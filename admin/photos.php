@@ -9,6 +9,19 @@ $UP = __DIR__ . '/../uploads';
 if (!is_dir($UP)) @mkdir($UP, 0755, true);
 $can_write = is_dir($UP) && is_writable($UP);
 
+/* "8M" / "512K" jaisi likhawat ko number me badlo */
+function ph_bytes($s) {
+    $s = trim((string)$s);
+    if ($s === '') return 0;
+    $n = (float)$s;
+    switch (strtolower(substr($s, -1))) {
+        case 'g': $n *= 1024;
+        case 'm': $n *= 1024;
+        case 'k': $n *= 1024;
+    }
+    return (int)$n;
+}
+
 /* ---------- naam milane ke liye: sirf akshar-ank bache ---------- */
 function ph_norm($s) {
     $s = mb_strtolower(trim((string)$s), 'UTF-8');
@@ -57,22 +70,48 @@ function ph_put(PDO $pdo, $id, $tmp, $size) {
    1) TEZ TARIKA — ek tile ki photo, bina page badle (AJAX)
    ============================================================ */
 if (get('ajax') === '1') {
+    while (ob_get_level()) ob_end_clean();          // koi warning JSON se pehle na nikle
+    ob_start();
     header('Content-Type: application/json; charset=utf-8');
-    if (!csrf_ok())  { echo json_encode(['ok' => false, 'msg' => 'Page purana ho gaya. Page refresh kijiye.']); exit; }
-    if (!$can_write) { echo json_encode(['ok' => false, 'msg' => 'uploads folder me likha nahi ja raha. Permission 755 kijiye.']); exit; }
+
+    $jawab = function ($ok, $msg = '', $photo = null) {
+        while (ob_get_level()) ob_end_clean();       // jo kachra jama hua, phenk do
+        echo json_encode($ok ? ['ok' => true, 'photo' => $photo] : ['ok' => false, 'msg' => $msg],
+                         JSON_UNESCAPED_UNICODE);
+        exit;
+    };
+
+    // Photo itni badi thi ki PHP ne poora data hi phenk diya — tab $_POST
+    // khaali aata hai aur csrf fail ho jata hai. Asli wajah yahi hai,
+    // "page purana ho gaya" nahi.
+    $bheja = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+    $hadd  = ph_bytes(ini_get('post_max_size'));
+    if (!$_POST && $bheja > 0 && $hadd > 0 && $bheja > $hadd) {
+        $jawab(false, 'Photo bahut badi hai (' . round($bheja / 1048576, 1) . ' MB). '
+                    . 'Is server par ' . round($hadd / 1048576, 1) . ' MB tak hi ja sakti hai.');
+    }
+
+    if (!csrf_ok())  $jawab(false, 'Page purana ho gaya. Page refresh karke dobara kijiye.');
+    if (!$can_write) $jawab(false, 'uploads folder me likha nahi ja raha. Uski permission 755 kijiye.');
 
     $id = (int)post('id');
     if (empty($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
-        $e   = $_FILES['photo']['error'] ?? -1;
-        $msg = ($e === UPLOAD_ERR_INI_SIZE || $e === UPLOAD_ERR_FORM_SIZE)
-             ? 'Photo bahut badi hai. Chhoti photo chuniye.' : 'Photo aa nahi payi. Dobara chuniye.';
-        echo json_encode(['ok' => false, 'msg' => $msg]); exit;
+        $e = $_FILES['photo']['error'] ?? -1;
+        if ($e === UPLOAD_ERR_INI_SIZE || $e === UPLOAD_ERR_FORM_SIZE) {
+            $jawab(false, 'Photo bahut badi hai. Is server par '
+                        . ini_get('upload_max_filesize') . ' tak hi ja sakti hai.');
+        }
+        if ($e === UPLOAD_ERR_PARTIAL) $jawab(false, 'Photo poori nahi pahunchi — net beech me kat gaya. Dobara kijiye.');
+        if ($e === UPLOAD_ERR_NO_FILE) $jawab(false, 'Koi photo chuni hi nahi gayi.');
+        if ($e === UPLOAD_ERR_NO_TMP_DIR || $e === UPLOAD_ERR_CANT_WRITE) {
+            $jawab(false, 'Server photo sambhal nahi pa raha. Hosting wale se kahiye.');
+        }
+        $jawab(false, 'Photo aa nahi payi. Dobara chuniye.');
     }
+
     $new = ph_put($pdo, $id, $_FILES['photo']['tmp_name'], $_FILES['photo']['size']);
-    echo json_encode($new
-        ? ['ok' => true,  'photo' => $new]
-        : ['ok' => false, 'msg' => 'Ye file photo nahi hai (jpg / png / webp chuniye).']);
-    exit;
+    $new ? $jawab(true, '', $new)
+         : $jawab(false, 'Ye file photo nahi hai (jpg / png / webp chuniye).');
 }
 
 /* ============================================================
@@ -298,36 +337,47 @@ include __DIR__ . '/../inc/panel.php';
     var er = tile.querySelector('.er'); er.style.display = 'none'; er.textContent = '';
     var lb = tile.querySelector('.lb'), old = lb.textContent;
     var pehle_se = tile.classList.contains('ok');
-    tile.classList.add('busy'); lb.textContent = 'चढ़ रही है…';
+    tile.classList.add('busy');
 
-    var fd = new FormData();
-    fd.append('csrf', csrf);
-    fd.append('id', tile.dataset.id);
-    fd.append('photo', inp.files[0]);
+    var file = inp.files[0];
+    inp.value = '';                                   // ab file humare paas hai
 
-    fetch('/admin/photos.php?ajax=1', { method:'POST', body:fd, credentials:'same-origin' })
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        tile.classList.remove('busy');
-        if (j && j.ok) {
-          var sq = tile.querySelector('.sq');
-          sq.innerHTML = '<img alt="">';
-          sq.firstChild.src = '/uploads/' + j.photo + '?v=' + Date.now();
-          tile.classList.add('ok');
-          lb.textContent = 'बदलिए';
-          if (!pehle_se) { done++; if (fill) fill.style.width = Math.round(done*100/kul) + '%'; }
-        } else {
-          lb.textContent = old;
-          er.textContent = (j && j.msg) ? j.msg : 'नहीं चढ़ी। दोबारा कीजिए।';
-          er.style.display = 'block';
-        }
-        inp.value = '';
-      })
-      .catch(function(){
-        tile.classList.remove('busy'); lb.textContent = old;
-        er.textContent = 'नेट गड़बड़ है। दोबारा कीजिए।'; er.style.display = 'block';
-        inp.value = '';
-      });
+    // dheeme net par 5 MB ki photo atak jaati hai — pehle chhoti kar lo
+    lb.textContent = 'छोटी की जा रही है…';
+    var kaam = (window.mkShrink ? window.mkShrink(file) : Promise.resolve(file));
+
+    kaam.then(function(chhoti){
+      lb.textContent = 'चढ़ रही है…';
+      var fd = new FormData();
+      fd.append('csrf', csrf);
+      fd.append('id', tile.dataset.id);
+      fd.append('photo', chhoti, 'photo.jpg');
+
+      return fetch('/admin/photos.php?ajax=1', { method:'POST', body:fd, credentials:'same-origin' })
+        .then(function(r){
+          return r.text().then(function(txt){
+            try { return JSON.parse(txt); }
+            catch(_){ return { ok:false, msg:'सर्वर ने अजीब जवाब दिया (' + r.status + ')। दोबारा कीजिए।' }; }
+          });
+        });
+    }).then(function(j){
+      tile.classList.remove('busy');
+      if (j && j.ok) {
+        var sq = tile.querySelector('.sq');
+        sq.innerHTML = '<img alt="">';
+        sq.firstChild.src = '/uploads/' + j.photo + '?v=' + Date.now();
+        tile.classList.add('ok');
+        lb.textContent = 'बदलिए';
+        if (!pehle_se) { done++; if (fill) fill.style.width = Math.round(done*100/kul) + '%'; }
+      } else {
+        lb.textContent = old;
+        er.textContent = (j && j.msg) ? j.msg : 'नहीं चढ़ी। दोबारा कीजिए।';
+        er.style.display = 'block';
+      }
+    })['catch'](function(){
+      tile.classList.remove('busy'); lb.textContent = old;
+      er.textContent = 'नेट बीच में कट गया। दोबारा कीजिए।'; er.style.display = 'block';
+    });
   });
 })();
 </script>

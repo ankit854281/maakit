@@ -5,5 +5,5 @@
 // hamesha sahi version dikhta hai.
 // (config.php me mat rakhiye — wo file aap purani rakhte hain)
 // ============================================================
-define('MAAKIT_VERSION', '6');
-define('MAAKIT_VERSION_DATE', '3 Oct 2026');
+define('MAAKIT_VERSION', '6.1');
+define('MAAKIT_VERSION_DATE', '4 Oct 2026');
