@@ -8,6 +8,6 @@ deployment:
     - /bin/cp -R  ./delivery  $DEPLOYPATH
     - /bin/cp -R  ./inc       $DEPLOYPATH
     - /bin/cp     ./*.php     $DEPLOYPATH
-    - /bin/cp     ./*.sql     $DEPLOYPATH
+    - /bin/cp -R  ./sql       $DEPLOYPATH
     - /bin/cp     ./*.json    $DEPLOYPATH 2>/dev/null || true
     - /bin/cp     ./sw.js     $DEPLOYPATH 2>/dev/null || true

@@ -1,0 +1,11 @@
+Is folder ki SQL file updater KHUD chalata hai, naam ke kram me.
+
+Niyam sirf ek: har file aisi honi chahiye ki DO BAAR chalne par
+bhi kuch na bigde. Isliye hamesha:
+
+   CREATE TABLE IF NOT EXISTS ...
+   INSERT IGNORE ...
+   ALTER wale ko information_schema se jaanch kar chalao
+
+Seedha "ALTER TABLE ... ADD COLUMN" kabhi mat likhna —
+dusri baar chalega to poora update ruk jayega.
