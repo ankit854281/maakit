@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/items.php';
+require_once __DIR__ . '/inc/daam.php';
 require_once __DIR__ . '/inc/icons.php';
 
 $page_title = t('Order — Maakit', 'ऑर्डर कीजिए — Maakit');
@@ -80,13 +81,29 @@ foreach ($villages as $v) {
     $vjs[$v['name']] = ['kapsethi'=>(int)$v['rate_kapsethi'], 'chauri'=>(int)$v['rate_chauri'], 'kachhawa'=>(int)$v['rate_kachhawa']];
 }
 // JS ke liye saaman
+$DAAM = daam_sab($pdo);          // seekha hua daam — ek hi query
+$IBR  = item_brands_all($pdo);   // kis saaman me kaun se brand
+
 $ijs = []; $ikeys = [];
 foreach ($items as $i) {
-    $ic = prod_icon_key($i['name'], $i['grp']);
+    $ic  = prod_icon_key($i['name'], $i['grp']);
     $ikeys[] = $ic;
-    $ijs[] = ['i'=>(int)$i['id'], 'n'=>$i['name'], 'u'=>$i['unit'], 'g'=>$i['grp'],
-              'c'=>$ic, 'k'=>round(unit_kg($i['unit']), 3),
-              'p'=>$i['photo'] ? '/uploads/' . $i['photo'] : ''];
+    $id  = (int)$i['id'];
+    $d   = $DAAM[$id] ?? null;
+    $row = ['i'=>$id, 'n'=>$i['name'], 'u'=>$i['unit'], 'g'=>$i['grp'],
+            's'=>($i['section'] ?? 'saaman'),
+            'c'=>$ic, 'k'=>round(unit_kg($i['unit']), 3),
+            'p'=>$i['photo'] ? '/uploads/' . $i['photo'] : ''];
+    if ($d) { $row['d'] = daam_likhawat($d); $row['dw'] = daam_kab($d); }
+    if (!empty($IBR[$id])) {
+        $row['b'] = [];
+        foreach ($IBR[$id] as $b) {
+            $bd = daam_ek($pdo, $id, (int)$b['id']);     // us brand ka apna daam
+            $row['b'][] = ['i'=>(int)$b['id'], 'n'=>brand_naam($b)]
+                        + ($bd ? ['d'=>daam_likhawat($bd), 'dw'=>daam_kab($bd)] : []);
+        }
+    }
+    $ijs[] = $row;
 }
 $ipaths = prod_icon_paths($ikeys);
 include __DIR__ . '/inc/head.php';
@@ -153,12 +170,15 @@ try{
         <button type="button" class="mic" id="mic" title="<?= h(t('Speak it', 'बोलकर बताइए')) ?>" aria-label="<?= h(t('Speak it', 'बोलकर बताइए')) ?>" style="display:none"><?= svc_icon('mic', 19) ?></button>
       </div>
     </div>
-    <div class="rail" id="rail" role="tablist">
-      <button type="button" data-g="daily" class="on"><?= t('Everyday', 'रोज़ का') ?></button>
-      <?php foreach ($groups as $k => $n): if ($k === 'daily') continue; ?>
-        <button type="button" data-g="<?= h($k) ?>"><?= h($n) ?></button>
-      <?php endforeach; ?>
+    <!-- do bade hisse — raashan aur bana khana alag -->
+    <div class="secs" id="secs" role="tablist">
+      <button type="button" data-s="saaman" class="on">
+        <?= svc_icon('grocery', 20) ?> <span><?= t('Groceries & things', 'राशन और सामान') ?></span></button>
+      <button type="button" data-s="khana">
+        <?= svc_icon('food', 20) ?> <span><?= t('Cooked food & sweets', 'बना खाना, मिठाई') ?></span></button>
     </div>
+
+    <div class="rail" id="rail" role="tablist"></div>
 
     <div id="reorder"></div>
     <h3 class="ghead" id="ghead"><?= t('Everyday essentials', 'रोज़ का सामान') ?></h3>
@@ -292,6 +312,9 @@ var L = <?= json_encode([
   'added'       => t('added', 'जुड़ गया'),
   'resultsfor'  => t('results for', 'सामान मिले —'),
   'everyday'    => t('Everyday essentials', 'रोज़ का सामान'),
+  'andaza'      => t('rough idea', 'अंदाज़ा'),
+  'daamcall'    => t('price on the bill', 'दाम बिल का'),
+  'anybrand'    => t('Any brand', 'कोई भी ब्रांड'),
   'again'       => t('Order the same again', 'फिर से वही ऑर्डर'),
   'addall'      => t('Add all', 'सब जोड़ दीजिए'),
   'reorderdone' => t('Last order added', 'पिछला ऑर्डर जुड़ गया'),
@@ -352,7 +375,22 @@ try { cart = JSON.parse(localStorage.getItem('mk_cart')||'{}') || {}; } catch(e)
 // purane/hataye gaye saaman saaf
 for (var k in cart) { if (!BY[k]) delete cart[k]; }
 
-var curG = 'daily', curQ = '', lastCount = 0;
+var curS = 'saaman', curG = 'daily', curQ = '', lastCount = 0;
+
+/* kis hisse me kaun se group hain — jo khaali ho wo chip dikhao hi mat */
+function groupsOf(sec){
+  var seen = {}, out = [];
+  ITEMS.forEach(function(x){ if ((x.s||'saaman') === sec && !seen[x.g]) { seen[x.g]=1; out.push(x.g); } });
+  return out;
+}
+function drawRail(){
+  var h = '<button type="button" data-g="daily"' + (curG==='daily'?' class="on"':'') + '>'
+        + L.everyday + '</button>';
+  groupsOf(curS).forEach(function(g){
+    h += '<button type="button" data-g="'+g+'"'+(curG===g?' class="on"':'')+'>'+esc(GRPS[g]||g)+'</button>';
+  });
+  $('rail').innerHTML = h;
+}
 
 function save(){ try{ localStorage.setItem('mk_cart', JSON.stringify(cart)); }catch(e){} }
 function count(){ var n=0; for(var k in cart) n += cart[k].q; return n; }
@@ -365,12 +403,37 @@ function toast(t){ var e=$('toast'); e.textContent=t; e.classList.add('show'); c
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
 function cardHtml(x){
-  var q = cart[x.i] ? cart[x.i].q : 0;
-  return '<div class="it'+(q?' in':'')+'" data-i="'+x.i+'">'
+  var c = cart[x.i], q = c ? c.q : 0;
+  var h = '<div class="it'+(q?' in':'')+'" data-i="'+x.i+'">'
     + '<div class="thumb">'+thumb(x,30)+'</div>'
     + '<div class="nm">'+esc(x.n)+'</div>'
-    + '<div class="un">'+esc(x.u)+'</div>'
-    + '<div class="act">'+ (q
+    + '<div class="un">'+esc(x.u)+'</div>';
+
+  /* seekha hua daam — asli bill se. Tay daam nahi hai, isliye saaf likha hai. */
+  var dd = x.d, dw = x.dw;
+  if (c && c.b && x.b) {                       // brand chuna hua hai to usi ka daam
+    for (var bi = 0; bi < x.b.length; bi++) {
+      if (x.b[bi].i == c.b) { dd = x.b[bi].d || null; dw = x.b[bi].dw || ''; break; }
+    }
+  }
+  if (dd) {
+    h += '<div class="dm">'+esc(dd)+'</div>'
+       + '<div class="dmw">'+L.andaza+(dw ? ' · '+esc(dw) : '')+'</div>';
+  } else {
+    h += '<div class="dmw dmn">'+L.daamcall+'</div>';
+  }
+
+  /* brand — sirf jahan hai wahan. "koi bhi" pehle se chuna rehta hai. */
+  if (x.b && x.b.length) {
+    var sel = c && c.b ? c.b : 0;
+    h += '<select class="bsel" data-i="'+x.i+'"><option value="0">'+L.anybrand+'</option>';
+    x.b.forEach(function(b){
+      h += '<option value="'+b.i+'"'+(sel==b.i?' selected':'')+'>'+esc(b.n)+'</option>';
+    });
+    h += '</select>';
+  }
+
+  return h + '<div class="act">'+ (q
         ? '<div class="step"><button type="button" data-a="-" aria-label="−">−</button><span class="q">'+q+'</span><button type="button" data-a="+" aria-label="+">+</button></div>'
         : '<button type="button" class="addbtn" data-a="+">'+L.add+'</button>')
     + '</div></div>';
@@ -391,10 +454,10 @@ function draw(){
     });
     $('ghead').textContent = list.length ? (list.length + ' ' + L.resultsfor + ' “' + curQ + '”') : '';
   } else if (curG === 'daily') {
-    list = ITEMS.filter(function(x){ return POP[x.i]; });
+    list = ITEMS.filter(function(x){ return POP[x.i] && (x.s||'saaman') === curS; });
     $('ghead').textContent = L.everyday;
   } else {
-    list = ITEMS.filter(function(x){ return x.g === curG; });
+    list = ITEMS.filter(function(x){ return x.g === curG && (x.s||'saaman') === curS; });
     $('ghead').textContent = GRPS[curG] || '';
   }
   lastCount = list.length;
@@ -459,6 +522,53 @@ $('q').addEventListener('input', function(){
   clearTimeout(lg); lg = setTimeout(function(){ logSearch(curQ.trim(), lastCount); }, 2000);
 });
 $('qc').addEventListener('click', function(){ $('q').value=''; curQ=''; this.style.display='none'; draw(); });
+/* ---------- do bade hisse: raashan / bana khana ---------- */
+$('secs').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-s]'); if (!b) return;
+  [].forEach.call(this.querySelectorAll('button'), function(x){ x.classList.remove('on'); });
+  b.classList.add('on');
+  curS = b.getAttribute('data-s');
+  curG = 'daily';
+  $('q').value=''; curQ=''; $('qc').style.display='none';
+  drawRail(); draw();
+  window.scrollTo({top: 0, behavior:'smooth'});
+});
+
+/* ---------- brand chunna (jahan hai wahan) ---------- */
+$('grid').addEventListener('change', function(e){
+  var sel = e.target.closest('select.bsel'); if (!sel) return;
+  var id = sel.getAttribute('data-i');
+  if (!cart[id]) return;                       // abhi jod hi nahi rakha
+  var v = parseInt(sel.value, 10) || 0;
+  if (v) { cart[id].b = v; cart[id].bn = sel.options[sel.selectedIndex].text; }
+  else   { delete cart[id].b; delete cart[id].bn; }
+  save();
+  showDaam(sel.closest('.it'), BY[id], v);
+});
+
+/* chune hue brand ka daam dikhao — "sab milakar" wali chaudi range ke bajaye */
+function showDaam(card, x, bid){
+  if (!card || !x) return;
+  var dm = card.querySelector('.dm'), dw = card.querySelector('.dmw');
+  var d = x.d, w = x.dw;
+  if (bid && x.b) {
+    for (var i = 0; i < x.b.length; i++) {
+      if (x.b[i].i == bid) { d = x.b[i].d || null; w = x.b[i].dw || ''; break; }
+    }
+  }
+  if (d) {
+    if (dm) { dm.textContent = d; }
+    else if (dw) { var e = document.createElement('div'); e.className='dm'; e.textContent=d;
+                   dw.parentNode.insertBefore(e, dw); }
+    var dw2 = card.querySelector('.dmw');
+    if (dw2) { dw2.textContent = L.andaza + (w ? ' · ' + w : ''); dw2.classList.remove('dmn'); }
+  } else {
+    if (dm) dm.remove();
+    var dw3 = card.querySelector('.dmw');
+    if (dw3) { dw3.textContent = L.daamcall; dw3.classList.add('dmn'); }
+  }
+}
+
 $('rail').addEventListener('click', function(e){
   var b = e.target.closest('button[data-g]'); if (!b) return;
   [].forEach.call(this.querySelectorAll('button'), function(x){ x.classList.remove('on'); });
@@ -501,7 +611,7 @@ function syncPane(){
     $('cartbar').classList.remove('show');
     drawCart(); fillMe(); calc();
   } else {
-    draw(); bar();
+    drawRail(); draw(); bar();
   }
 }
 $('cbGo').addEventListener('click', function(){

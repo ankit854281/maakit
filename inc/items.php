@@ -10,7 +10,7 @@ function items_all(PDO $pdo) {
     static $c = null;
     if ($c !== null) return $c;
     try {
-        $c = $pdo->query("SELECT id,name,unit,grp,words,popular,photo FROM items WHERE active=1 ORDER BY sort_no, id")->fetchAll();
+        $c = $pdo->query("SELECT id,name,unit,grp,words,popular,photo,section FROM items WHERE active=1 ORDER BY sort_no, id")->fetchAll();
     } catch (Throwable $e) { $c = []; }
     return $c;
 }
@@ -94,8 +94,13 @@ function cart_parse(PDO $pdo, $json) {
         $q  = (int)(is_array($row) ? ($row['q'] ?? 0) : $row);
         if ($q < 1 || $q > 99 || !isset($by[$id])) continue;
         $it = $by[$id];
+        $bn = '';
+        if (is_array($row) && !empty($row['bn'])) {
+            $bn = mb_substr(preg_replace('/[\r\n]+/', ' ', (string)$row['bn']), 0, 40);
+        }
         $out['lines'][] = [
             'id' => $id, 'name' => $it['name'], 'unit' => $it['unit'], 'q' => $q,
+            'brand' => $bn,
             'ic' => prod_icon_key($it['name'], $it['grp']),
         ];
         $out['kg']    += unit_kg($it['unit']) * $q;
@@ -103,7 +108,8 @@ function cart_parse(PDO $pdo, $json) {
     }
     $t = [];
     foreach ($out['lines'] as $l) {
-        $t[] = $l['name'] . ' — ' . ($l['q'] > 1 ? $l['q'] . ' × ' : '') . $l['unit'];
+        $t[] = $l['name'] . (!empty($l['brand']) ? ' (' . $l['brand'] . ')' : '')
+             . ' — ' . ($l['q'] > 1 ? $l['q'] . ' × ' : '') . $l['unit'];
     }
     $out['text'] = implode("\n", $t);
     return $out;

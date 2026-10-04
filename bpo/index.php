@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/icons.php';
 $u = need_role(['bpo', 'admin']);
 $page_title = 'आज के ऑर्डर — Maakit';
 
@@ -105,6 +106,10 @@ include __DIR__ . '/../inc/panel.php';
           </div>
           <button class="btn btn-brand btn-sm">सेव</button>
         </form>
+        <a class="btn btn-sm <?= $o['priced_at'] ? 'btn-ghost' : 'btn-gold' ?>"
+           href="/bpo/daam.php?id=<?= (int)$o['id'] ?>"
+           title="बिल के दाम लिख दीजिए — ग्राहकों को अंदाज़ा दिखेगा">
+          <?= $o['priced_at'] ? 'दाम ✓' : 'दाम लिखिए' ?></a>
         <form method="post" style="display:flex;gap:6px;align-items:flex-end">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="assign"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
           <div><label>डिलीवरी पार्टनर</label>
