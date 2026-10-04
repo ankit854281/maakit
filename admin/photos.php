@@ -94,7 +94,8 @@ if (get('ajax') === '1') {
     if (!csrf_ok())  $jawab(false, 'Page purana ho gaya. Page refresh karke dobara kijiye.');
     if (!$can_write) $jawab(false, 'uploads folder me likha nahi ja raha. Uski permission 755 kijiye.');
 
-    $id = (int)post('id');
+    $svc = preg_replace('/[^a-z]/', '', post('svc'));     // sewa ki photo
+    $id  = (int)post('id');
     if (empty($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
         $e = $_FILES['photo']['error'] ?? -1;
         if ($e === UPLOAD_ERR_INI_SIZE || $e === UPLOAD_ERR_FORM_SIZE) {
@@ -107,6 +108,16 @@ if (get('ajax') === '1') {
             $jawab(false, 'Server photo sambhal nahi pa raha. Hosting wale se kahiye.');
         }
         $jawab(false, 'Photo aa nahi payi. Dobara chuniye.');
+    }
+
+    if ($svc) {
+        // sewa ka tile — photo ka naam tay hai: svc-<key>.jpg
+        $tmpn = save_photo_from($_FILES['photo']['tmp_name'], $_FILES['photo']['size'], 'tmpsvc', 700);
+        if (!$tmpn) $jawab(false, 'Ye file photo nahi hai (jpg / png / webp chuniye).');
+        foreach (['jpg','png','webp'] as $e) @unlink($UP . '/svc-' . $svc . '.' . $e);
+        @rename($UP . '/' . $tmpn, $UP . '/svc-' . $svc . '.jpg');
+        @chmod($UP . '/svc-' . $svc . '.jpg', 0644);
+        $jawab(true, '', 'svc-' . $svc . '.jpg');
     }
 
     $new = ph_put($pdo, $id, $_FILES['photo']['tmp_name'], $_FILES['photo']['size']);
@@ -310,6 +321,51 @@ include __DIR__ . '/../inc/panel.php';
   <?php endif; ?>
 </div>
 
+<!-- =============== SEWA / TILE KI PHOTO =============== -->
+<div class="phbox" id="sewa">
+  <h3>सेवा और हिस्सों की फ़ोटो</h3>
+  <p>ये वही डिब्बे हैं जो <b>होम पेज</b> पर दिखते हैं — गाड़ी, लॉन, टेंट, किताबें, दुकानें।
+     अभी इनमें चित्र (icon) है। असली फ़ोटो लगाते ही होम पेज बदल जाएगा।</p>
+  <p>एक अच्छी फ़ोटो — जैसे अपनी बोलेरो की, या किसी लॉन की जहाँ आपने डिलीवरी की थी।
+     <b>Google से उठाई हुई फ़ोटो मत लगाइए।</b></p>
+
+  <div class="phgrid" id="svcGrid">
+    <?php
+      $SV = [
+        'grocery'  => 'राशन और सामान',
+        'food'     => 'बना खाना, मिठाई',
+        'medicine' => 'दवाई',
+        'books'    => 'पुरानी किताबें',
+        'ride'     => 'गाड़ी बुकिंग',
+        'truck'    => 'माल ढुलाई',
+        'lawn'     => 'लॉन / हॉल',
+        'tent'     => 'टेंट, साउंड',
+        'halwai'   => 'हलवाई',
+        'pandit'   => 'पंडित जी',
+        'salon'    => 'नाई / पार्लर',
+        'home'     => 'घर की मरम्मत',
+        'photo'    => 'फोटो / वीडियो',
+        'shops'    => 'दुकानें',
+      ];
+      foreach ($SV as $k => $lbl): $sp = svc_photo($k); ?>
+      <div class="pht <?= $sp ? 'ok' : '' ?>" data-svc="<?= h($k) ?>">
+        <span class="tick">&#10004;</span>
+        <div class="sq">
+          <?php if ($sp): ?><img src="/uploads/<?= h($sp) ?>?v=<?= @filemtime($UP . '/' . $sp) ?>" alt="">
+          <?php else: ?><?= svc_icon($k, 46) ?><?php endif; ?>
+        </div>
+        <div class="nm"><?= h($lbl) ?></div>
+        <div class="un">होम पेज का डिब्बा</div>
+        <label>
+          <span class="lb"><?= $sp ? 'बदलिए' : 'फ़ोटो लगाइए' ?></span>
+          <input type="file" accept="image/*">
+        </label>
+        <div class="er"></div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+</div>
+
 <!-- =============== NUMBER LIST =============== -->
 <div class="phbox">
   <h3>नंबर की सूची</h3>
@@ -325,11 +381,12 @@ include __DIR__ . '/../inc/panel.php';
 
 <script>
 (function(){
-  var grid = document.getElementById('phGrid'); if (!grid) return;
   var csrf = <?= json_encode(csrf()) ?>;
   var kul  = <?= (int)$kul ?>, done = <?= (int)$done ?>;
   var fill = document.getElementById('phFill');
 
+  function lagao(grid){
+  if (!grid) return;
   grid.addEventListener('change', function(e){
     var inp = e.target; if (!inp.matches('input[type=file]')) return;
     var tile = inp.closest('.pht'); if (!tile || !inp.files.length) return;
@@ -350,7 +407,8 @@ include __DIR__ . '/../inc/panel.php';
       lb.textContent = 'चढ़ रही है…';
       var fd = new FormData();
       fd.append('csrf', csrf);
-      fd.append('id', tile.dataset.id);
+      if (tile.dataset.svc) fd.append('svc', tile.dataset.svc);
+      else                  fd.append('id',  tile.dataset.id);
       fd.append('photo', chhoti, 'photo.jpg');
 
       return fetch('/admin/photos.php?ajax=1', { method:'POST', body:fd, credentials:'same-origin' })
@@ -368,7 +426,7 @@ include __DIR__ . '/../inc/panel.php';
         sq.firstChild.src = '/uploads/' + j.photo + '?v=' + Date.now();
         tile.classList.add('ok');
         lb.textContent = 'बदलिए';
-        if (!pehle_se) { done++; if (fill) fill.style.width = Math.round(done*100/kul) + '%'; }
+        if (!pehle_se && !tile.dataset.svc) { done++; if (fill) fill.style.width = Math.round(done*100/kul) + '%'; }
       } else {
         lb.textContent = old;
         er.textContent = (j && j.msg) ? j.msg : 'नहीं चढ़ी। दोबारा कीजिए।';
@@ -379,6 +437,10 @@ include __DIR__ . '/../inc/panel.php';
       er.textContent = 'नेट बीच में कट गया। दोबारा कीजिए।'; er.style.display = 'block';
     });
   });
+  }
+
+  lagao(document.getElementById('phGrid'));    // saaman
+  lagao(document.getElementById('svcGrid'));   // sewa ke tile
 })();
 </script>
 <?php include __DIR__ . '/../inc/foot.php'; ?>

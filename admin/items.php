@@ -196,40 +196,12 @@ include __DIR__ . '/../inc/panel.php';
   </div>
 
   <h3 class="ghead" id="sewa">होम पेज की सेवाओं की फ़ोटो</h3>
-  <p class="help" style="margin:-4px 0 10px">होम पेज पर जो बड़ी और छोटी tiles हैं, उन पर भी असली फ़ोटो लगा सकते हैं।
-    जैसे अपनी बोलेरो की फ़ोटो “गाड़ी बुकिंग” पर।</p>
-  <div class="admgrid" style="margin-bottom:24px">
-    <?php
-      $SV = ['grocery'=>'राशन','food'=>'खाना','medicine'=>'दवाई','ride'=>'गाड़ी बुकिंग','lawn'=>'लॉन / हॉल',
-             'tent'=>'टेंट, साउंड','halwai'=>'हलवाई','pandit'=>'पंडित जी','salon'=>'नाई / पार्लर',
-             'home'=>'घर की मरम्मत','photo'=>'फोटो / वीडियो','shops'=>'दुकानें'];
-      foreach ($SV as $k => $lbl): $sp = svc_photo($k); ?>
-      <div class="admit">
-        <div class="ph">
-          <?php if ($sp): ?><img src="/uploads/<?= h($sp) ?>?v=<?= @filemtime(__DIR__ . '/../uploads/' . $sp) ?>" alt="">
-          <?php else: ?><span class="noph"><?= svc_icon($k, 34) ?></span><?php endif; ?>
-        </div>
-        <div class="tx"><b><?= h($lbl) ?></b><i>होम पेज की tile</i></div>
-        <form method="post" enctype="multipart/form-data" class="up">
-          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-          <input type="hidden" name="do" value="svcphoto">
-          <input type="hidden" name="key" value="<?= h($k) ?>">
-          <label class="pick2">
-            <input type="file" name="photo" accept="image/*"
-                   onchange="if(this.files.length){this.closest('.admit').classList.add('busy');this.form.submit();}">
-            <span><?= $sp ? 'बदलिए' : 'फ़ोटो लगाइए' ?></span>
-          </label>
-        </form>
-        <?php if ($sp): ?>
-          <form method="post">
-            <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-            <input type="hidden" name="do" value="svcunphoto"><input type="hidden" name="key" value="<?= h($k) ?>">
-            <button class="btn btn-sm" style="background:transparent;color:var(--bad);padding:4px 8px;font-size:13px">हटाइए</button>
-          </form>
-        <?php endif; ?>
-      </div>
-    <?php endforeach; ?>
-  </div>
+  <p class="help" style="margin:-4px 0 14px">
+    यह हिस्सा अब <b>फ़ोटो</b> पेज पर चला गया है — वहाँ सारी फ़ोटो एक ही जगह हैं,
+    और वहाँ दबाते ही फ़ोटो चढ़ जाती है।
+  </p>
+  <a class="btn btn-brand btn-sm" style="margin-bottom:26px" href="/admin/photos.php#sewa">
+    सेवाओं की फ़ोटो लगाइए &rarr;</a>
 
   <h3 class="ghead" id="naya">नया सामान जोड़िए</h3>
   <form method="post" class="box" style="max-width:520px;margin-bottom:30px">
