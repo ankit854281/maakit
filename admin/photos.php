@@ -1,0 +1,334 @@
+<?php
+require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/items.php';
+require_once __DIR__ . '/../inc/groups.php';
+$u = need_role('admin');
+$page_title = 'फ़ोटो एक साथ लगाइए — Maakit';
+
+$UP = __DIR__ . '/../uploads';
+if (!is_dir($UP)) @mkdir($UP, 0755, true);
+$can_write = is_dir($UP) && is_writable($UP);
+
+/* ---------- naam milane ke liye: sirf akshar-ank bache ---------- */
+function ph_norm($s) {
+    $s = mb_strtolower(trim((string)$s), 'UTF-8');
+    $s = preg_replace('/[^\p{L}\p{N}]+/u', '', $s);
+    return $s === null ? '' : $s;
+}
+
+/* file ke naam se saaman dhoondho:
+   1) sirf number ho to wahi id
+   2) warna naam / khoj-shabd se milao                         */
+function ph_match($file, array $items) {
+    $base = pathinfo($file, PATHINFO_FILENAME);
+    $base = preg_replace('/[\s_\-]*\(\d+\)$/', '', $base);      // "aata (1)" -> "aata"
+    $t = trim($base);
+
+    if (preg_match('/^0*(\d{1,7})$/', $t, $m)) {
+        $id = (int)$m[1];
+        foreach ($items as $it) if ((int)$it['id'] === $id) return $it;
+        return null;
+    }
+    $n = ph_norm($t);
+    if ($n === '') return null;
+
+    foreach ($items as $it) if (ph_norm($it['name']) === $n) return $it;      // poora naam
+    foreach ($items as $it) {
+        foreach (preg_split('/\s+/', (string)$it['words']) as $w) {
+            if ($w !== '' && ph_norm($w) === $n) return $it;                  // khoj-shabd
+        }
+    }
+    return null;
+}
+
+/* ---------- ek photo lagao (dono tarike isi ko bulate hain) ---------- */
+function ph_put(PDO $pdo, $id, $tmp, $size) {
+    $new = save_photo_from($tmp, $size, 'it', 500);
+    if (!$new) return false;
+    $st = $pdo->prepare("SELECT photo FROM items WHERE id=?"); $st->execute([$id]);
+    $row = $st->fetch();
+    if (!$row) { drop_photo($new); return false; }
+    $pdo->prepare("UPDATE items SET photo=? WHERE id=?")->execute([$new, $id]);
+    if (!empty($row['photo'])) drop_photo($row['photo']);
+    return $new;
+}
+
+/* ============================================================
+   1) TEZ TARIKA — ek tile ki photo, bina page badle (AJAX)
+   ============================================================ */
+if (get('ajax') === '1') {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!csrf_ok())  { echo json_encode(['ok' => false, 'msg' => 'Page purana ho gaya. Page refresh kijiye.']); exit; }
+    if (!$can_write) { echo json_encode(['ok' => false, 'msg' => 'uploads folder me likha nahi ja raha. Permission 755 kijiye.']); exit; }
+
+    $id = (int)post('id');
+    if (empty($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+        $e   = $_FILES['photo']['error'] ?? -1;
+        $msg = ($e === UPLOAD_ERR_INI_SIZE || $e === UPLOAD_ERR_FORM_SIZE)
+             ? 'Photo bahut badi hai. Chhoti photo chuniye.' : 'Photo aa nahi payi. Dobara chuniye.';
+        echo json_encode(['ok' => false, 'msg' => $msg]); exit;
+    }
+    $new = ph_put($pdo, $id, $_FILES['photo']['tmp_name'], $_FILES['photo']['size']);
+    echo json_encode($new
+        ? ['ok' => true,  'photo' => $new]
+        : ['ok' => false, 'msg' => 'Ye file photo nahi hai (jpg / png / webp chuniye).']);
+    exit;
+}
+
+/* ============================================================
+   2) EK SAATH — kai photo ek hi baar me
+   ============================================================ */
+$bulk = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'bulk') {
+    $all   = $pdo->query("SELECT id,name,unit,grp,words,photo FROM items WHERE active=1")->fetchAll();
+    $bulk  = ['lagi' => [], 'nahi' => [], 'kharab' => []];
+    $files = $_FILES['photos'] ?? null;
+
+    if ($files && is_array($files['name'])) {
+        foreach ($files['name'] as $i => $fname) {
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) { $bulk['kharab'][] = $fname; continue; }
+            $it = ph_match($fname, $all);
+            if (!$it) { $bulk['nahi'][] = $fname; continue; }
+            $new = ph_put($pdo, (int)$it['id'], $files['tmp_name'][$i], $files['size'][$i]);
+            if ($new) $bulk['lagi'][] = ['file' => $fname, 'name' => $it['name'], 'unit' => $it['unit'], 'photo' => $new];
+            else      $bulk['kharab'][] = $fname;
+        }
+    }
+}
+
+/* ---------- list ---------- */
+$g  = get('g', '');
+$sh = get('sh', 'nophoto');                       // nophoto | all
+$sql = "SELECT id,name,unit,grp,photo FROM items WHERE active=1";
+$par = [];
+if ($g !== '' && array_key_exists($g, item_groups())) { $sql .= " AND grp=?"; $par[] = $g; }
+if ($sh === 'nophoto') $sql .= " AND (photo IS NULL OR photo='')";
+$sql .= " ORDER BY sort_no, id";
+$st = $pdo->prepare($sql); $st->execute($par); $rows = $st->fetchAll();
+
+$kul  = (int)$pdo->query("SELECT COUNT(*) c FROM items WHERE active=1")->fetch()['c'];
+$done = (int)$pdo->query("SELECT COUNT(*) c FROM items WHERE active=1 AND photo IS NOT NULL AND photo<>''")->fetch()['c'];
+$pc   = $kul ? round($done * 100 / $kul) : 0;
+
+/* server ek baar me kitni file leta hai */
+$maxf = (int)ini_get('max_file_uploads'); if ($maxf < 1) $maxf = 20;
+$post_mb = (int)ini_get('post_max_size');
+$one_mb  = (int)ini_get('upload_max_filesize');
+
+include __DIR__ . '/../inc/panel.php';
+?>
+<style>
+.phwrap{max-width:1000px;margin:0 auto;padding:0 14px}
+.phbar{background:#fff;border:2px solid #EAD7B5;border-radius:16px;padding:14px 18px;margin:16px 0}
+.phbar .big{font-size:26px;font-weight:800;line-height:1.1}
+.phbar .track{height:12px;border-radius:9px;background:#F0E3C8;overflow:hidden;margin-top:10px}
+.phbar .fill{height:100%;background:#7A1F1F;border-radius:9px;transition:width .35s}
+.phtabs{display:flex;gap:8px;margin:16px 0 10px;flex-wrap:wrap}
+.phtabs a{padding:9px 16px;border-radius:999px;border:2px solid #EAD7B5;background:#fff;
+  text-decoration:none;color:#2B1A12;font-weight:600;font-size:15px}
+.phtabs a.on{background:#7A1F1F;border-color:#7A1F1F;color:#fff}
+.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;margin:14px 0 30px}
+.pht{background:#fff;border:2px solid #EAD7B5;border-radius:14px;padding:10px;text-align:center;position:relative}
+.pht.ok{border-color:#2E7D4F}
+.pht .sq{width:100%;aspect-ratio:1/1;border-radius:10px;background:#FBF4E6;display:grid;place-items:center;overflow:hidden}
+.pht .sq img{width:100%;height:100%;object-fit:cover}
+.pht .nm{font-size:13.5px;font-weight:600;margin-top:7px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pht .un{font-size:12px;color:#6B4A2F;margin-top:2px}
+.pht .no{position:absolute;top:7px;left:8px;background:#F4E6CB;border-radius:6px;
+  padding:1px 6px;font-size:11.5px;font-weight:700;color:#6B4A2F}
+.pht label{display:block;margin-top:8px;background:#E0A526;color:#3A1208;border-radius:9px;
+  padding:7px 0;font-size:13.5px;font-weight:700;cursor:pointer}
+.pht label:active{opacity:.8}
+.pht input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.pht .tick{position:absolute;top:6px;right:7px;width:24px;height:24px;border-radius:50%;
+  background:#2E7D4F;color:#fff;display:none;place-items:center;font-size:15px;font-weight:800}
+.pht.ok .tick{display:grid}
+.pht.busy{opacity:.55}
+.pht .er{font-size:11.5px;color:#B02A2A;margin-top:5px;line-height:1.35;display:none}
+.phbox{background:#fff;border:2px solid #EAD7B5;border-radius:16px;padding:18px;margin-bottom:18px}
+.phbox h3{margin:0 0 6px;font-size:20px}
+.phbox p{font-size:14.5px;color:#6B4A2F;line-height:1.65;margin:0 0 10px}
+.phnums{max-height:330px;overflow:auto;border:1px solid #EAD7B5;border-radius:10px;background:#FBF4E6;padding:10px 12px;
+  font-size:14px;line-height:1.9;columns:2;column-gap:26px}
+.phnums b{color:#7A1F1F}
+.phres td{padding:6px 10px 6px 0;font-size:14.5px;vertical-align:middle}
+.phres img{width:38px;height:38px;border-radius:7px;object-fit:cover;display:block}
+.phwarn{background:#7A1F1F;color:#FBF4E6;border-radius:14px;padding:14px 18px;margin:14px 0;font-size:15px;line-height:1.6}
+@media(max-width:560px){.phnums{columns:1}}
+</style>
+
+<div class="phwrap">
+
+<?php if (!$can_write): ?>
+  <div class="phwarn"><b>uploads folder me likha nahi ja raha.</b><br>
+    cPanel → File Manager → <code>public_html/uploads</code> par right-click → <b>Change Permissions</b> → <b>755</b> → Save.
+    Jab tak ye nahi hoga, koi photo nahi lagegi.</div>
+<?php endif; ?>
+
+<div class="phbar">
+  <div class="big"><span style="color:#6B4A2F;font-weight:600;font-size:19px"><?= $kul ?> में से</span>
+    <?= $done ?> <span style="color:#6B4A2F;font-weight:600;font-size:19px">सामान की फ़ोटो लग चुकी</span></div>
+  <div class="track"><div class="fill" id="phFill" style="width:<?= $pc ?>%"></div></div>
+  <div style="font-size:14px;color:#6B4A2F;margin-top:7px">
+    जिनकी फ़ोटो नहीं है, उनकी जगह अपने आप चित्र (icon) दिखता है — इसलिए कोई जल्दी नहीं।
+    पहले वही सामान कीजिए जो सबसे ज़्यादा बिकता है।
+  </div>
+</div>
+
+<!-- =============== TEZ TARIKA =============== -->
+<div class="phbox">
+  <h3>तेज़ तरीक़ा — दबाइए और फ़ोटो चुनिए</h3>
+  <p>नीचे हर सामान का अपना डिब्बा है। <b>“फ़ोटो लगाइए”</b> दबाते ही फ़ोन का कैमरा या गैलरी खुलेगी।
+     फ़ोटो चुनते ही वह अपने आप चढ़ जाएगी — पेज दोबारा नहीं खुलेगा, कुछ सेव नहीं करना।
+     एक के बाद एक करते जाइए।</p>
+
+  <div class="phtabs">
+    <a class="<?= $sh === 'nophoto' ? 'on' : '' ?>" href="?sh=nophoto<?= $g ? '&g=' . h($g) : '' ?>">सिर्फ़ बची हुई</a>
+    <a class="<?= $sh === 'all' ? 'on' : '' ?>"     href="?sh=all<?= $g ? '&g=' . h($g) : '' ?>">सारी</a>
+  </div>
+  <div class="phtabs">
+    <a class="<?= $g === '' ? 'on' : '' ?>" href="?sh=<?= h($sh) ?>">सब तरह का</a>
+    <?php foreach (item_groups() as $k => $lbl): ?>
+      <a class="<?= $g === $k ? 'on' : '' ?>" href="?sh=<?= h($sh) ?>&g=<?= h($k) ?>"><?= h($lbl) ?></a>
+    <?php endforeach; ?>
+  </div>
+
+  <?php if (!$rows): ?>
+    <p style="font-size:16px;color:#2E7D4F;font-weight:600">इस हिस्से का सारा सामान हो चुका। 🎉</p>
+  <?php else: ?>
+    <div class="phgrid" id="phGrid">
+      <?php foreach ($rows as $r): ?>
+        <div class="pht <?= $r['photo'] ? 'ok' : '' ?>" data-id="<?= (int)$r['id'] ?>">
+          <span class="no"><?= (int)$r['id'] ?></span>
+          <span class="tick">&#10004;</span>
+          <div class="sq">
+            <?php if ($r['photo']): ?>
+              <img src="/uploads/<?= h($r['photo']) ?>" alt="">
+            <?php else: ?>
+              <?= prod_icon($r['name'], $r['grp'], 46) ?>
+            <?php endif; ?>
+          </div>
+          <div class="nm"><?= h($r['name']) ?></div>
+          <div class="un"><?= h($r['unit']) ?></div>
+          <label>
+            <span class="lb"><?= $r['photo'] ? 'बदलिए' : 'फ़ोटो लगाइए' ?></span>
+            <input type="file" accept="image/*">
+          </label>
+          <div class="er"></div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
+<!-- =============== EK SAATH =============== -->
+<div class="phbox" id="eksath">
+  <h3>एक साथ — कंप्यूटर से कई फ़ोटो</h3>
+  <p>अगर सारी फ़ोटो कंप्यूटर में रखी हैं, तो उन्हें सामान के <b>नंबर</b> के नाम से रख दीजिए —
+     जैसे <code>12.jpg</code>, <code>37.jpg</code>। नंबर नीचे की सूची में लिखे हैं (हर डिब्बे के ऊपर बाएँ भी दिखते हैं)।
+     फिर नीचे से सारी फ़ोटो एक बार में चुन लीजिए।</p>
+  <p>सामान का नाम भी चलेगा — जैसे <code>चीनी.jpg</code> या <code>aata.jpg</code>। नाम न मिला तो वह फ़ोटो छोड़ दी जाएगी,
+     कुछ बिगड़ेगा नहीं।</p>
+
+  <form method="post" enctype="multipart/form-data" style="margin:14px 0 6px">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+    <input type="hidden" name="do" value="bulk">
+    <input type="file" name="photos[]" multiple accept="image/*"
+           style="font-size:15px;padding:10px;background:#FBF4E6;border:2px dashed #EAD7B5;border-radius:10px;width:100%">
+    <button class="btn btn-brand" style="margin-top:12px" type="submit">चुनी हुई फ़ोटो चढ़ाइए</button>
+  </form>
+  <p style="font-size:13.5px">
+    यह सर्वर एक बार में <b><?= $maxf ?> फ़ोटो</b> तक लेता है<?= $one_mb ? ', एक फ़ोटो ' . $one_mb . ' MB तक' : '' ?>.
+    इससे ज़्यादा चुनेंगे तो बाक़ी छूट जाएँगी — <?= $maxf ?>-<?= $maxf ?> करके भेजिए।
+  </p>
+
+  <?php if ($bulk !== null): ?>
+    <div style="border-top:2px solid #EAD7B5;margin-top:16px;padding-top:14px">
+      <h3 style="font-size:18px"><?= count($bulk['lagi']) ?> फ़ोटो लग गईं</h3>
+      <?php if ($bulk['lagi']): ?>
+        <table class="phres"><?php foreach ($bulk['lagi'] as $x): ?>
+          <tr><td><img src="/uploads/<?= h($x['photo']) ?>" alt=""></td>
+              <td><code><?= h($x['file']) ?></code></td>
+              <td>→ <b><?= h($x['name']) ?></b> <span style="color:#6B4A2F"><?= h($x['unit']) ?></span></td></tr>
+        <?php endforeach; ?></table>
+      <?php endif; ?>
+
+      <?php if ($bulk['nahi']): ?>
+        <p style="margin-top:14px;color:#B02A2A"><b><?= count($bulk['nahi']) ?> फ़ोटो का सामान नहीं मिला</b> —
+          इनका नाम बदलकर नंबर रख दीजिए, फिर दोबारा भेजिए:</p>
+        <div style="font-size:14px;line-height:1.8"><?php foreach ($bulk['nahi'] as $f): ?>
+          <code><?= h($f) ?></code>&nbsp; <?php endforeach; ?></div>
+      <?php endif; ?>
+
+      <?php if ($bulk['kharab']): ?>
+        <p style="margin-top:14px;color:#B02A2A"><b><?= count($bulk['kharab']) ?> फ़ोटो चढ़ नहीं पाई</b>
+          (बहुत बड़ी है, या तस्वीर नहीं है):</p>
+        <div style="font-size:14px;line-height:1.8"><?php foreach ($bulk['kharab'] as $f): ?>
+          <code><?= h($f) ?></code>&nbsp; <?php endforeach; ?></div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
+<!-- =============== NUMBER LIST =============== -->
+<div class="phbox">
+  <h3>नंबर की सूची</h3>
+  <p>फ़ोटो का नाम इनमें से नंबर रख दीजिए। <?= $sh === 'nophoto' ? 'यहाँ सिर्फ़ वही हैं जिनकी फ़ोटो बाक़ी है।' : '' ?></p>
+  <div class="phnums">
+    <?php foreach ($rows as $r): ?>
+      <div><b><?= (int)$r['id'] ?></b> — <?= h($r['name']) ?> <span style="color:#6B4A2F"><?= h($r['unit']) ?></span></div>
+    <?php endforeach; ?>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function(){
+  var grid = document.getElementById('phGrid'); if (!grid) return;
+  var csrf = <?= json_encode(csrf()) ?>;
+  var kul  = <?= (int)$kul ?>, done = <?= (int)$done ?>;
+  var fill = document.getElementById('phFill');
+
+  grid.addEventListener('change', function(e){
+    var inp = e.target; if (!inp.matches('input[type=file]')) return;
+    var tile = inp.closest('.pht'); if (!tile || !inp.files.length) return;
+
+    var er = tile.querySelector('.er'); er.style.display = 'none'; er.textContent = '';
+    var lb = tile.querySelector('.lb'), old = lb.textContent;
+    var pehle_se = tile.classList.contains('ok');
+    tile.classList.add('busy'); lb.textContent = 'चढ़ रही है…';
+
+    var fd = new FormData();
+    fd.append('csrf', csrf);
+    fd.append('id', tile.dataset.id);
+    fd.append('photo', inp.files[0]);
+
+    fetch('/admin/photos.php?ajax=1', { method:'POST', body:fd, credentials:'same-origin' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        tile.classList.remove('busy');
+        if (j && j.ok) {
+          var sq = tile.querySelector('.sq');
+          sq.innerHTML = '<img alt="">';
+          sq.firstChild.src = '/uploads/' + j.photo + '?v=' + Date.now();
+          tile.classList.add('ok');
+          lb.textContent = 'बदलिए';
+          if (!pehle_se) { done++; if (fill) fill.style.width = Math.round(done*100/kul) + '%'; }
+        } else {
+          lb.textContent = old;
+          er.textContent = (j && j.msg) ? j.msg : 'नहीं चढ़ी। दोबारा कीजिए।';
+          er.style.display = 'block';
+        }
+        inp.value = '';
+      })
+      .catch(function(){
+        tile.classList.remove('busy'); lb.textContent = old;
+        er.textContent = 'नेट गड़बड़ है। दोबारा कीजिए।'; er.style.display = 'block';
+        inp.value = '';
+      });
+  });
+})();
+</script>
+<?php include __DIR__ . '/../inc/foot.php'; ?>

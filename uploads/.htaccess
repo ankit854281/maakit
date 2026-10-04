@@ -1,0 +1,18 @@
+# uploads folder me sirf tasveer — koi code yahan se NA chale
+php_flag engine off
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+  php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phps
+AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl
+<FilesMatch "\.(?i:php|phtml|php[3-8]|phps|cgi|pl|htaccess)$">
+  Require all denied
+</FilesMatch>
+Options -ExecCGI -Indexes

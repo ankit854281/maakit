@@ -1,0 +1,24 @@
+Maakit — version 5
+27 September 2026
+
+Is version me kya-kya hai (sab pehle ke saath):
+
+v1  Website + order form + 18 category ki directory
+    BPO panel, delivery panel, admin panel
+v2  Nai/parlour ki seat booking, shop panel, access code
+v3  App jaisa order (165 saaman, cart, stepper)
+    Order ka safar, delivery code, BPO ko ghanti
+v4  75 icon ka design system (emoji hataye)
+    Saaman ki photo, booking (7 sewa), customer khata
+    Bolkar order, photo bhejiye, bill ki photo, PWA
+v5  English + Hindi (switch ke saath)
+    Upar gaon ke naam ki chalti patti
+    Offer / ad (aap khud chalate hain)
+    Location — GPS + naksha + LIVE TRACKING
+    Naye gaon ki maang + Admin Dashboard
+    Transport registration (gaadi wale khud judte hain)
+    MAAL GAADI — alag booking, alag gaadi
+    Khula/band ka status, logon ki raay, FAQ
+
+Chalane ke liye: install-app.sql zaroor chalaiye.
+Poora tarika PEHLE-YE-PADHIYE.txt me hai.

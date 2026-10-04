@@ -1,0 +1,742 @@
+/* ============================================================
+   Maakit — app jaisa hissa (order screen, cart, tracking)
+   style.css ke baad load hota hai
+   ============================================================ */
+
+/* ---------- bottom nav (app ki tarah) ---------- */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:var(--surface);border-top:1.5px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom,0px);
+  box-shadow:0 -2px 14px rgba(0,0,0,.06);
+}
+.tabbar a{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 2px 7px;text-decoration:none;color:var(--muted);
+  font-size:11.5px;font-weight:600;position:relative;
+}
+.tabbar a svg{width:23px;height:23px}
+.tabbar a.on{color:var(--brand)}
+.tabbar a.on svg{stroke-width:2.2}
+.tabbar .dot{
+  position:absolute;top:4px;right:calc(50% - 20px);min-width:17px;height:17px;
+  border-radius:20px;background:var(--brand);color:#fff;font-size:11px;
+  font-weight:800;display:grid;place-items:center;padding:0 4px;line-height:1;
+}
+body.has-tabbar{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+body.cart-on #paneCat{padding-bottom:72px}
+body.has-tabbar .footer{padding-bottom:30px}
+body.has-tabbar .float{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){ .tabbar{display:none} body.has-tabbar{padding-bottom:0} }
+
+/* ---------- search (app jaisa) ---------- */
+.appsearch{position:sticky;top:calc(62px + env(safe-area-inset-top,0px));z-index:18;background:var(--bg);padding:10px 0 8px}
+.appsearch .in{
+  display:flex;align-items:center;gap:9px;background:var(--surface);
+  border:1.8px solid var(--line);border-radius:14px;padding:0 12px;
+}
+.appsearch input{flex:1;border:0;background:transparent;font:inherit;font-size:16px;padding:13px 0;color:var(--ink);min-width:0}
+.appsearch input:focus{outline:none}
+.appsearch .ic{color:var(--muted);display:grid;place-items:center;flex-shrink:0}
+.appsearch .clr{border:0;background:var(--soft);color:var(--muted);width:26px;height:26px;border-radius:20px;font-size:16px;line-height:1;cursor:pointer;flex-shrink:0;font-family:inherit}
+
+/* ---------- category rail ---------- */
+.rail{
+  position:sticky;top:calc(124px + env(safe-area-inset-top,0px));z-index:17;
+  background:var(--bg);display:flex;gap:8px;overflow-x:auto;
+  padding:6px 18px 10px;margin:0 -18px;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.rail::-webkit-scrollbar{display:none}
+.rail button{
+  flex-shrink:0;border:1.5px solid var(--line);background:var(--surface);
+  color:var(--ink);font:inherit;font-size:14.5px;font-weight:600;
+  border-radius:30px;padding:8px 15px;cursor:pointer;white-space:nowrap;
+}
+.rail button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ---------- item card + stepper ---------- */
+.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
+@media (min-width:640px){ .items{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (min-width:980px){ .items{grid-template-columns:repeat(4,minmax(0,1fr))} }
+
+.it{
+  background:var(--surface);border:1.5px solid var(--line);border-radius:16px;
+  padding:12px;display:flex;flex-direction:column;gap:6px;position:relative;
+}
+.it.in{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.it .thumb{
+  height:66px;border-radius:12px;background:var(--soft);display:grid;place-items:center;
+  font-size:32px;line-height:1;
+}
+.it .nm{font-weight:600;font-size:15px;line-height:1.28;min-height:2.56em}
+.it .un{font-size:13px;color:var(--muted);margin-top:-2px}
+.it .act{margin-top:auto;padding-top:8px}
+
+.addbtn{
+  width:100%;border:1.8px solid var(--brand);background:var(--surface);color:var(--brand);
+  font:inherit;font-weight:800;font-size:15px;border-radius:11px;padding:9px 0;
+  cursor:pointer;min-height:42px;letter-spacing:.3px;
+}
+.addbtn:active{transform:scale(.97)}
+.step{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--brand);border-radius:11px;min-height:42px;overflow:hidden;
+}
+.step button{
+  border:0;background:transparent;color:#fff;font:inherit;font-size:22px;font-weight:700;
+  width:42px;height:42px;cursor:pointer;line-height:1;display:grid;place-items:center;
+}
+.step button:active{background:rgba(0,0,0,.15)}
+.step .q{color:#fff;font-weight:800;font-size:16px;min-width:22px;text-align:center}
+
+/* ---------- sticky cart bar ---------- */
+.cartbar{
+  position:fixed;left:0;right:0;z-index:41;
+  bottom:calc(64px + env(safe-area-inset-bottom,0px));
+  padding:0 12px 10px;
+  transform:translateY(160px);opacity:0;visibility:hidden;
+  transition:transform .22s ease, opacity .18s ease, visibility 0s linear .22s;
+  pointer-events:none;
+}
+.cartbar.show{
+  transform:translateY(0);opacity:1;visibility:visible;pointer-events:auto;
+  transition:transform .22s ease, opacity .18s ease, visibility 0s;
+}
+@media (min-width:900px){ .cartbar{bottom:14px} }
+.cartbar .inner{
+  max-width:1056px;margin:0 auto;background:var(--brand);color:#fff;
+  border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+.cartbar .n{font-weight:800;font-size:16px;line-height:1.25}
+.cartbar .s{font-size:12.5px;opacity:.85;line-height:1.3}
+.cartbar .go{
+  margin-left:auto;background:var(--gold);color:#3A1208;border:0;font:inherit;
+  font-weight:800;font-size:15.5px;border-radius:11px;padding:11px 18px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+
+/* ---------- cart list (checkout) ---------- */
+.crow{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.crow:last-child{border-bottom:0}
+.crow .ci{font-size:26px;width:38px;text-align:center;flex-shrink:0}
+.crow .cn{flex:1;min-width:0}
+.crow .cn b{display:block;font-size:15.5px;font-weight:600;line-height:1.3}
+.crow .cn span{font-size:13px;color:var(--muted)}
+.crow .step{width:112px;flex-shrink:0;min-height:38px}
+.crow .step button{width:36px;height:38px;font-size:20px}
+
+/* ---------- chips for quick qty ---------- */
+.qchips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.qchips button{
+  border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
+  font:inherit;font-size:14px;font-weight:600;border-radius:20px;padding:6px 13px;cursor:pointer;
+}
+.qchips button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ---------- order status (safar) ---------- */
+.safar{position:relative;padding-left:34px;margin-top:6px}
+.safar .s{position:relative;padding:0 0 22px}
+.safar .s:last-child{padding-bottom:0}
+.safar .s::before{
+  content:'';position:absolute;left:-26px;top:4px;width:15px;height:15px;border-radius:20px;
+  background:var(--surface);border:2.5px solid var(--line);z-index:2;
+}
+.safar .s::after{
+  content:'';position:absolute;left:-19.5px;top:18px;bottom:-4px;width:2.5px;background:var(--line);
+}
+.safar .s:last-child::after{display:none}
+.safar .s.done::before{background:var(--ok);border-color:var(--ok)}
+.safar .s.done::after{background:var(--ok)}
+.safar .s.now::before{
+  background:var(--brand);border-color:var(--brand);
+  box-shadow:0 0 0 5px rgba(122,31,31,.16);
+}
+.safar .s b{display:block;font-size:16px;font-weight:700;line-height:1.35}
+.safar .s.pend b{color:var(--muted);font-weight:600}
+.safar .s span{font-size:13.5px;color:var(--muted)}
+
+/* ---------- order card ---------- */
+.ocard{
+  background:var(--surface);border:1.5px solid var(--line);border-radius:16px;
+  padding:15px;margin-bottom:12px;text-decoration:none;color:var(--ink);display:block;
+}
+.ocard .hd{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.ocard .no{font-weight:800;font-size:15.5px}
+.ocard .dt{font-size:13px;color:var(--muted);margin-left:auto}
+.ocard .li{font-size:14.5px;color:var(--muted);line-height:1.5}
+
+.pill{display:inline-block;font-size:12.5px;font-weight:700;border-radius:20px;padding:3px 11px}
+.pill-new{background:#FFF0D6;color:#8A5B00}
+.pill-run{background:#E3EEFB;color:#14417A}
+.pill-done{background:#E5F3EA;color:#14502F}
+.pill-bad{background:#FDE2E2;color:#8A1F1F}
+
+/* ---------- code box (Rapido jaisa) ---------- */
+.codebox{
+  background:var(--brand);color:#fff;border-radius:16px;padding:16px;text-align:center;margin:14px 0;
+}
+.codebox .l{font-size:13.5px;opacity:.85;margin-bottom:6px}
+.codebox .c{display:flex;gap:9px;justify-content:center}
+.codebox .c span{
+  background:#fff;color:var(--brand);font-weight:800;font-size:28px;
+  width:48px;height:56px;border-radius:12px;display:grid;place-items:center;
+}
+.codebox .h{font-size:12.5px;opacity:.85;margin-top:9px;line-height:1.45}
+
+/* ---------- misc ---------- */
+.empty{text-align:center;padding:34px 16px;color:var(--muted)}
+.empty .e{font-size:46px;line-height:1;margin-bottom:10px}
+.ghead{font-size:18px;font-weight:700;margin:20px 0 8px;letter-spacing:-.2px}
+.ghead:first-of-type{margin-top:10px}
+.sticky-tot{
+  background:var(--soft);border-radius:13px;padding:12px 14px;font-size:15px;
+}
+.sticky-tot .r{display:flex;justify-content:space-between;padding:3px 0}
+.sticky-tot .r.big{font-weight:800;font-size:17px;border-top:1.5px dashed var(--line);margin-top:6px;padding-top:9px}
+.freebadge{background:var(--ok);color:#fff;font-size:12.5px;font-weight:700;border-radius:20px;padding:3px 10px}
+
+.stepsdot{display:flex;gap:6px;align-items:center;margin-bottom:14px}
+.stepsdot i{height:5px;border-radius:5px;background:var(--line);flex:1}
+.stepsdot i.on{background:var(--brand)}
+.stepsdot em{font-style:normal;font-size:13px;color:var(--muted);font-weight:600;margin-left:6px;flex-shrink:0}
+
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
+  bottom:calc(136px + env(safe-area-inset-bottom,0px));z-index:60;
+  background:#2B1A12;color:#fff;font-size:14.5px;font-weight:600;
+  border-radius:30px;padding:10px 18px;opacity:0;transition:.2s;pointer-events:none;
+  max-width:88vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============================================================
+   Maakit — home page, booking, account
+   ============================================================ */
+
+/* ---------- upar ka hissa ---------- */
+.hero2{
+  background:linear-gradient(168deg, var(--brand) 0%, var(--brand-deep) 100%);
+  color:var(--on-brand);padding:26px 0 46px;position:relative;overflow:hidden;
+}
+.hero2::after{
+  content:'';position:absolute;right:-90px;top:-70px;width:280px;height:280px;
+  border-radius:50%;background:rgba(224,165,38,.13);
+}
+.hero2 .wrap{position:relative;z-index:1}
+.loc{
+  display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
+  color:var(--gold);background:rgba(251,244,230,.1);border-radius:30px;padding:6px 13px;margin-bottom:14px;
+}
+.hero2 h1{
+  font-size:clamp(30px,6.6vw,50px);line-height:1.13;margin:0;font-weight:800;letter-spacing:-1.1px;
+  text-wrap:balance;
+}
+.hero2 .sub{
+  font-size:clamp(14.5px,2vw,17px);margin:11px 0 20px;color:rgba(251,244,230,.82);
+  max-width:46ch;line-height:1.55;
+}
+.hsearch{
+  display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:15px;
+  padding:6px 6px 6px 14px;box-shadow:0 10px 26px rgba(0,0,0,.2);max-width:560px;
+}
+.hsearch.light{box-shadow:0 2px 10px rgba(0,0,0,.05);border:1.5px solid var(--line);margin-bottom:16px}
+.hsearch .ic{color:var(--muted);display:grid;place-items:center;flex-shrink:0}
+.hsearch input{flex:1;border:0;background:transparent;font:inherit;font-size:16px;padding:12px 0;color:var(--ink);min-width:0}
+.hsearch input:focus{outline:none}
+.hsearch .go{
+  border:0;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:15px;
+  border-radius:11px;padding:11px 17px;cursor:pointer;flex-shrink:0;
+}
+
+/* ---------- do badi sewayein ---------- */
+.bigsvc{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:-26px;position:relative;z-index:2}
+.bs{
+  background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:16px 15px 14px;
+  text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:3px;
+  box-shadow:0 6px 18px rgba(0,0,0,.07);transition:transform .15s ease, box-shadow .15s ease;
+}
+.bs:active{transform:scale(.985)}
+.bs .ic{color:var(--brand);margin-bottom:4px}
+.bs b{font-size:17px;line-height:1.28;letter-spacing:-.3px}
+.bs i{font-style:normal;font-size:13px;color:var(--muted);line-height:1.4}
+.bs .cta{
+  margin-top:11px;display:inline-flex;align-items:center;gap:4px;align-self:flex-start;
+  background:var(--soft);color:var(--brand);font-weight:700;font-size:13.5px;border-radius:30px;padding:6px 12px;
+}
+@media (max-width:560px){
+  .bs{padding:14px 12px 12px}
+  .bs b{font-size:15.5px}
+  .bs i{font-size:12.5px}
+  .bs .cta{margin-top:9px;font-size:12.5px;padding:5px 10px}
+}
+
+/* ---------- chhoti tiles ---------- */
+.secthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:14px}
+.secthead h2{font-size:clamp(21px,3.2vw,28px);margin:0;letter-spacing:-.5px;width:100%}
+.secthead p{margin:0;color:var(--muted);font-size:14.5px}
+.secthead .more{
+  margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-weight:700;
+  font-size:14px;text-decoration:none;color:var(--brand);
+}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:640px){ .tiles{grid-template-columns:repeat(3,1fr)} }
+.tile{
+  background:var(--surface);border:1.5px solid var(--line);border-radius:15px;
+  padding:14px 8px 12px;text-decoration:none;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  transition:border-color .15s, transform .15s;
+}
+.tile:active{transform:scale(.97)}
+.tile:hover{border-color:var(--brand)}
+.tile .ic{
+  width:52px;height:52px;border-radius:15px;background:var(--soft);color:var(--brand);
+  display:grid;place-items:center;
+}
+.tile b{font-size:13.5px;font-weight:600;line-height:1.28}
+
+/* ---------- bharose ki patti ---------- */
+.trust{background:var(--soft);padding:26px 0}
+.tr{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media (max-width:820px){ .tr{grid-template-columns:repeat(2,1fr)} }
+.tr div{display:flex;flex-direction:column;gap:3px}
+.tr span{color:var(--brand);margin-bottom:3px}
+.tr b{font-size:15.5px;line-height:1.3}
+.tr i{font-style:normal;font-size:13.5px;color:var(--muted);line-height:1.45}
+
+/* ---------- 3 kadam ---------- */
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:820px){ .steps3{grid-template-columns:1fr} }
+.steps3 > div{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:18px}
+.steps3 .n{
+  display:grid;place-items:center;width:34px;height:34px;border-radius:12px;
+  background:var(--brand);color:#fff;font-weight:800;font-size:17px;margin-bottom:10px;
+}
+.steps3 b{font-size:17px;display:block;margin-bottom:5px}
+.steps3 p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.55}
+.timing{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media (max-width:520px){ .timing{grid-template-columns:1fr} }
+.timing div{background:var(--soft);border-radius:14px;padding:14px 16px}
+.timing b{display:block;font-size:15.5px}
+.timing i{font-style:normal;color:var(--muted);font-size:14px}
+
+/* ---------- ghar se door ---------- */
+.away{background:var(--brand);color:var(--on-brand);padding:34px 0}
+.aw{display:flex;align-items:center;gap:26px}
+.aw .kk{color:var(--gold);font-weight:700;margin:0 0 4px;font-size:14.5px}
+.aw h2{margin:0;font-size:clamp(22px,3.6vw,32px);letter-spacing:-.6px;line-height:1.2}
+.aw .sub{color:rgba(251,244,230,.84);margin:9px 0 18px;max-width:52ch;font-size:15.5px;line-height:1.55}
+.aw .il{color:var(--gold);opacity:.35;flex-shrink:0}
+@media (max-width:820px){ .aw .il{display:none} }
+
+/* ---------- category ki patti ---------- */
+.catrow{display:flex;gap:9px;overflow-x:auto;padding:2px 18px 6px;margin:0 -18px;scrollbar-width:none}
+.catrow::-webkit-scrollbar{display:none}
+.cc{
+  flex-shrink:0;display:inline-flex;align-items:center;gap:7px;background:var(--surface);
+  border:1.5px solid var(--line);border-radius:30px;padding:8px 15px 8px 10px;
+  text-decoration:none;color:var(--ink);font-size:14.5px;font-weight:600;white-space:nowrap;
+}
+.cc span{color:var(--brand);display:grid;place-items:center}
+.cc:hover{border-color:var(--brand)}
+
+/* ---------- page ka sar (booking / account) ---------- */
+.pghead{padding:22px 0 16px}
+.pghead .bigic{
+  display:grid;place-items:center;width:64px;height:64px;border-radius:20px;
+  background:var(--soft);color:var(--brand);margin-bottom:12px;
+}
+.pghead h1{font-size:clamp(25px,4.4vw,34px);margin:0;letter-spacing:-.7px;line-height:1.18}
+.pghead h1 span{display:block;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:3px}
+.pghead p{color:var(--muted);margin:8px 0 0;font-size:15.5px;line-height:1.55}
+
+.promise{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.promise span{
+  display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--brand);
+  border-radius:30px;padding:7px 13px;font-size:13.5px;font-weight:600;
+}
+
+/* ---------- booking ki sewa list ---------- */
+.svcgrid{display:grid;gap:10px}
+.svc{
+  display:flex;align-items:center;gap:14px;background:var(--surface);border:1.5px solid var(--line);
+  border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--ink);
+}
+.svc:hover{border-color:var(--brand)}
+.svc .ic{
+  width:52px;height:52px;border-radius:15px;background:var(--soft);color:var(--brand);
+  display:grid;place-items:center;flex-shrink:0;
+}
+.svc .tx{flex:1;min-width:0}
+.svc .tx b{display:block;font-size:16.5px;line-height:1.3}
+.svc .tx i{font-style:normal;font-size:13.5px;color:var(--muted)}
+.svc .ar{color:var(--brand);opacity:.5;flex-shrink:0}
+
+/* ---------- chun-ne wale dabbe (multi) ---------- */
+.pickers{display:flex;flex-wrap:wrap;gap:8px}
+.pick{margin:0;cursor:pointer}
+.pick input{position:absolute;opacity:0;width:0;height:0}
+.pick span{
+  display:inline-block;background:var(--surface);border:1.5px solid var(--line);border-radius:30px;
+  padding:8px 15px;font-size:14.5px;font-weight:600;transition:.12s;
+}
+.pick input:checked + span{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pick input:focus-visible + span{outline:3px solid var(--gold);outline-offset:2px}
+
+.sep{border:0;border-top:1.5px dashed var(--line);margin:20px 0}
+label .opt{font-style:normal;font-weight:400;color:var(--muted);font-size:13.5px}
+.okmark{
+  display:grid;place-items:center;width:64px;height:64px;border-radius:50%;
+  background:#E5F3EA;color:var(--ok);margin:0 auto;
+}
+
+/* ---------- khata (account) ---------- */
+.prof{display:flex;align-items:center;gap:13px;padding:20px 0 16px}
+.prof .av{
+  width:54px;height:54px;border-radius:50%;background:var(--brand);color:var(--gold);
+  display:grid;place-items:center;flex-shrink:0;
+}
+.prof b{display:block;font-size:19px;line-height:1.25}
+.prof i{font-style:normal;font-size:14px;color:var(--muted)}
+.segs{display:flex;background:var(--soft);border-radius:13px;padding:4px;margin-bottom:16px}
+.segs a{
+  flex:1;text-align:center;padding:10px;border-radius:10px;text-decoration:none;
+  color:var(--muted);font-weight:700;font-size:15px;
+}
+.segs a.on{background:var(--surface);color:var(--brand);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.quick2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.qq{
+  display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--surface);
+  border:1.5px solid var(--line);border-radius:15px;padding:16px 10px;
+  text-decoration:none;color:var(--ink);
+}
+.qq svg{color:var(--brand)}
+.qq b{font-size:14.5px;font-weight:600}
+details summary::-webkit-details-marker{color:var(--brand)}
+
+/* ---------- header ka khata button ---------- */
+.top .acct{
+  display:inline-flex;align-items:center;gap:6px;color:var(--on-brand);text-decoration:none;
+  font-weight:600;font-size:14.5px;border:1.5px solid rgba(251,244,230,.35);
+  border-radius:30px;padding:6px 13px 6px 10px;flex-shrink:0;
+}
+.top .acct.in{background:var(--gold);color:#3A1208;border-color:var(--gold)}
+@media (max-width:420px){ .top .acct .lbl{display:none} .top .acct{padding:7px 9px} }
+
+/* ---------- install / PWA patti ---------- */
+.install{
+  display:none;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--gold);
+  border-radius:16px;padding:12px 14px;margin:14px 0;
+}
+.install.show{display:flex}
+.install .ic{color:var(--brand);flex-shrink:0}
+.install b{display:block;font-size:15px}
+.install i{font-style:normal;font-size:13px;color:var(--muted)}
+.install .btn{margin-left:auto;flex-shrink:0}
+
+/* ---------- bolkar / photo se order ---------- */
+.appsearch .mic{
+  border:0;background:var(--soft);color:var(--brand);width:34px;height:34px;border-radius:30px;
+  display:grid;place-items:center;cursor:pointer;flex-shrink:0;
+}
+body.listening .appsearch .mic,
+body.listening .way#wayVoice{
+  background:var(--brand);color:#fff;animation:pulse 1.1s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(122,31,31,.45)}
+  70%{box-shadow:0 0 0 12px rgba(122,31,31,0)}
+  100%{box-shadow:0 0 0 0 rgba(122,31,31,0)}
+}
+.ways{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.way{
+  display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;
+  background:var(--surface);border:1.8px dashed var(--line);border-radius:15px;padding:15px 10px;
+  color:var(--ink);font:inherit;cursor:pointer;transition:.15s;
+}
+.way:hover{border-color:var(--brand);border-style:solid}
+.way svg{color:var(--brand);margin-bottom:4px}
+.way b{font-size:14.5px;font-weight:700}
+.way i{font-style:normal;font-size:12.5px;color:var(--muted)}
+.phot{display:flex;align-items:center;gap:12px;background:var(--soft);border-radius:13px;padding:10px}
+.phot img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.phot b{display:block;font-size:14.5px}
+.phot i{font-style:normal;font-size:12.5px;color:var(--muted)}
+.phot .btn{margin-left:auto;flex-shrink:0}
+.empty .e{color:var(--muted);opacity:.6;display:grid;place-items:center}
+.proof{
+  display:block;width:100%;max-height:360px;object-fit:contain;
+  background:var(--soft);border-radius:12px;border:1.5px solid var(--line);
+}
+
+/* ---------- saaman / sewa ki asli photo ---------- */
+.it .thumb .pimg,
+.crow .ci .pimg{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.it .thumb{overflow:hidden}
+.crow .ci{width:40px;height:40px;border-radius:10px;overflow:hidden;background:var(--soft);display:grid;place-items:center}
+.crow .ci svg{color:var(--brand)}
+.bs .ph,.tile .ph{overflow:hidden}
+.bs .ph img,.tile .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.bs .ph{width:100%;height:96px;border-radius:13px;background:var(--soft);margin-bottom:8px}
+.tile .ic img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+
+/* ---------- admin: saaman aur photo ---------- */
+.admgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.admit{
+  background:var(--surface);border:1.5px solid var(--line);border-radius:15px;padding:11px;
+  display:flex;flex-direction:column;gap:7px;
+}
+.admit.off{opacity:.55}
+.admit .ph{
+  height:112px;border-radius:12px;background:var(--soft);overflow:hidden;
+  display:grid;place-items:center;
+}
+.admit .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.admit .ph .noph{color:var(--brand);opacity:.65}
+.admit .tx b{display:block;font-size:14.5px;line-height:1.3}
+.admit .tx i{font-style:normal;font-size:12.5px;color:var(--muted)}
+.admit .up{margin-top:auto}
+.pick2{display:block;margin:0;cursor:pointer}
+.pick2 input{position:absolute;opacity:0;width:0;height:0}
+.pick2 span{
+  display:block;text-align:center;background:var(--soft);color:var(--brand);
+  border-radius:10px;padding:9px;font-size:13.5px;font-weight:700;
+}
+.pick2 input:focus-visible + span{outline:3px solid var(--gold);outline-offset:2px}
+.admit .ed{font-size:13px}
+.admit .ed summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+.admit .ed .field{margin-bottom:8px}
+.admit .ed input[type=text],.admit .ed select{font-size:14px;padding:8px;min-height:38px}
+.admit.busy{opacity:.5;pointer-events:none}
+.admit.busy .pick2 span::after{content:' — लग रही है…'}
+.admit:target{border-color:var(--brand);box-shadow:0 0 0 3px rgba(122,31,31,.12)}
+
+/* ============================================================
+   Ticker, bhasha, banner, location
+   ============================================================ */
+
+/* ---------- upar chalne wali patti ---------- */
+.ticker{background:var(--brand-deep);color:var(--on-brand);overflow:hidden;font-size:12.5px}
+.ticker .tk{
+  max-width:1080px;margin:0 auto;padding:0 12px;display:flex;align-items:center;gap:10px;height:32px;
+}
+.ticker .lbl{
+  display:inline-flex;align-items:center;gap:5px;color:var(--gold);font-weight:800;
+  letter-spacing:.5px;flex-shrink:0;text-transform:uppercase;font-size:10.5px;
+}
+.ticker .run{flex:1;overflow:hidden;min-width:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+.ticker .rr{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;animation:tick 42s linear infinite}
+.ticker .rr span{opacity:.92}
+.ticker .rr i{opacity:.4;font-style:normal}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){ .ticker .rr{animation:none} }
+.ticker .add{
+  color:var(--gold);text-decoration:none;font-weight:700;flex-shrink:0;
+  border-bottom:1px dashed rgba(224,165,38,.5);padding-bottom:1px;
+}
+@media (max-width:560px){ .ticker .add{display:none} }
+.top{top:0}
+
+/* ---------- header ka dayan hissa ---------- */
+.hdr{display:flex;align-items:center;gap:7px;margin-left:auto;min-width:0}
+.top .lang{
+  color:var(--on-brand);text-decoration:none;font-weight:700;font-size:13px;
+  border:1.5px solid rgba(251,244,230,.35);border-radius:30px;padding:5px 11px;flex-shrink:0;
+}
+.top .lang:hover{background:rgba(251,244,230,.14)}
+@media (max-width:470px){ .top .tlink{display:none} }
+
+/* ---------- do bhasha ek saath ---------- */
+.l1{display:block}
+.l2{display:block;font-size:.76em;font-weight:500;opacity:.62;letter-spacing:0;margin-top:1px}
+
+/* ---------- offer banner ---------- */
+.bann{display:flex;gap:11px;overflow-x:auto;padding:2px 18px 10px;margin:0 -18px;scrollbar-width:none;scroll-snap-type:x mandatory}
+.bann::-webkit-scrollbar{display:none}
+.bn{
+  flex:0 0 84%;max-width:330px;scroll-snap-align:start;border-radius:17px;padding:16px 16px 15px;
+  text-decoration:none;display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;min-height:132px;
+}
+@media (min-width:700px){ .bn{flex:0 0 320px} }
+.bn.brand{background:var(--brand);color:var(--on-brand)}
+.bn.gold{background:var(--gold);color:#3A1208}
+.bn.dark{background:#2B1A12;color:#FBF4E6}
+.bn.cream{background:var(--soft);color:var(--ink);border:1.5px solid var(--line)}
+.bn b{font-size:17.5px;line-height:1.22;letter-spacing:-.4px;position:relative;z-index:1;max-width:88%}
+.bn i{font-style:normal;font-size:13.5px;opacity:.86;line-height:1.4;position:relative;z-index:1;max-width:90%}
+.bn .go{
+  margin-top:auto;padding-top:9px;font-weight:800;font-size:13.5px;
+  display:inline-flex;align-items:center;gap:5px;position:relative;z-index:1;
+}
+.bn .bg{position:absolute;right:-14px;bottom:-14px;opacity:.16;z-index:0}
+.bn .bg img{width:112px;height:112px;object-fit:cover;border-radius:16px;opacity:.9}
+
+/* ---------- location ---------- */
+.locbtn{
+  display:flex;align-items:center;gap:10px;width:100%;background:var(--surface);
+  border:1.8px dashed var(--line);border-radius:14px;padding:12px 14px;
+  color:var(--ink);font:inherit;cursor:pointer;text-align:left;transition:.15s;
+}
+.locbtn:hover{border-color:var(--brand);border-style:solid}
+.locbtn svg{color:var(--brand);flex-shrink:0}
+.locbtn b{display:block;font-size:14.5px}
+.locbtn i{font-style:normal;font-size:12.5px;color:var(--muted)}
+.locbtn.done{border-style:solid;border-color:var(--ok);background:#F2FAF5}
+.locbtn.done svg{color:var(--ok)}
+
+/* ---------- safar me samay ---------- */
+.safar .s em{font-style:normal;font-size:12.5px;color:var(--ok);font-weight:700;display:block;margin-top:1px}
+
+/* ---------- footer ---------- */
+.fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:26px}
+@media (max-width:860px){ .fgrid{grid-template-columns:1fr 1fr;gap:22px} .fgrid > div:last-child{text-align:left !important} }
+@media (max-width:480px){ .fgrid{grid-template-columns:1fr} }
+.fnav b{display:block;font-size:15px;margin-bottom:8px;color:var(--gold)}
+.fnav a{display:block;color:var(--on-brand);opacity:.82;text-decoration:none;font-size:14px;padding:3px 0}
+.fnav a:hover{opacity:1}
+.fbot{opacity:.62;font-size:13px;margin-top:24px;line-height:1.65;border-top:1px solid rgba(251,244,230,.14);padding-top:16px}
+
+/* ---------- admin dashboard ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1.5px solid var(--line);border-radius:15px;padding:14px 15px}
+.kpi .k{font-size:12.5px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.kpi .k svg{color:var(--brand)}
+.kpi .v{font-size:27px;font-weight:800;color:var(--brand);line-height:1.15;margin-top:5px;letter-spacing:-.8px}
+.kpi .d{font-size:12.5px;color:var(--muted);margin-top:1px}
+.kpi.good .v{color:var(--ok)}
+.kpi.warn .v{color:var(--bad)}
+.bars{display:grid;gap:8px}
+.bar{display:flex;align-items:center;gap:10px;font-size:14.5px}
+.bar .nm{width:110px;flex-shrink:0;font-weight:600}
+.bar .tr2{flex:1;height:22px;background:var(--soft);border-radius:6px;overflow:hidden}
+.bar .tr2 span{display:block;height:100%;background:var(--brand);border-radius:6px}
+.bar .vv{width:52px;text-align:right;font-weight:700;flex-shrink:0}
+
+.footer a.btn-gold{color:#3A1208}
+.footer a.btn{text-decoration:none}
+
+/* ---------- gaadi ki list (booking page) ---------- */
+.fleet{display:grid;gap:10px;margin-bottom:16px}
+.veh{display:block;margin:0;cursor:pointer}
+.veh input{position:absolute;opacity:0;width:0;height:0}
+.veh .in{
+  display:flex;align-items:center;gap:13px;background:var(--surface);
+  border:1.8px solid var(--line);border-radius:16px;padding:12px 13px;transition:.14s;
+}
+.veh input:checked + .in{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.veh input:focus-visible + .in{outline:3px solid var(--gold);outline-offset:2px}
+.veh .ph{
+  width:64px;height:64px;border-radius:14px;background:var(--soft);color:var(--brand);
+  display:grid;place-items:center;flex-shrink:0;overflow:hidden;
+}
+.veh .ph img{width:100%;height:100%;object-fit:cover}
+.veh .tx{flex:1;min-width:0}
+.veh .tx b{display:block;font-size:16px;line-height:1.28}
+.veh .tx i{font-style:normal;display:block;font-size:13px;color:var(--muted);margin-top:1px}
+.veh .rt{display:block;font-size:14.5px;font-weight:700;color:var(--brand);margin-top:4px}
+.veh .bd{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.veh .nt{display:block;font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.4}
+.veh .tick{
+  width:26px;height:26px;border-radius:30px;border:2px solid var(--line);color:transparent;
+  display:grid;place-items:center;flex-shrink:0;transition:.14s;
+}
+.veh input:checked + .in .tick{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* ---------- ghoshna (declaration) ---------- */
+.dcl{display:flex;gap:11px;align-items:flex-start;background:var(--soft);border-radius:13px;
+  padding:13px 14px;margin:6px 0 16px;font-weight:400;cursor:pointer}
+.dcl input{width:auto;min-height:0;margin-top:3px;flex-shrink:0;transform:scale(1.25)}
+.dcl span{font-size:13.5px;line-height:1.55;color:var(--ink)}
+
+/* ---------- live location ---------- */
+.trk.on{border:1.5px solid var(--ok);background:#F2FAF5}
+.trk.on .trkMsg{color:var(--ok);font-weight:700}
+.livemap{
+  position:relative;border-radius:14px;overflow:hidden;border:1.5px solid var(--line);
+  background:var(--soft);height:250px;
+}
+.livemap iframe{width:100%;height:100%;border:0;display:block}
+.liveon{
+  display:inline-flex;align-items:center;gap:6px;background:#E5F3EA;color:var(--ok);
+  font-size:13px;font-weight:800;border-radius:30px;padding:5px 12px;
+}
+.liveon i{width:8px;height:8px;border-radius:8px;background:var(--ok);animation:blip 1.4s infinite}
+@keyframes blip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.distbar{display:flex;align-items:center;gap:12px;background:var(--brand);color:#fff;border-radius:14px;padding:12px 15px;margin-top:10px}
+.distbar .d{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.6px}
+.distbar .l{font-size:13px;opacity:.85}
+.distbar .r{margin-left:auto;text-align:right}
+
+/* ---------- khula / band ---------- */
+.hbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.hbar .loc{margin-bottom:0}
+.opn{
+  display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;
+  border-radius:30px;padding:6px 13px;letter-spacing:.2px;
+}
+.opn i{width:8px;height:8px;border-radius:8px;flex-shrink:0}
+.opn.yes{background:rgba(31,122,77,.22);color:#9BE7BF}
+.opn.yes i{background:#4CD68A;animation:blip 1.8s infinite}
+.opn.no{background:rgba(251,244,230,.13);color:rgba(251,244,230,.8)}
+.opn.no i{background:rgba(251,244,230,.55)}
+
+/* ---------- abhi-abhi kya hua ---------- */
+.proof{
+  display:inline-flex;align-items:center;gap:9px;background:var(--surface);
+  border:1.5px solid var(--line);border-radius:30px;padding:7px 15px;margin:16px 0 0;
+  font-size:13.5px;font-weight:600;color:var(--muted);max-width:100%;
+}
+.proof .dot{width:8px;height:8px;border-radius:8px;background:var(--ok);flex-shrink:0;animation:blip 1.8s infinite}
+.proof span:last-child{transition:opacity .22s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- logon ki raay ---------- */
+.says{display:flex;gap:12px;overflow-x:auto;padding:2px 18px 10px;margin:0 -18px;scrollbar-width:none;scroll-snap-type:x mandatory}
+.says::-webkit-scrollbar{display:none}
+.say{
+  flex:0 0 78%;max-width:320px;scroll-snap-align:start;background:var(--surface);
+  border:1.5px solid var(--line);border-radius:16px;padding:15px;
+}
+@media (min-width:700px){ .say{flex:0 0 300px} }
+.say .st{color:var(--gold);letter-spacing:2px;font-size:15px;margin-bottom:7px}
+.say .st span{color:var(--line)}
+.say p{margin:0 0 10px;font-size:15px;line-height:1.55}
+.say b{display:block;font-size:14px}
+.say i{font-style:normal;font-size:12.5px;color:var(--muted)}
+
+/* ---------- aam sawaal ---------- */
+.faq{display:grid;gap:9px}
+.faq details{background:var(--surface);border:1.5px solid var(--line);border-radius:15px;padding:0}
+.faq details[open]{border-color:var(--brand)}
+.faq summary{
+  cursor:pointer;list-style:none;padding:15px 16px;font-weight:700;font-size:16px;
+  display:flex;align-items:center;gap:12px;line-height:1.35;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .pm{margin-left:auto;color:var(--brand);flex-shrink:0;transition:transform .18s}
+.faq details[open] summary .pm{transform:rotate(45deg)}
+.faq p{margin:0;padding:0 16px 16px;color:var(--muted);font-size:15px;line-height:1.6}
+
+/* ---------- home page par purani kitaabein ---------- */
+.hbk{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch}
+.hbk::-webkit-scrollbar{height:6px}
+.hbk::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+.hbk-c{flex:0 0 146px;scroll-snap-align:start;position:relative;display:block;text-decoration:none;
+  color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:15px;
+  padding:10px 11px 12px;overflow:hidden}
+.hbk-c:hover{border-color:var(--brand)}
+.hbk-k{position:absolute;top:0;left:0;color:#fff;font-size:11px;font-weight:700;
+  padding:4px 8px;border-radius:0 0 11px 0;line-height:1}
+.hbk-i{display:grid;place-items:center;height:104px;margin:20px 0 8px;border-radius:10px;
+  background:var(--soft);color:var(--brand);overflow:hidden}
+.hbk-i img{width:100%;height:100%;object-fit:cover}
+.hbk-c b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:14px;line-height:1.3}
+.hbk-c i{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-style:normal;font-weight:800;font-size:15.5px;line-height:1.25;color:var(--brand);margin-top:4px}
+.hbk-add{border-style:dashed;border-color:var(--brand)}
+.hbk-add .hbk-i{margin-top:0;height:124px}
+
+/* halke background par dusra (secondary) button */
+.btn-ghost{background:transparent;color:var(--brand);border:2px solid var(--line)}
+.btn-ghost:hover{border-color:var(--brand)}

@@ -1,0 +1,27 @@
+{
+  "name": "Maakit — गाँव की अपनी डिलीवरी",
+  "short_name": "Maakit",
+  "description": "कपसेठी, चौरी, कछवा और आसपास के गाँवों में सामान की डिलीवरी और गाड़ी, लॉन, टेंट, हलवाई, पंडित जी की बुकिंग।",
+  "lang": "hi",
+  "dir": "ltr",
+  "start_url": "/?src=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBF4E6",
+  "theme_color": "#7A1F1F",
+  "categories": ["shopping", "food", "lifestyle"],
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "सामान मँगाइए", "short_name": "ऑर्डर", "url": "/order.php",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "मेरे ऑर्डर", "short_name": "ऑर्डर देखिए", "url": "/track.php",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "बुकिंग कीजिए", "short_name": "बुकिंग", "url": "/book.php",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

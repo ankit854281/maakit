@@ -1,0 +1,13 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/sbs81w9g9z45/public_html/
+    - /bin/cp -R  ./admin     $DEPLOYPATH
+    - /bin/cp -R  ./assets    $DEPLOYPATH
+    - /bin/cp -R  ./bpo       $DEPLOYPATH
+    - /bin/cp -R  ./delivery  $DEPLOYPATH
+    - /bin/cp -R  ./inc       $DEPLOYPATH
+    - /bin/cp     ./*.php     $DEPLOYPATH
+    - /bin/cp     ./*.sql     $DEPLOYPATH
+    - /bin/cp     ./*.json    $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp     ./sw.js     $DEPLOYPATH 2>/dev/null || true

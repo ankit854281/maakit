@@ -1,0 +1,440 @@
+========================================================
+  MAAKIT — VERSION 5  (27 September 2026)
+  Upload karne ka tarika (6 kadam, ~15 minute)
+========================================================
+
+>> KAUN SA ZIP DALNA HAI?
+   SIRF SABSE AAKHRI WALA. Bas ek.
+
+   Har zip POORA system hota hai — usme pehle ke saare
+   feature already andar hain. Purane zip alag se chadhane
+   ki zaroorat NAHI hai. Seedha aakhri wala daal dijiye,
+   sab aa jayega.
+
+>> KAUN SA CHAL RAHA HAI, YE KAISE PATA CHALEGA?
+   Admin -> Dashboard kholiye. Upar sunehre rang me likha
+   milega: "Version 5 · 27 Sep 2026"
+   Panel ke sabse neeche bhi "Maakit v5" likha rehta hai.
+
+   Zip ke andar VERSION.txt bhi hai — usme likha hai ki
+   is version me kya-kya hai.
+
+
+Ankit bhai, ye aapki website ka poora naya roop hai.
+Purana kuchh bhi delete NAHI hoga — na order, na dukan,
+na customer, na nai ki booking.
+
+
+--------------------------------------------------------
+KADAM 0 — PEHLE BACKUP (ye mat chhodiye)
+--------------------------------------------------------
+1. cPanel -> phpMyAdmin
+2. baayen taraf apna database "maakit.in" dabaiye
+   (DHYAN: wahi jisme aapka purana data hai)
+3. upar "Export" -> "Go"
+4. .sql file download hogi — computer me sambhal kar rakhiye
+
+
+--------------------------------------------------------
+KADAM 1 — config.php bhariye
+--------------------------------------------------------
+Zip me "config.php" hai. Notepad me kholkar ye 3 line badliye:
+
+  define('DB_NAME', 'yahan_database_ka_naam');
+  define('DB_USER', 'yahan_user_ka_naam');
+  define('DB_PASS', 'yahan_password');
+
+Jaanne ka tarika: cPanel -> File Manager -> public_html ->
+purani config.php -> View -> wahi 3 cheezein utar lijiye.
+
+Password mujhe kabhi mat bhejiye.
+
+
+--------------------------------------------------------
+KADAM 2 — file upload kijiye
+--------------------------------------------------------
+1. cPanel -> File Manager -> public_html
+2. "Upload" -> maakit-system.zip chuniye
+3. wapas aakar zip par right-click -> Extract
+4. "Replace all" / "Overwrite" dabaiye
+
+
+--------------------------------------------------------
+KADAM 3 — uploads folder ko likhne layak banaiye
+--------------------------------------------------------
+(Ab customer parchi ki photo bhej sakta hai aur delivery
+ boy bill ki photo lagata hai — isliye ye zaroori hai)
+
+File Manager -> public_html -> "uploads" folder par
+right-click -> "Change Permissions" -> 755 -> Save.
+
+
+--------------------------------------------------------
+KADAM 4 — database me do SQL chalaiye
+--------------------------------------------------------
+phpMyAdmin -> apna database -> "SQL" tab
+
+Pehle:  install-salon.sql   poora paste karke "Go"
+Phir:   install-app.sql     poora paste karke "Go"
+
+(install.sql sirf khali database ke liye hai. Purane par
+ zaroorat nahi — galti se chal bhi gaya to nuksan nahi.)
+
+Beech me kuchh baar "1" dikhe to sahi hai, ghabraiye mat.
+
+
+--------------------------------------------------------
+KADAM 5 — phone me kholkar dekh lijiye
+--------------------------------------------------------
+maakit.in kholiye. Ye dikhna chahiye:
+
+  [OK] sabse upar gaon ke naam chalti patti
+  [OK] laal patti me "हिंदी/English" aur "लॉगिन" ka button
+  [OK] 2 badi tiles: राशन  aur  खाना
+  [OK] "What's on" me 3 offer card
+  [OK] uske neeche 11 chhoti tiles (दवाई, गाड़ी, लॉन, टेंट…)
+  [OK] neeche 5 button: Home, Order, Book, My orders, Services
+  [OK] Order page par saaman ke chitr, "जोड़िए" -> [-] 1 [+]
+  [OK] Chrome puchhega "Maakit ko home screen par rakhein?"
+
+Agar saaman ki list khali dikhe -> KADAM 4 ka
+install-app.sql dobara chalaiye.
+
+
+--------------------------------------------------------
+KADAM 6 — password badliye (bahut zaroori)
+--------------------------------------------------------
+1. maakit.in/login.php  ->  admin / maakit123
+2. "टीम" me jakar apna password TURANT badliye
+3. BPO aur delivery boy ke alag login banaiye
+
+
+========================================================
+  NAYA KYA HAI
+========================================================
+
+>> HOME PAGE — ab directory nahi, service app hai
+   Rapido/Swiggy ki tarah tiles. Aapka asli dhandha
+   (delivery) sabse upar. Emoji hata kar 75 professional
+   icon banaye — sab ek hi design ke.
+
+>> BOOKING — 7 nayi kamai ki jagah
+   गाड़ी (बोलेरो, टेम्पो, ट्रैक्टर, एम्बुलेंस)
+   लॉन / मैरिज हॉल · टेंट-साउंड · हलवाई
+   पंडित जी · फोटो-वीडियो · घर की मरम्मत
+
+   Customer date-time bharkar bhejta hai, wo seedha aapke
+   BPO panel -> "बुकिंग" me aata hai. Aap rate pata karke
+   call karte hain. Aap beech me rehte hain — yahi aapka
+   commission ka rasta hai.
+
+>> BOLKAR ORDER
+   Mic dabaiye, Hindi me boliye — apne aap likh jayega.
+   Bujurg aur jo type nahi kar paate, unke liye.
+   (Android Chrome me chalta hai)
+
+>> PHOTO BHEJIYE
+   Dawa ki patti, doctor ki parchi, ya haath se likhi list
+   ki photo. Swiggy-Blinkit me ye nahi hai.
+
+>> BILL KI PHOTO — "dukandar ne zyada le liya" khatam
+   Delivery boy dukan se nikalte hi bill ki photo lagata
+   hai. Customer ko apne order page par dikh jati hai.
+
+>> ENGLISH + HINDI — dono
+   Upar daayin taraf "हिंदी / English" ka button hai.
+   Ek baar dabane par bhasha yaad rah jati hai — har page
+   usi me khulega.
+   * Naye customer ko phone ki bhasha ke hisaab se khulta
+     hai (Hindi phone -> Hindi, warna English).
+   * Poori website dono me hai — home, order, booking,
+     tracking, khata, sab.
+   * Gaon ke naam bhi English me dikhte hain (Barwa,
+     Bhagwanpur…), Admin -> nahi, wo database me hai.
+
+>> UPAR CHALNE WALI PATTI (ticker)
+   Sabse upar aapke sare gaon ke naam chalte rehte hain —
+   "WE DELIVER IN: Barwa · Bhagwanpur · Surhan…"
+   Naya gaon chalu karte hi wo apne aap is patti me aa
+   jayega. Kuchh karna nahi padta.
+
+>> OFFER / AD — aap khud chalaiye
+   Admin -> "ऑफ़र" tab.
+   Home page par "What's on" wali patti aapke haath me hai.
+   * Diwali ka offer, nayi sewa, koi zaroori baat — likhiye,
+     rang chuniye, dikhne lagegi.
+   * "Kab se / kab tak" bhar dijiye — tyohar ka offer pehle
+     se laga dijiye, apne aap aayega aur apne aap hatega.
+   * Har offer kitni baar dabaya gaya, wo bhi dikhta hai —
+     pata chal jayega kaun sa chal raha hai.
+
+>> LOCATION — ghar dhundhne ki dikkat khatam
+   Order karte waqt customer "Pin my location" dabata hai.
+   * Delivery boy ke panel me "घर का रास्ता (Map)" button
+     aa jata hai — dabate hi Google Maps me rasta khul jata
+     hai. Kisi se puchhna nahi padta.
+   * BPO panel me bhi nakshe ka link dikhta hai.
+   * Zaroori nahi hai — na de to purana tarika chalta hai.
+
+>> ORDER KA SAMAY — customer ko dikhta hai
+   "ऑर्डर मिल गया — 5 मिनट पहले"
+   "पक्का हो गया — अभी-अभी"
+   Jab aap status badalte hain, samay apne aap darj hota
+   hai aur customer ko uske order page par dikhta hai.
+   Isse "kahan tak pahuncha?" wale phone kam ho jayenge.
+
+>> NAYE GAON KI MAANG — apne aap aane wale customer
+   Upar ki patti me "Not your village?" link hai.
+   Jis gaon me abhi service nahi hai, wahan ke log apna
+   gaon aur number likh dete hain.
+
+   Admin -> "नए गाँव" tab me dikhta hai:
+   * Kis gaon se kitne log maang rahe hain (jyada wala upar)
+   * Sabke naam aur number
+   * "यहाँ शुरू कीजिए" — rate bhar kar dabaiye, gaon chalu
+   * Har aadmi ko WhatsApp bhejne ka button — "aapne manga
+     tha, ab shuru ho gaya"
+
+   >> Ye sabse badi baat hai: naye gaon me jaane se PEHLE
+      aapko pata hota hai ki wahan kitne customer taiyar
+      hain. Andhere me paisa nahi lagana padega.
+
+>> DASHBOARD — Admin ka pehla page
+   Admin -> "Dashboard"
+   * Aaj: kitne order, kitne dekhne baki, kitni kamai
+   * 30 din: kul order, delivery se kamai, kitne grahak,
+     kitne % dobara aaye (ye sabse zaroori number hai)
+   * "Dhyan dene wali baatein" — jo kaam ruka hai
+   * Roz ke order ka chart
+   * Kaun se gaon se kitna order (jahan kam hai wahan
+     poster lagwaiye)
+   * Sabse zyada manga jane wala saaman (Phase 2 me yahi
+     stock me rakhiye)
+   * >> "लोगों ने ढूंढा, पर मिला नहीं" <<
+     Jo log search karte hain aur hamare paas nahi hai —
+     sab yahan likha jata hai. Ye seedha bata deta hai ki
+     kaun sa naya saaman list me jodna hai. Blinkit-Swiggy
+     me ye aapko kabhi nahi milega.
+
+>> TRANSPORT REGISTRATION — gaadi wale khud judenge
+   maakit.in/transport.php  (home page par "गाड़ी है? जोड़िए")
+
+   Gaadi wala khud bharta hai:
+   * Kaun si gaadi (Bolero, Scorpio, Magic, Tempo, Auto,
+     Bus, Tractor-trolley, Dala/DCM, Ambulance)
+   * Gaadi ka NUMBER, kitni seat, AC hai ya nahi, photo
+   * Rate: per km, kam se kam kiraya, poore din ka,
+     rukne ka per hour
+   * Bahar jata hai? Raat me chalata hai?
+   * KAAGAZ: licence, RC, bima, commercial permit
+     + bima aur fitness kab tak hai (tareekh)
+   * Ek ghoshna (declaration) par tick — bina tick ke
+     form jata hi nahi
+
+   Jodte hi usko ek LOGIN CODE milta hai (jaise BGP-4028).
+   Usi number + code se wo apne panel me aata hai.
+
+   >> GAADI WALE KA PANEL — roz ka ek button
+      "आज गाड़ी खाली है?" -> हाँ / नहीं
+      Sirf wahi gaadi booking page par dikhti hai jisne
+      AAJ khaali bataya hai. 36 ghante purana ho jaye to
+      apne aap hat jati hai — "aaj bataya nahi" dikhta hai.
+      Wahi se apna rate bhi kabhi bhi badal sakta hai.
+
+   >> AAPKE PANEL ME — Admin -> "गाड़ियाँ"
+      * Nayi gaadi manzoori ke liye aati hai
+      * Ek button: "कागज़ माँगिए" -> WhatsApp par likha-likhaya
+        message jata hai, gaadi wala kaagaz ki photo bhej deta
+      * Kaagaz dekh kar "कागज़ देख लिए" dabaiye — tab customer
+        ko "Papers checked" ka hara nishan dikhega
+      * "मंज़ूर कीजिए" dabate hi gaadi booking page par aa jati
+      * "कोड भेजिए" -> login code WhatsApp par chala jata hai
+      * >> BIMA / FITNESS KHATAM HONE SE 45 DIN PEHLE
+           LAAL CHETAWNI dikhne lagti hai, Dashboard par bhi
+
+   >> CUSTOMER KO KYA DIKHTA HAI — book.php?s=gaadi
+      "आज खाली गाड़ियाँ" — har gaadi ka photo, type, seat,
+      rate (₹14/km · कम से कम ₹600 · पूरा दिन ₹2800),
+      "कागज़ देखे गए" ka nishan, aur kitni trip ho chuki.
+      Customer gaadi chunkar booking bhej deta hai.
+      Ya "कोई भी गाड़ी" chunkar aap par chhod deta hai.
+
+   >> BPO PANEL ME
+      Booking ke saath dikhta hai "चुनी हुई गाड़ी" — uska
+      number, rate, aur ek WhatsApp button jisse gaadi wale
+      ko poori booking ek message me chali jati hai.
+      Saath me "हमारा हिस्सा ₹" ka khana — har booking par
+      aapka commission likh sakte hain.
+      "हो गया" karte hi us gaadi ki trip ginti badh jati hai.
+
+   >> !! KANOON KI BAAT — ISE MAT CHHODIYE !!
+      Kiraye par sawari le jane ke liye COMMERCIAL PERMIT,
+      chalu BIMA, FITNESS aur sahi LICENCE zaroori hai.
+      Maakit gaadi nahi chalata — aap sirf customer aur
+      gaadi wale ko milate hain. Phir bhi agar aapne bina
+      kaagaz wali gaadi ko trip bhej di aur kuchh ho gaya,
+      to baat aap tak aa sakti hai.
+
+      Isliye:
+      1. Kaagaz ki photo WhatsApp par MANGWAIYE
+      2. Apni aankh se DEKHIYE
+      3. Tabhi "कागज़ देख लिए" dabaiye
+      4. Jiske kaagaz nahi, use manzoori MAT dijiye —
+         bhale wo jaan-pehchan ka ho
+      5. Khatam kaagaz wali gaadi ko trip MAT bhejiye
+
+      Website me ye sab dikhta rehta hai, par dabane wala
+      aap hain. Ye zimmedari code nahi le sakta.
+
+>> MAAL GAADI — sawari se alag, poora apna system
+   Home page par nayi tile: "माल ढुलाई"
+
+   Gaadi ke prakaar (8 tarah):
+   Chhota Hathi (Tata Ace) · Pickup (Bolero/407) · Dala/DCM
+   Truck 6 chakka · Truck 10 chakka · Tractor-trolley
+   Paani ka tanker · JCB
+
+   Registration form gaadi chunte hi BADAL jata hai:
+   * Sawari chuni -> "kitni seat", "AC"
+   * Maal chuna  -> "kitna maal jata hai (टन)", "मज़दूर भी
+     लगवा देता हूँ", "एक फेरे का ₹"
+   Ton apne aap bhar jata hai (Dala -> 3 टन).
+
+   Customer ka form bhi alag hai:
+   * Kaun sa saaman (ईंट, बालू, सीमेंट, अनाज, फ़र्नीचर,
+     घर शिफ़्ट, पशु, पानी का टैंकर…)
+   * Kitna (1 टन तक / 1-3 टन / 3-5 टन / 5-10 / 10+)
+     — har option ke saath likha hai kaun si gaadi lagegi
+   * Kahan se, kahan tak, kitne FERE
+   * Chadhane-utarne ke मज़दूर, तिरपाल, धर्मकांटा, वापसी का फेरा
+
+   Maal ki booking par SIRF maal gaadi dikhti hai, sawari
+   wali nahi. Aur ulta bhi.
+
+>> LIVE LOCATION — gaadi chalti hui dikhegi
+   Delivery boy ke panel me naya button: "📍 मैं निकल गया"
+   Dabate hi uski jagah har 25 second par jati rehti hai.
+
+   Customer apne order page par dekhta hai:
+   * Chalta hua naksha (gaadi ka nishan)
+   * "2.4 km आपसे दूर"
+   * "लगभग 7 मिनट में"
+   * "देखा 3 सेकंड पहले"
+
+   * Naksha OpenStreetMap ka hai — koi paisa nahi, koi
+     Google API key nahi chahiye
+   * "पहुँचा दिया" dabate hi apne aap band, aur jagah ka
+     record turant MIT jata hai
+   * Ek din se purane record apne aap saaf ho jate hain
+   * Delivery boy ki marzi — na dabaye to kuchh nahi hota,
+     customer ko "अभी जगह नहीं दिख रही" likha aata hai
+
+   >> Isse "kahan tak pahuncha?" wale phone lagbhag khatam
+      ho jayenge. Swiggy-Zomato ka sabse bada feature yahi
+      hai, aur ab aapke paas bhi hai.
+
+>> HOME PAGE — 4 nayi cheezein
+   1. KHULA / BAND ki patti (upar)
+      "अभी खुले हैं · रात 8 बजे तक डिलीवरी"
+      ya "8:00 बजे से खुलेंगे" ya "आज बंद है"
+      Ise Admin -> "समय/छुट्टी" se chalate hain:
+      * Roz ka khulne-band hone ka time
+      * "आज बंद कर दीजिए" — ek button, saath me wajah likh
+        sakte hain ("होली की वजह से आज बंद है")
+      * AAGE KI CHHUTTIYAN pehle se daal dijiye — Holi,
+        Diwali, shaadi. Us din website APNE AAP "आज बंद है"
+        dikha degi, aapko yaad rakhne ki zaroorat nahi.
+
+   2. "अभी-अभी क्या हुआ" chalti patti
+      "अमवा · ऑर्डर अभी-अभी"
+      Asli orders se banti hai. SIRF gaon aur samay dikhta
+      hai — kisi ka naam nahi, kya mangaya wo bhi nahi.
+      Naye customer ko dikhta hai ki yahan kaam chal raha hai.
+
+   3. "लोग क्या कहते हैं" — asli raay
+      Jo feedback aap Admin -> "राय" me manzoor karte hain,
+      wahi home page par star ke saath aa jati hai.
+      Upar likha aata hai "5 में से 4.7 · 3 लोगों की राय".
+
+   4. "आम सवाल" (FAQ) — 7 sawaal ka sidha jawab
+      "क्या आप दुकान से ज़्यादा दाम लेते हैं?"
+      "सामान ग़लत निकला तो?"
+      "मुझे पढ़ना-लिखना नहीं आता, तब भी ऑर्डर होगा?"
+      Ye Google par bhi dikhte hain, aur phone par bar-bar
+      wahi samjhane se bacha lete hain.
+
+>> SAAMAN KI ASLI PHOTO — aap khud lagaiye
+   Admin -> "सामान/फ़ोटो" tab.
+   Har saaman par "फ़ोटो लगाइए" -> phone ka camera khulega
+   -> khinchiye -> apne aap lag jayegi.
+
+   * Photo lagana ZAROORI NAHI. Jiski photo nahi, uska
+     saaf icon dikhega. Website kahin nahi rukegi.
+   * Website khud photo ko chaukor kaatkar 500px chhoti
+     kar deti hai (~10 KB), taaki 2G par bhi turant khule.
+   * Upar patti dikhati hai: "फ़ोटो लग चुकी: 12 / 166"
+   * Pehle "रोज़ का सामान" wale 54 ki photo lagaiye —
+     wahi sabse zyada dikhte hain.
+   * Usi page par neeche home page ki tiles ki photo bhi
+     laga sakte hain — jaise apni Bolero ki photo
+     "गाड़ी बुकिंग" par.
+   * DHYAN: Google ya kisi aur ki photo mat lagaiye.
+     Apni khinchi hui hi lagaiye — wo aapki apni hai,
+     aur gaon walon ko asli dukan ka saaman dikhega.
+     Yahi aapko Blinkit se alag banata hai.
+
+>> PHONE ME INSTALL (PWA)
+   Chrome khud puchhega "home screen par rakhein?"
+   Play Store ki zaroorat nahi. Ek baar khulne ke baad
+   dheeme net par bhi turant khulta hai, aur net na ho
+   to bhi saaman ki list dikhti hai.
+
+>> CUSTOMER KA KHATA — marzi ka
+   Bina login bhi order hota hai (jaisa pehle tha).
+   Jo chahe, mobile + password se khata bana le — phir
+   pata, purane order aur booking sab ek jagah.
+
+>> DELIVERY KA CODE — Rapido jaisa
+   "पहुँचा दिया" tabhi darj hoga jab delivery boy grahak
+   ka 4 ank ka code daalega. Galat code -> darj nahi.
+
+>> BPO PANEL
+   Upar ghanti: "X नया ऑर्डर देखना बाकी है"
+   Har minute page khud dekh leta hai.
+   Naya order likhte waqt list se saaman dhoondh sakte
+   hain — Hindi type karne ki zaroorat nahi.
+   Alag tab: "बुकिंग"
+
+PURANA SAB WAISA HI HAI
+   Directory (18 kaam), dukan register, feedback,
+   nai/parlour seat booking, shop panel, access code,
+   admin panel, rate, hisab, team.
+
+
+========================================================
+  DIKKAT HO TO
+========================================================
+Safed / khali page        -> KADAM 1 me database ka naam
+                             galat hai
+Saaman ki list khali      -> install-app.sql nahi chala
+Photo nahi lag rahi       -> KADAM 3 (uploads = 755)
+Hindi tooti dikhe         -> SQL poora paste kijiye,
+                             pehli line "SET NAMES utf8mb4;"
+                             zaroor honi chahiye
+Booking tab nahi dikh raha-> install-app.sql nahi chala
+Order BPO me na dikhe     -> BPO panel me upar ki tareekh
+                             aaj ki hai ya nahi, dekhiye
+
+Kuchh samajh na aaye to screenshot bhej dijiye.
+
+
+========================================================
+  AAGE KYA KAR SAKTE HAIN (abhi zaroori nahi)
+========================================================
+1. Google Business Profile banaiye — "Maakit Kapsethi"
+   search karne par nakshe me dikhega, free hai
+2. Booking ka commission tay kijiye (5-10% aam hai)
+3. Har gaon me ek "Maakit mitra" banaiye jo order
+   ikattha kare — usko per order kuchh dijiye
+4. Bolero apni ho jaye to gaadi booking me poora
+   munafa aapka
