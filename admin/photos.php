@@ -338,6 +338,8 @@ include __DIR__ . '/../inc/panel.php';
         'grocery'  => 'Kirana & Masala — आटा, तेल, साबुन',
         'food'     => 'Hotel & Mithai — थाली, बिरयानी',
         'medicine' => 'Medicines — दवाई',
+        'pooja'    => 'Puja & Agarbatti — दीया, रोली',
+        'khad'     => 'Khad, Beej & Chara — यूरिया, चोकर',
         'ride'     => 'Taxi, Auto & Bus — सवारी',
         'truck'    => 'Tempo, Truck & Trolley — माल ढुलाई',
         'tent'     => 'Lawn, Tent & Catering — शादी, तिलक',

@@ -813,7 +813,9 @@ var HASHMAP = {
   mithai: {s:'khana',  g:'mithai'},
   peene:  {s:'khana',  g:'peene'},
   sabzi:  {s:'saaman', g:'sabzi'},
-  dawa:   {s:'saaman', g:'sabun'}
+  dawa:   {s:'saaman', g:'sabun'},
+  pooja:  {s:'saaman', g:'pooja'},
+  khad:   {s:'saaman', g:'khad'}
 };
 function jaoHash(pehliBaar){
   var hs = (location.hash || '').replace('#','');

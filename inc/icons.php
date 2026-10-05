@@ -132,7 +132,7 @@ function prod_icon_key($name, $grp = '') {
     }
     $g = ['anaj'=>'sack','tel'=>'bottle','masala'=>'spice','dairy'=>'milk','nashta'=>'biscuit',
           'sabzi'=>'leaf','fal'=>'apple','safai'=>'soap','sabun'=>'tube','khana'=>'thali','chaat'=>'noodle',
-          'mithai'=>'sweet','peene'=>'glass','anya'=>'bag'];
+          'mithai'=>'sweet','peene'=>'glass','pooja'=>'diya','khad'=>'leaf','anya'=>'bag'];
     return $g[$grp] ?? 'bag';
 }
 

@@ -72,6 +72,8 @@ $GROUPS = [
     ['grocery',  'Kirana &amp; Masala',      t('atta, oil, soap', 'आटा, तेल, साबुन'),          '/order.php'],
     ['food',     'Hotel &amp; Mithai',       t('thali, biryani, sweets', 'थाली, बिरयानी, मिठाई'), '/order.php#khana'],
     ['medicine', 'Medicines',                t('send the prescription', 'पर्ची भेजिए'),         '/order.php#dawa'],
+    ['pooja',    'Puja &amp; Agarbatti',     t('diya, roli, coconut', 'दीया, रोली, नारियल'),    '/order.php#pooja'],
+    ['khad',     'Khad, Beej &amp; Chara',   t('urea, seed, bran', 'यूरिया, बीज, चोकर'),        '/order.php#khad'],
   ]],
   [t('Book it in advance', 'पहले से बुक कीजिए'), [
     ['ride',     'Taxi, Auto &amp; Bus',     t('for people', 'सवारी के लिए'),                  '/sewa.php?s=safar'],
