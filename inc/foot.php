@@ -19,9 +19,9 @@
 
       <div class="fnav">
         <b><?= t('Book', 'बुकिंग') ?></b>
-        <a href="/book.php?s=gaadi"><?= t('Vehicle / Bolero', 'गाड़ी / बोलेरो') ?></a>
-        <a href="/book.php?s=lawn"><?= t('Lawn & marriage hall', 'लॉन / मैरिज हॉल') ?></a>
-        <a href="/book.php?s=tent"><?= t('Tent, sound & light', 'टेंट, साउंड, लाइट') ?></a>
+        <a href="/sewa.php?s=safar"><?= t('Vehicle / Bolero', 'गाड़ी / बोलेरो') ?></a>
+        <a href="/sewa.php?s=lawn"><?= t('Lawn & marriage hall', 'लॉन / मैरिज हॉल') ?></a>
+        <a href="/sewa.php?s=tent"><?= t('Tent, sound & light', 'टेंट, साउंड, लाइट') ?></a>
         <a href="/book.php"><?= t('All bookings', 'सारी बुकिंग') ?></a>
         <a href="/transport.php"><?= t('Register your vehicle', 'अपनी गाड़ी जोड़िए') ?></a>
       </div>

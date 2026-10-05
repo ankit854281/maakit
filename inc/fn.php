@@ -35,6 +35,19 @@ function need_role($roles) {
     if (!$u || !in_array($u['role'], (array)$roles, true)) { redirect('/login.php'); }
     return $u;
 }
+/**
+ * Login ke baad kaun kahan jayega.
+ * Naya role jodna ho to bas yahan ek line jodiye — login.php aur
+ * baaki jagah apne aap sahi jagah bhej dengi.
+ */
+function panel_home($role) {
+    switch ($role) {
+        case 'admin':    return '/admin/';
+        case 'bpo':      return '/bpo/';
+        case 'designer': return '/admin/banners.php';
+        default:         return '/delivery/';
+    }
+}
 function csrf() {
     if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
     return $_SESSION['csrf'];

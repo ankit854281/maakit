@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
-$u = need_role('admin');
+$u = need_role(['admin', 'designer']);
 $page_title = 'ऑफ़र और ऐड — Maakit';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
@@ -63,11 +63,11 @@ $LINKS = [
   '/order.php' => 'ऑर्डर पेज',
   '/order.php#khana' => 'खाना',
   '/book.php' => 'सारी बुकिंग',
-  '/book.php?s=gaadi' => 'गाड़ी बुकिंग',
-  '/book.php?s=lawn' => 'लॉन बुकिंग',
-  '/book.php?s=tent' => 'टेंट बुकिंग',
-  '/book.php?s=halwai' => 'हलवाई',
-  '/book.php?s=pandit' => 'पंडित जी',
+  '/sewa.php?s=safar' => 'गाड़ी बुकिंग',
+  '/sewa.php?s=lawn' => 'लॉन बुकिंग',
+  '/sewa.php?s=tent' => 'टेंट बुकिंग',
+  '/sewa.php?s=halwai' => 'हलवाई',
+  '/sewa.php?s=pandit' => 'पंडित जी',
   '/directory.php' => 'काम-धंधा',
   '/area.php' => 'नए गाँव की माँग',
 ];

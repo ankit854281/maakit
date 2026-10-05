@@ -4,12 +4,44 @@ $tab = $tab ?? '';           // ghar | order | mere | kaam
 $no_tabbar = $no_tabbar ?? false;
 $no_ticker = $no_ticker ?? false;
 
-// ticker ke liye jahan-jahan service hai
-$tick = [];
+// ---------------------------------------------------------------
+// Upar chalne wali patti.
+//
+// Pehle isme sirf gaon ke naam chalte the. Ab isme asli hulchul
+// chalti hai — kaunse gaon me abhi-abhi order ya booking hui.
+// Ye jhoothi nahi hoti: jo sach me database me hai wahi dikhta hai.
+// Agar 4 se kam asli khabar ho to gaon ke naam par wapas chala
+// jata hai, taaki patti khaali na lage.
+// ---------------------------------------------------------------
+$tick     = [];
+$tick_hul = false;         // true = asli hulchul, false = gaon ke naam
+
 if (!$no_tabbar && !$no_ticker) {
     try {
-        foreach ($pdo->query("SELECT name, name_en FROM villages WHERE live=1 ORDER BY name") as $r) { $tick[] = vname($r); }
-    } catch (Throwable $e) { $tick = []; }
+        $rows = $pdo->query(
+            "SELECT village, created_at, 'o' AS kind FROM orders
+               WHERE status<>'Cancel' AND created_at > NOW() - INTERVAL 2 DAY
+             UNION ALL
+             SELECT village, created_at, 'b' FROM service_bookings
+               WHERE status<>'Cancel' AND created_at > NOW() - INTERVAL 2 DAY
+             ORDER BY created_at DESC LIMIT 10"
+        )->fetchAll();
+
+        foreach ($rows as $r) {
+            if (empty($r['village'])) continue;
+            $tick[] = vname(['name' => $r['village']]) . ' · '
+                    . ($r['kind'] === 'o' ? t('order', 'ऑर्डर') : t('booking', 'बुकिंग'))
+                    . ' ' . ago($r['created_at']);
+        }
+        $tick_hul = count($tick) >= 4;
+
+        if (!$tick_hul) {   // abhi itni hulchul nahi — gaon ke naam dikha dijiye
+            $tick = [];
+            foreach ($pdo->query("SELECT name, name_en FROM villages WHERE live=1 ORDER BY name") as $r) {
+                $tick[] = vname($r);
+            }
+        }
+    } catch (Throwable $e) { $tick = []; $tick_hul = false; }
 }
 ?><!doctype html>
 <html lang="<?= html_lang() ?>">
@@ -40,9 +72,11 @@ if (!$no_tabbar && !$no_ticker) {
 
 <?php if ($tick): ?>
 <!-- jahan-jahan Maakit pahunchta hai -->
-<div class="ticker" aria-label="<?= h(t('Service areas', 'सेवा क्षेत्र')) ?>">
+<div class="ticker" aria-label="<?= h($tick_hul ? t('Recent activity', 'अभी-अभी') : t('Service areas', 'सेवा क्षेत्र')) ?>">
   <div class="tk">
-    <span class="lbl"><?= svc_icon('box', 13) ?> <?= t('WE DELIVER IN', 'यहाँ पहुँचते हैं') ?></span>
+    <span class="lbl"><?= svc_icon('box', 13) ?> <?= $tick_hul
+        ? t('JUST NOW', 'अभी-अभी')
+        : t('WE DELIVER IN', 'यहाँ पहुँचते हैं') ?></span>
     <div class="run"><div class="rr">
       <?php for ($p = 0; $p < 2; $p++): foreach ($tick as $v): ?>
         <span><?= h($v) ?></span><i>·</i>

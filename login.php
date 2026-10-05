@@ -5,7 +5,7 @@ $page_title = 'टीम लॉगिन — Maakit';
 $err = '';
 if (user()) {
     $r = user()['role'];
-    redirect($r === 'admin' ? '/admin/' : ($r === 'bpo' ? '/bpo/' : '/delivery/'));
+    redirect(panel_home($r));
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $st = $pdo->prepare("SELECT * FROM users WHERE username=? AND active=1");
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $u = $st->fetch();
     if ($u && password_verify(post('password'), $u['password'])) {
         $_SESSION['user'] = ['id' => $u['id'], 'name' => $u['name'], 'role' => $u['role']];
-        redirect($u['role'] === 'admin' ? '/admin/' : ($u['role'] === 'bpo' ? '/bpo/' : '/delivery/'));
+        redirect(panel_home($u['role']));
     }
     $err = 'यूज़रनेम या पासवर्ड ग़लत है।';
 }

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/items.php';
-$u = need_role('admin');
+$u = need_role(['admin', 'designer']);
 $page_title = 'सामान और फ़ोटो — Maakit';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {

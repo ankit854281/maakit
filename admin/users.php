@@ -34,7 +34,7 @@ include __DIR__ . '/../inc/panel.php';
     <?php foreach ($rows as $r): ?>
     <tr>
       <td><?= h($r['name']) ?></td><td><?= h($r['username']) ?></td>
-      <td><?= ['admin'=>'मालिक','bpo'=>'BPO','delivery'=>'डिलीवरी'][$r['role']] ?></td>
+      <td><?= (['admin'=>'मालिक','bpo'=>'BPO','delivery'=>'डिलीवरी','designer'=>'डिज़ाइनर'][$r['role']] ?? $r['role']) ?></td>
       <td><?= h($r['mobile']) ?></td>
       <td>
         <?php if ((int)$r['id'] !== (int)$me['id']): ?>
@@ -56,7 +56,7 @@ include __DIR__ . '/../inc/panel.php';
       <div style="min-width:160px"><label>नाम</label><input type="text" name="name" required></div>
       <div style="min-width:150px"><label>यूज़रनेम</label><input type="text" name="username" required></div>
       <div style="min-width:150px"><label>पासवर्ड</label><input type="text" name="password" required></div>
-      <div style="min-width:150px"><label>काम</label><select name="role"><option value="bpo">BPO</option><option value="delivery">डिलीवरी पार्टनर</option><option value="admin">मालिक</option></select></div>
+      <div style="min-width:150px"><label>काम</label><select name="role"><option value="bpo">BPO</option><option value="delivery">डिलीवरी पार्टनर</option><option value="designer">डिज़ाइनर (ऑफ़र और फ़ोटो)</option><option value="admin">मालिक</option></select></div>
       <div style="min-width:140px"><label>मोबाइल</label><input type="tel" name="mobile"></div>
       <button class="btn btn-brand btn-sm">बनाइए</button>
     </form>

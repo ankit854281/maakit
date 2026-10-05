@@ -12,6 +12,11 @@ if ($role === 'admin') {
              '/admin/transport.php' => 'गाड़ियाँ', '/admin/banners.php' => 'ऑफ़र', '/admin/areas.php' => 'नए गाँव',
              '/admin/summary.php' => 'हिसाब', '/admin/businesses.php' => 'दुकान/कारीगर',
              '/admin/feedback.php' => 'राय', '/admin/rates.php' => 'रेट', '/admin/settings.php' => 'समय/छुट्टी', '/admin/users.php' => 'टीम'];
+} elseif ($role === 'designer') {
+    // Designer ka kaam sirf dikhne wali cheezein — offer, photo, home page.
+    // Order, hisaab, rate, team isko nahi dikhte.
+    $menu = ['/admin/banners.php' => 'ऑफ़र / विज्ञापन', '/admin/photos.php' => 'फ़ोटो',
+             '/admin/items.php' => 'सामान'];
 } elseif ($role === 'bpo') {
     $menu = ['/bpo/' => 'आज के ऑर्डर', '/bpo/new.php' => 'नया ऑर्डर', '/bpo/bookings.php' => 'बुकिंग',
              '/bpo/summary.php' => 'आज का हिसाब'];

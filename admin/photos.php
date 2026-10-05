@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/items.php';
 require_once __DIR__ . '/../inc/groups.php';
-$u = need_role('admin');
+$u = need_role(['admin', 'designer']);
 $page_title = 'फ़ोटो एक साथ लगाइए — Maakit';
 
 $UP = __DIR__ . '/../uploads';
