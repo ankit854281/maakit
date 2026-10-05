@@ -52,25 +52,49 @@ try {
 } catch (Throwable $e) { $banners = []; }
 
 // ---------- home page ki sewayein ----------
-$BIG = [
-  ['grocery', t('Groceries & Daily Needs', 'राशन और रोज़ का सामान'), t('From any shop — you pay only delivery', 'किसी भी दुकान से — आप सिर्फ़ डिलीवरी दीजिए'), '/order.php'],
-  ['food',    t('Food & Sweets', 'खाना और मिठाई'),                   t('Dhaba, hotel, halwai — hot food at home', 'ढाबा, होटल, हलवाई — गरम खाना घर पर'), '/order.php#khana'],
+// ---------------------------------------------------------------
+// Home page ki shreniyan.
+//
+// Char samooh, aur samooh "kaam kaise hota hai" se bane hain —
+// "cheez kya hai" se nahi. Grahak ko pehli nazar me pata chal jata
+// hai ki paisa kya lagega, kaun chalega, kitni der me hoga.
+//
+// Naam Roman lipi me hain aur neeche Hindi — yahi tarika Blinkit,
+// Zepto, Urban Company, 1mg sab istemal karte hain. Naam me cheezein
+// ginayi gayi hain ("Taxi, Auto & Bus"), sirf kaam ka naam nahi
+// ("Rides") — taaki grahak ko dikhe ki andar kya milega.
+//
+// Nayi shreni jodni ho to bas yahan ek line jodiye.
+// ---------------------------------------------------------------
+$GROUPS = [
+  [t('We bring it', 'हम लाते हैं'), [
+    ['chaat',    'Samosa &amp; Momos',       t('chowmein, chaat, maggi', 'चाउमीन, चाट, मैगी'),  '/order.php#chaat'],
+    ['grocery',  'Kirana &amp; Masala',      t('atta, oil, soap', 'आटा, तेल, साबुन'),          '/order.php'],
+    ['food',     'Hotel &amp; Mithai',       t('thali, biryani, sweets', 'थाली, बिरयानी, मिठाई'), '/order.php#khana'],
+    ['medicine', 'Medicines',                t('send the prescription', 'पर्ची भेजिए'),         '/order.php#dawa'],
+  ]],
+  [t('Book it in advance', 'पहले से बुक कीजिए'), [
+    ['ride',     'Taxi, Auto &amp; Bus',     t('for people', 'सवारी के लिए'),                  '/sewa.php?s=safar'],
+    ['truck',    'Tempo, Truck &amp; Trolley', t('goods, shifting', 'माल ढुलाई, शिफ़्टिंग'),    '/sewa.php?s=maal'],
+    ['tent',     'Lawn, Tent &amp; Catering', t('wedding, tilak, bhandara', 'शादी, तिलक, भंडारा'), '/sewa.php?s=lawn'],
+  ]],
+  [t('They come to your home', 'कारीगर घर आएगा'), [
+    ['tools',    'Electrician &amp; Plumber', t('mistri, painter, mason', 'मिस्त्री, पेंटर, राजगीर'), '/sewa.php?s=mistri'],
+    ['mobile',   'Mobile &amp; TV Repair',    t('phone, fan, fridge, cooler', 'फ़ोन, पंखा, फ़्रिज'),  '/directory.php?cat=repair'],
+  ]],
+  [t('You go there', 'पता कीजिए'), [
+    ['salon',    'Salon &amp; Parlour',      t('cutting, mehendi, facial', 'कटिंग, मेहंदी, फेशियल'), '/directory.php?cat=nai'],
+    ['shops',    'Shops &amp; Workers',      t('who is near you', 'आपके पास कौन है'),          '/directory.php?cat=dukan'],
+    ['books',    'Old Books',                t('buy, sell, exchange', 'बेचिए, लीजिए, बदलिए'),   '/books.php'],
+  ]],
 ];
-$SMALL = [
-  ['medicine', t('Medicine', 'दवाई'),            '/order.php#dawa'],
-  ['books',    t('Old books', 'पुरानी किताबें'),  '/books.php'],
-  ['ride',     t('Vehicle', 'गाड़ी बुकिंग'),      '/sewa.php?s=safar'],
-  ['truck',    t('Goods', 'माल ढुलाई'),          '/sewa.php?s=maal'],
-  ['lawn',     t('Lawn & Hall', 'लॉन / हॉल'),     '/sewa.php?s=lawn'],
-  ['tent',     t('Tent & Sound', 'टेंट, साउंड'),  '/sewa.php?s=tent'],
-  ['halwai',   t('Catering', 'हलवाई'),            '/sewa.php?s=halwai'],
-  ['pandit',   t('Pandit ji', 'पंडित जी'),        '/sewa.php?s=pandit'],
-  ['salon',    t('Salon', 'नाई / पार्लर'),        '/directory.php?cat=nai'],
-  ['home',     t('Repairs', 'घर की मरम्मत'),      '/sewa.php?s=mistri'],
-  ['photo',    t('Photography', 'फोटो / वीडियो'), '/sewa.php?s=photo'],
-  ['shops',    t('Shops', 'दुकानें'),             '/directory.php?cat=dukan'],
-  ['all',      t('See all', 'सब कुछ देखिए'),      '/directory.php'],
-];
+
+// "Samosa & Momos" wali patti ke liye — 20 minute me aane wali cheezein.
+// ★ wale (popular) pehle, taaki momos aur chowmein jaise naam saamne rahein.
+$chaat = array_values(array_filter(items_all($pdo), fn($i) => ($i['grp'] ?? '') === 'chaat'));
+usort($chaat, fn($a, $b) => ((int)$b['popular'] <=> (int)$a['popular'])
+                         ?: ((int)($a['sort_no'] ?? 0) <=> (int)($b['sort_no'] ?? 0)));
+$chaat = array_slice($chaat, 0, 8);
 include __DIR__ . '/inc/head.php';
 ?>
 
@@ -106,18 +130,50 @@ include __DIR__ . '/inc/head.php';
     <button class="btn btn-sm" id="installNo" style="background:transparent;color:var(--muted);padding:8px"><?= t('Not now', 'अभी नहीं') ?></button>
   </div>
 
-  <!-- ============ do badi sewayein ============ -->
-  <div class="bigsvc">
-    <?php foreach ($BIG as list($ic, $hi, $sub, $href)): $bp = svc_photo($ic); ?>
-      <a class="bs" href="<?= h($href) ?>">
-        <?php if ($bp): ?><span class="ph"><img src="/uploads/<?= h($bp) ?>" alt="" loading="lazy"></span>
-        <?php else: ?><span class="ic"><?= svc_icon($ic, 44) ?></span><?php endif; ?>
-        <b><?= h($hi) ?></b>
-        <i><?= h($sub) ?></i>
-        <span class="cta"><?= t('Start', 'शुरू कीजिए') ?> <?= svc_icon('plus', 14) ?></span>
-      </a>
-    <?php endforeach; ?>
-  </div>
+  <!-- ============ 20 minute wala nashta ============ -->
+  <?php if ($chaat): ?>
+    <div class="secthead" style="margin-top:4px">
+      <h2><?= t('Samosa &amp; Momos', 'समोसा और मोमोज़') ?></h2>
+      <p><?= t('Hot, in about 20 minutes', 'गरम, क़रीब 20 मिनट में') ?></p>
+      <a class="more" href="/order.php#chaat"><?= t('See all', 'सब देखिए') ?> <?= svc_icon('plus', 13) ?></a>
+    </div>
+    <div class="nrail">
+      <?php foreach ($chaat as $it): ?>
+        <a class="nr" href="/order.php#chaat">
+          <span class="ph">
+            <?php if (!empty($it['photo'])): ?>
+              <img src="/uploads/<?= h($it['photo']) ?>" alt="" loading="lazy">
+            <?php else: ?>
+              <?= prod_icon($it['name'], $it['grp'] ?? '', 30) ?>
+            <?php endif; ?>
+          </span>
+          <b><?= h($it['name']) ?></b>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+
+  <!-- ============ shreniyan — char samooh ============ -->
+  <?php foreach ($GROUPS as list($gname, $rows)): ?>
+    <div class="grphead"><?= h($gname) ?></div>
+    <div class="tiles cat">
+      <?php foreach ($rows as list($ic, $en, $hi, $href)): $tp = svc_photo($ic); ?>
+        <a class="tile" href="<?= h($href) ?>">
+          <span class="ic"><?= $tp
+              ? '<img src="/uploads/' . h($tp) . '" alt="" loading="lazy">'
+              : svc_icon($ic, 32) ?></span>
+          <b><?= $en ?></b>
+          <i><?= h($hi) ?></i>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endforeach; ?>
+
+  <a class="allsvc" href="/directory.php">
+    <?= svc_icon('all', 20) ?>
+    <span><?= t('All services and shops', 'सभी सेवाएँ और दुकानें') ?></span>
+    <?= svc_icon('plus', 15) ?>
+  </a>
 
   <!-- ============ abhi-abhi kya hua ============ -->
   <?php if (count($recent) >= 3): ?>
@@ -150,7 +206,7 @@ include __DIR__ . '/inc/head.php';
       <h2><?= t('What’s on', 'क्या चल रहा है') ?></h2>
       <p><?= t('Offers and new services', 'ऑफ़र और नई सेवाएँ') ?></p>
     </div>
-    <div class="bann">
+    <div class="bann" id="bann">
       <?php foreach ($banners as $b):
         $ti = is_hi() ? $b['title_hi'] : $b['title_en'];
         $su = is_hi() ? $b['sub_hi'] : $b['sub_en']; ?>
@@ -164,6 +220,14 @@ include __DIR__ . '/inc/head.php';
         </a>
       <?php endforeach; ?>
     </div>
+    <?php if (count($banners) > 1): ?>
+      <!-- gol nishaan — kaunsa offer chal raha hai -->
+      <div class="banndots" id="banndots" aria-hidden="true">
+        <?php for ($i = 0; $i < count($banners); $i++): ?>
+          <u<?= $i === 0 ? ' class="on"' : '' ?>></u>
+        <?php endfor; ?>
+      </div>
+    <?php endif; ?>
   <?php endif; ?>
 
   <!-- ============ purani kitaabein ============ -->
@@ -190,19 +254,6 @@ include __DIR__ . '/inc/head.php';
     </div>
   <?php endif; ?>
 
-  <!-- ============ baaki sewayein ============ -->
-  <div class="secthead" style="margin-top:24px">
-    <h2><?= t('Everything else we do', 'और क्या-क्या हो सकता है') ?></h2>
-    <p><?= t('All services · one place', 'सारी सेवाएँ · एक ही जगह') ?></p>
-  </div>
-  <div class="tiles">
-    <?php foreach ($SMALL as list($ic, $lbl, $href)): $tp = svc_photo($ic); ?>
-      <a class="tile" href="<?= h($href) ?>">
-        <span class="ic"><?= $tp ? '<img src="/uploads/' . h($tp) . '" alt="" loading="lazy">' : svc_icon($ic, 28) ?></span>
-        <b><?= h($lbl) ?></b>
-      </a>
-    <?php endforeach; ?>
-  </div>
 </div>
 
 <!-- ============ bharose ki baat ============ -->
@@ -430,6 +481,57 @@ include __DIR__ . '/inc/head.php';
 </section>
 
 <script>
+/* ---------- offer ki patti khud chalti hai ----------
+   Tasveer aur uspar likha hua, dono ek saath badalte hain —
+   kyunki har patti apne andar dono rakhti hai.
+   Ungli se khiskane par apne aap ruk jati hai, taaki padhne me
+   dikkat na ho. Jinhe hilti cheezein pasand nahi, unke liye
+   bilkul nahi chalti. */
+(function(){
+  var box = document.getElementById('bann');
+  var dots = document.getElementById('banndots');
+  if (!box || !dots) return;
+  var sl = box.querySelectorAll('.bn');
+  var du = dots.querySelectorAll('u');
+  if (sl.length < 2) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var i = 0, ruka = false, tmr = null;
+
+  function mark(n){
+    for (var k = 0; k < du.length; k++) du[k].classList.toggle('on', k === n);
+  }
+  function kaunsa(){               // abhi kaun si patti saamne hai
+    var best = 0, kam = 1e9;
+    for (var k = 0; k < sl.length; k++) {
+      var d = Math.abs(sl[k].offsetLeft - box.scrollLeft);
+      if (d < kam) { kam = d; best = k; }
+    }
+    return best;
+  }
+  function aage(){
+    if (ruka) return;
+    i = (kaunsa() + 1) % sl.length;
+    box.scrollTo({ left: sl[i].offsetLeft - box.offsetLeft, behavior: 'smooth' });
+    mark(i);
+  }
+
+  box.addEventListener('scroll', function(){ mark(kaunsa()); }, { passive: true });
+  // ungli rakhte hi ruk jaye
+  ['pointerdown','touchstart'].forEach(function(ev){
+    box.addEventListener(ev, function(){ ruka = true; }, { passive: true });
+  });
+  ['pointerup','touchend','mouseleave'].forEach(function(ev){
+    box.addEventListener(ev, function(){ ruka = false; }, { passive: true });
+  });
+  // dusre tab par gaye to chalana band — data aur battery dono bachti hai
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) { clearInterval(tmr); tmr = null; }
+    else if (!tmr) { tmr = setInterval(aage, 4200); }
+  });
+  tmr = setInterval(aage, 4200);
+})();
+
 /* banner kitni baar dabaya gaya */
 document.addEventListener('click', function(e){
   var a = e.target.closest('.bn[data-bid]'); if (!a) return;

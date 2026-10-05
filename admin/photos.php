@@ -331,21 +331,21 @@ include __DIR__ . '/../inc/panel.php';
 
   <div class="phgrid" id="svcGrid">
     <?php
+      // Ye wahi 12 dibbe hain jo home page par dikhte hain, usi kram me.
+      // Yahan photo lagate hi home page ka icon badal jata hai.
       $SV = [
-        'grocery'  => 'राशन और सामान',
-        'food'     => 'बना खाना, मिठाई',
-        'medicine' => 'दवाई',
-        'books'    => 'पुरानी किताबें',
-        'ride'     => 'गाड़ी बुकिंग',
-        'truck'    => 'माल ढुलाई',
-        'lawn'     => 'लॉन / हॉल',
-        'tent'     => 'टेंट, साउंड',
-        'halwai'   => 'हलवाई',
-        'pandit'   => 'पंडित जी',
-        'salon'    => 'नाई / पार्लर',
-        'home'     => 'घर की मरम्मत',
-        'photo'    => 'फोटो / वीडियो',
-        'shops'    => 'दुकानें',
+        'chaat'    => 'Samosa & Momos — समोसा, मोमोज़',
+        'grocery'  => 'Kirana & Masala — आटा, तेल, साबुन',
+        'food'     => 'Hotel & Mithai — थाली, बिरयानी',
+        'medicine' => 'Medicines — दवाई',
+        'ride'     => 'Taxi, Auto & Bus — सवारी',
+        'truck'    => 'Tempo, Truck & Trolley — माल ढुलाई',
+        'tent'     => 'Lawn, Tent & Catering — शादी, तिलक',
+        'tools'    => 'Electrician & Plumber — मिस्त्री',
+        'mobile'   => 'Mobile & TV Repair — फ़ोन, पंखा',
+        'salon'    => 'Salon & Parlour — कटिंग, मेहंदी',
+        'shops'    => 'Shops & Workers — दुकानें',
+        'books'    => 'Old Books — पुरानी किताबें',
       ];
       foreach ($SV as $k => $lbl): $sp = svc_photo($k); ?>
       <div class="pht <?= $sp ? 'ok' : '' ?>" data-svc="<?= h($k) ?>">

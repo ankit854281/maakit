@@ -624,7 +624,10 @@ $('backBtn').addEventListener('click', function(){
   else { syncPane(); }
   window.scrollTo(0, 0);
 });
-window.addEventListener('hashchange', function(){ syncPane(); window.scrollTo(0,0); });
+window.addEventListener('hashchange', function(){
+  if (jaoHash(false)) { window.scrollTo(0,0); return; }   // shreni badli
+  syncPane(); window.scrollTo(0,0);
+});
 function showCat(){
   if (location.hash === '#pata') { history.back(); } else { syncPane(); }
 }
@@ -799,18 +802,42 @@ $('photo').addEventListener('change', function(){
   });
 });
 
+/* ---------- home page ke dibbe se aana ----------
+   /order.php#chaat jaise pate se seedhe sahi hisse aur sahi group par
+   pahunch jaiye — do dabane ka kaam ek me.
+   Ye sirf pehli baar nahi, hash badalne par bhi chalta hai: wapas
+   jane ka button dabane par bhi sahi jagah dikhe. */
+var HASHMAP = {
+  chaat:  {s:'khana',  g:'chaat'},
+  khana:  {s:'khana',  g:'khana'},
+  mithai: {s:'khana',  g:'mithai'},
+  peene:  {s:'khana',  g:'peene'},
+  sabzi:  {s:'saaman', g:'sabzi'},
+  dawa:   {s:'saaman', g:'sabun'}
+};
+function jaoHash(pehliBaar){
+  var hs = (location.hash || '').replace('#','');
+  var m  = HASHMAP[hs];
+  if (!m) return false;
+  curS = m.s;
+  curG = m.g;
+  var sb = document.querySelector('#secs button[data-s="'+curS+'"]');
+  if (sb) {
+    [].forEach.call(document.querySelectorAll('#secs button'), function(x){ x.classList.remove('on'); });
+    sb.classList.add('on');
+  }
+  $('q').value = ''; curQ = ''; $('qc').style.display = 'none';
+  drawRail();
+  if (!pehliBaar) draw();
+  if (hs === 'dawa') { window.setTimeout(function(){ $('note').focus(); }, 300); }
+  return true;
+}
+
 /* ---------- shuruaat ---------- */
 (function(){
   var qs = new URLSearchParams(location.search).get('q');
   if (qs) { $('q').value = qs; curQ = qs; $('qc').style.display = 'block'; }
-  var hs = (location.hash || '').replace('#','');
-  var GM = {khana:'khana', dawa:'sabun', mithai:'mithai', sabzi:'sabzi'};
-  if (GM[hs]) {
-    curG = GM[hs];
-    var b = document.querySelector('.rail button[data-g="'+curG+'"]');
-    if (b) { document.querySelectorAll('.rail button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); }
-    if (hs === 'dawa') { $('q').value = ''; curQ = ''; window.setTimeout(function(){ $('note').focus(); }, 300); }
-  }
+  jaoHash(true);
 })();
 syncPane();
 if (curQ) { setTimeout(function(){ logSearch(curQ.trim(), lastCount); }, 1500); }

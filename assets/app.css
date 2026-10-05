@@ -763,3 +763,65 @@ body.listening .way#wayVoice{
   margin-top:7px;width:100%;font:inherit;font-size:13px;padding:6px 8px;
   border:1.5px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);
 }
+
+/* ============================================================
+   Home page — char samooh wali shreniyan (v7.2)
+   Naam Roman me upar, Hindi chhoti line me neeche.
+   Icon ke peeche koi rangeen chaukor nahi — saaf lakeer.
+   ============================================================ */
+.grphead{
+  font-size:11px;letter-spacing:.11em;text-transform:uppercase;font-weight:800;
+  color:var(--muted);margin:20px 0 9px;
+}
+.tiles.cat{gap:9px}
+.tiles.cat .tile{
+  padding:13px 6px 11px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+}
+.tiles.cat .tile .ic{
+  width:auto;height:auto;background:transparent;border-radius:0;margin-bottom:9px;
+}
+.tiles.cat .tile .ic img{
+  width:40px;height:40px;object-fit:cover;border-radius:11px;
+}
+.tiles.cat .tile b{
+  font-size:12.5px;font-weight:700;line-height:1.22;
+  display:flex;align-items:center;justify-content:center;min-height:31px;
+}
+.tiles.cat .tile i{
+  font-style:normal;font-size:10px;color:var(--muted);line-height:1.3;margin-top:3px;
+}
+@media (min-width:641px){ .tiles.cat .tile b{min-height:0} }
+
+/* sab kuchh dekhne wala chaura button */
+.allsvc{
+  display:flex;align-items:center;gap:10px;margin-top:16px;
+  background:var(--surface);border:1.5px solid var(--line);border-radius:14px;
+  padding:14px 16px;text-decoration:none;color:var(--ink);font-weight:700;font-size:15px;
+}
+.allsvc span{flex:1;min-width:0}
+.allsvc svg{color:var(--brand);flex-shrink:0}
+.allsvc:hover{border-color:var(--brand)}
+
+/* ---------- 20 minute wala nashta ---------- */
+.nrail{
+  display:flex;gap:10px;overflow-x:auto;padding:2px 18px 8px;margin:0 -18px;
+  scrollbar-width:none;scroll-snap-type:x proximity;
+}
+.nrail::-webkit-scrollbar{display:none}
+.nr{
+  flex:0 0 78px;text-align:center;text-decoration:none;color:var(--ink);scroll-snap-align:start;
+}
+.nr .ph{
+  display:grid;place-items:center;width:78px;height:78px;border-radius:14px;
+  background:var(--soft);color:var(--brand);overflow:hidden;
+}
+.nr .ph img{width:100%;height:100%;object-fit:cover}
+.nr b{display:block;font-size:12px;font-weight:600;line-height:1.25;margin-top:6px}
+.nr:active{transform:scale(.97)}
+
+/* ---------- offer ki patti ke gol nishaan ---------- */
+.banndots{display:flex;gap:5px;justify-content:center;margin-top:9px}
+.banndots u{
+  width:6px;height:6px;border-radius:50%;background:var(--line);display:block;transition:.25s;
+}
+.banndots u.on{background:var(--brand);width:17px;border-radius:3px}

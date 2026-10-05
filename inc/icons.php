@@ -56,7 +56,8 @@ function _prod_paths() {
         // khana
         'thali'    => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="7"/><circle cx="9.2" cy="9.2" r="2.1"/><circle cx="14.8" cy="9.2" r="2.1"/><circle cx="12" cy="14.8" r="2.4"/>',
         'roti'     => '<ellipse cx="12" cy="12" rx="8.6" ry="7.4"/><path d="M8.2 10c.8.9 2 1.4 3.2 1.4M13.6 14.6c1-.2 2-.8 2.6-1.6"/><circle cx="14.6" cy="9.4" r=".9"/><circle cx="9.4" cy="14.2" r=".9"/>',
-        'samosa'   => '<path d="M12 4.6 20.4 18a1.4 1.4 0 0 1-1.2 2.1H4.8A1.4 1.4 0 0 1 3.6 18z"/><path d="M12 4.6v15.5"/><path d="M8 20.1c0-3 1.4-5.6 4-7.4M16 20.1c0-3-1.4-5.6-4-7.4"/>',
+        'samosa'   => '<path d="M11.4 4.2 19 16.8a1.3 1.3 0 0 1-1.1 2H4.9a1.3 1.3 0 0 1-1.1-2z"/><path d="M11.4 7.6 16.4 16H6.4z"/><path d="M2.6 21.4h18.8"/>',
+        'momo'     => '<circle cx="12" cy="13.6" r="5.6"/><path d="M8.2 11.4c1.6-2.1 6-2.1 7.6 0M9.4 8.8c1.2-1.4 4-1.4 5.2 0"/><path d="M3.4 21.4h17.2"/><path d="M9 4.4c0 1.4 1.3 1.4 1.3 2.8M13.7 3.8c0 1.4 1.3 1.4 1.3 2.8"/>',
         'sweet'    => '<circle cx="8.4" cy="14.6" r="3.6"/><circle cx="15.6" cy="14.6" r="3.6"/><circle cx="12" cy="8.6" r="3.6"/>',
         'cake'     => '<path d="M4.4 13.6c1.3 0 1.3 1.4 2.5 1.4s1.3-1.4 2.5-1.4 1.3 1.4 2.6 1.4 1.3-1.4 2.5-1.4 1.3 1.4 2.5 1.4 1.3-1.4 2.6-1.4"/><path d="M4.4 13.6v-1.4a2 2 0 0 1 2-2h11.2a2 2 0 0 1 2 2v1.4"/><path d="M4.4 15v3.8a1.6 1.6 0 0 0 1.6 1.6h12a1.6 1.6 0 0 0 1.6-1.6V15"/><path d="M12 10.2V7.4"/><path d="M12 7.4c.9-.7 1.2-1.4.9-2.1-.2-.5-.5-.8-.9-1-.4.2-.7.5-.9 1-.3.7 0 1.4.9 2.1z"/>',
         // peene ka
@@ -109,7 +110,7 @@ function _prod_map() {
             'डायपर'=>'pad','शेविंग'=>'tube','रेज़र'=>'razor','कंघी'=>'brush','क्रीम'=>'tube',
             'समोसा'=>'samosa','कचौड़ी'=>'samosa','पकौड़ी'=>'samosa','पूरी'=>'roti','भटूरे'=>'roti',
             'पराठा'=>'roti','रोटी'=>'roti','थाली'=>'thali','चाट'=>'thali','गोलगप्पे'=>'thali',
-            'बिरयानी'=>'rice','राइस'=>'rice','चाउमीन'=>'noodle','मोमोज़'=>'samosa','बर्गर'=>'bread',
+            'बिरयानी'=>'rice','राइस'=>'rice','चाउमीन'=>'noodle','मोमोज़'=>'momo','डिम सम'=>'momo','बर्गर'=>'bread',
             'पिज़्ज़ा'=>'thali','चिकन'=>'thali','मटन'=>'thali','करी'=>'thali','वेज'=>'thali','दाल-चावल'=>'rice',
             'जलेबी'=>'sweet','रसगुल्ला'=>'sweet','जामुन'=>'sweet','लड्डू'=>'sweet','बर्फ़ी'=>'sweet',
             'पेड़ा'=>'sweet','इमरती'=>'sweet','रसमलाई'=>'sweet','केक'=>'cake','पेस्ट्री'=>'cake',
@@ -130,7 +131,7 @@ function prod_icon_key($name, $grp = '') {
         if (mb_strpos($name, $k) !== false && isset($p[$v])) { return $v; }
     }
     $g = ['anaj'=>'sack','tel'=>'bottle','masala'=>'spice','dairy'=>'milk','nashta'=>'biscuit',
-          'sabzi'=>'leaf','fal'=>'apple','safai'=>'soap','sabun'=>'tube','khana'=>'thali',
+          'sabzi'=>'leaf','fal'=>'apple','safai'=>'soap','sabun'=>'tube','khana'=>'thali','chaat'=>'noodle',
           'mithai'=>'sweet','peene'=>'glass','anya'=>'bag'];
     return $g[$grp] ?? 'bag';
 }
@@ -193,6 +194,18 @@ function svc_icon($key, $size = 40) {
       'swap'    => '<path d="M4 8.4h12.4"/><path d="m13.4 5.2 3.2 3.2-3.2 3.2"/><path d="M20 15.6H7.6"/><path d="m10.6 12.4-3.2 3.2 3.2 3.2"/>',
       'gift'    => '<path '.$sh.' d="M4 11h16v9.4H4z"/><rect x="3.4" y="10.6" width="17.2" height="9.8" rx="1.6"/><path d="M2.6 7.4h18.8v3.2H2.6zM12 7.4v13"/><path d="M12 7.4C10.6 4.4 9.4 3.4 8 3.4a2 2 0 0 0 0 4zM12 7.4c1.4-3 2.6-4 4-4a2 2 0 0 1 0 4z"/>',
       'tag'     => '<path d="M11.2 3.4H20v8.8l-8.6 8.6a1.6 1.6 0 0 1-2.3 0l-6.5-6.5a1.6 1.6 0 0 1 0-2.3z"/><circle cx="16.2" cy="7.8" r="1.5"/>',
+
+      // ---- naye: home page ki shreniyon ke liye ----
+      // samosa + ek momo — 20 minute wala nashta
+      'chaat'   => '<path '.$sh.' d="m8.6 5.4 6.2 12.4H2.4z"/><path d="M8.6 4.8 15 17.6a.8.8 0 0 1-.7 1.2H2.9a.8.8 0 0 1-.7-1.2z"/><path d="M8.6 8.2 12.6 16H4.6z"/><circle cx="18.6" cy="12.4" r="3.8"/><path d="M16 11.4c1.1-1.4 4.1-1.4 5.2 0"/><path d="M2 20.6h20"/>',
+      // diya — pooja ka saaman
+      'pooja'   => '<path '.$sh.' d="M4.6 13.6h14.8a7.4 7.4 0 0 1-14.8 0z"/><path d="M12 11.8c-1.8-1.6-1.4-4 0-5.8 1.4 1.8 2 4.2 0 5.8z"/><path d="M4.4 13.6h15.2a7.6 7.6 0 0 1-15.2 0z"/><path d="M2.6 20.4h18.8"/>',
+      // podha — khad, beej, chara
+      'khad'    => '<path '.$sh.' d="M6 19.2h12v1.4H6z"/><path d="M12 20.4v-9.6"/><path d="M12 14.6c-3.2 0-5.6-2.2-5.6-5 3.2 0 5.6 2.1 5.6 5z"/><path d="M12 12.6c2.6 0 4.6-2 4.6-4.4-2.4 0-4.6 1.8-4.6 4.4z"/><path d="M5.6 20.4h12.8"/>',
+      // pana aur pechkas — bijli, nal, mistri
+      'tools'   => '<path d="M15.6 4.2a4 4 0 0 0-5.2 4.9l-5.8 5.8a2 2 0 0 0 2.8 2.8l5.8-5.8a4 4 0 0 0 4.9-5.2l-2.4 2.4-2.1-.4-.4-2.1z"/><path d="M5.2 19.6a1.1 1.1 0 1 1-1.6-1.6"/>',
+      // mobile aur pechkas — phone, pankha, fridge ki marammat
+      'mobile'  => '<path '.$sh.' d="M6.6 3.4h8v13h-8z"/><rect x="6" y="2.8" width="8.6" height="14.6" rx="1.8"/><path d="M9.4 5.4h1.8"/><path d="m15.4 15.6 3.2 3.2"/><path d="m17.8 13.8 3.2 3.2-1.8 1.8-3.2-3.2z"/>',
     ];
     $sw = ($key === 'plus') ? 2.2 : 1.6;
     return _svg($I[$key] ?? $I['all'], $size, $sw);
