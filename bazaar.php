@@ -48,12 +48,16 @@ include __DIR__ . '/inc/head.php';
 .bazaar-photo{width:76px;height:76px;object-fit:contain;border-radius:10px;float:right;margin:0 0 10px 12px}
 .bazaar-offer{border-top:1px solid var(--line);padding:10px 0;margin-top:10px}.bazaar-price{font-weight:700;font-size:20px}
 .bazaar-chips{display:flex;gap:8px;overflow:auto;padding:8px 0}.bazaar-chips .chip{flex-shrink:0}
+/* .searchbox ko hero ke neeche ghusne ke liye -28px upar khincha gaya
+   hai. Yahan hero nahi hai, isliye wo upar wale likhe par chadh jata
+   tha. Is panne par usko seedha rakhiye. */
+.bazaar-find{margin-top:14px}
 </style>
 <section><div class="wrap">
   <h1><?= t('Shop → products → prices', 'दुकान → सामान → दाम') ?></h1>
   <p class="lead"><?= t('Choose a shop type, then see its products and local shop prices.', 'दुकान का प्रकार चुनिए, फिर उसका सामान और स्थानीय दुकान के दाम देखिए।') ?></p>
   <p class="help"><?= t('This is a catalogue of possible products and services. Stock, pack sizes and prices depend on each shop. Delivery is charged separately.', 'यह सामान और सेवाओं की master list है। उपलब्धता, पैक का नाप और दाम हर दुकान के अपने हैं। डिलीवरी चार्ज अलग है।') ?></p>
-  <form class="searchbox" action="/bazaar.php" method="get">
+  <form class="searchbox bazaar-find" action="/bazaar.php" method="get">
     <?php foreach (['group' => $group, 'type' => $type] as $k => $v): if ($v !== ''): ?>
       <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
     <?php endif; endforeach; ?>
