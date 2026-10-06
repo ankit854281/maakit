@@ -1,0 +1,131 @@
+# ============================================================
+# Maakit ka MUNEEM
+#
+# Har somvaar subah 7:40 (Bharat ka samay) maakit.in/muneem.php
+# khol kar uski bahi uthata hai, aur use GitHub par ek issue bana
+# kar aapke saamne rakh deta hai — email aur app dono par khabar.
+#
+# Muneem kuchh badalta NAHI hai — sirf ginti rakhta hai.
+# Kya karna hai, wo faisla aapka.
+#
+# Chalne ke liye do cheezein chahiye, jo GitHub ke
+# Settings > Secrets and variables > Actions me daalni hain:
+#   MUNEEM_KEY  — wahi chaabi jo config.php me likhi hai
+#   MAAKIT_URL  — https://maakit.in   (na dein to yahi maan lega)
+#
+# Chaabi na ho to muneem chup rehta hai, galti nahi deta.
+# ============================================================
+name: मुनीम
+
+on:
+  schedule:
+    # somvaar 7:40 subah IST = 02:10 UTC
+    - cron: '10 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: maakit-muneem
+  cancel-in-progress: false
+
+jobs:
+  bahi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: bahi uthaiye
+        id: bahi
+        env:
+          KEY: ${{ secrets.MUNEEM_KEY }}
+          URL: ${{ vars.MAAKIT_URL || 'https://maakit.in' }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "chaabi nahi mili — muneem chup hai"
+            echo "mila=nahi" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          code=$(curl -s -o bahi.json -w '%{http_code}' --max-time 60 \
+                 "$URL/muneem.php?f=json&key=$KEY")
+          if [ "$code" != "200" ]; then
+            echo "muneem.php se jawab nahi mila (code $code)"
+            echo "mila=nahi" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "mila=haan" >> "$GITHUB_OUTPUT"
+
+      - name: saamne rakhiye
+        if: steps.bahi.outputs.mila == 'haan'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const b = JSON.parse(fs.readFileSync('bahi.json', 'utf8'));
+            const { owner, repo } = context.repo;
+
+            const n = x => Number(x || 0).toLocaleString('en-IN');
+            const teer = (ab, pe) => {
+              if (!pe) return ab ? ' 🆕' : '';
+              const p = Math.round(((ab - pe) / pe) * 100);
+              if (p > 4)  return ` ▲ ${p}%`;
+              if (p < -4) return ` ▼ ${Math.abs(p)}%`;
+              return ' (बराबर)';
+            };
+
+            const h = b.hafta || {};
+            let m = `## पिछले 7 दिन\n\n`;
+            m += `| | |\n|---|---|\n`;
+            m += `| ऑर्डर | **${n(h.order)}**${teer(h.order, h.order_pichhle)} |\n`;
+            m += `| बुकिंग | **${n(h.booking)}**${teer(h.booking, h.booking_pichhle)} |\n`;
+            m += `| अलग-अलग नंबर | ${n(h.naye_grahak)} |\n`;
+            m += `| डिलीवरी से | ₹${n(h.delivery_paisa)} |\n`;
+            if (h.radd) m += `| रद्द हुए | ${n(h.radd)} |\n`;
+
+            if ((b.nahi_mila || []).length) {
+              m += `\n## लोगों ने खोजा, पर नहीं मिला\n\n`;
+              m += b.nahi_mila.map(x => `- **${x.q}** — ${x.times} बार`).join('\n');
+              m += `\n\n_यही सबसे काम की सूची है — ये आपके अपने गाँव के लोग हैं जो ख़ाली हाथ लौटे।_\n`;
+            }
+
+            const d = b.dekhna_baaki || {}, c = b.chup || {};
+            const kaam = [];
+            if (d.nayi_booking)  kaam.push(`**${n(d.nayi_booking)} नई बुकिंग** — अभी तक किसी ने नहीं देखी`);
+            if (d.gaadi_kagaz)   kaam.push(`${n(d.gaadi_kagaz)} गाड़ी के काग़ज़ जाँचने बाक़ी — ख़ुद आँख से देखिए`);
+            if (d.nayi_dukaan)   kaam.push(`${n(d.nayi_dukaan)} नई दुकान मंज़ूरी के इंतज़ार में`);
+            if (d.naye_gaon)     kaam.push(`${n(d.naye_gaon)} गाँव से आने की माँग`);
+            if (d.nayi_raay)     kaam.push(`${n(d.nayi_raay)} राय मंज़ूरी के इंतज़ार में`);
+            if (b.bina_photo?.star) kaam.push(`${n(b.bina_photo.star)} ★ सामान बिना फ़ोटो के`);
+            if (b.bina_daam?.kul)   kaam.push(`${n(b.bina_daam.kul)} सामान का दाम दर्ज नहीं`);
+            if (c.gaadi)         kaam.push(`${n(c.gaadi)} गाड़ी वाले महीने भर से चुप — एक बार फ़ोन कीजिए`);
+            if (c.dukaan)        kaam.push(`${n(c.dukaan)} दुकानें महीने भर से चुप`);
+
+            m += `\n## ध्यान माँग रहा है\n\n`;
+            m += kaam.length ? kaam.map(x => `- ${x}`).join('\n')
+                             : `- कुछ भी अटका हुआ नहीं है।`;
+
+            if ((b.sabse_zyada || []).length) {
+              m += `\n\n## महीने में सबसे ज़्यादा बिका\n\n`;
+              m += b.sabse_zyada.map(x => `- ${x.name} — ${x.baar} बार`).join('\n');
+            }
+            if ((b.gaon || []).length) {
+              m += `\n\n## किस गाँव से काम आया\n\n`;
+              m += b.gaon.map(x => `- ${x.village} — ${x.n}`).join('\n');
+            }
+
+            m += `\n\n---\n`;
+            m += `मुनीम सिर्फ़ गिनती रखता है। क्या करना है, वह फ़ैसला आपका।\n\n`;
+            m += `**इस पूरी बही को Claude पर भेज दीजिए** — वहाँ इस पर सोच कर रास्ते निकाले जा सकते हैं।\n\n`;
+            m += `_${b.kab} · Maakit v${b.version}_`;
+
+            const aaj = new Date().toLocaleDateString('en-IN', {
+              timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric',
+            });
+
+            await github.rest.issues.create({
+              owner, repo,
+              title: `📒 मुनीम की बही — ${aaj}`,
+              body: m,
+              labels: ['muneem'],
+            });
+            core.info('bahi saamne rakh di');
