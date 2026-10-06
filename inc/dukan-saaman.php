@@ -12,10 +12,11 @@
 //  Daam 0 wala saaman grahak ko nahi dikhta — isliye adhoori
 //  dukaan kabhi nahi dikhti.
 // ============================================================
+require_once __DIR__ . '/catalog.php';
 $kism   = (string)($b['shop_type'] ?? '');
 $kisme  = dukan_types($pdo);
 $kismName = '';
-foreach ($kisme as $k) { if ($k['slug'] === $kism) { $kismName = $k['name_hi']; break; } }
+foreach ($kisme as $k) { if ($k['slug'] === $kism) { $kismName = catalog_label($k['slug'], $k['name_hi']); break; } }
 
 $baaki  = dukan_daam_baaki($pdo, $bid);      // जिनका दाम भरना है
 $chalu  = dukan_items($pdo, $bid, true);     // जो ग्राहक को दिख रहे हैं
@@ -43,6 +44,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
 <section><div class="wrap" style="max-width:820px">
 
   <h2>मेरा सामान</h2>
+  <a class="chip" href="/bazaar.php"><?= t('View customer categories & prices', 'ग्राहक की categories और दाम देखिए') ?></a>
 
 <?php if ($kism === ''): ?>
 
@@ -57,7 +59,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
     <select name="shop_type" style="margin-top:12px" required>
       <option value="">— चुनिए —</option>
       <?php foreach ($kisme as $k): ?>
-        <option value="<?= h($k['slug']) ?>"><?= h($k['name_hi']) ?> (<?= (int)$k['ginti'] ?> सामान)</option>
+        <option value="<?= h($k['slug']) ?>"><?= h(catalog_label($k['slug'], $k['name_hi'])) ?> (<?= (int)$k['ginti'] ?> सामान)</option>
       <?php endforeach; ?>
     </select>
     <button class="btn btn-brand" style="margin-top:12px;width:100%;font-size:17px">सामान ले आइए</button>
@@ -193,7 +195,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
       <div style="flex:1"><label>दुकान की किस्म बदलिए</label>
         <select name="shop_type">
           <?php foreach ($kisme as $k): ?>
-            <option value="<?= h($k['slug']) ?>" <?= $k['slug']===$kism?'selected':'' ?>><?= h($k['name_hi']) ?> (<?= (int)$k['ginti'] ?>)</option>
+            <option value="<?= h($k['slug']) ?>" <?= $k['slug']===$kism?'selected':'' ?>><?= h(catalog_label($k['slug'], $k['name_hi'])) ?> (<?= (int)$k['ginti'] ?>)</option>
           <?php endforeach; ?>
         </select>
         <p class="help">नई किस्म का सामान भी आ जाएगा। पुराना हटेगा नहीं।</p></div>

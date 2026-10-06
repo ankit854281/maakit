@@ -1,0 +1,786 @@
+{
+  "AC & Refrigerator Repair Shop": {
+    "hi": "एसी और फ्रिज मरम्मत",
+    "group": "electronics"
+  },
+  "AC & Refrigerator Service": {
+    "hi": "एसी और फ्रिज सर्विस",
+    "group": "electronics"
+  },
+  "AC Service Centre": {
+    "hi": "एसी सर्विस सेंटर",
+    "group": "electronics"
+  },
+  "Accounting / GST Service": {
+    "hi": "लेखा और जीएसटी सेवा",
+    "group": "services"
+  },
+  "Advertising Agency": {
+    "hi": "विज्ञापन एजेंसी",
+    "group": "services"
+  },
+  "Agriculture Store": {
+    "hi": "खाद बीज और कृषि सामग्री",
+    "group": "farming"
+  },
+  "Antique Store": {
+    "hi": "पुरानी दुर्लभ वस्तुओं की दुकान",
+    "group": "home"
+  },
+  "Appliance Repair Shop": {
+    "hi": "घरेलू उपकरण मरम्मत",
+    "group": "electronics"
+  },
+  "Aquarium Shop": {
+    "hi": "एक्वेरियम और मछली पालन दुकान",
+    "group": "farming"
+  },
+  "Art & Craft Shop": {
+    "hi": "कला और हस्तकला दुकान",
+    "group": "home"
+  },
+  "Art Gallery": {
+    "hi": "कला गैलरी",
+    "group": "home"
+  },
+  "Auto Showroom": {
+    "hi": "गाड़ी शोरूम",
+    "group": "vehicles"
+  },
+  "Auto Spare Parts Shop": {
+    "hi": "ऑटो पार्ट्स दुकान",
+    "group": "vehicles"
+  },
+  "Baby Store": {
+    "hi": "शिशु सामान दुकान",
+    "group": "home"
+  },
+  "Bag Repair Shop": {
+    "hi": "बैग मरम्मत",
+    "group": "fashion"
+  },
+  "Bakery": {
+    "hi": "बेकरी",
+    "group": "food"
+  },
+  "Bakery Supply Shop": {
+    "hi": "बेकरी सामग्री दुकान",
+    "group": "food"
+  },
+  "Banking / Financial Service": {
+    "hi": "बैंकिंग और वित्तीय सेवा",
+    "group": "services"
+  },
+  "Battery Shop": {
+    "hi": "बैटरी दुकान",
+    "group": "electronics"
+  },
+  "Beauty Equipment Supply Shop": {
+    "hi": "ब्यूटी उपकरण दुकान",
+    "group": "beauty"
+  },
+  "Bicycle Repair Shop": {
+    "hi": "साइकिल मरम्मत",
+    "group": "vehicles"
+  },
+  "Bicycle Shop": {
+    "hi": "साइकिल दुकान",
+    "group": "vehicles"
+  },
+  "Bike Rental": {
+    "hi": "किराये की बाइक",
+    "group": "vehicles"
+  },
+  "Bike Service Centre": {
+    "hi": "बाइक सर्विस सेंटर",
+    "group": "vehicles"
+  },
+  "Book & Stationery Shop": {
+    "hi": "बुक स्टेशनरी दुकान",
+    "group": "education"
+  },
+  "Boutique & Tailor Shop": {
+    "hi": "बुटीक और दर्जी",
+    "group": "fashion"
+  },
+  "Bridal Store": {
+    "hi": "दुल्हन के कपड़े और सामान",
+    "group": "fashion"
+  },
+  "Building Material Store": {
+    "hi": "निर्माण सामग्री दुकान",
+    "group": "construction"
+  },
+  "CCTV & Security Shop": {
+    "hi": "सीसीटीवी और सुरक्षा उपकरण",
+    "group": "electronics"
+  },
+  "Cafe": {
+    "hi": "कैफे और चाय कॉफी",
+    "group": "food"
+  },
+  "Camera Shop": {
+    "hi": "कैमरा दुकान",
+    "group": "electronics"
+  },
+  "Car Detailing": {
+    "hi": "कार की सफाई और पॉलिश",
+    "group": "vehicles"
+  },
+  "Car Rental": {
+    "hi": "किराये की कार",
+    "group": "vehicles"
+  },
+  "Car Wash": {
+    "hi": "कार धुलाई",
+    "group": "vehicles"
+  },
+  "Catering Service": {
+    "hi": "कैटरिंग और खाना बनवाना",
+    "group": "events"
+  },
+  "Chemical Supply Shop": {
+    "hi": "केमिकल सामग्री दुकान",
+    "group": "construction"
+  },
+  "Cleaning Products Store": {
+    "hi": "सफाई का सामान",
+    "group": "home"
+  },
+  "Clothing / Garments Shop": {
+    "hi": "कपड़े की दुकान",
+    "group": "fashion"
+  },
+  "Coaching / Tuition Centre": {
+    "hi": "कोचिंग और ट्यूशन",
+    "group": "education"
+  },
+  "Cold Storage / Ice Supplier": {
+    "hi": "कोल्ड स्टोरेज और बर्फ सप्लायर",
+    "group": "food"
+  },
+  "Commercial Kitchen Equipment Shop": {
+    "hi": "होटल रसोई उपकरण",
+    "group": "home"
+  },
+  "Computer / IT Store": {
+    "hi": "कंप्यूटर और आईटी दुकान",
+    "group": "electronics"
+  },
+  "Computer Networking Shop": {
+    "hi": "कंप्यूटर नेटवर्किंग",
+    "group": "electronics"
+  },
+  "Computer Repair Shop": {
+    "hi": "कंप्यूटर मरम्मत",
+    "group": "electronics"
+  },
+  "Computer Shop": {
+    "hi": "कंप्यूटर दुकान",
+    "group": "electronics"
+  },
+  "Construction Tool Rental": {
+    "hi": "निर्माण औजार किराये पर",
+    "group": "construction"
+  },
+  "Consumer Electronics Shop": {
+    "hi": "इलेक्ट्रॉनिक्स दुकान",
+    "group": "electronics"
+  },
+  "Convenience Store": {
+    "hi": "रोजमर्रा की छोटी दुकान",
+    "group": "food"
+  },
+  "Cosmetics & Beauty Store": {
+    "hi": "कॉस्मेटिक और सौंदर्य सामान",
+    "group": "beauty"
+  },
+  "Costume Store": {
+    "hi": "कार्यक्रम की पोशाक दुकान",
+    "group": "fashion"
+  },
+  "Courier / Parcel Shop": {
+    "hi": "कूरियर और पार्सल",
+    "group": "services"
+  },
+  "Courier Packing Shop": {
+    "hi": "कूरियर पैकिंग",
+    "group": "services"
+  },
+  "Curtain Shop": {
+    "hi": "पर्दे की दुकान",
+    "group": "home"
+  },
+  "Cyber Cafe / CSC": {
+    "hi": "साइबर कैफे और जनसेवा केंद्र",
+    "group": "services"
+  },
+  "Dairy Shop": {
+    "hi": "डेयरी दुकान",
+    "group": "food"
+  },
+  "Decoration Service": {
+    "hi": "सजावट सेवा",
+    "group": "events"
+  },
+  "Departmental Store": {
+    "hi": "डिपार्टमेंटल स्टोर",
+    "group": "food"
+  },
+  "Digital Marketing Agency": {
+    "hi": "डिजिटल मार्केटिंग",
+    "group": "services"
+  },
+  "Driving School": {
+    "hi": "ड्राइविंग स्कूल",
+    "group": "vehicles"
+  },
+  "Dry Fruits & Organic Store": {
+    "hi": "मेवा और ऑर्गेनिक सामान",
+    "group": "food"
+  },
+  "Electrical Repair Shop": {
+    "hi": "बिजली उपकरण मरम्मत",
+    "group": "electronics"
+  },
+  "Electrical Store": {
+    "hi": "इलेक्ट्रिकल दुकान",
+    "group": "electronics"
+  },
+  "Electronics & Appliances": {
+    "hi": "इलेक्ट्रॉनिक्स और घरेलू उपकरण",
+    "group": "electronics"
+  },
+  "Embroidery Shop": {
+    "hi": "कढ़ाई की दुकान",
+    "group": "fashion"
+  },
+  "Equipment Rental": {
+    "hi": "उपकरण किराये पर",
+    "group": "services"
+  },
+  "Event Management": {
+    "hi": "कार्यक्रम आयोजन",
+    "group": "events"
+  },
+  "Fashion Accessories Shop": {
+    "hi": "फैशन और सजने का सामान",
+    "group": "fashion"
+  },
+  "Fast Food Shop": {
+    "hi": "फास्ट फूड और नाश्ता",
+    "group": "food"
+  },
+  "Fitness / Gym Equipment Shop": {
+    "hi": "जिम उपकरण दुकान",
+    "group": "education"
+  },
+  "Florist": {
+    "hi": "फूल वाला",
+    "group": "events"
+  },
+  "Flower Shop": {
+    "hi": "फूलों की दुकान",
+    "group": "events"
+  },
+  "Footwear Shop": {
+    "hi": "जूते चप्पल की दुकान",
+    "group": "fashion"
+  },
+  "Fruit & Vegetable Shop": {
+    "hi": "फल सब्जी दुकान",
+    "group": "food"
+  },
+  "Furniture Rental": {
+    "hi": "फर्नीचर किराये पर",
+    "group": "home"
+  },
+  "Furniture Shop": {
+    "hi": "फर्नीचर दुकान",
+    "group": "home"
+  },
+  "Gaming Store": {
+    "hi": "गेमिंग दुकान",
+    "group": "electronics"
+  },
+  "Garage / Auto Workshop": {
+    "hi": "गैराज और गाड़ी मरम्मत",
+    "group": "vehicles"
+  },
+  "General Store": {
+    "hi": "जनरल स्टोर",
+    "group": "food"
+  },
+  "Generator Shop": {
+    "hi": "जनरेटर दुकान",
+    "group": "construction"
+  },
+  "Gift & Toy Shop": {
+    "hi": "गिफ्ट और खिलौने",
+    "group": "home"
+  },
+  "Gift Wrapping Shop": {
+    "hi": "गिफ्ट पैकिंग",
+    "group": "home"
+  },
+  "Glass & Aluminium Shop": {
+    "hi": "कांच और एल्युमिनियम",
+    "group": "construction"
+  },
+  "Grocery / Kirana Store": {
+    "hi": "किराना दुकान",
+    "group": "food"
+  },
+  "Gym & Fitness Store": {
+    "hi": "जिम और फिटनेस सामान",
+    "group": "education"
+  },
+  "Handicraft Store": {
+    "hi": "हस्तशिल्प की दुकान",
+    "group": "home"
+  },
+  "Hardware Shop": {
+    "hi": "हार्डवेयर दुकान",
+    "group": "construction"
+  },
+  "Helmet & Riding Gear Shop": {
+    "hi": "हेलमेट और राइडिंग सामान",
+    "group": "vehicles"
+  },
+  "Home Decor Shop": {
+    "hi": "घर की सजावट",
+    "group": "home"
+  },
+  "Hotel / Lodge": {
+    "hi": "होटल और लॉज",
+    "group": "services"
+  },
+  "Hotel Supply Shop": {
+    "hi": "होटल सामग्री",
+    "group": "home"
+  },
+  "Household Products Store": {
+    "hi": "घरेलू सामान दुकान",
+    "group": "home"
+  },
+  "Hypermarket / Supermarket": {
+    "hi": "सुपरमार्केट",
+    "group": "food"
+  },
+  "Ice Cream Shop": {
+    "hi": "आइसक्रीम दुकान",
+    "group": "food"
+  },
+  "Industrial Equipment Shop": {
+    "hi": "औद्योगिक उपकरण",
+    "group": "construction"
+  },
+  "Industrial Safety Store": {
+    "hi": "औद्योगिक सुरक्षा सामान",
+    "group": "construction"
+  },
+  "Insurance Office": {
+    "hi": "बीमा कार्यालय",
+    "group": "services"
+  },
+  "Inverter & Battery Shop": {
+    "hi": "इन्वर्टर और बैटरी",
+    "group": "electronics"
+  },
+  "Jewelry Shop": {
+    "hi": "गहने और आभूषण",
+    "group": "fashion"
+  },
+  "Juice Shop": {
+    "hi": "जूस की दुकान",
+    "group": "food"
+  },
+  "Key Maker / Locksmith": {
+    "hi": "चाबी बनाने वाला और ताला मिस्त्री",
+    "group": "home"
+  },
+  "Kids Fashion Store": {
+    "hi": "बच्चों के कपड़े",
+    "group": "fashion"
+  },
+  "Kitchenware / Utensils Shop": {
+    "hi": "बर्तन और रसोई सामान",
+    "group": "home"
+  },
+  "LPG / Gas Service Centre": {
+    "hi": "एलपीजी गैस एजेंसी",
+    "group": "services"
+  },
+  "Laboratory Equipment Shop": {
+    "hi": "लैब उपकरण",
+    "group": "health"
+  },
+  "Ladies Boutique": {
+    "hi": "महिला बुटीक",
+    "group": "fashion"
+  },
+  "Laundry / Dry Cleaner": {
+    "hi": "धुलाई और ड्राई क्लीन",
+    "group": "services"
+  },
+  "Leather Goods Shop": {
+    "hi": "चमड़े का सामान",
+    "group": "fashion"
+  },
+  "Legal Documentation Centre": {
+    "hi": "कानूनी दस्तावेज सेवा",
+    "group": "services"
+  },
+  "Lock & Security Shop": {
+    "hi": "ताले और सुरक्षा सामान",
+    "group": "home"
+  },
+  "Lottery / Ticket Counter": {
+    "hi": "लॉटरी और टिकट काउंटर",
+    "group": "services"
+  },
+  "Luggage Shop": {
+    "hi": "सूटकेस और बैग",
+    "group": "fashion"
+  },
+  "Machine Tools Shop": {
+    "hi": "मशीन और औजार",
+    "group": "construction"
+  },
+  "Maternity Store": {
+    "hi": "गर्भवती महिलाओं के कपड़े और सामान",
+    "group": "fashion"
+  },
+  "Mattress & Bedding Shop": {
+    "hi": "गद्दा और बिस्तर",
+    "group": "home"
+  },
+  "Meat / Chicken / Fish Shop": {
+    "hi": "मांस मुर्गा और मछली",
+    "group": "food"
+  },
+  "Medical / Pharmacy": {
+    "hi": "मेडिकल स्टोर",
+    "group": "health"
+  },
+  "Medical Equipment Shop": {
+    "hi": "चिकित्सा उपकरण",
+    "group": "health"
+  },
+  "Men's Fashion Store": {
+    "hi": "पुरुषों के कपड़े",
+    "group": "fashion"
+  },
+  "Milk Booth": {
+    "hi": "दूध बूथ",
+    "group": "food"
+  },
+  "Mini Mart": {
+    "hi": "मिनी मार्ट",
+    "group": "food"
+  },
+  "Mobile Repair Shop": {
+    "hi": "मोबाइल मरम्मत",
+    "group": "electronics"
+  },
+  "Mobile Store": {
+    "hi": "मोबाइल दुकान",
+    "group": "electronics"
+  },
+  "Music Shop": {
+    "hi": "संगीत वाद्य दुकान",
+    "group": "education"
+  },
+  "Newspaper / Magazine Shop": {
+    "hi": "अखबार और पत्रिका",
+    "group": "education"
+  },
+  "Nursery / Garden Store": {
+    "hi": "पौधे और नर्सरी",
+    "group": "farming"
+  },
+  "Office Space Rental": {
+    "hi": "ऑफिस किराये पर",
+    "group": "services"
+  },
+  "Office Supply Store": {
+    "hi": "ऑफिस का सामान",
+    "group": "education"
+  },
+  "Optical Shop": {
+    "hi": "चश्मे की दुकान",
+    "group": "health"
+  },
+  "Packaging Material Shop": {
+    "hi": "पैकिंग सामग्री",
+    "group": "home"
+  },
+  "Paint Store": {
+    "hi": "पेंट की दुकान",
+    "group": "construction"
+  },
+  "Party Supply Store": {
+    "hi": "पार्टी का सामान",
+    "group": "events"
+  },
+  "Perfume Shop": {
+    "hi": "इत्र और परफ्यूम",
+    "group": "beauty"
+  },
+  "Pet Shop": {
+    "hi": "पालतू पशुओं का सामान",
+    "group": "farming"
+  },
+  "Petrol Pump": {
+    "hi": "पेट्रोल पंप",
+    "group": "vehicles"
+  },
+  "Photo Studio": {
+    "hi": "फोटो स्टूडियो",
+    "group": "events"
+  },
+  "Photography Equipment Shop": {
+    "hi": "फोटोग्राफी उपकरण",
+    "group": "electronics"
+  },
+  "Pipe & Fittings Shop": {
+    "hi": "पाइप और फिटिंग",
+    "group": "construction"
+  },
+  "Plastic Products Shop": {
+    "hi": "प्लास्टिक सामान",
+    "group": "home"
+  },
+  "Plumbing Store": {
+    "hi": "नल और प्लम्बिंग सामग्री",
+    "group": "construction"
+  },
+  "Pooja Samagri Shop": {
+    "hi": "पूजा सामग्री दुकान",
+    "group": "events"
+  },
+  "Pop-up Store": {
+    "hi": "अस्थायी स्टॉल",
+    "group": "food"
+  },
+  "Printer Repair Shop": {
+    "hi": "प्रिंटर मरम्मत",
+    "group": "electronics"
+  },
+  "Printing Press": {
+    "hi": "प्रिंटिंग प्रेस",
+    "group": "services"
+  },
+  "Property Rental Office": {
+    "hi": "मकान और दुकान किराये पर",
+    "group": "services"
+  },
+  "RO & Water Purifier Shop": {
+    "hi": "आरओ और वाटर प्यूरीफायर",
+    "group": "electronics"
+  },
+  "RO Service Shop": {
+    "hi": "आरओ मरम्मत और सर्विस",
+    "group": "electronics"
+  },
+  "RO Water Purifier Shop": {
+    "hi": "आरओ वाटर प्यूरीफायर दुकान",
+    "group": "electronics"
+  },
+  "Real Estate Office": {
+    "hi": "जमीन और मकान प्रॉपर्टी",
+    "group": "services"
+  },
+  "Recycling Store": {
+    "hi": "रीसाइक्लिंग केंद्र",
+    "group": "services"
+  },
+  "Refrigerator Repair Shop": {
+    "hi": "फ्रिज मरम्मत",
+    "group": "electronics"
+  },
+  "Religious Book Shop": {
+    "hi": "धार्मिक किताबें",
+    "group": "education"
+  },
+  "Religious Store": {
+    "hi": "धार्मिक सामान",
+    "group": "events"
+  },
+  "Restaurant": {
+    "hi": "रेस्टोरेंट और भोजनालय",
+    "group": "food"
+  },
+  "Restaurant Equipment Shop": {
+    "hi": "रेस्टोरेंट उपकरण",
+    "group": "home"
+  },
+  "Restaurant Supply Shop": {
+    "hi": "रेस्टोरेंट सामग्री",
+    "group": "home"
+  },
+  "Safety Equipment Shop": {
+    "hi": "सुरक्षा उपकरण",
+    "group": "construction"
+  },
+  "Salon / Barber": {
+    "hi": "सैलून",
+    "group": "beauty"
+  },
+  "Salon Supply Shop": {
+    "hi": "सैलून सामग्री",
+    "group": "beauty"
+  },
+  "Sanitaryware Shop": {
+    "hi": "बाथरूम और सैनिटरी सामान",
+    "group": "construction"
+  },
+  "School Bag & Supplies Shop": {
+    "hi": "स्कूल बैग और सामग्री",
+    "group": "education"
+  },
+  "School Uniform Shop": {
+    "hi": "स्कूल यूनिफॉर्म",
+    "group": "education"
+  },
+  "Scrap / Kabadi Shop": {
+    "hi": "कबाड़ी और रद्दी",
+    "group": "services"
+  },
+  "Second-hand Goods Store": {
+    "hi": "पुराना इस्तेमाल किया सामान",
+    "group": "home"
+  },
+  "Shoe Repair Shop": {
+    "hi": "मोची और जूते मरम्मत",
+    "group": "fashion"
+  },
+  "Signboard / Flex Shop": {
+    "hi": "साइनबोर्ड और फ्लेक्स",
+    "group": "services"
+  },
+  "Solar Store": {
+    "hi": "सोलर उपकरण",
+    "group": "electronics"
+  },
+  "Sports Shop": {
+    "hi": "खेल का सामान",
+    "group": "education"
+  },
+  "Surgical Equipment Shop": {
+    "hi": "सर्जिकल उपकरण",
+    "group": "health"
+  },
+  "Sweet Shop": {
+    "hi": "मिठाई दुकान",
+    "group": "food"
+  },
+  "Tailoring Shop": {
+    "hi": "दर्जी और सिलाई",
+    "group": "fashion"
+  },
+  "Tent House": {
+    "hi": "टेंट हाउस",
+    "group": "events"
+  },
+  "Textile / Fabric Shop": {
+    "hi": "कपड़े का थान और फैब्रिक",
+    "group": "fashion"
+  },
+  "Thrift Store": {
+    "hi": "पुराने सस्ते कपड़े और सामान",
+    "group": "home"
+  },
+  "Tiles & Flooring Shop": {
+    "hi": "टाइल्स और फर्श",
+    "group": "construction"
+  },
+  "Timber / Wood Shop": {
+    "hi": "लकड़ी और टिम्बर",
+    "group": "construction"
+  },
+  "Tractor / Farm Equipment Shop": {
+    "hi": "ट्रैक्टर और कृषि उपकरण",
+    "group": "farming"
+  },
+  "Travel Agency": {
+    "hi": "ट्रैवल एजेंसी",
+    "group": "services"
+  },
+  "Travel Document Centre": {
+    "hi": "यात्रा दस्तावेज सेवा",
+    "group": "services"
+  },
+  "Tyre Shop": {
+    "hi": "टायर दुकान",
+    "group": "vehicles"
+  },
+  "Used Electronics Store": {
+    "hi": "पुराना इलेक्ट्रॉनिक सामान",
+    "group": "electronics"
+  },
+  "Used Furniture Store": {
+    "hi": "पुराना फर्नीचर",
+    "group": "home"
+  },
+  "Vending Machine": {
+    "hi": "वेंडिंग मशीन",
+    "group": "food"
+  },
+  "Veterinary Medicine Store": {
+    "hi": "पशु दवा दुकान",
+    "group": "farming"
+  },
+  "Video Game Shop": {
+    "hi": "वीडियो गेम दुकान",
+    "group": "electronics"
+  },
+  "Washing Machine Repair Shop": {
+    "hi": "वॉशिंग मशीन मरम्मत",
+    "group": "electronics"
+  },
+  "Watch Repair Shop": {
+    "hi": "घड़ी मरम्मत",
+    "group": "fashion"
+  },
+  "Watch Shop": {
+    "hi": "घड़ी की दुकान",
+    "group": "fashion"
+  },
+  "Water Purifier Service": {
+    "hi": "वाटर प्यूरीफायर सर्विस",
+    "group": "electronics"
+  },
+  "Water Supplier": {
+    "hi": "पानी सप्लायर",
+    "group": "food"
+  },
+  "Water Tank Shop": {
+    "hi": "पानी टंकी दुकान",
+    "group": "construction"
+  },
+  "Web / Computer Service Centre": {
+    "hi": "वेबसाइट और कंप्यूटर सेवा",
+    "group": "electronics"
+  },
+  "Wedding Photography Service": {
+    "hi": "शादी फोटो और वीडियो",
+    "group": "events"
+  },
+  "Wedding Supply Store": {
+    "hi": "शादी का सामान",
+    "group": "events"
+  },
+  "Welding / Fabrication Shop": {
+    "hi": "वेल्डिंग और लोहे का काम",
+    "group": "construction"
+  },
+  "Wholesale Store": {
+    "hi": "थोक की दुकान",
+    "group": "food"
+  },
+  "Wood / Timber Shop": {
+    "hi": "लकड़ी की दुकान",
+    "group": "construction"
+  }
+}

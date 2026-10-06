@@ -152,6 +152,17 @@ include __DIR__ . '/inc/head.php';
     <button class="btn btn-sm" id="installNo" style="background:transparent;color:var(--muted);padding:8px"><?= t('Not now', 'अभी नहीं') ?></button>
   </div>
 
+  <div class="secthead" style="margin-top:20px">
+    <h2><?= t('Shop categories, products & prices', 'दुकान की categories, सामान और दाम') ?></h2>
+    <p><?= t('Kirana, clothes, medical, hardware and every local shop — choose a shop type first.', 'किराना, कपड़े, मेडिकल, हार्डवेयर और हर स्थानीय दुकान — पहले दुकान का प्रकार चुनिए।') ?></p>
+  </div>
+  <div class="chips" style="margin-bottom:18px">
+    <?php foreach ([['food','Food & kirana','राशन और खाना'],['fashion','Clothes & shoes','कपड़े और जूते'],['health','Medical','दवा और स्वास्थ्य'],['electronics','Electronics','इलेक्ट्रॉनिक्स'],['construction','Hardware','हार्डवेयर'],['home','Household','घरेलू सामान']] as $cat): ?>
+      <a class="chip" href="/bazaar.php?group=<?= h($cat[0]) ?>"><?= h(t($cat[1], $cat[2])) ?></a>
+    <?php endforeach; ?>
+    <a class="chip on" href="/bazaar.php"><?= t('All shop categories →', 'सभी दुकान categories →') ?></a>
+  </div>
+
   <!-- ============ 20 minute wala nashta ============ -->
   <?php if ($chaat): ?>
     <div class="secthead" style="margin-top:4px">

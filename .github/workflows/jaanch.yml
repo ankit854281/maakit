@@ -45,7 +45,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: pdo_mysql, mysqli, gd, zip, mbstring
+          extensions: pdo_mysql, pdo_sqlite, mysqli, gd, zip, mbstring
           coverage: none
 
       # ---------- 1. हर PHP फ़ाइल का व्याकरण ----------
@@ -64,6 +64,9 @@ jobs:
             exit 1
           fi
           echo "✅ सारी PHP फ़ाइलें ठीक हैं"
+
+      - name: दुकान categories और दाम की जाँच
+        run: php tests/catalog.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi

@@ -55,6 +55,10 @@ export const PAGES = [
   { path: '/sewa.php?s=mistri', naam: 'मिस्त्री',               chahiye: ['Maakit'], nahi: ['किताब नहीं मिली', 'Book not found'] },
   { path: '/sewa.php?s=photo',  naam: 'फोटो / वीडियो',          chahiye: ['Maakit'], nahi: ['किताब नहीं मिली', 'Book not found'] },
 
+  // ---------- shop catalogue ----------
+  { path: '/bazaar.php', naam: 'दुकान categories और दाम', chahiye: ['Maakit'] },
+  { path: '/bazaar.php?type=Grocery%20%2F%20Kirana%20Store&lang=hi', naam: 'किराना सामान और दाम', chahiye: ['आटा', 'Maakit'] },
+
   // ---------- baaki ----------
   { path: '/books.php',     naam: 'पुरानी किताबें', chahiye: ['Maakit'] },
   { path: '/book-add.php',  naam: 'किताब डालिए',    chahiye: ['Maakit'] },

@@ -3,12 +3,16 @@ require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/search.php';
+require_once __DIR__ . '/inc/catalog.php';
 
 $q = isset($_GET['q']) && is_string($_GET['q']) ? mb_substr(trim($_GET['q']), 0, 100) : '';
 $page_title = t('Search — Maakit', 'खोजिए — Maakit');
 $tab = 'kaam';
 $products = $bookings = $shops = $matched_categories = [];
+$catalog_matches = [];
 if ($q !== '') {
+    try { $catalog_matches = catalog_filter(catalog_load($pdo), '', '', '', $q); }
+    catch (PDOException $e) { error_log('Maakit search catalog: ' . $e->getMessage()); }
     foreach (items_all($pdo) as $item) {
         if (market_matches($q, $item['name'] . ' ' . $item['words'] . ' ' . $item['unit'])) $products[] = $item;
     }
@@ -41,7 +45,7 @@ if ($q !== '') {
             try {
                 $pdo->prepare("INSERT INTO search_log (q, hits, times) VALUES (?,?,1)
                                ON DUPLICATE KEY UPDATE times = times + 1, hits = VALUES(hits)")
-                    ->execute([$sq, count($products) + count($bookings) + count($shops)]);
+                    ->execute([$sq, count($products) + count($bookings) + count($shops) + count($catalog_matches)]);
             } catch (Throwable $e) { /* bahi na likhe to khoj rukni nahi chahiye */ }
         }
     }
@@ -58,6 +62,13 @@ include __DIR__ . '/inc/head.php';
     <p class="lead"><?= t('Search in Hindi or English for goods, a booking or a local shop.', 'सामान, बुकिंग या स्थानीय दुकान के लिए हिंदी या English में खोजिए।') ?></p>
   <?php else: ?>
     <p class="lead"><?= t('Results for: ', 'खोज: ') . h($q) ?></p>
+    <?php if ($catalog_matches): ?>
+      <div class="box" style="margin:16px 0">
+        <h2><?= t('Shop catalogue & prices', 'दुकान का सामान और दाम') ?></h2>
+        <p><?= count($catalog_matches) ?> <?= t('catalogue matches. Actual prices depend on the local shop.', 'सामान/सेवा entries मिलीं। असली दाम स्थानीय दुकान के हैं।') ?></p>
+        <a class="btn btn-brand btn-sm" href="<?= h(catalog_url(['q' => $q])) ?>"><?= t('See categories, products & prices', 'Categories, सामान और दाम देखिए') ?></a>
+      </div>
+    <?php endif; ?>
     <?php if ($products): ?>
       <h2><?= t('Goods delivered from a shop', 'दुकान से सामान मँगाइए') ?></h2>
       <p class="help"><?= t('Goods are charged at the shop’s price; delivery is separate.', 'सामान का दाम दुकान वाला होगा; डिलीवरी चार्ज अलग है।') ?></p>
@@ -89,13 +100,14 @@ include __DIR__ . '/inc/head.php';
       </div>
       <a class="btn btn-sm" href="/directory.php?q=<?= h(rawurlencode($q)) ?>"><?= t('Browse the local directory', 'स्थानीय डायरेक्टरी देखिए') ?></a>
     <?php endif; ?>
-    <?php if (!$products && !$bookings && !$shops && !$matched_categories): ?>
+    <?php if (!$products && !$bookings && !$shops && !$matched_categories && !$catalog_matches): ?>
       <div class="box"><p><?= t('Nothing listed yet. You can still send your requirement.', 'अभी लिस्ट में नहीं मिला। फिर भी अपनी जरूरत भेज सकते हैं।') ?></p></div>
     <?php endif; ?>
   <?php endif; ?>
   <div class="chips" style="margin-top:20px">
     <a class="chip" href="/order.php"><?= t('Send a list or photo', 'लिस्ट या फोटो भेजिए') ?></a>
     <a class="chip" href="/sewa.php"><?= t('All bookings', 'सभी बुकिंग') ?></a>
+    <a class="chip" href="/bazaar.php"><?= t('Shop categories & prices', 'दुकान की categories और दाम') ?></a>
     <a class="chip" href="/directory.php"><?= t('All local shops', 'सभी स्थानीय दुकानें') ?></a>
     <a class="chip" href="/area.php"><?= t('Request Maakit in your village', 'अपने गाँव में Maakit माँगिए') ?></a>
   </div>
