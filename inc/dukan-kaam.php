@@ -13,7 +13,11 @@ $naye = (int)$naye->fetch()['c'];
 
 $j      = dukan_jod($pdo, $bid, $aaj, $aaj);
 $lena   = dukan_lena_hai($pdo, $bid);
-$kulItems = $pdo->prepare("SELECT COUNT(*) c, COALESCE(SUM(stock='khatam'),0) k FROM shop_items WHERE business_id=?");
+$kulItems = $pdo->prepare("SELECT
+      COALESCE(SUM(active=1 AND stock='hai' AND price>0),0) AS dikh,
+      COALESCE(SUM(active=1 AND price<=0),0)               AS baaki,
+      COALESCE(SUM(active=1 AND stock='khatam'),0)         AS k
+    FROM shop_items WHERE business_id=?");
 $kulItems->execute([$bid]);
 $ki = $kulItems->fetch();
 ?>
@@ -69,20 +73,27 @@ $ki = $kulItems->fetch();
   </div>
 
   <!-- सामान की हालत -->
-  <div class="box" style="margin-top:12px">
-    <?php if (!(int)$ki['c']): ?>
-      <b>अभी आपका कोई सामान नहीं चढ़ा है</b>
-      <p class="help" style="margin-top:6px">ग्राहक को आपका दाम तब तक नहीं दिखेगा।
-        Maakit की सूची से टिक करके सिर्फ़ दाम भर दीजिए — नाम टाइप नहीं करना पड़ेगा।</p>
-      <a class="btn btn-brand" href="/shop.php?tab=saaman" style="margin-top:10px">सामान जोड़िए</a>
+  <div class="box" style="margin-top:12px<?= (int)$ki['baaki'] ? ';border-color:var(--gold)' : '' ?>">
+    <?php if (empty($b['shop_type'])): ?>
+      <b>पहले अपनी दुकान की किस्म बता दीजिए</b>
+      <p class="help" style="margin-top:6px">बताते ही उस किस्म का <b>सारा सामान</b> आपकी दुकान
+        में अपने आप आ जाएगा। फिर आपको सिर्फ़ दाम भरना है — एक-एक चीज़ जोड़नी नहीं पड़ेगी।</p>
+      <a class="btn btn-brand" href="/shop.php?tab=saaman" style="margin-top:10px">किस्म चुनिए</a>
+    <?php elseif ((int)$ki['baaki']): ?>
+      <b><?= (int)$ki['baaki'] ?> सामान का दाम भरना बाकी है</b>
+      <p class="help" style="margin-top:6px">
+        ग्राहक को अभी <b><?= (int)$ki['dikh'] ?></b> चीज़ें दिख रही हैं।
+        बिना दाम वाला सामान ग्राहक को नहीं दिखता, इसलिए जल्दी की ज़रूरत नहीं —
+        रोज़ थोड़ा-थोड़ा भरते रहिए।</p>
+      <a class="btn btn-brand" href="/shop.php?tab=saaman" style="margin-top:10px">दाम भरिए</a>
     <?php else: ?>
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
         <div style="flex:1;min-width:150px">
-          <b><?= (int)$ki['c'] ?> सामान चढ़ा है</b>
+          <b><?= (int)$ki['dikh'] ?> सामान ग्राहक को दिख रहा है</b>
           <?php if ((int)$ki['k']): ?>
             <div class="meta" style="color:var(--brand)"><?= (int)$ki['k'] ?> पर “ख़त्म” लगा है</div>
           <?php else: ?>
-            <div class="meta">सब उपलब्ध है</div>
+            <div class="meta">सब का दाम भरा हुआ है</div>
           <?php endif; ?>
         </div>
         <a class="btn btn-sm" style="background:#EFEAE0" href="/shop.php?tab=saaman">देखिए / बदलिए</a>

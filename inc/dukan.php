@@ -18,12 +18,64 @@
 //  nahi rakhta.
 // ============================================================
 
-/** Dukaan ka apna saaman. $live = sirf wo jo abhi bik sakta hai. */
+/**
+ * Dukaan ka apna saaman.
+ *   $live = true  → sirf wo jo grahak ko dikhna chahiye
+ *                   (daam bhara hua, chalu, aur khatam nahi)
+ *   $live = false → sab, dukandar ke panel ke liye
+ *
+ * Daam 0 wala grahak ko kabhi nahi dikhta — warna dukaan
+ * adhoori lagti hai aur bharosa jaata hai.
+ */
 function dukan_items(PDO $pdo, $bid, $live = false) {
     $sql = "SELECT * FROM shop_items WHERE business_id=?";
-    if ($live) $sql .= " AND active=1 AND stock='hai'";
+    if ($live) $sql .= " AND active=1 AND stock='hai' AND price > 0";
     $sql .= " ORDER BY sort_no, sold DESC, name";
     $st = $pdo->prepare($sql);
+    $st->execute([(int)$bid]);
+    return $st->fetchAll();
+}
+
+/**
+ * Kism chunte hi us kism ka SAARA saaman dukaan me chadha do.
+ * Dukandar ko ek-ek karke jodna nahi padta — wo sirf daam bharta hai.
+ * Daam 0 rehta hai, isliye grahak ko tab tak kuchh nahi dikhta.
+ *
+ * Jo naam pehle se chadha hai wo dobara nahi aata.
+ * Wapas karta hai: kitne naye chadhe.
+ */
+function dukan_kism_bharo(PDO $pdo, $bid, $slug) {
+    $bid = (int)$bid;
+    $st = $pdo->prepare("SELECT id, name_en, name_hi, unit_hint, sort_no
+                           FROM catalog_items WHERE shop_type=? ORDER BY sort_no");
+    $st->execute([$slug]);
+    $saare = $st->fetchAll();
+    if (!$saare) return 0;
+
+    // ek dukaan me 400 ki hadd — usse jyada na chadhe
+    $cnt = $pdo->prepare("SELECT COUNT(*) c FROM shop_items WHERE business_id=?");
+    $cnt->execute([$bid]);
+    $jagah = 400 - (int)$cnt->fetch()['c'];
+    if ($jagah <= 0) return 0;
+
+    $ins = $pdo->prepare("INSERT IGNORE INTO shop_items
+            (business_id, cat_id, name, unit, price, stock, active, sort_no)
+            VALUES (?,?,?,?,0,'hai',1,?)");
+    $naye = 0;
+    foreach ($saare as $c) {
+        if ($naye >= $jagah) break;
+        $nm = ($c['name_hi'] !== '' && $c['name_hi'] !== null) ? $c['name_hi'] : $c['name_en'];
+        $ins->execute([$bid, (int)$c['id'], $nm, $c['unit_hint'], (int)$c['sort_no']]);
+        if ($ins->rowCount()) $naye++;
+    }
+    return $naye;
+}
+
+/** Jis saaman ka daam abhi nahi bhara (dukandar ko bharna hai) */
+function dukan_daam_baaki(PDO $pdo, $bid, $limit = 500) {
+    $st = $pdo->prepare("SELECT * FROM shop_items
+                          WHERE business_id=? AND price <= 0 AND active=1
+                          ORDER BY sort_no, name LIMIT " . (int)$limit);
     $st->execute([(int)$bid]);
     return $st->fetchAll();
 }

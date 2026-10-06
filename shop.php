@@ -66,16 +66,67 @@ if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         redirect('/shop.php?tab=saaman' . (post('q') !== '' ? '&q=' . urlencode(post('q')) : ''));
     }
 
-    // --- दुकान किस किस्म की है (एक बार चुनना है) ---
+    // --- दुकान किस किस्म की है ---
+    // Kism chunte hi us kism ka SAARA saaman apne aap chadh jata hai.
+    // Dukandar ko jodna nahi padta — wo bas daam bharta hai.
     if ($do === 'kism') {
         $k = trim(post('shop_type'));
         $ok = $pdo->prepare("SELECT COUNT(*) c FROM catalog_types WHERE slug=?");
         $ok->execute([$k]);
         if ($k === '' || (int)$ok->fetch()['c']) {
-            $pdo->prepare("UPDATE businesses SET shop_type=?, shop_updated=NOW() WHERE id=?")
+            $pdo->prepare("UPDATE businesses SET shop_type=?, items_on=1, shop_updated=NOW() WHERE id=?")
                 ->execute([$k ?: null, $bid]);
-            flash($k ? 'किस्म सेव हो गई — अब आपका ही सामान पहले दिखेगा।' : 'किस्म हटा दी।');
+            if ($k) {
+                $naye = dukan_kism_bharo($pdo, $bid, $k);
+                flash($naye
+                    ? "$naye सामान आपकी दुकान में आ गए। अब सिर्फ़ दाम भरना है।"
+                    : 'किस्म सेव हो गई।');
+            } else {
+                flash('किस्म हटा दी।');
+            }
         }
+        redirect('/shop.php?tab=saaman');
+    }
+
+    // --- एक साथ कई दाम भरना (सबसे ज़्यादा इस्तेमाल होने वाला काम) ---
+    if ($do === 'daam_bharo') {
+        $daam  = (array)($_POST['daam'] ?? []);
+        $naap  = (array)($_POST['naap'] ?? []);
+        $nahi  = (array)($_POST['nahi'] ?? []);     // "नहीं रखता"
+        $bhare = 0; $hataye = 0;
+
+        $upd  = $pdo->prepare("UPDATE shop_items SET price=?, unit=? WHERE id=? AND business_id=?");
+        $updD = $pdo->prepare("UPDATE shop_items SET price=? WHERE id=? AND business_id=?");
+        $off  = $pdo->prepare("UPDATE shop_items SET active=0 WHERE id=? AND business_id=?");
+
+        foreach ($daam as $sid => $p) {
+            $sid = (int)$sid;
+            if (isset($nahi[$sid])) { $off->execute([$sid, $bid]); $hataye++; continue; }
+            $p = (int)$p;
+            if ($p <= 0 || $p > 200000) continue;
+            // naap tabhi badliye jab bhara hua aaya ho — warna purana hi rehne dijiye
+            $u = trim((string)($naap[$sid] ?? ''));
+            if ($u !== '') { $upd->execute([$p, $u, $sid, $bid]); $kiya = $upd->rowCount(); }
+            else           { $updD->execute([$p, $sid, $bid]);    $kiya = $updD->rowCount(); }
+            if ($kiya) $bhare++;
+        }
+        // jo sirf "nahi rakhta" me the, daam ke bina
+        foreach ($nahi as $sid => $_) {
+            if (!isset($daam[$sid])) { $off->execute([(int)$sid, $bid]); $hataye++; }
+        }
+        $pdo->prepare("UPDATE businesses SET shop_updated=NOW() WHERE id=?")->execute([$bid]);
+
+        $m = [];
+        if ($bhare)  $m[] = "$bhare का दाम भर गया";
+        if ($hataye) $m[] = "$hataye हटा दिए";
+        flash($m ? implode(', ', $m) . '।' : 'कुछ भरा नहीं गया।');
+        redirect('/shop.php?tab=saaman' . (get('p') ? '&p=' . (int)get('p') : ''));
+    }
+
+    // --- हटाया हुआ सामान वापस लाना ---
+    if ($do === 'wapas') {
+        $pdo->prepare("UPDATE shop_items SET active=1 WHERE id=? AND business_id=?")
+            ->execute([(int)post('id'), $bid]);
         redirect('/shop.php?tab=saaman');
     }
 
