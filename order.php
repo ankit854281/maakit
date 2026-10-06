@@ -44,6 +44,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     elseif (!$village)                 { $err = t('Please choose your village.', 'अपना गाँव चुनिए।'); }
     elseif (mb_strlen($items_text) < 3 && !$photo){ $err = t('Pick at least one item, write it, or send a photo.', 'कम से कम एक सामान चुनिए, लिख दीजिए या फ़ोटो भेजिए।'); }
     else {
+        // ---- ek hi number se bahut saare order na aayein ----
+        // Launch ke din koi mazaak me 50 order daal de to BPO ka poora
+        // din kharab ho jata hai. Asli grahak ek ghante me 5 se zyada
+        // kabhi nahi karta.
+        $tz = $pdo->prepare("SELECT COUNT(*) c FROM orders
+                              WHERE mobile=? AND created_at > NOW() - INTERVAL 1 HOUR");
+        $tz->execute([$mobile]);
+        $tez = (int)($tz->fetch()['c'] ?? 0);
+    }
+
+    if (!$err && isset($tez) && $tez >= 5) {
+        $err = t('Too many orders from this number just now. Please call us instead.',
+                 'इस नंबर से अभी बहुत ऑर्डर आ चुके हैं। एक घंटे बाद कोशिश कीजिए, या हमें कॉल कर लीजिए — ' . MAAKIT_NUMBER_SHOW);
+    }
+
+    if (!$err) {
         $st = $pdo->prepare("SELECT COUNT(*) c FROM orders WHERE mobile=?");
         $st->execute([$mobile]);
         $first = ((int)$st->fetch()['c'] === 0) ? 1 : 0;

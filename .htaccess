@@ -1,0 +1,109 @@
+# ============================================================
+# Maakit — website ki jad ka .htaccess
+#
+# Teen kaam karta hai:
+#   1. HTTPS zaroori — taaki grahak ka number, pata aur password
+#      raaste me koi padh na sake
+#   2. Jo file kisi ko nahi dikhni chahiye, wo band
+#   3. Browser ko kuchh surakhsha ke niyam batana
+#
+# Ye GoDaddy ke Apache par chalta hai. Agar hosting badle aur
+# kuchh toote, to is file ka naam badal dene se sab purana jaisa
+# ho jata hai.
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. HTTPS zaroori
+# ------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # pehle se https ho to kuchh mat kijiye
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
+
+# ------------------------------------------------------------
+# 2. Jo file bahar se nahi khulni chahiye
+# ------------------------------------------------------------
+# config.php me database ka password hai. PHP file khul kar kuchh
+# dikhati to nahi, par agar kabhi PHP band pada to saaf-saaf dikh
+# jata. Isliye seedhe hi band.
+<FilesMatch "^(config\.php|config\.sample\.php|composer\.(json|lock)|package(-lock)?\.json|\.env.*|.*\.(sql|log|bak|old|zip|tar|gz|ini|yml|yaml|md|txt))$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# ...par ye do khuli rehni chahiye
+<Files "robots.txt">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+</Files>
+<Files "sitemap.xml">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+</Files>
+
+# chhupi hui file (.git, .env wagairah)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule "(^|/)\.(?!well-known)" - [F,L]
+</IfModule>
+
+# folder ki soochi kisi ko mat dikhaiye
+Options -Indexes
+
+# ------------------------------------------------------------
+# 3. Browser ko surakhsha ke niyam
+# ------------------------------------------------------------
+<IfModule mod_headers.c>
+  # doosri website hamara pannaa apne andar na khole (thagi se bachav)
+  Header always set X-Frame-Options "SAMEORIGIN"
+  # browser file ka type khud mat guess kijiye
+  Header always set X-Content-Type-Options "nosniff"
+  # doosri website ko pura pata mat bhejiye
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # camera, mic, jagah — jab tak khud na maangein, band
+  Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(self), payment=()"
+</IfModule>
+
+# ------------------------------------------------------------
+# 4. Cookie ki surakhsha
+# ------------------------------------------------------------
+<IfModule mod_php.c>
+  php_flag session.cookie_httponly on
+  php_flag session.cookie_secure on
+  php_value session.cookie_samesite "Lax"
+</IfModule>
+<IfModule mod_php8.c>
+  php_flag session.cookie_httponly on
+  php_flag session.cookie_secure on
+  php_value session.cookie_samesite "Lax"
+</IfModule>
+
+# ------------------------------------------------------------
+# 5. Tasveer aur CSS browser me ruki rahein — net kam lagta hai
+# ------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg        "access plus 30 days"
+  ExpiresByType image/png         "access plus 30 days"
+  ExpiresByType image/webp        "access plus 30 days"
+  ExpiresByType image/svg+xml     "access plus 30 days"
+  ExpiresByType text/css          "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType font/woff2        "access plus 90 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json image/svg+xml
+</IfModule>

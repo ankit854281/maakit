@@ -1,0 +1,9 @@
+# inc/ me website ka andar ka kaam hai — browser se koi na khole.
+# Yahan ki file sirf doosri PHP file ke andar se chalti hai.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

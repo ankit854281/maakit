@@ -5,9 +5,21 @@ $page_title = $page_title ?? 'Maakit पैनल';
 $no_tabbar = true;                 // panel me neeche ka customer menu nahi
 include __DIR__ . '/head.php';
 $role = $u['role'];
+
+// ---- hafte me ek baar database ki nakal, apne aap ----
+// Malik panel kholta hai to jaanch leta hai ki pichhli nakal kitni
+// purani hai. 7 din se purani ho to nayi bana deta hai. Isse na cron
+// chahiye, na kuchh yaad rakhna padta hai.
+if ($role === 'admin' && isset($pdo)) {
+    @include_once __DIR__ . '/nakal-fn.php';
+    if (function_exists('nakal_apne_aap')) {
+        try { nakal_apne_aap($pdo, dirname(__DIR__, 2) . '/maakit-backups/db'); }
+        catch (Throwable $e) { /* nakal na bane to panel ruke nahi */ }
+    }
+}
 $menu = [];
 if ($role === 'admin') {
-    $menu = ['/admin/dash.php' => 'Dashboard', '/muneem.php' => 'मुनीम', '/admin/' => 'ऑर्डर', '/bpo/bookings.php' => 'बुकिंग',
+    $menu = ['/admin/dash.php' => 'Dashboard', '/muneem.php' => 'मुनीम', '/nakal.php' => 'नक़ल', '/admin/' => 'ऑर्डर', '/bpo/bookings.php' => 'बुकिंग',
              '/admin/items.php' => 'सामान', '/admin/photos.php' => 'फ़ोटो', '/admin/daam.php' => 'दाम/ब्रांड', '/admin/books.php' => 'किताबें',
              '/admin/transport.php' => 'गाड़ियाँ', '/admin/banners.php' => 'ऑफ़र', '/admin/areas.php' => 'नए गाँव',
              '/admin/summary.php' => 'हिसाब', '/admin/businesses.php' => 'दुकान/कारीगर',
