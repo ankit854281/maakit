@@ -1,0 +1,101 @@
+# ============================================================
+# Maakit — jaanch karne wala bot
+#
+# Har 15 minute: nabz dekhta hai (4 main page khul rahe hain?)
+# Subah 7 aur shaam 6: poori jaanch (har page, har dibba, har link)
+#
+# Kuchh toota to GitHub par ek "issue" khol deta hai — uski khabar
+# aapke email aur GitHub ke app dono par aa jati hai. Theek hote hi
+# wahi issue band kar deta hai.
+#
+# Khabar ek hi baar jati hai. Site 2 ghante band rahe to bhi ek hi
+# message milega, aath nahi.
+#
+# Ye website me kuchh badalta NAHI hai — sirf dekhta hai.
+# ============================================================
+name: Maakit ki jaanch
+
+on:
+  schedule:
+    # har 15 minute — nabz
+    - cron: '*/15 * * * *'
+    # subah 7:10 aur shaam 6:10 (Bharat ka samay) — poori jaanch
+    - cron: '40 1,12 * * *'
+  workflow_dispatch:        # haath se chalane ke liye bhi
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: maakit-jaanch
+  cancel-in-progress: false
+
+jobs:
+  jaanch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: kaun si jaanch
+        id: mode
+        run: |
+          if [ "${{ github.event.schedule }}" = "40 1,12 * * *" ]; then
+            echo "mode=poori" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=nabz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: browser lagaiye
+        if: steps.mode.outputs.mode == 'poori'
+        run: npm i -D playwright@1.47.2 && npx playwright install --with-deps chromium
+
+      - name: jaanch kijiye
+        run: node .github/jaanch/jaanch.mjs ${{ steps.mode.outputs.mode }}
+
+      - name: khabar kijiye
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const n = JSON.parse(fs.readFileSync('jaanch-nateeja.json', 'utf8'));
+            const TITLE = '⚠️ Maakit — कुछ टूटा है';
+            const { owner, repo } = context.repo;
+
+            // pehle se khula hua issue hai?
+            const { data: khule } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: 'jaanch', per_page: 20,
+            });
+            const purana = khule.find(i => i.title === TITLE);
+
+            if (n.theek) {
+              if (purana) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: purana.number,
+                  body: `✅ **अब सब ठीक है।**\n\n${n.dekhe} पेज देखे, कोई गड़बड़ी नहीं मिली।\n\n_${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}_`,
+                });
+                await github.rest.issues.update({ owner, repo, issue_number: purana.number, state: 'closed' });
+              }
+              core.info('सब ठीक है');
+              return;
+            }
+
+            const lines = n.galtiyan.map(g => `- **${g.naam}** — ${g.baat}`).join('\n');
+            const body =
+              `वेबसाइट देखने पर **${n.galtiyan.length} गड़बड़ी** मिली:\n\n${lines}\n\n` +
+              `---\n` +
+              `देखे गए पेज: ${n.dekhe} · जाँच: ${n.mode === 'nabz' ? 'नब्ज़ (हर 15 मिनट)' : 'पूरी (दिन में दो बार)'}\n` +
+              `समय: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n\n` +
+              `ठीक होते ही यह अपने आप बंद हो जाएगा।`;
+
+            if (purana) {
+              // wahi issue, nayi jaankari — naya message nahi, taaki bheed na ho
+              await github.rest.issues.update({ owner, repo, issue_number: purana.number, body });
+              core.info('purane issue me jaankari badal di');
+            } else {
+              await github.rest.issues.create({ owner, repo, title: TITLE, body, labels: ['jaanch'] });
+              core.info('naya issue khol diya');
+            }
