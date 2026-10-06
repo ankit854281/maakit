@@ -115,7 +115,7 @@ include __DIR__ . '/inc/head.php';
       'Order anything from any shop — we bring it. You pay only the delivery.',
       'किसी भी दुकान से कुछ भी मँगाइए — हम ले आएँगे। आप सिर्फ़ डिलीवरी का पैसा दीजिए।') ?></p>
 
-    <form class="hsearch" action="/order.php" method="get">
+    <form class="hsearch" action="/search.php" method="get">
       <span class="ic"><?= svc_icon('search', 20) ?></span>
       <input type="text" name="q" id="q" placeholder="<?= h(t('What do you need? Atta, medicine, Bolero…', 'क्या चाहिए? आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
       <button class="go" type="submit"><?= t('Search', 'खोजिए') ?></button>
