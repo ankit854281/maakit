@@ -39,23 +39,43 @@ if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         redirect('/shop.php?tab=saaman');
     }
 
-    // --- Maakit की सूची से कई सामान एक बार में (सिर्फ़ दाम भरे हुए) ---
+    // --- बड़ी सूची से कई सामान एक बार में (सिर्फ़ दाम भरे हुए) ---
     if ($do === 'item_bulk') {
         $daam = (array)($_POST['daam'] ?? []);
+        $naap = (array)($_POST['naap'] ?? []);
         $jude = 0;
-        foreach ($daam as $iid => $p) {
+        foreach ($daam as $cid => $p) {
             $p = (int)$p;
             if ($p <= 0) continue;
-            $st = $pdo->prepare("SELECT name, unit FROM items WHERE id=? AND active=1");
-            $st->execute([(int)$iid]);
+            $st = $pdo->prepare("SELECT id, name_en, name_hi, unit_hint FROM catalog_items WHERE id=?");
+            $st->execute([(int)$cid]);
             if (!$it = $st->fetch()) continue;
-            list($ok) = dukan_item_save($pdo, $bid, [
-                'name' => $it['name'], 'unit' => $it['unit'], 'price' => $p, 'item_id' => (int)$iid,
+            $nm = ($it['name_hi'] !== '' && $it['name_hi'] !== null) ? $it['name_hi'] : $it['name_en'];
+            list($ok, $msg, $sid) = dukan_item_save($pdo, $bid, [
+                'name'  => $nm,
+                'unit'  => trim((string)($naap[$cid] ?? '')) ?: $it['unit_hint'],
+                'price' => $p,
             ]);
-            if ($ok) $jude++;
+            if ($ok) {
+                $pdo->prepare("UPDATE shop_items SET cat_id=? WHERE id=?")->execute([(int)$it['id'], $sid]);
+                $jude++;
+            }
         }
         $pdo->prepare("UPDATE businesses SET items_on=1, shop_updated=NOW() WHERE id=?")->execute([$bid]);
         flash($jude ? "$jude सामान जुड़ गए।" : 'किसी का दाम नहीं भरा था।');
+        redirect('/shop.php?tab=saaman' . (post('q') !== '' ? '&q=' . urlencode(post('q')) : ''));
+    }
+
+    // --- दुकान किस किस्म की है (एक बार चुनना है) ---
+    if ($do === 'kism') {
+        $k = trim(post('shop_type'));
+        $ok = $pdo->prepare("SELECT COUNT(*) c FROM catalog_types WHERE slug=?");
+        $ok->execute([$k]);
+        if ($k === '' || (int)$ok->fetch()['c']) {
+            $pdo->prepare("UPDATE businesses SET shop_type=?, shop_updated=NOW() WHERE id=?")
+                ->execute([$k ?: null, $bid]);
+            flash($k ? 'किस्म सेव हो गई — अब आपका ही सामान पहले दिखेगा।' : 'किस्म हटा दी।');
+        }
         redirect('/shop.php?tab=saaman');
     }
 

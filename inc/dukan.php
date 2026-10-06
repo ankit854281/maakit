@@ -68,23 +68,59 @@ function dukan_item_save(PDO $pdo, $bid, array $d) {
 }
 
 /**
- * Maakit ki 165 wali list — jisme daam bharna baaki hai.
+ * Saaman ki badi soochi (catalog_items) — jisme daam bharna baaki hai.
  * Isse dukandar ko naam type nahi karna padta, sirf daam.
+ *
+ * - Dukaan ki apni kism (shop_type) ka saaman PEHLE
+ * - $q se poori soochi me khoj (Hindi aur angrezi dono me)
+ * - jo pehle se chadha hai wo dobara nahi dikhta
  */
-function dukan_suggest(PDO $pdo, $bid, $q = '', $limit = 40) {
+function dukan_suggest(PDO $pdo, $bid, $q = '', $limit = 40, $sab = false) {
+    $b = $pdo->prepare("SELECT shop_type FROM businesses WHERE id=?");
+    $b->execute([(int)$bid]);
+    $type = (string)($b->fetch()['shop_type'] ?? '');
+
+    // "naam" wahi hai jo dukandar ko dikhega — Hindi ho to Hindi
+    $naam = "IF(c.name_hi <> '' AND c.name_hi IS NOT NULL, c.name_hi, c.name_en)";
+
     $args = [(int)$bid];
-    $sql = "SELECT i.id, i.name, i.unit, i.grp, i.photo, i.popular
-              FROM items i
-              LEFT JOIN shop_items s ON s.business_id=? AND s.item_id=i.id
-             WHERE i.active=1 AND s.id IS NULL";
+    $sql = "SELECT c.id, c.shop_type, c.sub_cat, c.is_sewa, c.unit_hint AS unit,
+                   $naam AS name, c.name_en
+              FROM catalog_items c
+             WHERE NOT EXISTS (SELECT 1 FROM shop_items s
+                                WHERE s.business_id = ?
+                                  AND (s.cat_id = c.id OR s.name = $naam))";
+
     if ($q !== '') {
-        $sql .= " AND (i.name LIKE ? OR i.words LIKE ?)";
-        $args[] = "%$q%"; $args[] = "%$q%";
+        $sql .= " AND (c.name_en LIKE ? OR c.name_hi LIKE ? OR c.sub_cat LIKE ? OR c.shop_type LIKE ?)";
+        array_push($args, "%$q%", "%$q%", "%$q%", "%$q%");
+    } elseif ($type !== '' && !$sab) {
+        $sql .= " AND c.shop_type = ?";
+        $args[] = $type;
     }
-    $sql .= " ORDER BY i.popular DESC, i.sort_no, i.name LIMIT " . (int)$limit;
+
+    // apni kism ka saaman upar, phir baaki
+    if ($type !== '') {
+        $sql .= " ORDER BY (c.shop_type = ?) DESC, c.sort_no";
+        $args[] = $type;
+    } else {
+        $sql .= " ORDER BY c.sort_no";
+    }
+    $sql .= " LIMIT " . (int)$limit;
+
     $st = $pdo->prepare($sql);
     $st->execute($args);
     return $st->fetchAll();
+}
+
+/** Dukaan ki kismein — ek baar chunne ke liye */
+function dukan_types(PDO $pdo) {
+    return $pdo->query("SELECT t.slug, t.name_hi, COUNT(c.id) AS ginti
+                          FROM catalog_types t
+                          LEFT JOIN catalog_items c ON c.shop_type = t.slug
+                         GROUP BY t.slug, t.name_hi
+                         HAVING ginti > 0
+                         ORDER BY ginti DESC, t.slug")->fetchAll();
 }
 
 /** Is dukaan ke order (naye pehle) */
