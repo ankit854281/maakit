@@ -28,6 +28,23 @@ if ($q !== '') {
     $st = $pdo->prepare($sql . ') ORDER BY id DESC LIMIT 12');
     $st->execute($args);
     $shops = $st->fetchAll();
+
+    // ---- kya dhoondha gaya, wo bahi me likh dijiye ----
+    // मुनीम isi se batata hai ki log kya maang rahe hain jo hamare
+    // paas nahi hai. Pehle ye order.php se likha jata tha; ab hero
+    // ki khoj yahan aati hai, isliye yahan bhi likhna zaroori hai.
+    $sq = mb_strtolower(trim($q));
+    if (mb_strlen($sq) >= 2 && mb_strlen($sq) <= 60) {
+        $_SESSION['sl'] = (int)($_SESSION['sl'] ?? 0);
+        if ($_SESSION['sl'] < 40) {                 // ek session me 40 se jyada nahi
+            $_SESSION['sl']++;
+            try {
+                $pdo->prepare("INSERT INTO search_log (q, hits, times) VALUES (?,?,1)
+                               ON DUPLICATE KEY UPDATE times = times + 1, hits = VALUES(hits)")
+                    ->execute([$sq, count($products) + count($bookings) + count($shops)]);
+            } catch (Throwable $e) { /* bahi na likhe to khoj rukni nahi chahiye */ }
+        }
+    }
 }
 include __DIR__ . '/inc/head.php';
 ?>
