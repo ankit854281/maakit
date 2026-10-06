@@ -61,8 +61,13 @@ $rows = $pdo->query("SELECT * FROM banners ORDER BY active DESC, sort_no, id")->
 $TONES = ['brand'=>'गहरा लाल','gold'=>'सुनहरा','dark'=>'काला','cream'=>'हल्का'];
 $LINKS = [
   '/order.php' => 'ऑर्डर पेज',
-  '/order.php#khana' => 'खाना',
-  '/book.php' => 'सारी बुकिंग',
+  '/order.php#chaat' => 'समोसा, मोमोज़',
+  '/order.php#khana' => 'थाली, बिरयानी',
+  '/order.php#dawa' => 'दवाई',
+  '/order.php#pooja' => 'पूजा का सामान',
+  '/order.php#khad' => 'खाद, बीज, चारा',
+  '/books.php' => 'पुरानी किताबें',
+  '/sewa.php' => 'सारी बुकिंग',
   '/sewa.php?s=safar' => 'गाड़ी बुकिंग',
   '/sewa.php?s=lawn' => 'लॉन बुकिंग',
   '/sewa.php?s=tent' => 'टेंट बुकिंग',
@@ -142,7 +147,21 @@ include __DIR__ . '/../inc/panel.php';
   <?php endforeach; ?>
 
   <h3 class="ghead">नया ऑफ़र जोड़िए</h3>
-  <form method="post" enctype="multipart/form-data" class="box" style="margin-bottom:30px">
+
+  <!-- ===== tayyar namune =====
+       Ankit ke paas designer nahi hai. Iski zaroorat bhi nahi —
+       ye patti rang aur likhawat se banti hai, tasveer se nahi.
+       Bas ek namuna dabaiye, neeche sab apne aap bhar jayega. -->
+  <div class="box" style="margin-bottom:12px">
+    <b style="display:block;margin-bottom:4px">तैयार नमूने</b>
+    <p style="margin:0 0 11px;font-size:14px;color:var(--muted)">
+      कोई एक दबाइए — नीचे का फ़ॉर्म अपने आप भर जाएगा। फिर शब्द अपने हिसाब से
+      बदल लीजिए। <b>फ़ोटो की ज़रूरत नहीं है</b> — पट्टी बिना फ़ोटो के भी पूरी दिखती है।
+    </p>
+    <div class="qchips" id="namune"></div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="box" style="margin-bottom:30px" id="navform">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="add">
     <div class="grid g2">
       <div class="field"><label>हेडिंग (हिंदी)</label>
@@ -168,4 +187,63 @@ include __DIR__ . '/../inc/panel.php';
   </form>
 </div>
 </section>
+
+<script>
+/* ---------- tayyar namune ----------
+   Har namuna sirf shabd aur rang hai — koi tasveer nahi.
+   Dabate hi neeche ka form bhar jata hai, phir Ankit shabd
+   apne hisaab se badal sakte hain. */
+(function () {
+  var N = [
+    { n:'डिलीवरी फ़्री', hi:'₹300 से ऊपर डिलीवरी फ़्री', en:'Free delivery above ₹300',
+      shi:'आज और कल के लिए', sen:'Today and tomorrow', tone:'brand', link:'/order.php' },
+    { n:'दवाई जल्दी', hi:'दवाई 30 मिनट में', en:'Medicines in 30 minutes',
+      shi:'पर्ची की फ़ोटो भेज दीजिए', sen:'Just send the prescription', tone:'dark', link:'/order.php#dawa' },
+    { n:'नाश्ता', hi:'समोसा, मोमोज़, चाउमीन', en:'Samosa, momos, chowmein',
+      shi:'गरम — क़रीब 20 मिनट में', sen:'Hot, in about 20 minutes', tone:'gold', link:'/order.php#chaat' },
+    { n:'गाड़ी', hi:'वाराणसी के लिए गाड़ी', en:'Vehicle for Varanasi',
+      shi:'बोलेरो · टेम्पो · बस — पहले से बुक कीजिए', sen:'Bolero · Tempo · Bus', tone:'dark', link:'/sewa.php?s=safar' },
+    { n:'शादी-ब्याह', hi:'शादी का पूरा इंतज़ाम', en:'Everything for the wedding',
+      shi:'लॉन, टेंट, हलवाई, पंडित जी — एक ही जगह', sen:'Lawn, tent, catering, pandit ji', tone:'brand', link:'/sewa.php?s=lawn' },
+    { n:'खाद-बीज', hi:'खाद, बीज और चारा', en:'Fertiliser, seed and fodder',
+      shi:'यूरिया, DAP, चोकर, खली — घर तक', sen:'Urea, DAP, bran, oil cake', tone:'gold', link:'/order.php#khad' },
+    { n:'पूजा', hi:'पूजा का सामान', en:'Puja essentials',
+      shi:'अगरबत्ती, दीया, रोली, नारियल', sen:'Agarbatti, diya, roli, coconut', tone:'brand', link:'/order.php#pooja' },
+    { n:'त्योहार', hi:'त्योहार की तैयारी शुरू', en:'Festival shopping is open',
+      shi:'मिठाई, सजावट, पूजा — सब मँगा लीजिए', sen:'Sweets, decoration, puja — order it all', tone:'gold', link:'/order.php' },
+    { n:'नया गाँव', hi:'आपके गाँव में भी आएँगे', en:'We can come to your village too',
+      shi:'नाम लिखवा दीजिए', sen:'Just leave your name', tone:'cream', link:'/area.php' },
+    { n:'किताबें', hi:'पुरानी किताबें लीजिए-दीजिए', en:'Old books — buy, sell, exchange',
+      shi:'बेचिए, मुफ़्त दीजिए, या बदल लीजिए', sen:'Sell, give away, or swap', tone:'cream', link:'/books.php' }
+  ];
+
+  var box = document.getElementById('namune');
+  var f   = document.getElementById('navform');
+  if (!box || !f) return;
+
+  function set(name, val) {
+    var el = f.querySelector('[name="' + name + '"]');
+    if (!el) return;
+    el.value = val;
+    // select ke liye: agar aisa vikalp na ho to chhod dijiye
+    if (el.tagName === 'SELECT' && el.value !== val) el.selectedIndex = 0;
+  }
+
+  N.forEach(function (x) {
+    var b = document.createElement('button');
+    b.type = 'button';
+
+    b.textContent = x.n;
+    b.addEventListener('click', function () {
+      set('title_hi', x.hi);  set('title_en', x.en);
+      set('sub_hi',  x.shi);  set('sub_en',  x.sen);
+      set('tone',    x.tone); set('link',    x.link);
+      [].forEach.call(box.children, function (c) { c.classList.remove('on'); });
+      b.classList.add('on');
+      f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    box.appendChild(b);
+  });
+})();
+</script>
 <?php include __DIR__ . '/../inc/foot.php'; ?>

@@ -21,7 +21,7 @@ if ($role === 'admin') {
     $menu = ['/bpo/' => 'आज के ऑर्डर', '/bpo/new.php' => 'नया ऑर्डर', '/bpo/bookings.php' => 'बुकिंग',
              '/bpo/summary.php' => 'आज का हिसाब'];
 } else {
-    $menu = ['/delivery/' => 'मेरे ऑर्डर'];
+    $menu = ['/delivery/' => 'मेरे ऑर्डर', '/delivery/photo.php' => 'सामान की फ़ोटो'];
 }
 $cur = strtok($_SERVER['REQUEST_URI'], '?');
 ?>
