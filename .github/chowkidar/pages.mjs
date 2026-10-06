@@ -1,14 +1,14 @@
 // ============================================================
-// Maakit — kaun se page jaanchne hain
+// Maakit — chowkidar kaun se page dekhta hai
 //
-// Nayi page banao to bas yahan ek line jod dijiye. Bot khud
-// usko bhi dekhne lagega.
+// Naya page banao to bas yahan ek line jod dijiye. Chowkidar
+// khud usko bhi gasht me shaamil kar lega.
 //
 //   path     — pata, maakit.in ke baad wala hissa
 //   naam     — galti batate waqt aapko yahi naam dikhega
 //   chahiye  — ye shabd page par hone hi chahiye (na mile to galti)
 //   nahi     — ye shabd page par nahi hone chahiye
-//   nabz     — true matlab har 15 minute wali jaanch me bhi shaamil
+//   nabz     — true matlab har 15 minute wali gasht me bhi shaamil
 // ============================================================
 
 // Ye shabd kisi bhi page par mile to kuchh toota hai

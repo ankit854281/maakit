@@ -9,3 +9,5 @@ uploads/*
 # zip aur jaanch wali file
 *.zip
 jaanch.php
+node_modules/
+chowkidar-nateeja.json

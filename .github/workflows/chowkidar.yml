@@ -1,5 +1,8 @@
 # ============================================================
-# Maakit — jaanch karne wala bot
+# Maakit ka CHOWKIDAR
+#
+# Gaon ke chowkidar ki tarah — gasht lagata hai aur tabhi bolta
+# hai jab kuchh galat ho.
 #
 # Har 15 minute: nabz dekhta hai (4 main page khul rahe hain?)
 # Subah 7 aur shaam 6: poori jaanch (har page, har dibba, har link)
@@ -13,7 +16,7 @@
 #
 # Ye website me kuchh badalta NAHI hai — sirf dekhta hai.
 # ============================================================
-name: Maakit ki jaanch
+name: चौकीदार
 
 on:
   schedule:
@@ -28,11 +31,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: maakit-jaanch
+  group: maakit-chowkidar
   cancel-in-progress: false
 
 jobs:
-  jaanch:
+  gasht:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +43,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
 
-      - name: kaun si jaanch
+      - name: kaun si gasht
         id: mode
         run: |
           if [ "${{ github.event.schedule }}" = "40 1,12 * * *" ]; then
@@ -53,21 +56,21 @@ jobs:
         if: steps.mode.outputs.mode == 'poori'
         run: npm i -D playwright@1.47.2 && npx playwright install --with-deps chromium
 
-      - name: jaanch kijiye
-        run: node .github/jaanch/jaanch.mjs ${{ steps.mode.outputs.mode }}
+      - name: gasht lagaiye
+        run: node .github/chowkidar/chowkidar.mjs ${{ steps.mode.outputs.mode }}
 
       - name: khabar kijiye
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const n = JSON.parse(fs.readFileSync('jaanch-nateeja.json', 'utf8'));
-            const TITLE = '⚠️ Maakit — कुछ टूटा है';
+            const n = JSON.parse(fs.readFileSync('chowkidar-nateeja.json', 'utf8'));
+            const TITLE = '⚠️ चौकीदार — कुछ टूटा है';
             const { owner, repo } = context.repo;
 
             // pehle se khula hua issue hai?
             const { data: khule } = await github.rest.issues.listForRepo({
-              owner, repo, state: 'open', labels: 'jaanch', per_page: 20,
+              owner, repo, state: 'open', labels: 'chowkidar', per_page: 20,
             });
             const purana = khule.find(i => i.title === TITLE);
 
@@ -84,10 +87,12 @@ jobs:
             }
 
             const lines = n.galtiyan.map(g => `- **${g.naam}** — ${g.baat}`).join('\n');
+            const kul = (n.kul && n.kul > n.galtiyan.length)
+              ? `\n\n_कुल ${n.kul} जगह असर दिखा, ऊपर मुख्य बातें हैं।_` : '';
             const body =
-              `वेबसाइट देखने पर **${n.galtiyan.length} गड़बड़ी** मिली:\n\n${lines}\n\n` +
+              `चौकीदार को गश्त में **${n.kul || n.galtiyan.length} गड़बड़ी** मिली:\n\n${lines}${kul}\n\n` +
               `---\n` +
-              `देखे गए पेज: ${n.dekhe} · जाँच: ${n.mode === 'nabz' ? 'नब्ज़ (हर 15 मिनट)' : 'पूरी (दिन में दो बार)'}\n` +
+              `देखे गए पेज: ${n.dekhe} · गश्त: ${n.mode === 'nabz' ? 'नब्ज़ (हर 15 मिनट)' : 'पूरी (दिन में दो बार)'}\n` +
               `समय: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n\n` +
               `ठीक होते ही यह अपने आप बंद हो जाएगा।`;
 
@@ -96,6 +101,6 @@ jobs:
               await github.rest.issues.update({ owner, repo, issue_number: purana.number, body });
               core.info('purane issue me jaankari badal di');
             } else {
-              await github.rest.issues.create({ owner, repo, title: TITLE, body, labels: ['jaanch'] });
+              await github.rest.issues.create({ owner, repo, title: TITLE, body, labels: ['chowkidar'] });
               core.info('naya issue khol diya');
             }

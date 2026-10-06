@@ -1,20 +1,23 @@
 // ============================================================
-// Maakit — jaanch karne wala bot
+// Maakit ka CHOWKIDAR
 //
-// Do tarah se chalta hai:
+// Gaon ke chowkidar ki tarah — gasht lagata hai, kuchh chhoota
+// nahi, aur tabhi bolta hai jab kuchh galat ho. Baaki waqt chup.
 //
-//   node jaanch.mjs nabz    — har 15 minute. Sirf 4 main page.
-//                             Khul rahe hain? Dheeme to nahi?
+// Do tarah ki gasht:
 //
-//   node jaanch.mjs poori   — subah 7 aur shaam 6. Har page,
-//                             har dibba, har link, har photo.
-//                             Iske liye asli browser chalta hai.
+//   node chowkidar.mjs nabz   — har 15 minute. Sirf 4 main page.
+//                               Khul rahe hain? Dheeme to nahi?
 //
-// Ye website me kuchh badalta NAHI hai — sirf dekhta hai.
+//   node chowkidar.mjs poori  — subah 7 aur shaam 6. Har page,
+//                               har dibba, har link, har photo.
+//                               Iske liye asli browser chalta hai.
+//
+// Chowkidar website me kuchh badalta NAHI hai — sirf dekhta hai.
 // Na koi order banata hai, na koi form bhejta hai.
 //
-// Nateeja jaanch-nateeja.json me likh deta hai, jise workflow
-// padhkar aapko khabar karta hai.
+// Jo dekha wo chowkidar-nateeja.json me likh deta hai, jise
+// workflow padhkar aapko khabar karta hai.
 // ============================================================
 import { writeFileSync } from 'node:fs';
 import { PAGES, KHARAB, GALAT_JAGAH } from './pages.mjs';
@@ -35,7 +38,7 @@ async function dekho(p) {
   try {
     r = await fetch(pata, {
       redirect: 'follow',
-      headers: { 'User-Agent': 'Maakit-Jaanch/1.0 (apni hi website dekh raha hai)' },
+      headers: { 'User-Agent': 'Maakit-Chowkidar/1.0 (apni hi website par gasht par hai)' },
       signal: AbortSignal.timeout(25000),
     });
     html = await r.text();
@@ -69,7 +72,7 @@ async function dekho(p) {
 async function browserSe() {
   let chromium;
   try { ({ chromium } = await import('playwright')); }
-  catch { add('जाँच', 'browser नहीं मिला — पूरी जाँच नहीं हो पाई'); return; }
+  catch { add('चौकीदार', 'browser नहीं मिला — पूरी जाँच नहीं हो पाई'); return; }
 
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
@@ -131,7 +134,7 @@ async function browserSe() {
 
     if (jsGalti.length) add('वेबसाइट', `पेज पर जावास्क्रिप्ट की ग़लती: ${jsGalti[0]}`);
   } catch (e) {
-    add('पूरी जाँच', `बीच में रुक गई — ${String(e.message || e).slice(0, 140)}`);
+    add('चौकीदार की गश्त', `बीच में रुक गई — ${String(e.message || e).slice(0, 140)}`);
   } finally {
     await b.close();
   }
@@ -148,20 +151,43 @@ for (let i = 0; i < list.length; i += 4) {
 
 if (MODE === 'poori') await browserSe();
 
+// Jab badi gadbad ho — jaise database hi band ho jaye — to har page
+// se ek jaisi galti aati hai aur 40-50 line ka dher ban jata hai.
+// Usme asli baat dab jati hai. Isliye ek hi tarah ki galti ko ek hi
+// line me jod dete hain.
+function sametiye(sab) {
+  const dibba = new Map();
+  for (const g of sab) {
+    if (!dibba.has(g.baat)) dibba.set(g.baat, []);
+    dibba.get(g.baat).push(g.naam);
+  }
+  const out = [];
+  for (const [baat, naam] of dibba) {
+    if (naam.length === 1) { out.push({ naam: naam[0], baat }); continue; }
+    const kuchh = naam.slice(0, 3).join(', ');
+    const aur   = naam.length > 3 ? ` और ${naam.length - 3} और` : '';
+    out.push({ naam: `${naam.length} पेज पर`, baat: `${baat}\n  (${kuchh}${aur})` });
+  }
+  return out.slice(0, 12);
+}
+
+const chhanti = sametiye(galtiyan);
+
 const nateeja = {
   mode: MODE,
   samay: new Date().toISOString(),
   theek: galtiyan.length === 0,
-  galtiyan,
+  galtiyan: chhanti,
+  kul: galtiyan.length,
   dekhe: list.length,
 };
-writeFileSync('jaanch-nateeja.json', JSON.stringify(nateeja, null, 2));
+writeFileSync('chowkidar-nateeja.json', JSON.stringify(nateeja, null, 2));
 
 if (galtiyan.length === 0) {
   console.log(`सब ठीक है — ${list.length} पेज देखे (${MODE})`);
 } else {
   console.log(`${galtiyan.length} गड़बड़ी मिली:`);
-  for (const g of galtiyan) console.log(`  • ${g.naam} — ${g.baat}`);
+  for (const g of chhanti) console.log(`  • ${g.naam} — ${g.baat}`);
 }
 
 // Galti milne par bhi 0 hi lautate hain. Workflow ko report
