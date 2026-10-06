@@ -8,45 +8,36 @@
 //
 // Ye file kuchh BADALTI NAHI hai — sirf padhti hai.
 //
-// Kaise khulti hai:
-//   maakit.in/muneem.php?key=<CHAABI>          -> padhne layak (browser me)
-//   maakit.in/muneem.php?key=<CHAABI>&f=json   -> bot ke liye
+// Bahi do tarah se khulti hai:
 //
-// Chaabi wahi hai jo maakit-update.php me hai. Dono ek hi file
-// (config.php) se aati hain, taaki do jagah yaad na rakhna pade.
+//   1. Aap Admin me login hain  -> Admin ke menu me "मुनीम" dabaiye.
+//      Koi chaabi nahi chahiye. Yahi aasaan raasta hai.
 //
-// Har somvaar subah GitHub se ye file apne aap khulti hai aur
-// uska nateeja aapko khabar ban kar milta hai.
+//   2. Chaabi se (sirf bot ke liye, jo login nahi kar sakta):
+//        maakit.in/muneem.php?key=<CHAABI>&f=json
+//      Chaabi config.php ki MUNEEM_KEY hai. Na ho to ye raasta
+//      band rehta hai — aur Admin wala raasta phir bhi chalta hai.
+//
+// Yani GitHub par chaabi daalna ZAROORI NAHI. Wo sirf isliye hai
+// ki har somvaar bahi apne aap aa jaye, bina aapke khole.
 // ============================================================
-require_once __DIR__ . '/config.php';
-@require_once __DIR__ . '/inc/version.php';   // sirf version dikhane ke liye
+require_once __DIR__ . '/inc/fn.php';   // session, $pdo aur user() yahin se
 
-// ---------- chaabi ----------
-// MUNEEM_KEY config.php me daal dijiye. Jab tak na daalein, ye
-// file kisi ko kuchh nahi dikhati.
-$chaabi = defined('MUNEEM_KEY') ? MUNEEM_KEY : '';
+// ---------- kaun dekh sakta hai ----------
+$u      = user();
+$admin  = $u && ($u['role'] ?? '') === 'admin';
+
+$chaabi = defined('MUNEEM_KEY') ? (string)MUNEEM_KEY : '';
 $diya   = (string)($_GET['key'] ?? '');
+$key_ok = $chaabi !== '' && $diya !== '' && hash_equals($chaabi, $diya);
 
-if ($chaabi === '' || !hash_equals($chaabi, $diya)) {
+if (!$admin && !$key_ok) {
     http_response_code(403);
     header('Content-Type: text/plain; charset=utf-8');
-    exit("Muneem band hai.\n");
+    exit("Muneem band hai. Admin me login kijiye.\n");
 }
 
 $json = (($_GET['f'] ?? '') === 'json');
-
-// ---------- database ----------
-try {
-    $pdo = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
-                   DB_USER, DB_PASS, [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-} catch (Throwable $e) {
-    http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    exit(json_encode(['theek' => false, 'galti' => 'database se baat nahi ho payi']));
-}
 
 /** chhota helper — galti aaye to kaam ruke nahi, bas khaali laut aaye */
 function ek(PDO $p, $sql, $args = [], $d = 0) {

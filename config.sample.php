@@ -16,12 +16,17 @@ define('MAAKIT_PHONE', '+918429393903');
 define('MAAKIT_NUMBER_SHOW', '84293 93903');
 
 // ============================================================
-// Muneem ki chaabi.
+// Muneem ki chaabi — ZAROORI NAHI HAI.
 //
-// Muneem (muneem.php) tab tak chup rehta hai jab tak yahan ek
-// chaabi na ho. Koi bhi lambi anjaan line chalegi.
+// Bahi dekhne ke liye bas Admin me login kijiye aur menu me
+// "मुनीम" dabaiye. Koi chaabi nahi chahiye.
 //
-// Wahi chaabi GitHub par bhi daalni hai:
+// Chaabi sirf tab chahiye jab aap chahein ki har somvaar subah
+// bahi apne aap aa jaye, bina aapke khole. Bot login nahi kar
+// sakta, isliye use chaabi se andar aana padta hai.
+//
+// Aisa karna ho to: neeche wali line se // hatakar koi lambi
+// anjaan line likh dijiye, aur wahi GitHub par bhi daal dijiye —
 //   Settings > Secrets and variables > Actions > New secret
 //   naam: MUNEEM_KEY
 //
