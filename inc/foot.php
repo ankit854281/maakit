@@ -40,7 +40,7 @@
         'Maakit सिर्फ़ जानकारी और डिलीवरी की सुविधा देता है। दुकानों और कारीगरों के काम, दाम और लेन-देन के लिए Maakit ज़िम्मेदार नहीं है।') ?><br>
       <a href="/register-business.php"><?= t('List your shop or service — free', 'अपना काम / दुकान जोड़िए — फ़्री') ?></a> ·
       <a href="<?= h(lang_switch_url()) ?>"><?= h(lang_other_label()) ?></a> ·
-      <a href="/login.php"><?= t('Team login', 'टीम लॉगिन') ?></a>
+      <a href="/login.php"><?= t('Shop / team login', 'दुकान / टीम लॉगिन') ?></a>
     </div>
   </div>
 </footer>
@@ -51,7 +51,10 @@
       <?= defined('MAAKIT_VERSION_DATE') ? '· ' . MAAKIT_VERSION_DATE : '' ?> · <?= h(MAAKIT_NUMBER_SHOW) ?></span>
     <span style="display:flex;gap:14px;font-size:14px">
       <a href="/" target="_blank" rel="noopener">वेबसाइट देखिए</a>
-      <a href="/logout.php">लॉगआउट</a>
+      <?php /* Jo andar hi nahi hai (jaise login ka panna), use लॉगआउट mat dikhaiye */ ?>
+      <?php if (function_exists('user') && user()): ?>
+        <a href="/logout.php">लॉगआउट</a>
+      <?php endif; ?>
     </span>
   </div>
 </footer>

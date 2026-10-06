@@ -7,28 +7,12 @@ $page_title = 'मेरी दुकान — Maakit';
 $err = '';
 
 // ---------------- लॉगिन ----------------
+// Login ka ek hi darwaza hai — /login.php. Yahan andar aane ka
+// apna form nahi hai, taaki dukandar ko do jagah yaad na rakhni pade.
 $b = shop_login_business($pdo);
+if (!$b) { redirect('/login.php'); }
 
-if (!$b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'login') {
-    $mob = preg_replace('/\D/', '', post('mobile'));
-    $code = strtoupper(trim(post('code')));
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-    $tries = $pdo->prepare("SELECT COUNT(*) c FROM shop_login_log WHERE mobile=? AND ok=0 AND created_at > (NOW() - INTERVAL 15 MINUTE)");
-    $tries->execute([$mob]);
-    if ((int)$tries->fetch()['c'] >= 5) {
-        $err = 'बहुत बार गलत कोड डाला गया। 15 मिनट बाद कोशिश कीजिए।';
-    } else {
-        $st = $pdo->prepare("SELECT * FROM businesses WHERE mobile=? AND status='approved'");
-        $st->execute([$mob]);
-        $row = $st->fetch();
-        $okc = $row && $row['access_code'] && hash_equals(strtoupper($row['access_code']), $code);
-        $pdo->prepare("INSERT INTO shop_login_log (business_id, mobile, ok, ip) VALUES (?,?,?,?)")
-            ->execute([$row['id'] ?? null, $mob, $okc ? 1 : 0, $ip]);
-        if ($okc) { shop_start_session($pdo, $row['id']); redirect('/shop.php'); }
-        $err = 'नंबर या कोड सही नहीं है। Maakit से अपना कोड पूछ लीजिए।';
-    }
-}
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'logout') { shop_logout($pdo); redirect('/shop.php'); }
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'logout') { shop_logout($pdo); redirect('/login.php'); }
 
 // ---------------- दुकान पैनल के काम (सामान, ऑर्डर, हिसाब, खाता) ----------------
 if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
@@ -227,22 +211,9 @@ if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 }
 include __DIR__ . '/inc/head.php';
 ?>
-<?php if (!$b): ?>
-<section><div class="wrap" style="max-width:440px">
-  <h2>मेरी दुकान</h2>
-  <p class="lead">अपना सामान, अपना दाम, अपने ऑर्डर और अपना हिसाब — सब यहीं से।
-    नाई और पार्लर अपनी सीट बुकिंग भी यहीं से चलाते हैं।</p>
-  <?php if ($err): ?><div class="err"><?= h($err) ?></div><?php endif; ?>
-  <form method="post" class="box">
-    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="login">
-    <div class="field"><label>अपना मोबाइल नंबर</label><input type="tel" name="mobile" required></div>
-    <div class="field"><label>Maakit से मिला कोड</label><input type="text" name="code" placeholder="जैसे KLM-4821" required></div>
-    <button class="btn btn-brand" type="submit">खोलिए</button>
-    <p class="help">एक बार खोलने के बाद 90 दिन तक इसी फ़ोन पर सीधा खुलेगा। कोड नहीं मिला? Maakit को <?= MAAKIT_NUMBER_SHOW ?> पर WhatsApp कीजिए।</p>
-  </form>
-</div></section>
-
-<?php else:
+<?php
+  // Yahan tak wahi pahunchta hai jo andar aa chuka hai
+  // (bina login ke upar hi /login.php bhej diya jata hai).
   $bid   = (int)$b['id'];
   $nai   = (int)$b['salon_on'] === 1;          // नाई / पार्लर है?
 
@@ -402,6 +373,5 @@ include __DIR__ . '/inc/head.php';
     <p class="help" style="margin-top:10px">मिनट अंदाज़े से भर दीजिए। “हो गया” दबाते रहने पर असली समय अपने आप सीख लिया जाएगा।</p>
   </div>
 </div></section>
-<?php endif; ?>
 <?php endif; ?>
 <?php include __DIR__ . '/inc/foot.php'; ?>

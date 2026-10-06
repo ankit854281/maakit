@@ -89,12 +89,12 @@ include __DIR__ . '/../inc/panel.php';
           ? "• सीट बुकिंग — कौन इंतज़ार में है, किसे बिठाना है\n• अपना सामान और दाम\n• अपना हिसाब — रोज़ कितना बिका"
           : "• अपना सामान और अपना दाम डालिए\n• अपने ऑर्डर देखिए\n• अपना हिसाब — रोज़ कितना बिका, कितना लेना है\n• अपना UPI — पैसा सीधा आपके खाते में";
         $sandesh = "नमस्ते " . $b['name'] . " जी,\nMaakit पर आपकी दुकान का पेज चालू हो गया है।\n\n"
-          . "अपना पेज खोलिए: https://maakit.in/shop.php\nमोबाइल: " . $b['mobile'] . "\nकोड: " . $b['access_code'] . "\n\n"
+          . "अपना पेज खोलिए: https://maakit.in/login.php\nमोबाइल: " . $b['mobile'] . "\nकोड: " . $b['access_code'] . "\n\n"
           . "वहाँ आप ये कर सकते हैं —\n" . $kaam
           . "\n\nएक बार खोलने के बाद 90 दिन तक इसी फ़ोन पर सीधा खुलेगा। कोड किसी को न बताइए।";
       ?>
         <div class="note" style="margin-top:10px">
-          दुकानदार को यह भेजिए — लिंक: <b>maakit.in/shop.php</b> · मोबाइल: <b><?= h($b['mobile']) ?></b> · कोड: <b><?= h($b['access_code']) ?></b>
+          दुकानदार को यह भेजिए — लिंक: <b>maakit.in/login.php</b> · मोबाइल: <b><?= h($b['mobile']) ?></b> · कोड: <b><?= h($b['access_code']) ?></b>
           <div style="margin-top:8px"><a class="btn btn-green btn-sm" target="_blank" rel="noopener"
              href="<?= h(wa_link($b['mobile'], $sandesh)) ?>">कोड WhatsApp पर भेजिए</a></div>
           <form method="post" style="display:flex;gap:8px;align-items:flex-end;margin-top:12px">

@@ -60,7 +60,6 @@ export const PAGES = [
   { path: '/book-add.php',  naam: 'किताब डालिए',    chahiye: ['Maakit'] },
   { path: '/directory.php', naam: 'दुकानें',        chahiye: ['Maakit'] },
   { path: '/area.php',      naam: 'नया गाँव',       chahiye: ['Maakit'] },
-  { path: '/login.php',     naam: 'टीम का लॉगिन',   chahiye: ['Maakit'] },
   { path: '/transport.php', naam: 'गाड़ी रजिस्टर',  chahiye: ['Maakit'] },
   { path: '/salon.php',     naam: 'सैलून',          chahiye: ['Maakit'] },
 
@@ -68,6 +67,12 @@ export const PAGES = [
   // Dukandar ka login khula rehna chahiye. "मेरा हिसाब" yahan nahi
   // dikhna chahiye — wo login ke BAAD aata hai. Bina login ke dikh
   // gaya to andar ka panna khula pada hai.
-  { path: '/shop.php', naam: 'दुकानदार का लॉगिन',
-    chahiye: ['मेरी दुकान', 'कोड'], nahi: ['मेरा हिसाब'], nabz: true },
+  // Login ka ek hi darwaza hai — /login.php. Dono raste wahin hain.
+  // "मेरा हिसाब" yahan nahi dikhna chahiye — wo login ke BAAD aata
+  // hai. Bina login ke dikh gaya to andar ka panna khula pada hai.
+  { path: '/login.php', naam: 'दुकान / टीम लॉगिन',
+    chahiye: ['मैं दुकानदार हूँ', 'मैं Maakit टीम से हूँ', 'कोड'],
+    nahi: ['मेरा हिसाब'], nabz: true },
+  { path: '/login.php?as=team', naam: 'टीम का लॉगिन',
+    chahiye: ['यूज़रनेम', 'पासवर्ड'], nahi: ['मेरा हिसाब'] },
 ];
