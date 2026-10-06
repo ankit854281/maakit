@@ -230,7 +230,9 @@ body.has-tabbar .float{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
   color:var(--gold);background:rgba(251,244,230,.1);border-radius:30px;padding:6px 13px;margin-bottom:14px;
 }
 .hero2 h1{
-  font-size:clamp(30px,6.6vw,50px);line-height:1.13;margin:0;font-weight:800;letter-spacing:-1.1px;
+  /* line-height thoda khula — Devanagari ki matra (माँ, ऑ) upar wali
+     line se takra jaati thi */
+  font-size:clamp(30px,6.6vw,50px);line-height:1.24;margin:0;font-weight:800;letter-spacing:-1.1px;
   text-wrap:balance;
 }
 .hero2 .sub{

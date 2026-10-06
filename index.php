@@ -110,10 +110,10 @@ include __DIR__ . '/inc/head.php';
     </div>
     <h1><?= $me
         ? t('Hello, ', 'नमस्ते, ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . '.<br>' . t('What do you need?', 'आज क्या चाहिए?')
-        : t('Your village.<br>Delivered.', 'गाँव की अपनी<br>डिलीवरी और बुकिंग।') ?></h1>
+        : t('Anything you need.<br>Maa hai na.', 'कुछ भी चाहिए?<br>माँ है ना।') ?></h1>
     <p class="sub"><?= t(
-      'Groceries, hot food, medicine, a Bolero, a lawn, tent, halwai, pandit ji — all in one place. You pay the shop’s price, plus delivery.',
-      'दुकान का सामान, गरम खाना, दवाई, गाड़ी, लॉन, टेंट, हलवाई, पंडित जी — सब एक जगह। सामान दुकान के दाम पर, आप सिर्फ़ डिलीवरी चार्ज दीजिए।') ?></p>
+      'Order anything from any shop — we bring it. You pay only the delivery.',
+      'किसी भी दुकान से कुछ भी मँगाइए — हम ले आएँगे। आप सिर्फ़ डिलीवरी का पैसा दीजिए।') ?></p>
 
     <form class="hsearch" action="/order.php" method="get">
       <span class="ic"><?= svc_icon('search', 20) ?></span>
@@ -176,6 +176,10 @@ include __DIR__ . '/inc/head.php';
   <?php endif; ?>
 
   <!-- ============ shreniyan — char samooh ============ -->
+  <div class="secthead" style="margin-top:22px">
+    <h2><?= t('What do you need?', 'क्या चाहिए आपको?') ?></h2>
+    <p><?= t('Call, WhatsApp or tap here — from any shop', 'फ़ोन कीजिए, WhatsApp कीजिए या यहीं दबाइए — किसी भी दुकान से') ?></p>
+  </div>
   <?php foreach ($GROUPS as list($gname, $rows)): ?>
     <div class="grphead"><?= h($gname) ?></div>
     <div class="tiles cat">
@@ -203,7 +207,7 @@ include __DIR__ . '/inc/head.php';
        usse ye samajh nahi aata — isliye teen kadam me saaf. -->
   <div class="kaise">
     <div class="secthead" style="margin-top:0">
-      <h2><?= t('How it works', 'कैसे काम करता है') ?></h2>
+      <h2><?= t('How does it work?', 'कैसे काम करता है?') ?></h2>
       <p><?= t('Three steps, nothing else', 'तीन कदम, और कुछ नहीं') ?></p>
     </div>
     <ol class="steps">
@@ -221,13 +225,16 @@ include __DIR__ . '/inc/head.php';
       </li>
       <li>
         <span class="n">3</span>
-        <b><?= t('You pay only the delivery', 'आप सिर्फ़ डिलीवरी का पैसा दीजिए') ?></b>
+        <b><?= t('Just pay the delivery fee', 'सिर्फ़ डिलीवरी फ़ीस दीजिए') ?></b>
         <i><?= t('The goods cost what the shop charges — not a rupee more. Our earning is the delivery charge.',
                  'सामान का दाम वही जो दुकान का है — एक रुपया ज़्यादा नहीं। हमारी कमाई डिलीवरी चार्ज है।') ?></i>
       </li>
     </ol>
 
     <!-- kyun Maakit — jo bade app nahi karte -->
+    <div class="secthead" style="margin-top:22px">
+      <h2><?= t('Why Maakit?', 'क्यों Maakit?') ?></h2>
+    </div>
     <div class="kyun">
       <div>
         <span><?= svc_icon('grocery', 20) ?></span>
@@ -237,15 +244,15 @@ include __DIR__ . '/inc/head.php';
       </div>
       <div>
         <span><?= svc_icon('rupee', 20) ?></span>
-        <b><?= t('The shop’s money stays the shop’s', 'दुकान का पैसा दुकान का') ?></b>
+        <b><?= t('The money goes straight to the shop', 'पैसा सीधे दुकान को जाता है') ?></b>
         <i><?= t('Cash, or UPI straight to the shop’s own number. Whatever share Maakit takes is shown to the shopkeeper in his own ledger — nothing hidden.',
                  'नगद, या UPI सीधे दुकान के अपने नंबर पर। Maakit का जो भी हिस्सा होगा वह दुकानदार को उसकी बही में साफ़ दिखता है — छिपाकर कुछ नहीं।') ?></i>
       </div>
       <div>
         <span><?= svc_icon('truck', 20) ?></span>
-        <b><?= t('The big apps don’t come here', 'बड़े ऐप यहाँ नहीं आते') ?></b>
-        <i><?= t('Swiggy and Blinkit will not deliver to our villages. That is exactly why Maakit exists.',
-                 'स्विगी और ब्लिंकिट हमारे गाँवों तक नहीं आते। Maakit इसीलिए है।') ?></i>
+        <b><?= t('Zomato-Blinkit doesn’t come here', 'ज़ोमैटो-ब्लिंकिट यहाँ नहीं आता') ?></b>
+        <i><?= t('Big apps don’t come to small villages. That is exactly why we are here — for your village.',
+                 'बड़े ऐप छोटे गाँव तक नहीं आते। हम इसीलिए हैं — आपके गाँव के लिए।') ?></i>
       </div>
     </div>
   </div>
@@ -254,11 +261,11 @@ include __DIR__ . '/inc/head.php';
   <a class="dknyota" href="/register-business.php">
     <span class="ic"><?= svc_icon('shops', 26) ?></span>
     <span class="tx">
-      <b><?= t('Do you run a shop?', 'दुकान आपकी है?') ?></b>
+      <b><?= t('Are you a shopkeeper?', 'आप दुकानदार हैं?') ?></b>
       <i><?= t('Put your shop on Maakit — your items, your prices, your orders and your daily accounts, all on your phone. Free.',
                'अपनी दुकान Maakit पर रखिए — अपना सामान, अपना दाम, अपने ऑर्डर और अपना हिसाब, सब अपने फ़ोन में। मुफ़्त।') ?></i>
     </span>
-    <span class="go"><?= t('Add your shop', 'दुकान जोड़िए') ?> <?= svc_icon('plus', 14) ?></span>
+    <span class="go"><?= t('Register your shop', 'दुकान रजिस्टर कीजिए') ?> <?= svc_icon('plus', 14) ?></span>
   </a>
 
   <!-- ============ abhi-abhi kya hua ============ -->
@@ -439,7 +446,9 @@ include __DIR__ . '/inc/head.php';
 <!-- ============ kaise chalta hai ============ -->
 <section>
   <div class="wrap">
-    <div class="secthead"><h2><?= t('How it works', 'कैसे काम करता है') ?></h2>
+    <?php /* Upar teen kadam me chhota jawab hai. Yahan poora
+             tareeka — daam ki haan, code, aur samay. */ ?>
+    <div class="secthead"><h2><?= t('How your order reaches you', 'ऑर्डर आप तक कैसे पहुँचता है') ?></h2>
       <p><?= t('No app download, no long forms', 'न ऐप डाउनलोड, न लंबा फ़ॉर्म') ?></p></div>
     <div class="steps3">
       <div><span class="n">1</span><b><?= t('Tell us what you need', 'बताइए क्या चाहिए') ?></b>
