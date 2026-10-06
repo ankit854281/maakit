@@ -38,6 +38,11 @@ $PANNE = [
     ['/search.php?lang=hi&q=zzqqxx', 'खोज — जो नहीं है',
         'chahiye' => ['Maakit'], 'nahi' => ['Fatal error', 'Undefined']],
 
+    ['/bazaar.php?lang=hi', 'दुकान categories',
+        'chahiye' => ['196', '1510', 'किराना'], 'nahi' => ['Fatal error', 'Warning:', 'Undefined']],
+    ['/bazaar.php?type=Grocery%20%2F%20Kirana%20Store&lang=hi', 'किराना सामान',
+        'chahiye' => ['आटा', 'दाम'], 'nahi' => ['Fatal error', 'Warning:', 'Undefined']],
+
     // sewa.php booking ka panna hai. book.php KITAAB ka hai.
     // Ye do ek baar aapas me badal gaye the — tabse yahi jaanch.
     ['/sewa.php', 'बुकिंग की सूची',
