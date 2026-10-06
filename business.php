@@ -2,6 +2,7 @@
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/salon.php';
 require_once __DIR__ . '/inc/dukan.php';
+require_once __DIR__ . '/inc/catalog.php';
 $tab = 'kaam';
 $id = (int)get('id');
 $st = $pdo->prepare("SELECT *, (queue_updated IS NOT NULL AND queue_updated > (NOW() - INTERVAL 60 MINUTE)) AS is_live FROM businesses WHERE id=? AND status='approved'");
@@ -58,18 +59,21 @@ include __DIR__ . '/inc/head.php';
   <?php
   // ---- इस दुकान का अपना सामान ----
   // दाम दुकान के अपने हैं, दुकानदार ने ख़ुद चढ़ाए हैं।
-  // "ख़त्म" लगा सामान और बंद दुकान यहाँ नहीं दिखती।
-  $mera  = dukan_items($pdo, $id, true);
+  // दाम और stock दिखते हैं; मँगाने का रास्ता सिर्फ़ उपलब्ध सामान के लिए है।
+  $mera = !empty($b['items_on']) ? array_values(array_filter(dukan_items($pdo, $id), fn($it) => (int)$it['active'] === 1 && (int)$it['price'] > 0)) : [];
+  $buyable = count(array_filter($mera, fn($it) => $it['stock'] === 'hai'));
+  $spages = max(1, (int)ceil(count($mera) / 30));
+  $spage = min($spages, max(1, (int)(isset($_GET['sp']) && is_string($_GET['sp']) ? $_GET['sp'] : 1)));
   $khuli = dukan_khuli($b);
   if ($mera): ?>
   <div class="box" style="margin-top:18px;border-color:var(--gold)">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <h2 style="margin:0;flex:1">इस दुकान का सामान</h2>
+      <h2 style="margin:0;flex:1"><?= t('This shop’s products', 'इस दुकान का सामान') ?></h2>
       <span class="tag <?= $khuli ? 'tag-live' : 'tag-off' ?>"><?= $khuli ? 'अभी खुली है' : 'अभी बंद है' ?></span>
     </div>
     <p class="help" style="margin-top:6px">दाम इसी दुकान के हैं — दुकानदार ने ख़ुद डाले हैं।</p>
 
-    <?php foreach (array_slice($mera, 0, 8) as $it): ?>
+    <?php foreach (array_slice($mera, ($spage - 1) * 30, 30) as $it): ?>
       <div style="border-top:1px solid var(--line);padding:9px 0;display:flex;gap:10px;align-items:center">
         <?php if ($it['photo']): ?>
           <img src="/uploads/<?= h($it['photo']) ?>" alt="" width="44" height="44"
@@ -77,25 +81,41 @@ include __DIR__ . '/inc/head.php';
         <?php endif; ?>
         <div style="flex:1;min-width:0">
           <b><?= h($it['name']) ?></b>
-          <div class="meta"><?= h($it['unit']) ?></div>
+          <div class="meta"><?= h($it['unit']) ?> · <?= $it['stock'] === 'hai' ? t('In stock', 'उपलब्ध है') : t('Out of stock', 'स्टॉक खत्म है') ?></div>
         </div>
         <div style="font-weight:800">₹<?= (int)$it['price'] ?></div>
       </div>
     <?php endforeach; ?>
 
-    <?php if (count($mera) > 8): ?>
-      <p class="meta" style="margin-top:8px">और <?= count($mera) - 8 ?> चीज़ें…</p>
+    <?php if ($spages > 1): ?>
+      <nav class="chips" style="margin-top:12px" aria-label="<?= h(t('Product pages', 'सामान के पन्ने')) ?>">
+        <?php if ($spage > 1): ?><a class="chip" href="/business.php?id=<?= $id ?>&amp;sp=<?= $spage - 1 ?>"><?= t('Previous', 'पिछला') ?></a><?php endif; ?>
+        <span class="chip"><?= $spage ?> / <?= $spages ?></span>
+        <?php if ($spage < $spages): ?><a class="chip" href="/business.php?id=<?= $id ?>&amp;sp=<?= $spage + 1 ?>"><?= t('Next', 'अगला') ?></a><?php endif; ?>
+      </nav>
     <?php endif; ?>
 
-    <?php if ($khuli): ?>
+    <?php if ($khuli && $buyable): ?>
       <a class="btn btn-brand" style="margin-top:12px;width:100%;text-align:center"
          href="/dukan-se.php?id=<?= $id ?>">इस दुकान से मँगाइए</a>
+    <?php elseif (!$buyable): ?>
+      <p class="help"><?= t('No items are in stock for an online order right now.', 'अभी ऑनलाइन ऑर्डर के लिए कोई सामान stock में नहीं है।') ?></p>
     <?php else: ?>
       <p class="help" style="margin-top:12px">दुकान खुलने पर यहीं से मँगा सकते हैं।
         समय: <?= h(salon_hm($b['open_time'])) ?> से <?= h(salon_hm($b['close_time'])) ?>।</p>
     <?php endif; ?>
     <p class="help" style="margin-top:8px">सामान का पैसा दुकान का, डिलीवरी का पैसा Maakit का।</p>
   </div>
+  <?php endif; ?>
+
+  <?php if (!$mera): ?>
+    <div class="box" style="margin-top:18px">
+      <p><?= t('Online product prices are not ready for this shop yet. Maakit can help arrange your requirement.', 'इस दुकान के ऑनलाइन सामान और दाम अभी तैयार नहीं हैं। Maakit से अपनी जरूरत मँगवा सकते हैं।') ?></p>
+      <a class="btn btn-green" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $b['name'] . ' (' . $b['village'] . ') — मुझे इस दुकान से सामान मँगाना है।')) ?>"><?= t('Arrange through Maakit', 'Maakit से मँगाइए') ?></a>
+    </div>
+  <?php endif; ?>
+  <?php if (!empty($b['shop_type'])): ?>
+    <p style="margin-top:16px"><a class="chip" href="<?= h(catalog_url(['type' => $b['shop_type']])) ?>">← <?= t('Other shops in this category', 'इस category की दूसरी दुकानें') ?></a></p>
   <?php endif; ?>
 
   <?php if (!empty($b['salon_on'])):

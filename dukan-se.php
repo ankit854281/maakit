@@ -19,6 +19,7 @@ $st = $pdo->prepare("SELECT * FROM businesses WHERE id=? AND status='approved'")
 $st->execute([$id]);
 $b = $st->fetch();
 if (!$b) { redirect('/directory.php'); }
+if (empty($b['items_on'])) { redirect('/business.php?id=' . $id); }
 
 $items = dukan_items($pdo, $id, true);
 if (!$items) { redirect('/business.php?id=' . $id); }

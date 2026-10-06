@@ -49,3 +49,11 @@ shop carries every item. Delivery and service booking retain their existing flow
 Check catalogue filtering and price visibility with `php tests/catalog.php`
 (PHP 8 with mbstring and PDO SQLite). Before deployment, check catalogue browsing,
 Hindi/English search, pagination, and actual shop offers on PHP/MySQL.
+
+Category pages now list approved shops by their chosen shop type or active
+catalogue-linked inventory. They show village, opening status and the actual
+count of available priced items. No name guessing or distance claim is used.
+Shop pages show all published products in pages of 30, including sold-out stock;
+disabled catalogues remain hidden and cannot be ordered through a direct URL.
+The CI-only category-flow check submits a seeded shop order to verify server
+prices, stock exclusions, shop routing and the disabled-catalogue guard.

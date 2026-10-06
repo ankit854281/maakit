@@ -109,5 +109,6 @@ jobs:
             sleep 1
           done
           php .github/jaanch/panne.php
+          php .github/jaanch/category-flow.php
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"
