@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
+require_once __DIR__ . '/inc/dakiya.php';
 require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/services.php';
 
@@ -114,6 +115,26 @@ include __DIR__ . '/inc/head.php';
         <div class="c"><?php foreach (str_split($o['code']) as $d): ?><span><?= h($d) ?></span><?php endforeach; ?></div>
         <div class="h"><?= t('Say this code to the delivery partner.<br>Do not share it with anyone else.', 'सामान लेते समय यही कोड डिलीवरी पार्टनर को बताइए।<br>किसी और को मत बताइए।') ?></div>
       </div>
+    <?php else: ?>
+      <!-- Saaman pahunch gaya — yahi sabse achha pal hai batane ka -->
+      <div class="box" style="margin-top:14px;text-align:center">
+        <b style="font-size:16px"><?= t('Did it reach you fine?', 'सामान ठीक पहुँच गया?') ?></b>
+        <p class="help" style="margin:5px 0 11px"><?= t(
+            'If it did, tell someone in your village. That is how Maakit grows.',
+            'तो गाँव में किसी को बता दीजिए। Maakit ऐसे ही बढ़ता है।') ?></p>
+        <button type="button" class="btn btn-brand btn-sm" id="dostBtn"><?= t('Tell a friend', 'दोस्त को भेजिए') ?></button>
+      </div>
+      <script>
+      (function(){
+        var b = document.getElementById('dostBtn');
+        if (!b) return;
+        var msg = <?= json_encode(dak_dost(), JSON_UNESCAPED_UNICODE) ?>;
+        b.addEventListener('click', function(){
+          if (navigator.share) { navigator.share({ text: msg }).catch(function(){}); return; }
+          window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+        });
+      })();
+      </script>
     <?php endif; ?>
   <?php endif; ?>
 

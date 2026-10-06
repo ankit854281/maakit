@@ -128,3 +128,20 @@ function dak_btn($mobile, $text, $label, $cls = 'btn-green') {
     return '<a class="btn ' . h($cls) . ' btn-sm" target="_blank" rel="noopener" href="'
          . h(wa_link($mobile, $text)) . '">' . h($label) . '</a>';
 }
+
+/**
+ * "Dost ko bhejiye" — jo sandesh grahak apne gaon ke group me daal sake.
+ *
+ * Ye Maakit ki taraf se vigyapan nahi hai — ye grahak ki apni baat hai,
+ * isliye "maine mangaya" likha hai, "hum behtareen hain" nahi. Gaon me
+ * ek padosi ki baat sau poster se zyada chalti hai.
+ *
+ * Chhota rakha gaya hai — lamba sandesh koi aage nahi bhejta.
+ */
+function dak_dost() {
+    return "मैंने *Maakit* से सामान मँगाया — दुकान का ही दाम, घर तक आ गया।\n\n"
+         . "राशन, खाना, दवाई, गाड़ी — कुछ भी।\n"
+         . "गाँव में किसी को ज़रूरत हो तो:\n\n"
+         . "📞 " . MAAKIT_NUMBER_SHOW . "\n"
+         . dak_ghar();
+}

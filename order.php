@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/items.php';
+require_once __DIR__ . '/inc/dakiya.php';
 require_once __DIR__ . '/inc/daam.php';
 require_once __DIR__ . '/inc/icons.php';
 
@@ -136,13 +137,31 @@ include __DIR__ . '/inc/head.php';
 
     <div style="display:grid;gap:9px;margin-top:14px">
       <a class="btn btn-green" href="<?= h($done['wa']) ?>" target="_blank" rel="noopener"><?= t('Send a copy on WhatsApp', 'WhatsApp पर कॉपी भेजिए') ?></a>
-      <a class="btn btn-brand" href="/track.php?no=<?= h($done['no']) ?>"><?= t('Track this order', 'ऑर्डर का सफ़र देखिए') ?></a>
+      <a class="btn btn-brand" href="/track.php?no=<?= h($done['no']) ?>&amp;m=<?= h($done['mobile']) ?>"><?= t('Track this order', 'ऑर्डर का सफ़र देखिए') ?></a>
+      <!-- Gaon me khabar WhatsApp group se phailti hai, vigyapan se nahi -->
+      <button type="button" class="btn btn-ghost" id="dostBtn"><?= t('Tell a friend', 'दोस्त को भेजिए') ?></button>
     </div>
     <p class="help" style="margin-top:10px"><?= t('First you get a call with the price, then the goods arrive.', 'पहले आपको कॉल आएगा, दाम बताए जाएँगे, फिर सामान आएगा।') ?></p>
   </div>
 </div>
 </section>
 <script>
+/* ---------- "दोस्त को भेजिए" ----------
+   Phone ka apna share sheet khulta hai, taaki grahak seedhe apne
+   gaon ke WhatsApp group me daal sake. Jahan wo na ho (computer),
+   wahan WhatsApp khul jata hai. */
+(function(){
+  var b = document.getElementById('dostBtn');
+  if (!b) return;
+  var msg = <?= json_encode(dak_dost(), JSON_UNESCAPED_UNICODE) ?>;
+  b.addEventListener('click', function(){
+    if (navigator.share) {
+      navigator.share({ text: msg }).catch(function(){});
+      return;
+    }
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  });
+})();
 try{
   localStorage.removeItem('mk_cart');
   localStorage.setItem('mk_me', JSON.stringify({n:<?= json_encode($_POST['name'] ?? '') ?>,m:<?= json_encode($done['mobile']) ?>,v:<?= json_encode($_POST['village'] ?? '') ?>,l:<?= json_encode($_POST['landmark'] ?? '') ?>}));
