@@ -22,7 +22,7 @@
         <a href="/sewa.php?s=safar"><?= t('Vehicle / Bolero', 'गाड़ी / बोलेरो') ?></a>
         <a href="/sewa.php?s=lawn"><?= t('Lawn & marriage hall', 'लॉन / मैरिज हॉल') ?></a>
         <a href="/sewa.php?s=tent"><?= t('Tent, sound & light', 'टेंट, साउंड, लाइट') ?></a>
-        <a href="/book.php"><?= t('All bookings', 'सारी बुकिंग') ?></a>
+        <a href="/sewa.php"><?= t('All bookings', 'सारी बुकिंग') ?></a>
         <a href="/transport.php"><?= t('Register your vehicle', 'अपनी गाड़ी जोड़िए') ?></a>
       </div>
 
@@ -64,7 +64,7 @@
   $T = [
     ['ghar',  '/',             t('Home', 'होम'),         '<path d="M3 10.5L12 3.5l9 7"/><path d="M5.5 12v8.5h13V12"/>'],
     ['order', '/order.php',    t('Order', 'ऑर्डर'),      '<path d="M4 5h2.2l2.3 10.5h9.3L20 8H7"/><circle cx="10" cy="19.5" r="1.4"/><circle cx="17.5" cy="19.5" r="1.4"/>'],
-    ['book',  '/book.php',     t('Book', 'बुकिंग'),      '<rect x="3.6" y="4.8" width="16.8" height="15.6" rx="2.4"/><path d="M8 3v3.6M16 3v3.6M3.6 9.6h16.8"/><path d="M9 13.4h2M9 16.6h6M13.5 13.4h1.5"/>'],
+    ['book',  '/sewa.php',     t('Book', 'बुकिंग'),      '<rect x="3.6" y="4.8" width="16.8" height="15.6" rx="2.4"/><path d="M8 3v3.6M16 3v3.6M3.6 9.6h16.8"/><path d="M9 13.4h2M9 16.6h6M13.5 13.4h1.5"/>'],
     ['mere',  '/track.php',    t('My orders', 'मेरे ऑर्डर'), '<path d="M3.6 7.6 12 3.4l8.4 4.2v8.8L12 20.6l-8.4-4.2z"/><path d="M3.6 7.6 12 11.8l8.4-4.2M12 11.8v8.8"/>'],
     ['kaam',  '/directory.php',t('Services', 'काम-धंधा'), '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'],
   ];

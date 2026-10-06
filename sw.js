@@ -11,7 +11,7 @@
    - panel, login, POST: kabhi cache nahi (hamesha taaza)
    ============================================================ */
 
-const V     = 'maakit-v1';
+const V     = 'maakit-v2';
 const SHELL = V + '-shell';
 const PAGES = V + '-pages';
 
@@ -26,7 +26,7 @@ const CORE = [
 ];
 
 // jin raaston ko kabhi cache nahi karna
-const NEVER = /^\/(admin|bpo|delivery|login\.php|logout\.php|shop\.php|account\.php)/;
+const NEVER = /^\/(admin|bpo|delivery|login\.php|logout\.php|shop\.php|account\.php|track\.php|api\.php|dukan-se\.php|book-mine\.php|uploads)/;
 
 self.addEventListener('install', e => {
   e.waitUntil(

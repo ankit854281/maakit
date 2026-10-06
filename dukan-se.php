@@ -12,6 +12,7 @@
 // ============================================================
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/dukan.php';
+require_once __DIR__ . '/inc/items.php';
 
 // id URL se bhi aa sakti hai aur form se bhi — dono chalein
 $id = (int)(get('id') ?: post('id'));
@@ -37,10 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
     $landmark= post('landmark');
     $pay     = post('pay') === 'upi' ? 'UPI (दुकान को सीधा)' : 'नगद — सामान लेते समय';
     $note    = post('note');
+    $market = post('market','kapsethi');
+    if (!array_key_exists($market,markets())) $market='kapsethi';
+    $weight = post('weight','0');
+    if (!array_key_exists($weight,weight_extras())) $weight='0';
+    $size = post('size','0');
+    if (!array_key_exists($size,size_extras())) $size='0';
     $qty     = (array)($_POST['q'] ?? []);
 
     // ---- kya-kya chuna gaya ----
-    $lines = []; $maal = 0;
+    $lines = []; $maal = 0; $kg = 0;
     foreach ($items as $it) {
         $n = (int)($qty[$it['id']] ?? 0);
         if ($n < 1) continue;
@@ -48,12 +55,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
         $lines[] = ['name' => $it['name'], 'unit' => $it['unit'], 'qty' => $n,
                     'price' => (int)$it['price'], 'id' => (int)$it['id']];
         $maal += (int)$it['price'] * $n;
+        $kg += unit_kg($it['unit']) * $n;
     }
+
+    // Never let the declared weight undercut the known packed-product weight.
+    $minimum=kg_band($kg);
+    if ($minimum === 'van' || ($weight !== 'van' && (int)$weight < (int)$minimum)) $weight=$minimum;
 
     if (!$lines)                       { $err = 'कुछ चुना ही नहीं। जो चाहिए उसकी गिनती भर दीजिए।'; }
     elseif (mb_strlen($name) < 2)      { $err = 'अपना नाम लिखिए।'; }
     elseif (strlen($mobile) !== 10)    { $err = 'मोबाइल नंबर 10 अंकों का लिखिए।'; }
     elseif (!$village)                 { $err = 'अपना गाँव चुनिए।'; }
+    elseif (post('pay') === 'upi' && !dukan_upi_link($b)) { $err = t('This shop has no UPI details yet. Choose cash or contact us.', 'दुकान का UPI अभी नहीं भरा है। नगद चुनिए या हमें कॉल कीजिए।'); }
     elseif (!dukan_khuli($b))          { $err = 'यह दुकान अभी बंद है। खुलने पर मँगा लीजिए।'; }
     else {
         // ek number se ghante me 6 se jyada order nahi
@@ -71,18 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
             $pehla = $pdo->prepare("SELECT COUNT(*) c FROM orders WHERE mobile=?");
             $pehla->execute([$mobile]);
             $first = ((int)$pehla->fetch()['c'] === 0) ? 1 : 0;
-            $calc  = calc_charge($village, 'kapsethi', 0, 0, $pdo, (bool)$first);
+            $calc  = calc_charge($village, $market, $weight, $size, $pdo, (bool)$first);
 
             $order_no = new_order_no($pdo);
             $code     = new_code();
             $pdo->prepare("INSERT INTO orders
                 (order_no, code, source, customer_id, customer_name, mobile, village, landmark,
                  items, items_json, goods_note, shop, business_id, goods_amount, market,
-                 first_order, delivery_charge, payment, status, shop_status)
-                VALUES (?,?,'website',?,?,?,?,?,?,?,?,?,?,?,'kapsethi',?,?,?,'Naya','naya')")
+                 weight_extra, size_extra, first_order, delivery_charge, payment, status, shop_status)
+                VALUES (?,?,'website',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Naya','naya')")
                 ->execute([$order_no, $code, $me['id'] ?? null, $name, $mobile, $village, $landmark,
                            $items_text, json_encode($lines, JSON_UNESCAPED_UNICODE), $note,
-                           $b['name'], $id, $maal, $first, $calc['total'], $pay]);
+                           $b['name'], $id, $maal, $market, $weight, $size, $first, $calc['total'], $pay]);
 
             // kaun saaman kitna chala — dukandar ko hisab me dikhega
             $up = $pdo->prepare("UPDATE shop_items SET sold = sold + ? WHERE id=? AND business_id=?");
@@ -176,7 +189,7 @@ include __DIR__ . '/inc/head.php';
           </div>
           <div style="font-weight:800;flex:none">₹<?= (int)$it['price'] ?></div>
           <input class="qn" type="number" name="q[<?= (int)$it['id'] ?>]" value="0" min="0" max="50"
-                 inputmode="numeric" data-p="<?= (int)$it['price'] ?>"
+                 inputmode="numeric" data-p="<?= (int)$it['price'] ?>" data-kg="<?= h(unit_kg($it['unit'])) ?>"
                  style="width:62px;flex:none" aria-label="<?= h($it['name']) ?> की गिनती">
         </div>
       <?php endforeach; ?>
@@ -202,6 +215,14 @@ include __DIR__ . '/inc/head.php';
         </select></div>
       <div class="field"><label>पहचान (किसके घर के पास)</label>
         <input type="text" name="landmark" value="<?= h($me['landmark'] ?? post('landmark')) ?>"></div>
+      <div class="field"><label><?= t('Shop market', 'दुकान किस बाज़ार में है') ?></label>
+        <select name="market"><?php foreach (markets() as $key=>$label): ?><option value="<?= h($key) ?>"><?= h($label) ?></option><?php endforeach; ?></select></div>
+      <div class="field"><label><?= t('Total weight', 'सामान का कुल वजन') ?></label>
+        <select name="weight"><?php foreach (weight_extras() as $key=>$label): ?><option value="<?= h($key) ?>"><?= h($label) ?></option><?php endforeach; ?></select></div>
+      <div class="field"><label><?= t('Size or fragile goods', 'बड़ा या नाज़ुक सामान') ?></label>
+        <select name="size"><?php foreach (size_extras() as $key=>$label): ?><option value="<?= h($key) ?>"><?= h($label) ?></option><?php endforeach; ?></select></div>
+      <div class="note" id="deliveryEstimate" aria-live="polite"></div>
+      <p class="help"><?= t('Normal delivery fee is shown here. Eligible first orders waive the base fee; weight and size extras remain. Final fee is checked when you submit. Unknown fees are confirmed before dispatch.', 'यहाँ सामान्य delivery charge दिखेगा। योग्य पहले order पर base fee माफ है; वजन और आकार का अतिरिक्त charge रहेगा। भेजते समय final charge जाँचा जाएगा। अनिश्चित charge सामान भेजने से पहले पक्का होगा।') ?></p>
       <div class="field"><label>पैसा कैसे देंगे</label>
         <select name="pay">
           <option value="nagad">नगद — सामान लेते समय</option>
@@ -220,15 +241,30 @@ include __DIR__ . '/inc/head.php';
   <script>
   (function () {
     var f = document.getElementById('mf'), out = document.getElementById('jod');
+    var rates = <?= json_encode(array_column($villages,null,'name'), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
+    var wording = <?= json_encode(['choose'=>t('Choose your village to see the delivery fee.','delivery charge देखने के लिए गाँव चुनिए।'),'call'=>t('Delivery fee will be confirmed on call before dispatch.','delivery charge भेजने से पहले कॉल पर पक्का होगा।'),'fee'=>t('Normal delivery fee','सामान्य delivery charge'),'total'=>t('Goods + normal delivery','सामान + सामान्य delivery')], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
     function jodo() {
-      var s = 0;
+      var s = 0, kg = 0;
       f.querySelectorAll('.qn').forEach(function (i) {
         var n = parseInt(i.value, 10); if (!n || n < 0) n = 0;
+        n = Math.min(50,n);
         s += n * parseInt(i.dataset.p, 10);
+        kg += n * parseFloat(i.dataset.kg || 0);
       });
       out.textContent = s;
+      var minimum=kg > 50 ? 'van' : kg > 30 ? '40' : kg > 15 ? '20' : kg > 5 ? '10' : '0';
+      var weight=f.elements.weight;
+      if (minimum==='van' || (weight.value!=='van' && Number(weight.value)<Number(minimum))) weight.value=minimum;
+      var village=f.elements.village.value, market=f.elements.market.value;
+      var result=document.getElementById('deliveryEstimate');
+      if (!village) { result.textContent=wording.choose; return; }
+      var base=rates[village] ? Number(rates[village]['rate_'+market]) : 0;
+      if (!base || weight.value==='van' || f.elements.size.value==='van') { result.textContent=wording.call; return; }
+      var charge=base+Number(weight.value)+Number(f.elements.size.value);
+      result.textContent=wording.fee+': ₹'+charge+' · '+wording.total+': ₹'+(s+charge);
     }
     f.addEventListener('input', jodo);
+    f.addEventListener('change', jodo);
     jodo();
   })();
   </script>

@@ -57,3 +57,11 @@ Shop pages show all published products in pages of 30, including sold-out stock;
 disabled catalogues remain hidden and cannot be ordered through a direct URL.
 The CI-only category-flow check submits a seeded shop order to verify server
 prices, stock exclusions, shop routing and the disabled-catalogue guard.
+
+### Launch revenue and checkout checks
+
+`admin/summary.php` records actual daily fuel, staff and other operating costs. It compares these with completed delivery fees and the explicit shop commission already recorded in `shop_ledger`. Goods value, pending/cancelled orders and booking revenue are excluded. Missing costs or an unknown completed delivery fee leave the balance incomplete rather than reporting false profit. Monthly costs must be allocated once per day by the admin; this report is not payment collection, tax or full accounting. Existing customer/village ranking remains available.
+
+Shop checkout now shows the normal delivery estimate and supports market, weight and fragile/large-item charges. Known packed weight cannot be understated in a forged request, and UPI is rejected if the shop has no payment details. Delivery staff distinguish both direct-shop UPI labels from cash and see any weight surcharges on the first order. Booking navigation now opens `sewa.php`. Private tracking, orders and uploaded bills are excluded from offline caches; the cache version is bumped to remove previously stored private pages.
+
+Validation includes SQLite revenue/cost edge cases, MariaDB migrations twice, real shop-order HTTP checks, and admin login/cost entry/correction/CSRF checks in the guarded CI database. No live test orders or expenses are created.
