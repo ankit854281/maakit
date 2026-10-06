@@ -34,3 +34,17 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // khul jata hai.
 // ============================================================
 // define('MUNEEM_KEY', 'yahan ek lambi anjaan line likhiye');
+
+// ============================================================
+// Updater ki chaabi — YE ZAROORI HAI.
+//
+// update.php isi chaabi se kholta hai:
+//     maakit.in/update.php?key=<yahi line>
+//
+// Neeche wali line se // hataiye aur apni koi lambi anjaan line
+// likh dijiye (20-30 akshar, angrezi akshar aur ginti milaakar).
+//
+// Ye chaabi kisi ko mat dijiye — isse website ka code badla
+// ja sakta hai.
+// ============================================================
+// define('UPDATE_KEY', 'yahan ek lambi anjaan line likhiye');
