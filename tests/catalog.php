@@ -19,13 +19,15 @@ check(catalog_url(['type'=>'Grocery / Kirana Store','sub'=>'Atta & Flour']) === 
 $pdo = new PDO('sqlite::memory:');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-$pdo->exec('CREATE TABLE businesses(id INTEGER,name TEXT,village TEXT,shop_open INTEGER,status TEXT,items_on INTEGER)');
+$pdo->exec('CREATE TABLE businesses(id INTEGER,name TEXT,village TEXT,shop_open INTEGER,status TEXT,items_on INTEGER,open_time TEXT,close_time TEXT)');
 $pdo->exec('CREATE TABLE shop_items(id INTEGER,cat_id INTEGER,name TEXT,unit TEXT,price INTEGER,photo TEXT,stock TEXT,active INTEGER,business_id INTEGER)');
-$pdo->exec("INSERT INTO businesses VALUES (1,'Approved','Village',1,'approved',1),(2,'Pending','Village',1,'pending',1),(3,'Disabled','Village',1,'approved',0)");
+$pdo->exec("INSERT INTO businesses VALUES (1,'Approved','Village',1,'approved',1,'00:00','00:00'),(2,'Pending','Village',1,'pending',1,'00:00','00:00'),(3,'Disabled','Village',1,'approved',0,'00:00','00:00')");
 $pdo->exec("INSERT INTO shop_items VALUES (1,1,'Atta','5 kg',200,NULL,'hai',1,1),(2,1,'Atta','1 kg',40,NULL,'hai',1,2),(3,1,'Atta','1 kg',0,NULL,'hai',1,1),(4,1,'Atta','1 kg',50,NULL,'khatam',1,1),(5,1,'Atta','2 kg',80,NULL,'hai',0,1),(6,1,'Atta','1 kg',60,NULL,'hai',1,3)");
 $offers = catalog_offers($pdo, [1]);
 check(count($offers[1]) === 2, 'Only approved, enabled, active, positive-price offers');
 check($offers[1][0]['price'] === 50 && $offers[1][0]['stock'] === 'khatam', 'Sold-out offers keep their real price and stock');
 check($offers[1][1]['unit'] === '5 kg', 'Keep shop pack size alongside price');
 check(catalog_offers($pdo, []) === [], 'Empty page has no offers');
+check($offers[1][1]['open_now'] === true, 'Use shop opening schedule');
+check(dukan_khuli(['shop_open'=>0,'open_time'=>'00:00','close_time'=>'00:00']) === false, 'Shop switch overrides schedule');
 echo "Catalogue tests passed\n";

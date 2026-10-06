@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/search.php';
+require_once __DIR__ . '/dukan.php';
 
 function catalog_groups() {
     return [
@@ -95,13 +96,16 @@ function catalog_offers(PDO $pdo, array $ids) {
     if (!$ids) return [];
     $marks = implode(',', array_fill(0, count($ids), '?'));
     $st = $pdo->prepare("SELECT s.id,s.cat_id,s.name,s.unit,s.price,s.photo,s.stock,
-        b.id AS business_id,b.name AS shop_name,b.village,b.shop_open
+        b.id AS business_id,b.name AS shop_name,b.village,b.shop_open,b.open_time,b.close_time
         FROM shop_items s JOIN businesses b ON b.id=s.business_id
         WHERE s.cat_id IN ($marks) AND s.active=1 AND s.price>0
           AND b.status='approved' AND b.items_on=1
         ORDER BY s.price,s.id");
     $st->execute($ids);
     $out = [];
-    foreach ($st->fetchAll() as $offer) $out[(int)$offer['cat_id']][] = $offer;
+    foreach ($st->fetchAll() as $offer) {
+        $offer['open_now'] = dukan_khuli($offer);
+        $out[(int)$offer['cat_id']][] = $offer;
+    }
     return $out;
 }

@@ -106,10 +106,10 @@ include __DIR__ . '/inc/head.php';
             <span class="bazaar-price">₹<?= (int)$offer['price'] ?></span> / <?= h($offer['unit']) ?>
             <span class="meta"><?= h($offer['shop_name']) ?> · <?= h($offer['village']) ?></span>
             <?php if ($offer['stock'] !== 'hai'): ?><span class="meta"><?= t('Out of stock', 'अभी स्टॉक नहीं है') ?></span>
-            <?php elseif (!(int)$offer['shop_open']): ?><span class="meta"><?= t('Shop closed', 'दुकान अभी बंद है') ?></span>
+            <?php elseif (!$offer['open_now']): ?><span class="meta"><?= t('Shop closed', 'दुकान अभी बंद है') ?></span>
             <?php endif; ?>
             <a class="btn btn-sm" href="/business.php?id=<?= (int)$offer['business_id'] ?>"><?= t('View shop', 'दुकान देखिए') ?></a>
-            <?php if ($offer['stock'] === 'hai' && (int)$offer['shop_open'] && empty($item['is_sewa'])): ?>
+            <?php if ($offer['stock'] === 'hai' && $offer['open_now'] && empty($item['is_sewa'])): ?>
               <a class="btn btn-brand btn-sm" href="/dukan-se.php?id=<?= (int)$offer['business_id'] ?>"><?= t('Order from shop', 'दुकान से मँगाइए') ?></a>
             <?php endif; ?>
           </div>
