@@ -120,6 +120,26 @@ include __DIR__ . '/inc/head.php';
       <input type="text" name="q" id="q" placeholder="<?= h(t('What do you need? Atta, medicine, Bolero…', 'क्या चाहिए? आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
       <button class="go" type="submit"><?= t('Search', 'खोजिए') ?></button>
     </form>
+
+    <?php
+    // Ek nazar me daayra — ki yahan sirf kirana nahi, dawa bhi,
+    // nashta bhi, mistri bhi, gaadi bhi. Har chip asli jagah par
+    // le jaati hai, dikhane bhar ki nahi hai.
+    $NAMUNE = [
+      [t('Atta 5kg', 'आटा 5 किलो'),        '/order.php#anaj'],
+      [t('Paracetamol', 'पैरासिटामोल'),    '/order.php#dawa'],
+      [t('Samosa', 'समोसा'),               '/order.php#chaat'],
+      [t('Mistri', 'मिस्त्री'),             '/directory.php?cat=bijli'],
+      [t('Bolero', 'बोलेरो'),               '/sewa.php?s=safar'],
+      [t('Salon seat', 'सैलून'),            '/directory.php?cat=nai'],
+    ];
+    ?>
+    <div class="hnam">
+      <span class="hnam-l"><?= t('Like —', 'जैसे —') ?></span>
+      <?php foreach ($NAMUNE as list($lbl, $href)): ?>
+        <a href="<?= h($href) ?>"><?= h($lbl) ?></a>
+      <?php endforeach; ?>
+    </div>
   </div>
 </section>
 
@@ -175,6 +195,70 @@ include __DIR__ . '/inc/head.php';
     <?= svc_icon('all', 20) ?>
     <span><?= t('All services and shops', 'सभी सेवाएँ और दुकानें') ?></span>
     <?= svc_icon('plus', 15) ?>
+  </a>
+
+  <!-- ============ kaise kaam karta hai ============ -->
+  <!-- Maakit ka tareeka aam nahi hai: koi stock nahi, kisi bhi
+       dukaan se, sirf delivery ka paisa. Jo pehli baar aata hai
+       usse ye samajh nahi aata — isliye teen kadam me saaf. -->
+  <div class="kaise">
+    <div class="secthead" style="margin-top:0">
+      <h2><?= t('How it works', 'कैसे काम करता है') ?></h2>
+      <p><?= t('Three steps, nothing else', 'तीन कदम, और कुछ नहीं') ?></p>
+    </div>
+    <ol class="steps">
+      <li>
+        <span class="n">1</span>
+        <b><?= t('Tell us what you need', 'बताइए क्या चाहिए') ?></b>
+        <i><?= t('Call, WhatsApp, or order here. Anything, from any shop — even if it is not on our list.',
+                 'फ़ोन कीजिए, WhatsApp कीजिए, या यहीं ऑर्डर कर दीजिए। किसी भी दुकान से कुछ भी — जो लिस्ट में नहीं है वो भी।') ?></i>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <b><?= t('We bring it', 'हम ले आते हैं') ?></b>
+        <i><?= t('Our delivery boy picks it up from the shop and brings it to your door, with the shop’s bill.',
+                 'हमारा डिलीवरी बॉय दुकान से उठाकर आपके घर तक पहुँचाता है — दुकान की पर्ची के साथ।') ?></i>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <b><?= t('You pay only the delivery', 'आप सिर्फ़ डिलीवरी का पैसा दीजिए') ?></b>
+        <i><?= t('The goods cost what the shop charges — not a rupee more. Our earning is the delivery charge.',
+                 'सामान का दाम वही जो दुकान का है — एक रुपया ज़्यादा नहीं। हमारी कमाई डिलीवरी चार्ज है।') ?></i>
+      </li>
+    </ol>
+
+    <!-- kyun Maakit — jo bade app nahi karte -->
+    <div class="kyun">
+      <div>
+        <span><?= svc_icon('grocery', 20) ?></span>
+        <b><?= t('We keep no stock', 'हम कोई स्टॉक नहीं रखते') ?></b>
+        <i><?= t('Your things come from the shop you already trust. We only carry them.',
+                 'आपका सामान उसी दुकान से आता है जिस पर आपका भरोसा है। हम सिर्फ़ पहुँचाते हैं।') ?></i>
+      </div>
+      <div>
+        <span><?= svc_icon('rupee', 20) ?></span>
+        <b><?= t('The shop’s money stays the shop’s', 'दुकान का पैसा दुकान का') ?></b>
+        <i><?= t('Cash, or UPI straight to the shop’s own number. Whatever share Maakit takes is shown to the shopkeeper in his own ledger — nothing hidden.',
+                 'नगद, या UPI सीधे दुकान के अपने नंबर पर। Maakit का जो भी हिस्सा होगा वह दुकानदार को उसकी बही में साफ़ दिखता है — छिपाकर कुछ नहीं।') ?></i>
+      </div>
+      <div>
+        <span><?= svc_icon('truck', 20) ?></span>
+        <b><?= t('The big apps don’t come here', 'बड़े ऐप यहाँ नहीं आते') ?></b>
+        <i><?= t('Swiggy and Blinkit will not deliver to our villages. That is exactly why Maakit exists.',
+                 'स्विगी और ब्लिंकिट हमारे गाँवों तक नहीं आते। Maakit इसीलिए है।') ?></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ dukandar ke liye ============ -->
+  <a class="dknyota" href="/register-business.php">
+    <span class="ic"><?= svc_icon('shops', 26) ?></span>
+    <span class="tx">
+      <b><?= t('Do you run a shop?', 'दुकान आपकी है?') ?></b>
+      <i><?= t('Put your shop on Maakit — your items, your prices, your orders and your daily accounts, all on your phone. Free.',
+               'अपनी दुकान Maakit पर रखिए — अपना सामान, अपना दाम, अपने ऑर्डर और अपना हिसाब, सब अपने फ़ोन में। मुफ़्त।') ?></i>
+    </span>
+    <span class="go"><?= t('Add your shop', 'दुकान जोड़िए') ?> <?= svc_icon('plus', 14) ?></span>
   </a>
 
   <!-- ============ abhi-abhi kya hua ============ -->
