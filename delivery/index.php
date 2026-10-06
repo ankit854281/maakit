@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/dakiya.php';
 $u = need_role(['delivery', 'admin']);
 $page_title = 'मेरे ऑर्डर — Maakit';
 
@@ -88,7 +89,9 @@ include __DIR__ . '/../inc/panel.php';
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">
         <a class="btn btn-green btn-sm" href="tel:+91<?= h($o['mobile']) ?>">📞 कॉल</a>
-        <a class="btn btn-brand btn-sm" href="<?= h(wa_link($o['mobile'], "नमस्ते, Maakit से बोल रहे हैं। आपका ऑर्डर {$o['order_no']} लेकर आ रहा हूँ।")) ?>" target="_blank" rel="noopener">💬 WhatsApp</a>
+        <?php // ---- डाकिया: दुकान से निकलते ही ग्राहक को बता दीजिए ----
+          echo dak_btn($o['mobile'], dak_order($o, 'nikla'), '💬 आ रहा हूँ — भेजिए', 'btn-brand');
+        ?>
         <?php if ($o['status'] !== 'Pickup' && $o['status'] !== 'Delivered'): ?>
           <form method="post" style="display:inline">
             <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>"><input type="hidden" name="status" value="Pickup">

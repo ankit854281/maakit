@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/dakiya.php';
 require_once __DIR__ . '/../inc/icons.php';
 $u = need_role(['bpo', 'admin']);
 $page_title = 'आज के ऑर्डर — Maakit';
@@ -58,15 +59,7 @@ include __DIR__ . '/../inc/panel.php';
 
   <?php if (!$orders): ?><div class="box">इस दिन का कोई ऑर्डर नहीं है।</div><?php endif; ?>
 
-  <?php foreach ($orders as $o):
-    $conf = "Maakit - ऑर्डर कन्फर्म\nऑर्डर नंबर: {$o['order_no']}\nसामान: {$o['items']}\n"
-      . ($o['shop'] ? "दुकान: {$o['shop']}\n" : "")
-      . "डिलीवरी चार्ज: " . ($o['first_order'] ? "पहली डिलीवरी फ़्री" : "₹" . (int)$o['delivery_charge']) . "\n"
-      . "डिलीवरी कोड: {$o['code']}\nसामान लेते समय यह कोड डिलीवरी पार्टनर को बताइए। किसी और को न बताएँ।";
-    $del = "Maakit - आपका ऑर्डर {$o['order_no']} पहुँचा दिया गया है।\n"
-      . ($o['goods_amount'] ? "सामान: ₹{$o['goods_amount']}\n" : "")
-      . "डिलीवरी चार्ज: " . ($o['first_order'] ? "फ़्री" : "₹" . (int)$o['delivery_charge']) . "\n"
-      . "Maakit चुनने के लिए धन्यवाद। कोई दिक्कत हो तो आज ही बताइए।"; ?>
+  <?php foreach ($orders as $o): ?>
     <div class="box" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div>
@@ -93,8 +86,21 @@ include __DIR__ . '/../inc/panel.php';
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <a class="btn btn-green btn-sm" href="<?= h(wa_link($o['mobile'], $conf)) ?>" target="_blank" rel="noopener">कन्फर्म + कोड भेजिए</a>
-        <a class="btn btn-brand btn-sm" href="<?= h(wa_link($o['mobile'], $del)) ?>" target="_blank" rel="noopener">डिलीवर मैसेज</a>
+        <?php // ---- डाकिया: हर हाल का अपना सन्देश ----
+          $st = $o['status'];
+          if (in_array($st, ['Naya','Confirm'], true)) {
+              echo dak_btn($o['mobile'], dak_order($o, 'confirm'), 'कन्फ़र्म + कोड भेजिए');
+          }
+          if (in_array($st, ['Assign','Pickup'], true)) {
+              echo dak_btn($o['mobile'], dak_order($o, 'nikla'), 'निकल चुका है — भेजिए');
+          }
+          if ($st === 'Delivered') {
+              echo dak_btn($o['mobile'], dak_order($o, 'pahuncha'), 'पहुँचा दिया — भेजिए');
+          }
+          if (in_array($st, ['Naya','Confirm','Assign','Pickup'], true)) {
+              echo dak_btn($o['mobile'], dak_order($o, 'der'), 'देर हो रही है', 'btn-ghost');
+          }
+        ?>
         <a class="btn btn-brand btn-sm" href="tel:+91<?= h($o['mobile']) ?>">कॉल</a>
       </div>
 

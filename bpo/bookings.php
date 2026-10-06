@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/dakiya.php';
 require_once __DIR__ . '/../inc/services.php';
 require_once __DIR__ . '/../inc/transport.php';
 $u = need_role(['bpo', 'admin']);
@@ -99,7 +100,17 @@ include __DIR__ . '/../inc/panel.php';
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
         <a class="btn btn-brand btn-sm" href="tel:+91<?= h($b['mobile']) ?>">कॉल</a>
-        <a class="btn btn-green btn-sm" href="<?= h(wa_link($b['mobile'], $wa)) ?>" target="_blank" rel="noopener">WhatsApp भेजिए</a>
+        <?php // ---- डाकिया: बुकिंग के हर हाल का अपना सन्देश ----
+          $q = $b['quote'] !== null && $b['quote'] !== '' ? (int)$b['quote'] : null;
+          if ($b['status'] === 'Naya') {
+              echo dak_btn($b['mobile'], dak_booking($b, 'mili'), 'बुकिंग मिल गई — भेजिए');
+          }
+          if ($q !== null) {
+              echo dak_btn($b['mobile'], dak_booking($b, 'rate', $q), 'रेट भेजिए', 'btn-ghost');
+              echo dak_btn($b['mobile'], dak_booking($b, 'pakki', $q), 'पक्की हो गई — भेजिए');
+          }
+        ?>
+        <a class="btn btn-ghost btn-sm" href="<?= h(wa_link($b['mobile'], $wa)) ?>" target="_blank" rel="noopener">पूरा ब्योरा भेजिए</a>
       </div>
 
       <form method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px">
