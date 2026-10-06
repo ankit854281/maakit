@@ -37,6 +37,12 @@ $prices_ready = true;
 try { $offers = catalog_offers($pdo, array_column($items, 'id')); }
 catch (PDOException $e) { $prices_ready = false; error_log('Maakit catalog prices: ' . $e->getMessage()); }
 $params = ['group' => $group, 'type' => $type, 'sub' => $sub, 'q' => $q];
+$local_shops = [];
+$shops_ready = true;
+if ($type !== '') {
+    try { $local_shops = catalog_shops($pdo, $type); }
+    catch (PDOException $e) { $shops_ready = false; error_log('Maakit category shops: ' . $e->getMessage()); }
+}
 $page_title = t('Shop categories & prices — Maakit', 'दुकान की categories और दाम — Maakit');
 $tab = 'order';
 include __DIR__ . '/inc/head.php';
@@ -80,13 +86,36 @@ include __DIR__ . '/inc/head.php';
           <h3><?= h($slug) ?></h3>
           <span class="meta"><?= h(catalog_meta()[$slug]['hi'] ?? $info['hi']) ?></span>
           <span class="meta"><?= $info['count'] ?> <?= t('products / services', 'सामान / सेवाएँ') ?></span>
-          <b><?= t('View products and prices →', 'सामान और दाम देखिए →') ?></b>
+          <b><?= t('Choose a shop & see products →', 'दुकान चुनिए और सामान देखिए →') ?></b>
         </a>
       <?php endforeach; ?>
     </div>
   <?php else: ?>
     <a class="chip" href="<?= h(catalog_url(['group' => $group])) ?>">← <?= t('Shop types', 'दुकान के प्रकार') ?></a>
     <h2><?= $type !== '' ? h(catalog_label($type, $types[$type]['hi'])) : h(t('Catalogue results', 'सामान की खोज')) ?></h2>
+    <?php if ($type !== ''): ?>
+      <h3><?= t('Choose a local shop', 'स्थानीय दुकान चुनिए') ?></h3>
+      <p class="help"><?= t('Choose a shop to see its own products, pack sizes and prices.', 'दुकान चुनकर उसी दुकान का सामान, नाप और दाम देखिए।') ?></p>
+      <?php if ($local_shops): ?>
+        <div class="bazaar-cards">
+          <?php foreach ($local_shops as $shop): ?>
+            <article class="bazaar-card">
+              <?php if ($shop['photo']): ?><img class="bazaar-photo" src="/uploads/<?= h($shop['photo']) ?>" alt="<?= h($shop['name']) ?>" loading="lazy"><?php endif; ?>
+              <h3><?= h($shop['name']) ?></h3>
+              <span class="meta"><?= h($shop['village']) ?></span>
+              <?php if ($shop['address']): ?><span class="meta"><?= h($shop['address']) ?></span><?php endif; ?>
+              <span class="tag <?= $shop['open_now'] ? 'tag-live' : 'tag-off' ?>"><?= $shop['open_now'] ? t('Open now', 'अभी खुली है') : t('Closed now', 'अभी बंद है') ?></span>
+              <p class="help"><?= (int)$shop['available_count'] ? (int)$shop['available_count'] . ' ' . t('priced items in stock', 'सामान के दाम और stock जुड़े हैं') : t('Online prices are not ready yet. You can view the shop or ask Maakit.', 'ऑनलाइन सामान के दाम अभी तैयार नहीं हैं। दुकान देखिए या Maakit से पूछिए।') ?></p>
+              <a class="btn btn-brand btn-sm" href="/business.php?id=<?= (int)$shop['id'] ?>"><?= t('View shop & products', 'दुकान और सामान देखिए') ?></a>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <div class="box"><p><?= $shops_ready ? t('No local shop is listed in this category yet. Maakit can still help arrange your requirement.', 'इस category में स्थानीय दुकान अभी नहीं जुड़ी है। फिर भी Maakit से अपनी जरूरत मँगवा सकते हैं।') : t('The shop list is temporarily unavailable. Please ask Maakit.', 'दुकान की सूची अभी नहीं खुल पा रही है। Maakit से पूछिए।') ?></p></div>
+      <?php endif; ?>
+      <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . catalog_label($type) . ' — ' . t('Please arrange what I need from a local shop.', 'मुझे स्थानीय दुकान से सामान मँगाना है।'))) ?>"><?= t('Arrange through Maakit', 'Maakit से मँगाइए') ?></a>
+      <h3 style="margin-top:24px"><?= t('Products usually found in this shop type', 'इस तरह की दुकान में मिलने वाला सामान') ?></h3>
+    <?php endif; ?>
     <?php if ($subs): ?>
       <nav class="bazaar-chips" aria-label="<?= h(t('Product subcategories', 'सामान की subcategories')) ?>">
         <a class="chip <?= $sub === '' ? 'on' : '' ?>" href="<?= h(catalog_url(array_merge($params, ['sub' => '']))) ?>"><?= t('All products', 'सभी सामान') ?></a>

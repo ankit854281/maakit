@@ -109,3 +109,24 @@ function catalog_offers(PDO $pdo, array $ids) {
     }
     return $out;
 }
+
+function catalog_shops(PDO $pdo, $type) {
+    if ($type === '') return [];
+    $st = $pdo->prepare("SELECT b.id,b.name,b.village,b.address,b.photo,b.shop_open,
+        b.open_time,b.close_time,b.items_on,
+        (SELECT COUNT(*) FROM shop_items s WHERE s.business_id=b.id
+          AND s.active=1 AND s.price>0 AND s.stock='hai') AS available_count
+        FROM businesses b WHERE b.status='approved'
+          AND (b.shop_type=? OR EXISTS (
+            SELECT 1 FROM shop_items s JOIN catalog_items c ON c.id=s.cat_id
+            WHERE s.business_id=b.id AND s.active=1 AND c.shop_type=?))
+        ORDER BY b.village,b.name,b.id");
+    $st->execute([$type, $type]);
+    $out = $st->fetchAll();
+    foreach ($out as &$shop) {
+        $shop['open_now'] = dukan_khuli($shop);
+        if (!(int)$shop['items_on']) $shop['available_count'] = 0;
+    }
+    unset($shop);
+    return $out;
+}
