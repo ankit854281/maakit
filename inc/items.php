@@ -63,6 +63,8 @@ function item_emoji($name, $grp = '') {
 /** unit se andaaz ka wazan (kilo) — cart se wazan khud chun jaaye */
 function unit_kg($unit) {
     $u = trim($unit);
+    if (preg_match('/([\d.]+)\s*(?:kg|kilograms?|litres?|liters?|l)\b/i', $u, $m)) return (float)$m[1];
+    if (preg_match('/([\d.]+)\s*(?:g|grams?|ml)\b/i', $u, $m)) return (float)$m[1] / 1000;
     if (preg_match('/([\d.]+)\s*(किलो|लीटर)/u', $u, $m)) return (float)$m[1];
     if (preg_match('/([\d.]+)\s*(ग्राम)/u', $u, $m)) return (float)$m[1] / 1000;
     if (preg_match('/([\d.]+)\s*मि\.?ली/u', $u, $m)) return (float)$m[1] / 1000;

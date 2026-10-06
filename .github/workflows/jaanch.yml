@@ -66,7 +66,9 @@ jobs:
           echo "✅ सारी PHP फ़ाइलें ठीक हैं"
 
       - name: दुकान categories और दाम की जाँच
-        run: php tests/catalog.php
+        run: |
+          php tests/catalog.php
+          php tests/earning.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi
@@ -110,5 +112,6 @@ jobs:
           done
           php .github/jaanch/panne.php
           php .github/jaanch/category-flow.php
+          php .github/jaanch/earning-flow.php
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"

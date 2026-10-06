@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/dakiya.php';
+require_once __DIR__ . '/../inc/earning.php';
 $u = need_role(['delivery', 'admin']);
 $page_title = 'मेरे ऑर्डर — Maakit';
 
@@ -69,8 +70,8 @@ include __DIR__ . '/../inc/panel.php';
       <div style="margin-top:6px"><?= nl2br(h($o['items'])) ?></div>
       <div class="meta"><?= $o['shop'] ? 'दुकान: ' . h($o['shop']) : 'दुकान: अपनी पसंद' ?> · <?= h(markets()[$o['market']] ?? '') ?></div>
       <div class="note" style="margin-top:10px">
-        लेना है: <b><?= $o['payment'] === 'मैं खुद दुकान को UPI करूँगा' ? 'सिर्फ़ डिलीवरी चार्ज' : 'सामान + डिलीवरी' ?></b>
-        · डिलीवरी: <?= $o['first_order'] ? 'फ़्री' : '₹' . (int)$o['delivery_charge'] ?>
+        लेना है: <b><?= goods_paid_to_shop($o['payment']) ? 'सिर्फ़ डिलीवरी चार्ज' : 'सामान + डिलीवरी' ?></b>
+        · डिलीवरी: <?= $o['delivery_charge'] === null ? h(t('Confirm the charge first', 'चार्ज पहले पक्का कीजिए')) : '₹' . (int)$o['delivery_charge'] ?>
         <?= $o['goods_amount'] ? ' · सामान ₹' . (int)$o['goods_amount'] : '' ?>
         · पेमेंट: <?= h($o['payment']) ?>
       </div>

@@ -16,7 +16,7 @@ $o_today   = (int)one($pdo, "SELECT COUNT(*) FROM orders WHERE DATE(created_at)=
 $o_new     = (int)one($pdo, "SELECT COUNT(*) FROM orders WHERE DATE(created_at)=? AND status='Naya'", [$day]);
 $o_done    = (int)one($pdo, "SELECT COUNT(*) FROM orders WHERE DATE(created_at)=? AND status IN ('Delivered','Paisa jama')", [$day]);
 $o_cancel  = (int)one($pdo, "SELECT COUNT(*) FROM orders WHERE DATE(created_at)=? AND status='Cancel'", [$day]);
-$del_today = (int)one($pdo, "SELECT COALESCE(SUM(delivery_charge),0) FROM orders WHERE DATE(created_at)=? AND status<>'Cancel'", [$day]);
+$del_today = (int)one($pdo, "SELECT COALESCE(SUM(delivery_charge),0) FROM orders WHERE DATE(created_at)=? AND status IN ('Delivered','Paisa jama')", [$day]);
 $goods_tdy = (int)one($pdo, "SELECT COALESCE(SUM(goods_amount),0) FROM orders WHERE DATE(created_at)=? AND status<>'Cancel'", [$day]);
 $b_today   = (int)one($pdo, "SELECT COUNT(*) FROM service_bookings WHERE DATE(created_at)=?", [$day]);
 $b_new     = (int)one($pdo, "SELECT COUNT(*) FROM service_bookings WHERE status='Naya'");
@@ -41,7 +41,7 @@ $tr_free   = (int)one($pdo, "SELECT COUNT(*) FROM transports WHERE status='appro
 $tr_exp    = count(papers_expiring($pdo, 45));
 
 // ---------- 30 din ----------
-$byday = $pdo->prepare("SELECT DATE(created_at) d, COUNT(*) c, COALESCE(SUM(delivery_charge),0) s
+$byday = $pdo->prepare("SELECT DATE(created_at) d, COUNT(*) c, COALESCE(SUM(CASE WHEN status IN ('Delivered','Paisa jama') THEN delivery_charge ELSE 0 END),0) s
                         FROM orders WHERE DATE(created_at) BETWEEN ? AND ? AND status<>'Cancel'
                         GROUP BY DATE(created_at) ORDER BY d");
 $byday->execute([$from, $day]);
@@ -49,7 +49,7 @@ $series = $byday->fetchAll();
 $o_30   = array_sum(array_column($series, 'c'));
 $del_30 = array_sum(array_column($series, 's'));
 
-$byvill = $pdo->prepare("SELECT village, COUNT(*) c, COALESCE(SUM(delivery_charge),0) s
+$byvill = $pdo->prepare("SELECT village, COUNT(*) c, COALESCE(SUM(CASE WHEN status IN ('Delivered','Paisa jama') THEN delivery_charge ELSE 0 END),0) s
                          FROM orders WHERE DATE(created_at) BETWEEN ? AND ? AND status<>'Cancel'
                          GROUP BY village ORDER BY c DESC LIMIT 12");
 $byvill->execute([$from, $day]);
@@ -76,7 +76,7 @@ try {
         foreach ((json_decode($r['items_json'], true) ?: []) as $l) {
             $k = ($l['name'] ?? '') . ' · ' . ($l['unit'] ?? '');
             if (trim($k) === ' · ') continue;
-            $cnt[$k] = ($cnt[$k] ?? 0) + (int)($l['q'] ?? 1);
+            $cnt[$k] = ($cnt[$k] ?? 0) + (int)($l['qty'] ?? $l['q'] ?? 1);
         }
     }
     arsort($cnt);
@@ -115,7 +115,7 @@ $mxd = max(1, max(array_column($series, 'c') ?: [1]));
     <div class="kpi"><div class="k"><?= svc_icon('box', 15) ?> कुल ऑर्डर</div><div class="v"><?= $o_30 ?></div>
       <div class="d">रोज़ औसत <?= round($o_30 / max(1, (strtotime($day) - strtotime($from)) / 86400 + 1), 1) ?></div></div>
     <div class="kpi good"><div class="k"><?= svc_icon('rupee', 15) ?> डिलीवरी कमाई</div><div class="v">₹<?= $del_30 ?></div>
-      <div class="d">पेट्रोल-सैलरी इसमें से जाएगी</div></div>
+      <div class="d"><a href="/admin/summary.php">खर्च घटाकर हिसाब देखिए</a></div></div>
     <div class="kpi"><div class="k"><?= svc_icon('user', 15) ?> ग्राहक</div><div class="v"><?= $mobiles ?></div>
       <div class="d"><?= $cust_tot ?> का खाता · आज <?= $cust_new ?> नए</div></div>
     <div class="kpi <?= $rep_pct >= 30 ? 'good' : '' ?>"><div class="k"><?= svc_icon('shield', 15) ?> दोबारा आए</div><div class="v"><?= $rep_pct ?>%</div>
