@@ -1,0 +1,110 @@
+# ============================================================
+#  जाँच — har push aur har pull request par apne aap
+#
+#  Is repo par do AI kaam karte hain. Koi bhi kuchh tode to wo
+#  2 minute me yahan pakda jaye — Ankit ke server tak pahunchne
+#  se pehle.
+#
+#  Teen cheezein dekhta hai:
+#    1. har PHP file ka vyakaran (lint)
+#    2. saari SQL ek khaali database par — DO BAAR
+#       (updater do baar chala de to bhi kuchh na toote)
+#    3. site chala kar 16 panne kholta hai aur dekhta hai ki
+#       khule, aur usme sahi cheez likhi ho
+#
+#  Lal ho jaye to theek kijiye, phir maalik ko bataiye.
+# ============================================================
+name: जाँच
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  jaanch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      db:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: jaanch
+          MARIADB_DATABASE: maakit_jaanch
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP लगाइए
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mysqli, gd, zip, mbstring
+          coverage: none
+
+      # ---------- 1. हर PHP फ़ाइल का व्याकरण ----------
+      - name: 1. हर PHP फ़ाइल जाँचिए
+        run: |
+          kharab=0
+          while IFS= read -r f; do
+            if ! out=$(php -l "$f" 2>&1); then
+              echo "::error file=$f::$out"
+              kharab=$((kharab+1))
+            fi
+          done < <(find . -name '*.php' -not -path './.git/*')
+          echo "---"
+          if [ "$kharab" -gt 0 ]; then
+            echo "❌ $kharab फ़ाइल में ग़लती है"
+            exit 1
+          fi
+          echo "✅ सारी PHP फ़ाइलें ठीक हैं"
+
+      # ---------- 2. SQL दो बार ----------
+      # Updater kabhi do baar chal sakta hai. Migration tab bhi
+      # nahi tootni chahiye. Isi se wo pakda jata hai.
+      - name: 2. सारी SQL दो बार चलाइए
+        run: |
+          for i in $(seq 1 30); do
+            mysqladmin ping -h 127.0.0.1 -P 3306 -ujaanch_root -pjaanch --silent 2>/dev/null && break
+            mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch -e "SELECT 1" >/dev/null 2>&1 && break
+            sleep 2
+          done
+          run_all () {
+            for f in sql/*.sql; do
+              echo "   $f"
+              mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch maakit_jaanch < "$f" > /dev/null
+            done
+          }
+          echo "— पहली बार —"; run_all
+          echo "— दूसरी बार —"; run_all
+          echo "✅ SQL दो बार चली, कुछ नहीं टूटा"
+          mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch maakit_jaanch \
+            -e "SELECT COUNT(*) AS saaman FROM items; SELECT COUNT(*) AS badi_soochi FROM catalog_items;"
+
+      # ---------- 3. साइट चलाकर पन्ने खोलिए ----------
+      - name: 3. साइट चलाइए और पन्ने खोलिए
+        run: |
+          cp config.sample.php config.php
+          php -r '
+            $c = file_get_contents("config.php");
+            $c = preg_replace("/define\(.DB_HOST.,[^)]*\);/", "define(\"DB_HOST\", \"127.0.0.1:3306\");", $c);
+            $c = preg_replace("/define\(.DB_NAME.,[^)]*\);/", "define(\"DB_NAME\", \"maakit_jaanch\");", $c);
+            $c = preg_replace("/define\(.DB_USER.,[^)]*\);/", "define(\"DB_USER\", \"root\");", $c);
+            $c = preg_replace("/define\(.DB_PASS.,[^)]*\);/", "define(\"DB_PASS\", \"jaanch\");", $c);
+            file_put_contents("config.php", $c);
+          '
+          mkdir -p uploads && chmod 755 uploads
+          php -S 127.0.0.1:8099 > /tmp/php.log 2>&1 &
+          for i in $(seq 1 25); do
+            curl -s -o /dev/null http://127.0.0.1:8099/ && break
+            sleep 1
+          done
+          php .github/jaanch/panne.php
+          echo "— PHP की चेतावनियाँ —"
+          grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"
