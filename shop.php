@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/salon.php';
+require_once __DIR__ . '/inc/dukan.php';
 $no_tabbar = true;
 $page_title = 'मेरी दुकान — Maakit';
 $err = '';
@@ -17,7 +18,7 @@ if (!$b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 
     if ((int)$tries->fetch()['c'] >= 5) {
         $err = 'बहुत बार गलत कोड डाला गया। 15 मिनट बाद कोशिश कीजिए।';
     } else {
-        $st = $pdo->prepare("SELECT * FROM businesses WHERE mobile=? AND salon_on=1 AND status='approved'");
+        $st = $pdo->prepare("SELECT * FROM businesses WHERE mobile=? AND status='approved'");
         $st->execute([$mob]);
         $row = $st->fetch();
         $okc = $row && $row['access_code'] && hash_equals(strtoupper($row['access_code']), $code);
@@ -29,7 +30,132 @@ if (!$b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'logout') { shop_logout($pdo); redirect('/shop.php'); }
 
-// ---------------- दुकानदार के काम ----------------
+// ---------------- दुकान पैनल के काम (सामान, ऑर्डर, हिसाब, खाता) ----------------
+if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
+    $do = post('do'); $bid = (int)$b['id'];
+    $wapas = '/shop.php?tab=' . urlencode(post('tab') ?: 'kaam');
+
+    // --- दुकान खुली / बंद ---
+    if ($do === 'khuli') {
+        $pdo->prepare("UPDATE businesses SET shop_open=?, shop_updated=NOW() WHERE id=?")
+            ->execute([post('open') === '1' ? 1 : 0, $bid]);
+        flash(post('open') === '1' ? 'दुकान खुली दिखेगी।' : 'दुकान बंद दिखेगी।');
+        redirect($wapas);
+    }
+
+    // --- सामान जोड़ना (अपने हाथ से, या Maakit की सूची से) ---
+    if ($do === 'item_add') {
+        $photo = save_item_photo('photo', 'sh');
+        list($ok, $msg) = dukan_item_save($pdo, $bid, [
+            'name' => post('name'), 'unit' => post('unit'), 'price' => post('price'),
+            'mrp' => post('mrp'), 'item_id' => (int)post('item_id'), 'photo' => $photo,
+        ]);
+        if (!$ok && $photo) drop_photo($photo);
+        flash($msg);
+        redirect('/shop.php?tab=saaman');
+    }
+
+    // --- Maakit की सूची से कई सामान एक बार में (सिर्फ़ दाम भरे हुए) ---
+    if ($do === 'item_bulk') {
+        $daam = (array)($_POST['daam'] ?? []);
+        $jude = 0;
+        foreach ($daam as $iid => $p) {
+            $p = (int)$p;
+            if ($p <= 0) continue;
+            $st = $pdo->prepare("SELECT name, unit FROM items WHERE id=? AND active=1");
+            $st->execute([(int)$iid]);
+            if (!$it = $st->fetch()) continue;
+            list($ok) = dukan_item_save($pdo, $bid, [
+                'name' => $it['name'], 'unit' => $it['unit'], 'price' => $p, 'item_id' => (int)$iid,
+            ]);
+            if ($ok) $jude++;
+        }
+        $pdo->prepare("UPDATE businesses SET items_on=1, shop_updated=NOW() WHERE id=?")->execute([$bid]);
+        flash($jude ? "$jude सामान जुड़ गए।" : 'किसी का दाम नहीं भरा था।');
+        redirect('/shop.php?tab=saaman');
+    }
+
+    // --- दाम बदलना / है-ख़त्म / हटाना ---
+    if ($do === 'item_daam') {
+        if ($it = dukan_item($pdo, $bid, post('id'))) {
+            $p = max(0, (int)post('price'));
+            if ($p > 0 && $p <= 200000) {
+                $pdo->prepare("UPDATE shop_items SET price=? WHERE id=?")->execute([$p, $it['id']]);
+                flash('दाम बदल दिया।');
+            } else { flash('दाम ठीक नहीं लगा।'); }
+        }
+        redirect('/shop.php?tab=saaman');
+    }
+    if ($do === 'item_stock') {
+        if ($it = dukan_item($pdo, $bid, post('id'))) {
+            $pdo->prepare("UPDATE shop_items SET stock=? WHERE id=?")
+                ->execute([$it['stock'] === 'hai' ? 'khatam' : 'hai', $it['id']]);
+        }
+        redirect('/shop.php?tab=saaman');
+    }
+    if ($do === 'item_del') {
+        if ($it = dukan_item($pdo, $bid, post('id'))) {
+            $pdo->prepare("DELETE FROM shop_items WHERE id=?")->execute([$it['id']]);
+            if ($it['photo']) drop_photo($it['photo']);
+            flash('हटा दिया।');
+        }
+        redirect('/shop.php?tab=saaman');
+    }
+    if ($do === 'item_photo') {
+        if ($it = dukan_item($pdo, $bid, post('id'))) {
+            if ($nayi = save_item_photo('photo', 'sh')) {
+                $pdo->prepare("UPDATE shop_items SET photo=? WHERE id=?")->execute([$nayi, $it['id']]);
+                if ($it['photo']) drop_photo($it['photo']);
+                flash('फ़ोटो लग गई।');
+            } else { flash('फ़ोटो नहीं लग पाई — दोबारा कीजिए।'); }
+        }
+        redirect('/shop.php?tab=saaman');
+    }
+
+    // --- ऑर्डर पर दुकानदार का जवाब ---
+    if ($do === 'order_do') {
+        dukan_order_status($pdo, $bid, (int)post('id'), post('kya'));
+        redirect('/shop.php?tab=order');
+    }
+
+    // --- दुकान पर ही बिका (अपनी बही) ---
+    if ($do === 'khata_add') {
+        $r = (int)post('amount');
+        $kharch = (post('kind') === 'kharch');
+        if ($r > 0 && $r <= 500000) {
+            // ख़र्च घटाव में जाता है, बिक्री जोड़ में
+            dukan_khata_likho($pdo, $bid, $kharch ? -$r : $r, [
+                'source'  => 'dukaan',
+                'kind'    => $kharch ? 'kharch' : 'bikri',
+                'paid_by' => in_array(post('paid_by'), ['nagad','upi','baad'], true) ? post('paid_by') : 'nagad',
+                'note'    => post('note'),
+            ]);
+            flash('बही में लिख दिया।');
+        } else { flash('रकम ठीक नहीं लगी।'); }
+        redirect('/shop.php?tab=hisab');
+    }
+
+    // --- मेरा खाता (UPI) ---
+    if ($do === 'khata_set') {
+        $vpa = trim(post('upi_id'));
+        if ($vpa !== '' && !preg_match('/^[\w.\-]{2,}@[a-zA-Z]{2,}$/', $vpa)) {
+            flash('UPI ID ऐसी होती है — जैसे 9876543210@ybl');
+        } else {
+            $pdo->prepare("UPDATE businesses SET upi_id=?, upi_name=?, shop_updated=NOW() WHERE id=?")
+                ->execute([$vpa ?: null, trim(post('upi_name')) ?: null, $bid]);
+            flash('खाता सेव हो गया।');
+        }
+        redirect('/shop.php?tab=khata');
+    }
+    if ($do === 'samay') {
+        $pdo->prepare("UPDATE businesses SET open_time=?, close_time=?, shop_updated=NOW() WHERE id=?")
+            ->execute([post('open_time') ?: '08:00', post('close_time') ?: '20:00', $bid]);
+        flash('समय सेव हो गया।');
+        redirect('/shop.php?tab=khata');
+    }
+}
+
+// ---------------- नाई / पार्लर के काम (सीट बुकिंग) ----------------
 if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do'); $bid = (int)$b['id'];
     $own = $pdo->prepare("SELECT id FROM bookings WHERE id=? AND business_id=?");
@@ -104,7 +230,8 @@ include __DIR__ . '/inc/head.php';
 <?php if (!$b): ?>
 <section><div class="wrap" style="max-width:440px">
   <h2>मेरी दुकान</h2>
-  <p class="lead">नाई और ब्यूटी पार्लर के लिए — अपनी सीट बुकिंग यहाँ से चलाइए।</p>
+  <p class="lead">अपना सामान, अपना दाम, अपने ऑर्डर और अपना हिसाब — सब यहीं से।
+    नाई और पार्लर अपनी सीट बुकिंग भी यहीं से चलाते हैं।</p>
   <?php if ($err): ?><div class="err"><?= h($err) ?></div><?php endif; ?>
   <form method="post" class="box">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="login">
@@ -116,20 +243,41 @@ include __DIR__ . '/inc/head.php';
 </div></section>
 
 <?php else:
-  $board = salon_board($pdo, $b);
-  $tab = get('tab') === 'setup' ? 'setup' : 'live';
-  $req = $pdo->prepare("SELECT * FROM bookings WHERE business_id=? AND status='requested' AND DATE(created_at)=CURDATE() ORDER BY id");
-  $req->execute([$b['id']]); $requests = $req->fetchAll();
-  $svc = salon_services($pdo, $b['id'], false);
-  $dsum = $pdo->prepare("SELECT COUNT(*) c, COALESCE(SUM(price),0) p FROM bookings WHERE business_id=? AND status='done' AND DATE(created_at)=CURDATE()");
-  $dsum->execute([$b['id']]); $today = $dsum->fetch();
+  $bid   = (int)$b['id'];
+  $nai   = (int)$b['salon_on'] === 1;          // नाई / पार्लर है?
+
+  // ---- कौन-कौन से tab दिखेंगे ----
+  $tabs = ['kaam' => 'मेरी दुकान', 'saaman' => 'मेरा सामान', 'order' => 'ऑर्डर',
+           'hisab' => 'मेरा हिसाब', 'khata' => 'मेरा खाता'];
+  if ($nai) { $tabs = ['live' => 'आज की बुकिंग', 'setup' => 'रेट और सेटिंग'] + $tabs; }
+  $tab = get('tab');
+  if (!isset($tabs[$tab])) $tab = $nai ? 'live' : 'kaam';
+
+  // ---- नाई वाले tab का सामान ----
+  if ($nai) {
+      $board = salon_board($pdo, $b);
+      $req = $pdo->prepare("SELECT * FROM bookings WHERE business_id=? AND status='requested' AND DATE(created_at)=CURDATE() ORDER BY id");
+      $req->execute([$bid]); $requests = $req->fetchAll();
+      $svc = salon_services($pdo, $bid, false);
+      $dsum = $pdo->prepare("SELECT COUNT(*) c, COALESCE(SUM(price),0) p FROM bookings WHERE business_id=? AND status='done' AND DATE(created_at)=CURDATE()");
+      $dsum->execute([$bid]); $today = $dsum->fetch();
+  }
+  $aaj = date('Y-m-d');
 ?>
 <nav class="panelnav"><div class="wrap">
-  <a class="<?= $tab==='live'?'on':'' ?>" href="/shop.php">आज की बुकिंग</a>
-  <a class="<?= $tab==='setup'?'on':'' ?>" href="/shop.php?tab=setup">रेट और सेटिंग</a>
-  <a href="/salon.php?id=<?= (int)$b['id'] ?>" target="_blank">ग्राहक को कैसा दिखता है</a>
+  <?php foreach ($tabs as $k => $lbl): ?>
+    <a class="<?= $tab===$k?'on':'' ?>" href="/shop.php?tab=<?= h($k) ?>"><?= h($lbl) ?></a>
+  <?php endforeach; ?>
+  <a href="<?= $nai ? '/salon.php?id=' . $bid : '/business.php?id=' . $bid ?>" target="_blank">ग्राहक को कैसा दिखता है</a>
   <form method="post" style="margin-left:auto"><input type="hidden" name="do" value="logout"><button class="btn btn-sm" style="background:rgba(251,244,230,.18);color:#fff">बंद कीजिए</button></form>
 </div></nav>
+<?php if ($m = flash()): ?><div class="wrap" style="max-width:820px"><div class="ok" style="margin-top:12px"><?= h($m) ?></div></div><?php endif; ?>
+
+<?php if ($tab === 'kaam')   { include __DIR__ . '/inc/dukan-kaam.php'; } ?>
+<?php if ($tab === 'saaman') { include __DIR__ . '/inc/dukan-saaman.php'; } ?>
+<?php if ($tab === 'order')  { include __DIR__ . '/inc/dukan-order.php'; } ?>
+<?php if ($tab === 'hisab')  { include __DIR__ . '/inc/dukan-hisab.php'; } ?>
+<?php if ($tab === 'khata')  { include __DIR__ . '/inc/dukan-khata.php'; } ?>
 
 <?php if ($tab === 'live'): ?>
 <section><div class="wrap" style="max-width:820px">
@@ -220,7 +368,7 @@ include __DIR__ . '/inc/head.php';
   <script>setTimeout(function(){ location.reload(); }, 45000);</script>
 </div></section>
 
-<?php else: ?>
+<?php elseif ($tab === 'setup'): ?>
 <section><div class="wrap" style="max-width:720px">
   <h2>रेट और सेटिंग</h2>
   <form method="post" class="box">

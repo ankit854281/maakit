@@ -104,10 +104,14 @@ function salon_wait_text($board) {
 function salon_ref() { return strtoupper(bin2hex(random_bytes(3))); }
 
 // ---------- दुकानदार का लॉगिन (कोड + 90 दिन का token) ----------
+// Pehle ye sirf nai/parlour (salon_on=1) ko andar aane deta tha.
+// Ab har manzoor-shuda dukaan andar aa sakti hai — kirana, medical,
+// mithai, hardware, sab. Seat booking wale tab phir bhi sirf
+// salon_on=1 walon ko dikhte hain.
 function shop_login_business(PDO $pdo) {
     if (!empty($_COOKIE['mk_shop'])) {
         $st = $pdo->prepare("SELECT b.* FROM shop_tokens t JOIN businesses b ON b.id=t.business_id
-                             WHERE t.token=? AND t.expires > NOW() AND b.salon_on=1");
+                             WHERE t.token=? AND t.expires > NOW() AND b.status='approved'");
         $st->execute([$_COOKIE['mk_shop']]);
         if ($row = $st->fetch()) {
             $st2 = $pdo->prepare("SELECT *, (salon_updated IS NOT NULL AND salon_updated > (NOW() - INTERVAL 180 MINUTE)) AS fresh FROM businesses WHERE id=?");

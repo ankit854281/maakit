@@ -63,4 +63,11 @@ export const PAGES = [
   { path: '/login.php',     naam: 'टीम का लॉगिन',   chahiye: ['Maakit'] },
   { path: '/transport.php', naam: 'गाड़ी रजिस्टर',  chahiye: ['Maakit'] },
   { path: '/salon.php',     naam: 'सैलून',          chahiye: ['Maakit'] },
+
+  // ---------- dukaan panel ----------
+  // Dukandar ka login khula rehna chahiye. "मेरा हिसाब" yahan nahi
+  // dikhna chahiye — wo login ke BAAD aata hai. Bina login ke dikh
+  // gaya to andar ka panna khula pada hai.
+  { path: '/shop.php', naam: 'दुकानदार का लॉगिन',
+    chahiye: ['मेरी दुकान', 'कोड'], nahi: ['मेरा हिसाब'], nabz: true },
 ];
