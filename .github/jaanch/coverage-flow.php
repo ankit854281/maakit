@@ -20,6 +20,15 @@ try{
  $post=['csrf'=>$m[1],'submit_key'=>$sk[1],'name'=>'CI Customer','mobile'=>'9000000099','village'=>'CI Paused Area','note'=>'test product','market'=>'local','payment'=>'cash'];
  $html=cv_request('/order.php?lang=en',$post);$st=$pdo->query("SELECT order_no FROM orders WHERE mobile='9000000099' ORDER BY id DESC LIMIT 1");$no=$st->fetchColumn();cv_check((bool)$no,'Goods order saved');
  $html=cv_request('/order.php?lang=en',$post);cv_check(strpos($html,$no)!==false && (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE mobile='9000000099'")->fetchColumn()===$before+1,'Goods replay has one order');
+ $cancelpost=['csrf'=>$m[1],'no'=>$no,'m'=>'9000000099','act'=>'cancel'];
+ $pdo->prepare("UPDATE orders SET shop_status='manzoor' WHERE order_no=?")->execute([$no]);
+ cv_request('/track.php?lang=en',$cancelpost,302);
+ $state=$pdo->prepare('SELECT status FROM orders WHERE order_no=?');$state->execute([$no]);cv_check($state->fetchColumn()==='Naya','Accepted shop order cannot self-cancel');
+ $pdo->prepare("UPDATE orders SET shop_status='naya',status='Assign' WHERE order_no=?")->execute([$no]);
+ cv_request('/track.php?lang=en',$cancelpost,302);$state->execute([$no]);cv_check($state->fetchColumn()==='Assign','Advanced fulfilment cannot self-cancel');
+ $pdo->prepare("UPDATE orders SET status='Naya' WHERE order_no=?")->execute([$no]);
+ cv_request('/track.php?lang=en',array_merge($cancelpost,['csrf'=>'invalid']));$state->execute([$no]);cv_check($state->fetchColumn()==='Naya','Invalid CSRF cannot cancel');
+ cv_request('/track.php?lang=en',$cancelpost,302);$state->execute([$no]);cv_check($state->fetchColumn()==='Cancel','Fresh order cancels');
  $pdo->prepare('UPDATE service_area_meta SET booking_on=1 WHERE village_id=?')->execute([$id]);
  $html=cv_request('/sewa.php?s=gaadi&lang=en');preg_match('/name="submit_key" value="([^"]+)"/',$html,$sk);
  $post=['csrf'=>$m[1],'submit_key'=>$sk[1],'name'=>'CI Customer','mobile'=>'9000000099','village'=>'CI Paused Area','vehicle'=>'Bolero','trip'=>'One way','from'=>'CI Start','to'=>'CI End','on_date'=>date('Y-m-d',time()+86400),'on_time'=>'10:00'];
