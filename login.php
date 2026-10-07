@@ -54,14 +54,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     // ---------- टीम ----------
     elseif (post('do') === 'team') {
         $as = 'team';
-        $st = $pdo->prepare("SELECT * FROM users WHERE username=? AND active=1");
-        $st->execute([post('username')]);
-        $u = $st->fetch();
-        if ($u && password_verify(post('password'), $u['password'])) {
-            $_SESSION['user'] = ['id' => $u['id'], 'name' => $u['name'], 'role' => $u['role']];
-            redirect(panel_home($u['role']));
+        $username=post('username');
+        if(auth_attempt_blocked($pdo,'team',$username))$err=auth_attempt_error();
+        else {
+            $st=$pdo->prepare("SELECT * FROM users WHERE username=? AND active=1");$st->execute([$username]);$u=$st->fetch();
+            if($u&&password_verify(post('password'),$u['password'])) {
+                session_regenerate_id(true);
+                $_SESSION['user']=['id'=>$u['id'],'name'=>$u['name'],'role'=>$u['role']];
+                redirect(panel_home($u['role']));
+            }
+            auth_attempt_failed($pdo,'team',$username);
+            $err=t('Username or password is wrong.','यूज़रनेम या पासवर्ड ग़लत है।');
         }
-        $err = 'यूज़रनेम या पासवर्ड ग़लत है।';
+
     }
 }
 

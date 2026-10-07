@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/auth-attempts.php';
 // ============================================================
 // Maakit — customer ka apna khata (account)
 // Login zaroori NAHI hai. Bina login bhi order ho jata hai.
@@ -55,18 +56,13 @@ function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark) {
 /** login — [ok, msg]. 6 galat koshish = 15 minute rok */
 function cust_login(PDO $pdo, $mobile, $pass) {
     $mobile = preg_replace('/\D/', '', $mobile);
-    $t = time();
-    $try = $_SESSION['cl'] ?? ['n'=>0,'t'=>$t];
-    if ($t - $try['t'] > 900) { $try = ['n'=>0,'t'=>$t]; }
-    if ($try['n'] >= 6) {
-        return [false, t('Too many wrong attempts. Try again in 15 minutes, or call us.', 'बहुत बार ग़लत पासवर्ड। 15 मिनट बाद कोशिश कीजिए, या हमें कॉल कीजिए।')];
-    }
+    if(auth_attempt_blocked($pdo,'customer',$mobile))return [false,auth_attempt_error()];
 
     $st = $pdo->prepare("SELECT * FROM customers WHERE mobile=? AND active=1");
     $st->execute([$mobile]);
     $c = $st->fetch();
     if (!$c || !password_verify($pass, $c['password'])) {
-        $try['n']++; $_SESSION['cl'] = $try;
+        auth_attempt_failed($pdo,'customer',$mobile);
         return [false, t('Number or password is wrong.', 'नंबर या पासवर्ड ग़लत है।')];
     }
     unset($_SESSION['cl']);
