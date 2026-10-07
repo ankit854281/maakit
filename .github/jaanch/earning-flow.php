@@ -73,6 +73,21 @@ try {
     $pdo->prepare('UPDATE users SET active=1 WHERE id=?')->execute([$driverid]);money_request('/bpo/',$assign,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Assign','Area-linked driver receives order');
     foreach(['Pickup','Delivered','Cancel'] as $locked){$pdo->prepare('UPDATE orders SET status=?,delivery_user=NULL WHERE id=?')->execute([$locked,$oid]);money_request('/bpo/',$assign,302);$row=$pdo->query('SELECT status,delivery_user FROM orders WHERE id='.(int)$oid)->fetch();money_check($row['status']===$locked && $row['delivery_user']===null,'Locked fulfilment cannot be reassigned');}
     $html=money_request('/admin/readiness.php?lang=en');money_check(strpos($html,'Linked active delivery staff')!==false,'Readiness shows per-area staff count');
+    $statuspost=['csrf'=>$m[1],'do'=>'status','id'=>$oid,'status'=>'Naya'];money_request('/bpo/',$statuspost,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Cancel','Staff cannot reopen cancelled order');
+    $pdo->prepare("UPDATE orders SET status='Naya',delivery_user=NULL WHERE id=?")->execute([$oid]);
+    foreach(['Delivered','Paisa jama','Assign','unknown'] as $invalid){$statuspost['status']=$invalid;money_request('/bpo/',$statuspost,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Naya','Staff cannot skip fulfilment or submit unknown state');}
+    $amountpost=['csrf'=>$m[1],'do'=>'amount','id'=>$oid,'goods_amount'=>'0','delivery_charge'=>'0','payment'=>'मैं खुद दुकान को UPI करूँगा'];money_request('/bpo/',$amountpost,302);
+    $billstate->execute([$oid]);money_check((int)$billstate->fetch()['goods_amount']===0,'Staff explicit zero amount retained');
+    foreach(['-1','1.5','1000001'] as $invalid){$bad=$amountpost;$bad['goods_amount']=$invalid;money_request('/bpo/',$bad,302);}$bad=$amountpost;$bad['payment']='एडवांस लिया';money_request('/bpo/',$bad,302);$billstate->execute([$oid]);money_check((int)$billstate->fetch()['goods_amount']===0,'Invalid staff amounts/payment rejected');
+    $amountpost['goods_amount']='';money_request('/bpo/',$amountpost,302);$billstate->execute([$oid]);money_check($billstate->fetch()['goods_amount']===null,'Staff blank amount stays unknown');
+    $statuspost['status']='Confirm';money_request('/bpo/',$statuspost,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Confirm','Staff confirms fresh order');
+    money_request('/bpo/',$assign,302);$statuspost['status']='Pickup';money_request('/bpo/',$statuspost,302);$statuspost['status']='Delivered';money_request('/bpo/',$statuspost,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Delivered','Assigned staff fulfilment advances in order');
+    $statuspost['status']='Confirm';money_request('/bpo/',$statuspost,302);$amountpost['goods_amount']='999';money_request('/bpo/',$amountpost,302);$state->execute([$oid]);$billstate->execute([$oid]);money_check($state->fetchColumn()==='Delivered' && $billstate->fetch()['goods_amount']===null,'Completed status and bill protected');
+    $html=money_request('/bpo/new.php?lang=en');preg_match('/name="submit_key" value="([^"]+)"/',$html,$bm);
+    $newpost=['csrf'=>$m[1],'submit_key'=>$bm[1],'name'=>'CI BPO Customer','mobile'=>'9000000066','village'=>'CI Dispatch Area','items'=>'CI goods','market'=>(string)array_key_first(markets()),'weight'=>'0','size'=>'0','source'=>'call','payment'=>'मैं खुद दुकान को UPI करूँगा','delivery_charge'=>'0'];
+    $bad=$newpost;$bad['village']='CI Nonexistent';money_request('/bpo/new.php',$bad);$bad=$newpost;$bad['payment']='एडवांस लिया';money_request('/bpo/new.php',$bad);$bad=$newpost;$bad['delivery_charge']='-1';money_request('/bpo/new.php',$bad);
+    money_check((int)$pdo->query("SELECT COUNT(*) FROM orders WHERE mobile='9000000066'")->fetchColumn()===0,'Invalid BPO new orders rejected');
+    money_request('/bpo/new.php',$newpost);money_request('/bpo/new.php',$newpost);money_check((int)$pdo->query("SELECT COUNT(*) FROM orders WHERE mobile='9000000066'")->fetchColumn()===1,'BPO double-submit creates one order');
     $pdo->prepare("INSERT INTO customers(name,mobile,password,village,landmark) VALUES ('CI Support','9000000077',?,'','')")->execute([password_hash($password,PASSWORD_DEFAULT)]);$cid=(int)$pdo->lastInsertId();
     $pdo->prepare("INSERT INTO support_tickets(customer_id,reference_no,kind,message) VALUES (?,'CI-DELIVERY','return','CI return test request')")->execute([$cid]);$tid=(int)$pdo->lastInsertId();
     $resolution=['csrf'=>$m[1],'id'=>$tid,'status'=>'reviewing','reply'=>'Return reviewed with shop','decision'=>'approved','refund_amount'=>'','refund_reference'=>''];
@@ -97,6 +112,7 @@ try {
     }finally{unlink($jar);$jar=$saved_jar;}
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
+    $pdo->exec("DELETE FROM orders WHERE mobile='9000000066'");
     if ($areaid) { $pdo->prepare('DELETE FROM service_area_drivers WHERE village_id=?')->execute([$areaid]);$pdo->prepare('DELETE FROM service_area_meta WHERE village_id=?')->execute([$areaid]);$pdo->prepare('DELETE FROM villages WHERE id=?')->execute([$areaid]); }
     if ($driverid) $pdo->prepare('DELETE FROM users WHERE id=?')->execute([$driverid]);
     if ($tid) { $pdo->prepare('DELETE FROM support_resolution WHERE ticket_id=?')->execute([$tid]);$pdo->prepare('DELETE FROM support_tickets WHERE id=?')->execute([$tid]); }
