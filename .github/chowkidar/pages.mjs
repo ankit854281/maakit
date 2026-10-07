@@ -36,6 +36,8 @@ export const GALAT_JAGAH = [
 ];
 
 export const PAGES = [
+  { path: '/robots.txt', naam: 'Google robots', chahiye: ['Sitemap: https://maakit.in/sitemap.xml'] },
+  { path: '/sitemap.xml', naam: 'Google sitemap', chahiye: ['urlset', 'https://maakit.in/bazaar.php'] },
   // ---------- rozmarra ke page (nabz me bhi) ----------
   { path: '/',            naam: 'होम पेज',        chahiye: ['Maakit'],              nabz: true },
   { path: '/order.php',   naam: 'ऑर्डर',          chahiye: ['Maakit'],              nabz: true },

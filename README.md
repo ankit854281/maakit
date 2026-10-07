@@ -67,3 +67,5 @@ Shop checkout now shows the normal delivery estimate and supports market, weight
 Validation includes SQLite revenue/cost edge cases, MariaDB migrations twice, real shop-order HTTP checks, and admin login/cost entry/correction/CSRF checks in the guarded CI database. No live test orders or expenses are created.
 
 Shop category imports preserve existing prices. Pending price fields can be prefilled from an approved shop’s public price updated within seven days, only for the same catalogue ID, name and pack. The source shop/date are displayed and the owner must confirm or edit and save before publication. No invented default prices or silent updates are used.
+
+Search discovery: `robots.txt` links to a static XML sitemap covering main public pages and all shop categories. Public canonical URLs use the fixed HTTPS origin and preserve category identities; private, search and POST pages are noindex. Search Console ownership verification and sitemap submission are still required outside this code. Indexing/ranking is controlled by Google, not guaranteed by these files.

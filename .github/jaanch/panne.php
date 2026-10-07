@@ -18,6 +18,8 @@
 $BASE = 'http://127.0.0.1:8099';
 
 $PANNE = [
+    ['/robots.txt', 'Robots', 'chahiye'=>['Sitemap: https://maakit.in/sitemap.xml']],
+    ['/sitemap.xml', 'Sitemap', 'chahiye'=>['urlset','https://maakit.in/bazaar.php']],
     // ---- grahak ke panne ----
     // Bina chune bhasha English rehti hai, isliye Hindi wale shabd
     // ?lang=hi par jaanchne chahiye.
