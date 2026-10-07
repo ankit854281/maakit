@@ -9,6 +9,8 @@ $tab = 'mere';
 
 $no  = strtoupper(trim(get('no', post('no'))));
 $bno = strtoupper(trim(get('b', post('b'))));
+// The shared tracking form and earlier booking links submit BK references as no.
+if ($bno === '' && strpos($no, 'BK-') === 0) { $bno = $no; $no = ''; }
 $mob = preg_replace('/\D/', '', get('m', post('m')));
 $o = null; $bk = null; $err = ''; $steps = [];
 

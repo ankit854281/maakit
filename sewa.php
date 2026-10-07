@@ -126,7 +126,7 @@ include __DIR__ . '/inc/head.php';
   </div>
 
   <div style="display:grid;gap:9px;margin-top:18px">
-    <a class="btn btn-brand" href="/track.php?no=<?= urlencode($done['no']) ?>&amp;m=<?= urlencode($done['mobile']) ?>">
+    <a class="btn btn-brand" href="/track.php?b=<?= urlencode($done['no']) ?>&amp;m=<?= urlencode($done['mobile']) ?>">
       <?= t('See this booking', 'यह बुकिंग देखिए') ?></a>
     <a class="btn btn-green" target="_blank" rel="noopener"
        href="<?= h(wa_link(MAAKIT_WA, t('Hello Maakit, I booked ', 'नमस्ते Maakit, मैंने बुकिंग की है ') . $done['no'])) ?>">
