@@ -31,7 +31,27 @@ $villages = village_list($pdo);
 $err = ''; $done = null;
 $me = cust();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao') {
+// PHP's session lock serializes submissions from the same browser. Keep a
+// bounded receipt per form so double taps / POST refresh reuse its confirmation.
+$attempts = $_SESSION['shop_checkout'][$id] ?? [];
+foreach ($attempts as $key => $attempt) {
+    if ($attempt['at'] < time()-3600) unset($attempts[$key]);
+}
+$checkout_key = $_POST['checkout_key'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok() || !is_string($checkout_key) || !isset($attempts[$checkout_key])) {
+        $err = t('This order form has expired. Review the items and send it again.', 'ऑर्डर फॉर्म की अवधि समाप्त हो गई। सामान जाँचकर दोबारा भेजिए।');
+    } else {
+        $done = $attempts[$checkout_key]['done'] ?? null;
+    }
+}
+if (!is_string($checkout_key) || !isset($attempts[$checkout_key])) {
+    $checkout_key = bin2hex(random_bytes(16));
+    $attempts[$checkout_key] = ['at'=>time()];
+}
+$_SESSION['shop_checkout'][$id] = array_slice($attempts, -20, null, true);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao' && !$done && !$err) {
     $name    = post('name');
     $mobile  = preg_replace('/\D/', '', post('mobile'));
     $village = post('village');
@@ -122,7 +142,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
             foreach ($lines as $l) { $up->execute([$l['qty'], $l['id'], $id]); }
 
             $done = ['no' => $order_no, 'code' => $code, 'maal' => $maal,
-                     'charge' => $calc, 'lines' => $lines, 'pay' => $pay];
+                     'charge' => $calc, 'lines' => $lines, 'pay' => $pay, 'mobile' => $mobile];
+            $_SESSION['shop_checkout'][$id][$checkout_key]['done'] = $done;
         }
     }
 }
@@ -165,7 +186,7 @@ include __DIR__ . '/inc/head.php';
 
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
     <a class="btn btn-brand" href="<?= h($wa) ?>" target="_blank" rel="noopener">WhatsApp पर पक्का कीजिए</a>
-    <a class="btn btn-gold" href="/track.php?no=<?= h($done['no']) ?>&m=<?= h($done['code']) ?>">कहाँ पहुँचा, देखिए</a>
+    <a class="btn btn-gold" href="/track.php?no=<?= h($done['no']) ?>&amp;m=<?= h($done['mobile']) ?>">कहाँ पहुँचा, देखिए</a>
     <?php if ($upi): ?>
       <a class="btn btn-sm" style="background:#EFEAE0" href="<?= h($upi) ?>">UPI से अभी दे दीजिए</a>
     <?php endif; ?>
@@ -194,6 +215,7 @@ include __DIR__ . '/inc/head.php';
   <form method="post" id="mf" action="/dukan-se.php?id=<?= $id ?>">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
     <input type="hidden" name="do" value="mangao">
+    <input type="hidden" name="checkout_key" value="<?= h($checkout_key) ?>">
     <input type="hidden" name="id" value="<?= $id ?>">
 
     <div class="box">
