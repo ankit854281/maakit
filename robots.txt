@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /bpo/
+Disallow: /delivery/
+Disallow: /update.php
+Disallow: /nakal.php
+Disallow: /api.php
+Sitemap: https://maakit.in/sitemap.xml

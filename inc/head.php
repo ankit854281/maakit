@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . "/seo.php";
+$seo=seo_page($_SERVER["REQUEST_URI"] ?? "/", $_GET, $_SERVER["REQUEST_METHOD"] ?? "GET");
 $page_title = $page_title ?? t('Maakit — delivery & booking for your village', 'Maakit — गाँव की अपनी डिलीवरी और बुकिंग');
 $tab = $tab ?? '';           // ghar | order | mere | kaam
 $no_tabbar = $no_tabbar ?? false;
@@ -52,6 +54,11 @@ if (!$no_tabbar && !$no_ticker) {
 <meta name="description" content="<?= h(t(
   'Maakit delivers from any shop in Kapsethi, Chauri, Kachhwa and nearby villages — groceries, food, medicine. Also book a Bolero, lawn, tent, halwai, pandit ji and local services.',
   'Maakit — कपसेठी, चौरी, कछवा और आसपास के गाँवों में किसी भी दुकान से डिलीवरी। साथ ही गाड़ी, लॉन, टेंट, हलवाई, पंडित जी और मिस्त्री की बुकिंग।')) ?>">
+<meta name="robots" content="<?= $seo['index'] ? 'index,follow' : 'noindex,follow' ?>">
+<?php if ($seo['canonical']): ?>
+<link rel="canonical" href="<?= h($seo['canonical']) ?>">
+<meta property="og:url" content="<?= h($seo['canonical']) ?>">
+<?php endif; ?>
 <meta name="theme-color" content="#7A1F1F">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
