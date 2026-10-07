@@ -81,12 +81,12 @@ include __DIR__ . '/inc/head.php';
 
   <div class="quick2">
     <a class="qq" href="/order.php"><?= svc_icon('grocery', 26) ?><b><?= t('Order goods', 'सामान मँगाइए') ?></b></a>
-    <a class="qq" href="/book.php"><?= svc_icon('all', 26) ?><b><?= t('Make a booking', 'बुकिंग कीजिए') ?></b></a>
+    <a class="qq" href="/sewa.php"><?= svc_icon('all', 26) ?><b><?= t('Make a booking', 'बुकिंग कीजिए') ?></b></a>
   </div>
 
   <h3 class="ghead"><?= t('My orders', 'मेरे ऑर्डर') ?></h3>
   <?php if (!$orders): ?>
-    <div class="box"><p class="help" style="margin:0"><?= t('No orders yet.', 'अभी कोई ऑर्डर नहीं।') ?> <a href="/order.php"><?= t('Place your first order', 'पहला ऑर्डर कीजिए') ?></a> — <?= t('first delivery is free.', 'पहली डिलीवरी फ़्री।') ?></p></div>
+    <div class="box"><p class="help" style="margin:0"><?= t('No orders yet.', 'अभी कोई ऑर्डर नहीं।') ?> <a href="/order.php"><?= t('Place your first order', 'पहला ऑर्डर कीजिए') ?></a> — <?= t('Delivery fees and offers depend on your service area.', 'डिलीवरी शुल्क और ऑफ़र आपके सेवा क्षेत्र पर निर्भर हैं।') ?></p></div>
   <?php else: foreach ($orders as $o): list($pc,$pl) = status_pill($o['status']); ?>
     <a class="ocard" href="/track.php?no=<?= h($o['order_no']) ?>&m=<?= h($o['mobile']) ?>">
       <div class="hd"><span class="no"><?= h($o['order_no']) ?></span>
@@ -176,7 +176,7 @@ include __DIR__ . '/inc/head.php';
 
   <div class="box" style="margin-top:14px">
     <b><?= t('Everything works without an account too', 'बिना खाते के भी सब चलता है') ?></b>
-    <p class="help" style="margin-top:4px"><?= t('Go straight to', 'सीधे') ?> <a href="/order.php"><?= t('ordering', 'सामान मँगाइए') ?></a> <?= t('or', 'या') ?> <a href="/book.php"><?= t('booking', 'बुकिंग कीजिए') ?></a> — <?= t('your order number always works.', 'ऑर्डर नंबर से हमेशा देख सकते हैं।') ?></p>
+    <p class="help" style="margin-top:4px"><?= t('Go straight to', 'सीधे') ?> <a href="/order.php"><?= t('ordering', 'सामान मँगाइए') ?></a> <?= t('or', 'या') ?> <a href="/sewa.php"><?= t('booking', 'बुकिंग कीजिए') ?></a> — <?= t('your order number always works.', 'ऑर्डर नंबर से हमेशा देख सकते हैं।') ?></p>
   </div>
   <div style="height:30px"></div>
 <?php endif; ?>

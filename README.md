@@ -97,6 +97,7 @@ Order/booking references use random suffixes rather than a racy daily COUNT.
 Validation: `tests/coverage.php`, guarded MariaDB `coverage-flow.php`, all existing
 checks, migrations twice and HTTP smoke tests. Remaining operational prerequisites:
 real shop photos/prices/stock, coverage verification, local delivery staff, provider
-availability and support staffing. Automated driver dispatch, continuous GPS,
-courier shipping, OTP messaging and national load capacity are not implemented
-by this foundation and must not be advertised as live.
+availability and support staffing. Existing delivery tracking uses browser GPS.
+Native background GPS, automated driver dispatch, courier shipping, OTP messaging
+and national load capacity are not delivered or verified by this foundation
+and must not be advertised as live.
