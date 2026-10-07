@@ -19,6 +19,7 @@ $kismName = '';
 foreach ($kisme as $k) { if ($k['slug'] === $kism) { $kismName = catalog_label($k['slug'], $k['name_hi']); break; } }
 
 $baaki  = dukan_daam_baaki($pdo, $bid);      // जिनका दाम भरना है
+$starting_prices = $baaki ? dukan_price_defaults($pdo, $bid) : [];
 $chalu  = dukan_items($pdo, $bid, true);     // जो ग्राहक को दिख रहे हैं
 $khoj   = get('q');
 
@@ -55,7 +56,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
     <b style="font-size:18px">आपकी दुकान किस किस्म की है?</b>
     <p class="help" style="margin-top:6px">बस यह बता दीजिए। उस किस्म का <b>सारा सामान</b>
       आपकी दुकान में अपने आप आ जाएगा — एक-एक करके जोड़ना नहीं पड़ेगा।
-      फिर आपको सिर्फ़ दाम भरना है।</p>
+      <?= t('Recent prices for matching goods and packs will be filled where available. Check or change them, then save your own prices.', 'उसी सामान और पैक के हाल के दाम उपलब्ध हों तो भरकर आएँगे। जाँचिए या बदलिए, फिर अपने दाम सेव कीजिए।') ?></p>
     <select name="shop_type" style="margin-top:12px" required>
       <option value="">— चुनिए —</option>
       <?php foreach ($kisme as $k): ?>
@@ -82,6 +83,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
         रोज़ थोड़ा-थोड़ा भरते रहिए।
       </p>
 
+      <p class="help"><?= t('Prefilled prices are references from another approved shop, not your confirmed prices. The shop and date are shown. Change any price or pack before saving. Empty fields still need a price; existing shop prices are never replaced.', 'पहले से भरे दाम दूसरी मंज़ूर दुकान के संदर्भ हैं, आपके पक्के दाम नहीं। दुकान और तारीख नीचे दिखेंगे। दाम या पैक बदलकर सेव कर सकते हैं। खाली जगह का दाम भरिए; आपके पुराने दाम नहीं बदलेंगे।') ?></p>
       <form method="post" style="margin-top:14px">
         <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
         <input type="hidden" name="do" value="daam_bharo">
@@ -90,6 +92,9 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
           <div style="border-top:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <div style="flex:1;min-width:120px">
               <b><?= h($it['name']) ?></b>
+              <?php if (isset($starting_prices[$it['id']])): $ref=$starting_prices[$it['id']]; ?>
+                <div class="meta"><?= t('Reference', 'संदर्भ') ?>: <?= h($ref['shop_name']) ?> · <?= h(date('d-m-Y',strtotime($ref['updated_at']))) ?></div>
+              <?php endif; ?>
             </div>
             <input type="text" name="naap[<?= (int)$it['id'] ?>]" value="<?= h($it['unit']) ?>"
                    style="width:88px;flex:none" aria-label="नाप">
@@ -97,6 +102,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
               <span style="font-weight:700">₹</span>
               <input type="number" name="daam[<?= (int)$it['id'] ?>]" min="1" max="200000"
                      inputmode="numeric" style="width:80px" placeholder="दाम"
+                     value="<?= isset($starting_prices[$it['id']]) ? (int)$starting_prices[$it['id']]['price'] : '' ?>"
                      aria-label="<?= h($it['name']) ?> का दाम">
             </div>
             <label style="display:flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);flex:none;cursor:pointer">
@@ -106,7 +112,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
           </div>
         <?php endforeach; ?>
 
-        <button class="btn btn-brand" style="margin-top:16px;width:100%;font-size:17px">सेव कीजिए</button>
+        <button class="btn btn-brand" style="margin-top:16px;width:100%;font-size:17px"><?= t('Confirm and save my prices', 'मेरे दाम पक्के करके सेव कीजिए') ?></button>
       </form>
 
       <?php if ($kul > 1): ?>

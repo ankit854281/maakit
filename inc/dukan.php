@@ -71,6 +71,29 @@ function dukan_kism_bharo(PDO $pdo, $bid, $slug) {
     return $naye;
 }
 
+/** Starting price suggestions from recent public shop prices, never published
+ * as this shop's price until its owner explicitly saves the editable form.
+ * Match catalogue ID, product name AND pack size; don't convert unlike packs.
+ */
+function dukan_price_defaults(PDO $pdo, $bid) {
+    $st=$pdo->prepare("SELECT target.id target_id, source.price, b.name shop_name, source.updated_at
+        FROM shop_items target JOIN shop_items source
+          ON source.cat_id=target.cat_id AND source.name=target.name AND source.unit=target.unit
+        JOIN businesses b ON b.id=source.business_id
+        WHERE target.business_id=? AND target.price<=0 AND target.active=1
+          AND source.business_id<>? AND source.active=1 AND source.stock='hai'
+          AND source.price BETWEEN 1 AND 200000 AND source.updated_at>=?
+          AND b.status='approved' AND b.items_on=1
+        ORDER BY source.updated_at DESC, source.id DESC");
+    $st->execute([(int)$bid,(int)$bid,date('Y-m-d H:i:s',strtotime('-7 days'))]);
+    $prices=[];
+    foreach ($st as $row) {
+        $id=(int)$row['target_id'];
+        if (!isset($prices[$id])) $prices[$id]=$row;
+    }
+    return $prices;
+}
+
 /** Jis saaman ka daam abhi nahi bhara (dukandar ko bharna hai) */
 function dukan_daam_baaki(PDO $pdo, $bid, $limit = 500) {
     $st = $pdo->prepare("SELECT * FROM shop_items
