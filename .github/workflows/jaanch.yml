@@ -119,6 +119,7 @@ jobs:
           php .github/jaanch/earning-flow.php
           php .github/jaanch/coverage-flow.php
           php .github/jaanch/dispatch-flow.php
+          php .github/jaanch/tracking-flow.php
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"
 

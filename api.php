@@ -6,6 +6,7 @@
 require_once __DIR__ . '/inc/fn.php';
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
 
 $a = get('a', post('a'));
 
@@ -41,29 +42,32 @@ if ($a === 'bclick' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode(['ok' => 1]); exit;
 }
 
-// ---- delivery partner apni jagah bhejta hai (har ~25 second) ----
-if ($a === 'ping' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $u = user();
-    if (!$u || !in_array($u['role'], ['delivery', 'admin'], true)) {
-        http_response_code(403); echo json_encode(['ok' => 0]); exit;
+// A new consent token prevents late pings or old tabs from restarting a stopped share.
+if(in_array($a,['start_tracking','stop_tracking','ping'],true)&&$_SERVER['REQUEST_METHOD']==='POST'){
+    $u=user();$field=fn($key)=>is_string($_POST[$key]??null)?trim($_POST[$key]):'';
+    if(!$u||!in_array($u['role'],['delivery','admin'],true)||!csrf_ok()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}
+    $oid=(int)$field('o');$token=$field('token');
+    $own=$pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Assign','Pickup')");$own->execute([$oid,$u['id'],$u['role']]);
+    if(!$own->fetch()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}
+    if($a==='start_tracking'){
+        $token=bin2hex(random_bytes(16));
+        $q=$pdo->prepare("INSERT INTO live_tracks(order_id,user_id,lat,lng,tracking_token,captured_at) SELECT id,?,0,0,?,NULL FROM orders WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Assign','Pickup') ON DUPLICATE KEY UPDATE user_id=VALUES(user_id),lat=0,lng=0,tracking_token=VALUES(tracking_token),captured_at=NULL");$q->execute([$u['id'],$token,$oid,$u['id'],$u['role']]);
+        if(!$q->rowCount()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}
+        echo json_encode(['ok'=>1,'token'=>$token]);exit;
     }
-    $oid = (int)post('o');
-    $lat = post('lat'); $lng = post('lng');
-    if (!$oid || !is_numeric($lat) || !is_numeric($lng) || abs((float)$lat) > 90 || abs((float)$lng) > 180) {
-        http_response_code(400); echo json_encode(['ok' => 0]); exit;
+    if(!preg_match('/^[a-f0-9]{32}$/',$token)){http_response_code(400);echo json_encode(['ok'=>0]);exit;}
+    if($a==='stop_tracking'){
+        $q=$pdo->prepare("DELETE t FROM live_tracks t JOIN orders o ON o.id=t.order_id WHERE t.order_id=? AND t.tracking_token=? AND (o.delivery_user=? OR ?='admin')");$q->execute([$oid,$token,$u['id'],$u['role']]);echo json_encode(['ok'=>1]);exit;
     }
-    // sirf apne hi order ka
-    $c = $pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin')
-                        AND status IN ('Assign','Pickup')");
-    $c->execute([$oid, $u['id'], $u['role']]);
-    if (!$c->fetch()) { http_response_code(403); echo json_encode(['ok' => 0]); exit; }
-
-    $pdo->prepare("INSERT INTO live_tracks (order_id, user_id, lat, lng, acc)
-                   VALUES (?,?,?,?,?)
-                   ON DUPLICATE KEY UPDATE lat=VALUES(lat), lng=VALUES(lng), acc=VALUES(acc),
-                                           user_id=VALUES(user_id), updated_at=NOW()")
-        ->execute([$oid, $u['id'], round((float)$lat, 7), round((float)$lng, 7), (int)post('acc') ?: null]);
-    echo json_encode(['ok' => 1]); exit;
+    $lat=$field('lat');$lng=$field('lng');$at=$field('at');$acc=$field('acc');
+    if(!is_numeric($lat)||!is_numeric($lng)||!is_finite((float)$lat)||!is_finite((float)$lng)||abs((float)$lat)>90||abs((float)$lng)>180||!ctype_digit($at)||strlen($at)>11||(int)$at<time()-120||(int)$at>time()+30||!ctype_digit($acc)||strlen($acc)>6||(int)$acc>100000){http_response_code(400);echo json_encode(['ok'=>0]);exit;}
+    $captured=gmdate('Y-m-d H:i:s',(int)$at);
+    $q=$pdo->prepare("UPDATE live_tracks t JOIN orders o ON o.id=t.order_id SET t.lat=?,t.lng=?,t.acc=?,t.captured_at=?,t.updated_at=NOW() WHERE t.order_id=? AND t.tracking_token=? AND (o.delivery_user=? OR ?='admin') AND o.status IN ('Assign','Pickup') AND (t.captured_at IS NULL OR t.captured_at<=?)");$q->execute([round((float)$lat,7),round((float)$lng,7),(int)$acc,$captured,$oid,$token,$u['id'],$u['role'],$captured]);
+    if(!$q->rowCount()){
+        $check=$pdo->prepare("SELECT 1 FROM live_tracks t JOIN orders o ON o.id=t.order_id WHERE t.order_id=? AND t.tracking_token=? AND (o.delivery_user=? OR ?='admin') AND o.status IN ('Assign','Pickup')");$check->execute([$oid,$token,$u['id'],$u['role']]);
+        if(!$check->fetch()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}
+    }
+    echo json_encode(['ok'=>1]);exit;
 }
 
 // ---- grahak apne order ki gaadi kahan hai, ye poochhta hai ----
@@ -75,7 +79,7 @@ if ($a === 'where') {
     if ($_SESSION['wq']++ > 400) { http_response_code(429); echo json_encode(['ok' => 0]); exit; }
 
     $st = $pdo->prepare("SELECT o.id, o.status, o.lat AS dlat, o.lng AS dlng,
-                                t.lat, t.lng, t.updated_at, u.name AS rider
+                                t.lat, t.lng, t.captured_at, TIMESTAMPDIFF(SECOND,t.captured_at,UTC_TIMESTAMP()) AS location_age, u.name AS rider
                          FROM orders o
                          LEFT JOIN live_tracks t ON t.order_id = o.id
                          LEFT JOIN users u ON u.id = o.delivery_user
@@ -85,8 +89,8 @@ if ($a === 'where') {
     if (!$r) { http_response_code(404); echo json_encode(['ok' => 0]); exit; }
 
     $live = false; $age = null;
-    if ($r['lat'] !== null && in_array($r['status'], ['Assign', 'Pickup'], true)) {
-        $age = time() - strtotime($r['updated_at']);
+    if ($r['captured_at'] !== null && $r['lat'] !== null && in_array($r['status'], ['Assign', 'Pickup'], true)) {
+        $age = max(0,(int)$r['location_age']);
         $live = $age < 180;                       // 3 minute tak taza maante hain
     }
     echo json_encode([

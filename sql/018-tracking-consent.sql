@@ -1,0 +1,5 @@
+SET NAMES utf8mb4;
+SET @q=IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='live_tracks' AND COLUMN_NAME='tracking_token')=0,'ALTER TABLE live_tracks ADD tracking_token CHAR(32) NULL','SELECT 1');
+PREPARE stmt FROM @q; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @q=IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='live_tracks' AND COLUMN_NAME='captured_at')=0,'ALTER TABLE live_tracks ADD captured_at DATETIME NULL','SELECT 1');
+PREPARE stmt FROM @q; EXECUTE stmt; DEALLOCATE PREPARE stmt;

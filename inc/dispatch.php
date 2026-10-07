@@ -23,7 +23,7 @@ function dispatch_assign(PDO $pdo,$orderid,$manualDriver=0) {
             if(!$manualDriver)$sql.=" AND v.live=1 AND o.status='Confirm' AND o.delivery_user IS NULL";
             else $sql.=" AND o.status IN ('Naya','Confirm','Assign')";
             $s=$pdo->prepare($sql);$s->execute([$driver,$orderid]);
-            if($s->rowCount()){$pdo->commit();return (int)$driver;}
+            if($s->rowCount()){$pdo->prepare('DELETE FROM live_tracks WHERE order_id=?')->execute([$orderid]);$pdo->commit();return (int)$driver;}
         }
         $pdo->rollBack();return null;
     }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();error_log('Dispatch deferred: '.$e->getMessage());return null;}
