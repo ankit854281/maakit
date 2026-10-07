@@ -30,6 +30,6 @@ function dispatch_assign(PDO $pdo,$orderid,$manualDriver=0) {
 }
 function dispatch_queue(PDO $pdo) {
     // Retry a bounded queue on duty/confirmation/completion events; no cron needed.
-    $ids=$pdo->query("SELECT o.id FROM orders o JOIN villages v ON v.name=o.village JOIN service_area_dispatch a ON a.village_id=v.id AND a.enabled=1 WHERE o.status='Confirm' AND o.delivery_user IS NULL ORDER BY o.id LIMIT 20")->fetchAll(PDO::FETCH_COLUMN);
+    $ids=$pdo->query("SELECT o.id FROM orders o JOIN villages v ON v.name=o.village JOIN service_area_dispatch a ON a.village_id=v.id AND a.enabled=1 JOIN service_area_meta m ON m.village_id=v.id AND m.delivery_on=1 WHERE v.live=1 AND o.status='Confirm' AND o.delivery_user IS NULL AND EXISTS (SELECT 1 FROM service_area_drivers d JOIN users u ON u.id=d.user_id AND u.role='delivery' AND u.active=1 JOIN driver_availability f ON f.user_id=u.id AND f.available_until>UTC_TIMESTAMP() WHERE d.village_id=v.id AND NOT EXISTS (SELECT 1 FROM orders busy WHERE busy.delivery_user=u.id AND busy.status IN ('Naya','Confirm','Assign','Pickup'))) ORDER BY o.id LIMIT 20")->fetchAll(PDO::FETCH_COLUMN);
     foreach($ids as $id)dispatch_assign($pdo,(int)$id);
 }
