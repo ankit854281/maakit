@@ -11,13 +11,11 @@
    - panel, login, POST: kabhi cache nahi (hamesha taaza)
    ============================================================ */
 
-const V     = 'maakit-v2';
+const V     = 'maakit-v3';
 const SHELL = V + '-shell';
 const PAGES = V + '-pages';
 
 const CORE = [
-  '/',
-  '/order.php',
   '/assets/style.css',
   '/assets/app.css',
   '/assets/icon-192.png',
@@ -26,7 +24,7 @@ const CORE = [
 ];
 
 // jin raaston ko kabhi cache nahi karna
-const NEVER = /^\/(admin|bpo|delivery|login\.php|logout\.php|shop\.php|account\.php|track\.php|api\.php|dukan-se\.php|book-mine\.php|uploads)/;
+const NEVER = /^\/(admin|bpo|delivery|login\.php|logout\.php|shop\.php|account\.php|track\.php|location\.php|support\.php|api\.php|dukan-se\.php|book-mine\.php|uploads)/;
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -66,22 +64,13 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // ---- page: pehle net se, warna cache se ----
-  e.respondWith(
-    fetch(req)
-      .then(res => {
-        if (res && res.ok && res.type === 'basic') {
-          const copy = res.clone();
-          caches.open(PAGES).then(c => c.put(req, copy));
-        }
-        return res;
-      })
-      .catch(() =>
-        caches.match(req)
-          .then(hit => hit || caches.match('/order.php'))
-          .then(hit => hit || caches.match('/offline.html'))
-      )
-  );
+  // Area/account-dependent HTML must never leak into a shared offline cache.
+  if (!/\.(css|js|png|jpg|jpeg|webp|svg|woff2?|json)$/i.test(url.pathname)) {
+    e.respondWith(fetch(req).catch(() => caches.match('/offline.html')));
+    return;
+  }
+
+
 });
 
 // naya version turant lagane ke liye

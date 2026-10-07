@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     }
     redirect('/admin/rates.php');
 }
-$rows = village_list($pdo);
+$rows = $pdo->query("SELECT * FROM villages ORDER BY name")->fetchAll();
 include __DIR__ . '/../inc/panel.php';
 ?>
 <section><div class="wrap">

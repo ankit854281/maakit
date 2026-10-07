@@ -29,7 +29,9 @@ if ($q !== '') {
         $sql .= ' OR category IN (' . implode(',', array_fill(0, count($matched_categories), '?')) . ')';
         array_push($args, ...$matched_categories);
     }
-    $st = $pdo->prepare($sql . ') ORDER BY id DESC LIMIT 12');
+    $sql.=')';
+    if($area=coverage_selected($pdo)){$sql.=' AND EXISTS (SELECT 1 FROM service_area_shops a WHERE a.business_id=businesses.id AND a.village_id=?)';$args[]=(int)$area['id'];}
+    $st = $pdo->prepare($sql . ' ORDER BY id DESC LIMIT 12');
     $st->execute($args);
     $shops = $st->fetchAll();
 

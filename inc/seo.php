@@ -3,7 +3,8 @@
 function seo_page($uri, array $query = [], $method = 'GET') {
     $path=parse_url($uri,PHP_URL_PATH) ?: '/';
     if ($path === '/index.php') $path='/';
-    $public=['/','/order.php','/bazaar.php','/directory.php','/sewa.php','/books.php','/business.php','/area.php','/transport.php','/register-business.php'];
+    $public=['/','/order.php','/bazaar.php','/directory.php','/sewa.php','/books.php','/business.php','/area.php','/transport.php','/register-business.php','/location.php','/support.php'];
+    if (!empty($_SESSION['service_area']) && in_array($path,['/','/bazaar.php','/directory.php','/location.php'],true)) return ['index'=>false,'canonical'=>null];
     if ($method !== 'GET' || !in_array($path,$public,true) || !empty($query['q'])) return ['index'=>false,'canonical'=>null];
     $params=[];
     if ($path==='/business.php') {

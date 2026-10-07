@@ -2,7 +2,7 @@
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/icons.php';
 
-$page_title = t('Bring Maakit to my village — Maakit', 'मेरे गाँव में भी लाइए — Maakit');
+$page_title = t('Bring Maakit to my area — Maakit', 'मेरे इलाके में भी लाइए — Maakit');
 $tab = 'ghar';
 $err = ''; $done = false;
 
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $mob = preg_replace('/\D/', '', post('mobile'));
     $nt  = trim(post('note'));
 
-    if (mb_strlen($v) < 2)          { $err = t('Please write your village name.', 'अपने गाँव का नाम लिखिए।'); }
+    if (mb_strlen($v) < 2 || mb_strlen($v) > 60)          { $err = t('Please write your locality and city.', 'अपने इलाके और शहर का नाम लिखिए।'); }
     elseif (strlen($mob) !== 10)    { $err = t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।'); }
     else {
         $c = $pdo->prepare("SELECT id FROM area_requests WHERE mobile=? AND village=?");
@@ -46,8 +46,8 @@ include __DIR__ . '/inc/head.php';
     <div class="okmark"><?= svc_icon('shield', 34) ?></div>
     <h2 style="margin:10px 0 4px"><?= t('Noted. Thank you.', 'लिख लिया। धन्यवाद।') ?></h2>
     <p class="lead" style="margin-bottom:0"><?= t(
-      'We go village by village. When enough people ask from one village, that village goes live next.',
-      'हम एक-एक गाँव करके बढ़ रहे हैं। जिस गाँव से ज़्यादा लोग माँगते हैं, वहाँ पहले पहुँचते हैं।') ?></p>
+      'We expand area by area after shops and delivery operations are ready. This request does not confirm availability.',
+      'दुकानें और डिलीवरी व्यवस्था तैयार होने पर नया इलाका शुरू होता है। अनुरोध से सेवा की पुष्टि नहीं होती।') ?></p>
 
     <div class="note" style="margin-top:16px;text-align:left">
       <div style="display:flex;justify-content:space-between;gap:10px">
@@ -55,8 +55,8 @@ include __DIR__ . '/inc/head.php';
         <b><?= num($same ?? 1) ?></b>
       </div>
       <p class="help" style="margin:8px 0 0"><?= t(
-        'Tell your neighbours to ask too — the more requests, the sooner we come.',
-        'पड़ोसियों से भी कहिए — जितनी ज़्यादा माँग, उतनी जल्दी हम आएँगे।') ?></p>
+        'Requests help us plan expansion. We will contact you if service becomes available.',
+        'अनुरोध से विस्तार की योजना बनती है। सेवा शुरू होने पर संपर्क करेंगे।') ?></p>
     </div>
 
     <div style="display:grid;gap:9px;margin-top:14px">
@@ -64,18 +64,18 @@ include __DIR__ . '/inc/head.php';
       <a class="btn btn-brand" href="/"><?= t('Back to home', 'होम पेज') ?></a>
     </div>
     <p class="help" style="margin-top:12px"><?= t(
-      'Meanwhile you can still order — we’ll tell you the charge on the phone.',
-      'तब तक भी ऑर्डर कर सकते हैं — चार्ज हम फ़ोन पर बता देंगे।') ?></p>
+      'Orders are accepted only in active service areas. You can enquire about future coverage.',
+      'ऑर्डर केवल चालू सेवा क्षेत्रों में लिए जाते हैं। भविष्य की सेवा के बारे में पूछ सकते हैं।') ?></p>
   </div>
 
 <?php else: ?>
   <div class="pghead">
     <span class="bigic"><?= svc_icon('box', 36) ?></span>
-    <h1><?= t('Not in your village yet?', 'आपका गाँव अभी नहीं है?') ?>
-      <span><?= t('Tell us — we’ll come', 'बता दीजिए — हम आएँगे') ?></span></h1>
+    <h1><?= t('Not in your area yet?', 'आपका इलाका अभी नहीं है?') ?>
+      <span><?= t('Request service coverage', 'सेवा के लिए अनुरोध भेजें') ?></span></h1>
     <p><?= t(
-      'Maakit runs in ' . count($live) . ' villages today. We add the next village where people ask for it. Takes 30 seconds.',
-      'Maakit अभी ' . num(count($live)) . ' गाँवों में चलता है। अगला गाँव वही होगा जहाँ से लोग माँगेंगे। 30 सेकंड लगेंगे।') ?></p>
+      'Maakit has ' . count($live) . ' active service areas. Tell us your locality, city, state and PIN to help plan expansion.',
+      'Maakit के ' . num(count($live)) . ' चालू सेवा क्षेत्र हैं। विस्तार की योजना के लिए इलाका, शहर, राज्य और PIN बताइए।') ?></p>
   </div>
 
   <div class="promise">
@@ -87,14 +87,14 @@ include __DIR__ . '/inc/head.php';
 
   <form method="post" class="box">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-    <div class="field"><label for="village"><?= t('Your village name', 'आपके गाँव का नाम') ?></label>
-      <input type="text" id="village" name="village" value="<?= h(post('village')) ?>" required
+    <div class="field"><label for="village"><?= t('Locality + city (max 60 characters)', 'इलाका + शहर (अधिकतम 60 अक्षर)') ?></label>
+      <input type="text" id="village" name="village" maxlength="60" value="<?= h(post('village')) ?>" required
              placeholder="<?= h(t('e.g. Rampur', 'जैसे: रामपुर')) ?>" list="vl">
       <datalist id="vl"><?php foreach ($live as $v): ?><option value="<?= h($v) ?>"><?php endforeach; ?></datalist>
     </div>
-    <div class="field"><label for="block"><?= t('Block / nearest market', 'ब्लॉक / पास का बाज़ार') ?>
+    <div class="field"><label for="block"><?= t('State + PIN code', 'राज्य + PIN code') ?>
       <i class="opt">(<?= t('optional', 'चाहें तो') ?>)</i></label>
-      <input type="text" id="block" name="block" value="<?= h(post('block')) ?>" placeholder="<?= h(t('e.g. Kapsethi', 'जैसे: कपसेठी')) ?>"></div>
+      <input type="text" id="block" name="block" value="<?= h(post('block')) ?>" placeholder="<?= h(t('e.g. Uttar Pradesh, 221403', 'जैसे: उत्तर प्रदेश, 221403')) ?>"></div>
     <div class="field"><label for="name"><?= t('Your name', 'आपका नाम') ?>
       <i class="opt">(<?= t('optional', 'चाहें तो') ?>)</i></label>
       <input type="text" id="name" name="name" value="<?= h(post('name')) ?>"></div>
@@ -104,11 +104,11 @@ include __DIR__ . '/inc/head.php';
     <div class="field"><label for="note"><?= t('Anything we should know?', 'कुछ और बताना है?') ?>
       <i class="opt">(<?= t('optional', 'चाहें तो') ?>)</i></label>
       <textarea id="note" name="note" style="min-height:76px" placeholder="<?= h(t('How far is the market? How many houses? Any shop nearby?', 'बाज़ार कितनी दूर है? कितने घर हैं? पास कोई दुकान है?')) ?>"><?= h(post('note')) ?></textarea></div>
-    <button type="submit" class="btn btn-brand" style="width:100%;font-size:17px"><?= t('Ask for my village', 'मेरे गाँव के लिए माँगिए') ?></button>
+    <button type="submit" class="btn btn-brand" style="width:100%;font-size:17px"><?= t('Request my area', 'मेरे इलाके के लिए अनुरोध') ?></button>
   </form>
 
   <?php if ($top): ?>
-    <h3 class="ghead"><?= t('Villages asking right now', 'अभी कौन से गाँव माँग रहे हैं') ?></h3>
+    <h3 class="ghead"><?= t('Areas requesting service', 'कौन से इलाके सेवा माँग रहे हैं') ?></h3>
     <div class="box">
       <div class="bars">
         <?php $mx = max(array_column($top, 'c')); foreach ($top as $r): ?>
@@ -119,7 +119,7 @@ include __DIR__ . '/inc/head.php';
           </div>
         <?php endforeach; ?>
       </div>
-      <p class="help" style="margin-top:10px"><?= t('The village at the top is next.', 'सबसे ऊपर वाला गाँव अगला है।') ?></p>
+      <p class="help" style="margin-top:10px"><?= t('Request counts help planning; they do not guarantee a launch date.', 'अनुरोध की गिनती योजना में मदद करती है; शुरू होने की तारीख तय नहीं करती।') ?></p>
     </div>
   <?php endif; ?>
 

@@ -29,7 +29,7 @@ $SVCS = services();
 $svc = $slug && $slug !== 'safar' ? service_get($slug) : null;
 if ($slug && $slug !== 'safar' && !$svc) { redirect('/sewa.php'); }
 
-$villages = village_list($pdo);
+$villages = array_values(array_filter(coverage_areas($pdo), fn($a)=>coverage_enabled($a,'booking')));
 $me = cust();
 
 // ============================================================
@@ -61,7 +61,7 @@ if ($svc && $_SERVER['REQUEST_METHOD'] === 'POST') {
         // jaanch
         if (mb_strlen($nm) < 2)       { $err = t('Please write your name.', 'अपना नाम लिखिए।'); }
         elseif (strlen($mob) !== 10)  { $err = t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।'); }
-        elseif ($vil === '')          { $err = t('Please choose your village.', 'अपना गाँव चुनिए।'); }
+        elseif (!coverage_enabled(coverage_area($pdo,$vil),'booking')) { $err=coverage_error('booking'); }
         else {
             foreach ($svc['fields'] as $f) {
                 if (empty($f['req'])) continue;
@@ -240,7 +240,7 @@ include __DIR__ . '/inc/head.php';
           <select id="f_<?= h($k) ?>" name="<?= h($k) ?>" <?= $req ? 'required' : '' ?>>
             <option value=""><?= t('Choose…', 'चुनिए…') ?></option>
             <?php foreach ($villages as $v): ?>
-              <option value="<?= h($v['name']) ?>" <?= $val === $v['name'] ? 'selected' : '' ?>><?= h(vname($v)) ?></option>
+              <option value="<?= h($v['name']) ?>" <?= $val === $v['name'] ? 'selected' : '' ?>><?= h(coverage_label($v)) ?></option>
             <?php endforeach; ?>
           </select>
 
@@ -276,12 +276,12 @@ include __DIR__ . '/inc/head.php';
              value="<?= h((string)(post('mobile') ?: ($me['mobile'] ?? ''))) ?>">
     </div>
     <div class="step">
-      <label for="village"><b><?= t('Your village', 'आपका गाँव') ?></b> <span style="color:#A33427">*</span></label>
+      <label for="village"><b><?= t('Service area', 'सेवा का इलाका') ?></b> <span style="color:#A33427">*</span></label>
       <select id="village" name="village" required>
         <option value=""><?= t('Choose…', 'चुनिए…') ?></option>
-        <?php $pv = (string)(post('village') ?: ($me['village'] ?? '')); ?>
+        <?php $pv = (string)(post('village') ?: (coverage_selected($pdo)['name'] ?? ($me['village'] ?? ''))); ?>
         <?php foreach ($villages as $v): ?>
-          <option value="<?= h($v['name']) ?>" <?= $pv === $v['name'] ? 'selected' : '' ?>><?= h(vname($v)) ?></option>
+          <option value="<?= h($v['name']) ?>" <?= $pv === $v['name'] ? 'selected' : '' ?>><?= h(coverage_label($v)) ?></option>
         <?php endforeach; ?>
       </select>
     </div>

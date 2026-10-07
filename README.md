@@ -69,3 +69,34 @@ Validation includes SQLite revenue/cost edge cases, MariaDB migrations twice, re
 Shop category imports preserve existing prices. Pending price fields can be prefilled from an approved shop’s public price updated within seven days, only for the same catalogue ID, name and pack. The source shop/date are displayed and the owner must confirm or edit and save before publication. No invented default prices or silent updates are used.
 
 Search discovery: `robots.txt` links to a static XML sitemap covering main public pages and all shop categories. Public canonical URLs use the fixed HTTPS origin and preserve category identities; private, search and POST pages are noindex. Search Console ownership verification and sitemap submission are still required outside this code. Indexing/ranking is controlled by Google, not guaranteed by these files.
+
+## India-wide expansion (7 October 2026)
+
+The owner has changed the target to all of India. This is a multi-area foundation,
+not a claim that delivery is already available nationally. Apply SQL 010 and 011
+before enabling the new runtime. Existing orders retain their legacy `village`
+field as a stable locality identifier; never rename it casually.
+
+Admin → Service areas adds unique locality+city names, state, PIN, normal local
+delivery fee, separate delivery/booking switches and approved serving shops.
+An area can be paused without deleting order history. PIN is metadata, not a
+promise of delivery to every address sharing that PIN. Existing exact shop/locality
+associations are migrated once; other shops need an explicit serving-area link.
+Customers select a location; catalogue offers, directory and shop search are scoped
+to it. Forged requests for unknown/paused areas or shops outside the delivery area
+are rejected server-side. New areas have no first-order discount unless enabled.
+The normal charge estimate does not infer eligibility from browser history.
+
+Help requests are tied to the signed-in customer's order/booking; admin can reply
+and track review status. Requests do not automatically refund, cancel or change
+fulfilment. Guest support continues by phone/WhatsApp. No customer funds are held.
+Homepage identity and the PWA now describe shopping, delivery and bookings in India
+with area-dependent availability. Location-dependent HTML is not stored offline.
+Order/booking references use random suffixes rather than a racy daily COUNT.
+
+Validation: `tests/coverage.php`, guarded MariaDB `coverage-flow.php`, all existing
+checks, migrations twice and HTTP smoke tests. Remaining operational prerequisites:
+real shop photos/prices/stock, coverage verification, local delivery staff, provider
+availability and support staffing. Automated driver dispatch, continuous GPS,
+courier shipping, OTP messaging and national load capacity are not implemented
+by this foundation and must not be advertised as live.

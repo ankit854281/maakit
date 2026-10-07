@@ -10,6 +10,8 @@ $sql = "SELECT b.*, (b.salon_updated IS NOT NULL AND b.salon_updated > (NOW() - 
         (SELECT COUNT(*) FROM feedback f WHERE f.business_id=b.id AND f.status='approved') AS rc
         FROM businesses b WHERE b.status='approved'";
 $args = [];
+$area=coverage_selected($pdo);
+if ($area) { $sql.=' AND EXISTS (SELECT 1 FROM service_area_shops a WHERE a.business_id=b.id AND a.village_id=?)';$args[]=(int)$area['id']; }
 
 if ($cat && cat_by_slug($cat)) { $sql .= " AND b.category=?"; $args[] = $cat; }
 
