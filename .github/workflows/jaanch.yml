@@ -69,6 +69,7 @@ jobs:
         run: |
           php tests/catalog.php
           php tests/earning.php
+          php tests/shop-prices.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi
