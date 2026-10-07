@@ -57,6 +57,8 @@ if ($o && $_SERVER['REQUEST_METHOD'] === 'POST' && post('act') === 'cancel' && c
     redirect('/track.php?no=' . urlencode($no) . '&m=' . urlencode($mob));
 }
 
+$shipment=null;
+if ($o) { $ship=$pdo->prepare('SELECT carrier,tracking_no,updated_at FROM courier_tracking WHERE order_id=?');$ship->execute([$o['id']]);$shipment=$ship->fetch(); }
 $lines = $o ? (json_decode((string)$o['items_json'], true) ?: []) : [];
 include __DIR__ . '/inc/head.php';
 ?>
@@ -73,6 +75,7 @@ include __DIR__ . '/inc/head.php';
     <p class="lead" style="margin:4px 0 0"><?= date('d/m/Y, h:i A', strtotime($o['created_at'])) ?> · <?= h($o['village']) ?></p>
   </div>
 
+  <?php if($shipment):?><div class="box"><h3><?=t('Courier details','Courier जानकारी')?></h3><b><?=h($shipment['carrier'])?></b><p><?=t('Tracking / AWB','Tracking / AWB')?>: <?=h($shipment['tracking_no'])?></p><p class="help"><?=t('Recorded by the Maakit team. Use this number on the courier’s official website or contact support. This is not a live courier status.','Maakit टीम ने यह जानकारी दर्ज की है। Courier की official website पर इस नंबर से जाँचें या सहायता टीम से संपर्क करें। यह courier की live स्थिति नहीं है।')?></p></div><?php endif;?>
   <?php if ($o['status'] === 'Cancel'): ?>
     <div class="err" style="margin-top:16px"><?= t('This order was cancelled.', 'यह ऑर्डर कैंसिल हो गया है।') ?> <a href="/order.php"><?= t('Place a new one', 'नया ऑर्डर कीजिए') ?></a>.</div>
   <?php else: ?>

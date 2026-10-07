@@ -105,6 +105,7 @@ include __DIR__ . '/../inc/panel.php';
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:flex-end">
+        <a class="btn btn-line btn-sm" href="/admin/shipment.php?id=<?= (int)$o['id'] ?>"><?= t('Courier details','Courier जानकारी') ?></a>
         <form method="post" style="display:flex;gap:6px;align-items:flex-end">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="status"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
           <div><label>स्टेटस</label>

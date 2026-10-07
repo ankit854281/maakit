@@ -25,7 +25,7 @@ include __DIR__ . '/../inc/panel.php';
     <tr><th>ऑर्डर</th><th>ग्राहक</th><th>गाँव</th><th>सामान</th><th>चार्ज</th><th>स्टेटस</th><th>पार्टनर</th><th>कब</th></tr>
     <?php foreach ($rows as $o): ?>
       <tr>
-        <td><?= h($o['order_no']) ?><br><span class="meta">कोड <?= h($o['code']) ?></span></td>
+        <td><?= h($o['order_no']) ?><br><a href="/admin/shipment.php?id=<?= (int)$o['id'] ?>"><?= t('Courier details','Courier जानकारी') ?></a><br><span class="meta">कोड <?= h($o['code']) ?></span></td>
         <td><?= h($o['customer_name']) ?><br><span class="meta"><?= h($o['mobile']) ?></span></td>
         <td><?= h($o['village']) ?></td>
         <td style="max-width:280px"><?= h(mb_strimwidth($o['items'], 0, 90, '…')) ?></td>
