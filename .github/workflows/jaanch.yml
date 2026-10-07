@@ -120,3 +120,11 @@ jobs:
           php .github/jaanch/coverage-flow.php
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"
+
+      - name: 4. Backup को अलग database में वापस डालकर जाँचिए
+        run: |
+          php .github/jaanch/backup-flow.php export
+          mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch -e 'CREATE DATABASE maakit_restore_jaanch CHARACTER SET utf8mb4'
+          gzip -dc "$(cat /tmp/maakit-backup-path)" | mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch maakit_restore_jaanch
+          php .github/jaanch/backup-flow.php verify
+          mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch -e 'DROP DATABASE maakit_restore_jaanch'
