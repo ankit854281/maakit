@@ -4,6 +4,7 @@ require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/dakiya.php';
 require_once __DIR__ . '/inc/daam.php';
 require_once __DIR__ . '/inc/icons.php';
+require_once __DIR__ . '/inc/submit-once.php';
 
 $page_title = t('Order — Maakit', 'ऑर्डर कीजिए — Maakit');
 $tab = 'order';
@@ -12,9 +13,10 @@ $items = items_all($pdo);
 $groups = item_groups();
 $err = '';
 $done = null;
+[$submit_key,$done,$err] = submit_once_form('goods');
 
 // ---------- ऑर्डर सेव ----------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
     $name    = post('name');
     $mobile  = preg_replace('/\D/', '', post('mobile'));
     $village = post('village');
@@ -90,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
         $done = ['no'=>$order_no, 'code'=>$code, 'calc'=>$calc, 'first'=>$first,
                  'wa'=>wa_link(MAAKIT_WA, $lines), 'mobile'=>$mobile, 'cart'=>$cart, 'note'=>$note];
+        submit_once_complete($submit_key,$done);
     }
 }
 
@@ -254,6 +257,7 @@ try{
 
     <form method="post" id="ofrm" enctype="multipart/form-data">
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+      <input type="hidden" name="submit_key" value="<?= h($submit_key) ?>">
       <input type="hidden" name="cart_json" id="cartJson">
       <input type="hidden" name="note" id="noteHid">
 
