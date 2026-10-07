@@ -1,12 +1,14 @@
 <?php
 require_once __DIR__.'/../inc/fn.php';
 $u=need_role(['admin','bpo']);
-$id=(int)get('id',post('id'));
+$raw_id=$_GET['id']??$_POST['id']??0;
+$id=is_scalar($raw_id)?(int)$raw_id:0;
 $st=$pdo->prepare('SELECT * FROM orders WHERE id=?');$st->execute([$id]);$o=$st->fetch();
 if(!$o)redirect($u['role']==='admin'?'/admin/':'/bpo/');
 $err='';
 if($_SERVER['REQUEST_METHOD']==='POST'){
- $carrier=post('carrier');$number=post('tracking_no');
+ $carrier=is_string($_POST['carrier']??null)?trim($_POST['carrier']):'';
+ $number=is_string($_POST['tracking_no']??null)?trim($_POST['tracking_no']):'';
  if(!csrf_ok())$err=t('Reload and try again.','पेज दोबारा खोलकर कोशिश करें।');
  elseif(mb_strlen($carrier)<2||mb_strlen($carrier)>80||!preg_match('/^[A-Za-z0-9][A-Za-z0-9 ._\/-]{2,99}$/',$number))$err=t('Enter the courier name and a valid tracking number (3–100 letters/numbers).','Courier का नाम और सही tracking number भरें (3–100 अक्षर/अंक)।');
  else{
@@ -23,7 +25,7 @@ $page_title=t('Courier details — Maakit','Courier जानकारी — Ma
 <p class="lead"><?=t('Enter details only after booking with the courier separately. This form does not create a courier booking, label, charge or automatic tracking update. Goods payment still goes directly to the shop.','Courier से अलग booking करने के बाद ही जानकारी भरें। इस form से booking, label, शुल्क या automatic tracking update नहीं बनता। सामान का पैसा सीधे दुकान को ही जाता है।')?></p>
 <?php if($err):?><div class="err"><?=h($err)?></div><?php endif;?>
 <form method="post" class="box"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="id" value="<?=$id?>">
-<div class="field"><label><?=t('Courier name','Courier का नाम')?></label><input name="carrier" minlength="2" maxlength="80" required value="<?=h(post('carrier',$shipment['carrier']??''))?>"></div>
-<div class="field"><label><?=t('Tracking / AWB number','Tracking / AWB नंबर')?></label><input name="tracking_no" minlength="3" maxlength="100" required value="<?=h(post('tracking_no',$shipment['tracking_no']??''))?>"></div>
+<div class="field"><label><?=t('Courier name','Courier का नाम')?></label><input name="carrier" minlength="2" maxlength="80" required value="<?=h($carrier??$shipment['carrier']??'')?>"></div>
+<div class="field"><label><?=t('Tracking / AWB number','Tracking / AWB नंबर')?></label><input name="tracking_no" minlength="3" maxlength="100" required value="<?=h($number??$shipment['tracking_no']??'')?>"></div>
 <button class="btn btn-brand"><?=t('Save courier details','Courier जानकारी सेव करें')?></button></form>
 </div></section><?php include __DIR__.'/../inc/foot.php'; ?>
