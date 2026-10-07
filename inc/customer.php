@@ -12,19 +12,30 @@ function cust() {
 
 /** session me daal do */
 function cust_set($c) {
+    if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
     $_SESSION['cust'] = [
         'id' => (int)$c['id'], 'name' => $c['name'], 'mobile' => $c['mobile'],
         'village' => $c['village'], 'landmark' => $c['landmark'],
     ];
 }
-function cust_logout() { unset($_SESSION['cust']); }
+function cust_logout() {
+    unset($_SESSION['cust']);
+    if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
+}
+
+function cust_password_ok($pass) {
+    return is_string($pass) && strlen($pass) >= 8 && strlen($pass) <= 72;
+}
+function cust_password_error() {
+    return t('Use 8–72 English letters, numbers or symbols. Avoid your mobile or vehicle number.', '8–72 अंग्रेज़ी अक्षर, अंक या चिन्ह रखें। मोबाइल या गाड़ी का नंबर पासवर्ड न रखें।');
+}
 
 /** naya khata — [ok, msg] */
 function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark) {
     $mobile = preg_replace('/\D/', '', $mobile);
     if (mb_strlen(trim($name)) < 2)  return [false, t('Please write your full name.', 'अपना पूरा नाम लिखिए।')];
     if (strlen($mobile) !== 10)      return [false, t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।')];
-    if (strlen($pass) < 4)           return [false, t('Password must be at least 4 characters.', 'पासवर्ड कम से कम 4 अंक का रखिए।')];
+    if (!cust_password_ok($pass))    return [false, cust_password_error()];
 
     $st = $pdo->prepare("SELECT id FROM customers WHERE mobile=?");
     $st->execute([$mobile]);
@@ -34,9 +45,8 @@ function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark) {
     $ins->execute([trim($name), $mobile, password_hash($pass, PASSWORD_DEFAULT), $village, $landmark]);
     $id = (int)$pdo->lastInsertId();
 
-    // is number se pehle jo order/booking bina login ke hue the, wo bhi khate me jod do
-    $pdo->prepare("UPDATE orders SET customer_id=? WHERE mobile=? AND customer_id IS NULL")->execute([$id, $mobile]);
-    $pdo->prepare("UPDATE service_bookings SET customer_id=? WHERE mobile=? AND customer_id IS NULL")->execute([$id, $mobile]);
+    // Do not claim guest history from an unverified phone number. Only orders
+    // placed while signed in belong to this account. Guest tracking remains available.
 
     cust_set(['id'=>$id,'name'=>trim($name),'mobile'=>$mobile,'village'=>$village,'landmark'=>$landmark]);
     return [true, ''];

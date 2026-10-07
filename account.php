@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $st = $pdo->prepare("SELECT password FROM customers WHERE id=?"); $st->execute([$me['id']]);
         $row = $st->fetch();
         if (!$row || !password_verify($old, $row['password'])) { $err = t('Old password is wrong.', 'पुराना पासवर्ड ग़लत है।'); }
-        elseif (strlen($new) < 4) { $err = t('New password must be at least 4 characters.', 'नया पासवर्ड कम से कम 4 अंक का रखिए।'); }
+        elseif (!cust_password_ok($new)) { $err = cust_password_error(); }
         else {
             $pdo->prepare("UPDATE customers SET password=? WHERE id=?")
                 ->execute([password_hash($new, PASSWORD_DEFAULT), $me['id']]);
@@ -112,9 +112,9 @@ include __DIR__ . '/inc/head.php';
   <form method="post" class="box">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="save">
     <div class="field"><label for="name"><?= t('Name', 'नाम') ?></label><input type="text" id="name" name="name" value="<?= h($me['name']) ?>" required></div>
-    <div class="field"><label for="village"><?= t('Village', 'गाँव') ?></label>
+    <div class="field"><label for="village"><?= t('Service area', 'सेवा क्षेत्र') ?></label>
       <select id="village" name="village"><option value="">— <?= t('Choose', 'चुनिए') ?> —</option>
-        <?php foreach ($villages as $v): ?><option value="<?= h($v['name']) ?>" <?= $me['village'] === $v['name'] ? 'selected' : '' ?>><?= h(vname($v)) ?></option><?php endforeach; ?>
+        <?php foreach ($villages as $v): ?><option value="<?= h($v['name']) ?>" <?= $me['village'] === $v['name'] ? 'selected' : '' ?>><?= h(coverage_label($v)) ?></option><?php endforeach; ?>
       </select></div>
     <div class="field"><label for="landmark"><?= t('Landmark', 'घर की पहचान') ?></label>
       <input type="text" id="landmark" name="landmark" value="<?= h($me['landmark']) ?>" placeholder="<?= h(t('opposite the temple…', 'मंदिर के सामने…')) ?>"></div>
@@ -127,7 +127,7 @@ include __DIR__ . '/inc/head.php';
     <form method="post" style="margin-top:12px">
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="pass">
       <div class="field"><label for="old"><?= t('Old password', 'पुराना पासवर्ड') ?></label><input type="password" id="old" name="old" required></div>
-      <div class="field"><label for="new"><?= t('New password', 'नया पासवर्ड') ?></label><input type="password" id="new" name="new" required></div>
+      <div class="field"><label for="new"><?= t('New password', 'नया पासवर्ड') ?></label><input type="password" id="new" name="new" autocomplete="new-password" minlength="8" required></div>
       <button type="submit" class="btn btn-brand" style="width:100%"><?= t('Change it', 'बदल दीजिए') ?></button>
     </form>
   </details>
@@ -138,7 +138,7 @@ include __DIR__ . '/inc/head.php';
   <div class="pghead">
     <span class="bigic"><?= svc_icon('user', 36) ?></span>
     <h1><?= t('My Account', 'मेरा खाता') ?> <span><?= t('Optional — ordering works without it', 'ज़रूरी नहीं — बिना लॉगिन भी ऑर्डर होता है') ?></span></h1>
-    <p><?= t('You don’t need an account to order.<br>With one, your address, past orders and bookings stay with you.', 'खाता बनाना ज़रूरी नहीं है — बिना लॉगिन भी ऑर्डर होता है।<br>खाता बनाने पर पता, पुराने ऑर्डर और बुकिंग हमेशा साथ रहते हैं।') ?></p>
+    <p><?= t('You can order without an account. Orders and bookings placed while signed in appear here. Track earlier guest orders using their order number.', 'बिना खाते के भी ऑर्डर होता है। लॉगिन करके किए गए ऑर्डर और बुकिंग यहाँ दिखेंगे। पहले के बिना लॉगिन वाले ऑर्डर उनके नंबर से देखें।') ?></p>
   </div>
 
   <div class="segs">
@@ -154,11 +154,11 @@ include __DIR__ . '/inc/head.php';
       <div class="field"><label for="rname"><?= t('Your name', 'आपका नाम') ?></label><input type="text" id="rname" name="name" value="<?= h(post('name')) ?>" autocomplete="name" required></div>
       <div class="field"><label for="rmob"><?= t('Mobile number (10 digits)', 'मोबाइल नंबर (10 अंक)') ?></label><input type="tel" id="rmob" name="mobile" value="<?= h(post('mobile')) ?>" inputmode="numeric" maxlength="10" autocomplete="tel-national" required></div>
       <div class="field"><label for="rpass"><?= t('Create a password', 'पासवर्ड बनाइए') ?></label>
-        <input type="password" id="rpass" name="password" autocomplete="new-password" required>
-        <p class="help"><?= t('At least 4 characters. Pick something you’ll remember — like your vehicle number.', 'कम से कम 4 अंक। ऐसा रखिए जो याद रहे — जैसे अपनी गाड़ी का नंबर।') ?></p></div>
-      <div class="field"><label for="rvil"><?= t('Your village', 'आपका गाँव') ?></label>
+        <input type="password" id="rpass" name="password" autocomplete="new-password" minlength="8" required>
+        <p class="help"><?= cust_password_error() ?></p></div>
+      <div class="field"><label for="rvil"><?= t('Your service area', 'आपका सेवा क्षेत्र') ?></label>
         <select id="rvil" name="village"><option value="">— <?= t('Choose', 'चुनिए') ?> —</option>
-          <?php foreach ($villages as $v): ?><option value="<?= h($v['name']) ?>" <?= post('village') === $v['name'] ? 'selected' : '' ?>><?= h(vname($v)) ?></option><?php endforeach; ?>
+          <?php foreach ($villages as $v): ?><option value="<?= h($v['name']) ?>" <?= post('village') === $v['name'] ? 'selected' : '' ?>><?= h(coverage_label($v)) ?></option><?php endforeach; ?>
         </select></div>
       <div class="field"><label for="rland"><?= t('Landmark', 'घर की पहचान') ?></label><input type="text" id="rland" name="landmark" value="<?= h(post('landmark')) ?>" placeholder="<?= h(t('opposite the temple…', 'मंदिर के सामने…')) ?>"></div>
       <button type="submit" class="btn btn-brand" style="width:100%;font-size:17px"><?= t('Create account', 'खाता बनाइए') ?></button>
