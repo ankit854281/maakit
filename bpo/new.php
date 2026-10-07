@@ -1,12 +1,14 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/items.php';
+require_once __DIR__ . '/../inc/order-workflow.php';
+require_once __DIR__ . '/../inc/submit-once.php';
 $u = need_role(['bpo', 'admin']);
 $page_title = 'नया ऑर्डर — Maakit';
-$villages = village_list($pdo);
-$err = ''; $done = null;
+$villages = array_filter(coverage_areas($pdo),fn($a)=>coverage_enabled($a));
+[$submit_key,$done,$err]=submit_once_form('bpo-new');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
     $name = post('name'); $mobile = preg_replace('/\D/', '', post('mobile'));
     $village = post('village'); $landmark = post('landmark'); $items = post('items');
     $shop = post('shop'); $market = post('market', 'kapsethi'); $w = post('weight', '0'); $sz = post('size', '0');
@@ -14,11 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
     if (mb_strlen($name) < 2 || strlen($mobile) !== 10 || !$village || mb_strlen($items) < 3) {
         $err = 'नाम, 10 अंकों का मोबाइल, गाँव और सामान — चारों ज़रूरी हैं।';
+    } elseif(!coverage_enabled(coverage_area($pdo,$village))) { $err=coverage_error();
+    } elseif(!isset(staff_goods_payments()[$pay])||!in_array($src,['call','whatsapp'],true)||!array_key_exists($market,markets())||!array_key_exists($w,weight_extras())||!array_key_exists($sz,size_extras())||staff_order_amount($_POST['delivery_charge']??'')===false) { $err=t('Check payment, delivery charge, source and size choices.','भुगतान, डिलीवरी चार्ज, ऑर्डर का स्रोत और आकार जाँचें।');
     } else {
         $stc = $pdo->prepare("SELECT COUNT(*) c FROM orders WHERE mobile=?"); $stc->execute([$mobile]);
         $first = ((int)$stc->fetch()['c'] === 0) ? 1 : 0;
         $calc = calc_charge($village, $market, $w, $sz, $pdo, (bool)$first);
-        $charge = post('delivery_charge') !== '' ? (int)post('delivery_charge') : $calc['total'];
+        $charge = post('delivery_charge') !== '' ? staff_order_amount(post('delivery_charge')) : $calc['total'];
         $order_no = new_order_no($pdo); $code = new_code();
         $pdo->prepare("INSERT INTO orders (order_no, code, source, customer_name, mobile, village, landmark, items, shop, market, sector, weight_extra, size_extra, first_order, delivery_charge, payment, status)
                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'Confirm')")
@@ -26,9 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
         $conf = "Maakit - ऑर्डर कन्फर्म\nऑर्डर नंबर: $order_no\nसामान: $items\n"
             . ($shop ? "दुकान: $shop\n" : "")
-            . "डिलीवरी चार्ज: " . ($first ? "पहली डिलीवरी फ़्री" : "₹" . (int)$charge) . "\n"
+            . "डिलीवरी चार्ज: " . ($charge===null ? "कॉल पर तय करना बाकी" : "₹" . (int)$charge) . "\n"
             . "डिलीवरी कोड: $code\nसामान लेते समय यह कोड डिलीवरी पार्टनर को बताइए। किसी और को न बताएँ।";
         $done = ['no' => $order_no, 'code' => $code, 'wa' => wa_link($mobile, $conf), 'charge' => $charge, 'first' => $first];
+        submit_once_complete($submit_key,$done);
     }
 }
 include __DIR__ . '/../inc/panel.php';
@@ -41,7 +46,7 @@ include __DIR__ . '/../inc/panel.php';
     <div class="note" style="margin-bottom:12px">
       <div><b>ऑर्डर नंबर:</b> <?= h($done['no']) ?></div>
       <div><b>कोड:</b> <?= h($done['code']) ?></div>
-      <div><b>चार्ज:</b> <?= $done['first'] ? 'पहली डिलीवरी फ़्री' : '₹' . (int)$done['charge'] ?></div>
+      <div><b>चार्ज:</b> <?= $done['charge']===null?t('To be confirmed','तय करना बाकी'):'₹'.(int)$done['charge'] ?></div>
     </div>
     <a class="btn btn-green" href="<?= h($done['wa']) ?>" target="_blank" rel="noopener">कन्फर्म मैसेज WhatsApp पर भेजिए</a>
     <div style="margin-top:12px;display:flex;gap:8px"><a class="btn btn-brand btn-sm" href="/bpo/new.php">+ एक और ऑर्डर</a><a class="btn btn-brand btn-sm" href="/bpo/">आज के ऑर्डर</a></div>
@@ -51,7 +56,7 @@ include __DIR__ . '/../inc/panel.php';
   <p class="lead">कॉल या WhatsApp पर आया ऑर्डर यहाँ लिखिए। ऑर्डर नंबर और कोड अपने आप बनेंगे।</p>
   <?php if ($err): ?><div class="err"><?= h($err) ?></div><?php endif; ?>
   <form method="post" class="box">
-    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="submit_key" value="<?=h($submit_key)?>">
     <div class="field"><label>ऑर्डर कहाँ से आया</label>
       <select name="source"><option value="call">कॉल से</option><option value="whatsapp">WhatsApp से</option></select></div>
     <div class="field"><label>ग्राहक का नाम</label><input type="text" name="name" required></div>
@@ -82,7 +87,7 @@ include __DIR__ . '/../inc/panel.php';
       <select name="size"><?php foreach (size_extras() as $k => $t): ?><option value="<?= h($k) ?>"><?= h($t) ?></option><?php endforeach; ?></select></div>
     <div class="field"><label>डिलीवरी चार्ज ₹ (खाली छोड़ेंगे तो अपने आप लगेगा)</label><input type="number" name="delivery_charge"></div>
     <div class="field"><label>पेमेंट</label>
-      <select name="payment"><?php foreach (['डिलीवरी पर कैश','डिलीवरी पर UPI','मैं खुद दुकान को UPI करूँगा','एडवांस लिया'] as $p): ?><option><?= h($p) ?></option><?php endforeach; ?></select></div>
+      <select name="payment"><?php foreach (staff_goods_payments() as $p=>$label): ?><option value="<?=h($p)?>"><?= h($label) ?></option><?php endforeach; ?></select></div>
     <button class="btn btn-brand" type="submit">ऑर्डर बनाइए</button>
   </form>
   <script>
