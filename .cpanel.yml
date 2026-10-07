@@ -11,3 +11,4 @@ deployment:
     - /bin/cp -R  ./sql       $DEPLOYPATH
     - /bin/cp     ./*.json    $DEPLOYPATH 2>/dev/null || true
     - /bin/cp     ./sw.js     $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp     ./robots.txt ./sitemap.xml ./.htaccess ./offline.html $DEPLOYPATH
