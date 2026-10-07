@@ -21,6 +21,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $check=$pdo->prepare("SELECT id FROM businesses WHERE status='approved' AND id IN ($marks)");$check->execute($shopids);
     if (count($check->fetchAll())!==count($shopids)) $err=t('Only approved shops can be linked.','केवल स्वीकृत दुकानें जोड़ सकते हैं।');
    }
+   $driverids=array_values(array_unique(array_filter(array_map('intval',(array)($_POST['drivers']??[])),fn($x)=>$x>0)));
+   if($driverids){
+    $marks=implode(',',array_fill(0,count($driverids),'?'));
+    $check=$pdo->prepare("SELECT id FROM users WHERE role='delivery' AND active=1 AND id IN ($marks)");$check->execute($driverids);
+    if(count($check->fetchAll())!==count($driverids))$err=t('Choose active delivery staff only.','केवल चालू delivery staff चुनें।');
+   }
    if (!$err) {
     try {
      $pdo->beginTransaction();
@@ -31,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
      $pdo->prepare('DELETE FROM service_area_shops WHERE village_id=?')->execute([$id]);
      $link=$pdo->prepare('INSERT INTO service_area_shops(village_id,business_id) VALUES (?,?)');
      foreach($shopids as $bid) $link->execute([$id,$bid]);
+     $pdo->prepare('DELETE FROM service_area_drivers WHERE village_id=?')->execute([$id]);
+     $driverlink=$pdo->prepare('INSERT INTO service_area_drivers(village_id,user_id) VALUES (?,?)');
+     foreach($driverids as $driverid)$driverlink->execute([$id,$driverid]);
      $pdo->commit();flash(t('Coverage saved.','सेवा क्षेत्र सेव हो गया।'));redirect('/admin/coverage.php?id='.$id);
     } catch(PDOException $e) { if($pdo->inTransaction())$pdo->rollBack();error_log('Coverage save failed: '.$e->getMessage());$err=t('Could not save. Use a unique area name and try again.','सेव नहीं हुआ। इलाके का अलग पहचान वाला नाम रखकर दोबारा कोशिश कीजिए।'); }
    }
@@ -41,6 +50,8 @@ $areas=coverage_areas($pdo,false);$id=(int)get('id');$edit=null;
 foreach($areas as $a)if((int)$a['id']===$id)$edit=$a;
 $links=[];if($edit){$s=$pdo->prepare('SELECT business_id FROM service_area_shops WHERE village_id=?');$s->execute([$id]);$links=array_map('intval',$s->fetchAll(PDO::FETCH_COLUMN));}
 $shops=$pdo->query("SELECT id,name,village FROM businesses WHERE status='approved' ORDER BY name")->fetchAll();
+ $driverlinks=[];if($edit){$s=$pdo->prepare('SELECT user_id FROM service_area_drivers WHERE village_id=?');$s->execute([$id]);$driverlinks=array_map('intval',$s->fetchAll(PDO::FETCH_COLUMN));}
+$drivers=$pdo->query("SELECT id,name FROM users WHERE role='delivery' AND active=1 ORDER BY name")->fetchAll();
 include __DIR__.'/../inc/panel.php';
 ?>
 <section><div class="wrap" style="max-width:900px">
@@ -58,6 +69,7 @@ include __DIR__.'/../inc/panel.php';
 <?php foreach(['live'=>['Area active','इलाका चालू'],'delivery_on'=>['Accept delivery requests','डिलीवरी अनुरोध लें'],'booking_on'=>['Accept booking requests','बुकिंग अनुरोध लें'],'first_free'=>['Waive base fee on first delivery','पहली डिलीवरी का मूल चार्ज माफ करें']] as $k=>$label):?>
 <div class="field"><label><input type="checkbox" name="<?=h($k)?>" value="1" <?=($_SERVER['REQUEST_METHOD']==='POST'?post($k)==='1':(bool)($edit[$k]??0))?'checked':''?>> <?=h(t($label[0],$label[1]))?></label></div><?php endforeach;?>
 <div class="field"><label><?=t('Approved shops serving this area (hold Ctrl to select multiple)','इस इलाके में सेवा देने वाली दुकानें (कई चुनने के लिए Ctrl दबाएँ)')?></label><select name="shops[]" multiple size="8"><?php foreach($shops as $shop):?><option value="<?=(int)$shop['id']?>" <?=in_array((int)$shop['id'],$links,true)?'selected':''?>><?=h($shop['name'].' · '.$shop['village'])?></option><?php endforeach;?></select></div>
+<div class="field"><label><?=t('Delivery staff serving this area','इस इलाके के delivery staff')?></label><?php foreach($drivers as $driver):?><label><input type="checkbox" name="drivers[]" value="<?=(int)$driver['id']?>" <?=in_array((int)$driver['id'],$_SERVER['REQUEST_METHOD']==='POST'?($driverids??[]):$driverlinks,true)?'checked':''?>> <?=h($driver['name'])?></label><?php endforeach;?></div><p class="help"><?=t('Confirm shifts with these people. This roster does not mean they are online or automatically assigned.','इन लोगों की shift पक्की करें। इस सूची का मतलब online होना या automatic assignment नहीं है।')?></p>
 <button class="btn btn-brand"><?=t('Save coverage','सेवा क्षेत्र सेव करें')?></button>
 </form></div></section>
 <?php include __DIR__.'/../inc/foot.php';?>

@@ -4,7 +4,7 @@ if (DB_NAME !== 'maakit_jaanch') throw new RuntimeException('Only the CI databas
 require_once __DIR__ . '/../../inc/fn.php';
 require_once __DIR__ . '/../../inc/earning.php';
 function money_check($ok,$message) { if (!$ok) throw new RuntimeException($message); }
-$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $cid=0; $tid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
+$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $cid=0; $tid=0; $driverid=0; $areaid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
 function money_request($path,$post=null,$status=200) {
     global $jar;
     $ch=curl_init('http://127.0.0.1:8099'.$path);
@@ -60,6 +60,19 @@ try {
     $shipment['csrf']='invalid';$shipment['tracking_no']='FORGED';money_request('/admin/shipment.php?id='.$oid,$shipment);
     $pdo->prepare("UPDATE orders SET status='Cancel' WHERE id=?")->execute([$oid]);$shipment['csrf']=$m[1];money_request('/admin/shipment.php?id='.$oid,$shipment);
     money_check($pdo->query('SELECT tracking_no FROM courier_tracking WHERE order_id='.(int)$oid)->fetchColumn()==='CI-AWB-123','CSRF/cancelled shipment edits rejected');
+    $pdo->prepare("INSERT INTO users(name,username,password,role) VALUES ('CI Area Driver','jaanch-area-driver',?,'delivery')")->execute([password_hash($password,PASSWORD_DEFAULT)]);$driverid=(int)$pdo->lastInsertId();
+    $area=['csrf'=>$m[1],'name'=>'CI Dispatch Area','city'=>'CI City','state'=>'CI State','pincode'=>'221403','base_fee'=>'40','live'=>'1','delivery_on'=>'1','drivers'=>[$uid]];
+    money_request('/admin/coverage.php',$area);money_check(!$pdo->query("SELECT id FROM villages WHERE name='CI Dispatch Area'")->fetchColumn(),'Admin cannot be linked as delivery driver');
+    $area['drivers']=[$driverid];money_request('/admin/coverage.php',$area,302);$areaid=(int)$pdo->query("SELECT id FROM villages WHERE name='CI Dispatch Area'")->fetchColumn();
+    money_check($areaid && count(coverage_drivers($pdo,'CI Dispatch Area'))===1,'Area roster saves active delivery staff');
+    $pdo->prepare("UPDATE orders SET village='CI Dispatch Area',status='Naya',delivery_user=NULL WHERE id=?")->execute([$oid]);
+    $assign=['csrf'=>$m[1],'do'=>'assign','id'=>$oid,'delivery_user'=>$uid];money_request('/bpo/',$assign,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Naya','Non-driver assignment blocked');
+    $assign['delivery_user']=$driverid;$bad=$assign;$bad['csrf']='invalid';money_request('/bpo/',$bad);$state->execute([$oid]);money_check($state->fetchColumn()==='Naya','Forged assignment blocked');
+    $pdo->prepare("UPDATE orders SET village='CI Other Area' WHERE id=?")->execute([$oid]);money_request('/bpo/',$assign,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Naya','Cross-area assignment blocked');
+    $pdo->prepare("UPDATE orders SET village='CI Dispatch Area' WHERE id=?")->execute([$oid]);$pdo->prepare('UPDATE users SET active=0 WHERE id=?')->execute([$driverid]);money_request('/bpo/',$assign,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Naya','Inactive driver blocked');
+    $pdo->prepare('UPDATE users SET active=1 WHERE id=?')->execute([$driverid]);money_request('/bpo/',$assign,302);$state->execute([$oid]);money_check($state->fetchColumn()==='Assign','Area-linked driver receives order');
+    foreach(['Pickup','Delivered','Cancel'] as $locked){$pdo->prepare('UPDATE orders SET status=?,delivery_user=NULL WHERE id=?')->execute([$locked,$oid]);money_request('/bpo/',$assign,302);$row=$pdo->query('SELECT status,delivery_user FROM orders WHERE id='.(int)$oid)->fetch();money_check($row['status']===$locked && $row['delivery_user']===null,'Locked fulfilment cannot be reassigned');}
+    $html=money_request('/admin/readiness.php?lang=en');money_check(strpos($html,'Linked active delivery staff')!==false,'Readiness shows per-area staff count');
     $pdo->prepare("INSERT INTO customers(name,mobile,password,village,landmark) VALUES ('CI Support','9000000077',?,'','')")->execute([password_hash($password,PASSWORD_DEFAULT)]);$cid=(int)$pdo->lastInsertId();
     $pdo->prepare("INSERT INTO support_tickets(customer_id,reference_no,kind,message) VALUES (?,'CI-DELIVERY','return','CI return test request')")->execute([$cid]);$tid=(int)$pdo->lastInsertId();
     $resolution=['csrf'=>$m[1],'id'=>$tid,'status'=>'reviewing','reply'=>'Return reviewed with shop','decision'=>'approved','refund_amount'=>'','refund_reference'=>''];
@@ -84,6 +97,8 @@ try {
     }finally{unlink($jar);$jar=$saved_jar;}
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
+    if ($areaid) { $pdo->prepare('DELETE FROM service_area_drivers WHERE village_id=?')->execute([$areaid]);$pdo->prepare('DELETE FROM service_area_meta WHERE village_id=?')->execute([$areaid]);$pdo->prepare('DELETE FROM villages WHERE id=?')->execute([$areaid]); }
+    if ($driverid) $pdo->prepare('DELETE FROM users WHERE id=?')->execute([$driverid]);
     if ($tid) { $pdo->prepare('DELETE FROM support_resolution WHERE ticket_id=?')->execute([$tid]);$pdo->prepare('DELETE FROM support_tickets WHERE id=?')->execute([$tid]); }
     if ($cid) $pdo->prepare('DELETE FROM customers WHERE id=?')->execute([$cid]);
     if ($billname) drop_photo($billname);

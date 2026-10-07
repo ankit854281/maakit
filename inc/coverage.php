@@ -32,3 +32,10 @@ function coverage_error($kind='delivery') {
         ? t('Bookings are not available in this area yet. Check service areas or request coverage.', 'इस इलाके में बुकिंग अभी उपलब्ध नहीं है। सेवा क्षेत्र देखिए या अपने इलाके के लिए अनुरोध कीजिए।')
         : t('Delivery is not available in this area yet. Check service areas or request coverage.', 'इस इलाके में डिलीवरी अभी उपलब्ध नहीं है। सेवा क्षेत्र देखिए या अपने इलाके के लिए अनुरोध कीजिए।');
 }
+
+// Area assignments are a service roster, not live availability or automatic dispatch.
+function coverage_drivers(PDO $pdo, $name) {
+    if (!is_string($name) || $name==='') return [];
+    $s=$pdo->prepare("SELECT u.id,u.name FROM service_area_drivers d JOIN users u ON u.id=d.user_id JOIN villages v ON v.id=d.village_id WHERE v.name=? AND u.role='delivery' AND u.active=1 ORDER BY u.name");
+    $s->execute([$name]);return $s->fetchAll();
+}

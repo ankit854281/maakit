@@ -17,10 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         }
         flash('स्टेटस बदल दिया गया।');
     } elseif (post('do') === 'assign') {
-        $pdo->prepare("UPDATE orders SET delivery_user=?, status=IF(status='Naya' OR status='Confirm','Assign',status),
-                       assigned_at=COALESCE(assigned_at, NOW()) WHERE id=?")
-            ->execute([(int)post('delivery_user') ?: null, $id]);
-        flash('डिलीवरी पार्टनर को दे दिया गया।');
+        $driver=(int)post('delivery_user');
+        $assign=$pdo->prepare("UPDATE orders o JOIN villages v ON v.name=o.village JOIN service_area_drivers d ON d.village_id=v.id AND d.user_id=? JOIN users u ON u.id=d.user_id AND u.role='delivery' AND u.active=1 SET o.delivery_user=u.id,o.status='Assign',o.assigned_at=COALESCE(o.assigned_at,NOW()) WHERE o.id=? AND o.status IN ('Naya','Confirm','Assign')");
+        $assign->execute([$driver,$id]);
+        flash($assign->rowCount()?t('Assigned to the area delivery partner.','इलाके के delivery partner को दिया गया।'):t('Could not assign. Check the order status and area delivery staff.','Assignment नहीं हुआ। ऑर्डर की स्थिति और इलाके के delivery staff जाँचें।'));
     } elseif (post('do') === 'amount') {
         $pdo->prepare("UPDATE orders SET goods_amount=?, payment=?, delivery_charge=? WHERE id=?")
             ->execute([(int)post('goods_amount') ?: null, post('payment'), (int)post('delivery_charge') ?: null, $id]);
@@ -37,7 +37,7 @@ $st = $pdo->prepare("SELECT o.*, u.name AS dname FROM orders o LEFT JOIN users u
 $st->execute([$day]);
 $orders = $st->fetchAll();
 $naye = 0; foreach ($orders as $o) { if ($o['status'] === 'Naya') $naye++; }
-$boys = $pdo->query("SELECT id,name FROM users WHERE role='delivery' AND active=1 ORDER BY name")->fetchAll();
+$areaBoys=[];foreach($orders as $order){if(!isset($areaBoys[$order['village']]))$areaBoys[$order['village']]=coverage_drivers($pdo,$order['village']);}
 include __DIR__ . '/../inc/panel.php';
 ?>
 <section>
@@ -117,15 +117,15 @@ include __DIR__ . '/../inc/panel.php';
            href="/bpo/daam.php?id=<?= (int)$o['id'] ?>"
            title="बिल के दाम लिख दीजिए — ग्राहकों को अंदाज़ा दिखेगा">
           <?= $o['priced_at'] ? 'दाम ✓' : 'दाम लिखिए' ?></a>
-        <form method="post" style="display:flex;gap:6px;align-items:flex-end">
+        <?php if(in_array($o['status'],['Naya','Confirm','Assign'],true)):?><form method="post" style="display:flex;gap:6px;align-items:flex-end">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="assign"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
           <div><label>डिलीवरी पार्टनर</label>
             <select name="delivery_user" style="min-width:150px"><option value="">— चुनिए —</option>
-              <?php foreach ($boys as $b): ?><option value="<?= (int)$b['id'] ?>" <?= (int)$o['delivery_user'] === (int)$b['id'] ? 'selected' : '' ?>><?= h($b['name']) ?></option><?php endforeach; ?>
+              <?php foreach ($areaBoys[$o['village']] as $b): ?><option value="<?= (int)$b['id'] ?>" <?= (int)$o['delivery_user'] === (int)$b['id'] ? 'selected' : '' ?>><?= h($b['name']) ?></option><?php endforeach; ?>
             </select>
           </div>
           <button class="btn btn-brand btn-sm">दीजिए</button>
-        </form>
+        </form><?php endif;?>
         <form method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="amount"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
           <div style="max-width:120px"><label>सामान ₹</label><input type="number" name="goods_amount" value="<?= h($o['goods_amount']) ?>"></div>
