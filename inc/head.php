@@ -66,6 +66,13 @@ if (!$no_tabbar && !$no_ticker) {
 <meta name="apple-mobile-web-app-title" content="Maakit">
 <meta property="og:title" content="<?= h($page_title) ?>">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Maakit">
+<?php if ($seo['index'] && $seo['canonical'] === 'https://maakit.in/'): ?>
+<!-- Fixed brand identity; no invented reviews, address or social profiles. -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","@id":"https://maakit.in/#website","name":"Maakit","alternateName":"maakit.in","url":"https://maakit.in/"}
+</script>
+<?php endif; ?>
 <meta property="og:image" content="/assets/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
