@@ -77,10 +77,20 @@ try {
     $html = flow_request('/dukan-se.php?id=' . $bid, ['csrf'=>$m[1], 'checkout_key'=>$key[1], 'do'=>'mangao', 'id'=>$bid,
         'name'=>'Jaanch Customer', 'mobile'=>'9000000002', 'village'=>$village, 'pay'=>'upi', 'q'=>[$iid=>1], 'shown_price'=>[$iid=>200]]);
     flow_check(strpos($html, 'UPI अभी नहीं') !== false && count(dukan_orders($pdo,$bid)) === 1, 'Missing shop UPI cannot be forged in POST');
+    $pdo->prepare('UPDATE businesses SET commission_pct=10 WHERE id=?')->execute([$bid]);
+    flow_check(!dukan_order_status($pdo,$bid+100000,(int)$order['id'],'diya'),'Another shop cannot fulfil this order');
+    flow_check(dukan_order_status($pdo,$bid,(int)$order['id'],'diya'),'Shop fulfilment succeeds');
+    flow_check(dukan_order_status($pdo,$bid,(int)$order['id'],'diya'),'Fulfilment replay is safe');
+    $ledger=$pdo->prepare('SELECT kind,amount FROM shop_ledger WHERE order_id=? ORDER BY id');$ledger->execute([$order['id']]);$rows=$ledger->fetchAll();
+    flow_check(count($rows)===2 && (int)$rows[0]['amount']===400 && (int)$rows[1]['amount']===-40,'One sale and one visible commission on replay');
+    flow_check(!dukan_order_status($pdo,$bid,(int)$order['id'],'manzoor'),'Handed-over shop state cannot move backwards');
+    $pdo->prepare("UPDATE orders SET status='Cancel' WHERE id=?")->execute([$order['id']]);
+    flow_check(!dukan_order_status($pdo,$bid,(int)$order['id'],'diya'),'Cancelled order cannot be fulfilled');
     echo "Category → shop → goods → order integration passed\n";
 } finally {
     if ($bid) {
         $pdo->prepare('DELETE FROM service_area_shops WHERE business_id=?')->execute([$bid]);
+        $pdo->prepare('DELETE FROM shop_ledger WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM orders WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM shop_items WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM businesses WHERE id=?')->execute([$bid]);

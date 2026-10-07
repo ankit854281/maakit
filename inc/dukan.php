@@ -211,10 +211,15 @@ function dukan_orders(PDO $pdo, $bid, $din = 7, $limit = 60) {
 function dukan_order_status(PDO $pdo, $bid, $oid, $kya) {
     $ok = ['manzoor', 'taiyaar', 'diya', 'mana'];
     if (!in_array($kya, $ok, true)) return false;
-    $own = $pdo->prepare("SELECT id, goods_amount, payment FROM orders WHERE id=? AND business_id=?");
+    $pdo->beginTransaction();
+    try {
+    $own = $pdo->prepare("SELECT id, goods_amount, payment, status, shop_status FROM orders WHERE id=? AND business_id=? FOR UPDATE");
     $own->execute([(int)$oid, (int)$bid]);
     $o = $own->fetch();
-    if (!$o) return false;
+    if (!$o || $o['status'] === 'Cancel' || ($o['shop_status'] === 'diya' && $kya !== 'diya')) {
+        $pdo->rollBack();
+        return false;
+    }
 
     $pdo->prepare("UPDATE orders SET shop_status=?, shop_seen_at=NOW() WHERE id=?")
         ->execute([$kya, (int)$oid]);
@@ -231,7 +236,12 @@ function dukan_order_status(PDO $pdo, $bid, $oid, $kya) {
             ]);
         }
     }
+    $pdo->commit();
     return true;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
 }
 
 /**

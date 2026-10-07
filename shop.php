@@ -169,7 +169,9 @@ if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
     // --- ऑर्डर पर दुकानदार का जवाब ---
     if ($do === 'order_do') {
-        dukan_order_status($pdo, $bid, (int)post('id'), post('kya'));
+        if (!dukan_order_status($pdo, $bid, (int)post('id'), post('kya'))) {
+            flash(t('This order cannot be changed now. Refresh the list or contact the team.', 'यह ऑर्डर अब बदला नहीं जा सकता। सूची दोबारा देखें या टीम से संपर्क करें।'));
+        }
         redirect('/shop.php?tab=order');
     }
 
