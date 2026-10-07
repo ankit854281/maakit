@@ -67,6 +67,7 @@ $PANNE = [
     ['/register-business.php', 'दुकान दर्ज कीजिए', 'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],
     ['/location.php', 'सेवा क्षेत्र', 'chahiye'=>['Maakit'], 'nahi'=>['Fatal error']],
     ['/support.php', 'सहायता', 'chahiye'=>['Maakit'], 'nahi'=>['Fatal error']],
+    ['/admin/readiness.php', 'Launch तैयारी बिना login', 'code'=>302],
     ['/admin/coverage.php', 'क्षेत्र बिना लॉगिन', 'code'=>302],
     ['/admin/support.php', 'सहायता बिना लॉगिन', 'code'=>302],
     ['/area.php',      'नया गाँव',      'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],

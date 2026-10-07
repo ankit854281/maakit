@@ -36,6 +36,7 @@ export const GALAT_JAGAH = [
 ];
 
 export const PAGES = [
+  { path: '/admin/readiness.php', naam: 'Launch तैयारी login guard', chahiye: ['Maakit'] },
   { path: '/location.php', naam: 'सेवा क्षेत्र चुनें', chahiye: ['Maakit'] },
   { path: '/support.php', naam: 'ग्राहक सहायता', chahiye: ['Maakit'] },
   { path: '/robots.txt', naam: 'Google robots', chahiye: ['Sitemap: https://maakit.in/sitemap.xml'] },

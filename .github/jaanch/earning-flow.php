@@ -33,6 +33,8 @@ try {
     $post['fuel']='999';$post['csrf']='wrong';money_request('/admin/summary.php',$post);
     $st->execute([$today]);money_check((int)$st->fetch()['fuel']===25,'Invalid or forged cost cannot be saved');
     money_request('/admin/dash.php');
+    $ready=money_request('/admin/readiness.php?lang=en');
+    money_check(strpos($ready,'Launch readiness')!==false && strpos($ready,'Items missing prices')!==false && strpos($ready,'WhatsApp OTP')!==false,'Admin readiness shows real counts and external checks');
     $days=earning_days($pdo,$today,$today);money_check($days[0]['expense']===65,'MariaDB cost report aggregates correctly');
     $pdo->prepare("INSERT INTO orders(order_no,code,customer_name,mobile,village,items,status) VALUES ('CI-DELIVERY','1234','CI Customer','9000000088','CI Area','test goods','Cancel')")->execute();$oid=(int)$pdo->lastInsertId();
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Pickup'],302);
