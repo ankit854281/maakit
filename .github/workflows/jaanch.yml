@@ -109,7 +109,7 @@ jobs:
             file_put_contents("config.php", $c);
           '
           mkdir -p uploads && chmod 755 uploads
-          php -S 127.0.0.1:8099 > /tmp/php.log 2>&1 &
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8099 > /tmp/php.log 2>&1 &
           for i in $(seq 1 25); do
             curl -s -o /dev/null http://127.0.0.1:8099/ && break
             sleep 1
@@ -120,6 +120,8 @@ jobs:
           php .github/jaanch/coverage-flow.php
           php .github/jaanch/dispatch-flow.php
           php .github/jaanch/tracking-flow.php
+          php .github/jaanch/traffic-flow.php
+          node --check assets/delivery-tracking.js
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"
 
