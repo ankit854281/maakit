@@ -53,10 +53,18 @@ try {
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Delivered','code'=>'1234'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Delivered','Correct code completes delivery');
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Pickup'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Delivered','Completed order cannot regress to pickup');
     $billpost['amount']='999';money_request('/delivery/',$billpost,302);$billstate->execute([$oid]);$row=$billstate->fetch();money_check((int)$row['goods_amount']===250 && $row['bill_photo']===$billname,'Completed order bill cannot change');
+    $shipment=['csrf'=>$m[1],'carrier'=>'CI Courier','tracking_no'=>'CI-AWB-123'];
+    money_request('/admin/shipment.php?id='.$oid,$shipment,302);
+    $row=$pdo->query('SELECT * FROM courier_tracking WHERE order_id='.(int)$oid)->fetch();money_check($row && $row['tracking_no']==='CI-AWB-123' && (int)$row['updated_by']===$uid,'Courier details save with staff owner');
+    $html=money_request('/track.php?no=CI-DELIVERY&m=9000000088&lang=en');money_check(strpos($html,'CI-AWB-123')!==false && strpos($html,'not a live courier status')!==false,'Customer sees manual courier reference');
+    $shipment['csrf']='invalid';$shipment['tracking_no']='FORGED';money_request('/admin/shipment.php?id='.$oid,$shipment);
+    $pdo->prepare("UPDATE orders SET status='Cancel' WHERE id=?")->execute([$oid]);$shipment['csrf']=$m[1];money_request('/admin/shipment.php?id='.$oid,$shipment);
+    money_check($pdo->query('SELECT tracking_no FROM courier_tracking WHERE order_id='.(int)$oid)->fetchColumn()==='CI-AWB-123','CSRF/cancelled shipment edits rejected');
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
     if ($billname) drop_photo($billname);
     if (is_file($billfile)) unlink($billfile);
+    if ($oid) $pdo->prepare('DELETE FROM courier_tracking WHERE order_id=?')->execute([$oid]);
     if ($oid) $pdo->prepare('DELETE FROM orders WHERE id=?')->execute([$oid]);
     if ($uid) {
         $pdo->prepare('DELETE FROM operating_costs WHERE updated_by=?')->execute([$uid]);
