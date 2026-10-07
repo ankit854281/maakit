@@ -43,6 +43,8 @@ try {
     flow_check(!empty($m[1]), 'Order CSRF token');
     $village = $pdo->query('SELECT name FROM villages WHERE live=1 LIMIT 1')->fetchColumn();
     flow_check((bool)$village, 'Need a live village fixture');
+    $aid=$pdo->prepare('SELECT id FROM villages WHERE name=?');$aid->execute([$village]);$areaid=(int)$aid->fetchColumn();
+    $pdo->prepare('INSERT INTO service_area_shops(village_id,business_id) VALUES (?,?)')->execute([$areaid,$bid]);
     $html = flow_request('/dukan-se.php?id=' . $bid, ['csrf'=>$m[1], 'do'=>'mangao', 'id'=>$bid,
         'name'=>'Jaanch Customer', 'mobile'=>'9000000001', 'village'=>$village, 'pay'=>'nagad',
         'price'=>1, 'market'=>'chauri', 'weight'=>'0', 'size'=>'15', 'q'=>[$iid=>2,$sold=>10]]);
@@ -59,6 +61,7 @@ try {
     echo "Category → shop → goods → order integration passed\n";
 } finally {
     if ($bid) {
+        $pdo->prepare('DELETE FROM service_area_shops WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM orders WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM shop_items WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM businesses WHERE id=?')->execute([$bid]);

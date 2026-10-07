@@ -65,7 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
     if (!$lines)                       { $err = 'कुछ चुना ही नहीं। जो चाहिए उसकी गिनती भर दीजिए।'; }
     elseif (mb_strlen($name) < 2)      { $err = 'अपना नाम लिखिए।'; }
     elseif (strlen($mobile) !== 10)    { $err = 'मोबाइल नंबर 10 अंकों का लिखिए।'; }
-    elseif (!$village)                 { $err = 'अपना गाँव चुनिए।'; }
+    elseif (!coverage_enabled($order_area=coverage_area($pdo,$village))) { $err=coverage_error(); }
+    elseif (!coverage_shop_allowed($pdo,$id,$order_area)) { $err=t('This shop does not deliver to the selected area. Choose a shop serving your area.', 'यह दुकान चुने हुए इलाके में डिलीवरी नहीं देती। अपने इलाके की दुकान चुनिए।'); }
     elseif (post('pay') === 'upi' && !dukan_upi_link($b)) { $err = t('This shop has no UPI details yet. Choose cash or contact us.', 'दुकान का UPI अभी नहीं भरा है। नगद चुनिए या हमें कॉल कीजिए।'); }
     elseif (!dukan_khuli($b))          { $err = 'यह दुकान अभी बंद है। खुलने पर मँगा लीजिए।'; }
     else {
@@ -83,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
 
             $pehla = $pdo->prepare("SELECT COUNT(*) c FROM orders WHERE mobile=?");
             $pehla->execute([$mobile]);
-            $first = ((int)$pehla->fetch()['c'] === 0) ? 1 : 0;
+            $first = ((int)$pehla->fetch()['c'] === 0 && ($order_area['first_free'] ?? 1)) ? 1 : 0;
             $calc  = calc_charge($village, $market, $weight, $size, $pdo, (bool)$first);
 
             $order_no = new_order_no($pdo);
@@ -210,7 +211,7 @@ include __DIR__ . '/inc/head.php';
         <select name="village" required>
           <option value="">— चुनिए —</option>
           <?php foreach ($villages as $v): ?>
-            <option value="<?= h($v['name']) ?>" <?= ($me['village'] ?? post('village')) === $v['name'] ? 'selected' : '' ?>><?= h(vname($v)) ?></option>
+            <option value="<?= h($v['name']) ?>" <?= (post('village') ?: (coverage_selected($pdo)['name'] ?? ($me['village'] ?? ''))) === $v['name'] ? 'selected' : '' ?>><?= h(coverage_label($v)) ?></option>
           <?php endforeach; ?>
         </select></div>
       <div class="field"><label>पहचान (किसके घर के पास)</label>
@@ -258,8 +259,8 @@ include __DIR__ . '/inc/head.php';
       var village=f.elements.village.value, market=f.elements.market.value;
       var result=document.getElementById('deliveryEstimate');
       if (!village) { result.textContent=wording.choose; return; }
-      var base=rates[village] ? Number(rates[village]['rate_'+market]) : 0;
-      if (!base || weight.value==='van' || f.elements.size.value==='van') { result.textContent=wording.call; return; }
+      var base=rates[village] ? Number(rates[village].base_fee !== null ? rates[village].base_fee : rates[village]['rate_'+market]) : 0;
+      if ((!base && rates[village].base_fee === null) || weight.value==='van' || f.elements.size.value==='van') { result.textContent=wording.call; return; }
       var charge=base+Number(weight.value)+Number(f.elements.size.value);
       result.textContent=wording.fee+': ₹'+charge+' · '+wording.total+': ₹'+(s+charge);
     }

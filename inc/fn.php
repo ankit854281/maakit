@@ -5,6 +5,7 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/lang.php';
 require_once __DIR__ . '/icons.php';
 require_once __DIR__ . '/customer.php';
+require_once __DIR__ . '/coverage.php';
 
 
 
@@ -61,11 +62,7 @@ function wa_link($mobile, $text) {
 }
 
 function new_order_no(PDO $pdo) {
-    $d = date('dm');
-    $n = $pdo->prepare("SELECT COUNT(*) c FROM orders WHERE DATE(created_at)=CURDATE()");
-    $n->execute();
-    $c = (int)$n->fetch()['c'] + 1;
-    return 'MK-' . $d . '-' . str_pad($c, 2, '0', STR_PAD_LEFT);
+    return 'MK-' . date('dm') . '-' . strtoupper(bin2hex(random_bytes(5)));
 }
 function new_code() {
     do {
@@ -138,10 +135,10 @@ function weight_extras() {
 function size_extras() {
     return ['0'=>'सामान्य (थैले/डिब्बे में)','15'=>'नाज़ुक (काँच, अंडे, टीवी)','20'=>'लंबा या बड़ा (पाइप, चटाई, पंखा)','van'=>'बहुत बड़ा (अलमारी, कूलर, साइकिल)'];
 }
-function markets() { return ['kapsethi'=>'कपसेठी','chauri'=>'चौरी','kachhawa'=>'कछवा चौराहा']; }
+function markets() { return ['local'=>t('Local shop / area rate','स्थानीय दुकान / इलाके का रेट'),'kapsethi'=>'कपसेठी','chauri'=>'चौरी','kachhawa'=>'कछवा चौराहा']; }
 
 function village_list(PDO $pdo) {
-    return $pdo->query("SELECT * FROM villages ORDER BY name")->fetchAll();
+    return array_values(array_filter(coverage_areas($pdo), fn($a) => coverage_enabled($a)));
 }
 function calc_charge($village, $market, $weight, $size, PDO $pdo, $first = false) {
     $st = $pdo->prepare("SELECT * FROM villages WHERE name=?");
@@ -151,8 +148,10 @@ function calc_charge($village, $market, $weight, $size, PDO $pdo, $first = false
     if ($weight === 'van' || $size === 'van') {
         return ['van'=>true,'total'=>null,'base'=>null,'extra'=>0,'msg'=>t('This needs a van — from ₹150, confirmed on call', 'यह सामान वैन से जाएगा — चार्ज ₹150 से शुरू, कॉल पर पक्का होगा')];
     }
-    $base = (int)($v['rate_' . $market] ?? 0);
-    if ($base <= 0) {
+    $area=coverage_area($pdo,$village);
+    $base = $area && $area['base_fee'] !== null ? (int)$area['base_fee'] : (int)($v['rate_' . $market] ?? 0);
+    if ($area && $area['first_free'] !== null) $first=$first && (bool)$area['first_free'];
+    if ($base <= 0 && (!$area || $area['base_fee'] === null)) {
         return ['van'=>false,'total'=>null,'base'=>0,'extra'=>0,'msg'=>t('We will tell you this village’s charge on call', 'इस गाँव का चार्ज कॉल पर बताया जाएगा')];
     }
     $extra = (int)$weight + (int)$size;

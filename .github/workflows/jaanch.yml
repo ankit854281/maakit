@@ -71,6 +71,7 @@ jobs:
           php tests/earning.php
           php tests/shop-prices.php
           php tests/seo.php
+          php tests/coverage.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi
@@ -115,5 +116,6 @@ jobs:
           php .github/jaanch/panne.php
           php .github/jaanch/category-flow.php
           php .github/jaanch/earning-flow.php
+          php .github/jaanch/coverage-flow.php
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"

@@ -1,0 +1,31 @@
+<?php
+require_once __DIR__.'/inc/fn.php';
+$page_title=t('Help & requests — Maakit','सहायता और अनुरोध — Maakit');$tab='mere';$me=cust();$err='';
+$kinds=['delivery'=>['Delivery issue','डिलीवरी की समस्या'],'wrong_item'=>['Wrong or missing item','गलत या कम सामान'],'cancel'=>['Cancellation request','कैंसिल करने का अनुरोध'],'return'=>['Return request','वापसी का अनुरोध'],'other'=>['Other help','अन्य सहायता']];
+if($me && $_SERVER['REQUEST_METHOD']==='POST'){
+ $no=post('reference_no');$kind=post('kind');$msg=post('message');
+ if(!csrf_ok())$err=t('Reload and try again.','पेज दोबारा खोलिए।');
+ elseif(!isset($kinds[$kind])||mb_strlen($msg)<10||mb_strlen($msg)>1000||strlen($no)>20)$err=t('Choose a request type and explain the issue in 10–1000 characters.','अनुरोध का प्रकार चुनें और समस्या 10–1000 अक्षरों में लिखें।');
+ else{
+  $owns=$pdo->prepare('SELECT order_no AS ref FROM orders WHERE customer_id=? AND order_no=? UNION ALL SELECT booking_no AS ref FROM service_bookings WHERE customer_id=? AND booking_no=?');$owns->execute([$me['id'],$no,$me['id'],$no]);
+  if(!$owns->fetch())$err=t('Choose an order or booking from your account.','अपने खाते का ऑर्डर या बुकिंग चुनें।');
+  else{
+   $count=$pdo->prepare('SELECT COUNT(*) FROM support_tickets WHERE customer_id=? AND created_at>NOW()-INTERVAL 1 HOUR');$count->execute([$me['id']]);
+   if((int)$count->fetchColumn()>=5)$err=t('Please call us for further help right now.','अभी और सहायता के लिए कॉल कीजिए।');
+   else{$pdo->prepare('INSERT INTO support_tickets(customer_id,reference_no,kind,message) VALUES (?,?,?,?)')->execute([$me['id'],$no,$kind,$msg]);flash(t('Request received. Track its status here.','अनुरोध मिल गया। स्थिति यहाँ देखें।'));redirect('/support.php');}
+  }
+ }
+}
+$tickets=$refs=[];
+if($me){$s=$pdo->prepare('SELECT * FROM support_tickets WHERE customer_id=? ORDER BY id DESC LIMIT 30');$s->execute([$me['id']]);$tickets=$s->fetchAll();foreach(cust_orders($pdo,$me['id'],50) as $o)$refs[]=$o['order_no'];foreach(cust_bookings($pdo,$me['id'],50)as$b)$refs[]=$b['booking_no'];}
+include __DIR__.'/inc/head.php';
+?>
+<section><div class="wrap" style="max-width:760px"><h1><?=t('Help, cancellations & returns','सहायता, कैंसिलेशन और वापसी')?></h1>
+<p class="lead"><?=t('A request does not automatically cancel an order or issue a refund. The team checks fulfilment and coordinates with the shop or provider. Goods payments go directly to the shop.','अनुरोध भेजने से ऑर्डर अपने आप कैंसिल या पैसा वापस नहीं होता। टीम स्थिति जाँचकर दुकान या सेवा देने वाले से बात करेगी। सामान का भुगतान सीधे दुकान को जाता है।')?></p>
+<div class="chips"><a class="btn btn-brand" href="tel:<?=h(MAAKIT_PHONE)?>"><?=t('Call support','सहायता के लिए कॉल')?></a><a class="btn btn-green" href="<?=h(wa_link(MAAKIT_WA,t('Hello Maakit, I need help with an order or booking.','नमस्ते Maakit, ऑर्डर या बुकिंग में सहायता चाहिए।')) )?>"><?=t('WhatsApp support','WhatsApp सहायता')?></a><a class="chip" href="/track.php"><?=t('Track order','ऑर्डर देखें')?></a></div>
+<?php if(!$me):?><div class="box"><p><?=t('Sign in to send and track a request for orders in your account. Guest customers can call or use WhatsApp.','अपने खाते के ऑर्डर का अनुरोध भेजने और देखने के लिए लॉगिन करें। बिना खाते वाले ग्राहक कॉल या WhatsApp करें।')?></p><a class="btn btn-brand" href="/account.php"><?=t('Customer sign in','ग्राहक लॉगिन')?></a></div>
+<?php else:?>
+<?php if($err):?><div class="err"><?=h($err)?></div><?php endif;?>
+<?php if($refs):?><form method="post" class="box"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><div class="field"><label><?=t('Order / booking','ऑर्डर / बुकिंग')?></label><select name="reference_no" required><?php foreach($refs as $ref):?><option value="<?=h($ref)?>"><?=h($ref)?></option><?php endforeach;?></select></div><div class="field"><label><?=t('Request type','अनुरोध का प्रकार')?></label><select name="kind"><?php foreach($kinds as $key=>$label):?><option value="<?=h($key)?>"><?=h(t($label[0],$label[1]))?></option><?php endforeach;?></select></div><div class="field"><label><?=t('What happened? Do not include passwords or payment PINs.','क्या हुआ? पासवर्ड या payment PIN न लिखें।')?></label><textarea name="message" required minlength="10" maxlength="1000"><?=h(post('message'))?></textarea></div><button class="btn btn-brand"><?=t('Send request','अनुरोध भेजें')?></button></form><?php else:?><div class="box"><?=t('No orders or bookings are linked to your account yet.','आपके खाते में अभी ऑर्डर या बुकिंग नहीं है।')?></div><?php endif;?>
+<h2><?=t('My requests','मेरे अनुरोध')?></h2><?php foreach($tickets as $ticket):?><article class="box"><b>#<?=(int)$ticket['id']?> · <?=h($ticket['reference_no'])?></b><p><?=h(t(['new'=>'Received','reviewing'=>'Under review','resolved'=>'Resolved','closed'=>'Closed'][$ticket['status']],['new'=>'मिल गया','reviewing'=>'जाँच चल रही है','resolved'=>'समाधान हुआ','closed'=>'बंद'][$ticket['status']]))?></p><p><?=nl2br(h($ticket['message']))?></p><?php if($ticket['reply']!==''):?><div class="note"><?=nl2br(h($ticket['reply']))?></div><?php endif;?></article><?php endforeach;?>
+<?php endif;?></div></section><?php include __DIR__.'/inc/foot.php';?>

@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__.'/../inc/fn.php';need_role('admin');$page_title=t('Support requests — Maakit','सहायता अनुरोध — Maakit');$err='';
+if($_SERVER['REQUEST_METHOD']==='POST'){
+ $status=post('status');$reply=post('reply');
+ if(!csrf_ok())$err=t('Reload and try again.','पेज दोबारा खोलें।');
+ elseif(!in_array($status,['new','reviewing','resolved','closed'],true)||mb_strlen($reply)>1000)$err=t('Check the status and reply.','स्थिति और जवाब जाँचें।');
+ else{$pdo->prepare('UPDATE support_tickets SET status=?,reply=? WHERE id=?')->execute([$status,$reply,(int)post('id')]);flash(t('Request updated.','अनुरोध अपडेट हुआ।'));redirect('/admin/support.php');}
+}
+$rows=$pdo->query('SELECT t.*,c.name,c.mobile FROM support_tickets t JOIN customers c ON c.id=t.customer_id ORDER BY FIELD(t.status,"new","reviewing","resolved","closed"),t.id DESC LIMIT 100')->fetchAll();include __DIR__.'/../inc/panel.php';
+?>
+<section><div class="wrap"><h1><?=t('Support requests','सहायता अनुरोध')?></h1><p class="lead"><?=t('Review the order with the shop/provider before replying. This page updates the request only; it does not move money or cancel fulfilment.','जवाब से पहले दुकान या सेवा देने वाले के साथ ऑर्डर जाँचें। यह पेज केवल अनुरोध बदलता है; भुगतान या ऑर्डर को अपने आप नहीं बदलता।')?></p><?php if($err):?><div class="err"><?=h($err)?></div><?php endif;?><?php if(!$rows):?><div class="box"><?=t('No requests yet.','अभी कोई अनुरोध नहीं।')?></div><?php endif;?>
+<?php foreach($rows as $r):?><form method="post" class="box"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="id" value="<?=(int)$r['id']?>"><h2>#<?=(int)$r['id']?> · <?=h($r['reference_no'])?></h2><p><?=h($r['name'])?> · <a href="tel:<?=h($r['mobile'])?>"><?=h($r['mobile'])?></a> · <?=h($r['kind'])?></p><p><?=nl2br(h($r['message']))?></p><div class="field"><label><?=t('Status','स्थिति')?></label><select name="status"><?php foreach(['new'=>['Received','मिल गया'],'reviewing'=>['Reviewing','जाँच में'],'resolved'=>['Resolved','समाधान हुआ'],'closed'=>['Closed','बंद']] as $k=>$label):?><option value="<?=h($k)?>" <?=$r['status']===$k?'selected':''?>><?=h(t($label[0],$label[1]))?></option><?php endforeach;?></select></div><div class="field"><label><?=t('Reply visible to customer','ग्राहक को दिखने वाला जवाब')?></label><textarea name="reply" maxlength="1000"><?=h($r['reply'])?></textarea></div><button class="btn btn-brand"><?=t('Save reply','जवाब सेव करें')?></button></form><?php endforeach;?></div></section><?php include __DIR__.'/../inc/foot.php';?>

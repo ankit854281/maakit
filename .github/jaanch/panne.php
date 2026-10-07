@@ -60,6 +60,10 @@ $PANNE = [
     ['/transport.php', 'गाड़ी रजिस्टर',  'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],
     ['/track.php',     'ऑर्डर कहाँ है',  'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],
     ['/register-business.php', 'दुकान दर्ज कीजिए', 'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],
+    ['/location.php', 'सेवा क्षेत्र', 'chahiye'=>['Maakit'], 'nahi'=>['Fatal error']],
+    ['/support.php', 'सहायता', 'chahiye'=>['Maakit'], 'nahi'=>['Fatal error']],
+    ['/admin/coverage.php', 'क्षेत्र बिना लॉगिन', 'code'=>302],
+    ['/admin/support.php', 'सहायता बिना लॉगिन', 'code'=>302],
     ['/area.php',      'नया गाँव',      'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],
 
     // ---- login — ek hi darwaza ----

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/seo.php";
 $seo=seo_page($_SERVER["REQUEST_URI"] ?? "/", $_GET, $_SERVER["REQUEST_METHOD"] ?? "GET");
-$page_title = $page_title ?? t('Maakit — delivery & booking for your village', 'Maakit — गाँव की अपनी डिलीवरी और बुकिंग');
+$page_title = $page_title ?? t('Maakit — shopping, delivery & bookings', 'Maakit — शॉपिंग, डिलीवरी और बुकिंग');
 $tab = $tab ?? '';           // ghar | order | mere | kaam
 $no_tabbar = $no_tabbar ?? false;
 $no_ticker = $no_ticker ?? false;
@@ -52,8 +52,8 @@ if (!$no_tabbar && !$no_ticker) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title><?= h($page_title) ?></title>
 <meta name="description" content="<?= h(t(
-  'Maakit delivers from any shop in Kapsethi, Chauri, Kachhwa and nearby villages — groceries, food, medicine. Also book a Bolero, lawn, tent, halwai, pandit ji and local services.',
-  'Maakit — कपसेठी, चौरी, कछवा और आसपास के गाँवों में किसी भी दुकान से डिलीवरी। साथ ही गाड़ी, लॉन, टेंट, हलवाई, पंडित जी और मिस्त्री की बुकिंग।')) ?>">
+  'Discover shops, products, delivery and vehicle or service bookings on Maakit in India. Select your location to check active service coverage and local availability.',
+  'Maakit पर भारत में दुकानें, सामान, डिलीवरी, गाड़ी और सेवाओं की बुकिंग देखें। अपना इलाका चुनकर चालू सेवा क्षेत्र और उपलब्धता जाँचें।')) ?>">
 <meta name="robots" content="<?= $seo['index'] ? 'index,follow' : 'noindex,follow' ?>">
 <?php if ($seo['canonical']): ?>
 <link rel="canonical" href="<?= h($seo['canonical']) ?>">
@@ -96,7 +96,7 @@ if (!$no_tabbar && !$no_ticker) {
         <span><?= h($v) ?></span><i>·</i>
       <?php endforeach; endfor; ?>
     </div></div>
-    <a class="add" href="/area.php"><?= t('Not your village?', 'आपका गाँव नहीं?') ?></a>
+    <a class="add" href="/location.php"><?= t('Check your area', 'अपना इलाका देखें') ?></a>
   </div>
 </div>
 <?php endif; ?>
@@ -121,3 +121,7 @@ if (!$no_tabbar && !$no_ticker) {
   </div>
 </header>
 <?php if ($f = flash()): ?><div class="wrap" style="padding-top:14px"><div class="ok"><?= h($f) ?></div></div><?php endif; ?>
+
+<?php if (empty($no_tabbar)): $chosen_area=coverage_selected($pdo); ?>
+<div class="locationbar"><div class="wrap"><a href="/location.php"><?= svc_icon('box',18) ?> <b><?= $chosen_area ? h(coverage_label($chosen_area)) : t('Choose city / area / PIN','शहर / इलाका / PIN चुनें') ?></b> <span><?=t('Change','बदलें')?></span></a><a href="/support.php"><?=t('Help','सहायता')?></a></div></div>
+<?php endif; ?>

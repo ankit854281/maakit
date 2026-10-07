@@ -5,6 +5,7 @@ require_once __DIR__ . '/inc/catalog.php';
 function bazaar_get($key, $max = 100) {
     return isset($_GET[$key]) && is_string($_GET[$key]) ? mb_substr(trim($_GET[$key]), 0, $max) : '';
 }
+$area=coverage_selected($pdo);
 $group = bazaar_get('group');
 $type = bazaar_get('type');
 $sub = bazaar_get('sub');
@@ -34,13 +35,13 @@ $page = min($pages, max(1, (int)bazaar_get('p', 8)));
 $items = $show_items ? array_slice($matches, ($page - 1) * $per, $per) : [];
 $offers = [];
 $prices_ready = true;
-try { $offers = catalog_offers($pdo, array_column($items, 'id')); }
+try { $offers = catalog_offers($pdo, array_column($items, 'id'),$area); }
 catch (PDOException $e) { $prices_ready = false; error_log('Maakit catalog prices: ' . $e->getMessage()); }
 $params = ['group' => $group, 'type' => $type, 'sub' => $sub, 'q' => $q];
 $local_shops = [];
 $shops_ready = true;
 if ($type !== '') {
-    try { $local_shops = catalog_shops($pdo, $type); }
+    try { $local_shops = catalog_shops($pdo, $type,$area); }
     catch (PDOException $e) { $shops_ready = false; error_log('Maakit category shops: ' . $e->getMessage()); }
 }
 $page_title = t('Shop categories & prices — Maakit', 'दुकान की categories और दाम — Maakit');
@@ -111,7 +112,7 @@ include __DIR__ . '/inc/head.php';
           <?php endforeach; ?>
         </div>
       <?php else: ?>
-        <div class="box"><p><?= $shops_ready ? t('No local shop is listed in this category yet. Maakit can still help arrange your requirement.', 'इस category में स्थानीय दुकान अभी नहीं जुड़ी है। फिर भी Maakit से अपनी जरूरत मँगवा सकते हैं।') : t('The shop list is temporarily unavailable. Please ask Maakit.', 'दुकान की सूची अभी नहीं खुल पा रही है। Maakit से पूछिए।') ?></p></div>
+        <div class="box"><p><?= $shops_ready ? t('No local shop is listed in this category yet. Check another category or request service coverage.', 'इस category में स्थानीय दुकान अभी नहीं जुड़ी है। दूसरी category देखिए या सेवा के लिए अनुरोध भेजिए।') : t('The shop list is temporarily unavailable. Please ask Maakit.', 'दुकान की सूची अभी नहीं खुल पा रही है। Maakit से पूछिए।') ?></p></div>
       <?php endif; ?>
       <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . catalog_label($type) . ' — ' . t('Please arrange what I need from a local shop.', 'मुझे स्थानीय दुकान से सामान मँगाना है।'))) ?>"><?= t('Arrange through Maakit', 'Maakit से मँगाइए') ?></a>
       <h3 style="margin-top:24px"><?= t('Products usually found in this shop type', 'इस तरह की दुकान में मिलने वाला सामान') ?></h3>

@@ -827,3 +827,12 @@ body.listening .way#wayVoice{
   width:6px;height:6px;border-radius:50%;background:var(--line);display:block;transition:.25s;
 }
 .banndots u.on{background:var(--brand);width:17px;border-radius:3px}
+
+/* Location and task navigation for the India-wide platform. */
+.locationbar{border-bottom:1px solid var(--line);background:var(--soft)}
+.locationbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;padding-bottom:10px}
+.locationbar a{display:flex;align-items:center;gap:8px;color:var(--brand);font-size:14px;text-decoration:none;min-height:38px}.locationbar b{overflow-wrap:anywhere}.locationbar span{font-size:12px}
+.journeys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.journeys a{display:flex;flex-direction:column;gap:8px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--soft);color:var(--brand);text-decoration:none;min-width:0}
+.journeys span{color:var(--muted);font-size:13px}.journeys b{font-size:18px}
+@media(max-width:480px){.journeys{gap:7px}.journeys a{padding:12px 8px}.journeys b{font-size:15px}.journeys span{font-size:12px}.locationbar .wrap{gap:8px}}

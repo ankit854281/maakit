@@ -173,10 +173,7 @@ function svc_name($svc) { return is_hi() ? $svc['name'] : $svc['en']; }
 
 /** booking number — BK-DDMM-NN */
 function new_booking_no(PDO $pdo) {
-    $n = $pdo->prepare("SELECT COUNT(*) c FROM service_bookings WHERE DATE(created_at)=CURDATE()");
-    $n->execute();
-    $c = (int)$n->fetch()['c'] + 1;
-    return 'BK-' . date('dm') . '-' . str_pad($c, 2, '0', STR_PAD_LEFT);
+    return 'BK-' . date('dm') . '-' . strtoupper(bin2hex(random_bytes(5)));
 }
 
 /** booking ke jawaab ko padhne layak line banao */

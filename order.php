@@ -41,7 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
     if (mb_strlen($name) < 2)          { $err = t('Please write your name.', 'कृपया अपना नाम लिखिए।'); }
     elseif (strlen($mobile) !== 10)    { $err = t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।'); }
-    elseif (!$village)                 { $err = t('Please choose your village.', 'अपना गाँव चुनिए।'); }
+    elseif (!coverage_enabled(coverage_area($pdo,$village))) { $err=coverage_error(); }
+    elseif (!array_key_exists($market,markets())) { $err=t('Choose a valid pickup area.', 'सही pickup क्षेत्र चुनिए।'); }
     elseif (mb_strlen($items_text) < 3 && !$photo){ $err = t('Pick at least one item, write it, or send a photo.', 'कम से कम एक सामान चुनिए, लिख दीजिए या फ़ोटो भेजिए।'); }
     else {
         // ---- ek hi number se bahut saare order na aayein ----
@@ -62,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     if (!$err) {
         $st = $pdo->prepare("SELECT COUNT(*) c FROM orders WHERE mobile=?");
         $st->execute([$mobile]);
-        $first = ((int)$st->fetch()['c'] === 0) ? 1 : 0;
+        $first = ((int)$st->fetch()['c'] === 0 && (coverage_area($pdo,$village)['first_free'] ?? 1)) ? 1 : 0;
         $calc  = calc_charge($village, $market, $w, $sz, $pdo, (bool)$first);
         $order_no = new_order_no($pdo);
         $code = new_code();
@@ -95,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 // JS ke liye gaanv ke rate
 $vjs = [];
 foreach ($villages as $v) {
-    $vjs[$v['name']] = ['kapsethi'=>(int)$v['rate_kapsethi'], 'chauri'=>(int)$v['rate_chauri'], 'kachhawa'=>(int)$v['rate_kachhawa']];
+    $vjs[$v['name']] = ['kapsethi'=>(int)($v['base_fee'] ?? $v['rate_kapsethi']), 'chauri'=>(int)($v['base_fee'] ?? $v['rate_chauri']), 'kachhawa'=>(int)($v['base_fee'] ?? $v['rate_kachhawa']), 'local'=>(int)($v['base_fee'] ?? 0),'known'=>$v['base_fee'] !== null];
 }
 // JS ke liye saaman
 $DAAM = daam_sab($pdo);          // seekha hua daam — ek hi query
@@ -271,10 +272,10 @@ try{
           <input type="text" id="name" name="name" autocomplete="name" required></div>
         <div class="field"><label for="mobile"><?= t('Mobile number (10 digits)', 'मोबाइल नंबर (10 अंक)') ?></label>
           <input type="tel" id="mobile" name="mobile" inputmode="numeric" maxlength="10" autocomplete="tel-national" required></div>
-        <div class="field"><label for="village"><?= t('Your village', 'आपका गाँव') ?></label>
+        <div class="field"><label for="village"><?= t('Delivery area', 'डिलीवरी का इलाका') ?></label>
           <select id="village" name="village" required>
             <option value="">— <?= t('Choose', 'चुनिए') ?> —</option>
-            <?php foreach ($villages as $v): ?><option value="<?= h($v['name']) ?>"><?= h(vname($v)) ?></option><?php endforeach; ?>
+            <?php foreach ($villages as $v): ?><option value="<?= h($v['name']) ?>" <?= (coverage_selected($pdo)['name'] ?? '') === $v['name'] ? 'selected' : '' ?>><?= h(coverage_label($v)) ?></option><?php endforeach; ?>
           </select></div>
         <div class="field"><label for="landmark"><?= t('Landmark', 'घर की पहचान') ?></label>
           <input type="text" id="landmark" name="landmark" placeholder="<?= h(t('opposite the temple, near the school…', 'मंदिर के सामने, स्कूल के पास…')) ?>"></div>
@@ -723,12 +724,12 @@ function calc(){
   }
   var base = (VILL[v] && VILL[v][m]) ? VILL[v][m] : 0;
   var extra = (parseInt(w,10)||0) + (parseInt(s,10)||0);
-  if (!base) {
+  if (!base && !(VILL[v] && VILL[v].known)) {
     $('tot').innerHTML = '<div class="r"><span>'+L.delcharge+'</span><b>'+L.oncall+'</b></div>'
       + '<div class="help" style="margin-top:4px">'+L.oncallnote+'</div>';
     return;
   }
-  var first = isFirst();
+  var first = false; // Server verifies first-order eligibility on submission.
   h += '<div class="r"><span>'+L.goodsprice+'</span><b>'+L.asperbill+'</b></div>';
   h += '<div class="r"><span>'+L.delivery + (first ? ' <span class="freebadge">'+L.firstfree+'</span>' : '') + '</span><b>'
      + (first ? '<s style="opacity:.55">₹'+base+'</s> ₹0' : '₹'+base) + '</b></div>';

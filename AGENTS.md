@@ -14,8 +14,10 @@ time. Never assume he knows a technical term.
 
 ## 1. What Maakit is
 
-A pick-up and drop delivery service for villages around **Kapsethi, Chauri
-and Kachhwa** in Bhadohi, UP. Site: **maakit.in**. Phone **+91 84293 93903**.
+Owner update, 7 October 2026: Maakit targets **all of India**, including cities,
+towns and villages. Delivery and bookings are enabled only in verified active
+service areas; national ambition must never be shown as universal live coverage.
+The original Kapsethi, Chauri and Kachhwa operation remains supported. Site: **maakit.in**. Phone **+91 84293 93903**.
 Tagline: *"Anything you need. Maa hai na."*
 
 The customer asks for **anything, from any shop** — by phone, WhatsApp, or on
@@ -257,9 +259,9 @@ Silicon Valley startup.**
 
 ## 10. What Ankit wants this to become
 
-The one app a village family opens for anything they need — the way people in
-cities open Swiggy or Blinkit, but built for a place those companies will
-never serve.
+One platform for customers across India to find shops, request local delivery
+and book vehicles/services. Expansion is area by area after operational readiness.
+Do not invent national availability, delivery times, GPS dispatch or courier integration.
 
 As fast and as polished as a big app, but clearly from here: Indian, warm, in
 Hindi, run by someone from the same district who will pick up the phone.

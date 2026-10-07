@@ -92,16 +92,17 @@ function catalog_filter(array $items, $group, $type, $sub, $query) {
 }
 
 // Only actual shop-owned prices. Catalogue examples never become offers.
-function catalog_offers(PDO $pdo, array $ids) {
+function catalog_offers(PDO $pdo, array $ids, $area = null) {
     if (!$ids) return [];
     $marks = implode(',', array_fill(0, count($ids), '?'));
+    $scope=$area ? ' AND EXISTS (SELECT 1 FROM service_area_shops a WHERE a.business_id=b.id AND a.village_id=?)' : '';
     $st = $pdo->prepare("SELECT s.id,s.cat_id,s.name,s.unit,s.price,s.photo,s.stock,
         b.id AS business_id,b.name AS shop_name,b.village,b.shop_open,b.open_time,b.close_time
         FROM shop_items s JOIN businesses b ON b.id=s.business_id
         WHERE s.cat_id IN ($marks) AND s.active=1 AND s.price>0
-          AND b.status='approved' AND b.items_on=1
+          AND b.status='approved' AND b.items_on=1 $scope
         ORDER BY s.price,s.id");
-    $st->execute($ids);
+    $st->execute($area ? array_merge($ids,[(int)$area['id']]) : $ids);
     $out = [];
     foreach ($st->fetchAll() as $offer) {
         $offer['open_now'] = dukan_khuli($offer);
@@ -110,8 +111,9 @@ function catalog_offers(PDO $pdo, array $ids) {
     return $out;
 }
 
-function catalog_shops(PDO $pdo, $type) {
+function catalog_shops(PDO $pdo, $type, $area = null) {
     if ($type === '') return [];
+    $scope=$area ? ' AND EXISTS (SELECT 1 FROM service_area_shops a WHERE a.business_id=b.id AND a.village_id=?)' : '';
     $st = $pdo->prepare("SELECT b.id,b.name,b.village,b.address,b.photo,b.shop_open,
         b.open_time,b.close_time,b.items_on,
         (SELECT COUNT(*) FROM shop_items s WHERE s.business_id=b.id
@@ -119,9 +121,9 @@ function catalog_shops(PDO $pdo, $type) {
         FROM businesses b WHERE b.status='approved'
           AND (b.shop_type=? OR EXISTS (
             SELECT 1 FROM shop_items s JOIN catalog_items c ON c.id=s.cat_id
-            WHERE s.business_id=b.id AND s.active=1 AND c.shop_type=?))
+            WHERE s.business_id=b.id AND s.active=1 AND c.shop_type=?)) $scope
         ORDER BY b.village,b.name,b.id");
-    $st->execute([$type, $type]);
+    $st->execute($area ? [$type,$type,(int)$area['id']] : [$type,$type]);
     $out = $st->fetchAll();
     foreach ($out as &$shop) {
         $shop['open_now'] = dukan_khuli($shop);

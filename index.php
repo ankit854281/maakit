@@ -7,8 +7,8 @@ require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/customer.php';
 require_once __DIR__ . '/inc/books.php';
 
-$page_title = t('Maakit — delivery & booking for your village | Kapsethi, Chauri, Kachhwa',
-                'Maakit — गाँव की अपनी डिलीवरी और बुकिंग सेवा | कपसेठी, चौरी, कछवा');
+$page_title = t('Maakit — shopping, local delivery & bookings in India',
+                'Maakit — भारत में शॉपिंग, स्थानीय डिलीवरी और बुकिंग');
 $tab = 'ghar';
 $me  = cust();
 
@@ -104,16 +104,15 @@ include __DIR__ . '/inc/head.php';
 <section class="hero2">
   <div class="wrap">
     <div class="hbar">
-      <span class="loc"><?= svc_icon('box', 15) ?> <?= t('Kapsethi · Chauri · Kachhwa + ' . num($n_vill) . ' villages',
-          'कपसेठी · चौरी · कछवा और ' . num($n_vill) . ' गाँव') ?></span>
+      <span class="loc"><?= svc_icon('box', 15) ?> <?= t('Building across India · check your service area', 'भारत में विस्तार · अपने इलाके में सेवा जाँचें') ?></span>
       <span class="opn <?= $is_open ? 'yes' : 'no' ?>"><i></i> <?= h($open_short) ?></span>
     </div>
     <h1><?= $me
         ? t('Hello, ', 'नमस्ते, ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . '.<br>' . t('What do you need?', 'आज क्या चाहिए?')
         : t('Anything you need.<br>Maa hai na.', 'कुछ भी चाहिए?<br>माँ है ना।') ?></h1>
     <p class="sub"><?= t(
-      'Order anything from any shop — we bring it. You pay only the delivery.',
-      'किसी भी दुकान से कुछ भी मँगाइए — हम ले आएँगे। आप सिर्फ़ डिलीवरी का पैसा दीजिए।') ?></p>
+      'Shop, request local delivery or book a service. Choose your area to see availability. Goods and delivery charges are shown separately.',
+      'शॉपिंग, स्थानीय डिलीवरी या सेवा बुकिंग। अपना इलाका चुनकर उपलब्धता देखें। सामान का दाम और डिलीवरी चार्ज अलग हैं।') ?></p>
 
     <form class="hsearch" action="/search.php" method="get">
       <span class="ic"><?= svc_icon('search', 20) ?></span>
@@ -144,6 +143,11 @@ include __DIR__ . '/inc/head.php';
 </section>
 
 <div class="wrap">
+  <nav class="journeys" aria-label="<?=h(t('Choose what you need','अपनी जरूरत चुनें'))?>">
+    <a href="/bazaar.php"><?=svc_icon('grocery',28)?><b><?=t('Shopping','शॉपिंग')?></b><span><?=t('Shops, products & prices','दुकानें, सामान और दाम')?></span></a>
+    <a href="/order.php"><?=svc_icon('box',28)?><b><?=t('Local delivery','स्थानीय डिलीवरी')?></b><span><?=t('Send a list or photo','लिस्ट या फोटो भेजें')?></span></a>
+    <a href="/sewa.php"><?=svc_icon('ride',28)?><b><?=t('Bookings','बुकिंग')?></b><span><?=t('Vehicles & services','गाड़ियाँ और सेवाएँ')?></span></a>
+  </nav>
   <div class="install" id="installBox">
     <span class="ic"><?= svc_icon('box', 30) ?></span>
     <span><b><?= t('Keep Maakit on your phone', 'Maakit को फ़ोन में रख लीजिए') ?></b>
@@ -167,7 +171,7 @@ include __DIR__ . '/inc/head.php';
   <?php if ($chaat): ?>
     <div class="secthead" style="margin-top:4px">
       <h2><?= t('Samosa &amp; Momos', 'समोसा और मोमोज़') ?></h2>
-      <p><?= t('Hot, in about 20 minutes', 'गरम, क़रीब 20 मिनट में') ?></p>
+      <p><?= t('Delivery time confirmed with availability', 'उपलब्धता के साथ डिलीवरी समय पक्का होगा') ?></p>
       <a class="more" href="/order.php#chaat"><?= t('See all', 'सब देखिए') ?> <?= svc_icon('plus', 13) ?></a>
     </div>
     <div class="nrail">
@@ -262,8 +266,8 @@ include __DIR__ . '/inc/head.php';
       <div>
         <span><?= svc_icon('truck', 20) ?></span>
         <b><?= t('Zomato-Blinkit doesn’t come here', 'ज़ोमैटो-ब्लिंकिट यहाँ नहीं आता') ?></b>
-        <i><?= t('Big apps don’t come to small villages. That is exactly why we are here — for your village.',
-                 'बड़े ऐप छोटे गाँव तक नहीं आते। हम इसीलिए हैं — आपके गाँव के लिए।') ?></i>
+        <i><?= t('Local shops and services, connected through one platform. Check coverage before ordering.',
+                 'स्थानीय दुकानें और सेवाएँ एक प्लेटफ़ॉर्म पर। ऑर्डर से पहले सेवा क्षेत्र जाँचें।') ?></i>
       </div>
     </div>
   </div>
@@ -488,7 +492,7 @@ include __DIR__ . '/inc/head.php';
     <div class="aw">
       <div>
         <p class="kk"><?= t('Living away from home?', 'घर से दूर हैं?') ?></p>
-        <h2><?= t('You’re in Mumbai. Your parents are in the village.', 'मुंबई में हैं, माँ-बाप गाँव में।') ?></h2>
+        <h2><?= t('Send essentials to family in an active service area.', 'चालू सेवा क्षेत्र में परिवार के लिए सामान मँगाएँ।') ?></h2>
         <p class="sub"><?= t(
           'Send them groceries, medicine, anything. We deliver to their door and send you a photo of the shop’s bill. Pay by UPI from wherever you are.',
           'राशन, दवाई या कुछ भी मँगाइए — हम उनके दरवाज़े तक पहुँचाएँगे और दुकान के बिल की फ़ोटो आपको भेजेंगे। पैसा आप वहीं से UPI कर दीजिए।') ?></p>
@@ -524,9 +528,9 @@ include __DIR__ . '/inc/head.php';
         [t('I cannot read or type. Can I still order?', 'मुझे पढ़ना-लिखना नहीं आता, तब भी ऑर्डर होगा?'),
          t('Yes. Call ' . MAAKIT_NUMBER_SHOW . ' and just say it. Or tap the mic on the order page and speak in Hindi. Or send a photo of a hand-written list.',
            'हाँ। ' . MAAKIT_NUMBER_SHOW . ' पर कॉल करके बोल दीजिए। या ऑर्डर पेज पर माइक दबाकर हिंदी में बोलिए। या हाथ से लिखी पर्ची की फ़ोटो भेज दीजिए।')],
-        [t('My village is not in the list.', 'मेरा गाँव लिस्ट में नहीं है।'),
-         t('Tell us on the “Request your village” page. We add the village that the most people ask for.',
-           '“अपने गाँव के लिए माँगिए” पेज पर बता दीजिए। जिस गाँव से सबसे ज़्यादा लोग माँगते हैं, अगला वही होता है।')],
+        [t('My area is not in the list.', 'मेरा इलाका लिस्ट में नहीं है।'),
+         t('Request coverage on the service-area page. An area opens after shops, delivery and local operations are ready.',
+           'सेवा क्षेत्र पेज पर अनुरोध भेजें। दुकानें, डिलीवरी और स्थानीय व्यवस्था तैयार होने पर इलाका चालू होता है।')],
         [t('How do I book a Bolero or a goods vehicle?', 'बोलेरो या माल गाड़ी कैसे बुक करें?'),
          t('Open Vehicle or Goods from the home page. You see which vehicles are free today with their rates, pick one, and we call you to fix the fare.',
            'होम पेज से “गाड़ी बुकिंग” या “माल ढुलाई” खोलिए। आज कौन सी गाड़ी खाली है और उसका रेट दिखेगा — चुन लीजिए, किराया हम कॉल पर तय करेंगे।')],
