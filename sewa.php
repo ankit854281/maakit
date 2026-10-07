@@ -31,11 +31,14 @@ if ($slug && $slug !== 'safar' && !$svc) { redirect('/sewa.php'); }
 
 $villages = array_values(array_filter(coverage_areas($pdo), fn($a)=>coverage_enabled($a,'booking')));
 $me = cust();
+require_once __DIR__.'/inc/submit-once.php';
+$submit_key = '';
+if ($svc) [$submit_key,$done,$err] = submit_once_form('booking:'.$slug);
 
 // ============================================================
 // form bhara gaya
 // ============================================================
-if ($svc && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($svc && $_SERVER['REQUEST_METHOD'] === 'POST' && !$done && !$err) {
 
     if (!csrf_ok()) {
         $err = t('The page got old. Please send again.', 'पेज पुराना हो गया। एक बार फिर भेजिए।');
@@ -94,6 +97,7 @@ if ($svc && $_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             $done = ['no' => $no, 'code' => $code, 'mobile' => $mob, 'name' => $nm];
+            submit_once_complete($submit_key,$done);
         }
     }
 }
@@ -209,6 +213,7 @@ include __DIR__ . '/inc/head.php';
 
   <form method="post" class="card" style="padding:18px">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+    <input type="hidden" name="submit_key" value="<?= h($submit_key) ?>">
 
     <?php foreach ($svc['fields'] as $f):
       $k = $f['k']; $lb = f_label($f['l']); $req = !empty($f['req']);
