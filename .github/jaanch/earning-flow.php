@@ -69,11 +69,18 @@ try {
     $bad=$resolution;$bad['refund_amount']='-5';$bad['refund_reference']='SHOP-123';money_request('/admin/support.php',$bad);$check->execute([$tid]);money_check($check->fetch()['refund_amount']===null,'Invalid refund rejected');
     $resolution['refund_amount']='100';$resolution['refund_reference']='SHOP-123';$resolution['status']='resolved';money_request('/admin/support.php',$resolution,302);$check->execute([$tid]);$r=$check->fetch();money_check((int)$r['refund_amount']===100 && $r['refund_reference']==='SHOP-123','Direct shop refund recorded');
     $resolution['refund_amount']='200';money_request('/admin/support.php',$resolution);$check->execute([$tid]);money_check((int)$check->fetch()['refund_amount']===100,'Recorded paid refund cannot be overwritten');
+    $resolution['refund_amount']='100';$resolution['return_stage']='scheduled';$resolution['return_date']='2026-02-30';
+    money_request('/admin/support.php',$resolution);$check->execute([$tid]);money_check($check->fetch()['return_stage']==='not_required','Invalid pickup date rejected');
+    $resolution['return_date']='2026-10-10';$bad=$resolution;$bad['decision']='pending';money_request('/admin/support.php',$bad);
+    money_request('/admin/support.php',$resolution,302);$check->execute([$tid]);$r=$check->fetch();money_check($r['return_stage']==='scheduled' && $r['return_date']==='2026-10-10','Approved return pickup scheduled');
+    $resolution['return_stage']='collected';money_request('/admin/support.php',$resolution,302);
+    $bad=$resolution;$bad['return_stage']='scheduled';money_request('/admin/support.php',$bad);$check->execute([$tid]);money_check($check->fetch()['return_stage']==='collected','Return cannot regress');
+    $resolution['return_stage']='received';money_request('/admin/support.php',$resolution,302);
     $saved_jar=$jar;$jar=tempnam(sys_get_temp_dir(),'mk-support-customer-');
     try{
       $html=money_request('/account.php?lang=en');preg_match('/name="csrf" value="([^"]+)"/',$html,$cm);
       money_request('/account.php',['csrf'=>$cm[1],'do'=>'login','mobile'=>'9000000077','password'=>$password],302);
-      $html=money_request('/support.php?lang=en');money_check(strpos($html,'SHOP-123')!==false && strpos($html,'Approved')!==false,'Customer sees decision and refund reference');
+      $html=money_request('/support.php?lang=en');money_check(strpos($html,'SHOP-123')!==false && strpos($html,'Approved')!==false,'Customer sees decision and refund reference');money_check(strpos($html,'Returned to shop')!==false && strpos($html,'2026-10-10')!==false,'Customer sees return progress and pickup date');
     }finally{unlink($jar);$jar=$saved_jar;}
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
