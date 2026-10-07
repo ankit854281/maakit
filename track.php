@@ -47,11 +47,13 @@ if ($no !== '' && strlen($mob) === 10) {
     elseif (strlen($mob) !== 10) { $err = t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।'); }
 }
 
-// ऑर्डर कैंसिल (सिर्फ़ जब तक नया है)
-if ($o && post('act') === 'cancel' && csrf_ok() && $o['status'] === 'Naya') {
-    $pdo->prepare("UPDATE orders SET status='Cancel', note=CONCAT(COALESCE(note,''),'\n[customer ne website se cancel kiya]') WHERE id=?")
-        ->execute([$o['id']]);
-    flash(t('Your order has been cancelled.', 'आपका ऑर्डर कैंसिल कर दिया गया।'));
+// Decide cancellation eligibility in the UPDATE itself, not a stale page read.
+if ($o && $_SERVER['REQUEST_METHOD'] === 'POST' && post('act') === 'cancel' && csrf_ok()) {
+    $cancel = $pdo->prepare("UPDATE orders SET status='Cancel', note=CONCAT(COALESCE(note,''),'\n[customer ne website se cancel kiya]') WHERE id=? AND status='Naya' AND (shop_status IS NULL OR shop_status='' OR shop_status='naya')");
+    $cancel->execute([$o['id']]);
+    flash($cancel->rowCount() === 1
+        ? t('Your order has been cancelled.', 'आपका ऑर्डर कैंसिल कर दिया गया।')
+        : t('This order can no longer be cancelled here. Contact support to request cancellation.', 'यह ऑर्डर अब यहाँ से कैंसिल नहीं हो सकता। कैंसिलेशन के लिए सहायता टीम से संपर्क करें।'));
     redirect('/track.php?no=' . urlencode($no) . '&m=' . urlencode($mob));
 }
 
@@ -191,7 +193,7 @@ include __DIR__ . '/inc/head.php';
   <div style="display:grid;gap:9px;margin-top:14px">
     <a class="btn btn-green" href="<?= h(wa_link(MAAKIT_WA, "नमस्ते Maakit, मेरे ऑर्डर " . $o['order_no'] . " के बारे में बात करनी है।")) ?>" target="_blank" rel="noopener"><?= t('Chat about this order', 'इस ऑर्डर पर बात कीजिए') ?></a>
     <a class="btn btn-brand" href="tel:<?= MAAKIT_PHONE ?>"><?= t('Call us', 'कॉल कीजिए') ?></a>
-    <?php if ($o['status'] === 'Naya'): ?>
+    <?php if ($o['status'] === 'Naya' && in_array($o['shop_status'] ?? '', ['', 'naya'], true)): ?>
       <form method="post" onsubmit="return confirm('<?= h(t('Cancel this order?', 'ऑर्डर कैंसिल कर दें?')) ?>')">
         <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
         <input type="hidden" name="no" value="<?= h($no) ?>">
@@ -199,10 +201,11 @@ include __DIR__ . '/inc/head.php';
         <input type="hidden" name="act" value="cancel">
         <button class="btn btn-line" type="submit" style="width:100%;color:var(--bad);border-color:var(--bad)"><?= t('Cancel this order', 'ऑर्डर कैंसिल कीजिए') ?></button>
       </form>
-      <p class="help" style="text-align:center;margin:0"><?= t('Once the rider has left, please call to cancel.', 'डिलीवरी पार्टनर निकलने के बाद कैंसिल के लिए कॉल कीजिए।') ?></p>
+      <p class="help" style="text-align:center;margin:0"><?= t('After the shop accepts or fulfilment starts, contact support for cancellation.', 'दुकान स्वीकार कर ले या काम शुरू हो जाए तो कैंसिलेशन के लिए सहायता टीम से संपर्क करें।') ?></p>
     <?php endif; ?>
   </div>
 
+  <p style="text-align:center"><a href="/support.php"><?= t('Help, cancellation or return request', 'सहायता, कैंसिलेशन या वापसी का अनुरोध') ?></a></p>
   <p style="text-align:center;margin:22px 0 30px"><a href="/track.php">← <?= t('Check another order', 'दूसरा ऑर्डर देखिए') ?></a></p>
 
   <?php if (in_array($o['status'], ['Assign','Pickup'], true)): ?>
