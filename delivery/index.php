@@ -8,9 +8,9 @@ $page_title = 'मेरे ऑर्डर — Maakit';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $id = (int)post('id'); $status = post('status');
     if ($status === 'Pickup') {
-        $pdo->prepare("UPDATE orders SET status='Pickup', picked_at=COALESCE(picked_at, NOW()) WHERE id=? AND (delivery_user=? OR ?='admin')")
-            ->execute([$id, $u['id'], $u['role']]);
-        flash('दुकान से लिया — दर्ज हो गया।');
+        $pickup = $pdo->prepare("UPDATE orders SET status='Pickup', picked_at=COALESCE(picked_at, NOW()) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign')");
+        $pickup->execute([$id, $u['id'], $u['role']]);
+        flash($pickup->rowCount() === 1 ? t('Pickup recorded.', 'दुकान से लिया — दर्ज हो गया।') : t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
     } elseif ($status === 'bill') {
         // dukaan ki parchi ki photo — grahak ko dikhegi
         $ph = save_photo('bill', 'bill');
@@ -27,17 +27,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     } elseif ($status === 'Delivered') {
         // Grahak ka 4 ank ka code sahi hoga tabhi "pahuncha diya" darj hoga
         $code = preg_replace('/\D/', '', post('code'));
-        $chk = $pdo->prepare("SELECT code FROM orders WHERE id=? AND (delivery_user=? OR ?='admin')");
+        $chk = $pdo->prepare("SELECT code, status FROM orders WHERE id=? AND (delivery_user=? OR ?='admin')");
         $chk->execute([$id, $u['id'], $u['role']]);
         $row = $chk->fetch();
         if (!$row) {
             flash('यह ऑर्डर आपके पास नहीं है।');
+        } elseif ($row['status'] !== 'Pickup') {
+            flash(t('Delivery can be recorded only after pickup. Refresh the order.', 'दुकान से सामान लेने के बाद ही डिलीवरी दर्ज होगी। ऑर्डर दोबारा देखें।'));
         } elseif ($code !== $row['code']) {
             flash('कोड मेल नहीं खाया। ग्राहक से दोबारा पूछिए — सही कोड के बिना सामान मत दीजिए।');
         } else {
-            $pdo->prepare("UPDATE orders SET status='Delivered', delivered_at=COALESCE(delivered_at, NOW()) WHERE id=?")->execute([$id]);
-            $pdo->prepare("DELETE FROM live_tracks WHERE order_id=?")->execute([$id]);   // jagah ka record mita do
-            flash('कोड सही — पहुँचा दिया, दर्ज हो गया।');
+            $finish = $pdo->prepare("UPDATE orders SET status='Delivered', delivered_at=COALESCE(delivered_at, NOW()) WHERE id=? AND status='Pickup' AND code=? AND (delivery_user=? OR ?='admin')");
+            $finish->execute([$id, $code, $u['id'], $u['role']]);
+            if ($finish->rowCount() === 1) {
+                $pdo->prepare("DELETE FROM live_tracks WHERE order_id=?")->execute([$id]);
+                flash(t('Delivery recorded.', 'कोड सही — पहुँचा दिया, दर्ज हो गया।'));
+            } else {
+                flash(t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
+            }
         }
     }
     redirect('/delivery/');
