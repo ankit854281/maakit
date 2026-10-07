@@ -1,0 +1,9 @@
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS service_area_dispatch (
+ village_id INT PRIMARY KEY,
+ enabled TINYINT(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS driver_availability (
+ user_id INT PRIMARY KEY,
+ available_until DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

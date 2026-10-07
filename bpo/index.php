@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/dakiya.php';
 require_once __DIR__ . '/../inc/order-workflow.php';
+require_once __DIR__ . '/../inc/dispatch.php';
 require_once __DIR__ . '/../inc/icons.php';
 $u = need_role(['bpo', 'admin']);
 $page_title = 'आज के ऑर्डर — Maakit';
@@ -16,14 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             $sql="UPDATE orders SET status=?".($stamp?", `$stamp`=COALESCE(`$stamp`,NOW())":'')." WHERE id=? AND status IN ($marks)";
             if(in_array($st2,['Pickup','Delivered'],true))$sql.=' AND delivery_user IS NOT NULL';
             $change=$pdo->prepare($sql);$change->execute(array_merge([$st2,$id],$from));$changed=$change->rowCount();
+            if($changed&&$st2==='Confirm')dispatch_assign($pdo,$id);
             if($changed&&in_array($st2,['Delivered','Cancel'],true))$pdo->prepare('DELETE FROM live_tracks WHERE order_id=?')->execute([$id]);
         }
+        if($changed&&$st2==='Delivered')dispatch_queue($pdo);
         flash($changed?t('Order progress saved.','ऑर्डर की प्रगति सेव हुई।'):t('This change is not allowed from the current status. Assign a driver before pickup.','मौजूदा स्थिति से यह बदलाव नहीं हो सकता। Pickup से पहले driver दीजिए।'));
     } elseif (post('do') === 'assign') {
         $driver=(int)post('delivery_user');
-        $assign=$pdo->prepare("UPDATE orders o JOIN villages v ON v.name=o.village JOIN service_area_drivers d ON d.village_id=v.id AND d.user_id=? JOIN users u ON u.id=d.user_id AND u.role='delivery' AND u.active=1 SET o.delivery_user=u.id,o.status='Assign',o.assigned_at=COALESCE(o.assigned_at,NOW()) WHERE o.id=? AND o.status IN ('Naya','Confirm','Assign')");
-        $assign->execute([$driver,$id]);
-        flash($assign->rowCount()?t('Assigned to the area delivery partner.','इलाके के delivery partner को दिया गया।'):t('Could not assign. Check the order status and area delivery staff.','Assignment नहीं हुआ। ऑर्डर की स्थिति और इलाके के delivery staff जाँचें।'));
+        $assigned=$driver>0?dispatch_assign($pdo,$id,$driver):null;
+        flash($assigned?t('Assigned to the area delivery partner.','इलाके के delivery partner को दिया गया।'):t('Could not assign. Check the order status and area delivery staff.','Assignment नहीं हुआ। ऑर्डर की स्थिति और इलाके के delivery staff जाँचें।'));
     } elseif (post('do') === 'amount') {
         $goods=staff_order_amount($_POST['goods_amount']??'');$fee=staff_order_amount($_POST['delivery_charge']??'');$payment=post('payment');$changed=0;
         if($goods!==false&&$fee!==false&&isset(staff_goods_payments()[$payment])){

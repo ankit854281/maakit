@@ -3,6 +3,7 @@ require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/items.php';
 require_once __DIR__ . '/../inc/order-workflow.php';
 require_once __DIR__ . '/../inc/submit-once.php';
+require_once __DIR__ . '/../inc/dispatch.php';
 $u = need_role(['bpo', 'admin']);
 $page_title = 'नया ऑर्डर — Maakit';
 $villages = array_filter(coverage_areas($pdo),fn($a)=>coverage_enabled($a));
@@ -28,6 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'Confirm')")
             ->execute([$order_no, $code, $src, $name, $mobile, $village, $landmark, $items, $shop, $market, $sector, $w, $sz, $first, $charge, $pay]);
 
+        $created_id=(int)$pdo->lastInsertId();
+        dispatch_assign($pdo,$created_id);
         $conf = "Maakit - ऑर्डर कन्फर्म\nऑर्डर नंबर: $order_no\nसामान: $items\n"
             . ($shop ? "दुकान: $shop\n" : "")
             . "डिलीवरी चार्ज: " . ($charge===null ? "कॉल पर तय करना बाकी" : "₹" . (int)$charge) . "\n"

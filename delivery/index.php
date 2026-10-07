@@ -2,12 +2,18 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/dakiya.php';
 require_once __DIR__ . '/../inc/earning.php';
+require_once __DIR__ . '/../inc/dispatch.php';
 $u = need_role(['delivery', 'admin']);
 $page_title = 'मेरे ऑर्डर — Maakit';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $id = (int)post('id'); $status = post('status');
-    if ($status === 'Pickup') {
+    if($status==='availability'&&$u['role']==='delivery'){
+        $until=post('available')==='1'?gmdate('Y-m-d H:i:s',time()+900):null;
+        $pdo->prepare("INSERT INTO driver_availability(user_id,available_until) SELECT id,? FROM users WHERE id=? AND active=1 AND role='delivery' ON DUPLICATE KEY UPDATE available_until=VALUES(available_until)")->execute([$until,$u['id']]);
+        if($until)dispatch_queue($pdo);
+        flash(t('Availability updated. Refresh to see assigned orders.','उपलब्धता अपडेट हुई। मिले order देखने के लिए पेज दोबारा देखें।'));
+    } elseif ($status === 'Pickup') {
         $pickup = $pdo->prepare("UPDATE orders SET status='Pickup', picked_at=COALESCE(picked_at, NOW()) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign')");
         $pickup->execute([$id, $u['id'], $u['role']]);
         flash($pickup->rowCount() === 1 ? t('Pickup recorded.', 'दुकान से लिया — दर्ज हो गया।') : t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
@@ -53,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             $finish->execute([$id, $code, $u['id'], $u['role']]);
             if ($finish->rowCount() === 1) {
                 $pdo->prepare("DELETE FROM live_tracks WHERE order_id=?")->execute([$id]);
+                dispatch_queue($pdo);
                 flash(t('Delivery recorded.', 'कोड सही — पहुँचा दिया, दर्ज हो गया।'));
             } else {
                 flash(t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
@@ -67,11 +74,13 @@ $args = [];
 if ($u['role'] === 'delivery') { $sql .= " AND delivery_user=?"; $args[] = $u['id']; }
 $sql .= " ORDER BY FIELD(status,'Assign','Confirm','Naya','Pickup','Delivered'), id DESC";
 $st = $pdo->prepare($sql); $st->execute($args); $orders = $st->fetchAll();
+$available=false;if($u['role']==='delivery'){$s=$pdo->prepare('SELECT available_until>UTC_TIMESTAMP() FROM driver_availability WHERE user_id=?');$s->execute([$u['id']]);$available=(bool)$s->fetchColumn();}
 include __DIR__ . '/../inc/panel.php';
 ?>
 <section><div class="wrap">
   <h2>मेरे ऑर्डर</h2>
   <p class="lead">दुकान से सामान लीजिए, ग्राहक के दरवाज़े पर कोड पूछिए, फिर “पहुँचा दिया” दबाइए।</p>
+  <?php if($u['role']==='delivery'):?><form method="post" class="box"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="status" value="availability"><b><?=t('Automatic assignment availability','Automatic assignment की उपलब्धता')?>: <?=h($available?t('Available now','अभी उपलब्ध'):t('Unavailable','उपलब्ध नहीं'))?></b><p class="help"><?=t('Choose availability only when ready. It expires in 15 minutes; renew to keep receiving confirmed orders. Check this page for assignments. This does not share GPS.','तैयार होने पर ही उपलब्धता चुनें। यह 15 मिनट में समाप्त होगी; नए confirmed order लेने के लिए फिर चुनें। मिले order इस पेज पर देखें। इससे GPS share नहीं होता।')?></p><button class="btn btn-brand" name="available" value="1"><?=t('Available for 15 minutes','15 मिनट के लिए उपलब्ध')?></button> <button class="btn btn-line" name="available" value="0"><?=t('Stop new assignments','नए assignment रोकें')?></button></form><?php endif;?>
   <?php if (!$orders): ?><div class="box">अभी आपके पास कोई ऑर्डर नहीं है।</div><?php endif; ?>
   <?php foreach ($orders as $o): ?>
     <div class="box" style="margin-bottom:14px">
