@@ -12,17 +12,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $pickup->execute([$id, $u['id'], $u['role']]);
         flash($pickup->rowCount() === 1 ? t('Pickup recorded.', 'दुकान से लिया — दर्ज हो गया।') : t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
     } elseif ($status === 'bill') {
-        // dukaan ki parchi ki photo — grahak ko dikhegi
-        $ph = save_photo('bill', 'bill');
-        $own = $pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin')");
+        // Authorize and validate before storing a customer-visible bill photo.
+        $own = $pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign','Pickup')");
         $own->execute([$id, $u['id'], $u['role']]);
-        if (!$own->fetch())      { flash('यह ऑर्डर आपके पास नहीं है।'); }
-        elseif (!$ph)            { flash('फ़ोटो नहीं लग पाई। दोबारा कोशिश कीजिए (4 MB तक, साफ़ तस्वीर)।'); }
-        else {
-            $amt = post('amount') !== '' ? (int)post('amount') : null;
-            $pdo->prepare("UPDATE orders SET bill_photo=?, goods_amount=COALESCE(?, goods_amount) WHERE id=?")
-                ->execute([$ph, $amt, $id]);
-            flash('बिल की फ़ोटो लग गई। ग्राहक को दिख जाएगी।');
+        $raw_amount = post('amount');
+        $amt = $raw_amount === '' ? null : earning_cost($raw_amount);
+        if (!$own->fetch()) {
+            flash(t('This order is not assigned to you or can no longer be changed.', 'यह ऑर्डर आपके पास नहीं है या अब बदला नहीं जा सकता।'));
+        } elseif ($raw_amount !== '' && $amt === null) {
+            flash(t('Enter a whole goods amount from 0 to 1000000, or leave it blank.', 'सामान की रकम 0 से 1000000 तक पूरी संख्या में भरें, या खाली छोड़ें।'));
+        } else {
+            $ph = save_photo('bill', 'bill');
+            if (!$ph) {
+                flash(t('Photo could not be saved. Try a clear image up to 4 MB.', 'फ़ोटो नहीं लग पाई। 4 MB तक की साफ़ तस्वीर से दोबारा कोशिश करें।'));
+            } else {
+                $bill = $pdo->prepare("UPDATE orders SET bill_photo=?, goods_amount=COALESCE(?, goods_amount) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign','Pickup')");
+                $bill->execute([$ph, $amt, $id, $u['id'], $u['role']]);
+                if ($bill->rowCount() === 1) {
+                    flash(t('Bill saved. The customer can see it.', 'बिल सेव हो गया। ग्राहक देख सकता है।'));
+                } else {
+                    drop_photo($ph);
+                    flash(t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
+                }
+            }
         }
     } elseif ($status === 'Delivered') {
         // Grahak ka 4 ank ka code sahi hoga tabhi "pahuncha diya" darj hoga
