@@ -72,6 +72,7 @@ jobs:
           php tests/shop-prices.php
           php tests/seo.php
           php tests/coverage.php
+          php tests/customer.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi
