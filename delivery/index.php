@@ -106,8 +106,7 @@ include __DIR__ . '/../inc/panel.php';
       <?php if (in_array($o['status'], ['Assign','Pickup'], true)): ?>
         <div class="note trk" data-o="<?= (int)$o['id'] ?>" style="margin-top:12px">
           <b>अपनी जगह ग्राहक को दिखाइए</b>
-          <p class="help" style="margin:4px 0 10px">दबाते ही ग्राहक अपने ऑर्डर पेज पर आपकी गाड़ी चलती देखेगा।
-            “पहुँचा दिया” दबाते ही अपने आप बंद हो जाएगा। पेज खुला रखिए।</p>
+          <p class="help" style="margin:4px 0 10px"><?=t('Allow GPS and keep this page visible. Sharing stops after delivery. Screen lock or another app may pause updates.','GPS की अनुमति दें और यह पेज सामने रखें। डिलीवरी के बाद sharing बंद होगी। Screen lock या दूसरे app पर जाने से updates रुक सकते हैं।')?></p>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button type="button" class="btn btn-brand btn-sm trkOn">📍 मैं निकल गया</button>
             <button type="button" class="btn btn-sm trkOff" style="display:none;background:var(--soft);color:var(--bad)">बंद कीजिए</button>
@@ -168,66 +167,6 @@ include __DIR__ . '/../inc/panel.php';
     </div>
   <?php endforeach; ?>
 </div></section>
-<script>
-/* ---- apni jagah ग्राहक ko bhejte rehna ---- */
-(function(){
-  var W = null, T = null, box = null;
-  function stop(msg){
-    if (W !== null) { navigator.geolocation.clearWatch(W); W = null; }
-    if (T) { clearInterval(T); T = null; }
-    if (box) {
-      box.querySelector('.trkOn').style.display = '';
-      box.querySelector('.trkOff').style.display = 'none';
-      box.querySelector('.trkMsg').textContent = msg || '';
-      box.classList.remove('on');
-    }
-    box = null;
-    try { sessionStorage.removeItem('mk_trk'); } catch(e){}
-  }
-  function send(oid, pos){
-    var d = new FormData();
-    d.append('a','ping'); d.append('o', oid);
-    d.append('lat', pos.coords.latitude); d.append('lng', pos.coords.longitude);
-    d.append('acc', Math.round(pos.coords.accuracy || 0));
-    fetch('/api.php', { method:'POST', body:d, credentials:'same-origin' })
-      .then(function(r){ if (!r.ok) stop('अब बंद है'); })
-      .catch(function(){});
-  }
-  function start(b){
-    if (!navigator.geolocation) { b.querySelector('.trkMsg').textContent = 'इस फ़ोन में जगह बताने की सुविधा नहीं'; return; }
-    if (box) stop('');
-    box = b;
-    var oid = b.getAttribute('data-o'), last = null;
-    b.querySelector('.trkOn').style.display = 'none';
-    b.querySelector('.trkOff').style.display = '';
-    b.querySelector('.trkMsg').textContent = 'जगह ढूंढ रहे हैं…';
-    b.classList.add('on');
-    try { sessionStorage.setItem('mk_trk', oid); } catch(e){}
-    W = navigator.geolocation.watchPosition(function(pos){
-      last = pos;
-      send(oid, pos);
-      b.querySelector('.trkMsg').textContent = 'ग्राहक को दिख रहे हैं ✓';
-    }, function(err){
-      b.querySelector('.trkMsg').textContent = err.code === 1 ? 'माइक की तरह जगह की भी इजाज़त दीजिए' : 'जगह नहीं मिल रही';
-    }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
-    // har 25 second par dobara bhejte rehte hain
-    T = setInterval(function(){ if (last) send(oid, last); }, 25000);
-  }
-  document.addEventListener('click', function(e){
-    var on = e.target.closest('.trkOn'), off = e.target.closest('.trkOff');
-    if (on)  start(on.closest('.trk'));
-    if (off) stop('बंद है');
-  });
-  // "pahuncha diya" dabate hi band
-  document.addEventListener('submit', function(e){
-    var f = e.target;
-    if (f.querySelector && f.querySelector('input[name=status][value=Delivered]')) stop('');
-  });
-  // page wapas khula to dobara chalu
-  try {
-    var last = sessionStorage.getItem('mk_trk');
-    if (last) { var b = document.querySelector('.trk[data-o="' + last + '"]'); if (b) start(b); }
-  } catch(e){}
-})();
-</script>
+<script>window.MAAKIT_TRACKING=<?=json_encode(['csrf'=>csrf(),'waiting'=>t('Finding location…','जगह ढूँढ रहे हैं…'),'shared'=>t('Location sent to customer','ग्राहक को location भेजी गई'),'failed'=>t('Location could not be sent. Check internet and refresh.','Location नहीं भेजी गई। इंटरनेट जाँचें और पेज दोबारा देखें।'),'denied'=>t('Allow location in your browser settings.','Browser settings में location की अनुमति दें।'),'stale'=>t('Waiting for a fresh GPS location.','नई GPS location का इंतज़ार है।'),'stopped'=>t('Sharing stopped','Sharing बंद हुई'),'paused'=>t('Keep this page visible for GPS updates.','GPS updates के लिए यह पेज सामने रखें।')],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE)?>;</script>
+<script src="/assets/delivery-tracking.js" defer></script>
 <?php include __DIR__ . '/../inc/foot.php'; ?>
