@@ -4,7 +4,7 @@ if (DB_NAME !== 'maakit_jaanch') throw new RuntimeException('Only the CI databas
 require_once __DIR__ . '/../../inc/fn.php';
 require_once __DIR__ . '/../../inc/earning.php';
 function money_check($ok,$message) { if (!$ok) throw new RuntimeException($message); }
-$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $cid=0; $tid=0; $driverid=0; $areaid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
+$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $cid=0; $tid=0; $driverid=0; $areaid=0; $rateuid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
 function money_request($path,$post=null,$status=200) {
     global $jar;
     $ch=curl_init('http://127.0.0.1:8099'.$path);
@@ -20,7 +20,9 @@ try {
     $pdo->prepare("INSERT INTO users(name,username,password,role) VALUES ('Money test','jaanch-money',?,'admin')")->execute([password_hash($password,PASSWORD_DEFAULT)]);
     $uid=(int)$pdo->lastInsertId();
     $html=money_request('/login.php?as=team');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);
+    preg_match('/\tPHPSESSID\t([^\r\n]+)/',file_get_contents($jar),$session_before);
     money_request('/login.php?as=team',['csrf'=>$m[1],'do'=>'team','username'=>'jaanch-money','password'=>$password],302);
+    preg_match('/\tPHPSESSID\t([^\r\n]+)/',file_get_contents($jar),$session_after);money_check(!empty($session_before[1])&&!empty($session_after[1])&&$session_before[1]!==$session_after[1],'Team login rotates session');
     $html=money_request('/admin/summary.php?lang=hi');
     money_check(strpos($html,'दिन का खर्च') !== false && strpos($html,'हिसाब अधूरा') !== false,'Admin gets costs and incomplete balance');
     preg_match('/name="csrf" value="([^"]+)"/',$html,$m);
@@ -110,8 +112,21 @@ try {
       money_request('/account.php',['csrf'=>$cm[1],'do'=>'login','mobile'=>'9000000077','password'=>$password],302);
       $html=money_request('/support.php?lang=en');money_check(strpos($html,'SHOP-123')!==false && strpos($html,'Approved')!==false,'Customer sees decision and refund reference');money_check(strpos($html,'Returned to shop')!==false && strpos($html,'2026-10-10')!==false,'Customer sees return progress and pickup date');
     }finally{unlink($jar);$jar=$saved_jar;}
+    $pdo->prepare("INSERT INTO users(name,username,password,role) VALUES ('CI Rate Team','jaanch-rate-team',?,'bpo')")->execute([password_hash($password,PASSWORD_DEFAULT)]);$rateuid=(int)$pdo->lastInsertId();
+    $saved_jar=$jar;
+    try{
+        for($i=0;$i<7;$i++){
+            $jar=tempnam(sys_get_temp_dir(),'mk-rate-');
+            try{
+                $html=money_request('/login.php?as=team&lang=en');preg_match('/name="csrf" value="([^"]+)"/',$html,$rm);
+                $html=money_request('/login.php?as=team&lang=en',['csrf'=>$rm[1],'do'=>'team','username'=>'jaanch-rate-team','password'=>$i<6?'wrong':$password]);
+                if($i===6){money_check(strpos($html,'Too many wrong attempts')!==false,'Fresh cookie cannot bypass team limit');money_request('/bpo/',null,302);}
+            }finally{unlink($jar);}
+        }
+    }finally{$jar=$saved_jar;}
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
+    if($rateuid){$pdo->prepare('DELETE FROM auth_failures WHERE scope=? AND identity_hash=?')->execute(['team',hash('sha256','jaanch-rate-team')]);$pdo->prepare('DELETE FROM users WHERE id=?')->execute([$rateuid]);}
     $pdo->exec("DELETE FROM orders WHERE mobile='9000000066'");
     if ($areaid) { $pdo->prepare('DELETE FROM service_area_drivers WHERE village_id=?')->execute([$areaid]);$pdo->prepare('DELETE FROM service_area_meta WHERE village_id=?')->execute([$areaid]);$pdo->prepare('DELETE FROM villages WHERE id=?')->execute([$areaid]); }
     if ($driverid) $pdo->prepare('DELETE FROM users WHERE id=?')->execute([$driverid]);
