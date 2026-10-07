@@ -4,7 +4,7 @@ if (DB_NAME !== 'maakit_jaanch') throw new RuntimeException('Only the CI databas
 require_once __DIR__ . '/../../inc/fn.php';
 require_once __DIR__ . '/../../inc/earning.php';
 function money_check($ok,$message) { if (!$ok) throw new RuntimeException($message); }
-$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
+$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $cid=0; $tid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
 function money_request($path,$post=null,$status=200) {
     global $jar;
     $ch=curl_init('http://127.0.0.1:8099'.$path);
@@ -60,8 +60,25 @@ try {
     $shipment['csrf']='invalid';$shipment['tracking_no']='FORGED';money_request('/admin/shipment.php?id='.$oid,$shipment);
     $pdo->prepare("UPDATE orders SET status='Cancel' WHERE id=?")->execute([$oid]);$shipment['csrf']=$m[1];money_request('/admin/shipment.php?id='.$oid,$shipment);
     money_check($pdo->query('SELECT tracking_no FROM courier_tracking WHERE order_id='.(int)$oid)->fetchColumn()==='CI-AWB-123','CSRF/cancelled shipment edits rejected');
+    $pdo->prepare("INSERT INTO customers(name,mobile,password,village,landmark) VALUES ('CI Support','9000000077',?,'','')")->execute([password_hash($password,PASSWORD_DEFAULT)]);$cid=(int)$pdo->lastInsertId();
+    $pdo->prepare("INSERT INTO support_tickets(customer_id,reference_no,kind,message) VALUES (?,'CI-DELIVERY','return','CI return test request')")->execute([$cid]);$tid=(int)$pdo->lastInsertId();
+    $resolution=['csrf'=>$m[1],'id'=>$tid,'status'=>'reviewing','reply'=>'Return reviewed with shop','decision'=>'approved','refund_amount'=>'','refund_reference'=>''];
+    money_request('/admin/support.php',$resolution,302);
+    $check=$pdo->prepare('SELECT * FROM support_resolution WHERE ticket_id=?');$check->execute([$tid]);money_check($check->fetch()['decision']==='approved','Admin approves request');
+    $bad=$resolution;$bad['decision']='rejected';$bad['reply']='';money_request('/admin/support.php',$bad);$check->execute([$tid]);money_check($check->fetch()['decision']==='approved','Rejection requires reason');
+    $bad=$resolution;$bad['refund_amount']='-5';$bad['refund_reference']='SHOP-123';money_request('/admin/support.php',$bad);$check->execute([$tid]);money_check($check->fetch()['refund_amount']===null,'Invalid refund rejected');
+    $resolution['refund_amount']='100';$resolution['refund_reference']='SHOP-123';$resolution['status']='resolved';money_request('/admin/support.php',$resolution,302);$check->execute([$tid]);$r=$check->fetch();money_check((int)$r['refund_amount']===100 && $r['refund_reference']==='SHOP-123','Direct shop refund recorded');
+    $resolution['refund_amount']='200';money_request('/admin/support.php',$resolution);$check->execute([$tid]);money_check((int)$check->fetch()['refund_amount']===100,'Recorded paid refund cannot be overwritten');
+    $saved_jar=$jar;$jar=tempnam(sys_get_temp_dir(),'mk-support-customer-');
+    try{
+      $html=money_request('/account.php?lang=en');preg_match('/name="csrf" value="([^"]+)"/',$html,$cm);
+      money_request('/account.php',['csrf'=>$cm[1],'do'=>'login','mobile'=>'9000000077','password'=>$password],302);
+      $html=money_request('/support.php?lang=en');money_check(strpos($html,'SHOP-123')!==false && strpos($html,'Approved')!==false,'Customer sees decision and refund reference');
+    }finally{unlink($jar);$jar=$saved_jar;}
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
+    if ($tid) { $pdo->prepare('DELETE FROM support_resolution WHERE ticket_id=?')->execute([$tid]);$pdo->prepare('DELETE FROM support_tickets WHERE id=?')->execute([$tid]); }
+    if ($cid) $pdo->prepare('DELETE FROM customers WHERE id=?')->execute([$cid]);
     if ($billname) drop_photo($billname);
     if (is_file($billfile)) unlink($billfile);
     if ($oid) $pdo->prepare('DELETE FROM courier_tracking WHERE order_id=?')->execute([$oid]);
