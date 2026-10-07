@@ -44,7 +44,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
     if (!array_key_exists($weight,weight_extras())) $weight='0';
     $size = post('size','0');
     if (!array_key_exists($size,size_extras())) $size='0';
-    $qty     = (array)($_POST['q'] ?? []);
+    $qty     = $_POST['q'] ?? [];
+    $shown   = $_POST['shown_price'] ?? [];
+    $cart_error = '';
+    $current = array_column($items, null, 'id');
+    if (!is_array($qty) || !is_array($shown)) {
+        $cart_error = t('Check the quantities and try again.', 'गिनती जाँचकर दोबारा कोशिश कीजिए।'); $qty = [];
+    }
+    foreach ($qty as $item_id => $quantity) {
+        if (!is_scalar($quantity) || !preg_match('/^\d{1,2}$/', (string)$quantity) || (int)$quantity > 50) {
+            $cart_error = t('Choose a whole quantity from 0 to 50.', 'गिनती 0 से 50 तक पूरी संख्या में भरिए।'); break;
+        }
+        if ((int)$quantity === 0) continue;
+        if (!isset($current[$item_id])) {
+            $cart_error = t('A selected item is no longer available. Review the list before ordering again.', 'चुना हुआ सामान अब उपलब्ध नहीं है। सूची जाँचकर दोबारा ऑर्डर कीजिए।'); break;
+        }
+        if (!isset($shown[$item_id]) || !is_scalar($shown[$item_id]) || (string)$shown[$item_id] !== (string)(int)$current[$item_id]['price']) {
+            $cart_error = t('Item prices have changed. Review the updated prices and send the order again.', 'सामान के दाम बदल गए हैं। नए दाम जाँचकर ऑर्डर दोबारा भेजिए।'); break;
+        }
+    }
 
     // ---- kya-kya chuna gaya ----
     $lines = []; $maal = 0; $kg = 0;
@@ -62,7 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
     $minimum=kg_band($kg);
     if ($minimum === 'van' || ($weight !== 'van' && (int)$weight < (int)$minimum)) $weight=$minimum;
 
-    if (!$lines)                       { $err = 'कुछ चुना ही नहीं। जो चाहिए उसकी गिनती भर दीजिए।'; }
+    if ($cart_error)                   { $err = $cart_error; }
+    elseif (!$lines)                       { $err = 'कुछ चुना ही नहीं। जो चाहिए उसकी गिनती भर दीजिए।'; }
     elseif (mb_strlen($name) < 2)      { $err = 'अपना नाम लिखिए।'; }
     elseif (strlen($mobile) !== 10)    { $err = 'मोबाइल नंबर 10 अंकों का लिखिए।'; }
     elseif (!coverage_enabled($order_area=coverage_area($pdo,$village))) { $err=coverage_error(); }
@@ -189,7 +208,8 @@ include __DIR__ . '/inc/head.php';
             <div class="meta"><?= h($it['unit']) ?></div>
           </div>
           <div style="font-weight:800;flex:none">₹<?= (int)$it['price'] ?></div>
-          <input class="qn" type="number" name="q[<?= (int)$it['id'] ?>]" value="0" min="0" max="50"
+          <input type="hidden" name="shown_price[<?= (int)$it['id'] ?>]" value="<?= (int)$it['price'] ?>">
+          <input class="qn" type="number" name="q[<?= (int)$it['id'] ?>]" value="<?= h(is_scalar($_POST['q'][$it['id']] ?? null) ? min(50, max(0, (int)$_POST['q'][$it['id']])) : 0) ?>" min="0" max="50"
                  inputmode="numeric" data-p="<?= (int)$it['price'] ?>" data-kg="<?= h(unit_kg($it['unit'])) ?>"
                  style="width:62px;flex:none" aria-label="<?= h($it['name']) ?> की गिनती">
         </div>

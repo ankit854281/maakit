@@ -45,18 +45,28 @@ try {
     flow_check((bool)$village, 'Need a live village fixture');
     $aid=$pdo->prepare('SELECT id FROM villages WHERE name=?');$aid->execute([$village]);$areaid=(int)$aid->fetchColumn();
     $pdo->prepare('INSERT INTO service_area_shops(village_id,business_id) VALUES (?,?)')->execute([$areaid,$bid]);
+    $base_post = ['csrf'=>$m[1], 'do'=>'mangao', 'id'=>$bid, 'name'=>'Jaanch Customer',
+        'mobile'=>'9000000001', 'village'=>$village, 'pay'=>'nagad'];
+    foreach ([['q'=>[$iid=>2], 'shown_price'=>[$iid=>199]],
+              ['q'=>[$iid=>2,$sold=>1], 'shown_price'=>[$iid=>200,$sold=>50]],
+              ['q'=>[$iid=>51], 'shown_price'=>[$iid=>200]],
+              ['q'=>[$iid=>['bad']], 'shown_price'=>[$iid=>200]],
+              ['q'=>[$iid=>2]]] as $bad_cart) {
+        flow_request('/dukan-se.php?id='.$bid, array_merge($base_post,$bad_cart));
+        flow_check(count(dukan_orders($pdo,$bid))===0, 'Stale, unavailable or invalid cart must create no partial order');
+    }
     $html = flow_request('/dukan-se.php?id=' . $bid, ['csrf'=>$m[1], 'do'=>'mangao', 'id'=>$bid,
         'name'=>'Jaanch Customer', 'mobile'=>'9000000001', 'village'=>$village, 'pay'=>'nagad',
-        'price'=>1, 'market'=>'chauri', 'weight'=>'0', 'size'=>'15', 'q'=>[$iid=>2,$sold=>10]]);
+        'price'=>1, 'market'=>'chauri', 'weight'=>'0', 'size'=>'15', 'q'=>[$iid=>2], 'shown_price'=>[$iid=>200]]);
     $st = $pdo->prepare('SELECT * FROM orders WHERE business_id=? ORDER BY id DESC LIMIT 1');
     $st->execute([$bid]); $order = $st->fetch();
     flow_check($order && (int)$order['goods_amount'] === 400, 'Server price and stock must control the order');
     flow_check($order['market'] === 'chauri' && $order['weight_extra'] === '10' && $order['size_extra'] === '15' && (int)$order['delivery_charge'] === 25, 'Market, minimum weight and fragile surcharge must be honoured even on first order');
     flow_check($order['source'] === 'website' && $order['status'] === 'Naya' && $order['shop_status'] === 'naya', 'New order routing');
-    flow_check(count(json_decode($order['items_json'], true)) === 1, 'Sold-out item excluded even from tampered POST');
+    flow_check(count(json_decode($order['items_json'], true)) === 1, 'Only confirmed available items ordered');
     flow_check(count(dukan_orders($pdo, $bid)) === 1, 'Order reaches the correct shop panel');
     $html = flow_request('/dukan-se.php?id=' . $bid, ['csrf'=>$m[1], 'do'=>'mangao', 'id'=>$bid,
-        'name'=>'Jaanch Customer', 'mobile'=>'9000000002', 'village'=>$village, 'pay'=>'upi', 'q'=>[$iid=>1]]);
+        'name'=>'Jaanch Customer', 'mobile'=>'9000000002', 'village'=>$village, 'pay'=>'upi', 'q'=>[$iid=>1], 'shown_price'=>[$iid=>200]]);
     flow_check(strpos($html, 'UPI अभी नहीं') !== false && count(dukan_orders($pdo,$bid)) === 1, 'Missing shop UPI cannot be forged in POST');
     echo "Category → shop → goods → order integration passed\n";
 } finally {
