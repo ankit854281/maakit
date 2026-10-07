@@ -4,12 +4,12 @@ if (DB_NAME !== 'maakit_jaanch') throw new RuntimeException('Only the CI databas
 require_once __DIR__ . '/../../inc/fn.php';
 require_once __DIR__ . '/../../inc/earning.php';
 function money_check($ok,$message) { if (!$ok) throw new RuntimeException($message); }
-$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $today=date('Y-m-d');
+$jar=tempnam(sys_get_temp_dir(),'mk-money-'); $uid=0; $oid=0; $billfile=tempnam(sys_get_temp_dir(),'mk-bill-'); $billname=null; $today=date('Y-m-d');
 function money_request($path,$post=null,$status=200) {
     global $jar;
     $ch=curl_init('http://127.0.0.1:8099'.$path);
     curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_COOKIEJAR=>$jar,CURLOPT_COOKIEFILE=>$jar,CURLOPT_TIMEOUT=>20,CURLOPT_PROXY=>'']);
-    if ($post !== null) curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>http_build_query($post)]);
+    if ($post !== null) curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>(isset($post['bill']) && $post['bill'] instanceof CURLFile ? $post : http_build_query($post))]);
     $html=curl_exec($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);
     money_check($html !== false && $code===$status && !preg_match('/Fatal error|Warning:|Uncaught/',$html),'Money page failed: '.$path);
     return $html;
@@ -44,11 +44,19 @@ try {
     $pdo->prepare("UPDATE orders SET status='Assign' WHERE id=?")->execute([$oid]);
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Delivered','code'=>'1234'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Assign','Delivery requires pickup');
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Pickup'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Pickup','Pickup succeeds');
+    $image=imagecreatetruecolor(2,2);imagepng($image,$billfile);imagedestroy($image);
+    $billpost=['csrf'=>$m[1],'id'=>$oid,'status'=>'bill','amount'=>'250','bill'=>new CURLFile($billfile,'image/png','bill.png')];
+    foreach(['-1','1.5','1e3','1000001'] as $bad_amount){$billpost['amount']=$bad_amount;money_request('/delivery/',$billpost,302);}
+    $billstate=$pdo->prepare('SELECT goods_amount,bill_photo FROM orders WHERE id=?');$billstate->execute([$oid]);$row=$billstate->fetch();money_check(empty($row['bill_photo']),'Invalid bill amount cannot store photo');
+    $billpost['amount']='250';money_request('/delivery/',$billpost,302);$billstate->execute([$oid]);$row=$billstate->fetch();$billname=$row['bill_photo'];money_check((int)$row['goods_amount']===250 && !empty($billname),'Valid bill stores shop amount and photo');
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Delivered','code'=>'9999'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Pickup','Wrong delivery code rejected');
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Delivered','code'=>'1234'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Delivered','Correct code completes delivery');
     money_request('/delivery/',['csrf'=>$m[1],'id'=>$oid,'status'=>'Pickup'],302);$state->execute([$oid]);money_check($state->fetchColumn()==='Delivered','Completed order cannot regress to pickup');
+    $billpost['amount']='999';money_request('/delivery/',$billpost,302);$billstate->execute([$oid]);$row=$billstate->fetch();money_check((int)$row['goods_amount']===250 && $row['bill_photo']===$billname,'Completed order bill cannot change');
     echo "Authenticated daily cost entry and reporting checks passed\n";
 } finally {
+    if ($billname) drop_photo($billname);
+    if (is_file($billfile)) unlink($billfile);
     if ($oid) $pdo->prepare('DELETE FROM orders WHERE id=?')->execute([$oid]);
     if ($uid) {
         $pdo->prepare('DELETE FROM operating_costs WHERE updated_by=?')->execute([$uid]);
