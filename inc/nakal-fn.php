@@ -23,10 +23,25 @@ function nakal_banao(PDO $pdo, $dir) {
     $naam = 'maakit-' . date('ymd-His') . '.sql.gz';
     $path = $dir . '/' . $naam;
 
-    $gz = @gzopen($path, 'wb6');
-    if (!$gz) return [false, 'file nahi ban payi'];
-
-    $w = function ($s) use ($gz) { gzwrite($gz, $s); };
+    // Publish only a complete archive; simultaneous backups must not overwrite it.
+    $lock = @fopen($dir . '/.backup-lock', 'c');
+    if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { if ($lock) fclose($lock); return [false, 'nakal abhi ban rahi hai']; }
+    if (is_file($path)) { flock($lock, LOCK_UN); fclose($lock); return [false, 'ek second baad dobara kijiye']; }
+    $tmp = $path . '.part';
+    $gz = @gzopen($tmp, 'wb6');
+    if (!$gz) { flock($lock, LOCK_UN); fclose($lock); return [false, 'file nahi ban payi']; }
+    @chmod($tmp, 0640);
+    $snapshot = false;
+    try {
+    if ($pdo->inTransaction()) throw new RuntimeException('Backup requires its own snapshot');
+    $pdo->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+    $pdo->exec('START TRANSACTION WITH CONSISTENT SNAPSHOT');
+    $snapshot = true;
+    $w = function ($s) use ($gz) {
+        $offset=0; $length=strlen($s);
+        while ($offset<$length) { $n=gzwrite($gz,substr($s,$offset)); if (!$n) throw new RuntimeException('Backup write failed'); $offset+=$n; }
+    };
+    $ident = fn($name) => '`' . str_replace('`', '``', $name) . '`';
 
     $w("-- Maakit database ki nakal\n-- " . date('d/m/Y H:i') . "\n");
     $w("-- Wapas daalne ka tarika: phpMyAdmin > Import > yahi file\n\n");
@@ -39,32 +54,43 @@ function nakal_banao(PDO $pdo, $dir) {
 
     $ginti = 0;
     foreach ($tables as $t) {
-        $cr = $pdo->query("SHOW CREATE TABLE `$t`")->fetch(PDO::FETCH_NUM);
+        $table = $ident($t);
+        $cr = $pdo->query("SHOW CREATE TABLE $table")->fetch(PDO::FETCH_NUM);
         if (empty($cr[1])) { continue; }                 // bana hi nahi to chhod dijiye
-        $w("DROP TABLE IF EXISTS `$t`;\n" . $cr[1] . ";\n\n");
+        $w("DROP TABLE IF EXISTS $table;\n" . $cr[1] . ";\n\n");
 
         // thode-thode karke — taaki badi table par memory na bhare
-        $n = (int)($pdo->query("SELECT COUNT(*) FROM `$t`")->fetch(PDO::FETCH_NUM)[0] ?? 0);
+        $n = (int)($pdo->query("SELECT COUNT(*) FROM $table")->fetch(PDO::FETCH_NUM)[0] ?? 0);
         $ginti += $n;
         for ($off = 0; $off < $n; $off += 500) {
-            $rows = $pdo->query("SELECT * FROM `$t` LIMIT 500 OFFSET $off")->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $pdo->query("SELECT * FROM $table LIMIT 500 OFFSET $off")->fetchAll(PDO::FETCH_ASSOC);
             if (!$rows) break;
             foreach ($rows as $row) {
                 $vals = [];
                 foreach ($row as $v) {
                     $vals[] = ($v === null) ? 'NULL' : $pdo->quote((string)$v);
                 }
-                $w("INSERT INTO `$t` VALUES (" . implode(',', $vals) . ");\n");
+                $w("INSERT INTO $table VALUES (" . implode(',', $vals) . ");\n");
             }
         }
         $w("\n");
     }
 
     $w("SET FOREIGN_KEY_CHECKS=1;\n");
-    gzclose($gz);
+    if (!gzclose($gz)) throw new RuntimeException('Backup close failed');
+    $gz = null;
+    $pdo->commit(); $snapshot = false;
+    if (!@rename($tmp,$path)) throw new RuntimeException('Backup publish failed');
     @chmod($path, 0640);
 
     return [true, ['naam' => $naam, 'naap' => filesize($path), 'tables' => count($tables), 'rows' => $ginti]];
+    } catch (Throwable $e) {
+        if ($snapshot && $pdo->inTransaction()) $pdo->rollBack();
+        if (is_resource($gz)) gzclose($gz);
+        @unlink($tmp);
+        error_log('Maakit backup failed: '.$e->getMessage());
+        return [false, 'nakal poori nahi bani; dobara kijiye'];
+    } finally { flock($lock, LOCK_UN); fclose($lock); }
 }
 
 function nakal_saaf($dir, $rakho) {
