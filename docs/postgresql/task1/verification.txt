@@ -1,0 +1,52 @@
+PASS Fresh migration executes
+PASS Overlapping commission policy rejected
+PASS B2B offer rejected from B2C cart
+PASS Cross-store cart rejected
+PASS Cart fulfillment identity immutable
+PASS Hyperlocal-only offer rejected from courier cart
+PASS Minimum order enforced
+PASS High RTO COD rejected
+PASS Stock reserved atomically
+PASS Checkout retry idempotent
+PASS Idempotency conflict rejected
+PASS Reservation retry does not double-reserve
+PASS Order price snapshot tampering rejected
+PASS Repriced cart invalidates old delivery quote
+PASS Insufficient available stock rejected
+PASS Failed checkout rolls back order and stock
+PASS Cancellation releases stock
+PASS Dispatch consumes reserved stock once
+PASS Delivery without verified OTP rejected
+PASS Unassigned rider cannot verify delivery
+PASS Wrong OTP consumes an attempt
+PASS Failed OTP attempt persists
+PASS Assigned rider correct OTP verifies
+PASS Unbalanced journal rejected
+PASS Posted ledger immutable
+PASS Uncollected order cannot become payable
+PASS Payable snapshot immutable
+PASS Immutable payable accepts reconciled append-only adjustment
+PASS Pending KYC blocks payout while catalog remains usable
+PASS Payout includes posted entitlement adjustments
+PASS Payout retry idempotent
+PASS Payable cannot be allocated twice
+PASS Payout success without settlement ledger rejected
+PASS Verified payout settlement reconciles to vendor liability debit
+PASS Successful payout cannot be retried
+PASS Refund above capture rejected
+PASS Non-v4 primary key rejected
+PASS Overlapping provider slots rejected
+PASS Double-booked service slot rejected
+PASS Service confirmation requires accepted price
+PASS Accepted service quote immutable
+PASS Service booking supports common payment tables
+PASS B2C item rejected from RFQ
+PASS Customer A cannot read customer B order (RLS/IDOR)
+PASS Reader cannot read delivery OTP secrets
+PASS Reader cannot read credentials
+PASS Reader cannot mutate order state
+PASS Admin role alone does not grant finance access
+PASS Explicit finance permission authorizes finance read
+PASS Every table ID uses UUID-v4 domain
+PASS Every foreign key has a usable leading-column index
+SUCCESS: 51 checks passed
