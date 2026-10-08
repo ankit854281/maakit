@@ -68,7 +68,7 @@ const assert = require('node:assert/strict');
     assert(await page.locator('.request-cart-row').first().isVisible(),'Cart summary opens selected items');
     const edit=page.locator('.request-cart-edit').first();
     const formData=await edit.evaluate(form=>Object.fromEntries(new FormData(form)));
-    await page.request.post(page.url(),{form:{...formData,qty:'0',request_action:'update'}});
+    await page.request.post(page.url(),{maxRedirects:0,form:{...formData,qty:'0',request_action:'update'}});
     await page.reload();
     assert.equal(await page.locator('.request-cart-edit [name="qty"]').first().inputValue(),'2','Server rejects zero quantity');
 
