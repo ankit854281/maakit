@@ -24,6 +24,103 @@
       }
     ]
   },
+  "2": {
+    "name_en": "Aashirvaad Multigrains Atta (reference example)",
+    "name_hi": "आशीर्वाद मल्टीग्रेन आटा (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/284420/aashirvaad-multigrains-atta-5-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "5 kg",
+        "price": 286.74
+      },
+      {
+        "unit": "10 kg",
+        "price": 549
+      },
+      {
+        "unit": "1 kg",
+        "price": 77
+      }
+    ]
+  },
+  "5": {
+    "name_en": "Aashirvaad Besan (reference example)",
+    "name_hi": "आशीर्वाद बेसन (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40365307/aashirvaad-besan-500-g-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "500 g pouch",
+        "price": 78.4
+      },
+      {
+        "unit": "1 kg pouch",
+        "price": 155.82
+      }
+    ]
+  },
+  "21": {
+    "name_en": "Tata Sampann Unpolished Toor Dal (reference example)",
+    "name_hi": "टाटा संपन्न बिना पॉलिश की अरहर दाल (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40000291/tata-sampann-unpolished-toor-dalarhar-dal-1-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 kg pouch",
+        "price": 171
+      },
+      {
+        "unit": "2 kg",
+        "price": 324
+      },
+      {
+        "unit": "500 g pouch",
+        "price": 88
+      },
+      {
+        "unit": "5 kg",
+        "price": 945.25
+      }
+    ]
+  },
+  "23": {
+    "name_en": "Tata Sampann Organic Unpolished Moong Dal (reference example)",
+    "name_hi": "टाटा संपन्न ऑर्गेनिक बिना पॉलिश की मूँग दाल (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40156317/tata-sampann-organic-moong-dal-500-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "500 g",
+        "price": 126.35
+      },
+      {
+        "unit": "1 kg",
+        "price": 220.59
+      }
+    ]
+  },
+  "25": {
+    "name_en": "Tata Sampann Unpolished Chana Dal (reference example)",
+    "name_hi": "टाटा संपन्न बिना पॉलिश की चना दाल (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40000290/tata-sampann-unpolished-chana-dal-1-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 kg",
+        "price": 124
+      },
+      {
+        "unit": "500 g pouch",
+        "price": 74
+      }
+    ]
+  },
   "31": {
     "name_en": "Fortune Premium Kachi Ghani Mustard Oil (reference example)",
     "name_hi": "फॉर्च्यून प्रीमियम कच्ची घानी सरसों तेल (संदर्भ उदाहरण)",
@@ -59,6 +156,48 @@
       {
         "unit": "1 kg pouch",
         "price": 186
+      }
+    ]
+  },
+  "41": {
+    "name_en": "Aashirvaad Turmeric Powder (reference example)",
+    "name_hi": "आशीर्वाद हल्दी पाउडर (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/100532774/aashirvaad-turmeric-powder-200-g/?nc=sis-prod-list&t_pos_item=2&t_pos_sec=1&t_s=Turmeric%2520Powder%252FArisina%2520Pudi",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "200 g",
+        "price": 72
+      },
+      {
+        "unit": "100 g",
+        "price": 30.6
+      },
+      {
+        "unit": "500 g",
+        "price": 191.25
+      }
+    ]
+  },
+  "43": {
+    "name_en": "Aashirvaad Coriander Powder (reference example)",
+    "name_hi": "आशीर्वाद धनिया पाउडर (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40001313/aashirvaad-powder-coriander-100-g-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 34
+      },
+      {
+        "unit": "200 g",
+        "price": 61.64
+      },
+      {
+        "unit": "500 g",
+        "price": 154.1
       }
     ]
   },
@@ -502,6 +641,44 @@
       {
         "unit": "10 kg",
         "price": 546
+      }
+    ]
+  },
+  "1518": {
+    "name_en": "Aashirvaad Multigrains Atta",
+    "name_hi": "आशीर्वाद मल्टीग्रेन आटा",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/284420/aashirvaad-multigrains-atta-5-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "5 kg",
+        "price": 286.74
+      },
+      {
+        "unit": "10 kg",
+        "price": 549
+      },
+      {
+        "unit": "1 kg",
+        "price": 77
+      }
+    ]
+  },
+  "1519": {
+    "name_en": "Aashirvaad Besan",
+    "name_hi": "आशीर्वाद बेसन",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40365307/aashirvaad-besan-500-g-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "500 g pouch",
+        "price": 78.4
+      },
+      {
+        "unit": "1 kg pouch",
+        "price": 155.82
       }
     ]
   },
@@ -1019,6 +1196,35 @@
       {
         "unit": "1 kg",
         "price": 125
+      }
+    ]
+  },
+  "1676": {
+    "name_en": "Britannia Good Day Rich Cashew Cookies",
+    "name_hi": "ब्रिटानिया गुड डे रिच काजू कुकीज़",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/263526/britannia-good-day-cashew-cookies-200-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "200 g",
+        "price": 32.58
+      },
+      {
+        "unit": "34.5 g",
+        "price": 4.5
+      },
+      {
+        "unit": "60.1 g",
+        "price": 10
+      },
+      {
+        "unit": "82.7 g",
+        "price": 20
+      },
+      {
+        "unit": "250 g",
+        "price": 54
       }
     ]
   },

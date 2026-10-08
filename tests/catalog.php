@@ -45,12 +45,16 @@ check(count(catalog_shops($pdo, 'Hardware Shop')) === 1, 'Exact shop type associ
 check(catalog_shops($pdo, 'Unknown') === [], 'Do not guess unrelated shops');
 check(catalog_shops($pdo, '') === [], 'Empty category has no shop query');
 $references=json_decode(file_get_contents(__DIR__.'/../inc/catalog-reference-prices.json'),true,512,JSON_THROW_ON_ERROR);
-check(count($references)===51,'51 catalogue entries have explicit retail references');
+check(count($references)===61,'61 catalogue entries have explicit retail references');
 $unique_packs=[];
 foreach ($references as $reference) foreach ($reference['packs'] as $pack) $unique_packs[$reference['url'].'|'.$pack['unit'].'|'.$pack['price']]=true;
-check(count($unique_packs)===87,'87 unique sourced pack prices; shared examples are not double counted');
+check(count($unique_packs)===111,'111 unique sourced pack prices; shared examples are not double counted');
 check(str_contains($references[1]['name_en'],'reference example'),'Generic atta labels the specific brand example');
 check($references[1]['packs']===$references[1517]['packs'],'Generic reference carries the exact source packs, not guessed generic prices');
+check($references[21]['packs'][0]===['unit'=>'1 kg pouch','price'=>171],'Toor dal keeps the observed brand pack and price');
+check(str_contains($references[23]['name_en'],'Organic'),'Organic moong is not labelled as ordinary loose dal');
+check($references[2]['packs']===$references[1518]['packs'],'Shared multigrain example does not create new prices');
+check(!isset($references[42]) && !isset($references[22]),'Conflicting chilli and stale masoor listings remain unpriced');
 foreach ($references as $id=>$reference) {
     check(preg_match('~^https://www\\.bigbasket\\.com/(pd|pb)/~',$reference['url'])===1,'Retail source link');
     check(!empty($reference['name_en']) && !empty($reference['name_hi']),'Specific product variant labels');
