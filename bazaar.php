@@ -23,6 +23,13 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && csrf_ok()) {
             }
         }
     } elseif($action==='remove') {unset($cart[post('request_key')]);}
+    elseif($action==='update') {
+        $key=post('request_key');$qty=post('qty');
+        if(isset($cart[$key]) && is_array($cart[$key]) && ctype_digit($qty) && (int)$qty>=1 && (int)$qty<=99) {
+            $cart[$key]['qty']=(int)$qty;
+            $_SESSION['request_cart_notice']=t('Quantity saved.','मात्रा बदल गई।');
+        } else $_SESSION['request_cart_notice']=t('Enter a quantity from 1 to 99 and try again.','मात्रा 1 से 99 के बीच भरकर फिर कोशिश कीजिए।');
+    }
     elseif($action==='clear') {$cart=[];}
     $_SESSION['catalogue_request_cart']=$cart;
     $filter=[];foreach(['group','type','sub','q','p'] as $key) $filter[$key]=bazaar_get($key);
@@ -91,18 +98,26 @@ include __DIR__ . '/inc/head.php';
   <p class="help"><?= t('Choose a product and send a request. Maakit checks suitable shops and confirms price and delivery time with you. Delivery is charged separately.', 'सामान चुनकर माँग भेजिए। Maakit उपयुक्त दुकान से पता करके दाम और डिलीवरी समय आपसे पक्का करेगा। डिलीवरी चार्ज अलग है।') ?></p>
   <div class="request-steps" aria-label="<?= h(t('How requests work','माँग कैसे पूरी होती है')) ?>"><span><b>1</b><?= t('Choose products','सामान चुनिए') ?></span><span><b>2</b><?= t('Send request','माँग भेजिए') ?></span><span><b>3</b><?= t('Confirm prices','दाम पक्का कीजिए') ?></span></div>
   <?php if($request_cart): ?><div class="box catalogue-request-cart">
-    <details><summary><?= t('Your request cart','आपकी माँग की लिस्ट') ?> · <?= count($request_cart) ?></summary>
+    <?php if(isset($_SESSION['request_cart_notice'])): ?><p role="status"><?= h($_SESSION['request_cart_notice']) ?></p><?php endif; ?>
+    <details<?= isset($_SESSION['request_cart_notice']) ? ' open' : '' ?>><summary><?= t('Your request cart','आपकी माँग की लिस्ट') ?> · <?= count($request_cart) ?></summary>
     <?php foreach($request_cart as $key=>$row): ?>
       <div class="request-cart-row">
         <span><?= h($row['name']) ?> · <?= (int)$row['qty'] ?> × <?= h($row['pack']) ?><?= $row['urgent']?' · '.t('Urgent','जल्दी चाहिए'):'' ?></span>
-        <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_action" value="remove"><input type="hidden" name="request_key" value="<?= h($key) ?>"><button class="btn btn-sm" type="submit"><?= t('Remove','हटाइए') ?></button></form>
+        <form method="post" class="request-cart-edit">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_key" value="<?= h($key) ?>">
+          <label for="cart-qty-<?= h($key) ?>"><?= t('Quantity','मात्रा') ?></label>
+          <input id="cart-qty-<?= h($key) ?>" type="number" inputmode="numeric" name="qty" value="<?= (int)$row['qty'] ?>" min="1" max="99" required>
+          <button class="btn btn-sm" type="submit" name="request_action" value="update"><?= t('Save quantity','मात्रा बदलिए') ?></button>
+          <button class="btn btn-sm" type="submit" name="request_action" value="remove" formnovalidate><?= t('Remove','हटाइए') ?></button>
+        </form>
+
       </div>
     <?php endforeach; ?>
     </details>
     <p class="help"><?= t('You can add products from other categories. Final prices come from the team after checking shops.','दूसरी categories से भी सामान जोड़ सकते हैं। टीम दुकानों से पता करके अंतिम दाम बताएगी।') ?></p>
     <div class="request-cart-actions"><a class="btn btn-brand" href="/order.php?request_cart=1&amp;lang=<?= h(t('en','hi')) ?>#pata"><?= t('Send this request','यह माँग भेजिए') ?></a>
     <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_action" value="clear"><button class="btn btn-sm" type="submit"><?= t('Clear list','लिस्ट खाली कीजिए') ?></button></form></div>
-  </div><?php endif; ?>
+  </div><?php endif; unset($_SESSION['request_cart_notice']); ?>
   <form class="searchbox bazaar-find" action="/bazaar.php" method="get">
     <?php foreach (['group' => $group, 'type' => $type] as $k => $v): if ($v !== ''): ?>
       <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
