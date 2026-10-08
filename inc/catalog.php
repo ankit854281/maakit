@@ -33,7 +33,7 @@ function catalog_label($type, $fallback = '') {
 function catalog_sub_label($name) {
     $hi = [
         'Atta & Flour'=>'आटा और बेसन', 'Rice'=>'चावल', 'Pulses'=>'दालें',
-        'Spices'=>'मसाले', 'Edible Oil'=>'खाने का तेल', 'Beverages'=>'पेय पदार्थ',
+        'Spices'=>'मसाले', 'Salt & Sugar'=>'नमक, चीनी और गुड़', 'Oral Care'=>'दाँत और मुँह की देखभाल', 'Edible Oil'=>'खाने का तेल', 'Beverages'=>'पेय पदार्थ',
         'Breakfast & Spreads'=>'नाश्ता और स्प्रेड', 'Snacks & Packaged Food'=>'नमकीन और पैक खाना',
         'Vegetables'=>'सब्जियाँ', 'Fruits'=>'फल', 'Leafy & Herbs'=>'हरी पत्तेदार सब्जियाँ',
         'Milk & Milk Products'=>'दूध और दूध का सामान', 'Bread & Buns'=>'ब्रेड और बन',
@@ -70,6 +70,32 @@ function catalog_sub_label($name) {
 function catalog_url(array $params = []) {
     $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
     return '/bazaar.php' . ($params ? '?' . http_build_query($params) : '');
+}
+
+// Confirmation prompts, never an assertion of available variants or compatibility.
+function catalog_variant_hint(array $item) {
+    if (!empty($item['is_sewa'])) return '';
+    switch ($item['shop_type']) {
+        case 'Mobile Store':
+            return t('Confirm exact phone model, connector and compatibility with the shop.', 'दुकान से फोन का पूरा मॉडल, कनेक्टर और अनुकूलता पक्की करें।');
+        case 'Clothing / Garments Shop':
+            return t('Confirm size/measurements, colour and fabric with the shop.', 'दुकान से साइज़/नाप, रंग और कपड़े का प्रकार पक्का करें।');
+        case 'Footwear Shop':
+            return t('Confirm shoe size and size system, colour and material.', 'जूते का साइज़ और साइज़ प्रणाली, रंग और सामग्री पक्की करें।');
+        case 'Baby Store':
+            return t('Confirm size, product variant and pieces per pack from the label.', 'लेबल से साइज़, उत्पाद का प्रकार और पैक में पीस पक्के करें।');
+        case 'Electrical Store':
+            return t('Confirm wattage/rating, fitting, wire cross-section and length as applicable.', 'सामान के अनुसार वाट/रेटिंग, फिटिंग, तार का वर्ग मिमी और लंबाई पक्की करें।');
+        case 'Hardware Shop':
+            return t('Confirm dimensions, material and quantity with the shop.', 'दुकान से नाप, सामग्री और मात्रा पक्की करें।');
+        case 'Plumbing Store': case 'Pipe & Fittings Shop': case 'Sanitaryware Shop':
+            return t('Confirm diameter, material, pressure grade and pipe length as applicable.', 'सामान के अनुसार व्यास, सामग्री, प्रेशर ग्रेड और पाइप की लंबाई पक्की करें।');
+        case 'Agriculture Store':
+            return t('Confirm seed variety or fertiliser grade, pack weight and expiry from the label.', 'लेबल से बीज की किस्म या खाद का ग्रेड, पैक वजन और समाप्ति तारीख पक्की करें।');
+        case 'Auto Spare Parts Shop':
+            return t('Confirm vehicle make, model, year, variant and matching part number.', 'गाड़ी का ब्रांड, मॉडल, साल, वेरिएंट और सही पार्ट नंबर पक्का करें।');
+        default: return '';
+    }
 }
 
 function catalog_load(PDO $pdo) {
