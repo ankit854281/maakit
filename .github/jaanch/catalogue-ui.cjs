@@ -22,11 +22,11 @@ const assert = require('node:assert/strict');
     await page.setViewportSize({width:390,height:844});
     await page.goto('http://127.0.0.1:8099/register-business.php?lang=hi');
     const picker=page.locator('[data-category-picker]');
-    for (const word of ['paint','पेंट','asian']) {
+    for (const word of ['paint','पेंट','rang']) {
       await picker.locator('input').fill(word);
       assert(await picker.locator('select option[value="Paint Store"]').count()===1,'Category search: '+word);
     }
-    await picker.locator('select').selectOption('Paint Store');
+    await picker.locator('.category-matches button').filter({hasText:'Paint Store'}).click();
     await picker.locator('.category-preview').waitFor({state:'visible'});
     assert((await picker.locator('.category-preview').textContent()).includes('एशियन'),'Paint category previews brand products');
     await picker.locator('input').fill('zznonexistent');

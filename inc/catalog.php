@@ -134,5 +134,5 @@ function catalog_shops(PDO $pdo, $type, $area = null) {
 }
 
 function catalog_picker_aliases($type) {
-    return ['Grocery / Kirana Store'=>'kirana rashan ration', 'Paint Store'=>'paint pent rang brush asian berger nerolac dulux रंग ब्रश एशियन', 'Medical Store'=>'dawa dawai dava', 'Mobile Store'=>'mobile phone', 'Sweet Shop'=>'mithai nashta nasta', 'Hardware Shop'=>'hardware aujar tools'][$type] ?? '';
+    return ['Grocery / Kirana Store'=>'kirana rashan ration', 'Paint Store'=>'paint pent rang brush shop रंग ब्रश', 'Medical Store'=>'dawa dawai dava', 'Mobile Store'=>'mobile phone', 'Sweet Shop'=>'mithai nashta nasta', 'Hardware Shop'=>'hardware aujar tools'][$type] ?? '';
 }

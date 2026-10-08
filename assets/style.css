@@ -176,3 +176,7 @@ th{background:var(--brand);color:#fff;font-weight:600;font-size:14px}
 .catalog-picker select{width:100%;max-width:100%}
 .category-preview{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:12px;overflow-wrap:anywhere;font-size:14px}
 @media(min-width:800px){.discovery-product{flex-basis:180px}.shop-category-rail a{flex-basis:160px}}
+
+.category-matches button{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;padding:12px;min-height:50px;margin-top:6px;cursor:pointer;overflow-wrap:anywhere}
+
+.discovery-picture img{width:100%;height:100%;object-fit:contain;border-radius:10px}

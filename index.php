@@ -53,7 +53,7 @@ try {
 } catch (Throwable $e) { $banners = []; }
 
 // Discovery templates stay visible even before a shop publishes a price.
-$discovery = [];
+$discovery = []; $discovery_offers = [];
 try {
     $cs = $pdo->prepare('SELECT * FROM catalog_items WHERE shop_type=? ORDER BY sort_no,id LIMIT 6');
     foreach (['Sweet Shop','Grocery / Kirana Store','Paint Store','Mobile Store'] as $kind) {
@@ -61,6 +61,9 @@ try {
         $rows = $cs->fetchAll();
         if ($rows) $discovery[$kind] = $rows;
     }
+    $ids=[];
+    foreach ($discovery as $rows) foreach ($rows as $row) $ids[]=(int)$row['id'];
+    $discovery_offers=catalog_offers($pdo,$ids,coverage_selected($pdo));
 } catch (PDOException $e) { error_log('Maakit home catalogue: '.$e->getMessage()); }
 
 // ---------- home page ki sewayein ----------
@@ -175,11 +178,17 @@ include __DIR__ . '/inc/head.php';
       </div>
       <p class="help"><?= t('Explore products. Each shop confirms its price, pack and availability.', 'सामान देखिए। दाम, पैक और उपलब्धता दुकान से पक्के होंगे।') ?></p>
       <div class="product-discovery-rail" aria-label="<?= h(catalog_label($kind)) ?>">
-        <?php foreach ($products as $product): ?>
+        <?php foreach ($products as $product):
+          $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
+          $offer=$offers[0] ?? null; ?>
           <a class="discovery-product" href="<?= h(catalog_url(['type'=>$kind,'q'=>$product['name_en']])) ?>">
-            <span class="discovery-picture"><?= prod_icon($product['name_en'],'',38) ?></span>
+            <span class="discovery-picture"><?php if ($offer && $offer['photo']): ?><img src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php else: ?><?= prod_icon($product['name_en'],'',38) ?><?php endif; ?></span>
             <b><?= h(t($product['name_en'],$product['name_hi'] ?: $product['name_en'])) ?></b>
-            <span class="meta"><?= h($product['unit_hint']) ?></span>
+            <?php if ($offer): ?>
+              <span class="meta">₹<?= (int)$offer['price'] ?> · <?= h($offer['unit']) ?><br><?= h($offer['shop_name']) ?></span>
+            <?php else: ?>
+              <span class="meta"><?= t('Price to be confirmed', 'दाम पूछकर पक्के होंगे') ?></span>
+            <?php endif; ?>
             <span class="discovery-action"><?= t('View & request', 'देखिए और मँगाइए') ?></span>
           </a>
         <?php endforeach; ?>

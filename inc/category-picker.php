@@ -19,6 +19,7 @@ function catalog_picker(PDO $pdo, $selected = '', $required = false) {
     <div class="catalog-picker" data-category-picker>
       <label for="<?= h($id) ?>-search"><?= t('Find your shop category', 'अपनी दुकान की category खोजिए') ?></label>
       <input id="<?= h($id) ?>-search" type="search" class="category-query" autocomplete="off" placeholder="<?= h(t('Try paint, kirana, mobile…', 'जैसे paint, पेंट, kirana, मोबाइल…')) ?>" aria-controls="<?= h($id) ?>">
+      <div class="category-matches" hidden aria-label="<?= h(t('Matching categories', 'मिलती categories')) ?>"></div>
       <label for="<?= h($id) ?>"><?= t('Choose the matching category', 'सही category चुनिए') ?></label>
       <select id="<?= h($id) ?>" name="shop_type" <?= $required ? 'required' : '' ?>>
         <option value=""><?= t('Choose a category', 'category चुनिए') ?></option>
