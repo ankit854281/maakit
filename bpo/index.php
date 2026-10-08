@@ -6,6 +6,7 @@ require_once __DIR__ . '/../inc/order-quotes.php';
 require_once __DIR__ . '/../inc/dispatch.php';
 require_once __DIR__ . '/../inc/icons.php';
 $u = need_role(['bpo', 'admin']);
+$request_design=true;
 $page_title = 'आज के ऑर्डर — Maakit';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
@@ -140,12 +141,12 @@ include __DIR__ . '/../inc/panel.php';
           <button class="btn btn-brand btn-sm">दीजिए</button>
         </form><?php endif;?>
         <?php if($quotes[$o['id']]): $quote=$quotes[$o['id']]; ?>
-          <div class="box" style="width:100%">
+          <div class="box staff-quote" style="width:100%">
             <h3><?= t('Customer price approval','ग्राहक से दाम की पुष्टि') ?></h3>
             <p><?= h(['draft'=>t('Checking shops','दुकानों से पता कर रहे हैं'),'ready'=>t('Waiting for customer','ग्राहक की पुष्टि बाकी'),'accepted'=>t('Customer accepted','ग्राहक ने स्वीकार किया'),'rejected'=>t('Customer requested changes','ग्राहक बदलाव चाहता है')][$quote['state']]??$quote['state']) ?></p>
             <?= dak_btn($o['mobile'],t('Please check and confirm the goods and delivery price: ','सामान और डिलीवरी का दाम देखकर पुष्टि कीजिए: ').dak_link($o['order_no'],$o['mobile']),t('Send approval link','पुष्टि का लिंक भेजिए')) ?>
             <?php if(in_array($o['status'],['Naya','Confirm'],true)): ?>
-              <form method="post" style="display:grid;gap:8px">
+              <form method="post" class="staff-quote-form">
                 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="quote"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
                 <label><?= t('Goods total ₹','सामान का कुल दाम ₹') ?><input name="goods_amount" type="number" min="0" max="1000000" required value="<?= h($quote['goods_amount']) ?>"></label>
                 <label><?= t('Delivery ₹','डिलीवरी ₹') ?><input name="delivery_charge" type="number" min="0" max="1000000" required value="<?= h($quote['delivery_charge']??$o['delivery_charge']) ?>"></label>

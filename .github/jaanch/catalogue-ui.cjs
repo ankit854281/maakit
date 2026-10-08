@@ -59,6 +59,9 @@ const assert = require('node:assert/strict');
     await request.locator('[name="urgent"]').check();
     await request.getByRole('button',{name:'Add to request cart'}).click();
     await page.locator('.catalogue-request-cart').waitFor();
+    await page.locator('.catalogue-request-cart summary').click();
+    assert(await page.locator('.request-cart-row').first().isVisible(),'Cart summary opens selected items');
+    await page.screenshot({path:'/tmp/catalogue-cart-polished.png',fullPage:true});
     await page.goto('http://127.0.0.1:8099/bazaar.php?type=Hardware%20Shop&q=Hammer&lang=en');
     await page.locator('.catalogue-request').first().getByRole('button',{name:'Add to request cart'}).click();
     assert((await page.locator('.catalogue-request-cart').textContent()).includes('Tata Salt'),'Cart survives category changes');
@@ -76,6 +79,14 @@ const assert = require('node:assert/strict');
     await page.locator('.order-quote').waitFor();
     assert(await page.getByRole('button',{name:'Accept these prices'}).isVisible(),'Customer approval controls visible');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Quote fits mobile');
+    const contrast=await page.getByRole('button',{name:'Request changes'}).evaluate(el=>{
+      const css=getComputedStyle(el),lum=color=>{
+        const rgb=color.match(/[0-9.]+/g).slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
+        return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];
+      };
+      const a=lum(css.color),b=lum(css.backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+    });
+    assert(contrast>=4.5,'Change-request text must be readable on its button background');
     await page.screenshot({path:'/tmp/catalogue-quote-mobile.png',fullPage:true});
     assert.deepEqual(errors,[],'No browser script errors');
     console.log('Catalogue mobile layout, category search/preview and product navigation passed');

@@ -68,6 +68,7 @@ if ($type !== '') {
     try { $local_shops = catalog_shops($pdo, $type,$area); }
     catch (PDOException $e) { $shops_ready = false; error_log('Maakit category shops: ' . $e->getMessage()); }
 }
+$request_design=true;
 $page_title = t('Shop categories & prices — Maakit', 'दुकान की categories और दाम — Maakit');
 $tab = 'order';
 include __DIR__ . '/inc/head.php';
@@ -85,20 +86,22 @@ include __DIR__ . '/inc/head.php';
 .bazaar-find{margin-top:14px}
 </style>
 <section><div class="wrap">
-  <h1><?= t('Shop → products → prices', 'दुकान → सामान → दाम') ?></h1>
+  <h1><?= t('Find products', 'सामान खोजिए') ?></h1>
   <p class="lead"><?= t('Choose a shop type, then see its products and local shop prices.', 'दुकान का प्रकार चुनिए, फिर उसका सामान और स्थानीय दुकान के दाम देखिए।') ?></p>
   <p class="help"><?= t('Choose a product and send a request. Maakit checks suitable shops and confirms price and delivery time with you. Delivery is charged separately.', 'सामान चुनकर माँग भेजिए। Maakit उपयुक्त दुकान से पता करके दाम और डिलीवरी समय आपसे पक्का करेगा। डिलीवरी चार्ज अलग है।') ?></p>
+  <div class="request-steps" aria-label="<?= h(t('How requests work','माँग कैसे पूरी होती है')) ?>"><span><b>1</b><?= t('Choose products','सामान चुनिए') ?></span><span><b>2</b><?= t('Send request','माँग भेजिए') ?></span><span><b>3</b><?= t('Confirm prices','दाम पक्का कीजिए') ?></span></div>
   <?php if($request_cart): ?><div class="box catalogue-request-cart">
-    <h2><?= t('Your request cart','आपकी माँग की लिस्ट') ?> · <?= count($request_cart) ?></h2>
+    <details><summary><?= t('Your request cart','आपकी माँग की लिस्ट') ?> · <?= count($request_cart) ?></summary>
     <?php foreach($request_cart as $key=>$row): ?>
-      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0">
+      <div class="request-cart-row">
         <span><?= h($row['name']) ?> · <?= (int)$row['qty'] ?> × <?= h($row['pack']) ?><?= $row['urgent']?' · '.t('Urgent','जल्दी चाहिए'):'' ?></span>
         <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_action" value="remove"><input type="hidden" name="request_key" value="<?= h($key) ?>"><button class="btn btn-sm" type="submit"><?= t('Remove','हटाइए') ?></button></form>
       </div>
     <?php endforeach; ?>
+    </details>
     <p class="help"><?= t('You can add products from other categories. Final prices come from the team after checking shops.','दूसरी categories से भी सामान जोड़ सकते हैं। टीम दुकानों से पता करके अंतिम दाम बताएगी।') ?></p>
-    <a class="btn btn-brand" href="/order.php?request_cart=1&amp;lang=<?= h(t('en','hi')) ?>#pata"><?= t('Send this request','यह माँग भेजिए') ?></a>
-    <form method="post" style="margin-top:8px"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_action" value="clear"><button class="btn btn-sm" type="submit"><?= t('Clear list','लिस्ट खाली कीजिए') ?></button></form>
+    <div class="request-cart-actions"><a class="btn btn-brand" href="/order.php?request_cart=1&amp;lang=<?= h(t('en','hi')) ?>#pata"><?= t('Send this request','यह माँग भेजिए') ?></a>
+    <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_action" value="clear"><button class="btn btn-sm" type="submit"><?= t('Clear list','लिस्ट खाली कीजिए') ?></button></form></div>
   </div><?php endif; ?>
   <form class="searchbox bazaar-find" action="/bazaar.php" method="get">
     <?php foreach (['group' => $group, 'type' => $type] as $k => $v): if ($v !== ''): ?>

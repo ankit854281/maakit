@@ -79,10 +79,11 @@ if (!$no_tabbar && !$no_ticker) {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="stylesheet" href="/assets/app.css">
+<?php if(!empty($request_design)): ?><link rel="stylesheet" href="/assets/request-design.css?v=<?= (int)filemtime(__DIR__.'/../assets/request-design.css') ?>"><?php endif; ?>
 <!-- photo bhejne se pehle chhoti kar deta hai — dheeme net ke liye -->
 <script src="/assets/shrink.js?v=<?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '1' ?>" defer></script>
 </head>
-<body<?= $no_tabbar ? '' : ' class="has-tabbar"' ?>>
+<body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($request_design)?' request-design':'' ?>">
 
 <?php if ($tick): ?>
 <!-- jahan-jahan Maakit pahunchta hai -->

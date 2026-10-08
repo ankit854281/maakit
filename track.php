@@ -6,6 +6,7 @@ require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/order-quotes.php';
 require_once __DIR__ . '/inc/dispatch.php';
 
+$request_design=true;
 $page_title = t('My orders — Maakit', 'मेरे ऑर्डर — Maakit');
 $tab = 'mere';
 
@@ -91,13 +92,16 @@ include __DIR__ . '/inc/head.php';
     <h3><?= t('Confirm the final prices','अंतिम दाम की पुष्टि') ?></h3>
     <?php if($quote['state']==='draft'): ?><p><?= t('Maakit is checking suitable shops. Your request is received; prices and time will appear here.','Maakit उपयुक्त दुकानों से पता कर रहा है। आपकी माँग मिली है; दाम और समय यहीं दिखेंगे।') ?></p>
     <?php else: ?>
-      <p><?= t('Goods','सामान') ?>: <b>₹<?= (int)$quote['goods_amount'] ?></b> · <?= t('Delivery','डिलीवरी') ?>: <b>₹<?= (int)$quote['delivery_charge'] ?></b></p>
-      <p><?= t('Total','कुल') ?>: <b>₹<?= (int)$quote['goods_amount']+(int)$quote['delivery_charge'] ?></b></p>
+      <dl class="quote-breakdown">
+        <div><dt><?= t('Goods','सामान') ?></dt><dd>₹<?= (int)$quote['goods_amount'] ?></dd></div>
+        <div><dt><?= t('Delivery','डिलीवरी') ?></dt><dd>₹<?= (int)$quote['delivery_charge'] ?></dd></div>
+        <div class="quote-total"><dt><?= t('Total','कुल') ?></dt><dd>₹<?= (int)$quote['goods_amount']+(int)$quote['delivery_charge'] ?></dd></div>
+      </dl>
       <p><?= t('Shops','दुकानें') ?>: <?= h($quote['shop_details']) ?><br><?= t('Possible delivery time','सम्भव डिलीवरी समय') ?>: <?= h($quote['delivery_time']) ?></p>
-      <?php if($quote['details']): ?><p><?= nl2br(h($quote['details'])) ?></p><?php endif; ?>
+      <?php if($quote['details']): ?><p class="quote-details"><?= nl2br(h($quote['details'])) ?></p><?php endif; ?>
       <p class="help"><?= t('Goods payment goes directly to the shops. Maakit’s delivery charge is separate. Check quantities, packs and any substitutions before accepting.','सामान का भुगतान सीधे दुकानों को है। Maakit का डिलीवरी चार्ज अलग है। मात्रा, पैक और बदले हुए सामान देखकर स्वीकार कीजिए।') ?></p>
       <?php if($quote['state']==='ready' && $o['status']==='Naya'): ?>
-        <form method="post" style="display:grid;gap:8px">
+        <form method="post" class="quote-actions">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="no" value="<?= h($no) ?>"><input type="hidden" name="m" value="<?= h($mob) ?>"><input type="hidden" name="revision" value="<?= (int)$quote['revision'] ?>">
           <button class="btn btn-brand" name="act" value="quote_accept"><?= t('Accept these prices','ये दाम स्वीकार हैं') ?></button>
           <button class="btn btn-line" name="act" value="quote_reject"><?= t('Request changes','बदलाव चाहिए') ?></button>
