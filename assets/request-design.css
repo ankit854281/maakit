@@ -62,3 +62,9 @@
  .request-cart-actions form{width:100%}
  .request-cart-actions form .btn{width:100%}
 }
+
+.request-design .request-cart-row{display:block}
+.request-cart-edit{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:12px}
+.request-cart-edit label{grid-column:1/-1;margin:0;font-size:13px;color:var(--muted)}
+.request-cart-edit input{min-width:0;margin:0}
+.request-cart-edit .btn{padding:10px;font-size:14px}
