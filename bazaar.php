@@ -7,13 +7,14 @@ function bazaar_get($key, $max = 100) {
     return isset($_GET[$key]) && is_string($_GET[$key]) ? mb_substr(trim($_GET[$key]), 0, $max) : '';
 }
 if ($_SERVER['REQUEST_METHOD']==='POST' && csrf_ok()) {
+    foreach(['request_action','catalog_id','qty','pack','urgent','request_key'] as $field){if(isset($_POST[$field]) && !is_string($_POST[$field]))redirect('/bazaar.php');}
     $action=post('request_action');
     $cart=$_SESSION['catalogue_request_cart']??[];
     if($action==='add') {
         $id=(int)post('catalog_id');$pack=mb_substr(post('pack'),0,120);
         $entry=['id'=>$id,'qty'=>(int)post('qty','1'),'pack'=>$pack,'urgent'=>post('urgent')==='1'];
         $valid=request_cart_rows($pdo,[$entry]);
-        if($valid && $entry['qty']>=1 && $entry['qty']<=99) {
+        if($valid && ctype_digit(post('qty','1')) && $entry['qty']>=1 && $entry['qty']<=99) {
             $key=hash('sha256',$id.'|'.$pack.'|'.($entry['urgent']?'1':'0'));
             if(count($cart)<50 || isset($cart[$key])) {
                 $entry['qty']=min(99,$entry['qty']+(int)($cart[$key]['qty']??0));

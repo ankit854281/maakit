@@ -407,7 +407,7 @@ var L = <?= json_encode([
   'addall'      => t('Add all', 'सब जोड़ दीजिए'),
   'reorderdone' => t('Last order added', 'पिछला ऑर्डर जुड़ गया'),
   'pickfirst'   => t('Pick something first', 'पहले कुछ सामान चुनिए'),
-  'nothingpicked'=> t('Nothing picked — we will go by what you wrote below.', 'कोई सामान नहीं चुना — नीचे लिखी बात के हिसाब से लाएँगे।'),
+  'nothingpicked'=> ($using_request_cart || $request_item) ? t('Your catalogue request is listed below.', 'आपकी चुनी हुई माँग नीचे है।') : t('Nothing picked — we will go by what you wrote below.', 'कोई सामान नहीं चुना — नीचे लिखी बात के हिसाब से लाएँगे।'),
   'youwrote'    => t('You wrote:', 'आपने लिखा:'),
   'cartempty'   => t('Cart is empty', 'कार्ट खाली हो गया'),
   'delcharge'   => t('Delivery charge', 'डिलीवरी चार्ज'),
