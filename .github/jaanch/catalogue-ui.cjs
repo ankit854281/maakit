@@ -37,12 +37,17 @@ const assert = require('node:assert/strict');
     await picker.locator('select').selectOption('Paint Store');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Registration fits phone');
     await page.screenshot({path:'/tmp/catalogue-registration.png',fullPage:true});
+    await page.goto('http://127.0.0.1:8099/search.php?q=paint&lang=en');
+    assert(await page.locator('#search-category-hints option[value="Paint Store"]').count()===1,'Search offers shop category hints');
+    await page.getByRole('navigation',{name:'Matching shop categories'}).getByRole('link',{name:'Paint Store',exact:true}).click();
+    assert(page.url().includes('type=Paint'),'Category hint opens complete shop catalogue');
     await page.goto('http://127.0.0.1:8099/search.php?q=Asian&lang=en');
     await page.getByText('Asian Paints Interior Emulsion',{exact:true}).click();
     assert(page.url().includes('bazaar.php'),'Search card opens product listing');
     assert((await page.locator('body').textContent()).includes('Shop price not added yet'),'Unpriced discovery keeps confirmation wording');
     const fresh=Date.now()>=Date.parse('2026-10-08T00:00:00Z') && Date.now()<Date.parse('2026-11-08T00:00:00Z');
     await page.goto('http://127.0.0.1:8099/search.php?q=Tata%20Salt&lang=en');
+    assert((await page.locator('.discovery-product').first().textContent()).includes('Tata Salt'),'Exact product name ranks above category matches');
     if (fresh) assert((await page.locator('.discovery-product').first().textContent()).includes('₹28 / 1 kg'),'Search shows sourced pack reference');
     await page.locator('.discovery-product').first().click();
     if (fresh) {

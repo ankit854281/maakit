@@ -126,7 +126,7 @@ function catalog_reference_summary(array $item) {
 
 function catalog_filter(array $items, $group, $type, $sub, $query) {
     $meta = catalog_meta();
-    return array_values(array_filter($items, function ($item) use ($meta, $group, $type, $sub, $query) {
+    $matches = array_values(array_filter($items, function ($item) use ($meta, $group, $type, $sub, $query) {
         $shop = $item['shop_type'];
         if ($group !== '' && ($meta[$shop]['group'] ?? 'services') !== $group) return false;
         if ($type !== '' && $shop !== $type) return false;
@@ -136,6 +136,20 @@ function catalog_filter(array $items, $group, $type, $sub, $query) {
             $item['name_en'], $item['name_hi'] ?? '', $item['sub_cat'] ?? '',
         ]));
     }));
+    // Product-name matches come before broad category matches. Keep catalogue
+    // order within each tier so Hindi and English searches remain predictable.
+    if ($query !== '') {
+        $needle = mb_strtolower(trim($query));
+        $tiers = [[], [], []];
+        foreach ($matches as $item) {
+            $names = [mb_strtolower($item['name_en']), mb_strtolower($item['name_hi'] ?? '')];
+            $tier = in_array($needle, $names, true) ? 0 :
+                (market_matches($query, implode(' ', $names)) ? 1 : 2);
+            $tiers[$tier][] = $item;
+        }
+        $matches = array_merge(...$tiers);
+    }
+    return $matches;
 }
 
 // Only actual shop-owned prices. Catalogue examples never become offers.

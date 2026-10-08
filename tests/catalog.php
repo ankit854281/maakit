@@ -16,6 +16,16 @@ check(catalog_filter($rows, '', '', '', 'आटा')[0]['id'] === 1, 'Hindi prod
 check(count(catalog_filter($rows, '', '', '', 'किराना')) === 2, 'Hindi shop search');
 check(count(catalog_filter($rows, '', '', '', 'rashan')) === 2, 'Roman shop aliases');
 check(count(catalog_filter($rows, '', '', '', 'zznotfound')) === 0, 'Unknown query');
+$rank_rows = [
+    ['id'=>10,'shop_type'=>'Paint Store','name_en'=>'Brush','name_hi'=>'ब्रश'],
+    ['id'=>11,'shop_type'=>'Paint Store','name_en'=>'Asian Paint','name_hi'=>'एशियन पेंट'],
+    ['id'=>12,'shop_type'=>'Paint Store','name_en'=>'Paint','name_hi'=>'पेंट'],
+    ['id'=>13,'shop_type'=>'Paint Store','name_en'=>'Wall Paint','name_hi'=>'दीवार पेंट'],
+];
+check(array_column(catalog_filter($rank_rows,'','','','paint'),'id') === [12,11,13,10], 'Exact names first, product names next, broad category matches last');
+check(array_column(catalog_filter($rank_rows,'','','','पेंट'),'id') === [12,11,13,10], 'Hindi relevance uses the same stable tiers');
+check(array_column(catalog_filter($rank_rows,'','','',''),'id') === [10,11,12,13], 'Browsing retains catalogue order');
+
 check(catalog_url(['type'=>'Grocery / Kirana Store','sub'=>'Atta & Flour']) === '/bazaar.php?type=Grocery+%2F+Kirana+Store&sub=Atta+%26+Flour', 'Filter URL encoding');
 $pdo = new PDO('sqlite::memory:');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

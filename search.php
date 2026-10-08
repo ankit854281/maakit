@@ -6,11 +6,16 @@ require_once __DIR__ . '/inc/search.php';
 require_once __DIR__ . '/inc/catalog.php';
 
 $q = isset($_GET['q']) && is_string($_GET['q']) ? mb_substr(trim($_GET['q']), 0, 100) : '';
+$request_design = true;
 $page_title = t('Search — Maakit', 'खोजिए — Maakit');
 $tab = 'kaam';
 $products = $bookings = $shops = $matched_categories = [];
 $catalog_matches = [];
 $catalog_prices = [];
+$catalog_types = [];
+foreach (catalog_meta() as $type => $meta) {
+    if ($q !== '' && market_matches($q, $type.' '.($meta['hi'] ?? '').' '.catalog_picker_aliases($type))) $catalog_types[] = $type;
+}
 if ($q !== '') {
     try { $catalog_matches = catalog_filter(catalog_load($pdo), '', '', '', $q); }
     catch (PDOException $e) { error_log('Maakit search catalog: ' . $e->getMessage()); }
@@ -59,10 +64,23 @@ include __DIR__ . '/inc/head.php';
 ?>
 <section><div class="wrap">
   <h1><?= t('What do you need?', 'क्या चाहिए आपको?') ?></h1>
-  <form class="searchbox" action="/search.php" method="get">
-    <input name="q" maxlength="100" value="<?= h($q) ?>" placeholder="<?= h(t('Atta, Bolero, plumber, tent…', 'आटा, बोलेरो, मिस्त्री, टेंट…')) ?>" aria-label="<?= h(t('Search products, services and shops', 'सामान, सेवाएँ और दुकानें खोजिए')) ?>">
+  <form class="searchbox bazaar-find" action="/search.php" method="get">
+    <input type="hidden" name="lang" value="<?= h(lang()) ?>">
+    <input name="q" list="search-category-hints" maxlength="100" value="<?= h($q) ?>" placeholder="<?= h(t('Atta, Bolero, plumber, tent…', 'आटा, बोलेरो, मिस्त्री, टेंट…')) ?>" aria-label="<?= h(t('Search products, services and shops', 'सामान, सेवाएँ और दुकानें खोजिए')) ?>">
     <button class="btn btn-brand btn-sm" type="submit"><?= t('Search', 'खोजिए') ?></button>
   </form>
+  <datalist id="search-category-hints">
+    <?php foreach (catalog_meta() as $type => $meta): ?>
+      <option value="<?= h(catalog_label($type)) ?>"><?= h($type) ?></option>
+    <?php endforeach; ?>
+  </datalist>
+  <?php if ($catalog_types): ?>
+    <nav class="chips" aria-label="<?= h(t('Matching shop categories','मिलती दुकान categories')) ?>">
+      <?php foreach (array_slice($catalog_types,0,12) as $type): ?>
+        <a class="chip" href="<?= h(catalog_url(['type'=>$type])) ?>"><?= h(catalog_label($type)) ?></a>
+      <?php endforeach; ?>
+    </nav>
+  <?php endif; ?>
   <?php if ($q === ''): ?>
     <p class="lead"><?= t('Search in Hindi or English for goods, a booking or a local shop.', 'सामान, बुकिंग या स्थानीय दुकान के लिए हिंदी या English में खोजिए।') ?></p>
   <?php else: ?>
@@ -127,7 +145,7 @@ include __DIR__ . '/inc/head.php';
     <a class="chip" href="/sewa.php"><?= t('All bookings', 'सभी बुकिंग') ?></a>
     <a class="chip" href="/bazaar.php"><?= t('Shop categories & prices', 'दुकान की categories और दाम') ?></a>
     <a class="chip" href="/directory.php"><?= t('All local shops', 'सभी स्थानीय दुकानें') ?></a>
-    <a class="chip" href="/area.php"><?= t('Request Maakit in your village', 'अपने गाँव में Maakit माँगिए') ?></a>
+    <a class="chip" href="/area.php"><?= t('Request Maakit in your area', 'अपने इलाके में Maakit माँगिए') ?></a>
   </div>
 </div></section>
 <?php include __DIR__ . '/inc/foot.php'; ?>
