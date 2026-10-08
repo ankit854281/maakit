@@ -1,0 +1,41 @@
+name: PHP API security
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  transactions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      matrix:
+        database: ['mysql:8.0', 'mariadb:10.11']
+    services:
+      db:
+        image: ${{ matrix.database }}
+        env:
+          MYSQL_ROOT_PASSWORD: api_test
+          MYSQL_DATABASE: maakit_api_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -papi_test"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      MAAKIT_DB_HOST: 127.0.0.1
+      MAAKIT_DB_NAME: maakit_api_test
+      MAAKIT_DB_USER: root
+      MAAKIT_DB_PASS: api_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, openssl
+          coverage: none
+      - name: Lint and repeatable schema
+        run: |
+          find config middleware controllers api tests/php-api -name '*.php' -print0 | xargs -0 -n1 php -l
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/schema.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/schema.sql
+      - name: JWT, IDOR, trusted prices, rollback, real concurrent stock
+        run: php tests/php-api/security.php

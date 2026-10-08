@@ -1,3 +1,7 @@
+# Owner architecture update — 8 October 2026
+
+The latest owner instruction supersedes the earlier Node.js/PostgreSQL exception: PHP 8.2+ with PDO and MySQL 8.0.16+/MariaDB 10.6+ is the active backend. No Node runtime or build step is required. Historical node-api/ and docs/postgresql/ files are inactive references only; do not deploy or extend them. Direct commits to main without PRs remain explicitly authorized by Ankit. Preserve private config.php, uploads/ and existing live data. New UUID API tables use the additive mk_ namespace. The PHP API is opt-in until its identity/catalog migration and keys are configured; do not claim that a code push automatically switches legacy checkout.
+
 # Maakit — rules for anyone working on this code
 
 **Read this file completely before changing anything.**
