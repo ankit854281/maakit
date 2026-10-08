@@ -17,6 +17,7 @@ const assert = require('node:assert/strict');
       const rail=page.locator('#shop-category-rail');
       await rail.evaluate(el => {el.scrollLeft=200;});
       if(width<800) assert(await rail.evaluate(el=>el.scrollLeft)>0,'Category rail can be swiped');
+      await rail.evaluate(el=>{el.scrollLeft=0;});
       await page.screenshot({path:'/tmp/catalogue-home-'+width+'.png',fullPage:width===390});
     }
     await page.setViewportSize({width:390,height:844});

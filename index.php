@@ -126,8 +126,8 @@ include __DIR__ . '/inc/head.php';
         ? t('Hello, ', 'नमस्ते, ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . '.<br>' . t('What do you need?', 'आज क्या चाहिए?')
         : t('Anything you need.<br>Maa hai na.', 'कुछ भी चाहिए?<br>माँ है ना।') ?></h1>
     <p class="sub"><?= t(
-      'Shop, request local delivery or book a service. Choose your area to see availability. Goods and delivery charges are shown separately.',
-      'शॉपिंग, स्थानीय डिलीवरी या सेवा बुकिंग। अपना इलाका चुनकर उपलब्धता देखें। सामान का दाम और डिलीवरी चार्ज अलग हैं।') ?></p>
+      'Find products, shops and services. Check your area before ordering.',
+      'सामान, दुकान और सेवाएँ खोजिए। ऑर्डर से पहले अपने इलाके में सेवा जाँचिए।') ?></p>
 
     <form class="hsearch" action="/search.php" method="get">
       <span class="ic"><?= svc_icon('search', 20) ?></span>
@@ -147,25 +147,6 @@ include __DIR__ . '/inc/head.php';
       <a href="/bazaar.php"><?= svc_icon('all',24) ?><span><?= t('All categories', 'सभी categories') ?></span></a>
     </nav>
 
-    <?php
-    // Ek nazar me daayra — ki yahan sirf kirana nahi, dawa bhi,
-    // nashta bhi, mistri bhi, gaadi bhi. Har chip asli jagah par
-    // le jaati hai, dikhane bhar ki nahi hai.
-    $NAMUNE = [
-      [t('Atta 5kg', 'आटा 5 किलो'),        '/order.php#anaj'],
-      [t('Paracetamol', 'पैरासिटामोल'),    '/order.php#dawa'],
-      [t('Samosa', 'समोसा'),               '/order.php#chaat'],
-      [t('Mistri', 'मिस्त्री'),             '/directory.php?cat=bijli'],
-      [t('Bolero', 'बोलेरो'),               '/sewa.php?s=safar'],
-      [t('Salon seat', 'सैलून'),            '/directory.php?cat=nai'],
-    ];
-    ?>
-    <div class="hnam">
-      <span class="hnam-l"><?= t('Like —', 'जैसे —') ?></span>
-      <?php foreach ($NAMUNE as list($lbl, $href)): ?>
-        <a href="<?= h($href) ?>"><?= h($lbl) ?></a>
-      <?php endforeach; ?>
-    </div>
   </div>
 </section>
 
@@ -182,7 +163,7 @@ include __DIR__ . '/inc/head.php';
           $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
           $offer=$offers[0] ?? null; ?>
           <a class="discovery-product" href="<?= h(catalog_url(['type'=>$kind,'q'=>$product['name_en']])) ?>">
-            <span class="discovery-picture"><?php if ($offer && $offer['photo']): ?><img src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php else: ?><?= prod_icon($product['name_en'],'',38) ?><?php endif; ?></span>
+            <span class="discovery-picture"><?php if ($offer && $offer['photo']): ?><img src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php else: ?><?= catalog_product_icon($product,38) ?><?php endif; ?></span>
             <b><?= h(t($product['name_en'],$product['name_hi'] ?: $product['name_en'])) ?></b>
             <?php if ($offer): ?>
               <span class="meta">₹<?= (int)$offer['price'] ?> · <?= h($offer['unit']) ?><br><?= h($offer['shop_name']) ?></span>
@@ -202,6 +183,26 @@ include __DIR__ . '/inc/head.php';
     <a href="/order.php"><?=svc_icon('box',28)?><b><?=t('Local delivery','स्थानीय डिलीवरी')?></b><span><?=t('Send a list or photo','लिस्ट या फोटो भेजें')?></span></a>
     <a href="/sewa.php"><?=svc_icon('ride',28)?><b><?=t('Bookings','बुकिंग')?></b><span><?=t('Vehicles & services','गाड़ियाँ और सेवाएँ')?></span></a>
   </nav>
+    <?php
+    // Ek nazar me daayra — ki yahan sirf kirana nahi, dawa bhi,
+    // nashta bhi, mistri bhi, gaadi bhi. Har chip asli jagah par
+    // le jaati hai, dikhane bhar ki nahi hai.
+    $NAMUNE = [
+      [t('Atta 5kg', 'आटा 5 किलो'),        '/order.php#anaj'],
+      [t('Paracetamol', 'पैरासिटामोल'),    '/order.php#dawa'],
+      [t('Samosa', 'समोसा'),               '/order.php#chaat'],
+      [t('Mistri', 'मिस्त्री'),             '/directory.php?cat=bijli'],
+      [t('Bolero', 'बोलेरो'),               '/sewa.php?s=safar'],
+      [t('Salon seat', 'सैलून'),            '/directory.php?cat=nai'],
+    ];
+    ?>
+    <div class="hnam light">
+      <span class="hnam-l"><?= t('Like —', 'जैसे —') ?></span>
+      <?php foreach ($NAMUNE as list($lbl, $href)): ?>
+        <a href="<?= h($href) ?>"><?= h($lbl) ?></a>
+      <?php endforeach; ?>
+    </div>
+
   <div class="install" id="installBox">
     <span class="ic"><?= svc_icon('box', 30) ?></span>
     <span><b><?= t('Keep Maakit on your phone', 'Maakit को फ़ोन में रख लीजिए') ?></b>
