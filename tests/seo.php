@@ -9,4 +9,5 @@ seo_check(!seo_page('/bazaar.php',['q'=>'atta'])['index']);
 seo_check(!seo_page('/business.php',['id'=>['bad']])['index']);
 seo_check(!seo_page('/bazaar.php',['type'=>'made up'])['index']);
 seo_check(strpos(seo_page('/business.php',['id'=>'12','m'=>'secret'])['canonical'],'secret')===false);
+seo_check(!seo_page('/bazaar.php',['product'=>'1517'])['index']);
 echo "Canonical and private page SEO checks passed\n";
