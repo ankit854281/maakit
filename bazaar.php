@@ -63,7 +63,7 @@ include __DIR__ . '/inc/head.php';
 <section><div class="wrap">
   <h1><?= t('Shop → products → prices', 'दुकान → सामान → दाम') ?></h1>
   <p class="lead"><?= t('Choose a shop type, then see its products and local shop prices.', 'दुकान का प्रकार चुनिए, फिर उसका सामान और स्थानीय दुकान के दाम देखिए।') ?></p>
-  <p class="help"><?= t('This is a catalogue of possible products and services. Stock, pack sizes and prices depend on each shop. Delivery is charged separately.', 'यह सामान और सेवाओं की master list है। उपलब्धता, पैक का नाप और दाम हर दुकान के अपने हैं। डिलीवरी चार्ज अलग है।') ?></p>
+  <p class="help"><?= t('Choose a product and send a request. Maakit checks suitable shops and confirms price and delivery time with you. Delivery is charged separately.', 'सामान चुनकर माँग भेजिए। Maakit उपयुक्त दुकान से पता करके दाम और डिलीवरी समय आपसे पक्का करेगा। डिलीवरी चार्ज अलग है।') ?></p>
   <form class="searchbox bazaar-find" action="/bazaar.php" method="get">
     <?php foreach (['group' => $group, 'type' => $type] as $k => $v): if ($v !== ''): ?>
       <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
