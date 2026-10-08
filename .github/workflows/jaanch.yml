@@ -116,6 +116,7 @@ jobs:
           done
           php .github/jaanch/panne.php
           php .github/jaanch/category-flow.php
+          php .github/jaanch/catalogue-expansion.php
           php .github/jaanch/earning-flow.php
           php .github/jaanch/coverage-flow.php
           php .github/jaanch/dispatch-flow.php

@@ -41,7 +41,7 @@ $PANNE = [
         'chahiye' => ['Maakit'], 'nahi' => ['Fatal error', 'Undefined']],
 
     ['/bazaar.php?lang=hi', 'दुकान categories',
-        'chahiye' => ['196', '1516', 'किराना'], 'nahi' => ['Fatal error', 'Warning:', 'Undefined']],
+        'chahiye' => ['196', 'किराना'], 'nahi' => ['Fatal error', 'Warning:', 'Undefined']],
     ['/bazaar.php?type=Grocery%20%2F%20Kirana%20Store&lang=hi', 'किराना सामान',
         'chahiye' => ['आटा', 'दाम'], 'nahi' => ['Fatal error', 'Warning:', 'Undefined']],
 
