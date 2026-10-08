@@ -14,17 +14,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         if($until)dispatch_queue($pdo);
         flash(t('Availability updated. Refresh to see assigned orders.','उपलब्धता अपडेट हुई। मिले order देखने के लिए पेज दोबारा देखें।'));
     } elseif ($status === 'Pickup') {
-        $pickup = $pdo->prepare("UPDATE orders SET status='Pickup', picked_at=COALESCE(picked_at, NOW()) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign')");
+        $pickup = $pdo->prepare("UPDATE orders SET status='Pickup', picked_at=COALESCE(picked_at, NOW()) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign') AND ".quote_guard());
         $pickup->execute([$id, $u['id'], $u['role']]);
         flash($pickup->rowCount() === 1 ? t('Pickup recorded.', 'दुकान से लिया — दर्ज हो गया।') : t('Order state or assignment changed. Refresh the list.', 'ऑर्डर की स्थिति या जिम्मेदारी बदल गई है। सूची दोबारा देखें।'));
     } elseif ($status === 'bill') {
         // Authorize and validate before storing a customer-visible bill photo.
-        $own = $pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign','Pickup')");
+        $own = $pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign','Pickup') AND ".quote_guard());
         $own->execute([$id, $u['id'], $u['role']]);
+        $quote=order_quote($pdo,$id);
         $raw_amount = post('amount');
         $amt = $raw_amount === '' ? null : earning_cost($raw_amount);
         if (!$own->fetch()) {
             flash(t('This order is not assigned to you or can no longer be changed.', 'यह ऑर्डर आपके पास नहीं है या अब बदला नहीं जा सकता।'));
+        } elseif ($quote && $raw_amount!=='' && ($amt===null || (int)$amt!==(int)$quote['goods_amount'])) {
+            flash(t('Bill amount differs from the accepted quote. Contact the team before proceeding.','बिल का दाम स्वीकार किए दाम से अलग है। आगे बढ़ने से पहले टीम से बात कीजिए।'));
         } elseif ($raw_amount !== '' && $amt === null) {
             flash(t('Enter a whole goods amount from 0 to 1000000, or leave it blank.', 'सामान की रकम 0 से 1000000 तक पूरी संख्या में भरें, या खाली छोड़ें।'));
         } else {
@@ -32,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             if (!$ph) {
                 flash(t('Photo could not be saved. Try a clear image up to 4 MB.', 'फ़ोटो नहीं लग पाई। 4 MB तक की साफ़ तस्वीर से दोबारा कोशिश करें।'));
             } else {
-                $bill = $pdo->prepare("UPDATE orders SET bill_photo=?, goods_amount=COALESCE(?, goods_amount) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign','Pickup')");
-                $bill->execute([$ph, $amt, $id, $u['id'], $u['role']]);
+                $bill = $pdo->prepare("UPDATE orders SET bill_photo=?, goods_amount=COALESCE(?, goods_amount) WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Naya','Confirm','Assign','Pickup') AND ".quote_guard()." AND (NOT EXISTS (SELECT 1 FROM order_quotes q WHERE q.order_id=orders.id) OR ? IS NULL OR ?=goods_amount)");
+                $bill->execute([$ph, $amt, $id, $u['id'], $u['role'],$amt,$amt]);
                 if ($bill->rowCount() === 1) {
                     flash(t('Bill saved. The customer can see it.', 'बिल सेव हो गया। ग्राहक देख सकता है।'));
                 } else {
@@ -55,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         } elseif ($code !== $row['code']) {
             flash('कोड मेल नहीं खाया। ग्राहक से दोबारा पूछिए — सही कोड के बिना सामान मत दीजिए।');
         } else {
-            $finish = $pdo->prepare("UPDATE orders SET status='Delivered', delivered_at=COALESCE(delivered_at, NOW()) WHERE id=? AND status='Pickup' AND code=? AND (delivery_user=? OR ?='admin')");
+            $finish = $pdo->prepare("UPDATE orders SET status='Delivered', delivered_at=COALESCE(delivered_at, NOW()) WHERE id=? AND status='Pickup' AND code=? AND (delivery_user=? OR ?='admin') AND ".quote_guard());
             $finish->execute([$id, $code, $u['id'], $u['role']]);
             if ($finish->rowCount() === 1) {
                 $pdo->prepare("DELETE FROM live_tracks WHERE order_id=?")->execute([$id]);

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/dakiya.php';
 require_once __DIR__ . '/../inc/order-workflow.php';
+require_once __DIR__ . '/../inc/order-quotes.php';
 require_once __DIR__ . '/../inc/dispatch.php';
 require_once __DIR__ . '/../inc/icons.php';
 $u = need_role(['bpo', 'admin']);
@@ -15,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             $stamp=['Confirm'=>'confirmed_at','Pickup'=>'picked_at','Delivered'=>'delivered_at'][$st2]??null;
             $marks=implode(',',array_fill(0,count($from),'?'));
             $sql="UPDATE orders SET status=?".($stamp?", `$stamp`=COALESCE(`$stamp`,NOW())":'')." WHERE id=? AND status IN ($marks)";
+            if($st2!=='Cancel')$sql.=' AND '.quote_guard();
             if(in_array($st2,['Pickup','Delivered'],true))$sql.=' AND delivery_user IS NOT NULL';
             $change=$pdo->prepare($sql);$change->execute(array_merge([$st2,$id],$from));$changed=$change->rowCount();
             if($changed&&$st2==='Confirm')dispatch_assign($pdo,$id);
@@ -26,10 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $driver=(int)post('delivery_user');
         $assigned=$driver>0?dispatch_assign($pdo,$id,$driver):null;
         flash($assigned?t('Assigned to the area delivery partner.','इलाके के delivery partner को दिया गया।'):t('Could not assign. Check the order status and area delivery staff.','Assignment नहीं हुआ। ऑर्डर की स्थिति और इलाके के delivery staff जाँचें।'));
+    } elseif (post('do') === 'quote') {
+        $ok=quote_publish($pdo,$id,staff_order_amount($_POST['goods_amount']??''),staff_order_amount($_POST['delivery_charge']??''),post('shop_details'),post('delivery_time'),post('details'));
+        flash($ok?t('Quote sent for customer approval.','दाम ग्राहक की पुष्टि के लिए भेजे गए।'):t('Fill goods, delivery, shop and time. Only requests before assignment can be quoted.','सामान, डिलीवरी, दुकान और समय भरिए। Assignment से पहले की माँग पर ही दाम भेज सकते हैं।'));
     } elseif (post('do') === 'amount') {
         $goods=staff_order_amount($_POST['goods_amount']??'');$fee=staff_order_amount($_POST['delivery_charge']??'');$payment=post('payment');$changed=0;
         if($goods!==false&&$fee!==false&&isset(staff_goods_payments()[$payment])){
-            $save=$pdo->prepare("UPDATE orders SET goods_amount=?,payment=?,delivery_charge=? WHERE id=? AND status IN ('Naya','Confirm','Assign','Pickup')");$save->execute([$goods,$payment,$fee,$id]);$changed=$save->rowCount();
+            $save=$pdo->prepare("UPDATE orders SET goods_amount=?,payment=?,delivery_charge=? WHERE id=? AND status IN ('Naya','Confirm','Assign','Pickup') AND NOT EXISTS (SELECT 1 FROM order_quotes q WHERE q.order_id=orders.id)");$save->execute([$goods,$payment,$fee,$id]);$changed=$save->rowCount();
         }
         flash($changed?t('Amounts saved. Goods are paid to the shop.','रकम सेव हुई। सामान का भुगतान दुकान को है।'):t('Check whole amounts from 0 to 1000000, direct shop payment and the order status.','0 से 1000000 तक पूरी रकम, दुकान को सीधा भुगतान और ऑर्डर की स्थिति जाँचें।'));
     }
@@ -43,6 +48,7 @@ $st = $pdo->prepare("SELECT o.*, u.name AS dname FROM orders o LEFT JOIN users u
                      ORDER BY (o.status='Naya') DESC, o.id DESC");
 $st->execute([$day]);
 $orders = $st->fetchAll();
+$quotes=[];foreach($orders as $order){$quotes[$order['id']]=order_quote($pdo,$order['id']);}
 $naye = 0; foreach ($orders as $o) { if ($o['status'] === 'Naya') $naye++; }
 $areaBoys=[];foreach($orders as $order){if(!isset($areaBoys[$order['village']]))$areaBoys[$order['village']]=coverage_drivers($pdo,$order['village']);}
 include __DIR__ . '/../inc/panel.php';
@@ -95,7 +101,7 @@ include __DIR__ . '/../inc/panel.php';
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
         <?php // ---- डाकिया: हर हाल का अपना सन्देश ----
           $st = $o['status'];
-          if (in_array($st, ['Naya','Confirm'], true)) {
+          if (in_array($st, ['Naya','Confirm'], true) && (!$quotes[$o['id']] || $quotes[$o['id']]['state']==='accepted')) {
               echo dak_btn($o['mobile'], dak_order($o, 'confirm'), 'कन्फ़र्म + कोड भेजिए');
           }
           if (in_array($st, ['Assign','Pickup'], true)) {
@@ -133,6 +139,25 @@ include __DIR__ . '/../inc/panel.php';
           </div>
           <button class="btn btn-brand btn-sm">दीजिए</button>
         </form><?php endif;?>
+        <?php if($quotes[$o['id']]): $quote=$quotes[$o['id']]; ?>
+          <div class="box" style="width:100%">
+            <h3><?= t('Customer price approval','ग्राहक से दाम की पुष्टि') ?></h3>
+            <p><?= h(['draft'=>t('Checking shops','दुकानों से पता कर रहे हैं'),'ready'=>t('Waiting for customer','ग्राहक की पुष्टि बाकी'),'accepted'=>t('Customer accepted','ग्राहक ने स्वीकार किया'),'rejected'=>t('Customer requested changes','ग्राहक बदलाव चाहता है')][$quote['state']]??$quote['state']) ?></p>
+            <?= dak_btn($o['mobile'],t('Please check and confirm the goods and delivery price: ','सामान और डिलीवरी का दाम देखकर पुष्टि कीजिए: ').dak_link($o['order_no'],$o['mobile']),t('Send approval link','पुष्टि का लिंक भेजिए')) ?>
+            <?php if(in_array($o['status'],['Naya','Confirm'],true)): ?>
+              <form method="post" style="display:grid;gap:8px">
+                <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="quote"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
+                <label><?= t('Goods total ₹','सामान का कुल दाम ₹') ?><input name="goods_amount" type="number" min="0" max="1000000" required value="<?= h($quote['goods_amount']) ?>"></label>
+                <label><?= t('Delivery ₹','डिलीवरी ₹') ?><input name="delivery_charge" type="number" min="0" max="1000000" required value="<?= h($quote['delivery_charge']??$o['delivery_charge']) ?>"></label>
+                <label><?= t('Shop names / source','दुकानों के नाम') ?><input name="shop_details" maxlength="240" required value="<?= h($quote['shop_details']) ?>"></label>
+                <label><?= t('Possible delivery time','सम्भव डिलीवरी समय') ?><input name="delivery_time" maxlength="160" required value="<?= h($quote['delivery_time']) ?>"></label>
+                <label><?= t('Item prices / substitutions','हर सामान का दाम / बदलाव') ?><textarea name="details" maxlength="3000"><?= h($quote['details']) ?></textarea></label>
+                <p class="help"><?= t('Any change requires fresh customer approval. Goods money goes directly to shops.','बदलाव पर ग्राहक की नई पुष्टि जरूरी है। सामान का भुगतान सीधे दुकानों को है।') ?></p>
+                <button class="btn btn-brand"><?= t('Send prices for approval','दाम पुष्टि के लिए भेजिए') ?></button>
+              </form>
+            <?php endif; ?>
+          </div>
+        <?php else: ?>
         <form method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="amount"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
           <div style="max-width:120px"><label>सामान ₹</label><input type="number" name="goods_amount" value="<?= h($o['goods_amount']) ?>"></div>
@@ -146,6 +171,7 @@ include __DIR__ . '/../inc/panel.php';
           </div>
           <button class="btn btn-brand btn-sm">सेव</button>
         </form>
+        <?php endif; ?>
       </div>
     </div>
   <?php endforeach; ?>
