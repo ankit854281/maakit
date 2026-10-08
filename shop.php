@@ -12,7 +12,10 @@ $err = '';
 $b = shop_login_business($pdo);
 if (!$b) { redirect('/login.php'); }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'logout') { shop_logout($pdo); redirect('/login.php'); }
+// csrf ke saath hi — warna koi doosri website dukandar ko logout kara sakti hai
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'logout' && csrf_ok()) {
+    shop_logout($pdo); redirect('/login.php');
+}
 
 // ---------------- दुकान पैनल के काम (सामान, ऑर्डर, हिसाब, खाता) ----------------
 if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
@@ -313,7 +316,7 @@ include __DIR__ . '/inc/head.php';
     <a class="<?= $tab===$k?'on':'' ?>" href="/shop.php?tab=<?= h($k) ?>"><?= h($lbl) ?></a>
   <?php endforeach; ?>
   <a href="<?= $nai ? '/salon.php?id=' . $bid : '/business.php?id=' . $bid ?>" target="_blank">ग्राहक को कैसा दिखता है</a>
-  <form method="post" style="margin-left:auto"><input type="hidden" name="do" value="logout"><button class="btn btn-sm" style="background:rgba(251,244,230,.18);color:#fff">बंद कीजिए</button></form>
+  <form method="post" style="margin-left:auto"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="logout"><button class="btn btn-sm" style="background:rgba(251,244,230,.18);color:#fff">बंद कीजिए</button></form>
 </div></nav>
 <?php if ($m = flash()): ?><div class="wrap" style="max-width:820px"><div class="ok" style="margin-top:12px"><?= h($m) ?></div></div><?php endif; ?>
 

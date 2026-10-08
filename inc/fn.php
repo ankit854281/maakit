@@ -53,7 +53,23 @@ function csrf() {
     if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
     return $_SESSION['csrf'];
 }
-function csrf_ok() { return isset($_POST['csrf']) && hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf']); }
+/**
+ * Dhyan: pehle ye khali token ko bhi sahi maan leta tha.
+ *
+ * Bina cookie ke aaye request me $_SESSION['csrf'] hota hi nahi, aur
+ * hash_equals('', '') PHP me TRUE deta hai. Yani koi bhi `csrf=` khali
+ * bhejkar bina session ke form POST kar sakta tha — aur har aisi request
+ * ka apna naya session banta tha, isliye galat password ginne wali hadd
+ * bhi ek saath sau baar todi ja sakti thi.
+ *
+ * Ab dono taraf bhara hua hona zaroori hai.
+ */
+function csrf_ok() {
+    $mera = $_SESSION['csrf'] ?? '';
+    $diya = $_POST['csrf'] ?? '';
+    if (!is_string($diya) || $mera === '' || $diya === '') return false;
+    return hash_equals($mera, $diya);
+}
 
 function wa_link($mobile, $text) {
     $m = preg_replace('/\D/', '', $mobile);

@@ -56,15 +56,17 @@ function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark) {
 /** login — [ok, msg]. 6 galat koshish = 15 minute rok */
 function cust_login(PDO $pdo, $mobile, $pass) {
     $mobile = preg_replace('/\D/', '', $mobile);
-    if(auth_attempt_blocked($pdo,'customer',$mobile))return [false,auth_attempt_error()];
+    // Koshish pehle darj hoti hai, ginti baad me — warna ek saath bheji
+    // gayi sau koshishein hadd ko lang jaati hain.
+    if (auth_attempt_try($pdo, 'customer', $mobile)) return [false, auth_attempt_error()];
 
     $st = $pdo->prepare("SELECT * FROM customers WHERE mobile=? AND active=1");
     $st->execute([$mobile]);
     $c = $st->fetch();
     if (!$c || !password_verify($pass, $c['password'])) {
-        auth_attempt_failed($pdo,'customer',$mobile);
         return [false, t('Number or password is wrong.', 'नंबर या पासवर्ड ग़लत है।')];
     }
+    auth_attempt_ok($pdo, 'customer', $mobile);
     unset($_SESSION['cl']);
     $pdo->prepare("UPDATE customers SET last_login=NOW() WHERE id=?")->execute([$c['id']]);
     cust_set($c);

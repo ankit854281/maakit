@@ -33,12 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $code = strtoupper(trim(post('code')));
         $ip   = $_SERVER['REMOTE_ADDR'] ?? '';
 
-        // ek number par 15 minute me 5 galat koshish — uske baad ruk jaiye
-        $tries = $pdo->prepare("SELECT COUNT(*) c FROM shop_login_log
-                                 WHERE mobile=? AND ok=0 AND created_at > (NOW() - INTERVAL 15 MINUTE)");
-        $tries->execute([$mob]);
-        if ((int)$tries->fetch()['c'] >= 5) {
-            $err = 'बहुत बार ग़लत कोड डाला गया। 15 मिनट बाद कोशिश कीजिए।';
+        // Wahi hadd jo team ke login par hai — ek number par 6, aur ek
+        // IP par 30. Pehle yahan sirf number ki ginti thi, IP ki nahi,
+        // isliye ek hi jagah se sau number par koshish ho sakti thi.
+        if (auth_attempt_try($pdo, 'dukan', $mob)) {
+            $err = auth_attempt_error();
         } else {
             $st = $pdo->prepare("SELECT * FROM businesses WHERE mobile=? AND status='approved'");
             $st->execute([$mob]);
@@ -46,7 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             $okc = $row && $row['access_code'] && hash_equals(strtoupper($row['access_code']), $code);
             $pdo->prepare("INSERT INTO shop_login_log (business_id, mobile, ok, ip) VALUES (?,?,?,?)")
                 ->execute([$row['id'] ?? null, $mob, $okc ? 1 : 0, $ip]);
-            if ($okc) { shop_start_session($pdo, $row['id']); redirect('/shop.php'); }
+            if ($okc) {
+                auth_attempt_ok($pdo, 'dukan', $mob);
+                shop_start_session($pdo, $row['id']);
+                redirect('/shop.php');
+            }
             $err = 'नंबर या कोड सही नहीं है। Maakit से अपना कोड पूछ लीजिए।';
         }
     }
@@ -54,17 +57,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     // ---------- टीम ----------
     elseif (post('do') === 'team') {
         $as = 'team';
-        $username=post('username');
-        if(auth_attempt_blocked($pdo,'team',$username))$err=auth_attempt_error();
-        else {
-            $st=$pdo->prepare("SELECT * FROM users WHERE username=? AND active=1");$st->execute([$username]);$u=$st->fetch();
-            if($u&&password_verify(post('password'),$u['password'])) {
-                session_regenerate_id(true);
-                $_SESSION['user']=['id'=>$u['id'],'name'=>$u['name'],'role'=>$u['role']];
-                redirect(panel_home($u['role']));
-            }
-            auth_attempt_failed($pdo,'team',$username);
-            $err=t('Username or password is wrong.','यूज़रनेम या पासवर्ड ग़लत है।');
+        $username = post('username');
+        $st = $pdo->prepare("SELECT * FROM users WHERE username=? AND active=1");
+        $st->execute([$username]);
+        $u = $st->fetch();
+        // Ginti ki chaabi khate ka ASLI naam ho — warna "ädmin" jaisi
+        // likhawat ek hi khata kholkar nayi ginti shuru kar deti hai.
+        $kunji = $u ? $u['username'] : $username;
+        if (auth_attempt_try($pdo, 'team', $kunji)) {
+            $err = auth_attempt_error();
+        } elseif ($u && password_verify(post('password'), $u['password'])) {
+            auth_attempt_ok($pdo, 'team', $kunji);
+            session_regenerate_id(true);
+            $_SESSION['user'] = ['id'=>$u['id'], 'name'=>$u['name'], 'role'=>$u['role']];
+            redirect(panel_home($u['role']));
+        } else {
+            $err = t('Username or password is wrong.','यूज़रनेम या पासवर्ड ग़लत है।');
         }
 
     }

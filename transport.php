@@ -21,18 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     if ($do === 'login') {
         $mob  = preg_replace('/\D/', '', post('mobile'));
         $code = strtoupper(trim(post('code')));
-        $tryk = 'trlog'; $_SESSION[$tryk] = $_SESSION[$tryk] ?? ['n'=>0,'t'=>time()];
-        if (time() - $_SESSION[$tryk]['t'] > 900) $_SESSION[$tryk] = ['n'=>0,'t'=>time()];
-        if ($_SESSION[$tryk]['n'] >= 5) {
-            $err = t('Too many tries. Wait 15 minutes or call us.', 'बहुत बार कोशिश हो गई। 15 मिनट बाद या हमें कॉल कीजिए।');
+        // Pehle ye ginti session me rakhi jati thi — cookie mita dene se
+        // phir se shuny ho jati thi, yani hadd thi hi nahi. Ab wahi
+        // database wali hadd jo baaki login par hai.
+        if (auth_attempt_try($pdo, 'transport', $mob)) {
+            $err = auth_attempt_error();
         } else {
             $s = $pdo->prepare("SELECT * FROM transports WHERE mobile=? AND access_code=? AND status<>'hidden'");
             $s->execute([$mob, $code]);
             if ($r = $s->fetch()) {
+                auth_attempt_ok($pdo, 'transport', $mob);
                 shop_start_session($pdo, (int)$r['business_id']);
                 redirect('/transport.php');
             }
-            $_SESSION[$tryk]['n']++;
             $err = t('Number or code is wrong.', 'नंबर या कोड ग़लत है।');
         }
     }

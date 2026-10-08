@@ -122,6 +122,11 @@ function shop_login_business(PDO $pdo) {
     return null;
 }
 function shop_start_session(PDO $pdo, $bid) {
+    // Login ke baad nayi session-id — warna purani id ke saath uska
+    // csrf token bhi waisa hi rehta hai. Agar kisi ne pehle se wo id
+    // bitha rakhi ho (ek hi phone, ek hi computer), to use dukandar
+    // ka token pata hota.
+    if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
     $tok = bin2hex(random_bytes(24));
     $pdo->prepare("INSERT INTO shop_tokens (business_id, token, expires) VALUES (?,?, NOW() + INTERVAL 90 DAY)")->execute([$bid, $tok]);
     setcookie('mk_shop', $tok, [
