@@ -85,7 +85,7 @@ function catalog_filter(array $items, $group, $type, $sub, $query) {
         if ($type !== '' && $shop !== $type) return false;
         if ($sub !== '' && $item['sub_cat'] !== $sub) return false;
         return $query === '' || market_matches($query, implode(' ', [
-            $shop, $meta[$shop]['hi'] ?? '', $item['type_hi'] ?? '',
+            $shop, $meta[$shop]['hi'] ?? '', $item['type_hi'] ?? '', catalog_picker_aliases($shop),
             $item['name_en'], $item['name_hi'] ?? '', $item['sub_cat'] ?? '',
         ]));
     }));
@@ -131,4 +131,21 @@ function catalog_shops(PDO $pdo, $type, $area = null) {
     }
     unset($shop);
     return $out;
+}
+
+function catalog_picker_aliases($type) {
+    return ['Grocery / Kirana Store'=>'kirana rashan ration', 'Paint Store'=>'paint pent rang brush shop रंग ब्रश', 'Medical Store'=>'dawa dawai dava', 'Mobile Store'=>'mobile phone', 'Sweet Shop'=>'mithai nashta nasta', 'Hardware Shop'=>'hardware aujar tools'][$type] ?? '';
+}
+
+/** Reuse the line-icon system until a shop supplies its own real photograph. */
+function catalog_product_icon(array $item, $size = 38) {
+    $name = $item['name_hi'] ?: $item['name_en'];
+    $key = prod_icon_key($name);
+    if ($key !== 'bag') return prod_icon_by_key($key,$size);
+    $english = strtolower($item['name_en']);
+    foreach (['brush'=>'brush','paint'=>'tin','primer'=>'tin','putty'=>'tin','atta'=>'sack','flour'=>'sack','rice'=>'rice','dal'=>'dal','milk'=>'milk','bread'=>'bread','biscuit'=>'biscuit','oil'=>'bottle'] as $word=>$icon) {
+        if (strpos($english,$word)!==false) return prod_icon_by_key($icon,$size);
+    }
+    if ($item['shop_type']==='Mobile Store') return svc_icon('mobile',$size);
+    return prod_icon($name,'',$size);
 }

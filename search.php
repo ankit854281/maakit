@@ -68,6 +68,16 @@ include __DIR__ . '/inc/head.php';
       <div class="box" style="margin:16px 0">
         <h2><?= t('Shop catalogue & prices', 'दुकान का सामान और दाम') ?></h2>
         <p><?= count($catalog_matches) ?> <?= t('catalogue matches. Actual prices depend on the local shop.', 'सामान/सेवा entries मिलीं। असली दाम स्थानीय दुकान के हैं।') ?></p>
+        <div class="product-discovery-rail">
+          <?php foreach (array_slice($catalog_matches,0,12) as $match): ?>
+            <a class="discovery-product" href="<?= h(catalog_url(['type'=>$match['shop_type'],'q'=>$match['name_en']])) ?>">
+              <span class="discovery-picture"><?= catalog_product_icon($match,34) ?></span>
+              <b><?= h(t($match['name_en'],$match['name_hi'] ?: $match['name_en'])) ?></b>
+              <span class="meta"><?= h(catalog_label($match['shop_type'])) ?></span>
+              <span class="discovery-action"><?= t('Check shop prices / request', 'दुकान के दाम देखिए / मँगाइए') ?></span>
+            </a>
+          <?php endforeach; ?>
+        </div>
         <a class="btn btn-brand btn-sm" href="<?= h(catalog_url(['q' => $q])) ?>"><?= t('See categories, products & prices', 'Categories, सामान और दाम देखिए') ?></a>
       </div>
     <?php endif; ?>

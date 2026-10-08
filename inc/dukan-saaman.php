@@ -13,6 +13,7 @@
 //  dukaan kabhi nahi dikhti.
 // ============================================================
 require_once __DIR__ . '/catalog.php';
+require_once __DIR__ . '/category-picker.php';
 $kism   = (string)($b['shop_type'] ?? '');
 $kisme  = dukan_types($pdo);
 $kismName = '';
@@ -57,12 +58,7 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
     <p class="help" style="margin-top:6px">बस यह बता दीजिए। उस किस्म का <b>सारा सामान</b>
       आपकी दुकान में अपने आप आ जाएगा — एक-एक करके जोड़ना नहीं पड़ेगा।
       <?= t('Recent prices for matching goods and packs will be filled where available. Check or change them, then save your own prices.', 'उसी सामान और पैक के हाल के दाम उपलब्ध हों तो भरकर आएँगे। जाँचिए या बदलिए, फिर अपने दाम सेव कीजिए।') ?></p>
-    <select name="shop_type" style="margin-top:12px" required>
-      <option value="">— चुनिए —</option>
-      <?php foreach ($kisme as $k): ?>
-        <option value="<?= h($k['slug']) ?>"><?= h(catalog_label($k['slug'], $k['name_hi'])) ?> (<?= (int)$k['ginti'] ?> सामान)</option>
-      <?php endforeach; ?>
-    </select>
+    <?php catalog_picker($pdo, '', true); ?>
     <button class="btn btn-brand" style="margin-top:12px;width:100%;font-size:17px">सामान ले आइए</button>
   </form>
 
@@ -195,15 +191,11 @@ $sujhav = $khoj !== '' ? dukan_suggest($pdo, $bid, $khoj, 40) : [];
       <button class="btn btn-brand">जोड़िए</button>
     </form>
 
-    <form method="post" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:flex;gap:8px;align-items:flex-end">
+    <form method="post" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
       <input type="hidden" name="do" value="kism">
       <div style="flex:1"><label>दुकान की किस्म बदलिए</label>
-        <select name="shop_type">
-          <?php foreach ($kisme as $k): ?>
-            <option value="<?= h($k['slug']) ?>" <?= $k['slug']===$kism?'selected':'' ?>><?= h(catalog_label($k['slug'], $k['name_hi'])) ?> (<?= (int)$k['ginti'] ?>)</option>
-          <?php endforeach; ?>
-        </select>
+        <?php catalog_picker($pdo, $kism, true); ?>
         <p class="help">नई किस्म का सामान भी आ जाएगा। पुराना हटेगा नहीं।</p></div>
       <button class="btn btn-sm" style="background:#EFEAE0">सेव</button>
     </form>

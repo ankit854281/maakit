@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../inc/dukan.php';
 require_once __DIR__ . '/../../inc/earning.php';
 function flow_check($ok, $message) { if (!$ok) throw new RuntimeException($message); }
 $cookie = tempnam(sys_get_temp_dir(), 'mk-flow-');
-$bid = 0;
+$bid = 0; $registered = 0;
 function flow_request($path, $post = null, $expected = 200) {
     global $cookie;
     $ch = curl_init('http://127.0.0.1:8099' . $path);
@@ -22,6 +22,29 @@ function flow_request($path, $post = null, $expected = 200) {
     return $html;
 }
 try {
+    $home = flow_request('/?lang=hi');
+    flow_check(strpos($home,'id="shop-category-rail"') !== false && strpos($home,'product-discovery-rail') !== false, 'Home links categories and discovery product rails');
+    $html = flow_request('/register-business.php?lang=hi');
+    flow_check(strpos($html,'data-category-picker') !== false && strpos($html,'Paint Store') !== false, 'Registration offers searchable shop categories');
+    preg_match('/name="csrf" value="([^"]+)"/', $html, $reg);
+    $form = ['csrf'=>$reg[1], 'name'=>'Jaanch Paint Registration', 'owner'=>'Anil', 'category'=>'dukan', 'mobile'=>'9000000019', 'shop_type'=>'Not a category'];
+    flow_request('/register-business.php', $form);
+    flow_check((int)$pdo->query("SELECT COUNT(*) FROM businesses WHERE mobile='9000000019'")->fetchColumn()===0, 'Reject forged shop category');
+    $form['shop_type']='Paint Store';
+    flow_request('/register-business.php', $form);
+    $registered=(int)$pdo->query("SELECT id FROM businesses WHERE mobile='9000000019' ORDER BY id DESC LIMIT 1")->fetchColumn();
+    flow_check($registered>0, 'Shop registration succeeds');
+    $st=$pdo->prepare('SELECT shop_type,status FROM businesses WHERE id=?'); $st->execute([$registered]); $registeredShop=$st->fetch();
+    flow_check($registeredShop['shop_type']==='Paint Store' && $registeredShop['status']==='pending', 'Keep category and approval requirement');
+    $st=$pdo->prepare('SELECT COUNT(*) FROM shop_items WHERE business_id=?'); $st->execute([$registered]); $seeded=(int)$st->fetchColumn();
+    $expected=(int)$pdo->query("SELECT COUNT(*) FROM catalog_items WHERE shop_type='Paint Store'")->fetchColumn();
+    flow_check($seeded===$expected && $seeded>10, 'All matching paint products are seeded');
+    flow_check(dukan_kism_bharo($pdo,$registered,'Paint Store')===0, 'Repeated category selection does not duplicate products');
+    flow_check(dukan_items($pdo,$registered,true)===[], 'Unconfirmed prices never become shop offers');
+    $html=flow_request('/bazaar.php?type=Paint+Store&q=Asian&lang=hi');
+    flow_check(strpos($html,'एशियन')!==false && strpos($html,'दाम अभी नहीं जुड़ा')!==false, 'Brand is discoverable without seller price');
+    $html=flow_request('/search.php?q=Asian&lang=en');
+    flow_check(strpos($html,'Asian Paints')!==false, 'Unified search finds master products');
     $pdo->prepare("INSERT INTO businesses (name,category,mobile,status,shop_type,items_on,shop_open,open_time,close_time)
         VALUES ('Jaanch Kirana','dukan','9000000000','approved','Grocery / Kirana Store',1,1,'00:00','00:00')")->execute();
     $bid = (int)$pdo->lastInsertId();
@@ -88,6 +111,10 @@ try {
     flow_check(!dukan_order_status($pdo,$bid,(int)$order['id'],'diya'),'Cancelled order cannot be fulfilled');
     echo "Category → shop → goods → order integration passed\n";
 } finally {
+    if ($registered) {
+        $pdo->prepare('DELETE FROM shop_items WHERE business_id=?')->execute([$registered]);
+        $pdo->prepare('DELETE FROM businesses WHERE id=?')->execute([$registered]);
+    }
     if ($bid) {
         $pdo->prepare('DELETE FROM service_area_shops WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM shop_ledger WHERE business_id=?')->execute([$bid]);

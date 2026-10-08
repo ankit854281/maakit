@@ -122,8 +122,24 @@ jobs:
           php .github/jaanch/tracking-flow.php
           php .github/jaanch/traffic-flow.php
           node --check assets/delivery-tracking.js
+          node --check assets/category-picker.js
+          node --check assets/catalogue-discovery.js
           echo "— PHP की चेतावनियाँ —"
           grep -iE "fatal|parse error|uncaught" /tmp/php.log && exit 1 || echo "कोई fatal नहीं"
+
+      - name: Mobile catalogue and shop-category browser checks
+        run: |
+          npm install --prefix /tmp/maakit-ui --no-audit --no-fund playwright@1.56.1
+          /tmp/maakit-ui/node_modules/.bin/playwright install --with-deps chromium
+          node .github/jaanch/catalogue-ui.cjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catalogue-mobile-preview
+          path: /tmp/catalogue-*.png
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: 4. Backup को अलग database में वापस डालकर जाँचिए
         run: |

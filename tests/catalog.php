@@ -14,6 +14,7 @@ check(count(catalog_filter($rows, 'food', '', '', '')) === 2, 'Food grouping');
 check(count(catalog_filter($rows, '', 'Grocery / Kirana Store', 'Rice', '')) === 1, 'Type and subcategory');
 check(catalog_filter($rows, '', '', '', 'आटा')[0]['id'] === 1, 'Hindi product search');
 check(count(catalog_filter($rows, '', '', '', 'किराना')) === 2, 'Hindi shop search');
+check(count(catalog_filter($rows, '', '', '', 'rashan')) === 2, 'Roman shop aliases');
 check(count(catalog_filter($rows, '', '', '', 'zznotfound')) === 0, 'Unknown query');
 check(catalog_url(['type'=>'Grocery / Kirana Store','sub'=>'Atta & Flour']) === '/bazaar.php?type=Grocery+%2F+Kirana+Store&sub=Atta+%26+Flour', 'Filter URL encoding');
 $pdo = new PDO('sqlite::memory:');

@@ -6,6 +6,7 @@ require_once __DIR__ . '/inc/icons.php';
 require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/customer.php';
 require_once __DIR__ . '/inc/books.php';
+require_once __DIR__ . '/inc/catalog.php';
 
 $page_title = t('Maakit — shopping, local delivery & bookings in India',
                 'Maakit — भारत में शॉपिंग, स्थानीय डिलीवरी और बुकिंग');
@@ -50,6 +51,20 @@ try {
         AND (starts IS NULL OR starts <= CURDATE()) AND (ends IS NULL OR ends >= CURDATE())
         ORDER BY sort_no, id LIMIT 6")->fetchAll();
 } catch (Throwable $e) { $banners = []; }
+
+// Discovery templates stay visible even before a shop publishes a price.
+$discovery = []; $discovery_offers = [];
+try {
+    $cs = $pdo->prepare('SELECT * FROM catalog_items WHERE shop_type=? ORDER BY sort_no,id LIMIT 6');
+    foreach (['Sweet Shop','Grocery / Kirana Store','Paint Store','Mobile Store'] as $kind) {
+        $cs->execute([$kind]);
+        $rows = $cs->fetchAll();
+        if ($rows) $discovery[$kind] = $rows;
+    }
+    $ids=[];
+    foreach ($discovery as $rows) foreach ($rows as $row) $ids[]=(int)$row['id'];
+    $discovery_offers=catalog_offers($pdo,$ids,coverage_selected($pdo));
+} catch (PDOException $e) { error_log('Maakit home catalogue: '.$e->getMessage()); }
 
 // ---------- home page ki sewayein ----------
 // ---------------------------------------------------------------
@@ -111,8 +126,8 @@ include __DIR__ . '/inc/head.php';
         ? t('Hello, ', 'नमस्ते, ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . '.<br>' . t('What do you need?', 'आज क्या चाहिए?')
         : t('Anything you need.<br>Maa hai na.', 'कुछ भी चाहिए?<br>माँ है ना।') ?></h1>
     <p class="sub"><?= t(
-      'Shop, request local delivery or book a service. Choose your area to see availability. Goods and delivery charges are shown separately.',
-      'शॉपिंग, स्थानीय डिलीवरी या सेवा बुकिंग। अपना इलाका चुनकर उपलब्धता देखें। सामान का दाम और डिलीवरी चार्ज अलग हैं।') ?></p>
+      'Find products, shops and services. Check your area before ordering.',
+      'सामान, दुकान और सेवाएँ खोजिए। ऑर्डर से पहले अपने इलाके में सेवा जाँचिए।') ?></p>
 
     <form class="hsearch" action="/search.php" method="get">
       <span class="ic"><?= svc_icon('search', 20) ?></span>
@@ -120,6 +135,54 @@ include __DIR__ . '/inc/head.php';
       <button class="go" type="submit"><?= t('Search', 'खोजिए') ?></button>
     </form>
 
+    <div class="discovery-controls">
+      <span><?= t('Browse shop categories', 'दुकान की category चुनिए') ?></span>
+      <button type="button" class="rail-toggle" data-rail-toggle="shop-category-rail" aria-pressed="false" data-paused="<?= h(t('Play', 'चलाएँ')) ?>" data-playing="<?= h(t('Pause', 'रोकें')) ?>"><?= t('Play', 'चलाएँ') ?></button>
+    </div>
+    <nav class="shop-category-rail" id="shop-category-rail" aria-label="<?= h(t('Shop categories', 'दुकान की categories')) ?>">
+      <?php $navicons=['food'=>'grocery','fashion'=>'shops','health'=>'medicine','beauty'=>'salon','electronics'=>'box','construction'=>'home','home'=>'shops','vehicles'=>'ride','education'=>'book','farming'=>'khad','events'=>'pooja','services'=>'all']; ?>
+      <?php foreach (catalog_groups() as $slug=>$label): ?>
+        <a href="<?= h(catalog_url(['group'=>$slug])) ?>"><?= svc_icon($navicons[$slug],24) ?><span><?= h(t($label[0],$label[1])) ?></span></a>
+      <?php endforeach; ?>
+      <a href="/bazaar.php"><?= svc_icon('all',24) ?><span><?= t('All categories', 'सभी categories') ?></span></a>
+    </nav>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <?php foreach ($discovery as $kind=>$products): ?>
+    <div class="discovery-section">
+      <div class="discovery-heading">
+        <h2><?= h(catalog_label($kind)) ?></h2>
+        <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= t('See all →', 'सब देखिए →') ?></a>
+      </div>
+      <p class="help"><?= t('Explore products. Each shop confirms its price, pack and availability.', 'सामान देखिए। दाम, पैक और उपलब्धता दुकान से पक्के होंगे।') ?></p>
+      <div class="product-discovery-rail" aria-label="<?= h(catalog_label($kind)) ?>">
+        <?php foreach ($products as $product):
+          $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
+          $offer=$offers[0] ?? null; ?>
+          <a class="discovery-product" href="<?= h(catalog_url(['type'=>$kind,'q'=>$product['name_en']])) ?>">
+            <span class="discovery-picture"><?php if ($offer && $offer['photo']): ?><img src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php else: ?><?= catalog_product_icon($product,38) ?><?php endif; ?></span>
+            <b><?= h(t($product['name_en'],$product['name_hi'] ?: $product['name_en'])) ?></b>
+            <?php if ($offer): ?>
+              <span class="meta">₹<?= (int)$offer['price'] ?> · <?= h($offer['unit']) ?><br><?= h($offer['shop_name']) ?></span>
+            <?php else: ?>
+              <span class="meta"><?= t('Price to be confirmed', 'दाम पूछकर पक्के होंगे') ?></span>
+            <?php endif; ?>
+            <span class="discovery-action"><?= t('View & request', 'देखिए और मँगाइए') ?></span>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endforeach; ?>
+  <a class="allsvc" href="/bazaar.php"><?= svc_icon('all',20) ?><span><?= t('Browse all shop categories & products', 'सभी दुकान categories और सामान देखिए') ?></span> →</a>
+
+  <nav class="journeys" aria-label="<?=h(t('Choose what you need','अपनी जरूरत चुनें'))?>">
+    <a href="/bazaar.php"><?=svc_icon('grocery',28)?><b><?=t('Shopping','शॉपिंग')?></b><span><?=t('Shops, products & prices','दुकानें, सामान और दाम')?></span></a>
+    <a href="/order.php"><?=svc_icon('box',28)?><b><?=t('Local delivery','स्थानीय डिलीवरी')?></b><span><?=t('Send a list or photo','लिस्ट या फोटो भेजें')?></span></a>
+    <a href="/sewa.php"><?=svc_icon('ride',28)?><b><?=t('Bookings','बुकिंग')?></b><span><?=t('Vehicles & services','गाड़ियाँ और सेवाएँ')?></span></a>
+  </nav>
     <?php
     // Ek nazar me daayra — ki yahan sirf kirana nahi, dawa bhi,
     // nashta bhi, mistri bhi, gaadi bhi. Har chip asli jagah par
@@ -133,21 +196,13 @@ include __DIR__ . '/inc/head.php';
       [t('Salon seat', 'सैलून'),            '/directory.php?cat=nai'],
     ];
     ?>
-    <div class="hnam">
+    <div class="hnam light">
       <span class="hnam-l"><?= t('Like —', 'जैसे —') ?></span>
       <?php foreach ($NAMUNE as list($lbl, $href)): ?>
         <a href="<?= h($href) ?>"><?= h($lbl) ?></a>
       <?php endforeach; ?>
     </div>
-  </div>
-</section>
 
-<div class="wrap">
-  <nav class="journeys" aria-label="<?=h(t('Choose what you need','अपनी जरूरत चुनें'))?>">
-    <a href="/bazaar.php"><?=svc_icon('grocery',28)?><b><?=t('Shopping','शॉपिंग')?></b><span><?=t('Shops, products & prices','दुकानें, सामान और दाम')?></span></a>
-    <a href="/order.php"><?=svc_icon('box',28)?><b><?=t('Local delivery','स्थानीय डिलीवरी')?></b><span><?=t('Send a list or photo','लिस्ट या फोटो भेजें')?></span></a>
-    <a href="/sewa.php"><?=svc_icon('ride',28)?><b><?=t('Bookings','बुकिंग')?></b><span><?=t('Vehicles & services','गाड़ियाँ और सेवाएँ')?></span></a>
-  </nav>
   <div class="install" id="installBox">
     <span class="ic"><?= svc_icon('box', 30) ?></span>
     <span><b><?= t('Keep Maakit on your phone', 'Maakit को फ़ोन में रख लीजिए') ?></b>
@@ -156,16 +211,6 @@ include __DIR__ . '/inc/head.php';
     <button class="btn btn-sm" id="installNo" style="background:transparent;color:var(--muted);padding:8px"><?= t('Not now', 'अभी नहीं') ?></button>
   </div>
 
-  <div class="secthead" style="margin-top:20px">
-    <h2><?= t('Shop categories, products & prices', 'दुकान की categories, सामान और दाम') ?></h2>
-    <p><?= t('Kirana, clothes, medical, hardware and every local shop — choose a shop type first.', 'किराना, कपड़े, मेडिकल, हार्डवेयर और हर स्थानीय दुकान — पहले दुकान का प्रकार चुनिए।') ?></p>
-  </div>
-  <div class="chips" style="margin-bottom:18px">
-    <?php foreach ([['food','Food & kirana','राशन और खाना'],['fashion','Clothes & shoes','कपड़े और जूते'],['health','Medical','दवा और स्वास्थ्य'],['electronics','Electronics','इलेक्ट्रॉनिक्स'],['construction','Hardware','हार्डवेयर'],['home','Household','घरेलू सामान']] as $cat): ?>
-      <a class="chip" href="/bazaar.php?group=<?= h($cat[0]) ?>"><?= h(t($cat[1], $cat[2])) ?></a>
-    <?php endforeach; ?>
-    <a class="chip on" href="/bazaar.php"><?= t('All shop categories →', 'सभी दुकान categories →') ?></a>
-  </div>
 
   <!-- ============ 20 minute wala nashta ============ -->
   <?php if ($chaat): ?>
@@ -659,4 +704,5 @@ document.addEventListener('click', function(e){
     i = (i + 1) % list.length; el.setAttribute('placeholder', list[i]); }, 2400);
 })();
 </script>
+<script src="/assets/catalogue-discovery.js" defer></script>
 <?php include __DIR__ . '/inc/foot.php'; ?>

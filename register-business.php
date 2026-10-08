@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
+require_once __DIR__ . '/inc/category-picker.php';
+$shop_type = post('shop_type');
+$type_choices = array_column(dukan_types($pdo), 'slug');
 $tab = 'kaam';
 $page_title = 'अपना काम जोड़िए — Maakit';
 $err = ''; $done = false;
@@ -11,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
     if (mb_strlen($name) < 2) { $err = 'दुकान/काम का नाम लिखिए।'; }
     elseif (!cat_by_slug($cat)) { $err = 'काम की श्रेणी चुनिए।'; }
+    elseif ($shop_type !== '' && !in_array($shop_type, $type_choices, true)) { $err = t('Choose a shop category from the list.', 'सूची से दुकान की category चुनिए।'); }
     elseif (strlen($mobile) !== 10) { $err = 'मोबाइल नंबर 10 अंकों का लिखिए।'; }
     else {
         $photo = null;
@@ -27,10 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             }
         }
         if (!$err) {
+            $pdo->beginTransaction();
             $tok = in_array($cat, ['nai', 'parlour'], true) ? 1 : 0;
-            $pdo->prepare("INSERT INTO businesses (name, owner, category, work, mobile, village, address, about, photo, token_enabled, status)
-                           VALUES (?,?,?,?,?,?,?,?,?,?, 'pending')")
-                ->execute([$name, $owner, $cat, $work, $mobile, $village, $address, $about, $photo, $tok]);
+            $pdo->prepare("INSERT INTO businesses (name, owner, category, work, mobile, village, address, about, photo, token_enabled, shop_type, items_on, status)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'pending')")
+                ->execute([$name, $owner, $cat, $work, $mobile, $village, $address, $about, $photo, $tok, $shop_type ?: null, $shop_type !== '' ? 1 : 0]);
+            if ($shop_type !== '') dukan_kism_bharo($pdo, (int)$pdo->lastInsertId(), $shop_type);
+            $pdo->commit();
             $done = true;
         }
     }
@@ -60,6 +67,7 @@ include __DIR__ . '/inc/head.php';
         <?php foreach (categories() as $c): ?><option value="<?= h($c['slug']) ?>" <?= post('category') === $c['slug'] ? 'selected' : '' ?>><?= h($c['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
+    <div class="field"><?php catalog_picker($pdo, $shop_type); ?></div>
     <div class="field"><label>एक लाइन में अपना काम</label><input type="text" name="work" value="<?= h(post('work')) ?>" placeholder="जैसे: घर की वायरिंग, पंखा-मोटर की मरम्मत"></div>
     <div class="field"><label>मोबाइल नंबर (यही लोगों को दिखेगा)</label><input type="tel" name="mobile" value="<?= h(post('mobile')) ?>" required></div>
     <div class="field"><label>गाँव / कस्बा</label><input type="text" name="village" value="<?= h(post('village')) ?>"></div>
