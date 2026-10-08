@@ -37,10 +37,10 @@ try {
         expansion_check(dukan_items($pdo,$bid,true)===[],'Templates do not publish prices: '.$type);
         $own=array_values(array_filter(dukan_items($pdo,$bid),fn($r)=>(int)$r['cat_id']>=1517 && (int)$r['cat_id']<=1658));
         expansion_check((bool)$own,'New entries reach the shop: '.$type);
-        $pdo->prepare("UPDATE shop_items SET price=123,unit='my pack',stock='khatam' WHERE id=?")->execute([$own[0]['id']]);
+        $pdo->prepare("UPDATE shop_items SET price=123,unit='my pack',stock='khatam',name='Owner product name' WHERE id=?")->execute([$own[0]['id']]);
         expansion_check(dukan_kism_bharo($pdo,$bid,$type)===0,'No duplicates on re-selection: '.$type);
         $saved=dukan_item($pdo,$bid,$own[0]['id']);
-        expansion_check((int)$saved['price']===123 && $saved['unit']==='my pack' && $saved['stock']==='khatam','Keep owner price, pack and stock');
+        expansion_check((int)$saved['price']===123 && $saved['unit']==='my pack' && $saved['stock']==='khatam' && $saved['name']==='Owner product name','Keep owner price, pack and stock');
         expansion_check(catalog_offers($pdo,array_column($new,'id'))===[],'Pending shops do not publish offers');
         $pdo->prepare('DELETE FROM shop_items WHERE business_id=?')->execute([$bid]);
         $pdo->prepare('DELETE FROM businesses WHERE id=?')->execute([$bid]);

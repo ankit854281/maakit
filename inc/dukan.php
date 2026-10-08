@@ -53,10 +53,19 @@ function dukan_kism_bharo(PDO $pdo, $bid, $slug) {
     if (!$saare) return 0;
 
     // ek dukaan me 400 ki hadd — usse jyada na chadhe
-    $cnt = $pdo->prepare("SELECT COUNT(*) c FROM shop_items WHERE business_id=?");
+    // Pack sizes belong to the owner. An edited pack must not make the same
+    // catalogue product look new on category re-selection. Include inactive
+    // entries too, so a deliberate "I do not keep this" stays respected.
+    $cnt = $pdo->prepare("SELECT cat_id,name FROM shop_items WHERE business_id=?");
     $cnt->execute([$bid]);
-    $jagah = 400 - (int)$cnt->fetch()['c'];
+    $existing = $cnt->fetchAll();
+    $jagah = 400 - count($existing);
     if ($jagah <= 0) return 0;
+    $cat_ids = $names = [];
+    foreach ($existing as $entry) {
+        if ($entry['cat_id'] !== null) $cat_ids[(int)$entry['cat_id']] = true;
+        $names[mb_strtolower(trim($entry['name']))] = true;
+    }
 
     $ins = $pdo->prepare("INSERT IGNORE INTO shop_items
             (business_id, cat_id, name, unit, price, stock, active, sort_no)
@@ -65,8 +74,13 @@ function dukan_kism_bharo(PDO $pdo, $bid, $slug) {
     foreach ($saare as $c) {
         if ($naye >= $jagah) break;
         $nm = ($c['name_hi'] !== '' && $c['name_hi'] !== null) ? $c['name_hi'] : $c['name_en'];
+        $name_key = mb_strtolower(trim($nm));
+        if (isset($cat_ids[(int)$c['id']]) || isset($names[$name_key])) continue;
         $ins->execute([$bid, (int)$c['id'], $nm, $c['unit_hint'], (int)$c['sort_no']]);
-        if ($ins->rowCount()) $naye++;
+        if ($ins->rowCount()) {
+            $naye++;
+            $cat_ids[(int)$c['id']] = $names[$name_key] = true;
+        }
     }
     return $naye;
 }
