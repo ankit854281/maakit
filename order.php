@@ -8,6 +8,7 @@ require_once __DIR__ . '/inc/submit-once.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__ . '/inc/catalog-request.php';
 
+$request_design=true;
 $page_title = t('Order — Maakit', 'ऑर्डर कीजिए — Maakit');
 $tab = 'order';
 $villages = village_list($pdo);
@@ -296,7 +297,7 @@ try{
 </div>
 
 <!-- ---------- पर्दा 2: पता और पेमेंट ---------- -->
-<div id="paneOut" style="display:none">
+<div id="paneOut" class="request-checkout" style="display:none">
   <div class="wrap" style="max-width:680px">
     <div class="stepsdot" style="margin-top:16px"><i></i><i class="on"></i><em><?= t('2 / 2 — Address & payment', '2 / 2 — पता और पेमेंट') ?></em></div>
 
