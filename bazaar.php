@@ -106,7 +106,7 @@ include __DIR__ . '/inc/head.php';
               <span class="meta"><?= h($shop['village']) ?></span>
               <?php if ($shop['address']): ?><span class="meta"><?= h($shop['address']) ?></span><?php endif; ?>
               <span class="tag <?= $shop['open_now'] ? 'tag-live' : 'tag-off' ?>"><?= $shop['open_now'] ? t('Open now', 'अभी खुली है') : t('Closed now', 'अभी बंद है') ?></span>
-              <p class="help"><?= (int)$shop['available_count'] ? (int)$shop['available_count'] . ' ' . t('priced items in stock', 'सामान के दाम और stock जुड़े हैं') : t('Online prices are not ready yet. You can view the shop or ask Maakit.', 'ऑनलाइन सामान के दाम अभी तैयार नहीं हैं। दुकान देखिए या Maakit से पूछिए।') ?></p>
+              <p class="help"><?= (int)$shop['available_count'] ? (int)$shop['available_count'] . ' ' . t('items with shop prices', 'सामान के दुकान वाले दाम जुड़े हैं') : t('Online prices are not ready yet. You can view the shop or ask Maakit.', 'ऑनलाइन सामान के दाम अभी तैयार नहीं हैं। दुकान देखिए या Maakit से पूछिए।') ?></p>
               <a class="btn btn-brand btn-sm" href="/business.php?id=<?= (int)$shop['id'] ?>"><?= t('View shop & products', 'दुकान और सामान देखिए') ?></a>
             </article>
           <?php endforeach; ?>
@@ -140,8 +140,7 @@ include __DIR__ . '/inc/head.php';
             <?php if ($offer['photo']): ?><img class="bazaar-photo" src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php endif; ?>
             <span class="bazaar-price">₹<?= (int)$offer['price'] ?></span> / <?= h($offer['unit']) ?>
             <span class="meta"><?= h($offer['shop_name']) ?> · <?= h($offer['village']) ?></span>
-            <?php if ($offer['stock'] !== 'hai'): ?><span class="meta"><?= t('Out of stock', 'अभी स्टॉक नहीं है') ?></span>
-            <?php elseif (!$offer['open_now']): ?><span class="meta"><?= t('Shop closed', 'दुकान अभी बंद है') ?></span>
+            <?php if (!$offer['open_now']): ?><span class="meta"><?= t('Shop closed', 'दुकान अभी बंद है') ?></span>
             <?php endif; ?>
             <a class="btn btn-sm" href="/business.php?id=<?= (int)$offer['business_id'] ?>"><?= t('View shop', 'दुकान देखिए') ?></a>
             <?php if ($offer['stock'] === 'hai' && $offer['open_now'] && empty($item['is_sewa'])): ?>
@@ -157,10 +156,23 @@ include __DIR__ . '/inc/head.php';
               <span class="meta"><strong>₹<?= h(rtrim(rtrim(number_format((float)$pack['price'],2,'.',''),'0'),'.')) ?></strong> / <?= h($pack['unit']) ?></span>
             <?php endforeach; ?>
             <span class="meta"><?= t('Source: ', 'स्रोत: ') ?><a href="<?= h($reference['url']) ?>" target="_blank" rel="noopener noreferrer"><?= h($reference['source']) ?></a> · <?= h($reference['checked_on']) ?></span>
-            <p class="help"><?= t('Online reference, not a confirmed local shop price. The shop confirms the final price and stock; delivery is extra.', 'यह ऑनलाइन संदर्भ है। स्थानीय दुकान का अंतिम दाम और stock पूछकर पक्के होंगे; डिलीवरी अलग है।') ?></p>
+            <p class="help"><?= t('Online reference, not a confirmed local shop price. The final price is confirmed before purchase; delivery is extra.', 'यह ऑनलाइन संदर्भ है। खरीदने से पहले अंतिम दाम पक्का होगा; डिलीवरी अलग है।') ?></p>
           </div>
         <?php endif; ?>
         <?php if (!$list): ?><p class="help"><?= t('Shop price not added yet — ask for price and availability.', 'दुकान का दाम अभी नहीं जुड़ा — दाम और उपलब्धता पूछिए।') ?></p><?php endif; ?>
+        <?php if (empty($item['is_sewa'])): ?>
+          <form class="catalogue-request" action="/order.php#pata" method="get">
+            <input type="hidden" name="lang" value="<?= h(t('en','hi')) ?>">
+            <input type="hidden" name="catalog_id" value="<?= (int)$item['id'] ?>">
+            <label for="rq-qty-<?= (int)$item['id'] ?>"><?= t('Quantity', 'मात्रा') ?></label>
+            <input id="rq-qty-<?= (int)$item['id'] ?>" name="qty" type="number" min="1" max="99" value="1" required>
+            <label for="rq-pack-<?= (int)$item['id'] ?>"><?= t('Pack / size / model (optional)', 'पैक / नाप / मॉडल (चाहें तो)') ?></label>
+            <input id="rq-pack-<?= (int)$item['id'] ?>" name="pack" type="text" maxlength="120" placeholder="<?= h($item['unit_hint']) ?>">
+            <label><input type="checkbox" name="urgent" value="1"> <?= t('Needed urgently', 'जल्दी चाहिए') ?></label>
+            <p class="help"><?= t('Maakit will check suitable shops and confirm the final price and possible delivery time with you.', 'Maakit उपयुक्त दुकानों से पता करके अंतिम दाम और सम्भव डिलीवरी समय आपसे पक्का करेगा।') ?></p>
+            <button class="btn btn-brand" type="submit"><?= t('Request through Maakit', 'Maakit से मँगाइए') ?></button>
+          </form>
+        <?php endif; ?>
         <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $item['name_en'] . ' / ' . ($item['name_hi'] ?? '') . ' (' . $item['shop_type'] . ') — दाम और उपलब्धता बताइए।' . ($variant_hint ? "\n" . $variant_hint : ''))) ?>"><?= t('Ask Maakit', 'Maakit से पूछिए') ?></a>
       </article>
     <?php endforeach; ?>

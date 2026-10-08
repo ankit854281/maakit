@@ -5,6 +5,7 @@ require_once __DIR__ . '/inc/dakiya.php';
 require_once __DIR__ . '/inc/daam.php';
 require_once __DIR__ . '/inc/icons.php';
 require_once __DIR__ . '/inc/submit-once.php';
+require_once __DIR__ . '/inc/catalog.php';
 
 $page_title = t('Order — Maakit', 'ऑर्डर कीजिए — Maakit');
 $tab = 'order';
@@ -14,6 +15,30 @@ $groups = item_groups();
 $err = '';
 $done = null;
 [$submit_key,$done,$err] = submit_once_form('goods');
+
+// Catalogue requests use the existing team order queue, never a guessed shop price.
+$request_note = $_SERVER['REQUEST_METHOD'] === 'POST' ? post('note') : '';
+$request_item = null;
+$request_id = isset($_GET['catalog_id']) && is_string($_GET['catalog_id']) && ctype_digit($_GET['catalog_id']) ? (int)$_GET['catalog_id'] : 0;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $request_id > 0) {
+    $st = $pdo->prepare('SELECT * FROM catalog_items WHERE id=? AND is_sewa=0');
+    $st->execute([$request_id]);
+    $request_item = $st->fetch() ?: null;
+    if ($request_item) {
+        $raw_qty = isset($_GET['qty']) && is_string($_GET['qty']) ? $_GET['qty'] : '1';
+        $qty = ctype_digit($raw_qty) ? max(1, min(99, (int)$raw_qty)) : 1;
+        $pack = isset($_GET['pack']) && is_string($_GET['pack']) ? mb_substr(trim($_GET['pack']),0,120) : '';
+        $urgent = isset($_GET['urgent']) && $_GET['urgent'] === '1';
+        $request_note = t('Maakit sourcing request: ', 'Maakit से सामान की माँग: ')
+            . t($request_item['name_en'], $request_item['name_hi'] ?: $request_item['name_en'])
+            . "\n" . t('Quantity: ', 'मात्रा: ') . $qty . ' × ' . ($pack ?: $request_item['unit_hint'])
+            . ($urgent ? "\n" . t('Urgent request — please call with the earliest possible time.', 'जल्दी चाहिए — सम्भव समय बताने के लिए कॉल कीजिए।') : '')
+            . "\n" . t('Please find a suitable shop and confirm the final price and delivery time before purchase.', 'उपयुक्त दुकान से पता करके खरीदने से पहले अंतिम दाम और डिलीवरी समय की पुष्टि कीजिए।');
+        $hint = catalog_variant_hint($request_item);
+        if ($hint) $request_note .= "\n" . $hint;
+    }
+}
+
 
 // ---------- ऑर्डर सेव ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
@@ -240,7 +265,7 @@ try{
       <div id="photoShow" style="display:none;margin-top:10px"></div>
 
       <label for="note" style="margin-top:14px"><?= t('Or write it in your own words', 'या अपने शब्दों में लिख दीजिए') ?></label>
-      <textarea id="note" name="note" placeholder="<?= h(t('e.g. fever medicine 1 strip, 2-inch pipe, a notebook…', 'जैसे: बुख़ार की दवा 1 पत्ता, 2 इंच का पाइप, बच्चे की कॉपी…')) ?>" style="min-height:82px"></textarea>
+      <textarea id="note" name="note" placeholder="<?= h(t('e.g. fever medicine 1 strip, 2-inch pipe, a notebook…', 'जैसे: बुख़ार की दवा 1 पत्ता, 2 इंच का पाइप, बच्चे की कॉपी…')) ?>" style="min-height:82px"><?= h($request_note) ?></textarea>
       <div id="voiceHint" class="help" style="display:none"></div>
     </div>
 
@@ -259,7 +284,7 @@ try{
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
       <input type="hidden" name="submit_key" value="<?= h($submit_key) ?>">
       <input type="hidden" name="cart_json" id="cartJson">
-      <input type="hidden" name="note" id="noteHid">
+      <input type="hidden" name="note" id="noteHid" value="<?= h($request_note) ?>">
 
       <div class="box" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
@@ -267,6 +292,7 @@ try{
           <button type="button" class="btn btn-sm" id="backBtn" style="margin-left:auto;background:var(--soft);color:var(--brand)">+ <?= t('Add more', 'और जोड़िए') ?></button>
         </div>
         <div id="cartList"></div>
+        <p class="help"><?= t('Maakit will check suitable shops. Purchase proceeds after you confirm the final goods price and delivery time; an urgent request is not a delivery guarantee.', 'Maakit उपयुक्त दुकानों से पता करेगा। अंतिम दाम और डिलीवरी समय आपकी पुष्टि के बाद खरीद होगी। जल्दी की माँग तय समय की गारंटी नहीं है।') ?></p>
         <div id="noteShow" style="display:none;margin-top:10px" class="note"></div>
       </div>
 

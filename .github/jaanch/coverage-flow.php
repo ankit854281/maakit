@@ -38,5 +38,18 @@ try{
  $html=cv_request('/?lang=en');cv_check(strpos($html,'CI City')!==false,'Chosen location shown');cv_check(strpos($html,'noindex,follow')!==false,'Scoped home is noindex');
  $html=cv_request('/support.php?lang=en');cv_check(strpos($html,'Sign in to send')!==false,'Guest sees support contacts, no private tickets');
  cv_request('/admin/coverage.php',null,302);cv_request('/admin/support.php',null,302);
+ $html=cv_request('/order.php?catalog_id=1666&qty=2&pack=1+kg&urgent=1&lang=en');
+ preg_match('/name="csrf" value="([^"]+)"/',$html,$token);preg_match('/name="submit_key" value="([^"]+)"/',$html,$key);
+ preg_match('/<textarea id="note"[^>]*>(.*?)<\/textarea>/s',$html,$text);
+ $note=html_entity_decode($text[1]??'',ENT_QUOTES,'UTF-8');
+ cv_check(strpos($note,'Tata Salt')!==false && strpos($note,'2 × 1 kg')!==false && strpos($note,'Urgent request')!==false,'Catalogue request prefill');
+ $post=['csrf'=>$token[1],'submit_key'=>$key[1],'name'=>'CI Sourcing Customer','mobile'=>'9000000099','village'=>'CI Paused Area','note'=>$note,'cart_json'=>'[]','market'=>'local','payment'=>'cash'];
+ $html=cv_request('/order.php?lang=en',$post);
+ $request=$pdo->query("SELECT * FROM orders WHERE mobile='9000000099' ORDER BY id DESC LIMIT 1")->fetch();
+ cv_check($request && $request['goods_note']===$note && $request['status']==='Naya','Unpriced sourcing request reaches team order queue');
+ cv_check(empty($request['business_id']) && empty($request['goods_amount']),'Request does not invent a seller or confirmed goods price');
+ $before=(int)$pdo->query("SELECT COUNT(*) FROM orders WHERE mobile='9000000099'")->fetchColumn();
+ cv_request('/order.php?lang=en',$post);
+ cv_check((int)$pdo->query("SELECT COUNT(*) FROM orders WHERE mobile='9000000099'")->fetchColumn()===$before,'Request replay creates no duplicate');
  echo "Coverage HTTP checks passed\n";
 }finally{$pdo->exec("DELETE FROM orders WHERE mobile='9000000099'; DELETE FROM service_bookings WHERE mobile='9000000099'");if($id){$pdo->prepare('DELETE FROM service_area_meta WHERE village_id=?')->execute([$id]);$pdo->prepare('DELETE FROM villages WHERE id=?')->execute([$id]);}unlink($cookie);}
