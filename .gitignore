@@ -11,3 +11,8 @@ uploads/*
 jaanch.php
 node_modules/
 chowkidar-nateeja.json
+
+# Node API local secrets
+.env
+.env.*
+!.env.example

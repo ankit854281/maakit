@@ -173,8 +173,13 @@ stop that. They are not optional.
    the repo without pulling.
 2. **Never force-push. Never revert someone else's commit** without the owner
    saying so.
-3. **Work on a branch and open a pull request** when the change is more than a
-   few lines. Name the branch for the work (`codex/…`, `claude/…`).
+3. **Owner update, 9 October 2026: commit and push directly to `main`; do not
+   create pull requests.** Read the latest remote head before every push, run
+   relevant checks, and preserve other contributors' changes. Never force-push.
+   The owner explicitly requested Node.js/PostgreSQL API modules for Tasks 1–3;
+   these require a separately provisioned Node/PostgreSQL runtime. Adding them
+   to GitHub does not convert the existing PHP/MySQL hosting or activate platform
+   payment collection.
 4. **Before you change a file, read it.** If a section carries a comment
    explaining *why* it is that way, that comment is a decision the owner
    already made. Respect it or ask.
