@@ -156,3 +156,23 @@ th{background:var(--brand);color:#fff;font-weight:600;font-size:14px}
 .dknyota .go{display:inline-flex;align-items:center;gap:7px;background:var(--brand);color:#fff;
   font-weight:700;font-size:15px;border-radius:11px;padding:11px 17px;flex:none}
 .dknyota:active{opacity:.9}
+
+/* Catalogue discovery: swipe rails keep the full page within a small screen. */
+.discovery-controls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;font-size:14px}
+.rail-toggle{background:var(--soft);color:var(--brand);border:1px solid var(--line);border-radius:11px;min-height:44px;padding:8px 14px;cursor:pointer;font:inherit}
+.shop-category-rail{display:flex;gap:10px;overflow-x:auto;padding:10px 0 14px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.shop-category-rail a{flex:0 0 138px;display:flex;align-items:center;gap:8px;min-height:66px;padding:10px;background:var(--bg);color:var(--brand);border:1px solid var(--line);border-radius:12px;text-decoration:none;font-size:13px;line-height:1.5}
+.shop-category-rail svg{flex-shrink:0}
+.discovery-section{margin:24px 0}
+.discovery-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.discovery-heading h2{font-size:22px;line-height:1.4;margin:0}
+.discovery-heading a{color:var(--brand);font-size:14px;white-space:nowrap}
+.product-discovery-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding:12px 0;overscroll-behavior-x:contain}
+.discovery-product{flex:0 0 164px;display:flex;flex-direction:column;gap:7px;border:1px solid var(--line);border-radius:14px;padding:12px;color:var(--ink);background:var(--bg);text-decoration:none;scroll-snap-align:start}
+.discovery-picture{display:grid;place-items:center;height:92px;background:var(--soft);border-radius:10px;color:var(--brand)}
+.discovery-product b{font-size:15px;line-height:1.5;flex:1}
+.discovery-action{display:block;border-top:1px solid var(--line);padding-top:8px;color:var(--brand);font-size:13px;font-weight:600}
+.catalog-picker label{display:block;margin:10px 0 5px}
+.catalog-picker select{width:100%;max-width:100%}
+.category-preview{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:12px;overflow-wrap:anywhere;font-size:14px}
+@media(min-width:800px){.discovery-product{flex-basis:180px}.shop-category-rail a{flex-basis:160px}}

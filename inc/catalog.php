@@ -85,7 +85,7 @@ function catalog_filter(array $items, $group, $type, $sub, $query) {
         if ($type !== '' && $shop !== $type) return false;
         if ($sub !== '' && $item['sub_cat'] !== $sub) return false;
         return $query === '' || market_matches($query, implode(' ', [
-            $shop, $meta[$shop]['hi'] ?? '', $item['type_hi'] ?? '',
+            $shop, $meta[$shop]['hi'] ?? '', $item['type_hi'] ?? '', catalog_picker_aliases($shop),
             $item['name_en'], $item['name_hi'] ?? '', $item['sub_cat'] ?? '',
         ]));
     }));
@@ -131,4 +131,8 @@ function catalog_shops(PDO $pdo, $type, $area = null) {
     }
     unset($shop);
     return $out;
+}
+
+function catalog_picker_aliases($type) {
+    return ['Grocery / Kirana Store'=>'kirana rashan ration', 'Paint Store'=>'paint pent rang brush asian berger nerolac dulux रंग ब्रश एशियन', 'Medical Store'=>'dawa dawai dava', 'Mobile Store'=>'mobile phone', 'Sweet Shop'=>'mithai nashta nasta', 'Hardware Shop'=>'hardware aujar tools'][$type] ?? '';
 }
