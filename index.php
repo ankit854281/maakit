@@ -11,16 +11,12 @@ require_once __DIR__ . '/inc/catalog.php';
 $page_title = t('Maakit — shopping, local delivery & bookings in India',
                 'Maakit — भारत में शॉपिंग, स्थानीय डिलीवरी और बुकिंग');
 $tab = 'ghar';
+$request_design = true;
 $me  = cust();
 
 $live = $pdo->query("SELECT *, (salon_updated IS NOT NULL AND salon_updated > (NOW() - INTERVAL 180 MINUTE)) AS fresh
                      FROM businesses WHERE status='approved' AND salon_on=1 AND mode<>'off'
                      ORDER BY salon_updated DESC LIMIT 4")->fetchAll();
-$latest    = $pdo->query("SELECT * FROM businesses WHERE status='approved' ORDER BY id DESC LIMIT 6")->fetchAll();
-$total_biz = (int)$pdo->query("SELECT COUNT(*) c FROM businesses WHERE status='approved'")->fetch()['c'];
-$n_vill    = (int)$pdo->query("SELECT COUNT(*) c FROM villages WHERE live=1")->fetch()['c'];
-$n_ord     = (int)$pdo->query("SELECT COUNT(*) c FROM orders WHERE status<>'Cancel'")->fetch()['c'];
-$pop       = array_slice(array_values(array_filter(items_all($pdo), fn($i) => (int)$i['popular'] === 1)), 0, 6);
 
 list($is_open, $open_short, $open_long) = open_now($pdo);
 
@@ -36,16 +32,6 @@ try {
     $avg = $pdo->query("SELECT ROUND(AVG(rating),1) a, COUNT(*) c FROM feedback WHERE status='approved'")->fetch();
 } catch (Throwable $e) { $says = []; $avg = null; }
 
-// abhi-abhi kya hua (sirf gaon aur samay — naam nahi)
-try {
-    $recent = $pdo->query("SELECT village, created_at, 'o' AS kind FROM orders
-                           WHERE status<>'Cancel' AND created_at > NOW() - INTERVAL 3 DAY
-                           UNION ALL
-                           SELECT village, created_at, 'b' FROM service_bookings
-                           WHERE status<>'Cancel' AND created_at > NOW() - INTERVAL 3 DAY
-                           ORDER BY created_at DESC LIMIT 8")->fetchAll();
-} catch (Throwable $e) { $recent = []; }
-
 try {
     $banners = $pdo->query("SELECT * FROM banners WHERE active=1
         AND (starts IS NULL OR starts <= CURDATE()) AND (ends IS NULL OR ends >= CURDATE())
@@ -56,7 +42,7 @@ try {
 $discovery = []; $discovery_offers = [];
 try {
     $cs = $pdo->prepare('SELECT * FROM catalog_items WHERE shop_type=? ORDER BY CASE WHEN id IN (1517,1659,1666,1669,1671,1678) THEN 0 ELSE 1 END,sort_no,id LIMIT 6');
-    foreach (['Sweet Shop','Grocery / Kirana Store','Paint Store','Mobile Store'] as $kind) {
+    foreach (['Grocery / Kirana Store','Sweet Shop'] as $kind) {
         $cs->execute([$kind]);
         $rows = $cs->fetchAll();
         if ($rows) $discovery[$kind] = $rows;
@@ -66,55 +52,10 @@ try {
     $discovery_offers=catalog_offers($pdo,$ids,coverage_selected($pdo));
 } catch (PDOException $e) { error_log('Maakit home catalogue: '.$e->getMessage()); }
 
-// ---------- home page ki sewayein ----------
-// ---------------------------------------------------------------
-// Home page ki shreniyan.
-//
-// Char samooh, aur samooh "kaam kaise hota hai" se bane hain —
-// "cheez kya hai" se nahi. Grahak ko pehli nazar me pata chal jata
-// hai ki paisa kya lagega, kaun chalega, kitni der me hoga.
-//
-// Naam Roman lipi me hain aur neeche Hindi — yahi tarika Blinkit,
-// Zepto, Urban Company, 1mg sab istemal karte hain. Naam me cheezein
-// ginayi gayi hain ("Taxi, Auto & Bus"), sirf kaam ka naam nahi
-// ("Rides") — taaki grahak ko dikhe ki andar kya milega.
-//
-// Nayi shreni jodni ho to bas yahan ek line jodiye.
-// ---------------------------------------------------------------
-$GROUPS = [
-  [t('We bring it', 'हम लाते हैं'), [
-    ['chaat',    'Samosa &amp; Momos',       t('chowmein, chaat, maggi', 'चाउमीन, चाट, मैगी'),  '/order.php#chaat'],
-    ['grocery',  'Kirana &amp; Masala',      t('atta, oil, soap', 'आटा, तेल, साबुन'),          '/order.php'],
-    ['food',     'Hotel &amp; Mithai',       t('thali, biryani, sweets', 'थाली, बिरयानी, मिठाई'), '/order.php#khana'],
-    ['medicine', 'Medicines',                t('send the prescription', 'पर्ची भेजिए'),         '/order.php#dawa'],
-    ['pooja',    'Puja &amp; Agarbatti',     t('diya, roli, coconut', 'दीया, रोली, नारियल'),    '/order.php#pooja'],
-    ['khad',     'Khad, Beej &amp; Chara',   t('urea, seed, bran', 'यूरिया, बीज, चोकर'),        '/order.php#khad'],
-  ]],
-  [t('Book it in advance', 'पहले से बुक कीजिए'), [
-    ['ride',     'Taxi, Auto &amp; Bus',     t('for people', 'सवारी के लिए'),                  '/sewa.php?s=safar'],
-    ['truck',    'Tempo, Truck &amp; Trolley', t('goods, shifting', 'माल ढुलाई, शिफ़्टिंग'),    '/sewa.php?s=maal'],
-    ['tent',     'Lawn, Tent &amp; Catering', t('wedding, tilak, bhandara', 'शादी, तिलक, भंडारा'), '/sewa.php?s=lawn'],
-  ]],
-  [t('They come to your home', 'कारीगर घर आएगा'), [
-    ['tools',    'Electrician &amp; Plumber', t('mistri, painter, mason', 'मिस्त्री, पेंटर, राजगीर'), '/sewa.php?s=mistri'],
-    ['mobile',   'Mobile &amp; TV Repair',    t('phone, fan, fridge, cooler', 'फ़ोन, पंखा, फ़्रिज'),  '/directory.php?cat=repair'],
-  ]],
-  [t('You go there', 'पता कीजिए'), [
-    ['salon',    'Salon &amp; Parlour',      t('cutting, mehendi, facial', 'कटिंग, मेहंदी, फेशियल'), '/directory.php?cat=nai'],
-    ['shops',    'Shops &amp; Workers',      t('who is near you', 'आपके पास कौन है'),          '/directory.php?cat=dukan'],
-    ['books',    'Old Books',                t('buy, sell, exchange', 'बेचिए, लीजिए, बदलिए'),   '/books.php'],
-  ]],
-];
-
-// "Samosa & Momos" wali patti ke liye — 20 minute me aane wali cheezein.
-// ★ wale (popular) pehle, taaki momos aur chowmein jaise naam saamne rahein.
-$chaat = array_values(array_filter(items_all($pdo), fn($i) => ($i['grp'] ?? '') === 'chaat'));
-usort($chaat, fn($a, $b) => ((int)$b['popular'] <=> (int)$a['popular'])
-                         ?: ((int)($a['sort_no'] ?? 0) <=> (int)($b['sort_no'] ?? 0)));
-$chaat = array_slice($chaat, 0, 8);
 include __DIR__ . '/inc/head.php';
 ?>
 
+<main class="search-page home-shopping" data-previous="<?= h(t('Previous cards','पिछले कार्ड')) ?>" data-next="<?= h(t('Next cards','अगले कार्ड')) ?>">
 <!-- ============ hero ============ -->
 <section class="hero2">
   <div class="wrap">
@@ -124,10 +65,10 @@ include __DIR__ . '/inc/head.php';
     </div>
     <h1><?= $me
         ? t('Hello, ', 'नमस्ते, ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . '.<br>' . t('What do you need?', 'आज क्या चाहिए?')
-        : t('Anything you need.<br>Maa hai na.', 'कुछ भी चाहिए?<br>माँ है ना।') ?></h1>
+        : t('Your local shops.<br>Delivered to your door.', 'दुकानों का सामान।<br>सीधे आपके घर।') ?></h1>
     <p class="sub"><?= t(
-      'Find products, shops and services. Check your area before ordering.',
-      'सामान, दुकान और सेवाएँ खोजिए। ऑर्डर से पहले अपने इलाके में सेवा जाँचिए।') ?></p>
+      'Choose products, send your request, then approve the final price. Delivery in active areas.',
+      'सामान चुनिए, माँग भेजिए, फिर अंतिम दाम पक्का कीजिए। डिलीवरी चालू सेवा क्षेत्रों में।') ?></p>
 
     <form class="hsearch" action="/search.php" method="get">
       <span class="ic"><?= svc_icon('search', 20) ?></span>
@@ -135,22 +76,25 @@ include __DIR__ . '/inc/head.php';
       <button class="go" type="submit"><?= t('Search', 'खोजिए') ?></button>
     </form>
 
-    <div class="discovery-controls">
-      <span><?= t('Browse shop categories', 'दुकान की category चुनिए') ?></span>
-      <button type="button" class="rail-toggle" data-rail-toggle="shop-category-rail" aria-pressed="false" data-paused="<?= h(t('Play', 'चलाएँ')) ?>" data-playing="<?= h(t('Pause', 'रोकें')) ?>"><?= t('Play', 'चलाएँ') ?></button>
-    </div>
-    <nav class="shop-category-rail" id="shop-category-rail" aria-label="<?= h(t('Shop categories', 'दुकान की categories')) ?>">
-      <?php $navicons=['food'=>'grocery','fashion'=>'shops','health'=>'medicine','beauty'=>'salon','electronics'=>'box','construction'=>'home','home'=>'shops','vehicles'=>'ride','education'=>'book','farming'=>'khad','events'=>'pooja','services'=>'all']; ?>
-      <?php foreach (catalog_groups() as $slug=>$label): ?>
-        <a href="<?= h(catalog_url(['group'=>$slug])) ?>"><?= svc_icon($navicons[$slug],24) ?><span><?= h(t($label[0],$label[1])) ?></span></a>
-      <?php endforeach; ?>
-      <a href="/bazaar.php"><?= svc_icon('all',24) ?><span><?= t('All categories', 'सभी categories') ?></span></a>
-    </nav>
+    <div class="home-main-actions"><a class="btn btn-gold" href="/bazaar.php"><?= t('Start shopping','सामान चुनिए') ?></a><a class="btn btn-line" href="/order.php#pata"><?= t('Send a list / photo','लिस्ट / फोटो भेजिए') ?></a></div>
 
   </div>
 </section>
 
 <div class="wrap">
+    <div class="discovery-controls">
+      <span><?= t('Shop by category', 'क्या मँगाना है?') ?></span>
+      <button type="button" class="rail-toggle" data-rail-toggle="shop-category-rail" aria-pressed="false" data-paused="<?= h(t('Play', 'चलाएँ')) ?>" data-playing="<?= h(t('Pause', 'रोकें')) ?>"><?= t('Play', 'चलाएँ') ?></button>
+    </div>
+    <nav class="shop-category-rail" id="shop-category-rail" aria-label="<?= h(t('Shop categories', 'दुकान की categories')) ?>">
+      <?php $navicons=['food'=>'grocery','fashion'=>'shops','health'=>'medicine','beauty'=>'salon','electronics'=>'box','construction'=>'home','home'=>'shops','vehicles'=>'ride','education'=>'book','farming'=>'khad','events'=>'pooja','services'=>'all']; ?>
+      <?php foreach ([['Grocery / Kirana Store','grocery','Grocery','राशन'],['Sweet Shop','food','Sweets & snacks','मिठाई और नाश्ता'],['Medical / Pharmacy','medicine','Medicines','दवाइयाँ'],['Clothing / Garments Shop','shops','Clothing','कपड़े'],['Mobile Store','mobile','Mobiles','मोबाइल'],['Hardware Shop','tools','Hardware','हार्डवेयर'],['Kitchenware / Utensils Shop','shops','Kitchen','रसोई'],['Paint Store','home','Paint','पेंट']] as [$kind,$icon,$en,$hi]): ?>
+        <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= svc_icon($icon,26) ?><span><?= h(t($en,$hi)) ?></span></a>
+      <?php endforeach; ?>
+      <a href="/bazaar.php"><?= svc_icon('all',24) ?><span><?= t('All categories', 'सभी categories') ?></span></a>
+    </nav>
+
+  <div class="home-order-steps"><span>1 · <?= t('Choose products','सामान चुनिए') ?></span><span>2 · <?= t('Send request','माँग भेजिए') ?></span><span>3 · <?= t('Approve final price','अंतिम दाम पक्का कीजिए') ?></span></div>
   <?php foreach ($discovery as $kind=>$products): ?>
     <div class="discovery-section">
       <div class="discovery-heading">
@@ -158,11 +102,11 @@ include __DIR__ . '/inc/head.php';
         <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= t('See all →', 'सब देखिए →') ?></a>
       </div>
       <p class="help"><?= t('Explore products. Each shop confirms its price, pack and availability.', 'सामान देखिए। दाम, पैक और उपलब्धता दुकान से पक्के होंगे।') ?></p>
-      <div class="product-discovery-rail" aria-label="<?= h(catalog_label($kind)) ?>">
+      <div class="product-discovery-rail search-rail" tabindex="0" role="region" aria-label="<?= h(catalog_label($kind)) ?>">
         <?php foreach ($products as $product):
           $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
           $offer=$offers[0] ?? null; ?>
-          <a class="discovery-product" href="<?= h(catalog_url(['type'=>$kind,'q'=>$product['name_en']])) ?>">
+          <a class="discovery-product" href="<?= h(catalog_url(['product'=>(int)$product['id']])) ?>">
             <span class="discovery-picture"><?php if ($offer && $offer['photo']): ?><img src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php else: ?><?= catalog_product_icon($product,38) ?><?php endif; ?></span>
             <b><?= h(t($product['name_en'],$product['name_hi'] ?: $product['name_en'])) ?></b>
             <?php if ($offer): ?>
@@ -170,7 +114,7 @@ include __DIR__ . '/inc/head.php';
             <?php else: ?>
               <span class="meta"><?= h(catalog_reference_summary($product) ?: t('Price to be confirmed', 'दाम पूछकर पक्के होंगे')) ?></span>
             <?php endif; ?>
-            <span class="discovery-action"><?= t('View & request', 'देखिए और मँगाइए') ?></span>
+            <span class="discovery-action"><?= t('Choose pack →', 'पैक चुनिए →') ?></span>
           </a>
         <?php endforeach; ?>
       </div>
@@ -178,31 +122,11 @@ include __DIR__ . '/inc/head.php';
   <?php endforeach; ?>
   <a class="allsvc" href="/bazaar.php"><?= svc_icon('all',20) ?><span><?= t('Browse all shop categories & products', 'सभी दुकान categories और सामान देखिए') ?></span> →</a>
 
-  <nav class="journeys" aria-label="<?=h(t('Choose what you need','अपनी जरूरत चुनें'))?>">
-    <a href="/bazaar.php"><?=svc_icon('grocery',28)?><b><?=t('Shopping','शॉपिंग')?></b><span><?=t('Shops, products & prices','दुकानें, सामान और दाम')?></span></a>
-    <a href="/order.php"><?=svc_icon('box',28)?><b><?=t('Local delivery','स्थानीय डिलीवरी')?></b><span><?=t('Send a list or photo','लिस्ट या फोटो भेजें')?></span></a>
-    <a href="/sewa.php"><?=svc_icon('ride',28)?><b><?=t('Bookings','बुकिंग')?></b><span><?=t('Vehicles & services','गाड़ियाँ और सेवाएँ')?></span></a>
+  <nav class="journeys" aria-label="<?= h(t('Other services','दूसरी सेवाएँ')) ?>">
+    <a href="/sewa.php"><?= svc_icon('ride',28) ?><b><?= t('Vehicles & services','गाड़ी और सेवाएँ') ?></b><span><?= t('Book your requirement','अपनी जरूरत बुक कीजिए') ?></span></a>
+    <a href="/directory.php"><?= svc_icon('shops',28) ?><b><?= t('Find a shop','दुकान खोजिए') ?></b><span><?= t('Shops and local professionals','दुकानें और कारीगर') ?></span></a>
+    <a href="/books.php"><?= svc_icon('book',28) ?><b><?= t('Old books','पुरानी किताबें') ?></b><span><?= t('Buy, sell, exchange','खरीदिए, बेचिए, बदलिए') ?></span></a>
   </nav>
-    <?php
-    // Ek nazar me daayra — ki yahan sirf kirana nahi, dawa bhi,
-    // nashta bhi, mistri bhi, gaadi bhi. Har chip asli jagah par
-    // le jaati hai, dikhane bhar ki nahi hai.
-    $NAMUNE = [
-      [t('Atta 5kg', 'आटा 5 किलो'),        '/order.php#anaj'],
-      [t('Paracetamol', 'पैरासिटामोल'),    '/order.php#dawa'],
-      [t('Samosa', 'समोसा'),               '/order.php#chaat'],
-      [t('Mistri', 'मिस्त्री'),             '/directory.php?cat=bijli'],
-      [t('Bolero', 'बोलेरो'),               '/sewa.php?s=safar'],
-      [t('Salon seat', 'सैलून'),            '/directory.php?cat=nai'],
-    ];
-    ?>
-    <div class="hnam light">
-      <span class="hnam-l"><?= t('Like —', 'जैसे —') ?></span>
-      <?php foreach ($NAMUNE as list($lbl, $href)): ?>
-        <a href="<?= h($href) ?>"><?= h($lbl) ?></a>
-      <?php endforeach; ?>
-    </div>
-
   <div class="install" id="installBox">
     <span class="ic"><?= svc_icon('box', 30) ?></span>
     <span><b><?= t('Keep Maakit on your phone', 'Maakit को फ़ोन में रख लीजिए') ?></b>
@@ -211,111 +135,6 @@ include __DIR__ . '/inc/head.php';
     <button class="btn btn-sm" id="installNo" style="background:transparent;color:var(--muted);padding:8px"><?= t('Not now', 'अभी नहीं') ?></button>
   </div>
 
-
-  <!-- ============ 20 minute wala nashta ============ -->
-  <?php if ($chaat): ?>
-    <div class="secthead" style="margin-top:4px">
-      <h2><?= t('Samosa &amp; Momos', 'समोसा और मोमोज़') ?></h2>
-      <p><?= t('Delivery time confirmed with availability', 'उपलब्धता के साथ डिलीवरी समय पक्का होगा') ?></p>
-      <a class="more" href="/order.php#chaat"><?= t('See all', 'सब देखिए') ?> <?= svc_icon('plus', 13) ?></a>
-    </div>
-    <div class="nrail">
-      <?php foreach ($chaat as $it): ?>
-        <a class="nr" href="/order.php#chaat">
-          <span class="ph">
-            <?php if (!empty($it['photo'])): ?>
-              <img src="/uploads/<?= h($it['photo']) ?>" alt="" loading="lazy">
-            <?php else: ?>
-              <?= prod_icon($it['name'], $it['grp'] ?? '', 30) ?>
-            <?php endif; ?>
-          </span>
-          <b><?= h($it['name']) ?></b>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
-
-  <!-- ============ shreniyan — char samooh ============ -->
-  <div class="secthead" style="margin-top:22px">
-    <h2><?= t('What do you need?', 'क्या चाहिए आपको?') ?></h2>
-    <p><?= t('Call, WhatsApp or tap here — from any shop', 'फ़ोन कीजिए, WhatsApp कीजिए या यहीं दबाइए — किसी भी दुकान से') ?></p>
-  </div>
-  <?php foreach ($GROUPS as list($gname, $rows)): ?>
-    <div class="grphead"><?= h($gname) ?></div>
-    <div class="tiles cat">
-      <?php foreach ($rows as list($ic, $en, $hi, $href)): $tp = svc_photo($ic); ?>
-        <a class="tile" href="<?= h($href) ?>">
-          <span class="ic"><?= $tp
-              ? '<img src="/uploads/' . h($tp) . '" alt="" loading="lazy">'
-              : svc_icon($ic, 32) ?></span>
-          <b><?= $en ?></b>
-          <i><?= h($hi) ?></i>
-        </a>
-      <?php endforeach; ?>
-    </div>
-  <?php endforeach; ?>
-
-  <a class="allsvc" href="/directory.php">
-    <?= svc_icon('all', 20) ?>
-    <span><?= t('All services and shops', 'सभी सेवाएँ और दुकानें') ?></span>
-    <?= svc_icon('plus', 15) ?>
-  </a>
-
-  <!-- ============ kaise kaam karta hai ============ -->
-  <!-- Maakit ka tareeka aam nahi hai: koi stock nahi, kisi bhi
-       dukaan se, sirf delivery ka paisa. Jo pehli baar aata hai
-       usse ye samajh nahi aata — isliye teen kadam me saaf. -->
-  <div class="kaise">
-    <div class="secthead" style="margin-top:0">
-      <h2><?= t('How does it work?', 'कैसे काम करता है?') ?></h2>
-      <p><?= t('Three steps, nothing else', 'तीन कदम, और कुछ नहीं') ?></p>
-    </div>
-    <ol class="steps">
-      <li>
-        <span class="n">1</span>
-        <b><?= t('Tell us what you need', 'बताइए क्या चाहिए') ?></b>
-        <i><?= t('Call, WhatsApp, or order here. Anything, from any shop — even if it is not on our list.',
-                 'फ़ोन कीजिए, WhatsApp कीजिए, या यहीं ऑर्डर कर दीजिए। किसी भी दुकान से कुछ भी — जो लिस्ट में नहीं है वो भी।') ?></i>
-      </li>
-      <li>
-        <span class="n">2</span>
-        <b><?= t('We bring it', 'हम ले आते हैं') ?></b>
-        <i><?= t('Our delivery boy picks it up from the shop and brings it to your door, with the shop’s bill.',
-                 'हमारा डिलीवरी बॉय दुकान से उठाकर आपके घर तक पहुँचाता है — दुकान की पर्ची के साथ।') ?></i>
-      </li>
-      <li>
-        <span class="n">3</span>
-        <b><?= t('Just pay the delivery fee', 'सिर्फ़ डिलीवरी फ़ीस दीजिए') ?></b>
-        <i><?= t('The goods cost what the shop charges — not a rupee more. Our earning is the delivery charge.',
-                 'सामान का दाम वही जो दुकान का है — एक रुपया ज़्यादा नहीं। हमारी कमाई डिलीवरी चार्ज है।') ?></i>
-      </li>
-    </ol>
-
-    <!-- kyun Maakit — jo bade app nahi karte -->
-    <div class="secthead" style="margin-top:22px">
-      <h2><?= t('Why Maakit?', 'क्यों Maakit?') ?></h2>
-    </div>
-    <div class="kyun">
-      <div>
-        <span><?= svc_icon('grocery', 20) ?></span>
-        <b><?= t('We keep no stock', 'हम कोई स्टॉक नहीं रखते') ?></b>
-        <i><?= t('Your things come from the shop you already trust. We only carry them.',
-                 'आपका सामान उसी दुकान से आता है जिस पर आपका भरोसा है। हम सिर्फ़ पहुँचाते हैं।') ?></i>
-      </div>
-      <div>
-        <span><?= svc_icon('rupee', 20) ?></span>
-        <b><?= t('The money goes straight to the shop', 'पैसा सीधे दुकान को जाता है') ?></b>
-        <i><?= t('Cash, or UPI straight to the shop’s own number. Whatever share Maakit takes is shown to the shopkeeper in his own ledger — nothing hidden.',
-                 'नगद, या UPI सीधे दुकान के अपने नंबर पर। Maakit का जो भी हिस्सा होगा वह दुकानदार को उसकी बही में साफ़ दिखता है — छिपाकर कुछ नहीं।') ?></i>
-      </div>
-      <div>
-        <span><?= svc_icon('truck', 20) ?></span>
-        <b><?= t('Zomato-Blinkit doesn’t come here', 'ज़ोमैटो-ब्लिंकिट यहाँ नहीं आता') ?></b>
-        <i><?= t('Local shops and services, connected through one platform. Check coverage before ordering.',
-                 'स्थानीय दुकानें और सेवाएँ एक प्लेटफ़ॉर्म पर। ऑर्डर से पहले सेवा क्षेत्र जाँचें।') ?></i>
-      </div>
-    </div>
-  </div>
 
   <!-- ============ dukandar ke liye ============ -->
   <a class="dknyota" href="/register-business.php">
@@ -327,31 +146,6 @@ include __DIR__ . '/inc/head.php';
     </span>
     <span class="go"><?= t('Register your shop', 'दुकान रजिस्टर कीजिए') ?> <?= svc_icon('plus', 14) ?></span>
   </a>
-
-  <!-- ============ abhi-abhi kya hua ============ -->
-  <?php if (count($recent) >= 3): ?>
-    <div class="proof" aria-live="off">
-      <span class="dot"></span>
-      <span id="proofTx"><?= h(t(vname(['name'=>$recent[0]['village']]) . ' · ' . ($recent[0]['kind'] === 'o' ? 'order' : 'booking') . ' ' . ago($recent[0]['created_at']),
-          $recent[0]['village'] . ' · ' . ($recent[0]['kind'] === 'o' ? 'ऑर्डर' : 'बुकिंग') . ' ' . ago($recent[0]['created_at']))) ?></span>
-    </div>
-    <script>
-    (function(){
-      var L = <?= json_encode(array_map(fn($r) => [
-          'v' => $r['village'],
-          'k' => $r['kind'] === 'o' ? t('order', 'ऑर्डर') : t('booking', 'बुकिंग'),
-          'a' => ago($r['created_at']),
-        ], $recent), JSON_UNESCAPED_UNICODE) ?>;
-      var e = document.getElementById('proofTx'), i = 0;
-      if (L.length < 2) return;
-      setInterval(function(){
-        i = (i + 1) % L.length;
-        e.style.opacity = 0;
-        setTimeout(function(){ e.textContent = L[i].v + ' · ' + L[i].k + ' ' + L[i].a; e.style.opacity = 1; }, 220);
-      }, 3200);
-    })();
-    </script>
-  <?php endif; ?>
 
   <!-- ============ offer / ad ============ -->
   <?php if ($banners): ?>
@@ -409,48 +203,6 @@ include __DIR__ . '/inc/head.php';
 
 </div>
 
-<!-- ============ bharose ki baat ============ -->
-<section class="trust">
-  <div class="wrap">
-    <div class="tr">
-      <div><span><?= svc_icon('rupee', 22) ?></span><b><?= t('Shop price, always', 'दुकान का ही दाम') ?></b>
-        <i><?= t('With the bill. We add nothing to the goods.', 'बिल के साथ। हम सामान पर कुछ नहीं जोड़ते।') ?></i></div>
-      <div><span><?= svc_icon('shield', 22) ?></span><b><?= t('4-digit delivery code', '4 अंकों का कोड') ?></b>
-        <i><?= t('Goods handed over only when you say the code.', 'कोड बताने पर ही सामान मिलेगा।') ?></i></div>
-      <div><span><?= svc_icon('bill', 22) ?></span><b><?= t('Photo of the bill', 'बिल की फ़ोटो') ?></b>
-        <i><?= t('The shop’s slip, on your order page.', 'दुकान की पर्ची आपके ऑर्डर पेज पर।') ?></i></div>
-      <div><span><?= svc_icon('wifi', 22) ?></span><b><?= t('Works on slow net', 'धीमे नेट पर भी') ?></b>
-        <i><?= t('Opens even when the network drops.', 'एक बार खुलने के बाद बिना नेट भी चलेगा।') ?></i></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ roz ka saaman ============ -->
-<?php if ($pop): ?>
-<section>
-  <div class="wrap">
-    <div class="secthead">
-      <h2><?= t('Everyday essentials', 'रोज़ का सामान') ?></h2>
-      <p><?= t('Tap, pick, order — that’s it', 'दबाइए, चुनिए, ऑर्डर — बस इतना ही') ?></p>
-      <a class="more" href="/order.php"><?= t('Full list', 'पूरी लिस्ट') ?> <?= svc_icon('plus', 13) ?></a>
-    </div>
-    <div class="items">
-      <?php foreach ($pop as $i): ?>
-        <a class="it" href="/order.php" style="text-decoration:none;color:inherit">
-          <div class="thumb"><?= item_thumb($i, 30) ?></div>
-          <div class="nm"><?= h($i['name']) ?></div>
-          <div class="un"><?= h($i['unit']) ?></div>
-          <div class="act"><span class="addbtn" style="display:block;text-align:center"><?= t('ADD', 'जोड़िए') ?></span></div>
-        </a>
-      <?php endforeach; ?>
-    </div>
-    <p class="help" style="margin-top:12px"><?= t(
-      'Not on the list? Order it anyway — speak it, write it, or send a photo.',
-      'लिस्ट में जो नहीं है वो भी मँगा सकते हैं — बोलकर, लिखकर या फ़ोटो भेजकर।') ?></p>
-  </div>
-</section>
-<?php endif; ?>
-
 <!-- ============ salon seat booking ============ -->
 <?php if ($live): ?>
 <section class="alt">
@@ -503,137 +255,12 @@ include __DIR__ . '/inc/head.php';
 </section>
 <?php endif; ?>
 
-<!-- ============ kaise chalta hai ============ -->
-<section>
-  <div class="wrap">
-    <?php /* Upar teen kadam me chhota jawab hai. Yahan poora
-             tareeka — daam ki haan, code, aur samay. */ ?>
-    <div class="secthead"><h2><?= t('How your order reaches you', 'ऑर्डर आप तक कैसे पहुँचता है') ?></h2>
-      <p><?= t('No app download, no long forms', 'न ऐप डाउनलोड, न लंबा फ़ॉर्म') ?></p></div>
-    <div class="steps3">
-      <div><span class="n">1</span><b><?= t('Tell us what you need', 'बताइए क्या चाहिए') ?></b>
-        <p><?= t('Pick items, speak it out, send a photo — or just call. Name your shop, or we’ll pick a good one.',
-                 'सामान चुनिए, बोलकर बताइए, फ़ोटो भेजिए — या सीधे कॉल कीजिए। दुकान आपकी पसंद की, या हम अच्छी दुकान से लाएँगे।') ?></p></div>
-      <div><span class="n">2</span><b><?= t('We call with the price', 'दाम और कोड मिलेगा') ?></b>
-        <p><?= t('Nothing is bought before you say yes. Your order number and a 4-digit code arrive on WhatsApp.',
-                 'हम कॉल करके दाम बताएँगे। आपकी हाँ के बाद ही सामान उठेगा। ऑर्डर नंबर और 4 अंकों का कोड WhatsApp पर आएगा।') ?></p></div>
-      <div><span class="n">3</span><b><?= t('Delivered to your door', 'घर पर सामान') ?></b>
-        <p><?= t('The rider brings the shop’s bill. Say your code, check the bill, then pay.',
-                 'डिलीवरी पार्टनर दुकान का बिल लेकर आएगा। कोड बताइए, बिल देखिए, फिर पैसा दीजिए।') ?></p></div>
-    </div>
-    <div class="timing">
-      <div><b><?= t('Order by 11 AM', 'सुबह 11 बजे तक ऑर्डर') ?></b><i><?= t('At your door by afternoon', 'दोपहर तक घर पर') ?></i></div>
-      <div><b><?= t('Order by 3 PM', 'दोपहर 3 बजे तक ऑर्डर') ?></b><i><?= t('At your door by 7 PM', 'शाम 7 बजे तक घर पर') ?></i></div>
-    </div>
-    <p class="help" style="margin-top:12px"><?= t(
-      'For prescription medicine, send a photo of the doctor’s slip. We do not carry liquor, gutkha or anything illegal.',
-      'पर्ची वाली दवाई के लिए डॉक्टर की पर्ची की फ़ोटो भेजिए। शराब, गुटखा और ग़ैर-क़ानूनी सामान हम नहीं ले जाते।') ?></p>
-  </div>
-</section>
-
-<!-- ============ ghar se door ============ -->
-<section class="away">
-  <div class="wrap">
-    <div class="aw">
-      <div>
-        <p class="kk"><?= t('Living away from home?', 'घर से दूर हैं?') ?></p>
-        <h2><?= t('Send essentials to family in an active service area.', 'चालू सेवा क्षेत्र में परिवार के लिए सामान मँगाएँ।') ?></h2>
-        <p class="sub"><?= t(
-          'Send them groceries, medicine, anything. We deliver to their door and send you a photo of the shop’s bill. Pay by UPI from wherever you are.',
-          'राशन, दवाई या कुछ भी मँगाइए — हम उनके दरवाज़े तक पहुँचाएँगे और दुकान के बिल की फ़ोटो आपको भेजेंगे। पैसा आप वहीं से UPI कर दीजिए।') ?></p>
-        <div class="cta">
-          <a class="btn btn-gold" href="<?= h(wa_link(MAAKIT_WA, t('Hello Maakit, I live outside. I want to order for my family at home.', 'नमस्ते Maakit, मैं बाहर रहता/रहती हूँ। घर के लिए ऑर्डर करना है।'))) ?>" target="_blank" rel="noopener"><?= t('Talk on WhatsApp', 'WhatsApp पर बात कीजिए') ?></a>
-          <a class="btn btn-line" href="/order.php"><?= t('Order yourself', 'ख़ुद ऑर्डर कीजिए') ?></a>
-        </div>
-      </div>
-      <span class="il"><?= svc_icon('box', 90) ?></span>
-    </div>
-  </div>
-</section>
-
-<!-- ============ aam sawaal ============ -->
-<section>
-  <div class="wrap" style="max-width:820px">
-    <div class="secthead"><h2><?= t('Common questions', 'आम सवाल') ?></h2>
-      <p><?= t('Straight answers', 'सीधा जवाब') ?></p></div>
-    <?php
-      $FAQ = [
-        [t('Do you charge more than the shop?', 'क्या आप दुकान से ज़्यादा दाम लेते हैं?'),
-         t('No. You pay exactly what is on the shop’s bill, and we send you a photo of that bill. On top of that you pay only the delivery charge, which you see before you order.',
-           'नहीं। दुकान की पर्ची पर जो लिखा है, वही दाम। उस पर्ची की फ़ोटो भी आपको भेजते हैं। उसके ऊपर सिर्फ़ डिलीवरी चार्ज, जो ऑर्डर से पहले ही दिख जाता है।')],
-        [t('What if the goods are wrong or damaged?', 'सामान ग़लत या ख़राब निकला तो?'),
-         t('Tell us the same day. We take it back to the shop and get it changed, or return your money. Keep the bill — the rider leaves it with you.',
-           'उसी दिन बता दीजिए। हम दुकान ले जाकर बदलवाते हैं, या पैसा वापस करते हैं। पर्ची अपने पास रखिए — डिलीवरी पार्टनर आपको दे जाता है।')],
-        [t('Do I have to pay in advance?', 'क्या पहले पैसा देना पड़ता है?'),
-         t('No. Pay when the goods reach your door — cash or UPI, as you like. For big bookings we may ask for an advance, and we will tell you on the call.',
-           'नहीं। सामान घर पहुँचने पर दीजिए — कैश या UPI, जैसा ठीक लगे। बड़ी बुकिंग में एडवांस लग सकता है, वो कॉल पर बता देंगे।')],
-        [t('Can I order medicine?', 'क्या दवाई मँगा सकते हैं?'),
-         t('Yes. For prescription medicine send a photo of the doctor’s slip. We do not carry liquor, gutkha or anything illegal.',
-           'हाँ। पर्ची वाली दवाई के लिए डॉक्टर की पर्ची की फ़ोटो भेज दीजिए। शराब, गुटखा और ग़ैर-क़ानूनी सामान हम नहीं ले जाते।')],
-        [t('I cannot read or type. Can I still order?', 'मुझे पढ़ना-लिखना नहीं आता, तब भी ऑर्डर होगा?'),
-         t('Yes. Call ' . MAAKIT_NUMBER_SHOW . ' and just say it. Or tap the mic on the order page and speak in Hindi. Or send a photo of a hand-written list.',
-           'हाँ। ' . MAAKIT_NUMBER_SHOW . ' पर कॉल करके बोल दीजिए। या ऑर्डर पेज पर माइक दबाकर हिंदी में बोलिए। या हाथ से लिखी पर्ची की फ़ोटो भेज दीजिए।')],
-        [t('My area is not in the list.', 'मेरा इलाका लिस्ट में नहीं है।'),
-         t('Request coverage on the service-area page. An area opens after shops, delivery and local operations are ready.',
-           'सेवा क्षेत्र पेज पर अनुरोध भेजें। दुकानें, डिलीवरी और स्थानीय व्यवस्था तैयार होने पर इलाका चालू होता है।')],
-        [t('How do I book a Bolero or a goods vehicle?', 'बोलेरो या माल गाड़ी कैसे बुक करें?'),
-         t('Open Vehicle or Goods from the home page. You see which vehicles are free today with their rates, pick one, and we call you to fix the fare.',
-           'होम पेज से “गाड़ी बुकिंग” या “माल ढुलाई” खोलिए। आज कौन सी गाड़ी खाली है और उसका रेट दिखेगा — चुन लीजिए, किराया हम कॉल पर तय करेंगे।')],
-      ];
-    ?>
-    <div class="faq">
-      <?php foreach ($FAQ as $i => $f): ?>
-        <details<?= $i === 0 ? ' open' : '' ?>>
-          <summary><?= h($f[0]) ?><span class="pm"><?= svc_icon('plus', 15) ?></span></summary>
-          <p><?= h($f[1]) ?></p>
-        </details>
-      <?php endforeach; ?>
-    </div>
-    <p class="help" style="margin-top:14px;text-align:center"><?= t('Still not clear?', 'फिर भी साफ़ न हो?') ?>
-      <a href="tel:<?= MAAKIT_PHONE ?>"><?= t('Call us', 'कॉल कीजिए') ?></a> ·
-      <a href="<?= h(wa_link(MAAKIT_WA, t('Hello Maakit, I have a question.', 'नमस्ते Maakit, एक बात पूछनी है।'))) ?>" target="_blank" rel="noopener">WhatsApp</a></p>
-  </div>
-</section>
-
-<!-- ============ local kaam karne wale ============ -->
-<section class="alt">
-  <div class="wrap">
-    <div class="secthead">
-      <h2><?= t('Local people who do the work', 'अपने इलाके के काम करने वाले') ?></h2>
-      <p><?= t('Pandit ji to plumber — find the number, call directly', 'पंडित जी से मिस्त्री तक — नंबर ढूंढिए, सीधे बात कीजिए') ?><?= $total_biz ? ' · ' . t(num($total_biz) . ' listed', num($total_biz) . ' लोग जुड़े हैं') : '' ?></p>
-    </div>
-    <form class="hsearch light" action="/directory.php" method="get">
-      <span class="ic"><?= svc_icon('search', 20) ?></span>
-      <input type="text" name="q" id="dq" placeholder="<?= h(t('plumber, tent, nalka wala…', 'नलका वाला, plumber, टेंट…')) ?>" aria-label="<?= h(t('Find a service', 'काम करने वाले खोजिए')) ?>">
-      <button class="go" type="submit"><?= t('Search', 'खोजिए') ?></button>
-    </form>
-    <div class="catrow">
-      <?php foreach (categories() as $c): ?>
-        <a class="cc" href="/directory.php?cat=<?= h($c['slug']) ?>">
-          <span><?= cat_icon($c['icon'], 24) ?></span><?= h($c['name']) ?>
-        </a>
-      <?php endforeach; ?>
-    </div>
-    <?php if ($latest): ?>
-      <div class="grid g3" style="margin-top:18px">
-        <?php foreach ($latest as $b): ?>
-          <a class="card biz" href="/business.php?id=<?= (int)$b['id'] ?>">
-            <span class="ph"><?= $b['photo'] ? '<img src="/uploads/' . h($b['photo']) . '" alt="">' : cat_icon(cat_by_slug($b['category'])['icon'] ?? 'anya', 30) ?></span>
-            <span>
-              <h3><?= h($b['name']) ?></h3>
-              <div class="meta"><?= h(cat_by_slug($b['category'])['name'] ?? '') ?> · <?= h($b['village']) ?></div>
-            </span>
-          </a>
-        <?php endforeach; ?>
-      </div>
-    <?php endif; ?>
-    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
-      <a class="btn btn-brand" href="/register-business.php"><?= t('List your shop or service — free', 'अपना काम / दुकान जोड़िए — फ़्री') ?></a>
-      <a class="btn btn-gold" href="/transport.php"><?= t('Have a vehicle? Register it', 'गाड़ी है? जोड़िए') ?></a>
-      <a class="btn btn-line" href="/directory.php" style="color:var(--brand);border-color:var(--line)"><?= t('See all', 'सब देखिए') ?></a>
-    </div>
-  </div>
-</section>
+<section class="home-help"><div class="wrap">
+  <h2><?= t('Clear prices. One request.','साफ़ दाम। एक माँग।') ?></h2>
+  <p><?= t('Pack prices are labelled on each product. Maakit confirms the final goods and delivery total before purchase. Goods payment goes directly to the shop.','हर सामान के साथ पैक और उसका दाम देखें। खरीदने से पहले सामान और डिलीवरी का अंतिम कुल आपसे पक्का होगा। सामान का भुगतान सीधे दुकान को होगा।') ?></p>
+  <div class="chips"><a class="chip" href="/sewa.php"><?= t('Vehicles & services','गाड़ी और सेवाएँ') ?></a><a class="chip" href="/directory.php"><?= t('Find a shop','दुकान खोजिए') ?></a><a class="chip" href="/area.php"><?= t('Check delivery area','डिलीवरी क्षेत्र जाँचिए') ?></a><a class="chip" href="tel:<?= h(MAAKIT_PHONE) ?>"><?= t('Need help? Call','मदद चाहिए? कॉल कीजिए') ?></a></div>
+</div></section>
+</main>
 
 <script>
 /* ---------- offer ki patti khud chalti hai ----------
@@ -705,4 +332,5 @@ document.addEventListener('click', function(e){
 })();
 </script>
 <script src="/assets/catalogue-discovery.js" defer></script>
+<script src="/assets/search-sliders.js?v=1" defer></script>
 <?php include __DIR__ . '/inc/foot.php'; ?>

@@ -4,7 +4,7 @@
   var button = document.querySelector('[data-rail-toggle="shop-category-rail"]');
   if (!rail || !button) return;
   var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var playing = !motion.matches;
+  var playing = false; // Customers choose when category movement starts.
   var interacting = false;
   function label() {
     button.textContent = playing ? button.dataset.playing : button.dataset.paused;
