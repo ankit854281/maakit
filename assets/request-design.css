@@ -97,3 +97,32 @@
 @media(prefers-reduced-motion:reduce){.search-rail{scroll-behavior:auto}}
 
 .search-slider-controls[hidden]{display:none}
+
+.home-shopping{padding:0}
+.home-shopping .hero2{background:var(--brand);padding:26px 0 30px}
+.home-shopping .hero2::after{display:none}
+.home-shopping .hero2 h1{font-size:clamp(32px,5vw,48px);line-height:1.35;max-width:22ch}
+.home-shopping .hsearch{box-shadow:none;max-width:700px}
+.home-main-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.home-shopping .discovery-controls{margin:24px 0 8px;color:var(--ink);font-size:21px;font-weight:700}
+.home-shopping .shop-category-rail a{background:var(--surface);color:var(--brand);border:1px solid var(--line);flex-basis:124px;min-height:128px;justify-content:center;flex-direction:column;text-align:center;gap:6px}
+.home-shopping .shop-category-rail span{font-size:15px;line-height:1.5}
+.home-shopping .rail-toggle{color:var(--brand);border-color:var(--line);background:var(--surface);font-size:13px}
+.home-order-steps{display:flex;gap:12px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px}
+.home-shopping .discovery-section{margin:26px 0;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.home-shopping .discovery-heading{align-items:baseline;gap:12px}
+.home-shopping .discovery-heading h2{font-size:23px;line-height:1.45}
+.home-shopping .discovery-heading a{flex-shrink:0;font-size:14px}
+.home-shopping .discovery-section>.help{max-width:60ch;font-size:14px}
+.home-help{background:var(--soft)}
+.home-help p{max-width:64ch;font-size:15px;line-height:1.8}
+.focused-product>.wrap{max-width:740px}
+.focused-product .bazaar-card{padding:24px}
+.focused-product .catalogue-request select[name="pack"]{grid-column:2;grid-row:2;min-width:0;width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);color:var(--ink)}
+.focused-product .catalogue-request>button{min-height:52px}
+.focused-product .bazaar-card h3{font-size:26px;line-height:1.4}
+.shop-options{margin:14px 0;border:1px solid var(--line);border-radius:12px;padding:14px}
+.shop-options summary{cursor:pointer;color:var(--brand);font-weight:600}
+@media(max-width:480px){.home-main-actions>.btn{flex:1;font-size:14px;padding:12px}.home-shopping .discovery-heading h2{font-size:21px}.focused-product .bazaar-card{padding:18px}}
+
+.home-shopping .shop-category-rail small{font-size:12px;color:var(--muted);line-height:1.5}

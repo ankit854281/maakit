@@ -91,7 +91,7 @@ include __DIR__ . '/inc/head.php';
         <p class="help"><?= count($catalog_matches) ?> <?= t('matches · swipe to browse. Final price confirmed by the shop.', 'नतीजे · आगे सरकाकर देखिए। अंतिम दाम दुकान से पक्का होगा।') ?></p>
         <div class="product-discovery-rail search-rail" tabindex="0" role="region" aria-label="<?= h(t('Products and prices','सामान और दाम')) ?>">
           <?php foreach (array_slice($catalog_matches,0,12) as $match): ?>
-            <a class="discovery-product" href="<?= h(catalog_url(['type'=>$match['shop_type'],'q'=>$match['name_en']])) ?>">
+            <a class="discovery-product" href="<?= h(catalog_url(['product'=>(int)$match['id']])) ?>">
               <span class="discovery-picture"><?= catalog_product_icon($match,34) ?></span>
               <b><?= h(t($match['name_en'],$match['name_hi'] ?: $match['name_en'])) ?></b>
               <span class="meta"><?= h(catalog_label($match['shop_type'])) ?></span>

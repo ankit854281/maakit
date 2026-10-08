@@ -12,6 +12,8 @@ function seo_page($uri, array $query = [], $method = 'GET') {
         $params['id']=(int)$query['id'];
     }
     if ($path==='/bazaar.php') {
+        // Product views are request forms, not the category index.
+        if (isset($query['product'])) return ['index'=>false,'canonical'=>null];
         $meta=json_decode(file_get_contents(__DIR__.'/catalog-meta.json'),true);
         foreach (['group','type','sub','p'] as $key) {
             $v=$query[$key] ?? '';
