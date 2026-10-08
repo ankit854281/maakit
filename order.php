@@ -6,6 +6,7 @@ require_once __DIR__ . '/inc/daam.php';
 require_once __DIR__ . '/inc/icons.php';
 require_once __DIR__ . '/inc/submit-once.php';
 require_once __DIR__ . '/inc/catalog.php';
+require_once __DIR__ . '/inc/catalog-request.php';
 
 $page_title = t('Order — Maakit', 'ऑर्डर कीजिए — Maakit');
 $tab = 'order';
@@ -20,6 +21,7 @@ $done = null;
 $request_note = $_SERVER['REQUEST_METHOD'] === 'POST' ? post('note') : '';
 $request_item = null;
 $request_id = isset($_GET['catalog_id']) && is_string($_GET['catalog_id']) && ctype_digit($_GET['catalog_id']) ? (int)$_GET['catalog_id'] : 0;
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['catalog_id']) && is_string($_POST['catalog_id'])) $request_id=(int)$_POST['catalog_id'];
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $request_id > 0) {
     $st = $pdo->prepare('SELECT * FROM catalog_items WHERE id=? AND is_sewa=0');
     $st->execute([$request_id]);
@@ -40,13 +42,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $request_id > 0) {
 }
 
 
+$using_request_cart = ($_GET['request_cart']??'')==='1' || ($_POST['request_cart']??'')==='1';
+$catalogue_rows=$using_request_cart?request_cart_rows($pdo,$_SESSION['catalogue_request_cart']??[]):[];
+$catalogue_note=request_cart_note($catalogue_rows);
+if($using_request_cart && !$done && !$catalogue_rows) $err=t('Your request cart is empty. Add products again.','माँग की लिस्ट खाली है। सामान फिर जोड़िए।');
+if($catalogue_note && $_SERVER['REQUEST_METHOD']!=='POST') $request_note=$catalogue_note;
+// A valid single catalogue request also requires final-price approval.
+$posted_id=isset($_POST['catalog_id'])&&is_string($_POST['catalog_id'])?(int)$_POST['catalog_id']:0;
+$needs_quote=(bool)$request_item || (bool)$catalogue_rows;
+if($posted_id>0){$st=$pdo->prepare('SELECT id FROM catalog_items WHERE id=? AND is_sewa=0');$st->execute([$posted_id]);$needs_quote=(bool)$st->fetch() || $needs_quote;}
+
 // ---------- ऑर्डर सेव ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
     $name    = post('name');
     $mobile  = preg_replace('/\D/', '', post('mobile'));
     $village = post('village');
     $landmark= post('landmark');
-    $note    = post('note');                 // "aur kuchh" — khula likha hua
+    $note    = post('note');
+    if($catalogue_note && $note!==$catalogue_note) $note=$catalogue_note.($note?"\n".$note:'');                 // "aur kuchh" — khula likha hua
     $shop    = post('shop');
     $market  = post('market', 'kapsethi');
     $pay     = post('payment');
@@ -99,9 +112,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
             (order_no, code, source, customer_id, customer_name, mobile, village, landmark, items, items_json, goods_note, photo,
              shop, market, weight_extra, size_extra, first_order, delivery_charge, payment, lat, lng, status)
             VALUES (?,?,'website',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'Naya')");
+        if($needs_quote) $pdo->beginTransaction();
+        try {
         $ins->execute([$order_no, $code, cust()['id'] ?? null, $name, $mobile, $village, $landmark, $items_text,
                        json_encode($cart['lines'], JSON_UNESCAPED_UNICODE), $note, $photo,
                        $shop, $market, $w, $sz, $first, $calc['total'], $pay, $lat, $lng]);
+        if($needs_quote){$pdo->prepare('INSERT INTO order_quotes(order_id) VALUES (?)')->execute([(int)$pdo->lastInsertId()]);$pdo->commit();}
+        } catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+        if($using_request_cart) unset($_SESSION['catalogue_request_cart']);
+
 
         $charge_line = ($calc['van'] || $calc['total'] === null)
             ? "डिलीवरी चार्ज: कॉल पर बताया जाएगा"
@@ -116,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
             . "पेमेंट: $pay\n" . $charge_line;
 
         $done = ['no'=>$order_no, 'code'=>$code, 'calc'=>$calc, 'first'=>$first,
-                 'wa'=>wa_link(MAAKIT_WA, $lines), 'mobile'=>$mobile, 'cart'=>$cart, 'note'=>$note];
+                 'wa'=>wa_link(MAAKIT_WA, $lines), 'mobile'=>$mobile, 'cart'=>$cart, 'note'=>$note,'needs_quote'=>$needs_quote];
         submit_once_complete($submit_key,$done);
     }
 }
@@ -164,6 +183,7 @@ include __DIR__ . '/inc/head.php';
     <h2 style="margin:6px 0 4px"><?= t('Order received', 'ऑर्डर मिल गया') ?></h2>
     <p class="lead" style="margin-bottom:0"><?= t('Our team will call or WhatsApp you shortly to confirm.', 'हमारी टीम कुछ ही देर में फ़ोन या WhatsApp पर कन्फ़र्म करेगी।') ?></p>
 
+    <?php if(!empty($done['needs_quote'])): ?><p class="help"><?= t('Your request is saved. The team will send final goods and delivery prices for your approval before purchase.','आपकी माँग दर्ज है। खरीदने से पहले टीम सामान और डिलीवरी के अंतिम दाम आपकी पुष्टि के लिए भेजेगी।') ?></p><?php endif; ?>
     <div class="codebox">
       <div class="l"><?= t('DELIVERY CODE', 'डिलीवरी कोड') ?></div>
       <div class="c"><?php foreach (str_split($done['code']) as $d): ?><span><?= h($d) ?></span><?php endforeach; ?></div>
@@ -284,6 +304,8 @@ try{
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
       <input type="hidden" name="submit_key" value="<?= h($submit_key) ?>">
       <input type="hidden" name="cart_json" id="cartJson">
+      <input type="hidden" name="request_cart" value="<?= $using_request_cart?'1':'0' ?>">
+      <input type="hidden" name="catalog_id" value="<?= (int)$request_id ?>">
       <input type="hidden" name="note" id="noteHid" value="<?= h($request_note) ?>">
 
       <div class="box" style="margin-bottom:14px">
@@ -385,7 +407,7 @@ var L = <?= json_encode([
   'addall'      => t('Add all', 'सब जोड़ दीजिए'),
   'reorderdone' => t('Last order added', 'पिछला ऑर्डर जुड़ गया'),
   'pickfirst'   => t('Pick something first', 'पहले कुछ सामान चुनिए'),
-  'nothingpicked'=> t('Nothing picked — we will go by what you wrote below.', 'कोई सामान नहीं चुना — नीचे लिखी बात के हिसाब से लाएँगे।'),
+  'nothingpicked'=> ($using_request_cart || $request_item) ? t('Your catalogue request is listed below.', 'आपकी चुनी हुई माँग नीचे है।') : t('Nothing picked — we will go by what you wrote below.', 'कोई सामान नहीं चुना — नीचे लिखी बात के हिसाब से लाएँगे।'),
   'youwrote'    => t('You wrote:', 'आपने लिखा:'),
   'cartempty'   => t('Cart is empty', 'कार्ट खाली हो गया'),
   'delcharge'   => t('Delivery charge', 'डिलीवरी चार्ज'),

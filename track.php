@@ -3,6 +3,8 @@ require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/dakiya.php';
 require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/services.php';
+require_once __DIR__ . '/inc/order-quotes.php';
+require_once __DIR__ . '/inc/dispatch.php';
 
 $page_title = t('My orders — Maakit', 'मेरे ऑर्डर — Maakit');
 $tab = 'mere';
@@ -47,6 +49,16 @@ if ($no !== '' && strlen($mob) === 10) {
     elseif (strlen($mob) !== 10) { $err = t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।'); }
 }
 
+if($o && $_SERVER['REQUEST_METHOD']==='POST' && in_array(post('act'),['quote_accept','quote_reject'],true) && csrf_ok()) {
+    $accept=post('act')==='quote_accept';
+    $revision=isset($_POST['revision'])&&is_string($_POST['revision'])?(int)$_POST['revision']:0;
+    $ok=quote_reply($pdo,(int)$o['id'],$mob,$revision,$accept);
+    if($ok && $accept) dispatch_assign($pdo,(int)$o['id']);
+    flash($ok?($accept?t('Prices accepted. Maakit can proceed.','दाम स्वीकार हुए। Maakit अब आगे बढ़ सकता है।'):t('Change requested. The team will contact you.','बदलाव की माँग दर्ज हुई। टीम आपसे बात करेगी।')):t('The quote changed or is no longer open. Review the latest prices.','दाम बदल गए हैं या यह पुष्टि अब खुली नहीं है। नए दाम देखिए।'));
+    redirect('/track.php?no='.urlencode($no).'&m='.urlencode($mob));
+}
+$quote=$o?order_quote($pdo,(int)$o['id']):null;
+
 // Decide cancellation eligibility in the UPDATE itself, not a stale page read.
 if ($o && $_SERVER['REQUEST_METHOD'] === 'POST' && post('act') === 'cancel' && csrf_ok()) {
     $cancel = $pdo->prepare("UPDATE orders SET status='Cancel', note=CONCAT(COALESCE(note,''),'\n[customer ne website se cancel kiya]') WHERE id=? AND status='Naya' AND (shop_status IS NULL OR shop_status='' OR shop_status='naya')");
@@ -75,6 +87,24 @@ include __DIR__ . '/inc/head.php';
     <p class="lead" style="margin:4px 0 0"><?= date('d/m/Y, h:i A', strtotime($o['created_at'])) ?> · <?= h($o['village']) ?></p>
   </div>
 
+  <?php if($quote && $o['status']!=='Cancel'): ?><div class="box order-quote" style="margin-top:14px">
+    <h3><?= t('Confirm the final prices','अंतिम दाम की पुष्टि') ?></h3>
+    <?php if($quote['state']==='draft'): ?><p><?= t('Maakit is checking suitable shops. Your request is received; prices and time will appear here.','Maakit उपयुक्त दुकानों से पता कर रहा है। आपकी माँग मिली है; दाम और समय यहीं दिखेंगे।') ?></p>
+    <?php else: ?>
+      <p><?= t('Goods','सामान') ?>: <b>₹<?= (int)$quote['goods_amount'] ?></b> · <?= t('Delivery','डिलीवरी') ?>: <b>₹<?= (int)$quote['delivery_charge'] ?></b></p>
+      <p><?= t('Total','कुल') ?>: <b>₹<?= (int)$quote['goods_amount']+(int)$quote['delivery_charge'] ?></b></p>
+      <p><?= t('Shops','दुकानें') ?>: <?= h($quote['shop_details']) ?><br><?= t('Possible delivery time','सम्भव डिलीवरी समय') ?>: <?= h($quote['delivery_time']) ?></p>
+      <?php if($quote['details']): ?><p><?= nl2br(h($quote['details'])) ?></p><?php endif; ?>
+      <p class="help"><?= t('Goods payment goes directly to the shops. Maakit’s delivery charge is separate. Check quantities, packs and any substitutions before accepting.','सामान का भुगतान सीधे दुकानों को है। Maakit का डिलीवरी चार्ज अलग है। मात्रा, पैक और बदले हुए सामान देखकर स्वीकार कीजिए।') ?></p>
+      <?php if($quote['state']==='ready' && $o['status']==='Naya'): ?>
+        <form method="post" style="display:grid;gap:8px">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="no" value="<?= h($no) ?>"><input type="hidden" name="m" value="<?= h($mob) ?>"><input type="hidden" name="revision" value="<?= (int)$quote['revision'] ?>">
+          <button class="btn btn-brand" name="act" value="quote_accept"><?= t('Accept these prices','ये दाम स्वीकार हैं') ?></button>
+          <button class="btn btn-line" name="act" value="quote_reject"><?= t('Request changes','बदलाव चाहिए') ?></button>
+        </form>
+      <?php else: ?><b><?= $quote['state']==='accepted'?t('You accepted this quote','आपने ये दाम स्वीकार किए हैं'):t('Changes requested; waiting for a revised quote','बदलाव माँगा है; नए दाम की प्रतीक्षा है') ?></b><?php endif; ?>
+    <?php endif; ?>
+  </div><?php endif; ?>
   <?php if($shipment):?><div class="box"><h3><?=t('Courier details','Courier जानकारी')?></h3><b><?=h($shipment['carrier'])?></b><p><?=t('Tracking / AWB','Tracking / AWB')?>: <?=h($shipment['tracking_no'])?></p><p class="help"><?=t('Recorded by the Maakit team. Use this number on the courier’s official website or contact support. This is not a live courier status.','Maakit टीम ने यह जानकारी दर्ज की है। Courier की official website पर इस नंबर से जाँचें या सहायता टीम से संपर्क करें। यह courier की live स्थिति नहीं है।')?></p></div><?php endif;?>
   <?php if ($o['status'] === 'Cancel'): ?>
     <div class="err" style="margin-top:16px"><?= t('This order was cancelled.', 'यह ऑर्डर कैंसिल हो गया है।') ?> <a href="/order.php"><?= t('Place a new one', 'नया ऑर्डर कीजिए') ?></a>.</div>
@@ -185,7 +215,7 @@ include __DIR__ . '/inc/head.php';
       <div class="r"><span><?= t('Goods', 'सामान का दाम') ?></span><b><?= $o['goods_amount'] !== null ? '₹' . (int)$o['goods_amount'] : t('as per shop bill', 'दुकान की पर्ची से') ?></b></div>
       <div class="r"><span><?= t('Delivery charge', 'डिलीवरी चार्ज') ?></span><b>
         <?php if ($o['delivery_charge'] === null): ?><?= t('on call', 'कॉल पर') ?>
-        <?php elseif ((int)$o['first_order'] === 1): ?><span class="freebadge"><?= t('First delivery FREE', 'पहली डिलीवरी फ़्री') ?></span><?= (int)$o['delivery_charge'] ? ' + ₹' . (int)$o['delivery_charge'] . ' (' . t('weight/size', 'वज़न/आकार') . ')' : '' ?>
+        <?php elseif ((int)$o['first_order'] === 1 && !$quote): ?><span class="freebadge"><?= t('First delivery FREE', 'पहली डिलीवरी फ़्री') ?></span><?= (int)$o['delivery_charge'] ? ' + ₹' . (int)$o['delivery_charge'] . ' (' . t('weight/size', 'वज़न/आकार') . ')' : '' ?>
         <?php else: ?>₹<?= (int)$o['delivery_charge'] ?><?php endif; ?>
       </b></div>
       <div class="r"><span><?= t('Payment', 'पेमेंट') ?></span><b><?= h($o['payment'] ?: '—') ?></b></div>

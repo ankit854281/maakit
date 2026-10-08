@@ -119,6 +119,7 @@ jobs:
           php .github/jaanch/catalogue-expansion.php
           php .github/jaanch/earning-flow.php
           php .github/jaanch/coverage-flow.php
+          php .github/jaanch/request-flow.php
           php .github/jaanch/dispatch-flow.php
           php .github/jaanch/tracking-flow.php
           php .github/jaanch/traffic-flow.php
