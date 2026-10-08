@@ -45,8 +45,12 @@ check(count(catalog_shops($pdo, 'Hardware Shop')) === 1, 'Exact shop type associ
 check(catalog_shops($pdo, 'Unknown') === [], 'Do not guess unrelated shops');
 check(catalog_shops($pdo, '') === [], 'Empty category has no shop query');
 $references=json_decode(file_get_contents(__DIR__.'/../inc/catalog-reference-prices.json'),true,512,JSON_THROW_ON_ERROR);
-check(count($references)===30,'30 checked retail product families');
-check(array_sum(array_map(fn($r)=>count($r['packs']),$references))===87,'87 explicit pack prices');
+check(count($references)===51,'51 catalogue entries have explicit retail references');
+$unique_packs=[];
+foreach ($references as $reference) foreach ($reference['packs'] as $pack) $unique_packs[$reference['url'].'|'.$pack['unit'].'|'.$pack['price']]=true;
+check(count($unique_packs)===87,'87 unique sourced pack prices; shared examples are not double counted');
+check(str_contains($references[1]['name_en'],'reference example'),'Generic atta labels the specific brand example');
+check($references[1]['packs']===$references[1517]['packs'],'Generic reference carries the exact source packs, not guessed generic prices');
 foreach ($references as $id=>$reference) {
     check(preg_match('~^https://www\\.bigbasket\\.com/(pd|pb)/~',$reference['url'])===1,'Retail source link');
     check(!empty($reference['name_en']) && !empty($reference['name_hi']),'Specific product variant labels');

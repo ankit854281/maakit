@@ -1,4 +1,485 @@
 {
+  "1": {
+    "name_en": "Aashirvaad Whole Wheat Atta (reference example)",
+    "name_hi": "आशीर्वाद गेहूँ आटा (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/126903/aashirvaad-atta-whole-wheat-5-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 kg",
+        "price": 64
+      },
+      {
+        "unit": "2 kg",
+        "price": 99
+      },
+      {
+        "unit": "5 kg",
+        "price": 273.59
+      },
+      {
+        "unit": "10 kg",
+        "price": 546
+      }
+    ]
+  },
+  "31": {
+    "name_en": "Fortune Premium Kachi Ghani Mustard Oil (reference example)",
+    "name_hi": "फॉर्च्यून प्रीमियम कच्ची घानी सरसों तेल (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/276756/fortune-fortune-premium-kachi-ghani-pure-mustard-oil-1l-pet-bottle/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "200 ml bottle",
+        "price": 39.09
+      },
+      {
+        "unit": "500 ml bottle",
+        "price": 83.97
+      },
+      {
+        "unit": "1 L bottle",
+        "price": 160
+      }
+    ]
+  },
+  "32": {
+    "name_en": "Fortune Soya Health Soyabean Oil (reference example)",
+    "name_hi": "फॉर्च्यून सोया हेल्थ सोयाबीन तेल (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/272765/fortune-soya-bean-oil-1-l-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "750 g pouch",
+        "price": 139
+      },
+      {
+        "unit": "1 kg pouch",
+        "price": 186
+      }
+    ]
+  },
+  "51": {
+    "name_en": "Parle-G Gold Biscuits (reference example)",
+    "name_hi": "पारले जी गोल्ड बिस्कुट (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40204945/parle-g-gold-biscuits-1-kg/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "56.25 g",
+        "price": 8.9
+      },
+      {
+        "unit": "187.5 g",
+        "price": 26.7
+      },
+      {
+        "unit": "475 g",
+        "price": 66.75
+      },
+      {
+        "unit": "1 kg",
+        "price": 125
+      }
+    ]
+  },
+  "57": {
+    "name_en": "Maggi Instant Masala Noodles (reference example)",
+    "name_hi": "मैगी मसाला नूडल्स (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266160/maggi-masala-instant-noodles-vegetarian-70-g-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "70 g",
+        "price": 14
+      },
+      {
+        "unit": "280 g",
+        "price": 60
+      },
+      {
+        "unit": "420 g",
+        "price": 70.56
+      },
+      {
+        "unit": "560 g",
+        "price": 112
+      },
+      {
+        "unit": "840 g (12 x 70 g)",
+        "price": 163
+      }
+    ]
+  },
+  "61": {
+    "name_en": "Brooke Bond Red Label Tea (reference example)",
+    "name_hi": "ब्रुक बॉन्ड रेड लेबल चाय (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266575/red-label-tea-250-g-carton/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 30
+      },
+      {
+        "unit": "250 g",
+        "price": 120
+      },
+      {
+        "unit": "500 g",
+        "price": 232.5
+      },
+      {
+        "unit": "1 kg",
+        "price": 512.4
+      }
+    ]
+  },
+  "63": {
+    "name_en": "BRU Instant Coffee (reference example)",
+    "name_hi": "ब्रू इंस्टेंट कॉफी (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266531/bru-instant-coffee-100-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "50 g",
+        "price": 104.5
+      },
+      {
+        "unit": "100 g",
+        "price": 202.4
+      },
+      {
+        "unit": "200 g pouch",
+        "price": 308
+      },
+      {
+        "unit": "500 g",
+        "price": 648
+      }
+    ]
+  },
+  "116": {
+    "name_en": "Amul Fresh Malai Paneer (reference example)",
+    "name_hi": "अमूल फ्रेश मलाई पनीर (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40096747/amul-malai-fresh-paneer-200-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 45
+      },
+      {
+        "unit": "200 g",
+        "price": 76
+      },
+      {
+        "unit": "1 kg pouch",
+        "price": 450
+      }
+    ]
+  },
+  "117": {
+    "name_en": "Amul Pasteurised Butter (reference example)",
+    "name_hi": "अमूल पाश्चुरीकृत मक्खन (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/104860/amul-butter-pasteurised-100-g-carton/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 63
+      },
+      {
+        "unit": "500 g",
+        "price": 230
+      }
+    ]
+  },
+  "119": {
+    "name_en": "Amul Fresh Cream (reference example)",
+    "name_hi": "अमूल फ्रेश क्रीम (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40102603/amul-fresh-cream-25-milk-fat-low-fat-250-ml/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "250 ml",
+        "price": 60
+      },
+      {
+        "unit": "1 L carton",
+        "price": 250
+      }
+    ]
+  },
+  "120": {
+    "name_en": "Amul Pure Ghee (reference example)",
+    "name_hi": "अमूल प्योर घी (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40050536/amul-ghee-1-l-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "500 ml pouch",
+        "price": 323.38
+      },
+      {
+        "unit": "1 L pouch",
+        "price": 590
+      }
+    ]
+  },
+  "245": {
+    "name_en": "Vaseline Deep Moisture Body Lotion (reference example)",
+    "name_hi": "वैसलीन डीप मॉइस्चर बॉडी लोशन (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40118800/vaseline-intensive-care-deep-moisture-body-lotion-400-ml/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "20 ml",
+        "price": 10
+      },
+      {
+        "unit": "40 ml",
+        "price": 42
+      },
+      {
+        "unit": "100 ml",
+        "price": 85
+      },
+      {
+        "unit": "200 ml",
+        "price": 152
+      },
+      {
+        "unit": "400 ml",
+        "price": 100.5
+      },
+      {
+        "unit": "600 ml",
+        "price": 382.5
+      }
+    ]
+  },
+  "251": {
+    "name_en": "Dove Daily Shine Shampoo (reference example)",
+    "name_hi": "डव डेली शाइन शैम्पू (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266692/dove-daily-shine-shampoo-180-ml/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "75 ml",
+        "price": 60
+      },
+      {
+        "unit": "180 ml",
+        "price": 172
+      },
+      {
+        "unit": "340 ml",
+        "price": 258.75
+      },
+      {
+        "unit": "650 ml",
+        "price": 380
+      },
+      {
+        "unit": "1 L",
+        "price": 685
+      }
+    ]
+  },
+  "391": {
+    "name_en": "Prestige Popular Plus Svachh Aluminium Cooker, Induction Base (reference example)",
+    "name_hi": "प्रेस्टीज पॉपुलर प्लस स्वच्छ एल्युमिनियम कुकर, इंडक्शन बेस (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40287227/prestige-pressure-cooker-popular-svachh-pop-outer-lid-aluminium-spillage-control-3-l/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "3 L, 1 cooker",
+        "price": 1734
+      }
+    ]
+  },
+  "401": {
+    "name_en": "Classmate A4 Single Line Notebook, 140 Pages, 21 x 29.7 cm (reference example)",
+    "name_hi": "क्लासमेट ए4 सिंगल लाइन कॉपी, 140 पेज, 21 x 29.7 सेमी (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40005735/classmate-notebook-a4-single-line-ruled-140-pages/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 notebook",
+        "price": 38
+      },
+      {
+        "unit": "3 notebooks",
+        "price": 108.15
+      }
+    ]
+  },
+  "632": {
+    "name_en": "Vim Lemon Dishwash Liquid (reference example)",
+    "name_hi": "विम लेमन डिशवॉश लिक्विड (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266967/vim-dishwash-liquid-gel-lemon-250-ml-bottle/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "245 ml",
+        "price": 49
+      },
+      {
+        "unit": "500 ml bottle",
+        "price": 125
+      },
+      {
+        "unit": "750 ml bottle",
+        "price": 189
+      }
+    ]
+  },
+  "972": {
+    "name_en": "Lux Soft Glow Rose Soap (reference example)",
+    "name_hi": "लक्स सॉफ्ट ग्लो रोज़ साबुन (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/306171/lux-beauty-soap-for-glowing-skin-rose-vitamin-e-100-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 36
+      },
+      {
+        "unit": "150 g",
+        "price": 38
+      },
+      {
+        "unit": "3 x 100 g",
+        "price": 95
+      },
+      {
+        "unit": "4 x 100 g",
+        "price": 125
+      },
+      {
+        "unit": "3 x 150 g",
+        "price": 157
+      }
+    ]
+  },
+  "973": {
+    "name_en": "Dove Daily Shine Shampoo (reference example)",
+    "name_hi": "डव डेली शाइन शैम्पू (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266692/dove-daily-shine-shampoo-180-ml/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "75 ml",
+        "price": 60
+      },
+      {
+        "unit": "180 ml",
+        "price": 172
+      },
+      {
+        "unit": "340 ml",
+        "price": 258.75
+      },
+      {
+        "unit": "650 ml",
+        "price": 380
+      },
+      {
+        "unit": "1 L",
+        "price": 685
+      }
+    ]
+  },
+  "974": {
+    "name_en": "Parle-G Gold Biscuits (reference example)",
+    "name_hi": "पारले जी गोल्ड बिस्कुट (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40204945/parle-g-gold-biscuits-1-kg/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "56.25 g",
+        "price": 8.9
+      },
+      {
+        "unit": "187.5 g",
+        "price": 26.7
+      },
+      {
+        "unit": "475 g",
+        "price": 66.75
+      },
+      {
+        "unit": "1 kg",
+        "price": 125
+      }
+    ]
+  },
+  "978": {
+    "name_en": "Parle-G Gold Biscuits (reference example)",
+    "name_hi": "पारले जी गोल्ड बिस्कुट (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40204945/parle-g-gold-biscuits-1-kg/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "56.25 g",
+        "price": 8.9
+      },
+      {
+        "unit": "187.5 g",
+        "price": 26.7
+      },
+      {
+        "unit": "475 g",
+        "price": 66.75
+      },
+      {
+        "unit": "1 kg",
+        "price": 125
+      }
+    ]
+  },
+  "1428": {
+    "name_en": "Amul Fresh Malai Paneer (reference example)",
+    "name_hi": "अमूल फ्रेश मलाई पनीर (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40096747/amul-malai-fresh-paneer-200-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 45
+      },
+      {
+        "unit": "200 g",
+        "price": 76
+      },
+      {
+        "unit": "1 kg pouch",
+        "price": 450
+      }
+    ]
+  },
   "1517": {
     "name_en": "Aashirvaad Whole Wheat Atta",
     "name_hi": "आशीर्वाद गेहूँ आटा",

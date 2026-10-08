@@ -2,7 +2,7 @@
 
 This is a structural review of all 1,794 catalogue entries (1,446 goods and 348 services), not a claim that all products have been searched on the web or all shops have verified prices.
 
-The CSV tracks every catalogue ID once. It contains 30 product-family retail references with 87 explicitly sourced packs. The 1,416 remaining goods entries are pending exact variants and verified prices. Services require scope-specific provider quotes. Live shop-owned prices remain separate and authoritative; the CSV does not audit the production shop database.
+The CSV tracks every catalogue ID once. It contains 30 specific product variants with 87 unique sourced packs, displayed across 51 catalogue entries. Twenty-one generic entries show explicitly labelled brand examples; shared examples are not counted as new pack prices. The 1,395 remaining goods entries are pending exact variants and verified prices. Services require scope-specific provider quotes. Live shop-owned prices remain separate and authoritative; the CSV does not audit the production shop database.
 
 Each retail reference gives its actual named brand/variant, pack, retailer link and observation date. Generic families may contain a clearly labelled specific example; they do not acquire that example's selling price. Prices are online observations and may vary by location, offer and date. Existing expiry rules hide references after 30 days. No shop stock or checkout prices are seeded.
 
