@@ -257,7 +257,54 @@ Silicon Valley startup.**
 
 ---
 
-## 10. What Ankit wants this to become
+## 10. How Maakit grows — the order of work
+
+The name is national. The operation is not, and must never pretend to be.
+This section exists so neither AI builds breadth while depth is still empty.
+
+**Where Maakit can win, and where it cannot.**
+"The big apps don't come here" is true in a village. It is false in Varanasi,
+Lucknow or Delhi, where Blinkit, Instamart and Zepto deliver in ten minutes
+with far more money behind them. In a metro, "anything from any shop" is a
+slower offer, not a better one. What does scale nationally is the opposite
+end: the lakhs of villages and qasbas those companies will never serve.
+**So national growth means more small towns, not big cities.**
+
+**Software travels in one click. A delivery boy does not.** Every new area
+needs real riders, someone local to manage them, shops onboarded and cash
+handled. That is why expansion is area by area, and why the natural shape is
+a **local partner per area** — someone who runs their own riders and shops the
+way the owner does in Bhadohi, with Maakit providing the platform, the name
+and the accounts. When the first partner is real, build a partner login and a
+per-area ledger. Do not build either before then.
+
+**Depth before breadth. The current bottleneck is not features.**
+At the time of writing the catalogue holds 196 shop types and 1,510 entries,
+while the number of real shops with real prices, real pack sizes and their own
+photos is close to zero. One village with ten shops genuinely running proves
+the model. A hundred empty shop types prove nothing, and an empty shop page
+costs trust that does not come back.
+
+**Before a second area opens, the first one should show:**
+
+- about ten shops with real prices, filled in and kept current by the
+  shopkeepers themselves, not by the owner
+- orders repeating from the same customers week after week — repeat orders are
+  the signal, total orders are not
+- one delivery boy busy enough to be worth his pay
+
+Until then, work that adds depth (getting real shops, prices and photos in,
+making the shop panel easier, making ordering faster) comes before work that
+adds reach.
+
+**What this means for code right now:** the area gating that already exists is
+correct and sufficient. Do not add partner accounts, franchise billing,
+multi-city dispatch or courier integrations until there is a real partner or a
+real second area asking for them.
+
+---
+
+## 11. What Ankit wants this to become
 
 One platform for customers across India to find shops, request local delivery
 and book vehicles/services. Expansion is area by area after operational readiness.
