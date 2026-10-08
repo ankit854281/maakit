@@ -129,11 +129,12 @@ include __DIR__ . '/inc/head.php';
     <?php if (!$prices_ready): ?><p class="help"><?= t('Shop prices are temporarily unavailable. Please ask Maakit.', 'दुकान के दाम अभी नहीं दिख पा रहे हैं। Maakit से पूछिए।') ?></p><?php endif; ?>
     <?php if (!$matches): ?><div class="box"><?= t('No match. Try another name or send your requirement.', 'नहीं मिला। दूसरा नाम खोजिए या अपनी जरूरत भेजिए।') ?></div><?php endif; ?>
     <div class="bazaar-cards">
-    <?php foreach ($items as $item): $list = $offers[(int)$item['id']] ?? []; ?>
+    <?php foreach ($items as $item): $list = $offers[(int)$item['id']] ?? []; $variant_hint = catalog_variant_hint($item); ?>
       <article class="bazaar-card">
         <h3><?= h(t($item['name_en'], $item['name_hi'] ?: $item['name_en'])) ?></h3>
         <span class="meta"><?= h(catalog_label($item['shop_type'], $item['type_hi'])) ?></span>
         <span class="meta"><?= h(catalog_sub_label($item['sub_cat'])) ?> · <?= h($item['unit_hint']) ?><?= !empty($item['is_sewa']) ? ' · ' . t('Service', 'सेवा') : '' ?></span>
+        <?php if ($variant_hint): ?><p class="help catalogue-variant"><?= h($variant_hint) ?></p><?php endif; ?>
         <?php foreach ($list as $offer): ?>
           <div class="bazaar-offer">
             <?php if ($offer['photo']): ?><img class="bazaar-photo" src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php endif; ?>
@@ -149,7 +150,7 @@ include __DIR__ . '/inc/head.php';
           </div>
         <?php endforeach; ?>
         <?php if (!$list): ?><p class="help"><?= t('Shop price not added yet — ask for price and availability.', 'दुकान का दाम अभी नहीं जुड़ा — दाम और उपलब्धता पूछिए।') ?></p><?php endif; ?>
-        <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $item['name_en'] . ' / ' . ($item['name_hi'] ?? '') . ' (' . $item['shop_type'] . ') — दाम और उपलब्धता बताइए।')) ?>"><?= t('Ask Maakit', 'Maakit से पूछिए') ?></a>
+        <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $item['name_en'] . ' / ' . ($item['name_hi'] ?? '') . ' (' . $item['shop_type'] . ') — दाम और उपलब्धता बताइए।' . ($variant_hint ? "\n" . $variant_hint : ''))) ?>"><?= t('Ask Maakit', 'Maakit से पूछिए') ?></a>
       </article>
     <?php endforeach; ?>
     </div>
