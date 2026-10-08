@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS mk_users (
  PRIMARY KEY (id),
  CHECK (id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'),
  UNIQUE KEY (phone_e164),
+ CHECK (phone_e164 REGEXP '^[+][1-9][0-9]{7,14}$'),
  CHECK (rto_risk_score<=100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -224,6 +225,7 @@ CREATE TABLE IF NOT EXISTS mk_addresses (
  CHECK (latitude BETWEEN -90 AND 90),
  CHECK (longitude BETWEEN -180 AND 180),
  CHECK ((latitude IS NULL)=(longitude IS NULL)),
+ CHECK (phone_e164 REGEXP '^[+][1-9][0-9]{7,14}$'),
  CHECK (pincode REGEXP '^[1-9][0-9]{5}$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -690,6 +692,7 @@ CREATE TABLE IF NOT EXISTS mk_payout_accounts (
  active BOOLEAN NOT NULL DEFAULT FALSE,
  PRIMARY KEY (id),
  CHECK (id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'),
+ UNIQUE KEY (id,vendor_id),
  KEY payout_accounts_fk0 (vendor_id),
  FOREIGN KEY (vendor_id) REFERENCES mk_vendors (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -712,8 +715,8 @@ CREATE TABLE IF NOT EXISTS mk_payout_batches (
  CHECK (id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'),
  KEY payout_batches_fk0 (vendor_id),
  FOREIGN KEY (vendor_id) REFERENCES mk_vendors (id),
- KEY payout_batches_fk1 (account_id),
- FOREIGN KEY (account_id) REFERENCES mk_payout_accounts (id),
+ KEY payout_batches_fk1 (account_id,vendor_id),
+ FOREIGN KEY (account_id,vendor_id) REFERENCES mk_payout_accounts (id,vendor_id),
  UNIQUE KEY (idempotency_key),
  CHECK (gross_minor=commission_minor+commission_gst_minor+tcs_minor+tds_minor+net_minor)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -34,7 +34,7 @@ function add(PDO $db,string $table,array $data): string {
     query($db,'INSERT INTO '.$table.' ('.implode(',',$cols).') VALUES ('.implode(',',array_fill(0,count($cols),'?')).')',array_values($data));return $id;
 }
 function person(PDO $db,string $role='CUSTOMER'): array {
-    $id=add($db,'mk_users',['phone_e164'=>'+1999'.substr(str_replace('-','',uuid4()),0,10),'display_name'=>'Test user']);
+    $id=add($db,'mk_users',['phone_e164'=>'+1999'.(string)random_int(1000000000,9999999999),'display_name'=>'Test user']);
     $roleId=query($db,'SELECT id FROM mk_roles WHERE code=?',[$role])->fetchColumn();add($db,'mk_user_roles',['user_id'=>$id,'role_id'=>$roleId]);
     $sid=add($db,'mk_sessions',['user_id'=>$id,'refresh_hash'=>random_bytes(32),'session_version'=>0,'expires_at'=>gmdate('Y-m-d H:i:s',time()+3600)]);
     return live_identity($db,['sub'=>$id,'sid'=>$sid,'session_version'=>0]);
@@ -107,4 +107,29 @@ foreach ($files as $file) unlink($file);
 check($success===1 && $outOfStock===1,'two competing checkouts cannot oversell last unit');
 check((int)query($db,'SELECT reserved FROM mk_inventory WHERE id=?',[$f['inventory']])->fetchColumn()===1,'concurrent inventory invariant');
 check(hash_file('sha256',__DIR__.'/../../database/schema.sql')===hash_file('sha256',__DIR__.'/../../sql/024-php-api.sql'),'updater and standalone schema match');
-echo "PHP security and MySQL transaction tests passed.\n";
+// Exercise the actual HTTP router, including body/header handling and normalized UUID reads.
+$f=fixture($db);$tmp=tempnam(sys_get_temp_dir(),'maakit-keys-');chmod($tmp,0600);file_put_contents($tmp,json_encode($keys,JSON_THROW_ON_ERROR));
+putenv('MAAKIT_JWT_KEY_FILE='.$tmp);putenv('MAAKIT_JWT_ISSUER=maakit-test');putenv('MAAKIT_JWT_AUDIENCE=maakit-client');
+$httpClaims=array_replace($claims,['sub'=>$f['a']['user_id'],'sid'=>$f['a']['claims']['sid'],'iat'=>time(),'exp'=>time()+900]);
+$bearer=sign_token($httpClaims,$private);$log=tempnam(sys_get_temp_dir(),'maakit-http-');$pipes=[];
+$server=proc_open([PHP_BINARY,'-S','127.0.0.1:19099','-t',dirname(__DIR__,2)],[0=>['pipe','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes);fclose($pipes[0]);
+function http_api(string $action,string $method,string $bearer,?array $data=null,string $key=''): array {
+    $headers="Authorization: $bearer\r\nContent-Type: application/json\r\n";
+    if ($key!=='') $headers.="Idempotency-Key: $key\r\n";
+    $context=stream_context_create(['http'=>['method'=>$method,'header'=>$headers,'content'=>$data===null?'':json_encode($data,JSON_THROW_ON_ERROR),'ignore_errors'=>true,'timeout'=>5]]);
+    $raw=file_get_contents('http://127.0.0.1:19099/api/v1/index.php?action='.$action,false,$context);
+    $response=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$line=$http_response_header[0]??'';
+    preg_match('/\s([0-9]{3})\s/',$line,$m);return [(int)($m[1]??0),$response];
+}
+try {
+    $ready=false;for ($i=0;$i<50;$i++) { $sock=@fsockopen('127.0.0.1',19099,$errno,$error,0.1);if ($sock) { fclose($sock);$ready=true;break; }usleep(100000); }
+    check($ready,'HTTP router starts');
+    [$status,$data]=http_api('quote','POST',$bearer,$f['body']);check($status===200,'HTTP trusted quote');
+    $body=$f['body'];$body['quote_id']=$data['data']['quote_id'];$body['total_minor']=1;$key=uuid4();
+    [$status,$data]=http_api('checkout','POST',$bearer,$body,$key);check($status===201 && $data['data']['order']['total_minor']==='23000','HTTP checkout uses trusted price');
+    $id=$data['data']['order']['id'];[$status,$data]=http_api('order&uuid='.strtoupper($id),'GET',$bearer);check($status===200 && $data['data']['order']['id']===$id,'HTTP UUID normalization and ownership');
+    [$status,$data]=http_api('checkout','POST',$bearer,$body,$key);check($status===200 && $data['data']['replayed'],'HTTP idempotent replay');
+    [$status,$data]=http_api('order&uuid='.$id,'GET','Bearer invalid');check($status===401 && !isset($data['data']),'HTTP invalid token redacted');
+    [$status,$data]=http_api('order&uuid='.uuid4(),'GET',$bearer);check($status===404,'HTTP nonexistent order concealed');
+} finally { proc_terminate($server);proc_close($server);unlink($tmp);unlink($log); }
+echo "PHP security, HTTP and MySQL transaction tests passed.\n";

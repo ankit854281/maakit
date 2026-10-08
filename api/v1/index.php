@@ -37,8 +37,8 @@ try {
         if ($action==='quote') $result=quote_checkout($db,$auth,$body);
         else { $result=checkout($db,$auth,$body,$_SERVER['HTTP_IDEMPOTENCY_KEY']??'');$status=$result['replayed']?200:201; }
     } else {
-        require_ownership($db,$auth,'order',$_GET['uuid']??null);
-        $result=['order'=>public_order(query($db,'SELECT * FROM mk_orders WHERE id=? AND customer_id=?',[$_GET['uuid'],$auth['user_id']])->fetch())];
+        $owned=require_ownership($db,$auth,'order',$_GET['uuid']??null);
+        $result=['order'=>public_order(query($db,'SELECT * FROM mk_orders WHERE id=? AND customer_id=?',[$owned['id'],$auth['user_id']])->fetch())];
     }
     http_response_code($status);echo json_data(['data'=>$result,'request_id'=>$requestId]);
 } catch (ApiError $e) {
