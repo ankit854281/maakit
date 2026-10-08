@@ -68,3 +68,32 @@
 .request-cart-edit label{grid-column:1/-1;margin:0;font-size:13px;color:var(--muted)}
 .request-cart-edit input{min-width:0;margin:0}
 .request-cart-edit .btn{padding:10px;font-size:14px}
+
+/* Search has its own consistent rows; other catalogue pages keep their layout. */
+.search-page{padding:24px 0 36px}
+.search-page .wrap{min-width:0}
+.search-page h1{font-size:clamp(26px,4vw,36px)}
+.search-page .searchbox{max-width:760px}
+.search-category-strip{flex-wrap:nowrap;overflow-x:auto;padding:4px 0 10px}
+.search-category-strip .chip{flex-shrink:0;max-width:280px;white-space:normal}
+.search-query{margin:18px 0 8px;font-size:15px;overflow-wrap:anywhere}
+.search-section{padding:22px 0;border-top:1px solid var(--line);min-width:0;position:relative}
+.search-section h2{font-size:22px;line-height:1.45;margin:0 0 6px;max-width:42ch}
+.search-section>.help{font-size:14px;margin:0 0 12px;max-width:68ch}
+.search-rail{display:flex;align-items:stretch;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;padding:4px 2px 16px;scroll-padding-inline:2px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.search-rail>.discovery-product,.search-rail>.search-result-card{flex:0 0 238px;min-width:0;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface);color:var(--ink);text-decoration:none;scroll-snap-align:start;overflow-wrap:anywhere}
+.search-rail .discovery-picture{height:112px;flex:none;background:var(--bg);margin-bottom:2px}
+.search-rail .discovery-picture img{max-height:112px;width:100%;object-fit:contain}
+.search-rail b{font-size:17px;line-height:1.5;min-height:3em;flex:none}
+.search-rail .meta{font-size:14px;line-height:1.6;color:var(--muted)}
+.search-rail .discovery-action{margin-top:auto;border-top:1px solid var(--line);padding-top:12px;min-height:48px;display:flex;align-items:center;font-size:14px;font-weight:700;color:var(--brand)}
+.search-section>.btn{margin-top:8px;background:var(--surface);color:var(--brand);border:1px solid var(--line)}
+.search-slider-controls{display:flex;justify-content:flex-end;gap:8px;margin:0 0 10px}
+.search-slider-controls button{width:50px;height:50px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--brand);font-size:26px;cursor:pointer}
+.search-slider-controls button:disabled{opacity:.4;cursor:default}
+.search-more{border-top:1px solid var(--line);padding-top:18px;margin-top:16px}
+.search-more summary{cursor:pointer;font-weight:600;padding:10px 0}
+@media(min-width:800px){.search-rail>.discovery-product,.search-rail>.search-result-card{flex-basis:250px}}
+@media(prefers-reduced-motion:reduce){.search-rail{scroll-behavior:auto}}
+
+.search-slider-controls[hidden]{display:none}
