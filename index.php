@@ -55,7 +55,7 @@ try {
 // Discovery templates stay visible even before a shop publishes a price.
 $discovery = []; $discovery_offers = [];
 try {
-    $cs = $pdo->prepare('SELECT * FROM catalog_items WHERE shop_type=? ORDER BY sort_no,id LIMIT 6');
+    $cs = $pdo->prepare('SELECT * FROM catalog_items WHERE shop_type=? ORDER BY CASE WHEN id IN (1517,1659,1666,1669,1671,1678) THEN 0 ELSE 1 END,sort_no,id LIMIT 6');
     foreach (['Sweet Shop','Grocery / Kirana Store','Paint Store','Mobile Store'] as $kind) {
         $cs->execute([$kind]);
         $rows = $cs->fetchAll();
@@ -168,7 +168,7 @@ include __DIR__ . '/inc/head.php';
             <?php if ($offer): ?>
               <span class="meta">₹<?= (int)$offer['price'] ?> · <?= h($offer['unit']) ?><br><?= h($offer['shop_name']) ?></span>
             <?php else: ?>
-              <span class="meta"><?= t('Price to be confirmed', 'दाम पूछकर पक्के होंगे') ?></span>
+              <span class="meta"><?= h(catalog_reference_summary($product) ?: t('Price to be confirmed', 'दाम पूछकर पक्के होंगे')) ?></span>
             <?php endif; ?>
             <span class="discovery-action"><?= t('View & request', 'देखिए और मँगाइए') ?></span>
           </a>

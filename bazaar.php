@@ -149,6 +149,17 @@ include __DIR__ . '/inc/head.php';
             <?php endif; ?>
           </div>
         <?php endforeach; ?>
+        <?php if (!$list && ($reference=catalog_reference_price($item))): ?>
+          <div class="bazaar-offer market-reference">
+            <b><?= t('Indicative market price', 'अनुमानित बाज़ार दाम') ?></b>
+            <span class="meta"><?= h(t($reference['name_en'],$reference['name_hi'])) ?></span>
+            <?php foreach ($reference['packs'] as $pack): ?>
+              <span class="meta"><strong>₹<?= h(rtrim(rtrim(number_format((float)$pack['price'],2,'.',''),'0'),'.')) ?></strong> / <?= h($pack['unit']) ?></span>
+            <?php endforeach; ?>
+            <span class="meta"><?= t('Source: ', 'स्रोत: ') ?><a href="<?= h($reference['url']) ?>" target="_blank" rel="noopener noreferrer"><?= h($reference['source']) ?></a> · <?= h($reference['checked_on']) ?></span>
+            <p class="help"><?= t('Online reference, not a confirmed local shop price. The shop confirms the final price and stock; delivery is extra.', 'यह ऑनलाइन संदर्भ है। स्थानीय दुकान का अंतिम दाम और stock पूछकर पक्के होंगे; डिलीवरी अलग है।') ?></p>
+          </div>
+        <?php endif; ?>
         <?php if (!$list): ?><p class="help"><?= t('Shop price not added yet — ask for price and availability.', 'दुकान का दाम अभी नहीं जुड़ा — दाम और उपलब्धता पूछिए।') ?></p><?php endif; ?>
         <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $item['name_en'] . ' / ' . ($item['name_hi'] ?? '') . ' (' . $item['shop_type'] . ') — दाम और उपलब्धता बताइए।' . ($variant_hint ? "\n" . $variant_hint : ''))) ?>"><?= t('Ask Maakit', 'Maakit से पूछिए') ?></a>
       </article>

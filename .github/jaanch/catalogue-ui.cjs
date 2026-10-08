@@ -41,6 +41,18 @@ const assert = require('node:assert/strict');
     await page.getByText('Asian Paints Interior Emulsion',{exact:true}).click();
     assert(page.url().includes('bazaar.php'),'Search card opens product listing');
     assert((await page.locator('body').textContent()).includes('Shop price not added yet'),'Unpriced discovery keeps confirmation wording');
+    const fresh=Date.now()>=Date.parse('2026-10-08T00:00:00Z') && Date.now()<Date.parse('2026-11-08T00:00:00Z');
+    await page.goto('http://127.0.0.1:8099/search.php?q=Tata%20Salt&lang=en');
+    if (fresh) assert((await page.locator('.discovery-product').first().textContent()).includes('₹28 / 1 kg'),'Search shows sourced pack reference');
+    await page.locator('.discovery-product').first().click();
+    if (fresh) {
+      const reference=page.locator('.market-reference');
+      assert((await reference.textContent()).includes('₹28') && (await reference.textContent()).includes('2026-10-08'),'Price and checked date visible');
+      assert((await reference.textContent()).includes('not a confirmed local shop price'),'Reference clearly differs from shop price');
+      assert.equal(await reference.locator('a').getAttribute('href'),'https://www.bigbasket.com/pd/241600/tata-salt-iodized-1-kg-pouch/','Source available');
+    } else assert.equal(await page.locator('.market-reference').count(),0,'Stale references stay hidden');
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Reference prices fit phone');
+    await page.screenshot({path:'/tmp/catalogue-reference-prices.png',fullPage:true});
     assert.deepEqual(errors,[],'No browser script errors');
     console.log('Catalogue mobile layout, category search/preview and product navigation passed');
   } finally {await browser.close();}

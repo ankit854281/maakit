@@ -103,6 +103,27 @@ function catalog_load(PDO $pdo) {
         LEFT JOIN catalog_types t ON t.slug=c.shop_type ORDER BY c.sort_no,c.id')->fetchAll();
 }
 
+// Separate dated retail references. Never seed shop prices or use in a cart.
+function catalog_reference_price(array $item, ?string $today = null) {
+    if (!empty($item['is_sewa'])) return null;
+    static $references;
+    if ($references === null) $references = json_decode(file_get_contents(__DIR__.'/catalog-reference-prices.json'),true) ?: [];
+    $reference=$references[(string)($item['id'] ?? '')] ?? null;
+    if (!$reference) return null;
+    $checked=DateTimeImmutable::createFromFormat('!Y-m-d',$reference['checked_on']);
+    $now=DateTimeImmutable::createFromFormat('!Y-m-d',$today ?? date('Y-m-d'));
+    if (!$checked || !$now || $checked>$now || $checked->modify('+30 days')<$now) return null;
+    return $reference;
+}
+
+function catalog_reference_summary(array $item) {
+    $reference=catalog_reference_price($item);
+    if (!$reference) return '';
+    $pack=$reference['packs'][0];
+    $price=rtrim(rtrim(number_format((float)$pack['price'],2,'.',''),'0'),'.');
+    return t('Market reference: ','बाज़ार संदर्भ: ').'₹'.$price.' / '.$pack['unit'].' · '.t($reference['name_en'],$reference['name_hi']);
+}
+
 function catalog_filter(array $items, $group, $type, $sub, $query) {
     $meta = catalog_meta();
     return array_values(array_filter($items, function ($item) use ($meta, $group, $type, $sub, $query) {

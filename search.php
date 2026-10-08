@@ -10,9 +10,12 @@ $page_title = t('Search — Maakit', 'खोजिए — Maakit');
 $tab = 'kaam';
 $products = $bookings = $shops = $matched_categories = [];
 $catalog_matches = [];
+$catalog_prices = [];
 if ($q !== '') {
     try { $catalog_matches = catalog_filter(catalog_load($pdo), '', '', '', $q); }
     catch (PDOException $e) { error_log('Maakit search catalog: ' . $e->getMessage()); }
+    try { $catalog_prices=catalog_offers($pdo,array_column(array_slice($catalog_matches,0,12),'id'),coverage_selected($pdo)); }
+    catch (PDOException $e) { error_log('Maakit search prices: '.$e->getMessage()); }
     foreach (items_all($pdo) as $item) {
         if (market_matches($q, $item['name'] . ' ' . $item['words'] . ' ' . $item['unit'])) $products[] = $item;
     }
@@ -74,6 +77,9 @@ include __DIR__ . '/inc/head.php';
               <span class="discovery-picture"><?= catalog_product_icon($match,34) ?></span>
               <b><?= h(t($match['name_en'],$match['name_hi'] ?: $match['name_en'])) ?></b>
               <span class="meta"><?= h(catalog_label($match['shop_type'])) ?></span>
+              <?php if ($shop_price=$catalog_prices[(int)$match['id']][0] ?? null): ?>
+                <span class="meta">₹<?= (int)$shop_price['price'] ?> / <?= h($shop_price['unit']) ?> · <?= h($shop_price['shop_name']) ?><?= $shop_price['stock']==='khatam' ? ' · '.t('Out of stock','स्टॉक नहीं है') : '' ?></span>
+              <?php elseif ($reference_summary=catalog_reference_summary($match)): ?><span class="meta"><?= h($reference_summary) ?></span><?php endif; ?>
               <span class="discovery-action"><?= t('Check shop prices / request', 'दुकान के दाम देखिए / मँगाइए') ?></span>
             </a>
           <?php endforeach; ?>
