@@ -45,10 +45,14 @@ check(count(catalog_shops($pdo, 'Hardware Shop')) === 1, 'Exact shop type associ
 check(catalog_shops($pdo, 'Unknown') === [], 'Do not guess unrelated shops');
 check(catalog_shops($pdo, '') === [], 'Empty category has no shop query');
 $references=json_decode(file_get_contents(__DIR__.'/../inc/catalog-reference-prices.json'),true,512,JSON_THROW_ON_ERROR);
-check(count($references)===9,'Nine checked retail product families');
-check(array_sum(array_map(fn($r)=>count($r['packs']),$references))===27,'27 explicit pack prices');
+check(count($references)===51,'51 catalogue entries have explicit retail references');
+$unique_packs=[];
+foreach ($references as $reference) foreach ($reference['packs'] as $pack) $unique_packs[$reference['url'].'|'.$pack['unit'].'|'.$pack['price']]=true;
+check(count($unique_packs)===87,'87 unique sourced pack prices; shared examples are not double counted');
+check(str_contains($references[1]['name_en'],'reference example'),'Generic atta labels the specific brand example');
+check($references[1]['packs']===$references[1517]['packs'],'Generic reference carries the exact source packs, not guessed generic prices');
 foreach ($references as $id=>$reference) {
-    check(str_starts_with($reference['url'],'https://www.bigbasket.com/pd/'),'Retail source link');
+    check(preg_match('~^https://www\\.bigbasket\\.com/(pd|pb)/~',$reference['url'])===1,'Retail source link');
     check(!empty($reference['name_en']) && !empty($reference['name_hi']),'Specific product variant labels');
     foreach ($reference['packs'] as $pack) check($pack['price']>0 && $pack['unit']!=='','Positive sourced price with exact pack');
     check(catalog_reference_price(['id'=>$id],'2026-10-08')!==null,'Dated reference is visible');
@@ -58,4 +62,27 @@ foreach ($references as $id=>$reference) {
 }
 check(catalog_reference_price(['id'=>99999],'2026-10-08')===null,'Unknown products must not get guessed prices');
 check(catalog_offers($pdo,[1666])===[],'Reference price is not a shop offer');
+$fh=fopen(__DIR__.'/../docs/catalogue-price-coverage.csv','r');
+$header=fgetcsv($fh); $coverage=[]; $goods=0; $services=0; $reference_count=0;
+while (($values=fgetcsv($fh))!==false) {
+    check(count($values)===count($header),'Coverage CSV columns');
+    $entry=array_combine($header,$values); $id=(int)$entry['catalog_id'];
+    check(!isset($coverage[$id]),'Catalogue entry tracked once');
+    $coverage[$id]=$entry;
+    if ($entry['kind']==='service') {
+        $services++;
+        check($entry['price_status']==='service_quote_required' && !isset($references[$id]),'Services need provider quotes');
+    } else {
+        $goods++;
+        if (isset($references[$id])) {
+            $reference_count++;
+            check($entry['price_status']==='retail_reference_only','References are not confirmed selling prices');
+            check($entry['source_url']===$references[$id]['url'] && (int)$entry['reference_pack_count']===count($references[$id]['packs']),'Coverage matches sourced packs');
+        } else check(in_array($entry['price_status'],['source_pack_conflict','variant_and_source_pending'],true),'Unverified products stay pending');
+    }
+}
+fclose($fh);
+check(count($coverage)===1794 && $goods===1446 && $services===348,'Every current catalogue entry tracked');
+check($reference_count===count($references),'Every source reference tracked');
+check($coverage[1712]['price_status']==='source_pack_conflict','Ambiguous diaper pack is not assigned a price');
 echo "Catalogue tests passed\n";
