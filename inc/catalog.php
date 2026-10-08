@@ -134,7 +134,34 @@ function catalog_shops(PDO $pdo, $type, $area = null) {
 }
 
 function catalog_picker_aliases($type) {
-    return ['Grocery / Kirana Store'=>'kirana rashan ration', 'Paint Store'=>'paint pent rang brush shop रंग ब्रश', 'Medical Store'=>'dawa dawai dava', 'Mobile Store'=>'mobile phone', 'Sweet Shop'=>'mithai nashta nasta', 'Hardware Shop'=>'hardware aujar tools'][$type] ?? '';
+    return [
+        'Grocery / Kirana Store'=>'kirana rashan ration',
+        'Paint Store'=>'paint pent rang brush shop रंग ब्रश',
+        'Medical / Pharmacy'=>'medical dawa dawai dava',
+        'Mobile Store'=>'mobile phone',
+        'Sweet Shop'=>'mithai nashta nasta',
+        'Hardware Shop'=>'hardware aujar tools',
+        'Dairy Shop'=>'dairy doodh dudh dahi paneer',
+        'Cleaning Products Store'=>'safai detergent jhadu pocha',
+        'Cosmetics & Beauty Store'=>'cosmetic beauty makeup shampoo cream',
+        'Book & Stationery Shop'=>'stationery copy kitab pustak pen pencil',
+        'Electrical Store'=>'electrical bijli bulb pankha taar',
+        'Kitchenware / Utensils Shop'=>'bartan bartanwala cooker belan rasoi',
+        'Clothing / Garments Shop'=>'kapda kapde garments saree sari suit',
+        'Footwear Shop'=>'joota juta chappal footwear shoes',
+        'Baby Store'=>'baby baccha bachcha diaper',
+        'Pet Shop'=>'pet dog cat pashu',
+        'Agriculture Store'=>'kheti khad beej krishi',
+        'Sanitaryware Shop'=>'sanitary nal toti pipe bathroom plumbing',
+        'Sports Shop'=>'sports khel cricket badminton',
+        'Pooja Samagri Shop'=>'pooja puja agarbatti dhoop',
+        'Gift & Toy Shop'=>'gift toy khilona khilauna',
+        'Bicycle Shop'=>'cycle saikil bicycle',
+        'Tyre Shop'=>'tyre tire puncture tube',
+        'School Bag & Supplies Shop'=>'school bag basta lunchbox',
+        'Party Supply Store'=>'party birthday janamdin gubbara',
+        'Bakery'=>'bakery bread cake rusk',
+    ][$type] ?? '';
 }
 
 /** Reuse the line-icon system until a shop supplies its own real photograph. */
