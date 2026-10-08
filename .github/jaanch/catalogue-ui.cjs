@@ -37,6 +37,21 @@ const assert = require('node:assert/strict');
     await picker.locator('select').selectOption('Paint Store');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Registration fits phone');
     await page.screenshot({path:'/tmp/catalogue-registration.png',fullPage:true});
+    for (const width of [360,390,1080]) {
+      await page.setViewportSize({width,height:844});
+      await page.goto('http://127.0.0.1:8099/search.php?q=paint&lang=hi');
+      const results=page.locator('.search-rail').first();
+      await results.locator('a').first().waitFor();
+      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Search fits '+width+'px');
+      const sizes=await results.locator('a').evaluateAll(cards=>cards.map(c=>({w:c.getBoundingClientRect().width,h:c.getBoundingClientRect().height})));
+      assert(sizes.every(s=>Math.abs(s.w-sizes[0].w)<1 && Math.abs(s.h-sizes[0].h)<1),'Search cards align at '+width+'px');
+      await page.getByRole('button',{name:'अगले कार्ड',exact:true}).first().click();
+      await page.waitForFunction(()=>document.querySelector('.search-rail').scrollLeft>0);
+      await page.getByRole('button',{name:'पिछले कार्ड',exact:true}).first().click();
+      await page.waitForFunction(()=>document.querySelector('.search-rail').scrollLeft<3);
+      await page.screenshot({path:'/tmp/catalogue-search-slider-'+width+'.png',fullPage:width===390});
+    }
+    await page.setViewportSize({width:390,height:844});
     await page.goto('http://127.0.0.1:8099/search.php?q=paint&lang=en');
     assert(await page.locator('#search-category-hints option[value="Paint Store"]').count()===1,'Search offers shop category hints');
     await page.getByRole('navigation',{name:'Matching shop categories'}).getByRole('link',{name:'Paint Store',exact:true}).click();
