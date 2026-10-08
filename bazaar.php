@@ -7,8 +7,9 @@ function bazaar_get($key, $max = 100) {
     return isset($_GET[$key]) && is_string($_GET[$key]) ? mb_substr(trim($_GET[$key]), 0, $max) : '';
 }
 if ($_SERVER['REQUEST_METHOD']==='POST' && csrf_ok()) {
-    foreach(['request_action','catalog_id','qty','pack','urgent','request_key'] as $field){if(isset($_POST[$field]) && !is_string($_POST[$field]))redirect('/bazaar.php');}
+    foreach(['request_action','catalog_id','qty','pack','urgent','request_key','checkout'] as $field){if(isset($_POST[$field]) && !is_string($_POST[$field]))redirect('/bazaar.php');}
     $action=post('request_action');
+    $added=false;
     $cart=$_SESSION['catalogue_request_cart']??[];
     if($action==='add') {
         $id=(int)post('catalog_id');$pack=mb_substr(post('pack'),0,120);
@@ -20,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && csrf_ok()) {
                 $entry['qty']=min(99,$entry['qty']+(int)($cart[$key]['qty']??0));
                 if($pack==='')$entry['pack']=$valid[0]['pack']?:t('piece','पीस');
                 $cart[$key]=$entry;
+                $added=true;
             }
         }
     } elseif($action==='remove') {unset($cart[post('request_key')]);}
@@ -32,7 +34,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && csrf_ok()) {
     }
     elseif($action==='clear') {$cart=[];}
     $_SESSION['catalogue_request_cart']=$cart;
-    $filter=[];foreach(['group','type','sub','q','p'] as $key) $filter[$key]=bazaar_get($key);
+    if($added && post('checkout')==='1') redirect('/order.php?request_cart=1&lang='.lang().'#pata');
+    if($added && (int)bazaar_get('product',10)>0) redirect('/bazaar.php');
+    $filter=[];foreach(['group','type','sub','q','p','product'] as $key) $filter[$key]=bazaar_get($key);
     redirect(catalog_url($filter));
 }
 $request_cart=request_cart_rows($pdo,$_SESSION['catalogue_request_cart']??[]);
@@ -45,6 +49,10 @@ $groups = catalog_groups();
 if ($group !== '' && !isset($groups[$group])) $group = '';
 $ready = true;
 try { $all = catalog_load($pdo); } catch (PDOException $e) { $all = []; $ready = false; error_log('Maakit catalog: ' . $e->getMessage()); }
+$product_id=(int)bazaar_get('product',10);
+$focused=null;
+if($product_id>0) foreach($all as $candidate) if((int)$candidate['id']===$product_id){$focused=$candidate;break;}
+if($focused){$type=$focused['shop_type'];$group='';$sub='';$q='';}
 $types = [];
 foreach (catalog_filter($all, $group, '', '', '') as $item) {
     $key = $item['shop_type'];
@@ -58,8 +66,8 @@ if ($type !== '') foreach (catalog_filter($all, $group, $type, '', '') as $item)
     if (!empty($item['sub_cat'])) $subs[$item['sub_cat']] = ($subs[$item['sub_cat']] ?? 0) + 1;
 }
 if ($sub !== '' && !isset($subs[$sub])) $sub = '';
-$matches = catalog_filter($all, $group, $type, $sub, $q);
-$show_items = $type !== '' || $q !== '';
+$matches = $product_id>0 ? ($focused?[$focused]:[]) : catalog_filter($all, $group, $type, $sub, $q);
+$show_items = $product_id>0 || $type !== '' || $q !== '';
 $per = 30;
 $pages = max(1, (int)ceil(count($matches) / $per));
 $page = min($pages, max(1, (int)bazaar_get('p', 8)));
@@ -92,11 +100,12 @@ include __DIR__ . '/inc/head.php';
    tha. Is panne par usko seedha rakhiye. */
 .bazaar-find{margin-top:14px}
 </style>
-<section><div class="wrap">
-  <h1><?= t('Find products', 'सामान खोजिए') ?></h1>
-  <p class="lead"><?= t('Choose a shop type, then see its products and local shop prices.', 'दुकान का प्रकार चुनिए, फिर उसका सामान और स्थानीय दुकान के दाम देखिए।') ?></p>
+<section class="<?= $focused ? 'focused-product' : '' ?>"><div class="wrap">
+  <h1><?= $focused ? (!empty($focused['is_sewa']) ? t('Service details','सेवा की जानकारी') : t('Choose your pack','अपना पैक चुनिए')) : t('Find products', 'सामान खोजिए') ?></h1>
+  <?php if(!$focused): ?><p class="lead"><?= t('Choose a shop type, then see its products and local shop prices.', 'दुकान का प्रकार चुनिए, फिर उसका सामान और स्थानीय दुकान के दाम देखिए।') ?></p>
   <p class="help"><?= t('Choose a product and send a request. Maakit checks suitable shops and confirms price and delivery time with you. Delivery is charged separately.', 'सामान चुनकर माँग भेजिए। Maakit उपयुक्त दुकान से पता करके दाम और डिलीवरी समय आपसे पक्का करेगा। डिलीवरी चार्ज अलग है।') ?></p>
   <div class="request-steps" aria-label="<?= h(t('How requests work','माँग कैसे पूरी होती है')) ?>"><span><b>1</b><?= t('Choose products','सामान चुनिए') ?></span><span><b>2</b><?= t('Send request','माँग भेजिए') ?></span><span><b>3</b><?= t('Confirm prices','दाम पक्का कीजिए') ?></span></div>
+  <?php endif; ?>
   <?php if($request_cart): ?><div class="box catalogue-request-cart">
     <?php if(isset($_SESSION['request_cart_notice'])): ?><p role="status"><?= h($_SESSION['request_cart_notice']) ?></p><?php endif; ?>
     <details<?= isset($_SESSION['request_cart_notice']) ? ' open' : '' ?>><summary><?= t('Your request cart','आपकी माँग की लिस्ट') ?> · <?= count($request_cart) ?></summary>
@@ -118,7 +127,7 @@ include __DIR__ . '/inc/head.php';
     <div class="request-cart-actions"><a class="btn btn-brand" href="/order.php?request_cart=1&amp;lang=<?= h(t('en','hi')) ?>#pata"><?= t('Send this request','यह माँग भेजिए') ?></a>
     <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="request_action" value="clear"><button class="btn btn-sm" type="submit"><?= t('Clear list','लिस्ट खाली कीजिए') ?></button></form></div>
   </div><?php endif; unset($_SESSION['request_cart_notice']); ?>
-  <form class="searchbox bazaar-find" action="/bazaar.php" method="get">
+  <?php if(!$focused): ?><form class="searchbox bazaar-find" action="/bazaar.php" method="get">
     <?php foreach (['group' => $group, 'type' => $type] as $k => $v): if ($v !== ''): ?>
       <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
     <?php endif; endforeach; ?>
@@ -131,6 +140,7 @@ include __DIR__ . '/inc/head.php';
       <a class="chip <?= $slug === $group ? 'on' : '' ?>" href="<?= h(catalog_url(['group' => $slug])) ?>"><?= h(t($label[0], $label[1])) ?></a>
     <?php endforeach; ?>
   </nav>
+  <?php endif; ?>
   <?php if (!$ready): ?>
     <div class="box"><?= t('The shop catalogue is being set up. You can send your list meanwhile.', 'दुकानों की सूची अभी तैयार हो रही है। तब तक अपनी लिस्ट भेज सकते हैं।') ?></div>
   <?php elseif (!$show_items): ?>
@@ -147,9 +157,9 @@ include __DIR__ . '/inc/head.php';
     </div>
   <?php else: ?>
     <a class="chip" href="<?= h(catalog_url(['group' => $group])) ?>">← <?= t('Shop types', 'दुकान के प्रकार') ?></a>
-    <h2><?= $type !== '' ? h(catalog_label($type, $types[$type]['hi'])) : h(t('Catalogue results', 'सामान की खोज')) ?></h2>
-    <?php if ($type !== ''): ?>
-      <h3><?= t('Choose a local shop', 'स्थानीय दुकान चुनिए') ?></h3>
+    <?php if(!$focused): ?><h2><?= $type !== '' ? h(catalog_label($type, $types[$type]['hi'])) : h(t('Catalogue results', 'सामान की खोज')) ?></h2><?php endif; ?>
+    <?php if ($type !== '' && !$focused && $local_shops): ?>
+      <details class="shop-options"><summary><?= t('Prefer a particular shop?','किसी खास दुकान से मँगाना है?') ?></summary>
       <p class="help"><?= t('Choose a shop to see its own products, pack sizes and prices.', 'दुकान चुनकर उसी दुकान का सामान, नाप और दाम देखिए।') ?></p>
       <?php if ($local_shops): ?>
         <div class="bazaar-cards">
@@ -169,9 +179,9 @@ include __DIR__ . '/inc/head.php';
         <div class="box"><p><?= $shops_ready ? t('No local shop is listed in this category yet. Check another category or request service coverage.', 'इस category में स्थानीय दुकान अभी नहीं जुड़ी है। दूसरी category देखिए या सेवा के लिए अनुरोध भेजिए।') : t('The shop list is temporarily unavailable. Please ask Maakit.', 'दुकान की सूची अभी नहीं खुल पा रही है। Maakit से पूछिए।') ?></p></div>
       <?php endif; ?>
       <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . catalog_label($type) . ' — ' . t('Please arrange what I need from a local shop.', 'मुझे स्थानीय दुकान से सामान मँगाना है।'))) ?>"><?= t('Arrange through Maakit', 'Maakit से मँगाइए') ?></a>
-      <h3 style="margin-top:24px"><?= t('Products usually found in this shop type', 'इस तरह की दुकान में मिलने वाला सामान') ?></h3>
+      </details><h3 style="margin-top:24px"><?= t('Products usually found in this shop type', 'इस तरह की दुकान में मिलने वाला सामान') ?></h3>
     <?php endif; ?>
-    <?php if ($subs): ?>
+    <?php if ($subs && !$focused): ?>
       <nav class="bazaar-chips" aria-label="<?= h(t('Product subcategories', 'सामान की subcategories')) ?>">
         <a class="chip <?= $sub === '' ? 'on' : '' ?>" href="<?= h(catalog_url(array_merge($params, ['sub' => '']))) ?>"><?= t('All products', 'सभी सामान') ?></a>
         <?php foreach ($subs as $name => $count): ?>
@@ -179,11 +189,11 @@ include __DIR__ . '/inc/head.php';
         <?php endforeach; ?>
       </nav>
     <?php endif; ?>
-    <p class="meta"><?= count($matches) ?> <?= t('results', 'नतीजे') ?></p>
+    <?php if(!$focused): ?><p class="meta"><?= count($matches) ?> <?= t('results', 'नतीजे') ?></p><?php endif; ?>
     <?php if (!$prices_ready): ?><p class="help"><?= t('Shop prices are temporarily unavailable. Please ask Maakit.', 'दुकान के दाम अभी नहीं दिख पा रहे हैं। Maakit से पूछिए।') ?></p><?php endif; ?>
     <?php if (!$matches): ?><div class="box"><?= t('No match. Try another name or send your requirement.', 'नहीं मिला। दूसरा नाम खोजिए या अपनी जरूरत भेजिए।') ?></div><?php endif; ?>
     <div class="bazaar-cards">
-    <?php foreach ($items as $item): $list = $offers[(int)$item['id']] ?? []; $variant_hint = catalog_variant_hint($item); ?>
+    <?php foreach ($items as $item): $list = $offers[(int)$item['id']] ?? []; $variant_hint = catalog_variant_hint($item); $reference = !$list ? catalog_reference_price($item) : null; ?>
       <article class="bazaar-card">
         <h3><?= h(t($item['name_en'], $item['name_hi'] ?: $item['name_en'])) ?></h3>
         <span class="meta"><?= h(catalog_label($item['shop_type'], $item['type_hi'])) ?></span>
@@ -202,7 +212,7 @@ include __DIR__ . '/inc/head.php';
             <?php endif; ?>
           </div>
         <?php endforeach; ?>
-        <?php if (!$list && ($reference=catalog_reference_price($item))): ?>
+        <?php if ($reference): ?>
           <div class="bazaar-offer market-reference">
             <b><?= t('Indicative market price', 'अनुमानित बाज़ार दाम') ?></b>
             <span class="meta"><?= h(t($reference['name_en'],$reference['name_hi'])) ?></span>
@@ -213,7 +223,7 @@ include __DIR__ . '/inc/head.php';
             <p class="help"><?= t('Online reference, not a confirmed local shop price. The final price is confirmed before purchase; delivery is extra.', 'यह ऑनलाइन संदर्भ है। खरीदने से पहले अंतिम दाम पक्का होगा; डिलीवरी अलग है।') ?></p>
           </div>
         <?php endif; ?>
-        <?php if (!$list): ?><p class="help"><?= t('Shop price not added yet — ask for price and availability.', 'दुकान का दाम अभी नहीं जुड़ा — दाम और उपलब्धता पूछिए।') ?></p><?php endif; ?>
+        <?php if (!$list && !$reference): ?><p class="help"><?= t('Shop price not added yet — ask for price and availability.', 'दुकान का दाम अभी नहीं जुड़ा — दाम और उपलब्धता पूछिए।') ?></p><?php endif; ?>
         <?php if (empty($item['is_sewa'])): ?>
           <form class="catalogue-request" method="post">
             <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
@@ -222,14 +232,18 @@ include __DIR__ . '/inc/head.php';
             <input type="hidden" name="catalog_id" value="<?= (int)$item['id'] ?>">
             <label for="rq-qty-<?= (int)$item['id'] ?>"><?= t('Quantity', 'मात्रा') ?></label>
             <input id="rq-qty-<?= (int)$item['id'] ?>" name="qty" type="number" min="1" max="99" value="1" required>
-            <label for="rq-pack-<?= (int)$item['id'] ?>"><?= t('Pack / size / model (optional)', 'पैक / नाप / मॉडल (चाहें तो)') ?></label>
-            <input id="rq-pack-<?= (int)$item['id'] ?>" name="pack" type="text" maxlength="120" placeholder="<?= h($item['unit_hint']) ?>">
+            <label for="rq-pack-<?= (int)$item['id'] ?>"><?= $focused && $reference ? t('Pack & reference price','पैक और संदर्भ दाम') : t('Pack / size / model (optional)', 'पैक / नाप / मॉडल (चाहें तो)') ?></label>
+            <?php if($focused && $reference): ?>
+            <select id="rq-pack-<?= (int)$item['id'] ?>" name="pack" required>
+              <?php foreach($reference['packs'] as $pack): ?><option value="<?= h(mb_substr($reference['name_en'].' · '.$pack['unit'],0,120)) ?>"><?= h($pack['unit']) ?> — ₹<?= h($pack['price']) ?> <?= t('(reference)','(संदर्भ)') ?></option><?php endforeach; ?>
+            </select>
+            <?php else: ?><input id="rq-pack-<?= (int)$item['id'] ?>" name="pack" type="text" maxlength="120" placeholder="<?= h($item['unit_hint']) ?>"><?php endif; ?>
             <label><input type="checkbox" name="urgent" value="1"> <?= t('Needed urgently', 'जल्दी चाहिए') ?></label>
             <p class="help"><?= t('Maakit will check suitable shops and confirm the final price and possible delivery time with you.', 'Maakit उपयुक्त दुकानों से पता करके अंतिम दाम और सम्भव डिलीवरी समय आपसे पक्का करेगा।') ?></p>
-            <button class="btn btn-brand" type="submit"><?= t('Add to request cart', 'माँग की लिस्ट में जोड़िए') ?></button>
+            <?php if($focused): ?><button class="btn btn-brand" type="submit" name="checkout" value="1"><?= t('Continue to address →','पता भरने के लिए आगे बढ़िए →') ?></button><button class="btn btn-line" type="submit"><?= t('Add & keep shopping','जोड़कर और सामान चुनिए') ?></button><?php else: ?><button class="btn btn-brand" type="submit"><?= t('Add to request cart', 'माँग की लिस्ट में जोड़िए') ?></button><?php endif; ?>
           </form>
         <?php endif; ?>
-        <a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $item['name_en'] . ' / ' . ($item['name_hi'] ?? '') . ' (' . $item['shop_type'] . ') — दाम और उपलब्धता बताइए।' . ($variant_hint ? "\n" . $variant_hint : ''))) ?>"><?= t('Ask Maakit', 'Maakit से पूछिए') ?></a>
+        <?php if(!$focused || !empty($item['is_sewa'])): ?><a class="btn btn-green btn-sm" href="<?= h(wa_link(MAAKIT_WA, 'Maakit: ' . $item['name_en'] . ' / ' . ($item['name_hi'] ?? '') . ' (' . $item['shop_type'] . ') — दाम और उपलब्धता बताइए।' . ($variant_hint ? "\n" . $variant_hint : ''))) ?>"><?= t('Ask Maakit', 'Maakit से पूछिए') ?></a><?php endif; ?>
       </article>
     <?php endforeach; ?>
     </div>
