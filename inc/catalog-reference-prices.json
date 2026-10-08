@@ -1,0 +1,191 @@
+{
+  "1666": {
+    "name_en": "Tata Salt Iodised",
+    "name_hi": "टाटा आयोडीन युक्त नमक",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/241600/tata-salt-iodized-1-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 kg",
+        "price": 28
+      },
+      {
+        "unit": "2 kg",
+        "price": 62
+      }
+    ]
+  },
+  "1517": {
+    "name_en": "Aashirvaad Whole Wheat Atta",
+    "name_hi": "आशीर्वाद गेहूँ आटा",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/126903/aashirvaad-atta-whole-wheat-5-kg-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 kg",
+        "price": 64
+      },
+      {
+        "unit": "2 kg",
+        "price": 99
+      },
+      {
+        "unit": "5 kg",
+        "price": 273.59
+      },
+      {
+        "unit": "10 kg",
+        "price": 546
+      }
+    ]
+  },
+  "1678": {
+    "name_en": "Maggi Instant Masala Noodles",
+    "name_hi": "मैगी मसाला नूडल्स",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/266160/maggi-masala-instant-noodles-vegetarian-70-g-pouch/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "70 g",
+        "price": 14
+      },
+      {
+        "unit": "280 g",
+        "price": 60
+      },
+      {
+        "unit": "420 g",
+        "price": 70.56
+      },
+      {
+        "unit": "560 g",
+        "price": 112
+      },
+      {
+        "unit": "840 g (12 x 70 g)",
+        "price": 163
+      }
+    ]
+  },
+  "1671": {
+    "name_en": "Parle-G Gold Biscuits",
+    "name_hi": "पारले जी गोल्ड बिस्कुट",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40204945/parle-g-gold-biscuits-1-kg/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "56.25 g",
+        "price": 8.9
+      },
+      {
+        "unit": "187.5 g",
+        "price": 26.7
+      },
+      {
+        "unit": "475 g",
+        "price": 66.75
+      },
+      {
+        "unit": "1 kg",
+        "price": 125
+      }
+    ]
+  },
+  "1669": {
+    "name_en": "Fortune Premium Kachi Ghani Mustard Oil",
+    "name_hi": "फॉर्च्यून प्रीमियम कच्ची घानी सरसों तेल",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/276756/fortune-fortune-premium-kachi-ghani-pure-mustard-oil-1l-pet-bottle/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "200 ml bottle",
+        "price": 39.09
+      },
+      {
+        "unit": "500 ml bottle",
+        "price": 83.97
+      },
+      {
+        "unit": "1 L bottle",
+        "price": 160
+      }
+    ]
+  },
+  "1700": {
+    "name_en": "Colgate Active Salt Toothpaste",
+    "name_hi": "कोलगेट एक्टिव साल्ट टूथपेस्ट",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/40000334/colgate-active-salt-toothpaste-100-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 79
+      },
+      {
+        "unit": "200 g",
+        "price": 137
+      }
+    ]
+  },
+  "1530": {
+    "name_en": "Amul Pasteurised Butter",
+    "name_hi": "अमूल पाश्चुरीकृत मक्खन",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/104860/amul-butter-pasteurised-100-g-carton/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "100 g",
+        "price": 63
+      },
+      {
+        "unit": "500 g",
+        "price": 230
+      }
+    ]
+  },
+  "1659": {
+    "name_en": "bb Royal Sulphurless Sugar (reference example)",
+    "name_hi": "बीबी रॉयल सल्फरलेस चीनी (संदर्भ उदाहरण)",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/10000447/bb-royal-refined-sugar-sulphurless-1-kg/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "1 kg",
+        "price": 55
+      },
+      {
+        "unit": "2 kg",
+        "price": 123
+      },
+      {
+        "unit": "5 kg",
+        "price": 345
+      }
+    ]
+  },
+  "1707": {
+    "name_en": "Dettol Original Soap",
+    "name_hi": "डेटॉल ओरिजिनल साबुन",
+    "source": "BigBasket",
+    "url": "https://www.bigbasket.com/pd/407516/dettol-soap-bar-original-42-g/",
+    "checked_on": "2026-10-08",
+    "packs": [
+      {
+        "unit": "75 g",
+        "price": 40
+      },
+      {
+        "unit": "125 g",
+        "price": 67
+      }
+    ]
+  }
+}

@@ -44,4 +44,18 @@ check($local[1]['available_count'] === 0, 'Disabled online stock is not advertis
 check(count(catalog_shops($pdo, 'Hardware Shop')) === 1, 'Exact shop type associates a shop without matching inventory');
 check(catalog_shops($pdo, 'Unknown') === [], 'Do not guess unrelated shops');
 check(catalog_shops($pdo, '') === [], 'Empty category has no shop query');
+$references=json_decode(file_get_contents(__DIR__.'/../inc/catalog-reference-prices.json'),true,512,JSON_THROW_ON_ERROR);
+check(count($references)===9,'Nine checked retail product families');
+check(array_sum(array_map(fn($r)=>count($r['packs']),$references))===27,'27 explicit pack prices');
+foreach ($references as $id=>$reference) {
+    check(str_starts_with($reference['url'],'https://www.bigbasket.com/pd/'),'Retail source link');
+    check(!empty($reference['name_en']) && !empty($reference['name_hi']),'Specific product variant labels');
+    foreach ($reference['packs'] as $pack) check($pack['price']>0 && $pack['unit']!=='','Positive sourced price with exact pack');
+    check(catalog_reference_price(['id'=>$id],'2026-10-08')!==null,'Dated reference is visible');
+    check(catalog_reference_price(['id'=>$id],'2026-10-07')===null,'Future observations hidden');
+    check(catalog_reference_price(['id'=>$id],'2026-11-08')===null,'Stale references hidden after 30 days');
+    check(catalog_reference_price(['id'=>$id,'is_sewa'=>1],'2026-10-08')===null,'No retail references on services');
+}
+check(catalog_reference_price(['id'=>99999],'2026-10-08')===null,'Unknown products must not get guessed prices');
+check(catalog_offers($pdo,[1666])===[],'Reference price is not a shop offer');
 echo "Catalogue tests passed\n";
