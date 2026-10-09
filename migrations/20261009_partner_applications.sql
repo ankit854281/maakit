@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS mk_partner_applications (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ kind ENUM('VENDOR','RIDER') NOT NULL,
+ applicant_name VARCHAR(150) NOT NULL,
+ mobile VARCHAR(10) NOT NULL,
+ business_name VARCHAR(200) NULL,
+ market ENUM('B2B','B2C','BOTH') NULL,
+ shop_category VARCHAR(150) NULL,
+ gstin VARCHAR(15) NULL,
+ pan VARCHAR(10) NULL,
+ vehicle_type VARCHAR(50) NULL,
+ dl_number VARCHAR(25) NULL,
+ rc_number VARCHAR(30) NULL,
+ status ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+ reviewed_by INT NULL,
+ reviewed_at DATETIME NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ KEY idx_queue(status,kind,created_at),
+ KEY idx_mobile(mobile)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
