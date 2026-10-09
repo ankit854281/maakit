@@ -6,9 +6,9 @@ $page_title='Join Maakit — Login & Registration';
 $role=isset($_GET['role'])&&is_string($_GET['role'])?$_GET['role']:'customer';
 if(!in_array($role,['customer','vendor','rider','admin'],true))$role='customer';
 $links=[
- 'customer'=>['login'=>'/customer-login.php','join'=>'/customer-register.php','label'=>'Customer'],
- 'vendor'=>['login'=>'/login.php','join'=>'/register-business.php','label'=>'Vendor / Seller'],
- 'rider'=>['login'=>'/login.php?as=team','join'=>'/rider-apply.php','label'=>'Rider'],
+ 'customer'=>['login'=>'/account.php','join'=>'/account.php','label'=>'Customer'],
+ 'vendor'=>['login'=>'/login.php','join'=>'/public/partner-apply.php?kind=vendor','label'=>'Vendor / Seller'],
+ 'rider'=>['login'=>'/login.php?as=team','join'=>'/public/partner-apply.php?kind=rider','label'=>'Rider'],
  'admin'=>['login'=>'/login.php?as=team','join'=>null,'label'=>'Admin']
 ];
 include __DIR__.'/../inc/head.php';
