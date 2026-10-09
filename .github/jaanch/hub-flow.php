@@ -18,7 +18,7 @@ try {
  // A committed supplier fixture must render through the hub's real shared PDO database.
  $owner=hub_fixture($pdo,'mk_users',['display_name'=>'CI Hub Supplier']);
  $vendor=hub_fixture($pdo,'mk_vendors',['owner_user_id'=>$owner,'legal_name'=>'CI Supplier','status'=>'ACTIVE']);
- $store=hub_fixture($pdo,'mk_stores',['vendor_id'=>$vendor,'name'=>'CI Supplier Store','address_json'=>'["CI"]','active'=>1]);
+ $store=hub_fixture($pdo,'mk_stores',['vendor_id'=>$vendor,'name'=>'CI Supplier Store','address_json'=>'["CI"]','supports_hyperlocal'=>0,'active'=>1]);
  $category=hub_fixture($pdo,'mk_categories',['name'=>'CI Wholesale Category','slug'=>'ci-hub-'.bin2hex(random_bytes(6)),'category_type'=>'B2B']);
  $product=hub_fixture($pdo,'mk_products',['category_id'=>$category,'name'=>'CI Wholesale Connected Product','brand'=>'CI Brand']);
  $offer=hub_fixture($pdo,'mk_offers',['product_id'=>$product,'store_id'=>$store,'is_b2b'=>1,'active'=>1]);
