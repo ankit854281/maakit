@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/../middleware/legacy.php';
 // ================= सैलून (नाई / पार्लर) के काम की functions =================
 
 function salon_modes() {
@@ -122,6 +123,7 @@ function shop_login_business(PDO $pdo) {
     return null;
 }
 function shop_start_session(PDO $pdo, $bid) {
+    Maakit\Api\revoke_legacy_sessions($pdo);
     // Login ke baad nayi session-id — warna purani id ke saath uska
     // csrf token bhi waisa hi rehta hai. Agar kisi ne pehle se wo id
     // bitha rakhi ho (ek hi phone, ek hi computer), to use dukandar
@@ -135,6 +137,7 @@ function shop_start_session(PDO $pdo, $bid) {
     ]);
 }
 function shop_logout(PDO $pdo) {
+    Maakit\Api\revoke_legacy_sessions($pdo,'shop');
     if (!empty($_COOKIE['mk_shop'])) {
         $pdo->prepare("DELETE FROM shop_tokens WHERE token=?")->execute([$_COOKIE['mk_shop']]);
         setcookie('mk_shop', '', ['expires' => time() - 3600, 'path' => '/']);
@@ -160,3 +163,4 @@ function salon_customer_badge($c) {
     if ((int)$c['visits'] >= 3) return [(int)$c['visits'] . ' बार आ चुके हैं', 'tag-live'];
     return [((int)$c['visits'] ?: 0) . ' बार आए', 'tag-off'];
 }
+

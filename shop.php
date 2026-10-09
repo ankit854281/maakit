@@ -287,6 +287,9 @@ if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 }
 include __DIR__ . '/inc/head.php';
 ?>
+<div class="wrap"><a class="btn btn-line" href="/public/dispatch.php?context=shop"><?= t('Delivery queue & wholesale enquiries','डिलीवरी सूची और थोक भाव की माँग') ?></a></div>
+<?php
+?>
 <?php
   // Yahan tak wahi pahunchta hai jo andar aa chuka hai
   // (bina login ke upar hi /login.php bhej diya jata hai).
@@ -451,3 +454,4 @@ include __DIR__ . '/inc/head.php';
 </div></section>
 <?php endif; ?>
 <?php include __DIR__ . '/inc/foot.php'; ?>
+

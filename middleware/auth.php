@@ -4,6 +4,7 @@ namespace Maakit\Api;
 use PDO;
 use Throwable;
 require_once __DIR__.'/common.php';
+require_once __DIR__.'/origin.php';
 /** Strict, narrow RS256 verifier. No remote key discovery; no role claims trusted. */
 function b64url(string $value): string {
     if ($value==='' || !preg_match('/^[A-Za-z0-9_-]+$/D',$value)) throw new ApiError(401,'UNAUTHENTICATED','Please sign in again.');
@@ -39,6 +40,7 @@ function live_identity(PDO $db,array $claims,bool $lock=false): array {
         WHERE u.id=? AND s.id=? AND u.status='ACTIVE' AND s.revoked_at IS NULL AND s.expires_at>UTC_TIMESTAMP(6)
         AND u.session_version=? AND s.session_version=u.session_version".($lock?' FOR UPDATE':''),[$claims['sub'],$claims['sid'],$claims['session_version']])->fetch();
     if (!$user) throw new ApiError(401,'SESSION_REVOKED','Please sign in again.');
+    validate_legacy_origin($db,$claims['sid'],$lock);
     $roles=query($db,'SELECT r.code FROM mk_roles r JOIN mk_user_roles ur ON ur.role_id=r.id WHERE ur.user_id=?',[$user['id']])->fetchAll(PDO::FETCH_COLUMN);
     $permissions=query($db,'SELECT DISTINCT p.code FROM mk_permissions p WHERE p.id IN
         (SELECT rp.permission_id FROM mk_role_permissions rp JOIN mk_user_roles ur ON ur.role_id=rp.role_id WHERE ur.user_id=?

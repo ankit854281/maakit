@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             $err = auth_attempt_error();
         } elseif ($u && password_verify(post('password'), $u['password'])) {
             auth_attempt_ok($pdo, 'team', $kunji);
+            Maakit\Api\revoke_legacy_sessions($pdo);
             session_regenerate_id(true);
             $_SESSION['user'] = ['id'=>$u['id'], 'name'=>$u['name'], 'role'=>$u['role']];
             redirect(panel_home($u['role']));
@@ -141,3 +142,4 @@ include __DIR__ . '/inc/head.php';
 </div>
 </section>
 <?php include __DIR__ . '/inc/foot.php'; ?>
+

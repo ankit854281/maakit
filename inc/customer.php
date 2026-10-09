@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/../middleware/legacy.php';
 require_once __DIR__.'/auth-attempts.php';
 // ============================================================
 // Maakit — customer ka apna khata (account)
@@ -13,6 +14,8 @@ function cust() {
 
 /** session me daal do */
 function cust_set($c) {
+    global $pdo;
+    if ($pdo instanceof PDO) Maakit\Api\revoke_legacy_sessions($pdo);
     if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
     $_SESSION['cust'] = [
         'id' => (int)$c['id'], 'name' => $c['name'], 'mobile' => $c['mobile'],
@@ -20,6 +23,8 @@ function cust_set($c) {
     ];
 }
 function cust_logout() {
+    global $pdo;
+    if ($pdo instanceof PDO) Maakit\Api\revoke_legacy_sessions($pdo,'customer');
     unset($_SESSION['cust']);
     if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
 }
@@ -170,3 +175,4 @@ function drop_photo($name) {
     if (!$name || !preg_match('/^[a-z]{2,6}-\d{6}-[a-f0-9]{8,12}\.(jpg|png|webp)$/', $name)) return;
     @unlink(__DIR__ . '/../uploads/' . $name);
 }
+

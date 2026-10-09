@@ -1,5 +1,7 @@
 # PHP/PDO + MySQL API
 
+**Task 4 update:** [TASK4.md](TASK4.md) documents the implemented legacy-session bridge, three-segment hub, scoped vendor/rider dashboard, RFQs and cron dispatch engine. Apply `sql/025-session-dispatch.sql` after 024. The earlier integration prerequisites below describe the initial API release; session bridging and the dispatch worker are now implemented. Legacy catalogue/checkout data still requires an explicit UUID migration before using the new checkout API. Carrier credentials and the hosting cron remain deployment tasks.
+
 PHP is now the active backend. There is no npm, framework, Redis, Node server or build step required for these endpoints. Require **64-bit PHP 8.2+**, PDO MySQL, OpenSSL, and InnoDB with **MySQL 8.0.16+ or MariaDB 10.6+**. Older MySQL versions do not enforce CHECK constraints and are unsupported.
 
 ## Deploy without destroying live data

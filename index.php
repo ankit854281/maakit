@@ -7,6 +7,8 @@ require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/customer.php';
 require_once __DIR__ . '/inc/books.php';
 require_once __DIR__ . '/inc/catalog.php';
+require_once __DIR__.'/inc/segments.php';
+$hub_design=true;
 
 $page_title = t('Maakit — shopping, local delivery & bookings in India',
                 'Maakit — भारत में शॉपिंग, स्थानीय डिलीवरी और बुकिंग');
@@ -59,6 +61,7 @@ include __DIR__ . '/inc/head.php';
 <!-- ============ hero ============ -->
 <section class="hero2">
   <div class="wrap">
+    <?php maakit_segments(); ?>
     <div class="hbar">
       <span class="loc"><?= svc_icon('box', 15) ?> <?= t('Building across India · check your service area', 'भारत में विस्तार · अपने इलाके में सेवा जाँचें') ?></span>
       <span class="opn <?= $is_open ? 'yes' : 'no' ?>"><i></i> <?= h($open_short) ?></span>
@@ -333,3 +336,4 @@ document.addEventListener('click', function(e){
 <script src="/assets/catalogue-discovery.js" defer></script>
 <script src="/assets/search-sliders.js?v=1" defer></script>
 <?php include __DIR__ . '/inc/foot.php'; ?>
+

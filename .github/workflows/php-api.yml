@@ -30,12 +30,15 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: pdo_mysql, openssl
+          extensions: pdo_mysql, openssl, curl
           coverage: none
       - name: Lint and repeatable schema
         run: |
-          find config middleware controllers api tests/php-api -name '*.php' -print0 | xargs -0 -n1 php -l
+          find config middleware controllers api public bin tests/php-api -name '*.php' -print0 | xargs -0 -n1 php -l
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/schema.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/025-session-dispatch.sql
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/schema.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/025-session-dispatch.sql
       - name: JWT, IDOR, trusted prices, rollback, real concurrent stock
-        run: php tests/php-api/security.php
+        run: |
+          php tests/php-api/task4.php

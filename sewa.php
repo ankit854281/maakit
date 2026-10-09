@@ -217,7 +217,8 @@ include __DIR__ . '/inc/head.php';
 
     <?php foreach ($svc['fields'] as $f):
       $k = $f['k']; $lb = f_label($f['l']); $req = !empty($f['req']);
-      $val = (string)post($k); ?>
+      $val = (string)post($k);
+      if ($_SERVER['REQUEST_METHOD']==='GET' && $slug==='mistri' && $k==='event' && is_string($_GET['work']??null) && in_array($_GET['work'],$f['o']??[],true)) $val=$_GET['work']; ?>
       <div class="step">
         <label for="f_<?= h($k) ?>"><b><?= h($lb) ?></b><?= $req ? ' <span style="color:#A33427">*</span>' : '' ?></label>
 
@@ -316,3 +317,4 @@ include __DIR__ . '/inc/head.php';
 <?php endif; ?>
 
 <?php include __DIR__ . '/inc/foot.php'; ?>
+

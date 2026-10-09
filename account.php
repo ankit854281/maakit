@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         if (!$row || !password_verify($old, $row['password'])) { $err = t('Old password is wrong.', 'पुराना पासवर्ड ग़लत है।'); }
         elseif (!cust_password_ok($new)) { $err = cust_password_error(); }
         else {
+            Maakit\Api\revoke_legacy_sessions($pdo,'customer');
             $pdo->prepare("UPDATE customers SET password=? WHERE id=?")
                 ->execute([password_hash($new, PASSWORD_DEFAULT), $me['id']]);
             flash(t('Password changed.', 'पासवर्ड बदल गया।'));
@@ -187,3 +188,4 @@ var mb = document.getElementById('rmob') || document.getElementById('lmob');
 if (mb) mb.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,10); });
 </script>
 <?php include __DIR__ . '/inc/foot.php'; ?>
+

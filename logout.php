@@ -20,6 +20,7 @@ require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/salon.php';
 
 function maakit_sab_band(PDO $pdo) {
+    Maakit\Api\revoke_legacy_sessions($pdo);
     // dukaan ka 90 din wala login bhi band kijiye
     if (function_exists('shop_logout')) { try { shop_logout($pdo); } catch (Throwable $e) {} }
 
@@ -63,3 +64,4 @@ include __DIR__ . '/inc/head.php';
   </form>
 </div></section>
 <?php include __DIR__ . '/inc/foot.php'; ?>
+

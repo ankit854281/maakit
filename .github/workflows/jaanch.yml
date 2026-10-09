@@ -123,6 +123,7 @@ jobs:
           php .github/jaanch/dispatch-flow.php
           php .github/jaanch/tracking-flow.php
           php .github/jaanch/traffic-flow.php
+          php .github/jaanch/hub-flow.php
           node --check assets/delivery-tracking.js
           node --check assets/category-picker.js
           node --check assets/catalogue-discovery.js
@@ -134,6 +135,7 @@ jobs:
           npm install --prefix /tmp/maakit-ui --no-audit --no-fund playwright@1.56.1
           /tmp/maakit-ui/node_modules/.bin/playwright install --with-deps chromium
           node .github/jaanch/catalogue-ui.cjs
+          node .github/jaanch/hub-ui.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -150,3 +152,4 @@ jobs:
           gzip -dc "$(cat /tmp/maakit-backup-path)" | mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch maakit_restore_jaanch
           php .github/jaanch/backup-flow.php verify
           mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch -e 'DROP DATABASE maakit_restore_jaanch'
+

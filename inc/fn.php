@@ -1,7 +1,11 @@
 <?php
-session_start();
+if (session_status()!==PHP_SESSION_ACTIVE) {
+    ini_set('session.use_strict_mode','1');
+    session_start();
+}
 require_once __DIR__ . '/version.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__.'/../middleware/legacy.php';
 require_once __DIR__ . '/lang.php';
 require_once __DIR__ . '/icons.php';
 require_once __DIR__ . '/customer.php';
@@ -186,3 +190,4 @@ function flash($msg = null) {
     if ($msg !== null) { $_SESSION['flash'] = $msg; return; }
     $m = $_SESSION['flash'] ?? null; unset($_SESSION['flash']); return $m;
 }
+

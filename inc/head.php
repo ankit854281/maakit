@@ -82,6 +82,7 @@ if (!$no_tabbar && !$no_ticker) {
 <?php if(!empty($request_design)): ?><link rel="stylesheet" href="/assets/request-design.css?v=<?= (int)filemtime(__DIR__.'/../assets/request-design.css') ?>"><?php endif; ?>
 <!-- photo bhejne se pehle chhoti kar deta hai — dheeme net ke liye -->
 <script src="/assets/shrink.js?v=<?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '1' ?>" defer></script>
+<?php if(!empty($hub_design)): ?><link rel="stylesheet" href="/assets/hub.css?v=<?= (int)filemtime(__DIR__.'/../assets/hub.css') ?>"><?php endif; ?>
 </head>
 <body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($request_design)?' request-design':'' ?>">
 
@@ -126,3 +127,4 @@ if (!$no_tabbar && !$no_ticker) {
 <?php if (empty($no_tabbar)): $chosen_area=coverage_selected($pdo); ?>
 <div class="locationbar"><div class="wrap"><a href="/location.php"><?= svc_icon('box',18) ?> <b><?= $chosen_area ? h(coverage_label($chosen_area)) : t('Choose city / area / PIN','शहर / इलाका / PIN चुनें') ?></b> <span><?=t('Change','बदलें')?></span></a><a href="/support.php"><?=t('Help','सहायता')?></a></div></div>
 <?php endif; ?>
+

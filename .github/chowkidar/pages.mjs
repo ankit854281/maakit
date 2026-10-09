@@ -36,6 +36,10 @@ export const GALAT_JAGAH = [
 ];
 
 export const PAGES = [
+  { path: '/public/index.php?segment=LOCAL_SHOPPING', naam: 'Shopping segment', chahiye: ['Maakit'] },
+  { path: '/public/index.php?segment=HOME_SERVICES', naam: 'Home services segment', chahiye: ['Maakit'] },
+  { path: '/public/index.php?segment=B2B', naam: 'Wholesale segment', chahiye: ['Maakit'] },
+  { path: '/public/dispatch.php', naam: 'Dispatch login guard', chahiye: ['Maakit'] },
   { path: '/admin/shipment.php', naam: 'Courier staff login guard', chahiye: ['Maakit'] },
   { path: '/admin/readiness.php', naam: 'Launch तैयारी login guard', chahiye: ['Maakit'] },
   { path: '/location.php', naam: 'सेवा क्षेत्र चुनें', chahiye: ['Maakit'] },
@@ -86,3 +90,4 @@ export const PAGES = [
   { path: '/login.php?as=team', naam: 'टीम का लॉगिन',
     chahiye: ['यूज़रनेम', 'पासवर्ड'], nahi: ['मेरा हिसाब'] },
 ];
+
