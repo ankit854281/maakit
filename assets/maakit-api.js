@@ -9,6 +9,8 @@
     if (pending.has(context)) return pending.get(context);
     const promise=(async()=>{
       const body=new URLSearchParams({context});
+      const role=document.querySelector('[data-auth-role]')?.dataset.authRole;
+      if(role) body.set('requested_role',role);
       const response=await fetch('/api/v1/session.php',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':csrf()},body});
       const result=await response.json();
       if (!response.ok) { const e=new Error(result.error?.code||'SESSION_UNAVAILABLE');e.status=response.status;throw e; }

@@ -13,7 +13,7 @@ function legacy_snapshot(PDO $db,string $source,int $id,?int $tokenId=null,bool 
     }
     if ($source==='STAFF') {
         $row=query($db,'SELECT id,name,role,password FROM users WHERE id=? AND active=1'.$suffix,[$id])->fetch();
-        $roles=['admin'=>'ADMIN','delivery'=>'RIDER','bpo'=>'BPO','designer'=>'DESIGNER'];
+        $roles=['admin'=>'ADMIN','delivery'=>'RIDER','rider'=>'RIDER','vendor'=>'VENDOR','bpo'=>'BPO','designer'=>'DESIGNER'];
         if (!$row || !isset($roles[$row['role']])) throw new ApiError(401,'SESSION_REVOKED','Please sign in again.');
         return ['id'=>(int)$row['id'],'role'=>$roles[$row['role']],'name'=>$row['name'],'phone'=>null,'credential'=>hash('sha256','STAFF:'.$id.':'.$row['role'].':'.$row['password'])];
     }

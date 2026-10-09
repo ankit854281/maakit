@@ -36,6 +36,12 @@ export const GALAT_JAGAH = [
 ];
 
 export const PAGES = [
+  { path: '/public/auth.php', naam: 'Role login gateway', chahiye: ['Maakit'] },
+  { path: '/public/partner-apply.php?kind=vendor', naam: 'Seller application', chahiye: ['Maakit'] },
+  { path: '/public/partner-apply.php?kind=rider', naam: 'Rider application', chahiye: ['Maakit'] },
+  { path: '/public/partner-dashboard.php', naam: 'Partner dashboard login guard', chahiye: ['Maakit'] },
+  { path: '/public/admin/approvals.php', naam: 'Partner approval login guard', chahiye: ['Maakit'] },
+
   { path: '/public/index.php?segment=LOCAL_SHOPPING', naam: 'Shopping segment', chahiye: ['Maakit'] },
   { path: '/public/index.php?segment=HOME_SERVICES', naam: 'Home services segment', chahiye: ['Maakit'] },
   { path: '/public/index.php?segment=B2B', naam: 'Wholesale segment', chahiye: ['Maakit'] },

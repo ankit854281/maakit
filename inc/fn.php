@@ -1,6 +1,7 @@
 <?php
 if (session_status()!==PHP_SESSION_ACTIVE) {
     ini_set('session.use_strict_mode','1');
+    session_set_cookie_params(['httponly'=>true,'samesite'=>'Lax','secure'=>!(in_array($_SERVER['SERVER_NAME']??'', ['localhost','127.0.0.1'],true) && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off'))]);
     session_start();
 }
 require_once __DIR__ . '/version.php';
@@ -47,6 +48,8 @@ function need_role($roles) {
  */
 function panel_home($role) {
     switch ($role) {
+        case 'vendor':
+        case 'rider':    return '/public/partner-dashboard.php';
         case 'admin':    return '/admin/';
         case 'bpo':      return '/bpo/';
         case 'designer': return '/admin/banners.php';

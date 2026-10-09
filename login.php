@@ -50,6 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
                 shop_start_session($pdo, $row['id']);
                 redirect('/shop.php');
             }
+            // New approved partner accounts keep the existing mobile + code door.
+            $st=$pdo->prepare("SELECT * FROM users WHERE username=? AND role='vendor' AND active=1");
+            $st->execute([$mob]);$partner=$st->fetch();
+            if ($partner && password_verify($code,$partner['password'])) {
+                auth_attempt_ok($pdo,'dukan',$mob);
+                Maakit\Api\revoke_legacy_sessions($pdo);session_regenerate_id(true);
+                $_SESSION['user']=['id'=>$partner['id'],'name'=>$partner['name'],'role'=>$partner['role']];
+                redirect(panel_home($partner['role']));
+            }
             $err = 'नंबर या कोड सही नहीं है। Maakit से अपना कोड पूछ लीजिए।';
         }
     }

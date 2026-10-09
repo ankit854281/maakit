@@ -124,6 +124,10 @@ jobs:
           php .github/jaanch/tracking-flow.php
           php .github/jaanch/traffic-flow.php
           php .github/jaanch/hub-flow.php
+          php .github/jaanch/partner-flow.php
+          node --check assets/auth-gateway.js
+          node --check assets/maakit-api.js
+          node tests/php-api/browser-auth.cjs
           node --check assets/delivery-tracking.js
           node --check assets/category-picker.js
           node --check assets/catalogue-discovery.js

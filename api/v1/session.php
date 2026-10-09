@@ -12,7 +12,16 @@ try {
     $recent=$_SESSION['maakit_exchange_times']??[];$recent=array_values(array_filter($recent,static fn($t)=>is_int($t)&&$t>time()-60));
     if (count($recent)>=6) { header('Retry-After: 60');throw new Maakit\Api\ApiError(429,'RATE_LIMITED','Please wait a minute.'); }
     $recent[]=time();$_SESSION['maakit_exchange_times']=$recent;
-    echo Maakit\Api\json_data(['data'=>Maakit\Api\bridge_session($pdo,$context)]);
+    $result=Maakit\Api\bridge_session($pdo,$context);
+    $expectedRole=$_POST['requested_role']??null;
+    if($expectedRole!==null){
+        $roles=['customer'=>'CUSTOMER','vendor'=>'VENDOR','rider'=>'RIDER','admin'=>'ADMIN'];
+        if(!is_string($expectedRole)||!isset($roles[$expectedRole])) throw new Maakit\Api\ApiError(400,'INVALID_ROLE','Choose a valid role.');
+        $actual=Maakit\Api\query($pdo,'SELECT r.code FROM mk_roles r JOIN mk_user_roles ur ON ur.role_id=r.id WHERE ur.user_id=?',[$result['user_id']])->fetchAll(PDO::FETCH_COLUMN);
+        if(!in_array($roles[$expectedRole],$actual,true)) throw new Maakit\Api\ApiError(403,'ROLE_REQUIRED','Sign in with an account for the selected role.');
+    }
+    setcookie('mk_jwt_'.$context,$result['access_token'],['expires'=>time()+$result['expires_in'],'path'=>'/api/v1/','secure'=>!(in_array($_SERVER['SERVER_NAME']??'', ['localhost','127.0.0.1'],true) && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off')),'httponly'=>true,'samesite'=>'Strict']);
+    echo Maakit\Api\json_data(['data'=>$result]);
 } catch (Maakit\Api\ApiError $e) {
     if ($e->apiCode==='SESSION_REVOKED' && isset($context)) {
         try { Maakit\Api\revoke_legacy_sessions($pdo,$context); } catch (Throwable $ignored) {}

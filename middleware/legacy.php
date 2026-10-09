@@ -73,6 +73,7 @@ function bridge_session(PDO $db,string $context): array {
     } catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack();throw $e; }
 }
 function revoke_legacy_sessions(PDO $db,?string $context=null): void {
+    if (!headers_sent()) foreach ($context===null?['customer','staff','shop']:[$context] as $cookieContext) setcookie('mk_jwt_'.$cookieContext,'',['expires'=>time()-3600,'path'=>'/api/v1/','secure'=>!(in_array($_SERVER['SERVER_NAME']??'', ['localhost','127.0.0.1'],true) && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off')),'httponly'=>true,'samesite'=>'Strict']);
     if ($context===null) unset($_SESSION['maakit_login_proof']);else unset($_SESSION['maakit_login_proof'][$context]);
     $cache=$_SESSION['maakit_api']??[];
     foreach ($cache as $key=>$value) {

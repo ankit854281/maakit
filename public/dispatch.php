@@ -5,17 +5,17 @@ $context='staff';$u=user();
 if (($_GET['context']??'')==='shop') { if (!shop_login_business($pdo)) redirect('/login.php');$context='shop';$u=null; }
 if ($context==='shop') {}
 elseif (!$u) { if (shop_login_business($pdo)) $context='shop';else redirect('/login.php'); }
-elseif (!in_array($u['role'],['admin','delivery'],true)) redirect(panel_home($u['role']));
+elseif (!in_array($u['role'],['admin','delivery','rider','vendor'],true)) redirect(panel_home($u['role']));
 $page_title=t('Dispatch — Maakit','डिलीवरी पैनल — Maakit');$hub_design=true;
 include __DIR__.'/../inc/head.php';
 ?>
 <main class="maakit-hub" data-csrf="<?= h(csrf()) ?>" data-dispatch-context="<?= h($context) ?>"><div class="wrap">
 <h1><?= t('Dispatch dashboard','डिलीवरी पैनल') ?></h1>
 <p><?= t('Only confirmed, packed orders and verified available riders enter dispatch.','पक्के और पैक किए ऑर्डर तथा सत्यापित उपलब्ध riders ही यहाँ आएँगे।') ?></p>
-<?php if ($u&&$u['role']==='delivery'): ?><button class="btn btn-brand" data-duty><?= t('Available for deliveries','डिलीवरी के लिए उपलब्ध हूँ') ?></button><p class="help"><?= t('Availability lasts five minutes. Renew it while you are available.','उपलब्धता पाँच मिनट की है। उपलब्ध रहने पर इसे दोबारा चालू करें।') ?></p><?php endif; ?>
+<?php if ($u&&in_array($u['role'],['delivery','rider'],true)): ?><button class="btn btn-brand" data-duty><?= t('Available for deliveries','डिलीवरी के लिए उपलब्ध हूँ') ?></button><p class="help"><?= t('Availability lasts five minutes. Renew it while you are available.','उपलब्धता पाँच मिनट की है। उपलब्ध रहने पर इसे दोबारा चालू करें।') ?></p><?php endif; ?>
 <button class="btn btn-line" data-dispatch-refresh><?= t('Refresh','फिर से देखें') ?></button>
 <p role="status" data-dispatch-status aria-live="polite"></p>
-<?php if ($context==='shop'||($u&&$u['role']==='admin')): ?>
+<?php if ($context==='shop'||($u&&in_array($u['role'],['admin','vendor'],true))): ?>
 <form class="hub-empty" data-parcel-form>
 <h2><?= t('Courier parcel details','Courier पैक की जानकारी') ?></h2>
 <label><?= t('Order','ऑर्डर') ?><select name="order_id" required data-parcel-orders><option value=""><?= t('Choose your order','अपना ऑर्डर चुनिए') ?></option></select></label>
