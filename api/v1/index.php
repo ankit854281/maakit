@@ -2,19 +2,20 @@
 declare(strict_types=1);
 use Maakit\Api\ApiError;
 use function Maakit\Api\{database,authenticate,checkout,quote_checkout,require_ownership,query,public_order,json_data,uuid4,jwt_material,
-    request_wholesale_quote,dispatch_start,dispatch_accept,dispatch_view,rider_duty,dispatch_parcel,order_decision};
+    request_wholesale_quote,dispatch_start,dispatch_accept,dispatch_view,rider_duty,dispatch_parcel,order_decision,rider_progress};
 require_once __DIR__.'/../../config/db.php';
 require_once __DIR__.'/../../config/config.php';
 require_once __DIR__.'/../../controllers/dispatch.php';
 require_once __DIR__.'/../../controllers/leads.php';
 require_once __DIR__.'/../../controllers/orderLifecycle.php';
+require_once __DIR__.'/../../controllers/riderController.php';
 ini_set('display_errors','0');
 header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');header('X-Content-Type-Options: nosniff');
 $requestId=uuid4();header('X-Request-ID: '.$requestId);
 try {
     if (PHP_INT_SIZE!==8) throw new RuntimeException('64-bit PHP required');
     $action=$_GET['action']??'';$method=$_SERVER['REQUEST_METHOD']??'GET';
-    $routes=['quote'=>'POST','checkout'=>'POST','order'=>'GET','orders'=>'GET','rfq'=>'POST','dispatch_start'=>'POST','dispatch_accept'=>'POST','dispatch_view'=>'GET','rider_duty'=>'POST','parcel'=>'POST','order_decision'=>'POST'];
+    $routes=['quote'=>'POST','checkout'=>'POST','order'=>'GET','orders'=>'GET','rfq'=>'POST','dispatch_start'=>'POST','dispatch_accept'=>'POST','dispatch_view'=>'GET','rider_duty'=>'POST','rider_progress'=>'POST','parcel'=>'POST','order_decision'=>'POST'];
     if (!is_string($action)||!isset($routes[$action])) throw new ApiError(404,'NOT_FOUND','API endpoint not found.');
     if ($method!==$routes[$action]) { header('Allow: '.$routes[$action]);throw new ApiError(405,'METHOD_NOT_ALLOWED','Use the supported request method.'); }
     $db=database();$material=jwt_material();
@@ -32,7 +33,8 @@ try {
             case 'rfq': $result=request_wholesale_quote($db,$auth,$body,$_SERVER['HTTP_IDEMPOTENCY_KEY']??'');$status=$result['replayed']?200:201;break;
             case 'dispatch_start': $result=dispatch_start($db,$auth,Maakit\Api\valid_uuid($body['order_id']??null));break;
             case 'dispatch_accept': $result=dispatch_accept($db,$auth,Maakit\Api\valid_uuid($body['attempt_id']??null));break;
-            case 'rider_duty': $result=rider_duty($db,$auth);break;
+            case 'rider_duty': if(isset($body['status'])&&!is_string($body['status']))throw new ApiError(400,'INVALID_STATUS','Choose online or offline.');$result=rider_duty($db,$auth,$body['status']??'online');break;
+            case 'rider_progress': $result=rider_progress($db,$auth,$body);break;
             case 'order_decision': $result=order_decision($db,$auth,$body);break;
             case 'parcel': $result=dispatch_parcel($db,$auth,$body);break;
         }

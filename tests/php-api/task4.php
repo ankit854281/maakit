@@ -65,11 +65,67 @@ rejected(fn()=>dispatch_accept($db,$pool['auth'],$attempt['id']),'NOT_FOUND');
 query($db,'UPDATE mk_dispatch_attempts SET expires_at=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND) WHERE id=?',[$attempt['id']]);query($db,'UPDATE mk_dispatch_jobs SET next_action_at=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND) WHERE order_id=?',[$f['order']]);
 rejected(fn()=>dispatch_accept($db,$merchant['auth'],$attempt['id']),'OFFER_EXPIRED');dispatch_tick($db,$noNetwork);
 $attempt=query($db,"SELECT * FROM mk_dispatch_attempts WHERE order_id=? AND status='OFFERED'",[$f['order']])->fetch();check($attempt['rider_id']===$pool['id'] && (int)$attempt['level']===2,'60-second timeout falls back to local pool');
+// Offer acceptance requires current availability; offline never frees an assigned job.
+check(rider_duty($db,$pool['auth'],'offline')['status']==='offline','explicit offline status');
+check(dispatch_view($db,$pool['auth'])['offers']===[],'offline rider does not see actionable offers');
+rejected(fn()=>dispatch_accept($db,$pool['auth'],$attempt['id']),'OFFER_EXPIRED');
+rider_duty($db,$pool['auth'],'online');
+rejected(fn()=>rider_duty($db,$pool['auth'],'busy'),'INVALID_STATUS');
 $accepted=dispatch_accept($db,$pool['auth'],$attempt['id']);check($accepted['accepted'],'rider accepts a fresh own offer');
 check(dispatch_accept($db,$pool['auth'],$attempt['id'])['accepted'],'accept replay does not duplicate shipment');
 check((int)query($db,'SELECT COUNT(*) FROM mk_shipments WHERE order_id=?',[$f['order']])->fetchColumn()===1,'exactly one shipment');
 $f2=ready_order($db);add($db,'mk_rider_zones',['rider_id'=>$pool['id'],'store_id'=>$f2['store'],'fulfillment_type'=>'HYPERLOCAL','active'=>1]);dispatch_tick($db,$noNetwork);
 check(!query($db,"SELECT id FROM mk_dispatch_attempts WHERE order_id=? AND rider_id=? AND status='OFFERED'",[$f2['order'],$pool['id']])->fetch(),'assigned rider cannot take a second auto job');
+// Scoped progression, invalid states and live account/profile checks.
+require_once __DIR__.'/../../controllers/riderController.php';
+$progress=['order_id'=>$f['order'],'operation'=>'pickup'];
+rejected(fn()=>Maakit\Api\rider_progress($db,$merchant['auth'],$progress),'NOT_FOUND');
+rejected(fn()=>Maakit\Api\rider_progress($db,$f['a'],$progress),'FORBIDDEN');
+rejected(fn()=>Maakit\Api\rider_progress($db,$pool['auth'],['order_id'=>$f['order'],'operation'=>'complete']),'INVALID_TRANSITION');
+rejected(fn()=>Maakit\Api\rider_progress($db,$pool['auth'],['order_id'=>$f['order'],'operation'=>'cancel']),'INVALID_DECISION');
+query($db,"UPDATE mk_riders SET kyc_status='REJECTED' WHERE id=?",[$pool['id']]);
+rejected(fn()=>Maakit\Api\rider_progress($db,$pool['auth'],$progress),'NOT_FOUND');
+rejected(fn()=>rider_duty($db,$pool['auth']),'RIDER_NOT_VERIFIED');
+query($db,"UPDATE mk_riders SET kyc_status='VERIFIED' WHERE id=?",[$pool['id']]);
+query($db,"UPDATE mk_users SET status='SUSPENDED' WHERE id=?",[$pool['auth']['user_id']]);
+rejected(fn()=>Maakit\Api\rider_progress($db,$pool['auth'],$progress),'SESSION_REVOKED');
+query($db,"UPDATE mk_users SET status='ACTIVE' WHERE id=?",[$pool['auth']['user_id']]);
+$slot=query($db,'SELECT id FROM mk_rider_slots WHERE order_id=?',[$f['order']])->fetchColumn();
+rider_duty($db,$pool['auth'],'offline');
+check(query($db,'SELECT id FROM mk_rider_slots WHERE order_id=?',[$f['order']])->fetchColumn()===$slot,'offline retains assigned slot');
+function progress_race(PDO $db,array $auth,array $body): void {
+    $file=tempnam(sys_get_temp_dir(),'mk-rider-race-');file_put_contents($file,json_encode([$auth,$body],JSON_THROW_ON_ERROR));$workers=[];
+    try {
+        for($i=0;$i<2;$i++){$pipes=[];$proc=proc_open([PHP_BINARY,__DIR__.'/rider-race.php',$file],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);check(is_resource($proc),'progress worker starts');fclose($pipes[0]);$workers[]=[$proc,$pipes];}
+        $results=[];foreach($workers as [$proc,$pipes]){$out=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);check(proc_close($proc)===0,'concurrent rider progress '.$error);$results[]=json_decode($out,true,16,JSON_THROW_ON_ERROR);}
+        check(count(array_filter($results,fn($r)=>!$r['replayed']))===1,'one transition and one replay under concurrent requests');
+    } finally {unlink($file);}
+}
+progress_race($db,$pool['auth'],$progress);
+check(query($db,'SELECT status FROM mk_orders WHERE id=?',[$f['order']])->fetchColumn()==='DISPATCHED','pickup starts delivery');
+check((int)query($db,'SELECT on_hand FROM mk_inventory WHERE id=?',[$f['inventory']])->fetchColumn()===19,'seller stock consumed once');
+check((int)query($db,'SELECT reserved FROM mk_inventory WHERE id=?',[$f['inventory']])->fetchColumn()===0,'pickup releases held stock once');
+check(query($db,'SELECT dispatched_at FROM mk_shipments WHERE order_id=?',[$f['order']])->fetchColumn()!==null,'pickup timestamp recorded');
+progress_race($db,$pool['auth'],['order_id'=>$f['order'],'operation'=>'complete']);
+check(query($db,'SELECT delivered_at FROM mk_orders WHERE id=?',[$f['order']])->fetchColumn()!==null,'completion records delivery time');
+check(query($db,'SELECT state FROM mk_dispatch_jobs WHERE order_id=?',[$f['order']])->fetchColumn()==='COMPLETED','job completes immediately');
+check(!query($db,'SELECT id FROM mk_rider_slots WHERE order_id=?',[$f['order']])->fetch(),'completion frees assigned rider slot');
+check((int)query($db,"SELECT COUNT(*) FROM mk_order_events WHERE order_id=? AND status='DELIVERED'",[$f['order']])->fetchColumn()===1,'completion audit exactly once');
+check(Maakit\Api\rider_progress($db,$pool['auth'],$progress)['status']==='DELIVERED','late pickup replay cannot reopen delivered order');
+rejected(fn()=>Maakit\Api\rider_progress($db,$merchant['auth'],['order_id'=>$f['order'],'operation'=>'complete']),'NOT_FOUND');
+// API route requires Bearer auth and permits only POST with checked status fields.
+$material=jwt_material(true);$httpClaims=['iss'=>$material['issuer'],'aud'=>$material['audience'],'sub'=>$pool['auth']['user_id'],'sid'=>$pool['auth']['claims']['sid'],'session_version'=>0,'jti'=>Maakit\Api\uuid4(),'iat'=>time(),'exp'=>time()+900];
+$bearer=sign_token($httpClaims,$material['private'],['alg'=>'RS256','typ'=>'JWT','kid'=>$material['kid']]);
+$log=tempnam(sys_get_temp_dir(),'mk-rider-http-');$pipes=[];
+$server=proc_open([PHP_BINARY,'-S','127.0.0.1:19099','-t',dirname(__DIR__,2)],[0=>['pipe','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes);fclose($pipes[0]);
+try {
+    $ready=false;for($i=0;$i<50;$i++){$socket=@fsockopen('127.0.0.1',19099,$errno,$error,0.1);if($socket){fclose($socket);$ready=true;break;}usleep(100000);}check($ready,'rider API server starts');
+    [$status,$data]=http_api('rider_progress','POST',$bearer,['order_id'=>$f['order'],'operation'=>'complete']);check($status===200&&$data['data']['replayed'],'HTTP own completion replay');
+    [$status]=http_api('rider_progress','POST','Bearer invalid',$progress);check($status===401,'HTTP invalid rider token');
+    [$status]=http_api('rider_progress','GET',$bearer);check($status===405,'HTTP GET cannot complete');
+    [$status]=http_api('rider_duty','POST',$bearer,['status'=>[]]);check($status===400,'HTTP malformed status rejected');
+    [$status,$data]=http_api('rider_duty','POST',$bearer,['status'=>'offline']);check($status===200&&$data['data']['status']==='offline','HTTP offline status');
+} finally {proc_terminate($server);proc_close($server);unlink($log);}
 // Reset active local queues so carrier tests do not consume unrelated fixture jobs.
 query($db,"UPDATE mk_dispatch_jobs SET state='MANUAL_REQUIRED' WHERE state NOT IN ('ASSIGNED','COMPLETED','CANCELLED')");
 $f=ready_order($db,'COURIER');$calls=[];

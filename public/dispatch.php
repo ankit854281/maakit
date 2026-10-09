@@ -12,7 +12,7 @@ include __DIR__.'/../inc/head.php';
 <main class="maakit-hub" data-csrf="<?= h(csrf()) ?>" data-dispatch-context="<?= h($context) ?>"><div class="wrap">
 <h1><?= t('Dispatch dashboard','डिलीवरी पैनल') ?></h1>
 <p><?= t('Only confirmed, packed orders and verified available riders enter dispatch.','पक्के और पैक किए ऑर्डर तथा सत्यापित उपलब्ध riders ही यहाँ आएँगे।') ?></p>
-<?php if ($u&&in_array($u['role'],['delivery','rider'],true)): ?><button class="btn btn-brand" data-duty><?= t('Available for deliveries','डिलीवरी के लिए उपलब्ध हूँ') ?></button><p class="help"><?= t('Availability lasts five minutes. Renew it while you are available.','उपलब्धता पाँच मिनट की है। उपलब्ध रहने पर इसे दोबारा चालू करें।') ?></p><?php endif; ?>
+<?php if ($u&&in_array($u['role'],['delivery','rider'],true)): ?><p role="status" data-duty-status></p><button class="btn btn-brand" data-duty><?= t('Available for deliveries','डिलीवरी के लिए उपलब्ध हूँ') ?></button> <button class="btn btn-line" data-duty-offline><?= t('Go offline','ऑफलाइन हो जाएँ') ?></button><p class="help"><?= t('Availability lasts five minutes. Renew it while you are available.','उपलब्धता पाँच मिनट की है। उपलब्ध रहने पर इसे दोबारा चालू करें।') ?></p><?php endif; ?>
 <button class="btn btn-line" data-dispatch-refresh><?= t('Refresh','फिर से देखें') ?></button>
 <p role="status" data-dispatch-status aria-live="polite"></p>
 <?php if ($context==='shop'||($u&&in_array($u['role'],['admin','vendor'],true))): ?>
@@ -30,5 +30,5 @@ include __DIR__.'/../inc/head.php';
 <p class="help"><?= t('Courier confirmation appears only after a real provider response.','Courier की पुष्टि असली provider जवाब मिलने पर ही दिखेगी।') ?></p>
 <a href="/public/index.php"><?= t('Back to Maakit','Maakit पर वापस जाइए') ?></a>
 </div></main>
-<script src="/assets/maakit-api.js" defer></script><script src="/assets/dispatch-dashboard.js" defer></script>
+<script src="/assets/maakit-api.js" defer></script><script src="/assets/dispatch-dashboard.js?v=<?= (int)filemtime(__DIR__.'/../assets/dispatch-dashboard.js') ?>" defer></script>
 <?php include __DIR__.'/../inc/foot.php'; ?>

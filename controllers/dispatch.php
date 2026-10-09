@@ -202,13 +202,16 @@ function dispatch_accept(PDO $db,array $auth,string $attemptId): array {
         return ['accepted'=>true,'order_id'=>$order['id']];
     } catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack();throw $e; }
 }
-function rider_duty(PDO $db,array $auth): array {
+function rider_duty(PDO $db,array $auth,string $status='online'): array {
+    if (!in_array($status,['online','offline'],true)) throw new ApiError(400,'INVALID_STATUS','Choose online or offline.');
     $db->beginTransaction();
     try {
         $auth=live_identity($db,$auth['claims'],true);require_roles($auth,['RIDER']);
         $r=query($db,"SELECT id FROM mk_riders WHERE user_id=? AND active=1 AND kyc_status='VERIFIED' FOR UPDATE",[$auth['user_id']])->fetch();
         if (!$r) throw new ApiError(403,'RIDER_NOT_VERIFIED','Your rider profile must be verified first.');
-        query($db,'INSERT INTO mk_rider_duty(id,rider_id,available_until) VALUES(?,?,DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 5 MINUTE)) ON DUPLICATE KEY UPDATE available_until=VALUES(available_until)',[uuid4(),$r['id']]);$db->commit();return ['available_for_seconds'=>300];
+        if ($status==='online') query($db,'INSERT INTO mk_rider_duty(id,rider_id,available_until) VALUES(?,?,DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 5 MINUTE)) ON DUPLICATE KEY UPDATE available_until=VALUES(available_until)',[uuid4(),$r['id']]);
+        else query($db,'UPDATE mk_rider_duty SET available_until=UTC_TIMESTAMP(6) WHERE rider_id=?',[$r['id']]);
+        $db->commit();return ['status'=>$status,'available_for_seconds'=>$status==='online'?300:0];
     } catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack();throw $e; }
 }
 function dispatch_view(PDO $db,array $auth): array {
@@ -225,9 +228,10 @@ function dispatch_view(PDO $db,array $auth): array {
         return compact('jobs','rfqs','pending_orders');
     }
     require_roles($auth,['RIDER']);
-    $offers=query($db,"SELECT a.id,a.order_id,a.level,a.expires_at,s.name AS store_name FROM mk_dispatch_attempts a JOIN mk_riders r ON r.id=a.rider_id JOIN mk_orders o ON o.id=a.order_id JOIN mk_stores s ON s.id=o.store_id WHERE r.user_id=? AND r.active=1 AND r.kyc_status='VERIFIED' AND a.status='OFFERED' AND a.expires_at>UTC_TIMESTAMP(6) AND o.status='READY' ORDER BY a.expires_at LIMIT 20",[$auth['user_id']])->fetchAll();
-    $assigned=query($db,"SELECT sh.order_id,o.status,s.name AS store_name FROM mk_shipments sh JOIN mk_riders r ON r.id=sh.rider_id JOIN mk_orders o ON o.id=sh.order_id JOIN mk_stores s ON s.id=o.store_id WHERE r.user_id=? AND r.active=1 AND o.status NOT IN ('DELIVERED','CANCELLED','RTO') LIMIT 20",[$auth['user_id']])->fetchAll();
-    return compact('offers','assigned');
+    $offers=query($db,"SELECT a.id,a.order_id,a.level,a.expires_at,s.name AS store_name FROM mk_dispatch_attempts a JOIN mk_riders r ON r.id=a.rider_id JOIN mk_orders o ON o.id=a.order_id JOIN mk_stores s ON s.id=o.store_id WHERE r.user_id=? AND r.active=1 AND r.kyc_status='VERIFIED' AND EXISTS(SELECT 1 FROM mk_rider_duty d WHERE d.rider_id=r.id AND d.available_until>UTC_TIMESTAMP(6)) AND a.status='OFFERED' AND a.expires_at>UTC_TIMESTAMP(6) AND o.status='READY' ORDER BY a.expires_at LIMIT 20",[$auth['user_id']])->fetchAll();
+    $assigned=query($db,"SELECT sh.order_id,o.status,s.name AS store_name FROM mk_shipments sh JOIN mk_riders r ON r.id=sh.rider_id JOIN mk_orders o ON o.id=sh.order_id JOIN mk_stores s ON s.id=o.store_id WHERE r.user_id=? AND r.active=1 AND r.kyc_status='VERIFIED' AND o.status NOT IN ('DELIVERED','CANCELLED','RTO') LIMIT 20",[$auth['user_id']])->fetchAll();
+    $availability=query($db,"SELECT GREATEST(0,TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(6),d.available_until)) FROM mk_riders r JOIN mk_rider_duty d ON d.rider_id=r.id WHERE r.user_id=? AND r.active=1 AND r.kyc_status='VERIFIED'",[$auth['user_id']])->fetchColumn();
+    return ['offers'=>$offers,'assigned'=>$assigned,'duty'=>['status'=>(int)$availability>0?'online':'offline','available_for_seconds'=>(int)$availability]];
 }
 function dispatch_parcel(PDO $db,array $auth,array $body): array {
     $order=valid_uuid($body['order_id']??null);$values=[];
