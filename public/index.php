@@ -49,6 +49,7 @@ include __DIR__.'/../inc/head.php';
 <div class="wrap">
 <?php maakit_segments($segment); ?>
 <header class="hub-intro">
+<a class="btn btn-line" href="/public/auth.php"><?= t('Login / Join Maakit','लॉगिन / Maakit से जुड़िए') ?></a>
 <a class="hub-location" href="/location.php"><?= svc_icon('shops',18) ?> <?= h($area?coverage_label($area):t('Choose your service area','अपना सेवा क्षेत्र चुनिए')) ?> →</a>
 <h1><?= h(t($titles[$segment][0],$titles[$segment][1])) ?></h1>
 <p><?= h($segment==='LOCAL_SHOPPING'?t('Shop prices, clear pack sizes, delivery in active areas.','दुकान का दाम, सही पैक और चालू क्षेत्रों में डिलीवरी.'):
@@ -94,7 +95,7 @@ t('Send a requirement directly to a wholesale supplier. This is a quotation, not
 <?php endif; ?>
 <?php endforeach; ?>
 </div>
-<section class="hub-help"><h2><?= t('Your order, one place','आपका ऑर्डर, एक जगह') ?></h2><p><?= t('Goods payment goes directly to the shop. Track your request and confirmed delivery from your account.','सामान का भुगतान सीधे दुकान को होगा। माँग और पक्की डिलीवरी अपने खाते में देखिए।') ?></p><div class="hub-help-actions"><a class="btn btn-line" href="/account.php"><?= t('My orders','मेरे ऑर्डर') ?></a><a class="btn btn-line" href="/track.php"><?= t('Track an order','ऑर्डर की स्थिति देखिए') ?></a><?php if (user()&&in_array(user()['role'],['admin','delivery'],true)): ?><a class="btn btn-line" href="/public/dispatch.php"><?= t('Dispatch dashboard','डिलीवरी पैनल') ?></a><?php endif; ?></div></section>
+<section class="hub-help"><h2><?= t('Your order, one place','आपका ऑर्डर, एक जगह') ?></h2><p><?= t('Goods payment goes directly to the shop. Track your request and confirmed delivery from your account.','सामान का भुगतान सीधे दुकान को होगा। माँग और पक्की डिलीवरी अपने खाते में देखिए।') ?></p><div class="hub-help-actions"><a class="btn btn-line" href="/account.php"><?= t('My orders','मेरे ऑर्डर') ?></a><a class="btn btn-line" href="/track.php"><?= t('Track an order','ऑर्डर की स्थिति देखिए') ?></a><?php if (user()&&in_array(user()['role'],['admin','delivery','vendor','rider'],true)): ?><a class="btn btn-line" href="/public/dispatch.php"><?= t('Dispatch dashboard','डिलीवरी पैनल') ?></a><?php endif; ?></div></section>
 </div>
 </main>
 <script src="/assets/maakit-api.js" defer></script>

@@ -20,15 +20,15 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  }
  }
 }
-$rows=$pdo->query("SELECT * FROM mk_partner_applications WHERE status='PENDING' ORDER BY created_at ASC LIMIT 200")->fetchAll();
+$partnerApplications=$pdo->query("SELECT * FROM mk_partner_applications WHERE status='PENDING' ORDER BY created_at ASC LIMIT 200")->fetchAll();
 include __DIR__.'/../../inc/head.php';
 ?>
 <section><div class="wrap"><h1><?= t('Vendor & Rider approvals','दुकानदार और राइडर आवेदन') ?></h1><p><?= t('Verify documents independently before approving. Approval activates the linked login and creates the vendor or rider profile. Service areas still need separate setup.','मंजूरी से पहले दस्तावेज़ देखें। मंजूरी मिलने पर लॉगिन और प्रोफ़ाइल खुलेंगे। सेवा क्षेत्र अलग से तय करने होंगे।') ?></p>
 <?php if($message): ?><p role="status"><?= h($message) ?></p><?php endif; ?>
 <div class="tablewrap"><table><thead><tr><th><?= t('Applicant','आवेदक') ?></th><th><?= t('Details','जानकारी') ?></th><th><?= t('Documents','दस्तावेज़') ?></th><th><?= t('Submitted','भेजा गया') ?></th><th><?= t('Decision','निर्णय') ?></th></tr></thead><tbody>
-<?php foreach($rows as $a): ?><tr><td><?= h($a['kind']) ?><p><?= h($a['applicant_name']) ?></p><p><?= h($a['mobile']) ?></p></td>
+<?php foreach($partnerApplications as $a): ?><tr><td><?= h($a['kind']) ?><p><?= h($a['applicant_name']) ?></p><p><?= h($a['mobile']) ?></p></td>
 <td><?php if($a['kind']==='VENDOR'): ?><?= h($a['business_name']) ?> · <?= h($a['market']) ?> · <?= h($a['shop_category']) ?><p>GSTIN: <?= h($a['gstin']?:'—') ?> | PAN: <?= h($a['pan']?:'—') ?></p><?php else: ?><?= h($a['vehicle_type']) ?><p>DL: <?= h($a['dl_number']) ?> | RC: <?= h($a['rc_number']) ?></p><?php endif; ?></td>
 <td><?php $docs=Maakit\Api\query($pdo,'SELECT id,kind FROM mk_partner_documents WHERE application_id=?',[$a['id']])->fetchAll();foreach($docs as $doc): ?><a class="btn btn-line btn-sm" href="/public/admin/document.php?id=<?= (int)$doc['id'] ?>"><?= h($doc['kind']) ?></a> <?php endforeach; ?></td>
 <td><?= h($a['created_at']) ?></td><td><form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$a['id'] ?>"><button class="btn btn-brand btn-sm" name="decision" value="APPROVED"><?= t('Approve','मंजूर करें') ?></button> <button class="btn btn-line btn-sm" name="decision" value="REJECTED"><?= t('Reject','नामंजूर करें') ?></button></form></td></tr><?php endforeach; ?>
-</tbody></table></div><?php if(!$rows): ?><p><?= t('No pending applications.','कोई आवेदन बाकी नहीं है।') ?></p><?php endif; ?></div></section>
+</tbody></table></div><?php if(!$partnerApplications): ?><p><?= t('No pending applications.','कोई आवेदन बाकी नहीं है।') ?></p><?php endif; ?></div></section>
 <?php include __DIR__.'/../../inc/foot.php'; ?>

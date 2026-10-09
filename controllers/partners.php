@@ -64,7 +64,7 @@ function review_partner(PDO $db,int $applicationId,string $decision,int $adminId
             query($db,'INSERT INTO mk_user_roles(id,user_id,role_id) VALUES(?,?,?)',[uuid4(),$uuid,$roleId]);
             if ($a['kind']==='VENDOR') {
                 $vendor=uuid4();query($db,"INSERT INTO mk_vendors(id,owner_user_id,legal_name,status) VALUES(?,?,?,'ACTIVE')",[$vendor,$uuid,$a['business_name']]);
-                query($db,'INSERT INTO mk_vendor_members(vendor_id,user_id) VALUES(?,?)',[$vendor,$uuid]);
+                query($db,'INSERT INTO mk_vendor_members(id,vendor_id,user_id) VALUES(?,?,?)',[uuid4(),$vendor,$uuid]);
             } else query($db,"INSERT INTO mk_riders(id,user_id,kyc_status,active,vehicle_type) VALUES(?,?,'VERIFIED',1,?)",[uuid4(),$uuid,strtoupper($a['vehicle_type'])]);
             query($db,'UPDATE users SET role=?,active=1 WHERE id=?',[$role,$u['id']]);
         }

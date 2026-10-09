@@ -90,6 +90,7 @@ $mxd = max(1, max(array_column($series, 'c') ?: [1]));
 <div class="wrap">
   <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
     <h2 style="margin:0">Dashboard</h2>
+    <a class="btn btn-line btn-sm" href="/public/admin/approvals.php"><?= t('Partner applications','पार्टनर आवेदन') ?></a>
     <span class="tag tag-gold">Version <?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '?' ?><?= defined('MAAKIT_VERSION_DATE') ? ' · ' . h(MAAKIT_VERSION_DATE) : '' ?></span>
   </div>
   <form method="get" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
