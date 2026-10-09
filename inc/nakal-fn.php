@@ -59,6 +59,12 @@ function nakal_banao(PDO $pdo, $dir) {
         if (empty($cr[1])) { continue; }                 // bana hi nahi to chhod dijiye
         $w("DROP TABLE IF EXISTS $table;\n" . $cr[1] . ";\n\n");
 
+        // Binary security hashes need hex literals, never connection-charset text quoting.
+        $binary=[];
+        foreach ($pdo->query("SHOW FULL COLUMNS FROM $table")->fetchAll(PDO::FETCH_ASSOC) as $column) {
+            if (preg_match('/^(?:varbinary|binary|tinyblob|blob|mediumblob|longblob|bit)\\b/i',$column['Type'])) $binary[$column['Field']]=true;
+        }
+
         // thode-thode karke — taaki badi table par memory na bhare
         $n = (int)($pdo->query("SELECT COUNT(*) FROM $table")->fetch(PDO::FETCH_NUM)[0] ?? 0);
         $ginti += $n;
@@ -67,8 +73,8 @@ function nakal_banao(PDO $pdo, $dir) {
             if (!$rows) break;
             foreach ($rows as $row) {
                 $vals = [];
-                foreach ($row as $v) {
-                    $vals[] = ($v === null) ? 'NULL' : $pdo->quote((string)$v);
+                foreach ($row as $column => $v) {
+                    $vals[] = ($v === null) ? 'NULL' : (isset($binary[$column]) ? "X'".bin2hex((string)$v)."'" : $pdo->quote((string)$v));
                 }
                 $w("INSERT INTO $table VALUES (" . implode(',', $vals) . ");\n");
             }
