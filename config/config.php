@@ -4,12 +4,17 @@ namespace Maakit\Api;
 /** Versioned defaults contain no credentials. Root config.php stays private and untouched. */
 function settings(): array {
     $value=static function(string $key,$default=null) { $v=getenv($key);return $v!==false&&$v!==''?$v:(defined($key)?constant($key):$default); };
+    $privateDir=$value('MAAKIT_PRIVATE_DIR',dirname(__DIR__,2).'/maakit-private');
+    // cPanel File Manager setup: credentials stay outside public_html and survive code updates.
+    // An explicit MAAKIT_CARRIER_CONFIG environment variable/private constant takes precedence.
+    $carrierFile=$value('MAAKIT_CARRIER_CONFIG');
+    if (!$carrierFile && is_file($privateDir.'/carriers.json')) $carrierFile=$privateDir.'/carriers.json';
     return ['site_url'=>$value('MAAKIT_SITE_URL','https://maakit.in'),
         'issuer'=>$value('MAAKIT_JWT_ISSUER','https://maakit.in'),'audience'=>$value('MAAKIT_JWT_AUDIENCE','maakit-web'),
-        'private_dir'=>$value('MAAKIT_PRIVATE_DIR',dirname(__DIR__,2).'/maakit-private'),
+        'private_dir'=>$privateDir,
         'key_file'=>$value('MAAKIT_JWT_KEY_FILE'),'private_key_file'=>$value('MAAKIT_JWT_PRIVATE_KEY_FILE'),
         'kid'=>$value('MAAKIT_JWT_KID','maakit-php-v1'),'bridge_enabled'=>(string)$value('MAAKIT_SESSION_BRIDGE','1')==='1',
-        'dispatch_batch'=>20,'offer_seconds'=>60,'carrier_config'=>$value('MAAKIT_CARRIER_CONFIG')];
+        'dispatch_batch'=>20,'offer_seconds'=>60,'carrier_config'=>$carrierFile];
 }
 /** Never put key material in source control/web root. Existing files are never overwritten. */
 function private_directory(string $dir): string {

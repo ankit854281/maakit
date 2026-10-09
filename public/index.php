@@ -41,6 +41,8 @@ if (mb_strlen($q)>=2&&mb_strlen($q)<=60&&(int)($_SESSION['sl']??0)<40) {
     $_SESSION['sl']=(int)($_SESSION['sl']??0)+1;
     try { $pdo->prepare('INSERT INTO search_log(q,hits,times) VALUES(?,?,1) ON DUPLICATE KEY UPDATE times=times+1,hits=VALUES(hits)')->execute([mb_strtolower($q),count($cards)]); } catch (Throwable $e) {}
 }
+// A database/schema failure is not an empty wholesale catalogue. Keep errors private.
+if ($setupPending) { http_response_code(503);header('Retry-After: 120'); }
 include __DIR__.'/../inc/head.php';
 ?>
 <main class="maakit-hub" data-context="<?= h($segment) ?>" data-csrf="<?= h(csrf()) ?>">
@@ -67,7 +69,8 @@ t('Send a requirement directly to a wholesale supplier. This is a quotation, not
 </nav>
 <?php endif; ?>
 <div class="hub-section-heading"><h2><?= h($q!==''?t('Search results','खोज के नतीजे'):t('Explore this section','अपनी जरूरत चुनिए')) ?></h2><span><?= count($cards) ?> <?= t('shown','दिखाए गए') ?></span></div>
-<?php if (!$cards): ?><section class="hub-empty"><h2><?= t('Nothing available here yet','यहाँ अभी उपलब्ध listing नहीं है') ?></h2><p><?= h($segment==='B2B'?t('Wholesale suppliers appear after they publish their own offers.','थोक सप्लायर अपना सामान दर्ज करेंगे, तब यहाँ दिखेंगे।'):t('Try another category or tell us what you need.','दूसरी category चुनिए या अपनी जरूरत बताइए।')) ?></p><a class="btn btn-gold" href="<?= $segment==='B2B'?'/register-business.php':'/order.php#pata' ?>"><?= t('Tell us your requirement','अपनी जरूरत बताइए') ?></a></section><?php endif; ?>
+<?php if ($setupPending): ?><section class="hub-empty" role="status"><h2><?= t('Wholesale catalogue temporarily unavailable','थोक सामान की सूची अभी नहीं खुल पा रही') ?></h2><p><?= t('Please try again shortly. Your existing shopping and service requests are still available.','थोड़ी देर में दोबारा कोशिश कीजिए। सामान और सेवाओं की अपनी माँग दूसरे हिस्सों से भेज सकते हैं।') ?></p></section><?php endif; ?>
+<?php if (!$cards&&!$setupPending): ?><section class="hub-empty"><h2><?= t('Nothing available here yet','यहाँ अभी उपलब्ध listing नहीं है') ?></h2><p><?= h($segment==='B2B'?t('Wholesale suppliers appear after they publish their own offers.','थोक सप्लायर अपना सामान दर्ज करेंगे, तब यहाँ दिखेंगे।'):t('Try another category or tell us what you need.','दूसरी category चुनिए या अपनी जरूरत बताइए।')) ?></p><a class="btn btn-gold" href="<?= $segment==='B2B'?'/register-business.php':'/order.php#pata' ?>"><?= t('Tell us your requirement','अपनी जरूरत बताइए') ?></a></section><?php endif; ?>
 <div class="hub-product-grid">
 <?php foreach ($cards as $card): ?>
 <?php if ($segment==='LOCAL_SHOPPING'):

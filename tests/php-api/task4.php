@@ -13,6 +13,11 @@ foreach (["CREATE TABLE IF NOT EXISTS customers(id INT AUTO_INCREMENT PRIMARY KE
 "CREATE TABLE IF NOT EXISTS businesses(id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(80),access_code VARCHAR(20),status VARCHAR(20))",
 "CREATE TABLE IF NOT EXISTS shop_tokens(id INT AUTO_INCREMENT PRIMARY KEY,business_id INT,token VARCHAR(64) UNIQUE,expires DATETIME)"] as $ddl) $db->exec($ddl);
 putenv('MAAKIT_JWT_KEY_FILE');putenv('MAAKIT_JWT_PRIVATE_KEY_FILE');$privateDir=sys_get_temp_dir().'/maakit-private-'.bin2hex(random_bytes(6));putenv('MAAKIT_PRIVATE_DIR='.$privateDir);
+check(Maakit\Api\settings()['carrier_config']===null,'missing private credentials keep carriers disabled');
+$carrierFile=$privateDir.'/carriers.json';mkdir($privateDir,0700);file_put_contents($carrierFile,'{"THREE_PL":{"enabled":false}}');chmod($carrierFile,0600);
+check(Maakit\Api\settings()['carrier_config']===$carrierFile,'cPanel private carrier configuration discovered');
+check(Maakit\Api\carrier_transport('THREE_PL',['fulfillment_type'=>'COURIER'])['outcome']==='DISABLED','discovered disabled provider cannot book');
+putenv('MAAKIT_CARRIER_CONFIG=/tmp/explicit-carrier-config.json');check(Maakit\Api\settings()['carrier_config']==='/tmp/explicit-carrier-config.json','explicit carrier path takes precedence');putenv('MAAKIT_CARRIER_CONFIG');
 $db->prepare('INSERT INTO customers(name,mobile,password) VALUES(?,?,?)')->execute(['Legacy customer','9000040001',password_hash('test-password',PASSWORD_DEFAULT)]);$legacyId=(int)$db->lastInsertId();
 $_SESSION['cust']=['id'=>$legacyId,'name'=>'Client cannot choose real identity'];
 $exchange=bridge_session($db,'customer');$material=jwt_material();
