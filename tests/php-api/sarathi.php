@@ -1,0 +1,45 @@
+<?php
+declare(strict_types=1);
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+require __DIR__.'/task4.php';
+require_once __DIR__.'/../../controllers/sarathi.php';
+use function Maakit\Api\{sarathi_location,sarathi_contacts,sarathi_tracking,sarathi_dashboard,sarathi_assigned,sarathi_fee_create,sarathi_fee_verify,sarathi_capture};
+query($db,"UPDATE mk_dispatch_jobs SET state='MANUAL_REQUIRED' WHERE state NOT IN ('ASSIGNED','COMPLETED','CANCELLED')");
+$f=ready_order($db);$r=rider($db,$f,true);$other=person($db);
+rejected(fn()=>sarathi_location($db,$f['a'],['consent'=>true,'latitude'=>25,'longitude'=>82,'accuracy_m'=>10]),'FORBIDDEN');
+check(sarathi_location($db,$r['auth'],['consent'=>false])['sharing']===false,'explicit consent withdrawal clears stored GPS');
+rejected(fn()=>sarathi_location($db,$r['auth'],[]),'CONSENT_REQUIRED');
+rejected(fn()=>sarathi_location($db,$r['auth'],['consent'=>true,'latitude'=>91,'longitude'=>82,'accuracy_m'=>10]),'INVALID_LOCATION');
+check(sarathi_location($db,$r['auth'],['consent'=>true,'latitude'=>25,'longitude'=>82,'accuracy_m'=>10])['saved'],'GPS location persisted');
+check(!sarathi_location($db,$r['auth'],['consent'=>true,'latitude'=>25.1,'longitude'=>82,'accuracy_m'=>10])['saved'],'GPS updates throttled');
+rejected(fn()=>sarathi_contacts($db,$other,['order_id'=>$f['order'],'consent'=>true,'contacts'=>[]]),'NOT_FOUND');
+rejected(fn()=>sarathi_contacts($db,$f['a'],['order_id'=>$f['order'],'consent'=>true,'contacts'=>[['name'=>'Parent','phone'=>'javascript:bad']]]),'INVALID_CONTACTS');
+sarathi_contacts($db,$f['a'],['order_id'=>$f['order'],'consent'=>true,'contacts'=>[['name'=>'Family','phone'=>'9876543210']]]);
+Maakit\Api\dispatch_tick($db,$noNetwork);$a=query($db,"SELECT id FROM mk_dispatch_attempts WHERE order_id=? AND status='OFFERED'",[$f['order']])->fetchColumn();
+check(sarathi_dashboard($db,$r['auth'])['assigned']===[],'family contacts hidden before assignment');
+Maakit\Api\dispatch_accept($db,$r['auth'],$a);
+check(sarathi_dashboard($db,$r['auth'])['assigned'][0]['emergency_contacts'][0]['phone']==='+919876543210','assigned delivery gets customer contact');
+check(sarathi_tracking($db,$f['a'],$f['order'])['status']==='FRESH','own active order sees fresh location');
+rejected(fn()=>sarathi_tracking($db,$other,$f['order']),'NOT_FOUND');
+query($db,'UPDATE mk_partner_locations SET updated_at=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 61 SECOND) WHERE rider_id=?',[$r['id']]);
+check(sarathi_tracking($db,$f['a'],$f['order'])['location']===null,'stale GPS hidden');
+putenv('MAAKIT_RAZORPAY_KEY_ID');putenv('MAAKIT_RAZORPAY_KEY_SECRET');
+rejected(fn()=>sarathi_fee_create($db,$f['a'],['order_id'=>$f['order']]),'PAYMENT_SETUP_REQUIRED');
+$calls=0;$transport=function($method,$path,$body)use(&$calls){$calls++;check($body['amount']===3000,'fee is delivery charge only, not goods total');return ['id'=>'order_SarathiTest','amount'=>$body['amount'],'currency'=>'INR'];};
+$p=sarathi_fee_create($db,$f['a'],['order_id'=>$f['order'],'amount_minor'=>999999],$transport);
+check($p['amount_minor']==='3000','browser fee tampering ignored');
+sarathi_fee_create($db,$f['a'],['order_id'=>$f['order']],$transport);check($calls===1,'payment order creation replay does not call provider twice');
+rejected(fn()=>sarathi_capture($db,['id'=>'pay_Test','order_id'=>$p['provider_order_id'],'amount'=>23000,'currency'=>'INR','status'=>'captured']),'PAYMENT_MISMATCH');
+rejected(fn()=>sarathi_capture($db,['id'=>'pay_Test','order_id'=>$p['provider_order_id'],'amount'=>3000,'currency'=>'INR','status'=>'authorized']),'PAYMENT_NOT_CAPTURED');
+putenv('MAAKIT_RAZORPAY_KEY_SECRET=sarathi-test-secret');$sig=hash_hmac('sha256',$p['provider_order_id'].'|pay_Test','sarathi-test-secret');
+$verify=function($method,$path,$body)use($p){return ['id'=>'pay_Test','order_id'=>$p['provider_order_id'],'amount'=>3000,'currency'=>'INR','status'=>'captured'];};
+rejected(fn()=>sarathi_fee_verify($db,$f['a'],['order_id'=>$f['order'],'payment_id'=>'pay_Test','signature'=>str_repeat('0',64)],$verify),'INVALID_PAYMENT_SIGNATURE');
+check(sarathi_fee_verify($db,$f['a'],['order_id'=>$f['order'],'payment_id'=>'pay_Test','signature'=>$sig],$verify)['state']==='CAPTURED','signature and fetched capture confirm fee');
+check(sarathi_fee_verify($db,$f['a'],['order_id'=>$f['order'],'payment_id'=>'pay_Test','signature'=>$sig],$verify)['state']==='CAPTURED','captured verification is idempotent');
+Maakit\Api\rider_progress($db,$r['auth'],['order_id'=>$f['order'],'operation'=>'pickup']);Maakit\Api\rider_progress($db,$r['auth'],['order_id'=>$f['order'],'operation'=>'complete']);
+check(sarathi_tracking($db,$f['a'],$f['order'])['location']===null,'completed delivery location hidden');
+rejected(fn()=>sarathi_assigned($db,$r['auth'],$f['order']),'NOT_FOUND');
+$f=ready_order($db);$unknown=fn()=>throw new RuntimeException('timeout');
+try{sarathi_fee_create($db,$f['a'],['order_id'=>$f['order']],$unknown);}catch(RuntimeException $e){}
+rejected(fn()=>sarathi_fee_create($db,$f['a'],['order_id'=>$f['order']],$transport),'PAYMENT_RECONCILIATION');
+putenv('MAAKIT_RAZORPAY_KEY_SECRET');echo "Sarathi GPS, assignment privacy, family contacts and delivery-fee payment checks passed.\n";
