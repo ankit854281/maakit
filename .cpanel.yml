@@ -9,6 +9,9 @@ deployment:
     - /bin/cp -R  ./inc       $DEPLOYPATH
     - /bin/cp -R  ./config ./middleware ./controllers ./api ./public ./bin $DEPLOYPATH
     - /bin/cp -R  ./sarathi   $DEPLOYPATH
+    # smartsarathi.in isi folder se chalta hai (Alias + .htaccess ka
+    # raasta). Ise chhodne par wo domain Maakit hi dikhane lagega.
+    - /bin/cp -R  ./smartsarathi $DEPLOYPATH
     - /bin/cp     ./*.php     $DEPLOYPATH
     - /bin/cp -R  ./sql       $DEPLOYPATH
     - /bin/cp     ./*.json    $DEPLOYPATH 2>/dev/null || true

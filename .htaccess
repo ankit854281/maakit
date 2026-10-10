@@ -22,6 +22,26 @@
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # ----------------------------------------------------------
+  # 1क. smartsarathi.in — apni alag website, usi hosting par
+  #
+  # Hosting plan me "Addon Domain" ki jagah khatam hai (0/0), par
+  # "Alias" ki koi hadd nahi (0/∞). Isliye smartsarathi.in ko Alias
+  # ke roop me joda gaya hai. Alias apne aap primary site (Maakit)
+  # hi dikhata hai — ye do line usko uske apne folder me bhej deti
+  # hain, taaki wo sach me alag website bane.
+  #
+  # Dhyan dene layak teen baatein:
+  #   - Ye sirf us HOST par chalta hai. maakit.in par koi asar nahi.
+  #   - Doosri shart (!^/smartsarathi/) chakkar rukne ke liye hai,
+  #     warna Apache apne hi likhe pate ko dobara likhta rehta.
+  #   - URL browser me waisa hi rehta hai — smartsarathi.in. Folder
+  #     ka naam kisi ko nahi dikhta.
+  # ----------------------------------------------------------
+  RewriteCond %{HTTP_HOST} ^(www\.)?smartsarathi\.in$ [NC]
+  RewriteCond %{REQUEST_URI} !^/smartsarathi/
+  RewriteRule ^(.*)$ /smartsarathi/$1 [L]
 </IfModule>
 
 # ------------------------------------------------------------
