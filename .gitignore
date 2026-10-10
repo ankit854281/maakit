@@ -16,3 +16,8 @@ chowkidar-nateeja.json
 .env
 .env.*
 !.env.example
+
+# Sarathi ka apna database password — ye bhi kabhi GitHub par nahi
+smartsarathi/inc/config.php
+smartsarathi/uploads/*
+!smartsarathi/uploads/.htaccess

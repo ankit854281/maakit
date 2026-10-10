@@ -1,0 +1,451 @@
+/* ============================================================
+   सारथी — डिलीवरी वाले का पन्ना
+
+   Ye panna dhoop me, gaadi par, ek haath se chalaya jata hai.
+   Isliye:
+     - har dabane wali cheez kam se kam 52px oonchi
+     - likhawat badi (17px se neeche kuch nahi)
+     - rang gehre, taaki dhoop me bhi padha jaye
+     - OTP ka khana bada aur ginti ke liye khula
+
+   Maakit ke rang wahi: maroon #7A1F1F, gold #E0A526, cream #FBF4E6
+   ============================================================ */
+
+:root{
+  --mar:#7A1F1F; --mar-d:#5E1616; --gold:#E0A526;
+  --cream:#FBF4E6; --ink:#241A16; --mut:#6B5D55;
+  --line:#E3D8C6; --ok:#1F6B3A; --warn:#A33427;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--cream); color:var(--ink);
+  font-family:system-ui,-apple-system,"Noto Sans Devanagari","Segoe UI",sans-serif;
+  font-size:17px; line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+b{font-weight:700}
+
+/* ============================================================
+   ऐप का ढाँचा — ऊपर पट्टी, ☰ मेन्यू, नीचे tab पट्टी
+   ============================================================ */
+
+/* ---------- ऊपर ---------- */
+.sr-top{
+  background:var(--mar); color:#fff; position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:13px;
+  padding:11px 15px; padding-top:calc(11px + env(safe-area-inset-top));
+}
+.sr-top-t{flex:1; min-width:0}
+.sr-top-t b{display:block; font-size:20px; line-height:1.2}
+.sr-top-t small{display:block; font-size:13px; opacity:.85; margin-top:1px}
+.sr-top-dot{
+  width:11px; height:11px; border-radius:50%; flex:0 0 11px;
+  background:rgba(255,255,255,.35);
+}
+.sr-top-dot.on{background:#8FE3A8; box-shadow:0 0 0 4px rgba(143,227,168,.25)}
+
+/* ☰ तीन लाइन */
+.sr-ham{
+  display:flex; flex-direction:column; justify-content:center; gap:5px;
+  width:44px; height:44px; padding:0 9px; cursor:pointer; flex:0 0 44px;
+  border-radius:11px;
+}
+.sr-ham span{display:block; height:2.5px; background:#fff; border-radius:2px}
+.sr-ham span:nth-child(2){width:72%}
+.sr-nav-sw:checked ~ .sr-top .sr-ham{background:rgba(255,255,255,.14)}
+
+/* ---------- ☰ का मेन्यू ---------- */
+.sr-veil{
+  position:fixed; inset:0; background:rgba(26,16,12,.5); z-index:28;
+  opacity:0; visibility:hidden; transition:opacity .2s;
+}
+.sr-draw{
+  position:fixed; top:0; bottom:0; left:0; width:280px; max-width:84vw;
+  background:#fff; z-index:29; overflow-y:auto;
+  transform:translateX(-100%); transition:transform .22s ease;
+  display:flex; flex-direction:column;
+  padding-top:env(safe-area-inset-top);
+}
+.sr-nav-sw:checked ~ .sr-veil{opacity:1; visibility:visible}
+.sr-nav-sw:checked ~ .sr-draw{transform:translateX(0)}
+
+.sr-draw-top{
+  display:flex; align-items:center; gap:12px;
+  background:var(--mar); color:#fff; padding:18px 16px;
+}
+.sr-ava{
+  width:46px; height:46px; border-radius:50%; flex:0 0 46px;
+  background:var(--gold); color:#3A2606;
+  display:flex; align-items:center; justify-content:center;
+  font-size:23px; font-weight:800;
+}
+.sr-draw-top b{display:block; font-size:17px; line-height:1.25}
+.sr-draw-top small{display:block; font-size:13px; opacity:.85}
+.sr-draw-x{
+  margin-left:auto; font-size:30px; line-height:1; cursor:pointer;
+  width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+  border-radius:9px; background:rgba(255,255,255,.14);
+}
+
+.sr-draw a, .sr-draw-out{
+  display:flex; align-items:center; gap:13px; width:100%;
+  padding:15px 17px; color:var(--ink); text-decoration:none;
+  font-size:17px; font-weight:600; border:0; background:none;
+  font-family:inherit; text-align:left; cursor:pointer; min-height:54px;
+}
+.sr-draw a.on{background:var(--cream); color:var(--mar); box-shadow:inset 4px 0 0 var(--mar)}
+.sr-draw a em{
+  margin-left:auto; background:var(--mar); color:#fff; border-radius:20px;
+  padding:1px 9px; font-size:14px; font-style:normal; font-weight:700;
+}
+.sr-draw .sr-i{flex:0 0 22px; color:var(--mut)}
+.sr-draw a.on .sr-i{color:var(--mar)}
+.sr-draw-gap{height:1px; background:var(--line); margin:9px 17px}
+.sr-draw-out{color:var(--warn)}
+.sr-draw-foot{
+  margin-top:auto; padding:17px; font-size:13px; color:var(--mut);
+  border-top:1px solid var(--line);
+}
+
+/* ---------- नीचे की tab पट्टी ---------- */
+.sr-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:18;
+  display:flex; background:#fff; border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.sr-bar a{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:8px 2px 7px; color:var(--mut); text-decoration:none;
+  font-size:12px; font-weight:700; position:relative; min-height:58px;
+  justify-content:center;
+}
+.sr-bar a.on{color:var(--mar)}
+.sr-bar a.on::before{
+  content:''; position:absolute; top:0; left:22%; right:22%;
+  height:3px; background:var(--mar); border-radius:0 0 3px 3px;
+}
+.sr-bar em{
+  position:absolute; top:5px; left:52%;
+  background:var(--mar); color:#fff; border-radius:20px;
+  padding:0 6px; font-size:11px; font-style:normal; font-weight:700;
+  min-width:18px; text-align:center;
+}
+
+/* ---------- बीच का हिस्सा ---------- */
+.sr-main{max-width:620px; margin:0 auto; padding:14px 14px 86px}
+
+.sr-flash{
+  background:#E8F3EA; border:1px solid #BFDCC6; color:#1C5130;
+  border-radius:12px; padding:13px 15px; margin-bottom:14px; font-weight:600;
+}
+.sr-err{
+  background:#FBE9E7; border:1px solid #E8BDB7; color:#8A2A1F;
+  border-radius:12px; padding:13px 15px; margin-bottom:14px; font-weight:600;
+}
+.sr-err-soft{font-weight:500; margin-bottom:16px}
+
+.sr-card{
+  background:#fff; border:1px solid var(--line); border-radius:16px;
+  padding:16px; margin-bottom:14px;
+}
+.sr-h2{margin:0 0 14px; font-size:20px}
+
+/* ---------- पट्टियाँ — हाज़िरी और चक्कर, एक-एक लाइन ----------
+   Pehle ye poore card the. Card jagah khata hai aur rider ko kaam
+   tak pahunchne me scroll karna padta hai. Ab ek patli patti. */
+.sr-strip{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  padding:9px 9px 9px 14px; margin-bottom:10px; font-size:16px;
+}
+.sr-strip>div{display:flex; gap:7px}
+.sr-strip button{
+  background:#EFEAE0; color:var(--ink); border:0; border-radius:9px;
+  padding:10px 13px; font:inherit; font-size:15px; font-weight:700;
+  min-height:44px; white-space:nowrap; cursor:pointer;
+}
+.sr-strip .sr-x{color:var(--warn)}
+.sr-strip-on i{
+  display:inline-block; width:9px; height:9px; border-radius:50%;
+  background:var(--ok); margin-right:6px;
+}
+.sr-strip-off{background:#FBE9E7; border-color:#E8BDB7}
+.sr-strip-off button{background:var(--mar); color:#fff}
+.sr-strip-trip{background:#2E2A26; border-color:#2E2A26; color:#fff}
+.sr-strip-trip b{color:var(--gold); font-size:18px}
+.sr-strip-trip button{background:rgba(255,255,255,.16); color:#fff}
+
+/* ---------- बटन ---------- */
+.sr-btn{
+  display:block; width:100%; border:0; border-radius:12px;
+  padding:15px 12px; font:inherit; font-size:18px; font-weight:700;
+  min-height:56px; cursor:pointer; text-align:center;
+}
+.sr-btn-go{background:var(--mar); color:#fff}
+.sr-btn-done{background:var(--ok); color:#fff}
+
+/* saadharan khana — login panne par mobile aur code */
+.sr-in{
+  width:100%; border:2px solid var(--line); border-radius:12px;
+  padding:14px; font:inherit; font-size:18px; background:#fff;
+  min-height:56px; margin-bottom:13px;
+}
+.sr-in:focus{outline:0; border-color:var(--mar)}
+
+/* ---------- खाली ---------- */
+.sr-khali{
+  background:#fff; border:1px dashed var(--line); border-radius:16px;
+  padding:30px 20px; text-align:center;
+}
+.sr-khali .sr-i{color:var(--line); margin-bottom:10px}
+.sr-khali p{margin:0; font-size:18px}
+.sr-khali-s{margin-top:8px !important; color:var(--mut); font-size:15px !important}
+
+/* ============================================================
+   एक ऑर्डर — बंद हालत में सिर्फ़ एक पट्टी, खुली हालत में पूरा
+
+   Ek baar me ek hi khula rehta hai. Rider ko "abhi yah karna hai"
+   turant dikhta hai, aur baaki aath order do-do line me neeche.
+   ============================================================ */
+.sr-ord{
+  background:#fff; border:1px solid var(--line); border-radius:14px;
+  margin-bottom:9px; border-left:5px solid var(--line);
+  overflow:hidden;
+}
+.sr-ord-utha{border-left-color:var(--gold)}
+.sr-ord[open]{
+  margin-bottom:14px; border-color:var(--mar);
+  box-shadow:0 2px 14px rgba(122,31,31,.1);
+}
+.sr-ord[open].sr-ord-utha{border-color:var(--gold)}
+
+/* बंद पट्टी */
+.sr-head{
+  display:flex; align-items:center; gap:11px;
+  padding:13px 14px; cursor:pointer; list-style:none;
+  min-height:58px;
+}
+.sr-head::-webkit-details-marker{display:none}
+.sr-dot{
+  width:11px; height:11px; border-radius:50%; flex:0 0 11px;
+  background:var(--line);
+}
+.sr-ord-utha .sr-dot{background:var(--gold)}
+.sr-ord[open] .sr-dot{background:var(--mar)}
+.sr-head-mid{flex:1; min-width:0}
+.sr-head-mid b{display:block; font-size:18px; line-height:1.3}
+.sr-head-mid small{
+  display:block; font-size:14px; color:var(--mut); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sr-head-tag{
+  background:#F4EEE2; color:#6A4A1C; border-radius:20px;
+  padding:4px 10px; font-size:13px; font-weight:700; white-space:nowrap;
+}
+.sr-ord-utha .sr-head-tag{background:#FBEFD2; color:#7A5410}
+.sr-ord[open] .sr-head{border-bottom:1px solid #F1E9DA}
+
+/* खुला हिस्सा */
+.sr-body{padding:13px 14px 15px}
+.sr-mark{margin:0 0 10px; font-size:16px; color:var(--mut)}
+.sr-items{
+  background:var(--cream); border-radius:10px;
+  padding:10px 12px; margin:0 0 10px; font-size:16px; line-height:1.5;
+}
+.sr-money{
+  display:flex; gap:14px; flex-wrap:wrap; margin:0 0 13px;
+  font-size:15px; color:var(--mut);
+}
+.sr-money b{color:var(--mar); font-size:16px}
+.sr-warn{color:var(--warn); font-weight:600}
+
+/* ---------- काम की कार्रवाई ---------- */
+.sr-act{margin:0}
+.sr-lab{display:block; font-size:15px; color:var(--mut); margin:0 0 7px}
+
+/* OTP aur button ek hi line me — do alag katar se jagah bachti hai */
+.sr-pair{display:flex; gap:9px; align-items:stretch}
+.sr-otp{
+  /* min-width:0 zaroori hai. Bina iske <input> apni "andar ki
+     chaudai" se chhota hota hi nahi — flex-basis 118px likha hone
+     par bhi 384px le leta tha aur button 54px me dab jata tha. */
+  flex:0 0 118px; min-width:0;
+  border:2px solid var(--line); border-radius:12px;
+  font:inherit; font-size:26px; font-weight:700; text-align:center;
+  letter-spacing:5px; padding:0 8px; background:#fff; min-height:56px;
+}
+.sr-otp:focus{outline:0; border-color:var(--mar)}
+.sr-pair .sr-btn{flex:1 1 auto; min-width:0; width:auto; margin:0; white-space:nowrap}
+
+/* फ़ोटो — पूरी चौड़ाई की पट्टी, भद्दा file बटन नहीं */
+.sr-file-lab{
+  display:block; margin-top:10px; padding:12px 14px;
+  border:2px dashed var(--line); border-radius:12px;
+  font-size:15px; color:var(--mut); cursor:pointer; background:#fff;
+}
+.sr-file-lab input{display:none}
+.sr-file-lab span::before{content:'📷 '}
+.sr-file-lab small{font-size:13px}
+
+.sr-call-sm{
+  display:block; text-align:center; margin-top:10px; padding:11px;
+  background:#EFEAE0; color:var(--ink); text-decoration:none;
+  border-radius:11px; font-weight:700; font-size:16px; min-height:46px;
+}
+
+/* ---------- "आपको मिलेगा" ---------- */
+.sr-mera{
+  background:#E8F3EA; border-radius:10px; padding:9px 12px;
+  margin:0 0 11px; font-size:16px; color:#1C5130;
+}
+.sr-mera b{font-size:19px}
+.sr-mera small{color:#3C7A52; font-size:13px; margin-left:5px}
+
+/* ---------- रास्ता और फ़ोन ---------- */
+.sr-go{display:flex; gap:8px; margin:0 0 12px; flex-wrap:wrap}
+.sr-go-a{
+  flex:1 1 0; min-width:96px; display:flex; align-items:center;
+  justify-content:center; gap:5px; text-align:center;
+  background:#EFEAE0; color:var(--ink); text-decoration:none; border:0;
+  border-radius:11px; padding:11px 8px; font:inherit; font-size:15px;
+  font-weight:700; min-height:48px; cursor:pointer;
+}
+.sr-go-map{background:var(--ink); color:#fff; flex:1 1 100%}
+.sr-go-stop{background:#FBE9E7; color:var(--warn)}
+
+/* ---------- मैं निकल गया (live location) ---------- */
+.sr-trk{margin:0 0 12px}
+.sr-trk .sr-go-a{width:100%; flex:none}
+.sr-trk-m{
+  display:block; font-size:14px; color:var(--mut);
+  margin-top:6px; text-align:center;
+}
+
+/* ---------- समस्या बताइए ---------- */
+.sr-prob{margin-top:13px; border-top:1px solid #F1E9DA; padding-top:11px}
+.sr-prob summary{
+  list-style:none; cursor:pointer; color:var(--warn);
+  font-size:15px; font-weight:700; padding:9px 0; min-height:40px;
+}
+.sr-prob summary::-webkit-details-marker{display:none}
+.sr-prob summary::before{content:'⚠ '}
+.sr-prob-f{margin-top:7px}
+.sr-rad{
+  display:flex; align-items:center; gap:11px; padding:11px 12px;
+  border:1px solid var(--line); border-radius:11px; margin-bottom:7px;
+  font-size:16px; cursor:pointer; background:#fff; min-height:48px;
+}
+.sr-rad input{width:21px; height:21px; flex:0 0 21px; accent-color:var(--mar)}
+.sr-rad:has(input:checked){border-color:var(--mar); background:var(--cream)}
+.sr-btn-warn{background:var(--warn); color:#fff}
+
+/* ---------- नेट नहीं है ---------- */
+.sr-net{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  background:var(--warn); color:#fff; text-align:center;
+  padding:13px; font-size:16px; font-weight:700;
+  padding-bottom:calc(13px + env(safe-area-inset-bottom));
+}
+
+/* .sr-btn yahan dobara mat likhiye — upar ek hi jagah hai. */
+
+/* ---------- खाता ---------- */
+.sr-big{display:flex; gap:12px; margin-bottom:16px}
+.sr-big>div{
+  flex:1; background:var(--cream); border-radius:14px;
+  padding:14px; text-align:center;
+}
+.sr-big span{display:block; font-size:14px; color:var(--mut)}
+.sr-big b{display:block; font-size:30px; color:var(--mar); line-height:1.25}
+.sr-big em{display:block; font-size:13px; color:var(--mut); font-style:normal}
+
+.sr-tab{width:100%; border-collapse:collapse; font-size:17px}
+.sr-tab td{padding:12px 2px; border-bottom:1px solid #F1E9DA}
+.sr-tab td:last-child{text-align:right; font-weight:700; white-space:nowrap}
+.sr-tab small{font-weight:400; color:var(--mut)}
+.sr-baaki td{border-bottom:0; font-size:19px; padding-top:15px}
+.sr-baaki td:last-child{color:var(--mar)}
+
+.sr-note{font-size:15px; color:var(--mut); margin:14px 0 0; line-height:1.6}
+.sr-note-q{
+  background:var(--cream); border-radius:12px; padding:13px 14px;
+  border-left:4px solid var(--gold);
+}
+
+/* ---------- बीते काम ---------- */
+.sr-day{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin:16px 3px 8px; font-size:15px; color:var(--mut);
+}
+.sr-day b{font-size:17px; color:var(--ink)}
+.sr-past{
+  display:flex; align-items:center; gap:11px;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  padding:11px 13px; margin-bottom:7px;
+}
+.sr-tick{
+  width:26px; height:26px; border-radius:50%; flex:0 0 26px;
+  background:#E8F3EA; color:var(--ok);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:800;
+}
+.sr-past-mid{flex:1; min-width:0}
+.sr-past-mid b{display:block; font-size:16px; line-height:1.3}
+.sr-past-mid small{
+  display:block; font-size:13px; color:var(--mut);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sr-past-pic{
+  background:#EFEAE0; color:var(--ink); text-decoration:none;
+  border-radius:8px; padding:7px 11px; font-size:14px; font-weight:700;
+}
+
+/* ---------- मदद ---------- */
+.sr-helpcall{
+  display:flex; align-items:center; gap:13px; margin-bottom:14px;
+  background:var(--mar); color:#fff; text-decoration:none;
+  border-radius:14px; padding:15px 17px;
+}
+.sr-helpcall b{display:block; font-size:17px}
+.sr-helpcall small{display:block; font-size:14px; opacity:.85}
+.sr-ans{margin:0; font-size:16px; line-height:1.6; color:var(--ink)}
+
+/* ---------- जानकारी वाली तालिका ---------- */
+.sr-tab-l td:first-child{color:var(--mut); font-size:16px}
+.sr-tab-l td:last-child{font-size:17px}
+
+/* ============================================================
+   लॉगिन का पन्ना
+   ============================================================ */
+body.sr-login{
+  background:var(--mar);
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:22px 16px;
+}
+.sr-wrap{width:100%; max-width:400px}
+.sr-brand{text-align:center; margin-bottom:22px; color:#fff}
+.sr-logo{font-size:40px; font-weight:800; letter-spacing:1px; line-height:1.2}
+.sr-brand p{margin:4px 0 0; opacity:.85; font-size:16px}
+.sr-login .sr-card{margin-bottom:14px}
+.sr-login .sr-err{background:#8E2A20; border-color:#A8463B; color:#fff}
+
+.sr-help{
+  background:rgba(255,255,255,.1); border-radius:14px;
+  padding:15px; color:#fff; font-size:15px;
+}
+.sr-help b{display:block; margin-bottom:5px; font-size:16px}
+.sr-help p{margin:0 0 12px; opacity:.88; line-height:1.55}
+.sr-call{
+  display:block; text-align:center; background:var(--gold); color:#3A2606;
+  text-decoration:none; border-radius:11px; padding:14px;
+  font-weight:700; min-height:50px;
+}
+.sr-foot{text-align:center; margin:18px 0 0}
+.sr-foot a{color:rgba(255,255,255,.75); font-size:15px}
+
+/* ---------- बड़ी स्क्रीन पर भी फ़ोन जैसा ही ---------- */
+@media (min-width:700px){
+  .sr-main{padding-top:20px}
+}

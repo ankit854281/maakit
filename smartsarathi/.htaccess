@@ -1,0 +1,71 @@
+# ============================================================
+#  सारथी — इस फ़ोल्डर की सुरक्षा
+#
+#  Ye folder smartsarathi.in ke roop me khulta hai. Upar wali
+#  (public_html ki) .htaccess bhi lagti hai, par us par bharosa
+#  mat kijiye — ye folder apni suraksha khud rakhta hai. Agar
+#  kabhi upar wali file badal jaye ya hat jaye, tab bhi yahan
+#  ka config.php band rahega.
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. Jo file bahar se nahi khulni chahiye
+#
+#    config.php me database ka password hai. PHP file khul kar
+#    dikhati to nahi, par agar kabhi PHP band pada to saaf-saaf
+#    dikh jaati. Isliye seedhe hi band.
+# ------------------------------------------------------------
+<FilesMatch "^(config\.php|config\.sample\.php|.*\.(sql|log|bak|old|zip|tar|gz|ini|yml|yaml|md))$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# ------------------------------------------------------------
+# 2. Poore folder jo bahar se nahi khulne chahiye
+#
+#    inc/ me saari logic hai, sql/ me database ka dhancha.
+#    Inhe browser se kholne ki kabhi zaroorat nahi padti.
+# ------------------------------------------------------------
+RedirectMatch 404 ^/(smartsarathi/)?(inc|sql)(/|$)
+
+# chhupi hui file (.git, .env wagairah)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule "(^|/)\.(?!well-known)" - [F,L]
+</IfModule>
+
+# folder ki soochi kisi ko mat dikhaiye
+Options -Indexes
+
+# ------------------------------------------------------------
+# 3. Browser ko suraksha ke niyam
+# ------------------------------------------------------------
+<IfModule mod_headers.c>
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # camera chahiye (delivery ki photo), jagah chahiye (GPS),
+  # baaki sab band
+  Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(self), payment=()"
+</IfModule>
+
+# ------------------------------------------------------------
+# 4. Tasveer aur CSS browser me ruki rahein — gaon me net dheema hai
+# ------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css               "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/jpeg             "access plus 30 days"
+  ExpiresByType image/png              "access plus 30 days"
+  ExpiresByType image/webp             "access plus 30 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json
+</IfModule>
