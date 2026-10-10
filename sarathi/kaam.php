@@ -11,6 +11,9 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/sarathi.php';
 require_once __DIR__ . '/../inc/sarathi-ui.php';
+// dispatch_queue() — haazri lagte hi aur delivery poori hote hi
+// intezaar wale order baant deta hai. delivery/index.php bhi yahi karta hai.
+require_once __DIR__ . '/../inc/dispatch.php';
 
 $me = sarathi_me();
 if (!$me) { redirect('/sarathi/'); }
@@ -24,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         if (session_status() === PHP_SESSION_ACTIVE) { session_regenerate_id(true); session_destroy(); }
         redirect('/sarathi/');
     }
-    if ($do === 'duty_on')  { sarathi_duty_on($pdo, $uid);  flash('हाज़िरी लग गई — अगले 90 मिनट तक।'); redirect('/sarathi/kaam.php'); }
+    if ($do === 'duty_on')  { sarathi_duty_on($pdo, $uid); dispatch_queue($pdo); flash('हाज़िरी लग गई — अगले 90 मिनट तक।'); redirect('/sarathi/kaam.php'); }
     if ($do === 'duty_off') { sarathi_duty_off($pdo, $uid); flash('अब आप बंद हैं।');                  redirect('/sarathi/kaam.php'); }
 
     if ($do === 'trip_band') {
@@ -39,8 +42,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     }
     if ($do === 'de_diya') {
         $photo = save_item_photo('pod', 'pod', 700);   // dheeme net ke liye chhoti
-        [$ok, $msg] = sarathi_de_diya($pdo, $uid, (int)post('oid'), post('otp'), $photo);
+        $oid = (int)post('oid');
+        [$ok, $msg] = sarathi_de_diya($pdo, $uid, $oid, post('otp'), $photo);
         if (!$ok && $photo) { drop_photo($photo); }
+        if ($ok) {
+            // Wahi do kaam jo delivery/index.php delivery ke baad karta hai:
+            // graahak ki live location band, aur agla intezaar wala order.
+            $pdo->prepare("DELETE FROM live_tracks WHERE order_id=?")->execute([$oid]);
+            dispatch_queue($pdo);
+        }
         flash($msg); redirect('/sarathi/kaam.php');
     }
     if ($do === 'samasya') {

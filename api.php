@@ -45,7 +45,7 @@ if ($a === 'bclick' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // A new consent token prevents late pings or old tabs from restarting a stopped share.
 if(in_array($a,['start_tracking','stop_tracking','ping'],true)&&$_SERVER['REQUEST_METHOD']==='POST'){
     $u=user();$field=fn($key)=>is_string($_POST[$key]??null)?trim($_POST[$key]):'';
-    if(!$u||!in_array($u['role'],['delivery','admin'],true)||!csrf_ok()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}
+    if(!$u||!in_array($u['role'],['delivery','rider','admin'],true)||!csrf_ok()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}
     $oid=(int)$field('o');$token=$field('token');
     $own=$pdo->prepare("SELECT id FROM orders WHERE id=? AND (delivery_user=? OR ?='admin') AND status IN ('Assign','Pickup')");$own->execute([$oid,$u['id'],$u['role']]);
     if(!$own->fetch()){http_response_code(403);echo json_encode(['ok'=>0]);exit;}

@@ -4,11 +4,11 @@ need_role('admin');
 $page_title=t('Launch readiness — Maakit','Launch की तैयारी — Maakit');
 $counts=$pdo->query("SELECT COUNT(*) shops, COALESCE(SUM(items_on=1),0) catalogues FROM businesses WHERE status='approved'")->fetch();
 $goods=$pdo->query("SELECT COUNT(*) total,COALESCE(SUM(i.price>0),0) priced,COALESCE(SUM(i.photo IS NOT NULL AND i.photo<>''),0) pictured,COALESCE(SUM(i.price>0 AND i.stock='hai' AND b.items_on=1),0) orderable FROM shop_items i JOIN businesses b ON b.id=i.business_id WHERE b.status='approved' AND i.active=1")->fetch();
-$drivers=(int)$pdo->query("SELECT COUNT(*) FROM users WHERE role='delivery' AND active=1")->fetchColumn();
+$drivers=(int)$pdo->query("SELECT COUNT(*) FROM users WHERE role IN ('delivery','rider') AND active=1")->fetchColumn();
 $requests=(int)$pdo->query("SELECT COUNT(*) FROM support_tickets WHERE status IN ('new','reviewing')")->fetchColumn();
 $areas=coverage_areas($pdo,false);
 $mapped=$pdo->query("SELECT s.village_id,COUNT(*) shops FROM service_area_shops s JOIN businesses b ON b.id=s.business_id WHERE b.status='approved' GROUP BY s.village_id")->fetchAll(PDO::FETCH_KEY_PAIR);
-$areaDrivers=$pdo->query("SELECT d.village_id,COUNT(*) drivers FROM service_area_drivers d JOIN users u ON u.id=d.user_id WHERE u.role='delivery' AND u.active=1 GROUP BY d.village_id")->fetchAll(PDO::FETCH_KEY_PAIR);
+$areaDrivers=$pdo->query("SELECT d.village_id,COUNT(*) drivers FROM service_area_drivers d JOIN users u ON u.id=d.user_id WHERE u.role IN ('delivery','rider') AND u.active=1 GROUP BY d.village_id")->fetchAll(PDO::FETCH_KEY_PAIR);
 $cards=[
  [t('Approved shops','स्वीकृत दुकानें'),(int)$counts['shops'],'/admin/businesses.php'],
  [t('Enabled shop catalogues','चालू दुकान catalogue'),(int)$counts['catalogues'],'/admin/businesses.php'],

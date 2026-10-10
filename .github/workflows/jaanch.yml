@@ -125,6 +125,7 @@ jobs:
           php .github/jaanch/traffic-flow.php
           php .github/jaanch/hub-flow.php
           php .github/jaanch/partner-flow.php
+          php .github/jaanch/sarathi-flow.php
           node --check assets/auth-gateway.js
           node --check assets/maakit-api.js
           node tests/php-api/browser-auth.cjs

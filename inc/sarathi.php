@@ -92,9 +92,15 @@ function sarathi_otp_bharo(PDO $pdo, $oid) {
 // ---------------------------------------------------------------
 //  हाज़िरी — "मैं अभी काम के लिए तैयार हूँ"
 // ---------------------------------------------------------------
+//
+// Dhyaan: samay UTC me likhte hain (UTC_TIMESTAMP), NOW() me nahi.
+// inc/dispatch.php haazri ko UTC_TIMESTAMP() se milata hai aur
+// delivery/index.php bhi gmdate() se UTC hi likhta hai. Hosting ka
+// MySQL agar UTC par nahi hai to NOW() se likhi haazri dispatch ko
+// kabhi "chalu" dikhti hi nahi — rider haazir, par order nahi aata.
 function sarathi_duty_on(PDO $pdo, $uid, $minutes = 90) {
     $pdo->prepare("INSERT INTO driver_availability (user_id, available_until)
-                   VALUES (?, NOW() + INTERVAL ? MINUTE)
+                   VALUES (?, UTC_TIMESTAMP() + INTERVAL ? MINUTE)
                    ON DUPLICATE KEY UPDATE available_until = VALUES(available_until)")
         ->execute([(int)$uid, (int)$minutes]);
 }
@@ -104,9 +110,16 @@ function sarathi_duty_off(PDO $pdo, $uid) {
 }
 function sarathi_duty_tak(PDO $pdo, $uid) {
     $st = $pdo->prepare("SELECT available_until FROM driver_availability
-                          WHERE user_id = ? AND available_until > NOW()");
+                          WHERE user_id = ? AND available_until > UTC_TIMESTAMP()");
     $st->execute([(int)$uid]);
-    return $st->fetchColumn() ?: null;
+    $utc = $st->fetchColumn();
+    if (!$utc) return null;
+    // Database me UTC hai; rider ko Bharat ka samay dikhna chahiye.
+    try {
+        $d = new DateTime($utc, new DateTimeZone('UTC'));
+        $d->setTimezone(new DateTimeZone('Asia/Kolkata'));
+        return $d->format('Y-m-d H:i:s');
+    } catch (Throwable $e) { return $utc; }
 }
 
 // ---------------------------------------------------------------

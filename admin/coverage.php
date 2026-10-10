@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
    $driverids=array_values(array_unique(array_filter(array_map('intval',(array)($_POST['drivers']??[])),fn($x)=>$x>0)));
    if($driverids){
     $marks=implode(',',array_fill(0,count($driverids),'?'));
-    $check=$pdo->prepare("SELECT id FROM users WHERE role='delivery' AND active=1 AND id IN ($marks)");$check->execute($driverids);
+    $check=$pdo->prepare("SELECT id FROM users WHERE role IN ('delivery','rider') AND active=1 AND id IN ($marks)");$check->execute($driverids);
     if(count($check->fetchAll())!==count($driverids))$err=t('Choose active delivery staff only.','केवल चालू delivery staff चुनें।');
    }
    if(post('auto_dispatch')==='1'&&!$driverids)$err=t('Link delivery staff before enabling automatic assignment.','Automatic assignment चालू करने से पहले delivery staff जोड़ें।');
@@ -53,7 +53,7 @@ foreach($areas as $a)if((int)$a['id']===$id)$edit=$a;
 $links=[];if($edit){$s=$pdo->prepare('SELECT business_id FROM service_area_shops WHERE village_id=?');$s->execute([$id]);$links=array_map('intval',$s->fetchAll(PDO::FETCH_COLUMN));}
 $shops=$pdo->query("SELECT id,name,village FROM businesses WHERE status='approved' ORDER BY name")->fetchAll();
  $driverlinks=[];if($edit){$s=$pdo->prepare('SELECT user_id FROM service_area_drivers WHERE village_id=?');$s->execute([$id]);$driverlinks=array_map('intval',$s->fetchAll(PDO::FETCH_COLUMN));}
-$drivers=$pdo->query("SELECT id,name FROM users WHERE role='delivery' AND active=1 ORDER BY name")->fetchAll();
+$drivers=$pdo->query("SELECT id,name FROM users WHERE role IN ('delivery','rider') AND active=1 ORDER BY name")->fetchAll();
 $auto=false;if($edit){$s=$pdo->prepare('SELECT enabled FROM service_area_dispatch WHERE village_id=?');$s->execute([$id]);$auto=(bool)$s->fetchColumn();}
 include __DIR__.'/../inc/panel.php';
 ?>

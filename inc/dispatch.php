@@ -15,11 +15,11 @@ function dispatch_assign(PDO $pdo,$orderid,$manualDriver=0) {
         }
         foreach($ids as $driver){
             // Manual and automatic dispatch share this lock, including across areas.
-            $s=$pdo->prepare("SELECT id FROM users WHERE id=? AND role='delivery' AND active=1 FOR UPDATE");$s->execute([$driver]);if(!$s->fetch())continue;
+            $s=$pdo->prepare("SELECT id FROM users WHERE id=? AND role IN ('delivery','rider') AND active=1 FOR UPDATE");$s->execute([$driver]);if(!$s->fetch())continue;
             if(!$manualDriver){
                 $s=$pdo->prepare("SELECT id FROM orders WHERE delivery_user=? AND status IN ('Naya','Confirm','Assign','Pickup') LIMIT 1 FOR UPDATE");$s->execute([$driver]);if($s->fetch())continue;
             }
-            $sql="UPDATE orders o JOIN villages v ON v.name=o.village JOIN service_area_drivers d ON d.village_id=v.id AND d.user_id=? JOIN users u ON u.id=d.user_id AND u.role='delivery' AND u.active=1";
+            $sql="UPDATE orders o JOIN villages v ON v.name=o.village JOIN service_area_drivers d ON d.village_id=v.id AND d.user_id=? JOIN users u ON u.id=d.user_id AND u.role IN ('delivery','rider') AND u.active=1";
             if(!$manualDriver)$sql.=" JOIN service_area_meta m ON m.village_id=v.id AND m.delivery_on=1 JOIN service_area_dispatch a ON a.village_id=v.id AND a.enabled=1 JOIN driver_availability f ON f.user_id=u.id AND f.available_until>UTC_TIMESTAMP()";
             $sql.=" SET o.delivery_user=u.id,o.status='Assign',o.assigned_at=COALESCE(o.assigned_at,NOW()) WHERE o.id=?";
             if(!$manualDriver)$sql.=" AND v.live=1 AND o.status='Confirm' AND o.delivery_user IS NULL";
@@ -33,6 +33,6 @@ function dispatch_assign(PDO $pdo,$orderid,$manualDriver=0) {
 }
 function dispatch_queue(PDO $pdo) {
     // Retry a bounded queue on duty/confirmation/completion events; no cron needed.
-    $ids=$pdo->query("SELECT o.id FROM orders o JOIN villages v ON v.name=o.village JOIN service_area_dispatch a ON a.village_id=v.id AND a.enabled=1 JOIN service_area_meta m ON m.village_id=v.id AND m.delivery_on=1 WHERE ".quote_guard('o')." AND v.live=1 AND o.status='Confirm' AND o.delivery_user IS NULL AND EXISTS (SELECT 1 FROM service_area_drivers d JOIN users u ON u.id=d.user_id AND u.role='delivery' AND u.active=1 JOIN driver_availability f ON f.user_id=u.id AND f.available_until>UTC_TIMESTAMP() WHERE d.village_id=v.id AND NOT EXISTS (SELECT 1 FROM orders busy WHERE busy.delivery_user=u.id AND busy.status IN ('Naya','Confirm','Assign','Pickup'))) ORDER BY o.id LIMIT 20")->fetchAll(PDO::FETCH_COLUMN);
+    $ids=$pdo->query("SELECT o.id FROM orders o JOIN villages v ON v.name=o.village JOIN service_area_dispatch a ON a.village_id=v.id AND a.enabled=1 JOIN service_area_meta m ON m.village_id=v.id AND m.delivery_on=1 WHERE ".quote_guard('o')." AND v.live=1 AND o.status='Confirm' AND o.delivery_user IS NULL AND EXISTS (SELECT 1 FROM service_area_drivers d JOIN users u ON u.id=d.user_id AND u.role IN ('delivery','rider') AND u.active=1 JOIN driver_availability f ON f.user_id=u.id AND f.available_until>UTC_TIMESTAMP() WHERE d.village_id=v.id AND NOT EXISTS (SELECT 1 FROM orders busy WHERE busy.delivery_user=u.id AND busy.status IN ('Naya','Confirm','Assign','Pickup'))) ORDER BY o.id LIMIT 20")->fetchAll(PDO::FETCH_COLUMN);
     foreach($ids as $id)dispatch_assign($pdo,(int)$id);
 }
