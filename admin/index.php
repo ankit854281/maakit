@@ -15,6 +15,7 @@ include __DIR__ . '/../inc/panel.php';
 ?>
 <section><div class="wrap">
   <h2>सारे ऑर्डर</h2>
+  <?php if ($u['role'] === 'admin'): /* update.php admin login se bhi khulta hai — chaabi ki zarurat nahi */ ?><p><a class="btn btn-gold" href="/update.php"><?= t('Update website (new code from GitHub)','वेबसाइट अपडेट कीजिए (GitHub से नया कोड)') ?></a></p><?php endif; ?>
   <p><a class="btn btn-line" href="/admin/company-delivery.php"><?= t('Company delivery approval','कंपनी delivery approval') ?></a></p>
   <form method="get" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
     <input type="date" name="day" value="<?= h($day) ?>" style="max-width:190px">

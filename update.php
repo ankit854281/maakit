@@ -57,10 +57,46 @@ $ROOT   = __DIR__;
 $BACKUP = dirname(__DIR__) . '/maakit-backups';   // web se bahar — koi dekh nahi sakta
 $STATE  = $BACKUP . '/state.json';
 
+// ---------- doosra darwaza: maalik (admin) ka login ----------
+// Chaabi dhoondhna mushkil tha, isliye ab ek aur raasta: jo maakit.in
+// par ADMIN login kiye hue hai, uske liye bhi ye panna khulta hai.
+// Har baar database se pakka karte hain ki wo abhi bhi active admin
+// hai. "Haan, lagao" (POST) par csrf bhi milate hain — taaki koi
+// anjaan link admin ke phone se update na chala de. inc/fn.php jaan-
+// boojh kar NAHI lagaya: site toot bhi jaye to updater chalna chahiye.
+function mk_admin_csrf() {
+    if (!defined('DB_HOST')) return null;
+    try {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            ini_set('session.use_strict_mode', '1');
+            $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+            session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax', 'secure' => $https]);
+            session_start();
+        }
+        $id = (int)($_SESSION['user']['id'] ?? 0);
+        if ($id <= 0 || ($_SESSION['user']['role'] ?? '') !== 'admin') return null;
+        $db = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4', DB_USER, DB_PASS,
+                      [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $st = $db->prepare("SELECT 1 FROM users WHERE id=? AND role='admin' AND active=1");
+        $st->execute([$id]);
+        if (!$st->fetchColumn()) return null;
+        if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
+        return (string)$_SESSION['csrf'];
+    } catch (Throwable $e) { return null; }
+}
+$admin_csrf = null;
+if (!isset($_GET['key']) && !isset($_POST['key'])) {
+    $admin_csrf = mk_admin_csrf();
+    if ($admin_csrf !== null && $_SERVER['REQUEST_METHOD'] === 'POST'
+        && !hash_equals($admin_csrf, (string)($_POST['csrf'] ?? ''))) {
+        $admin_csrf = null;   // purana/naqli form — chalne mat do
+    }
+}
+
 // ---------- chaabi ki jaanch ----------
 $chaabi = defined('UPDATE_KEY') ? (string)UPDATE_KEY : '';
 
-if ($chaabi === '' || strlen($chaabi) < 12) {
+if ($admin_csrf === null && ($chaabi === '' || strlen($chaabi) < 12)) {
     // Chaabi daali hi nahi — saaf-saaf bata dijiye ki kya karna hai
     http_response_code(503);
     exit('<!doctype html><meta charset="utf-8">'
@@ -70,14 +106,15 @@ if ($chaabi === '' || strlen($chaabi) < 12) {
        . '<p>यह updater चलने के लिए <b>config.php</b> में एक लाइन चाहिए:</p>'
        . '<pre style="background:#F4EDE0;padding:12px;border-radius:10px;overflow:auto">'
        . "define('UPDATE_KEY', 'यहाँ-एक-लंबी-अनजान-लाइन');</pre>"
-       . '<p>cPanel → File Manager → <b>public_html</b> → config.php पर दायाँ क्लिक → '
+       . '<p><b>सबसे आसान:</b> पहले <a href="/login.php?as=team" style="color:#7A1F1F">maakit.in पर admin login</a> कीजिए, फिर यही पन्ना दोबारा खोलिए।</p>'
+       . '<p>या cPanel → File Manager → <b>public_html</b> → config.php पर दायाँ क्लिक → '
        . '<b>Edit</b> → सबसे नीचे यह लाइन जोड़कर <b>Save</b>।</p>'
        . '<p style="color:#6C5B4D;font-size:14px">चाबी कोई भी लंबी अनजान लाइन हो सकती है। '
        . 'किसी को मत दीजिए — इससे वेबसाइट बदली जा सकती है।</p></div>');
 }
 
 $diya = (string)($_GET['key'] ?? $_POST['key'] ?? '');
-if (!hash_equals($chaabi, $diya)) {
+if ($admin_csrf === null && ($chaabi === '' || !hash_equals($chaabi, $diya))) {
     usleep(400000);                          // andaaza lagane walon ko thaka do
     http_response_code(404);
     exit('<!doctype html><meta charset="utf-8"><p style="font-family:sans-serif;padding:24px">Not found.</p>');
@@ -323,7 +360,11 @@ a{color:#7A1F1F}
       <code>config.php</code> और <code>uploads/</code> को हाथ नहीं लगाया जाएगा।
     </p>
     <form method="post" style="margin-top:16px">
+      <?php if ($admin_csrf !== null): ?>
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars($admin_csrf) ?>">
+      <?php else: ?>
       <input type="hidden" name="key" value="<?= htmlspecialchars($diya) ?>">
+      <?php endif; ?>
       <button class="big" type="submit">हाँ, अभी लगा दीजिए</button>
     </form>
     <p class="help">कुछ भी गड़बड़ हो तो backup <code>maakit-backups</code> फ़ोल्डर में पड़ा है —
