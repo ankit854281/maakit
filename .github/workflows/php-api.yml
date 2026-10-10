@@ -38,10 +38,15 @@ jobs:
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/schema.sql
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/025-session-dispatch.sql
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < sql/027-sarathi-live.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < sql/028-sarathi-companies.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < sql/029-order-delivery-proof.sql
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/schema.sql
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < database/025-session-dispatch.sql
           mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < sql/027-sarathi-live.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < sql/028-sarathi-companies.sql
+          mysql -h 127.0.0.1 -uroot -papi_test maakit_api_test < sql/029-order-delivery-proof.sql
       - name: JWT, IDOR, trusted prices, rollback, real concurrent stock
         run: |
-          php tests/php-api/sarathi.php
+          php tests/php-api/company.php
+
 

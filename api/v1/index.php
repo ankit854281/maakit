@@ -22,9 +22,10 @@ try {
     $auth=authenticate($db,$_SERVER['HTTP_AUTHORIZATION']??'',$material['keys'],$material['issuer'],$material['audience']);$status=200;
     if ($method==='POST') {
         if (strtolower(trim(explode(';',$_SERVER['CONTENT_TYPE']??'')[0]))!=='application/json') throw new ApiError(415,'JSON_REQUIRED','Send JSON request data.');
-        if ((int)($_SERVER['CONTENT_LENGTH']??0)>16384) throw new ApiError(413,'REQUEST_TOO_LARGE','Reduce request size.');
-        $stream=fopen('php://input','rb');$raw=stream_get_contents($stream,16385);fclose($stream);
-        if (strlen($raw)>16384) throw new ApiError(413,'REQUEST_TOO_LARGE','Reduce request size.');
+        $limit=$action==='rider_progress'?750000:16384;
+        if ((int)($_SERVER['CONTENT_LENGTH']??0)>$limit) throw new ApiError(413,'REQUEST_TOO_LARGE','Reduce request size.');
+        $stream=fopen('php://input','rb');$raw=stream_get_contents($stream,$limit+1);fclose($stream);
+        if (strlen($raw)>$limit) throw new ApiError(413,'REQUEST_TOO_LARGE','Reduce request size.');
         try { $body=json_decode($raw,true,16,JSON_THROW_ON_ERROR); } catch (JsonException $e) { throw new ApiError(400,'INVALID_JSON','Check request JSON.'); }
         if (!is_array($body)||!str_starts_with(ltrim($raw),'{')) throw new ApiError(400,'INVALID_JSON','Send a JSON object.');
         switch ($action) {
@@ -50,3 +51,4 @@ try {
     http_response_code($status);echo json_data(['data'=>$result,'request_id'=>$requestId]);
 } catch (ApiError $e) { http_response_code($e->status);echo json_data(['error'=>['code'=>$e->apiCode,'message'=>$e->getMessage()],'request_id'=>$requestId]); }
 catch (Throwable $e) { error_log('Maakit API unavailable request='.$requestId.' class='.get_class($e));http_response_code(503);echo json_data(['error'=>['code'=>'TEMPORARILY_UNAVAILABLE','message'=>'Please try again shortly.'],'request_id'=>$requestId]); }
+

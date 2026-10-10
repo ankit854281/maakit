@@ -4,6 +4,7 @@ namespace Maakit\Api;
 use PDO;
 use Throwable;
 require_once __DIR__.'/dispatch.php';
+require_once __DIR__.'/companyDelivery.php';
 function sarathi_rider(PDO $db,array $auth): array {
     require_roles($auth,['RIDER']);
     $r=query($db,"SELECT id FROM mk_riders WHERE user_id=? AND active=1 AND kyc_status='VERIFIED'",[$auth['user_id']])->fetch();
@@ -18,6 +19,7 @@ function sarathi_dashboard(PDO $db,array $auth): array {
     $r=sarathi_rider($db,$auth);$result=dispatch_view($db,$auth);
     foreach ($result['assigned'] as &$item) {
         $o=sarathi_assigned($db,$auth,$item['order_id']);
+        $item['otp_required']=(bool)query($db,'SELECT order_id FROM mk_order_safety WHERE order_id=?',[$o['id']])->fetch();
         $item['drop']=json_decode($o['address_snapshot'],true,16,JSON_THROW_ON_ERROR);
         $item['delivery_fee_minor']=(string)$o['delivery_minor'];
         $item['payment_method']=$o['payment_method'];
@@ -27,6 +29,9 @@ function sarathi_dashboard(PDO $db,array $auth): array {
     }unset($item);
     $result['location']=query($db,"SELECT latitude,longitude,accuracy_m,updated_at,TIMESTAMPDIFF(SECOND,updated_at,UTC_TIMESTAMP(6)) AS age_seconds FROM mk_partner_locations WHERE rider_id=?",[$r['id']])->fetch()?:null;
     $result['payment_gateway_configured']=sarathi_payment_configured();
+    $result['company_deliveries']=company_partner($db,$auth);
+    $result['history']=query($db,"SELECT b.id,b.reference AS label,c.name AS source,b.delivered_at FROM mk_company_deliveries b JOIN mk_delivery_companies c ON c.id=b.company_id WHERE b.rider_id=? AND b.state='DELIVERED' ORDER BY b.delivered_at DESC LIMIT 20",[$r['id']])->fetchAll();
+    $result['maakit_history']=query($db,"SELECT o.id,s.name AS source,o.delivered_at FROM mk_orders o JOIN mk_shipments sh ON sh.order_id=o.id JOIN mk_stores s ON s.id=o.store_id WHERE sh.rider_id=? AND o.status='DELIVERED' ORDER BY o.delivered_at DESC LIMIT 20",[$r['id']])->fetchAll();
     $result['supported_services']=['delivery']; // RIDER is the historical DELIVERY role, not passenger-ride approval.
     return $result;
 }
@@ -41,6 +46,7 @@ function sarathi_location(PDO $db,array $auth,array $body): array {
     $db->beginTransaction();try {
         $auth=live_identity($db,$auth['claims'],true);$r=sarathi_rider($db,$auth);
         if (!query($db,"SELECT id FROM mk_rider_duty WHERE rider_id=? AND available_until>UTC_TIMESTAMP(6)",[$r['id']])->fetch()
+            && !query($db,"SELECT id FROM mk_company_deliveries WHERE rider_id=? AND state IN ('ASSIGNED','PICKED_UP')",[$r['id']])->fetch()
             && !query($db,"SELECT sh.id FROM mk_shipments sh JOIN mk_orders o ON o.id=sh.order_id WHERE sh.rider_id=? AND o.status IN ('READY','DISPATCHED')",[$r['id']])->fetch()) throw new ApiError(409,'NOT_ON_DUTY','Go online or open your assigned delivery first.');
         $old=query($db,"SELECT updated_at>DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 5 SECOND) AS recent FROM mk_partner_locations WHERE rider_id=? FOR UPDATE",[$r['id']])->fetch();
         if ($old && $old['recent']) {$db->commit();return ['saved'=>false,'retry_after_seconds'=>5];}

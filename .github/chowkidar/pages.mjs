@@ -96,6 +96,10 @@ export const PAGES = [
     nahi: ['मेरा हिसाब'], nabz: true },
   { path: '/login.php?as=team', naam: 'टीम का लॉगिन',
     chahiye: ['यूज़रनेम', 'पासवर्ड'], nahi: ['मेरा हिसाब'] },
+  { path: '/public/company-delivery.php', naam: 'कंपनी delivery login', chahiye: ['Maakit'] },
+  { path: '/admin/company-delivery.php', naam: 'कंपनी approval login', chahiye: ['Maakit'] },
+  { path: '/public/company-track.php', naam: 'कंपनी tracking', chahiye: ['Maakit'] },
 ];
+
 
 

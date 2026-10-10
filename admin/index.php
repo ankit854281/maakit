@@ -15,6 +15,7 @@ include __DIR__ . '/../inc/panel.php';
 ?>
 <section><div class="wrap">
   <h2>सारे ऑर्डर</h2>
+  <p><a class="btn btn-line" href="/admin/company-delivery.php"><?= t('Company delivery approval','कंपनी delivery approval') ?></a></p>
   <form method="get" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
     <input type="date" name="day" value="<?= h($day) ?>" style="max-width:190px">
     <input type="text" name="q" value="<?= h($q) ?>" placeholder="नाम, नंबर, गाँव या ऑर्डर नंबर" style="max-width:280px">
@@ -38,3 +39,4 @@ include __DIR__ . '/../inc/panel.php';
   </table></div>
 </div></section>
 <?php include __DIR__ . '/../inc/foot.php'; ?>
+

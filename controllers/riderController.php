@@ -4,6 +4,7 @@ namespace Maakit\Api;
 use PDO;
 use Throwable;
 require_once __DIR__.'/orderLifecycle.php';
+require_once __DIR__.'/deliverySafety.php';
 /** Existing login.php/public/auth.php verify hashed credentials and exchange the PHP session. */
 function rider_progress(PDO $db,array $auth,array $body): array {
     $id=valid_uuid($body['order_id']??null);$operation=$body['operation']??null;
@@ -21,6 +22,7 @@ function rider_progress(PDO $db,array $auth,array $body): array {
         if ($order['status']===$target || ($operation==='pickup' && $order['status']==='DELIVERED')) { $db->commit();return ['status'=>$order['status'],'replayed'=>true]; }
         if (!$job||$job['state']!=='ASSIGNED'||$order['status']!==($operation==='pickup'?'READY':'DISPATCHED')) throw new ApiError(409,'INVALID_TRANSITION','Confirm pickup before completing the delivery. Refresh the order.');
         if (!query($db,"SELECT id FROM mk_rider_slots WHERE order_id=? AND rider_id=? AND state='ASSIGNED' FOR UPDATE",[$id,$rider['id']])->fetch()) throw new ApiError(409,'ASSIGNMENT_CHANGED','Your assignment changed. Refresh the list.');
+        order_safety_check($db,$id,$operation,$body);
         if ($operation==='pickup') {
             // Seller-owned tracked stock leaves the shop once, at pickup. No platform payment collection.
             $held=query($db,"SELECT r.* FROM mk_inventory_reservations r JOIN mk_order_items i ON i.id=r.order_item_id WHERE i.order_id=? ORDER BY i.variant_id FOR UPDATE",[$id])->fetchAll();
@@ -43,3 +45,4 @@ function rider_progress(PDO $db,array $auth,array $body): array {
         dispatch_event($db,$order,'ORDER_'.$target);$db->commit();return ['status'=>$target,'replayed'=>false];
     } catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack();throw $e; }
 }
+

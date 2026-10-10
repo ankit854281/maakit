@@ -108,11 +108,11 @@ function dispatch_plan(PDO $db,string $jobId,string $orderId): ?array {
             $plan=provider_plan($db,$order,$job,$request,'LOOKUP');$db->commit();return $plan;
         }
         while ($level<=2) {
-            $scope=$level===1?'r.vendor_id=?':'r.vendor_id IS NULL';$params=[$order['store_id'],$order['fulfillment_type']];if ($level===1) $params[]=$order['vendor_id'];
+            $scope=$level===1?'r.vendor_id=?':"r.vendor_id IS NULL AND NOT EXISTS(SELECT 1 FROM mk_company_riders cr WHERE cr.rider_id=r.id AND cr.active=1)";$params=[$order['store_id'],$order['fulfillment_type']];if ($level===1) $params[]=$order['vendor_id'];
             $ids=query($db,"SELECT r.id FROM mk_riders r JOIN mk_users u ON u.id=r.user_id JOIN mk_rider_duty d ON d.rider_id=r.id JOIN mk_rider_zones z ON z.rider_id=r.id AND z.store_id=? AND z.fulfillment_type=? AND z.active=1 WHERE $scope AND r.active=1 AND r.kyc_status='VERIFIED' AND u.status='ACTIVE' AND d.available_until>UTC_TIMESTAMP(6) ORDER BY r.id LIMIT 100",$params)->fetchAll(PDO::FETCH_COLUMN);
             foreach ($ids as $riderId) {
                 $rider=query($db,"SELECT r.* FROM mk_riders r JOIN mk_users u ON u.id=r.user_id JOIN mk_rider_duty d ON d.rider_id=r.id WHERE r.id=? AND r.active=1 AND r.kyc_status='VERIFIED' AND u.status='ACTIVE' AND d.available_until>UTC_TIMESTAMP(6) FOR UPDATE",[$riderId])->fetch();
-                if (!$rider || query($db,'SELECT id FROM mk_rider_slots WHERE rider_id=? FOR UPDATE',[$riderId])->fetch()) continue;
+                if (!$rider || query($db,'SELECT id FROM mk_rider_slots WHERE rider_id=? FOR UPDATE',[$riderId])->fetch() || query($db,"SELECT id FROM mk_company_deliveries WHERE rider_id=? AND state IN ('ASSIGNED','PICKED_UP') OR offered_rider_id=? AND state='OFFERED' AND offer_expires_at>UTC_TIMESTAMP(6) LIMIT 1 FOR UPDATE",[$riderId,$riderId])->fetch()) continue;
                 $attempt=uuid4();
                 query($db,"INSERT INTO mk_dispatch_attempts(id,order_id,rider_id,level,status,expires_at) VALUES(?,?,?,?,'OFFERED',DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 60 SECOND))",[$attempt,$orderId,$riderId,$level]);
                 query($db,"INSERT INTO mk_rider_slots(id,rider_id,order_id,state) VALUES(?,?,?,'OFFERED')",[uuid4(),$riderId,$orderId]);
@@ -191,6 +191,7 @@ function dispatch_accept(PDO $db,array $auth,string $attemptId): array {
         $attempt=query($db,"SELECT *,expires_at>UTC_TIMESTAMP(6) AS fresh FROM mk_dispatch_attempts WHERE id=? FOR UPDATE",[$attemptId])->fetch();
         $rider=query($db,"SELECT * FROM mk_riders WHERE id=? AND user_id=? AND active=1 AND kyc_status='VERIFIED' FOR UPDATE",[$attempt['rider_id'],$auth['user_id']])->fetch();
         if (!$rider) throw new ApiError(404,'NOT_FOUND','Offer not found.');
+        if(query($db,"SELECT id FROM mk_company_deliveries WHERE rider_id=? AND state IN ('ASSIGNED','PICKED_UP') OR offered_rider_id=? AND state='OFFERED' AND offer_expires_at>UTC_TIMESTAMP(6) LIMIT 1 FOR UPDATE",[$rider['id'],$rider['id']])->fetch())throw new ApiError(409,'ASSIGNMENT_CHANGED','Finish your current delivery first.');
         if ($attempt['status']==='ACCEPTED' && $job['state']==='ASSIGNED') { $db->commit();return ['accepted'=>true,'order_id'=>$order['id']]; }
         if (!query($db,"SELECT d.id FROM mk_rider_duty d JOIN mk_rider_zones z ON z.rider_id=d.rider_id WHERE d.rider_id=? AND d.available_until>UTC_TIMESTAMP(6) AND z.store_id=? AND z.fulfillment_type=? AND z.active=1",[$rider['id'],$order['store_id'],$order['fulfillment_type']])->fetch()) throw new ApiError(409,'OFFER_EXPIRED','Your availability or service area changed.');
         if (!$attempt['fresh']||$attempt['status']!=='OFFERED'||$job['state']!=='OFFERED'||(int)$job['level']!==(int)$attempt['level']||$order['status']!=='READY') throw new ApiError(409,'OFFER_EXPIRED','This offer expired. Check your latest offers.');
@@ -249,3 +250,4 @@ function dispatch_parcel(PDO $db,array $auth,array $body): array {
         if ($job) query($db,"UPDATE mk_dispatch_jobs SET state='READY',reason_code=NULL,next_action_at=UTC_TIMESTAMP(6) WHERE id=?",[$job['id']]);$db->commit();return ['saved'=>true];
     } catch (Throwable $e) { if ($db->inTransaction()) $db->rollBack();throw $e; }
 }
+
