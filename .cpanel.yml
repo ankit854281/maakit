@@ -8,6 +8,7 @@ deployment:
     - /bin/cp -R  ./delivery  $DEPLOYPATH
     - /bin/cp -R  ./inc       $DEPLOYPATH
     - /bin/cp -R  ./config ./middleware ./controllers ./api ./public ./bin $DEPLOYPATH
+    - /bin/cp -R  ./sarathi   $DEPLOYPATH
     - /bin/cp     ./*.php     $DEPLOYPATH
     - /bin/cp -R  ./sql       $DEPLOYPATH
     - /bin/cp     ./*.json    $DEPLOYPATH 2>/dev/null || true

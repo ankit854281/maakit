@@ -23,7 +23,8 @@ if ($role === 'admin') {
              '/admin/items.php' => 'सामान', '/admin/photos.php' => 'फ़ोटो', '/admin/daam.php' => 'दाम/ब्रांड', '/admin/books.php' => 'किताबें',
              '/admin/transport.php' => 'गाड़ियाँ', '/admin/banners.php' => 'ऑफ़र', '/admin/areas.php' => 'नए इलाके', '/admin/coverage.php' => 'सेवा क्षेत्र', '/admin/support.php' => 'सहायता',
              '/admin/summary.php' => 'हिसाब', '/admin/businesses.php' => 'दुकान/कारीगर',
-             '/admin/feedback.php' => 'राय', '/admin/rates.php' => 'रेट', '/admin/settings.php' => 'समय/छुट्टी', '/admin/users.php' => 'टीम'];
+             '/admin/feedback.php' => 'राय', '/admin/rates.php' => 'रेट', '/admin/sarathi.php' => 'सारथी',
+             '/admin/settings.php' => 'समय/छुट्टी', '/admin/users.php' => 'टीम'];
 } elseif ($role === 'designer') {
     // Designer ka kaam sirf dikhne wali cheezein — offer, photo, home page.
     // Order, hisaab, rate, team isko nahi dikhte.

@@ -51,7 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
                 redirect('/shop.php');
             }
             // New approved partner accounts keep the existing mobile + code door.
-            $st=$pdo->prepare("SELECT * FROM users WHERE username=? AND role='vendor' AND active=1");
+            //
+            // Pehle yahan sirf role='vendor' tha. Rider ka khata
+            // role='rider' banta hai (partner-apply.php), isliye manzoori
+            // ke baad bhi rider andar nahi aa pata tha — "number ya code
+            // sahi nahi hai" aata tha, jabki dono sahi hote the.
+            // Rider ke liye apna darwaza /sarathi/ hai, par ye bhi chale.
+            $st=$pdo->prepare("SELECT * FROM users WHERE username=? AND role IN ('vendor','rider') AND active=1");
             $st->execute([$mob]);$partner=$st->fetch();
             if ($partner && password_verify($code,$partner['password'])) {
                 auth_attempt_ok($pdo,'dukan',$mob);

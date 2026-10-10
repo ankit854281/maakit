@@ -53,6 +53,27 @@ $labels = ['naya' => ['नया', 'tag-gold'], 'manzoor' => ['मंज़ू�
       <?php endif; ?>
 
       <?php
+        // Saaman uthane ka OTP.
+        //
+        // Maakit ka डिलीवरी वाला jab saaman lene aaye, use ye char ank
+        // bataiye. Uske panel me ye daalne se hi "uthaya" darj hoga.
+        // Isse aapke paas sabooti rehti hai ki saaman kisko diya —
+        // aur "mera saaman gaya kahan" ka jhagda khatm ho jata hai.
+        //
+        // Ye OTP tabhi dikhta hai jab order kisi delivery wale ke naam
+        // par laga ho aur usne abhi uthaya na ho.
+        $otp_dikhe = !empty($o['pick_otp']) && empty($o['picked_at'])
+                     && !in_array($o['status'], ['Delivered','Cancel'], true);
+      ?>
+      <?php if ($otp_dikhe): ?>
+        <div style="margin-top:10px;background:var(--cream,#FBF4E6);border-left:4px solid var(--gold,#E0A526);border-radius:10px;padding:10px 12px">
+          <div class="meta" style="margin:0">डिलीवरी वाले को यही बताइए</div>
+          <div style="font-size:26px;font-weight:800;letter-spacing:6px;color:var(--brand,#7A1F1F)"><?= h($o['pick_otp']) ?></div>
+          <div class="meta" style="margin:2px 0 0">इसके बिना वो सामान उठा हुआ दर्ज नहीं कर पाएगा।</div>
+        </div>
+      <?php endif; ?>
+
+      <?php
         // UPI — paisa seedha dukaan ko. Maakit bich me nahi aata.
         $upi = dukan_upi_link($b, (int)$o['goods_amount'], $o['order_no']);
       ?>
