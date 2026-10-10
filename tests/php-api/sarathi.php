@@ -3,7 +3,7 @@ declare(strict_types=1);
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 require __DIR__.'/task4.php';
 require_once __DIR__.'/../../controllers/sarathi.php';
-use function Maakit\Api\{sarathi_location,sarathi_contacts,sarathi_tracking,sarathi_dashboard,sarathi_assigned,sarathi_fee_create,sarathi_fee_verify,sarathi_capture};
+use function Maakit\Api\{query,sarathi_location,sarathi_contacts,sarathi_tracking,sarathi_dashboard,sarathi_assigned,sarathi_fee_create,sarathi_fee_verify,sarathi_capture};
 query($db,"UPDATE mk_dispatch_jobs SET state='MANUAL_REQUIRED' WHERE state NOT IN ('ASSIGNED','COMPLETED','CANCELLED')");
 $f=ready_order($db);$r=rider($db,$f,true);$other=person($db);
 rejected(fn()=>sarathi_location($db,$f['a'],['consent'=>true,'latitude'=>25,'longitude'=>82,'accuracy_m'=>10]),'FORBIDDEN');
