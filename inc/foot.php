@@ -129,5 +129,33 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });
 }
 </script>
+<?php
+// Ilaka nahi chuna, par phone pehle se lokation ki ijaazat de chuka hai
+// (pichhli baar "Use my location" dabaya tha) — to chupchaap GPS se
+// ilaka chun lo. Bina ijaazat ke kabhi popup nahi khulta.
+if (empty($no_tabbar) && empty($adm_page) && isset($pdo) && function_exists('coverage_selected') && !coverage_selected($pdo) && empty($_SESSION['auto_area_tried'])):
+  $_SESSION['auto_area_tried'] = 1;
+  $_aa = array_map(fn($a) => ['name' => $a['name'], 'name_en' => $a['name_en'] ?? '', 'city' => $a['city'] ?? '', 'pincode' => $a['pincode'] ?? '', 'del' => coverage_enabled($a) ? 1 : 0], coverage_areas($pdo));
+?>
+<script src="/assets/geo-area.js?v=<?= (int)@filemtime(__DIR__ . '/../assets/geo-area.js') ?>" defer></script>
+<script>
+window.addEventListener('load', function () {
+  if (!window.MkGeo) return;
+  MkGeo.allowed().then(function (ok) {
+    if (!ok) return;
+    MkGeo.detect(<?= json_encode($_aa, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>).then(function (r) {
+      if (!r.match || !r.match.del) return;
+      var fd = new FormData(); fd.append('csrf', <?= json_encode(csrf()) ?>); fd.append('area', r.match.name); fd.append('ajax', '1'); fd.append('next', location.pathname);
+      fetch('/location.php', { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (x) { return x.json(); }).then(function (j) {
+        if (!j.ok) return;
+        var b = document.querySelector('.mk-loc b'); if (b) b.firstChild.nodeValue = j.label + ' ';
+        // ghar ke panne par us ilake ki dukaanein dikhane ke liye ek baar taaza
+        if (location.pathname === '/' || location.pathname === '/bazaar.php') location.reload();
+      });
+    }).catch(function () {});
+  });
+});
+</script>
+<?php endif; ?>
 </body>
 </html>

@@ -143,7 +143,8 @@ if ($_c && empty($no_tabbar) && isset($pdo)) {
       <span class="mk-word">Maakit<small><?= !empty($adm_page) ? t('Admin', 'एडमिन') : (!empty($shop_panel) ? t('Partner', 'दुकानदार') : t('Maa hai na', 'माँ है ना')) ?></small></span>
     </a>
     <?php if (empty($no_tabbar)): ?>
-    <a class="mk-loc" href="/location.php">
+    <?php $_here = strtok((string)($_SERVER['REQUEST_URI'] ?? '/'), '#'); ?>
+    <a class="mk-loc" href="/location.php<?= ($_here !== '/' && strpos($_here, '/location.php') !== 0 && preg_match('#^/[A-Za-z0-9._/?=&%\-]*$#', $_here)) ? '?next=' . h(urlencode($_here)) : '' ?>">
       <small><?= t('Delivering to', 'डिलीवरी') ?></small>
       <b><?= $_area ? h(coverage_label($_area)) : t('Select area', 'इलाका चुनिए') ?> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></b>
     </a>

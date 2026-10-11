@@ -88,7 +88,7 @@ include __DIR__ . '/inc/head.php';
   <form method="post" class="box">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
     <div class="field"><label for="village"><?= t('Locality + city (max 60 characters)', 'इलाका + शहर (अधिकतम 60 अक्षर)') ?></label>
-      <input type="text" id="village" name="village" maxlength="60" value="<?= h(post('village')) ?>" required
+      <input type="text" id="village" name="village" maxlength="60" value="<?= h(post('village') ?: mb_substr((string)get('village'), 0, 60)) ?>" required
              placeholder="<?= h(t('e.g. Rampur', 'जैसे: रामपुर')) ?>" list="vl">
       <datalist id="vl"><?php foreach ($live as $v): ?><option value="<?= h($v) ?>"><?php endforeach; ?></datalist>
     </div>
