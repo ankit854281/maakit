@@ -13,11 +13,9 @@ const assert = require('node:assert/strict');
       await page.goto('http://127.0.0.1:8099/?lang=hi');
       await page.locator('.discovery-product').first().waitFor();
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Home must fit '+width+'px');
-      assert.equal(await page.locator('[data-rail-toggle]').getAttribute('aria-pressed'),'false','Reduced motion disables automatic movement');
-      const rail=page.locator('#shop-category-rail');
-      await rail.evaluate(el => {el.scrollLeft=200;});
-      if(width<800) assert(await rail.evaluate(el=>el.scrollLeft)>0,'Category rail can be swiped');
-      await rail.evaluate(el=>{el.scrollLeft=0;});
+      assert(await page.locator('#shop-category-rail a').count()>=8,'Home shows the category grid');
+      assert(await page.locator('.product-discovery-rail .discovery-product').count()>=6,'Home shows compact product cards');
+      assert(await page.locator('#floatSearch input[name="q"]').count()===1,'Home has the floating search');
       await page.screenshot({path:'/tmp/catalogue-home-'+width+'.png',fullPage:width===390});
     }
     await page.setViewportSize({width:390,height:844});

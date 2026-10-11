@@ -284,3 +284,6 @@ body{font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,-apple-sys
 .mk-float-search.is-small .mk-fs-go{opacity:0;width:0;padding:0;pointer-events:none}
 @media(min-width:900px){.mk-float-search{bottom:26px}.mk-float-search.is-small{width:340px}}
 @media(prefers-reduced-motion:reduce){.mk-float-search,.mk-float-search *{transition:none}}
+.mk-segs{display:flex;gap:8px;margin:0 0 12px;overflow-x:auto;scrollbar-width:none}
+.mk-segs a{flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13px;font-weight:700;text-decoration:none}
+.mk-segs a[aria-current=page]{background:var(--ink);border-color:var(--ink);color:#fff}

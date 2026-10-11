@@ -127,7 +127,7 @@ $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_
       <small><?= t('Delivering to', 'डिलीवरी') ?></small>
       <b><?= $_area ? h(coverage_label($_area)) : t('Select area', 'इलाका चुनिए') ?> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></b>
     </a>
-    <?php if (!$_home): ?>
+    <?php if (!$_home && empty($hub_design)): ?>
     <form class="mk-search" action="/search.php" method="get" role="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" name="q" placeholder="<?= h(t('Search atta, medicine, Bolero…', 'खोजिए: आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">

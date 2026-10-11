@@ -92,6 +92,11 @@ include __DIR__ . '/inc/head.php';
   </section>
   <?php endif; ?>
 <div class="mk-wrap">
+    <nav class="mk-segs" aria-label="<?= h(t('Choose how to use Maakit','Maakit में अपना काम चुनिए')) ?>">
+      <?php foreach (['LOCAL_SHOPPING'=>['Shopping','शॉपिंग'],'HOME_SERVICES'=>['Home services','घरेलू सेवाएँ'],'B2B'=>['Wholesale','थोक']] as $key=>$label): ?>
+        <a href="/public/index.php?segment=<?= h($key) ?>" data-segment="<?= h($key) ?>"<?= $key==='LOCAL_SHOPPING' ? ' aria-current="page"' : '' ?>><?= h(t($label[0],$label[1])) ?></a>
+      <?php endforeach; ?>
+    </nav>
 
   <ul class="mk-trust" aria-label="<?= h(t('Why Maakit', 'Maakit क्यों')) ?>">
     <li><?= svc_icon('shops', 18) ?><?= t('Shop price, no markup', 'दुकान का ही दाम') ?></li>
@@ -101,7 +106,7 @@ include __DIR__ . '/inc/head.php';
 
   <section class="mk-sec">
     <div class="mk-sec-head"><h2><?= t('Shop by category', 'श्रेणी चुनिए') ?></h2><a href="/bazaar.php"><?= t('See all', 'सब देखिए') ?></a></div>
-    <nav class="mk-cats" aria-label="<?= h(t('Categories', 'श्रेणियाँ')) ?>">
+    <nav class="mk-cats" id="shop-category-rail" aria-label="<?= h(t('Categories', 'श्रेणियाँ')) ?>">
       <?php foreach ([['Grocery / Kirana Store','grocery','Grocery','राशन'],['Sweet Shop','food','Sweets','मिठाई'],['Medical / Pharmacy','medicine','Medicines','दवाई'],['Clothing / Garments Shop','shops','Clothing','कपड़े'],['Mobile Store','mobile','Mobiles','मोबाइल'],['Hardware Shop','tools','Hardware','हार्डवेयर'],['Kitchenware / Utensils Shop','thali','Kitchen','रसोई'],['Paint Store','home','Paint','पेंट']] as [$kind,$icon,$en,$hi]): ?>
         <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><span class="mk-cat-ic"><?= svc_icon($icon,30) ?></span><span><?= h(t($en,$hi)) ?></span></a>
       <?php endforeach; ?>
@@ -111,7 +116,7 @@ include __DIR__ . '/inc/head.php';
   <?php foreach ($discovery as $kind=>$products): ?>
   <section class="mk-sec">
     <div class="mk-sec-head"><h2><?= h(catalog_label($kind)) ?></h2><a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= t('See all', 'सब देखिए') ?></a></div>
-    <div class="mk-rail">
+    <div class="mk-rail product-discovery-rail">
       <?php foreach ($products as $product):
         $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
         $offer=$offers[0] ?? null;
@@ -120,7 +125,7 @@ include __DIR__ . '/inc/head.php';
         $ref=$offer ? null : catalog_reference_price($product);
         $pname=t($product['name_en'],$product['name_hi'] ?: $product['name_en']);
         $unit=$offer['unit'] ?? ($ref['packs'][0]['unit'] ?? $product['unit_hint']); ?>
-        <a class="mk-pc" href="<?= h(catalog_url(['product'=>(int)$product['id']])) ?>">
+        <a class="mk-pc discovery-product" href="<?= h(catalog_url(['product'=>(int)$product['id']])) ?>">
           <span class="mk-pc-img"><?php if ($cover): ?><img src="/uploads/<?= h($cover) ?>" alt="" loading="lazy"><?php else: ?><?= catalog_product_icon($product,34) ?><?php endif; ?></span>
           <?php if ($offer): ?><span class="mk-tag ok"><?= t('In stock','उपलब्ध') ?></span>
           <?php elseif ($ref): ?><span class="mk-tag"><?= t('Market price','बाज़ार दाम') ?></span>

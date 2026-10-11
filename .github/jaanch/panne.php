@@ -24,11 +24,11 @@ $PANNE = [
     // Bina chune bhasha English rehti hai, isliye Hindi wale shabd
     // ?lang=hi par jaanchne chahiye.
     ['/?lang=hi', 'होम (हिन्दी)',
-        'chahiye' => ['Maakit', 'दुकानों का सामान', 'सामान चुनिए', 'अंतिम दाम पक्का कीजिए', 'दुकानदार'],
+        'chahiye' => ['Maakit', 'श्रेणी चुनिए', 'सब देखिए', 'लिस्ट भेजिए', 'दुकानदार'],
         'nahi'    => ['Fatal error', 'Warning:', 'Notice:', 'Undefined']],
 
     ['/?lang=en', 'होम (English)',
-        'chahiye' => ['Maakit', 'Your local shops', 'Start shopping', 'Approve final price', 'shopkeeper'],
+        'chahiye' => ['Maakit', 'Shop by category', 'See all', 'Send a list', 'Sell on Maakit'],
         'nahi'    => ['Fatal error', 'Undefined']],
 
     ['/order.php', 'सामान और ऑर्डर',
