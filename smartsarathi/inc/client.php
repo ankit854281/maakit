@@ -13,6 +13,11 @@
 //  milegi. Maakit is list me pehla naam hai, akela nahi.
 // ============================================================
 
+// Kaam aate hi usko kisi sarathi ko dena hota hai, aur wo kaam
+// kaam.php me hai. Dono jagah se load hone par bhi ek hi baar
+// aata hai.
+require_once __DIR__ . '/kaam.php';
+
 // ------------------------------------------------------------
 //  चाबी बनाना और पहचानना
 // ------------------------------------------------------------
@@ -131,6 +136,13 @@ function job_create(PDO $pdo, array $client, array $in) {
         }
         throw $e;
     }
+
+    // Kaam aate hi kisi hazir sarathi ko de dijiye. Na de paye to
+    // kuch nahi bigadta -- kaam 'new' par rukta hai aur maalik ke
+    // panne par sabse upar dikhta hai. Isliye ye kabhi job banne
+    // ko fail nahi karta.
+    try { job_auto_give($pdo, $id); }
+    catch (Throwable $e) { error_log('Sarathi auto-give: ' . $e->getMessage()); }
 
     $st = $pdo->prepare("SELECT * FROM jobs WHERE id=?");
     $st->execute([$id]);

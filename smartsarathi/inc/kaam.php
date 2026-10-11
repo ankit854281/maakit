@@ -103,6 +103,89 @@ function trip_add(PDO $pdo, $rid, $jid) {
 }
 
 // ------------------------------------------------------------
+//  काम किसको दिया जाए
+//
+//  Ye bich ki kadi pehle chhoot gayi thi. API se kaam aata tha
+//  aur 'new' par pada reh jata tha -- kisi sarathi ko dikhta hi
+//  nahi tha, kyunki sarathi ko sirf APNE kaam dikhte hain.
+//
+//  Ab do raaste hain:
+//    1. kaam aate hi khud chala jata hai (jo hazir hai, jiske
+//       paas sabse kam kaam hai)
+//    2. koi hazir na ho to maalik ke panne par ruka dikhta hai,
+//       aur wahan se haath se diya ja sakta hai
+// ------------------------------------------------------------
+/**
+ * Ek kaam ek sarathi ko de dijiye.
+ *
+ * Do log ek saath na de dein -- isliye shart queries me hi hai:
+ * badalta sirf tab hai jab kaam abhi tak 'new' ho. Doosre ko
+ * 0 rows milti hain aur wo saaf mana ho jata hai.
+ *
+ * Lautata hai [theek hua?, sandesh]
+ */
+function job_give(PDO $pdo, $jid, $rid) {
+    $st = $pdo->prepare("SELECT id, name FROM riders WHERE id=? AND active=1");
+    $st->execute([(int)$rid]);
+    if (!$r = $st->fetch()) return [false, 'ये सारथी नहीं मिला।'];
+
+    $st = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned'
+                          WHERE id=? AND status='new'");
+    $st->execute([(int)$rid, (int)$jid]);
+    if ($st->rowCount() !== 1) return [false, 'ये काम अब बाकी नहीं रहा — शायद किसी और को दे दिया गया।'];
+
+    return [true, $r['name'] . ' को दे दिया गया।'];
+}
+
+/**
+ * Kaam aate hi khud de dijiye -- us sarathi ko jo abhi hazir hai
+ * aur jiske paas sabse kam kaam hai.
+ *
+ * Koi hazir na ho to kuch mat kijiye. Kaam 'new' par ruka rehta
+ * hai aur maalik ke panne par upar dikhta hai. Jabardasti kisi
+ * band baithe sarathi ko dena uska matlab hi khatam kar deta.
+ *
+ * Lautata hai rider_id, ya null.
+ */
+function job_auto_give(PDO $pdo, $jid) {
+    $st = $pdo->query(
+        "SELECT r.id,
+                (SELECT COUNT(*) FROM jobs j
+                  WHERE j.rider_id = r.id AND j.status IN ('assigned','picked')) AS abhi
+           FROM riders r
+          WHERE r.active = 1 AND r.ready_until > NOW()
+       ORDER BY abhi ASC, r.id ASC
+          LIMIT 1");
+    $r = $st->fetch();
+    if (!$r) return null;
+
+    $up = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned' WHERE id=? AND status='new'");
+    $up->execute([(int)$r['id'], (int)$jid]);
+    return $up->rowCount() === 1 ? (int)$r['id'] : null;
+}
+
+/** जो काम अभी किसी को नहीं दिया गया */
+function jobs_waiting(PDO $pdo, $limit = 30) {
+    $st = $pdo->query(
+        "SELECT j.*, c.name AS client_name
+           FROM jobs j JOIN clients c ON c.id = j.client_id
+          WHERE j.status = 'new'
+       ORDER BY j.created_at ASC, j.id ASC
+          LIMIT " . (int)$limit);
+    return $st->fetchAll();
+}
+
+/** अभी कौन हाज़िर है (काम देने के लिए) */
+function riders_ready(PDO $pdo) {
+    return $pdo->query(
+        "SELECT r.id, r.name, r.ready_until > NOW() AS hazir,
+                (SELECT COUNT(*) FROM jobs j
+                  WHERE j.rider_id = r.id AND j.status IN ('assigned','picked')) AS abhi
+           FROM riders r WHERE r.active = 1
+       ORDER BY hazir DESC, abhi ASC, r.name")->fetchAll();
+}
+
+// ------------------------------------------------------------
 //  आज का काम
 // ------------------------------------------------------------
 function rider_jobs(PDO $pdo, $rid) {

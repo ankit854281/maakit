@@ -32,7 +32,7 @@ if (is_file($cfg)) {
        . '<div style="font-family:system-ui,sans-serif;max-width:430px;margin:60px auto;padding:0 18px;line-height:1.7">'
        . '<h2 style="color:#1E7A3C">तैयारी हो चुकी है ✓</h2>'
        . '<p>ये पन्ना अब बंद है — सुरक्षा के लिए।</p>'
-       . '<p><a href="/" style="color:#7A1F1F;font-weight:700">सारथी खोलिए →</a></p></div>');
+       . '<p><a href="./" style="color:#7A1F1F;font-weight:700">सारथी खोलिए →</a></p></div>');
 }
 
 $err = ''; $done = false; $tables = [];
@@ -151,7 +151,7 @@ function v($k, $d = '') { return htmlspecialchars((string)($_POST[$k] ?? $d), EN
     <div class="t"><?php foreach ($tables as $t): ?><span><?= htmlspecialchars($t, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div>
     <p style="margin:0">अब ये पन्ना अपने आप बंद हो गया है — दोबारा नहीं खुलेगा।</p>
   </div>
-  <a class="go" href="/admin/">मालिक का पन्ना खोलिए →</a>
+  <a class="go" href="./admin/">मालिक का पन्ना खोलिए →</a>
   <p class="n">वहाँ वही चाबी डालिए जो अभी आपने बनाई। फिर Maakit को ग्राहक
      के रूप में जोड़िए और अपना सारथी जोड़िए।</p>
 

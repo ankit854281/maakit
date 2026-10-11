@@ -41,7 +41,7 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
 <meta name="theme-color" content="#7A1F1F">
 <meta name="robots" content="noindex,nofollow">
 <title><?= h($title) ?> — सारथी</title>
-<link rel="stylesheet" href="/assets/app.css?v=<?= (int)@filemtime(__DIR__ . '/../assets/app.css') ?>">
+<link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/app.css') ?>">
 </head>
 <body>
 
@@ -64,15 +64,15 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
     <label class="sr-draw-x" for="sr-nav" aria-label="बंद कीजिए">&times;</label>
   </div>
   <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
-    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h($url) ?>">
+    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>">
       <?= sr_icon($ic) ?> <span><?= h($lbl) ?></span>
       <?php if (!empty($count[$k])): ?><em><?= (int)$count[$k] ?></em><?php endif; ?>
     </a>
   <?php endforeach; ?>
   <div class="sr-draw-gap"></div>
   <a href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone') ?> <span>दफ़्तर को फ़ोन</span></a>
-  <a href="/madad.php"><?= sr_icon('help') ?> <span>मदद</span></a>
-  <form method="post" action="/kaam.php">
+  <a href="<?= h(u('/madad.php')) ?>"><?= sr_icon('help') ?> <span>मदद</span></a>
+  <form method="post" action="<?= h(u('/kaam.php')) ?>">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
     <input type="hidden" name="do" value="bahar">
     <button type="submit" class="sr-draw-out"><?= sr_icon('out') ?> <span>बाहर निकलिए</span></button>
@@ -89,7 +89,7 @@ function sr_foot($tab, $count = []) {
 </main>
 <nav class="sr-bar">
   <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
-    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h($url) ?>">
+    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>">
       <?= sr_icon($ic, 23) ?><span><?= h($lbl) ?></span>
       <?php if (!empty($count[$k])): ?><em><?= (int)$count[$k] ?></em><?php endif; ?>
     </a>

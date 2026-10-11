@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 <meta name="theme-color" content="#7A1F1F">
 <meta name="robots" content="noindex,nofollow">
 <title>सारथी</title>
-<link rel="stylesheet" href="/assets/app.css?v=<?= (int)@filemtime(__DIR__ . '/assets/app.css') ?>">
+<link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/app.css') ?>">
 </head>
 <body class="sr-login">
 <div class="sr-wrap">

@@ -40,7 +40,7 @@ if (empty($_SESSION['sr_admin'])) {
     ?><!doctype html><html lang="hi"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex,nofollow"><title>सारथी — मालिक</title>
-    <link rel="stylesheet" href="/assets/app.css"></head>
+    <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>"></head>
     <body class="sr-login"><div class="sr-wrap">
       <div class="sr-brand"><div class="sr-logo">सारथी</div><p>मालिक का पन्ना</p></div>
       <?php if ($err): ?><div class="sr-err"><?= h($err) ?></div><?php endif; ?>
@@ -125,6 +125,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     }
     if ($do === 'key_off') { key_revoke($pdo, (int)post('kid')); flash('चाबी बंद कर दी गई।'); redirect('/admin/'); }
 
+    if ($do === 'job_give') {
+        [$ok, $m] = job_give($pdo, (int)post('jid'), (int)post('rid'));
+        flash($m); redirect('/admin/');
+    }
+
     if ($do === 'prob_done') {
         $pdo->prepare("UPDATE problems SET settled=1 WHERE id=?")->execute([(int)post('pid')]);
         flash('निपटा हुआ मान लिया गया।'); redirect('/admin/');
@@ -135,6 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 $riders  = $pdo->query("SELECT * FROM riders ORDER BY active DESC, name")->fetchAll();
 $clients = $pdo->query("SELECT * FROM clients ORDER BY active DESC, name")->fetchAll();
 $probs   = problems_open($pdo);
+$ruke    = jobs_waiting($pdo);            // jo kaam abhi kisi ko nahi diye gaye
+$taiyar  = riders_ready($pdo);
 $newkey  = $_SESSION['sr_newkey'] ?? null; unset($_SESSION['sr_newkey']);
 $msg     = flash();
 
@@ -149,7 +156,7 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
 <html lang="hi"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>सारथी — मालिक</title>
-<link rel="stylesheet" href="/assets/app.css?v=<?= (int)@filemtime(__DIR__.'/../assets/app.css') ?>">
+<link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__.'/../assets/app.css') ?>">
 <style>
   .ad{max-width:860px;margin:0 auto;padding:16px 14px 60px}
   .ad h2{margin:26px 0 10px;font-size:21px}
@@ -191,6 +198,46 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
     <p class="mut" style="margin:0">ये पूरी चाबी <b>दोबारा नहीं दिखेगी</b> — डेटाबेस में सिर्फ़ इसका
       ताला रखा जाता है, चाबी नहीं। खो जाए तो नई बनानी पड़ेगी।</p>
   </div>
+<?php endif; ?>
+
+<!-- ===== रुके हुए काम =====
+     Kaam aate hi khud chale jaate hain, agar koi sarathi hazir ho.
+     Koi hazir na ho to wo yahan rukte hain -- sabse upar, taaki
+     dikhe bina na reh jayein. -->
+<?php if ($ruke): ?>
+  <h2>रुके हुए काम <span class="sr-head-tag"><?= count($ruke) ?></span></h2>
+  <?php foreach ($ruke as $j): ?>
+    <div class="box" style="border-left:4px solid var(--gold)">
+      <div class="hd">
+        <div style="flex:1;min-width:200px">
+          <b><?= h($j['drop_name']) ?></b>
+          <span class="mut">· <?= h($j['drop_village'] ?: $j['drop_address']) ?></span>
+          <p class="mut" style="margin:4px 0 0">
+            <?= h($j['client_name']) ?> · <?= h($j['job_no']) ?>
+            <?php if ($j['pick_name']): ?> · उठाना: <?= h($j['pick_name']) ?><?php endif; ?>
+          </p>
+        </div>
+      </div>
+      <?php if (!$taiyar): ?>
+        <p class="mut" style="margin:10px 0 0">अभी कोई सारथी जुड़ा नहीं है — नीचे जोड़िए।</p>
+      <?php else: ?>
+        <form method="post" class="row">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="job_give">
+          <input type="hidden" name="jid" value="<?= (int)$j['id'] ?>">
+          <select name="rid">
+            <?php foreach ($taiyar as $r): ?>
+              <option value="<?= (int)$r['id'] ?>">
+                <?= h($r['name']) ?> — <?= $r['hazir'] ? 'हाज़िर' : 'बंद' ?><?php
+                  if ((int)$r['abhi']) echo ', अभी ' . (int)$r['abhi'] . ' काम'; ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <button type="submit">इसको दीजिए</button>
+        </form>
+      <?php endif; ?>
+    </div>
+  <?php endforeach; ?>
 <?php endif; ?>
 
 <!-- ===== रास्ते की दिक्कतें ===== -->

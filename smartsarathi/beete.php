@@ -48,7 +48,7 @@ sr_head($me, 'beete', 'बीते काम', $ready, ['kaam' => count($jobs)]
           · <?= h(date('g:i a', strtotime($r['delivered_at']))) ?></small>
       </div>
       <?php if ($r['pod_photo']): ?>
-        <a class="sr-past-pic" href="/uploads/<?= h($r['pod_photo']) ?>" target="_blank" rel="noopener">फ़ोटो</a>
+        <a class="sr-past-pic" href="<?= h(u('/uploads/' . $r['pod_photo'])) ?>" target="_blank" rel="noopener">फ़ोटो</a>
       <?php endif; ?>
     </div>
   <?php endforeach; ?>

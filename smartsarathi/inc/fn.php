@@ -70,6 +70,31 @@ try {
        . '<a href="tel:' . SR_PHONE . '" style="color:#7A1F1F">' . SR_PHONE_SHOW . '</a></p></div>');
 }
 
+// ---------- panne ka pata ----------
+/**
+ * Sarathi do raaston se khulta hai:
+ *
+ *   smartsarathi.in/admin/           -> apne ghar me, aage kuch nahi
+ *   maakit.in/smartsarathi/admin/    -> Maakit ke andar ek folder me
+ *
+ * Pehle sab link "/admin/" jaise likhe the. Wo doosre raaste par
+ * Maakit ke admin par le jaate the, aur /assets/app.css Maakit ki
+ * CSS uthata tha -- isliye panna bina rang-roop ke khulta tha aur
+ * khane dikhte hi nahi the.
+ *
+ * Ab har andar ka link u() se hokar jata hai. Jis raaste se panna
+ * khula hai, u() usi ke hisaab se aage ka hissa jod deta hai.
+ */
+$sr_dir = '/' . basename(dirname(__DIR__));              // "/smartsarathi"
+$sr_uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+$sr_uri = (($p = strpos($sr_uri, '?')) !== false) ? substr($sr_uri, 0, $p) : $sr_uri;
+define('SR_BASE', ($sr_uri === $sr_dir || strpos($sr_uri, $sr_dir . '/') === 0) ? $sr_dir : '');
+
+/** andar ka pata — hamesha isse hokar */
+function u($path = '/') {
+    return SR_BASE . $path;
+}
+
 // ---------- session ----------
 if (session_status() !== PHP_SESSION_ACTIVE) {
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -90,7 +115,16 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function post($k, $d = '') { return $_POST[$k] ?? $d; }
 function get($k, $d = '')  { return $_GET[$k]  ?? $d; }
 
-function redirect($to) { header('Location: ' . $to); exit; }
+/**
+ * Andar ka pata ho to u() apne aap lag jata hai, taaki har
+ * redirect('/kaam.php') likhne wale ko yaad na rakhna pade.
+ * "//" se shuru hone wala pata bahar ka hai — usse chhedte nahi.
+ */
+function redirect($to) {
+    if (isset($to[0]) && $to[0] === '/' && substr($to, 0, 2) !== '//') $to = u($to);
+    header('Location: ' . $to);
+    exit;
+}
 
 function flash($msg = null) {
     if ($msg !== null) { $_SESSION['sr_flash'] = $msg; return null; }
