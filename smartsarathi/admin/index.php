@@ -78,6 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         }
     }
 
+    if ($do === 'rider_code') {
+        [$ok, $m] = rider_reset_code($pdo, post('id'), post('new_code'), post('confirm_code'));
+        if ($ok) { flash($m); redirect('/admin/'); }
+        $err = $m;
+    }
+
     if ($do === 'rider_rate') {
         $r = (int)post('rate'); $e = (int)post('extra_rate');
         if ($r < 0 || $r > 5000 || $e < 0 || $e > 5000) { $err = 'रेट 0 से 5000 के बीच रखिए।'; }
@@ -288,6 +294,22 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
         <span class="mut">चक्कर में अगला ₹</span><input class="sm" type="number" name="extra_rate" value="<?= (int)$r['extra_rate'] ?>" min="0" max="5000">
         <button class="g" type="submit">सेव</button>
       </form>
+      <details style="width:100%">
+        <summary class="mut" style="cursor:pointer;padding:10px 0">नया login कोड</summary>
+        <p class="mut">कोड बदलने पर पुराने login बंद होंगे। खाता और काम सुरक्षित रहेंगे।</p>
+        <form method="post" class="row" autocomplete="off">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="rider_code">
+          <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+          <label class="mut" for="new-code-<?= (int)$r['id'] ?>">नया कोड</label>
+          <input class="md" id="new-code-<?= (int)$r['id'] ?>" type="password" name="new_code"
+                 autocomplete="new-password" minlength="6" maxlength="72" required>
+          <label class="mut" for="confirm-code-<?= (int)$r['id'] ?>">दोबारा नया कोड</label>
+          <input class="md" id="confirm-code-<?= (int)$r['id'] ?>" type="password" name="confirm_code"
+                 autocomplete="new-password" minlength="6" maxlength="72" required>
+          <button class="g" type="submit">नया कोड सेव कीजिए</button>
+        </form>
+      </details>
       <form method="post" class="row" style="margin:0">
         <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="paisa">
         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
