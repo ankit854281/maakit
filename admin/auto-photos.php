@@ -63,6 +63,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('ajax') === '1') {
         ], $u['id'] ?? 0);
         ap_json(['ok' => $ok, 'msg' => $ok ? t('Photo added', 'फ़ोटो लग गई') : $msg, 'file' => $ok ? $msg : null]);
     }
+    if (post('do') === 'remove') {
+        $st = $pdo->prepare("SELECT * FROM catalog_photos WHERE id=? AND source IS NOT NULL");
+        $st->execute([(int)post('pid')]);
+        if ($row = $st->fetch()) {
+            $pdo->prepare("DELETE FROM catalog_photos WHERE id=?")->execute([(int)$row['id']]);
+            drop_photo($row['file']);
+            // galat photo thi — ye saaman dobara "apne aap" me na aaye, sirf dekh kar
+            $pdo->prepare("INSERT IGNORE INTO catalog_photo_skip (cat_id, skipped_by) VALUES (?,?)")->execute([(int)$row['cat_id'], (int)($u['id'] ?? 0)]);
+            ap_json(['ok' => true]);
+        }
+        ap_json(['ok' => false, 'msg' => t('Photo not found', 'फ़ोटो नहीं मिली')]);
+    }
     if (post('do') === 'skip') {
         $pdo->prepare("INSERT IGNORE INTO catalog_photo_skip (cat_id, skipped_by) VALUES (?,?)")->execute([$id, (int)($u['id'] ?? 0)]);
         ap_json(['ok' => true]);
@@ -85,6 +97,8 @@ $types = $ready ? $pdo->query("SELECT ci.shop_type, COUNT(*) c FROM catalog_item
               AND NOT EXISTS (SELECT 1 FROM catalog_photo_skip s WHERE s.cat_id=ci.id)
             GROUP BY ci.shop_type ORDER BY c DESC")->fetchAll() : [];
 $left = array_sum(array_column($types, 'c'));
+$added = $ready ? $pdo->query("SELECT p.id, p.file, p.cat_id, p.credit, p.license, ci.name_en, ci.name_hi, ci.shop_type
+            FROM catalog_photos p JOIN catalog_items ci ON ci.id=p.cat_id WHERE p.source IS NOT NULL ORDER BY p.id DESC LIMIT 120")->fetchAll() : [];
 // khane-peene wali dukaan — inke liye Open Food Facts bhi dekha jata hai
 $food = ['Grocery / Kirana Store', 'Dairy Shop', 'Bakery', 'Sweet Shop', 'Baby Store', 'Dry Fruits Shop', 'Beverage Shop', 'Namkeen Shop', 'Supermarket'];
 
@@ -120,6 +134,7 @@ include __DIR__ . '/../inc/panel.php';
     <div class="ap-modes" role="tablist">
       <button class="on" data-mode="review" role="tab"><?= t('Check & add', 'देखकर लगाइए') ?></button>
       <button data-mode="auto" role="tab"><?= t('Fully automatic', 'पूरा अपने आप') ?></button>
+      <button data-mode="added" role="tab"><?= t('Check added', 'लगी हुई जाँचिए') ?> (<?= count($added) ?>)</button>
     </div>
     <span class="ap-grow"></span>
     <?php if ($skipped): ?>
@@ -139,6 +154,21 @@ include __DIR__ . '/../inc/panel.php';
       <span data-ap-sel-count></span>
       <button class="mk-btn mk-btn-line" data-ap-next><?= t('Next 12 →', 'अगले 12 →') ?></button>
       <button class="mk-btn" data-ap-addall><?= t('Add all chosen', 'चुनी हुई सब लगाइए') ?></button>
+    </div>
+  </div>
+
+  <!-- 3. jo lag chuki — galat ho to ek dabane me hatao -->
+  <div data-panel="added" hidden>
+    <div class="ap-help"><?= t('Latest library photos (newest first). Wrong photo? Press ✕ — it is removed and the product moves to the Skipped list.', 'लाइब्रेरी से लगी नई फ़ोटो (नई सबसे पहले)। ग़लत फ़ोटो? ✕ दबाइए — फ़ोटो हट जाएगी और सामान “छोड़े हुए” में चला जाएगा।') ?></div>
+    <?php if (!$added): ?><p class="ap-empty"><?= t('No library photos yet.', 'अभी कोई लाइब्रेरी फ़ोटो नहीं।') ?></p><?php endif; ?>
+    <div class="ap-added">
+      <?php foreach ($added as $a): ?>
+        <figure data-pid="<?= (int)$a['id'] ?>">
+          <img src="/uploads/<?= h($a['file']) ?>" alt="" loading="lazy" width="150" height="150">
+          <button type="button" class="ap-x" data-remove="<?= (int)$a['id'] ?>" title="<?= h(t('Remove — wrong photo', 'हटाइए — ग़लत फ़ोटो')) ?>">✕</button>
+          <figcaption><b><?= h($a['name_en']) ?></b><small><?= h($a['shop_type']) ?></small></figcaption>
+        </figure>
+      <?php endforeach; ?>
     </div>
   </div>
 
@@ -183,19 +213,79 @@ include __DIR__ . '/../inc/panel.php';
   if (!grid) return;
 
   // ---------- khoj ----------
-  var STOP = ['and','with','for','the','of','pack','set','box','piece','pcs','pc','big','small','new','loose','fresh'];
+  var STOP = ['and','with','for','the','of','pack','set','box','piece','pcs','pc','big','small','new','loose','fresh','whole'];
   function clean(name) {
-    return String(name).replace(/\(.*?\)/g, ' ').replace(/\b\d+(\.\d+)?\s*(kg|g|gm|gram|ml|l|ltr|litre|liter|m|cm|mm|inch|pcs|pc|x)\b/gi, ' ')
+    return String(name).replace(/\(.*?\)/g, ' ').replace(/\b\d+(\.\d+)?\s*(kg|g|gm|gram|ml|l|ltr|litre|liter|m|cm|mm|inch|pcs|pc|x|w|sq)\b/gi, ' ')
       .replace(/[^A-Za-z0-9 &'-]+/g, ' ').replace(/\s+/g, ' ').trim();
   }
   function words(q) { return q.toLowerCase().split(/[\s&'-]+/).filter(function (w) { return w.length > 2 && STOP.indexOf(w) < 0 && !/^\d+$/.test(w); }); }
-  var BAD = /\b(logo|map|flag|diagram|chart|icon|coat of arms|seal|stamp|poster|cover|screenshot|graph|svg|drawing|illustration|sign|label|advert|banner|text|plate \d|portrait)\b/i;
-  function score(q, title) {
+
+  // Desi naam → duniya bhar me jis naam se photo milti hai.
+  // (Suji ki jagah "samurai helmet" aur Besan ki jagah "Besan gaon" aa raha tha — isliye.)
+  var SYN = {
+    'wheat atta':'wheat flour','multigrain atta':'multigrain flour','atta':'wheat flour','maida':'all-purpose flour','suji':'semolina','suji rava':'semolina','rava':'semolina',
+    'besan':'gram flour','dalia':'bulgur wheat','ragi flour':'finger millet flour','bajra flour':'pearl millet flour','sona masoori rice':'sona masuri rice',
+    'parboiled rice':'parboiled rice','gobind bhog rice':'gobindobhog rice','idli rice':'idli rice','arhar dal':'pigeon pea dal','masoor dal':'red lentils',
+    'moong dal':'mung dal','urad dal':'urad dal','chana dal':'chana dal','moong whole':'mung beans','urad whole':'black gram','rajma':'kidney beans',
+    'kabuli chana':'chickpeas','black chana':'black chickpeas','mustard oil':'mustard oil bottle','palmolein oil':'palm oil','turmeric powder':'turmeric powder',
+    'red chilli powder':'chili powder','coriander powder':'coriander powder','cumin':'cumin seeds','garam masala':'garam masala','chaat masala':'chaat masala',
+    'namkeen':'namkeen snack','bhujia':'bhujia snack','bhujia sev':'sev snack','aloo bhujia':'aloo bhujia','vermicelli':'vermicelli','papad':'papadum',
+    'sharbat':'sharbat drink','poha':'flattened rice','sabudana':'sago pearls','jaggery':'jaggery','jaggery powder':'jaggery powder','mishri':'rock sugar',
+    'iodised salt':'table salt','rock salt':'rock salt','black salt':'kala namak','soya chunks':'soya chunks','pickle':'indian pickle','ajwain':'carom seeds',
+    'asafoetida':'asafoetida','kasuri methi':'dried fenugreek leaves','dry mango powder':'amchur','fenugreek seeds':'fenugreek seeds','fennel seeds':'fennel seeds',
+    'makhana':'fox nut makhana','curd':'dahi yogurt','buttermilk':'chaas buttermilk','lassi':'lassi','paneer':'paneer','ghee':'ghee','toned milk':'milk',
+    'full cream milk':'milk','pav':'pav bread','rusk':'rusk','lady finger':'okra','brinjal':'eggplant','bottle gourd':'bottle gourd','fenugreek leaves':'fenugreek leaves',
+    'coriander':'coriander leaves','curry leaves':'curry leaves','green chilli':'green chili','peas':'green peas','muskmelon':'muskmelon',
+    'gulab jamun':'gulab jamun','rasgulla':'rasgulla','laddu':'ladoo','besan laddu':'besan ladoo','motichoor laddu':'motichoor ladoo','peda':'peda sweet',
+    'barfi':'barfi','kaju katli':'kaju katli','jalebi':'jalebi','imarti':'imarti','soan papdi':'soan papdi','gajar halwa':'gajar halwa','samosa':'samosa',
+    'kachori':'kachori','aloo tikki':'aloo tikki','dahi puri':'dahi puri','pani puri':'pani puri','bhel puri':'bhel puri','mixture':'indian snack mixture',
+    'sev':'sev snack','mathri':'mathri','namak para':'namak para','milk cake sweet':'milk cake sweet','kulfi':'kulfi','momos':'momo dumplings',
+    'agarbatti':'incense sticks','dhoop':'dhoop incense','camphor':'camphor tablets','diya':'diya oil lamp','cotton wick':'cotton wick lamp','roli':'kumkum',
+    'chandan':'sandalwood paste','kalawa':'mauli thread','pooja thali':'puja thali','mala':'japa mala','pooja mauli thread':'mauli thread','pooja roli':'kumkum',
+    'kadhai':'karahi','tawa':'tawa griddle','thali':'thali plate','rolling pin belan':'rolling pin','ladle kalchhi':'ladle','kurta':'kurta','kurta pajama':'kurta pajama',
+    'kurti':'kurti','saree':'saree','salwar suit':'salwar kameez','dupatta':'dupatta','cotton dhoti':'dhoti','mens vest baniyan':'undershirt vest',
+    'frock':'girl frock dress','harmonium':'harmonium','tabla':'tabla','dholak':'dholak','mangalsutra':'mangalsutra','silver anklet':'anklet payal',
+    'silver toe ring':'toe ring','attar':'attar perfume','shamiana':'shamiana tent','phenyl':'phenyl floor cleaner','fish rohu':'rohu fish','fish katla':'catla fish',
+    'chicken curry cut':'raw chicken pieces','mutton curry cut':'raw mutton','mutton boneless':'raw mutton','tulsi plant':'holy basil plant','neem cake':'neem cake fertilizer'
+  };
+  function synFor(name) {
+    var n = clean(name).toLowerCase();
+    if (SYN[n]) return SYN[n];
+    // brand + desi naam: "Aashirvaad Suji Rava" → "semolina"
+    var keys = Object.keys(SYN).sort(function (a, b) { return b.length - a.length; });
+    for (var i = 0; i < keys.length; i++) if ((' ' + n + ' ').indexOf(' ' + keys[i] + ' ') >= 0) return SYN[keys[i]];
+    return '';
+  }
+
+  // Har dukaan ki kism ke liye "ye sahi duniya ki photo hai" wale shabd
+  var FOODY = /\b(food|foods|cuisine|dish|dishes|flour|grain|grains|cereal|spice|spices|vegetable|vegetables|fruit|fruits|bread|sweet|sweets|dessert|snack|snacks|rice|lentil|lentils|pulse|pulses|bean|beans|legume|oil|milk|dairy|cheese|yogurt|drink|beverage|tea|coffee|ingredient|ingredients|cooking|cooked|kitchen|market|bazaar|meal|breakfast|bowl|plate|packet|package|packaged|biscuit|biscuits|cookie|cake|nut|nuts|seed|seeds|sugar|salt|sauce|condiment|pickle|curry|masala|meat|chicken|fish|egg|eggs|bakery|confectionery|produce|herb|herbs|leaves|edible|grocery|groceries|semolina|porridge|noodle|noodles|pasta|chips|juice|honey|jaggery|millet|wheat|chickpea|gram)\b/i;
+  var FOOD_TYPES = /grocery|kirana|dairy|bakery|sweet|fruit|vegetable|dry fruit|meat|chicken|fish|cafe|fast food|juice|ice cream|restaurant|convenience|milk|general store|mini mart|supermarket|vending/i;
+  var POOJA = /\b(puja|pooja|hindu|ritual|worship|religious|temple offering|incense|diwali|festival|ceremony|lamp|prayer|devotional)\b/i;
+  var BAD = /\b(logo|map|flag|diagram|chart|icon|coat of arms|seal|stamp|poster|cover|screenshot|graph|svg|drawing|illustration|sign|signboard|label|advert|banner|text|portrait|armour|armor|helmet|kabuto|samurai|landscape|panorama|aerial|village|town|city|street|road|railway|station|church|mosque|cathedral|building|house|mountain|hill|river|lake|forest|valley|view of|politician|actor|actress|singer|footballer|cricketer|team|club|parliament|election|protest|museum|statue|monument|coin|banknote|ship|aircraft|locomotive)\b/i;
+  var BAD_OK = { 'Helmet & Riding Gear Shop': /helmet/i, 'Industrial Safety Store': /helmet/i, 'Safety Equipment Shop': /helmet/i, 'Bicycle Shop': /helmet/i, 'Bike Rental': /helmet/i, 'Building Material Store': /building/i };
+
+  function hitRatio(q, text) {
     var ws = words(q); if (!ws.length) return 0;
-    var t = ' ' + title.toLowerCase().replace(/[_\-.,()]/g, ' ') + ' ', hit = 0;
-    ws.forEach(function (w) { var stem = w.replace(/(es|s)$/, ''); if (t.indexOf(' ' + stem) >= 0) hit++; });
-    var s = hit / ws.length;
-    if (BAD.test(title)) s -= 0.6;
+    var t = ' ' + text.toLowerCase().replace(/[_\-.,()|:]/g, ' ') + ' ', hit = 0;
+    ws.forEach(function (w) { var stem = w.replace(/(es|s)$/, ''); if (stem.length > 2 && t.indexOf(' ' + stem) >= 0) hit++; });
+    return hit / ws.length;
+  }
+  // score 0..1 — 1 = "pakka mel". cats = photo ki Commons categories.
+  function scoreItem(item, q, title, cats) {
+    var text = title + ' | ' + (cats || '');
+    var syn = synFor(item.name_en);
+    var s = Math.max(hitRatio(q, title), syn ? hitRatio(syn, title) : 0);
+    var sCat = Math.max(hitRatio(q, text), syn ? hitRatio(syn, text) : 0);
+    s = Math.max(s, sCat * 0.9);
+    var bad = BAD.test(title) || BAD.test(cats || '');
+    var ok = BAD_OK[item.shop_type];
+    if (bad && ok && ok.test(text) && !BAD.test(text.replace(ok, ''))) bad = false;
+    if (bad) s -= 0.7;
+    // khane ki dukaan → photo me khane ka koi nishaan zaroori
+    if (FOOD_TYPES.test(item.shop_type) && !FOODY.test(text)) s = Math.min(s, 0.6);
+    if (/pooja|religious/i.test(item.shop_type) && !POOJA.test(text) && !FOODY.test(text)) s = Math.min(s, 0.6);
+    // ek hi shabd wala naam (Suji, Besan) sirf naam se pakka nahi maana jata
+    if (words(syn || q).length < 2 && !cats) s = Math.min(s, 0.6);
     return s;
   }
   function licOk(l) {
@@ -205,10 +295,10 @@ include __DIR__ . '/../inc/panel.php';
   }
   function strip(html) { var d = document.createElement('div'); d.innerHTML = html || ''; return (d.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 100); }
 
-  function commons(q) {
-    var u = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=15'
+  function commons(item, q) {
+    var u = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20'
       + '&gsrsearch=' + encodeURIComponent('filetype:bitmap ' + q)
-      + '&prop=imageinfo&iiprop=url|extmetadata|mime|size&iiurlwidth=330&iiextmetadatafilter=License|LicenseShortName|Artist';
+      + '&prop=imageinfo|categories&clshow=!hidden&cllimit=max&iiprop=url|extmetadata|mime|size&iiurlwidth=330&iiextmetadatafilter=License|LicenseShortName|Artist';
     return fetch(u).then(function (r) { return r.json(); }).then(function (j) {
       var pages = (j && j.query && j.query.pages) ? Object.keys(j.query.pages).map(function (k) { return j.query.pages[k]; }) : [];
       pages.sort(function (a, b) { return (a.index || 0) - (b.index || 0); });
@@ -220,41 +310,49 @@ include __DIR__ . '/../inc/panel.php';
         var r = ii.width / ii.height; if (r > 2.2 || r < 0.45) return;
         var em = ii.extmetadata || {}, lic = (em.License && em.License.value) || (em.LicenseShortName && em.LicenseShortName.value) || '';
         if (!licOk(lic) && !licOk(em.LicenseShortName && em.LicenseShortName.value)) return;
-        var title = (p.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '');
+        var title = (p.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '').replace(/_/g, ' ');
+        var cats = (p.categories || []).map(function (c) { return c.title.replace(/^Category:/, ''); }).join(' | ');
         var big = ii.thumburl && ii.thumburl.indexOf('/330px-') > 0 ? ii.thumburl.replace('/330px-', '/960px-') : ii.url;
         if ((ii.width || 0) <= 960) big = ii.url;
         out.push({ source: 'commons', thumb: ii.thumburl || ii.url, url: big, page: ii.descriptionurl, title: title,
           credit: strip(em.Artist && em.Artist.value) || 'Wikimedia Commons',
-          license: (em.LicenseShortName && em.LicenseShortName.value) || lic, s: score(q, title) });
+          license: (em.LicenseShortName && em.LicenseShortName.value) || lic, s: scoreItem(item, q, title, cats) });
       });
       return out;
     });
   }
-  function off(q) {
-    var u = 'https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1&page_size=8'
-      + '&fields=code,product_name,brands,image_front_url,image_front_small_url&tagtype_0=countries&tag_contains_0=contains&tag_0=india'
+  function off(item, q) {
+    var u = 'https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1&page_size=10'
+      + '&fields=code,product_name,brands,image_front_url,image_front_small_url'
       + '&search_terms=' + encodeURIComponent(q);
     return fetch(u).then(function (r) { return r.json(); }).then(function (j) {
       return (j.products || []).filter(function (p) { return p.image_front_url; }).map(function (p) {
         var title = [p.brands, p.product_name].filter(Boolean).join(' ');
+        // Open Food Facts me sirf khana hota hai — isliye "packet" ko khane ka nishaan maan lete hain
         return { source: 'off', thumb: p.image_front_small_url || p.image_front_url, url: p.image_front_url,
           page: 'https://world.openfoodfacts.org/product/' + encodeURIComponent(p.code), title: title || q,
-          credit: 'Open Food Facts contributors', license: 'CC BY-SA 3.0', s: score(q, title) - 0.05 };
+          credit: 'Open Food Facts contributors', license: 'CC BY-SA 3.0', s: scoreItem(item, q, title, 'food packet') - 0.02 };
       });
     }).catch(function () { return []; });
   }
   function find(item, q) {
+    var own = !!q;
     q = q || clean(item.name_en);
-    var jobs = [commons(q).catch(function () { return null; })];
-    if (FOOD.indexOf(item.shop_type) >= 0) jobs.push(off(q));
+    var syn = own ? '' : synFor(item.name_en);
+    var jobs = [commons(item, syn || q).catch(function () { return null; })];
+    if (syn && syn.toLowerCase() !== q.toLowerCase()) jobs.push(commons(item, q).catch(function () { return []; }));
+    if (FOOD.indexOf(item.shop_type) >= 0 || FOOD_TYPES.test(item.shop_type)) jobs.push(off(item, q));
     return Promise.all(jobs).then(function (rs) {
-      if (rs[0] === null && !(rs[1] && rs[1].length)) throw new Error('offline');
-      var all = [].concat(rs[0] || [], rs[1] || []);
+      if (rs[0] === null && !rs.slice(1).some(function (x) { return x && x.length; })) throw new Error('offline');
+      var seen = {}, all = [];
+      [].concat.apply([], rs.map(function (x) { return x || []; })).forEach(function (c) { if (!seen[c.url]) { seen[c.url] = 1; all.push(c); } });
+      // bekaar (score < 0.4 — jaise helmet, gaon, station) dikhate hi nahi
+      all = all.filter(function (c) { return c.s >= 0.4; });
       all.sort(function (a, b) { return b.s - a.s; });
       return all.slice(0, 4);
     });
   }
-  function sure(c) { return c && c.s >= 0.999; }
+  function sure(c) { return c && c.s >= 0.95; }
 
   function post(data) {
     var fd = new FormData(); fd.append('csrf', CSRF); fd.append('ajax', '1');
@@ -288,7 +386,7 @@ include __DIR__ . '/../inc/panel.php';
       '<small>' + esc(item.shop_type) + (item.sub_cat && item.sub_cat !== item.shop_type ? ' · ' + esc(item.sub_cat) : '') + ' · #' + item.id + '</small></div>' +
       '<button type="button" class="ap-skip">' + L.skip + '</button></header>' +
       '<div class="ap-cands"><i class="ap-spin"></i></div>' +
-      '<form class="ap-q"><input type="search" value="' + esc(clean(item.name_en)) + '" aria-label="' + L.search + '"><button>' + L.search + '</button></form>';
+      '<form class="ap-q"><input type="search" value="' + esc(synFor(item.name_en) || clean(item.name_en)) + '" aria-label="' + L.search + '"><button>' + L.search + '</button></form>';
     grid.appendChild(el);
     var box = el.querySelector('.ap-cands');
     function load(q) {
@@ -379,6 +477,18 @@ include __DIR__ . '/../inc/panel.php';
   runBtn.addEventListener('click', function () {
     running = !running; runBtn.textContent = running ? L.stop : L.start;
     if (running) { autoAfter = 0; doneN = 0; total = 0; auto(); }
+  });
+
+  // galat lagi photo hatana
+  document.querySelectorAll('[data-remove]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var fig = b.closest('figure'); b.disabled = true;
+      post({ do: 'remove', pid: b.dataset.remove }).then(function (j) {
+        if (j.ok) { fig.classList.add('gone'); setTimeout(function () { fig.remove(); }, 250);
+          var w = $('[data-ap-with]'); if (w) w.textContent = Math.max(0, (parseInt(w.textContent.replace(/\D/g, ''), 10) || 0) - 1); }
+        else { b.disabled = false; alert(j.msg); }
+      });
+    });
   });
 
   // modes

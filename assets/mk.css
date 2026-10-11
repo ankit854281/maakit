@@ -1351,3 +1351,12 @@ small.sp-pos,small.sp-neg{font-weight:700}
 .ct-n{position:relative;z-index:1;font-size:11.5px;font-weight:700;line-height:1.25;text-align:center;padding:0 10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ct-lg{height:220px;border-radius:14px}.ct-lg .ct-ic{width:84px;height:84px;border-radius:22px}.ct-lg .ct-ic svg{width:48px;height:48px}.ct-lg .ct-n{font-size:14px}
 .ct-sm{height:44px;width:44px;margin:0;border-radius:10px;flex:none}.ct-sm .ct-ic{width:30px;height:30px;border-radius:9px;box-shadow:none}.ct-sm .ct-ic svg{width:20px;height:20px}.ct-sm::after{display:none}
+.ap-added{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}
+.ap-added figure{position:relative;margin:0;background:#fff;border:1px solid #E7E9EE;border-radius:12px;overflow:hidden;transition:opacity .25s,transform .25s}
+.ap-added figure.gone{opacity:0;transform:scale(.9)}
+.ap-added img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.ap-added figcaption{padding:6px 8px;font-size:12px;line-height:1.3}
+.ap-added figcaption b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-added figcaption small{color:#6B7280}
+.ap-x{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(17,24,39,.75);color:#fff;font-size:14px;cursor:pointer;display:grid;place-items:center}
+.ap-x:hover{background:#C0352B}
