@@ -1,506 +1,178 @@
 <?php
-/**
- * Maakit Express — Modern Customer Login
- * File: login.php
- * Repository: ankit854281/maakit
- */
-ob_start();
+// ============================================================
+//  एक ही लॉगिन — दुकानदार और Maakit टीम, दोनों यहीं से
+//
+//  Do tarah ke log andar aate hain:
+//    - Dukandar : mobile + code (password nahi — gaon me yaad
+//                 nahi rehta). Andar jaake /shop.php khulta hai.
+//    - Team     : username + password (admin, BPO, delivery,
+//                 designer). Apne-apne panel me jaate hain.
+//
+//  Dukandar pehle rakhe gaye hain kyunki unki ginti team se
+//  bahut jyada hogi.
+// ============================================================
+require_once __DIR__ . '/inc/fn.php';
+require_once __DIR__ . '/inc/salon.php';
+$no_tabbar = true;
+$page_title = 'लॉगिन — Maakit';
+$err = '';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// pehle se andar hain to seedha apne panel me
+if (user()) { redirect(panel_home(user()['role'])); }
+if (shop_login_business($pdo)) { redirect('/shop.php'); }
 
-$next = trim($_GET['next'] ?? $_SESSION['login_next'] ?? '/');
-$_SESSION['login_next'] = $next;
+// kaun sa form dikhe
+$as = get('as') === 'team' ? 'team' : 'dukan';
 
-// If customer already logged in, redirect directly to destination
-if (!empty($_SESSION['cust_id']) || !empty($_SESSION['cust'])) {
-    header("Location: " . $next);
-    exit;
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
-$error_msg = '';
-$success_msg = '';
-$step = 'mobile'; // 'mobile' or 'otp'
-$mobile = $_SESSION['login_mobile'] ?? '';
+    // ---------- दुकानदार ----------
+    if (post('do') === 'dukan') {
+        $as   = 'dukan';
+        $mob  = preg_replace('/\D/', '', post('mobile'));
+        $code = strtoupper(trim(post('code')));
+        $ip   = $_SERVER['REMOTE_ADDR'] ?? '';
 
-// Handle Backend Form POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-
-    // STEP 1: Send OTP to Mobile Number
-    if ($action === 'send_otp') {
-        $raw_mobile = preg_replace('/\D/', '', $_POST['mobile'] ?? '');
-        if (strlen($raw_mobile) === 10) {
-            $mobile = $raw_mobile;
-            $_SESSION['login_mobile'] = $mobile;
-            
-            // Generate 4-digit verification code
-            $otp = str_pad(strval(rand(1000, 9999)), 4, '0', STR_PAD_LEFT);
-            $_SESSION['active_otp'] = $otp;
-            $_SESSION['otp_time'] = time();
-
-            // In local/testing mode or SMS gateway integration:
-            // e.g., send_sms_otp($mobile, $otp)
-            $step = 'otp';
-            $success_msg = "OTP आपके मोबाइल नंबर +91 " . htmlspecialchars($mobile) . " पर भेज दिया गया है।";
+        // Wahi hadd jo team ke login par hai — ek number par 6, aur ek
+        // IP par 30. Pehle yahan sirf number ki ginti thi, IP ki nahi,
+        // isliye ek hi jagah se sau number par koshish ho sakti thi.
+        if (auth_attempt_try($pdo, 'dukan', $mob)) {
+            $err = auth_attempt_error();
         } else {
-            $error_msg = "कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें।";
+            $st = $pdo->prepare("SELECT * FROM businesses WHERE mobile=? AND status='approved'");
+            $st->execute([$mob]);
+            $row = $st->fetch();
+            $okc = $row && $row['access_code'] && hash_equals(strtoupper($row['access_code']), $code);
+            $pdo->prepare("INSERT INTO shop_login_log (business_id, mobile, ok, ip) VALUES (?,?,?,?)")
+                ->execute([$row['id'] ?? null, $mob, $okc ? 1 : 0, $ip]);
+            if ($okc) {
+                auth_attempt_ok($pdo, 'dukan', $mob);
+                shop_start_session($pdo, $row['id']);
+                redirect('/shop.php');
+            }
+            // New approved partner accounts keep the existing mobile + code door.
+            //
+            // Pehle yahan sirf role='vendor' tha. Rider ka khata
+            // role='rider' banta hai (partner-apply.php), isliye manzoori
+            // ke baad bhi rider andar nahi aa pata tha — "number ya code
+            // sahi nahi hai" aata tha, jabki dono sahi hote the.
+            // Rider ke liye apna darwaza /sarathi/ hai, par ye bhi chale.
+            $st=$pdo->prepare("SELECT * FROM users WHERE username=? AND role IN ('vendor','rider') AND active=1");
+            $st->execute([$mob]);$partner=$st->fetch();
+            if ($partner && password_verify($code,$partner['password'])) {
+                auth_attempt_ok($pdo,'dukan',$mob);
+                Maakit\Api\revoke_legacy_sessions($pdo);session_regenerate_id(true);
+                $_SESSION['user']=['id'=>$partner['id'],'name'=>$partner['name'],'role'=>$partner['role']];
+                redirect(panel_home($partner['role']));
+            }
+            $err = 'नंबर या कोड सही नहीं है। Maakit से अपना कोड पूछ लीजिए।';
         }
     }
 
-    // STEP 2: Verify OTP and Login
-    if ($action === 'verify_otp') {
-        $entered_otp = trim($_POST['digit1'] . $_POST['digit2'] . $_POST['digit3'] . $_POST['digit4']);
-        $actual_otp  = $_SESSION['active_otp'] ?? '';
-
-        // Allow actual OTP or master quick verification
-        if (!empty($entered_otp) && ($entered_otp === $actual_otp || $entered_otp === '1234')) {
-            // Customer Login Success
-            $_SESSION['cust_id']     = 'CUST_' . substr($mobile, -6);
-            $_SESSION['cust_mobile'] = $mobile;
-            $_SESSION['cust_name']   = 'ग्राहक (' . substr($mobile, -4) . ')';
-            
-            // Set 60-day Persistent Login Cookie
-            setcookie('mk_cust', $mobile, time() + (86400 * 60), '/');
-
-            // Clean up OTP session
-            unset($_SESSION['active_otp']);
-            unset($_SESSION['login_mobile']);
-
-            // Redirect back to store or checkout
-            header("Location: " . $next);
-            echo "<script>window.location.href = " . json_encode($next) . ";</script>";
-            exit;
+    // ---------- टीम ----------
+    elseif (post('do') === 'team') {
+        $as = 'team';
+        $username = post('username');
+        $st = $pdo->prepare("SELECT * FROM users WHERE username=? AND active=1");
+        $st->execute([$username]);
+        $u = $st->fetch();
+        // Ginti ki chaabi khate ka ASLI naam ho — warna "ädmin" jaisi
+        // likhawat ek hi khata kholkar nayi ginti shuru kar deti hai.
+        $kunji = $u ? $u['username'] : $username;
+        if (auth_attempt_try($pdo, 'team', $kunji)) {
+            $err = auth_attempt_error();
+        } elseif ($u && password_verify(post('password'), $u['password'])) {
+            auth_attempt_ok($pdo, 'team', $kunji);
+            Maakit\Api\revoke_legacy_sessions($pdo);
+            session_regenerate_id(true);
+            $_SESSION['user'] = ['id'=>$u['id'], 'name'=>$u['name'], 'role'=>$u['role']];
+            redirect(panel_home($u['role']));
         } else {
-            $step = 'otp';
-            $error_msg = "गलत OTP दर्ज किया गया है। कृपया सही 4-अंकों का कोड डालें।";
+            $err = t('Username or password is wrong.','यूज़रनेम या पासवर्ड ग़लत है।');
         }
+
     }
 }
+
+include __DIR__ . '/inc/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Maakit — लॉगिन या नया खाता बनाएँ (Customer Login)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --brand: #0C831F;
-      --brand-hover: #086F1A;
-      --brand-light: #E8F5E9;
-      --primary: #2563EB;
-      --text-main: #1C1C1C;
-      --text-sub: #555555;
-      --text-muted: #888888;
-      --border-color: #E2E8F0;
-      --bg: #F8FAFC;
-      --radius-lg: 20px;
-      --radius-md: 12px;
-      --radius-sm: 8px;
-      --font: 'Plus Jakarta Sans', 'Noto Sans Devanagari', -apple-system, sans-serif;
-    }
+<section class="lg">
+  <div class="lg-wrap">
+    <aside class="lg-side" aria-hidden="true">
+      <div class="lg-brand"><?= maakit_logo_svg(44) ?><span>Maakit<small><?= t('Partner & team login', 'साथी और टीम लॉगिन') ?></small></span></div>
+      <h1><?= t('Run your shop from your phone.', 'अपनी दुकान, अपने फ़ोन से।') ?></h1>
+      <ul>
+        <li><?= t('Add products and your own prices', 'अपना सामान और अपना दाम डालिए') ?></li>
+        <li><?= t('See new orders the moment they arrive', 'नया ऑर्डर आते ही देखिए') ?></li>
+        <li><?= t('Daily accounts and your ledger', 'रोज़ का हिसाब और अपना खाता') ?></li>
+        <li><?= t('Payments straight to your UPI', 'पैसा सीधा आपके UPI में') ?></li>
+      </ul>
+    </aside>
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: var(--font);
-      background-color: var(--bg);
-      color: var(--text-main);
-      line-height: 1.4;
-      -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px 12px;
-    }
-
-    /* Modern Card */
-    .login-box {
-      width: 100%;
-      max-width: 440px;
-      background: #FFFFFF;
-      border-radius: var(--radius-lg);
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
-      border: 1px solid var(--border-color);
-      padding: 32px 28px;
-      position: relative;
-    }
-
-    /* Brand Header */
-    .brand-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-    .brand-logo {
-      font-size: 24px;
-      font-weight: 900;
-      color: var(--brand);
-      text-decoration: none;
-      letter-spacing: -0.5px;
-    }
-    .brand-logo span { color: #F59E0B; }
-    .btn-skip {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-decoration: none;
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      background: #F1F5F9;
-      transition: all 0.2s;
-    }
-    .btn-skip:hover { background: #E2E8F0; color: var(--text-main); }
-
-    /* Headline */
-    .login-heading h1 {
-      font-size: 21px;
-      font-weight: 800;
-      color: var(--text-main);
-      letter-spacing: -0.4px;
-      margin-bottom: 6px;
-    }
-    .login-heading p {
-      font-size: 13px;
-      color: var(--text-sub);
-      margin-bottom: 24px;
-      line-height: 1.45;
-    }
-
-    /* Alerts */
-    .alert-banner {
-      padding: 11px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 12.5px;
-      font-weight: 600;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .alert-error {
-      background: #FEF2F2;
-      border: 1px solid #FECACA;
-      color: #991B1B;
-    }
-    .alert-success {
-      background: var(--brand-light);
-      border: 1px solid #C8E6C9;
-      color: #166534;
-    }
-
-    /* STEP 1: Phone Input Box */
-    .phone-group {
-      display: flex;
-      align-items: center;
-      border: 1.5px solid var(--border-color);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      margin-bottom: 18px;
-      transition: all 0.2s;
-      background: #FAFAFA;
-    }
-    .phone-group:focus-within {
-      border-color: var(--brand);
-      background: #FFFFFF;
-      box-shadow: 0 0 0 3px rgba(12, 131, 31, 0.12);
-    }
-    .country-prefix {
-      padding: 13px 14px;
-      background: #F1F5F9;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-main);
-      border-right: 1.5px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      user-select: none;
-    }
-    .phone-input {
-      flex: 1;
-      padding: 13px 14px;
-      border: none;
-      outline: none;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      font-family: inherit;
-      color: var(--text-main);
-      background: transparent;
-    }
-    .phone-input::placeholder {
-      font-weight: 400;
-      color: var(--text-muted);
-      letter-spacing: normal;
-    }
-
-    /* Primary Action Button */
-    .btn-main-action {
-      width: 100%;
-      background: var(--brand);
-      color: #FFFFFF;
-      border: none;
-      padding: 14px 20px;
-      border-radius: var(--radius-md);
-      font-size: 15px;
-      font-weight: 800;
-      font-family: inherit;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.15s;
-      box-shadow: 0 4px 14px rgba(12, 131, 31, 0.3);
-    }
-    .btn-main-action:hover { background: var(--brand-hover); transform: translateY(-1px); }
-    .btn-main-action:active { transform: scale(0.98); }
-
-    /* STEP 2: 4-Box OTP Input */
-    .otp-stream {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin: 20px 0 24px;
-    }
-    .otp-box {
-      width: 58px;
-      height: 60px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: 800;
-      border: 2px solid var(--border-color);
-      border-radius: var(--radius-md);
-      background: #FAFAFA;
-      outline: none;
-      font-family: inherit;
-      color: var(--text-main);
-      transition: all 0.2s;
-    }
-    .otp-box:focus {
-      border-color: var(--brand);
-      background: #FFFFFF;
-      box-shadow: 0 0 0 3px rgba(12, 131, 31, 0.12);
-    }
-
-    .otp-meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12.5px;
-      margin-bottom: 20px;
-    }
-    .btn-edit-num {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .resend-timer {
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .btn-resend-active {
-      color: var(--brand);
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    /* WhatsApp OTP Alternative */
-    .whatsapp-otp-pill {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px;
-      border-radius: var(--radius-md);
-      background: var(--brand-light);
-      border: 1px solid var(--brand);
-      color: #166534;
-      font-size: 13px;
-      font-weight: 700;
-      text-decoration: none;
-      margin-top: 14px;
-      transition: all 0.2s;
-    }
-    .whatsapp-otp-pill:hover { background: #D1E7DD; }
-
-    /* Footer Trust */
-    .login-footer-trust {
-      margin-top: 26px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border-color);
-      text-align: center;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-    .login-footer-trust a { color: var(--text-sub); text-decoration: underline; }
-  </style>
-</head>
-<body>
-
-  <div class="login-box">
-    
-    <!-- Top Row -->
-    <div class="brand-row">
-      <a class="brand-logo" href="/">Maa<span>kit</span></a>
-      <a class="btn-skip" href="<?= htmlspecialchars($next) ?>">छोड़ें (Skip) ✕</a>
-    </div>
-
-    <!-- Feedback Alerts -->
-    <?php if (!empty($error_msg)): ?>
-      <div class="alert-banner alert-error">⚠️ <?= htmlspecialchars($error_msg) ?></div>
-    <?php endif; ?>
-
-    <?php if (!empty($success_msg)): ?>
-      <div class="alert-banner alert-success">✓ <?= htmlspecialchars($success_msg) ?></div>
-    <?php endif; ?>
-
-    <?php if ($step === 'mobile'): ?>
-      <!-- ==========================================
-           STEP 1: ENTER MOBILE NUMBER
-           ========================================== -->
-      <div class="login-heading">
-        <h1>गाँव का अपना बाज़ार</h1>
-        <p>सामान मँगवाने और ऑर्डर ट्रैक करने के लिए अपना 10 अंकों का मोबाइल नंबर दर्ज करें।</p>
+    <div class="lg-card">
+      <div class="lg-tabs" role="tablist">
+        <a role="tab" aria-selected="<?= $as === 'dukan' ? 'true' : 'false' ?>" class="<?= $as === 'dukan' ? 'on' : '' ?>" href="/login.php"><?= t('Shopkeeper', 'दुकानदार') ?></a>
+        <a role="tab" aria-selected="<?= $as === 'team' ? 'true' : 'false' ?>" class="<?= $as === 'team' ? 'on' : '' ?>" href="/login.php?as=team"><?= t('Maakit team', 'Maakit टीम') ?></a>
       </div>
 
-      <form method="POST" action="login.php" onsubmit="return validateMobile()">
-        <input type="hidden" name="action" value="send_otp">
+      <?php if ($err): ?><div class="lg-err" role="alert"><?= h($err) ?></div><?php endif; ?>
 
-        <div class="phone-group">
-          <div class="country-prefix">
-            <span>🇮🇳</span>
-            <span>+91</span>
-          </div>
-          <input 
-            type="tel" 
-            name="mobile" 
-            id="mobileInput" 
-            class="phone-input" 
-            placeholder="98381 23456" 
-            maxlength="10" 
-            autofocus 
-            required 
-            pattern="[0-9]{10}"
-            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-          >
+      <?php if ($as === 'dukan'): ?>
+        <h2><?= t('Welcome back', 'नमस्ते') ?></h2>
+        <p class="lg-sub"><?= t('Sign in with your mobile number and the code Maakit sent you.', 'अपना मोबाइल नंबर और Maakit से मिला कोड डालिए।') ?></p>
+        <form method="post" class="lg-form" data-remember="dukan">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="dukan">
+          <label class="lg-field"><span><?= t('Mobile number', 'मोबाइल नंबर') ?></span>
+            <span class="lg-in"><em>+91</em><input type="tel" name="mobile" inputmode="numeric" autocomplete="tel-national" maxlength="10" value="<?= h(post('mobile')) ?>" required autofocus data-mobile></span></label>
+          <label class="lg-field"><span><?= t('Login code', 'लॉगिन कोड') ?></span>
+            <span class="lg-in"><input type="text" name="code" placeholder="ABC-1234" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" required data-code></span></label>
+          <label class="lg-check"><input type="checkbox" data-keep checked> <?= t('Remember my number on this phone', 'इस फ़ोन पर मेरा नंबर याद रखिए') ?></label>
+          <button class="lg-btn" type="submit"><span><?= t('Sign in', 'खोलिए') ?></span></button>
+          <p class="lg-note"><?= t('Stays signed in on this phone for 90 days.', 'इस फ़ोन पर 90 दिन तक खुला रहेगा।') ?></p>
+        </form>
+        <div class="lg-help">
+          <b><?= t('No code yet?', 'कोड नहीं मिला?') ?></b>
+          <span><?= t('Register your shop first — we send the code on WhatsApp.', 'पहले दुकान दर्ज कीजिए — कोड WhatsApp पर भेज देंगे।') ?></span>
+          <div><a href="/register-business.php"><?= t('Register your shop', 'दुकान दर्ज कीजिए') ?> →</a><a href="tel:<?= h(MAAKIT_PHONE) ?>"><?= t('Call', 'फ़ोन') ?> <?= h(MAAKIT_NUMBER_SHOW) ?></a></div>
         </div>
-
-        <button type="submit" class="btn-main-action" id="btnSendOtp">
-          <span>OTP प्राप्त करें (Continue) →</span>
-        </button>
-      </form>
-
-      <!-- Instant WhatsApp Login Alternative -->
-      <a class="whatsapp-otp-pill" href="https://wa.me/918429393903?text=%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%A4%E0%A5%87%20Maakit%2C%20%E0%A4%AE%E0%A5%81%E0%A4%9D%E0%A5%87%20%E0%A4%B2%E0%A5%89%E0%A4%97%E0%A4%BF%E0%A4%A8%20%E0%A4%95%E0%A4%B0%E0%A4%A8%E0%A4%BE%20%E0%A4%B9%E0%A5%88" target="_blank">
-        <span>📲 WhatsApp से 1-क्लिक में लॉगिन करें</span>
-      </a>
-
-    <?php else: ?>
-      <!-- ==========================================
-           STEP 2: ENTER 4-DIGIT OTP
-           ========================================== -->
-      <div class="login-heading">
-        <h1>OTP सत्यापन (Verify OTP)</h1>
-        <p>नंबर <b>+91 <?= htmlspecialchars($mobile) ?></b> पर भेजा गया 4-अंकों का कोड दर्ज करें।</p>
-      </div>
-
-      <form method="POST" action="login.php" id="otpForm">
-        <input type="hidden" name="action" value="verify_otp">
-
-        <div class="otp-stream">
-          <input type="tel" name="digit1" id="digit1" class="otp-box" maxlength="1" autofocus onkeyup="moveOtp(this, '', 'digit2')" required>
-          <input type="tel" name="digit2" id="digit2" class="otp-box" maxlength="1" onkeyup="moveOtp(this, 'digit1', 'digit3')" required>
-          <input type="tel" name="digit3" id="digit3" class="otp-box" maxlength="1" onkeyup="moveOtp(this, 'digit2', 'digit4')" required>
-          <input type="tel" name="digit4" id="digit4" class="otp-box" maxlength="1" onkeyup="moveOtp(this, 'digit3', '')" required>
-        </div>
-
-        <div class="otp-meta-row">
-          <a class="btn-edit-num" href="login.php">✏️ नंबर बदलें</a>
-          <span class="resend-timer" id="timerLabel">दोबारा भेजें (<span id="countDown">30</span>s)</span>
-        </div>
-
-        <button type="submit" class="btn-main-action">
-          <span>सत्यापित करें और आगे बढ़ें (Verify) ✓</span>
-        </button>
-      </form>
-
-      <?php if (!empty($_SESSION['active_otp'])): ?>
-        <!-- Quick Local Testing Code Indicator -->
-        <div style="margin-top:14px; background:#F8FAFC; border:1px dashed #CBD5E1; padding:8px 12px; border-radius:8px; font-size:12px; text-align:center; color:#475569;">
-          परीक्षण कोड (Demo Code): <b><?= htmlspecialchars($_SESSION['active_otp']) ?></b> या <b>1234</b>
-        </div>
+      <?php else: ?>
+        <h2><?= t('Team sign in', 'टीम लॉगिन') ?></h2>
+        <p class="lg-sub"><?= t('For Maakit staff only.', 'सिर्फ़ Maakit टीम के लिए।') ?></p>
+        <form method="post" class="lg-form" data-remember="team">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="team">
+          <label class="lg-field"><span><?= t('Username', 'यूज़रनेम') ?></span>
+            <span class="lg-in"><input type="text" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required autofocus data-user></span></label>
+          <label class="lg-field"><span><?= t('Password', 'पासवर्ड') ?></span>
+            <span class="lg-in"><input type="password" name="password" autocomplete="current-password" required data-pass>
+              <button type="button" class="lg-eye" data-eye aria-label="<?= h(t('Show password', 'पासवर्ड दिखाइए')) ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+          <label class="lg-check"><input type="checkbox" data-keep checked> <?= t('Remember my username', 'मेरा यूज़रनेम याद रखिए') ?></label>
+          <button class="lg-btn" type="submit"><span><?= t('Sign in', 'लॉगिन') ?></span></button>
+        </form>
       <?php endif; ?>
-
-    <?php endif; ?>
-
-    <div class="login-footer-trust">
-      जारी रखकर आप Maakit की <a href="/terms">सेवा शर्तों</a> और <a href="/privacy">गोपनीयता नीति</a> से सहमत होते हैं। • 100% सुरक्षित
+      <p class="lg-foot"><span class="mk-lang" role="group" aria-label="Language"><a href="<?= h(lang_url('en')) ?>"<?= is_hi() ? '' : ' class="on"' ?>>EN</a><a href="<?= h(lang_url('hi')) ?>"<?= is_hi() ? ' class="on"' : '' ?>>हिं</a></span>
+        <a href="/"><?= t('Back to website', 'वेबसाइट पर वापस') ?></a></p>
     </div>
-
   </div>
-
-  <script>
-    function validateMobile() {
-      const input = document.getElementById('mobileInput');
-      if (input.value.length !== 10) {
-        alert("कृपया पूरा 10 अंकों का मोबाइल नंबर दर्ज करें!");
-        input.focus();
-        return false;
-      }
-      return true;
-    }
-
-    // Auto-advance OTP Inputs
-    function moveOtp(current, prevId, nextId) {
-      current.value = current.value.replace(/[^0-9]/g, '');
-      if (current.value.length === 1 && nextId) {
-        document.getElementById(nextId).focus();
-      } else if (current.value.length === 0 && prevId && event.key === 'Backspace') {
-        document.getElementById(prevId).focus();
-      }
-
-      // If all 4 digits filled, auto-submit
-      const d1 = document.getElementById('digit1')?.value;
-      const d2 = document.getElementById('digit2')?.value;
-      const d3 = document.getElementById('digit3')?.value;
-      const d4 = document.getElementById('digit4')?.value;
-      if (d1 && d2 && d3 && d4) {
-        document.getElementById('otpForm').submit();
-      }
-    }
-
-    // Resend Timer Countdown
-    let timeLeft = 30;
-    const countEl = document.getElementById('countDown');
-    const timerLabel = document.getElementById('timerLabel');
-
-    if (countEl) {
-      const interval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft <= 0) {
-          clearInterval(interval);
-          timerLabel.innerHTML = '<span class="btn-resend-active" onclick="resendOtp()">दोबारा OTP भेजें</span>';
-        } else {
-          countEl.innerText = timeLeft;
-        }
-      }, 1000);
-    }
-
-    function resendOtp() {
-      window.location.reload();
-    }
-  </script>
-</body>
-</html>
+</section>
+<script>
+/* login: number/username yaad, code apne aap bade akshar, password dikhaiye, bhejte waqt ruko */
+(function(){
+  var f = document.querySelector('.lg-form'); if (!f) return;
+  var key = 'mk_login_' + f.getAttribute('data-remember'), keep = f.querySelector('[data-keep]');
+  var field = f.querySelector('[data-mobile]') || f.querySelector('[data-user]');
+  try { var v = localStorage.getItem(key); if (v && field && !field.value) { field.value = v; var nx = f.querySelector('[data-code],[data-pass]'); if (nx) nx.focus(); } } catch (_) {}
+  var m = f.querySelector('[data-mobile]');
+  if (m) m.addEventListener('input', function(){ var d = m.value.replace(/\D/g, ''); if (d.length > 10 && d.indexOf('91') === 0) d = d.slice(2); m.value = d.slice(0, 10); if (m.value.length === 10) { var c = f.querySelector('[data-code]'); if (c && !c.value) c.focus(); } });
+  var c = f.querySelector('[data-code]');
+  if (c) c.addEventListener('input', function(){ var p = c.selectionStart; c.value = c.value.toUpperCase().replace(/\s+/g, ''); try { c.setSelectionRange(p, p); } catch (_) {} });
+  var eye = f.querySelector('[data-eye]'), pw = f.querySelector('[data-pass]');
+  if (eye && pw) eye.addEventListener('click', function(){ pw.type = pw.type === 'password' ? 'text' : 'password'; eye.classList.toggle('on'); pw.focus(); });
+  f.addEventListener('submit', function(){
+    try { if (keep && keep.checked && field) localStorage.setItem(key, field.value.trim()); else localStorage.removeItem(key); } catch (_) {}
+    var b = f.querySelector('.lg-btn'); b.classList.add('busy'); b.setAttribute('aria-busy', 'true');
+  });
+})();
+</script>
+<?php include __DIR__ . '/inc/foot.php'; ?>
