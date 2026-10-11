@@ -50,7 +50,7 @@ function panel_home($role) {
     switch ($role) {
         case 'vendor':
         case 'rider':    return '/public/partner-dashboard.php';
-        case 'admin':    return '/admin/';
+        case 'admin':    return '/admin/dash.php';
         case 'bpo':      return '/bpo/';
         case 'designer': return '/admin/banners.php';
         default:         return '/delivery/';

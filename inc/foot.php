@@ -45,15 +45,16 @@
   </div>
 </footer>
 <?php else: ?>
+<?php if (!empty($adm_shell)): ?></div></div><?php endif; ?>
 <footer class="footer" style="padding:18px 0 22px;margin-top:26px">
   <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
     <span style="opacity:.8;font-size:14px">Maakit <?= defined('MAAKIT_VERSION') ? 'v' . MAAKIT_VERSION : '' ?>
       <?= defined('MAAKIT_VERSION_DATE') ? '· ' . MAAKIT_VERSION_DATE : '' ?> · <?= h(MAAKIT_NUMBER_SHOW) ?></span>
     <span style="display:flex;gap:14px;font-size:14px">
-      <a href="/" target="_blank" rel="noopener">वेबसाइट देखिए</a>
+      <a href="/" target="_blank" rel="noopener"><?= t('View website', 'वेबसाइट देखिए') ?></a>
       <?php /* Jo andar hi nahi hai (jaise login ka panna), use लॉगआउट mat dikhaiye */ ?>
       <?php if (function_exists('user') && user()): ?>
-        <a href="/logout.php">लॉगआउट</a>
+        <a href="/logout.php"><?= t('Log out', 'लॉगआउट') ?></a>
       <?php endif; ?>
     </span>
   </div>

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../inc/items.php';
 require_once __DIR__ . '/../inc/services.php';
 require_once __DIR__ . '/../inc/transport.php';
 $u = need_role('admin');
-$page_title = 'Dashboard — Maakit';
+$page_title = t('Dashboard', 'डैशबोर्ड') . ' — Maakit';
 
 $day  = get('day', date('Y-m-d'));
 $from = get('from', date('Y-m-d', strtotime('-29 days')));
@@ -83,171 +83,171 @@ try {
     $topitems = array_slice($cnt, 0, 12, true);
 } catch (Throwable $e) {}
 
+
+// ---------- har din ka hisaab (khali din bhi 0 ke saath) ----------
+$days = []; $dd = strtotime($from); $de = strtotime($day);
+if ($de - $dd > 120 * 86400) $dd = $de - 120 * 86400;
+for ($x = $dd; $x <= $de; $x += 86400) $days[date('Y-m-d', $x)] = ['c' => 0, 's' => 0];
+foreach ($series as $r) if (isset($days[$r['d']])) $days[$r['d']] = ['c' => (int)$r['c'], 's' => (int)$r['s']];
+$bystatus = $pdo->prepare("SELECT status, COUNT(*) c FROM orders WHERE DATE(created_at) BETWEEN ? AND ? GROUP BY status ORDER BY c DESC");
+$bystatus->execute([$from, $day]); $stat = $bystatus->fetchAll();
+$recent = $pdo->query("SELECT order_no, customer_name, village, status, delivery_charge, first_order, created_at FROM orders ORDER BY id DESC LIMIT 6")->fetchAll();
+$cp_tot = (int)one($pdo, "SELECT COUNT(*) FROM catalog_items");
+try { $cp_done = (int)one($pdo, "SELECT COUNT(DISTINCT cat_id) FROM catalog_photos"); } catch (Throwable $e) { $cp_done = 0; }
+
+/** SVG line + area chart */
+function dash_line(array $vals, $w = 640, $h = 180, $color = '#16A34A') {
+    $n = count($vals); if ($n < 2) return '';
+    $max = max(1, max($vals)); $pad = 6;
+    $pts = [];
+    foreach (array_values($vals) as $i => $v) $pts[] = round($pad + $i * ($w - 2 * $pad) / ($n - 1), 1) . ',' . round($h - $pad - $v * ($h - 2 * $pad) / $max, 1);
+    $grid = '';
+    for ($g = 1; $g <= 3; $g++) { $y = round($h - $pad - $g * ($h - 2 * $pad) / 4, 1); $grid .= '<line x1="0" x2="' . $w . '" y1="' . $y . '" y2="' . $y . '" stroke="#EEF0F2"/>'; }
+    $area = $pad . ',' . ($h - $pad) . ' ' . implode(' ', $pts) . ' ' . ($w - $pad) . ',' . ($h - $pad);
+    return '<svg class="dz-chart" viewBox="0 0 ' . $w . ' ' . $h . '" preserveAspectRatio="none" role="img" aria-label="chart">' . $grid
+        . '<polygon points="' . $area . '" fill="' . $color . '" fill-opacity=".10"/>'
+        . '<polyline points="' . implode(' ', $pts) . '" fill="none" stroke="' . $color . '" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+}
+function dash_bars(array $vals, $w = 640, $h = 180, $color = '#F2B705') {
+    $n = count($vals); if (!$n) return '';
+    $max = max(1, max($vals)); $bw = $w / $n; $out = '';
+    foreach (array_values($vals) as $i => $v) {
+        $bh = max($v ? 3 : 1, round($v * ($h - 8) / $max, 1));
+        $out .= '<rect x="' . round($i * $bw + $bw * .18, 1) . '" y="' . round($h - $bh, 1) . '" width="' . round($bw * .64, 1) . '" height="' . $bh . '" rx="2" fill="' . ($v ? $color : '#EEF0F2') . '"/>';
+    }
+    return '<svg class="dz-chart" viewBox="0 0 ' . $w . ' ' . $h . '" preserveAspectRatio="none" role="img" aria-label="chart">' . $out . '</svg>';
+}
+function dash_status_label($s) { return status_hi($s); }
 include __DIR__ . '/../inc/panel.php';
-$mxd = max(1, max(array_column($series, 'c') ?: [1]));
+$avg = round($o_30 / max(1, count($days)), 1);
+$rupee = fn($n) => '₹' . number_format((int)$n, 0, '.', ',');
 ?>
-<section>
-<div class="wrap">
-  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-    <h2 style="margin:0">Dashboard</h2>
-    <a class="btn btn-line btn-sm" href="/public/admin/approvals.php"><?= t('Partner applications','पार्टनर आवेदन') ?></a>
-    <span class="tag tag-gold">Version <?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '?' ?><?= defined('MAAKIT_VERSION_DATE') ? ' · ' . h(MAAKIT_VERSION_DATE) : '' ?></span>
-  </div>
-  <form method="get" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
-    <div><label>दिन</label><input type="date" name="day" value="<?= h($day) ?>" style="max-width:180px"></div>
-    <div><label>से</label><input type="date" name="from" value="<?= h($from) ?>" style="max-width:180px"></div>
-    <button class="btn btn-brand btn-sm">देखिए</button>
-  </form>
-
-  <h3 class="ghead" style="margin-top:0">आज — <?= h(date('d M Y', strtotime($day))) ?></h3>
-  <div class="kpis">
-    <div class="kpi"><div class="k"><?= svc_icon('box', 15) ?> ऑर्डर</div><div class="v"><?= $o_today ?></div>
-      <div class="d"><?= $o_done ?> पहुँचे · <?= $o_cancel ?> कैंसिल</div></div>
-    <div class="kpi <?= $o_new ? 'warn' : '' ?>"><div class="k"><?= svc_icon('clock', 15) ?> देखना बाकी</div><div class="v"><?= $o_new ?></div>
-      <div class="d"><?= $o_new ? 'अभी कॉल कीजिए' : 'सब देख लिए गए' ?></div></div>
-    <div class="kpi good"><div class="k"><?= svc_icon('rupee', 15) ?> डिलीवरी से</div><div class="v">₹<?= $del_today ?></div>
-      <div class="d">सामान ₹<?= $goods_tdy ?> का गया</div></div>
-    <div class="kpi"><div class="k"><?= svc_icon('all', 15) ?> बुकिंग</div><div class="v"><?= $b_today ?></div>
-      <div class="d"><?= $b_new ?> नई देखनी है<?= $quote_tdy ? ' · ₹' . $quote_tdy . ' तय' : '' ?></div></div>
-  </div>
-
-  <h3 class="ghead"><?= h(date('d M', strtotime($from))) ?> से आज तक</h3>
-  <div class="kpis">
-    <div class="kpi"><div class="k"><?= svc_icon('box', 15) ?> कुल ऑर्डर</div><div class="v"><?= $o_30 ?></div>
-      <div class="d">रोज़ औसत <?= round($o_30 / max(1, (strtotime($day) - strtotime($from)) / 86400 + 1), 1) ?></div></div>
-    <div class="kpi good"><div class="k"><?= svc_icon('rupee', 15) ?> डिलीवरी कमाई</div><div class="v">₹<?= $del_30 ?></div>
-      <div class="d"><a href="/admin/summary.php">खर्च घटाकर हिसाब देखिए</a></div></div>
-    <div class="kpi"><div class="k"><?= svc_icon('user', 15) ?> ग्राहक</div><div class="v"><?= $mobiles ?></div>
-      <div class="d"><?= $cust_tot ?> का खाता · आज <?= $cust_new ?> नए</div></div>
-    <div class="kpi <?= $rep_pct >= 30 ? 'good' : '' ?>"><div class="k"><?= svc_icon('shield', 15) ?> दोबारा आए</div><div class="v"><?= $rep_pct ?>%</div>
-      <div class="d"><?= $repeat ?> लोग एक से ज़्यादा बार</div></div>
-  </div>
-
-  <?php if ($tr_live || $tr_pend): ?>
-    <h3 class="ghead">गाड़ियाँ</h3>
-    <div class="kpis">
-      <div class="kpi"><div class="k">जुड़ी गाड़ियाँ</div><div class="v"><?= $tr_live ?></div>
-        <div class="d"><?= $tr_pend ?> मंज़ूरी बाकी</div></div>
-      <div class="kpi <?= $tr_free ? 'good' : 'warn' ?>"><div class="k">आज खाली</div><div class="v"><?= $tr_free ?></div>
-        <div class="d"><?= $tr_free ? 'बुकिंग पेज पर दिख रही हैं' : 'किसी ने आज बताया नहीं' ?></div></div>
-      <div class="kpi <?= $tr_exp ? 'warn' : '' ?>"><div class="k">कागज़ खत्म हो रहे</div><div class="v"><?= $tr_exp ?></div>
-        <div class="d">45 दिन के अंदर</div></div>
+<section class="dz">
+  <div class="dz-head">
+    <div>
+      <h1><?= t('Dashboard', 'डैशबोर्ड') ?></h1>
+      <p><?= t('Business overview', 'कारोबार की झलक') ?> · <?= h(date('d M', strtotime($from))) ?> – <?= h(date('d M Y', strtotime($day))) ?></p>
     </div>
-  <?php endif; ?>
+    <form method="get" class="dz-range">
+      <label><span><?= t('From', 'से') ?></span><input type="date" name="from" value="<?= h($from) ?>"></label>
+      <label><span><?= t('To', 'तक') ?></span><input type="date" name="day" value="<?= h($day) ?>"></label>
+      <button class="mk-btn mk-btn-sm"><?= t('Apply', 'देखिए') ?></button>
+    </form>
+  </div>
 
-  <?php if ($area_new || $ph_done < $ph_tot || $tr_pend || $tr_exp || $bk_flag || $bk_aaj): ?>
-    <div class="box" style="margin-bottom:18px">
-      <b>ध्यान देने वाली बातें</b>
-      <ul style="margin:8px 0 0;padding-left:18px;line-height:1.9;font-size:15px">
-        <?php if ($tr_exp): ?><li style="color:var(--bad)"><b><?= $tr_exp ?></b> गाड़ी के कागज़ जल्दी खत्म हो रहे हैं —
-          <a href="/admin/transport.php">देखिए</a></li><?php endif; ?>
-        <?php if ($tr_pend): ?><li><b><?= $tr_pend ?></b> गाड़ी मंज़ूरी का इंतज़ार कर रही है —
-          <a href="/admin/transport.php?v=pending">कागज़ देखिए</a></li><?php endif; ?>
-        <?php if ($area_new): ?><li><b><?= $area_new ?></b> नए गाँव से माँग आई है —
-          <a href="/admin/areas.php">देखिए</a></li><?php endif; ?>
-        <?php if ($bk_flag): ?><li><b><?= $bk_flag ?></b> किताब की शिकायत आई है —
-          <a href="/admin/books.php?v=flag">अभी देखिए</a></li><?php endif; ?>
-        <?php if ($bk_aaj): ?><li><b><?= $bk_aaj ?></b> नई किताब आज डाली गई —
-          <a href="/admin/books.php">देखिए</a></li><?php endif; ?>
-        <?php if ($ph_done < $ph_tot): ?><li><b><?= $ph_tot - $ph_done ?></b> सामान की फ़ोटो लगनी बाकी है —
-          <a href="/admin/photos.php">एक साथ लगाइए</a></li><?php endif; ?>
-        <?php if ($b_new): ?><li><b><?= $b_new ?></b> बुकिंग का रेट बताना बाकी है —
-          <a href="/bpo/bookings.php">देखिए</a></li><?php endif; ?>
+  <div class="dz-actions">
+    <a class="mk-btn mk-btn-sm" href="/update.php"><?= t('Update website', 'वेबसाइट अपडेट') ?></a>
+    <a class="dz-chip" href="/admin/product-photos.php"><?= t('Product photos', 'सामान की फ़ोटो') ?> · <?= $cp_done ?>/<?= $cp_tot ?></a>
+    <a class="dz-chip" href="/public/admin/approvals.php"><?= t('Partner applications', 'पार्टनर आवेदन') ?></a>
+    <a class="dz-chip" href="/admin/company-delivery.php"><?= t('Company deliveries', 'कंपनी डिलीवरी') ?></a>
+    <span class="dz-ver">v<?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '?' ?></span>
+  </div>
+
+  <div class="dz-kpis">
+    <div class="dz-kpi"><span><?= t('Orders today', 'आज के ऑर्डर') ?></span><b><?= $o_today ?></b><small><?= $o_done ?> <?= t('delivered', 'पहुँचे') ?> · <?= $o_cancel ?> <?= t('cancelled', 'कैंसिल') ?></small></div>
+    <div class="dz-kpi <?= $o_new ? 'warn' : '' ?>"><span><?= t('Waiting for a call', 'कॉल बाकी') ?></span><b><?= $o_new ?></b><small><?= $o_new ? t('Call these customers now', 'अभी कॉल कीजिए') : t('All handled', 'सब देख लिए गए') ?></small></div>
+    <div class="dz-kpi good"><span><?= t('Delivery income today', 'आज डिलीवरी कमाई') ?></span><b><?= $rupee($del_today) ?></b><small><?= t('Goods value', 'सामान') ?> <?= $rupee($goods_tdy) ?></small></div>
+    <div class="dz-kpi"><span><?= t('Bookings today', 'आज की बुकिंग') ?></span><b><?= $b_today ?></b><small><?= $b_new ?> <?= t('need a quote', 'का रेट बाकी') ?></small></div>
+  </div>
+
+  <div class="dz-kpis">
+    <div class="dz-kpi"><span><?= t('Orders in period', 'इस दौरान ऑर्डर') ?></span><b><?= $o_30 ?></b><small><?= $avg ?> <?= t('per day', 'रोज़') ?></small></div>
+    <div class="dz-kpi good"><span><?= t('Delivery income', 'डिलीवरी कमाई') ?></span><b><?= $rupee($del_30) ?></b><small><a href="/admin/summary.php"><?= t('See profit after costs', 'खर्च घटाकर देखिए') ?></a></small></div>
+    <div class="dz-kpi"><span><?= t('Customers', 'ग्राहक') ?></span><b><?= $mobiles ?></b><small><?= $cust_tot ?> <?= t('accounts', 'खाते') ?> · <?= $cust_new ?> <?= t('new today', 'आज नए') ?></small></div>
+    <div class="dz-kpi <?= $rep_pct >= 30 ? 'good' : '' ?>"><span><?= t('Repeat customers', 'दोबारा आए') ?></span><b><?= $rep_pct ?>%</b><small><?= $repeat ?> <?= t('ordered more than once', 'एक से ज़्यादा बार') ?></small></div>
+  </div>
+
+  <div class="dz-grid2">
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Orders per day', 'रोज़ के ऑर्डर') ?></b><span><?= t('Peak', 'सबसे ज़्यादा') ?> <?= max(array_column($days, 'c') ?: [0]) ?></span></div>
+      <?= dash_line(array_column($days, 'c')) ?: '<p class="dz-empty">' . t('No orders in this period yet', 'इस दौरान अभी कोई ऑर्डर नहीं') . '</p>' ?>
+      <div class="dz-axis"><span><?= h(date('d M', strtotime(array_key_first($days)))) ?></span><span><?= h(date('d M', strtotime(array_key_last($days)))) ?></span></div>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Delivery income per day', 'रोज़ की डिलीवरी कमाई') ?></b><span><?= $rupee($del_30) ?></span></div>
+      <?= dash_bars(array_column($days, 's')) ?>
+      <div class="dz-axis"><span><?= h(date('d M', strtotime(array_key_first($days)))) ?></span><span><?= h(date('d M', strtotime(array_key_last($days)))) ?></span></div>
+    </div>
+  </div>
+
+  <div class="dz-grid3">
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Order status', 'ऑर्डर की स्थिति') ?></b></div>
+      <?php if ($stat): $ts = array_sum(array_column($stat, 'c')); ?>
+        <div class="dz-stack"><?php foreach ($stat as $k => $r): ?><i class="s<?= $k % 6 ?>" style="width:<?= round($r['c'] * 100 / $ts, 2) ?>%"></i><?php endforeach; ?></div>
+        <ul class="dz-legend"><?php foreach ($stat as $k => $r): ?><li><i class="s<?= $k % 6 ?>"></i><?= h(dash_status_label($r['status'])) ?><b><?= (int)$r['c'] ?></b></li><?php endforeach; ?></ul>
+      <?php else: ?><p class="dz-empty"><?= t('No orders yet', 'अभी कोई ऑर्डर नहीं') ?></p><?php endif; ?>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Top villages', 'कौन से गाँव से') ?></b></div>
+      <?php if ($vills): $mv = max(array_column($vills, 'c')); ?>
+        <div class="dz-bars"><?php foreach (array_slice($vills, 0, 7) as $v): ?>
+          <div><span><?= h($v['village']) ?></span><i><em style="width:<?= max(4, round($v['c'] * 100 / $mv)) ?>%"></em></i><b><?= (int)$v['c'] ?></b></div>
+        <?php endforeach; ?></div>
+      <?php else: ?><p class="dz-empty"><?= t('No data yet', 'अभी आँकड़े नहीं') ?></p><?php endif; ?>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Most ordered products', 'सबसे ज़्यादा माँगा सामान') ?></b></div>
+      <?php if ($topitems): $mi = max($topitems); ?>
+        <div class="dz-bars"><?php foreach (array_slice($topitems, 0, 7, true) as $k => $c): ?>
+          <div><span title="<?= h($k) ?>"><?= h($k) ?></span><i><em style="width:<?= max(4, round($c * 100 / $mi)) ?>%"></em></i><b><?= $c ?></b></div>
+        <?php endforeach; ?></div>
+      <?php else: ?><p class="dz-empty"><?= t('No data yet', 'अभी आँकड़े नहीं') ?></p><?php endif; ?>
+    </div>
+  </div>
+
+  <div class="dz-grid2">
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Latest orders', 'नए ऑर्डर') ?></b><a href="/admin/"><?= t('All orders', 'सारे ऑर्डर') ?> →</a></div>
+      <?php if ($recent): ?>
+      <table class="dz-table">
+        <tr><th><?= t('Order', 'ऑर्डर') ?></th><th><?= t('Customer', 'ग्राहक') ?></th><th><?= t('Status', 'स्थिति') ?></th><th><?= t('Charge', 'चार्ज') ?></th></tr>
+        <?php foreach ($recent as $o): ?>
+          <tr><td><b><?= h($o['order_no']) ?></b><small><?= h(date('d M, h:i A', strtotime($o['created_at']))) ?></small></td>
+            <td><?= h($o['customer_name']) ?><small><?= h($o['village']) ?></small></td>
+            <td><span class="dz-pill p-<?= h(strtolower(str_replace(' ', '', $o['status']))) ?>"><?= h(dash_status_label($o['status'])) ?></span></td>
+            <td><?= $o['first_order'] ? t('Free', 'फ़्री') : $rupee($o['delivery_charge']) ?></td></tr>
+        <?php endforeach; ?>
+      </table>
+      <?php else: ?><p class="dz-empty"><?= t('Orders will appear here as soon as they come in.', 'ऑर्डर आते ही यहाँ दिखेंगे।') ?></p><?php endif; ?>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Needs your attention', 'ध्यान दीजिए') ?></b></div>
+      <ul class="dz-todo">
+        <?php $any = false; ?>
+        <?php if ($o_new): $any = true; ?><li class="warn"><b><?= $o_new ?></b> <?= t('new orders waiting for a call', 'नए ऑर्डर कॉल का इंतज़ार कर रहे') ?> <a href="/admin/"><?= t('Open', 'देखिए') ?></a></li><?php endif; ?>
+        <?php if ($b_new): $any = true; ?><li><b><?= $b_new ?></b> <?= t('bookings need a quote', 'बुकिंग का रेट बताना बाकी') ?> <a href="/bpo/bookings.php"><?= t('Open', 'देखिए') ?></a></li><?php endif; ?>
+        <?php if ($tr_exp): $any = true; ?><li class="warn"><b><?= $tr_exp ?></b> <?= t('vehicle papers expire within 45 days', 'गाड़ी के कागज़ 45 दिन में खत्म') ?> <a href="/admin/transport.php"><?= t('Open', 'देखिए') ?></a></li><?php endif; ?>
+        <?php if ($tr_pend): $any = true; ?><li><b><?= $tr_pend ?></b> <?= t('vehicles waiting for approval', 'गाड़ियाँ मंज़ूरी के इंतज़ार में') ?> <a href="/admin/transport.php?v=pending"><?= t('Open', 'देखिए') ?></a></li><?php endif; ?>
+        <?php if ($area_new): $any = true; ?><li><b><?= $area_new ?></b> <?= t('new area requests', 'नए इलाके की माँग') ?> <a href="/admin/areas.php"><?= t('Open', 'देखिए') ?></a></li><?php endif; ?>
+        <?php if ($bk_flag): $any = true; ?><li class="warn"><b><?= $bk_flag ?></b> <?= t('book complaints', 'किताब की शिकायत') ?> <a href="/admin/books.php?v=flag"><?= t('Open', 'देखिए') ?></a></li><?php endif; ?>
+        <?php if ($cp_done < $cp_tot): $any = true; ?><li><b><?= $cp_tot - $cp_done ?></b> <?= t('products without photos', 'सामान बिना फ़ोटो') ?> <a href="/admin/product-photos.php?f=missing"><?= t('Add photos', 'फ़ोटो लगाइए') ?></a></li><?php endif; ?>
+        <?php if (!$any): ?><li class="good"><?= t('All clear — nothing pending.', 'सब ठीक है — कुछ बाकी नहीं।') ?></li><?php endif; ?>
       </ul>
     </div>
-  <?php endif; ?>
+  </div>
 
-  <?php if ($series): ?>
-    <h3 class="ghead">रोज़ के ऑर्डर</h3>
-    <div class="box" style="margin-bottom:18px">
-      <div style="display:flex;align-items:flex-end;gap:3px;height:120px">
-        <?php foreach ($series as $s): ?>
-          <div title="<?= h(date('d M', strtotime($s['d']))) ?> — <?= (int)$s['c'] ?> ऑर्डर, ₹<?= (int)$s['s'] ?>"
-               style="flex:1;min-width:4px;height:<?= max(4, round($s['c'] * 100 / $mxd)) ?>%;background:var(--brand);border-radius:4px 4px 0 0"></div>
-        <?php endforeach; ?>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:6px">
-        <span><?= h(date('d M', strtotime($series[0]['d']))) ?></span>
-        <span>सबसे ज़्यादा <?= $mxd ?> / दिन</span>
-        <span><?= h(date('d M', strtotime(end($series)['d']))) ?></span>
-      </div>
-    </div>
-  <?php endif; ?>
-
-  <div class="grid g2" style="align-items:start">
-    <?php if ($vills): ?>
-    <div class="box">
-      <b>कौन से गाँव से कितना</b>
-      <div class="bars" style="margin-top:10px">
-        <?php $mv = max(array_column($vills, 'c')); foreach ($vills as $v): ?>
-          <div class="bar"><span class="nm"><?= h($v['village']) ?></span>
-            <span class="tr2"><span style="width:<?= max(6, round($v['c'] * 100 / $mv)) ?>%"></span></span>
-            <span class="vv"><?= (int)$v['c'] ?></span></div>
-        <?php endforeach; ?>
-      </div>
-      <p class="help" style="margin-top:10px">जहाँ सबसे कम है वहाँ पोस्टर लगवाइए।</p>
+  <?php if ($miss || $hitq): ?>
+  <div class="dz-grid2">
+    <?php if ($miss): ?>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Searched but not found', 'ढूंढा पर नहीं मिला') ?></b><a href="/admin/items.php#naya"><?= t('Add products', 'सामान जोड़िए') ?> →</a></div>
+      <table class="dz-table">
+        <tr><th><?= t('Search', 'खोज') ?></th><th><?= t('Times', 'बार') ?></th><th><?= t('Last', 'आख़िरी') ?></th></tr>
+        <?php foreach (array_slice($miss, 0, 8) as $m): ?><tr><td><b><?= h($m['q']) ?></b></td><td><?= (int)$m['times'] ?></td><td><small><?= h(date('d M', strtotime($m['last_at']))) ?></small></td></tr><?php endforeach; ?>
+      </table>
     </div>
     <?php endif; ?>
-
-    <?php if ($topitems): ?>
-    <div class="box">
-      <b>सबसे ज़्यादा माँगा जाने वाला सामान</b>
-      <div class="bars" style="margin-top:10px">
-        <?php $mi = max($topitems); foreach ($topitems as $k => $c): ?>
-          <div class="bar"><span class="nm" style="width:140px"><?= h($k) ?></span>
-            <span class="tr2"><span style="width:<?= max(6, round($c * 100 / $mi)) ?>%"></span></span>
-            <span class="vv"><?= $c ?></span></div>
-        <?php endforeach; ?>
-      </div>
-      <p class="help" style="margin-top:10px">Phase 2 में यही सामान अपने स्टॉक में रखिए।</p>
+    <?php if ($hitq || $svcs): ?>
+    <div class="dz-card">
+      <?php if ($hitq): ?><div class="dz-card-h"><b><?= t('Top searches', 'सबसे ज़्यादा खोजे गए') ?></b></div>
+        <div class="dz-tags"><?php foreach ($hitq as $q): ?><span><?= h($q['q']) ?> <b><?= (int)$q['times'] ?></b></span><?php endforeach; ?></div><?php endif; ?>
+      <?php if ($svcs): $ms = max(array_column($svcs, 'c')); ?><div class="dz-card-h" style="margin-top:14px"><b><?= t('Bookings by service', 'कौन सी बुकिंग ज़्यादा') ?></b></div>
+        <div class="dz-bars"><?php foreach (array_slice($svcs, 0, 6) as $sv): $sd = service_get($sv['service']); ?>
+          <div><span><?= h($sd ? $sd['name'] : $sv['service']) ?></span><i><em style="width:<?= max(4, round($sv['c'] * 100 / $ms)) ?>%"></em></i><b><?= (int)$sv['c'] ?></b></div><?php endforeach; ?></div><?php endif; ?>
     </div>
     <?php endif; ?>
   </div>
-
-  <?php if ($miss): ?>
-    <h3 class="ghead">लोगों ने ढूंढा, पर मिला नहीं</h3>
-    <div class="box" style="margin-bottom:18px">
-      <p class="help" style="margin:0 0 10px">यह सबसे काम की लिस्ट है — जो लोग ढूंढ रहे हैं और हमारे पास नहीं है।
-        इन्हें <a href="/admin/items.php#naya">सामान की लिस्ट में जोड़िए</a>।</p>
-      <div class="tablewrap">
-        <table>
-          <tr><th>क्या ढूंढा</th><th>कितनी बार</th><th>आख़िरी बार</th><th></th></tr>
-          <?php foreach ($miss as $m): ?>
-            <tr><td><b><?= h($m['q']) ?></b></td><td><?= (int)$m['times'] ?></td>
-              <td><?= h(date('d M, h:i A', strtotime($m['last_at']))) ?></td>
-              <td><a href="/admin/items.php#naya">जोड़िए</a></td></tr>
-          <?php endforeach; ?>
-        </table>
-      </div>
-    </div>
   <?php endif; ?>
-
-  <div class="grid g2" style="align-items:start;margin-bottom:30px">
-    <?php if ($svcs): ?>
-    <div class="box">
-      <b>कौन सी बुकिंग ज़्यादा</b>
-      <div class="bars" style="margin-top:10px">
-        <?php $ms = max(array_column($svcs, 'c')); foreach ($svcs as $sv): $sd = service_get($sv['service']); ?>
-          <div class="bar"><span class="nm"><?= h($sd ? $sd['name'] : $sv['service']) ?></span>
-            <span class="tr2"><span style="width:<?= max(6, round($sv['c'] * 100 / $ms)) ?>%"></span></span>
-            <span class="vv"><?= (int)$sv['c'] ?></span></div>
-        <?php endforeach; ?>
-      </div>
-    </div>
-    <?php endif; ?>
-
-    <?php if ($hitq): ?>
-    <div class="box">
-      <b>सबसे ज़्यादा ढूंढे गए शब्द</b>
-      <div class="chips" style="margin-top:10px">
-        <?php foreach ($hitq as $q): ?>
-          <span class="chip"><?= h($q['q']) ?> · <?= (int)$q['times'] ?></span>
-        <?php endforeach; ?>
-      </div>
-      <p class="help" style="margin-top:10px">इन्हीं शब्दों को अपने पोस्टर और WhatsApp मैसेज में लिखिए।</p>
-    </div>
-    <?php endif; ?>
-  </div>
-</div>
 </section>
 <?php include __DIR__ . '/../inc/foot.php'; ?>
