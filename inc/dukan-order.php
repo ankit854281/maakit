@@ -66,9 +66,9 @@ $labels = ['naya' => ['नया', 'tag-gold'], 'manzoor' => ['मंज़ू�
                      && !in_array($o['status'], ['Delivered','Cancel'], true);
       ?>
       <?php if ($otp_dikhe): ?>
-        <div style="margin-top:10px;background:var(--cream,#FBF4E6);border-left:4px solid var(--gold,#E0A526);border-radius:10px;padding:10px 12px">
+        <div style="margin-top:10px;background:var(--cream,#F5F9FF);border-left:4px solid var(--gold,#93C5FD);border-radius:10px;padding:10px 12px">
           <div class="meta" style="margin:0">डिलीवरी वाले को यही बताइए</div>
-          <div style="font-size:26px;font-weight:800;letter-spacing:6px;color:var(--brand,#7A1F1F)"><?= h($o['pick_otp']) ?></div>
+          <div style="font-size:26px;font-weight:800;letter-spacing:6px;color:var(--brand,#2563EB)"><?= h($o['pick_otp']) ?></div>
           <div class="meta" style="margin:2px 0 0">इसके बिना वो सामान उठा हुआ दर्ज नहीं कर पाएगा।</div>
         </div>
       <?php endif; ?>
@@ -88,7 +88,7 @@ $labels = ['naya' => ['नया', 'tag-gold'], 'manzoor' => ['मंज़ू�
             <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
             <input type="hidden" name="do" value="order_do"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
             <input type="hidden" name="kya" value="mana">
-            <button class="btn btn-sm" style="background:#EFEAE0">नहीं कर पाऊँगा</button></form>
+            <button class="btn btn-sm" style="background:#EEF2F7">नहीं कर पाऊँगा</button></form>
         <?php elseif ($o['shop_status'] === 'manzoor'): ?>
           <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
             <input type="hidden" name="do" value="order_do"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
@@ -103,11 +103,11 @@ $labels = ['naya' => ['नया', 'tag-gold'], 'manzoor' => ['मंज़ू�
         <?php endif; ?>
 
         <?php if ($upi && in_array($o['shop_status'], ['manzoor','taiyaar'], true)): ?>
-          <a class="btn btn-sm" style="background:#EFEAE0" href="<?= h($upi) ?>">UPI से पैसा लीजिए</a>
+          <a class="btn btn-sm" style="background:#EEF2F7" href="<?= h($upi) ?>">UPI से पैसा लीजिए</a>
         <?php endif; ?>
 
         <?php if ($o['mobile']): ?>
-          <a class="btn btn-sm" style="background:#EFEAE0" href="tel:+91<?= h($o['mobile']) ?>">फ़ोन कीजिए</a>
+          <a class="btn btn-sm" style="background:#EEF2F7" href="tel:+91<?= h($o['mobile']) ?>">फ़ोन कीजिए</a>
         <?php endif; ?>
       </div>
     </div>

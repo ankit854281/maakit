@@ -28,7 +28,7 @@
 
       <div style="text-align:right">
         <div style="opacity:.75;font-size:14px"><?= t('Call / WhatsApp', 'कॉल / WhatsApp') ?></div>
-        <a href="tel:<?= MAAKIT_PHONE ?>" style="text-decoration:none;color:#FBF4E6" class="big"><?= MAAKIT_NUMBER_SHOW ?></a>
+        <a href="tel:<?= MAAKIT_PHONE ?>" style="text-decoration:none;color:#F5F9FF" class="big"><?= MAAKIT_NUMBER_SHOW ?></a>
         <div style="font-size:20px;font-weight:700;opacity:.9">८४२९३ ९३९०३</div>
         <div style="opacity:.75;font-size:13.5px;margin-top:8px"><?= t('Daily 8 AM – 8 PM', 'रोज़ सुबह 8 से रात 8 बजे तक') ?></div>
       </div>

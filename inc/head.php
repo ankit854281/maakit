@@ -59,7 +59,7 @@ if (!$no_tabbar && !$no_ticker) {
 <link rel="canonical" href="<?= h($seo['canonical']) ?>">
 <meta property="og:url" content="<?= h($seo['canonical']) ?>">
 <?php endif; ?>
-<meta name="theme-color" content="#7A1F1F">
+<meta name="theme-color" content="#2563EB">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -77,8 +77,8 @@ if (!$no_tabbar && !$no_ticker) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css">
-<link rel="stylesheet" href="/assets/app.css">
+<link rel="stylesheet" href="/assets/style.css?v=<?= (int)filemtime(__DIR__.'/../assets/style.css') ?>">
+<link rel="stylesheet" href="/assets/app.css?v=<?= (int)filemtime(__DIR__.'/../assets/app.css') ?>">
 <?php if(!empty($request_design)): ?><link rel="stylesheet" href="/assets/request-design.css?v=<?= (int)filemtime(__DIR__.'/../assets/request-design.css') ?>"><?php endif; ?>
 <!-- photo bhejne se pehle chhoti kar deta hai — dheeme net ke liye -->
 <script src="/assets/shrink.js?v=<?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '1' ?>" defer></script>
@@ -106,12 +106,11 @@ if (!$no_tabbar && !$no_ticker) {
 <header class="top">
   <div class="wrap">
     <a class="brand" href="/">
-      <span class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7A1F1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5L12 3.5l8.5 7"/><rect x="6.5" y="12" width="11" height="8.5" rx="1.6"/><path d="M9.8 12v-1a2.2 2.2 0 0 1 4.4 0v1"/></svg></span>
+      <span class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5L12 3.5l8.5 7"/><rect x="6.5" y="12" width="11" height="8.5" rx="1.6"/><path d="M9.8 12v-1a2.2 2.2 0 0 1 4.4 0v1"/></svg></span>
       <span class="word">Maa<span>kit</span></span>
     </a>
     <?php $_c = function_exists('cust') ? cust() : null; ?>
     <span class="hdr">
-      <a class="lang" href="<?= h(lang_switch_url()) ?>" title="<?= h(lang_other_label()) ?>" rel="nofollow"><?= h(lang_other_label()) ?></a>
       <a class="tlink" href="tel:<?= MAAKIT_PHONE ?>"><?= MAAKIT_NUMBER_SHOW ?></a>
       <?php if (empty($no_tabbar)): ?>
         <a class="acct <?= $_c ? 'in' : '' ?>" href="/account.php">
@@ -119,6 +118,11 @@ if (!$no_tabbar && !$no_ticker) {
           <span class="lbl"><?= $_c ? h(mb_substr(explode(' ', trim($_c['name']))[0], 0, 10)) : t('Sign in', 'लॉगिन') ?></span>
         </a>
       <?php endif; ?>
+      <!-- bhasha badlo: hamesha sabse daayein -->
+      <span class="langsw" role="group" aria-label="Language / भाषा">
+        <a href="<?= h(lang_url('en')) ?>" lang="en" rel="nofollow"<?= is_hi() ? '' : ' class="on" aria-current="true"' ?>>EN</a>
+        <a href="<?= h(lang_url('hi')) ?>" lang="hi" rel="nofollow"<?= is_hi() ? ' class="on" aria-current="true"' : '' ?>>हिंदी</a>
+      </span>
     </span>
   </div>
 </header>

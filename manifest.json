@@ -8,8 +8,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FBF4E6",
-  "theme_color": "#7A1F1F",
+  "background_color": "#F5F9FF",
+  "theme_color": "#2563EB",
   "categories": [
     "shopping",
     "food",

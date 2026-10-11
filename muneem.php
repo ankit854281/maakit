@@ -177,7 +177,7 @@ $teer = function ($ab, $pehle) {
 body{background:#FBF7EF;color:#241A14;font-family:system-ui,'Segoe UI',sans-serif;
      margin:0;padding:18px;line-height:1.6;font-size:16px}
 .w{max-width:640px;margin:0 auto}
-h1{font-size:23px;margin:0 0 4px;color:#7A1F1F}
+h1{font-size:23px;margin:0 0 4px;color:#2563EB}
 .kab{color:#6C5B4D;font-size:13.5px;margin:0 0 20px}
 h2{font-size:16px;margin:26px 0 9px;letter-spacing:.04em}
 .c{background:#fff;border:1px solid #E7DECD;border-radius:13px;padding:15px;margin-bottom:11px}

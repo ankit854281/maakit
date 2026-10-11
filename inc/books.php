@@ -8,7 +8,7 @@
 /* bechna / muft / badalna */
 function book_kinds() {
     return [
-        'bech'  => ['l' => ['For sale', 'बेचनी है'],   'ic' => 'tag',  'col' => '#7A1F1F'],
+        'bech'  => ['l' => ['For sale', 'बेचनी है'],   'ic' => 'tag',  'col' => '#2563EB'],
         'muft'  => ['l' => ['Free',     'मुफ़्त देनी है'], 'ic' => 'gift', 'col' => '#2E7D4F'],
         'badal' => ['l' => ['Exchange', 'बदलनी है'],   'ic' => 'swap', 'col' => '#B3701A'],
     ];

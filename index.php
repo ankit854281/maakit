@@ -189,7 +189,7 @@ include __DIR__ . '/inc/head.php';
     <div class="hbk">
       <?php foreach ($bks as $b): $kd = book_kinds()[$b['kind']] ?? null; ?>
         <a class="hbk-c" href="/book.php?id=<?= (int)$b['id'] ?>">
-          <span class="hbk-k" style="background:<?= h($kd['col'] ?? '#7A1F1F') ?>"><?= h(book_kind_label($b['kind'])) ?></span>
+          <span class="hbk-k" style="background:<?= h($kd['col'] ?? '#2563EB') ?>"><?= h(book_kind_label($b['kind'])) ?></span>
           <span class="hbk-i"><?= book_thumb($b, 38) ?></span>
           <b><?= h($b['title']) ?></b>
           <i><?= h(book_price_line($b)) ?></i>

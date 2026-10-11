@@ -241,14 +241,14 @@ watches it too.
 ## 9. Colours and type
 
 ```
-maroon       #7A1F1F   brand — header, primary buttons
-deep maroon  #5A1414
-gold         #E0A526   highlight, secondary button, logo accent
-cream        #FBF4E6   page background
-soft         #F4E6CB   boxes and fills
-line         #EAD7B5   borders
-ink          #2B1A12   text
-muted        #6B4A2F   small text
+blue         #2563EB   brand — header, primary buttons
+deep blue    #1D4ED8
+light blue   #93C5FD   highlight, secondary button, logo accent (var --gold, name kept)
+page         #F5F9FF   page background
+soft         #E6F0FD   boxes and fills
+line         #D3E2F5   borders
+ink          #0F1E33   text
+muted        #4B5D75   small text
 green        #1F7A4D   success
 red          #A3360A   error
 ```
@@ -261,8 +261,10 @@ Rounded corners 11–16px, buttons at least 50px tall, soft shadows.
 Use the CSS variables (`var(--brand)`, `var(--gold)`, `var(--soft)`,
 `var(--line)`, `var(--muted)`), never raw hex in new code.
 
-The feeling: **warm, Indian, trustworthy — a well-run local shop, not a
-Silicon Valley startup.**
+Owner chose a professional light-blue palette on 11 October 2026 (replacing maroon/gold).
+The feeling: **clean, trustworthy, professional — still a well-run local shop.**
+
+Language: an `EN | हिंदी` switch sits at the far right of the header on every page (`lang_url()` in `inc/lang.php`).
 
 ---
 

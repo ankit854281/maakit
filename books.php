@@ -116,7 +116,7 @@ include __DIR__ . '/inc/head.php';
     <div class="bkgrid">
       <?php foreach ($rows as $b): $kd = book_kinds()[$b['kind']] ?? null; ?>
         <a class="bk" href="/book.php?id=<?= (int)$b['id'] ?>">
-          <span class="bk-kind" style="background:<?= h($kd['col'] ?? '#7A1F1F') ?>">
+          <span class="bk-kind" style="background:<?= h($kd['col'] ?? '#2563EB') ?>">
             <?= svc_icon($kd['ic'] ?? 'tag', 13) ?> <?= h(book_kind_label($b['kind'])) ?>
           </span>
           <div class="bk-img"><?= book_thumb($b, 46) ?></div>

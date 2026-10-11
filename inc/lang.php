@@ -59,6 +59,12 @@ function lang_switch_url() {
 }
 function lang_other_label() { return is_hi() ? 'English' : 'हिंदी'; }
 
+/** isi page ka link, chuni hui bhasha me (EN | हिंदी switch ke liye) */
+function lang_url($code) {
+    $q = $_GET; $q['lang'] = ($code === 'hi') ? 'hi' : 'en';
+    return strtok($_SERVER['REQUEST_URI'], '?') . '?' . http_build_query($q);
+}
+
 /** page ka lang attribute */
 function html_lang() { return is_hi() ? 'hi' : 'en-IN'; }
 

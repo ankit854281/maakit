@@ -143,7 +143,7 @@ include __DIR__ . '/inc/head.php';
     </div>
 
     <div>
-      <span class="bk-kind2" style="background:<?= h($kd['col'] ?? '#7A1F1F') ?>">
+      <span class="bk-kind2" style="background:<?= h($kd['col'] ?? '#2563EB') ?>">
         <?= svc_icon($kd['ic'] ?? 'tag', 14) ?> <?= h(book_kind_label($b['kind'])) ?>
       </span>
 
@@ -256,7 +256,7 @@ include __DIR__ . '/inc/head.php';
     <div class="bkgrid">
       <?php foreach ($aur as $x): $k2 = book_kinds()[$x['kind']] ?? null; ?>
         <a class="bk" href="/book.php?id=<?= (int)$x['id'] ?>">
-          <span class="bk-kind" style="background:<?= h($k2['col'] ?? '#7A1F1F') ?>">
+          <span class="bk-kind" style="background:<?= h($k2['col'] ?? '#2563EB') ?>">
             <?= h(book_kind_label($x['kind'])) ?></span>
           <div class="bk-img"><?= book_thumb($x, 42) ?></div>
           <div class="bk-t"><?= h($x['title']) ?></div>
