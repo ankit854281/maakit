@@ -24,7 +24,7 @@ if ($role === 'admin') {
              '/admin/transport.php' => 'गाड़ियाँ', '/admin/banners.php' => 'ऑफ़र', '/admin/areas.php' => 'नए इलाके', '/admin/coverage.php' => 'सेवा क्षेत्र', '/admin/support.php' => 'सहायता',
              '/admin/summary.php' => 'हिसाब', '/admin/businesses.php' => 'दुकान/कारीगर',
              '/admin/feedback.php' => 'राय', '/admin/rates.php' => 'रेट', '/admin/sarathi.php' => 'सारथी',
-             '/admin/settings.php' => 'समय/छुट्टी/रंग', '/admin/users.php' => 'टीम'];
+             '/admin/settings.php' => 'समय/छुट्टी/त्योहार', '/admin/users.php' => 'टीम'];
 } elseif ($role === 'designer') {
     // Designer ka kaam sirf dikhne wali cheezein — offer, photo, home page.
     // Order, hisaab, rate, team isko nahi dikhte.
@@ -46,3 +46,11 @@ $cur = strtok($_SERVER['REQUEST_URI'], '?');
     <a href="/logout.php" style="margin-left:auto">लॉगआउट (<?= h($u['name']) ?>)</a>
   </div>
 </nav>
+<?php if (in_array($role, ['admin', 'designer'], true) && in_array($cur, ['/admin/', '/admin/index.php', '/admin/dash.php'], true)): ?>
+<div class="wrap">
+  <a class="mk-dash-cta" href="/admin/product-photos.php">
+    <span style="flex:1"><b>सामान की फ़ोटो लगाइए (स्लाइड)</b><small>हर सामान की 4–7 फ़ोटो — home page और product page पर दिखेंगी</small></span>
+    <span class="mk-btn mk-btn-sm">फ़ोटो लगाइए →</span>
+  </a>
+</div>
+<?php endif; ?>

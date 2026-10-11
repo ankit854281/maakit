@@ -261,7 +261,7 @@ Rounded corners 11–16px, buttons at least 50px tall, soft shadows.
 Use the CSS variables (`var(--brand)`, `var(--gold)`, `var(--soft)`,
 `var(--line)`, `var(--muted)`), never raw hex in new code.
 
-Colours now come from `inc/theme.php`: five palettes (default Royal indigo + saffron), picked by the owner in Admin > समय/छुट्टी/रंग (setting `site_theme`). The table above is only the light-blue set. Capsule shapes, background lines, price pills and stock tags live in `assets/theme.css`; product photo slides (up to 7 per catalog item) in `catalog_photos` (sql/031), uploaded at `/admin/product-photos.php`.
+Since 11 October 2026 the site uses ONE colour, peacock teal (`inc/theme.php`: brand #0F766E, deep #115E59, marigold #F59E0B only for small highlights), on a white page. New design rules live in `assets/mk.css` (header `.mk-head`, home `.mk-*`): compact product cards (image ~104px phone / 140px desktop), 10–12px corners, no capsule overload, and a desktop layout from 900px with a 1200px container. The festival strip and banner come from `inc/festival.php` (dates per year; Admin > समय/छुट्टी/त्योहार turns it off). Product photo slides (up to 7 per catalog item) are in `catalog_photos` (sql/031), uploaded at `/admin/product-photos.php`.
 Always use the CSS variables, never hex, so every palette keeps working.
 
 Language: an `EN | हिंदी` switch sits at the far right of the header on every page (`lang_url()` in `inc/lang.php`).

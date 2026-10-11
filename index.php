@@ -7,14 +7,11 @@ require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/customer.php';
 require_once __DIR__ . '/inc/books.php';
 require_once __DIR__ . '/inc/catalog.php';
-require_once __DIR__.'/inc/segments.php';
 require_once __DIR__.'/inc/catalog-photos.php';
-$hub_design=true;
 
 $page_title = t('Maakit — shopping, local delivery & bookings in India',
                 'Maakit — भारत में शॉपिंग, स्थानीय डिलीवरी और बुकिंग');
 $tab = 'ghar';
-$request_design = true;
 $me  = cust();
 
 $live = $pdo->query("SELECT *, (salon_updated IS NOT NULL AND salon_updated > (NOW() - INTERVAL 180 MINUTE)) AS fresh
@@ -56,295 +53,164 @@ try {
     $discovery_photos=catalog_photos_for($pdo,$ids);
 } catch (PDOException $e) { error_log('Maakit home catalogue: '.$e->getMessage()); }
 
+require_once __DIR__ . '/inc/festival.php';
+$fest = maakit_festival_now($pdo);
+function mk_price($n) { return rtrim(rtrim(number_format((float)$n, 2, '.', ''), '0'), '.'); }
 include __DIR__ . '/inc/head.php';
 ?>
+<main class="mk-home">
+<div class="mk-wrap">
 
-<main class="search-page home-shopping" data-previous="<?= h(t('Previous cards','पिछले कार्ड')) ?>" data-next="<?= h(t('Next cards','अगले कार्ड')) ?>">
-<!-- ============ hero ============ -->
-<section class="hero2">
-  <div class="wrap">
-    <?php maakit_segments(); ?>
-    <div class="hbar">
-      <span class="loc"><?= svc_icon('box', 15) ?> <?= t('Building across India · check your service area', 'भारत में विस्तार · अपने इलाके में सेवा जाँचें') ?></span>
-      <span class="opn <?= $is_open ? 'yes' : 'no' ?>"><i></i> <?= h($open_short) ?></span>
+  <?php if ($fest): ?>
+  <section class="mk-hero mk-hero-fest" style="--fbg:<?= h($fest['bg']) ?>;--fdeep:<?= h($fest['deep']) ?>;--facc:<?= h($fest['accent']) ?>">
+    <div class="mk-hero-text">
+      <span class="mk-kicker"><?= t('Festival special', 'त्योहार विशेष') ?></span>
+      <h1><?= h(t($fest['en'], $fest['hi'])) ?></h1>
+      <p><?= h(t($fest['sub_en'], $fest['sub_hi'])) ?></p>
+      <div class="mk-hero-cta">
+        <a class="mk-btn mk-btn-light" href="/search.php?q=<?= h(urlencode($fest['q'])) ?>"><?= h(t($fest['cta_en'], $fest['cta_hi'])) ?></a>
+        <a class="mk-btn mk-btn-ghost" href="/order.php#pata"><?= t('Send a list', 'लिस्ट भेजिए') ?></a>
+      </div>
     </div>
-    <h1><?= $me
-        ? t('Hello, ', 'नमस्ते, ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . '.<br>' . t('What do you need?', 'आज क्या चाहिए?')
-        : t('Your local shops.<br>Delivered to your door.', 'दुकानों का सामान।<br>सीधे आपके घर।') ?></h1>
-    <p class="sub"><?= t(
-      'Choose products, send your request, then approve the final price. Delivery in active areas.',
-      'सामान चुनिए, माँग भेजिए, फिर अंतिम दाम पक्का कीजिए। डिलीवरी चालू सेवा क्षेत्रों में।') ?></p>
-
-    <form class="hsearch" action="/search.php" method="get">
-      <span class="ic"><?= svc_icon('search', 20) ?></span>
-      <input type="text" name="q" id="q" placeholder="<?= h(t('What do you need? Atta, medicine, Bolero…', 'क्या चाहिए? आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
-      <button class="go" type="submit"><?= t('Search', 'खोजिए') ?></button>
-    </form>
-
-    <div class="home-main-actions"><a class="btn btn-gold" href="/bazaar.php"><?= t('Start shopping','सामान चुनिए') ?></a><a class="btn btn-line" href="/order.php#pata"><?= t('Send a list / photo','लिस्ट / फोटो भेजिए') ?></a></div>
-
-  </div>
-</section>
-
-<div class="wrap">
-    <div class="discovery-controls">
-      <span><?= t('Shop by category', 'क्या मँगाना है?') ?></span>
-      <button type="button" class="rail-toggle" data-rail-toggle="shop-category-rail" aria-pressed="false" data-paused="<?= h(t('Play', 'चलाएँ')) ?>" data-playing="<?= h(t('Pause', 'रोकें')) ?>"><?= t('Play', 'चलाएँ') ?></button>
+    <?= maakit_festival_art($fest) ?>
+  </section>
+  <?php else: ?>
+  <section class="mk-hero">
+    <div class="mk-hero-text">
+      <span class="mk-kicker"><span class="mk-dot <?= $is_open ? 'on' : '' ?>"></span><?= h($open_short) ?></span>
+      <h1><?= $me ? t('Hello ', 'नमस्ते ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . ', ' . t('what do you need?', 'आज क्या चाहिए?') : t('Your local shops, delivered.', 'आपकी दुकानें, आपके घर।') ?></h1>
+      <p><?= t('Groceries, medicines and daily needs from shops near you.', 'राशन, दवाई और रोज़ का सामान — पास की दुकानों से।') ?></p>
+      <div class="mk-hero-cta">
+        <a class="mk-btn mk-btn-light" href="/bazaar.php"><?= t('Start shopping', 'सामान चुनिए') ?></a>
+        <a class="mk-btn mk-btn-ghost" href="/order.php#pata"><?= t('Send a list', 'लिस्ट भेजिए') ?></a>
+      </div>
     </div>
-    <nav class="shop-category-rail" id="shop-category-rail" aria-label="<?= h(t('Shop categories', 'दुकान की categories')) ?>">
-      <?php foreach ([['Grocery / Kirana Store','grocery','Grocery','राशन'],['Sweet Shop','food','Sweets & snacks','मिठाई और नाश्ता'],['Medical / Pharmacy','medicine','Medicines','दवाइयाँ'],['Clothing / Garments Shop','shops','Clothing','कपड़े'],['Mobile Store','mobile','Mobiles','मोबाइल'],['Hardware Shop','tools','Hardware','हार्डवेयर'],['Kitchenware / Utensils Shop','shops','Kitchen','रसोई'],['Paint Store','home','Paint','पेंट']] as [$kind,$icon,$en,$hi]): ?>
-        <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= svc_icon($icon,26) ?><span><?= h($en) ?></span><?php if(is_hi()): ?><small><?= h($hi) ?></small><?php endif; ?></a>
+  </section>
+  <?php endif; ?>
+
+  <ul class="mk-trust" aria-label="<?= h(t('Why Maakit', 'Maakit क्यों')) ?>">
+    <li><?= svc_icon('shops', 18) ?><?= t('Shop price, no markup', 'दुकान का ही दाम') ?></li>
+    <li><?= svc_icon('box', 18) ?><?= t('Delivery to your door', 'घर तक डिलीवरी') ?></li>
+    <li><?= svc_icon('user', 18) ?><?= t('Local team on call', 'फ़ोन पर मदद') ?></li>
+  </ul>
+
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Shop by category', 'श्रेणी चुनिए') ?></h2><a href="/bazaar.php"><?= t('See all', 'सब देखिए') ?></a></div>
+    <nav class="mk-cats" aria-label="<?= h(t('Categories', 'श्रेणियाँ')) ?>">
+      <?php foreach ([['Grocery / Kirana Store','grocery','Grocery','राशन'],['Sweet Shop','food','Sweets','मिठाई'],['Medical / Pharmacy','medicine','Medicines','दवाई'],['Clothing / Garments Shop','shops','Clothing','कपड़े'],['Mobile Store','mobile','Mobiles','मोबाइल'],['Hardware Shop','tools','Hardware','हार्डवेयर'],['Kitchenware / Utensils Shop','thali','Kitchen','रसोई'],['Paint Store','home','Paint','पेंट']] as [$kind,$icon,$en,$hi]): ?>
+        <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><span class="mk-cat-ic"><?= svc_icon($icon,30) ?></span><span><?= h(t($en,$hi)) ?></span></a>
       <?php endforeach; ?>
-      <a href="/bazaar.php"><?= svc_icon('all',24) ?><span><?= t('All categories', 'सभी categories') ?></span></a>
     </nav>
+  </section>
 
-  <div class="home-order-steps"><span>1 · <?= t('Choose products','सामान चुनिए') ?></span><span>2 · <?= t('Send request','माँग भेजिए') ?></span><span>3 · <?= t('Approve final price','अंतिम दाम पक्का कीजिए') ?></span></div>
   <?php foreach ($discovery as $kind=>$products): ?>
-    <div class="discovery-section">
-      <div class="discovery-heading">
-        <h2><?= h(catalog_label($kind)) ?></h2>
-        <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= t('See all →', 'सब देखिए →') ?></a>
-      </div>
-      <p class="help"><?= t('Explore products. Each shop confirms its price, pack and availability.', 'सामान देखिए। दाम, पैक और उपलब्धता दुकान से पक्के होंगे।') ?></p>
-      <div class="product-discovery-rail search-rail" tabindex="0" role="region" aria-label="<?= h(catalog_label($kind)) ?>">
-        <?php foreach ($products as $product):
-          $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
-          $offer=$offers[0] ?? null;
-          $pics=$discovery_photos[(int)$product['id']] ?? [];
-          $cover=$pics[0] ?? ($offer['photo'] ?? null);
-          $ref=$offer ? null : catalog_reference_price($product);
-          $pname=t($product['name_en'],$product['name_hi'] ?: $product['name_en']); ?>
-          <a class="discovery-product" href="<?= h(catalog_url(['product'=>(int)$product['id']])) ?>">
-            <span class="discovery-picture"><?php if ($cover): ?><img src="/uploads/<?= h($cover) ?>" alt="<?= h($pname) ?>" loading="lazy"><?php else: ?><?= catalog_product_icon($product,38) ?><?php endif; ?>
-              <?php if (count($pics) > 1): ?><span class="ps-count"><?= count($pics) ?> <?= t('photos','फ़ोटो') ?></span><?php endif; ?></span>
-            <b><?= h($pname) ?></b>
-            <?php if ($offer): ?>
-              <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$offer['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($offer['unit']) ?></span>
-              <span class="stock-tag ok"><?= count($offers) > 1 ? t('In stock · '.count($offers).' shops','उपलब्ध · '.count($offers).' दुकान') : t('In stock','उपलब्ध') ?></span>
-            <?php elseif ($ref && !empty($ref['packs'][0])): ?>
-              <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$ref['packs'][0]['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($ref['packs'][0]['unit']) ?></span>
-              <span class="stock-tag ref"><?= t('Market price','बाज़ार दाम') ?></span>
-            <?php else: ?>
-              <span class="stock-tag ask"><?= t('Price on request','दाम पूछकर') ?></span>
-            <?php endif; ?>
-            <span class="discovery-action"><?= t('Choose pack →', 'पैक चुनिए →') ?></span>
-          </a>
-        <?php endforeach; ?>
-      </div>
-    </div>
-  <?php endforeach; ?>
-  <a class="allsvc" href="/bazaar.php"><?= svc_icon('all',20) ?><span><?= t('Browse all shop categories & products', 'सभी दुकान categories और सामान देखिए') ?></span> →</a>
-
-  <nav class="journeys" aria-label="<?= h(t('Other services','दूसरी सेवाएँ')) ?>">
-    <a href="/sewa.php"><?= svc_icon('ride',28) ?><b><?= t('Vehicles & services','गाड़ी और सेवाएँ') ?></b><span><?= t('Book your requirement','अपनी जरूरत बुक कीजिए') ?></span></a>
-    <a href="/directory.php"><?= svc_icon('shops',28) ?><b><?= t('Find a shop','दुकान खोजिए') ?></b><span><?= t('Shops and local professionals','दुकानें और कारीगर') ?></span></a>
-    <a href="/books.php"><?= svc_icon('book',28) ?><b><?= t('Old books','पुरानी किताबें') ?></b><span><?= t('Buy, sell, exchange','खरीदिए, बेचिए, बदलिए') ?></span></a>
-  </nav>
-  <div class="install" id="installBox">
-    <span class="ic"><?= svc_icon('box', 30) ?></span>
-    <span><b><?= t('Keep Maakit on your phone', 'Maakit को फ़ोन में रख लीजिए') ?></b>
-      <i><?= t('Adds to your home screen — like an app, no Play Store', 'होम स्क्रीन पर आ जाएगा — ऐप की तरह, बिना Play Store') ?></i></span>
-    <button class="btn btn-sm btn-brand" id="installYes"><?= t('Add', 'रख लीजिए') ?></button>
-    <button class="btn btn-sm" id="installNo" style="background:transparent;color:var(--muted);padding:8px"><?= t('Not now', 'अभी नहीं') ?></button>
-  </div>
-
-
-  <!-- ============ dukandar ke liye ============ -->
-  <a class="dknyota" href="/register-business.php">
-    <span class="ic"><?= svc_icon('shops', 26) ?></span>
-    <span class="tx">
-      <b><?= t('Are you a shopkeeper?', 'आप दुकानदार हैं?') ?></b>
-      <i><?= t('Put your shop on Maakit — your items, your prices, your orders and your daily accounts, all on your phone. Free.',
-               'अपनी दुकान Maakit पर रखिए — अपना सामान, अपना दाम, अपने ऑर्डर और अपना हिसाब, सब अपने फ़ोन में। मुफ़्त।') ?></i>
-    </span>
-    <span class="go"><?= t('Register your shop', 'दुकान रजिस्टर कीजिए') ?> <?= svc_icon('plus', 14) ?></span>
-  </a>
-
-  <!-- ============ offer / ad ============ -->
-  <?php if ($banners): ?>
-    <div class="secthead" style="margin-top:24px">
-      <h2><?= t('What’s on', 'क्या चल रहा है') ?></h2>
-      <p><?= t('Offers and new services', 'ऑफ़र और नई सेवाएँ') ?></p>
-    </div>
-    <div class="bann" id="bann">
-      <?php foreach ($banners as $b):
-        $ti = is_hi() ? $b['title_hi'] : $b['title_en'];
-        $su = is_hi() ? $b['sub_hi'] : $b['sub_en']; ?>
-        <a class="bn <?= h($b['tone']) ?>" href="<?= h($b['link'] ?: '/order.php') ?>" data-bid="<?= (int)$b['id'] ?>">
-          <b><?= h($ti) ?></b>
-          <?php if ($su): ?><i><?= h($su) ?></i><?php endif; ?>
-          <span class="go"><?= t('Open', 'देखिए') ?> <?= svc_icon('plus', 13) ?></span>
-          <span class="bg"><?= $b['photo']
-              ? '<img src="/uploads/' . h($b['photo']) . '" alt="" loading="lazy">'
-              : svc_icon('box', 96) ?></span>
-        </a>
-      <?php endforeach; ?>
-    </div>
-    <?php if (count($banners) > 1): ?>
-      <!-- gol nishaan — kaunsa offer chal raha hai -->
-      <div class="banndots" id="banndots" aria-hidden="true">
-        <?php for ($i = 0; $i < count($banners); $i++): ?>
-          <u<?= $i === 0 ? ' class="on"' : '' ?>></u>
-        <?php endfor; ?>
-      </div>
-    <?php endif; ?>
-  <?php endif; ?>
-
-  <!-- ============ purani kitaabein ============ -->
-  <?php if ($bks): ?>
-    <div class="secthead" style="margin-top:24px">
-      <h2><?= t('Old books', 'पुरानी किताबें') ?></h2>
-      <p><?= t('Someone’s book, someone else’s need', 'किसी की पढ़ी हुई, किसी के काम की') ?></p>
-      <a class="more" href="/books.php"><?= t('See all', 'सारी देखिए') ?> <?= svc_icon('plus', 13) ?></a>
-    </div>
-    <div class="hbk">
-      <?php foreach ($bks as $b): $kd = book_kinds()[$b['kind']] ?? null; ?>
-        <a class="hbk-c" href="/book.php?id=<?= (int)$b['id'] ?>">
-          <span class="hbk-k" style="background:<?= h($kd['col'] ?? '#2563EB') ?>"><?= h(book_kind_label($b['kind'])) ?></span>
-          <span class="hbk-i"><?= book_thumb($b, 38) ?></span>
-          <b><?= h($b['title']) ?></b>
-          <i><?= h(book_price_line($b)) ?></i>
-        </a>
-      <?php endforeach; ?>
-      <a class="hbk-c hbk-add" href="/book-add.php">
-        <span class="hbk-i"><?= svc_icon('plus', 30) ?></span>
-        <b><?= t('Put up your own book', 'अपनी किताब डालिए') ?></b>
-        <i><?= t('Free', 'फ़्री') ?></i>
-      </a>
-    </div>
-  <?php endif; ?>
-
-</div>
-
-<!-- ============ salon seat booking ============ -->
-<?php if ($live): ?>
-<section class="alt">
-  <div class="wrap">
-    <div class="secthead">
-      <h2><?= t('Salon — book your seat', 'नाई और पार्लर — सीट बुक कीजिए') ?></h2>
-      <p><?= t('Reserve from home instead of waiting at the shop', 'घर बैठे सीट पक्की कीजिए, दुकान पर इंतज़ार मत कीजिए') ?></p>
-    </div>
-    <div class="grid g2">
-      <?php foreach ($live as $b):
-        $isl = salon_live($b);
-        list($dot, $lbl, $cls) = salon_status_label($b);
-        $board = $isl ? salon_board($pdo, $b) : null; ?>
-        <a class="card biz" href="/salon.php?id=<?= (int)$b['id'] ?>">
-          <span class="ph"><?= $b['photo'] ? '<img src="/uploads/' . h($b['photo']) . '" alt="">' : svc_icon('salon', 30) ?></span>
-          <span>
-            <h3><?= h($b['name']) ?></h3>
-            <div class="meta"><?= h($b['village']) ?></div>
-            <div style="margin-top:6px"><span class="tag <?= h($cls) ?>"><?= $dot ?> <?= h($lbl) ?></span>
-              <?= $isl ? '<span class="tag tag-off">' . h(salon_wait_text($board)) . '</span>' : '' ?></div>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= h(catalog_label($kind)) ?></h2><a href="<?= h(catalog_url(['type'=>$kind])) ?>"><?= t('See all', 'सब देखिए') ?></a></div>
+    <div class="mk-rail">
+      <?php foreach ($products as $product):
+        $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
+        $offer=$offers[0] ?? null;
+        $pics=$discovery_photos[(int)$product['id']] ?? [];
+        $cover=$pics[0] ?? ($offer['photo'] ?? null);
+        $ref=$offer ? null : catalog_reference_price($product);
+        $pname=t($product['name_en'],$product['name_hi'] ?: $product['name_en']);
+        $unit=$offer['unit'] ?? ($ref['packs'][0]['unit'] ?? $product['unit_hint']); ?>
+        <a class="mk-pc" href="<?= h(catalog_url(['product'=>(int)$product['id']])) ?>">
+          <span class="mk-pc-img"><?php if ($cover): ?><img src="/uploads/<?= h($cover) ?>" alt="" loading="lazy"><?php else: ?><?= catalog_product_icon($product,34) ?><?php endif; ?></span>
+          <?php if ($offer): ?><span class="mk-tag ok"><?= t('In stock','उपलब्ध') ?></span>
+          <?php elseif ($ref): ?><span class="mk-tag"><?= t('Market price','बाज़ार दाम') ?></span>
+          <?php else: ?><span class="mk-tag"><?= t('Ask price','दाम पूछिए') ?></span><?php endif; ?>
+          <b class="mk-pc-name"><?= h($pname) ?></b>
+          <span class="mk-pc-unit"><?= h($unit) ?></span>
+          <span class="mk-pc-foot">
+            <span class="mk-pc-price"><?php if ($offer): ?>₹<?= h(mk_price($offer['price'])) ?><?php elseif ($ref && !empty($ref['packs'][0])): ?>₹<?= h(mk_price($ref['packs'][0]['price'])) ?><?php else: ?>—<?php endif; ?></span>
+            <span class="mk-add"><?= t('ADD', 'जोड़ें') ?></span>
           </span>
         </a>
       <?php endforeach; ?>
     </div>
-  </div>
-</section>
-<?php endif; ?>
+  </section>
+  <?php endforeach; ?>
 
-<!-- ============ grahakon ki raay ============ -->
-<?php if ($says): ?>
-<section>
-  <div class="wrap">
-    <div class="secthead">
-      <h2><?= t('What people say', 'लोग क्या कहते हैं') ?></h2>
-      <p><?= $avg && $avg['c'] ? t(num($avg['a']) . ' out of 5 · ' . num($avg['c']) . ' reviews',
-             '5 में से ' . num($avg['a']) . ' · ' . num($avg['c']) . ' लोगों की राय')
-           : t('From your own village', 'आपके अपने गाँव से') ?></p>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('More from Maakit', 'Maakit की और सेवाएँ') ?></h2></div>
+    <div class="mk-svcs">
+      <a href="/sewa.php"><span class="mk-cat-ic"><?= svc_icon('ride',26) ?></span><b><?= t('Book a vehicle','गाड़ी बुक करें') ?></b><small><?= t('Bolero, tempo, tent & more','बोलेरो, टेम्पो, टेंट') ?></small></a>
+      <a href="/order.php#pata"><span class="mk-cat-ic"><?= svc_icon('box',26) ?></span><b><?= t('Send a list','लिस्ट भेजें') ?></b><small><?= t('Photo or written list','फ़ोटो या लिखी लिस्ट') ?></small></a>
+      <a href="/directory.php"><span class="mk-cat-ic"><?= svc_icon('shops',26) ?></span><b><?= t('Find a shop','दुकान खोजें') ?></b><small><?= t('Shops & local pros','दुकानें और कारीगर') ?></small></a>
+      <a href="/books.php"><span class="mk-cat-ic"><?= svc_icon('book',26) ?></span><b><?= t('Old books','पुरानी किताबें') ?></b><small><?= t('Buy, sell, exchange','खरीदें, बेचें') ?></small></a>
     </div>
-    <div class="says">
-      <?php foreach ($says as $sy): ?>
-        <div class="say">
-          <div class="st"><?= str_repeat('★', max(1, min(5, (int)$sy['rating']))) ?><span><?= str_repeat('★', 5 - max(1, min(5, (int)$sy['rating']))) ?></span></div>
-          <p><?= h(mb_strimwidth($sy['comment'], 0, 170, '…')) ?></p>
-          <b><?= h($sy['name']) ?><?= $sy['village'] ? ' · ' . h($sy['village']) : '' ?></b>
-          <?php if ($sy['biz']): ?><i><?= h($sy['biz']) ?></i><?php endif; ?>
-        </div>
+  </section>
+
+  <?php if ($banners): ?>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Offers', 'ऑफ़र') ?></h2></div>
+    <div class="mk-offers" id="bann">
+      <?php foreach ($banners as $b): $ti = is_hi() ? $b['title_hi'] : $b['title_en']; $su = is_hi() ? $b['sub_hi'] : $b['sub_en']; ?>
+        <a class="mk-offer tone-<?= h($b['tone']) ?>" href="<?= h($b['link'] ?: '/order.php') ?>" data-bid="<?= (int)$b['id'] ?>">
+          <span><b><?= h($ti) ?></b><?php if ($su): ?><small><?= h($su) ?></small><?php endif; ?></span>
+          <?php if ($b['photo']): ?><img src="/uploads/<?= h($b['photo']) ?>" alt="" loading="lazy"><?php endif; ?>
+        </a>
       <?php endforeach; ?>
     </div>
+  </section>
+  <?php endif; ?>
+
+  <?php if ($live): ?>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Salon — book a seat', 'नाई / पार्लर — सीट बुक करें') ?></h2></div>
+    <div class="mk-list">
+      <?php foreach ($live as $b): $isl = salon_live($b); list($dot, $lbl, $cls) = salon_status_label($b); $board = $isl ? salon_board($pdo, $b) : null; ?>
+        <a href="/salon.php?id=<?= (int)$b['id'] ?>"><span class="mk-cat-ic"><?= $b['photo'] ? '<img src="/uploads/' . h($b['photo']) . '" alt="">' : svc_icon('salon', 24) ?></span>
+          <span><b><?= h($b['name']) ?></b><small><?= h($b['village']) ?> · <?= h($lbl) ?><?= $isl ? ' · ' . h(salon_wait_text($board)) : '' ?></small></span></a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <?php if ($bks): ?>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Old books', 'पुरानी किताबें') ?></h2><a href="/books.php"><?= t('See all', 'सब देखिए') ?></a></div>
+    <div class="mk-rail">
+      <?php foreach ($bks as $b): ?>
+        <a class="mk-pc" href="/book.php?id=<?= (int)$b['id'] ?>"><span class="mk-pc-img"><?= book_thumb($b, 34) ?></span>
+          <b class="mk-pc-name"><?= h($b['title']) ?></b><span class="mk-pc-unit"><?= h(book_price_line($b)) ?></span></a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <?php if ($says): ?>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Customer reviews', 'ग्राहकों की राय') ?></h2><?php if ($avg && $avg['c']): ?><span class="mk-muted">★ <?= num($avg['a']) ?> · <?= num($avg['c']) ?></span><?php endif; ?></div>
+    <div class="mk-reviews">
+      <?php foreach ($says as $sy): ?>
+        <figure><span class="mk-stars"><?= str_repeat('★', max(1, min(5, (int)$sy['rating']))) ?></span>
+          <blockquote><?= h(mb_strimwidth($sy['comment'], 0, 140, '…')) ?></blockquote>
+          <figcaption><?= h($sy['name']) ?><?= $sy['village'] ? ' · ' . h($sy['village']) : '' ?></figcaption></figure>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <a class="mk-partner" href="/register-business.php">
+    <span class="mk-cat-ic"><?= svc_icon('shops', 24) ?></span>
+    <span><b><?= t('Own a shop? Sell on Maakit', 'दुकानदार हैं? Maakit पर बेचिए') ?></b><small><?= t('Free listing · orders on your phone', 'मुफ़्त · ऑर्डर आपके फ़ोन पर') ?></small></span>
+    <span class="mk-btn mk-btn-sm"><?= t('Register', 'रजिस्टर करें') ?></span>
+  </a>
+
+  <div class="install mk-install" id="installBox">
+    <span><b><?= t('Add Maakit to your phone', 'Maakit फ़ोन में रखिए') ?></b><small><?= t('Works like an app', 'ऐप की तरह चलता है') ?></small></span>
+    <button class="mk-btn mk-btn-sm" id="installYes"><?= t('Add', 'रखिए') ?></button>
+    <button class="mk-link" id="installNo"><?= t('Not now', 'अभी नहीं') ?></button>
   </div>
-</section>
-<?php endif; ?>
-
-<section class="home-help"><div class="wrap">
-  <h2><?= t('Clear prices. One request.','साफ़ दाम। एक माँग।') ?></h2>
-  <p><?= t('Available prices show the matching pack size. Maakit confirms the final goods and delivery total before purchase. Goods payment goes directly to the shop.','जहाँ दाम उपलब्ध हैं, साथ में उसी पैक का नाप देखें। खरीदने से पहले सामान और डिलीवरी का अंतिम कुल आपसे पक्का होगा। सामान का भुगतान सीधे दुकान को होगा।') ?></p>
-  <div class="chips"><a class="chip" href="/sewa.php"><?= t('Vehicles & services','गाड़ी और सेवाएँ') ?></a><a class="chip" href="/directory.php"><?= t('Find a shop','दुकान खोजिए') ?></a><a class="chip" href="/area.php"><?= t('Check delivery area','डिलीवरी क्षेत्र जाँचिए') ?></a><a class="chip" href="tel:<?= h(MAAKIT_PHONE) ?>"><?= t('Need help? Call','मदद चाहिए? कॉल कीजिए') ?></a></div>
-</div></section>
+</div>
 </main>
-
 <script>
-/* ---------- offer ki patti khud chalti hai ----------
-   Tasveer aur uspar likha hua, dono ek saath badalte hain —
-   kyunki har patti apne andar dono rakhti hai.
-   Ungli se khiskane par apne aap ruk jati hai, taaki padhne me
-   dikkat na ho. Jinhe hilti cheezein pasand nahi, unke liye
-   bilkul nahi chalti. */
-(function(){
-  var box = document.getElementById('bann');
-  var dots = document.getElementById('banndots');
-  if (!box || !dots) return;
-  var sl = box.querySelectorAll('.bn');
-  var du = dots.querySelectorAll('u');
-  if (sl.length < 2) return;
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  var i = 0, ruka = false, tmr = null;
-
-  function mark(n){
-    for (var k = 0; k < du.length; k++) du[k].classList.toggle('on', k === n);
-  }
-  function kaunsa(){               // abhi kaun si patti saamne hai
-    var best = 0, kam = 1e9;
-    for (var k = 0; k < sl.length; k++) {
-      var d = Math.abs(sl[k].offsetLeft - box.scrollLeft);
-      if (d < kam) { kam = d; best = k; }
-    }
-    return best;
-  }
-  function aage(){
-    if (ruka) return;
-    i = (kaunsa() + 1) % sl.length;
-    box.scrollTo({ left: sl[i].offsetLeft - box.offsetLeft, behavior: 'smooth' });
-    mark(i);
-  }
-
-  box.addEventListener('scroll', function(){ mark(kaunsa()); }, { passive: true });
-  // ungli rakhte hi ruk jaye
-  ['pointerdown','touchstart'].forEach(function(ev){
-    box.addEventListener(ev, function(){ ruka = true; }, { passive: true });
-  });
-  ['pointerup','touchend','mouseleave'].forEach(function(ev){
-    box.addEventListener(ev, function(){ ruka = false; }, { passive: true });
-  });
-  // dusre tab par gaye to chalana band — data aur battery dono bachti hai
-  document.addEventListener('visibilitychange', function(){
-    if (document.hidden) { clearInterval(tmr); tmr = null; }
-    else if (!tmr) { tmr = setInterval(aage, 4200); }
-  });
-  tmr = setInterval(aage, 4200);
-})();
-
-/* banner kitni baar dabaya gaya */
 document.addEventListener('click', function(e){
-  var a = e.target.closest('.bn[data-bid]'); if (!a) return;
+  var a = e.target.closest('[data-bid]'); if (!a) return;
   try { var d = new FormData(); d.append('a','bclick'); d.append('id', a.getAttribute('data-bid'));
         if (navigator.sendBeacon) navigator.sendBeacon('/api.php', d); } catch(_){}
 });
-(function(){
-  var el = document.getElementById('q');
-  if (!el) return;
-  var list = <?= json_encode(is_hi()
-      ? ['आटा, चावल, दाल…','बुख़ार की दवा','सरसों तेल 1 लीटर','गरम खाना मँगाइए','बोलेरो बुक कीजिए','शादी के लिए लॉन','टेंट और डीजे','पंडित जी चाहिए?','नल मिस्त्री बुलाइए']
-      : ['Atta, rice, dal…','Fever medicine','Mustard oil 1 litre','Hot food delivered','Book a Bolero','Lawn for a wedding','Tent and DJ','Need a pandit ji?','Call a plumber'], JSON_UNESCAPED_UNICODE) ?>;
-  var i = 0;
-  setInterval(function(){ if (document.activeElement === el || el.value) return;
-    i = (i + 1) % list.length; el.setAttribute('placeholder', list[i]); }, 2400);
-})();
 </script>
-<script src="/assets/catalogue-discovery.js" defer></script>
-<script src="/assets/search-sliders.js?v=1" defer></script>
 <?php include __DIR__ . '/inc/foot.php'; ?>
-

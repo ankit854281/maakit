@@ -85,55 +85,66 @@ if (!$no_tabbar && !$no_ticker) {
 <!-- photo bhejne se pehle chhoti kar deta hai — dheeme net ke liye -->
 <script src="/assets/shrink.js?v=<?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '1' ?>" defer></script>
 <?php if(!empty($hub_design)): ?><link rel="stylesheet" href="/assets/hub.css?v=<?= (int)filemtime(__DIR__.'/../assets/hub.css') ?>"><?php endif; ?>
-<!-- capsule design, background lines, price tags, photo slides — sabse aakhir me -->
-<link rel="stylesheet" href="/assets/theme.css?v=<?= (int)filemtime(__DIR__.'/../assets/theme.css') ?>">
+<!-- naya design (11 Oct 2026) — sabse aakhir me -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/mk.css?v=<?= (int)filemtime(__DIR__.'/../assets/mk.css') ?>">
 <style><?= maakit_theme_css($pdo ?? null) ?></style>
 </head>
 <body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($request_design)?' request-design':'' ?>">
 
-<?php if ($tick): ?>
-<!-- jahan-jahan Maakit pahunchta hai -->
+<?php
+require_once __DIR__ . '/festival.php';
+$_fest = empty($no_tabbar) ? maakit_festival_now($pdo ?? null) : null;
+$_c = function_exists('cust') ? cust() : null;
+$_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_selected($pdo) : null;
+?>
+<?php if ($_fest): ?>
+<a class="mk-fest-strip" href="/search.php?q=<?= h(urlencode($_fest['q'])) ?>" style="--fbg:<?= h($_fest['bg']) ?>;--facc:<?= h($_fest['accent']) ?>">
+  <span class="mk-wrap"><b><?= h(t($_fest['en'], $_fest['hi'])) ?></b><span class="mk-fs-sub"><?= h(t($_fest['cta_en'], $_fest['cta_hi'])) ?> →</span></span>
+</a>
+<?php elseif ($tick): ?>
 <div class="ticker" aria-label="<?= h($tick_hul ? t('Recent activity', 'अभी-अभी') : t('Service areas', 'सेवा क्षेत्र')) ?>">
   <div class="tk">
-    <span class="lbl"><?= svc_icon('box', 13) ?> <?= $tick_hul
-        ? t('JUST NOW', 'अभी-अभी')
-        : t('WE DELIVER IN', 'यहाँ पहुँचते हैं') ?></span>
+    <span class="lbl"><?= $tick_hul ? t('JUST NOW', 'अभी-अभी') : t('WE DELIVER IN', 'यहाँ पहुँचते हैं') ?></span>
     <div class="run"><div class="rr">
       <?php for ($p = 0; $p < 2; $p++): foreach ($tick as $v): ?>
         <span><?= h($v) ?></span><i>·</i>
       <?php endforeach; endfor; ?>
     </div></div>
-    <a class="add" href="/location.php"><?= t('Check your area', 'अपना इलाका देखें') ?></a>
   </div>
 </div>
 <?php endif; ?>
 
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="/">
-      <span class="mark"><?= maakit_logo_svg(38) ?></span>
-      <span class="word"><span class="wm">Maa<span>kit</span></span><small>Maa hai na</small></span>
+<header class="mk-head">
+  <div class="mk-wrap mk-head-row">
+    <a class="mk-brand" href="/" aria-label="Maakit home">
+      <?= maakit_logo_svg(36) ?>
+      <span class="mk-word">Maakit<small><?= t('Maa hai na', 'माँ है ना') ?></small></span>
     </a>
-    <?php $_c = function_exists('cust') ? cust() : null; ?>
-    <span class="hdr">
-      <a class="tlink" href="tel:<?= MAAKIT_PHONE ?>"><?= MAAKIT_NUMBER_SHOW ?></a>
-      <?php if (empty($no_tabbar)): ?>
-        <a class="acct <?= $_c ? 'in' : '' ?>" href="/account.php">
-          <?= svc_icon('user', 18) ?>
-          <span class="lbl"><?= $_c ? h(mb_substr(explode(' ', trim($_c['name']))[0], 0, 10)) : t('Sign in', 'लॉगिन') ?></span>
-        </a>
-      <?php endif; ?>
-      <!-- bhasha badlo: hamesha sabse daayein -->
-      <span class="langsw" role="group" aria-label="Language / भाषा">
+    <?php if (empty($no_tabbar)): ?>
+    <a class="mk-loc" href="/location.php">
+      <small><?= t('Delivering to', 'डिलीवरी') ?></small>
+      <b><?= $_area ? h(coverage_label($_area)) : t('Select area', 'इलाका चुनिए') ?> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></b>
+    </a>
+    <form class="mk-search" action="/search.php" method="get" role="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" name="q" placeholder="<?= h(t('Search atta, medicine, Bolero…', 'खोजिए: आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
+    </form>
+    <?php endif; ?>
+    <div class="mk-actions">
+      <a class="mk-call" href="tel:<?= MAAKIT_PHONE ?>"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span><?= MAAKIT_NUMBER_SHOW ?></span></a>
+      <span class="mk-lang" role="group" aria-label="Language / भाषा">
         <a href="<?= h(lang_url('en')) ?>" lang="en" rel="nofollow"<?= is_hi() ? '' : ' class="on" aria-current="true"' ?>>EN</a>
-        <a href="<?= h(lang_url('hi')) ?>" lang="hi" rel="nofollow"<?= is_hi() ? ' class="on" aria-current="true"' : '' ?>>हिंदी</a>
+        <a href="<?= h(lang_url('hi')) ?>" lang="hi" rel="nofollow"<?= is_hi() ? ' class="on" aria-current="true"' : '' ?>>हिं</a>
       </span>
-    </span>
+      <?php if (empty($no_tabbar)): ?>
+      <a class="mk-acct" href="/account.php" aria-label="<?= h($_c ? t('Your account', 'आपका खाता') : t('Sign in', 'लॉगिन')) ?>">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+        <span><?= $_c ? h(mb_substr(explode(' ', trim($_c['name']))[0], 0, 10)) : t('Login', 'लॉगिन') ?></span>
+      </a>
+      <?php endif; ?>
+    </div>
   </div>
 </header>
 <?php if ($f = flash()): ?><div class="wrap" style="padding-top:14px"><div class="ok"><?= h($f) ?></div></div><?php endif; ?>
-
-<?php if (empty($no_tabbar)): $chosen_area=coverage_selected($pdo); ?>
-<div class="locationbar"><div class="wrap"><a href="/location.php"><?= svc_icon('box',18) ?> <b><?= $chosen_area ? h(coverage_label($chosen_area)) : t('Choose city / area / PIN','शहर / इलाका / PIN चुनें') ?></b> <span><?=t('Change','बदलें')?></span></a><a href="/support.php"><?=t('Help','सहायता')?></a></div></div>
-<?php endif; ?>
 

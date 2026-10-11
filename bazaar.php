@@ -209,6 +209,9 @@ include __DIR__ . '/inc/head.php';
         <?php if ($pics): ?>
           <?= $focused ? catalog_slider_html($pics, $pname) : '<a class="bazaar-cover" href="' . h(catalog_url(['product' => (int)$item['id']])) . '"><img src="/uploads/' . h($pics[0]) . '" alt="' . h($pname) . '" loading="lazy">' . (count($pics) > 1 ? '<span class="ps-count">' . count($pics) . ' ' . t('photos', 'फ़ोटो') . '</span>' : '') . '</a>' ?>
         <?php endif; ?>
+        <?php if ($focused && function_exists('user') && ($__u = user()) && in_array($__u['role'] ?? '', ['admin','designer'], true)): ?>
+          <a class="pp-admin-link" href="/admin/product-photos.php?id=<?= (int)$item['id'] ?>">+ <?= t('Add / change photos (admin)', 'फ़ोटो लगाइए / बदलिए (admin)') ?></a>
+        <?php endif; ?>
         <h3><?= h($pname) ?></h3>
         <div class="price-row">
           <?php if ($stocked): $low = $stocked[0]; ?>

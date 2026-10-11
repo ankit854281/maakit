@@ -9,31 +9,12 @@
 // ============================================================
 
 function maakit_themes() {
+    // Ek hi rang — malik ki pasand (11 Oct 2026): peacock teal.
     return [
-        'indigo' => [
-            'en' => 'Royal indigo and saffron', 'hi' => 'शाही नीला और केसरिया',
-            'brand' => '#3D2C8D', 'brand-deep' => '#241A5C', 'gold' => '#FF9F1C', 'on-gold' => '#3A2200',
-            'bg' => '#F7F6FC', 'soft' => '#ECE9FA', 'line' => '#DCD7F2', 'ink' => '#17142E', 'muted' => '#5B5677',
-        ],
-        'emerald' => [
-            'en' => 'Emerald and gold', 'hi' => 'पन्ना हरा और सुनहरा',
-            'brand' => '#0B7A55', 'brand-deep' => '#075A40', 'gold' => '#F5B700', 'on-gold' => '#3A2B00',
-            'bg' => '#F3FAF6', 'soft' => '#DFF3EA', 'line' => '#C7E6D7', 'ink' => '#0D2A20', 'muted' => '#4B6A5E',
-        ],
-        'midnight' => [
-            'en' => 'Midnight and coral', 'hi' => 'गहरा नीला और मूंगा',
-            'brand' => '#14213D', 'brand-deep' => '#0B1426', 'gold' => '#FF7A59', 'on-gold' => '#3B0D02',
-            'bg' => '#F6F7FA', 'soft' => '#E8ECF4', 'line' => '#D6DCE8', 'ink' => '#101828', 'muted' => '#556070',
-        ],
-        'plum' => [
-            'en' => 'Plum and peach', 'hi' => 'बैंगनी और आड़ू',
-            'brand' => '#6A2C70', 'brand-deep' => '#4A1D4F', 'gold' => '#FFB38A', 'on-gold' => '#3D1405',
-            'bg' => '#FBF6FA', 'soft' => '#F3E6F1', 'line' => '#E6D2E3', 'ink' => '#2A1029', 'muted' => '#6E5470',
-        ],
-        'blue' => [
-            'en' => 'Light blue', 'hi' => 'हल्का नीला',
-            'brand' => '#2563EB', 'brand-deep' => '#1D4ED8', 'gold' => '#93C5FD', 'on-gold' => '#0B2E66',
-            'bg' => '#F5F9FF', 'soft' => '#E6F0FD', 'line' => '#D3E2F5', 'ink' => '#0F1E33', 'muted' => '#4B5D75',
+        'teal' => [
+            'en' => 'Peacock teal', 'hi' => 'मोर नीला-हरा',
+            'brand' => '#0F766E', 'brand-deep' => '#115E59', 'gold' => '#F59E0B', 'on-gold' => '#3A2200',
+            'bg' => '#F7F8F8', 'soft' => '#E6F4F2', 'line' => '#E3E7EA', 'ink' => '#111827', 'muted' => '#5B6472',
         ],
     ];
 }
@@ -47,7 +28,7 @@ function maakit_theme_key($pdo = null) {
     if ($pdo instanceof PDO && function_exists('setg')) {
         try { $saved = setg($pdo, 'site_theme', null); } catch (Throwable $e) { $saved = null; }
     }
-    return $k = (is_string($saved) && isset($all[$saved])) ? $saved : 'indigo';
+    return $k = (is_string($saved) && isset($all[$saved])) ? $saved : 'teal';
 }
 
 function maakit_theme($pdo = null) {

@@ -3,7 +3,7 @@
   <div class="wrap">
     <div class="fgrid">
       <div>
-        <div class="word" style="font-size:30px">Maa<span>kit</span></div>
+        <div class="mk-foot-brand"><?= function_exists('maakit_logo_svg') ? maakit_logo_svg(34) : '' ?><b>Maakit</b></div>
         <div style="opacity:.88;margin-top:2px"><?= t('Anything you need. Maa hai na.', 'कुछ चाहिए? माँ है ना।') ?></div>
         <div style="opacity:.7;font-size:14px;margin-top:10px"><?= t('Connecting local shops and services across India. Coverage varies by area.', 'भारत में स्थानीय दुकानें और सेवाएँ। उपलब्धता इलाके के अनुसार है।') ?></div>
         <a class="btn btn-sm btn-gold" style="margin-top:12px" href="/area.php"><?= t('Request your area', 'अपने इलाके में सेवा माँगें') ?></a>
@@ -26,10 +26,9 @@
         <a href="/transport.php"><?= t('Register your vehicle', 'अपनी गाड़ी जोड़िए') ?></a>
       </div>
 
-      <div style="text-align:right">
+      <div class="fcall">
         <div style="opacity:.75;font-size:14px"><?= t('Call / WhatsApp', 'कॉल / WhatsApp') ?></div>
-        <a href="tel:<?= MAAKIT_PHONE ?>" style="text-decoration:none;color:#F5F9FF" class="big"><?= MAAKIT_NUMBER_SHOW ?></a>
-        <div style="font-size:20px;font-weight:700;opacity:.9">८४२९३ ९३९०३</div>
+        <a href="tel:<?= MAAKIT_PHONE ?>" class="big"><?= MAAKIT_NUMBER_SHOW ?></a>
         <div style="opacity:.75;font-size:13.5px;margin-top:8px"><?= t('Daily 8 AM – 8 PM', 'रोज़ सुबह 8 से रात 8 बजे तक') ?></div>
       </div>
     </div>

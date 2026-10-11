@@ -11,7 +11,7 @@
    - panel, login, POST: kabhi cache nahi (hamesha taaza)
    ============================================================ */
 
-const V     = 'maakit-v6';
+const V     = 'maakit-v7';
 const SHELL = V + '-shell';
 const PAGES = V + '-pages';
 
