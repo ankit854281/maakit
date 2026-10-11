@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/theme.php';
 $u = need_role('admin');
-$page_title = 'समय और छुट्टी — Maakit';
+$page_title = 'समय, छुट्टी और रंग — Maakit';
 
 function sset(PDO $pdo, $k, $v) {
     $pdo->prepare("INSERT INTO settings (k, v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)")
@@ -11,7 +12,11 @@ function sset(PDO $pdo, $k, $v) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 
-    if ($do === 'hours') {
+    if ($do === 'theme') {
+        $k = post('theme');
+        if (isset(maakit_themes()[$k])) { sset($pdo, 'site_theme', $k); flash('वेबसाइट का रंग बदल गया — “वेबसाइट पर देखिए” दबाकर देखिए।'); }
+    }
+    elseif ($do === 'hours') {
         $o = preg_match('/^\d\d:\d\d$/', post('open_time'))  ? post('open_time')  : '08:00';
         $c = preg_match('/^\d\d:\d\d$/', post('close_time')) ? post('close_time') : '20:00';
         sset($pdo, 'open_time', $o);
@@ -48,7 +53,7 @@ include __DIR__ . '/../inc/panel.php';
 ?>
 <section>
 <div class="wrap" style="max-width:720px">
-  <h2>समय और छुट्टी</h2>
+  <h2>समय, छुट्टी और रंग</h2>
   <p class="lead">वेबसाइट पर सबसे ऊपर “अभी खुले हैं / आज बंद है” यहीं से तय होता है।
     ग्राहक को पहले ही पता चल जाता है, तो बेकार के फ़ोन नहीं आते।</p>
 
@@ -59,7 +64,23 @@ include __DIR__ . '/../inc/panel.php';
     <a class="btn btn-sm btn-line" href="/" target="_blank" style="margin-left:auto;color:var(--brand);border-color:var(--line)">वेबसाइट पर देखिए</a>
   </div>
 
-  <h3 class="ghead" style="margin-top:0">रोज़ का समय</h3>
+  <h3 class="ghead" style="margin-top:0">वेबसाइट का रंग</h3>
+  <form method="post" class="box theme-pick" style="margin-bottom:16px">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="theme">
+    <p class="help" style="margin:0 0 12px">एक रंग चुनिए — पूरी वेबसाइट (header, बटन, card, दाम) एक साथ बदल जाएगी। कभी भी वापस बदल सकते हैं।</p>
+    <?php $curTheme = $S['site_theme'] ?? 'indigo'; foreach (maakit_themes() as $tk => $th): ?>
+      <label class="theme-opt">
+        <input type="radio" name="theme" value="<?= h($tk) ?>" <?= $curTheme === $tk ? 'checked' : '' ?>>
+        <span class="theme-sw" aria-hidden="true">
+          <i style="background:<?= h($th['brand']) ?>"></i><i style="background:<?= h($th['gold']) ?>"></i><i style="background:<?= h($th['soft']) ?>"></i>
+        </span>
+        <span><b><?= h($th['hi']) ?></b><span class="meta"> · <?= h($th['en']) ?></span></span>
+      </label>
+    <?php endforeach; ?>
+    <button class="btn btn-brand" style="width:100%;margin-top:10px">यह रंग लगाइए</button>
+  </form>
+
+  <h3 class="ghead">रोज़ का समय</h3>
   <form method="post" class="box" style="margin-bottom:16px">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="hours">
     <div class="grid g2">

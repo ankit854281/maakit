@@ -1,7 +1,7 @@
 :root{
   --bg:#F5F9FF; --surface:#fff; --ink:#0F1E33; --muted:#4B5D75; --line:#D3E2F5;
   --brand:#2563EB; --brand-deep:#1D4ED8; --gold:#93C5FD; --on-brand:#FFFFFF; --soft:#E6F0FD;
-  --ok:#1F7A4D; --bad:#A3360A;
+  --ok:#1F7A4D; --bad:#A3360A; --on-gold:#0B2E66;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -28,7 +28,7 @@ a{color:var(--brand)}
 .hero p.sub{font-size:clamp(16px,2.2vw,20px);margin:10px 0 20px;color:rgba(255,255,255,.88);max-width:36ch}
 .cta{display:flex;flex-wrap:wrap;gap:10px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;font-weight:700;font-size:16px;border-radius:13px;padding:13px 20px;min-height:50px;border:0;cursor:pointer;font-family:inherit}
-.btn-gold{background:var(--gold);color:#0B2E66}
+.btn-gold{background:var(--gold);color:var(--on-gold)}
 .btn-line{background:transparent;color:var(--on-brand);border:2px solid rgba(255,255,255,.45)}
 .btn-brand{background:var(--brand);color:#fff}
 .btn-green{background:var(--ok);color:#fff}
@@ -65,7 +65,7 @@ h2{font-size:clamp(24px,3.6vw,34px);margin:0 0 6px;letter-spacing:-.4px}
 .tag{display:inline-block;font-size:13px;font-weight:700;border-radius:20px;padding:3px 10px}
 .tag-live{background:#E5F3EA;color:var(--ok)}
 .tag-off{background:#EEF2F7;color:var(--muted)}
-.tag-gold{background:var(--gold);color:#0B2E66}
+.tag-gold{background:var(--gold);color:var(--on-gold)}
 .stars{color:var(--gold);letter-spacing:2px}
 
 label{display:block;font-weight:600;font-size:15px;margin:0 0 5px}
@@ -148,7 +148,7 @@ th{background:var(--brand);color:#fff;font-weight:600;font-size:14px}
    ============================================================ */
 .dknyota{display:flex;align-items:center;gap:14px;flex-wrap:wrap;text-decoration:none;color:inherit;
   margin-top:18px;background:var(--soft);border:2px solid var(--gold);border-radius:16px;padding:16px 18px}
-.dknyota .ic{width:46px;height:46px;border-radius:13px;background:var(--gold);color:#0B2E66;
+.dknyota .ic{width:46px;height:46px;border-radius:13px;background:var(--gold);color:var(--on-gold);
   display:grid;place-items:center;flex:none}
 .dknyota .tx{flex:1;min-width:190px;display:block}
 .dknyota b{display:block;font-size:17px}

@@ -8,6 +8,7 @@ require_once __DIR__ . '/inc/customer.php';
 require_once __DIR__ . '/inc/books.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__.'/inc/segments.php';
+require_once __DIR__.'/inc/catalog-photos.php';
 $hub_design=true;
 
 $page_title = t('Maakit — shopping, local delivery & bookings in India',
@@ -41,7 +42,7 @@ try {
 } catch (Throwable $e) { $banners = []; }
 
 // Discovery templates stay visible even before a shop publishes a price.
-$discovery = []; $discovery_offers = [];
+$discovery = []; $discovery_offers = []; $discovery_photos = [];
 try {
     $cs = $pdo->prepare('SELECT * FROM catalog_items WHERE shop_type=? ORDER BY CASE WHEN id IN (1517,1659,1666,1669,1671,1678) THEN 0 ELSE 1 END,sort_no,id LIMIT 6');
     foreach (['Grocery / Kirana Store','Sweet Shop'] as $kind) {
@@ -52,6 +53,7 @@ try {
     $ids=[];
     foreach ($discovery as $rows) foreach ($rows as $row) $ids[]=(int)$row['id'];
     $discovery_offers=catalog_offers($pdo,$ids,coverage_selected($pdo));
+    $discovery_photos=catalog_photos_for($pdo,$ids);
 } catch (PDOException $e) { error_log('Maakit home catalogue: '.$e->getMessage()); }
 
 include __DIR__ . '/inc/head.php';
@@ -107,14 +109,23 @@ include __DIR__ . '/inc/head.php';
       <div class="product-discovery-rail search-rail" tabindex="0" role="region" aria-label="<?= h(catalog_label($kind)) ?>">
         <?php foreach ($products as $product):
           $offers=array_values(array_filter($discovery_offers[(int)$product['id']] ?? [],fn($o)=>$o['stock']==='hai'));
-          $offer=$offers[0] ?? null; ?>
+          $offer=$offers[0] ?? null;
+          $pics=$discovery_photos[(int)$product['id']] ?? [];
+          $cover=$pics[0] ?? ($offer['photo'] ?? null);
+          $ref=$offer ? null : catalog_reference_price($product);
+          $pname=t($product['name_en'],$product['name_hi'] ?: $product['name_en']); ?>
           <a class="discovery-product" href="<?= h(catalog_url(['product'=>(int)$product['id']])) ?>">
-            <span class="discovery-picture"><?php if ($offer && $offer['photo']): ?><img src="/uploads/<?= h($offer['photo']) ?>" alt="<?= h($offer['name']) ?>" loading="lazy"><?php else: ?><?= catalog_product_icon($product,38) ?><?php endif; ?></span>
-            <b><?= h(t($product['name_en'],$product['name_hi'] ?: $product['name_en'])) ?></b>
+            <span class="discovery-picture"><?php if ($cover): ?><img src="/uploads/<?= h($cover) ?>" alt="<?= h($pname) ?>" loading="lazy"><?php else: ?><?= catalog_product_icon($product,38) ?><?php endif; ?>
+              <?php if (count($pics) > 1): ?><span class="ps-count"><?= count($pics) ?> <?= t('photos','फ़ोटो') ?></span><?php endif; ?></span>
+            <b><?= h($pname) ?></b>
             <?php if ($offer): ?>
-              <span class="meta">₹<?= h(rtrim(rtrim(number_format((float)$offer['price'],2,'.',''),'0'),'.')) ?> · <?= h($offer['unit']) ?><br><?= h($offer['shop_name']) ?></span>
+              <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$offer['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($offer['unit']) ?></span>
+              <span class="stock-tag ok"><?= count($offers) > 1 ? t('In stock · '.count($offers).' shops','उपलब्ध · '.count($offers).' दुकान') : t('In stock','उपलब्ध') ?></span>
+            <?php elseif ($ref && !empty($ref['packs'][0])): ?>
+              <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$ref['packs'][0]['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($ref['packs'][0]['unit']) ?></span>
+              <span class="stock-tag ref"><?= t('Market price','बाज़ार दाम') ?></span>
             <?php else: ?>
-              <span class="meta"><?= h(catalog_reference_summary($product) ?: t('Price to be confirmed', 'दाम पूछकर पक्के होंगे')) ?></span>
+              <span class="stock-tag ask"><?= t('Price on request','दाम पूछकर') ?></span>
             <?php endif; ?>
             <span class="discovery-action"><?= t('Choose pack →', 'पैक चुनिए →') ?></span>
           </a>

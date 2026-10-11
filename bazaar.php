@@ -2,6 +2,7 @@
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__ . '/inc/catalog-request.php';
+require_once __DIR__ . '/inc/catalog-photos.php';
 
 function bazaar_get($key, $max = 100) {
     return isset($_GET[$key]) && is_string($_GET[$key]) ? mb_substr(trim($_GET[$key]), 0, $max) : '';
@@ -88,6 +89,7 @@ if ($type !== '') {
 $request_design=true;
 $page_title = t('Shop categories & prices — Maakit', 'दुकान की categories और दाम — Maakit');
 $tab = 'order';
+$cphotos = catalog_photos_for($pdo, array_column($items, 'id'));
 include __DIR__ . '/inc/head.php';
 ?>
 <style>
@@ -198,7 +200,30 @@ include __DIR__ . '/inc/head.php';
     <div class="bazaar-cards">
     <?php foreach ($items as $item): $list = $offers[(int)$item['id']] ?? []; $variant_hint = catalog_variant_hint($item); $reference = !$list ? catalog_reference_price($item) : null; ?>
       <article class="bazaar-card">
-        <h3><?= h(t($item['name_en'], $item['name_hi'] ?: $item['name_en'])) ?></h3>
+        <?php
+          $pics = $cphotos[(int)$item['id']] ?? [];
+          $stocked = array_values(array_filter($list, fn($o) => $o['stock'] === 'hai'));
+          if (!$pics) foreach ($list as $o) if (!empty($o['photo'])) $pics[] = $o['photo'];
+          $pname = t($item['name_en'], $item['name_hi'] ?: $item['name_en']);
+        ?>
+        <?php if ($pics): ?>
+          <?= $focused ? catalog_slider_html($pics, $pname) : '<a class="bazaar-cover" href="' . h(catalog_url(['product' => (int)$item['id']])) . '"><img src="/uploads/' . h($pics[0]) . '" alt="' . h($pname) . '" loading="lazy">' . (count($pics) > 1 ? '<span class="ps-count">' . count($pics) . ' ' . t('photos', 'फ़ोटो') . '</span>' : '') . '</a>' ?>
+        <?php endif; ?>
+        <h3><?= h($pname) ?></h3>
+        <div class="price-row">
+          <?php if ($stocked): $low = $stocked[0]; ?>
+            <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$low['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($low['unit']) ?></span>
+            <span class="stock-tag ok"><?= count($stocked) > 1 ? t('In stock · ' . count($stocked) . ' shops', 'उपलब्ध · ' . count($stocked) . ' दुकान') : t('In stock', 'उपलब्ध') ?></span>
+          <?php elseif ($list): $low = $list[0]; ?>
+            <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$low['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($low['unit']) ?></span>
+            <span class="stock-tag no"><?= t('Out of stock', 'अभी नहीं है') ?></span>
+          <?php elseif ($reference && !empty($reference['packs'][0])): $rp = $reference['packs'][0]; ?>
+            <span class="price-pill"><b>₹<?= h(rtrim(rtrim(number_format((float)$rp['price'],2,'.',''),'0'),'.')) ?></b> / <?= h($rp['unit']) ?></span>
+            <span class="stock-tag ref"><?= t('Market price', 'बाज़ार दाम') ?></span>
+          <?php else: ?>
+            <span class="stock-tag ask"><?= t('Price on request', 'दाम पूछकर') ?></span>
+          <?php endif; ?>
+        </div>
         <span class="meta"><?= h(catalog_label($item['shop_type'], $item['type_hi'])) ?></span>
         <span class="meta"><?= h(catalog_sub_label($item['sub_cat'])) ?> · <?= h($item['unit_hint']) ?><?= !empty($item['is_sewa']) ? ' · ' . t('Service', 'सेवा') : '' ?></span>
         <?php if ($variant_hint): ?><p class="help catalogue-variant"><?= h($variant_hint) ?></p><?php endif; ?>
@@ -264,4 +289,5 @@ include __DIR__ . '/inc/head.php';
     <a class="chip" href="/shop.php?tab=saaman"><?= t('Shopkeeper: add your prices', 'दुकानदार: अपने दाम भरिए') ?></a>
   </div>
 </div></section>
+<script src="/assets/photo-slider.js?v=<?= (int)filemtime(__DIR__.'/assets/photo-slider.js') ?>" defer></script>
 <?php include __DIR__ . '/inc/foot.php'; ?>

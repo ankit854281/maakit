@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . "/seo.php";
+require_once __DIR__ . "/theme.php";
+$_theme = maakit_theme($pdo ?? null);
 $seo=seo_page($_SERVER["REQUEST_URI"] ?? "/", $_GET, $_SERVER["REQUEST_METHOD"] ?? "GET");
 $page_title = $page_title ?? t('Maakit — shopping, delivery & bookings', 'Maakit — शॉपिंग, डिलीवरी और बुकिंग');
 $tab = $tab ?? '';           // ghar | order | mere | kaam
@@ -59,7 +61,7 @@ if (!$no_tabbar && !$no_ticker) {
 <link rel="canonical" href="<?= h($seo['canonical']) ?>">
 <meta property="og:url" content="<?= h($seo['canonical']) ?>">
 <?php endif; ?>
-<meta name="theme-color" content="#2563EB">
+<meta name="theme-color" content="<?= h($_theme['brand']) ?>">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -83,6 +85,9 @@ if (!$no_tabbar && !$no_ticker) {
 <!-- photo bhejne se pehle chhoti kar deta hai — dheeme net ke liye -->
 <script src="/assets/shrink.js?v=<?= defined('MAAKIT_VERSION') ? h(MAAKIT_VERSION) : '1' ?>" defer></script>
 <?php if(!empty($hub_design)): ?><link rel="stylesheet" href="/assets/hub.css?v=<?= (int)filemtime(__DIR__.'/../assets/hub.css') ?>"><?php endif; ?>
+<!-- capsule design, background lines, price tags, photo slides — sabse aakhir me -->
+<link rel="stylesheet" href="/assets/theme.css?v=<?= (int)filemtime(__DIR__.'/../assets/theme.css') ?>">
+<style><?= maakit_theme_css($pdo ?? null) ?></style>
 </head>
 <body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($request_design)?' request-design':'' ?>">
 
@@ -106,8 +111,8 @@ if (!$no_tabbar && !$no_ticker) {
 <header class="top">
   <div class="wrap">
     <a class="brand" href="/">
-      <span class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5L12 3.5l8.5 7"/><rect x="6.5" y="12" width="11" height="8.5" rx="1.6"/><path d="M9.8 12v-1a2.2 2.2 0 0 1 4.4 0v1"/></svg></span>
-      <span class="word">Maa<span>kit</span></span>
+      <span class="mark"><?= maakit_logo_svg(38) ?></span>
+      <span class="word"><span class="wm">Maa<span>kit</span></span><small>Maa hai na</small></span>
     </a>
     <?php $_c = function_exists('cust') ? cust() : null; ?>
     <span class="hdr">

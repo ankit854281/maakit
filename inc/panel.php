@@ -20,15 +20,15 @@ if ($role === 'admin' && isset($pdo)) {
 $menu = [];
 if ($role === 'admin') {
     $menu = ['/admin/dash.php' => 'Dashboard', '/admin/readiness.php' => t('Launch readiness','Launch तैयारी'), '/muneem.php' => 'मुनीम', '/nakal.php' => 'नक़ल', '/admin/' => 'ऑर्डर', '/bpo/bookings.php' => 'बुकिंग',
-             '/admin/items.php' => 'सामान', '/admin/photos.php' => 'फ़ोटो', '/admin/daam.php' => 'दाम/ब्रांड', '/admin/books.php' => 'किताबें',
+             '/admin/items.php' => 'सामान', '/admin/photos.php' => 'फ़ोटो', '/admin/product-photos.php' => 'स्लाइड फ़ोटो', '/admin/daam.php' => 'दाम/ब्रांड', '/admin/books.php' => 'किताबें',
              '/admin/transport.php' => 'गाड़ियाँ', '/admin/banners.php' => 'ऑफ़र', '/admin/areas.php' => 'नए इलाके', '/admin/coverage.php' => 'सेवा क्षेत्र', '/admin/support.php' => 'सहायता',
              '/admin/summary.php' => 'हिसाब', '/admin/businesses.php' => 'दुकान/कारीगर',
              '/admin/feedback.php' => 'राय', '/admin/rates.php' => 'रेट', '/admin/sarathi.php' => 'सारथी',
-             '/admin/settings.php' => 'समय/छुट्टी', '/admin/users.php' => 'टीम'];
+             '/admin/settings.php' => 'समय/छुट्टी/रंग', '/admin/users.php' => 'टीम'];
 } elseif ($role === 'designer') {
     // Designer ka kaam sirf dikhne wali cheezein — offer, photo, home page.
     // Order, hisaab, rate, team isko nahi dikhte.
-    $menu = ['/admin/banners.php' => 'ऑफ़र / विज्ञापन', '/admin/photos.php' => 'फ़ोटो',
+    $menu = ['/admin/banners.php' => 'ऑफ़र / विज्ञापन', '/admin/photos.php' => 'फ़ोटो', '/admin/product-photos.php' => 'स्लाइड फ़ोटो',
              '/admin/items.php' => 'सामान'];
 } elseif ($role === 'bpo') {
     $menu = ['/bpo/' => 'आज के ऑर्डर', '/bpo/new.php' => 'नया ऑर्डर', '/bpo/bookings.php' => 'बुकिंग',

@@ -261,8 +261,8 @@ Rounded corners 11–16px, buttons at least 50px tall, soft shadows.
 Use the CSS variables (`var(--brand)`, `var(--gold)`, `var(--soft)`,
 `var(--line)`, `var(--muted)`), never raw hex in new code.
 
-Owner chose a professional light-blue palette on 11 October 2026 (replacing maroon/gold).
-The feeling: **clean, trustworthy, professional — still a well-run local shop.**
+Colours now come from `inc/theme.php`: five palettes (default Royal indigo + saffron), picked by the owner in Admin > समय/छुट्टी/रंग (setting `site_theme`). The table above is only the light-blue set. Capsule shapes, background lines, price pills and stock tags live in `assets/theme.css`; product photo slides (up to 7 per catalog item) in `catalog_photos` (sql/031), uploaded at `/admin/product-photos.php`.
+Always use the CSS variables, never hex, so every palette keeps working.
 
 Language: an `EN | हिंदी` switch sits at the far right of the header on every page (`lang_url()` in `inc/lang.php`).
 
