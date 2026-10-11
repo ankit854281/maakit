@@ -30,59 +30,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $err = t('The mobile number or code is incorrect. Ask your office for your login code.', 'नंबर या कोड सही नहीं है। दफ़्तर से अपना कोड पूछ लीजिए।');
     }
 }
-?><!doctype html>
-<html lang="<?= h(sr_lang()) ?>">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14283f">
-<meta name="robots" content="noindex,nofollow">
-<title><?= h(t('Sarathi', 'सारथी')) ?></title>
-<link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/app.css') ?>">
-</head>
-<body class="sr-login sd-native">
-<?php sr_language_switch(true); ?>
-<section class="sd-login-intro">
-  <a class="sd-brand" href="<?= h(u('/')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">DELIVERY PARTNER</span></span></a>
-  <span class="sd-eyebrow"><?= h(t('YOUR WORK · YOUR PARTNER', 'आपका काम · आपका साथ')) ?></span>
-  <h1><?= h(t('Every journey.', 'हर सफ़र के साथ,')) ?><br><?= h(t('A fresh start.', 'एक नई शुरुआत।')) ?></h1>
-  <p><?= h(t('Deliveries, jobs and earnings.', 'डिलीवरी, काम और कमाई का हिसाब।')) ?><br><?= h(t('Everything you need, in one place.', 'सब कुछ एक जगह, आपके साथ।')) ?></p>
-  <div class="sd-login-art" aria-hidden="true"><span>↗</span></div>
-  <small>SMART SARATHI / PARTNER APP</small>
-</section>
-<div class="sr-wrap">
-  <?php sr_public_tabs('login'); ?>
-
-  <div class="sr-brand">
-    <div class="sr-logo"><?= h(t('Welcome back.', 'फिर से स्वागत है।')) ?></div>
-    <p><?= h(t('Delivery partner', 'डिलीवरी साथी')) ?></p>
-  </div>
-
-  <?php if ($err): ?><div class="sr-err"><?= h(sr_message($err)) ?></div><?php endif; ?>
-
-  <form method="post" class="sr-card" autocomplete="off">
+sr_public_head('login', t('Rider login', 'राइडर लॉगिन'), t('SARATHI PARTNER APP', 'सारथी पार्टनर ऐप'),
+    t('Every journey,', 'हर सफ़र के साथ,'), t('a fresh start.', 'एक नई शुरुआत।'),
+    t('Jobs, pickup codes, directions and your daily earnings — all in one place.', 'काम, पिकअप कोड, रास्ता और रोज़ की कमाई — सब एक जगह।'),
+    [['bolt', t('Jobs come to you', 'काम ख़ुद आपके पास')], ['nav', t('One-tap directions', 'एक टैप में रास्ता')], ['rupee', t('Clear daily earnings', 'रोज़ की साफ़ कमाई')]]);
+?>
+  <?php if ($err): ?><div class="sx-alert"><?= sr_icon('alert', 18) ?> <?= h(sr_message($err)) ?></div><?php endif; ?>
+  <form method="post" class="sx-card sx-form" autocomplete="on">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-    <label class="sr-lab" for="m"><?= h(t('Mobile number', 'अपना मोबाइल नंबर')) ?></label>
-    <input class="sr-in" id="m" name="mobile" type="tel" inputmode="numeric"
-           value="<?= h(post('mobile')) ?>" required autofocus>
-    <label class="sr-lab" for="c"><?= h(t('Login code', 'अपना कोड')) ?></label>
-    <input class="sr-in" id="c" name="code" type="password" required>
-    <button class="sr-btn sr-btn-go" type="submit"><?= h(t('Sign in to work', 'काम पर चलिए')) ?></button>
+    <div class="sx-pane-h"><span class="sx-pin a"><?= sr_icon('user', 16) ?></span><div><b><?= h(t('Welcome back', 'फिर से स्वागत है')) ?></b><small><?= h(t('Sign in with your mobile and login code', 'मोबाइल और लॉगिन कोड से अंदर आइए')) ?></small></div></div>
+    <label class="sx-field sx-tel"><span><?= h(t('Mobile number', 'मोबाइल नंबर')) ?></span><em>+91</em><input id="m" name="mobile" type="tel" inputmode="numeric" value="<?= h(post('mobile')) ?>" autocomplete="tel-national" required></label>
+    <label class="sx-field sx-pass"><span><?= h(t('Login code', 'लॉगिन कोड')) ?></span><input id="c" name="code" type="password" autocomplete="current-password" required>
+      <button type="button" class="sx-eye" data-eye aria-label="<?= h(t('Show code', 'कोड दिखाइए')) ?>"><?= sr_icon('eye', 18) ?></button></label>
+    <label class="sx-check"><input type="checkbox" data-keep checked><span><?= h(t('Remember my number on this phone', 'इस फ़ोन पर मेरा नंबर याद रखिए')) ?></span></label>
+    <button class="sx-btn sx-btn-mint" type="submit"><?= h(t('Start work', 'काम पर चलिए')) ?> <?= sr_icon('arrow', 18) ?></button>
+    <p class="sx-fine"><?= h(t('Forgot your code? Call the office — they will set a new one.', 'कोड भूल गए? दफ़्तर को फ़ोन कीजिए — नया कोड बना देंगे।')) ?></p>
   </form>
-
-  <div class="sr-help">
-    <b><?= h(t('Need your login code?', 'कोड नहीं मिला?')) ?></b>
-    <p><?= h(t('Ask your office for your code. Once signed in, this phone will remember your session.', 'दफ़्तर से अपना कोड पूछ लीजिए। एक बार अंदर आने के बाद यही फ़ोन आपको सीधा अंदर ले जाएगा।')) ?></p>
-    <a class="sr-call" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Call support —', 'फ़ोन कीजिए —')) ?> <?= h(SR_PHONE_SHOW) ?></a>
-  </div>
-  <a class="sp-join" href="<?= h(u('/apply.php')) ?>"><b><?= h(t('New here? Become a Sarathi rider', 'नए हैं? सारथी राइडर बनिए')) ?></b><span><?= h(t('Apply in 1 minute →', '1 मिनट में अर्ज़ी →')) ?></span></a>
-
-</div>
+  <a class="sx-join" href="<?= h(u('/apply.php')) ?>"><span class="sx-join-ic"><?= sr_icon('bike', 22) ?></span><span><b><?= h(t('New here? Become a Sarathi rider', 'नए हैं? सारथी राइडर बनिए')) ?></b><small><?= h(t('Apply in 1 minute · no fee', '1 मिनट में अर्ज़ी · कोई फ़ीस नहीं')) ?></small></span><?= sr_icon('arrow', 18) ?></a>
 <script>
-var m = document.getElementById('m');
-if (m) m.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,10); });
+(function () {
+  var m = document.getElementById('m'), c = document.getElementById('c'), keep = document.querySelector('[data-keep]');
+  try { var v = localStorage.getItem('sx_rider_m'); if (v && !m.value) { m.value = v; c.focus(); } } catch (e) {}
+  document.querySelector('[data-eye]').addEventListener('click', function () { c.type = c.type === 'password' ? 'text' : 'password'; this.classList.toggle('on'); c.focus(); });
+  m.form.addEventListener('submit', function () { try { if (keep.checked) localStorage.setItem('sx_rider_m', m.value); else localStorage.removeItem('sx_rider_m'); } catch (e) {} });
+})();
 </script>
-</body>
-</html>
-
-
+<?php sr_public_foot();

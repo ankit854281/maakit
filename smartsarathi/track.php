@@ -28,42 +28,47 @@ if ($no !== '' && $m !== '') {
     }
 }
 
-sr_public_head('track', t('Track your parcel', 'पार्सल कहाँ है'), t('LIVE STATUS', 'अभी की हालत'),
+sr_public_head('track', t('Track your parcel', 'पार्सल ट्रैक कीजिए'), t('LIVE STATUS', 'लाइव हालत'),
     t('Where is', 'आपका पार्सल'), t('my parcel?', 'कहाँ पहुँचा?'),
-    t('Enter the booking number and your mobile. The page refreshes by itself while the parcel is on the way.', 'बुकिंग नंबर और अपना मोबाइल डालिए। पार्सल रास्ते में हो तो पेज अपने आप ताज़ा होता है।'));
+    t('Enter your booking number and mobile. The status updates by itself while the parcel is on the way.', 'बुकिंग नंबर और मोबाइल डालिए। पार्सल रास्ते में हो तो हालत अपने आप ताज़ा होती है।'),
+    [['route', t('Every step, live', 'हर कदम लाइव')], ['check', t('Code-safe delivery', 'कोड से पक्की डिलीवरी')], ['phone', t('Help one call away', 'मदद बस एक फ़ोन पर')]]);
 ?>
-  <?php if ($err): ?><div class="sr-err"><?= h($err) ?></div><?php endif; ?>
+  <?php if ($err): ?><div class="sx-alert"><?= sr_icon('alert', 18) ?> <?= h($err) ?></div><?php endif; ?>
 
-  <?php if ($job): [$k, $steps] = sr_job_steps($job['status']); ?>
-    <div class="sr-card sp-track">
-      <div class="sp-track-h">
+  <?php if ($job): [$k, $steps] = sr_job_steps($job['status']); $live = in_array($job['status'], ['new', 'assigned', 'picked'], true); ?>
+    <div class="sx-card sx-trk">
+      <div class="sx-trk-h">
         <div><small><?= h(t('Booking', 'बुकिंग')) ?></small><b><?= h($job['job_no']) ?></b></div>
-        <span class="sp-st st-<?= h($job['status']) ?>"><?= $job['status'] === 'cancelled' ? h(t('Cancelled', 'रद्द')) : h($steps[max(0, $k)]) ?></span>
+        <span class="sx-tag <?= $job['status'] === 'delivered' ? 'mint' : ($job['status'] === 'cancelled' ? 'red' : 'sun') ?>"><?= $job['status'] === 'cancelled' ? h(t('Cancelled', 'रद्द')) : h($steps[max(0, $k)]) ?></span>
       </div>
       <?php if ($job['status'] !== 'cancelled'): ?>
-        <ol class="sp-steps">
-          <?php foreach ($steps as $i => $s): ?><li class="<?= $i < $k ? 'done' : ($i === $k ? 'now' : '') ?>"><i></i><span><?= h($s) ?></span></li><?php endforeach; ?>
+        <div class="sx-bar"><i style="width:<?= max(8, min(100, ($k / 3) * 100)) ?>%"></i></div>
+        <ol class="sx-tl">
+          <?php foreach ($steps as $i => $st): ?>
+            <li class="<?= $i < $k ? 'done' : ($i === $k ? 'now' : '') ?>"><i></i><div><b><?= h($st) ?></b>
+              <?php if ($i === 1 && $job['rider_name'] && $k >= 1): ?><small><?= h(explode(' ', trim($job['rider_name']))[0]) ?> · <?= h(t('Sarathi rider', 'सारथी राइडर')) ?></small><?php endif; ?>
+              <?php if ($i === 2 && $job['picked_at']): ?><small><?= h(date('h:i A', strtotime($job['picked_at']))) ?></small><?php endif; ?>
+              <?php if ($i === 3 && $job['delivered_at']): ?><small><?= h(date('d M, h:i A', strtotime($job['delivered_at']))) ?></small><?php endif; ?>
+            </div></li>
+          <?php endforeach; ?>
         </ol>
       <?php endif; ?>
-      <dl class="sp-dl">
-        <?php if ($job['pick_address']): ?><dt><?= h(t('From', 'कहाँ से')) ?></dt><dd><?= h($job['pick_address']) ?></dd><?php endif; ?>
-        <dt><?= h(t('To', 'कहाँ तक')) ?></dt><dd><?= h($job['drop_name']) ?> · <?= h($job['drop_address']) ?></dd>
-        <?php if ($job['items']): ?><dt><?= h(t('Parcel', 'सामान')) ?></dt><dd><?= h($job['items']) ?></dd><?php endif; ?>
-        <?php if ($job['rider_name']): ?><dt><?= h(t('Rider', 'राइडर')) ?></dt><dd><?= h(explode(' ', trim($job['rider_name']))[0]) ?></dd><?php endif; ?>
-        <?php if ($job['delivered_at']): ?><dt><?= h(t('Delivered at', 'पहुँचा')) ?></dt><dd><?= h(date('d M, h:i A', strtotime($job['delivered_at']))) ?></dd><?php endif; ?>
-      </dl>
-      <?php if (in_array($job['status'], ['new', 'assigned', 'picked'], true)): ?>
-        <p class="sp-small"><span class="sp-live"></span><?= h(t('Updates by itself every 30 seconds.', 'हर 30 सेकंड में अपने आप ताज़ा।')) ?></p>
-        <script>setTimeout(function () { location.reload(); }, 30000);</script>
+      <div class="sx-sum">
+        <?php if ($job['pick_address']): ?><div><small><?= h(t('From', 'कहाँ से')) ?></small><b><?= h($job['pick_address']) ?></b></div><?php endif; ?>
+        <div><small><?= h(t('To', 'कहाँ तक')) ?></small><b><?= h($job['drop_name']) ?> · <?= h($job['drop_address']) ?></b></div>
+        <?php if ($job['items']): ?><div><small><?= h(t('Parcel', 'सामान')) ?></small><b><?= h($job['items']) ?></b></div><?php endif; ?>
+      </div>
+      <?php if ($live): ?>
+        <p class="sx-fine"><span class="sx-live"></span><?= h(t('Updating automatically', 'अपने आप ताज़ा हो रहा है')) ?></p>
+        <script>setTimeout(function () { if (!document.querySelector('input:focus')) location.reload(); }, 30000);</script>
       <?php endif; ?>
     </div>
   <?php endif; ?>
 
-  <form method="post" class="sr-card">
-    <label class="sr-lab" for="no"><?= h(t('Booking number', 'बुकिंग नंबर')) ?></label>
-    <input class="sr-in" id="no" name="no" value="<?= h($no) ?>" placeholder="SR…" autocapitalize="characters" required>
-    <label class="sr-lab" for="m"><?= h(t('Your mobile (sender or receiver)', 'आपका मोबाइल (भेजने या पाने वाला)')) ?></label>
-    <input class="sr-in" id="m" name="m" type="tel" inputmode="numeric" value="<?= h($m) ?>" required>
-    <button class="sr-btn sr-btn-go" type="submit"><?= h(t('Check status', 'हालत देखिए')) ?></button>
+  <form method="post" class="sx-card sx-form">
+    <?php if ($job): ?><div class="sx-pane-h"><span class="sx-pin c"><?= sr_icon('route', 16) ?></span><div><b><?= h(t('Track another', 'दूसरा पार्सल देखिए')) ?></b></div></div><?php endif; ?>
+    <label class="sx-field"><span><?= h(t('Booking number', 'बुकिंग नंबर')) ?></span><input name="no" value="<?= h($no) ?>" placeholder="SR…" autocapitalize="characters" required></label>
+    <label class="sx-field"><span><?= h(t('Mobile (sender or receiver)', 'मोबाइल (भेजने या पाने वाला)')) ?></span><input name="m" type="tel" inputmode="numeric" value="<?= h($m) ?>" required></label>
+    <button class="sx-btn sx-btn-navy" type="submit"><?= sr_icon('route', 18) ?> <?= h(t('Check status', 'हालत देखिए')) ?></button>
   </form>
 <?php sr_public_foot();

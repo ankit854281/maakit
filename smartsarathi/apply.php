@@ -55,51 +55,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 sr_public_head('apply', t('Become a rider', 'राइडर बनिए'), t('EARN NEAR HOME', 'घर के पास कमाई'),
-    t('Deliver in your area.', 'अपने इलाके में डिलीवरी,'), t('Earn every day.', 'रोज़ की कमाई।'),
-    t('Bicycle, bike or e-rickshaw — choose your own hours. Payment for every delivery, with a clear daily record.', 'साइकिल, बाइक या ई-रिक्शा — अपने समय पर काम। हर डिलीवरी का पैसा, रोज़ का साफ़ हिसाब।'));
+    t('Ride with Sarathi.', 'सारथी के साथ चलिए,'), t('Earn every day.', 'रोज़ कमाइए।'),
+    t('Bicycle, bike or e-rickshaw — work your own hours near home, with a clear record of every rupee.', 'साइकिल, बाइक या ई-रिक्शा — घर के पास, अपने समय पर काम, हर रुपये का साफ़ हिसाब।'),
+    [['rupee', t('Payment for every delivery', 'हर डिलीवरी का पैसा')], ['clock', t('Choose your hours', 'अपना समय ख़ुद चुनिए')], ['check', t('No joining fee', 'कोई जॉइनिंग फ़ीस नहीं')]]);
 ?>
   <?php if ($done): ?>
-    <div class="sr-card sp-done">
-      <span class="sp-tick" aria-hidden="true">✓</span>
+    <div class="sx-card sx-done">
+      <div class="sx-done-ic"><?= sr_icon('check', 30) ?></div>
       <h2><?= h(t('Application received!', 'अर्ज़ी मिल गई!')) ?></h2>
-      <p><?= h(t('Our office will call you within 1–2 days for a short meeting. Bring your driving licence and vehicle papers. After approval you get your login code.', 'हमारा दफ़्तर 1–2 दिन में आपको फ़ोन करेगा। ड्राइविंग लाइसेंस और गाड़ी के कागज़ साथ लाइए। मंज़ूरी के बाद आपको लॉगिन कोड मिलेगा।')) ?></p>
-      <a class="sr-btn sr-btn-go" href="<?= h(u('/')) ?>"><?= h(t('Go to rider login', 'राइडर लॉगिन पर जाइए')) ?></a>
+      <p><?= h(t('Our office will call you within 1–2 days. Bring your driving licence and vehicle papers to the meeting. After approval you get your login code.', 'हमारा दफ़्तर 1–2 दिन में फ़ोन करेगा। मिलने आते समय ड्राइविंग लाइसेंस और गाड़ी के काग़ज़ लाइए। मंज़ूरी के बाद लॉगिन कोड मिलेगा।')) ?></p>
+      <a class="sx-btn sx-btn-navy" href="<?= h(u('/')) ?>"><?= h(t('Go to rider login', 'राइडर लॉगिन पर जाइए')) ?></a>
     </div>
   <?php else: ?>
-    <div class="sr-brand"><div class="sr-logo"><?= h(t('Become a Sarathi rider', 'सारथी राइडर बनिए')) ?></div><p><?= h(t('Takes 1 minute. No fee.', '1 मिनट लगेगा। कोई फ़ीस नहीं।')) ?></p></div>
-    <?php if ($err): ?><div class="sr-err"><?= h($err) ?></div><?php endif; ?>
-    <form method="post" class="sr-card" autocomplete="on">
+    <?php if ($err): ?><div class="sx-alert"><?= sr_icon('alert', 18) ?> <?= h($err) ?></div><?php endif; ?>
+    <form method="post" class="sx-card sx-form" autocomplete="on">
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-      <input type="text" name="website" value="" tabindex="-1" autocomplete="off" class="sp-hp" aria-hidden="true">
-      <label class="sr-lab" for="n"><?= h(t('Full name', 'पूरा नाम')) ?></label>
-      <input class="sr-in" id="n" name="name" value="<?= h(post('name')) ?>" autocomplete="name" required>
-      <label class="sr-lab" for="m"><?= h(t('Mobile number', 'मोबाइल नंबर')) ?></label>
-      <input class="sr-in" id="m" name="mobile" type="tel" inputmode="numeric" value="<?= h(post('mobile')) ?>" autocomplete="tel-national" required>
-      <label class="sr-lab" for="v"><?= h(t('Village / area', 'गाँव / इलाका')) ?></label>
-      <input class="sr-in" id="v" name="village" value="<?= h(post('village')) ?>" placeholder="<?= h(t('e.g. Gyanpur, Bhadohi', 'जैसे ज्ञानपुर, भदोही')) ?>">
-      <span class="sr-lab"><?= h(t('Vehicle', 'गाड़ी')) ?></span>
-      <div class="sp-chips">
-        <?php foreach ($vehicles as $k => $lbl): ?>
-          <label><input type="radio" name="vehicle" value="<?= h($k) ?>" <?= post('vehicle', 'bike') === $k ? 'checked' : '' ?>><span><?= h($lbl) ?></span></label>
+      <input type="text" name="website" value="" tabindex="-1" autocomplete="off" class="sx-hp" aria-hidden="true">
+      <div class="sx-pane-h"><span class="sx-pin a"><?= sr_icon('bike', 16) ?></span><div><b><?= h(t('Join in 1 minute', '1 मिनट में अर्ज़ी')) ?></b><small><?= h(t('No fee. We call you back.', 'कोई फ़ीस नहीं। हम फ़ोन करेंगे।')) ?></small></div></div>
+      <div class="sx-grid2">
+        <label class="sx-field"><span><?= h(t('Full name', 'पूरा नाम')) ?></span><input name="name" value="<?= h(post('name')) ?>" autocomplete="name" required></label>
+        <label class="sx-field"><span><?= h(t('Mobile', 'मोबाइल')) ?></span><input name="mobile" type="tel" inputmode="numeric" value="<?= h(post('mobile')) ?>" autocomplete="tel-national" required></label>
+      </div>
+      <label class="sx-field"><span><?= h(t('Village / area', 'गाँव / इलाका')) ?></span><input name="village" value="<?= h(post('village')) ?>" placeholder="<?= h(t('e.g. Gyanpur, Bhadohi', 'जैसे ज्ञानपुर, भदोही')) ?>"></label>
+      <span class="sx-lab"><?= h(t('Your vehicle', 'आपकी गाड़ी')) ?></span>
+      <div class="sx-tiles">
+        <?php foreach (['cycle' => '🚲', 'bike' => '🏍️', 'ev' => '🛵', 'auto' => '🛺', 'none' => '🚶'] as $kk => $em): ?>
+          <label><input type="radio" name="vehicle" value="<?= h($kk) ?>" <?= post('vehicle', 'bike') === $kk ? 'checked' : '' ?>><span><i><?= $em ?></i><?= h($vehicles[$kk]) ?></span></label>
         <?php endforeach; ?>
       </div>
-      <span class="sr-lab"><?= h(t('When can you work?', 'कब काम कर सकते हैं?')) ?></span>
-      <div class="sp-chips">
-        <?php foreach ($hours as $k => $lbl): ?>
-          <label><input type="radio" name="hours" value="<?= h($k) ?>" <?= post('hours', 'full') === $k ? 'checked' : '' ?>><span><?= h($lbl) ?></span></label>
-        <?php endforeach; ?>
+      <span class="sx-lab"><?= h(t('When can you work?', 'कब काम कर सकते हैं?')) ?></span>
+      <div class="sx-chips">
+        <?php foreach ($hours as $kk => $lbl): ?><label><input type="radio" name="hours" value="<?= h($kk) ?>" <?= post('hours', 'full') === $kk ? 'checked' : '' ?>><span><?= h($lbl) ?></span></label><?php endforeach; ?>
       </div>
-      <div class="sp-two">
-        <div><label class="sr-lab" for="dl"><?= h(t('Driving licence no. (optional)', 'ड्राइविंग लाइसेंस नं. (मर्ज़ी से)')) ?></label>
-          <input class="sr-in" id="dl" name="dl" value="<?= h(post('dl')) ?>" autocapitalize="characters"></div>
-        <div><label class="sr-lab" for="rc"><?= h(t('Vehicle no. (optional)', 'गाड़ी नं. (मर्ज़ी से)')) ?></label>
-          <input class="sr-in" id="rc" name="rc" value="<?= h(post('rc')) ?>" autocapitalize="characters" placeholder="UP66 AB 1234"></div>
-      </div>
-      <label class="sr-lab" for="nt"><?= h(t('Anything else? (optional)', 'और कुछ? (मर्ज़ी से)')) ?></label>
-      <input class="sr-in" id="nt" name="note" value="<?= h(post('note')) ?>" maxlength="300">
-      <label class="sp-agree"><input type="checkbox" name="agree" value="1" required> <span><?= h(t('My details are correct. Sarathi may call me about this work.', 'मेरी जानकारी सही है। सारथी इस काम के लिए मुझे फ़ोन कर सकता है।')) ?></span></label>
-      <button class="sr-btn sr-btn-go" type="submit"><?= h(t('Send application', 'अर्ज़ी भेजिए')) ?></button>
-      <p class="sp-small"><?= h(t('We never ask for Aadhaar, bank or ATM numbers on a form or phone call.', 'हम फ़ॉर्म या फ़ोन पर कभी आधार, बैंक या ATM नंबर नहीं माँगते।')) ?></p>
+      <details class="sx-more">
+        <summary><?= h(t('Licence & vehicle number (optional)', 'लाइसेंस और गाड़ी नंबर (मर्ज़ी से)')) ?></summary>
+        <div class="sx-grid2">
+          <label class="sx-field"><span><?= h(t('Driving licence no.', 'ड्राइविंग लाइसेंस नं.')) ?></span><input name="dl" value="<?= h(post('dl')) ?>" autocapitalize="characters"></label>
+          <label class="sx-field"><span><?= h(t('Vehicle no.', 'गाड़ी नं.')) ?></span><input name="rc" value="<?= h(post('rc')) ?>" autocapitalize="characters" placeholder="UP66 AB 1234"></label>
+        </div>
+        <label class="sx-field"><span><?= h(t('Anything else?', 'और कुछ?')) ?></span><input name="note" value="<?= h(post('note')) ?>" maxlength="300"></label>
+      </details>
+      <label class="sx-check"><input type="checkbox" name="agree" value="1" required><span><?= h(t('My details are correct. Sarathi may call me about this work.', 'मेरी जानकारी सही है। सारथी इस काम के लिए मुझे फ़ोन कर सकता है।')) ?></span></label>
+      <button class="sx-btn sx-btn-mint" type="submit"><?= sr_icon('arrow', 18) ?> <?= h(t('Send application', 'अर्ज़ी भेजिए')) ?></button>
+      <p class="sx-fine"><?= h(t('We never ask for Aadhaar, bank or ATM numbers on a form or call.', 'हम फ़ॉर्म या फ़ोन पर कभी आधार, बैंक या ATM नंबर नहीं माँगते।')) ?></p>
     </form>
   <?php endif; ?>
 <?php sr_public_foot();

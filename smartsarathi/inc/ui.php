@@ -3,17 +3,18 @@ require_once __DIR__ . "/lang.php";
 // ============================================================
 //  सारथी — ऐप का ढाँचा (हर पन्ने पर एक जैसा)
 //
-//  Owner-requested navy/teal dashboard: desktop sidebar and mobile tabs.
-//  Drawer bina JavaScript ke chalta hai — ek chhupa checkbox
-//  aur CSS. Purane aur dheeme phone par bhi khulta hai.
+//  Oct 2026 v2 ("app jaisa"): upar chhota header (naam + haazri
+//  switch + bhasha), beech me kaam, neeche app jaisi tab-patti.
+//  Bada screen ho to baayein taraf sidebar. Style: assets/sr2.css.
+//  Function ke naam aur arguments wahi — baaki panne nahi badle.
 // ============================================================
 
 function sr_tabs() {
     return [
-        ['kaam',    '/kaam.php',    t('Work', 'काम'),          'box'],
-        ['khata',   '/khata.php',   t('Earnings', 'खाता'),         'rupee'],
-        ['beete',   '/beete.php',   t('History', 'बीते काम'),      'clock'],
-        ['jankari', '/jankari.php', t('My profile', 'मेरी जानकारी'),  'user'],
+        ['kaam',    '/kaam.php',    t('Jobs', 'काम'),            'box'],
+        ['khata',   '/khata.php',   t('Earnings', 'कमाई'),       'rupee'],
+        ['beete',   '/beete.php',   t('History', 'बीते काम'),    'clock'],
+        ['jankari', '/jankari.php', t('Profile', 'प्रोफ़ाइल'),    'user'],
     ];
 }
 
@@ -27,116 +28,128 @@ function sr_icon($name, $size = 22) {
         'help'  => '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 115 .5c0 1.5-2.5 2-2.5 3.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>',
         'out'   => '<path d="M14 3h5v18h-5M10 8l-4 4 4 4M6 12h10"/>',
         'phone' => '<path d="M5 3h4l2 5-3 2a12 12 0 006 6l2-3 5 2v4a2 2 0 01-2 2A17 17 0 013 5a2 2 0 012-2z"/>',
+        'nav'   => '<path d="M3 11l18-8-8 18-2-8-8-2z"/>',
+        'wa'    => '<path d="M4 20l1.3-4A8 8 0 1 1 8 18.7L4 20z"/><path d="M9 9.5c.5 2 2 3.5 4 4.3l1.2-1 1.8.8"/>',
+        'cam'   => '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+        'pin'   => '<path d="M12 22s7-7.6 7-13a7 7 0 0 0-14 0c0 5.4 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/>',
+        'flag'  => '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+        'bolt'  => '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
+        'check' => '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+        'alert' => '<path d="M12 3l10 18H2L12 3z"/><path d="M12 10v4M12 17.5v.5"/>',
+        'route' => '<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/>',
+        'spark' => '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',
+        'copy'  => '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+        'share' => '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+        'arrow' => '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        'eye'   => '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        'bike'  => '<circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17l4-8h5l4 8M12 9l-2-4H7"/>',
     ][$name] ?? '';
     return '<svg class="sr-i" width="' . (int)$size . '" height="' . (int)$size . '" viewBox="0 0 24 24"'
-         . ' fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"'
+         . ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
          . ' stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 }
 
+/** Saare panno ke liye font + style (purani app.css ki jagah) */
+function sr_assets() {
+    ?><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="<?= h(u('/assets/sr2.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/sr2.css') ?>"><?php
+}
+
 function sr_head($me, $tab, $title, $ready = null, $count = []) {
+    $first = trim(explode(' ', trim((string)$me['name']))[0]);
     ?><!doctype html>
 <html lang="<?= h(sr_lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14283f">
+<meta name="theme-color" content="#0B1B36">
 <meta name="robots" content="noindex,nofollow">
 <title><?= h($title) ?> — <?= h(t('Sarathi', 'सारथी')) ?></title>
-<link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/app.css') ?>">
+<?php sr_assets(); ?>
 </head>
-<body class="sd-partner">
+<body class="sx sx-app<?= $ready ? ' is-online' : '' ?>">
 
-<input type="checkbox" id="sr-nav" class="sr-nav-sw" hidden>
-
-<header class="sr-top">
-  <label class="sr-ham" for="sr-nav" aria-label="<?= h(t('Menu', 'मेन्यू')) ?>"><span></span><span></span><span></span></label>
-  <div class="sr-top-t">
-    <b><?= h($title) ?></b>
-    <small><?= $ready ? t('Available until ', 'हाज़िर — ') . h(date('g:i a', strtotime($ready))) . t('', ' तक') : t('Currently offline', 'अभी बंद हैं') ?></small>
+<aside class="sx-side" aria-label="<?= h(t('Menu', 'मेन्यू')) ?>">
+  <a class="sx-logo" href="<?= h(u('/kaam.php')) ?>"><span class="sx-mark"><?= sr_icon('bolt', 18) ?></span><span>Sarathi<small>PARTNER</small></span></a>
+  <nav>
+    <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
+      <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>"><?= sr_icon($ic, 20) ?><span><?= h($lbl) ?></span>
+        <?php if (!empty($count[$k])): ?><em><?= (int)$count[$k] ?></em><?php endif; ?></a>
+    <?php endforeach; ?>
+  </nav>
+  <div class="sx-side-foot">
+    <a href="<?= h(u('/madad.php')) ?>"><?= sr_icon('help', 18) ?><span><?= h(t('Help', 'मदद')) ?></span></a>
+    <a href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone', 18) ?><span><?= h(t('Call office', 'दफ़्तर को फ़ोन')) ?></span></a>
+    <form method="post" action="<?= h(u('/kaam.php')) ?>"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="bahar">
+      <button type="submit"><?= sr_icon('out', 18) ?><span><?= h(t('Sign out', 'बाहर निकलिए')) ?></span></button></form>
   </div>
-  <span class="sr-top-dot <?= $ready ? 'on' : '' ?>"></span>
-  <?php sr_language_switch(); ?>
+</aside>
+
+<header class="sx-top">
+  <div class="sx-me">
+    <span class="sx-ava"><?= h(mb_strtoupper(mb_substr($first, 0, 1))) ?><i class="sx-ava-dot"></i></span>
+    <span class="sx-me-t"><small><?= h($tab === 'kaam' ? t('Hello', 'नमस्ते') : $first) ?></small><b><?= h($tab === 'kaam' ? $first : $title) ?></b></span>
+  </div>
+  <div class="sx-top-r">
+    <?php if ($tab !== 'kaam'): ?>
+      <span class="sx-chip <?= $ready ? 'on' : '' ?>"><i></i><?= $ready ? h(t('Online', 'हाज़िर')) : h(t('Offline', 'बंद')) ?></span>
+    <?php endif; ?>
+    <?php sr_language_switch(); ?>
+  </div>
 </header>
 
-<label class="sr-veil" for="sr-nav"></label>
-<nav class="sr-draw">
-  <a class="sd-brand" href="<?= h(u('/')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">DELIVERY PARTNER</span></span></a>
-  <div class="sr-draw-top">
-    <div class="sr-ava"><?= h(mb_substr(trim($me['name']), 0, 1)) ?></div>
-    <div><b><?= h($me['name']) ?></b><small><?= h(t('Sarathi', 'सारथी')) ?></small></div>
-    <label class="sr-draw-x" for="sr-nav" aria-label="<?= h(t('Close menu', 'बंद कीजिए')) ?>">&times;</label>
-  </div>
-  <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
-    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>">
-      <?= sr_icon($ic) ?> <span><?= h($lbl) ?></span>
-      <?php if (!empty($count[$k])): ?><em><?= (int)$count[$k] ?></em><?php endif; ?>
-    </a>
-  <?php endforeach; ?>
-  <div class="sr-draw-gap"></div>
-  <a href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone') ?> <span><?= h(t('Call support', 'दफ़्तर को फ़ोन')) ?></span></a>
-  <a href="<?= h(u('/madad.php')) ?>"><?= sr_icon('help') ?> <span><?= h(t('Help', 'मदद')) ?></span></a>
-  <form method="post" action="<?= h(u('/kaam.php')) ?>">
-    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-    <input type="hidden" name="do" value="bahar">
-    <button type="submit" class="sr-draw-out"><?= sr_icon('out') ?> <span><?= h(t('Sign out', 'बाहर निकलिए')) ?></span></button>
-  </form>
-  <p class="sr-draw-foot"><?= h(t('Sarathi', 'सारथी')) ?> · <?= h(SR_PHONE_SHOW) ?></p>
-</nav>
-
-<main class="sr-main sd-native">
-  <section class="sd-welcome">
-    <div><span class="sd-eyebrow">DELIVERY PARTNER</span>
-      <h1><?= $tab === 'kaam' ? t('Hello, ', 'नमस्ते, ') . h($me['name']) : h($title) ?></h1>
-      <p><?= $tab === 'kaam' ? t('Your next delivery starts here.', 'आपका अगला काम, यहीं से शुरू होता है।') : t('All your work details, in one place.', 'आपके काम की सारी जानकारी, एक जगह।') ?></p>
-    </div>
-    <a class="sd-support" href="<?= h(u('/madad.php')) ?>"><?= h(t('Help & support ↗', 'मदद और सहायता ↗')) ?></a>
-  </section>
-  <?php if ($tab === 'kaam'): ?>
-  <div class="sd-stats">
-    <div class="sd-stat"><small><?= h(t('Active jobs', 'अभी के काम')) ?></small><strong><?= (int)($count['kaam'] ?? 0) ?></strong><span><?= h(t('Jobs assigned to you', 'आपको मिले हुए काम')) ?></span></div>
-    <div class="sd-stat"><small><?= h(t('Availability', 'आपकी हाज़िरी')) ?></small><strong class="sd-word"><?= $ready ? t('Online', 'हाज़िर') : t('Offline', 'बंद') ?></strong><span><?= $ready ? t('Ready to receive new jobs', 'नए काम मिल सकते हैं') : t('Go online when you are ready', 'तैयार होने पर हाज़िरी लगाएँ') ?></span></div>
-    <a class="sd-stat" href="<?= h(u('/khata.php')) ?>"><small><?= h(t('Earnings & payments', 'कमाई और भुगतान')) ?></small><strong class="sd-word"><?= h(t('View earnings ↗', 'खाता देखें ↗')) ?></strong><span><?= h(t('Your complete earnings record', 'आपका पूरा हिसाब')) ?></span></a>
-  </div>
-  <div class="sd-grid"><div class="sd-work">
-    <section class="sd-hero"><span class="sd-eyebrow"><?= h(t('EVERY DELIVERY MATTERS', 'हर डिलीवरी मायने रखती है')) ?></span><h2><?= h(t('Your next delivery.', 'चलें, अगला काम')) ?><br><?= h(t('Made simpler.', 'आसान बनाते हैं।')) ?></h2><p><?= h(t('With you, from pickup to delivery.', 'पिकअप से डिलीवरी तक, आपका साथी।')) ?></p><span class="sd-orbit" aria-hidden="true">↗</span></section>
-  <?php endif; ?>
+<main class="sx-main">
 <?php
 }
 
 function sr_foot($tab, $count = []) {
     ?>
-<?php if ($tab === 'kaam'): ?>
-  </div><aside class="sd-rail">
-    <section class="sd-tip"><span class="sd-eyebrow"><?= h(t('WITH YOU, EVERY STEP', 'आपके साथ, हर रास्ते पर')) ?></span><h3><?= h(t('Travel safely.', 'सुरक्षित सफ़र,')) ?><br><?= h(t('Deliver confidently.', 'बेहतर डिलीवरी।')) ?></h3><p><?= h(t('Stop somewhere safe before using your phone while travelling.', 'चलती गाड़ी में फ़ोन इस्तेमाल करने से पहले सुरक्षित जगह रुकें।')) ?></p><a href="<?= h(u('/madad.php')) ?>"><?= h(t('Get help →', 'मदद देखिए →')) ?></a></section>
-    <section class="sd-rail-card"><span class="sd-eyebrow"><?= h(t('YOUR EARNINGS', 'आपका हिसाब')) ?></span><h3><?= h(t('Work done. Earnings clear.', 'काम पूरा। हिसाब साफ़।')) ?></h3><p><?= h(t('See your earnings, payments received and outstanding balance.', 'कमाई, मिला हुआ भुगतान और बाकी रकम अपने खाते में देखें।')) ?></p><a href="<?= h(u('/khata.php')) ?>"><?= h(t('Open earnings →', 'खाता खोलिए →')) ?></a></section>
-  </aside></div>
-<?php endif; ?>
 </main>
-<nav class="sr-bar">
+
+<nav class="sx-tabbar" aria-label="<?= h(t('Sections', 'हिस्से')) ?>">
   <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
-    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>">
-      <?= sr_icon($ic, 23) ?><span><?= h($lbl) ?></span>
-      <?php if (!empty($count[$k])): ?><em><?= (int)$count[$k] ?></em><?php endif; ?>
+    <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>"<?= $tab === $k ? ' aria-current="page"' : '' ?>>
+      <span class="sx-tb-ic"><?= sr_icon($ic, 22) ?><?php if (!empty($count[$k])): ?><em><?= (int)$count[$k] ?></em><?php endif; ?></span><span><?= h($lbl) ?></span>
     </a>
   <?php endforeach; ?>
 </nav>
 
+<div class="sx-toast" id="sxToast" role="status" aria-live="polite"></div>
 <script>
-// नेट चला गया तो बता दीजिए.
-// Gaon me net aata-jata rehta hai. Rider "utha liya" daba kar
-// aage badh jaye aur wo darj hi na ho — ye sabse bura hai.
+/* Sarathi v2: net gaya to batao, tap par halka vibrate, OTP dabbe, screen jagi rahe (haazir ho to) */
 (function () {
-  var p = document.createElement('div');
-  p.className = 'sr-net'; p.textContent = <?= json_encode(t('You are offline — actions cannot be saved', 'नेट नहीं है — दबाया हुआ दर्ज नहीं होगा'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
-  function dekho() { if (navigator.onLine) p.remove(); else document.body.appendChild(p); }
-  window.addEventListener('online', dekho);
-  window.addEventListener('offline', dekho);
-  dekho();
+  var net = document.createElement('div'); net.className = 'sx-net';
+  net.textContent = <?= json_encode(t('You are offline — taps will not be saved', 'नेट नहीं है — दबाया हुआ दर्ज नहीं होगा'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+  function chk() { if (navigator.onLine) net.remove(); else document.body.appendChild(net); }
+  window.addEventListener('online', chk); window.addEventListener('offline', chk); chk();
+
+  document.addEventListener('click', function (e) { if (e.target.closest('button, .sx-btn, .sx-tabbar a')) { try { navigator.vibrate && navigator.vibrate(8); } catch (x) {} } });
+
+  // 4 dabbon wala OTP: likhte hi agla dabba, poora hote hi button chamke
+  document.querySelectorAll('[data-otp]').forEach(function (wrap) {
+    var boxes = wrap.querySelectorAll('input.sx-otp-b'), hidden = wrap.querySelector('input[type=hidden][name=otp]'), btn = wrap.closest('form').querySelector('button[type=submit]');
+    function sync() { var v = ''; boxes.forEach(function (b) { v += b.value; }); hidden.value = v; wrap.classList.toggle('full', v.length === 4); }
+    boxes.forEach(function (b, i) {
+      b.addEventListener('input', function () { b.value = b.value.replace(/\D/g, '').slice(-1); if (b.value && boxes[i + 1]) boxes[i + 1].focus(); sync(); });
+      b.addEventListener('keydown', function (e) { if (e.key === 'Backspace' && !b.value && boxes[i - 1]) { boxes[i - 1].focus(); boxes[i - 1].value = ''; sync(); } });
+      b.addEventListener('paste', function (e) { var t = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4); if (t.length) { e.preventDefault(); boxes.forEach(function (x, j) { x.value = t[j] || ''; }); sync(); (boxes[Math.min(t.length, 3)]).focus(); } });
+    });
+    wrap.closest('form').addEventListener('submit', function (e) { sync(); if (hidden.value.length !== 4) { e.preventDefault(); boxes[hidden.value.length] && boxes[hidden.value.length].focus(); wrap.classList.add('shake'); setTimeout(function () { wrap.classList.remove('shake'); }, 400); } else if (btn) { btn.classList.add('busy'); } });
+  });
+
+  // haazir hain to screen band na ho (Android Chrome)
+  if (document.body.classList.contains('is-online') && 'wakeLock' in navigator) {
+    var lock = null, ask = function () { navigator.wakeLock.request('screen').then(function (l) { lock = l; }).catch(function () {}); };
+    ask(); document.addEventListener('visibilitychange', function () { if (!document.hidden) ask(); });
+  }
+
+  // flash ko toast bana do
+  var f = document.querySelector('.sr-flash'), t = document.getElementById('sxToast');
+  if (f && t) { t.textContent = f.textContent.trim(); t.classList.add('show'); f.remove(); setTimeout(function () { t.classList.remove('show'); }, 3200); }
 })();
 </script>
 </body>
 </html>
 <?php
 }
-
-

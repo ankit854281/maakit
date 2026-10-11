@@ -54,59 +54,73 @@ function sr_public_limit($key, $max) {
 }
 
 function sr_public_tabs($on) {
+    if (!function_exists('sr_icon')) require_once __DIR__ . '/ui.php';
     $tabs = [
-        'book'  => [u('/book.php'),  t('Send a parcel', 'पार्सल भेजिए')],
-        'track' => [u('/track.php'), t('Track', 'पार्सल कहाँ है')],
-        'apply' => [u('/apply.php'), t('Become a rider', 'राइडर बनिए')],
-        'login' => [u('/'),          t('Rider login', 'राइडर लॉगिन')],
+        'book'  => [u('/book.php'),  t('Send', 'भेजिए'),      'box'],
+        'track' => [u('/track.php'), t('Track', 'ट्रैक'),       'route'],
+        'apply' => [u('/apply.php'), t('Join as rider', 'राइडर बनिए'), 'bike'],
+        'login' => [u('/'),          t('Rider login', 'राइडर लॉगिन'), 'user'],
     ];
-    echo '<nav class="sp-tabs" aria-label="' . h(t('Sarathi', 'सारथी')) . '">';
-    foreach ($tabs as $k => [$href, $lbl]) {
-        echo '<a href="' . h($href) . '"' . ($k === $on ? ' class="on" aria-current="page"' : '') . '>' . h($lbl) . '</a>';
+    echo '<nav class="sxp-tabs" aria-label="' . h(t('Sarathi', 'सारथी')) . '">';
+    foreach ($tabs as $k => [$href, $lbl, $ic]) {
+        echo '<a href="' . h($href) . '"' . ($k === $on ? ' class="on" aria-current="page"' : '') . '>' . sr_icon($ic, 18) . '<span>' . h($lbl) . '</span></a>';
     }
     echo '</nav>';
 }
 
-function sr_public_head($tab, $title, $kicker, $h1a, $h1b, $lead) {
+/**
+ * $points = [[icon, text], ...] — hero ke neeche 3 chhoti khoobiyan
+ */
+function sr_public_head($tab, $title, $kicker, $h1a, $h1b, $lead, array $points = []) {
+    if (!function_exists('sr_icon')) require_once __DIR__ . '/ui.php';
     ?><!doctype html>
 <html lang="<?= h(sr_lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14283f">
+<meta name="theme-color" content="#0B1B36">
+<meta name="description" content="<?= h($lead) ?>">
 <title><?= h($title) ?> — <?= h(t('Smart Sarathi', 'स्मार्ट सारथी')) ?></title>
-<link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/app.css') ?>">
+<?php sr_assets(); ?>
 </head>
-<body class="sr-login sd-native sp-public">
-<?php sr_language_switch(true); ?>
-<section class="sd-login-intro">
-  <a class="sd-brand" href="<?= h(u('/book.php')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">SMART DELIVERY</span></span></a>
-  <span class="sd-eyebrow"><?= h($kicker) ?></span>
-  <h1><?= h($h1a) ?><br><?= h($h1b) ?></h1>
-  <p><?= h($lead) ?></p>
-  <div class="sd-login-art" aria-hidden="true"><span>↗</span></div>
-  <small>SMART SARATHI · <?= h(SR_PHONE_SHOW) ?></small>
-</section>
-<div class="sr-wrap">
-  <?php sr_public_tabs($tab); ?>
+<body class="sx sx-pub sx-pub-<?= h($tab) ?>">
+<header class="sxp-top">
+  <a class="sx-logo light" href="<?= h(u('/book.php')) ?>"><span class="sx-mark"><?= sr_icon('bolt', 18) ?></span><span>Sarathi<small>SMART DELIVERY</small></span></a>
+  <?php sr_language_switch(true); ?>
+</header>
+<div class="sxp">
+  <section class="sxp-hero">
+    <span class="sxp-kicker"><?= h($kicker) ?></span>
+    <h1><?= h($h1a) ?> <em><?= h($h1b) ?></em></h1>
+    <p><?= h($lead) ?></p>
+    <?php if ($points): ?><ul class="sxp-points"><?php foreach ($points as [$ic, $tx]): ?><li><?= sr_icon($ic, 18) ?><span><?= h($tx) ?></span></li><?php endforeach; ?></ul><?php endif; ?>
+    <div class="sxp-art" aria-hidden="true">
+      <svg viewBox="0 0 320 150" fill="none"><path d="M10 120 C 80 120, 90 40, 160 60 S 250 110, 310 30" stroke="url(#g)" stroke-width="3" stroke-dasharray="6 8" stroke-linecap="round"/><circle cx="10" cy="120" r="7" fill="#16E0A8"/><circle cx="310" cy="30" r="9" fill="#FFC83D"/><circle cx="310" cy="30" r="18" stroke="#FFC83D" stroke-opacity=".35" stroke-width="2"/><defs><linearGradient id="g" x1="0" y1="0" x2="320" y2="0"><stop stop-color="#16E0A8"/><stop offset="1" stop-color="#FFC83D"/></linearGradient></defs></svg>
+    </div>
+  </section>
+  <div class="sxp-col">
+    <?php sr_public_tabs($tab); ?>
 <?php
 }
 
 function sr_public_foot() {
     ?>
-  <div class="sr-help">
-    <b><?= h(t('Need help?', 'मदद चाहिए?')) ?></b>
-    <p><?= h(t('Call or WhatsApp us — we answer quickly.', 'फ़ोन या WhatsApp कीजिए — जल्दी जवाब मिलेगा।')) ?></p>
-    <a class="sr-call" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Call —', 'फ़ोन कीजिए —')) ?> <?= h(SR_PHONE_SHOW) ?></a>
+    <div class="sxp-help">
+      <div><b><?= h(t('Need help?', 'मदद चाहिए?')) ?></b><small><?= h(t('Call or WhatsApp — we answer quickly', 'फ़ोन या WhatsApp — जल्दी जवाब मिलेगा')) ?></small></div>
+      <a class="sx-pill" href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone', 16) ?> <?= h(SR_PHONE_SHOW) ?></a>
+    </div>
   </div>
 </div>
+<div class="sx-toast" id="sxToast" role="status" aria-live="polite"></div>
 <script>
 document.querySelectorAll('input[type=tel]').forEach(function (m) {
-  m.addEventListener('input', function () { var d = this.value.replace(/\D/g, ''); if (d.length > 10 && d.indexOf('91') === 0) d = d.slice(2); this.value = d.slice(0, 10); });
+  m.addEventListener('input', function () { var d = this.value.replace(/\D/g, ''); if (d.length > 10 && d.indexOf('91') === 0) d = d.slice(2); this.value = d.slice(0, 10); this.closest('.sx-field') && this.closest('.sx-field').classList.toggle('ok', this.value.length === 10); });
 });
-document.querySelectorAll('form.sr-card').forEach(function (f) {
-  f.addEventListener('submit', function () { var b = f.querySelector('button[type=submit]'); if (b) setTimeout(function () { b.disabled = true; b.classList.add('busy'); }, 0); });
+document.querySelectorAll('form.sx-form').forEach(function (f) {
+  f.addEventListener('submit', function (e) { if (!f.checkValidity()) return; var b = f.querySelector('button[type=submit]'); if (b) setTimeout(function () { b.disabled = true; b.classList.add('busy'); }, 0); });
 });
+document.addEventListener('click', function (e) { if (e.target.closest('button, .sx-btn, .sxp-tabs a')) { try { navigator.vibrate && navigator.vibrate(8); } catch (x) {} } });
+window.sxToast = function (m) { var t = document.getElementById('sxToast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 2600); };
 </script>
 </body>
 </html>
