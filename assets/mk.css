@@ -309,3 +309,30 @@ body{font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,-apple-sys
   .mk-cc-pics{height:150px}
   .mk-cc.wide .mk-cc-pics{height:210px;width:60%}
 }
+
+/* category card — chhota aur saaf (owner: "size dekhiye", 11 Oct) */
+.mk-ccards{gap:10px}
+.mk-cc{min-height:128px;padding:12px 12px 0;border-radius:14px}
+.mk-cc.wide{min-height:128px}
+.mk-cc b{font-size:14px;line-height:1.25;font-weight:700;max-width:14ch}
+.mk-cc.wide b{font-size:17px;max-width:11ch}
+.mk-cc-pics{height:72px}
+.mk-cc.wide .mk-cc-pics{height:104px;width:52%;right:8px}
+@media(min-width:900px){
+  .mk-ccards{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+  .mk-cc{min-height:150px;padding:14px 14px 0;border-radius:16px}
+  .mk-cc.wide{min-height:150px}
+  .mk-cc b{font-size:15px}
+  .mk-cc.wide b{font-size:20px}
+  .mk-cc-pics{height:86px}
+  .mk-cc.wide .mk-cc-pics{height:124px;width:50%}
+  .mk-top h1{font-size:36px}
+  .mk-top-in{min-height:250px}
+  .mk-top .fest-art{width:330px}
+}
+@media(max-width:899px){
+  .mk-ccards{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .mk-cc,.mk-cc.wide{grid-column:auto;min-height:118px;padding:10px 10px 0;border-radius:12px}
+  .mk-cc b,.mk-cc.wide b{font-size:12.5px;line-height:1.25;max-width:none}
+  .mk-cc-pics,.mk-cc.wide .mk-cc-pics{position:static;height:64px;width:100%;margin:0}
+}
