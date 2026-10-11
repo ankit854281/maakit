@@ -2,7 +2,8 @@
 // panel ka upar wala menu (bpo / delivery / admin)
 $u = user();
 $page_title = $page_title ?? 'Maakit पैनल';
-$no_tabbar = true;                 // panel me neeche ka customer menu nahi
+$no_tabbar = true;
+$adm_page = true;                  // patla admin header                 // panel me neeche ka customer menu nahi
 include __DIR__ . '/head.php';
 $role = $u['role'];
 

@@ -90,7 +90,7 @@ if (!$no_tabbar && !$no_ticker) {
 <link rel="stylesheet" href="/assets/mk.css?v=<?= (int)filemtime(__DIR__.'/../assets/mk.css') ?>">
 <style><?= maakit_theme_css($pdo ?? null) ?></style>
 </head>
-<body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($home_page)?' mk-home-page':'' ?><?= !empty($request_design)?' request-design':'' ?>">
+<body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($home_page)?' mk-home-page':'' ?><?= !empty($adm_page)?' adm-body':'' ?><?= !empty($request_design)?' request-design':'' ?>">
 
 <?php
 require_once __DIR__ . '/festival.php';
@@ -116,11 +116,11 @@ $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_
 </div>
 <?php endif; ?>
 
-<header class="mk-head<?= $_home ? ' mk-head-home' : '' ?>">
+<header class="mk-head<?= $_home ? ' mk-head-home' : '' ?><?= !empty($adm_page) ? ' mk-head-adm' : '' ?>">
   <div class="mk-wrap mk-head-row">
     <a class="mk-brand" href="/" aria-label="Maakit home">
       <?= maakit_logo_svg(36) ?>
-      <span class="mk-word">Maakit<small><?= t('Maa hai na', 'माँ है ना') ?></small></span>
+      <span class="mk-word">Maakit<small><?= !empty($adm_page) ? t('Admin', 'एडमिन') : t('Maa hai na', 'माँ है ना') ?></small></span>
     </a>
     <?php if (empty($no_tabbar)): ?>
     <a class="mk-loc" href="/location.php">

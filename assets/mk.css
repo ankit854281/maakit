@@ -554,3 +554,105 @@ body{background:#fff;color:var(--ink-2)}
 .dz-filter input[type=search]{flex:1 1 240px;min-width:0}
 .ph-page{background:transparent}
 .dz-table td,.dz-table th{border-left:0;border-right:0;border-top:0}
+
+/* ============================================================
+   Admin v2 — chhota, ghana, saaf (11 Oct, raat 8 baje)
+   ============================================================ */
+.adm-body{font-size:13.5px;background:#F6F7F9}
+.adm-body .mk-head{background:#fff;border-bottom:1px solid #E9EBEE;box-shadow:none}
+.adm-body .mk-head-row{padding-top:7px;padding-bottom:7px}
+.adm-body .mk-brand .mk-logo{width:28px;height:28px}
+.adm-body .mk-word{font-size:16px}
+.adm-body .mk-word small{font-size:10px;color:#14812A;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.adm-body .mk-call{font-size:13px}
+.adm-body .mk-lang a{font-size:12px;padding:5px 8px}
+.adm{background:#F6F7F9}
+.adm-side{font-size:13px}
+.adm-grp{font-size:10.5px;padding:12px 10px 4px}
+.adm-side nav a{font-size:13px;padding:6px 10px;gap:9px}
+.adm-side nav a svg{width:16px;height:16px}
+@media(min-width:1000px){.adm-side{width:212px;top:48px;max-height:calc(100vh - 48px)}}
+
+.dz{padding:18px 16px 36px;max-width:1240px}
+@media(min-width:900px){.dz{padding:20px 24px 40px}}
+.dz-head{margin-bottom:14px;align-items:center}
+.dz-head h1{font-size:19px;letter-spacing:-.2px}
+.dz-head p{font-size:12.5px}
+.dz-range{align-items:center;gap:6px}
+.dz-range input{padding:5px 8px;font-size:12.5px;border-radius:8px}
+.dz-pick{display:inline-flex;align-items:center;height:30px;padding:0 10px;border:1px solid #E2E4E8;border-radius:8px;background:#fff;font-size:12px;font-weight:700;color:#4B5563;text-decoration:none}
+.dz-pick.on{background:#111827;border-color:#111827;color:#fff}
+.dz-btn{display:inline-flex;align-items:center;height:30px;padding:0 12px;border:1px solid #E2E4E8;border-radius:8px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#111827;text-decoration:none;cursor:pointer}
+.dz-btn-p{background:#14812A;border-color:#14812A;color:#fff}
+.dz-kpis{gap:12px;margin-bottom:12px}
+.dz-kpi{padding:12px 14px 0;gap:0;border-radius:12px}
+.dz-kpi::before{display:none}
+.dz-k-top{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#4B5563;font-weight:600;margin-bottom:6px}
+.dz-k-top em{margin-left:auto;font-style:normal;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:#F3F4F6;color:#6B7280}
+.dz-k-top em.up{background:#EAF7EE;color:#14812A}.dz-k-top em.down{background:#FDECEC;color:#B42318}
+.dz-ic{display:grid;place-items:center;width:26px;height:26px;border-radius:7px}
+.dz-ic svg{width:15px;height:15px}
+.dz-ic.g{background:#EAF7EE;color:#14812A}.dz-ic.y{background:#FFF4D6;color:#B45309}.dz-ic.b{background:#EAF2FF;color:#1D4ED8}.dz-ic.p{background:#F3E8FF;color:#7E22CE}
+.dz-kpi b{font-size:22px;line-height:1.25}
+.dz-kpi small{font-size:12px;margin-top:2px}
+.dz-spark{display:block;width:calc(100% + 28px);height:34px;margin:8px -14px 0}
+.dz-today{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;background:#fff;border:1px solid #ECEEF1;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12.5px;color:#4B5563}
+.dz-today b{color:#111827;font-size:13.5px}
+.dz-today .warn b{color:#B45309}
+.dz-t-l{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#14812A;background:#EAF7EE;border-radius:6px;padding:2px 8px}
+.dz-row{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+@media(min-width:1000px){.dz-r-21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.dz-r-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.dz-grid2,.dz-grid3{margin-top:0}
+.dz-card{padding:14px;border-radius:12px}
+.dz-card-h{margin-bottom:10px}
+.dz-card-h b{font-size:13.5px}
+.dz-card-h span,.dz-card-h a{font-size:12px}
+.dz-key{display:flex;align-items:center;gap:6px;color:#6B7280}
+.dz-key i{display:inline-block;width:14px;height:8px;border-radius:2px}
+.dz-key .k-line{height:3px;background:#16A34A}.dz-key .k-bar{background:#FCD34D;margin-left:8px}
+.dz-combo{display:block;width:100%;height:210px}
+.dz-axis{font-size:11px}
+.dz-donut{display:flex;align-items:center;gap:16px}
+.dz-donut svg{flex-shrink:0}
+.dz-donut .dz-legend{flex:1}
+.dz-dn-v{font-size:24px;font-weight:800;fill:#111827}.dz-dn-l{font-size:11px;fill:#6B7280}
+.s0c{stroke:#22A33B}.s1c{stroke:#F2B705}.s2c{stroke:#3B82F6}.s3c{stroke:#A855F7}.s4c{stroke:#EF4444}.s5c{stroke:#94A3B8}
+.dz-legend li{font-size:12.5px}
+.dz-mb{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:4px}
+.dz-mb>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.dz-mb i{display:block;width:100%;max-width:26px;border-radius:3px 3px 0 0}
+.dz-mb span{font-size:10px;color:#9CA3AF;margin-top:4px;height:12px;white-space:nowrap}
+.dz-prog{margin-bottom:12px}
+.dz-prog>div{display:flex;justify-content:space-between;font-size:12.5px;color:#4B5563;margin-bottom:5px}
+.dz-prog b{color:#111827}
+.dz-prog i{display:block;height:7px;border-radius:7px;background:#F1F2F4;overflow:hidden}
+.dz-prog em{display:block;height:100%;background:#22A33B;border-radius:7px}
+.dz-mini3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.dz-mini3 a{display:flex;flex-direction:column;background:#F9FAFB;border-radius:10px;padding:8px 10px;color:#6B7280;font-size:12px;text-decoration:none}
+.dz-mini3 b{font-size:17px;color:#111827}
+.dz-mini3 small{font-size:11px}
+.dz-table{font-size:12.5px}
+.dz-table th{font-size:11px;padding:7px 8px}
+.dz-table td{padding:8px;vertical-align:middle}
+.dz-table .r{text-align:right}
+.dz-mut{color:#6B7280}
+.dz-pill{font-size:11px;padding:2px 8px}
+.dz-todo li{font-size:12.5px;padding:8px 10px}
+.dz-todo li a{font-size:14px}
+.dz-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #F1F2F4;font-size:12px}
+.dz-links a{color:#14812A;font-weight:600;text-decoration:none}
+.dz-links span{margin-left:auto;color:#9CA3AF}
+.dz-bars>div{font-size:12.5px}
+.dz-sub{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9CA3AF;margin:4px 0 6px}
+.dz-tags{margin-bottom:10px}
+.dz-tags span{font-size:12px;padding:3px 9px}
+.dz-tags.miss span{background:#FFF4E5;color:#9A3412}
+.adm-body .dz-filter input{padding:7px 10px;font-size:13px}
+.adm-body .mk-btn{min-height:32px;font-size:13px;padding:0 12px;border-radius:8px}
+.adm-body .dz-chip{min-height:32px;font-size:13px;border-radius:8px}
+.adm-body .ph-top h1{font-size:19px}
+.adm-body .ph-top p{font-size:12.5px}
+.adm-body .ph-stats b{font-size:17px}
+.adm-body .ph-info b{font-size:12.5px}
+.adm-body .ph-upbtn{font-size:12px;padding:5px}
+.adm-body .footer{font-size:12.5px}
