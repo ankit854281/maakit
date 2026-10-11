@@ -2,7 +2,7 @@
 // ============================================================
 //  सारथी — ऐप का ढाँचा (हर पन्ने पर एक जैसा)
 //
-//  Upar ☰ aur naam, bagal se aane wala menu, neeche tab patti.
+//  Owner-requested green/lime dashboard: desktop sidebar and mobile tabs.
 //  Drawer bina JavaScript ke chalta hai — ek chhupa checkbox
 //  aur CSS. Purane aur dheeme phone par bhi khulta hai.
 // ============================================================
@@ -38,12 +38,12 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#7A1F1F">
+<meta name="theme-color" content="#143c32">
 <meta name="robots" content="noindex,nofollow">
 <title><?= h($title) ?> — सारथी</title>
 <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/app.css') ?>">
 </head>
-<body>
+<body class="sd-partner">
 
 <input type="checkbox" id="sr-nav" class="sr-nav-sw" hidden>
 
@@ -58,6 +58,7 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
 
 <label class="sr-veil" for="sr-nav"></label>
 <nav class="sr-draw">
+  <a class="sd-brand" href="<?= h(u('/')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">DELIVERY PARTNER</span></span></a>
   <div class="sr-draw-top">
     <div class="sr-ava"><?= h(mb_substr(trim($me['name']), 0, 1)) ?></div>
     <div><b><?= h($me['name']) ?></b><small>सारथी</small></div>
@@ -80,12 +81,34 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
   <p class="sr-draw-foot">सारथी · <?= h(SR_PHONE_SHOW) ?></p>
 </nav>
 
-<main class="sr-main">
+<main class="sr-main sd-native">
+  <section class="sd-welcome">
+    <div><span class="sd-eyebrow">DELIVERY PARTNER</span>
+      <h1><?= $tab === 'kaam' ? 'नमस्ते, ' . h($me['name']) : h($title) ?></h1>
+      <p><?= $tab === 'kaam' ? 'आपका अगला काम, यहीं से शुरू होता है।' : 'आपके काम की सारी जानकारी, एक जगह।' ?></p>
+    </div>
+    <a class="sd-support" href="<?= h(u('/madad.php')) ?>">मदद और सहायता ↗</a>
+  </section>
+  <?php if ($tab === 'kaam'): ?>
+  <div class="sd-stats">
+    <div class="sd-stat"><small>अभी के काम</small><strong><?= (int)($count['kaam'] ?? 0) ?></strong><span>आपको मिले हुए काम</span></div>
+    <div class="sd-stat"><small>आपकी हाज़िरी</small><strong class="sd-word"><?= $ready ? 'हाज़िर' : 'बंद' ?></strong><span><?= $ready ? 'नए काम मिल सकते हैं' : 'तैयार होने पर हाज़िरी लगाएँ' ?></span></div>
+    <a class="sd-stat" href="<?= h(u('/khata.php')) ?>"><small>कमाई और भुगतान</small><strong class="sd-word">खाता देखें ↗</strong><span>आपका पूरा हिसाब</span></a>
+  </div>
+  <div class="sd-grid"><div class="sd-work">
+    <section class="sd-hero"><span class="sd-eyebrow">हर डिलीवरी मायने रखती है</span><h2>चलें, अगला काम<br>आसान बनाते हैं।</h2><p>पिकअप से डिलीवरी तक, आपका साथी।</p><span class="sd-orbit" aria-hidden="true">↗</span></section>
+  <?php endif; ?>
 <?php
 }
 
 function sr_foot($tab, $count = []) {
     ?>
+<?php if ($tab === 'kaam'): ?>
+  </div><aside class="sd-rail">
+    <section class="sd-tip"><span class="sd-eyebrow">आपके साथ, हर रास्ते पर</span><h3>सुरक्षित सफ़र,<br>बेहतर डिलीवरी।</h3><p>चलती गाड़ी में फ़ोन इस्तेमाल करने से पहले सुरक्षित जगह रुकें।</p><a href="<?= h(u('/madad.php')) ?>">मदद देखिए →</a></section>
+    <section class="sd-rail-card"><span class="sd-eyebrow">आपका हिसाब</span><h3>काम पूरा। हिसाब साफ़।</h3><p>कमाई, मिला हुआ भुगतान और बाकी रकम अपने खाते में देखें।</p><a href="<?= h(u('/khata.php')) ?>">खाता खोलिए →</a></section>
+  </aside></div>
+<?php endif; ?>
 </main>
 <nav class="sr-bar">
   <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
@@ -113,3 +136,4 @@ function sr_foot($tab, $count = []) {
 </html>
 <?php
 }
+
