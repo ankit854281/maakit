@@ -56,7 +56,25 @@ try {
 
 require_once __DIR__ . '/inc/festival.php';
 $fest = maakit_festival_now($pdo);
+function mk_unit($u) { return is_hi() ? $u : strtr((string)$u, ['किलो' => 'kg', 'ग्राम' => 'g', 'लीटर' => 'litre', 'पीस' => 'piece', 'पैकेट' => 'packet', 'दर्जन' => 'dozen', 'बोतल' => 'bottle', 'डिब्बा' => 'box', 'जोड़ा' => 'pair', 'मीटर' => 'metre']); }
 function mk_price($n) { return rtrim(rtrim(number_format((float)$n, 2, '.', ''), '0'), '.'); }
+// paas ki dukanen (asli, manzoor)
+$stores = [];
+try {
+    if (!function_exists('dukan_khuli')) require_once __DIR__ . '/inc/dukan.php';
+    $stores = $pdo->query("SELECT id, name, village, photo, shop_type, category, shop_open, open_time, close_time, items_on,
+        (SELECT COUNT(*) FROM shop_items s WHERE s.business_id=b.id AND s.active=1 AND s.price>0) AS n_items
+        FROM businesses b WHERE status='approved' AND (items_on=1 OR salon_on=1 OR photo IS NOT NULL)
+        ORDER BY (photo IS NOT NULL AND photo<>'') DESC, n_items DESC, id DESC LIMIT 8")->fetchAll();
+} catch (Throwable $e) { $stores = []; }
+// grahak ka pichhla pura hua order — "phir se mangaiye"
+$last_order = null;
+if ($me) {
+    try {
+        $st = $pdo->prepare("SELECT order_no, items, created_at FROM orders WHERE mobile=? AND status IN ('Delivered','Paisa jama') ORDER BY id DESC LIMIT 1");
+        $st->execute([$me['mobile'] ?? '']); $last_order = $st->fetch() ?: null;
+    } catch (Throwable $e) {}
+}
 $home_page = true;
 include __DIR__ . '/inc/head.php';
 ?>
@@ -104,6 +122,12 @@ include __DIR__ . '/inc/head.php';
     <li><?= svc_icon('box', 18) ?><?= t('Delivery to your door', 'घर तक डिलीवरी') ?></li>
     <li><?= svc_icon('user', 18) ?><?= t('Local team on call', 'फ़ोन पर मदद') ?></li>
   </ul>
+  <?php if (!empty($tick_hul) && !empty($tick)): ?>
+  <div class="mk-live" aria-label="<?= h(t('Recent activity', 'अभी-अभी')) ?>">
+    <span class="mk-live-l"><i></i><?= t('Live', 'अभी-अभी') ?></span>
+    <div class="mk-live-run"><div><?php for ($p = 0; $p < 2; $p++): foreach ($tick as $v): ?><span><?= h($v) ?></span><?php endforeach; endfor; ?></div></div>
+  </div>
+  <?php endif; ?>
 
   <section class="mk-sec">
     <div class="mk-sec-head"><h2><?= t('Shop by category', 'श्रेणी चुनिए') ?></h2><a href="/bazaar.php"><?= t('See all', 'सब देखिए') ?></a></div>
@@ -118,6 +142,16 @@ include __DIR__ . '/inc/head.php';
       <?php endforeach; ?>
     </nav>
   </section>
+
+  <?php if ($last_order): ?>
+  <section class="mk-sec">
+    <div class="mk-again">
+      <span class="mk-cat-ic"><?= svc_icon('box', 24) ?></span>
+      <span class="mk-again-t"><b><?= t('Order again', 'फिर से मँगाइए') ?></b><small><?= h(mb_strimwidth((string)$last_order['items'], 0, 80, '…')) ?></small></span>
+      <a class="mk-btn mk-btn-sm" href="<?= h(wa_link(MAAKIT_WA, t('Please repeat my order ', 'मेरा यह ऑर्डर फिर से भेज दीजिए ') . $last_order['order_no'] . ":\n" . $last_order['items'])) ?>" target="_blank" rel="noopener"><?= t('Repeat', 'दोबारा') ?></a>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <?php foreach ($discovery as $kind=>$products): ?>
   <section class="mk-sec">
@@ -137,7 +171,7 @@ include __DIR__ . '/inc/head.php';
           <?php elseif ($ref): ?><span class="mk-tag"><?= t('Market price','बाज़ार दाम') ?></span>
           <?php else: ?><span class="mk-tag"><?= t('Ask price','दाम पूछिए') ?></span><?php endif; ?>
           <b class="mk-pc-name"><?= h($pname) ?></b>
-          <span class="mk-pc-unit"><?= h($unit) ?></span>
+          <span class="mk-pc-unit"><?= h(mk_unit($unit)) ?></span>
           <span class="mk-pc-foot">
             <span class="mk-pc-price"><?php if ($offer): ?>₹<?= h(mk_price($offer['price'])) ?><?php elseif ($ref && !empty($ref['packs'][0])): ?>₹<?= h(mk_price($ref['packs'][0]['price'])) ?><?php else: ?>—<?php endif; ?></span>
             <span class="mk-add"><?= t('ADD', 'जोड़ें') ?></span>
@@ -148,11 +182,28 @@ include __DIR__ . '/inc/head.php';
   </section>
   <?php endforeach; ?>
 
+  <?php if ($stores): ?>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Shops near you', 'आपके पास की दुकानें') ?></h2><a href="/directory.php"><?= t('See all', 'सब देखिए') ?></a></div>
+    <div class="mk-stores">
+      <?php foreach ($stores as $b): $open = function_exists('dukan_khuli') ? dukan_khuli($b) : true; ?>
+        <a class="mk-store" href="/business.php?id=<?= (int)$b['id'] ?>">
+          <span class="mk-store-img"><?php if ($b['photo']): ?><img src="/uploads/<?= h($b['photo']) ?>" alt="" loading="lazy"><?php else: ?><?= svc_icon('shops', 30) ?><?php endif; ?>
+            <em class="<?= $open ? 'on' : '' ?>"><?= $open ? t('Open', 'खुली') : t('Closed', 'बंद') ?></em></span>
+          <b><?= h($b['name']) ?></b>
+          <small><?= h($b['village']) ?><?= $b['shop_type'] ? ' · ' . h(catalog_label($b['shop_type'])) : '' ?></small>
+          <?php if ((int)$b['n_items']): ?><small class="mk-store-n"><?= (int)$b['n_items'] ?> <?= t('products with price', 'सामान दाम सहित') ?></small><?php endif; ?>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
+
   <section class="mk-sec">
     <div class="mk-sec-head"><h2><?= t('More from Maakit', 'Maakit की और सेवाएँ') ?></h2></div>
     <div class="mk-svcs">
       <a href="/sewa.php"><span class="mk-cat-ic"><?= svc_icon('ride',26) ?></span><b><?= t('Book a vehicle','गाड़ी बुक करें') ?></b><small><?= t('Bolero, tempo, tent & more','बोलेरो, टेम्पो, टेंट') ?></small></a>
-      <a href="/order.php#pata"><span class="mk-cat-ic"><?= svc_icon('box',26) ?></span><b><?= t('Send a list','लिस्ट भेजें') ?></b><small><?= t('Photo or written list','फ़ोटो या लिखी लिस्ट') ?></small></a>
+      <a href="/order.php#pata"><span class="mk-cat-ic"><?= svc_icon('box',26) ?></span><b><?= t('Snap & order','फ़ोटो से ऑर्डर') ?></b><small><?= t('Photo of your list or an empty pack','लिस्ट या खाली पैकेट की फ़ोटो') ?></small></a>
       <a href="/directory.php"><span class="mk-cat-ic"><?= svc_icon('shops',26) ?></span><b><?= t('Find a shop','दुकान खोजें') ?></b><small><?= t('Shops & local pros','दुकानें और कारीगर') ?></small></a>
       <a href="/books.php"><span class="mk-cat-ic"><?= svc_icon('book',26) ?></span><b><?= t('Old books','पुरानी किताबें') ?></b><small><?= t('Buy, sell, exchange','खरीदें, बेचें') ?></small></a>
     </div>
@@ -226,6 +277,7 @@ include __DIR__ . '/inc/head.php';
 <form class="mk-float-search" id="floatSearch" action="/search.php" method="get" role="search">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
   <input type="search" name="q" id="q" placeholder="<?= h(t('Search atta, medicine, Bolero…', 'खोजिए: आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
+  <button type="button" class="mk-fs-mic" id="fsMic" hidden aria-label="<?= h(t('Search by voice', 'बोलकर खोजिए')) ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
   <button type="submit" class="mk-fs-go"><?= t('Search', 'खोजिए') ?></button>
 </form>
 <script>
@@ -241,6 +293,19 @@ include __DIR__ . '/inc/head.php';
       ? ['आटा, चावल, दाल…','बुख़ार की दवा','सरसों तेल','बोलेरो बुक कीजिए','पूजा सामग्री']
       : ['Atta, rice, dal…','Fever medicine','Mustard oil','Book a Bolero','Puja samagri'], JSON_UNESCAPED_UNICODE) ?>, i=0;
   setInterval(function(){ if(document.activeElement===el||el.value) return; i=(i+1)%list.length; el.setAttribute('placeholder',list[i]); },2600);
+  /* bolkar khojiye — Chrome/Android me chalta hai, baaki me button chhupa rehta hai */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = document.getElementById('fsMic');
+  if (SR && mic) {
+    mic.hidden = false;
+    mic.addEventListener('click', function(){
+      var r = new SR(); r.lang = <?= json_encode(is_hi() ? 'hi-IN' : 'en-IN') ?>; r.interimResults = false; r.maxAlternatives = 1;
+      f.classList.remove('is-small'); mic.classList.add('on'); el.setAttribute('placeholder', <?= json_encode(t('Listening…', 'सुन रहे हैं…'), JSON_UNESCAPED_UNICODE) ?>);
+      r.onresult = function(ev){ el.value = ev.results[0][0].transcript; f.submit(); };
+      r.onend = function(){ mic.classList.remove('on'); };
+      r.onerror = function(){ mic.classList.remove('on'); };
+      try { r.start(); } catch (_) { mic.classList.remove('on'); }
+    });
+  }
 })();
 </script>
 <script>

@@ -70,6 +70,16 @@
     ['kaam',  '/directory.php',t('Services', 'काम-धंधा'), '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'],
   ];
 ?>
+<a class="mk-wa" href="<?= h(wa_link(MAAKIT_WA, t('Hello Maakit, I need help.', 'नमस्ते Maakit, मुझे मदद चाहिए।'))) ?>" target="_blank" rel="noopener" aria-label="<?= h(t('Chat on WhatsApp', 'WhatsApp पर बात कीजिए')) ?>">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>
+</a>
+<script>
+/* chhoti si thartharahat (Android) jab ADD ya button dabaye */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('.mk-add,.mk-btn,.mk-fs-go,.tabbar a,.mk-cc');
+  if (b && navigator.vibrate) { try { navigator.vibrate(8); } catch (_) {} }
+}, { passive: true });
+</script>
 <nav class="tabbar" aria-label="<?= h(t('Main menu', 'मुख्य मेन्यू')) ?>">
   <?php foreach ($T as list($k, $href, $lbl, $path)): ?>
     <a href="<?= h($href) ?>" class="<?= ($tab ?? '') === $k ? 'on' : '' ?>">

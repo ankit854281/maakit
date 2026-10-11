@@ -98,12 +98,32 @@ $_fest = empty($no_tabbar) ? maakit_festival_now($pdo ?? null) : null;
 $_home = !empty($home_page);
 $_c = function_exists('cust') ? cust() : null;
 $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_selected($pdo) : null;
+// Admin ki ghoshna (Admin > समय/त्योहार) — sabse upar ki patti
+$_ann = null;
+if (empty($no_tabbar) && isset($pdo) && function_exists('setg')) {
+    $ae = trim((string)setg($pdo, 'announce_en', '')); $ah = trim((string)setg($pdo, 'announce_hi', ''));
+    if ($ae !== '' || $ah !== '') $_ann = ['text' => t($ae !== '' ? $ae : $ah, $ah !== '' ? $ah : $ae), 'link' => (string)setg($pdo, 'announce_link', '')];
+}
+// grahak ka chalta hua order — upar tairta capsule
+$_live_order = null;
+if ($_c && empty($no_tabbar) && isset($pdo)) {
+    try {
+        $st = $pdo->prepare("SELECT order_no, status, mobile FROM orders WHERE mobile=? AND status NOT IN ('Delivered','Paisa jama','Cancel')
+                             AND created_at > NOW() - INTERVAL 3 DAY ORDER BY id DESC LIMIT 1");
+        $st->execute([$_c['mobile'] ?? '']); $_live_order = $st->fetch() ?: null;
+    } catch (Throwable $e) { $_live_order = null; }
+}
 ?>
-<?php if ($_fest && !$_home): ?>
+<?php if ($_ann): ?>
+<<?= $_ann['link'] && preg_match('#^/[A-Za-z0-9._/?=&\#-]*$#', $_ann['link']) ? 'a href="' . h($_ann['link']) . '"' : 'div' ?> class="mk-ann" role="status">
+  <span class="mk-ann-run"><span><?= h($_ann['text']) ?></span><span aria-hidden="true"><?= h($_ann['text']) ?></span></span>
+</<?= $_ann['link'] && preg_match('#^/[A-Za-z0-9._/?=&\#-]*$#', $_ann['link']) ? 'a' : 'div' ?>>
+<?php endif; ?>
+<?php if ($_fest && !$_home && !$_ann): ?>
 <a class="mk-fest-strip" href="/search.php?q=<?= h(urlencode($_fest['q'])) ?>" style="--fbg:<?= h($_fest['bg']) ?>;--facc:<?= h($_fest['accent']) ?>">
   <span class="mk-wrap"><b><?= h(t($_fest['en'], $_fest['hi'])) ?></b><span class="mk-fs-sub"><?= h(t($_fest['cta_en'], $_fest['cta_hi'])) ?> →</span></span>
 </a>
-<?php elseif ($tick && !$_home): ?>
+<?php elseif ($tick && !$_home && !$_ann): ?>
 <div class="ticker" aria-label="<?= h($tick_hul ? t('Recent activity', 'अभी-अभी') : t('Service areas', 'सेवा क्षेत्र')) ?>">
   <div class="tk">
     <span class="lbl"><?= $tick_hul ? t('JUST NOW', 'अभी-अभी') : t('WE DELIVER IN', 'यहाँ पहुँचते हैं') ?></span>
@@ -149,5 +169,15 @@ $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_
     </div>
   </div>
 </header>
+<?php if ($_live_order):
+  $_steps = ['Naya' => 1, 'Confirm' => 2, 'Assign' => 3, 'Pickup' => 3, 'Delivered' => 4];
+  $_sn = $_steps[$_live_order['status']] ?? 1; ?>
+<a class="mk-island" href="/track.php?no=<?= h(urlencode($_live_order['order_no'])) ?>&amp;m=<?= h(urlencode($_live_order['mobile'])) ?>">
+  <span class="mk-isl-dot" aria-hidden="true"></span>
+  <span class="mk-isl-t"><b><?= h($_live_order['order_no']) ?></b> · <?= h(function_exists('status_hi') ? status_hi($_live_order['status']) : $_live_order['status']) ?></span>
+  <span class="mk-isl-bar" aria-hidden="true"><?php for ($i = 1; $i <= 4; $i++): ?><i class="<?= $i <= $_sn ? 'on' : '' ?>"></i><?php endfor; ?></span>
+  <span class="mk-isl-go"><?= t('Track', 'देखिए') ?> →</span>
+</a>
+<?php endif; ?>
 <?php if ($f = flash()): ?><div class="wrap" style="padding-top:14px"><div class="ok"><?= h($f) ?></div></div><?php endif; ?>
 

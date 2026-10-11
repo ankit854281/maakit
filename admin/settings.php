@@ -12,7 +12,15 @@ function sset(PDO $pdo, $k, $v) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 
-    if ($do === 'festival') {
+    if ($do === 'announce') {
+        $link = trim(post('announce_link'));
+        if ($link !== '' && !preg_match('#^/[A-Za-z0-9._/?=&\#-]*$#', $link)) $link = '';
+        sset($pdo, 'announce_en', mb_substr(trim(post('announce_en')), 0, 160));
+        sset($pdo, 'announce_hi', mb_substr(trim(post('announce_hi')), 0, 160));
+        sset($pdo, 'announce_link', $link);
+        flash(t('Announcement saved.', 'घोषणा सेव हो गई।'));
+    }
+    elseif ($do === 'festival') {
         sset($pdo, 'festival_off', post('v') === '1' ? '1' : '0');
         flash(post('v') === '1' ? 'त्योहार की पट्टी बंद कर दी।' : 'त्योहार की पट्टी चालू कर दी।');
     }
@@ -64,7 +72,19 @@ include __DIR__ . '/../inc/panel.php';
     <a class="btn btn-sm btn-line" href="/" target="_blank" style="margin-left:auto;color:var(--brand);border-color:var(--line)">वेबसाइट पर देखिए</a>
   </div>
 
-  <h3 class="ghead" style="margin-top:0">त्योहार की पट्टी</h3>
+  <h3 class="ghead" style="margin-top:0"><?= t('Announcement strip', 'घोषणा की पट्टी') ?></h3>
+  <form method="post" class="box" style="margin-bottom:16px">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="announce">
+    <p class="help" style="margin:0 0 10px"><?= t('A running line at the very top of every page. Leave both empty to turn it off. Write only what is true.', 'हर पेज के सबसे ऊपर चलती लाइन। दोनों खाली छोड़ेंगे तो बंद। सिर्फ़ सच्ची बात लिखिए।') ?></p>
+    <div class="grid g2">
+      <div class="field"><label><?= t('Text — English', 'लाइन — English') ?></label><input type="text" name="announce_en" maxlength="160" value="<?= h($S['announce_en'] ?? '') ?>" placeholder="Free delivery on your first order"></div>
+      <div class="field"><label><?= t('Text — Hindi', 'लाइन — हिंदी') ?></label><input type="text" name="announce_hi" maxlength="160" value="<?= h($S['announce_hi'] ?? '') ?>" placeholder="पहले ऑर्डर पर डिलीवरी फ़्री"></div>
+    </div>
+    <div class="field"><label><?= t('Link when tapped (optional, e.g. /bazaar.php)', 'दबाने पर कहाँ जाए (चाहें तो, जैसे /bazaar.php)') ?></label><input type="text" name="announce_link" maxlength="120" value="<?= h($S['announce_link'] ?? '') ?>"></div>
+    <button class="btn btn-brand"><?= t('Save announcement', 'घोषणा सेव कीजिए') ?></button>
+  </form>
+
+  <h3 class="ghead">त्योहार की पट्टी</h3>
   <?php require_once __DIR__ . '/../inc/festival.php'; $fOff = ($S['festival_off'] ?? '0') === '1'; $fNow = maakit_festival_now(null); ?>
   <form method="post" class="box" style="margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="festival">
