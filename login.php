@@ -96,65 +96,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
 include __DIR__ . '/inc/head.php';
 ?>
-<section>
-<div class="wrap" style="max-width:440px">
+<section class="lg">
+  <div class="lg-wrap">
+    <aside class="lg-side" aria-hidden="true">
+      <div class="lg-brand"><?= maakit_logo_svg(44) ?><span>Maakit<small><?= t('Partner & team login', 'साथी और टीम लॉगिन') ?></small></span></div>
+      <h1><?= t('Run your shop from your phone.', 'अपनी दुकान, अपने फ़ोन से।') ?></h1>
+      <ul>
+        <li><?= t('Add products and your own prices', 'अपना सामान और अपना दाम डालिए') ?></li>
+        <li><?= t('See new orders the moment they arrive', 'नया ऑर्डर आते ही देखिए') ?></li>
+        <li><?= t('Daily accounts and your ledger', 'रोज़ का हिसाब और अपना खाता') ?></li>
+        <li><?= t('Payments straight to your UPI', 'पैसा सीधा आपके UPI में') ?></li>
+      </ul>
+    </aside>
 
-  <h2>लॉगिन</h2>
-
-  <!-- कौन हैं आप — दो ही रास्ते -->
-  <div style="display:flex;gap:8px;margin:12px 0 16px">
-    <a class="btn btn-sm <?= $as==='dukan' ? 'btn-brand' : '' ?>"
-       style="flex:1;text-align:center<?= $as==='dukan' ? '' : ';background:#EFEAE0' ?>"
-       href="/login.php">मैं दुकानदार हूँ</a>
-    <a class="btn btn-sm <?= $as==='team' ? 'btn-brand' : '' ?>"
-       style="flex:1;text-align:center<?= $as==='team' ? '' : ';background:#EFEAE0' ?>"
-       href="/login.php?as=team">मैं Maakit टीम से हूँ</a>
-  </div>
-
-  <?php if ($err): ?><div class="err"><?= h($err) ?></div><?php endif; ?>
-
-  <?php if ($as === 'dukan'): ?>
-
-    <form method="post" class="box">
-      <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-      <input type="hidden" name="do" value="dukan">
-      <p class="lead" style="margin:0 0 14px">अपना सामान, अपना दाम, अपने ऑर्डर और अपना हिसाब —
-        सब यहीं से चलेगा।</p>
-      <div class="field"><label>अपना मोबाइल नंबर</label>
-        <input type="tel" name="mobile" inputmode="numeric" value="<?= h(post('mobile')) ?>" required autofocus></div>
-      <div class="field"><label>Maakit से मिला कोड</label>
-        <input type="text" name="code" placeholder="जैसे ABC-1234" autocapitalize="characters"
-               autocomplete="off" spellcheck="false" required></div>
-      <button class="btn btn-brand" type="submit" style="width:100%;font-size:17px">खोलिए</button>
-      <p class="help" style="margin-top:12px">एक बार खोलने के बाद <b>90 दिन</b> तक इसी फ़ोन पर
-        सीधा खुलेगा — बार-बार कुछ नहीं डालना पड़ेगा।</p>
-    </form>
-
-    <div class="box" style="margin-top:14px">
-      <b>कोड नहीं मिला?</b>
-      <p class="help" style="margin-top:6px">दुकान पहले Maakit पर दर्ज होनी चाहिए। उसके बाद
-        हम आपको WhatsApp पर कोड भेज देते हैं।</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        <a class="btn btn-gold btn-sm" href="/register-business.php">अपनी दुकान दर्ज कीजिए</a>
-        <a class="btn btn-sm" style="background:#EFEAE0" href="tel:<?= h(MAAKIT_PHONE) ?>">फ़ोन — <?= h(MAAKIT_NUMBER_SHOW) ?></a>
+    <div class="lg-card">
+      <div class="lg-tabs" role="tablist">
+        <a role="tab" aria-selected="<?= $as === 'dukan' ? 'true' : 'false' ?>" class="<?= $as === 'dukan' ? 'on' : '' ?>" href="/login.php"><?= t('Shopkeeper', 'दुकानदार') ?></a>
+        <a role="tab" aria-selected="<?= $as === 'team' ? 'true' : 'false' ?>" class="<?= $as === 'team' ? 'on' : '' ?>" href="/login.php?as=team"><?= t('Maakit team', 'Maakit टीम') ?></a>
       </div>
+
+      <?php if ($err): ?><div class="lg-err" role="alert"><?= h($err) ?></div><?php endif; ?>
+
+      <?php if ($as === 'dukan'): ?>
+        <h2><?= t('Welcome back', 'नमस्ते') ?></h2>
+        <p class="lg-sub"><?= t('Sign in with your mobile number and the code Maakit sent you.', 'अपना मोबाइल नंबर और Maakit से मिला कोड डालिए।') ?></p>
+        <form method="post" class="lg-form" data-remember="dukan">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="dukan">
+          <label class="lg-field"><span><?= t('Mobile number', 'मोबाइल नंबर') ?></span>
+            <span class="lg-in"><em>+91</em><input type="tel" name="mobile" inputmode="numeric" autocomplete="tel-national" maxlength="10" value="<?= h(post('mobile')) ?>" required autofocus data-mobile></span></label>
+          <label class="lg-field"><span><?= t('Login code', 'लॉगिन कोड') ?></span>
+            <span class="lg-in"><input type="text" name="code" placeholder="ABC-1234" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" required data-code></span></label>
+          <label class="lg-check"><input type="checkbox" data-keep checked> <?= t('Remember my number on this phone', 'इस फ़ोन पर मेरा नंबर याद रखिए') ?></label>
+          <button class="lg-btn" type="submit"><span><?= t('Sign in', 'खोलिए') ?></span></button>
+          <p class="lg-note"><?= t('Stays signed in on this phone for 90 days.', 'इस फ़ोन पर 90 दिन तक खुला रहेगा।') ?></p>
+        </form>
+        <div class="lg-help">
+          <b><?= t('No code yet?', 'कोड नहीं मिला?') ?></b>
+          <span><?= t('Register your shop first — we send the code on WhatsApp.', 'पहले दुकान दर्ज कीजिए — कोड WhatsApp पर भेज देंगे।') ?></span>
+          <div><a href="/register-business.php"><?= t('Register your shop', 'दुकान दर्ज कीजिए') ?> →</a><a href="tel:<?= h(MAAKIT_PHONE) ?>"><?= t('Call', 'फ़ोन') ?> <?= h(MAAKIT_NUMBER_SHOW) ?></a></div>
+        </div>
+      <?php else: ?>
+        <h2><?= t('Team sign in', 'टीम लॉगिन') ?></h2>
+        <p class="lg-sub"><?= t('For Maakit staff only.', 'सिर्फ़ Maakit टीम के लिए।') ?></p>
+        <form method="post" class="lg-form" data-remember="team">
+          <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="team">
+          <label class="lg-field"><span><?= t('Username', 'यूज़रनेम') ?></span>
+            <span class="lg-in"><input type="text" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required autofocus data-user></span></label>
+          <label class="lg-field"><span><?= t('Password', 'पासवर्ड') ?></span>
+            <span class="lg-in"><input type="password" name="password" autocomplete="current-password" required data-pass>
+              <button type="button" class="lg-eye" data-eye aria-label="<?= h(t('Show password', 'पासवर्ड दिखाइए')) ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+          <label class="lg-check"><input type="checkbox" data-keep checked> <?= t('Remember my username', 'मेरा यूज़रनेम याद रखिए') ?></label>
+          <button class="lg-btn" type="submit"><span><?= t('Sign in', 'लॉगिन') ?></span></button>
+        </form>
+      <?php endif; ?>
+      <p class="lg-foot"><span class="mk-lang" role="group" aria-label="Language"><a href="<?= h(lang_url('en')) ?>"<?= is_hi() ? '' : ' class="on"' ?>>EN</a><a href="<?= h(lang_url('hi')) ?>"<?= is_hi() ? ' class="on"' : '' ?>>हिं</a></span>
+        <a href="/"><?= t('Back to website', 'वेबसाइट पर वापस') ?></a></p>
     </div>
-
-  <?php else: ?>
-
-    <form method="post" class="box">
-      <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-      <input type="hidden" name="do" value="team">
-      <p class="lead" style="margin:0 0 14px">यह हिस्सा सिर्फ़ Maakit टीम के लिए है।</p>
-      <div class="field"><label>यूज़रनेम</label>
-        <input type="text" name="username" autocapitalize="off" spellcheck="false" required autofocus></div>
-      <div class="field"><label>पासवर्ड</label><input type="password" name="password" required></div>
-      <button class="btn btn-brand" type="submit" style="width:100%;font-size:17px">लॉगिन</button>
-    </form>
-
-  <?php endif; ?>
-
-</div>
+  </div>
 </section>
+<script>
+/* login: number/username yaad, code apne aap bade akshar, password dikhaiye, bhejte waqt ruko */
+(function(){
+  var f = document.querySelector('.lg-form'); if (!f) return;
+  var key = 'mk_login_' + f.getAttribute('data-remember'), keep = f.querySelector('[data-keep]');
+  var field = f.querySelector('[data-mobile]') || f.querySelector('[data-user]');
+  try { var v = localStorage.getItem(key); if (v && field && !field.value) { field.value = v; var nx = f.querySelector('[data-code],[data-pass]'); if (nx) nx.focus(); } } catch (_) {}
+  var m = f.querySelector('[data-mobile]');
+  if (m) m.addEventListener('input', function(){ var d = m.value.replace(/\D/g, ''); if (d.length > 10 && d.indexOf('91') === 0) d = d.slice(2); m.value = d.slice(0, 10); if (m.value.length === 10) { var c = f.querySelector('[data-code]'); if (c && !c.value) c.focus(); } });
+  var c = f.querySelector('[data-code]');
+  if (c) c.addEventListener('input', function(){ var p = c.selectionStart; c.value = c.value.toUpperCase().replace(/\s+/g, ''); try { c.setSelectionRange(p, p); } catch (_) {} });
+  var eye = f.querySelector('[data-eye]'), pw = f.querySelector('[data-pass]');
+  if (eye && pw) eye.addEventListener('click', function(){ pw.type = pw.type === 'password' ? 'text' : 'password'; eye.classList.toggle('on'); pw.focus(); });
+  f.addEventListener('submit', function(){
+    try { if (keep && keep.checked && field) localStorage.setItem(key, field.value.trim()); else localStorage.removeItem(key); } catch (_) {}
+    var b = f.querySelector('.lg-btn'); b.classList.add('busy'); b.setAttribute('aria-busy', 'true');
+  });
+})();
+</script>
 <?php include __DIR__ . '/inc/foot.php'; ?>
-

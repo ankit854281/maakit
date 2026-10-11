@@ -77,11 +77,11 @@ $PANNE = [
     // "मेरा हिसाब" login ke BAAD aata hai. Yahan dikh gaya to
     // andar ka panna bina login ke khula pada hai.
     ['/login.php', 'दुकान / टीम लॉगिन',
-        'chahiye' => ['मैं दुकानदार हूँ', 'मैं Maakit टीम से हूँ', 'कोड'],
+        'chahiye' => ['name="mobile"', 'name="code"', 'Maakit'],
         'nahi'    => ['मेरा हिसाब', 'Fatal error']],
 
     ['/login.php?as=team', 'टीम का लॉगिन',
-        'chahiye' => ['यूज़रनेम', 'पासवर्ड'],
+        'chahiye' => ['name="username"', 'name="password"'],
         'nahi'    => ['मेरा हिसाब', 'Fatal error']],
 
     // bina login ke dukaan ka panel band hona chahiye

@@ -179,6 +179,21 @@ include __DIR__ . '/inc/head.php';
     <?php endif; ?>
   <?php endif; ?>
 
+  <?php if (!in_array($o['status'], ['Delivered','Paisa jama','Cancel'], true)): ?>
+  <p class="trk-auto" id="trkAuto"><i></i><?= t('Updates automatically', 'अपने आप अपडेट होता है') ?> · <span id="trkAgo"><?= t('just now', 'अभी') ?></span></p>
+  <script>
+  /* chalte order ka panna har 40 second me khud taaza — jab panna saamne ho aur koi form na bhar raha ho */
+  (function(){
+    var t0 = Date.now(), ago = document.getElementById('trkAgo');
+    setInterval(function(){
+      var s = Math.round((Date.now() - t0) / 1000);
+      if (ago) ago.textContent = s < 60 ? s + 's' : Math.floor(s / 60) + 'm';
+      var busy = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+      if (s >= 40 && !document.hidden && !busy) location.reload();
+    }, 5000);
+  })();
+  </script>
+  <?php endif; ?>
   <div class="box" style="margin-top:14px">
     <h3 style="margin:0 0 6px;font-size:18px"><?= t('Your items', 'आपका सामान') ?></h3>
     <?php if ($lines): ?>
@@ -357,6 +372,19 @@ include __DIR__ . '/inc/head.php';
 
   <?php if ($err): ?><div class="err"><?= h($err) ?></div><?php endif; ?>
 
+  <?php if (!empty($me['mobile'])):
+    try { $mo = $pdo->prepare("SELECT order_no, status, items, created_at FROM orders WHERE mobile=? ORDER BY id DESC LIMIT 8"); $mo->execute([$me['mobile']]); $myo = $mo->fetchAll(); } catch (Throwable $e) { $myo = []; } ?>
+    <?php if ($myo): ?>
+    <div class="trk-mine">
+      <?php foreach ($myo as $r): list($pc2, $pl2) = status_pill($r['status']); ?>
+        <a class="trk-o" href="/track.php?no=<?= h(urlencode($r['order_no'])) ?>&amp;m=<?= h(urlencode($me['mobile'])) ?>">
+          <span><b><?= h($r['order_no']) ?></b><small><?= h(date('d M, g:i A', strtotime($r['created_at']))) ?> · <?= h(mb_strimwidth((string)$r['items'], 0, 48, '…')) ?></small></span>
+          <span class="pill <?= h($pc2) ?>"><?= h($pl2) ?></span>
+        </a>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+  <?php endif; ?>
   <div id="mine"></div>
 
   <?php if (!$me): ?>
@@ -369,10 +397,10 @@ include __DIR__ . '/inc/head.php';
 
   <form method="get" class="box">
     <div class="field"><label for="tno"><?= t('Order or booking number', 'ऑर्डर या बुकिंग नंबर') ?></label>
-      <input type="text" id="tno" name="no" value="<?= h($no) ?>" placeholder="MK-2609-01 या BK-2609-01" autocapitalize="characters" required>
+      <input type="text" id="tno" name="no" value="<?= h($no) ?>" placeholder="MK-2609-01 / BK-2609-01" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
       <input type="hidden" name="b" id="tb" value=""></div>
     <div class="field"><label for="tm"><?= t('Your mobile number', 'आपका मोबाइल नंबर') ?></label>
-      <input type="tel" id="tm" name="m" value="<?= h($mob) ?>" inputmode="numeric" maxlength="10" required></div>
+      <input type="tel" id="tm" name="m" value="<?= h($mob ?: ($me['mobile'] ?? '')) ?>" inputmode="numeric" autocomplete="tel-national" maxlength="10" required></div>
     <button class="btn btn-brand" type="submit" style="width:100%"><?= t('Show my order', 'देखिए') ?></button>
   </form>
 
