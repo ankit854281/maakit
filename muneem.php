@@ -168,6 +168,93 @@ $teer = function ($ab, $pehle) {
     if ($p < -4) return ' <b style="color:#A33427">▼ ' . abs($p) . '%</b>';
     return ' <span style="color:#6C5B4D">बराबर</span>';
 };
+// ------------------------------------------------------------ admin ke andar, naye roop me
+if ($admin) {
+    $page_title = t('Ledger (Muneem)', 'मुनीम की बही') . ' — Maakit';
+    include __DIR__ . '/inc/panel.php';
+    $fmt = fn($n) => number_format((int)$n);
+    $chg = function ($ab, $pehle) {
+        if (!$pehle) return $ab ? ['up', t('new', 'नया')] : ['flat', '—'];
+        $p = round(($ab - $pehle) * 100 / $pehle);
+        return [$p > 0 ? 'up' : ($p < 0 ? 'down' : 'flat'), ($p > 0 ? '+' : '') . $p . '%'];
+    };
+    [$c1, $t1] = $chg($B['hafta']['order'], $B['hafta']['order_pichhle']);
+    [$c2, $t2] = $chg($B['hafta']['booking'], $B['hafta']['booking_pichhle']);
+    $dk = $B['dekhna_baaki'];
+    ?>
+<section class="dz">
+  <div class="dz-head">
+    <div><h1><?= t('Ledger (Muneem)', 'मुनीम की बही') ?></h1>
+      <p><?= t('Weekly summary · read-only, nothing is changed here', 'हफ़्ते का हिसाब · सिर्फ़ गिनती, यहाँ कुछ नहीं बदलता') ?> · <?= h($B['kab']) ?> · v<?= h($B['version']) ?></p></div>
+    <div class="dz-range"><a class="dz-btn" href="/admin/dash.php"><?= t('Open dashboard', 'डैशबोर्ड खोलिए') ?></a><a class="dz-btn" href="?f=json"><?= t('Download JSON', 'JSON उतारिए') ?></a></div>
+  </div>
+
+  <div class="dz-kpis">
+    <div class="dz-kpi"><div class="dz-k-top"><span class="dz-ic g"><?= adm_icon('box') ?></span><?= t('Orders · 7 days', 'ऑर्डर · 7 दिन') ?><em class="<?= $c1 ?>"><?= $t1 ?></em></div>
+      <b><?= $fmt($B['hafta']['order']) ?></b><small><?= t('previous week', 'पिछला हफ़्ता') ?> <?= $fmt($B['hafta']['order_pichhle']) ?><?= $B['hafta']['radd'] ? ' · ' . $fmt($B['hafta']['radd']) . ' ' . t('cancelled', 'रद्द') : '' ?></small><div style="height:12px"></div></div>
+    <div class="dz-kpi"><div class="dz-k-top"><span class="dz-ic b"><?= adm_icon('calendar') ?></span><?= t('Bookings · 7 days', 'बुकिंग · 7 दिन') ?><em class="<?= $c2 ?>"><?= $t2 ?></em></div>
+      <b><?= $fmt($B['hafta']['booking']) ?></b><small><?= t('previous week', 'पिछला हफ़्ता') ?> <?= $fmt($B['hafta']['booking_pichhle']) ?></small><div style="height:12px"></div></div>
+    <div class="dz-kpi"><div class="dz-k-top"><span class="dz-ic p"><?= adm_icon('user') ?></span><?= t('Unique customers', 'अलग-अलग ग्राहक') ?></div>
+      <b><?= $fmt($B['hafta']['naye_grahak']) ?></b><small><?= t('distinct phone numbers this week', 'इस हफ़्ते अलग-अलग नंबर') ?></small><div style="height:12px"></div></div>
+    <div class="dz-kpi"><div class="dz-k-top"><span class="dz-ic y"><?= adm_icon('rupee') ?></span><?= t('Delivery income · 7 days', 'डिलीवरी कमाई · 7 दिन') ?></div>
+      <b>₹<?= $fmt($B['hafta']['delivery_paisa']) ?></b><small><a href="/admin/summary.php"><?= t('Full accounts', 'पूरा हिसाब') ?> →</a></small><div style="height:12px"></div></div>
+  </div>
+
+  <div class="dz-row dz-r-21">
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Needs attention', 'ध्यान माँग रहा है') ?></b></div>
+      <ul class="dz-todo">
+        <?php $kuchh = false; ?>
+        <?php if ($dk['nayi_booking']): $kuchh = true; ?><li class="warn"><b><?= $fmt($dk['nayi_booking']) ?></b> <?= t('new bookings nobody has looked at yet', 'नई बुकिंग — अभी तक किसी ने नहीं देखी') ?> <a href="/bpo/bookings.php">→</a></li><?php endif; ?>
+        <?php if ($dk['gaadi_kagaz']): $kuchh = true; ?><li><b><?= $fmt($dk['gaadi_kagaz']) ?></b> <?= t('vehicle papers to check yourself', 'गाड़ी के काग़ज़ ख़ुद जाँचने बाक़ी') ?> <a href="/admin/transport.php?v=pending">→</a></li><?php endif; ?>
+        <?php if ($dk['nayi_dukaan']): $kuchh = true; ?><li><b><?= $fmt($dk['nayi_dukaan']) ?></b> <?= t('new shops awaiting approval', 'नई दुकान मंज़ूरी के इंतज़ार में') ?> <a href="/admin/businesses.php">→</a></li><?php endif; ?>
+        <?php if ($dk['naye_gaon']): $kuchh = true; ?><li><b><?= $fmt($dk['naye_gaon']) ?></b> <?= t('villages asking for service', 'गाँव से आने की माँग') ?> <a href="/admin/areas.php">→</a></li><?php endif; ?>
+        <?php if ($dk['nayi_raay']): $kuchh = true; ?><li><b><?= $fmt($dk['nayi_raay']) ?></b> <?= t('reviews awaiting approval', 'राय मंज़ूरी के इंतज़ार में') ?> <a href="/admin/feedback.php">→</a></li><?php endif; ?>
+        <?php if ($B['bina_photo']['star']): $kuchh = true; ?><li><b><?= $fmt($B['bina_photo']['star']) ?></b> <?= t('★ products without a photo', '★ सामान बिना फ़ोटो के') ?><?= $B['bina_photo']['naam'] ? ' <small class="dz-mut">(' . h(implode(', ', array_slice($B['bina_photo']['naam'], 0, 3))) . '…)</small>' : '' ?> <a href="/admin/product-photos.php?f=missing">→</a></li><?php endif; ?>
+        <?php if ($B['bina_daam']['kul']): $kuchh = true; ?><li><b><?= $fmt($B['bina_daam']['kul']) ?></b> <?= t('products with no price recorded yet', 'सामान का दाम अब तक दर्ज नहीं') ?> <a href="/admin/daam.php">→</a></li><?php endif; ?>
+        <?php if ($B['chup']['gaadi']): $kuchh = true; ?><li><b><?= $fmt($B['chup']['gaadi']) ?></b> <?= t('vehicle owners silent for a month — give them a call', 'गाड़ी वाले महीने भर से चुप — एक बार फ़ोन कीजिए') ?> <a href="/admin/transport.php">→</a></li><?php endif; ?>
+        <?php if ($B['chup']['dukaan']): $kuchh = true; ?><li><b><?= $fmt($B['chup']['dukaan']) ?></b> <?= t('shops silent for a month', 'दुकानें महीने भर से चुप') ?> <a href="/admin/businesses.php">→</a></li><?php endif; ?>
+        <?php if (!$kuchh): ?><li class="good"><?= t('Nothing is stuck.', 'कुछ भी अटका हुआ नहीं है।') ?></li><?php endif; ?>
+      </ul>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Searched but not found', 'खोजा, पर नहीं मिला') ?></b><a href="/admin/items.php#naya"><?= t('Add products', 'सामान जोड़िए') ?> →</a></div>
+      <?php if ($B['nahi_mila']): ?>
+        <div class="dz-tags miss"><?php foreach ($B['nahi_mila'] as $r): ?><span><?= h($r['q']) ?> <b><?= (int)$r['times'] ?>×</b></span><?php endforeach; ?></div>
+        <p class="dz-mut" style="font-size:12px;margin:6px 0 0"><?= t('The most useful list — people from your own villages who left empty-handed.', 'यही सबसे काम की सूची है — आपके गाँव के लोग जो ख़ाली हाथ लौटे।') ?></p>
+      <?php else: ?><p class="dz-empty"><?= t('Nothing missed this week', 'इस हफ़्ते कुछ नहीं छूटा') ?></p><?php endif; ?>
+    </div>
+  </div>
+
+  <div class="dz-row dz-r-3">
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Best sellers this month', 'महीने में सबसे ज़्यादा बिका') ?></b></div>
+      <?php if ($B['sabse_zyada']): $mx = max(array_map(fn($r) => (int)$r['baar'], $B['sabse_zyada'])) ?: 1; ?>
+        <div class="dz-bars"><?php foreach ($B['sabse_zyada'] as $r): ?><div><span><?= h($r['name']) ?></span><i><em style="width:<?= max(4, round($r['baar'] * 100 / $mx)) ?>%"></em></i><b><?= (int)$r['baar'] ?></b></div><?php endforeach; ?></div>
+      <?php else: ?><p class="dz-empty"><?= t('No sales yet', 'अभी कुछ नहीं बिका') ?></p><?php endif; ?>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Work by village', 'किस गाँव से काम आया') ?></b></div>
+      <?php if ($B['gaon']): $mx = max(array_map(fn($r) => (int)$r['n'], $B['gaon'])) ?: 1; ?>
+        <div class="dz-bars"><?php foreach ($B['gaon'] as $r): ?><div><span><?= h($r['village']) ?></span><i><em style="width:<?= max(4, round($r['n'] * 100 / $mx)) ?>%"></em></i><b><?= (int)$r['n'] ?></b></div><?php endforeach; ?></div>
+      <?php else: ?><p class="dz-empty"><?= t('No data yet', 'अभी आँकड़े नहीं') ?></p><?php endif; ?>
+    </div>
+    <div class="dz-card">
+      <div class="dz-card-h"><b><?= t('Catalogue health', 'सामान की हालत') ?></b></div>
+      <div class="dz-mini3" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <a href="/admin/daam.php"><b><?= $fmt($B['bina_daam']['kul']) ?></b><?= t('without price', 'बिना दाम') ?></a>
+        <a href="/admin/product-photos.php?f=missing"><b><?= $fmt($B['bina_photo']['star']) ?></b><?= t('★ without photo', '★ बिना फ़ोटो') ?></a>
+        <a href="/admin/items.php"><b><?= $fmt($B['kabhi_nahi_bika']) ?></b><?= t('never sold', 'कभी नहीं बिका') ?></a>
+        <a href="/admin/businesses.php"><b><?= $fmt($B['chup']['dukaan']) ?></b><?= t('quiet shops', 'चुप दुकानें') ?></a>
+      </div>
+      <p class="dz-mut" style="font-size:12px;margin:10px 0 0"><?= t('The ledger only counts — decisions are yours. You can send this page to Claude to plan next steps.', 'मुनीम सिर्फ़ गिनती रखता है — फ़ैसला आपका। इसे Claude को भेजकर आगे का रास्ता सोचा जा सकता है।') ?></p>
+    </div>
+  </div>
+</section>
+<?php
+    include __DIR__ . '/inc/foot.php';
+    exit;
+}
 ?><!doctype html>
 <html lang="hi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -1,7 +1,10 @@
 <?php
 // panel ka upar wala menu (bpo / delivery / admin)
 $u = user();
-$page_title = $page_title ?? 'Maakit पैनल';
+$page_title = $page_title ?? 'Maakit Admin';
+// Hindi chuni na ho to admin ke purane Hindi shabd English me (inc/admin-en.php)
+require_once __DIR__ . '/admin-en.php';
+adm_en_start();
 $no_tabbar = true;
 $adm_page = true;                  // patla admin header                 // panel me neeche ka customer menu nahi
 include __DIR__ . '/head.php';
@@ -91,23 +94,46 @@ function adm_icon($k) {
 }
 $cur = strtok($_SERVER['REQUEST_URI'], '?');
 $adm_shell = true;
+// abhi kaunsa group aur page khula hai — breadcrumb ke liye
+$cur_grp = ''; $cur_lbl = '';
+foreach ($menu as $g => $links) foreach ($links as $href => [$lbl, $ic]) if ($cur === $href) { $cur_grp = $g; $cur_lbl = $lbl; }
+if ($cur_lbl === '') $cur_lbl = trim(preg_replace('/\s*—\s*Maakit.*$/u', '', (string)$page_title));
+$home_link = array_key_first(reset($menu) ?: []) ?: '/';
 ?>
 <div class="adm">
-  <details class="adm-side" id="admSide">
-    <summary><?= adm_icon('menu') ?> <?= t('Menu', 'मेन्यू') ?></summary>
-    <nav aria-label="<?= h(t('Admin menu', 'एडमिन मेन्यू')) ?>">
-      <?php foreach ($menu as $grp => $links): ?>
-        <div class="adm-grp"><?= h($grp) ?></div>
-        <?php foreach ($links as $href => [$label, $ic]): ?>
-          <a class="<?= $cur === $href ? 'on' : '' ?>" href="<?= h($href) ?>"><?= adm_icon($ic) ?><span><?= h($label) ?></span></a>
-        <?php endforeach; ?>
+  <nav class="adm-top" aria-label="<?= h(t('Admin menu', 'एडमिन मेन्यू')) ?>">
+    <div class="adm-top-in">
+      <?php foreach ($menu as $grp => $links): $on = $grp === $cur_grp; ?>
+        <?php if (count($links) <= 2 && count($menu) > 1): /* chhote group = seedhe link */ ?>
+          <?php foreach ($links as $href => [$label, $ic]): ?><a class="adm-tab<?= $cur === $href ? ' on' : '' ?>" href="<?= h($href) ?>"><?= adm_icon($ic) ?><?= h($label) ?></a><?php endforeach; ?>
+        <?php else: ?>
+        <details class="adm-dd<?= $on ? ' on' : '' ?>">
+          <summary class="adm-tab<?= $on ? ' on' : '' ?>"><?= h($grp) ?><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="adm-dd-panel">
+            <?php foreach ($links as $href => [$label, $ic]): ?>
+              <a class="<?= $cur === $href ? 'on' : '' ?>" href="<?= h($href) ?>"><span class="adm-dd-ic"><?= adm_icon($ic) ?></span><?= h($label) ?></a>
+            <?php endforeach; ?>
+          </div>
+        </details>
+        <?php endif; ?>
       <?php endforeach; ?>
-      <div class="adm-grp"></div>
-      <a href="/" target="_blank" rel="noopener"><?= adm_icon('shop') ?><span><?= t('View website', 'वेबसाइट देखिए') ?></span></a>
-      <a href="/logout.php"><?= adm_icon('out') ?><span><?= t('Log out', 'लॉगआउट') ?> · <?= h(mb_substr($u['name'], 0, 14)) ?></span></a>
-    </nav>
-  </details>
+      <span class="adm-top-sp"></span>
+      <a class="adm-tab" href="/" target="_blank" rel="noopener"><?= adm_icon('shop') ?><?= t('Website', 'वेबसाइट') ?></a>
+      <a class="adm-tab" href="/logout.php" title="<?= h($u['name']) ?>"><?= adm_icon('out') ?><?= t('Log out', 'लॉगआउट') ?></a>
+    </div>
+  </nav>
+  <div class="adm-crumb">
+    <button type="button" class="adm-back" onclick="if(document.referrer&&document.referrer.indexOf(location.host)>-1&&history.length>1){history.back()}else{location.href='<?= h($home_link) ?>'}" aria-label="<?= h(t('Go back', 'वापस जाइए')) ?>">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><?= t('Back', 'वापस') ?></button>
+    <span class="adm-path"><a href="<?= h($home_link) ?>"><?= t('Admin', 'एडमिन') ?></a><?php if ($cur_grp): ?> / <span><?= h($cur_grp) ?></span><?php endif; ?> / <b><?= h($cur_lbl) ?></b></span>
+  </div>
   <div class="adm-main">
-<script>(function(){var d=document.getElementById('admSide');if(d&&window.matchMedia('(min-width:1000px)').matches)d.open=true;})();</script>
+<script>
+/* ek dropdown khule to baaki band; bahar dabane par sab band */
+(function(){var dd=document.querySelectorAll('.adm-dd');
+ dd.forEach(function(d){d.addEventListener('toggle',function(){if(d.open)dd.forEach(function(o){if(o!==d)o.open=false;});});});
+ document.addEventListener('click',function(e){if(!e.target.closest('.adm-dd'))dd.forEach(function(o){o.open=false;});});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape')dd.forEach(function(o){o.open=false;});});})();
+</script>
 
 

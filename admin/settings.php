@@ -69,7 +69,7 @@ include __DIR__ . '/../inc/panel.php';
   <form method="post" class="box" style="margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="festival">
     <span style="flex:1;min-width:200px">
-      <b><?= $fNow ? h($fNow['hi']) . ' — home page पर दिख रहा है' : 'अभी कोई त्योहार नहीं' ?></b>
+      <b><?= $fNow ? h(t($fNow['en'], $fNow['hi'])) . ' — ' . t('showing on the home page', 'home page पर दिख रहा है') : 'अभी कोई त्योहार नहीं' ?></b>
       <span class="help" style="display:block;margin:4px 0 0">नवरात्रि, दशहरा, करवा चौथ, दीवाली, छठ — अपने आप दिखती है। बंद करनी हो तो यहाँ दबाइए।</span>
     </span>
     <button class="btn btn-sm <?= $fOff ? 'btn-brand' : 'btn-line' ?>" name="v" value="<?= $fOff ? '0' : '1' ?>"><?= $fOff ? 'पट्टी चालू कीजिए' : 'पट्टी बंद कीजिए' ?></button>

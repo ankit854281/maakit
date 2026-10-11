@@ -656,3 +656,51 @@ body{background:#fff;color:var(--ink-2)}
 .adm-body .ph-info b{font-size:12.5px}
 .adm-body .ph-upbtn{font-size:12px;padding:5px}
 .adm-body .footer{font-size:12.5px}
+
+/* ============================================================
+   Admin v3 — upar menu, Back button, poori chaudai
+   ============================================================ */
+.adm{display:block}
+.adm-top{position:sticky;top:46px;z-index:25;background:#fff;border-bottom:1px solid #E9EBEE}
+.adm-top-in{display:flex;align-items:center;gap:2px;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.adm-top-in::-webkit-scrollbar{display:none}
+.adm-tab{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-bottom:2px solid transparent;color:#4B5563;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;cursor:pointer;list-style:none}
+.adm-tab::-webkit-details-marker{display:none}
+.adm-tab svg{width:15px;height:15px;color:#9CA3AF}
+.adm-tab:hover{color:#111827}
+.adm-tab.on{color:#14812A;border-bottom-color:#14812A}
+.adm-tab.on svg{color:#14812A}
+.adm-top-sp{flex:1}
+.adm-dd{position:relative}
+.adm-dd[open]>.adm-tab{color:#111827;background:#F6F7F9}
+.adm-dd-panel{position:fixed;margin-top:2px;min-width:240px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 12px 32px rgba(17,24,39,.12);padding:6px;z-index:40;display:grid;gap:1px}
+.adm-dd-panel a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#374151;font-size:13px;font-weight:500;text-decoration:none}
+.adm-dd-panel a:hover{background:#F6F7F9}
+.adm-dd-panel a.on{background:#EAF7EE;color:#14812A;font-weight:700}
+.adm-dd-ic{display:grid;place-items:center;width:28px;height:28px;border-radius:7px;background:#F3F4F6;color:#6B7280}
+.adm-dd-panel a.on .adm-dd-ic{background:#DDF3E2;color:#14812A}
+.adm-dd-ic svg{width:15px;height:15px}
+.adm-crumb{display:flex;align-items:center;gap:12px;padding:12px 24px 0}
+.adm-back{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 12px 0 8px;border:1px solid #E2E4E8;border-radius:8px;background:#fff;color:#111827;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.adm-back:hover{border-color:#14812A;color:#14812A}
+.adm-path{font-size:12.5px;color:#9CA3AF}
+.adm-path a{color:#6B7280;text-decoration:none}
+.adm-path b{color:#111827;font-weight:600}
+/* poori chaudai */
+.adm-main .dz{max-width:none;padding:14px 24px 40px}
+.adm-main .wrap,.adm-main .wrap[style]{max-width:1680px!important;padding-left:24px;padding-right:24px}
+.adm-main>section{padding-top:14px}
+@media(max-width:700px){.adm-top-in{padding:0 8px}.adm-crumb{padding:10px 14px 0}.adm-main .dz{padding:12px 14px 30px}.adm-main .wrap,.adm-main .wrap[style]{padding-left:14px;padding-right:14px}.adm-path{display:none}}
+@media(min-width:1500px){.dz-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.dz-r-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* purane admin panno ko naya roop */
+.adm-main h2{font-size:19px;font-weight:800;color:#111827;letter-spacing:-.2px}
+.adm-main .lead{font-size:13px;color:#6B7280}
+.adm-main .box{background:#fff;border:1px solid #ECEEF1;border-radius:12px;box-shadow:none}
+.adm-main .ghead{font-size:13.5px;font-weight:700;color:#111827}
+.adm-main table{font-size:12.5px}
+.adm-main .tablewrap{background:#fff;border:1px solid #ECEEF1;border-radius:12px;overflow:auto}
+.adm-main th{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:#6B7280;background:#FAFAFB}
+.adm-main .btn{min-height:34px;font-size:13px;border-radius:8px;padding:0 14px}
+.adm-main input,.adm-main select,.adm-main textarea{font-size:13.5px}
+.adm-main label{font-size:12.5px}
+.adm-main .kpis .kpi .v{font-size:22px}
