@@ -287,3 +287,25 @@ body{font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,-apple-sys
 .mk-segs{display:flex;gap:8px;margin:0 0 12px;overflow-x:auto;scrollbar-width:none}
 .mk-segs a{flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13px;font-weight:700;text-decoration:none}
 .mk-segs a[aria-current=page]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ---------- bade category card (Flipkart Minutes jaisa dhaancha) ---------- */
+.mk-ccards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mk-cc{position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:168px;border-radius:18px;background:#F4F5F7;padding:14px 14px 0;text-decoration:none;color:var(--ink);overflow:hidden;transition:transform .15s,box-shadow .15s}
+.mk-cc:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.08)}
+.mk-cc.wide{grid-column:span 2;min-height:180px}
+.mk-cc b{position:relative;z-index:1;font-size:17px;line-height:1.2;font-weight:800;letter-spacing:-.3px;max-width:12ch}
+.mk-cc.wide b{font-size:22px;max-width:10ch}
+.mk-cc-pics{display:flex;align-items:flex-end;justify-content:flex-end;height:104px;margin:0 -4px 0 auto;width:100%}
+.mk-cc.wide .mk-cc-pics{position:absolute;right:10px;bottom:0;width:58%;height:150px}
+.mk-cc-art{width:100%;height:100%}
+.mk-cc-pics img{height:88%;width:auto;max-width:48%;object-fit:contain;border-radius:10px;mix-blend-mode:multiply;filter:drop-shadow(0 4px 6px rgba(0,0,0,.12))}
+.mk-cc-pics img+img{margin-left:-14%}
+.mk-cc-pics.n1 img{max-width:80%}
+@media(min-width:900px){
+  .mk-ccards{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+  .mk-cc{min-height:240px;padding:20px 20px 0;border-radius:22px}
+  .mk-cc b{font-size:22px}
+  .mk-cc.wide b{font-size:34px}
+  .mk-cc-pics{height:150px}
+  .mk-cc.wide .mk-cc-pics{height:210px;width:60%}
+}

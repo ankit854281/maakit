@@ -8,6 +8,7 @@ require_once __DIR__ . '/inc/customer.php';
 require_once __DIR__ . '/inc/books.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__.'/inc/catalog-photos.php';
+require_once __DIR__.'/inc/category-cards.php';
 
 $page_title = t('Maakit — shopping, local delivery & bookings in India',
                 'Maakit — भारत में शॉपिंग, स्थानीय डिलीवरी और बुकिंग');
@@ -106,9 +107,14 @@ include __DIR__ . '/inc/head.php';
 
   <section class="mk-sec">
     <div class="mk-sec-head"><h2><?= t('Shop by category', 'श्रेणी चुनिए') ?></h2><a href="/bazaar.php"><?= t('See all', 'सब देखिए') ?></a></div>
-    <nav class="mk-cats" id="shop-category-rail" aria-label="<?= h(t('Categories', 'श्रेणियाँ')) ?>">
-      <?php foreach ([['Grocery / Kirana Store','grocery','Grocery','राशन'],['Sweet Shop','food','Sweets','मिठाई'],['Medical / Pharmacy','medicine','Medicines','दवाई'],['Clothing / Garments Shop','shops','Clothing','कपड़े'],['Mobile Store','mobile','Mobiles','मोबाइल'],['Hardware Shop','tools','Hardware','हार्डवेयर'],['Kitchenware / Utensils Shop','thali','Kitchen','रसोई'],['Paint Store','home','Paint','पेंट']] as [$kind,$icon,$en,$hi]): ?>
-        <a href="<?= h(catalog_url(['type'=>$kind])) ?>"><span class="mk-cat-ic"><?= svc_icon($icon,30) ?></span><span><?= h(t($en,$hi)) ?></span></a>
+    <nav class="mk-ccards" id="shop-category-rail" aria-label="<?= h(t('Categories', 'श्रेणियाँ')) ?>">
+      <?php foreach (maakit_category_cards() as $cc): $ph = maakit_category_card_photos($pdo, $cc); ?>
+        <a class="mk-cc<?= !empty($cc['wide']) ? ' wide' : '' ?>" href="<?= h(catalog_url(['type' => $cc['type'], 'sub' => count($cc['subs']) === 1 ? $cc['subs'][0] : ''])) ?>">
+          <b><?= h(t($cc['en'], $cc['hi'])) ?></b>
+          <span class="mk-cc-pics n<?= count($ph) ?>">
+            <?php if ($ph): foreach ($ph as $f): ?><img src="/uploads/<?= h($f) ?>" alt="" loading="lazy"><?php endforeach; else: ?><?= maakit_category_art($cc['key']) ?><?php endif; ?>
+          </span>
+        </a>
       <?php endforeach; ?>
     </nav>
   </section>
