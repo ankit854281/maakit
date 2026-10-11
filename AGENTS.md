@@ -152,7 +152,7 @@ Which means:
 | `order.php` | The goods catalogue and cart |
 | `search.php`, `inc/search.php` | One search across goods, bookings and shops |
 | `sewa.php` | **Bookings.** (`book.php` is the **old-books** page, not booking) |
-| `shop.php`, `inc/dukan*.php` | Shop panel — items, orders, ledger, UPI |
+| `shop.php`, `inc/dukan*.php` | Shop panel — items, orders, ledger, UPI. Shell (Back, breadcrumb, KPIs, tabs) is `inc/dukan-shell.php` + `inc/dukan-shell-end.php` (toast, auto-save, new-order poll `shop.php?poll=1`); salon tabs in `inc/dukan-salon.php`. Styles are `.sp-*` in `assets/mk.css`. `item_daam`, `item_stock`, `khuli` answer JSON when `ajax=1`, and redirect as before without it. |
 | `dukan-se.php` | Customer ordering from one shop's own items |
 | `login.php` | **The only login door** — shopkeeper (mobile+code) and team (user+password) |
 | `business.php`, `directory.php` | Local shop and tradesperson directory |
