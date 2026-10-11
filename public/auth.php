@@ -10,7 +10,7 @@ if(!in_array($role,['customer','vendor','rider','admin'],true))$role='customer';
 $links=[
  'customer'=>['login'=>'/account.php','join'=>'/account.php','label'=>t('Customer','ग्राहक')],
  'vendor'=>['login'=>'/login.php','join'=>'/public/partner-apply.php?kind=vendor','label'=>t('Vendor / Seller','दुकानदार')],
- 'rider'=>['login'=>'/login.php?as=team','join'=>'/public/partner-apply.php?kind=rider','label'=>t('Rider','राइडर')],
+ 'rider'=>['login'=>'/smartsarathi/','join'=>'/smartsarathi/apply.php','label'=>t('Rider','राइडर')],
  'admin'=>['login'=>'/login.php?as=team','join'=>null,'label'=>t('Admin','एडमिन')]
 ];
 $context=null;$dashboard=$links[$role]['login'];

@@ -20,6 +20,11 @@ require_once __DIR__ . '/../inc/sarathi.php';
 // pehle se andar hain to seedha kaam par
 if (sarathi_me()) { redirect('/sarathi/kaam.php'); }
 
+// Oct 2026: riders ka EK hi login — Smart Sarathi (maakit.in/smartsarathi).
+// Ye purana darwaza sirf ?purana=1 se khulta hai (transition ke liye);
+// POST (login) pehle jaisa chalta hai.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && get('purana') !== '1') { redirect('/smartsarathi/'); }
+
 $err = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $who  = trim((string)post('who'));

@@ -41,6 +41,8 @@
       <a href="<?= h(lang_switch_url()) ?>"><?= h(lang_other_label()) ?></a> ·
       <a href="/location.php"><?=t('Service areas','सेवा क्षेत्र')?></a> · <a href="/support.php"><?=t('Help & complaints','सहायता और शिकायत')?></a> ·
       <a href="/login.php"><?= t('Shop / team login', 'दुकान / टीम लॉगिन') ?></a> ·
+      <a href="/smartsarathi/book.php"><?= t('Send a parcel', 'पार्सल भेजिए') ?></a> ·
+      <a href="/smartsarathi/apply.php"><?= t('Become a delivery rider', 'डिलीवरी राइडर बनिए') ?></a> ·
       <a href="/photo-credits.php"><?= t('Photo credits', 'फ़ोटो क्रेडिट') ?></a>
     </div>
   </div>

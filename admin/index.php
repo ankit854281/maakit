@@ -2,6 +2,16 @@
 require_once __DIR__ . '/../inc/fn.php';
 $u = need_role('admin');
 $page_title = t('Orders', 'सारे ऑर्डर') . ' — Maakit';
+require_once __DIR__ . '/../inc/sarathi-bridge.php';
+// Smart Sarathi: ek order bhejiye (button) + "apne aap" wale + halat taaza
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'sarathi_send') {
+    [$ok, $m] = sb_send($pdo, (int)post('id'));
+    flash(($ok ? '✓ ' : '✗ ') . $m);
+    redirect('/admin/index.php' . (get('day') || get('q') ? '?' . http_build_query(['day' => get('day'), 'q' => get('q')]) : ''));
+}
+$sb_on = false;
+try { $pdo->query("SELECT sarathi_job FROM orders LIMIT 1"); $sb_on = sb_ready($pdo); } catch (Throwable $e) {}
+if ($sb_on) { sb_auto($pdo); }
 $day = get('day', '');
 $q = get('q', '');
 $sql = "SELECT o.*, u.name dname FROM orders o LEFT JOIN users u ON u.id=o.delivery_user WHERE 1";
@@ -11,6 +21,7 @@ if ($q) { $sql .= " AND (o.order_no LIKE ? OR o.mobile LIKE ? OR o.customer_name
           array_push($args, "%$q%", "%$q%", "%$q%", "%$q%"); }
 $sql .= " ORDER BY o.id DESC LIMIT 300";
 $st = $pdo->prepare($sql); $st->execute($args); $rows = $st->fetchAll();
+if ($sb_on) { $n = 0; foreach ($rows as &$r) { if (!empty($r['sarathi_job']) && $n < 15 && !in_array($r['status'], ['Delivered','Cancel','Paisa jama'], true)) { $r = sb_sync($pdo, $r); $n++; } } unset($r); }
 include __DIR__ . '/../inc/panel.php';
 ?>
 <section class="dz">
@@ -39,7 +50,12 @@ include __DIR__ . '/../inc/panel.php';
         <td style="max-width:280px"><?= h(mb_strimwidth($o['items'], 0, 90, '…')) ?></td>
         <td><?= $o['first_order'] ? t('Free', 'फ़्री') : '₹' . (int)$o['delivery_charge'] ?></td>
         <td><span class="dz-pill p-<?= h(strtolower(str_replace(' ', '', $o['status']))) ?>"><?= h(status_hi($o['status'])) ?></span></td>
-        <td><?= h($o['dname'] ?: '—') ?></td>
+        <td><?php if (!empty($o['sarathi_job'])): ?>
+              <b>Sarathi</b><small><?= h($o['sarathi_job']) ?> · <?= h($o['sarathi_status'] ?: 'new') ?></small>
+            <?php elseif ($sb_on && in_array($o['status'], ['Naya', 'Confirm'], true)): ?>
+              <form method="post" style="margin:0"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="sarathi_send"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
+                <button class="mk-btn mk-btn-sm" title="<?= h(t('Send to Smart Sarathi riders', 'Smart Sarathi राइडर को भेजिए')) ?>"><?= t('Send to Sarathi', 'सारथी को भेजिए') ?></button></form>
+            <?php else: ?><?= h($o['dname'] ?: '—') ?><?php endif; ?></td>
         <td><small><?= h(date('d M, h:i A', strtotime($o['created_at']))) ?></small></td>
       </tr>
     <?php endforeach; ?>

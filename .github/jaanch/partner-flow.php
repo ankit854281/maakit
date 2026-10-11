@@ -32,7 +32,8 @@ try {
  try{document_metadata(['error'=>UPLOAD_ERR_OK,'tmp_name'=>$bad,'size'=>filesize($bad)]);throw new RuntimeException('PHP accepted');}catch(InvalidArgumentException $e){}finally{unlink($bad);}
  $savedCount=count(glob(document_directory().'/*'));
  // Multipart failures leave neither private files nor login records.
- $csrf=partner_csrf(partner_http('/public/partner-apply.php?kind=rider&lang=en')[0]);
+ partner_http('/public/partner-apply.php?kind=rider&lang=en',null,302); // rider arzi ab Smart Sarathi par
+ $csrf=partner_csrf(partner_http('/public/partner-apply.php?kind=vendor&lang=en')[0]);
  $fields=['csrf'=>$csrf,'applicant_name'=>'CI Rider','mobile'=>'9000081001','credential'=>'CI-Secure-1234','vehicle_type'=>'Bike','dl_number'=>'UP0123456789','rc_number'=>'UP65AB1234'];
  partner_http('/public/partner-apply.php?kind=rider',$fields,200);
  partner_check(!query($pdo,'SELECT id FROM users WHERE username=?',[$fields['mobile']])->fetch(),'missing documents cannot create user');

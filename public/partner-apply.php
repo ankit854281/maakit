@@ -3,7 +3,9 @@ require_once __DIR__.'/../inc/fn.php';
 require_once __DIR__.'/../controllers/partners.php';
 header('Cache-Control: no-store');
 $no_tabbar=true;$page_title='Partner application — Maakit';
-$kind=($_GET['kind']??'vendor')==='rider'?'RIDER':'VENDOR';$error='';$done=false;
+$kind=($_GET['kind']??'vendor')==='rider'?'RIDER':'VENDOR';
+// Rider banne ki arzi ab Smart Sarathi par (delivery platform wahi hai). POST purana API-raasta chalta rahe.
+if($kind==='RIDER'&&$_SERVER['REQUEST_METHOD']!=='POST'){redirect('/smartsarathi/apply.php');}$error='';$done=false;
 if($_SERVER['REQUEST_METHOD']==='POST'){
  foreach($_POST as $value)if(!is_string($value)){http_response_code(400);exit;}
  if((int)($_SERVER['CONTENT_LENGTH']??0)>22000000){http_response_code(413);exit;}

@@ -14,11 +14,25 @@
 // ============================================================
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/sarathi.php';
+require_once __DIR__ . '/../inc/sarathi-bridge.php';
 $me = need_role('admin');
 $page_title = 'सारथी — Maakit';
 $err = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
+
+    // ---- Smart Sarathi se jodna (ab sab delivery wahin) ----
+    if (post('do') === 'bridge') {
+        $url = trim((string)post('sb_url')); $key = trim((string)post('sb_key'));
+        if ($url !== '' && !preg_match('#^https?://[^\s]+$#', $url)) { $err = 'API का पता http(s):// से शुरू होना चाहिए।'; }
+        else {
+            $save = $pdo->prepare("INSERT INTO settings (k,v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)");
+            $save->execute(['sarathi_api_url', $url]);
+            if ($key !== '') $save->execute(['sarathi_api_key', $key]);          // khaali chhoda = purani chaabi rahe
+            $save->execute(['sarathi_auto', post('sb_auto') === '1' ? '1' : '0']);
+            flash('Smart Sarathi की सेटिंग सेव हो गई।'); redirect('/admin/sarathi.php?ping=1');
+        }
+    }
 
     if (post('do') === 'rate') {
         $r = (int)post('rate');
@@ -52,6 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     }
 }
 
+$sb = sb_cfg($pdo); $sb_ping = null;
+if (get('ping') === '1' && sb_ready($pdo)) { [$okp, $rp] = sb_call($pdo, 'ping'); $sb_ping = $okp ? '✓ जुड़ गया — ' . ($rp['client'] ?? '') : '✗ ' . $rp; }
 $samasya = sarathi_samasya_khuli($pdo);
 $kisme   = sarathi_samasya_kism();
 $extra   = sarathi_extra_rate($pdo);
@@ -67,6 +83,24 @@ include __DIR__ . '/../inc/panel.php';
   <h2>सारथी</h2>
   <?php if ($err): ?><div class="err"><?= h($err) ?></div><?php endif; ?>
   <?php if ($f = flash()): ?><div class="ok"><?= h($f) ?></div><?php endif; ?>
+
+  <!-- ===== Smart Sarathi — ab rider yahin se kaam lete hain ===== -->
+  <form method="post" class="box" style="margin-top:12px;border-left:4px solid #0f766e">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="bridge">
+    <b>Smart Sarathi से जोड़िए</b>
+    <p class="help" style="margin:4px 0 10px">राइडर अब सिर्फ़ <a href="/smartsarathi/" target="_blank">Smart Sarathi</a> पर लॉगिन करते हैं।
+      Maakit का ऑर्डर वहीं "काम" बनकर जाता है। Smart Sarathi के मालिक पन्ने (<a href="/smartsarathi/admin/" target="_blank">/smartsarathi/admin/</a>)
+      में "ग्राहक कंपनियाँ" → Maakit जोड़िए → "नई चाबी" बनाइए, और वो चाबी यहाँ डालिए।</p>
+    <?php if ($sb_ping): ?><div class="<?= strpos($sb_ping, '✓') === 0 ? 'ok' : 'err' ?>"><?= h($sb_ping) ?></div><?php endif; ?>
+    <div class="field"><label>API का पता</label>
+      <input type="text" name="sb_url" value="<?= h($sb['url']) ?>" placeholder="https://maakit.in/smartsarathi/api/v1.php"></div>
+    <div class="field"><label>चाबी (sk_…)</label>
+      <input type="password" name="sb_key" value="" placeholder="<?= $sb['key'] !== '' ? 'लगी हुई है — बदलनी हो तभी लिखिए' : 'sk_xxxxxxxx_…' ?>" autocomplete="off"></div>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" name="sb_auto" value="1" style="width:auto" <?= $sb['auto'] ? 'checked' : '' ?>>
+      ऑर्डर "Confirm" होते ही अपने आप Smart Sarathi को भेजिए</label>
+    <p class="help">बंद रखें तो "सारे ऑर्डर" पेज पर हर ऑर्डर के आगे "सारथी को भेजिए" बटन आएगा। दुकान का OTP और ग्राहक का कोड वही रहते हैं।</p>
+    <button class="btn btn-brand btn-sm">सेव करके जाँचिए</button>
+  </form>
 
   <!-- ===== खुली दिक्कतें ===== -->
   <h3 style="margin-top:18px">रास्ते से आई दिक्कतें

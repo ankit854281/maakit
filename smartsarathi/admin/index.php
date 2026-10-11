@@ -18,6 +18,7 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/kaam.php';
 require_once __DIR__ . '/../inc/client.php';
+require_once __DIR__ . '/../inc/public.php';   // arziyan (apply.php) + seedhe grahak
 
 // ---------- दरवाज़ा ----------
 $err = '';
@@ -131,6 +132,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     }
     if ($do === 'key_off') { key_revoke($pdo, (int)post('kid')); flash('चाबी बंद कर दी गई।'); redirect('/admin/'); }
 
+    // ---- rider ki arzi: manzoor = rider ban gaya + naya code (ek baar dikhta hai) ----
+    if ($do === 'app_ok' || $do === 'app_no') {
+        sr_apply_table($pdo);
+        $st = $pdo->prepare("SELECT * FROM applications WHERE id=? AND status='new'"); $st->execute([(int)post('aid')]);
+        if ($ap = $st->fetch()) {
+            if ($do === 'app_no') {
+                $pdo->prepare("UPDATE applications SET status='rejected' WHERE id=?")->execute([(int)$ap['id']]);
+                flash('अर्ज़ी हटा दी।');
+            } else {
+                $code = (string)random_int(100000, 999999);
+                try {
+                    $pdo->prepare("INSERT INTO riders (name,mobile,pass_hash,vehicle,rc_number,dl_number,rate,extra_rate) VALUES (?,?,?,?,?,?,?,?)")
+                        ->execute([$ap['name'], $ap['mobile'], password_hash($code, PASSWORD_DEFAULT), $ap['vehicle'], $ap['rc_number'], $ap['dl_number'], (int)post('rate'), 0]);
+                    $rid = (int)$pdo->lastInsertId();
+                    $pdo->prepare("UPDATE applications SET status='approved', rider_id=? WHERE id=?")->execute([$rid, (int)$ap['id']]);
+                    $_SESSION['sr_newcode'] = ['name' => $ap['name'], 'mobile' => $ap['mobile'], 'code' => $code];
+                    flash('सारथी जुड़ गया।');
+                } catch (PDOException $e) { flash('यह मोबाइल नंबर पहले से सारथी है।'); }
+            }
+        }
+        redirect('/admin/');
+    }
+
     if ($do === 'job_give') {
         [$ok, $m] = job_give($pdo, (int)post('jid'), (int)post('rid'));
         flash($m); redirect('/admin/');
@@ -149,6 +173,9 @@ $probs   = problems_open($pdo);
 $ruke    = jobs_waiting($pdo);            // jo kaam abhi kisi ko nahi diye gaye
 $taiyar  = riders_ready($pdo);
 $newkey  = $_SESSION['sr_newkey'] ?? null; unset($_SESSION['sr_newkey']);
+$newcode = $_SESSION['sr_newcode'] ?? null; unset($_SESSION['sr_newcode']);
+sr_apply_table($pdo);
+$apps = $pdo->query("SELECT * FROM applications WHERE status='new' ORDER BY id DESC LIMIT 50")->fetchAll();
 $msg     = flash();
 
 $aaj = $pdo->query("SELECT
@@ -204,6 +231,36 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
     <p class="mut" style="margin:0">ये पूरी चाबी <b>दोबारा नहीं दिखेगी</b> — डेटाबेस में सिर्फ़ इसका
       ताला रखा जाता है, चाबी नहीं। खो जाए तो नई बनानी पड़ेगी।</p>
   </div>
+<?php endif; ?>
+
+<?php if ($newcode): ?>
+  <div class="box" style="border-color:var(--gold);border-width:2px">
+    <b><?= h($newcode['name']) ?> (<?= h($newcode['mobile']) ?>) का लॉगिन कोड — अभी उन्हें बताइए</b>
+    <div class="k"><?= h($newcode['code']) ?></div>
+    <p class="mut" style="margin:0">ये कोड <b>दोबारा नहीं दिखेगा</b>। भूल जाएँ तो नीचे "सारथी" में नया कोड बनाइए।</p>
+  </div>
+<?php endif; ?>
+
+<?php if ($apps): ?>
+  <h2>नई अर्ज़ियाँ (राइडर बनना है) <span class="sr-head-tag"><?= count($apps) ?></span></h2>
+  <?php foreach ($apps as $ap): ?>
+    <div class="box">
+      <div class="hd"><b><?= h($ap['name']) ?></b> <a href="tel:+91<?= h($ap['mobile']) ?>"><?= h($ap['mobile']) ?></a>
+        <span class="mut"><?= h(date('d M, h:i A', strtotime($ap['created_at']))) ?></span></div>
+      <div class="mut"><?= h(implode(' · ', array_filter([$ap['village'], $ap['vehicle'], $ap['hours'], $ap['dl_number'] ? 'DL ' . $ap['dl_number'] : '', $ap['rc_number'] ? 'गाड़ी ' . $ap['rc_number'] : '']))) ?></div>
+      <?php if ($ap['note']): ?><div class="mut">“<?= h($ap['note']) ?>”</div><?php endif; ?>
+      <div class="row">
+        <form method="post" class="row" style="margin:0"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="app_ok"><input type="hidden" name="aid" value="<?= (int)$ap['id'] ?>">
+          <input class="sm" type="number" name="rate" placeholder="₹ / काम" min="0" aria-label="हर काम का पैसा">
+          <button type="submit">मंज़ूर — कोड बनाइए</button></form>
+        <form method="post" style="margin:0" onsubmit="return confirm('अर्ज़ी हटाएँ?')"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+          <input type="hidden" name="do" value="app_no"><input type="hidden" name="aid" value="<?= (int)$ap['id'] ?>">
+          <button type="submit" class="g">हटाइए</button></form>
+      </div>
+      <p class="mut" style="margin:8px 0 0">मिलकर DL और गाड़ी के काग़ज़ देख लीजिए, फिर मंज़ूर कीजिए।</p>
+    </div>
+  <?php endforeach; ?>
 <?php endif; ?>
 
 <!-- ===== रुके हुए काम =====

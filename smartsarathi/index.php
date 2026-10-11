@@ -8,6 +8,7 @@
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/lang.php';
 require_once __DIR__ . '/inc/kaam.php';
+require_once __DIR__ . '/inc/public.php';   // tabs: parcel / track / rider banna
 
 if (rider_me($pdo)) { redirect('/kaam.php'); }
 
@@ -50,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
   <small>SMART SARATHI / PARTNER APP</small>
 </section>
 <div class="sr-wrap">
+  <?php sr_public_tabs('login'); ?>
 
   <div class="sr-brand">
     <div class="sr-logo"><?= h(t('Welcome back.', 'फिर से स्वागत है।')) ?></div>
@@ -73,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     <p><?= h(t('Ask your office for your code. Once signed in, this phone will remember your session.', 'दफ़्तर से अपना कोड पूछ लीजिए। एक बार अंदर आने के बाद यही फ़ोन आपको सीधा अंदर ले जाएगा।')) ?></p>
     <a class="sr-call" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Call support —', 'फ़ोन कीजिए —')) ?> <?= h(SR_PHONE_SHOW) ?></a>
   </div>
+  <a class="sp-join" href="<?= h(u('/apply.php')) ?>"><b><?= h(t('New here? Become a Sarathi rider', 'नए हैं? सारथी राइडर बनिए')) ?></b><span><?= h(t('Apply in 1 minute →', '1 मिनट में अर्ज़ी →')) ?></span></a>
 
 </div>
 <script>

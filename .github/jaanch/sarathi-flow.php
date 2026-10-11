@@ -54,7 +54,8 @@ try{
     $first=sf_order('4321');$second=sf_order('8765');
 
     // ---- login ----
-    $html=sf_http('/sarathi/');
+    sf_http('/sarathi/',null,302);              // naya: ek hi login — Smart Sarathi
+    $html=sf_http('/sarathi/?purana=1');
     sf_http('/sarathi/',['csrf'=>sf_csrf($html),'who'=>$mobile,'pass'=>$code],302);
     $html=sf_http('/sarathi/kaam.php');$csrf=sf_csrf($html);
 

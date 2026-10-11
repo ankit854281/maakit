@@ -122,7 +122,11 @@ function job_create(PDO $pdo, array $client, array $in) {
             mb_substr(trim((string)($in['drop_village'] ?? '')), 0, 80) ?: null,
             mb_substr(trim((string)($in['items'] ?? '')), 0, 2000) ?: null,
             mb_substr(trim((string)($in['note']  ?? '')), 0, 2000) ?: null,
-            otp4(), otp4(), $fee, $cod,
+            // client (jaise Maakit) apne codes bhej sakta hai — taaki dukaan/grahak ko
+            // ek hi code yaad rakhna pade. Na bheje to yahin bante hain.
+            preg_match('/^\d{4}$/D', (string)($in['pick_otp'] ?? '')) ? (string)$in['pick_otp'] : otp4(),
+            preg_match('/^\d{4}$/D', (string)($in['drop_code'] ?? '')) ? (string)$in['drop_code'] : otp4(),
+            $fee, $cod,
         ]);
         $id = (int)$pdo->lastInsertId();
         $pdo->commit();

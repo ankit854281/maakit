@@ -33,7 +33,11 @@ if ($no !== '' && strlen($mob) === 10) {
         $st->execute([$no, $mob]);
         $o = $st->fetch();
         if (!$o) { $err = t('That order number and mobile do not match. Please check both.', 'यह ऑर्डर नंबर और मोबाइल मिल नहीं रहा। दोनों एक बार देख लीजिए।'); }
-        else { $steps = order_steps($o['status'], $o); }
+        else {
+            // Smart Sarathi ke rider ne uthaya/pahunchaya ho to wahi halat yahan
+            if (!empty($o['sarathi_job'])) { require_once __DIR__ . '/inc/sarathi-bridge.php'; try { $o = sb_sync($pdo, $o); } catch (Throwable $e) {} }
+            $steps = order_steps($o['status'], $o);
+        }
     }
 } elseif ($bno !== '' && strlen($mob) === 10) {
     $_SESSION['tr']++;

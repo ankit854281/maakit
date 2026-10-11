@@ -326,3 +326,11 @@ Hindi, run by someone from the same district who will pick up the phone.
 
 **Not a marketplace that squeezes shops.** A layer that makes the local shops
 that already exist reachable from a phone.
+
+## Delivery = Smart Sarathi (12 Oct 2026, owner decision)
+
+- Riders have ONE login: `maakit.in/smartsarathi/` (own DB, `smartsarathi/inc/config.php`). `/sarathi/` redirects there; the old Maakit-internal rider app still answers at `/sarathi/?purana=1` only for transition and CI.
+- Rider applications live on Smart Sarathi (`smartsarathi/apply.php` → admin "नई अर्ज़ियाँ" → approve creates the rider + one-time login code). `public/partner-apply.php?kind=rider` GET redirects there.
+- Customers can book pick & drop directly: `smartsarathi/book.php` (client "सीधे ग्राहक (वेबसाइट)", auto-created) and track at `smartsarathi/track.php`.
+- Maakit orders reach riders through the API bridge `inc/sarathi-bridge.php` (settings `sarathi_api_url`, `sarathi_api_key`, `sarathi_auto`, set in Admin → Sarathi). The order's shop OTP (`orders.pick_otp`) and customer code (`orders.code`) are sent as the job's `pick_otp`/`drop_code`, so nobody learns new codes. Status comes back on admin orders and `track.php` (`sb_sync`, once per 60 s). Columns: `orders.sarathi_job/sarathi_status/sarathi_checked` (sql/033).
+- Never ship a login that accepts a fixed/master OTP or trusts a plain cookie; real OTP needs an SMS provider.
