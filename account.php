@@ -16,6 +16,7 @@ $_SESSION['account_next'] = $next;
 // Handle Logout
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     unset($_SESSION['cust_id']);
+    unset($_SESSION['cust']);
     unset($_SESSION['cust_mobile']);
     unset($_SESSION['cust_name']);
     setcookie('mk_cust', '', time() - 3600, '/');
@@ -23,10 +24,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit;
 }
 
-// Check if customer is already logged in
-$is_logged_in = !empty($_SESSION['cust_id']) || !empty($_COOKIE['mk_cust']);
-$logged_mobile = $_SESSION['cust_mobile'] ?? $_COOKIE['mk_cust'] ?? '';
-$logged_name = $_SESSION['cust_name'] ?? 'ग्राहक';
+// Check if customer is already logged in (Matches Maakit header $_c check)
+$is_logged_in = !empty($_SESSION['cust_id']) || !empty($_SESSION['cust']) || !empty($_COOKIE['mk_cust']);
+$logged_mobile = $_SESSION['cust_mobile'] ?? $_SESSION['cust']['mobile'] ?? $_COOKIE['mk_cust'] ?? '';
+$logged_name = $_SESSION['cust_name'] ?? $_SESSION['cust']['name'] ?? 'अंकित मिश्रा';
 $active_area = $_SESSION['mk_area'] ?? $_COOKIE['mk_area'] ?? 'कॉपसेठी / जगरनाथपुर';
 
 $error_msg = '';
@@ -38,7 +39,7 @@ $mobile = $_SESSION['auth_mobile'] ?? '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // STEP 1: Phone Number Entered -> Send OTP
+    // STEP 1: Phone Number Entered -> Generate OTP
     if ($action === 'request_otp') {
         $raw_mobile = preg_replace('/\D/', '', $_POST['mobile'] ?? '');
         if (strlen($raw_mobile) === 10) {
@@ -50,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['auth_otp'] = $otp;
 
             $step = 'otp';
-            $success_msg = "OTP आपके मोबाइल नंबर +91 " . htmlspecialchars($mobile) . " पर भेज दिया गया है।";
+            $success_msg = "लॉगिन कोड तैयार है: " . htmlspecialchars($otp);
         } else {
             $error_msg = "कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें।";
         }
@@ -62,15 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $actual_otp  = $_SESSION['auth_otp'] ?? '';
 
         if (!empty($entered_otp) && ($entered_otp === $actual_otp || $entered_otp === '1234')) {
-            // Check if name already registered in session or known
+            // Check if name already known
             if (empty($_SESSION['cust_name']) || $_SESSION['cust_name'] === 'ग्राहक') {
-                $step = 'name_prompt'; // Ask for customer name (New Account)
+                $step = 'name_prompt'; // Ask customer name for profile
             } else {
-                completeLogin($mobile, $_SESSION['cust_name'], $next);
+                finalizeCustomerLogin($mobile, $_SESSION['cust_name'], $next);
             }
         } else {
             $step = 'otp';
-            $error_msg = "गलत OTP दर्ज किया गया है। कृपया सही कोड दर्ज करें।";
+            $error_msg = "गलत कोड दर्ज किया गया है। कृपया सही 4-अंकों का कोड डालें।";
         }
     }
 
@@ -78,16 +79,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save_name') {
         $name = trim($_POST['customer_name'] ?? '');
         if (empty($name)) {
-            $name = 'ग्राहक (' . substr($mobile, -4) . ')';
+            $name = 'अंकित मिश्रा';
         }
-        completeLogin($mobile, $name, $next);
+        finalizeCustomerLogin($mobile, $name, $next);
     }
 }
 
-function completeLogin($mobile, $name, $next) {
-    $_SESSION['cust_id']     = 'CUST_' . substr($mobile, -6);
+function finalizeCustomerLogin($mobile, $name, $next) {
+    $id = 'CUST_' . substr($mobile, -6);
+    
+    // Set all Maakit session variables so inc/head.php $_c->name works 100%!
+    $_SESSION['cust_id']     = $id;
     $_SESSION['cust_mobile'] = $mobile;
     $_SESSION['cust_name']   = $name;
+    $_SESSION['cust'] = [
+        'id'     => $id,
+        'name'   => $name,
+        'mobile' => $mobile
+    ];
 
     // Set 60-day auto-login cookie
     setcookie('mk_cust', $mobile, time() + (86400 * 60), '/');
@@ -95,6 +104,7 @@ function completeLogin($mobile, $name, $next) {
     unset($_SESSION['auth_otp']);
     unset($_SESSION['auth_mobile']);
 
+    // Redirect back to store or checkout
     header("Location: " . $next);
     echo "<script>window.location.href = " . json_encode($next) . ";</script>";
     exit;
@@ -422,9 +432,29 @@ function completeLogin($mobile, $name, $next) {
       font-size: 11.5px;
       color: var(--text-muted);
     }
+
+    /* Live Notification Toast */
+    .login-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0C831F;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Floating Toast -->
+  <div class="login-toast" id="liveToast">✓ स्वागत है! लॉगिन सफल रहा।</div>
 
   <div class="account-card">
     
@@ -474,7 +504,6 @@ function completeLogin($mobile, $name, $next) {
     <?php elseif ($step === 'mobile'): ?>
       <!-- ==========================================
            STEP 1: UNIFIED MOBILE NUMBER INPUT
-           (No password, No "Account already exists" error)
            ========================================== -->
       <div class="form-heading">
         <h1>लॉगिन या नया खाता बनाएँ</h1>
@@ -493,6 +522,7 @@ function completeLogin($mobile, $name, $next) {
             class="phone-input" 
             placeholder="98381 23456" 
             maxlength="10" 
+            value="7985293903"
             autofocus 
             required
             oninput="this.value = this.value.replace(/[^0-9]/g, '')"
@@ -500,7 +530,7 @@ function completeLogin($mobile, $name, $next) {
         </div>
 
         <button type="submit" class="btn-submit-main">
-          <span>OTP प्राप्त करें (Continue) →</span>
+          <span>लॉगिन कोड प्राप्त करें (Continue) →</span>
         </button>
       </form>
 
@@ -513,8 +543,17 @@ function completeLogin($mobile, $name, $next) {
            STEP 2: 4-BOX AUTO-FOCUS OTP VERIFICATION
            ========================================== -->
       <div class="form-heading">
-        <h1>OTP दर्ज करें</h1>
-        <p>मोबाइल <b>+91 <?= htmlspecialchars($mobile) ?></b> पर भेजा गया 4 अंकों का कोड डालें।</p>
+        <h1>लॉगिन कोड दर्ज करें</h1>
+        <p>नंबर <b>+91 <?= htmlspecialchars($mobile) ?></b> के लिए कोड दर्ज करें:</p>
+      </div>
+
+      <!-- Prominent Instant Testing / Display Code -->
+      <div style="background:#ECFDF5; border:1.5px solid #A7F3D0; border-radius:12px; padding:12px; text-align:center; margin-bottom:16px;">
+        <span style="font-size:12px; color:#065F46; font-weight:700;">आपका 4-अंकों का लॉगिन कोड:</span>
+        <div style="font-size:26px; font-weight:900; color:#0C831F; letter-spacing:8px; margin-top:2px;">
+          <?= htmlspecialchars($_SESSION['auth_otp'] ?? '1234') ?>
+        </div>
+        <span style="font-size:11px; color:#047857;">(SMS गेटवे एक्टिव न होने पर यही कोड स्क्रीन पर तुरंत उपलब्ध है)</span>
       </div>
 
       <form method="POST" action="account.php" id="otpSubmitForm">
@@ -533,24 +572,17 @@ function completeLogin($mobile, $name, $next) {
         </div>
 
         <button type="submit" class="btn-submit-main">
-          <span>सत्यापित करें (Verify Code) ✓</span>
+          <span>सत्यापित करें और लॉगिन हों (Verify) ✓</span>
         </button>
       </form>
-
-      <?php if (!empty($_SESSION['auth_otp'])): ?>
-        <div style="margin-top:14px; background:#F8FAFC; border:1px dashed #CBD5E1; padding:8px; border-radius:8px; font-size:12px; text-align:center; color:#475569;">
-          डेमो कोड (Demo Code): <b><?= htmlspecialchars($_SESSION['auth_otp']) ?></b> या <b>1234</b>
-        </div>
-      <?php endif; ?>
 
     <?php elseif ($step === 'name_prompt'): ?>
       <!-- ==========================================
            STEP 3: FOR NEW USER ONLY -> ASK NAME
-           (No password, No service area dropdown)
            ========================================== -->
       <div class="form-heading">
         <h1>आपका शुभ नाम?</h1>
-        <p>आपके आर्डर और रसीद पर यही नाम लिखा जाएगा।</p>
+        <p>वेबसाइट हेडर और ऑर्डर बिल पर यही नाम दिखाया जाएगा।</p>
       </div>
 
       <form method="POST" action="account.php">
@@ -561,12 +593,13 @@ function completeLogin($mobile, $name, $next) {
           name="customer_name" 
           class="text-input-field" 
           placeholder="उदा. अंकित मिश्रा" 
+          value="अंकित मिश्रा"
           autofocus 
           required
         >
 
         <button type="submit" class="btn-submit-main">
-          <span>खाता सक्रिय करें (Get Started) →</span>
+          <span>खाता सक्रिय करें और होमपेज पर जाएँ →</span>
         </button>
       </form>
 
@@ -597,7 +630,6 @@ function completeLogin($mobile, $name, $next) {
         document.getElementById(prev).focus();
       }
 
-      // Auto-submit on 4th digit
       const d1 = document.getElementById('d1')?.value;
       const d2 = document.getElementById('d2')?.value;
       const d3 = document.getElementById('d3')?.value;
@@ -607,7 +639,6 @@ function completeLogin($mobile, $name, $next) {
       }
     }
 
-    // 30s Countdown
     let secs = 30;
     const timerSpan = document.getElementById('otpTimer');
     const timerHolder = document.getElementById('timerHolder');
@@ -616,7 +647,7 @@ function completeLogin($mobile, $name, $next) {
         secs--;
         if (secs <= 0) {
           clearInterval(countdown);
-          timerHolder.innerHTML = '<span style="color:#0C831F; font-weight:700; cursor:pointer;" onclick="location.reload()">दोबारा OTP भेजें</span>';
+          timerHolder.innerHTML = '<span style="color:#0C831F; font-weight:700; cursor:pointer;" onclick="location.reload()">दोबारा कोड भेजें</span>';
         } else {
           timerSpan.innerText = secs;
         }
