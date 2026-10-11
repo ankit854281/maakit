@@ -3,6 +3,7 @@ require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__ . '/inc/catalog-request.php';
 require_once __DIR__ . '/inc/catalog-photos.php';
+require_once __DIR__ . '/inc/photo-fetch.php';
 
 function bazaar_get($key, $max = 100) {
     return isset($_GET[$key]) && is_string($_GET[$key]) ? mb_substr(trim($_GET[$key]), 0, $max) : '';
@@ -207,7 +208,9 @@ include __DIR__ . '/inc/head.php';
           $pname = t($item['name_en'], $item['name_hi'] ?: $item['name_en']);
         ?>
         <?php if ($pics): ?>
-          <?= $focused ? catalog_slider_html($pics, $pname) : '<a class="bazaar-cover" href="' . h(catalog_url(['product' => (int)$item['id']])) . '"><img src="/uploads/' . h($pics[0]) . '" alt="' . h($pname) . '" loading="lazy">' . (count($pics) > 1 ? '<span class="ps-count">' . count($pics) . ' ' . t('photos', 'फ़ोटो') . '</span>' : '') . '</a>' ?>
+          <?= $focused ? catalog_slider_html($pics, $pname) . pf_credit_line($pdo, $pics) : '<a class="bazaar-cover" href="' . h(catalog_url(['product' => (int)$item['id']])) . '"><img src="/uploads/' . h($pics[0]) . '" alt="' . h($pname) . '" loading="lazy">' . (count($pics) > 1 ? '<span class="ps-count">' . count($pics) . ' ' . t('photos', 'फ़ोटो') . '</span>' : '') . '</a>' ?>
+        <?php else: ?>
+          <?= catalog_tile_html($item, $focused ? '' : catalog_url(['product' => (int)$item['id']]), $focused ? 'lg' : 'md') ?>
         <?php endif; ?>
         <?php if ($focused && function_exists('user') && ($__u = user()) && in_array($__u['role'] ?? '', ['admin','designer'], true)): ?>
           <a class="pp-admin-link" href="/admin/product-photos.php?id=<?= (int)$item['id'] ?>">+ <?= t('Add / change photos (admin)', 'फ़ोटो लगाइए / बदलिए (admin)') ?></a>

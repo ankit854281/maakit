@@ -55,3 +55,22 @@ function catalog_slider_html(array $files, $alt) {
     }
     return $html . '</div>';
 }
+
+/**
+ * Jis saaman ki koi photo nahi — uske liye saaf, apne aap bani "tile":
+ * halka rang (sub-category se tay, har baar wahi), saaman ka icon aur naam.
+ * Ye photo nahi hai, bas khaali dabba na dikhe isliye. Asli photo lagte hi hat jaati hai.
+ */
+function catalog_tile_html(array $item, $href = '', $size = 'md') {
+    $hues = [[146, 38], [36, 90], [200, 70], [12, 75], [265, 45], [170, 45], [48, 85], [330, 45]];
+    $k = abs(crc32((string)($item['sub_cat'] ?? '') . '|' . (string)($item['shop_type'] ?? ''))) % count($hues);
+    [$hue, $sat] = $hues[$k];
+    $name = t($item['name_en'] ?? '', ($item['name_hi'] ?? '') ?: ($item['name_en'] ?? ''));
+    $icon = function_exists('catalog_product_icon') ? catalog_product_icon($item + ['name_hi' => '', 'name_en' => '', 'shop_type' => ''], $size === 'sm' ? 22 : 40) : '';
+    // naam card me neeche likha hi hota hai, isliye tile me sirf icon
+    $in = '<span class="ct-ic">' . $icon . '</span>';
+    $style = 'style="--ct-h:' . (int)$hue . ';--ct-s:' . (int)$sat . '%"';
+    return $href !== ''
+        ? '<a class="ct-tile ct-' . h($size) . '" ' . $style . ' href="' . h($href) . '" aria-label="' . h($name) . '">' . $in . '</a>'
+        : '<span class="ct-tile ct-' . h($size) . '" ' . $style . ' aria-hidden="true">' . $in . '</span>';
+}

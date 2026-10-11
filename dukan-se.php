@@ -221,8 +221,8 @@ include __DIR__ . '/inc/head.php';
     <div class="box">
       <?php foreach ($items as $it): ?>
         <div style="border-top:1px solid var(--line);padding:10px 0;display:flex;gap:10px;align-items:center">
-          <?php if ($it['photo']): ?>
-            <img src="/uploads/<?= h($it['photo']) ?>" alt="" width="46" height="46"
+          <?php if ($it['photo'] || !empty($it['cat_photo'])): ?>
+            <img src="/uploads/<?= h($it['photo'] ?: $it['cat_photo']) ?>" alt="" width="46" height="46"
                  style="border-radius:8px;object-fit:cover;flex:none">
           <?php endif; ?>
           <div style="flex:1;min-width:0">

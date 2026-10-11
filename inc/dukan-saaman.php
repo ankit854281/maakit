@@ -50,12 +50,12 @@ $LPER = 30;
 $w = "business_id=? AND active=1 AND price>0"; $args = [$bid];
 if ($f === 'hai')     $w .= " AND stock='hai'";
 if ($f === 'khatam')  $w .= " AND stock='khatam'";
-if ($f === 'nophoto') $w .= " AND (photo IS NULL OR photo='')";
+if ($f === 'nophoto') $w .= " AND (photo IS NULL OR photo='') AND NOT EXISTS (SELECT 1 FROM catalog_photos cp WHERE cp.cat_id=shop_items.cat_id)";
 if ($s !== '')        { $w .= " AND name LIKE ?"; $args[] = '%' . $s . '%'; }
 $cn = $pdo->prepare("SELECT COUNT(*) FROM shop_items WHERE $w"); $cn->execute($args); $list_kul = (int)$cn->fetchColumn();
 $lpages = max(1, (int)ceil($list_kul / $LPER)); if ($lp > $lpages) $lp = $lpages;
 $ls = $pdo->prepare("SELECT * FROM shop_items WHERE $w ORDER BY stock='hai' DESC, sold DESC, name LIMIT $LPER OFFSET " . (($lp - 1) * $LPER));
-$ls->execute($args); $list = $ls->fetchAll();
+$ls->execute($args); $list = dukan_cat_photos($pdo, $ls->fetchAll());
 $back = http_build_query(array_filter(['s' => $s, 'f' => $f, 'lp' => $lp > 1 ? $lp : '']));
 $lurl = function ($chg) use ($s, $f) {
     $q = array_filter(array_merge(['tab' => 'saaman', 's' => $s, 'f' => $f], $chg), function ($v) { return $v !== '' && $v !== null; });
@@ -167,8 +167,8 @@ $bharaPct = ($priced + $sp_it['baaki']) ? (int)round($priced / ($priced + $sp_it
       <?php endif; ?>
       <?php foreach ($list as $it): $hai = $it['stock'] === 'hai'; ?>
         <div class="sp-item<?= $hai ? '' : ' is-out' ?>" data-row>
-          <?php if ($it['photo']): ?>
-            <img class="sp-thumb" src="/uploads/<?= h($it['photo']) ?>" alt="" width="44" height="44" loading="lazy">
+          <?php if ($it['photo'] || $it['cat_photo']): ?>
+            <img class="sp-thumb" src="/uploads/<?= h($it['photo'] ?: $it['cat_photo']) ?>" alt="" width="44" height="44" loading="lazy"<?= $it['photo'] ? '' : ' title="' . h(t('Maakit photo — tap the camera to use your own', 'Maakit की फ़ोटो — अपनी लगाने के लिए कैमरा दबाइए')) . '"' ?>>
           <?php else: ?>
             <span class="sp-thumb sp-thumb-0" aria-hidden="true"><?= h(mb_substr($it['name'], 0, 1)) ?></span>
           <?php endif; ?>

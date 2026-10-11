@@ -33,7 +33,25 @@ function dukan_items(PDO $pdo, $bid, $live = false) {
     $sql .= " ORDER BY sort_no, sold DESC, name";
     $st = $pdo->prepare($sql);
     $st->execute([(int)$bid]);
-    return $st->fetchAll();
+    return dukan_cat_photos($pdo, $st->fetchAll());
+}
+
+/**
+ * Dukandar ne apni photo nahi lagai to Maakit ki suchi (catalog) wali
+ * cover photo 'cat_photo' me de do — taaki grahak ko khaali dabba na dike.
+ * 'photo' khaana nahi badalta (wo dukandar ki apni photo hai).
+ */
+function dukan_cat_photos(PDO $pdo, array $rows) {
+    $need = [];
+    foreach ($rows as $r) if (empty($r['photo']) && !empty($r['cat_id'])) $need[] = (int)$r['cat_id'];
+    $covers = [];
+    if ($need) {
+        require_once __DIR__ . '/catalog-photos.php';
+        foreach (catalog_photos_for($pdo, $need) as $cid => $files) $covers[$cid] = $files[0];
+    }
+    foreach ($rows as &$r) $r['cat_photo'] = (empty($r['photo']) && !empty($r['cat_id'])) ? ($covers[(int)$r['cat_id']] ?? '') : '';
+    unset($r);
+    return $rows;
 }
 
 /**

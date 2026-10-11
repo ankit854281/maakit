@@ -40,7 +40,8 @@
       <a href="/register-business.php"><?= t('List your shop or service — free', 'अपना काम / दुकान जोड़िए — फ़्री') ?></a> ·
       <a href="<?= h(lang_switch_url()) ?>"><?= h(lang_other_label()) ?></a> ·
       <a href="/location.php"><?=t('Service areas','सेवा क्षेत्र')?></a> · <a href="/support.php"><?=t('Help & complaints','सहायता और शिकायत')?></a> ·
-      <a href="/login.php"><?= t('Shop / team login', 'दुकान / टीम लॉगिन') ?></a>
+      <a href="/login.php"><?= t('Shop / team login', 'दुकान / टीम लॉगिन') ?></a> ·
+      <a href="/photo-credits.php"><?= t('Photo credits', 'फ़ोटो क्रेडिट') ?></a>
     </div>
   </div>
 </footer>

@@ -57,7 +57,7 @@ $sp_it = $pdo->prepare("SELECT
       COALESCE(SUM(active=1 AND stock='hai' AND price>0),0) AS dikh,
       COALESCE(SUM(active=1 AND price<=0),0)               AS baaki,
       COALESCE(SUM(active=1 AND price>0 AND stock='khatam'),0) AS khatam,
-      COALESCE(SUM(active=1 AND price>0 AND (photo IS NULL OR photo='')),0) AS bina_photo
+      COALESCE(SUM(active=1 AND price>0 AND (photo IS NULL OR photo='') AND NOT EXISTS (SELECT 1 FROM catalog_photos cp WHERE cp.cat_id=shop_items.cat_id)),0) AS bina_photo
     FROM shop_items WHERE business_id=?");
 $sp_it->execute([$bid]); $sp_it = array_map('intval', $sp_it->fetch());
 

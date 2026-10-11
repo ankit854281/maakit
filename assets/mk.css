@@ -1264,3 +1264,90 @@ small.sp-pos,small.sp-neg{font-weight:700}
   .sp-head{align-items:flex-start}
 }
 @media (prefers-reduced-motion:reduce){.sp *{animation:none!important;transition:none!important}}
+
+/* =====================================================================
+   Auto photos (admin/auto-photos.php) + photo credits — Oct 2026
+   ===================================================================== */
+.ap-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:14px 0 10px}
+.ap-bar form{margin:0}
+.ap-sel{display:flex;flex-direction:column;gap:3px;margin:0;font-weight:400}
+.ap-sel span{font-size:11.5px;font-weight:700;color:#6B7280}
+.ap-sel select{min-height:36px;font-size:13.5px;padding:6px 10px;border-radius:9px;border:1px solid #D6D9DF;max-width:280px;width:auto}
+.ap-modes{display:flex;background:#EEF0F3;border-radius:10px;padding:3px;gap:3px}
+.ap-modes button{font:inherit;font-size:13px;font-weight:700;border:0;background:transparent;color:#4B5563;border-radius:8px;padding:7px 12px;cursor:pointer;min-height:0}
+.ap-modes button.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.ap-grow{flex:1}
+.ap-help{font-size:12.5px;color:#4B5563;background:#F2FAF4;border:1px solid #CDE9D2;border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.ap-card{background:#fff;border:1px solid #E7E9EE;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;transition:opacity .25s,transform .25s,border-color .2s}
+.ap-card header{display:flex;gap:8px;align-items:flex-start}
+.ap-card header>div{flex:1;min-width:0}
+.ap-card header b{font-size:14px}.ap-card header span{color:#6B7280;font-size:13px}
+.ap-card header small{display:block;font-size:11.5px;color:#6B7280}
+.ap-card header em{font-style:normal;font-weight:700;color:#14812A}.ap-card header em.bad{color:#C0352B}
+.ap-skip{font:inherit;font-size:12px;font-weight:700;color:#6B7280;background:#F3F4F6;border:0;border-radius:999px;padding:4px 10px;cursor:pointer;min-height:0}
+.ap-skip:hover{background:#FDECEA;color:#C0352B}
+.ap-cands{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:82px;position:relative}
+.ap-c{position:relative;padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#F3F4F6;cursor:pointer;aspect-ratio:1;min-height:0;transition:border-color .15s,transform .1s}
+.ap-c:active{transform:scale(.96)}
+.ap-c img{width:100%;height:100%;object-fit:cover;display:block}
+.ap-c .ap-tag{position:absolute;left:0;right:0;bottom:0;font-size:9px;line-height:1.3;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:10px 4px 3px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-c .ap-t{display:none}
+.ap-c:hover .ap-t{display:block;position:absolute;top:0;left:0;right:0;font-size:10px;background:rgba(0,0,0,.65);color:#fff;padding:3px 4px;text-align:left;max-height:60%;overflow:hidden}
+.ap-c .ap-ok{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:#14812A;color:#fff;font-size:11px;display:grid;place-items:center;font-weight:800}
+.ap-c.sel{border-color:#14812A;box-shadow:0 0 0 3px rgba(20,129,42,.2)}
+.ap-c.sel::after{content:"";position:absolute;inset:0;background:rgba(20,129,42,.12)}
+.ap-none{grid-column:1/-1;font-size:12.5px;color:#6B7280;margin:6px 0}
+.ap-spin{grid-column:1/-1;justify-self:center;align-self:center;width:22px;height:22px;border:3px solid #D1D5DB;border-right-color:transparent;border-radius:50%;animation:spSpin .7s linear infinite}
+@keyframes spSpin{to{transform:rotate(360deg)}}
+.ap-q{display:flex;gap:6px;margin:0}
+.ap-q input{flex:1;min-height:32px!important;font-size:12.5px!important;padding:4px 9px!important;border:1px solid #E1E4E9!important;border-radius:8px!important;width:auto!important}
+.ap-q button{font:inherit;font-size:12px;font-weight:700;border:1px solid #E1E4E9;background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;min-height:0}
+.ap-card.saving{opacity:.6}
+.ap-card.done{border-color:#9FD3A9;background:#F6FBF7}
+.ap-card.done .ap-q,.ap-card.done .ap-skip{display:none}
+.ap-card.err{border-color:#F2B8B2}
+.ap-card.gone{opacity:0;transform:scale(.96)}
+.ap-empty{grid-column:1/-1;text-align:center;font-size:15px;font-weight:700;color:#14812A;padding:30px}
+.ap-foot{position:sticky;bottom:10px;z-index:5;display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;background:rgba(17,24,39,.94);color:#fff;border-radius:14px;padding:8px 8px 8px 14px;box-shadow:0 10px 30px rgba(17,24,39,.25)}
+.ap-foot span{margin-right:auto;font-size:13px;font-weight:600}
+.ap-foot .mk-btn-line{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.ap-foot .mk-btn:disabled{opacity:.45}
+.ap-auto{background:#fff;border:1px solid #E7E9EE;border-radius:14px;padding:14px 16px}
+.ap-auto-h{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ap-auto-h b{display:block;font-size:15px}.ap-auto-h small{display:block;font-size:12.5px;color:#6B7280;max-width:640px}
+.ap-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.ap-counts span{background:#F8F9FB;border-radius:10px;padding:8px 10px;font-size:12px;color:#6B7280}
+.ap-counts b{display:block;font-size:20px;color:#111827}
+.ap-counts .ok b{color:#14812A}
+.ap-prog{height:6px;background:#EEF0F3;border-radius:999px;overflow:hidden}
+.ap-prog i{display:block;height:100%;width:0;background:#14812A;transition:width .3s}
+.ap-log{margin-top:10px;max-height:420px;overflow:auto;font-size:12.5px}
+.ap-log div{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #F0F1F4}
+.ap-log img{width:30px;height:30px;border-radius:6px;object-fit:cover}
+.ap-log small{color:#6B7280}
+@media (max-width:700px){.ap-grid{grid-template-columns:1fr}.ap-counts{grid-template-columns:repeat(2,1fr)}.ap-modes{width:100%}.ap-modes button{flex:1}}
+
+.pf-credit{font-size:11px;color:#6B7280;margin:4px 0 6px;line-height:1.4;overflow-wrap:anywhere}
+.pf-credit a{color:#6B7280}
+.pfc{padding:22px 0 40px}
+.pfc h1{font-size:22px;margin:0 0 6px}
+.pfc-lead{font-size:13.5px;color:#4B5563;max-width:760px;margin:0 0 8px}
+.pfc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}
+.pfc-grid figure{display:flex;gap:10px;align-items:flex-start;margin:0;background:#fff;border:1px solid #E7E9EE;border-radius:12px;padding:8px}
+.pfc-grid img{width:56px;height:56px;border-radius:8px;object-fit:cover;flex:none}
+.pfc-grid b{display:block;font-size:13px}.pfc-grid small{display:block;font-size:11px;color:#6B7280;overflow-wrap:anywhere}
+.pfc-grid small a{color:#6B7280}
+.pfc-pages{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.pfc-pages a{padding:4px 10px;border:1px solid #E7E9EE;border-radius:8px;text-decoration:none;color:#374151;font-size:13px}
+.pfc-pages a.on{background:#111827;color:#fff}
+
+/* Bina photo ke saaman ki apne aap bani tile (inc/catalog-photos.php catalog_tile_html) */
+.ct-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:120px;border-radius:10px;margin-bottom:10px;text-decoration:none;overflow:hidden;
+  background:radial-gradient(120% 90% at 20% 10%,hsl(var(--ct-h) var(--ct-s) 96%) 0%,hsl(var(--ct-h) var(--ct-s) 90%) 70%);border:1px solid hsl(var(--ct-h) var(--ct-s) 86%);color:hsl(var(--ct-h) 45% 28%)}
+.ct-tile::after{content:"";position:absolute;right:-18px;bottom:-18px;width:70px;height:70px;border-radius:50%;background:hsl(var(--ct-h) var(--ct-s) 84% / .55)}
+.ct-ic{position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:#fff;box-shadow:0 4px 12px hsl(var(--ct-h) 40% 40% / .15)}
+.ct-ic svg{width:34px;height:34px}
+.ct-n{position:relative;z-index:1;font-size:11.5px;font-weight:700;line-height:1.25;text-align:center;padding:0 10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-lg{height:220px;border-radius:14px}.ct-lg .ct-ic{width:84px;height:84px;border-radius:22px}.ct-lg .ct-ic svg{width:48px;height:48px}.ct-lg .ct-n{font-size:14px}
+.ct-sm{height:44px;width:44px;margin:0;border-radius:10px;flex:none}.ct-sm .ct-ic{width:30px;height:30px;border-radius:9px;box-shadow:none}.ct-sm .ct-ic svg{width:20px;height:20px}.ct-sm::after{display:none}

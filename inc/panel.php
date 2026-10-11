@@ -33,6 +33,7 @@ if ($role === 'admin') {
         ],
         t('Catalogue', 'सामान') => [
             '/admin/product-photos.php' => [t('Product photos', 'सामान की फ़ोटो'), 'image'],
+            '/admin/auto-photos.php' => [t('Auto photos', 'अपने आप फ़ोटो'), 'image'],
             '/admin/items.php'     => [t('Products', 'सामान'), 'bag'],
             '/admin/daam.php'      => [t('Prices & brands', 'दाम/ब्रांड'), 'tag'],
             '/admin/photos.php'    => [t('Bulk item photos', 'फ़ोटो एक साथ'), 'image'],
@@ -62,6 +63,7 @@ if ($role === 'admin') {
     // Designer ka kaam sirf dikhne wali cheezein — offer, photo, home page.
     $menu = [t('Design', 'डिज़ाइन') => [
         '/admin/product-photos.php' => [t('Product photos', 'सामान की फ़ोटो'), 'image'],
+        '/admin/auto-photos.php' => [t('Auto photos', 'अपने आप फ़ोटो'), 'image'],
         '/admin/banners.php' => [t('Offers & banners', 'ऑफ़र'), 'star'],
         '/admin/photos.php'  => [t('Bulk item photos', 'फ़ोटो एक साथ'), 'image'],
         '/admin/items.php'   => [t('Products', 'सामान'), 'bag'],

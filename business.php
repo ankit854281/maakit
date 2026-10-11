@@ -75,8 +75,8 @@ include __DIR__ . '/inc/head.php';
 
     <?php foreach (array_slice($mera, ($spage - 1) * 30, 30) as $it): ?>
       <div style="border-top:1px solid var(--line);padding:9px 0;display:flex;gap:10px;align-items:center">
-        <?php if ($it['photo']): ?>
-          <img src="/uploads/<?= h($it['photo']) ?>" alt="" width="44" height="44"
+        <?php if ($it['photo'] || !empty($it['cat_photo'])): ?>
+          <img src="/uploads/<?= h($it['photo'] ?: $it['cat_photo']) ?>" alt="" width="44" height="44"
                style="border-radius:8px;object-fit:cover;flex:none" loading="lazy">
         <?php endif; ?>
         <div style="flex:1;min-width:0">
