@@ -26,6 +26,7 @@ function rider_login(PDO $pdo, $mobile, $code) {
 function rider_start_session($r) {
     session_regenerate_id(true);           // purani id dobara kaam na kare
     $_SESSION['sr_rider'] = (int)$r['id'];
+    $_SESSION['sr_rider_auth'] = hash('sha256', (string)$r['pass_hash']);
 }
 
 /** abhi kaun andar hai — har panne par database se taaza lete hain */
@@ -35,8 +36,28 @@ function rider_me(PDO $pdo) {
     $st = $pdo->prepare("SELECT * FROM riders WHERE id=? AND active=1");
     $st->execute([$id]);
     $r = $st->fetch();
-    if (!$r) { unset($_SESSION['sr_rider']); return null; }   // khata band ho gaya
+    if (!$r || !hash_equals(hash('sha256', (string)$r['pass_hash']), (string)($_SESSION['sr_rider_auth'] ?? ''))) {
+        unset($_SESSION['sr_rider'], $_SESSION['sr_rider_auth']);
+        return null;  // band khata, purana login ya badla hua code
+    }
     return $r;
+}
+
+/** Admin + CSRF-gated caller only; never return or log the new code. */
+function rider_reset_code(PDO $pdo, $rid, $code, $confirm) {
+    if (!is_string($code) || !is_string($confirm)
+        || strlen($code) < 6 || strlen($code) > 72 || trim($code) === ''
+        || !hash_equals($code, $confirm)) {
+        return [false, 'दोनों जगह एक ही नया कोड भरिए — 6 से 72 अक्षर में।'];
+    }
+    $rid = (int)$rid;
+    if ($rid <= 0) return [false, 'यह सारथी नहीं मिला।'];
+    $st = $pdo->prepare("SELECT id FROM riders WHERE id=?");
+    $st->execute([$rid]);
+    if (!$st->fetch()) return [false, 'यह सारथी नहीं मिला।'];
+    $pdo->prepare("UPDATE riders SET pass_hash=?, ready_until=NULL WHERE id=?")
+        ->execute([password_hash($code, PASSWORD_DEFAULT), $rid]);
+    return [true, 'नया कोड सेव हो गया। पुराने login बंद हैं; सारथी नए कोड से प्रवेश करे।'];
 }
 
 function rider_logout() {
