@@ -223,3 +223,64 @@ body{font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,-apple-sys
 }
 .mk-rail,.mk-offers,.mk-reviews{scroll-padding:0 16px}
 @media(max-width:480px){.mk-hero{padding:18px 16px}.mk-hero .mk-btn{min-height:40px;padding:0 14px;font-size:14px}.mk-hero p{margin-bottom:12px}}
+
+/* ============================================================
+   Halka peela (Blinkit jaisa) + hare button — 11 Oct 2026 shaam
+   ============================================================ */
+:root{--head:#FBE38E}
+.mk-head{background:var(--head);border-bottom:0}
+.mk-word small,.mk-loc small{color:#4B4B4B}
+.mk-loc{border-left-color:rgba(0,0,0,.12)}
+.mk-search{background:#fff}
+.mk-lang{background:rgba(255,255,255,.6)}
+.mk-btn-line{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.55)}
+.mk-btn-line:hover{background:rgba(255,255,255,.5)}
+
+/* ---------- upar ka hissa: header se judkar page me ghul jata hai ---------- */
+.mk-home{padding-top:0}
+.mk-top{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--head) 0%,#FDF1C4 58%,#FFFFFF 100%);margin-bottom:6px}
+.mk-top-in{position:relative;display:flex;align-items:center;min-height:210px;padding-top:18px;padding-bottom:30px}
+.mk-top .mk-hero-text{position:relative;z-index:1;max-width:560px;color:var(--ink)}
+.mk-top .mk-kicker{color:#7A5B00;opacity:1}
+.mk-top h1{font-size:28px;line-height:1.18;font-weight:800;letter-spacing:-.6px;margin:6px 0 6px}
+.mk-top p{margin:0 0 16px;font-size:15px;line-height:1.55;color:#3D3D3D}
+.mk-top-fest .mk-kicker{color:var(--fbg)}
+.mk-top-fest h1{color:var(--fdeep)}
+.mk-top .fest-art{position:absolute;right:-10px;top:0;bottom:auto;width:260px;opacity:1}
+.mk-top-fest .mk-hero-text{max-width:60%}
+@media(max-width:480px){
+  .mk-top-in{min-height:0;padding-top:96px;padding-bottom:26px}
+  .mk-top .fest-art{width:170px;right:-8px;top:-4px}
+  .mk-top-fest .mk-hero-text{max-width:100%}
+  .mk-top h1{font-size:25px}
+  .mk-top .mk-btn{min-height:40px;padding:0 14px;font-size:14px}
+}
+@media(min-width:900px){
+  .mk-top-in{min-height:300px;padding-top:30px;padding-bottom:50px}
+  .mk-top h1{font-size:44px}
+  .mk-top p{font-size:17px}
+  .mk-top .fest-art{width:420px;right:24px;top:-6px}
+}
+.mk-home .mk-trust{margin-top:0}
+.mk-home .mk-trust li{background:#FFFBEB}
+
+/* ---------- neeche tairta khoj-dabba (shishe jaisa) ---------- */
+.mk-home-page .mk-home{padding-bottom:110px}
+.mk-float-search{position:fixed;z-index:45;left:50%;transform:translateX(-50%);
+  bottom:calc(76px + env(safe-area-inset-bottom,0px));
+  width:min(calc(100vw - 24px),640px);height:58px;box-sizing:border-box;
+  display:flex;align-items:center;gap:10px;padding:0 7px 0 18px;border-radius:999px;color:#3D3D3D;
+  background:rgba(255,255,255,.55);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid rgba(255,255,255,.75);
+  box-shadow:0 10px 30px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.7);
+  transition:width .38s cubic-bezier(.2,.8,.2,1),height .38s cubic-bezier(.2,.8,.2,1),padding .38s,bottom .38s}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.mk-float-search{background:rgba(255,255,255,.95)}}
+.mk-float-search input{flex:1;min-width:0;border:0;background:transparent;outline:0;font:inherit;font-size:16px;color:var(--ink);padding:0;border-radius:0;transition:font-size .38s}
+.mk-float-search input::placeholder{color:#555}
+.mk-fs-go{flex-shrink:0;height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--brand);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .25s,width .38s,padding .38s}
+.mk-float-search.is-small{width:min(62vw,300px);height:46px;padding:0 6px 0 14px}
+.mk-float-search.is-small input{font-size:14px}
+.mk-float-search.is-small .mk-fs-go{opacity:0;width:0;padding:0;pointer-events:none}
+@media(min-width:900px){.mk-float-search{bottom:26px}.mk-float-search.is-small{width:340px}}
+@media(prefers-reduced-motion:reduce){.mk-float-search,.mk-float-search *{transition:none}}

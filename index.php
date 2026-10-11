@@ -56,37 +56,42 @@ try {
 require_once __DIR__ . '/inc/festival.php';
 $fest = maakit_festival_now($pdo);
 function mk_price($n) { return rtrim(rtrim(number_format((float)$n, 2, '.', ''), '0'), '.'); }
+$home_page = true;
 include __DIR__ . '/inc/head.php';
 ?>
 <main class="mk-home">
-<div class="mk-wrap">
 
   <?php if ($fest): ?>
-  <section class="mk-hero mk-hero-fest" style="--fbg:<?= h($fest['bg']) ?>;--fdeep:<?= h($fest['deep']) ?>;--facc:<?= h($fest['accent']) ?>">
+  <section class="mk-top mk-top-fest" style="--fbg:<?= h($fest['bg']) ?>;--fdeep:<?= h($fest['deep']) ?>;--facc:<?= h($fest['accent']) ?>">
+   <div class="mk-wrap mk-top-in">
     <div class="mk-hero-text">
       <span class="mk-kicker"><?= t('Festival special', 'त्योहार विशेष') ?></span>
       <h1><?= h(t($fest['en'], $fest['hi'])) ?></h1>
       <p><?= h(t($fest['sub_en'], $fest['sub_hi'])) ?></p>
       <div class="mk-hero-cta">
-        <a class="mk-btn mk-btn-light" href="/search.php?q=<?= h(urlencode($fest['q'])) ?>"><?= h(t($fest['cta_en'], $fest['cta_hi'])) ?></a>
-        <a class="mk-btn mk-btn-ghost" href="/order.php#pata"><?= t('Send a list', 'लिस्ट भेजिए') ?></a>
+        <a class="mk-btn" href="/search.php?q=<?= h(urlencode($fest['q'])) ?>"><?= h(t($fest['cta_en'], $fest['cta_hi'])) ?></a>
+        <a class="mk-btn mk-btn-line" href="/order.php#pata"><?= t('Send a list', 'लिस्ट भेजिए') ?></a>
       </div>
     </div>
     <?= maakit_festival_art($fest) ?>
+   </div>
   </section>
   <?php else: ?>
-  <section class="mk-hero">
+  <section class="mk-top">
+   <div class="mk-wrap mk-top-in">
     <div class="mk-hero-text">
       <span class="mk-kicker"><span class="mk-dot <?= $is_open ? 'on' : '' ?>"></span><?= h($open_short) ?></span>
       <h1><?= $me ? t('Hello ', 'नमस्ते ') . h(mb_substr(explode(' ', trim($me['name']))[0], 0, 12)) . ', ' . t('what do you need?', 'आज क्या चाहिए?') : t('Your local shops, delivered.', 'आपकी दुकानें, आपके घर।') ?></h1>
       <p><?= t('Groceries, medicines and daily needs from shops near you.', 'राशन, दवाई और रोज़ का सामान — पास की दुकानों से।') ?></p>
       <div class="mk-hero-cta">
-        <a class="mk-btn mk-btn-light" href="/bazaar.php"><?= t('Start shopping', 'सामान चुनिए') ?></a>
-        <a class="mk-btn mk-btn-ghost" href="/order.php#pata"><?= t('Send a list', 'लिस्ट भेजिए') ?></a>
+        <a class="mk-btn" href="/bazaar.php"><?= t('Start shopping', 'सामान चुनिए') ?></a>
+        <a class="mk-btn mk-btn-line" href="/order.php#pata"><?= t('Send a list', 'लिस्ट भेजिए') ?></a>
       </div>
     </div>
+   </div>
   </section>
   <?php endif; ?>
+<div class="mk-wrap">
 
   <ul class="mk-trust" aria-label="<?= h(t('Why Maakit', 'Maakit क्यों')) ?>">
     <li><?= svc_icon('shops', 18) ?><?= t('Shop price, no markup', 'दुकान का ही दाम') ?></li>
@@ -206,6 +211,27 @@ include __DIR__ . '/inc/head.php';
   </div>
 </div>
 </main>
+
+<form class="mk-float-search" id="floatSearch" action="/search.php" method="get" role="search">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+  <input type="search" name="q" id="q" placeholder="<?= h(t('Search atta, medicine, Bolero…', 'खोजिए: आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
+  <button type="submit" class="mk-fs-go"><?= t('Search', 'खोजिए') ?></button>
+</form>
+<script>
+/* neeche wala khoj-dabba: shuru me bada, scroll karte hi chhota */
+(function(){
+  var f=document.getElementById('floatSearch'); if(!f) return;
+  var small=false, tick=false;
+  function upd(){ tick=false; var s=window.scrollY>60; if(s!==small){small=s;f.classList.toggle('is-small',s);} }
+  window.addEventListener('scroll',function(){ if(!tick){tick=true;requestAnimationFrame(upd);} },{passive:true});
+  f.addEventListener('focusin',function(){f.classList.remove('is-small');small=false;});
+  upd();
+  var el=document.getElementById('q'), list=<?= json_encode(is_hi()
+      ? ['आटा, चावल, दाल…','बुख़ार की दवा','सरसों तेल','बोलेरो बुक कीजिए','पूजा सामग्री']
+      : ['Atta, rice, dal…','Fever medicine','Mustard oil','Book a Bolero','Puja samagri'], JSON_UNESCAPED_UNICODE) ?>, i=0;
+  setInterval(function(){ if(document.activeElement===el||el.value) return; i=(i+1)%list.length; el.setAttribute('placeholder',list[i]); },2600);
+})();
+</script>
 <script>
 document.addEventListener('click', function(e){
   var a = e.target.closest('[data-bid]'); if (!a) return;

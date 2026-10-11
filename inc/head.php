@@ -90,19 +90,20 @@ if (!$no_tabbar && !$no_ticker) {
 <link rel="stylesheet" href="/assets/mk.css?v=<?= (int)filemtime(__DIR__.'/../assets/mk.css') ?>">
 <style><?= maakit_theme_css($pdo ?? null) ?></style>
 </head>
-<body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($request_design)?' request-design':'' ?>">
+<body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($home_page)?' mk-home-page':'' ?><?= !empty($request_design)?' request-design':'' ?>">
 
 <?php
 require_once __DIR__ . '/festival.php';
 $_fest = empty($no_tabbar) ? maakit_festival_now($pdo ?? null) : null;
+$_home = !empty($home_page);
 $_c = function_exists('cust') ? cust() : null;
 $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_selected($pdo) : null;
 ?>
-<?php if ($_fest): ?>
+<?php if ($_fest && !$_home): ?>
 <a class="mk-fest-strip" href="/search.php?q=<?= h(urlencode($_fest['q'])) ?>" style="--fbg:<?= h($_fest['bg']) ?>;--facc:<?= h($_fest['accent']) ?>">
   <span class="mk-wrap"><b><?= h(t($_fest['en'], $_fest['hi'])) ?></b><span class="mk-fs-sub"><?= h(t($_fest['cta_en'], $_fest['cta_hi'])) ?> →</span></span>
 </a>
-<?php elseif ($tick): ?>
+<?php elseif ($tick && !$_home): ?>
 <div class="ticker" aria-label="<?= h($tick_hul ? t('Recent activity', 'अभी-अभी') : t('Service areas', 'सेवा क्षेत्र')) ?>">
   <div class="tk">
     <span class="lbl"><?= $tick_hul ? t('JUST NOW', 'अभी-अभी') : t('WE DELIVER IN', 'यहाँ पहुँचते हैं') ?></span>
@@ -115,7 +116,7 @@ $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_
 </div>
 <?php endif; ?>
 
-<header class="mk-head">
+<header class="mk-head<?= $_home ? ' mk-head-home' : '' ?>">
   <div class="mk-wrap mk-head-row">
     <a class="mk-brand" href="/" aria-label="Maakit home">
       <?= maakit_logo_svg(36) ?>
@@ -126,10 +127,12 @@ $_area = (empty($no_tabbar) && function_exists('coverage_selected')) ? coverage_
       <small><?= t('Delivering to', 'डिलीवरी') ?></small>
       <b><?= $_area ? h(coverage_label($_area)) : t('Select area', 'इलाका चुनिए') ?> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></b>
     </a>
+    <?php if (!$_home): ?>
     <form class="mk-search" action="/search.php" method="get" role="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" name="q" placeholder="<?= h(t('Search atta, medicine, Bolero…', 'खोजिए: आटा, दवाई, बोलेरो…')) ?>" aria-label="<?= h(t('Search', 'खोजिए')) ?>">
     </form>
+    <?php endif; ?>
     <?php endif; ?>
     <div class="mk-actions">
       <a class="mk-call" href="tel:<?= MAAKIT_PHONE ?>"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span><?= MAAKIT_NUMBER_SHOW ?></span></a>

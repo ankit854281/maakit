@@ -56,23 +56,23 @@ function maakit_festival_art($f) {
     $toran = '';
     for ($i = 0; $i < 9; $i++) {
         $x = 20 + $i * 32; $len = 26 + (($i % 3) * 10);
-        $toran .= '<line x1="' . $x . '" y1="0" x2="' . $x . '" y2="' . $len . '" stroke="' . $a . '" stroke-opacity=".5" stroke-width="1.5"/>'
-                . '<circle cx="' . $x . '" cy="' . ($len + 6) . '" r="7" fill="' . $a . '"/>'
+        $toran .= '<line x1="' . $x . '" y1="0" x2="' . $x . '" y2="' . $len . '" stroke="' . $f['bg'] . '" stroke-opacity=".35" stroke-width="1.5"/>'
+                . '<circle cx="' . $x . '" cy="' . ($len + 6) . '" r="7" fill="#FB923C"/>'
                 . '<circle cx="' . $x . '" cy="' . ($len + 6) . '" r="3" fill="#F97316"/>';
     }
     // diya
-    $diya = '<g transform="translate(205 150)"><path d="M-46 0 Q0 40 46 0 Z" fill="' . $a . '"/>'
+    $diya = '<g transform="translate(205 150)"><path d="M-46 0 Q0 40 46 0 Z" fill="' . $f['bg'] . '"/>'
           . '<path d="M-46 0 H46" stroke="#fff" stroke-opacity=".6" stroke-width="2"/>'
           . '<path d="M0 -6 C -12 -24 -2 -40 0 -52 C 2 -40 12 -24 0 -6 Z" fill="#FDE68A"/>'
           . '<path d="M0 -12 C -6 -22 -1 -30 0 -36 C 1 -30 6 -22 0 -12 Z" fill="#F97316"/></g>';
     // dandiya (sirf navratri)
     $dandiya = $f['key'] === 'navratri'
-        ? '<g stroke-linecap="round"><line x1="70" y1="190" x2="140" y2="90" stroke="#fff" stroke-opacity=".85" stroke-width="7"/>'
-          . '<line x1="140" y1="190" x2="70" y2="90" stroke="' . $a . '" stroke-width="7"/>'
-          . '<circle cx="140" cy="90" r="6" fill="' . $a . '"/><circle cx="70" cy="90" r="6" fill="#fff"/></g>'
+        ? '<g stroke-linecap="round"><line x1="70" y1="190" x2="140" y2="90" stroke="' . $f['bg'] . '" stroke-width="7"/>'
+          . '<line x1="140" y1="190" x2="70" y2="90" stroke="#F97316" stroke-width="7"/>'
+          . '<circle cx="140" cy="90" r="6" fill="#F97316"/><circle cx="70" cy="90" r="6" fill="' . $f['bg'] . '"/></g>'
         : '';
     return '<svg class="fest-art" viewBox="0 0 300 220" aria-hidden="true" focusable="false">'
-         . '<circle cx="205" cy="120" r="88" fill="#fff" fill-opacity=".07"/>'
-         . '<circle cx="205" cy="120" r="62" fill="#fff" fill-opacity=".07"/>'
+         . '<circle cx="205" cy="120" r="88" fill="#fff" fill-opacity=".45"/>'
+         . '<circle cx="205" cy="120" r="62" fill="#fff" fill-opacity=".45"/>'
          . $toran . $dandiya . $diya . '</svg>';
 }
