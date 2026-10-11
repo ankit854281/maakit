@@ -33,16 +33,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#7A1F1F">
+<meta name="theme-color" content="#143c32">
 <meta name="robots" content="noindex,nofollow">
 <title>सारथी</title>
 <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/app.css') ?>">
 </head>
-<body class="sr-login">
+<body class="sr-login sd-native">
+<section class="sd-login-intro">
+  <a class="sd-brand" href="<?= h(u('/')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">DELIVERY PARTNER</span></span></a>
+  <span class="sd-eyebrow">आपका काम · आपका साथ</span>
+  <h1>हर सफ़र के साथ,<br>एक नई शुरुआत।</h1>
+  <p>डिलीवरी, काम और कमाई का हिसाब।<br>सब कुछ एक जगह, आपके साथ।</p>
+  <div class="sd-login-art" aria-hidden="true"><span>↗</span></div>
+  <small>SMART SARATHI / PARTNER APP</small>
+</section>
 <div class="sr-wrap">
 
   <div class="sr-brand">
-    <div class="sr-logo">सारथी</div>
+    <div class="sr-logo">फिर से स्वागत है।</div>
     <p>डिलीवरी साथी</p>
   </div>
 
@@ -72,3 +80,4 @@ if (m) m.addEventListener('input', function(){ this.value = this.value.replace(/
 </script>
 </body>
 </html>
+
