@@ -21,24 +21,24 @@ $din = [];
 foreach ($past as $p) $din[date('Y-m-d', strtotime($p['delivered_at']))][] = $p;
 
 function din_naam($d) {
-    if ($d === date('Y-m-d')) return 'आज';
-    if ($d === date('Y-m-d', strtotime('-1 day'))) return 'कल';
-    $m = ['01'=>'जनवरी','02'=>'फ़रवरी','03'=>'मार्च','04'=>'अप्रैल','05'=>'मई','06'=>'जून',
-          '07'=>'जुलाई','08'=>'अगस्त','09'=>'सितंबर','10'=>'अक्टूबर','11'=>'नवंबर','12'=>'दिसंबर'];
+    if ($d === date('Y-m-d')) return t('Today', 'आज');
+    if ($d === date('Y-m-d', strtotime('-1 day'))) return t('Yesterday', 'कल');
+    $m = ['01'=>t('January', 'जनवरी'),'02'=>t('February', 'फ़रवरी'),'03'=>t('March', 'मार्च'),'04'=>t('April', 'अप्रैल'),'05'=>t('May', 'मई'),'06'=>t('June', 'जून'),
+          '07'=>t('July', 'जुलाई'),'08'=>t('August', 'अगस्त'),'09'=>t('September', 'सितंबर'),'10'=>t('October', 'अक्टूबर'),'11'=>t('November', 'नवंबर'),'12'=>t('December', 'दिसंबर')];
     return (int)date('j', strtotime($d)) . ' ' . $m[date('m', strtotime($d))];
 }
 
-sr_head($me, 'beete', 'बीते काम', $ready, ['kaam' => count($jobs)]);
+sr_head($me, 'beete', t('History', 'बीते काम'), $ready, ['kaam' => count($jobs)]);
 ?>
 
 <?php if (!$past): ?>
   <div class="sr-khali">
     <?= sr_icon('clock', 40) ?>
-    <p>अभी कोई काम पूरा नहीं हुआ।</p>
-    <p class="sr-khali-s">जो आप पहुँचा देंगे, वो यहाँ जुड़ता जाएगा।</p>
+    <p><?= h(t('No completed jobs yet.', 'अभी कोई काम पूरा नहीं हुआ।')) ?></p>
+    <p class="sr-khali-s"><?= h(t('Your completed deliveries will appear here.', 'जो आप पहुँचा देंगे, वो यहाँ जुड़ता जाएगा।')) ?></p>
   </div>
 <?php else: foreach ($din as $d => $rows): ?>
-  <div class="sr-day"><b><?= h(din_naam($d)) ?></b><span><?= count($rows) ?> डिलीवरी</span></div>
+  <div class="sr-day"><b><?= h(din_naam($d)) ?></b><span><?= count($rows) ?> <?= h(t('deliveries', 'डिलीवरी')) ?></span></div>
   <?php foreach ($rows as $r): ?>
     <div class="sr-past">
       <span class="sr-tick">✓</span>
@@ -48,10 +48,11 @@ sr_head($me, 'beete', 'बीते काम', $ready, ['kaam' => count($jobs)]
           · <?= h(date('g:i a', strtotime($r['delivered_at']))) ?></small>
       </div>
       <?php if ($r['pod_photo']): ?>
-        <a class="sr-past-pic" href="<?= h(u('/uploads/' . $r['pod_photo'])) ?>" target="_blank" rel="noopener">फ़ोटो</a>
+        <a class="sr-past-pic" href="<?= h(u('/uploads/' . $r['pod_photo'])) ?>" target="_blank" rel="noopener"><?= h(t('Photo', 'फ़ोटो')) ?></a>
       <?php endif; ?>
     </div>
   <?php endforeach; ?>
 <?php endforeach; endif; ?>
 
 <?php sr_foot('beete', ['kaam' => count($jobs)]); ?>
+

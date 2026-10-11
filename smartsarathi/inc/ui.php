@@ -1,18 +1,19 @@
 <?php
+require_once __DIR__ . "/lang.php";
 // ============================================================
 //  सारथी — ऐप का ढाँचा (हर पन्ने पर एक जैसा)
 //
-//  Owner-requested green/lime dashboard: desktop sidebar and mobile tabs.
+//  Owner-requested navy/teal dashboard: desktop sidebar and mobile tabs.
 //  Drawer bina JavaScript ke chalta hai — ek chhupa checkbox
 //  aur CSS. Purane aur dheeme phone par bhi khulta hai.
 // ============================================================
 
 function sr_tabs() {
     return [
-        ['kaam',    '/kaam.php',    'काम',          'box'],
-        ['khata',   '/khata.php',   'खाता',         'rupee'],
-        ['beete',   '/beete.php',   'बीते काम',      'clock'],
-        ['jankari', '/jankari.php', 'मेरी जानकारी',  'user'],
+        ['kaam',    '/kaam.php',    t('Work', 'काम'),          'box'],
+        ['khata',   '/khata.php',   t('Earnings', 'खाता'),         'rupee'],
+        ['beete',   '/beete.php',   t('History', 'बीते काम'),      'clock'],
+        ['jankari', '/jankari.php', t('My profile', 'मेरी जानकारी'),  'user'],
     ];
 }
 
@@ -34,13 +35,13 @@ function sr_icon($name, $size = 22) {
 
 function sr_head($me, $tab, $title, $ready = null, $count = []) {
     ?><!doctype html>
-<html lang="hi">
+<html lang="<?= h(sr_lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#143c32">
+<meta name="theme-color" content="#14283f">
 <meta name="robots" content="noindex,nofollow">
-<title><?= h($title) ?> — सारथी</title>
+<title><?= h($title) ?> — <?= h(t('Sarathi', 'सारथी')) ?></title>
 <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/app.css') ?>">
 </head>
 <body class="sd-partner">
@@ -48,12 +49,13 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
 <input type="checkbox" id="sr-nav" class="sr-nav-sw" hidden>
 
 <header class="sr-top">
-  <label class="sr-ham" for="sr-nav" aria-label="मेन्यू"><span></span><span></span><span></span></label>
+  <label class="sr-ham" for="sr-nav" aria-label="<?= h(t('Menu', 'मेन्यू')) ?>"><span></span><span></span><span></span></label>
   <div class="sr-top-t">
     <b><?= h($title) ?></b>
-    <small><?= $ready ? 'हाज़िर — ' . h(date('g:i a', strtotime($ready))) . ' तक' : 'अभी बंद हैं' ?></small>
+    <small><?= $ready ? t('Available until ', 'हाज़िर — ') . h(date('g:i a', strtotime($ready))) . t('', ' तक') : t('Currently offline', 'अभी बंद हैं') ?></small>
   </div>
   <span class="sr-top-dot <?= $ready ? 'on' : '' ?>"></span>
+  <?php sr_language_switch(); ?>
 </header>
 
 <label class="sr-veil" for="sr-nav"></label>
@@ -61,8 +63,8 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
   <a class="sd-brand" href="<?= h(u('/')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">DELIVERY PARTNER</span></span></a>
   <div class="sr-draw-top">
     <div class="sr-ava"><?= h(mb_substr(trim($me['name']), 0, 1)) ?></div>
-    <div><b><?= h($me['name']) ?></b><small>सारथी</small></div>
-    <label class="sr-draw-x" for="sr-nav" aria-label="बंद कीजिए">&times;</label>
+    <div><b><?= h($me['name']) ?></b><small><?= h(t('Sarathi', 'सारथी')) ?></small></div>
+    <label class="sr-draw-x" for="sr-nav" aria-label="<?= h(t('Close menu', 'बंद कीजिए')) ?>">&times;</label>
   </div>
   <?php foreach (sr_tabs() as [$k, $url, $lbl, $ic]): ?>
     <a class="<?= $tab === $k ? 'on' : '' ?>" href="<?= h(u($url)) ?>">
@@ -71,32 +73,32 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
     </a>
   <?php endforeach; ?>
   <div class="sr-draw-gap"></div>
-  <a href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone') ?> <span>दफ़्तर को फ़ोन</span></a>
-  <a href="<?= h(u('/madad.php')) ?>"><?= sr_icon('help') ?> <span>मदद</span></a>
+  <a href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone') ?> <span><?= h(t('Call support', 'दफ़्तर को फ़ोन')) ?></span></a>
+  <a href="<?= h(u('/madad.php')) ?>"><?= sr_icon('help') ?> <span><?= h(t('Help', 'मदद')) ?></span></a>
   <form method="post" action="<?= h(u('/kaam.php')) ?>">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
     <input type="hidden" name="do" value="bahar">
-    <button type="submit" class="sr-draw-out"><?= sr_icon('out') ?> <span>बाहर निकलिए</span></button>
+    <button type="submit" class="sr-draw-out"><?= sr_icon('out') ?> <span><?= h(t('Sign out', 'बाहर निकलिए')) ?></span></button>
   </form>
-  <p class="sr-draw-foot">सारथी · <?= h(SR_PHONE_SHOW) ?></p>
+  <p class="sr-draw-foot"><?= h(t('Sarathi', 'सारथी')) ?> · <?= h(SR_PHONE_SHOW) ?></p>
 </nav>
 
 <main class="sr-main sd-native">
   <section class="sd-welcome">
     <div><span class="sd-eyebrow">DELIVERY PARTNER</span>
-      <h1><?= $tab === 'kaam' ? 'नमस्ते, ' . h($me['name']) : h($title) ?></h1>
-      <p><?= $tab === 'kaam' ? 'आपका अगला काम, यहीं से शुरू होता है।' : 'आपके काम की सारी जानकारी, एक जगह।' ?></p>
+      <h1><?= $tab === 'kaam' ? t('Hello, ', 'नमस्ते, ') . h($me['name']) : h($title) ?></h1>
+      <p><?= $tab === 'kaam' ? t('Your next delivery starts here.', 'आपका अगला काम, यहीं से शुरू होता है।') : t('All your work details, in one place.', 'आपके काम की सारी जानकारी, एक जगह।') ?></p>
     </div>
-    <a class="sd-support" href="<?= h(u('/madad.php')) ?>">मदद और सहायता ↗</a>
+    <a class="sd-support" href="<?= h(u('/madad.php')) ?>"><?= h(t('Help & support ↗', 'मदद और सहायता ↗')) ?></a>
   </section>
   <?php if ($tab === 'kaam'): ?>
   <div class="sd-stats">
-    <div class="sd-stat"><small>अभी के काम</small><strong><?= (int)($count['kaam'] ?? 0) ?></strong><span>आपको मिले हुए काम</span></div>
-    <div class="sd-stat"><small>आपकी हाज़िरी</small><strong class="sd-word"><?= $ready ? 'हाज़िर' : 'बंद' ?></strong><span><?= $ready ? 'नए काम मिल सकते हैं' : 'तैयार होने पर हाज़िरी लगाएँ' ?></span></div>
-    <a class="sd-stat" href="<?= h(u('/khata.php')) ?>"><small>कमाई और भुगतान</small><strong class="sd-word">खाता देखें ↗</strong><span>आपका पूरा हिसाब</span></a>
+    <div class="sd-stat"><small><?= h(t('Active jobs', 'अभी के काम')) ?></small><strong><?= (int)($count['kaam'] ?? 0) ?></strong><span><?= h(t('Jobs assigned to you', 'आपको मिले हुए काम')) ?></span></div>
+    <div class="sd-stat"><small><?= h(t('Availability', 'आपकी हाज़िरी')) ?></small><strong class="sd-word"><?= $ready ? t('Online', 'हाज़िर') : t('Offline', 'बंद') ?></strong><span><?= $ready ? t('Ready to receive new jobs', 'नए काम मिल सकते हैं') : t('Go online when you are ready', 'तैयार होने पर हाज़िरी लगाएँ') ?></span></div>
+    <a class="sd-stat" href="<?= h(u('/khata.php')) ?>"><small><?= h(t('Earnings & payments', 'कमाई और भुगतान')) ?></small><strong class="sd-word"><?= h(t('View earnings ↗', 'खाता देखें ↗')) ?></strong><span><?= h(t('Your complete earnings record', 'आपका पूरा हिसाब')) ?></span></a>
   </div>
   <div class="sd-grid"><div class="sd-work">
-    <section class="sd-hero"><span class="sd-eyebrow">हर डिलीवरी मायने रखती है</span><h2>चलें, अगला काम<br>आसान बनाते हैं।</h2><p>पिकअप से डिलीवरी तक, आपका साथी।</p><span class="sd-orbit" aria-hidden="true">↗</span></section>
+    <section class="sd-hero"><span class="sd-eyebrow"><?= h(t('EVERY DELIVERY MATTERS', 'हर डिलीवरी मायने रखती है')) ?></span><h2><?= h(t('Your next delivery.', 'चलें, अगला काम')) ?><br><?= h(t('Made simpler.', 'आसान बनाते हैं।')) ?></h2><p><?= h(t('With you, from pickup to delivery.', 'पिकअप से डिलीवरी तक, आपका साथी।')) ?></p><span class="sd-orbit" aria-hidden="true">↗</span></section>
   <?php endif; ?>
 <?php
 }
@@ -105,8 +107,8 @@ function sr_foot($tab, $count = []) {
     ?>
 <?php if ($tab === 'kaam'): ?>
   </div><aside class="sd-rail">
-    <section class="sd-tip"><span class="sd-eyebrow">आपके साथ, हर रास्ते पर</span><h3>सुरक्षित सफ़र,<br>बेहतर डिलीवरी।</h3><p>चलती गाड़ी में फ़ोन इस्तेमाल करने से पहले सुरक्षित जगह रुकें।</p><a href="<?= h(u('/madad.php')) ?>">मदद देखिए →</a></section>
-    <section class="sd-rail-card"><span class="sd-eyebrow">आपका हिसाब</span><h3>काम पूरा। हिसाब साफ़।</h3><p>कमाई, मिला हुआ भुगतान और बाकी रकम अपने खाते में देखें।</p><a href="<?= h(u('/khata.php')) ?>">खाता खोलिए →</a></section>
+    <section class="sd-tip"><span class="sd-eyebrow"><?= h(t('WITH YOU, EVERY STEP', 'आपके साथ, हर रास्ते पर')) ?></span><h3><?= h(t('Travel safely.', 'सुरक्षित सफ़र,')) ?><br><?= h(t('Deliver confidently.', 'बेहतर डिलीवरी।')) ?></h3><p><?= h(t('Stop somewhere safe before using your phone while travelling.', 'चलती गाड़ी में फ़ोन इस्तेमाल करने से पहले सुरक्षित जगह रुकें।')) ?></p><a href="<?= h(u('/madad.php')) ?>"><?= h(t('Get help →', 'मदद देखिए →')) ?></a></section>
+    <section class="sd-rail-card"><span class="sd-eyebrow"><?= h(t('YOUR EARNINGS', 'आपका हिसाब')) ?></span><h3><?= h(t('Work done. Earnings clear.', 'काम पूरा। हिसाब साफ़।')) ?></h3><p><?= h(t('See your earnings, payments received and outstanding balance.', 'कमाई, मिला हुआ भुगतान और बाकी रकम अपने खाते में देखें।')) ?></p><a href="<?= h(u('/khata.php')) ?>"><?= h(t('Open earnings →', 'खाता खोलिए →')) ?></a></section>
   </aside></div>
 <?php endif; ?>
 </main>
@@ -125,7 +127,7 @@ function sr_foot($tab, $count = []) {
 // aage badh jaye aur wo darj hi na ho — ye sabse bura hai.
 (function () {
   var p = document.createElement('div');
-  p.className = 'sr-net'; p.textContent = 'नेट नहीं है — दबाया हुआ दर्ज नहीं होगा';
+  p.className = 'sr-net'; p.textContent = <?= json_encode(t('You are offline — actions cannot be saved', 'नेट नहीं है — दबाया हुआ दर्ज नहीं होगा'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
   function dekho() { if (navigator.onLine) p.remove(); else document.body.appendChild(p); }
   window.addEventListener('online', dekho);
   window.addEventListener('offline', dekho);
@@ -136,4 +138,5 @@ function sr_foot($tab, $count = []) {
 </html>
 <?php
 }
+
 

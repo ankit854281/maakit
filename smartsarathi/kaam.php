@@ -19,28 +19,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 
     if ($do === 'bahar')    { rider_logout(); redirect('/'); }
-    if ($do === 'duty_on')  { duty_on($pdo, $rid);  flash('हाज़िरी लग गई — अगले 90 मिनट तक।'); redirect('/kaam.php'); }
-    if ($do === 'duty_off') { duty_off($pdo, $rid); flash('अब आप बंद हैं।');                   redirect('/kaam.php'); }
+    if ($do === 'duty_on')  { duty_on($pdo, $rid);  flash(t('You are online for the next 90 minutes.', 'हाज़िरी लग गई — अगले 90 मिनट तक।')); redirect('/kaam.php'); }
+    if ($do === 'duty_off') { duty_off($pdo, $rid); flash(t('You are now offline.', 'अब आप बंद हैं।'));                   redirect('/kaam.php'); }
 
     if ($do === 'trip_band') {
         flash(trip_close($pdo, $rid)
-            ? 'चक्कर बंद हो गया।'
-            : 'इस चक्कर में कोई काम बाकी है — पहले उसे निपटाइए।');
+            ? t('Trip closed.', 'चक्कर बंद हो गया।')
+            : t('This trip still has pending jobs. Complete them first.', 'इस चक्कर में कोई काम बाकी है — पहले उसे निपटाइए।'));
         redirect('/kaam.php');
     }
     if ($do === 'uthaya') {
         [$ok, $msg] = job_pick($pdo, $rid, (int)post('jid'), post('otp'));
-        flash($msg); redirect('/kaam.php');
+        flash(sr_message($msg)); redirect('/kaam.php');
     }
     if ($do === 'de_diya') {
         $photo = save_photo('pod');                       // chhoti karke rakhi jaati hai
         [$ok, $msg] = job_deliver($pdo, $rid, (int)post('jid'), post('otp'), $photo);
         if (!$ok && $photo) drop_photo($photo);
-        flash($msg); redirect('/kaam.php');
+        flash(sr_message($msg)); redirect('/kaam.php');
     }
     if ($do === 'samasya') {
         [$ok, $msg] = problem_add($pdo, $rid, (int)post('jid'), post('kism'), post('note'));
-        flash($msg); redirect('/kaam.php');
+        flash(sr_message($msg)); redirect('/kaam.php');
     }
 }
 
@@ -63,37 +63,37 @@ if ($trip) {
     $chakkar = (int)$st->fetchColumn();
 }
 
-sr_head($me, 'kaam', 'काम', $ready, ['kaam' => count($jobs)]);
+sr_head($me, 'kaam', t('Work', 'काम'), $ready, ['kaam' => count($jobs)]);
 ?>
 
-<?php if ($msg): ?><div class="sr-flash"><?= h($msg) ?></div><?php endif; ?>
+<?php if ($msg): ?><div class="sr-flash"><?= h(sr_message($msg)) ?></div><?php endif; ?>
 
 <!-- हाज़िरी -->
 <?php if ($ready): ?>
   <div class="sr-strip sr-strip-on">
-    <span><i></i> आज <b><?= $aaj ?></b> पहुँचाए</span>
+    <span><i></i> <?= h(t('Today', 'आज')) ?> <b><?= $aaj ?></b> <?= h(t('delivered', 'पहुँचाए')) ?></span>
     <div>
       <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-        <input type="hidden" name="do" value="duty_on"><button type="submit">+90 मि</button></form>
+        <input type="hidden" name="do" value="duty_on"><button type="submit"><?= h(t('+90 min', '+90 मि')) ?></button></form>
       <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-        <input type="hidden" name="do" value="duty_off"><button type="submit" class="sr-x">बंद</button></form>
+        <input type="hidden" name="do" value="duty_off"><button type="submit" class="sr-x"><?= h(t('Offline', 'बंद')) ?></button></form>
     </div>
   </div>
 <?php else: ?>
   <form method="post" class="sr-strip sr-strip-off">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
     <input type="hidden" name="do" value="duty_on">
-    <span>अभी आप बंद हैं — नया काम नहीं आएगा</span>
-    <button type="submit">मैं तैयार हूँ</button>
+    <span><?= h(t('You are offline — new jobs will not arrive', 'अभी आप बंद हैं — नया काम नहीं आएगा')) ?></span>
+    <button type="submit"><?= h(t('Go online', 'मैं तैयार हूँ')) ?></button>
   </form>
 <?php endif; ?>
 
 <!-- चक्कर -->
 <?php if ($trip): ?>
   <div class="sr-strip sr-strip-trip">
-    <span>इस चक्कर में <b><?= $chakkar ?></b></span>
+    <span><?= h(t('Jobs in this trip', 'इस चक्कर में')) ?> <b><?= $chakkar ?></b></span>
     <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-      <input type="hidden" name="do" value="trip_band"><button type="submit">चक्कर बंद</button></form>
+      <input type="hidden" name="do" value="trip_band"><button type="submit"><?= h(t('Close trip', 'चक्कर बंद')) ?></button></form>
   </div>
 <?php endif; ?>
 
@@ -101,8 +101,8 @@ sr_head($me, 'kaam', 'काम', $ready, ['kaam' => count($jobs)]);
 <?php if (!$jobs): ?>
   <div class="sr-khali">
     <?= sr_icon('box', 40) ?>
-    <p>अभी कोई काम नहीं है।</p>
-    <p class="sr-khali-s">हाज़िरी लगी रहने दीजिए — काम आते ही यहीं दिखेगा।</p>
+    <p><?= h(t('No jobs right now.', 'अभी कोई काम नहीं है।')) ?></p>
+    <p class="sr-khali-s"><?= h(t('Stay online. New jobs will appear here.', 'हाज़िरी लगी रहने दीजिए — काम आते ही यहीं दिखेगा।')) ?></p>
   </div>
 <?php else:
   $pehla = true;
@@ -119,37 +119,37 @@ sr_head($me, 'kaam', 'काम', $ready, ['kaam' => count($jobs)]);
         <b><?= h($j['drop_name']) ?></b>
         <small><?= h($j['drop_village'] ?: $j['drop_address']) ?> · <?= h($j['client_name']) ?></small>
       </span>
-      <span class="sr-head-tag"><?= $utha ? 'साथ में' : 'उठाना है' ?></span>
+      <span class="sr-head-tag"><?= $utha ? t('Picked up', 'साथ में') : t('To pick up', 'उठाना है') ?></span>
     </summary>
 
     <div class="sr-body">
       <?php if (!$utha && $j['pick_address']): ?>
-        <p class="sr-mark"><b>उठाइए:</b> <?= h($j['pick_name'] ? $j['pick_name'] . ' · ' : '') ?><?= h($j['pick_address']) ?></p>
+        <p class="sr-mark"><b><?= h(t('Pickup:', 'उठाइए:')) ?></b> <?= h($j['pick_name'] ? $j['pick_name'] . ' · ' : '') ?><?= h($j['pick_address']) ?></p>
       <?php endif; ?>
-      <p class="sr-mark"><b>पहुँचाइए:</b> <?= h($j['drop_address']) ?></p>
+      <p class="sr-mark"><b><?= h(t('Drop-off:', 'पहुँचाइए:')) ?></b> <?= h($j['drop_address']) ?></p>
 
       <?php if ($j['items']): ?><div class="sr-items"><?= h($j['items']) ?></div><?php endif; ?>
 
       <div class="sr-money">
         <span><?= h($j['job_no']) ?></span>
         <?php if ($j['cod_amount'] !== null): ?>
-          <span>नगद लेना <b>₹<?= (int)$j['cod_amount'] ?></b></span>
+          <span><?= h(t('Cash to collect', 'नगद लेना')) ?> <b>₹<?= (int)$j['cod_amount'] ?></b></span>
         <?php endif; ?>
       </div>
 
       <?php if ($rate > 0): ?>
-        <div class="sr-mera">आपको मिलेगा <b>₹<?= (int)$mera ?></b><?php
-          if ($extra > 0 && (int)$mera === $rate): ?><small>· इसी चक्कर में अगले का ₹<?= $extra ?></small><?php
+        <div class="sr-mera"><?= h(t('Your earnings', 'आपको मिलेगा')) ?> <b>₹<?= (int)$mera ?></b><?php
+          if ($extra > 0 && (int)$mera === $rate): ?><small><?= h(t('· Next delivery in this trip: ₹', '· इसी चक्कर में अगले का ₹')) ?><?= $extra ?></small><?php
           endif; ?></div>
       <?php endif; ?>
 
       <div class="sr-go">
         <?php if ($r = maps_link($j)): ?>
-          <a class="sr-go-a sr-go-map" href="<?= h($r) ?>" target="_blank" rel="noopener">रास्ता दिखाइए</a>
+          <a class="sr-go-a sr-go-map" href="<?= h($r) ?>" target="_blank" rel="noopener"><?= h(t('Get directions', 'रास्ता दिखाइए')) ?></a>
         <?php endif; ?>
-        <a class="sr-go-a" href="tel:<?= h($j['drop_mobile']) ?>"><?= sr_icon('phone',17) ?> ग्राहक</a>
+        <a class="sr-go-a" href="tel:<?= h($j['drop_mobile']) ?>"><?= sr_icon('phone',17) ?> <?= h(t('Customer', 'ग्राहक')) ?></a>
         <?php if ($j['pick_mobile']): ?>
-          <a class="sr-go-a" href="tel:<?= h($j['pick_mobile']) ?>"><?= sr_icon('phone',17) ?> दुकान</a>
+          <a class="sr-go-a" href="tel:<?= h($j['pick_mobile']) ?>"><?= sr_icon('phone',17) ?> <?= h(t('Shop', 'दुकान')) ?></a>
         <?php endif; ?>
       </div>
 
@@ -158,11 +158,11 @@ sr_head($me, 'kaam', 'काम', $ready, ['kaam' => count($jobs)]);
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
           <input type="hidden" name="do" value="uthaya">
           <input type="hidden" name="jid" value="<?= (int)$j['id'] ?>">
-          <label class="sr-lab">भेजने वाले से <b>4 अंक</b> पूछिए</label>
+          <label class="sr-lab"><?= h(t('Ask the sender for the', 'भेजने वाले से')) ?> <b><?= h(t('4-digit code', '4 अंक')) ?></b> <?= h(t('', 'पूछिए')) ?></label>
           <div class="sr-pair">
             <input class="sr-otp" name="otp" inputmode="numeric" maxlength="4" size="4"
                    pattern="[0-9]{4}" placeholder="____" required>
-            <button class="sr-btn sr-btn-go" type="submit">उठा लिया</button>
+            <button class="sr-btn sr-btn-go" type="submit"><?= h(t('Confirm pickup', 'उठा लिया')) ?></button>
           </div>
         </form>
       <?php else: ?>
@@ -170,22 +170,22 @@ sr_head($me, 'kaam', 'काम', $ready, ['kaam' => count($jobs)]);
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
           <input type="hidden" name="do" value="de_diya">
           <input type="hidden" name="jid" value="<?= (int)$j['id'] ?>">
-          <label class="sr-lab">ग्राहक से <b>4 अंक</b> पूछिए</label>
+          <label class="sr-lab"><?= h(t('Ask the customer for the', 'ग्राहक से')) ?> <b><?= h(t('4-digit code', '4 अंक')) ?></b> <?= h(t('', 'पूछिए')) ?></label>
           <div class="sr-pair">
             <input class="sr-otp" name="otp" inputmode="numeric" maxlength="4" size="4"
                    pattern="[0-9]{4}" placeholder="____" required>
-            <button class="sr-btn sr-btn-done" type="submit">पहुँचा दिया</button>
+            <button class="sr-btn sr-btn-done" type="submit"><?= h(t('Confirm delivery', 'पहुँचा दिया')) ?></button>
           </div>
           <label class="sr-file-lab">
             <input type="file" name="pod" accept="image/*" capture="environment">
-            <span>सामान की फ़ोटो लीजिए <small>(अच्छा रहेगा)</small></span>
+            <span><?= h(t('Take a delivery photo', 'सामान की फ़ोटो लीजिए')) ?> <small><?= h(t('(recommended)', '(अच्छा रहेगा)')) ?></small></span>
           </label>
         </form>
       <?php endif; ?>
 
       <!-- समस्या — काम रद्द नहीं होता, सिर्फ़ दफ़्तर को पता चलता है -->
       <details class="sr-prob">
-        <summary>कुछ दिक्कत आ रही है?</summary>
+        <summary><?= h(t('Having a problem?', 'कुछ दिक्कत आ रही है?')) ?></summary>
         <form method="post" class="sr-prob-f">
           <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
           <input type="hidden" name="do" value="samasya">
@@ -193,11 +193,11 @@ sr_head($me, 'kaam', 'काम', $ready, ['kaam' => count($jobs)]);
           <?php foreach ($kisme as $kk => $kl): ?>
             <label class="sr-rad">
               <input type="radio" name="kism" value="<?= h($kk) ?>" required>
-              <span><?= h($kl) ?></span>
+              <span><?= h(sr_message($kl)) ?></span>
             </label>
           <?php endforeach; ?>
-          <input class="sr-in" type="text" name="note" maxlength="300" placeholder="कुछ और बताना हो तो लिखिए">
-          <button class="sr-btn sr-btn-warn" type="submit">दफ़्तर को बताइए</button>
+          <input class="sr-in" type="text" name="note" maxlength="300" placeholder="<?= h(t('Add any other details', 'कुछ और बताना हो तो लिखिए')) ?>">
+          <button class="sr-btn sr-btn-warn" type="submit"><?= h(t('Report to support', 'दफ़्तर को बताइए')) ?></button>
         </form>
       </details>
 
@@ -214,3 +214,4 @@ setTimeout(function () { location.reload(); }, 60000);
 <?php endif; ?>
 
 <?php sr_foot('kaam', ['kaam' => count($jobs)]); ?>
+

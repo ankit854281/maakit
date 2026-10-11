@@ -6,6 +6,7 @@
 //  aata hai. Password nahi — gaon me yaad nahi rehta.
 // ============================================================
 require_once __DIR__ . '/inc/fn.php';
+require_once __DIR__ . '/inc/lang.php';
 require_once __DIR__ . '/inc/kaam.php';
 
 if (rider_me($pdo)) { redirect('/kaam.php'); }
@@ -25,52 +26,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         rider_start_session($r);
         redirect('/kaam.php');
     } else {
-        $err = 'नंबर या कोड सही नहीं है। दफ़्तर से अपना कोड पूछ लीजिए।';
+        $err = t('The mobile number or code is incorrect. Ask your office for your login code.', 'नंबर या कोड सही नहीं है। दफ़्तर से अपना कोड पूछ लीजिए।');
     }
 }
 ?><!doctype html>
-<html lang="hi">
+<html lang="<?= h(sr_lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#143c32">
+<meta name="theme-color" content="#14283f">
 <meta name="robots" content="noindex,nofollow">
-<title>सारथी</title>
+<title><?= h(t('Sarathi', 'सारथी')) ?></title>
 <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/app.css') ?>">
 </head>
 <body class="sr-login sd-native">
+<?php sr_language_switch(true); ?>
 <section class="sd-login-intro">
   <a class="sd-brand" href="<?= h(u('/')) ?>"><span class="sd-mark">↗</span><span>Sarathi<span class="sd-brand-sub">DELIVERY PARTNER</span></span></a>
-  <span class="sd-eyebrow">आपका काम · आपका साथ</span>
-  <h1>हर सफ़र के साथ,<br>एक नई शुरुआत।</h1>
-  <p>डिलीवरी, काम और कमाई का हिसाब।<br>सब कुछ एक जगह, आपके साथ।</p>
+  <span class="sd-eyebrow"><?= h(t('YOUR WORK · YOUR PARTNER', 'आपका काम · आपका साथ')) ?></span>
+  <h1><?= h(t('Every journey.', 'हर सफ़र के साथ,')) ?><br><?= h(t('A fresh start.', 'एक नई शुरुआत।')) ?></h1>
+  <p><?= h(t('Deliveries, jobs and earnings.', 'डिलीवरी, काम और कमाई का हिसाब।')) ?><br><?= h(t('Everything you need, in one place.', 'सब कुछ एक जगह, आपके साथ।')) ?></p>
   <div class="sd-login-art" aria-hidden="true"><span>↗</span></div>
   <small>SMART SARATHI / PARTNER APP</small>
 </section>
 <div class="sr-wrap">
 
   <div class="sr-brand">
-    <div class="sr-logo">फिर से स्वागत है।</div>
-    <p>डिलीवरी साथी</p>
+    <div class="sr-logo"><?= h(t('Welcome back.', 'फिर से स्वागत है।')) ?></div>
+    <p><?= h(t('Delivery partner', 'डिलीवरी साथी')) ?></p>
   </div>
 
-  <?php if ($err): ?><div class="sr-err"><?= h($err) ?></div><?php endif; ?>
+  <?php if ($err): ?><div class="sr-err"><?= h(sr_message($err)) ?></div><?php endif; ?>
 
   <form method="post" class="sr-card" autocomplete="off">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-    <label class="sr-lab" for="m">अपना मोबाइल नंबर</label>
+    <label class="sr-lab" for="m"><?= h(t('Mobile number', 'अपना मोबाइल नंबर')) ?></label>
     <input class="sr-in" id="m" name="mobile" type="tel" inputmode="numeric"
            value="<?= h(post('mobile')) ?>" required autofocus>
-    <label class="sr-lab" for="c">अपना कोड</label>
+    <label class="sr-lab" for="c"><?= h(t('Login code', 'अपना कोड')) ?></label>
     <input class="sr-in" id="c" name="code" type="password" required>
-    <button class="sr-btn sr-btn-go" type="submit">काम पर चलिए</button>
+    <button class="sr-btn sr-btn-go" type="submit"><?= h(t('Sign in to work', 'काम पर चलिए')) ?></button>
   </form>
 
   <div class="sr-help">
-    <b>कोड नहीं मिला?</b>
-    <p>दफ़्तर से अपना कोड पूछ लीजिए। एक बार अंदर आने के बाद यही फ़ोन
-       आपको सीधा अंदर ले जाएगा।</p>
-    <a class="sr-call" href="tel:<?= h(SR_PHONE) ?>">फ़ोन कीजिए — <?= h(SR_PHONE_SHOW) ?></a>
+    <b><?= h(t('Need your login code?', 'कोड नहीं मिला?')) ?></b>
+    <p><?= h(t('Ask your office for your code. Once signed in, this phone will remember your session.', 'दफ़्तर से अपना कोड पूछ लीजिए। एक बार अंदर आने के बाद यही फ़ोन आपको सीधा अंदर ले जाएगा।')) ?></p>
+    <a class="sr-call" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Call support —', 'फ़ोन कीजिए —')) ?> <?= h(SR_PHONE_SHOW) ?></a>
   </div>
 
 </div>
@@ -80,4 +81,5 @@ if (m) m.addEventListener('input', function(){ this.value = this.value.replace(/
 </script>
 </body>
 </html>
+
 
