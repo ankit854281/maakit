@@ -40,6 +40,7 @@ define('SR_PHONE_SHOW', '84293 93903');
 // Real values go ONLY in private inc/config.php on hosting, not this sample.
 // define('FAST2SMS_ENABLED', '1');
 // define('FAST2SMS_API_KEY', 'private Dev API key');
+// define('FAST2SMS_ROUTE', 'otp'); // BINA DLT: sirf login OTP ("Your OTP: 123456"). Tab LOGIN/PICKUP/DELIVERY ID ki zaroorat nahi.
 // define('FAST2SMS_LOGIN_ID', 'Smart OTP login ID');
 // define('FAST2SMS_PICKUP_ID', 'Smart OTP pickup ID');
 // define('FAST2SMS_DELIVERY_ID', 'Smart OTP delivery ID');

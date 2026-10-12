@@ -28,7 +28,27 @@ SMS send, secret change or live activation is performed by this code commit.
   after the existing human approval. Existing API opt-in modules/legacy transition
   rider door are not migrated to a new identity system by this change.
 
-## One-time setup (owner)
+## Without DLT (owner's choice, 12 Oct 2026)
+
+DLT registration costs ₹5,900/year, so we start with Fast2SMS's **OTP route**
+(`https://www.fast2sms.com/dev/bulkV2`, `route=otp`). Fast2SMS sends
+"Your OTP: 123456" from its own sender. In private config set:
+
+```php
+define('FAST2SMS_ENABLED', '1');
+define('FAST2SMS_ROUTE', 'otp');
+define('FAST2SMS_API_KEY', '...');          // Dev API
+// Sarathi inc/config.php also: FAST2SMS_ADMIN_MOBILE
+```
+
+All logins then work by OTP: customer (`/otp.php`), shop (`/otp.php?role=shop`),
+vehicle owner (`/otp.php?role=vehicle`), rider (`/smartsarathi/otp.php`),
+team (password then OTP) and Sarathi admin (key then OTP). Pickup/delivery
+handover SMS are OFF in this mode (a bare "Your OTP" with no brand or booking
+number would confuse the receiver); those codes stay on screen and WhatsApp.
+When DLT is done later, remove `FAST2SMS_ROUTE` and add the three IDs below.
+
+## One-time setup (owner, with DLT)
 
 1. Sign in to Fast2SMS: https://www.fast2sms.com/ . Open **Smart OTP** and create
    an SMS OTP ID. Follow their current sender/template/DLT requirements for your

@@ -60,4 +60,17 @@ $_SESSION['sms_customer_recovery']=['id'=>1,'expires'=>time()+300];
 check_sms(cust_sms_recent(1) && !cust_sms_recent(2),'Recovery proof bound to customer');
 $_SESSION['sms_customer_recovery']['expires']=time()-1;
 check_sms(!cust_sms_recent(1),'Recovery proof expires');
+// Bina-DLT OTP route: login works, handover SMS never goes as a bare "Your OTP".
+putenv('FAST2SMS_ROUTE=otp');putenv('FAST2SMS_ENABLED=1');putenv('FAST2SMS_API_KEY=test-key');
+check_sms(f2s_mode()==='otp' && f2s_enabled(),'OTP route enables login without DLT template IDs');
+$rp=sms_db();$rs=[];$r=new Fast2SmsOtp($rp,function($body)use(&$rs){$rs[]=$body;return true;});
+$rid=$r->send('9000000011','customer_login','customer:11','browser-A','route-ip');
+check_sms(is_string($rid) && $rs[0]['route']==='otp' && $rs[0]['numbers']==='9000000011' && preg_match('/^[0-9]{6}$/',$rs[0]['variables_values']),'OTP route payload');
+check_sms($r->verify($rid,'customer_login','customer:11','browser-A',$rs[0]['variables_values']),'OTP route code verifies locally');
+check_sms(!$r->notify('9000000012','pickup','SR-ROUTE','0123') && count($rs)===1,'No handover SMS on OTP route');
+$p->exec("CREATE TABLE transports(id INTEGER PRIMARY KEY,business_id INTEGER,mobile TEXT,access_code TEXT,status TEXT)");
+$p->exec("INSERT INTO transports VALUES(1,5,'9000000020','ABC-1234','active'),(2,6,'9000000021','X','hidden')");
+check_sms(mk_otp_account($p,'vehicle','9000000020')['kind']==='vehicle','Vehicle owner can use OTP');
+check_sms(mk_otp_account($p,'vehicle','9000000021')===null,'Hidden vehicle denied');
+putenv('FAST2SMS_ROUTE');putenv('FAST2SMS_ENABLED');putenv('FAST2SMS_API_KEY');
 echo "Fast2SMS security and account policy checks passed\n";

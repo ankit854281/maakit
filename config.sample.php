@@ -53,6 +53,7 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // Use strings. Never put real values in this SAMPLE or GitHub.
 // define('FAST2SMS_ENABLED', '1');
 // define('FAST2SMS_API_KEY', 'private Dev API key');
+// define('FAST2SMS_ROUTE', 'otp'); // BINA DLT: sirf login OTP ("Your OTP: 123456"). Tab LOGIN/PICKUP/DELIVERY ID ki zaroorat nahi.
 // define('FAST2SMS_LOGIN_ID', 'Smart OTP ID: six-digit login, five-minute expiry');
 // define('FAST2SMS_PICKUP_ID', 'Smart OTP ID: pickup code, booking reference');
 // define('FAST2SMS_DELIVERY_ID', 'Smart OTP ID: delivery code, booking reference');

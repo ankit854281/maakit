@@ -6,8 +6,14 @@
 function f2s_config($key, $default = '') {
     return defined($key) ? constant($key) : (getenv($key) !== false ? getenv($key) : $default);
 }
+/** 'otp' = Fast2SMS ka bina-DLT OTP route ("Your OTP: 123456"), sirf login ke liye.
+ *  'smart' = Smart OTP (DLT template IDs) — login + pickup/delivery SMS. */
+function f2s_mode() {
+    return f2s_config('FAST2SMS_ROUTE') === 'otp' ? 'otp' : 'smart';
+}
 function f2s_enabled() {
-    return f2s_config('FAST2SMS_ENABLED') === '1' && f2s_config('FAST2SMS_API_KEY') !== '' && f2s_config('FAST2SMS_LOGIN_ID') !== '';
+    return f2s_config('FAST2SMS_ENABLED') === '1' && f2s_config('FAST2SMS_API_KEY') !== ''
+        && (f2s_mode() === 'otp' || f2s_config('FAST2SMS_LOGIN_ID') !== '');
 }
 function f2s_mobile($value) {
     if (!is_string($value)) return '';
@@ -49,7 +55,14 @@ final class Fast2SmsOtp {
         if (!function_exists('curl_init')) return false;
         $key = (string)f2s_config('FAST2SMS_API_KEY');
         if ($key === '' || preg_match('/[\r\n]/', $key)) return false;
-        $ch = curl_init('https://www.fast2sms.com/dev/otp/send');
+        // Bina-DLT OTP route: bulkV2 + route=otp. Fast2SMS khud "Your OTP: …" bhejta hai.
+        if (isset($body['route'])) {
+            $url = 'https://www.fast2sms.com/dev/bulkV2';
+            $body = ['route'=>'otp', 'variables_values'=>(string)$body['variables_values'], 'numbers'=>(string)$body['numbers']];
+        } else {
+            $url = 'https://www.fast2sms.com/dev/otp/send';
+        }
+        $ch = curl_init($url);
         curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true,
             CURLOPT_HTTPHEADER=>['Authorization: '.$key, 'Content-Type: application/json', 'Accept: application/json'],
             CURLOPT_POSTFIELDS=>json_encode($body), CURLOPT_CONNECTTIMEOUT=>5, CURLOPT_TIMEOUT=>12,
@@ -72,8 +85,10 @@ final class Fast2SmsOtp {
         $id = bin2hex(random_bytes(32)); $code = (string)random_int(100000, 999999);
         $this->pdo->prepare('INSERT INTO sms_otp_challenges(id,binding,mobile,purpose,subject,code_hash,expires) VALUES (?,?,?,?,?,?,?)')
             ->execute([$id, hash('sha256', $binding), $mobile, $purpose, $subject, password_hash($code, PASSWORD_DEFAULT), time()+300]);
-        $ok = $this->request(['mobile'=>$mobile, 'otp_id'=>(string)f2s_config('FAST2SMS_LOGIN_ID'), 'otp'=>$code,
-            'otp_length'=>6, 'otp_expiry'=>5]);
+        $ok = $this->request(f2s_mode() === 'otp'
+            ? ['route'=>'otp', 'numbers'=>$mobile, 'variables_values'=>$code, 'otp'=>$code]
+            : ['mobile'=>$mobile, 'otp_id'=>(string)f2s_config('FAST2SMS_LOGIN_ID'), 'otp'=>$code,
+               'otp_length'=>6, 'otp_expiry'=>5]);
         $this->pdo->prepare('UPDATE sms_otp_challenges SET sent=? WHERE id=?')->execute([$ok?1:0, $id]);
         if (random_int(1, 30) === 1) {
             $this->pdo->prepare('DELETE FROM sms_otp_challenges WHERE expires<?')->execute([time()-86400]);
@@ -98,6 +113,9 @@ final class Fast2SmsOtp {
         $this->pdo->prepare('UPDATE sms_otp_challenges SET consumed=1 WHERE id=?')->execute([$id]);
     }
     public function notify($mobile, $purpose, $reference, $code) {
+        // Bina-DLT route me naam/booking number nahi ja sakta — "Your OTP: 4821"
+        // paane wale ko dhokha lagega. Ye code screen aur WhatsApp se hi jaate hain.
+        if (f2s_mode() === 'otp') return false;
         $template = (string)f2s_config($purpose === 'pickup' ? 'FAST2SMS_PICKUP_ID' : 'FAST2SMS_DELIVERY_ID');
         if ($template === '' || !f2s_mobile($mobile) || !preg_match('/^[0-9]{4,6}$/D', (string)$code)) return false;
         $this->install();
@@ -112,7 +130,7 @@ final class Fast2SmsOtp {
 }
 /** Delivery SMS never rolls back a saved order. No code/phone/provider payload logged. */
 function f2s_notify(PDO $pdo, $mobile, $purpose, $reference, $code) {
-    if (!f2s_enabled()) return false;
+    if (!f2s_enabled() || f2s_mode() === 'otp') return false;
     try { $ok = (new Fast2SmsOtp($pdo))->notify($mobile,$purpose,$reference,$code); }
     catch (Throwable $e) { $ok = false; }
     if (!$ok) error_log('Fast2SMS: delivery SMS not sent; existing handover flow remains available.');
