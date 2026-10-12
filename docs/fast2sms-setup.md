@@ -28,6 +28,30 @@ SMS send, secret change or live activation is performed by this code commit.
   after the existing human approval. Existing API opt-in modules/legacy transition
   rider door are not migrated to a new identity system by this change.
 
+## WhatsApp first (owner's choice, 12 Oct 2026 evening)
+
+No DLT is needed for WhatsApp. Order of delivery for every login OTP:
+**WhatsApp → (if it fails, e.g. the number is not on WhatsApp) SMS**, same code.
+Pickup/delivery codes go on WhatsApp with the booking number when the utility
+templates are set. Code: `smartsarathi/inc/fast2sms.php` (`wa_ready`, `Fast2SmsOtp::whatsapp`).
+
+Meta setup (owner):
+1. business.facebook.com → create Business portfolio "Maakit"; developers.facebook.com
+   → Create app → type Business → add **WhatsApp**.
+2. Add a phone number that is NOT logged in to the WhatsApp app (a new SIM is best),
+   verify by SMS/call, set display name "Maakit". Add a payment method.
+3. WhatsApp Manager → Message templates:
+   - `maakit_login`, category **Authentication**, English, "Copy code" button,
+     security line on, expiry 5 minutes.
+   - `maakit_pickup_code`, category **Utility**: `Maakit: your pickup code is {{1}} for booking {{2}}. Give it to the rider only when you hand over the parcel.`
+   - `maakit_delivery_code`, category **Utility**: `Maakit: your delivery code is {{1}} for booking {{2}}. Tell it to the rider only after you receive your parcel.`
+4. System user (Business settings → Users → System users) → generate a **permanent token**
+   with `whatsapp_business_messaging` permission. Copy the **Phone number ID**.
+5. Private config (both config.php files): `OTP_ENABLED '1'`, `WA_TOKEN`, `WA_PHONE_ID`,
+   `WA_OTP_TEMPLATE`, optional `WA_PICKUP_TEMPLATE`/`WA_DELIVERY_TEMPLATE`, `WA_LANG 'en'`.
+   Keep the Fast2SMS lines too if you want SMS fallback.
+6. Test: login with your own number; the code arrives on WhatsApp with a Copy button.
+
 ## Without DLT (owner's choice, 12 Oct 2026)
 
 DLT registration costs ₹5,900/year, so we start with Fast2SMS's **OTP route**

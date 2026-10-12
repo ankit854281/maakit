@@ -37,7 +37,7 @@ sr_public_head('login', t('Rider login', 'राइडर लॉगिन'), t('
     [['bolt', t('Jobs come to you', 'काम ख़ुद आपके पास')], ['nav', t('One-tap directions', 'एक टैप में रास्ता')], ['rupee', t('Clear daily earnings', 'रोज़ की साफ़ कमाई')]]);
 ?>
   <?php if ($err): ?><div class="sx-alert"><?= sr_icon('alert', 18) ?> <?= h(sr_message($err)) ?></div><?php endif; ?>
-  <?php if(f2s_enabled()): ?><p><a class="sx-btn sx-btn-mint" href="<?= h(u('/otp.php')) ?>"><?= h(t('SMS OTP login / forgot code','SMS OTP से लॉगिन / कोड भूल गए')) ?></a></p><?php endif ?>
+  <?php if(f2s_enabled()): ?><p><a class="sx-btn sx-btn-mint" href="<?= h(u('/otp.php')) ?>"><?= h(t('OTP login / forgot code','OTP से लॉगिन / कोड भूल गए')) ?></a></p><?php endif ?>
   <form method="post" class="sx-card sx-form" autocomplete="on">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
     <div class="sx-pane-h"><span class="sx-pin a"><?= sr_icon('user', 16) ?></span><div><b><?= h(t('Welcome back', 'फिर से स्वागत है')) ?></b><small><?= h(t('Sign in with your mobile and login code', 'मोबाइल और लॉगिन कोड से अंदर आइए')) ?></small></div></div>

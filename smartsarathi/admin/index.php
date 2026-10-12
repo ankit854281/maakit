@@ -86,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
                     ->execute([$nam, $mob, password_hash($cod, PASSWORD_DEFAULT),
                                trim((string)post('vehicle')) ?: null,
                                (int)post('rate'), (int)post('extra_rate')]);
+                sr_jobs_upgrade($pdo);
+                $pdo->prepare("UPDATE riders SET vtype=? WHERE id=?")->execute([sr_vtype_guess(post('vehicle')), (int)$pdo->lastInsertId()]);
                 flash('सारथी जुड़ गया।'); redirect('/admin/');
             } catch (PDOException $e) { $err = 'यह मोबाइल नंबर पहले से है।'; }
         }
@@ -105,6 +107,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
                 ->execute([$r, $e, (int)post('id')]);
             flash('रेट सेव हो गया।'); redirect('/admin/');
         }
+    }
+
+    // Ek rider, dono kaam: gaadi ka prakaar + sawari ki ijaazat (DL/RC dekhkar)
+    if ($do === 'rider_work') {
+        sr_jobs_upgrade($pdo);
+        $vt = array_key_exists(post('vtype'), sr_vtypes()) ? post('vtype') : null;
+        $ok = post('ride_ok') === '1' && in_array($vt, ['bike', 'ev', 'auto', 'erick'], true) ? 1 : 0;
+        $pdo->prepare("UPDATE riders SET vtype=?, ride_ok=?, do_ride=IF(?=1, do_ride, 0) WHERE id=?")->execute([$vt, $ok, $ok, (int)post('id')]);
+        flash($ok || post('ride_ok') !== '1' ? 'सेव हो गया।' : 'सवारी के लिए बाइक/स्कूटी/ऑटो/ई-रिक्शा चुनिए।'); redirect('/admin/');
     }
 
     if ($do === 'rider_active') {
@@ -158,6 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
                     $pdo->prepare("INSERT INTO riders (name,mobile,pass_hash,vehicle,rc_number,dl_number,rate,extra_rate) VALUES (?,?,?,?,?,?,?,?)")
                         ->execute([$ap['name'], $ap['mobile'], password_hash($code, PASSWORD_DEFAULT), $ap['vehicle'], $ap['rc_number'], $ap['dl_number'], (int)post('rate'), 0]);
                     $rid = (int)$pdo->lastInsertId();
+                    sr_jobs_upgrade($pdo);
+                    $pdo->prepare("UPDATE riders SET vtype=? WHERE id=?")->execute([sr_vtype_guess($ap['vehicle']), $rid]);
                     $pdo->prepare("UPDATE applications SET status='approved', rider_id=? WHERE id=?")->execute([$rid, (int)$ap['id']]);
                     $_SESSION['sr_newcode'] = ['name' => $ap['name'], 'mobile' => $ap['mobile'], 'code' => $code];
                     flash('सारथी जुड़ गया।');
@@ -179,6 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 }
 
 // ---------- जानकारी ----------
+sr_jobs_upgrade($pdo);
 $riders  = $pdo->query("SELECT * FROM riders ORDER BY active DESC, name")->fetchAll();
 $clients = $pdo->query("SELECT * FROM clients ORDER BY active DESC, name")->fetchAll();
 $probs   = problems_open($pdo);
@@ -343,6 +357,7 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
     <div class="hd">
       <b style="font-size:18px"><?= h($r['name']) ?></b>
       <span class="mut"><?= h($r['mobile']) ?><?= $r['vehicle'] ? ' · ' . h($r['vehicle']) : '' ?></span>
+      <span class="mut"><?= !empty($r['do_delivery']) ? '📦 डिलीवरी' : '' ?><?= !empty($r['do_ride']) && !empty($r['ride_ok']) ? ' · 🏍️ सवारी चालू' : (!empty($r['ride_ok']) ? ' · सवारी की इजाज़त' : '') ?></span>
       <?php if ($r['ready_until'] && strtotime($r['ready_until']) > time()): ?>
         <span class="sr-head-tag" style="background:#E8F3EA;color:#1C5130">हाज़िर</span><?php endif; ?>
     </div>
@@ -361,6 +376,14 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <span class="mut">रेट ₹</span><input class="sm" type="number" name="rate" value="<?= (int)$r['rate'] ?>" min="0" max="5000">
         <span class="mut">चक्कर में अगला ₹</span><input class="sm" type="number" name="extra_rate" value="<?= (int)$r['extra_rate'] ?>" min="0" max="5000">
+        <button class="g" type="submit">सेव</button>
+      </form>
+      <form method="post" class="row" style="margin:0;width:100%">
+        <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="rider_work">
+        <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+        <span class="mut">गाड़ी</span>
+        <select name="vtype"><option value="">—</option><?php foreach (sr_vtypes() as $vk => $vl): ?><option value="<?= h($vk) ?>" <?= ($r['vtype'] ?? '') === $vk ? 'selected' : '' ?>><?= h($vl) ?></option><?php endforeach; ?></select>
+        <label class="mut" style="display:flex;gap:6px;align-items:center"><input type="checkbox" name="ride_ok" value="1" <?= !empty($r['ride_ok']) ? 'checked' : '' ?>> सवारी भी ले सकता है (DL/RC देख लिए)</label>
         <button class="g" type="submit">सेव</button>
       </form>
       <details style="width:100%">

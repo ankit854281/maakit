@@ -412,7 +412,7 @@ include __DIR__ . '/inc/head.php';
     </div>
     <button class="btn btn-brand" style="width:100%"><?= t('Sign in', 'लॉगिन कीजिए') ?></button>
     <?php if (function_exists('f2s_enabled') && f2s_enabled()): ?>
-      <a class="btn btn-line" style="width:100%;margin-top:8px" href="/otp.php?role=vehicle"><?= t('Sign in with SMS OTP / lost code', 'SMS OTP से लॉगिन / कोड खो गया') ?></a>
+      <a class="btn btn-line" style="width:100%;margin-top:8px" href="/otp.php?role=vehicle"><?= t('Sign in with OTP / lost code', 'OTP से लॉगिन / कोड खो गया') ?></a>
     <?php endif; ?>
     <p class="help" style="text-align:center;margin-top:10px"><?= t('Lost your code?', 'कोड खो गया?') ?>
       <a href="tel:<?= MAAKIT_PHONE ?>"><?= t('Call us', 'हमें कॉल कीजिए') ?></a></p>

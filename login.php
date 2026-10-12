@@ -127,7 +127,7 @@ include __DIR__ . '/inc/head.php';
       <?php if ($err): ?><div class="lg-err" role="alert"><?= h($err) ?></div><?php endif; ?>
 
       <?php if ($as === 'dukan'): ?>
-        <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php?role=shop"><?= h(t('SMS OTP login / forgot code','SMS OTP से लॉगिन / कोड भूल गए')) ?></a></p><?php endif ?>
+        <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php?role=shop"><?= h(t('OTP login / forgot code','OTP से लॉगिन / कोड भूल गए')) ?></a></p><?php endif ?>
         <h2><?= t('Welcome back', 'नमस्ते') ?></h2>
         <p class="lg-sub"><?= t('Sign in with your mobile number and the code Maakit sent you.', 'अपना मोबाइल नंबर और Maakit से मिला कोड डालिए।') ?></p>
         <form method="post" class="lg-form" data-remember="dukan">

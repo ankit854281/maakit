@@ -93,6 +93,14 @@ $csrf = h(csrf());
   </form>
 <?php endif; ?>
 
+<?php sr_jobs_upgrade($pdo); $wk = $pdo->prepare("SELECT do_delivery, do_ride, ride_ok FROM riders WHERE id=?"); $wk->execute([(int)$me['id']]); $wk = $wk->fetch() ?: []; ?>
+<a class="sx-worknow" href="<?= h(u('/jankari.php')) ?>">
+  <span><?= h(t('Receiving', 'आ रहा है')) ?>:</span>
+  <?php if (!empty($wk['do_delivery'])): ?><em class="d"><?= sr_icon('box', 14) ?> <?= h(t('Deliveries', 'डिलीवरी')) ?></em><?php endif; ?>
+  <?php if (!empty($wk['do_ride']) && !empty($wk['ride_ok'])): ?><em class="r"><?= sr_icon('bike', 14) ?> <?= h(t('Rides', 'सवारी')) ?></em><?php endif; ?>
+  <b><?= h(t('Change', 'बदलिए')) ?> ›</b>
+</a>
+
 <!-- आज का हिसाब -->
 <div class="sx-stats">
   <a class="sx-stat" href="<?= h(u('/khata.php')) ?>"><small><?= h(t("Today's earnings", 'आज की कमाई')) ?></small><b>₹<?= (int)$k['aaj'] ?></b></a>

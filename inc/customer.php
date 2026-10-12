@@ -40,7 +40,7 @@ function cust_password_error() {
 
 /** naya khata — [ok, msg] */
 function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark, $sms_verified = false) {
-    if (f2s_enabled() && !$sms_verified) return [false, t('Verify your mobile using SMS OTP to create an account.', 'नया खाता बनाने के लिए SMS OTP से मोबाइल जाँचिए।')];
+    if (f2s_enabled() && !$sms_verified) return [false, t('Verify your mobile using OTP to create an account.', 'नया खाता बनाने के लिए OTP से मोबाइल जाँचिए।')];
     $mobile = preg_replace('/\D/', '', $mobile);
     if (mb_strlen(trim($name)) < 2)  return [false, t('Please write your full name.', 'अपना पूरा नाम लिखिए।')];
     if (strlen($mobile) !== 10)      return [false, t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।')];

@@ -33,6 +33,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'code')
     }
 }
 
+// Ek login, ek profile — rider khud chunta hai ki aaj kaunsa kaam lega.
+// Sawari tabhi chalu ho sakti hai jab dafter ne ijaazat di ho (ride_ok).
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'work') {
+    sr_jobs_upgrade($pdo);
+    $d = post('do_delivery') === '1' ? 1 : 0;
+    $r = post('do_ride') === '1' && !empty($me['ride_ok']) ? 1 : 0;
+    if (!$d && !$r) { $err = t('Keep at least one kind of work on.', 'कम से कम एक काम चालू रखिए।'); }
+    else {
+        $pdo->prepare("UPDATE riders SET do_delivery=?, do_ride=? WHERE id=?")->execute([$d, $r, $rid]);
+        flash(t('Saved. New jobs will come as you chose.', 'सेव हो गया। अब काम आपकी पसंद से आएगा।'));
+        redirect('/jankari.php');
+    }
+}
+
+sr_jobs_upgrade($pdo);
+$me = array_merge(['vtype' => null, 'do_delivery' => 1, 'do_ride' => 0, 'ride_ok' => 0], $me);
 $ready = duty_until($pdo, $rid);
 $jobs  = rider_jobs($pdo, $rid);
 $msg   = flash();
@@ -41,39 +57,54 @@ sr_head($me, 'jankari', t('My profile', 'मेरी जानकारी'), $
 ?>
 
 <?php if ($msg): ?><div class="sr-flash"><?= h(sr_message($msg)) ?></div><?php endif; ?>
-<?php if ($err): ?><div class="sr-err"><?= h(sr_message($err)) ?></div><?php endif; ?>
+<?php if ($err): ?><div class="sx-alert"><?= sr_icon('alert', 18) ?> <?= h(sr_message($err)) ?></div><?php endif; ?>
+<?php $vt = sr_vtypes(); $vem = ['cycle' => '🚲', 'bike' => '🏍️', 'ev' => '🛵', 'auto' => '🛺', 'erick' => '🛺', 'none' => '🚶']; ?>
 
-<section class="sr-card">
-  <table class="sr-tab sr-tab-l">
-    <tr><td><?= h(t('Name', 'नाम')) ?></td><td><?= h($me['name']) ?></td></tr>
-    <tr><td><?= h(t('Mobile', 'मोबाइल')) ?></td><td><?= h($me['mobile']) ?></td></tr>
-    <?php if ($me['vehicle']): ?><tr><td><?= h(t('Vehicle', 'गाड़ी')) ?></td><td><?= h($me['vehicle']) ?></td></tr><?php endif; ?>
-    <?php if ($me['rc_number']): ?><tr><td><?= h(t('Registration number', 'RC नंबर')) ?></td><td><?= h($me['rc_number']) ?></td></tr><?php endif; ?>
-    <?php if ($me['dl_number']): ?><tr><td><?= h(t('Driving licence', 'लाइसेंस')) ?></td><td><?= h($me['dl_number']) ?></td></tr><?php endif; ?>
-    <tr><td><?= h(t('Per delivery', 'एक डिलीवरी का')) ?></td><td>
-      <?= (int)$me['rate'] > 0 ? '₹' . (int)$me['rate'] : '<span class="sr-warn">' . h(t('Not set', 'तय नहीं')) . '</span>' ?>
-    </td></tr>
-  </table>
-  <p class="sr-note"><?= h(t('Something incorrect? Call your office. Only the office can update these details.', 'इनमें कुछ ग़लत है? दफ़्तर को फ़ोन कीजिए — ये दफ़्तर ही बदल सकता है।')) ?></p>
-  <a class="sr-call-sm" href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone',18) ?> <?= h(SR_PHONE_SHOW) ?></a>
+<section class="sx-card sx-prof">
+  <div class="sx-prof-h">
+    <span class="sx-prof-av"><?= h(mb_strtoupper(mb_substr(trim($me['name']), 0, 1))) ?></span>
+    <div><b><?= h($me['name']) ?></b><small>+91 <?= h($me['mobile']) ?></small></div>
+    <?php if ($me['vtype']): ?><span class="sx-prof-veh"><i><?= $vem[$me['vtype']] ?? '🏍️' ?></i><?= h($vt[$me['vtype']] ?? '') ?></span><?php endif; ?>
+  </div>
+  <div class="sx-prof-grid">
+    <div><small><?= h(t('Per delivery', 'एक डिलीवरी का')) ?></small><b><?= (int)$me['rate'] > 0 ? '₹' . (int)$me['rate'] : h(t('Not set', 'तय नहीं')) ?></b></div>
+    <?php if ($me['rc_number']): ?><div><small><?= h(t('Vehicle no.', 'गाड़ी नं.')) ?></small><b><?= h($me['rc_number']) ?></b></div><?php endif; ?>
+    <?php if ($me['dl_number']): ?><div><small><?= h(t('Licence', 'लाइसेंस')) ?></small><b><?= h($me['dl_number']) ?></b></div><?php endif; ?>
+  </div>
 </section>
 
-<details class="sr-ord">
-  <summary class="sr-head">
-    <span class="sr-dot"></span>
-    <span class="sr-head-mid"><b><?= h(t('Change your login code', 'अपना कोड बदलिए')) ?></b><small><?= h(t('The code you use to sign in', 'जो लॉगिन करते वक़्त डालते हैं')) ?></small></span>
-  </summary>
-  <div class="sr-body">
-    <form method="post" class="sr-act">
-      <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-      <input type="hidden" name="do" value="code">
-      <label class="sr-lab"><?= h(t('Current code', 'पुराना कोड')) ?></label>
-      <input class="sr-in" type="password" name="purana" required>
-      <label class="sr-lab"><?= h(t('New code', 'नया कोड')) ?> <small><?= h(t('(at least 6 characters)', '(कम से कम 6 अक्षर)')) ?></small></label>
-      <input class="sr-in" type="password" name="naya" minlength="6" required>
-      <button class="sr-btn sr-btn-go" type="submit"><?= h(t('Change code', 'कोड बदलिए')) ?></button>
-    </form>
-  </div>
+<form method="post" class="sx-card sx-work" data-work>
+  <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="work">
+  <h3><?= h(t('My work', 'मेरा काम')) ?></h3>
+  <p class="sx-work-sub"><?= h(t('One login for everything. Choose what jobs you want to receive.', 'एक ही लॉगिन से सब काम। चुनिए कौन-सा काम आपके पास आए।')) ?></p>
+  <label class="sx-work-row">
+    <span class="sx-work-ic d"><?= sr_icon('box', 22) ?></span>
+    <span class="sx-work-t"><b><?= h(t('Deliveries', 'डिलीवरी')) ?></b><small><?= h(t('Shop orders and parcels', 'दुकान के ऑर्डर और पार्सल')) ?></small></span>
+    <span class="sx-switch-row"><input type="checkbox" name="do_delivery" value="1" <?= !empty($me['do_delivery']) ? 'checked' : '' ?>><span class="sx-sw"></span></span>
+  </label>
+  <label class="sx-work-row<?= empty($me['ride_ok']) ? ' off' : '' ?>">
+    <span class="sx-work-ic r"><?= sr_icon('bike', 22) ?></span>
+    <span class="sx-work-t"><b><?= h(t('Rides', 'सवारी')) ?></b>
+      <small><?= !empty($me['ride_ok']) ? h(t('Take passengers on your ', 'अपनी गाड़ी पर सवारी: ') . ($vt[$me['vtype']] ?? '')) : h(t('Ask the office to check your DL and vehicle papers to unlock rides.', 'सवारी चालू करवाने के लिए दफ़्तर में DL और गाड़ी के काग़ज़ दिखाइए।')) ?></small></span>
+    <span class="sx-switch-row"><input type="checkbox" name="do_ride" value="1" <?= !empty($me['do_ride']) && !empty($me['ride_ok']) ? 'checked' : '' ?> <?= empty($me['ride_ok']) ? 'disabled' : '' ?>><span class="sx-sw"></span></span>
+  </label>
+  <noscript><button class="sx-btn sx-btn-navy" type="submit"><?= h(t('Save', 'सेव कीजिए')) ?></button></noscript>
+</form>
+<script>document.querySelectorAll('[data-work] input[type=checkbox]').forEach(function (c) { c.addEventListener('change', function () { c.form.submit(); }); });</script>
+
+<section class="sx-card sx-prof-note">
+  <p><?= h(t('Name, mobile, vehicle and rate are set by the office. Something wrong? Call us.', 'नाम, मोबाइल, गाड़ी और रेट दफ़्तर तय करता है। कुछ ग़लत है तो फ़ोन कीजिए।')) ?></p>
+  <a class="sx-pill" href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone', 16) ?> <?= h(SR_PHONE_SHOW) ?></a>
+</section>
+
+<details class="sx-card sx-codebox">
+  <summary><?= sr_icon('user', 18) ?> <span><b><?= h(t('Change your login code', 'अपना लॉगिन कोड बदलिए')) ?></b><small><?= h(t('The code you use to sign in', 'जो लॉगिन करते वक़्त डालते हैं')) ?></small></span></summary>
+  <form method="post" class="sx-form">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="code">
+    <label class="sx-field"><span class="sx-lab"><?= h(t('Current code', 'पुराना कोड')) ?></span><input type="password" name="purana" required autocomplete="current-password"></label>
+    <label class="sx-field"><span class="sx-lab"><?= h(t('New code (at least 6 characters)', 'नया कोड (कम से कम 6 अक्षर)')) ?></span><input type="password" name="naya" minlength="6" required autocomplete="new-password"></label>
+    <button class="sx-btn sx-btn-navy" type="submit"><?= h(t('Change code', 'कोड बदलिए')) ?></button>
+  </form>
 </details>
 
 <?php sr_foot('jankari', ['kaam' => count($jobs)]); ?>

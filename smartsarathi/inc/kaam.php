@@ -80,6 +80,11 @@ function rider_logout() {
 function duty_on(PDO $pdo, $rid, $minutes = 90) {
     $pdo->prepare("UPDATE riders SET ready_until = NOW() + INTERVAL ? MINUTE WHERE id=?")
         ->execute([(int)$minutes, (int)$rid]);
+    // Koi hazir na tha tab aaye kaam (sawari/delivery) ab de dijiye — pehle aaye, pehle
+    try {
+        $ids = $pdo->query("SELECT id FROM jobs WHERE status='new' AND created_at > NOW() - INTERVAL 1 DAY ORDER BY id LIMIT 5")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($ids as $jid) job_auto_give($pdo, (int)$jid);
+    } catch (Throwable $e) { error_log('Sarathi catch-up: ' . $e->getMessage()); }
 }
 function duty_off(PDO $pdo, $rid) {
     $pdo->prepare("UPDATE riders SET ready_until = NULL WHERE id=?")->execute([(int)$rid]);
@@ -170,14 +175,28 @@ function job_give(PDO $pdo, $jid, $rid) {
  * Lautata hai rider_id, ya null.
  */
 function job_auto_give(PDO $pdo, $jid) {
-    $st = $pdo->query(
+    // Ek rider dono kaam karta hai — par sirf wahi jo usne apni profile me chuna hai.
+    // Sawari: dafter ki ijaazat (ride_ok) + rider ne "सवारी" chalu ki + gaadi mel khaaye.
+    sr_jobs_upgrade($pdo);
+    $jq = $pdo->prepare("SELECT kind, vehicle FROM jobs WHERE id=?"); $jq->execute([(int)$jid]);
+    $job = $jq->fetch() ?: ['kind' => 'delivery', 'vehicle' => null];
+    $args = [];
+    if (($job['kind'] ?? 'delivery') === 'ride') {
+        $fit = sr_ride_fits($job['vehicle'] ?? '');
+        $cond = "r.do_ride = 1 AND r.ride_ok = 1 AND r.vtype IN (" . implode(',', array_fill(0, count($fit), '?')) . ")";
+        $args = $fit;
+    } else {
+        $cond = "r.do_delivery = 1";
+    }
+    $st = $pdo->prepare(
         "SELECT r.id,
                 (SELECT COUNT(*) FROM jobs j
                   WHERE j.rider_id = r.id AND j.status IN ('assigned','picked')) AS abhi
            FROM riders r
-          WHERE r.active = 1 AND r.ready_until > NOW()
+          WHERE r.active = 1 AND r.ready_until > NOW() AND $cond
        ORDER BY abhi ASC, r.id ASC
           LIMIT 1");
+    $st->execute($args);
     $r = $st->fetch();
     if (!$r) return null;
 
@@ -453,7 +472,32 @@ function sr_jobs_upgrade(PDO $pdo) {
         if (!in_array('kind', $have, true))     $pdo->exec("ALTER TABLE jobs ADD COLUMN kind VARCHAR(10) NOT NULL DEFAULT 'delivery'");
         if (!in_array('pick_geo', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN pick_geo VARCHAR(40) DEFAULT NULL");
         if (!in_array('drop_geo', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN drop_geo VARCHAR(40) DEFAULT NULL");
+        if (!in_array('vehicle', $have, true))  $pdo->exec("ALTER TABLE jobs ADD COLUMN vehicle VARCHAR(10) DEFAULT NULL");
+        // Ek hi rider — delivery bhi, sawari bhi (ek login, ek profile)
+        $rh = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='riders'")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('vtype', $rh, true))       $pdo->exec("ALTER TABLE riders ADD COLUMN vtype VARCHAR(10) DEFAULT NULL");
+        if (!in_array('do_delivery', $rh, true)) $pdo->exec("ALTER TABLE riders ADD COLUMN do_delivery TINYINT NOT NULL DEFAULT 1");
+        if (!in_array('do_ride', $rh, true))     $pdo->exec("ALTER TABLE riders ADD COLUMN do_ride TINYINT NOT NULL DEFAULT 0");
+        if (!in_array('ride_ok', $rh, true))     $pdo->exec("ALTER TABLE riders ADD COLUMN ride_ok TINYINT NOT NULL DEFAULT 0");
     } catch (Throwable $e) { error_log('Sarathi jobs upgrade: ' . $e->getMessage()); }
+}
+
+/** Gaadi ke prakaar (rider ka vtype) */
+function sr_vtypes() {
+    return ['cycle' => t('Bicycle', 'साइकिल'), 'bike' => t('Motorcycle', 'बाइक'), 'ev' => t('Electric scooter', 'बिजली स्कूटी'),
+            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
+}
+/** Arzi ke likhe hue gaadi naam se vtype */
+function sr_vtype_guess($label) {
+    $l = mb_strtolower((string)$label);
+    foreach (['ई-रिक्शा' => 'erick', 'e-rick' => 'erick', 'ऑटो' => 'auto', 'auto' => 'auto', 'बिजली' => 'ev', 'electric' => 'ev', 'साइकिल' => 'cycle', 'bicycle' => 'cycle', 'cycle' => 'cycle', 'बाइक' => 'bike', 'bike' => 'bike', 'scoot' => 'bike', 'motor' => 'bike', 'नहीं' => 'none', 'no vehicle' => 'none'] as $k => $v) {
+        if (mb_strpos($l, mb_strtolower($k)) !== false) return $v;
+    }
+    return null;
+}
+/** Sawari ki gaadi maangi gayi ho to kaun-kaun si rider gaadi chalegi */
+function sr_ride_fits($want) {
+    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
 }
 
 /** Abhi kahan jaana hai — uthana baaki ho to pickup, warna drop. GPS ho to seedha wahi. */

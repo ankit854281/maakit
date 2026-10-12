@@ -72,5 +72,18 @@ $p->exec("CREATE TABLE transports(id INTEGER PRIMARY KEY,business_id INTEGER,mob
 $p->exec("INSERT INTO transports VALUES(1,5,'9000000020','ABC-1234','active'),(2,6,'9000000021','X','hidden')");
 check_sms(mk_otp_account($p,'vehicle','9000000020')['kind']==='vehicle','Vehicle owner can use OTP');
 check_sms(mk_otp_account($p,'vehicle','9000000021')===null,'Hidden vehicle denied');
+// WhatsApp first (no DLT), SMS only if WhatsApp does not reach the number.
+putenv('WA_TOKEN=test-token');putenv('WA_PHONE_ID=123456789012');putenv('WA_OTP_TEMPLATE=maakit_otp');putenv('WA_DELIVERY_TEMPLATE=maakit_delivery_code');
+check_sms(wa_ready() && f2s_enabled(),'WhatsApp channel enables OTP');
+$wp=sms_db();$ws=[];$w=new Fast2SmsOtp($wp,function($body)use(&$ws){$ws[]=$body;return true;});
+$wid=$w->send('9000000031','rider_login','rider:31','browser-A','wa-ip');
+check_sms($ws[0]['channel']==='whatsapp' && $ws[0]['template']==='maakit_otp' && $ws[0]['button']===true && $w->lastChannel==='whatsapp','OTP goes on WhatsApp first');
+check_sms($w->verify($wid,'rider_login','rider:31','browser-A',$ws[0]['params'][0]),'WhatsApp code verifies locally');
+$fs=[];$f=new Fast2SmsOtp($wp,function($body)use(&$fs){$fs[]=$body;return ($body['channel'] ?? '')!=='whatsapp';});
+$fid=$f->send('9000000032','customer_login','customer:32','browser-A','wa-ip2');
+check_sms(is_string($fid) && count($fs)===2 && $fs[1]['route']==='otp' && $f->lastChannel==='sms' && $fs[0]['params'][0]===$fs[1]['variables_values'],'Falls back to SMS with the same code');
+check_sms($w->notify('9000000033','delivery','PL1012ABCD','0456') && end($ws)['params']===['0456','PL1012ABCD'],'Delivery code goes on WhatsApp with booking number');
+check_sms(!$w->notify('9000000033','pickup','PL1012ABCD','0456'),'No pickup template, no message');
+putenv('WA_TOKEN');putenv('WA_PHONE_ID');putenv('WA_OTP_TEMPLATE');putenv('WA_DELIVERY_TEMPLATE');
 putenv('FAST2SMS_ROUTE');putenv('FAST2SMS_ENABLED');putenv('FAST2SMS_API_KEY');
 echo "Fast2SMS security and account policy checks passed\n";

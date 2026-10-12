@@ -196,7 +196,7 @@ include __DIR__ . '/inc/head.php';
       <?php if ($info): ?><div class="lg-info" role="status"><?= h($info) ?></div><?php endif; ?>
       <div class="lg-info" data-hint hidden></div>
 
-      <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php"><?= h(t('SMS OTP login / new account / forgot password','SMS OTP से लॉगिन / नया खाता / पासवर्ड भूल गए')) ?></a></p><?php endif ?>
+      <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php"><?= h(t('OTP login / new account / forgot password','OTP से लॉगिन / नया खाता / पासवर्ड भूल गए')) ?></a></p><?php endif ?>
       <!-- Sign in -->
       <form method="post" class="lg-form" data-form="login"<?= $mode === 'register' ? ' hidden' : '' ?>>
         <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="login">

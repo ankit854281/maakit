@@ -9,7 +9,7 @@ $binding=$_SESSION['sms_binding'];
 $service=new Fast2SmsOtp($pdo);
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     if (!csrf_ok()) $err=t('Page expired. Refresh and try again.','पन्ना दोबारा खोलकर कोशिश कीजिए।');
-    elseif (!f2s_enabled()) $err=t('SMS login is not enabled yet. Use the existing sign-in option.','SMS लॉगिन अभी चालू नहीं है। पुराने तरीके से लॉगिन कीजिए।');
+    elseif (!f2s_enabled()) $err=t('OTP login is not enabled yet. Use the existing sign-in option.','OTP लॉगिन अभी चालू नहीं है। पुराने तरीके से लॉगिन कीजिए।');
     else try {
         $action=is_string($_POST['action'] ?? null)?$_POST['action']:'';
         if ($action==='change') {
@@ -24,12 +24,15 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             } else {
                 $subject=$otp_subject($account);
                 $id=$service->send($mobile,$otp_role.'_login',$subject,$binding,substr($_SERVER['REMOTE_ADDR'] ?? '',0,45));
-                if (!$id) $err=t('SMS could not be sent. Wait a minute and retry; after several attempts wait an hour or use the existing login.','SMS नहीं भेज पाए। एक मिनट बाद कोशिश करें; कई बार कोशिश की है तो एक घंटे बाद करें या पुराने तरीके से लॉगिन करें।');
+                if (!$id) $err=t('OTP could not be sent. Wait a minute and retry; after several attempts wait an hour or use the existing login.','OTP नहीं भेज पाए। एक मिनट बाद कोशिश करें; कई बार कोशिश की है तो एक घंटे बाद करें या पुराने तरीके से लॉगिन करें।');
                 else {
                     if ($flow) $service->invalidate($flow['id']);
                     $flow=['id'=>$id,'mobile'=>$mobile,'subject'=>$subject,'name'=>$name,'expires'=>time()+300];
                     $_SESSION[$key]=$flow;
-                    $info=t('OTP requested. Enter the six digits received by SMS within 5 minutes.','OTP भेजने का अनुरोध हो गया। SMS में मिले छह अंक 5 मिनट के भीतर भरिए।');
+                    $flow['via']=$service->lastChannel; $_SESSION[$key]=$flow;
+                    $info=$service->lastChannel==='whatsapp'
+                        ? t('OTP sent on WhatsApp. Enter the six digits within 5 minutes.','OTP आपके WhatsApp पर भेजा है। छह अंक 5 मिनट के भीतर भरिए।')
+                        : t('OTP sent by SMS. Enter the six digits within 5 minutes.','OTP SMS से भेजा है। छह अंक 5 मिनट के भीतर भरिए।');
                 }
             }
         } elseif ($action==='verify' && $flow) {
@@ -43,18 +46,18 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     } catch (Throwable $e) { $err=t('Could not complete this request. Try again shortly or use the existing login.','अभी काम पूरा नहीं हुआ। थोड़ी देर बाद या पुराने तरीके से लॉगिन कीजिए।'); }
 }
 $is_sr=defined('SR_BASE');
-if ($is_sr) sr_public_head('login',t('SMS login','SMS लॉगिन'), 'SARATHI',t('Secure sign in','सुरक्षित लॉगिन'),'',t('Use the code sent to your phone.','अपने फ़ोन पर आया कोड डालिए।'),[]);
-else { $no_tabbar=true;$page_title=t('SMS login — Maakit','SMS लॉगिन — Maakit');include __DIR__.'/../../inc/head.php'; }
+if ($is_sr) sr_public_head('login',t('OTP login','OTP लॉगिन'), 'SARATHI',t('Secure sign in','सुरक्षित लॉगिन'),'',t('Use the code sent to your phone.','अपने फ़ोन पर आया कोड डालिए।'),[]);
+else { $no_tabbar=true;$page_title=t('OTP login — Maakit','OTP लॉगिन — Maakit');include __DIR__.'/../../inc/head.php'; }
 ?>
 <section class="wrap" style="max-width:480px;margin:24px auto;padding:16px">
 <div class="<?= $is_sr?'sx-card sx-form':'box lg-form' ?>">
 <h1><?= h(t('Sign in with OTP','OTP से लॉगिन')) ?></h1>
 <?php if($err): ?><p role="alert"><?= h($err) ?></p><?php endif ?>
 <?php if($info): ?><p role="status"><?= h($info) ?></p><?php endif ?>
-<?php if(!f2s_enabled()): ?><p><?= h(t('SMS login is not enabled yet.','SMS लॉगिन अभी चालू नहीं है।')) ?></p>
+<?php if(!f2s_enabled()): ?><p><?= h(t('OTP login is not enabled yet.','OTP लॉगिन अभी चालू नहीं है।')) ?></p>
 <?php else: ?>
 <?php if($flow): ?>
-<p><?= h(t('Code sent to number ending in ','नंबर के अंतिम चार अंक: ').substr($flow['mobile'],-4)) ?></p>
+<p><?= h((($flow['via'] ?? '')==='whatsapp' ? t('Check WhatsApp on the number ending in ','WhatsApp देखिए — नंबर के अंतिम चार अंक: ') : t('Code sent to number ending in ','नंबर के अंतिम चार अंक: ')).substr($flow['mobile'],-4)) ?></p>
 <form method="post" class="<?= $is_sr?'sx-form':'lg-form' ?>">
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="action" value="verify">
 <label class="<?= $is_sr?'sx-field':'lg-field' ?>"><?= h(t('Six-digit OTP','छह अंकों का OTP')) ?><input name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></label>
@@ -66,7 +69,7 @@ else { $no_tabbar=true;$page_title=t('SMS login — Maakit','SMS लॉगिन
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="action" value="send">
 <label class="<?= $is_sr?'sx-field':'lg-field' ?>"><?= h(t('Mobile number','मोबाइल नंबर')) ?><input name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" pattern="[6-9][0-9]{9}" maxlength="10" required></label>
 <?php if($otp_role==='customer'): ?><label class="lg-field"><?= h(t('Name (for a new account)','नाम (नए खाते के लिए)')) ?><input name="name" autocomplete="name" maxlength="80"></label><?php endif ?>
-<button class="<?= $is_sr?'sx-btn sx-btn-mint':'btn btn-brand' ?>"><?= h(t('Send SMS OTP','SMS पर OTP भेजिए')) ?></button>
+<button class="<?= $is_sr?'sx-btn sx-btn-mint':'btn btn-brand' ?>"><?= h(t('Send OTP (WhatsApp / SMS)','OTP भेजिए (WhatsApp / SMS)')) ?></button>
 </form>
 <?php endif; endif ?>
 <p><a href="<?= h($otp_back) ?>"><?= h(t('Back to sign in','लॉगिन पर वापस')) ?></a></p>

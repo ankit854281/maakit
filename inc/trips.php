@@ -189,7 +189,7 @@ function trip_send(PDO $pdo, $id) {
         'drop_name' => $t['drop_name'] ?: $t['name'], 'drop_mobile' => $t['drop_mobile'] ?: $t['mobile'], 'drop_address' => $t['drop_address'],
         'items' => $items, 'note' => implode(' · ', $note), 'cod_amount' => $cod,
         'pick_otp' => $t['pick_code'], 'drop_code' => $t['drop_code'],
-        'pick_geo' => $t['pick_geo'], 'drop_geo' => $t['drop_geo'],
+        'pick_geo' => $t['pick_geo'], 'drop_geo' => $t['drop_geo'], 'vehicle' => $ride ? $t['vehicle'] : null,
     ]);
     if (!$ok) {
         $pdo->prepare("UPDATE rides SET send_error=? WHERE id=?")->execute([mb_substr((string)$r, 0, 200), (int)$id]);

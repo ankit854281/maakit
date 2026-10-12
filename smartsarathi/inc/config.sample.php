@@ -40,6 +40,14 @@ define('SR_PHONE_SHOW', '84293 93903');
 // Real values go ONLY in private inc/config.php on hosting, not this sample.
 // define('FAST2SMS_ENABLED', '1');
 // define('FAST2SMS_API_KEY', 'private Dev API key');
+// --- WhatsApp OTP (Meta WhatsApp Cloud API) — DLT nahi chahiye. Pehle WhatsApp, na pahunche to SMS. ---
+// define('OTP_ENABLED', '1');
+// define('WA_TOKEN', 'Meta permanent access token');        // private, kabhi GitHub/chat me nahi
+// define('WA_PHONE_ID', 'WhatsApp phone number ID');         // number nahi, uski ID
+// define('WA_OTP_TEMPLATE', 'maakit_login');                 // Authentication template, "Copy code" button
+// define('WA_PICKUP_TEMPLATE', 'maakit_pickup_code');        // Utility: {{1}} code, {{2}} booking no.
+// define('WA_DELIVERY_TEMPLATE', 'maakit_delivery_code');    // Utility: {{1}} code, {{2}} booking no.
+// define('WA_LANG', 'en');
 // define('FAST2SMS_ROUTE', 'otp'); // BINA DLT: sirf login OTP ("Your OTP: 123456"). Tab LOGIN/PICKUP/DELIVERY ID ki zaroorat nahi.
 // define('FAST2SMS_LOGIN_ID', 'Smart OTP login ID');
 // define('FAST2SMS_PICKUP_ID', 'Smart OTP pickup ID');
