@@ -35,3 +35,14 @@ define('SR_ADMIN_KEY', 'yahan_ek_lamba_gupt_shabd_likhiye');
 // phone number jo panno par dikhega
 define('SR_PHONE', '+918429393903');
 define('SR_PHONE_SHOW', '84293 93903');
+
+// Fast2SMS — Sarathi has independent config and database.
+// Real values go ONLY in private inc/config.php on hosting, not this sample.
+// define('FAST2SMS_ENABLED', '1');
+// define('FAST2SMS_API_KEY', 'private Dev API key');
+// define('FAST2SMS_LOGIN_ID', 'Smart OTP login ID');
+// define('FAST2SMS_PICKUP_ID', 'Smart OTP pickup ID');
+// define('FAST2SMS_DELIVERY_ID', 'Smart OTP delivery ID');
+// define('FAST2SMS_ADMIN_MOBILE', 'owner verified 10-digit mobile');
+// define('FAST2SMS_DAILY_LIMIT', '300');
+// Handover templates take variables in this order: code | booking reference.

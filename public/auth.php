@@ -31,6 +31,7 @@ include __DIR__.'/../inc/head.php';
 <h2><?= h($links[$role]['label']) ?> <?= t('account','खाता') ?></h2>
 <?php if($role==='admin'): ?><p><?= t('Admin accounts are created by the Maakit team. Public admin registration is disabled.','एडमिन खाते Maakit टीम बनाती है।') ?></p><?php endif; ?>
 <?php if($role==='rider'): ?><p><?= t('Rider applications require verification and approval before dispatch access.','डिलीवरी के लिए राइडर आवेदन की जाँच और मंजूरी जरूरी है।') ?></p><?php endif; ?>
+<?php if(!$context && f2s_enabled() && in_array($role,['customer','vendor','rider'],true)): ?><p><a class="btn btn-brand" href="<?= $role==='rider'?'/smartsarathi/otp.php':('/otp.php?role='.($role==='vendor'?'shop':'customer')) ?>"><?= h(t('Sign in with SMS OTP','SMS OTP से लॉगिन')) ?></a></p><?php endif ?>
 <?php if(!$context): ?>
 <form method="post" action="<?= $role==='customer'?'/account.php':'/login.php' ?>" data-role-login>
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="<?= $role==='customer'?'login':($role==='vendor'?'dukan':'team') ?>">

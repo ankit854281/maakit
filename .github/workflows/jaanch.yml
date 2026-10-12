@@ -73,6 +73,7 @@ jobs:
           php tests/seo.php
           php tests/coverage.php
           php tests/customer.php
+          php tests/fast2sms.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/fast2sms.php';
 // ============================================================
 //  सारथी — धंधे की सारी logic
 //
@@ -248,6 +249,8 @@ function job_pick(PDO $pdo, $rid, $jid, $otp) {
     if ($j['status'] === 'delivered') return [true,  'ये काम पूरा हो चुका है।'];
     if ($j['status'] === 'cancelled') return [false, 'ये काम रद्द हो चुका है।'];
 
+    $guard=new Fast2SmsOtp($pdo);$guard->install();
+    if (!$guard->take('pick-check:'.$jid.':'.$rid,5,900)) return [false,'बहुत कोशिश हो गई। 15 मिनट बाद कोशिश कीजिए।'];
     $diya = preg_replace('/\D/', '', (string)$otp);
     if ($diya === '' || !hash_equals($j['pick_otp'], $diya)) {
         return [false, 'OTP सही नहीं है। भेजने वाले से दोबारा पूछिए।'];
@@ -262,6 +265,7 @@ function job_pick(PDO $pdo, $rid, $jid, $otp) {
         trip_add($pdo, $rid, $jid);
         $pdo->commit();
     } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
+    f2s_notify($pdo,$j['drop_mobile'],'delivery',$j['job_no'],$j['drop_code']);
     return [true, 'उठा लिया — दर्ज हो गया।'];
 }
 
@@ -277,6 +281,8 @@ function job_deliver(PDO $pdo, $rid, $jid, $code, $photo = null) {
     if ($j['status'] === 'cancelled') return [false, 'ये काम रद्द हो चुका है।'];
     if ($j['status'] !== 'picked')    return [false, 'पहले उठाना दर्ज कीजिए।'];
 
+    $guard=new Fast2SmsOtp($pdo);$guard->install();
+    if (!$guard->take('drop-check:'.$jid.':'.$rid,5,900)) return [false,'बहुत कोशिश हो गई। 15 मिनट बाद कोशिश कीजिए।'];
     $diya = preg_replace('/\D/', '', (string)$code);
     if ($diya === '' || !hash_equals($j['drop_code'], $diya)) {
         return [false, 'ग्राहक का कोड सही नहीं है। ग्राहक से दोबारा पूछिए।'];

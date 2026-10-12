@@ -17,6 +17,7 @@
 // kaam.php me hai. Dono jagah se load hone par bhi ek hi baar
 // aata hai.
 require_once __DIR__ . '/kaam.php';
+require_once __DIR__.'/fast2sms.php';
 
 // ------------------------------------------------------------
 //  चाबी बनाना और पहचानना
@@ -150,7 +151,10 @@ function job_create(PDO $pdo, array $client, array $in) {
 
     $st = $pdo->prepare("SELECT * FROM jobs WHERE id=?");
     $st->execute([$id]);
-    return [true, job_public($st->fetch())];
+    $saved=$st->fetch();
+    f2s_notify($pdo,$saved['pick_mobile'] ?? '', 'pickup',$saved['job_no'],$saved['pick_otp']);
+    // Recipient's delivery code goes when pickup is recorded, not to the rider.
+    return [true, job_public($saved)];
 }
 
 /**

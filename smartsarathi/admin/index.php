@@ -17,6 +17,7 @@
 // ============================================================
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/kaam.php';
+require_once __DIR__.'/../inc/fast2sms.php';
 require_once __DIR__ . '/../inc/client.php';
 require_once __DIR__ . '/../inc/public.php';   // arziyan (apply.php) + seedhe grahak
 
@@ -24,14 +25,24 @@ require_once __DIR__ . '/../inc/public.php';   // arziyan (apply.php) + seedhe g
 $err = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (post('do') === 'login')) {
     // Chaabi par bhi hadd — warna koi baith kar aazmata rahega
-    if (try_blocked($pdo, 'admin')) {
+    if (!csrf_ok()) { $err='पन्ना दोबारा खोलकर कोशिश कीजिए।'; }
+    elseif (try_blocked($pdo, 'admin')) {
         $err = try_error();
     } elseif (defined('SR_ADMIN_KEY') && SR_ADMIN_KEY !== ''
               && hash_equals(SR_ADMIN_KEY, (string)post('key'))) {
+        if (f2s_enabled()) {
+            if (!f2s_mobile((string)f2s_config('FAST2SMS_ADMIN_MOBILE'))) {
+                $err='पहले hosting में मालिक का OTP मोबाइल नंबर जोड़िए।';
+            } else {
+                $_SESSION['sms_admin_pending']=['fingerprint'=>hash('sha256',SR_ADMIN_KEY),'expires'=>time()+600];
+                redirect('/otp.php?role=admin');
+            }
+        } else {
         try_ok($pdo, 'admin');
         session_regenerate_id(true);
         $_SESSION['sr_admin'] = 1;
         redirect('/admin/');
+        }
     } else {
         $err = 'चाबी सही नहीं है।';
     }
@@ -46,6 +57,7 @@ if (empty($_SESSION['sr_admin'])) {
       <div class="sr-brand"><div class="sr-logo">सारथी</div><p>मालिक का पन्ना</p></div>
       <?php if ($err): ?><div class="sr-err"><?= h($err) ?></div><?php endif; ?>
       <form method="post" class="sr-card" autocomplete="off">
+        <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
         <input type="hidden" name="do" value="login">
         <label class="sr-lab">चाबी</label>
         <input class="sr-in" type="password" name="key" required autofocus>

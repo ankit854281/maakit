@@ -1,0 +1,63 @@
+<?php
+session_start();
+function t($en,$hi){return $en;}
+require_once __DIR__.'/../smartsarathi/inc/fast2sms.php';
+function check_sms($ok,$message){if(!$ok)throw new RuntimeException($message);}
+function sms_db(){ $p=new PDO('sqlite::memory:');$p->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$p->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);return $p; }
+check_sms(!f2s_enabled(),'Disabled without private setup');
+check_sms(f2s_mobile('+91 98765-43210')==='9876543210','Indian formatting');
+check_sms(f2s_mobile(['bad'])==='' && f2s_mobile('1111111111')==='','Malformed phones fail');
+$p=sms_db();$sent=[];
+$s=new Fast2SmsOtp($p,function($body)use(&$sent){$sent[]=$body;return true;});
+$id=$s->send('9000000001','customer_login','customer:1','browser-A','test-ip');
+check_sms(is_string($id) && strlen($id)===64,'Challenge issued');
+$code=$sent[0]['otp'];
+$row=$p->query('SELECT * FROM sms_otp_challenges')->fetch();
+check_sms($row['code_hash']!==$code && password_verify($code,$row['code_hash']),'Only hashed code persisted');
+check_sms(!$s->verify($id,'shop_login','customer:1','browser-A',$code),'Cross-purpose rejected');
+check_sms(!$s->verify($id,'customer_login','customer:2','browser-A',$code),'Cross-account rejected');
+check_sms(!$s->verify($id,'customer_login','customer:1','browser-B',$code),'Cross-browser rejected');
+check_sms(!$s->verify($id,'customer_login','customer:1','browser-A','1234'),'No fixed demo OTP');
+check_sms($s->verify($id,'customer_login','customer:1','browser-A',$code),'Matching OTP works');
+check_sms(!$s->verify($id,'customer_login','customer:1','browser-A',$code),'Replay blocked');
+check_sms($s->send('9000000001','customer_login','customer:1','browser-A','test-ip')===null,'Resend cooldown');
+$id2=$s->send('9000000002','rider_login','rider:1','browser-A','test-ip');$code2=$sent[1]['otp'];
+$wrong=$code2==='999999'?'888888':'999999';
+for($i=0;$i<5;$i++) check_sms(!$s->verify($id2,'rider_login','rider:1','browser-A',$wrong),'Wrong code rejected');
+check_sms(!$s->verify($id2,'rider_login','rider:1','browser-A',$code2),'Five guesses exhaust challenge');
+$id3=$s->send('9000000003','team_login','team:1','browser-A','test-ip');$code3=$sent[2]['otp'];
+$p->prepare('UPDATE sms_otp_challenges SET expires=? WHERE id=?')->execute([time()-1,$id3]);
+check_sms(!$s->verify($id3,'team_login','team:1','browser-A',$code3),'Expired code rejected');
+$id4=$s->send('9000000004','customer_login','customer:4','browser-A','test-ip');$code4=$sent[3]['otp'];$s->invalidate($id4);
+check_sms(!$s->verify($id4,'customer_login','customer:4','browser-A',$code4),'Replaced/changed flow invalidated');
+$failed=new Fast2SmsOtp($p,fn($body)=>false);
+check_sms($failed->send('9000000005','customer_login','customer:5','browser-A','test-ip')===null,'Provider failure never produces accepted challenge');
+$last=$p->query("SELECT * FROM sms_otp_challenges WHERE mobile='9000000005'")->fetch();
+check_sms((int)$last['sent']===0,'Provider failures fail closed');
+for($i=0;$i<3;$i++)check_sms($s->take('limited',3,3600),'Allowed budget');
+check_sms(!$s->take('limited',3,3600),'Budget exhausted');
+putenv('FAST2SMS_PICKUP_ID=test-pickup');putenv('FAST2SMS_DELIVERY_ID=test-delivery');
+check_sms($s->notify('9000000006','pickup','SR-TEST','0123'),'Handover sends custom code');
+check_sms(!$s->notify('9000000006','pickup','SR-TEST','0123'),'Duplicate notification suppressed');
+$body=end($sent);check_sms($body['otp']==='0123' && $body['variables_values']==='{otp}|SR-TEST','Leading zero and booking reference preserved');
+check_sms(!$s->verify($id,'customer_login','customer:1','browser-A','0123'),'Handover code cannot log in');
+// Account policy: human approval, unique identity, and first factor for staff.
+require_once __DIR__.'/../inc/otp-accounts.php';
+$p->exec('CREATE TABLE customers(id INTEGER PRIMARY KEY,mobile TEXT,password TEXT,active INTEGER,name TEXT,village TEXT,landmark TEXT); CREATE TABLE businesses(id INTEGER PRIMARY KEY,mobile TEXT,status TEXT,access_code TEXT); CREATE TABLE users(id INTEGER PRIMARY KEY,mobile TEXT,username TEXT,role TEXT,password TEXT,active INTEGER);');
+$p->exec("INSERT INTO customers VALUES(1,'9000000001','hash',0,'Test','',''); INSERT INTO businesses VALUES(1,'9000000002','pending','code'); INSERT INTO users VALUES(1,'9000000003','staff','admin','passwordhash',1);");
+check_sms(mk_otp_account($p,'customer','9000000001')===null,'Inactive customer denied');
+check_sms(mk_otp_account($p,'shop','9000000002')===null,'Pending shop denied');
+check_sms(mk_otp_account($p,'team','9000000003')===null,'Admin cannot use phone-only login');
+$_SESSION['sms_team_pending']=['id'=>1,'expires'=>time()+300,'fingerprint'=>hash('sha256','passwordhash')];
+check_sms(mk_otp_account($p,'team','9000000003')['kind']==='team','First factor bound to correct account');
+check_sms(mk_otp_account($p,'team','9000000004')===null,'Cannot change admin OTP destination');
+$p->exec("UPDATE users SET password='changed' WHERE id=1");
+check_sms(mk_otp_account($p,'team','9000000003')===null,'Credential change invalidates first factor');
+$p->exec("UPDATE businesses SET status='approved'; INSERT INTO businesses VALUES(2,'9000000002','approved','other');");
+check_sms(mk_otp_account($p,'shop','9000000002')===null,'Shared phone never selects arbitrary shop');
+require_once __DIR__.'/../inc/customer.php';
+$_SESSION['sms_customer_recovery']=['id'=>1,'expires'=>time()+300];
+check_sms(cust_sms_recent(1) && !cust_sms_recent(2),'Recovery proof bound to customer');
+$_SESSION['sms_customer_recovery']['expires']=time()-1;
+check_sms(!cust_sms_recent(1),'Recovery proof expires');
+echo "Fast2SMS security and account policy checks passed\n";

@@ -82,11 +82,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         if (auth_attempt_try($pdo, 'team', $kunji)) {
             $err = auth_attempt_error();
         } elseif ($u && password_verify(post('password'), $u['password'])) {
+            if (f2s_enabled()) {
+                if (!f2s_mobile($u['mobile'] ?? '')) {
+                    $err=t('Ask the owner to add your verified mobile before SMS login is enabled.','SMS लॉगिन के लिए मालिक से अपना सही मोबाइल नंबर जुड़वाइए।');
+                } else {
+                    $_SESSION['sms_team_pending']=['id'=>$u['id'],'fingerprint'=>hash('sha256',$u['password']),'expires'=>time()+600];
+                    redirect('/otp.php?role=team');
+                }
+            } else {
             auth_attempt_ok($pdo, 'team', $kunji);
             Maakit\Api\revoke_legacy_sessions($pdo);
             session_regenerate_id(true);
             $_SESSION['user'] = ['id'=>$u['id'], 'name'=>$u['name'], 'role'=>$u['role']];
             redirect(panel_home($u['role']));
+            }
         } else {
             $err = t('Username or password is wrong.','यूज़रनेम या पासवर्ड ग़लत है।');
         }
@@ -118,6 +127,7 @@ include __DIR__ . '/inc/head.php';
       <?php if ($err): ?><div class="lg-err" role="alert"><?= h($err) ?></div><?php endif; ?>
 
       <?php if ($as === 'dukan'): ?>
+        <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php?role=shop"><?= h(t('SMS OTP login / forgot code','SMS OTP से लॉगिन / कोड भूल गए')) ?></a></p><?php endif ?>
         <h2><?= t('Welcome back', 'नमस्ते') ?></h2>
         <p class="lg-sub"><?= t('Sign in with your mobile number and the code Maakit sent you.', 'अपना मोबाइल नंबर और Maakit से मिला कोड डालिए।') ?></p>
         <form method="post" class="lg-form" data-remember="dukan">

@@ -144,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
             $done = ['no' => $order_no, 'code' => $code, 'maal' => $maal,
                      'charge' => $calc, 'lines' => $lines, 'pay' => $pay, 'mobile' => $mobile];
             $_SESSION['shop_checkout'][$id][$checkout_key]['done'] = $done;
+            f2s_notify($pdo,$mobile,'delivery',$order_no,$code);
         }
     }
 }

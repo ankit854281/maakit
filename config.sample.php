@@ -48,3 +48,13 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // ja sakta hai.
 // ============================================================
 // define('UPDATE_KEY', 'yahan ek lambi anjaan line likhiye');
+
+// Fast2SMS: enable only AFTER API key, templates, balance and team mobiles are ready.
+// Use strings. Never put real values in this SAMPLE or GitHub.
+// define('FAST2SMS_ENABLED', '1');
+// define('FAST2SMS_API_KEY', 'private Dev API key');
+// define('FAST2SMS_LOGIN_ID', 'Smart OTP ID: six-digit login, five-minute expiry');
+// define('FAST2SMS_PICKUP_ID', 'Smart OTP ID: pickup code, booking reference');
+// define('FAST2SMS_DELIVERY_ID', 'Smart OTP ID: delivery code, booking reference');
+// define('FAST2SMS_DAILY_LIMIT', '300'); // per database, includes login and handover SMS
+// See docs/fast2sms-setup.md before enabling. Team accounts need correct users.mobile.

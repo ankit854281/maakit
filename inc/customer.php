@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/../middleware/legacy.php';
 require_once __DIR__.'/auth-attempts.php';
+require_once __DIR__.'/../smartsarathi/inc/fast2sms.php';
 // ============================================================
 // Maakit — customer ka apna khata (account)
 // Login zaroori NAHI hai. Bina login bhi order ho jata hai.
@@ -15,6 +16,7 @@ function cust() {
 /** session me daal do */
 function cust_set($c) {
     global $pdo;
+    unset($_SESSION['sms_customer_recovery']);
     if ($pdo instanceof PDO) Maakit\Api\revoke_legacy_sessions($pdo);
     if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
     $_SESSION['cust'] = [
@@ -25,7 +27,7 @@ function cust_set($c) {
 function cust_logout() {
     global $pdo;
     if ($pdo instanceof PDO) Maakit\Api\revoke_legacy_sessions($pdo,'customer');
-    unset($_SESSION['cust']);
+    unset($_SESSION['cust'], $_SESSION['sms_customer_recovery']);
     if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
 }
 
@@ -37,7 +39,8 @@ function cust_password_error() {
 }
 
 /** naya khata — [ok, msg] */
-function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark) {
+function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark, $sms_verified = false) {
+    if (f2s_enabled() && !$sms_verified) return [false, t('Verify your mobile using SMS OTP to create an account.', 'नया खाता बनाने के लिए SMS OTP से मोबाइल जाँचिए।')];
     $mobile = preg_replace('/\D/', '', $mobile);
     if (mb_strlen(trim($name)) < 2)  return [false, t('Please write your full name.', 'अपना पूरा नाम लिखिए।')];
     if (strlen($mobile) !== 10)      return [false, t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।')];
@@ -56,6 +59,12 @@ function cust_register(PDO $pdo, $name, $mobile, $pass, $village, $landmark) {
 
     cust_set(['id'=>$id,'name'=>trim($name),'mobile'=>$mobile,'village'=>$village,'landmark'=>$landmark]);
     return [true, ''];
+}
+
+/** Recent successful SMS login can authorize one password reset in this session. */
+function cust_sms_recent($id) {
+    $proof = $_SESSION['sms_customer_recovery'] ?? [];
+    return (int)($proof['id'] ?? 0) === (int)$id && (int)($proof['expires'] ?? 0) > time();
 }
 
 /** login — [ok, msg]. 6 galat koshish = 15 minute rok */

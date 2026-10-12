@@ -5,6 +5,7 @@ require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/customer.php';
 
+if (f2s_enabled() && !cust() && (get('m') === 'register' || ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'register'))) redirect('/otp.php');
 $tab = 'mere';
 $villages = village_list($pdo);
 $me = cust();
@@ -71,12 +72,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $old = post('old'); $new = post('new');
         $st = $pdo->prepare("SELECT password FROM customers WHERE id=?"); $st->execute([$me['id']]);
         $row = $st->fetch();
-        if (!$row || !password_verify($old, $row['password'])) { $err = t('Old password is wrong.', 'पुराना पासवर्ड ग़लत है।'); }
+        if (!$row || (!cust_sms_recent($me['id']) && !password_verify($old, $row['password']))) { $err = t('Old password is wrong.', 'पुराना पासवर्ड ग़लत है।'); }
         elseif (!cust_password_ok($new)) { $err = cust_password_error(); }
         else {
             Maakit\Api\revoke_legacy_sessions($pdo,'customer');
             $pdo->prepare("UPDATE customers SET password=? WHERE id=?")
                 ->execute([password_hash($new, PASSWORD_DEFAULT), $me['id']]);
+            unset($_SESSION['sms_customer_recovery']);
             flash(t('Password changed.', 'पासवर्ड बदल गया।'));
             redirect('/account.php');
         }
@@ -156,7 +158,7 @@ include __DIR__ . '/inc/head.php';
     <summary style="font-weight:600;cursor:pointer"><?= t('Change password', 'पासवर्ड बदलिए') ?></summary>
     <form method="post" style="margin-top:12px">
       <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="pass">
-      <div class="field"><label for="old"><?= t('Old password', 'पुराना पासवर्ड') ?></label><input type="password" id="old" name="old" required></div>
+      <?php if (!cust_sms_recent($me['id'])): ?><div class="field"><label for="old"><?= t('Old password', 'पुराना पासवर्ड') ?></label><input type="password" id="old" name="old" required></div><?php else: ?><p><?= h(t('Mobile verified. Set your new password now.','मोबाइल की जाँच हो गई। अब नया पासवर्ड रखिए।')) ?></p><?php endif ?>
       <div class="field"><label for="new"><?= t('New password', 'नया पासवर्ड') ?></label><input type="password" id="new" name="new" autocomplete="new-password" minlength="8" required></div>
       <button type="submit" class="btn btn-brand" style="width:100%"><?= t('Change it', 'बदल दीजिए') ?></button>
     </form>
@@ -194,6 +196,7 @@ include __DIR__ . '/inc/head.php';
       <?php if ($info): ?><div class="lg-info" role="status"><?= h($info) ?></div><?php endif; ?>
       <div class="lg-info" data-hint hidden></div>
 
+      <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php"><?= h(t('SMS OTP login / new account / forgot password','SMS OTP से लॉगिन / नया खाता / पासवर्ड भूल गए')) ?></a></p><?php endif ?>
       <!-- Sign in -->
       <form method="post" class="lg-form" data-form="login"<?= $mode === 'register' ? ' hidden' : '' ?>>
         <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="login">

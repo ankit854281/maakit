@@ -120,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
                        $shop, $market, $w, $sz, $first, $calc['total'], $pay, $lat, $lng]);
         if($needs_quote){$pdo->prepare('INSERT INTO order_quotes(order_id) VALUES (?)')->execute([(int)$pdo->lastInsertId()]);$pdo->commit();}
         } catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+        f2s_notify($pdo,$mobile,'delivery',$order_no,$code);
         if($using_request_cart) unset($_SESSION['catalogue_request_cart']);
 
 
