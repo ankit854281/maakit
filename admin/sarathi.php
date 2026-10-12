@@ -15,6 +15,7 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/sarathi.php';
 require_once __DIR__ . '/../inc/sarathi-bridge.php';
+require_once __DIR__ . '/../inc/trips.php';
 $me = need_role('admin');
 $page_title = 'सारथी — Maakit';
 $err = '';
@@ -32,6 +33,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
             $save->execute(['sarathi_auto', post('sb_auto') === '1' ? '1' : '0']);
             flash('Smart Sarathi की सेटिंग सेव हो गई।'); redirect('/admin/sarathi.php?ping=1');
         }
+    }
+
+    // ---- sawari / parcel ka kiraya (maakit.in/ride.php) ----
+    if (post('do') === 'fares') {
+        $save = $pdo->prepare("INSERT INTO settings (k,v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)");
+        foreach (['bike', 'auto', 'erick', 'parcel'] as $vk) {
+            $save->execute(["fare_{$vk}_base", (string)max(0, min(2000, (int)post("{$vk}_base")))]);
+            $save->execute(["fare_{$vk}_km",   (string)max(0, min(500, (int)post("{$vk}_km")))]);
+            $save->execute(["fare_{$vk}_on",   post("{$vk}_on") === '1' ? '1' : '0']);
+        }
+        $save->execute(['ride_max_km', (string)max(1, min(300, (int)post('max_km')))]);
+        flash('सवारी / पार्सल का किराया सेव हो गया।'); redirect('/admin/sarathi.php#kiraya');
+    }
+    if (post('do') === 'ride_send') {
+        [$okr, $mr] = trip_send($pdo, (int)post('rid'));
+        flash($okr ? 'Smart Sarathi को भेज दिया: ' . $mr : 'नहीं गया: ' . $mr); redirect('/admin/sarathi.php#bookings');
+    }
+    if (post('do') === 'ride_cancel' && ($tr = trip_get($pdo, (int)post('rid')))) {
+        [$okr, $mr] = trip_cancel($pdo, $tr);
+        flash($okr ? 'बुकिंग रद्द हो गई।' : $mr); redirect('/admin/sarathi.php#bookings');
     }
 
     if (post('do') === 'rate') {
@@ -68,6 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
 
 $sb = sb_cfg($pdo); $sb_ping = null;
 if (get('ping') === '1' && sb_ready($pdo)) { [$okp, $rp] = sb_call($pdo, 'ping'); $sb_ping = $okp ? '✓ जुड़ गया — ' . ($rp['client'] ?? '') : '✗ ' . $rp; }
+$VEH = trip_vehicles($pdo);
+$rides = trips_table($pdo) ? $pdo->query("SELECT * FROM rides ORDER BY id DESC LIMIT 25")->fetchAll() : [];
+foreach ($rides as $i => $rr) {
+    if (in_array($rr['status'], ['new', 'assigned', 'picked'], true) && $i < 10) { try { $rides[$i] = trip_sync($pdo, $rr); } catch (Throwable $e) {} }
+}
 $samasya = sarathi_samasya_khuli($pdo);
 $kisme   = sarathi_samasya_kism();
 $extra   = sarathi_extra_rate($pdo);
@@ -100,6 +126,53 @@ include __DIR__ . '/../inc/panel.php';
       ऑर्डर "Confirm" होते ही अपने आप Smart Sarathi को भेजिए</label>
     <p class="help">बंद रखें तो "सारे ऑर्डर" पेज पर हर ऑर्डर के आगे "सारथी को भेजिए" बटन आएगा। दुकान का OTP और ग्राहक का कोड वही रहते हैं।</p>
     <button class="btn btn-brand btn-sm">सेव करके जाँचिए</button>
+  </form>
+
+  <!-- ===== सवारी / पार्सल — maakit.in/ride.php ===== -->
+  <h3 style="margin-top:18px" id="bookings">सवारी और पार्सल बुकिंग
+    <?php $khuli = count(array_filter($rides, fn($r) => in_array($r['status'], ['new', 'assigned', 'picked'], true))); if ($khuli): ?><span class="tag tag-gold"><?= $khuli ?> चालू</span><?php endif; ?></h3>
+  <p class="help" style="margin:0 0 8px">ग्राहक <a href="/ride.php" target="_blank">maakit.in/ride.php</a> से बाइक / ऑटो / ई-रिक्शा या पार्सल बुक करते हैं।
+    बुकिंग अपने आप Smart Sarathi पर राइडरों को जाती है। लाल वाली नहीं गई — "भेजिए" दबाइए या ग्राहक को फ़ोन कीजिए।</p>
+  <?php if (!$rides): ?>
+    <div class="box"><b>अभी कोई बुकिंग नहीं</b></div>
+  <?php else: ?>
+    <div class="box" style="padding:0;overflow-x:auto">
+      <table class="tbl" style="width:100%;border-collapse:collapse;font-size:14px">
+        <tr style="background:#F7F8FA;text-align:left"><th style="padding:8px">बुकिंग</th><th style="padding:8px">ग्राहक</th><th style="padding:8px">कहाँ से → कहाँ तक</th><th style="padding:8px">किराया</th><th style="padding:8px">हालत</th><th style="padding:8px"></th></tr>
+        <?php foreach ($rides as $r): $bad = !$r['sarathi_job'] && $r['status'] === 'new'; ?>
+          <tr style="border-top:1px solid #eee<?= $bad ? ';background:#FFF5F5' : '' ?>">
+            <td style="padding:8px;white-space:nowrap"><b><?= $r['kind'] === 'parcel' ? '📦' : h($VEH[$r['vehicle']]['emoji'] ?? '🏍️') ?> <?= h($r['trip_no']) ?></b><div class="meta"><?= h(date('j/n g:i a', strtotime($r['created_at']))) ?><?= $r['when_at'] ? ' · समय ' . h($r['when_at']) : '' ?></div></td>
+            <td style="padding:8px"><?= h($r['name']) ?><div class="meta"><a href="tel:<?= h($r['mobile']) ?>"><?= h($r['mobile']) ?></a></div></td>
+            <td style="padding:8px;min-width:200px"><?= h(mb_strimwidth($r['pick_address'], 0, 40, '…')) ?> → <?= h(mb_strimwidth($r['drop_address'], 0, 40, '…')) ?><?= $r['km'] !== null ? '<div class="meta">' . h($r['km']) . ' km</div>' : '' ?></td>
+            <td style="padding:8px"><?= $r['fare_est'] !== null ? '₹' . (int)$r['fare_est'] : '—' ?></td>
+            <td style="padding:8px"><?php [$sk, $sn] = trip_steps($r); ?><?= $r['status'] === 'cancelled' ? 'रद्द' : h($sn[max(0, $sk)]) ?>
+              <div class="meta"><?= $r['sarathi_job'] ? h($r['sarathi_job']) . ($r['rider_name'] ? ' · ' . h($r['rider_name']) : '') : '<span style="color:#B42318">' . h($r['send_error'] ?: 'नहीं गई') . '</span>' ?></div></td>
+            <td style="padding:8px;white-space:nowrap">
+              <?php if ($bad): ?><form method="post" style="display:inline"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="ride_send"><input type="hidden" name="rid" value="<?= (int)$r['id'] ?>"><button class="btn btn-brand btn-sm">भेजिए</button></form><?php endif; ?>
+              <?php if (in_array($r['status'], ['new', 'assigned'], true)): ?><form method="post" style="display:inline" onsubmit="return confirm('यह बुकिंग रद्द करें?')"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="ride_cancel"><input type="hidden" name="rid" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm">रद्द</button></form><?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      </table>
+    </div>
+  <?php endif; ?>
+
+  <form method="post" class="box" style="margin-top:12px" id="kiraya">
+    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="fares">
+    <b>सवारी / पार्सल का किराया</b>
+    <p class="help" style="margin:4px 0 10px">किराया = शुरू का + (किलोमीटर × हर km का), ₹5 में गोल। ग्राहक को "लगभग" लिखा दिखता है।
+      km = GPS की सीधी दूरी × 1.3 (सड़क घूमकर जाती है)। जो गाड़ी बंद करेंगे, वो बुकिंग में नहीं दिखेगी।</p>
+    <div style="display:grid;gap:8px">
+      <?php foreach ($VEH as $vk => $vv): ?>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label style="display:flex;gap:6px;align-items:center;font-weight:700;min-width:140px"><input type="checkbox" name="<?= h($vk) ?>_on" value="1" style="width:auto" <?= $vv['on'] ? 'checked' : '' ?>> <?= h($vv['emoji'] . ' ' . $vv['name']) ?></label>
+          <label>शुरू का ₹ <input type="number" name="<?= h($vk) ?>_base" value="<?= (int)$vv['base'] ?>" min="0" max="2000" style="width:90px"></label>
+          <label>हर km ₹ <input type="number" name="<?= h($vk) ?>_km" value="<?= (int)$vv['km'] ?>" min="0" max="500" style="width:80px"></label>
+        </div>
+      <?php endforeach; ?>
+      <label>ज़्यादा से ज़्यादा दूरी (km) <input type="number" name="max_km" value="<?= (int)trip_max_km($pdo) ?>" min="1" max="300" style="width:90px"></label>
+    </div>
+    <button class="btn btn-brand btn-sm" style="margin-top:10px">किराया सेव कीजिए</button>
   </form>
 
   <!-- ===== खुली दिक्कतें ===== -->

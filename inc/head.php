@@ -89,6 +89,8 @@ if (!$no_tabbar && !$no_ticker) {
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/mk.css?v=<?= (int)filemtime(__DIR__.'/../assets/mk.css') ?>">
 <style><?= maakit_theme_css($pdo ?? null) ?></style>
+<?php foreach ((array)($page_css ?? []) as $pcss): ?><link rel="stylesheet" href="<?= h($pcss) ?>">
+<?php endforeach; ?>
 </head>
 <body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($home_page)?' mk-home-page':'' ?><?= !empty($adm_page)?' adm-body':'' ?><?= !empty($shop_panel)?' sp-body':'' ?><?= !empty($request_design)?' request-design':'' ?>">
 

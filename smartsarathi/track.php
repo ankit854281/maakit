@@ -7,8 +7,17 @@
 //  wahi try_blocked() jo login par hai.
 //  Rider ka sirf pehla naam dikhta hai, number nahi (wo khud
 //  grahak ko phone karta hai).
+//
+//  Nayi bookings maakit.in par hoti hain (ride.php / trip.php).
+//  Ye panna sirf purane "SR…" number wale links ke liye bacha
+//  hai; khaali khulne par maakit.in/trip.php par bhejta hai.
 // ============================================================
 require_once __DIR__ . '/inc/public.php';
+
+if (!isset($_GET['no']) && !isset($_POST['no']) && empty($_SESSION['sr_track'])) {
+    header('Location: ' . sr_maakit_url('/trip.php'), true, 302);
+    exit;
+}
 
 $no = strtoupper(trim((string)($_POST['no'] ?? $_GET['no'] ?? ($_SESSION['sr_track']['no'] ?? ''))));
 $m  = preg_replace('/\D/', '', (string)($_POST['m'] ?? $_GET['m'] ?? ($_SESSION['sr_track']['m'] ?? '')));
@@ -28,7 +37,7 @@ if ($no !== '' && $m !== '') {
     }
 }
 
-sr_public_head('track', t('Track your parcel', 'पार्सल ट्रैक कीजिए'), t('LIVE STATUS', 'लाइव हालत'),
+sr_public_head('none', t('Track your parcel', 'पार्सल ट्रैक कीजिए'), t('LIVE STATUS', 'लाइव हालत'),
     t('Where is', 'आपका पार्सल'), t('my parcel?', 'कहाँ पहुँचा?'),
     t('Enter your booking number and mobile. The status updates by itself while the parcel is on the way.', 'बुकिंग नंबर और मोबाइल डालिए। पार्सल रास्ते में हो तो हालत अपने आप ताज़ा होती है।'),
     [['route', t('Every step, live', 'हर कदम लाइव')], ['check', t('Code-safe delivery', 'कोड से पक्की डिलीवरी')], ['phone', t('Help one call away', 'मदद बस एक फ़ोन पर')]]);

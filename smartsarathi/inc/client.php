@@ -106,14 +106,17 @@ function job_create(PDO $pdo, array $client, array $in) {
     $cod = isset($in['cod_amount']) && $in['cod_amount'] !== '' ? (int)$in['cod_amount'] : null;
     if ($cod !== null && ($cod < 0 || $cod > 1000000)) return [false, 'cod_amount सही नहीं'];
 
+    sr_jobs_upgrade($pdo);
+    $kind = ($in['kind'] ?? '') === 'ride' ? 'ride' : 'delivery';
+    $geoOk = fn($g) => preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/', (string)$g) ? (string)$g : null;
     $pdo->beginTransaction();
     try {
         $st = $pdo->prepare(
             "INSERT INTO jobs
              (client_id, client_ref, job_no, pick_name, pick_mobile, pick_address,
               drop_name, drop_mobile, drop_address, drop_village, items, note,
-              pick_otp, drop_code, fee, cod_amount, status)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'new')");
+              pick_otp, drop_code, fee, cod_amount, status, kind, pick_geo, drop_geo)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'new',?,?,?)");
         $st->execute([
             (int)$client['id'], $ref, job_no($pdo),
             mb_substr(trim((string)($in['pick_name']    ?? '')), 0, 120) ?: null,
@@ -127,7 +130,7 @@ function job_create(PDO $pdo, array $client, array $in) {
             // ek hi code yaad rakhna pade. Na bheje to yahin bante hain.
             preg_match('/^\d{4}$/D', (string)($in['pick_otp'] ?? '')) ? (string)$in['pick_otp'] : otp4(),
             preg_match('/^\d{4}$/D', (string)($in['drop_code'] ?? '')) ? (string)$in['drop_code'] : otp4(),
-            $fee, $cod,
+            $fee, $cod, $kind, $geoOk($in['pick_geo'] ?? ''), $geoOk($in['drop_geo'] ?? ''),
         ]);
         $id = (int)$pdo->lastInsertId();
         $pdo->commit();

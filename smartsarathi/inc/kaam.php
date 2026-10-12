@@ -439,6 +439,32 @@ function fare_for(PDO $pdo, $km) {
     return end($slabs)['daam'];
 }
 
+/**
+ * jobs table me naye khaane (Oct 2026): kind (delivery / ride), pick_geo,
+ * drop_geo ("lat,lng"). Pehli baar zaroorat padte hi apne aap jud jaate
+ * hain — maalik ko phpMyAdmin nahi kholna.
+ */
+function sr_jobs_upgrade(PDO $pdo) {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    try {
+        $have = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='jobs'")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('kind', $have, true))     $pdo->exec("ALTER TABLE jobs ADD COLUMN kind VARCHAR(10) NOT NULL DEFAULT 'delivery'");
+        if (!in_array('pick_geo', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN pick_geo VARCHAR(40) DEFAULT NULL");
+        if (!in_array('drop_geo', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN drop_geo VARCHAR(40) DEFAULT NULL");
+    } catch (Throwable $e) { error_log('Sarathi jobs upgrade: ' . $e->getMessage()); }
+}
+
+/** Abhi kahan jaana hai — uthana baaki ho to pickup, warna drop. GPS ho to seedha wahi. */
+function maps_next($j) {
+    $picked = ($j['status'] ?? '') === 'picked';
+    $geo = $picked ? ($j['drop_geo'] ?? '') : ($j['pick_geo'] ?? '');
+    if (preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/', (string)$geo)) return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($geo);
+    if (!$picked && !empty($j['pick_address'])) return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($j['pick_address'] . ', Uttar Pradesh');
+    return maps_link($j);
+}
+
 /** phone ka apna naksha khol deta hai — koi API chaabi nahi, koi bill nahi */
 function maps_link($j) {
     $parts = array_filter([$j['drop_address'] ?? '', $j['drop_village'] ?? '', 'Uttar Pradesh'],

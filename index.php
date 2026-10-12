@@ -122,6 +122,17 @@ include __DIR__ . '/inc/head.php';
     <li><?= svc_icon('box', 18) ?><?= t('Delivery to your door', 'घर तक डिलीवरी') ?></li>
     <li><?= svc_icon('user', 18) ?><?= t('Local team on call', 'फ़ोन पर मदद') ?></li>
   </ul>
+  <!-- sawari / parcel — Smart Sarathi ke rider (ride.php) -->
+  <nav class="mk-go" aria-label="<?= h(t('Ride and parcel', 'सवारी और पार्सल')) ?>">
+    <a class="mk-go-ride" href="/ride.php">
+      <span class="mk-go-t"><small><?= t('Bike · Auto · E-rickshaw', 'बाइक · ऑटो · ई-रिक्शा') ?></small><b><?= t('Book a ride', 'सवारी बुक कीजिए') ?></b><em><?= t('Fare before you book', 'पहले किराया देखिए') ?> →</em></span>
+      <span class="mk-go-em" aria-hidden="true">🏍️</span>
+    </a>
+    <a class="mk-go-parcel" href="/ride.php?t=parcel">
+      <span class="mk-go-t"><small><?= t('Pick up & drop', 'उठाना · पहुँचाना') ?></small><b><?= t('Send a parcel', 'पार्सल भेजिए') ?></b><em><?= t('Tiffin, papers, medicine', 'टिफ़िन, काग़ज़, दवा') ?> →</em></span>
+      <span class="mk-go-em" aria-hidden="true">📦</span>
+    </a>
+  </nav>
   <?php if (!empty($tick_hul) && !empty($tick)): ?>
   <div class="mk-live" aria-label="<?= h(t('Recent activity', 'अभी-अभी')) ?>">
     <span class="mk-live-l"><i></i><?= t('Live', 'अभी-अभी') ?></span>

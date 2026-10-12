@@ -2,11 +2,13 @@
 // ============================================================
 //  सारथी — बाहर वालों के पन्ने (बिना लॉगिन)
 //
+//    index.php  — rider login
 //    apply.php  — rider banne ki arzi (Maakit.in se yahan aaya)
-//    book.php   — grahak: parcel bhejiye (pick & drop)
-//    track.php  — grahak: parcel kahan hai
 //
-//  Teeno ka dhaancha ek jaisa — login page wala (body.sr-login).
+//  Smart Sarathi SIRF riders ka app hai. Grahak (sawari bookh
+//  karna, parcel bhejna, track karna) maakit.in par jaata hai —
+//  maakit.in/ride.php → API → yahan "kaam". book.php/track.php
+//  ab wahin bhejte hain (sr_maakit_url()).
 //  Nayi table yahin apne aap ban jaati hai, taaki maalik ko
 //  phpMyAdmin kholna na pade.
 // ============================================================
@@ -44,6 +46,12 @@ function sr_direct_client(PDO $pdo) {
     return $pdo->query("SELECT * FROM clients WHERE id=" . (int)$pdo->lastInsertId())->fetch();
 }
 
+/** Grahak wale panne Maakit par hain — wahan ka pata (config me SR_MAAKIT_URL badal sakte hain) */
+function sr_maakit_url($path = '/') {
+    $base = defined('SR_MAAKIT_URL') ? rtrim(SR_MAAKIT_URL, '/') : 'https://maakit.in';
+    return $base . $path;
+}
+
 /** Ek session me kitni baar — bot aur galti se baar-baar bhejne se bachav */
 function sr_public_limit($key, $max) {
     $k = 'srp_' . $key;
@@ -56,8 +64,6 @@ function sr_public_limit($key, $max) {
 function sr_public_tabs($on) {
     if (!function_exists('sr_icon')) require_once __DIR__ . '/ui.php';
     $tabs = [
-        'book'  => [u('/book.php'),  t('Send', 'भेजिए'),      'box'],
-        'track' => [u('/track.php'), t('Track', 'ट्रैक'),       'route'],
         'apply' => [u('/apply.php'), t('Join as rider', 'राइडर बनिए'), 'bike'],
         'login' => [u('/'),          t('Rider login', 'राइडर लॉगिन'), 'user'],
     ];
@@ -85,7 +91,7 @@ function sr_public_head($tab, $title, $kicker, $h1a, $h1b, $lead, array $points 
 </head>
 <body class="sx sx-pub sx-pub-<?= h($tab) ?>">
 <header class="sxp-top">
-  <a class="sx-logo light" href="<?= h(u('/book.php')) ?>"><span class="sx-mark"><?= sr_icon('bolt', 18) ?></span><span>Sarathi<small>SMART DELIVERY</small></span></a>
+  <a class="sx-logo light" href="<?= h(u('/')) ?>"><span class="sx-mark"><?= sr_icon('bolt', 18) ?></span><span>Sarathi<small>SMART DELIVERY</small></span></a>
   <?php sr_language_switch(true); ?>
 </header>
 <div class="sxp">

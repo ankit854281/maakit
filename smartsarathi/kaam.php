@@ -13,6 +13,7 @@ require_once __DIR__ . '/inc/ui.php';
 
 $me = rider_me($pdo);
 if (!$me) { redirect('/'); }
+sr_jobs_upgrade($pdo);   // kind (ride/delivery) + GPS khaane
 $rid = (int)$me['id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
@@ -88,7 +89,7 @@ $csrf = h(csrf());
     <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="do" value="duty_on">
     <div class="sx-duty-l"><span class="sx-off-ic"><?= sr_icon('bolt', 22) ?></span>
       <div><b><?= h(t('You are offline', 'आप अभी बंद हैं')) ?></b><small><?= h(t('Go online to start getting jobs', 'हाज़िरी लगाइए — काम आने लगेंगे')) ?></small></div></div>
-    <button type="submit" class="sx-go"><span><?= h(t('Go online', 'हाज़िरी लगाइए')) ?></span><?= sr_icon('arrow', 20) ?></button>
+    <div class="sx-slide" data-slide data-label="<?= h(t('Swipe to go online', 'स्वाइप करके हाज़िरी लगाइए')) ?>"><button type="submit" class="sx-go"><span><?= h(t('Go online', 'हाज़िरी लगाइए')) ?></span><?= sr_icon('arrow', 20) ?></button></div>
   </form>
 <?php endif; ?>
 
@@ -119,21 +120,24 @@ $csrf = h(csrf());
     $utha  = $j['status'] === 'picked';
     $khula = $pehla; $pehla = false;
     $mera  = ($j['trip_id'] && (int)$j['trip_seq'] > 1) ? $extra : $rate;
-    $map   = maps_link($j);
-    $hello = rawurlencode(t('Hello, I am your Sarathi delivery partner. I am on the way with your order ', 'नमस्ते, मैं सारथी डिलीवरी पार्टनर हूँ। आपका सामान लेकर आ रहा हूँ — ') . $j['job_no']);
+    $map   = maps_next($j);
+    $isRide = ($j['kind'] ?? 'delivery') === 'ride';
+    $hello = rawurlencode($isRide
+        ? t('Hello, I am your Sarathi rider. I am coming to pick you up. Booking ', 'नमस्ते, मैं आपका सारथी राइडर हूँ। आपको लेने आ रहा हूँ। बुकिंग ') . ($j['client_ref'] ?: $j['job_no'])
+        : t('Hello, I am your Sarathi delivery partner. I am on the way with your order ', 'नमस्ते, मैं सारथी डिलीवरी पार्टनर हूँ। आपका सामान लेकर आ रहा हूँ — ') . $j['job_no']);
 ?>
   <details class="sx-job<?= $utha ? ' is-picked' : '' ?>" <?= $khula ? 'open' : '' ?>>
     <summary>
-      <span class="sx-job-st"><?= $utha ? sr_icon('flag', 18) : sr_icon('box', 18) ?></span>
+      <span class="sx-job-st<?= $isRide ? ' ride' : '' ?>"><?= $isRide ? sr_icon('bike', 18) : ($utha ? sr_icon('flag', 18) : sr_icon('box', 18)) ?></span>
       <span class="sx-job-t"><b><?= h($j['drop_name']) ?></b><small><?= h($j['drop_village'] ?: $j['drop_address']) ?> · <?= h($j['client_name']) ?></small></span>
-      <span class="sx-tag <?= $utha ? 'mint' : 'sun' ?>"><?= $utha ? h(t('Deliver', 'पहुँचाना है')) : h(t('Pick up', 'उठाना है')) ?></span>
+      <span class="sx-tag <?= $isRide ? 'blue' : ($utha ? 'mint' : 'sun') ?>"><?= $isRide ? ($utha ? h(t('On ride', 'सवारी चालू')) : h(t('Ride pickup', 'सवारी लेनी है'))) : ($utha ? h(t('Deliver', 'पहुँचाना है')) : h(t('Pick up', 'उठाना है'))) ?></span>
     </summary>
 
     <div class="sx-job-b">
       <ol class="sx-route">
-        <li class="<?= $utha ? 'done' : 'now' ?>"><i></i><div><small><?= h(t('Pick up', 'उठाइए')) ?></small>
+        <li class="<?= $utha ? 'done' : 'now' ?>"><i></i><div><small><?= $isRide ? h(t('Pick up passenger', 'सवारी यहाँ से')) : h(t('Pick up', 'उठाइए')) ?></small>
           <b><?= h($j['pick_name'] ?: $j['client_name']) ?></b><?php if ($j['pick_address']): ?><span><?= h($j['pick_address']) ?></span><?php endif; ?></div></li>
-        <li class="<?= $utha ? 'now' : '' ?>"><i></i><div><small><?= h(t('Deliver to', 'पहुँचाइए')) ?></small>
+        <li class="<?= $utha ? 'now' : '' ?>"><i></i><div><small><?= $isRide ? h(t('Drop passenger', 'सवारी यहाँ तक')) : h(t('Deliver to', 'पहुँचाइए')) ?></small>
           <b><?= h($j['drop_name']) ?></b><span><?= h($j['drop_address']) ?></span></div></li>
       </ol>
 
@@ -145,41 +149,41 @@ $csrf = h(csrf());
         <div class="sx-items note"><?= sr_icon('alert', 16) ?> <span><?= $nt ?></span></div><?php endif; ?>
 
       <div class="sx-money">
-        <?php if ($j['cod_amount'] !== null): ?><div class="cash"><small><?= h(t('Collect cash', 'नगद लेना है')) ?></small><b>₹<?= (int)$j['cod_amount'] ?></b></div><?php endif; ?>
+        <?php if ($j['cod_amount'] !== null): ?><div class="cash"><small><?= $isRide ? h(t('Fare (approx.)', 'किराया (लगभग)')) : h(t('Collect cash', 'नगद लेना है')) ?></small><b>₹<?= (int)$j['cod_amount'] ?></b></div><?php endif; ?>
         <?php if ($rate > 0): ?><div><small><?= h(t('You earn', 'आपकी कमाई')) ?></small><b>₹<?= (int)$mera ?></b></div><?php endif; ?>
         <div><small><?= h(t('Job no.', 'काम नं.')) ?></small><b class="sm"><?= h($j['job_no']) ?></b></div>
       </div>
 
       <div class="sx-acts">
         <?php if ($map): ?><a class="sx-act" href="<?= h($map) ?>" target="_blank" rel="noopener"><?= sr_icon('nav', 20) ?><span><?= h(t('Navigate', 'रास्ता')) ?></span></a><?php endif; ?>
-        <a class="sx-act" href="tel:<?= h($j['drop_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= h(t('Customer', 'ग्राहक')) ?></span></a>
-        <?php if ($j['pick_mobile']): ?><a class="sx-act" href="tel:<?= h($j['pick_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= h(t('Pickup', 'दुकान')) ?></span></a><?php endif; ?>
+        <a class="sx-act" href="tel:<?= h($j['drop_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= $isRide ? h(t('Passenger', 'सवारी')) : h(t('Customer', 'ग्राहक')) ?></span></a>
+        <?php if ($j['pick_mobile'] && $j['pick_mobile'] !== $j['drop_mobile']): ?><a class="sx-act" href="tel:<?= h($j['pick_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= h(t('Pickup', 'दुकान')) ?></span></a><?php endif; ?>
         <a class="sx-act" href="https://wa.me/91<?= h(preg_replace('/\D/', '', (string)$j['drop_mobile'])) ?>?text=<?= h($hello) ?>" target="_blank" rel="noopener"><?= sr_icon('wa', 20) ?><span>WhatsApp</span></a>
       </div>
 
       <?php if (!$utha): ?>
         <form method="post" class="sx-step">
           <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="do" value="uthaya"><input type="hidden" name="jid" value="<?= (int)$j['id'] ?>">
-          <label class="sx-step-l"><?= h(t('Pickup code from the sender', 'भेजने वाले से 4 अंक का कोड पूछिए')) ?></label>
+          <label class="sx-step-l"><?= $isRide ? h(t('Ride code from the passenger', 'सवारी से 4 अंक का कोड पूछिए')) : h(t('Pickup code from the sender', 'भेजने वाले से 4 अंक का कोड पूछिए')) ?></label>
           <div class="sx-otp" data-otp>
             <input type="hidden" name="otp" value="">
             <?php for ($i = 0; $i < 4; $i++): ?><input class="sx-otp-b" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="<?= $i + 1 ?>"><?php endfor; ?>
           </div>
           <noscript><input class="sx-in" name="otp" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></noscript>
-          <button class="sx-btn sx-btn-mint" type="submit"><?= sr_icon('check', 20) ?> <?= h(t('Picked up', 'उठा लिया')) ?></button>
+          <div class="sx-slide" data-slide data-need-otp data-label="<?= h($isRide ? t('Swipe — passenger on board', 'स्वाइप — सवारी बैठ गई') : t('Swipe — picked up', 'स्वाइप — उठा लिया')) ?>"><button class="sx-btn sx-btn-mint" type="submit"><?= sr_icon('check', 20) ?> <?= h(t('Picked up', 'उठा लिया')) ?></button></div>
         </form>
       <?php else: ?>
         <form method="post" class="sx-step" enctype="multipart/form-data">
           <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="do" value="de_diya"><input type="hidden" name="jid" value="<?= (int)$j['id'] ?>">
-          <label class="sx-step-l"><?= h(t('Delivery code from the customer', 'ग्राहक से 4 अंक का कोड पूछिए')) ?></label>
+          <label class="sx-step-l"><?= $isRide ? h(t('End code from the passenger', 'सवारी से आख़िरी कोड पूछिए')) : h(t('Delivery code from the customer', 'ग्राहक से 4 अंक का कोड पूछिए')) ?></label>
           <div class="sx-otp" data-otp>
             <input type="hidden" name="otp" value="">
             <?php for ($i = 0; $i < 4; $i++): ?><input class="sx-otp-b" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="<?= $i + 1 ?>"><?php endfor; ?>
           </div>
           <noscript><input class="sx-in" name="otp" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></noscript>
-          <label class="sx-photo"><input type="file" name="pod" accept="image/*" capture="environment" onchange="this.parentNode.classList.toggle('has', !!this.files.length)">
-            <?= sr_icon('cam', 20) ?><span><b><?= h(t('Delivery photo', 'सामान की फ़ोटो')) ?></b><small><?= h(t('Recommended — tap to take', 'अच्छा रहेगा — दबाकर खींचिए')) ?></small></span><i class="sx-photo-ok"><?= sr_icon('check', 16) ?></i></label>
-          <button class="sx-btn sx-btn-mint" type="submit"><?= sr_icon('check', 20) ?> <?= h(t('Delivered', 'पहुँचा दिया')) ?></button>
+          <?php if (!$isRide): ?><label class="sx-photo"><input type="file" name="pod" accept="image/*" capture="environment" onchange="this.parentNode.classList.toggle('has', !!this.files.length)">
+            <?= sr_icon('cam', 20) ?><span><b><?= h(t('Delivery photo', 'सामान की फ़ोटो')) ?></b><small><?= h(t('Recommended — tap to take', 'अच्छा रहेगा — दबाकर खींचिए')) ?></small></span><i class="sx-photo-ok"><?= sr_icon('check', 16) ?></i></label><?php endif; ?>
+          <div class="sx-slide" data-slide data-need-otp data-label="<?= h($isRide ? t('Swipe — ride complete', 'स्वाइप — सवारी पहुँच गई') : t('Swipe — delivered', 'स्वाइप — पहुँचा दिया')) ?>"><button class="sx-btn sx-btn-mint" type="submit"><?= sr_icon('check', 20) ?> <?= h(t('Delivered', 'पहुँचा दिया')) ?></button></div>
         </form>
       <?php endif; ?>
 
