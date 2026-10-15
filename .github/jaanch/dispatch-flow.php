@@ -14,16 +14,16 @@ try{
  $a=dp_order();$b=dp_order();$unconfirmed=dp_order('Naya');$cross=dp_order('Confirm','CI Other Area');$cancelled=dp_order('Cancel');
  dp_check(dispatch_assign($pdo,$a)===null,'Auto dispatch defaults off');
  $pdo->prepare('UPDATE service_area_dispatch SET enabled=1 WHERE village_id=?')->execute([$area]);dp_check(dispatch_assign($pdo,$a)===null,'No duty lease means no automatic assignment');
- dp_http('/delivery/',null,302);$html=dp_http('/login.php?as=team');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);dp_http('/login.php?as=team',['csrf'=>$m[1],'do'=>'team','username'=>'jaanch-auto-driver','password'=>$password],302);
- $html=dp_http('/delivery/?lang=en');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);
- dp_http('/delivery/',['csrf'=>'forged','status'=>'availability','available'=>'1']);dp_check(dispatch_assign($pdo,$a)===null,'Forged duty change rejected');
- dp_http('/delivery/',['csrf'=>$m[1],'status'=>'availability','available'=>'1'],302);
+ dp_http('/sarathi/kaam.php',null,302);$html=dp_http('/login.php?as=team');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);dp_http('/login.php?as=team',['csrf'=>$m[1],'do'=>'team','username'=>'jaanch-auto-driver','password'=>$password],302);
+ $html=dp_http('/sarathi/kaam.php?lang=en');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);
+ dp_http('/sarathi/kaam.php',['csrf'=>'forged','do'=>'duty_on']);dp_check(dispatch_assign($pdo,$a)===null,'Forged duty change rejected');
+ dp_http('/sarathi/kaam.php',['csrf'=>$m[1],'do'=>'duty_on'],302);
  $q=$pdo->prepare('SELECT status,delivery_user FROM orders WHERE id=?');$q->execute([$a]);$r=$q->fetch();dp_check($r['status']==='Assign'&&(int)$r['delivery_user']===$driver,'Duty activation assigns oldest confirmed area order');$q->execute([$b]);dp_check($q->fetch()['status']==='Confirm','Busy driver receives no second automatic order');
  foreach([$unconfirmed,$cross,$cancelled] as $id)dp_check(dispatch_assign($pdo,$id)===null,'Unconfirmed, cross-area and cancelled order excluded');dp_check(dispatch_assign($pdo,$a)===null,'Replay preserves assignment');
  $pdo->prepare("UPDATE orders SET status='Delivered' WHERE id=?")->execute([$a]);$pdo->prepare("UPDATE driver_availability SET available_until='2000-01-01' WHERE user_id=?")->execute([$driver]);dp_check(dispatch_assign($pdo,$b)===null,'Expired duty lease excluded');
  $pdo->prepare('UPDATE driver_availability SET available_until=UTC_TIMESTAMP()+INTERVAL 15 MINUTE WHERE user_id=?')->execute([$driver]);$pdo->prepare('UPDATE users SET active=0 WHERE id=?')->execute([$driver]);dp_check(dispatch_assign($pdo,$b)===null,'Inactive driver excluded');$pdo->prepare('UPDATE users SET active=1 WHERE id=?')->execute([$driver]);
  dp_check(dispatch_assign($pdo,$b)===$driver,'Fresh available driver receives confirmed order');
- dp_http('/delivery/',['csrf'=>$m[1],'status'=>'availability','available'=>'0'],302);$pdo->prepare("UPDATE orders SET status='Delivered' WHERE id=?")->execute([$b]);dp_check(dispatch_assign($pdo,dp_order())===null,'Stopping duty stops new automatic assignments');
+ dp_http('/sarathi/kaam.php',['csrf'=>$m[1],'do'=>'duty_off'],302);$pdo->prepare("UPDATE orders SET status='Delivered' WHERE id=?")->execute([$b]);dp_check(dispatch_assign($pdo,dp_order())===null,'Stopping duty stops new automatic assignments');
  $pdo->prepare('UPDATE driver_availability SET available_until=UTC_TIMESTAMP()+INTERVAL 15 MINUTE WHERE user_id=?')->execute([$driver]);
  $race=[dp_order(),dp_order()];$workers=[];
  foreach($race as $id){$pipes=[];$proc=proc_open([PHP_BINARY,__FILE__,'worker',(string)$id],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);dp_check(is_resource($proc),'Worker started');fclose($pipes[0]);$workers[]=[$proc,$pipes];}

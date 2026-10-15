@@ -75,7 +75,7 @@ if ($role === 'admin') {
     ]];
 } else {
     $menu = [t('Work', 'काम') => [
-        '/delivery/' => [t('My orders', 'मेरे ऑर्डर'), 'box'], '/delivery/photo.php' => [t('Product photos', 'सामान की फ़ोटो'), 'image'],
+        '/sarathi/kaam.php' => [t('My orders', 'मेरे ऑर्डर'), 'box'], '/delivery/photo.php' => [t('Product photos', 'सामान की फ़ोटो'), 'image'],
     ]];
 }
 if (!function_exists('adm_icon')) {

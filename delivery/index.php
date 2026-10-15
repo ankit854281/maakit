@@ -1,10 +1,41 @@
 <?php
+// ============================================================
+//  अब सिर्फ़ दफ़्तर के लिए — सारथी का दरवाज़ा /sarathi/ है
+//
+//  Rider ke liye teen darwaze khule the: /delivery/, /sarathi/
+//  aur /smartsarathi/. Teen darwaze matlab teen jagah bug, aur
+//  rider ko ye socha ki "aaj kaun sa kholun".
+//
+//  Isliye rider ab yahan se seedha /sarathi/ bhej diya jata hai.
+//  Jo do kaam sirf yahan the, wo PEHLE /sarathi/ me daale gaye,
+//  TAB ye band kiya gaya:
+//    - dukaan ka bill + saamaan ka daam
+//    - "aa raha hoon" wala WhatsApp sandesh
+//
+//  Par ye panna MITAYA NAHI gaya, aur admin ke liye khula hai.
+//  Kyun: puri Maakit me ye AKELI jagah hai jahan se daftar kisi
+//  bhi order par rider ki jagah se pickup, delivery ya bill darj
+//  kar sakta hai. Rider ka phone band ho gaya, wo "pahuncha diya"
+//  dabana bhool gaya — tab yahi kaam aata hai. Admin ke kisi aur
+//  panne me ye hai hi nahi (dekh kar jaancha gaya).
+//
+//  Dhyan rahe: admin ke liye bhi graahak ka sahi code zaroori
+//  hai. Ye chhoot nahi hai, sirf doosra haath hai.
+//
+//  delivery/photo.php band NAHI hua — saaman ki photo wahin se
+//  chadhti hai, aur ab uska link /sarathi/ ke menu me bhi hai.
+// ============================================================
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/dakiya.php';
 require_once __DIR__ . '/../inc/earning.php';
 require_once __DIR__ . '/../inc/dispatch.php';
-$u = need_role(['delivery', 'admin']);
-$page_title = 'मेरे ऑर्डर — Maakit';
+$u = need_role(['delivery', 'rider', 'admin']);
+
+// Sarathi ka ghar ab /sarathi/ hai. Purana bookmark ya WhatsApp
+// me bheja hua link bhi isiliye nahi tootta — wo mod diya jata hai.
+if ($u['role'] !== 'admin') { redirect('/sarathi/kaam.php'); }
+
+$page_title = 'ऑर्डर — दफ़्तर';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $id = (int)post('id'); $status = post('status');
@@ -81,8 +112,8 @@ $available=false;if($u['role']==='delivery'){$s=$pdo->prepare('SELECT available_
 include __DIR__ . '/../inc/panel.php';
 ?>
 <section><div class="wrap">
-  <h2>मेरे ऑर्डर</h2>
-  <p class="lead">दुकान से सामान लीजिए, ग्राहक के दरवाज़े पर कोड पूछिए, फिर “पहुँचा दिया” दबाइए।</p>
+  <h2>ऑर्डर — दफ़्तर का हाथ</h2>
+  <p class="lead">सारथी अपना काम <a href="/sarathi/kaam.php">/sarathi/</a> से करता है। ये पन्ना सिर्फ़ तब है जब दफ़्तर को उसकी जगह कुछ दर्ज करना पड़े — जैसे उसका फ़ोन बंद हो गया हो। ग्राहक का कोड यहाँ भी ज़रूरी है।</p>
   <?php if($u['role']==='delivery'):?><form method="post" class="box"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="status" value="availability"><b><?=t('Automatic assignment availability','Automatic assignment की उपलब्धता')?>: <?=h($available?t('Available now','अभी उपलब्ध'):t('Unavailable','उपलब्ध नहीं'))?></b><p class="help"><?=t('Choose availability only when ready. It expires in 15 minutes; renew to keep receiving confirmed orders. Check this page for assignments. This does not share GPS.','तैयार होने पर ही उपलब्धता चुनें। यह 15 मिनट में समाप्त होगी; नए confirmed order लेने के लिए फिर चुनें। मिले order इस पेज पर देखें। इससे GPS share नहीं होता।')?></p><button class="btn btn-brand" name="available" value="1"><?=t('Available for 15 minutes','15 मिनट के लिए उपलब्ध')?></button> <button class="btn btn-line" name="available" value="0"><?=t('Stop new assignments','नए assignment रोकें')?></button></form><?php endif;?>
   <?php if (!$orders): ?><div class="box">अभी आपके पास कोई ऑर्डर नहीं है।</div><?php endif; ?>
   <?php foreach ($orders as $o): ?>

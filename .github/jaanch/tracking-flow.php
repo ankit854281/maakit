@@ -10,7 +10,7 @@ try{
  $pdo->prepare("INSERT INTO orders(order_no,code,customer_name,mobile,village,items,status,delivery_user) VALUES ('CI-GPS','1234','CI GPS','9000000044','CI GPS Area','goods','Assign',?)")->execute([$uid]);$oid=(int)$pdo->lastInsertId();
  $start=['a'=>'start_tracking','o'=>$oid];gp_http('/api.php',$start,403);
  $html=gp_http('/login.php?as=team');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);gp_http('/login.php?as=team',['csrf'=>$m[1],'do'=>'team','username'=>'jaanch-gps-driver','password'=>$password],302);
- $html=gp_http('/delivery/');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);$start['csrf']=$m[1];$bad=$start;$bad['csrf']='forged';gp_http('/api.php',$bad,403);
+ $html=gp_http('/sarathi/kaam.php');preg_match('/name="csrf" value="([^"]+)"/',$html,$m);$start['csrf']=$m[1];$bad=$start;$bad['csrf']='forged';gp_http('/api.php',$bad,403);
  $pdo->prepare('UPDATE orders SET delivery_user=NULL WHERE id=?')->execute([$oid]);gp_http('/api.php',$start,403);$pdo->prepare('UPDATE orders SET delivery_user=? WHERE id=?')->execute([$uid,$oid]);
  $reply=json_decode(gp_http('/api.php',$start),true);$token=$reply['token'];
  $where='/api.php?a=where&no=CI-GPS&m=9000000044';$r=json_decode(gp_http($where),true);gp_check(!$r['live']&&$r['lat']===null,'Consent alone exposes no placeholder position');

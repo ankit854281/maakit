@@ -14,6 +14,12 @@ require_once __DIR__ . '/../inc/sarathi-ui.php';
 // dispatch_queue() — haazri lagte hi aur delivery poori hote hi
 // intezaar wale order baant deta hai. delivery/index.php bhi yahi karta hai.
 require_once __DIR__ . '/../inc/dispatch.php';
+// Dukaan ka bill aur "aa raha hoon" wala sandesh -- ye dono pehle
+// sirf /delivery/ me the. Wahan se yahan laaye gaye hain, taaki
+// rider ke liye ek hi darwaza bache.
+require_once __DIR__ . '/../inc/order-quotes.php';
+require_once __DIR__ . '/../inc/earning.php';
+require_once __DIR__ . '/../inc/dakiya.php';
 
 $me = sarathi_me();
 if (!$me) { redirect('/sarathi/'); }
@@ -56,6 +62,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     if ($do === 'samasya') {
         [$ok, $msg] = sarathi_samasya_likho($pdo, $uid, (int)post('oid'), post('kism'), post('note'));
         flash($msg); redirect('/sarathi/kaam.php');
+    }
+
+    // ---- दुकान का बिल ----
+    //
+    // Ye /delivery/index.php se jaisa ka taisa laaya gaya hai. Teen
+    // jaanch wahin se hain, aur teeno zaroori hain:
+    //
+    //   1. order sach me isi rider ka ho, aur abhi badalne laayak ho
+    //   2. agar daam pehle se tay (quote) ho chuka hai, to bill ka
+    //      daam usse alag na ho -- warna beech me hera-pheri ka
+    //      raasta khul jata hai
+    //   3. photo sach me lagi ho; na lage to kuch mat badliye
+    //
+    // Agar UPDATE na chale to photo mita dete hain, warna uploads/
+    // me anaath tasveerein jama hoti rehti hain.
+    if ($do === 'bill') {
+        $oid  = (int)post('oid');
+        $own  = $pdo->prepare("SELECT id FROM orders
+                                WHERE id=? AND delivery_user=?
+                                  AND status IN ('Naya','Confirm','Assign','Pickup')
+                                  AND " . quote_guard());
+        $own->execute([$oid, $uid]);
+        $quote = order_quote($pdo, $oid);
+        $raw   = post('amount');
+        $amt   = $raw === '' ? null : earning_cost($raw);
+
+        if (!$own->fetch()) {
+            flash('यह ऑर्डर आपके पास नहीं है या अब बदला नहीं जा सकता।');
+        } elseif ($quote && $raw !== '' && ($amt === null || (int)$amt !== (int)$quote['goods_amount'])) {
+            flash('बिल का दाम पक्के किए दाम से अलग है। आगे बढ़ने से पहले दफ़्तर से बात कीजिए।');
+        } elseif ($raw !== '' && $amt === null) {
+            flash('सामान की रकम पूरी संख्या में भरिए, या खाली छोड़ दीजिए।');
+        } else {
+            $ph = save_photo('bill', 'bill');
+            if (!$ph) {
+                flash('फ़ोटो नहीं लग पाई। साफ़ तस्वीर से दोबारा कोशिश कीजिए।');
+            } else {
+                $up = $pdo->prepare(
+                    "UPDATE orders SET bill_photo=?, goods_amount=COALESCE(?, goods_amount)
+                      WHERE id=? AND delivery_user=?
+                        AND status IN ('Naya','Confirm','Assign','Pickup')
+                        AND " . quote_guard() . "
+                        AND (NOT EXISTS (SELECT 1 FROM order_quotes q WHERE q.order_id=orders.id)
+                             OR ? IS NULL OR ?=goods_amount)");
+                $up->execute([$ph, $amt, $oid, $uid, $amt, $amt]);
+                if ($up->rowCount() === 1) {
+                    flash('बिल लग गया — ग्राहक को दिख रहा है।');
+                } else {
+                    drop_photo($ph);
+                    flash('ऑर्डर की हालत बदल गई है। सूची दोबारा देखिए।');
+                }
+            }
+        }
+        redirect('/sarathi/kaam.php');
     }
 }
 
@@ -171,6 +231,13 @@ sr_shell_head($me, 'kaam', 'काम', $duty_tak, ['kaam' => count($kaam)]);
         <?php if (!empty($o['shop_mobile'])): ?>
           <a class="sr-go-a" href="tel:<?= h(preg_replace('/\D/','',$o['shop_mobile'])) ?>"><?= sr_icon('phone',17) ?> दुकान</a>
         <?php endif; ?>
+        <?php
+          // "आ रहा हूँ" — dukaan se nikalte hi graahak ko WhatsApp.
+          // Graahak ka sabse bada sawaal yahi hota hai: "aa raha hai
+          // ya nahi". Ye /delivery/ me pehle se tha, yahan nahi.
+          if ($utha) echo str_replace('class="btn ', 'class="sr-go-a ',
+              dak_btn($o['mobile'], dak_order($o, 'nikla'), '💬 आ रहा हूँ', ''));
+        ?>
       </div>
 
       <!-- मैं निकल गया — ग्राहक को live location.
@@ -219,6 +286,36 @@ sr_shell_head($me, 'kaam', 'काम', $duty_tak, ['kaam' => count($kaam)]);
           </label>
         </form>
       <?php endif; ?>
+
+      <!-- ===== दुकान का बिल =====
+           Dukaan se nikalte hi bill ki photo. Isse graahak ko bharosa
+           rehta hai aur rider ka hisaab bhi saaf. Ye pehle sirf
+           /delivery/ me tha. -->
+      <div class="sr-bill">
+        <?php if (!empty($o['bill_photo'])): ?>
+          <a class="sr-bill-done" href="/uploads/<?= h($o['bill_photo']) ?>" target="_blank" rel="noopener">
+            <img src="/uploads/<?= h($o['bill_photo']) ?>" alt="बिल">
+            <span><b>बिल लग चुका है</b><small>ग्राहक को दिख रहा है<?=
+              $o['goods_amount'] !== null ? ' · सामान ₹' . (int)$o['goods_amount'] : '' ?></small></span>
+          </a>
+        <?php else: ?>
+          <form method="post" class="sr-act" enctype="multipart/form-data">
+            <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+            <input type="hidden" name="do" value="bill">
+            <input type="hidden" name="oid" value="<?= (int)$o['id'] ?>">
+            <label class="sr-lab">दुकान का <b>बिल</b> लगाइए</label>
+            <label class="sr-file-lab">
+              <input type="file" name="bill" accept="image/*" capture="environment" required>
+              <span>बिल की फ़ोटो खींचिए</span>
+            </label>
+            <div class="sr-pair">
+              <input class="sr-in" type="number" name="amount" inputmode="numeric"
+                     placeholder="सामान ₹" min="0" max="1000000">
+              <button class="sr-btn sr-btn-go" type="submit">बिल लगाइए</button>
+            </div>
+          </form>
+        <?php endif; ?>
+      </div>
 
       <!-- ===== समस्या बताइए =====
            Raste me sabse zyada yahi hota hai: graahak ghar par

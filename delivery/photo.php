@@ -17,7 +17,7 @@
 require_once __DIR__ . '/../inc/fn.php';
 require_once __DIR__ . '/../inc/items.php';
 
-$u = need_role(['delivery', 'admin']);
+$u = need_role(['delivery', 'rider', 'admin']);
 $page_title = 'सामान की फ़ोटो — Maakit';
 
 // ---------- photo aayi ----------

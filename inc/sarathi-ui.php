@@ -97,6 +97,14 @@ function sr_shell_head($me, $tab, $title, $duty_tak = null, $ginti = []) {
 
   <div class="sr-draw-gap"></div>
 
+  <?php
+    // "Saaman ki photo" — ye /delivery/photo.php par hai aur rehne
+    // de rahe hain. Maakit ke paas saaman rehta hi nahi, par rider
+    // ke HAATH me rehta hai -- isliye soochi usi se bharti hai.
+    // Pehle ye link sirf purane /delivery/ panel me tha, isliye
+    // /sarathi/ wale rider tak pahunchta hi nahi tha.
+  ?>
+  <a href="/delivery/photo.php"><?= sr_icon('box') ?> <span>सामान की फ़ोटो</span></a>
   <a href="tel:<?= h(MAAKIT_PHONE) ?>"><?= sr_icon('phone') ?> <span>Maakit को फ़ोन</span></a>
   <a href="/sarathi/madad.php"><?= sr_icon('help') ?> <span>मदद</span></a>
   <form method="post" action="/sarathi/kaam.php">

@@ -449,3 +449,20 @@ body.sr-login{
 @media (min-width:700px){
   .sr-main{padding-top:20px}
 }
+
+/* ---- दुकान का बिल ----
+   /delivery/ se yahan laaya gaya. Lag chuka ho to patli patti,
+   na laga ho to khula form. Rider ko do baar na sochna pade. */
+.sr-bill{margin-top:14px; padding-top:14px; border-top:1px solid var(--line)}
+.sr-bill .sr-pair{margin-top:10px}
+.sr-bill .sr-in{min-width:0; flex:1}
+.sr-bill-done{
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; background:#E8F3EA; border:1px solid #BFDCC6;
+  border-radius:12px; text-decoration:none; color:var(--ok);
+}
+.sr-bill-done img{
+  width:46px; height:46px; border-radius:9px; object-fit:cover; flex:none;
+}
+.sr-bill-done span{display:flex; flex-direction:column; min-width:0}
+.sr-bill-done small{color:var(--mut); font-size:13px}

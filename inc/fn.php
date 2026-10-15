@@ -53,7 +53,7 @@ function panel_home($role) {
         case 'admin':    return '/admin/dash.php';
         case 'bpo':      return '/bpo/';
         case 'designer': return '/admin/banners.php';
-        default:         return '/delivery/';
+        default:         return '/sarathi/kaam.php';
     }
 }
 function csrf() {
