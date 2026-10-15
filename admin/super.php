@@ -112,39 +112,81 @@ try {
 // config file bani hai ya nahi. Uske andar jhaanka nahi jaata.
 $sarathi_taiyar = is_file(__DIR__ . '/../smartsarathi/inc/config.php');
 
-// ---------- 4. सारे दरवाज़े ----------
+// ---------- 4. सारे दरवाज़े — देखने के लिए नहीं, भेजने के लिए ----------
+//
+// Ankit ko ye link DHOONDHNE ke liye nahi chahiye, DENE ke liye
+// chahiye -- sarathi ko uska, dukaandaar ko uska. Pehle wo har
+// baar address bar se uthata tha aur copy-paste karte-karte thak
+// jata tha.
+//
+// Isliye har link par do button hain: "copy" aur "WhatsApp par
+// bhejiye". Sandesh pehle se likha hua hai aur har aadmi ke liye
+// alag hai -- sarathi ko "apna kaam yahan dekhiye", dukaandaar ko
+// "apne daam yahan daaliye". Usse sirf naam chunna hai.
+//
+// Pata poora likha jata hai (https://maakit.in/...), adha nahi --
+// adha pata WhatsApp me link banta hi nahi.
+$ghar = 'https://maakit.in';
+
+// $sandesh khali ho to sirf copy ka button aata hai (apne panne
+// kisi ko bhejne ke liye nahi hote).
 $darwaze = [
     t('For you', 'आपके लिए') => [
-        ['/admin/super.php',    t('Everything in one place', 'सब एक जगह'),      t('this page', 'यही पन्ना')],
-        ['/admin/dash.php',     t('Numbers & charts', 'आँकड़े और चार्ट'),        t('week-on-week', 'हफ़्ते की तुलना')],
-        ['/admin/summary.php',  t('Monthly accounts', 'महीने का हिसाब'),        ''],
-        ['/admin/readiness.php',t('Launch readiness', 'Launch की तैयारी'),      t('what is still missing in setup', 'setup में क्या बाकी है')],
-        ['/delivery/',          t("Office's hand", 'दफ़्तर का हाथ'),            t("record an order in the rider's place", 'सारथी की जगह ऑर्डर दर्ज करना')],
+        ['/admin/super.php',    t('Everything in one place', 'सब एक जगह'),      t('this page', 'यही पन्ना'), ''],
+        ['/admin/dash.php',     t('Numbers & charts', 'आँकड़े और चार्ट'),        t('week-on-week', 'हफ़्ते की तुलना'), ''],
+        ['/admin/summary.php',  t('Monthly accounts', 'महीने का हिसाब'),        '', ''],
+        ['/admin/readiness.php',t('Launch readiness', 'Launch की तैयारी'),      t('what is still missing in setup', 'setup में क्या बाकी है'), ''],
+        ['/delivery/',          t("Office's hand", 'दफ़्तर का हाथ'),            t("record an order in the rider's place", 'सारथी की जगह ऑर्डर दर्ज करना'), ''],
     ],
     t('Day-to-day', 'रोज़ का काम') => [
-        ['/admin/areas.php',      t('Areas', 'इलाके'),                 t('a new town starts here', 'नया शहर यहीं से')],
-        ['/admin/rates.php',      t('Delivery rates', 'भाड़े का रेट'),   ''],
-        ['/admin/businesses.php', t('Shops', 'दुकानें'),                ''],
-        ['/admin/transport.php',  t('Vehicles', 'गाड़ियाँ'),             t('see the papers yourself', 'काग़ज़ ख़ुद देखिए')],
-        ['/admin/sarathi.php',    t('Riders', 'सारथी'),                 ''],
-        ['/admin/users.php',      t('Team', 'टीम'),                     ''],
-        ['/admin/daam.php',       t('Prices', 'दाम'),                   ''],
-        ['/admin/support.php',    t('Complaints', 'शिकायत'),            ''],
-        ['/admin/settings.php',   t('Settings', 'सेटिंग'),               ''],
+        ['/admin/areas.php',      t('Areas', 'इलाके'),                 t('a new town starts here', 'नया शहर यहीं से'), ''],
+        ['/admin/rates.php',      t('Delivery rates', 'भाड़े का रेट'),   '', ''],
+        ['/admin/businesses.php', t('Shops', 'दुकानें'),                '', ''],
+        ['/admin/transport.php',  t('Vehicles', 'गाड़ियाँ'),             t('see the papers yourself', 'काग़ज़ ख़ुद देखिए'), ''],
+        ['/admin/sarathi.php',    t('Riders', 'सारथी'),                 '', ''],
+        ['/admin/users.php',      t('Team', 'टीम'),                     '', ''],
+        ['/admin/daam.php',       t('Prices', 'दाम'),                   '', ''],
+        ['/admin/support.php',    t('Complaints', 'शिकायत'),            '', ''],
+        ['/admin/settings.php',   t('Settings', 'सेटिंग'),               '', ''],
     ],
-    t('Your people log in here', 'आपके लोग यहाँ घुसते हैं') => [
-        ['/bpo/',               t('BPO staff', 'BPO स्टाफ़'),          t('takes calls, enters orders', 'कॉल सुनकर ऑर्डर डालता है')],
-        ['/sarathi/',           t('Sarathi (rider)', 'सारथी'),        t('one door only', 'अब एक ही दरवाज़ा')],
-        ['/delivery/photo.php', t('Product photos', 'सामान की फ़ोटो'),  t('the rider fills the catalogue', 'सारथी से सूची भरती है')],
-        ['/shop.php',           t('Shopkeeper', 'दुकानदार'),           t('puts prices, sees orders', 'दाम डालता है, ऑर्डर देखता है')],
-        ['/login.php',          t('Everyone else', 'बाकी सब'),         t('one login for all', 'सबका एक ही login')],
+    t('Send these to your people', 'ये अपने लोगों को भेजिए') => [
+        ['/sarathi/', t('Sarathi (rider)', 'सारथी'), t('one door only', 'अब एक ही दरवाज़ा'),
+            "नमस्ते 🙏\n\nआप *Maakit* के सारथी हैं। अपना काम यहाँ देखिए:\n\n{link}\n\n"
+          . "अपने मोबाइल नंबर और कोड से घुसिए। हाज़िरी लगाइए, काम अपने आप आ जाएगा।\n\n"
+          . "कुछ अटके तो फ़ोन कीजिए — " . MAAKIT_NUMBER_SHOW],
+
+        ['/delivery/photo.php', t('Product photos', 'सामान की फ़ोटो'), t('the rider fills the catalogue', 'सारथी से सूची भरती है'),
+            "जो सामान आपके हाथ में आए, उसकी एक फ़ोटो यहाँ लगा दीजिए:\n\n{link}\n\n"
+          . "इससे सूची भरती जाएगी और ग्राहक को असली सामान दिखेगा।"],
+
+        ['/shop.php', t('Shopkeeper', 'दुकानदार'), t('puts prices, sees orders', 'दाम डालता है, ऑर्डर देखता है'),
+            "नमस्ते 🙏\n\nआपकी दुकान अब *Maakit* पर है। अपने दाम डालने और ऑर्डर देखने के लिए:\n\n{link}\n\n"
+          . "ग्राहक आपको सीधे पैसे देगा — Maakit सिर्फ़ सामान पहुँचाता है, पैसा अपने पास नहीं रखता।\n\n"
+          . "कोई बात हो तो — " . MAAKIT_NUMBER_SHOW],
+
+        ['/bpo/', t('BPO staff', 'BPO स्टाफ़'), t('takes calls, enters orders', 'कॉल सुनकर ऑर्डर डालता है'),
+            "यहाँ से ऑर्डर डालिए:\n\n{link}\n\nअपने username और password से घुसिए।"],
+
+        ['/login.php', t('Everyone else', 'बाकी सब'), t('one login for all', 'सबका एक ही login'),
+            "Maakit में घुसने का रास्ता:\n\n{link}"],
     ],
-    t('What the customer sees', 'ग्राहक क्या देखता है') => [
-        ['/',            t('Home', 'घर का पन्ना'),      ''],
-        ['/bazaar.php',  t('Shops & goods', 'बाज़ार'),   ''],
-        ['/order.php',   t('Place an order', 'ऑर्डर'),  ''],
-        ['/track.php',   t('Where is my order', 'कहाँ पहुँचा'), ''],
-        ['/ride.php',    t('Book a ride', 'सवारी'),     t('new, not tested yet', 'नया, अभी जाँचा नहीं')],
+    t('Send these to customers', 'ये ग्राहकों को भेजिए') => [
+        ['/', t('Home', 'घर का पन्ना'), '',
+            "*Maakit* — गाँव में घर तक सामान 🛵\n\n"
+          . "राशन, दवाई, खाना — किसी भी दुकान का सामान मँगाइए। दुकान का ही दाम, "
+          . "ऊपर सिर्फ़ पहुँचाने का चार्ज।\n\n{link}\n\nया फ़ोन कीजिए — " . MAAKIT_NUMBER_SHOW],
+
+        ['/bazaar.php', t('Shops & goods', 'बाज़ार'), '',
+            "गाँव की दुकानें और सामान यहाँ देखिए:\n\n{link}"],
+
+        ['/order.php', t('Place an order', 'ऑर्डर'), '',
+            "यहाँ से सामान मँगाइए:\n\n{link}\n\nया फ़ोन कीजिए — " . MAAKIT_NUMBER_SHOW],
+
+        ['/track.php', t('Where is my order', 'कहाँ पहुँचा'), '',
+            "अपना सामान कहाँ पहुँचा, यहाँ देखिए:\n\n{link}\n\nऑर्डर नंबर और मोबाइल डालिए।"],
+
+        ['/ride.php', t('Book a ride', 'सवारी'), t('new, not tested yet', 'नया, अभी जाँचा नहीं'),
+            "सवारी बुक कीजिए:\n\n{link}"],
     ],
 ];
 
@@ -171,14 +213,22 @@ include __DIR__ . '/../inc/panel.php';
   .sp-num small{color:var(--mut,#6B5D55);font-size:13.5px}
   .sp-grp{margin-top:18px}
   .sp-grp h3{font-size:15px;color:var(--mut,#6B5D55);margin:0 0 8px;font-weight:700}
-  .sp-link{display:flex;align-items:baseline;gap:9px;padding:11px 13px;
+  .sp-link{display:flex;align-items:center;gap:10px;padding:10px 12px;
            background:#fff;border:1px solid var(--line,#E3D8C6);border-radius:11px;
-           margin-bottom:7px;text-decoration:none;color:inherit}
-  .sp-link b{font-weight:700}
-  .sp-link small{color:var(--mut,#6B5D55);font-size:13px}
-  .sp-link code{margin-left:auto;font-size:12.5px;color:var(--mut,#6B5D55);
-                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%}
-  @media(max-width:430px){.sp-link code{display:none}}
+           margin-bottom:7px;flex-wrap:wrap}
+  .sp-link-a{flex:1;min-width:0;display:flex;align-items:baseline;gap:9px;
+             flex-wrap:wrap;text-decoration:none;color:inherit}
+  .sp-link-a b{font-weight:700}
+  .sp-link-a small{color:var(--mut,#6B5D55);font-size:13px}
+  .sp-link-a code{width:100%;font-size:12px;color:var(--mut,#6B5D55);
+                  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sp-do{display:flex;gap:7px;flex:none}
+  .sp-copy,.sp-wa{font:inherit;font-size:14px;font-weight:700;border-radius:9px;
+                  padding:9px 13px;min-height:40px;cursor:pointer;border:0;
+                  text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+  .sp-copy{background:#EFEAE0;color:var(--ink,#241A16)}
+  .sp-copy-ok{background:#E8F3EA;color:#1C5130}
+  .sp-wa{background:#1F6B3A;color:#fff}
 </style>
 
 <section><div class="wrap">
@@ -233,18 +283,73 @@ include __DIR__ . '/../inc/panel.php';
 
   <!-- ===== 4. सारे दरवाज़े ===== -->
   <h2 class="sp-sec"><?= h(t('Every door', 'सारे दरवाज़े')) ?></h2>
+  <p class="sp-lead"><?= h(t(
+     'Tap the name to open it. Tap copy or WhatsApp to hand it to someone — the message is already written.',
+     'नाम दबाइए तो पन्ना खुलेगा। किसी को देना हो तो "नक़ल" या "WhatsApp" दबाइए — सन्देश पहले से लिखा है।')) ?></p>
+
   <?php foreach ($darwaze as $grp => $rows): ?>
     <div class="sp-grp">
       <h3><?= h($grp) ?></h3>
-      <?php foreach ($rows as [$url, $naam, $kyun]): ?>
-        <a class="sp-link" href="<?= h($url) ?>">
-          <b><?= h($naam) ?></b>
-          <?php if ($kyun): ?><small><?= h($kyun) ?></small><?php endif; ?>
-          <code><?= h($url) ?></code>
-        </a>
+      <?php foreach ($rows as [$url, $naam, $kyun, $sandesh]):
+        $pura = $ghar . $url;
+      ?>
+        <div class="sp-link">
+          <a class="sp-link-a" href="<?= h($url) ?>">
+            <b><?= h($naam) ?></b>
+            <?php if ($kyun): ?><small><?= h($kyun) ?></small><?php endif; ?>
+            <code><?= h($pura) ?></code>
+          </a>
+          <div class="sp-do">
+            <button type="button" class="sp-copy" data-link="<?= h($pura) ?>"
+                    data-done="<?= h(t('Copied', 'नक़ल हो गई')) ?>"><?= h(t('Copy', 'नक़ल')) ?></button>
+            <?php if ($sandesh): ?>
+              <a class="sp-wa" target="_blank" rel="noopener"
+                 href="https://wa.me/?text=<?= h(rawurlencode(str_replace('{link}', $pura, $sandesh))) ?>">WhatsApp</a>
+            <?php endif; ?>
+          </div>
+        </div>
       <?php endforeach; ?>
     </div>
   <?php endforeach; ?>
 
 </div></section>
+
+<script>
+// नक़ल — एक दबाने में.
+//
+// navigator.clipboard sirf https par chalta hai. Gaon me koi
+// purana phone http par khole to wo chup-chaap fail ho jata, aur
+// Ankit ko lagta ki nakal ho gayi. Isliye na chale to purana
+// tareeka, aur wo bhi na chale to link chun kar dikha dete hain
+// taaki wo khud daba kar copy kar le. Chup-chaap kabhi nahi.
+(function () {
+  function batao(b, ok) {
+    var tha = b.textContent;
+    b.textContent = ok ? (b.dataset.done || 'OK') : '<?= h(t('Select and copy', 'चुनकर कॉपी कीजिए')) ?>';
+    b.classList.toggle('sp-copy-ok', ok);
+    setTimeout(function () { b.textContent = tha; b.classList.remove('sp-copy-ok'); }, 1800);
+  }
+  function purana(text) {
+    var t = document.createElement('textarea');
+    t.value = text; t.setAttribute('readonly', '');
+    t.style.position = 'fixed'; t.style.top = '-1000px';
+    document.body.appendChild(t); t.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(t);
+    return ok;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.sp-copy');
+    if (!b) return;
+    var link = b.dataset.link;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(function () { batao(b, true); },
+                                               function () { batao(b, purana(link)); });
+    } else {
+      batao(b, purana(link));
+    }
+  });
+})();
+</script>
 <?php include __DIR__ . '/../inc/foot.php'; ?>

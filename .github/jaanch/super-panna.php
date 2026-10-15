@@ -64,6 +64,37 @@ try{
     sp_check(strpos($html,'Every door')!==false,'saare darwaze ka hissa hona chahiye');
     sp_check(substr_count($html,'class="sp-link"')>=18,'har panel ka link hona chahiye');
 
+    // ---- link DENE ke liye hain, sirf dekhne ke liye nahi ----
+    // Ankit ko sarathi ko uska link dena hota hai, dukaandaar ko uska.
+    // Teen baatein zaroori hain, aur teeno alag tarah se toot sakti hain:
+    sp_check(substr_count($html,'class="sp-copy"')>=18,'har link par nakal ka button hona chahiye');
+    sp_check(substr_count($html,'class="sp-wa"')>=8,'bhejne layak link par WhatsApp ka button hona chahiye');
+
+    // 1. pata POORA ho. Adha pata (/sarathi/) WhatsApp me link banta
+    //    hi nahi -- aadmi use daba kar kahin nahi pahunchta.
+    sp_check(preg_match_all('#<code>(https://maakit\.in/[^<]*)</code>#',$html,$cm)>=18,
+             'har link ka poora pata (https://maakit.in/...) dikhna chahiye');
+    foreach($cm[1] as $pata)
+        sp_check(strpos($pata,'https://maakit.in')===0,"adha pata mila: $pata");
+
+    // 2. har WhatsApp sandesh me wahi link sach me ho
+    sp_check(preg_match_all('#href="https://wa\.me/\?text=([^"]+)"#',$html,$wm)>=8,
+             'WhatsApp ke link bante hue dikhne chahiye');
+    foreach($wm[1] as $enc){
+        $txt=rawurldecode(html_entity_decode($enc,ENT_QUOTES,'UTF-8'));
+        sp_check(strpos($txt,'https://maakit.in/')!==false,'sandesh me poora link hona chahiye');
+        sp_check(strpos($txt,'{link}')===false,'sandesh me {link} bina badle reh gaya');
+    }
+
+    // 3. sarathi ko sarathi ka link jaye, dukaandaar ko dukaan ka --
+    //    badle hue sandesh sabse bura hai, kyunki dikhta nahi
+    $sab=implode("\n",array_map(fn($e)=>rawurldecode(html_entity_decode($e,ENT_QUOTES,'UTF-8')),$wm[1]));
+    sp_check(preg_match('#सारथी[^\n]*\n*[^@]{0,120}https://maakit\.in/sarathi/#u',$sab)===1
+             ||strpos($sab,'https://maakit.in/sarathi/')!==false,'sarathi wala link hona chahiye');
+    sp_check(strpos($sab,'https://maakit.in/shop.php')!==false,'dukaandaar wala link hona chahiye');
+    // apne panne kisi ko bheje nahi jaate
+    sp_check(strpos($sab,'/admin/')===false,'admin ke panne ka koi WhatsApp sandesh nahi hona chahiye');
+
     // ---- 2. ginti sach bole ----
     foreach(['Naya','Naya','Confirm'] as $i=>$st){
         $no='CI-SP-'.bin2hex(random_bytes(4));
@@ -130,7 +161,7 @@ try{
     sp_http('/sarathi/',['csrf'=>sp_csrf($html),'who'=>$mobile,'pass'=>$code],302);
     sp_http('/admin/super.php',null,302);   // rider ko andar nahi ghusna chahiye
 
-    echo "Super panna: ginti sach bolti hai, shunya chhupti hai, Sarathi ka DB chhua nahi, sirf admin ke liye\n";
+    echo "Super panna: ginti sach bolti hai, poore link aur WhatsApp sandesh bante hain, Sarathi ka DB chhua nahi, sirf admin ke liye\n";
 }finally{
     foreach($made as $id)$pdo->prepare('DELETE FROM orders WHERE id=?')->execute([$id]);
     foreach([$boss,$rider] as $id)if($id)$pdo->prepare('DELETE FROM users WHERE id=?')->execute([$id]);
