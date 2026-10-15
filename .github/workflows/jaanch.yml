@@ -128,6 +128,7 @@ jobs:
           php .github/jaanch/partner-flow.php
           php .github/jaanch/sarathi-flow.php
           php .github/jaanch/ek-darwaza.php
+          php .github/jaanch/super-panna.php
           php .github/jaanch/ride-flow.php
           node --check assets/auth-gateway.js
           node --check assets/maakit-api.js

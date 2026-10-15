@@ -25,6 +25,9 @@ $menu = [];   // [group label => [href => [label, icon]]]
 if ($role === 'admin') {
     $menu = [
         t('Overview', 'सारांश') => [
+            // Sabse upar -- subah yahi kholna hai. Ruka hua kaam, aaj ka
+            // hisaab aur saare darwaze ek saath.
+            '/admin/super.php'     => [t('Everything in one place', 'सब एक जगह'), 'star'],
             '/admin/dash.php'      => [t('Dashboard', 'डैशबोर्ड'), 'chart'],
             '/admin/'              => [t('Orders', 'ऑर्डर'), 'box'],
             '/bpo/bookings.php'    => [t('Bookings', 'बुकिंग'), 'calendar'],
