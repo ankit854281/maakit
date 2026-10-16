@@ -262,6 +262,7 @@ async function loadAll() {
     S.grid = ttGenerate(2026);
     log('Setup', 'School data created: 16 teachers, 13 classes, periods per week and first weekly timetable');
   }
+  if (U.role === 'principal') applyBoardPlan();
 }
 async function ensureDate(d) {
   if (!d || !loadedFrom || d >= loadedFrom || DAYS_LOADED[d]) return;
@@ -379,9 +380,10 @@ function arrangement(date) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const absent = staffAbsent(date), extra = {}, slips = [];
   absent.forEach(t => BELLS.forEach((b, i) => {
-    const a = teacherAt(t, d, i); if (!a) return;
+    const a = teacherAt(t, d, i); if (!a || examBlocks(date, a.c)) return;
     const taken = slips.filter(s => s.bell === i).map(s => s.sub);
-    const pool = Object.keys(S.teachers).filter(x => !absent.includes(x) && !teacherAt(x, d, i) && !taken.includes(x)
+    const busy = x => { const q = teacherAt(x, d, i); return q && !examBlocks(date, q.c); };
+    const pool = Object.keys(S.teachers).filter(x => !absent.includes(x) && !busy(x) && !taken.includes(x)
       && (!S.teachers[x].bells || S.teachers[x].bells.includes(i)));
     const score = x => { let s = 0;
       if (S.alloc.some(q => q.t === x && q.s === a.s)) s += 5;
@@ -398,7 +400,7 @@ function myBells(tid, date) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   if (staffAbsent(date).includes(tid)) return [];
   const out = [];
-  BELLS.forEach((b, i) => { const a = teacherAt(tid, d, i); if (a) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
+  BELLS.forEach((b, i) => { const a = teacherAt(tid, d, i); if (a && !examBlocks(date, a.c)) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
   arrangement(date).filter(s => s.sub === tid).forEach(s => out.push({ bell: s.bell, cls: s.cls, subj: s.subj, arr: true, for: s.absent }));
   return out.sort((x, y) => x.bell - y.bell);
 }
@@ -434,10 +436,12 @@ function sylStatus(key, date) {
   const y = S.syl[key]; if (!y || !y.chapters.length) return null;
   const done = y.chapters.filter(ch => ch.done).length, total = y.chapters.length;
   let expected = null, lag = false;
-  if (y.targetCount && y.targetDate) {
-    const st = new Date(S.settings.sessionStart + 'T00:00:00'), en = new Date(y.targetDate + 'T00:00:00'), now = new Date(date + 'T00:00:00');
+  const dl = sylDeadline(key.split('|')[0]);          // class-wide hard deadline (e.g. Class 10: 100% by 19 Dec)
+  const tCount = dl ? total : y.targetCount, tDate = dl || y.targetDate;
+  if (tCount && tDate) {
+    const st = new Date(S.settings.sessionStart + 'T00:00:00'), en = new Date(tDate + 'T00:00:00'), now = new Date(date + 'T00:00:00');
     const f = Math.max(0, Math.min(1, (now - st) / Math.max(1, en - st)));
-    expected = Math.round(y.targetCount * f * 10) / 10;
+    expected = Math.round(tCount * f * 10) / 10;
     lag = expected - done >= 1;
   }
   return { done, total, expected, lag, pct: Math.round(done / total * 100) };
@@ -458,7 +462,7 @@ function studentById(id) { return S.students.find(s => s.id === id); }
 function alerts(date) {
   const A = [], isToday = date === todayISO();
   if (dayIdx(date) < 0) return [{ lv:'b', x:'Sunday — no classes.' }];
-  const hol = holidayOn(date); if (hol) return [{ lv:'b', x:'Holiday: ' + hol.title + ' — no classes.' }];
+  const hol = holidayOn(date); if (hol) return [{ lv:'b', x:'Holiday: ' + hol.title + ' — no classes.' }, ...boardAlerts(date)];
   if (!isToday || nowMin() >= toMin(S.settings.attendanceCutoff)) {
     const missing = CLASS_NAMES.filter(c => studentsOf(c).length && !attOf(date, c));
     if (missing.length) A.push({ lv:'r', x:`Student attendance not marked: Class ${missing.join(', ')}`, go:'attendance' });
@@ -467,6 +471,7 @@ function alerts(date) {
   if (pend.length) A.push({ lv:'a', x:`Diary pending: ${pend.map(([t, n]) => T(t).name + ' (' + n + ')').join(', ')}`, go:'diaries', wa: pend.map(([t]) => t) });
   const unc = arrangement(date).filter(s => !s.sub);
   if (unc.length) A.push({ lv:'r', x:`${unc.length} bell(s) with no free teacher to cover — see Arrangement`, go:'staff' });
+  A.push(...boardAlerts(date));
   const lpw = Object.values(S.lplan).filter(p => p.status === 'Submitted');
   if (lpw.length) A.push({ lv:'a', x:`${lpw.length} lesson plan(s) waiting for your approval`, go:'lplans' });
   const pl = S.leaves.filter(l => l.status === 'Pending');
@@ -502,7 +507,7 @@ async function go(v, params) { view = v; P = params || {}; if (P.date) await ens
 const NAV = {
   principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
-              ['lplans','fa-clipboard-check','Lesson Plans'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
+              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
@@ -511,7 +516,7 @@ const NAV = {
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
   student:   [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
+  chairman:  [['dash','fa-gauge','Dashboard'],['exams','fa-file-pen','Exams'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
 const PRIMARY = { student: ['phome','phw','presults','pnotices'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
@@ -1000,16 +1005,19 @@ function vMarks() {
   const mine = myAllocs(U.tid);
   if (!mine.length) return head('Marks Entry') + '<div class="card text-sm">No subjects assigned.</div>';
   const ex = S.exams.find(e => e.id === P.ex) || S.exams.find(e => e.date >= todayISO()) || S.exams[0];
-  const key = P.key && mine.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(mine[0].c, mine[0].s);
-  const [c, subj] = key.split('|'); const rec = (S.marks[ex.id] || {})[key] || { max: 25, m: {} };
+  const inEx = mine.filter(a => examClasses(ex).includes(a.c)), pick = inEx.length ? inEx : mine;
+  const key = P.key && pick.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(pick[0].c, pick[0].s);
+  const [c, subj] = key.split('|');
+  const paper = (ex.sheet || []).find(p => p.subjects.includes(subj));
+  const rec = (S.marks[ex.id] || {})[key] || { max: paper ? (paper.subjects.length === 1 ? paper.max : '') : 25, m: {} };
   const list = studentsOf(c);
   const vals = list.map(s => rec.m[s.id]).filter(v => v !== undefined && v !== '' && v !== 'AB').map(Number);
   const avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length / rec.max * 100) : null;
   return head('Marks Entry', 'Type marks; write AB for absent. Totals, grades and weak-student alerts are automatic.') + `
     <div class="card grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div><label class="lbl">Exam</label><select class="inp" onchange="go('marks',{ex:this.value,key:${jsq(key)}})">${S.exams.map(e => `<option value="${e.id}" ${e.id === ex.id ? 'selected' : ''}>${esc(e.name)} (${fmtDate(e.date)})</option>`).join('')}</select></div>
-      <div><label class="lbl">Class & subject</label><select class="inp" onchange="go('marks',{ex:'${ex.id}',key:this.value})">${mine.map(a => { const k = sylKey(a.c, a.s); return `<option value="${esc(k)}" ${k === key ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select></div>
-      <div><label class="lbl">Maximum marks</label><input id="mk-max" type="number" min="1" class="inp" value="${rec.max}"></div>
+      <div><label class="lbl">Class & subject</label><select class="inp" onchange="go('marks',{ex:'${ex.id}',key:this.value})">${pick.map(a => { const k = sylKey(a.c, a.s); return `<option value="${esc(k)}" ${k === key ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select></div>
+      <div><label class="lbl">Maximum marks${paper && paper.subjects.length > 1 ? ` (your part of ${esc(paper.title)}, ${paper.max} in all)` : ''}</label><input id="mk-max" type="number" min="1" class="inp" value="${rec.max}"></div>
     </div>
     <div class="card">
       ${list.length ? `<div class="space-y-1">${list.map((s, i) => `<div class="flex items-center gap-3 py-1 border-b border-slate-100"><span class="w-6 text-xs text-slate-400">${i + 1}</span><span class="flex-1 text-sm font-semibold">${esc(s.name)}</span>
@@ -1802,8 +1810,8 @@ function vCalendar() {
   const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate(), lead = (first.getDay() + 6) % 7;
   const prev = new Date(y, m - 2, 1), next = new Date(y, m, 1);
   const ymOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1);
-  const exams = S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam', exam: true }));
-  const items = d => [...calOn(d), ...exams.filter(e => e.date === d)];
+  const exams = examItems();
+  const items = d => [...calOn(d), ...exams.filter(e => e.date <= d && (e.to || e.date) >= d)];
   const colour = t => t === 'Holiday' ? 'bg-rose-100 text-rose-800' : t === 'Exam' ? 'bg-purple-100 text-purple-800' : t === 'PTM' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
   let cells = '';
   for (let i = 0; i < lead; i++) cells += '<div></div>';
@@ -1812,7 +1820,7 @@ function vCalendar() {
     cells += `<div class="min-h-[64px] rounded-lg border p-1 ${iso === todayISO() ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-200'} ${sun || it.some(e => e.type === 'Holiday') ? 'bg-rose-50/60' : 'bg-white'}">
       <div class="text-xs font-bold ${sun ? 'text-rose-600' : 'text-slate-600'}">${d}</div>${it.map(e => `<div class="text-[10px] leading-tight mt-0.5 px-1 rounded ${colour(e.type)}">${esc(e.title)}</div>`).join('')}</div>`;
   }
-  const list = [...S.cal.filter(e => (e.to || e.date).slice(0, 7) >= ym && e.date.slice(0, 7) <= ym), ...exams.filter(e => e.date.slice(0, 7) === ym)].sort((a, b) => a.date.localeCompare(b.date));
+  const list = [...S.cal.filter(e => (e.to || e.date).slice(0, 7) >= ym && e.date.slice(0, 7) <= ym), ...exams.filter(e => e.date.slice(0, 7) <= ym && (e.to || e.date).slice(0, 7) >= ym)].sort((a, b) => a.date.localeCompare(b.date));
   const canEdit = U.role === 'principal';
   return head('School Calendar', 'Holidays here are automatically treated as no-class days everywhere in the ERP.',
       `<button onclick="go('calendar',{ym:'${ymOf(prev)}'})" class="btn btn-l">‹</button><span class="btn btn-l pointer-events-none">${first.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span><button onclick="go('calendar',{ym:'${ymOf(next)}'})" class="btn btn-l">›</button>`) + `
@@ -2031,7 +2039,7 @@ function vPHome() {
   const pts = PD.behav.filter(b => b.sid === kid.id && b.date.slice(0, 7) === date.slice(0, 7)).reduce((s, b) => s + (+b.pts || 0), 0);
   const spk = PD.speak.filter(x => x.sid === kid.id).length;
   const badge = BADGES.find(([min]) => spk >= min);
-  const next = [...S.cal, ...S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam' }))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  const next = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
   const todayBox = at.today ? (at.today.present ? '<span class="text-leaf font-semibold">Present today</span>' : '<span class="text-rose font-semibold">Absent today</span>') : '<span class="text-slate-500">Today\'s attendance not marked yet</span>';
   return `${kidSwitch()}
     <section class="kid-hero">
@@ -2049,6 +2057,7 @@ function vPHome() {
     <div class="card flex items-center justify-between gap-3"><span>${todayBox}</span><span class="text-sm text-slate-500">${fmtDate(date)}</span></div>
     <div class="card"><h3 class="h3">Homework today</h3>${hwToday.length ? `<ul class="space-y-2 mt-2">${hwToday.map(h => `<li class="flex gap-3"><span class="subj">${esc(h.subj)}</span><span>${esc(h.hw)}</span></li>`).join('')}</ul>` : '<p class="text-sm text-slate-500 mt-1">No homework written yet today.</p>'}
       <button onclick="go('phw')" class="btn btn-l btn-sm mt-3">All homework</button></div>
+    ${parentDateSheets(kid)}
     ${wordCard(date)}
     ${next.length ? `<div class="card"><h3 class="h3">Coming up</h3>${next.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}</span></div>`).join('')}</div>` : ''}`;
 }
@@ -2081,7 +2090,8 @@ function vPResults() {
 function vPNotices() {
   const date = todayISO();
   const pinCard = `<div class="card flex items-center justify-between gap-3"><span class="text-sm">Change your login PIN</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change PIN</button></div>`;
-  const up = [...S.cal, ...S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam' }))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 12);
+  const kidCls = PD.kids.map(k => k.cls);
+  const up = [...S.cal, ...examItems().filter(e => e.cls.some(c => kidCls.includes(c)))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 12);
   return `${head('Notices & calendar')}
     ${PD.notices.length ? PD.notices.sort((a, b) => String(b.date).localeCompare(String(a.date))).map(n => `<div class="card"><div class="flex justify-between gap-2"><h3 class="h3">${esc(n.title)}</h3><span class="text-sm text-slate-500 shrink-0">${fmtDate(n.date)}</span></div><p class="text-sm whitespace-pre-wrap mt-1">${esc(n.body)}</p></div>`).join('') : '<div class="card text-sm text-slate-500">No notices.</div>'}
     <div class="card"><h3 class="h3">Holidays, exams and events</h3>${up.length ? up.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}${e.to && e.to !== e.date ? ' – ' + fmtDate(e.to) : ''}</span></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing scheduled.</p>'}</div>
@@ -2119,11 +2129,166 @@ async function makeParentCode(p) {
   } catch (e) { toast(e.message, 'r'); }
 }
 
+// ---------------------------------------------------------------- BOARD EXAMS (Class 10 plan 2026–27) + DATE SHEETS
+// An exam may carry: classes (which classes sit it), to (last day), noClasses (normal
+// bells stop for those classes during the exam), sheet (date sheet: one paper per day,
+// a paper can combine several timetable subjects, e.g. Science = Physics/Chemistry + Biology),
+// time, reportDate (results go to parents from this day) and sent {studentId: time}.
+const BOARD_PLAN_ID = 'board-2026-27';
+function examClasses(e) { return e && e.classes && e.classes.length ? e.classes : CLASS_NAMES; }
+function examEnd(e) { return e.to || (e.sheet && e.sheet.length ? e.sheet.map(x => x.date).sort().pop() : e.date); }
+function examBlocks(date, cls) { return S.exams.some(e => e.noClasses && e.date <= date && examEnd(e) >= date && examClasses(e).includes(cls)); }
+function examShort(e) { return String(e.name || '').replace(/\s*\(.*\)\s*$/, ''); }
+function examItems() {
+  const out = [];
+  S.exams.forEach(e => {
+    if (e.sheet && e.sheet.length) e.sheet.forEach(p => out.push({ date: p.date, to: '', title: examShort(e) + ': ' + p.title, type: 'Exam', exam: true, cls: examClasses(e) }));
+    else out.push({ date: e.date, to: e.to || '', title: e.name, type: 'Exam', exam: true, cls: examClasses(e) });
+  });
+  return out;
+}
+function paperTeachers(cls, p) { return [...new Set(p.subjects.map(s => (S.alloc.find(a => a.c === cls && a.s === s) || {}).t).filter(Boolean))].map(t => T(t).name); }
+function sylDeadline(cls) { return ((S.settings || {}).sylDeadlines || {})[cls] || null; }
+
+function applyBoardPlan() {
+  const set = S.settings; set.plans = set.plans || {};
+  if (set.plans[BOARD_PLAN_ID]) return;
+  const P10 = (date, title, subjects, max) => ({ date, title, subjects, max });
+  const upsert = e => { const i = S.exams.findIndex(x => x.id === e.id); if (i >= 0) S.exams[i] = { ...S.exams[i], ...e }; else S.exams.push(e); };
+  upsert({ id: 'pb1', name: 'Pre-Board 1 (Class 10)', date: '2026-12-21', to: '2026-12-28', classes: ['10th'], noClasses: true, time: '09:00–12:00', reportDate: '2026-12-30',
+    sheet: [P10('2026-12-21', 'Mathematics (Standard / Basic)', ['Mathematics'], 80), P10('2026-12-22', 'Hindi', ['Hindi'], 80),
+            P10('2026-12-23', 'English Language & Literature', ['English'], 80), P10('2026-12-24', 'Science (Physics, Chemistry, Biology)', ['Physics/Chemistry', 'Biology'], 80),
+            P10('2026-12-26', 'Social Science', ['Social Science'], 80), P10('2026-12-28', 'Computer / IT', ['Computer'], 50)] });
+  upsert({ id: 'pb2', name: 'Pre-Board 2 (Class 10)', date: '2027-02-01', to: '2027-02-08', classes: ['10th'], noClasses: true, time: '09:00–12:00', sheet: [] });
+  upsert({ id: 'ann', name: 'Annual Exam (PG–9th)', date: '2027-02-23', to: '2027-03-11', classes: CLASS_NAMES.filter(c => c !== '10th'), noClasses: true });
+  S.exams.sort((a, b) => a.date.localeCompare(b.date));
+  const cal = [['bp-syl', '2026-12-19', '', 'Class 10: full syllabus must be complete', 'Event'], ['bp-xmas', '2026-12-25', '', 'Christmas (BSA holiday list)', 'Holiday'],
+               ['bp-eval', '2026-12-29', '', 'Pre-Board 1: checking and marks entry', 'Event'], ['bp-ptm', '2026-12-30', '', 'Pre-Board 1 PTM (Class 10) and winter worksheets', 'PTM'],
+               ['bp-winter', '2026-12-31', '2027-01-14', 'Winter vacation (BSA)', 'Holiday'], ['bp-doubt', '2027-01-16', '2027-01-24', 'Class 10 doubt-clearing workshops', 'Event']];
+  cal.forEach(([id, date, to, title, type]) => { if (!S.cal.some(e => e.id === id || (e.date === date && e.title === title))) S.cal.push({ id, date, to, title, type }); });
+  S.cal.sort((a, b) => a.date.localeCompare(b.date));
+  set.sylDeadlines = { ...(set.sylDeadlines || {}), '10th': '2026-12-19' };
+  set.plans[BOARD_PLAN_ID] = Date.now();
+  log('Exam Plan', 'Class 10 board plan 2026–27 added: syllabus deadline 19 Dec; Pre-Board 1 21–28 Dec; PTM 30 Dec; winter vacation 31 Dec–14 Jan; doubt workshops 16–24 Jan; Pre-Board 2 1–8 Feb; Annual exam (PG–9th) 23 Feb–11 Mar');
+}
+
+function boardAlerts(date) {
+  const A = [];
+  Object.entries((S.settings || {}).sylDeadlines || {}).forEach(([cls, dl]) => {
+    const subs = S.alloc.filter(a => a.c === cls && a.n > 0 && !/Games|Library|Moral|Activity|PT/.test(a.s));
+    if (!subs.length || date > addDays(dl, 30)) return;
+    const left = Math.round((new Date(dl + 'T00:00:00') - new Date(date + 'T00:00:00')) / 86400000);
+    const st = subs.map(a => ({ a, s: sylStatus(sylKey(a.c, a.s), date) }));
+    const none = st.filter(x => !x.s).map(x => x.a.s), behind = st.filter(x => x.s && x.s.pct < 100 && (left < 0 || x.s.lag));
+    if (!none.length && !behind.length) return;
+    A.push({ lv: left <= 30 || left < 0 ? 'r' : 'a', go: 'syllabus',
+      x: `Class ${cls}: full syllabus due ${fmtDate(dl)} (${left < 0 ? 'deadline passed' : left + ' days left'}).` +
+         (behind.length ? ' Behind: ' + behind.map(x => `${x.a.s} ${x.s.done}/${x.s.total}` + (x.s.expected != null && left >= 0 ? ` (should be ${x.s.expected})` : '')).join(', ') + '.' : '') +
+         (none.length ? ' Chapters not entered yet: ' + none.join(', ') + '.' : '') });
+  });
+  S.exams.filter(e => e.sheet && e.sheet.length && examEnd(e) < date && date <= addDays(examEnd(e), 10)).forEach(e => examClasses(e).forEach(cls => {
+    const miss = e.sheet.filter(p => p.subjects.some(s => !((S.marks[e.id] || {})[cls + '|' + s]))).map(p => p.title.replace(/\s*\(.*\)/, '') + ' (' + paperTeachers(cls, p).join(', ') + ')');
+    if (miss.length) A.push({ lv: 'r', go: 'exams', x: `${examShort(e)} marks not entered for Class ${cls}: ${miss.join('; ')}` });
+  }));
+  S.exams.filter(e => e.reportDate && e.reportDate <= date && date <= addDays(e.reportDate, 7)).forEach(e => {
+    const rows = examReport(e).filter(r => r.complete), sent = rows.filter(r => (e.sent || {})[r.s.id]).length;
+    if (rows.length && sent < rows.length) A.push({ lv: 'a', go: 'exams', x: `Send ${examShort(e)} results and focus areas to parents: ${sent} of ${rows.length} ready results sent` });
+  });
+  return A;
+}
+
+function examReport(e) {
+  const out = [];
+  examClasses(e).forEach(cls => studentsOf(cls).forEach(s => {
+    const papers = (e.sheet || []).map(p => { let got = 0, max = 0, ab = false, have = 0;
+      p.subjects.forEach(sb => { const r = (S.marks[e.id] || {})[cls + '|' + sb]; if (!r) return; const v = r.m[s.id];
+        if (v === 'AB') ab = true; else if (v !== undefined && v !== '') { got += +v; max += +r.max; have++; } });
+      const done = have === p.subjects.length; return { p, got, max, ab, done, pct: done && max ? Math.round(got / max * 1000) / 10 : null }; });
+    const scored = papers.filter(x => x.pct != null), got = scored.reduce((a, x) => a + x.got, 0), max = scored.reduce((a, x) => a + x.max, 0);
+    out.push({ s, cls, papers, got, max, pct: max ? Math.round(got / max * 1000) / 10 : null, any: scored.length > 0 || papers.some(x => x.ab),
+               complete: papers.length > 0 && papers.every(x => x.done || x.ab),
+               weak: papers.filter(x => x.ab || (x.pct != null && x.pct < 60)) });
+  }));
+  return out;
+}
+function reportText(e, r) {
+  const L = [`*${S.settings.school}*`, `${e.name} — result`, `${r.s.name} (Class ${r.cls})`, ''];
+  r.papers.forEach(x => L.push(`${x.p.title.replace(/\s*\(.*\)/, '')}: ` + (x.ab ? 'Absent' : x.pct != null ? `${x.got}/${x.max} (${x.pct}%)` : 'not ready')));
+  if (r.max) L.push('', `Total: ${r.got}/${r.max} (${r.pct}%)`);
+  if (r.weak.length) L.push('', 'Needs practice in the winter vacation: ' + r.weak.map(x => x.p.title.replace(/\s*\(.*\)/, '') + (x.ab ? ' (absent)' : x.pct < 33 ? ' (urgent)' : '')).join(', ') + '.',
+                          'Subject teachers will give practice worksheets for these at the PTM' + (e.reportDate ? ' on ' + fmtDate(e.reportDate) : '') + '.');
+  else L.push('', 'Well done — keep revising every day.');
+  L.push('', '— Principal');
+  return L.join('\n');
+}
+function dateSheetText(e, cls) {
+  return `*${S.settings.school}*\n${e.name} — date sheet (Class ${cls})\nTime: ${e.time || 'see school notice'}\n\n` +
+    e.sheet.map(p => `${fmtDate(p.date)}: ${p.title} (${p.max} marks)`).join('\n') + '\n\nPlease make sure your child sleeps well and reaches school on time.';
+}
+
+function vExams() {
+  const ro = U.role !== 'principal';
+  const e = S.exams.find(x => x.id === P.ex) || S.exams.filter(x => examEnd(x) >= todayISO()).sort((a, b) => a.date.localeCompare(b.date))[0] || S.exams[0];
+  if (!e) return head('Exams') + '<div class="card text-sm">No exams yet. Add them in Settings › Exams.</div>';
+  const cls = examClasses(e), one = cls.length === 1 ? cls[0] : null;
+  const sheet = (e.sheet || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+  const marksState = p => one ? p.subjects.map(sb => { const r = (S.marks[e.id] || {})[one + '|' + sb]; return `${esc(sb)}: ${r ? '<span class="text-leaf font-semibold">entered</span>' : '<span class="text-slate-400">waiting</span>'}`; }).join('<br>') : '';
+  const rep = examReport(e).filter(r => r.any);
+  const subsOf = one ? S.alloc.filter(a => a.c === one && a.n > 0).map(a => a.s) : [];
+  return head('Exams & date sheets', 'Normal classes stop automatically for the classes sitting an exam. Results go to parents on WhatsApp from the report date.',
+      `<select class="inp w-auto" onchange="go('exams',{ex:this.value})">${S.exams.map(x => `<option value="${esc(x.id)}" ${x.id === e.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`) + `
+    <div class="card space-y-1"><h3 class="h3">${esc(e.name)}</h3>
+      <p class="text-sm text-slate-600">${fmtDate(e.date)}${examEnd(e) !== e.date ? ' to ' + fmtDate(examEnd(e)) : ''} · ${cls.length === CLASS_NAMES.length ? 'All classes' : 'Class ' + cls.join(', ')}${e.time ? ' · ' + esc(e.time) : ''}${e.noClasses ? ' · no normal classes for these students in this period' : ''}</p>
+      ${one && sylDeadline(one) ? `<p class="text-sm"><b>Class ${one} syllabus deadline:</b> 100% by ${fmtDate(sylDeadline(one))}</p>` : ''}</div>
+    <div class="card overflow-x-auto"><div class="flex flex-wrap justify-between gap-2 mb-2"><h3 class="h3">Date sheet</h3>
+      ${sheet.length && one ? `<span class="flex gap-2 noprint"><a target="_blank" href="${waLink('', dateSheetText({ ...e, sheet }, one))}" onclick="log('Exam Plan',${jsq('Date sheet shared: ' + e.name)})" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Share</a>
+        <button onclick="printHTML('Date sheet',printHeader(${jsq(e.name + ' — date sheet, Class ' + one)})+document.getElementById('dsheet').outerHTML+PRINT_FOOT)" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Print</button></span>` : ''}</div>
+      ${sheet.length ? `<table class="tbl" id="dsheet"><tr><th>Date</th><th>Paper</th><th>Marks</th><th>Teacher</th>${one ? '<th class="noprint">Marks entry</th>' : ''}${ro ? '' : '<th class="noprint"></th>'}</tr>
+        ${sheet.map(p => { const i = e.sheet.indexOf(p); return `<tr><td class="whitespace-nowrap">${fmtDate(p.date)}</td><td class="font-semibold">${esc(p.title)}</td>
+          <td>${ro ? p.max : `<input type="number" min="1" class="inp py-1 w-20" value="${p.max}" onchange="examPaperMax('${esc(e.id)}',${i},this.value)">`}</td>
+          <td>${one ? esc(paperTeachers(one, p).join(', ')) : ''}</td>${one ? `<td class="text-xs noprint">${marksState(p)}</td>` : ''}
+          ${ro ? '' : `<td class="noprint"><button onclick="examPaperDel('${esc(e.id)}',${i})" class="text-slate-300 hover:text-rose"><i class="fa-solid fa-trash"></i></button></td>`}</tr>`; }).join('')}</table>`
+      : '<p class="text-sm text-slate-500">No papers added yet.</p>'}
+      ${!ro && one ? `<div class="mt-4 pt-4 border-t border-line grid grid-cols-1 md:grid-cols-4 gap-2 items-end noprint">
+        <div><label class="lbl">Date</label><input id="pp-date" type="date" class="inp" value="${e.date}"></div>
+        <div class="md:col-span-2"><label class="lbl">Subjects in this paper</label><div class="flex flex-wrap gap-2">${subsOf.map(sb => `<label class="chip"><input type="checkbox" class="pp-sub mr-1" value="${esc(sb)}">${esc(sb)}</label>`).join('')}</div></div>
+        <div><label class="lbl">Marks</label><div class="flex gap-2"><input id="pp-max" type="number" class="inp" value="80"><button onclick="examPaperAdd('${esc(e.id)}')" class="btn btn-p">Add</button></div></div></div>` : ''}
+    </div>
+    ${sheet.length ? `<div class="card overflow-x-auto"><div class="flex flex-wrap justify-between gap-2 mb-2"><h3 class="h3">Results for parents</h3>
+        <span class="text-sm text-slate-500">${rep.filter(r => (e.sent || {})[r.s.id]).length} of ${rep.length} sent${e.reportDate ? ' · send from ' + fmtDate(e.reportDate) : ''}</span></div>
+      ${rep.length ? `<table class="tbl"><tr><th>Student</th>${sheet.map(p => `<th>${esc(p.title.replace(/\s*\(.*\)/, ''))}</th>`).join('')}<th>%</th><th>Needs practice</th>${ro ? '' : '<th class="noprint"></th>'}</tr>
+        ${rep.map(r => `<tr><td class="font-semibold whitespace-nowrap">${esc(r.s.name)}</td>${sheet.map(p => { const x = r.papers.find(y => y.p === p) || r.papers[e.sheet.indexOf(p)];
+          return `<td class="${x && x.pct != null && x.pct < 33 ? 'text-rose font-semibold' : ''}">${x ? (x.ab ? 'AB' : x.pct != null ? x.got + '/' + x.max : '—') : '—'}</td>`; }).join('')}
+          <td class="font-semibold">${r.pct ?? '—'}</td><td class="text-sm">${r.weak.map(x => esc(x.p.title.replace(/\s*\(.*\)/, ''))).join(', ') || '—'}</td>
+          ${ro ? '' : `<td class="noprint whitespace-nowrap">${!r.complete ? '<span class="text-xs text-slate-500">Marks pending</span>' : `${(e.sent || {})[r.s.id] ? '<span class="pill bg-leaf/10 text-leaf">Sent</span> ' : ''}<a target="_blank" href="${waLink(r.s.phone, reportText(e, r))}" onclick="examSent('${esc(e.id)}','${esc(r.s.id)}')" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Send</a>`}</td>`}</tr>`).join('')}</table>
+        <p class="text-xs text-slate-500 mt-2">Each message lists every paper, the total, and subjects below 60% to practise in the vacation. Parents need a mobile number on the student record.</p>`
+      : '<p class="text-sm text-slate-500">Results appear here as teachers enter marks.</p>'}</div>` : ''}`;
+}
+function examPaperMax(id, i, v) { const e = S.exams.find(x => x.id === id); const n = parseInt(v) || 0; if (!e || n < 1) return; const old = e.sheet[i].max; e.sheet[i].max = n; log('Exam Plan', `${e.name}: ${e.sheet[i].title} marks ${old} → ${n}`); render(); }
+function examPaperDel(id, i) { const e = S.exams.find(x => x.id === id); if (!e || !confirm('Remove ' + e.sheet[i].title + ' from the date sheet?')) return; const p = e.sheet.splice(i, 1)[0]; log('Exam Plan', `${e.name}: removed ${p.title} (${p.date})`); render(); }
+function examPaperAdd(id) {
+  const e = S.exams.find(x => x.id === id); if (!e) return;
+  const date = document.getElementById('pp-date').value, max = parseInt(document.getElementById('pp-max').value) || 0;
+  const subjects = [...document.querySelectorAll('.pp-sub:checked')].map(x => x.value);
+  if (!date || !subjects.length || max < 1) return toast('Choose the date, at least one subject and the marks', 'a');
+  if (e.sheet.some(p => p.date === date)) return toast('There is already a paper on that date', 'a');
+  e.sheet = e.sheet || []; e.sheet.push({ date, title: subjects.join(' + '), subjects, max }); e.sheet.sort((a, b) => a.date.localeCompare(b.date));
+  if (date < e.date) e.date = date; if (!e.to || date > e.to) e.to = date;
+  log('Exam Plan', `${e.name}: added ${subjects.join(' + ')} on ${date} (${max} marks)`); render();
+}
+function examSent(id, sid) { const e = S.exams.find(x => x.id === id); if (!e) return; e.sent = e.sent || {}; e.sent[sid] = Date.now(); log('Exam Report', `${e.name} result sent to parent of ${(studentById(sid) || {}).name}`); setTimeout(render, 300); }
+function parentDateSheets(kid) {
+  const today = todayISO();
+  return S.exams.filter(e => e.sheet && e.sheet.length && examClasses(e).includes(kid.cls) && examEnd(e) >= today && e.date <= addDays(today, 90)).map(e =>
+    `<div class="card"><h3 class="h3">${esc(e.name)} — date sheet</h3>${e.time ? `<p class="text-sm text-slate-500">Time: ${esc(e.time)}</p>` : ''}
+      <table class="tbl mt-2"><tr><th>Date</th><th>Paper</th><th class="text-right">Marks</th></tr>${e.sheet.slice().sort((a, b) => a.date.localeCompare(b.date)).map(p => `<tr><td class="whitespace-nowrap">${fmtDate(p.date)}</td><td>${esc(p.title)}</td><td class="text-right">${p.max}</td></tr>`).join('')}</table></div>`).join('');
+}
+
 // ---------------------------------------------------------------- routes
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 

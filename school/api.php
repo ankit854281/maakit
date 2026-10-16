@@ -388,7 +388,9 @@ case 'pdata': {
         'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? ''),
         'kids' => $kidsOut, 'att' => $att, 'hw' => $hw, 'marks' => $marks, 'behav' => $behav, 'speak' => $speak,
         'remarks' => array_values(array_filter($get('toolRemark'), fn($r) => in_array($r['sid']??'', $ids, true) && ($r['session']??'')===(string)($set['session']??''))),
-        'notices' => $notices, 'cal' => array_values($get('cal')), 'exams' => sch_rec_get('exams', 'main') ?? []]);
+        'notices' => $notices, 'cal' => array_values($get('cal')),
+        // 'sent' = kis bachche ke ghar result gaya — doosre parents ko nahi dikhna chahiye
+        'exams' => array_map(fn($e) => is_array($e) ? array_diff_key($e, ['sent' => 1]) : $e, (array)(sch_rec_get('exams', 'main') ?? []))]);
 }
 
 default:

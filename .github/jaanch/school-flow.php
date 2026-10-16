@@ -146,6 +146,11 @@ sf_check($c === 403, 'parent logged in with a wrong code');
 [$c, , $j] = sf_api('login', ['role' => 'parent', 'phone' => '9839022222', 'pin' => $pcode]);
 sf_check($c === 200, 'parent could not log in');
 $PA = $j['token'];
+// date sheet parent ko jaata hai, par kis-kis ke ghar result gaya ('sent') nahi
+sf_api('sync', ['put' => [['k' => 'exams', 'r' => 'main', 'd' => [['id' => 'pb1', 'name' => 'Pre-Board 1 (Class 10)', 'date' => '2026-12-21', 'classes' => ['9th'],
+    'sheet' => [['date' => '2026-12-21', 'title' => 'Mathematics', 'subjects' => ['Mathematics'], 'max' => 80]], 'sent' => ['s2' => 1]]]]]], $P);
+[, $raw, $j] = sf_api('pdata', null, $PA);
+sf_check(str_contains($raw, '"sheet"') && !str_contains($raw, '"sent"'), 'parent did not get the date sheet, or saw who else got results');
 [$c, $raw, $j] = sf_api('pdata', null, $PA);
 sf_check($c === 200 && count($j['kids']) === 1 && $j['kids'][0]['name'] === 'Shivam Dubey', 'parent did not get exactly their own child');
 sf_check(!str_contains($raw, 'Riya Pal') && !str_contains($raw, '98390 11111'), "another child's data reached a parent");
