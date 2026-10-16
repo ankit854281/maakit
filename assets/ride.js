@@ -99,7 +99,7 @@
   // ---------- jagah ka naam (OpenStreetMap) ----------
   function short(a) {
     a = a || {};
-    return [a.house_number, a.road, a.neighbourhood || a.suburb || a.hamlet, a.village || a.town || a.city, a.postcode].filter(Boolean).join(', ');
+    return [a.house_number, a.road || a.street, a.neighbourhood || a.suburb || a.hamlet || a.district, a.village || a.town || a.city, a.postcode].filter(Boolean).join(', ');
   }
   function reverse(g, cb) {
     var p = parse(g); if (!p) return;
@@ -143,6 +143,34 @@
   da.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search(); } });
   fb.addEventListener('click', search);
   var lastQ = 0;
+  function showPlaces(list) {
+    if (!list || !list.length) { res.innerHTML = '<p class="rd-res-msg">' + esc(L$.none) + '</p>'; return; }
+    res.innerHTML = '';
+    list.forEach(function (it) {
+      var b = document.createElement('button'); b.type = 'button';
+      var main = (it.name || (it.display_name || '').split(',')[0]), sub = short(it.address) || it.display_name;
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0-5z"/></svg><span><b>' + esc(main) + '</b><small>' + esc(sub) + '</small></span>';
+      b.addEventListener('click', function () {
+        da.value = main + (sub && sub.indexOf(main) !== 0 ? ', ' + sub : ''); da.dataset.geoText = da.value;
+        setB((+it.lat).toFixed(6) + ',' + (+it.lon).toFixed(6), false); findBtn();
+      });
+      res.appendChild(b);
+    });
+  }
+  function searchPhoton(q, a) {
+    // Nominatim often returns nothing for a misspelled landmark. Photon has typo-tolerant matching.
+    var u = 'https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=5&lang=' + encodeURIComponent(C.lang || 'en') + '&countrycode=in&lat=' + encodeURIComponent(a[0]) + '&lon=' + encodeURIComponent(a[1]);
+    return fetch(u).then(function (r) { if (!r.ok) throw new Error('Geocoder unavailable'); return r.json(); }).then(function (data) {
+      var features = data && data.features || [];
+      return features.map(function (f) {
+        var p = f.properties || {}, c = f.geometry && f.geometry.coordinates || [];
+        if (p.countrycode && p.countrycode.toLowerCase() !== 'in') return null;
+        var address = { house_number: p.housenumber, road: p.street, neighbourhood: p.district || p.suburb, village: p.village, town: p.town, city: p.city, postcode: p.postcode };
+        var label = [p.name, p.street, p.district, p.city || p.county, p.state, p.postcode, p.country].filter(Boolean).filter(function (v, i, all) { return all.indexOf(v) === i; }).join(', ');
+        return { name: p.name || p.street || p.city || p.county || p.state || p.country, display_name: label, address: address, lat: c[1], lon: c[0] };
+      }).filter(function (it) { return it && Number.isFinite(+it.lat) && Number.isFinite(+it.lon); });
+    });
+  }
   function search() {
     var q = da.value.trim(); if (q.length < 3) return;
     if (Date.now() - lastQ < 1100) return; lastQ = Date.now(); // Nominatim: 1 second me ek
@@ -150,20 +178,10 @@
     var a = parse(geoA.value) || C.center, d = 0.45;
     var vb = (a[1] - d) + ',' + (a[0] + d) + ',' + (a[1] + d) + ',' + (a[0] - d);
     fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=in&accept-language=' + C.lang + '&viewbox=' + vb + '&q=' + encodeURIComponent(q))
-      .then(function (r) { return r.json(); }).then(function (list) {
-        if (!list || !list.length) { res.innerHTML = '<p class="rd-res-msg">' + esc(L$.none) + '</p>'; return; }
-        res.innerHTML = '';
-        list.forEach(function (it) {
-          var b = document.createElement('button'); b.type = 'button';
-          var main = (it.name || (it.display_name || '').split(',')[0]), sub = short(it.address) || it.display_name;
-          b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><span><b>' + esc(main) + '</b><small>' + esc(sub) + '</small></span>';
-          b.addEventListener('click', function () {
-            da.value = main + (sub && sub.indexOf(main) !== 0 ? ', ' + sub : ''); da.dataset.geoText = da.value;
-            setB((+it.lat).toFixed(6) + ',' + (+it.lon).toFixed(6), false); findBtn();
-          });
-          res.appendChild(b);
-        });
-      }).catch(function () { res.innerHTML = '<p class="rd-res-msg">' + esc(L$.none) + '</p>'; });
+      .then(function (r) { if (!r.ok) throw new Error('Geocoder unavailable'); return r.json(); }).then(function (list) {
+        if (list && list.length) { showPlaces(list); return; }
+        return searchPhoton(q, a).then(showPlaces);
+      }).catch(function () { searchPhoton(q, a).then(showPlaces).catch(function () { showPlaces([]); }); });
   }
   var om = $('[data-onmap]');
   om.addEventListener('click', function () { pinMode = true; tip(true); document.getElementById('rdMap').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
