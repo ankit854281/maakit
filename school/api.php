@@ -88,16 +88,43 @@ case 'login': {
     if ((int)$st->fetchColumn() >= 20) sch_fail('Too many wrong tries. Please wait 15 minutes.', 429);
 
     $role = (string)($in['role'] ?? '');
-    $uid = $role === 'principal' ? 'principal' : ($role === 'chairman' ? 'chairman'
-         : ($role === 'parent' ? 'p:' . sch_phone10((string)($in['phone'] ?? '')) : 't:' . preg_replace('/[^A-Za-z0-9_]/', '', (string)($in['tid'] ?? ''))));
+    $pin = (string)($in['pin'] ?? '');
+    $tid = null; $valid = false;
+    switch ($role) {
+        case 'principal': $uid = 'principal'; break;
+        case 'chairman':  $uid = 'chairman'; $valid = true; break;
+        case 'teacher':
+            $tid = preg_replace('/[^A-Za-z0-9_]/', '', (string)($in['tid'] ?? ''));
+            if ($tid === 'P') sch_fail('Please use the Principal login.');
+            $uid = 't:' . $tid; $valid = $tid !== '' && sch_rec_get('teacher', $tid) !== null; break;
+        case 'parent':
+            $tid = sch_phone10((string)($in['phone'] ?? ''));
+            $uid = 'p:' . $tid; $valid = $tid !== '' && (bool)sch_children($tid); break;
+        case 'student':
+            $found = sch_students_by_adm(trim((string)($in['adm'] ?? '')));
+            if (count($found) > 1) sch_fail('More than one student has this admission number. Please ask the school office.');
+            $tid = $found ? (string)$found[0]['id'] : '';
+            $uid = 's:' . $tid; $valid = $tid !== ''; break;
+        default: sch_fail('Choose who is logging in.');
+    }
     $st = $db->prepare('SELECT * FROM sch_users WHERE uid=?');
     $st->execute([$uid]);
     $u = $st->fetch();
-    if ((!$u || !$u['pin_hash']) && $role === 'parent') {
-        $db->prepare('INSERT INTO sch_login_fail (ip) VALUES (?)')->execute([$ip]);
-        sch_fail('Wrong mobile number or code. Ask the school office for your parent code.', 403);
+    if (!$u || !$u['pin_hash']) {
+        // Pehli baar: PIN 1234 — sirf asli teacher / parent / student / chairman ke liye
+        if ($role !== 'principal' && $valid && hash_equals(SCH_DEFAULT_PIN, $pin)) {
+            $db->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,1)
+                          ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), must_change=1, fails=0, strikes=0, locked_until=NULL, updated_at=NOW()')
+               ->execute([$uid, $role, $tid, password_hash(SCH_DEFAULT_PIN, PASSWORD_DEFAULT)]);
+            $st->execute([$uid]);
+            $u = $st->fetch();
+        } else {
+            if ($role === 'principal') sch_fail('This login is not set up yet.');
+            $db->prepare('INSERT INTO sch_login_fail (ip) VALUES (?)')->execute([$ip]);
+            sch_fail($role === 'parent' ? 'Wrong mobile number or PIN. The first PIN is 1234.'
+                   : ($role === 'student' ? 'Wrong admission number or PIN. The first PIN is 1234.' : 'Wrong PIN.'), 403);
+        }
     }
-    if (!$u || !$u['pin_hash']) sch_fail($role === 'teacher' ? 'No PIN set for you yet. Ask the Principal to set it in Settings.' : 'This login is not set up yet.');
     if ($u['locked_until'] && strtotime((string)$u['locked_until']) > time()) sch_fail('Too many wrong PINs. Please wait 15 minutes.', 429);
     if ((int)$u['strikes'] >= SCH_MAX_STRIKES) sch_fail($role === 'principal'
         ? 'This login is blocked after too many wrong PINs. Use "Forgot PIN" with the website update key.'
@@ -110,7 +137,7 @@ case 'login': {
         $db->prepare('UPDATE sch_users SET fails=?, strikes=?, locked_until=? WHERE uid=?')
            ->execute([$f >= 5 ? 0 : $f, $strikes, $f >= 5 ? date('Y-m-d H:i:s', time() + 900) : null, $uid]);
         if ($strikes >= SCH_MAX_STRIKES) sch_fail('Too many wrong PINs. This login is now blocked until a new PIN is set.', 423);
-        sch_fail($f >= 5 ? 'Too many wrong PINs. Please wait 15 minutes.' : 'Wrong PIN.', 403);
+        sch_fail($f >= 5 ? 'Too many wrong PINs. Please wait 15 minutes.' : ($role === 'parent' ? 'Wrong mobile number or PIN.' : ($role === 'student' ? 'Wrong admission number or PIN.' : 'Wrong PIN.')), 403);
     }
     $db->prepare('UPDATE sch_users SET fails=0, strikes=0, locked_until=NULL WHERE uid=?')->execute([$uid]);
     $tok = bin2hex(random_bytes(32));
@@ -121,14 +148,14 @@ case 'login': {
     $me = ['role' => $u['role'], 'tid' => $u['tid']];
     $me['label'] = sch_user_label($me);
     sch_log($me, 'Login', $me['label'] . ' logged in');
-    sch_json(['ok' => true, 'token' => $tok, 'me' => $me]);
+    sch_json(['ok' => true, 'token' => $tok, 'me' => $me, 'mustChange' => (int)$u['must_change'] === 1]);
 }
 
 // ------------------------------------------------------------
 case 'logout': {
     $tok = (string)($_SERVER['HTTP_X_SCHOOL_TOKEN'] ?? '');
     if (preg_match('/^[a-f0-9]{64}$/', $tok)) {
-        $u = sch_auth();
+        $u = sch_auth(true);
         sch_log($u, 'Logout', $u['label'] . ' logged out');
         $db->prepare('DELETE FROM sch_sessions WHERE token_hash=?')->execute([hash('sha256', $tok)]);
     }
@@ -138,7 +165,7 @@ case 'logout': {
 // ------------------------------------------------------------
 case 'load': {
     $u = sch_auth();
-    if ($u['role'] === 'parent') sch_fail('Not allowed.', 403);
+    if (in_array($u['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
     $days = max(7, min(400, (int)($_GET['days'] ?? 60)));
     $from = date('Y-m-d', time() - $days * 86400);
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE deleted=0 AND (dkey IS NULL OR dkey >= ?)');
@@ -146,14 +173,14 @@ case 'load': {
     $recs = sch_rows_to_records($st->fetchAll());
     $log = $db->query('SELECT id, ts, uname, role, k, x FROM sch_log ORDER BY id DESC LIMIT 300')->fetchAll();
     $pins = [];
-    foreach ($db->query('SELECT uid FROM sch_users WHERE pin_hash IS NOT NULL') as $row) $pins[$row['uid']] = true;
+    foreach ($db->query('SELECT uid FROM sch_users WHERE pin_hash IS NOT NULL AND must_change = 0') as $row) $pins[$row['uid']] = true;
     sch_json(['ok' => true, 'me' => ['role' => $u['role'], 'tid' => $u['tid'], 'label' => $u['label']],
               'now' => sch_now_ms(), 'from' => $from, 'records' => $recs, 'log' => $log, 'pins' => $pins]);
 }
 
 // ------------------------------------------------------------
 case 'since': {
-    if (sch_auth()['role'] === 'parent') sch_fail('Not allowed.', 403);
+    if (in_array(sch_auth()['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
     $v = (int)($_GET['v'] ?? 0) - 5000;          // 5 second peeche se — ek saath hue badlaav chhootein nahi
     $l = (int)($_GET['l'] ?? 0);
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE ver > ? ORDER BY ver LIMIT 2000');
@@ -166,7 +193,7 @@ case 'since': {
 
 // ------------------------------------------------------------
 case 'day': {
-    if (sch_auth()['role'] === 'parent') sch_fail('Not allowed.', 403);
+    if (in_array(sch_auth()['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
     $date = (string)($_GET['date'] ?? '');
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Bad date.');
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE deleted=0 AND dkey = ?');
@@ -207,7 +234,7 @@ case 'sync': {
     foreach ($logs as $g) {
         $k = trim((string)($g['k'] ?? '')); $x = trim((string)($g['x'] ?? ''));
         if ($k === '' || $x === '') continue;
-        if ($u['role'] === 'parent') continue;
+        if (in_array($u['role'], ['parent', 'student'], true)) continue;
         if ($u['role'] === 'chairman' && !in_array($k, ['Summary', 'Results'], true)) continue;
         sch_log($u, $k, $x);
     }
@@ -242,30 +269,36 @@ case 'importstudents': {
 // ------------------------------------------------------------
 case 'setpin': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    $u = sch_auth();
-    if ($u['role'] === 'parent') sch_fail('Parent codes are given by the school office.', 403);
+    $u = sch_auth(true);
     $pin = (string)($in['pin'] ?? '');
     if (!sch_pin_ok($pin)) sch_fail('PIN must be 4 to 8 digits.');
     $target = (string)($in['uid'] ?? '');
-    $selfUid = $u['role'] === 'teacher' ? 't:' . $u['tid'] : $u['role'];
+    $selfUid = sch_uid_of($u);
     if ($target === '' || $target === $selfUid) {
+        if ($pin === SCH_DEFAULT_PIN) sch_fail('Choose a PIN other than 1234.');
         $st = $db->prepare('SELECT pin_hash FROM sch_users WHERE uid=?');
         $st->execute([$selfUid]);
         if (!password_verify((string)($in['old'] ?? ''), (string)$st->fetchColumn())) sch_fail('Old PIN is wrong.', 403);
         $target = $selfUid;
-    } elseif ($u['role'] !== 'principal') {
+    } elseif ($u['role'] !== 'principal' || (int)$u['must_change'] === 1) {
         sch_fail('Only the Principal can set other PINs.', 403);
     }
     if ($target === 'chairman') { $role = 'chairman'; $tid = null; }
     elseif ($target === 'principal') { $role = 'principal'; $tid = 'P'; }
-    elseif (preg_match('/^t:([A-Za-z0-9_]{1,20})$/', $target, $m) && sch_rec_get('teacher', $m[1])) { $role = 'teacher'; $tid = $m[1]; }
+    elseif (preg_match('/^t:([A-Za-z0-9_]{1,20})$/', $target, $m) && $m[1] !== 'P' && sch_rec_get('teacher', $m[1])) { $role = 'teacher'; $tid = $m[1]; }
+    elseif (preg_match('/^p:(\d{10})$/', $target, $m) && sch_children($m[1])) { $role = 'parent'; $tid = $m[1]; }
+    elseif (preg_match('/^s:(.{1,180})$/', $target, $m) && sch_rec_get('student', $m[1])) { $role = 'student'; $tid = $m[1]; }
     else sch_fail('Unknown user.');
-    $db->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash) VALUES (?,?,?,?)
-                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), fails=0, strikes=0, locked_until=NULL, updated_at=NOW()')
-       ->execute([$target, $role, $tid, password_hash($pin, PASSWORD_DEFAULT)]);
+    if ($role === 'principal' && $target !== $selfUid) sch_fail('Only the Principal can set other PINs.', 403);
+    // Principal kisi ka PIN 1234 kar de = "reset": us aadmi ko agli baar apna PIN chunna padega
+    $must = ($target !== $selfUid && $pin === SCH_DEFAULT_PIN) ? 1 : 0;
+    $db->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,?)
+                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), must_change=VALUES(must_change), fails=0, strikes=0, locked_until=NULL, updated_at=NOW()')
+       ->execute([$target, $role, $tid, password_hash($pin, PASSWORD_DEFAULT), $must]);
     if ($target !== $selfUid) $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$target]);   // purane phone se bahar
-    $who = $role === 'teacher' ? sch_teacher_name($tid) : ucfirst($role);
-    sch_log($u, 'PIN', 'PIN ' . ($target === $selfUid ? 'changed by ' . $u['label'] : 'set for ' . $who));
+    $who = match ($role) { 'teacher' => sch_teacher_name($tid), 'parent' => 'parent ' . substr((string)$tid, 0, 2) . 'xxxxxx' . substr((string)$tid, -2),
+                           'student' => sch_user_label(['role' => 'student', 'tid' => $tid]), default => ucfirst($role) };
+    sch_log($u, 'PIN', 'PIN ' . ($target === $selfUid ? 'chosen by ' . $u['label'] : ($must ? 'reset to 1234 for ' : 'set for ') . $who));
     sch_json(['ok' => true]);
 }
 
@@ -296,7 +329,7 @@ case 'parentcode': {
     if ($phone === '' || !sch_children($phone)) sch_fail('No student has this mobile number.');
     $code = (string)random_int(1000, 9999);
     $db->prepare("INSERT INTO sch_users (uid, role, tid, pin_hash) VALUES (?, 'parent', ?, ?)
-                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), fails=0, strikes=0, locked_until=NULL, updated_at=NOW()")
+                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), must_change=0, fails=0, strikes=0, locked_until=NULL, updated_at=NOW()")
        ->execute(['p:' . $phone, $phone, password_hash($code, PASSWORD_DEFAULT)]);
     $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute(['p:' . $phone]);
     sch_log($u, 'Parent Code', 'Parent code made for ' . substr($phone, 0, 2) . 'xxxxxx' . substr($phone, -2));
@@ -308,8 +341,9 @@ case 'parentcode': {
 // behaviour, speaking, notices, calendar. Doosre bachchon ka kuchh nahi.
 case 'pdata': {
     $u = sch_auth();
-    if ($u['role'] !== 'parent') sch_fail('Not allowed.', 403);
-    $kids = sch_children((string)$u['tid']);
+    if (!in_array($u['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
+    if ($u['role'] === 'student') { $one = sch_rec_get('student', (string)$u['tid']); $kids = $one ? [$one] : []; }
+    else $kids = sch_children((string)$u['tid']);
     $ids = array_column($kids, 'id');
     $classes = array_values(array_unique(array_column($kids, 'cls')));
     $from = date('Y-m-d', time() - 75 * 86400);
@@ -350,7 +384,7 @@ case 'pdata': {
     foreach ((array)sch_rec_get('classes', 'main') as $c) if (in_array($c['c'] ?? '', $classes, true)) $ct[$c['c']] = (string)($teachers[$c['ct'] ?? '']['name'] ?? '');
     $kidsOut = array_map(fn($k) => ['id' => $k['id'], 'name' => $k['name'] ?? '', 'cls' => $k['cls'] ?? '', 'adm' => $k['adm'] ?? '', 'ct' => $ct[$k['cls'] ?? ''] ?? ''], $kids);
     $set = sch_rec_get('settings', 'main') ?? [];
-    sch_json(['ok' => true, 'me' => ['role' => 'parent', 'tid' => $u['tid'], 'label' => $u['label']],
+    sch_json(['ok' => true, 'me' => ['role' => $u['role'], 'tid' => $u['tid'], 'label' => $u['label']],
         'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? ''),
         'kids' => $kidsOut, 'att' => $att, 'hw' => $hw, 'marks' => $marks, 'behav' => $behav, 'speak' => $speak,
         'remarks' => array_values(array_filter($get('toolRemark'), fn($r) => in_array($r['sid']??'', $ids, true) && ($r['session']??'')===(string)($set['session']??''))),

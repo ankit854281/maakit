@@ -201,7 +201,8 @@ function mergeLog(rows) {
   if (S.log.length > 1000) S.log.length = 1000;
 }
 
-function save() { if (U && U.role === 'parent') return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); }
+function isFam() { return !!U && (U.role === 'parent' || U.role === 'student'); }
+function save() { if (isFam()) return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); }
 async function sync() {
   if (!TOKEN || !S) return;
   if (syncing) { save(); return; }
@@ -224,7 +225,7 @@ async function sync() {
   } finally { syncing = false; }
 }
 async function poll() {
-  if (!TOKEN || !S || document.hidden || (U && U.role === 'parent')) return;
+  if (!TOKEN || !S || document.hidden || isFam()) return;
   try {
     const res = await api('since', null, { v: lastV, l: lastLogId });
     lastV = res.now;
@@ -508,11 +509,12 @@ const NAV = {
   teacher:   [['mytoday','fa-sun','Today'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
+  student:   [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   chairman:  [['dash','fa-gauge','Dashboard'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
-const PRIMARY = { principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
+const PRIMARY = { student: ['phome','phw','presults','pnotices'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
                   chairman: ['dash','results','fame','calendar'], parent: ['phome','phw','presults','pnotices'] };
 let moreOpen = false;
 function navLabel(k) { const n = NAV[U.role].find(x => x[0] === k); return n ? n[2] : ''; }
@@ -525,7 +527,7 @@ function render() {
   const side = NAV[U.role].map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="side-link ${view === k ? 'on' : ''}"><i class="fa-solid ${ic} w-5 text-center"></i><span>${lb}</span></button>`).join('');
   const prim = PRIMARY[U.role], rest = NAV[U.role].filter(x => !prim.includes(x[0]));
   const tab = k => { const n = NAV[U.role].find(x => x[0] === k); return n ? `<button onclick="moreOpen=false;go('${k}')" class="tab ${view === k && !moreOpen ? 'on' : ''}"><i class="fa-solid ${n[1]}"></i><span>${n[2].split(' ')[0]}</span></button>` : ''; };
-  const initials = U.role === 'parent' ? 'P' : (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('');
+  const initials = U.role === 'parent' ? 'P' : U.role === 'student' ? (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('') : (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   root.innerHTML = `
   <div class="lg:flex min-h-screen">
     <aside class="noprint hidden lg:flex lg:flex-col w-64 shrink-0 bg-ink text-white sticky top-0 h-screen">
@@ -544,7 +546,7 @@ function render() {
         <div class="carpet"></div>
         <div class="px-4 py-3 flex items-center gap-3"><div class="mark mark-sm">SN</div>
           <p class="font-semibold leading-tight truncate flex-1">${esc(S.settings.school)}</p>
-          ${U.role === 'parent' ? '' : '<span id="net-m" class="net"></span>'}
+          ${isFam() ? '' : '<span id="net-m" class="net"></span>'}
           <button onclick="logout()" class="avatar-sm" title="Log out">${esc(initials)}</button></div>
       </header>
       <main class="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-4 pb-28 lg:pb-10">${body}
@@ -588,18 +590,25 @@ function vLogin() {
       <div><label class="lbl">Type the PIN again</label><input id="su-pin2" type="password" inputmode="numeric" maxlength="8" class="inp pin"></div>
       <button onclick="doSetup()" class="btn btn-p w-full py-3">${STATUS.setup ? 'Set up school' : 'Save new PIN'}</button>
       ${STATUS.reset ? '<button onclick="STATUS.reset=false;render()" class="btn btn-l w-full">Back to log in</button>' : ''}`);
-  const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}${t.pin ? '' : ' (no PIN yet)'}</option>`).join('');
-  const roles = [['teacher', 'Teacher'], ['parent', 'Parent'], ['principal', 'Principal'], ['chairman', 'Chairman']];
+  if (MUST) return shell(`
+      <h2 class="text-xl font-semibold">Choose your own PIN</h2>
+      <p class="text-sm text-slate-600">You logged in with the first PIN, 1234. Choose your own 4-digit PIN now. Keep it private; you will use it every time.</p>
+      <div><label class="lbl">New PIN (4–8 digits)</label><input id="mc-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin"></div>
+      <div><label class="lbl">Type the new PIN again</label><input id="mc-pin2" type="password" inputmode="numeric" maxlength="8" class="inp pin" onkeydown="if(event.key==='Enter')saveFirstPin()"></div>
+      <button onclick="saveFirstPin()" class="btn btn-p w-full py-3">Save my PIN</button>
+      <button onclick="forceLogout()" class="btn btn-l w-full">Cancel</button>`);
+  const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}</option>`).join('');
+  const roles = [['teacher', 'Teacher'], ['student', 'Student'], ['parent', 'Parent'], ['principal', 'Principal'], ['chairman', 'Chairman']];
   return shell(`
       <h2 class="text-xl font-semibold">Log in</h2>
       <div class="seg">${roles.map(([r, l]) => `<button onclick="loginRole='${r}';render()" class="${loginRole === r ? 'on' : ''}">${l}</button>`).join('')}</div>
       ${loginRole === 'teacher' ? (STATUS.teachers.length ? `<div><label class="lbl">Your name</label><select id="lg-t" class="inp">${tOpts}</select></div>` : '<p class="text-sm text-slate-500">The Principal must log in once first.</p>') : ''}
+      ${loginRole === 'student' ? `<div><label class="lbl">Admission number</label><input id="lg-adm" class="inp" autocomplete="off" placeholder="e.g. 92"></div>` : ''}
       ${loginRole === 'parent' ? `<div><label class="lbl">Mobile number given to the school</label><input id="lg-ph" type="tel" inputmode="numeric" maxlength="13" class="inp" placeholder="98390 00000"></div>` : ''}
-      <div><label class="lbl">${loginRole === 'parent' ? '4-digit parent code' : 'PIN'}</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin" onkeydown="if(event.key==='Enter')login()"></div>
+      <div><label class="lbl">PIN</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin" onkeydown="if(event.key==='Enter')login()"></div>
       <button onclick="login()" class="btn btn-p w-full py-3">Log in</button>
-      <p class="text-xs text-slate-500 text-center">${loginRole === 'parent' ? 'No code yet? Ask the school office — they send it on WhatsApp.'
-        : loginRole === 'principal' ? 'Forgot your PIN? <button onclick="STATUS.reset=true;render()" class="underline text-ink">Reset it with the update key</button>'
-        : 'Forgot your PIN? Ask the Principal to set a new one.'}</p>`);
+      <p class="text-xs text-slate-500 text-center">${loginRole === 'principal' ? 'Forgot your PIN? <button onclick="STATUS.reset=true;render()" class="underline text-ink">Reset it with the update key</button>'
+        : 'First time? Your PIN is <b>1234</b> — you will then choose your own. Forgot it? Ask the school office to reset it.'}</p>`);
 }
 async function doSetup() {
   if (busy) return;
@@ -615,24 +624,42 @@ async function login() {
   const pin = document.getElementById('lg-pin').value.trim();
   const tid = loginRole === 'teacher' ? (document.getElementById('lg-t') || {}).value : null;
   const phone = loginRole === 'parent' ? (document.getElementById('lg-ph') || {}).value || '' : '';
+  const adm = loginRole === 'student' ? ((document.getElementById('lg-adm') || {}).value || '').trim() : '';
   if (loginRole === 'parent' && phone.replace(/\D/g, '').length < 10) return toast('Enter the 10-digit mobile number', 'a');
-  if (!pin) return toast(loginRole === 'parent' ? 'Enter the parent code' : 'Enter your PIN', 'a');
+  if (loginRole === 'student' && !adm) return toast('Enter your admission number', 'a');
+  if (!pin) return toast('Enter your PIN', 'a');
   busy = true;
-  try { await doLogin(loginRole, tid, pin, phone); } catch (e) { toast(e.message, 'r'); } finally { busy = false; }
+  try { await doLogin(loginRole, tid, pin, phone, adm); } catch (e) { toast(e.message, 'r'); } finally { busy = false; }
 }
-async function doLogin(role, tid, pin, phone) {
-  const res = await api('login', { role, tid, pin, phone });
+let MUST = null;   // { role, old } while a 1234 user chooses their own PIN
+async function doLogin(role, tid, pin, phone, adm) {
+  const res = await api('login', { role, tid, pin, phone, adm });
   TOKEN = res.token; tokenSet(TOKEN); try { localStorage.setItem('sch_role', res.me ? res.me.role : ''); } catch (e) {}
-  if (res.me && res.me.role === 'parent') await loadParent(); else await loadAll();
+  if (res.mustChange) { MUST = { role: res.me.role, old: pin }; render(); return; }
+  await finishLogin(res.me.role);
+}
+async function finishLogin(role) {
+  MUST = null;
+  if (role === 'parent' || role === 'student') await loadParent(); else await loadAll();
   view = null; render(); setNet('ok');
 }
+async function saveFirstPin() {
+  if (busy || !MUST) return;
+  const pin = document.getElementById('mc-pin').value.trim();
+  if (pin !== document.getElementById('mc-pin2').value.trim()) return toast('The two PINs do not match', 'a');
+  if (!/^\d{4,8}$/.test(pin)) return toast('PIN must be 4 to 8 digits', 'a');
+  if (pin === '1234') return toast('Choose a PIN other than 1234', 'a');
+  busy = true;
+  try { await api('setpin', { old: MUST.old, pin }); toast('Your PIN is saved'); await finishLogin(MUST.role); }
+  catch (e) { toast(e.message, 'r'); } finally { busy = false; }
+}
 async function logout() {
-  if (U && U.role !== 'parent') await sync();
+  if (U && !isFam()) await sync();
   try { await api('logout', {}); } catch (e) {}
   forceLogout();
 }
 function forceLogout() {
-  PD = null; PC_LAST = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
+  MUST = null; PD = null; PC_LAST = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
 }
@@ -1047,7 +1074,7 @@ function vStudents() {
       <div class="card lg:col-span-2 overflow-x-auto">
         <div class="flex flex-wrap gap-1 mb-3">${['ALL', ...CLASS_NAMES].map(x => `<button onclick="go('students',{c:'${x}'})" class="btn btn-sm ${x === c ? 'btn-p' : 'btn-l'}">${x === 'ALL' ? 'All' : x}</button>`).join('')}</div>
         <table class="tbl"><tr><th>Adm</th><th>Name</th><th>Class</th><th>Father</th><th>Phone</th><th></th></tr>${list.map(s => `<tr><td>${esc(s.adm)}</td><td class="font-semibold">${esc(s.name)}${s.sample ? ' <span class="pill bg-slate-100 text-slate-500">sample</span>' : ''}</td><td>${s.cls}</td><td>${esc(s.father)}</td><td>${esc(s.phone)}</td>
-          <td><button onclick="editStudent('${s.id}')" class="text-indigo-600"><i class="fa-solid fa-pen"></i></button> <button onclick="delStudent('${s.id}')" class="text-rose-500 ml-2"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')}</table>
+          <td class="whitespace-nowrap"><button onclick="setPin('s:' + ${jsq(s.id)}, ${jsq(s.name)})" class="text-slate-500 mr-2" title="Set or reset student PIN"><i class="fa-solid fa-key"></i></button><button onclick="editStudent('${s.id}')" class="text-indigo-600"><i class="fa-solid fa-pen"></i></button> <button onclick="delStudent('${s.id}')" class="text-rose-500 ml-2"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')}</table>
       </div>
       <div class="space-y-4">
         <div class="card space-y-2"><h3 class="font-bold">Add student</h3>
@@ -1166,6 +1193,7 @@ async function changeMyPin() {
   const old = prompt('Your current PIN'); if (old === null) return;
   const pin = prompt('New PIN (4 to 8 digits)'); if (pin === null) return;
   if (!/^\d{4,8}$/.test(pin.trim())) return toast('PIN must be 4 to 8 digits', 'a');
+  if (pin.trim() === '1234') return toast('Choose a PIN other than 1234', 'a');
   try { await api('setpin', { old: old.trim(), pin: pin.trim() }); toast('PIN changed'); } catch (e) { toast(e.message, 'r'); }
 }
 
@@ -1191,7 +1219,7 @@ async function exportLog() {
 function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 
 // ---------------------------------------------------------------- SETTINGS (principal)
-function pinBadge(uid) { return PINS[uid] ? '<span class="pill bg-emerald-100 text-emerald-800">PIN set</span>' : '<span class="pill bg-rose-100 text-rose-800">No PIN</span>'; }
+function pinBadge(uid) { return PINS[uid] ? '<span class="pill bg-emerald-100 text-emerald-800">Own PIN</span>' : '<span class="pill bg-amber-100 text-amber-800">Uses 1234</span>'; }
 function vSettings() {
   const tOpts = sel => Object.entries(S.teachers).map(([k, t]) => `<option value="${esc(k)}" ${k === sel ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
   return head('Settings', 'Logins, phone numbers, class teachers, exams and backup.') + `
@@ -1206,7 +1234,7 @@ function vSettings() {
       <div class="card space-y-3"><h3 class="font-bold">Logins</h3>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Principal</b> (you) ${pinBadge('principal')}</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change my PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Chairman</b> ${pinBadge('chairman')}</span><button onclick="setPin('chairman','Chairman')" class="btn btn-sm btn-l">Set PIN</button></div>
-        <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Nobody, including you, can see a PIN after it is set — just set a new one if someone forgets.</p></div>
+        <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Everyone except the Principal starts with PIN 1234 and must choose their own at first login. Nobody can see a PIN after it is set; if someone forgets, press Set PIN and type 1234 to reset it.</p></div>
       <div class="card lg:col-span-2 overflow-x-auto"><h3 class="font-bold mb-2">Teachers — login PIN & WhatsApp number</h3>
         <table class="tbl"><tr><th>Teacher</th><th>Role</th><th>Login</th><th>WhatsApp no.</th><th></th></tr>${Object.entries(S.teachers).map(([k, t]) => `<tr><td class="font-semibold">${esc(t.name)}</td><td class="text-xs">${esc(t.role)}</td>
           <td class="whitespace-nowrap">${pinBadge('t:' + k)} <button onclick="setPin('t:${esc(k)}',${jsq(t.name)})" class="btn btn-sm btn-l ml-1">Set PIN</button></td>
@@ -1229,10 +1257,10 @@ function saveSchool() {
   log('Settings', 'School settings updated'); toast('Saved'); render();
 }
 async function setPin(uidx, name) {
-  const pin = prompt('New PIN for ' + name + ' (4 to 8 digits). Tell it to them privately.'); if (pin === null) return;
+  const pin = prompt('New PIN for ' + name + ' (4 to 8 digits). Type 1234 to reset — they will then choose their own.'); if (pin === null) return;
   if (!/^\d{4,8}$/.test(pin.trim())) return toast('PIN must be 4 to 8 digits', 'a');
   await sync();
-  try { await api('setpin', { uid: uidx, pin: pin.trim() }); PINS[uidx] = true; toast('PIN set for ' + name); render(); } catch (e) { toast(e.message, 'r'); }
+  try { await api('setpin', { uid: uidx, pin: pin.trim() }); PINS[uidx] = pin.trim() !== '1234'; toast((pin.trim() === '1234' ? 'Reset to 1234 for ' : 'PIN set for ') + name); render(); } catch (e) { toast(e.message, 'r'); }
 }
 function addTeacher() {
   const name = document.getElementById('nt-name').value.trim(), role = document.getElementById('nt-role').value.trim();
@@ -1760,7 +1788,7 @@ function wordCard(iso, compact) {
       <p class="text-sm text-slate-600 italic mt-1">"${esc(w.e)}"</p></div>
       <a target="_blank" href="${waLink('', wordShareText(iso))}" class="btn btn-sm btn-wa noprint shrink-0"><i class="fa-brands fa-whatsapp"></i> Share</a></div>
     ${compact ? '' : `<div class="mt-3 pt-3 border-t border-indigo-200"><p class="text-sm font-semibold text-ink">Conversation Starter</p><p class="text-sm font-semibold mt-1">${esc(starterOf(iso))}</p>
-    <p class="text-xs text-slate-500 mt-1">${U && U.role === 'parent' ? 'Ask your child this at home and let them answer in English.' : 'Ask 3–4 students to answer in full English sentences, then log it in Speaking.'}</p></div>`}
+    <p class="text-xs text-slate-500 mt-1">${isFam() ? 'Ask your child this at home and let them answer in English.' : 'Ask 3–4 students to answer in full English sentences, then log it in Speaking.'}</p></div>`}
   </div>`;
 }
 
@@ -1981,7 +2009,7 @@ function vFame() {
 let PD = null, PKID = null;
 async function loadParent() {
   const res = await api('pdata');
-  PD = res; ME = res.me; U = { role: 'parent', tid: ME.tid };
+  PD = res; ME = res.me; U = { role: ME.role, tid: ME.tid };
   S = emptyState(); S.settings = { school: res.school, session: res.session }; S.exams = res.exams || []; S.cal = res.cal || [];
   if (!PKID || !PD.kids.some(k => k.id === PKID)) PKID = PD.kids.length ? PD.kids[0].id : null;
 }
@@ -2051,10 +2079,12 @@ function vPResults() {
 }
 function vPNotices() {
   const date = todayISO();
+  const pinCard = `<div class="card flex items-center justify-between gap-3"><span class="text-sm">Change your login PIN</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change PIN</button></div>`;
   const up = [...S.cal, ...S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam' }))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 12);
   return `${head('Notices & calendar')}
     ${PD.notices.length ? PD.notices.sort((a, b) => String(b.date).localeCompare(String(a.date))).map(n => `<div class="card"><div class="flex justify-between gap-2"><h3 class="h3">${esc(n.title)}</h3><span class="text-sm text-slate-500 shrink-0">${fmtDate(n.date)}</span></div><p class="text-sm whitespace-pre-wrap mt-1">${esc(n.body)}</p></div>`).join('') : '<div class="card text-sm text-slate-500">No notices.</div>'}
-    <div class="card"><h3 class="h3">Holidays, exams and events</h3>${up.length ? up.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}${e.to && e.to !== e.date ? ' – ' + fmtDate(e.to) : ''}</span></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing scheduled.</p>'}</div>`;
+    <div class="card"><h3 class="h3">Holidays, exams and events</h3>${up.length ? up.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}${e.to && e.to !== e.date ? ' – ' + fmtDate(e.to) : ''}</span></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing scheduled.</p>'}</div>
+    ${pinCard}`;
 }
 
 // ---------------------------------------------------------------- PARENT CODES (principal, in Students)
@@ -2065,10 +2095,10 @@ function parentFamilies() {
 }
 function parentCodesCard() {
   const fams = parentFamilies(), noPhone = S.students.filter(s => String(s.phone || '').replace(/\D/g, '').length < 10).length;
-  return `<div class="card space-y-3"><div class="flex flex-wrap justify-between gap-2"><h3 class="h3">Parent logins</h3><span class="text-sm text-slate-500">${fams.filter(([p]) => PINS['p:' + p]).length} of ${fams.length} families have a code</span></div>
-    <p class="text-sm text-slate-600">Parents open <b>${esc(location.origin + location.pathname)}</b>, choose Parent, and enter their mobile number and the 4-digit code. They see only their own children. Brothers and sisters with the same mobile number appear together.</p>
+  return `<div class="card space-y-3"><div class="flex flex-wrap justify-between gap-2"><h3 class="h3">Parent logins</h3><span class="text-sm text-slate-500">${fams.filter(([p]) => PINS['p:' + p]).length} of ${fams.length} families have their own PIN</span></div>
+    <p class="text-sm text-slate-600">Parents open <b>${esc(location.origin + location.pathname)}</b>, choose Parent, and enter their mobile number. The first PIN is <b>1234</b>; they then choose their own. "Make code" gives a family a private code instead. Students can log in with their admission number in the same way. Brothers and sisters with the same mobile number appear together.</p>
     ${noPhone ? `<p class="text-sm text-amber-700">${noPhone} student(s) have no 10-digit mobile number — add it to give their parents a login.</p>` : ''}
-    <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">${fams.map(([p, kids]) => `<div class="flex items-center justify-between gap-2 py-2"><span class="text-sm"><b>${kids.map(k => esc(k.name) + ' (' + k.cls + ')').join(', ')}</b><br><span class="text-slate-500">${p.slice(0, 5)} ${p.slice(5)}</span> ${PINS['p:' + p] ? '<span class="pill bg-leaf/10 text-leaf">Code given</span>' : ''}</span>
+    <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">${fams.map(([p, kids]) => `<div class="flex items-center justify-between gap-2 py-2"><span class="text-sm"><b>${kids.map(k => esc(k.name) + ' (' + k.cls + ')').join(', ')}</b><br><span class="text-slate-500">${p.slice(0, 5)} ${p.slice(5)}</span> ${PINS['p:' + p] ? '<span class="pill bg-leaf/10 text-leaf">Own PIN</span>' : '<span class="pill bg-amber-100 text-amber-800">Uses 1234</span>'}</span>
       <button onclick="makeParentCode('${p}')" class="btn btn-sm ${PINS['p:' + p] ? 'btn-l' : 'btn-p'}">${PINS['p:' + p] ? 'New code' : 'Make code'}</button></div>`).join('') || '<p class="text-sm text-slate-500 py-2">Add students with a parent mobile number first.</p>'}</div></div>`;
 }
 let PC_LAST = null;
@@ -2106,7 +2136,7 @@ VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','P
 (async function init() {
   TOKEN = tokenGet();
   if (TOKEN) {
-    try { if (tokenRole() === 'parent') await loadParent(); else await loadAll(); render(); return; }
+    try { if (tokenRole() === 'parent' || tokenRole() === 'student') await loadParent(); else await loadAll(); render(); return; }
     catch (e) {
       if (/internet|Server problem|reachable/i.test(e.message)) {
         document.getElementById('root').innerHTML = `<div class="flex-1 flex items-center justify-center p-6 text-center"><div><p class="font-bold">No connection to the school server.</p><p class="text-sm text-slate-500">${esc(e.message)}</p><button onclick="location.reload()" class="btn btn-p mt-3">Try again</button></div></div>`;

@@ -198,6 +198,53 @@ $changed=$erp;$changed['students'][0]['name']='Overwrite attempt';
 $wrong=$erp;$wrong['session']='2025-26';[$c]=sf_api('importstudents',$wrong,$P);sf_check($c===400,'wrong session accepted');
 sf_check($teachersBefore===$pdo->query("SELECT r,d FROM sch_records WHERE k='teacher' ORDER BY r")->fetchAll(),'student import changed teachers');
 
+// ---- pehli baar PIN 1234, phir apna PIN chunna zaroori ----
+[$c] = sf_api('login', ['role' => 'teacher', 'tid' => 'P', 'pin' => '1234']);
+sf_check($c === 400, 'teacher login was allowed for the Principal record');
+[$c] = sf_api('login', ['role' => 'principal', 'pin' => '1234']);
+sf_check($c === 403, 'principal accepted the default PIN');
+[$c, , $j] = sf_api('login', ['role' => 'chairman', 'pin' => '1234']);
+sf_check($c === 200 && $j['mustChange'] === true, 'chairman could not log in with 1234');
+$CH = $j['token'];
+[$c] = sf_api('load', null, $CH);
+sf_check($c === 428, 'ERP opened before the chairman chose a PIN');
+[$c] = sf_api('setpin', ['old' => '1234', 'pin' => '1234'], $CH);
+sf_check($c === 400, '1234 accepted as a chosen PIN');
+[$c] = sf_api('setpin', ['uid' => 't:K', 'pin' => '2222'], $CH);
+sf_check($c === 403, 'chairman set a teacher PIN');
+[$c] = sf_api('setpin', ['old' => '1234', 'pin' => '8642'], $CH);
+sf_check($c === 200, 'chairman could not choose a PIN');
+[$c] = sf_api('load', null, $CH);
+sf_check($c === 200, 'chairman blocked after choosing a PIN');
+[$c] = sf_api('login', ['role' => 'chairman', 'pin' => '1234']);
+sf_check($c === 403, '1234 still worked after the chairman chose a PIN');
+
+[$c] = sf_api('login', ['role' => 'student', 'adm' => '999', 'pin' => '1234']);
+sf_check($c === 403, 'unknown admission number logged in');
+[$c, , $j] = sf_api('login', ['role' => 'student', 'adm' => '75', 'pin' => '1234']);
+sf_check($c === 200 && $j['mustChange'] === true && $j['me']['role'] === 'student', 'student could not log in with 1234');
+$ST = $j['token'];
+[$c] = sf_api('pdata', null, $ST);
+sf_check($c === 428, 'student data opened before choosing a PIN');
+[$c] = sf_api('setpin', ['old' => '1234', 'pin' => '9753'], $ST);
+sf_check($c === 200, 'student could not choose a PIN');
+[$c, $raw, $j] = sf_api('pdata', null, $ST);
+sf_check($c === 200 && count($j['kids']) === 1 && $j['kids'][0]['name'] === 'Riya Pal', 'student did not get exactly their own record');
+sf_check(!str_contains($raw, 'Shivam'), 'another student reached a student login');
+[$c] = sf_api('load', null, $ST);
+sf_check($c === 403, 'student opened the full school data');
+[, , $j] = sf_api('sync', ['put' => [['k' => 'studAtt', 'r' => "$today|9th", 'd' => ['absent' => []]]]], $ST);
+sf_check(count($j['rejected']) === 1, 'student changed attendance');
+
+[$c, , $j] = sf_api('login', ['role' => 'parent', 'phone' => '98390 11111', 'pin' => '1234']);
+sf_check($c === 200 && $j['mustChange'] === true, 'parent could not log in with 1234');
+
+// Principal "reset": PIN 1234 dene par agli baar apna PIN chunna padta hai
+[$c] = sf_api('setpin', ['uid' => 't:MA', 'pin' => '1234'], $P);
+sf_check($c === 200, 'principal could not reset a teacher to 1234');
+[$c, , $j] = sf_api('login', ['role' => 'teacher', 'tid' => 'MA', 'pin' => '1234']);
+sf_check($c === 200 && $j['mustChange'] === true, 'reset teacher was not asked to choose a PIN');
+
 // ---- log export ----
 [$c, $csv] = sf_api('logcsv', null, $P);
 sf_check($c === 200 && str_contains($csv, 'Activity'), 'principal could not export log');

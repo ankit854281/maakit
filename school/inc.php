@@ -109,8 +109,27 @@ function sch_children(string $phone10): array {
     return $out;
 }
 
+// Admission number dohraaye bhi ja sakte hain (purane ERP se import), isliye list
+function sch_students_by_adm(string $adm): array {
+    $out = [];
+    if ($adm === '') return $out;
+    foreach (sch_db()->query("SELECT d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
+        $s = json_decode((string)$row['d'], true);
+        if (is_array($s) && strcasecmp(trim((string)($s['adm'] ?? '')), $adm) === 0) $out[] = $s;
+    }
+    return $out;
+}
+
+function sch_uid_of(array $u): string {
+    return match ($u['role']) { 'teacher' => 't:' . $u['tid'], 'parent' => 'p:' . $u['tid'], 'student' => 's:' . $u['tid'], default => (string)$u['role'] };
+}
+
 function sch_user_label(array $u): string {
     if ($u['role'] === 'chairman') return 'Chairman';
+    if ($u['role'] === 'student') {
+        $s = sch_rec_get('student', (string)$u['tid']);
+        return ($s ? (string)($s['name'] ?? '') : (string)$u['tid']) . ' (Student)';
+    }
     if ($u['role'] === 'parent') {
         $names = array_map(fn($s) => (string)($s['name'] ?? ''), sch_children((string)$u['tid']));
         return 'Parent of ' . ($names ? implode(', ', $names) : (string)$u['tid']);
@@ -121,17 +140,21 @@ function sch_user_label(array $u): string {
 }
 
 function sch_pin_ok(string $pin): bool { return (bool)preg_match('/^\d{4,8}$/', $pin); }
+const SCH_DEFAULT_PIN = '1234';   // pehli baar sab isi se login karte hain, phir apna PIN chunte hain (sql/038)
 const SCH_MAX_STRIKES = 15;      // itni baar kul galat PIN = login band, naya PIN lagana padega
 
 // ---------- session ----------
-function sch_auth(): array {
+// $allowMustChange: sirf PIN badalne aur logout ke liye true. Baaki har jagah
+// 1234 wala aadmi tab tak ruka rahega jab tak apna PIN na chun le.
+function sch_auth(bool $allowMustChange = false): array {
     $tok = (string)($_SERVER['HTTP_X_SCHOOL_TOKEN'] ?? '');
     if (!preg_match('/^[a-f0-9]{64}$/', $tok)) sch_fail('Please log in again.', 401);
-    $st = sch_db()->prepare('SELECT s.uid, u.role, u.tid FROM sch_sessions s JOIN sch_users u ON u.uid = s.uid
+    $st = sch_db()->prepare('SELECT s.uid, u.role, u.tid, u.must_change FROM sch_sessions s JOIN sch_users u ON u.uid = s.uid
                              WHERE s.token_hash = ? AND s.expires_at > NOW()');
     $st->execute([hash('sha256', $tok)]);
     $u = $st->fetch();
     if (!$u) sch_fail('Please log in again.', 401);
+    if ((int)$u['must_change'] === 1 && !$allowMustChange) sch_fail('Please choose your own PIN first.', 428);
     sch_db()->prepare('UPDATE sch_sessions SET last_seen = NOW() WHERE token_hash = ?')->execute([hash('sha256', $tok)]);
     $u['label'] = sch_user_label($u);
     return $u;

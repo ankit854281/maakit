@@ -39,7 +39,8 @@
   .more-item.on { @apply bg-marigold/25; }
   .net { @apply inline-flex items-center gap-1.5 text-xs text-white/80; }
   .dot { @apply inline-block w-2 h-2 rounded-full; }
-  .seg { @apply grid grid-cols-4 gap-1 bg-paper p-1 rounded-xl text-sm; }
+  .seg { @apply grid grid-cols-5 gap-0.5 bg-paper p-1 rounded-xl text-[13px]; }
+  .seg button { @apply px-0.5; }
   .seg button { @apply py-2 rounded-lg text-slate-500; }
   .seg button.on { @apply bg-white shadow-sm text-ink font-semibold; }
   .chip { @apply px-3 py-1.5 rounded-full border border-line bg-white text-sm whitespace-nowrap; }
