@@ -271,7 +271,7 @@ $csrf = h(csrf());
     var rider = null;
     function showRider(p) {
       if (!p) { if (rider) { map.removeLayer(rider); rider = null; } return; }
-      if (!rider) rider = L.circleMarker(p, {radius: 9, color: 'var(--card)', weight: 3, fillColor: 'var(--mint2)', fillOpacity: 1}).addTo(map).bindPopup(<?= json_encode(t('You', 'आप')) ?>);
+      if (!rider) rider = L.circleMarker(p, {radius: 9, color: 'var(--card)', weight: 3, fillColor: 'var(--navy)', fillOpacity: 1}).addTo(map).bindPopup(<?= json_encode(t('You', 'आप')) ?>);
       else rider.setLatLng(p);
       if (!map.getBounds().contains(p)) map.panTo(p);
     }

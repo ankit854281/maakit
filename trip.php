@@ -173,13 +173,13 @@ $V = trip_vehicles($pdo);
       if (!map) makeMap(q);
       if (!map) return;
       var coords = (+x.lat).toFixed(5) + ', ' + (+x.lng).toFixed(5);
-      if (!riderMarker) riderMarker = L.circleMarker(q, {radius: 10, color: 'var(--on-brand)', weight: 3, fillColor: 'var(--brand)', fillOpacity: 1}).addTo(map).bindPopup(coords);
+      if (!riderMarker) riderMarker = L.circleMarker(q, {radius: 10, color: 'var(--on-brand)', weight: 3, fillColor: 'var(--rk)', fillOpacity: 1}).addTo(map).bindPopup(coords);
       else { riderMarker.setLatLng(q); riderMarker.setPopupContent(coords); }
       if (!map.getBounds().contains(q)) map.panTo(q);
       if (status) {
         status.hidden = false;
         var mins = Math.max(0, Math.floor((Date.now()/1000 - (+x.at))/60));
-        status.textContent = <?= json_encode(t('Blue dot: rider · updated ', 'नीला निशान: राइडर · अपडेट '), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> + (mins < 1 ? <?= json_encode(t('just now', 'अभी')) ?> : mins + ' ' + <?= json_encode(t('min ago', 'मिनट पहले')) ?>);
+        status.textContent = <?= json_encode(t('Rider location · updated ', 'राइडर की जगह · अपडेट '), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> + (mins < 1 ? <?= json_encode(t('just now', 'अभी')) ?> : mins + ' ' + <?= json_encode(t('min ago', 'मिनट पहले')) ?>);
       }
     }
     function makeMap(livePoint) {
