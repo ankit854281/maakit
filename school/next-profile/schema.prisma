@@ -1,0 +1,79 @@
+// Portable PostgreSQL addition; Prisma 6.19 reference. NOT a live MySQL migration.
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum FacultyReviewState {
+  Draft
+  Submitted
+  Verified
+  NeedsRevision
+}
+enum CredentialReviewState {
+  Pending
+  Verified
+  Rejected
+}
+model FacultyProfile {
+  id                        String             @default(uuid()) @db.Uuid
+  schoolId                  String             @db.Uuid
+  teacherId                 String
+  fullName                  String             @db.VarChar(120)
+  designation               String             @db.VarChar(100)
+  phoneEncrypted            String?
+  emailEncrypted            String?
+  bloodGroupEncrypted       String?
+  emergencyContactEncrypted String?
+  photoObjectKey            String?
+  degrees                   String[]           @default([])
+  subjects                  String[]           @default([])
+  superpowers               String[]           @default([])
+  quote                     String             @default("") @db.VarChar(400)
+  bio                       String             @default("")
+  shareParents              Boolean            @default(false)
+  shareWebsite              Boolean            @default(false)
+  state                     FacultyReviewState @default(Draft)
+  version                   Int                @default(1)
+  approvedSnapshot          Json?
+  approvedVersion           Int?
+  approvedBy                String?
+  approvedAt                DateTime?          @db.Timestamptz(3)
+  idTokenHash               String?            @db.VarChar(64)
+  idExpiresAt               DateTime?          @db.Timestamptz(3)
+  idRevokedAt               DateTime?          @db.Timestamptz(3)
+  feedback                  String?
+  createdAt                 DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime           @updatedAt @db.Timestamptz(3)
+  credentials               TeacherCredential[]
+  @@id([schoolId, id])
+  @@unique([schoolId, teacherId])
+  @@unique([idTokenHash])
+  @@index([schoolId, state])
+  @@map("faculty_profiles")
+}
+model TeacherCredential {
+  id           String                @default(uuid()) @db.Uuid
+  schoolId     String                @db.Uuid
+  profileId    String                @db.Uuid
+  session      String                @db.VarChar(30)
+  type         String                @db.VarChar(20)
+  title        String                @db.VarChar(200)
+  issuer       String                @db.VarChar(200)
+  completedOn  DateTime              @db.Date
+  hours        Decimal               @default(0) @db.Decimal(6, 2)
+  evidenceKey  String?
+  reference    String
+  state        CredentialReviewState @default(Pending)
+  verifiedBy   String?
+  verifiedAt   DateTime?              @db.Timestamptz(3)
+  requestId    String                @db.Uuid
+  createdAt    DateTime              @default(now()) @db.Timestamptz(3)
+  profile      FacultyProfile        @relation(fields: [schoolId, profileId], references: [schoolId, id])
+  @@id([schoolId, id])
+  @@unique([schoolId, requestId])
+  @@index([schoolId, profileId, session, state])
+  @@map("teacher_credentials")
+}

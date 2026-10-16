@@ -525,7 +525,7 @@ function render() {
   let body = '';
   try { body = (VIEWS[view] || vDash)(); } catch (e) { console.error(e); body = `<div class="card text-rose">This screen could not open: ${esc(e.message)}. Please go back and try again.</div>`; }
   const side = NAV[U.role].map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="side-link ${view === k ? 'on' : ''}"><i class="fa-solid ${ic} w-5 text-center"></i><span>${lb}</span></button>`).join('');
-  const prim = PRIMARY[U.role], rest = NAV[U.role].filter(x => !prim.includes(x[0]));
+  const prim = PRIMARY[U.role], rest = NAV[U.role].filter(x => ['teacher','principal'].includes(U.role) ? !['studio','attendance','saathi','profile'].includes(x[0]) : !prim.includes(x[0]));
   const tab = k => { const n = NAV[U.role].find(x => x[0] === k); return n ? `<button onclick="moreOpen=false;go('${k}')" class="tab ${view === k && !moreOpen ? 'on' : ''}"><i class="fa-solid ${n[1]}"></i><span>${n[2].split(' ')[0]}</span></button>` : ''; };
   const initials = U.role === 'parent' ? 'P' : U.role === 'student' ? (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('') : (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   root.innerHTML = `
@@ -553,15 +553,16 @@ function render() {
         <p class="text-center text-xs text-slate-400 pt-6 lg:hidden">Powered by Maakit</p></main>
     </div>
   </div>
-  <nav class="noprint lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-line grid ${rest.length ? 'grid-cols-5' : 'grid-cols-4'} pb-[env(safe-area-inset-bottom)]">
+  ${['teacher','principal'].includes(U.role)?`<nav class="modern-dock noprint" aria-label="Teacher quick actions"><button onclick="go('studio')" aria-label="Camera scan"><i class="fa-solid fa-camera"></i><span>Camera</span></button><button class="${view==='attendance'?'on':''}" onclick="go('attendance')"><i class="fa-solid fa-clipboard-user"></i><span>Roll call</span></button><button onclick="go('saathi')" class="${view==='saathi'?'on':''}"><i class="fa-solid fa-feather"></i><span>Saathi</span></button><button onclick="go('profile')" class="${view==='profile'?'on':''}"><i class="fa-solid fa-user"></i><span>My profile</span></button><button onclick="moreOpen=!moreOpen;render()"><i class="fa-solid fa-grip"></i><span>More</span></button></nav>`:`<nav class="noprint lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-line grid ${rest.length ? 'grid-cols-5' : 'grid-cols-4'} pb-[env(safe-area-inset-bottom)]">
     ${prim.map(tab).join('')}${rest.length ? `<button onclick="moreOpen=!moreOpen;render()" class="tab ${moreOpen || !prim.includes(view) ? 'on' : ''}"><i class="fa-solid fa-grip"></i><span>More</span></button>` : ''}
-  </nav>
+  </nav>`}
   ${moreOpen ? `<div class="noprint lg:hidden fixed inset-0 z-30 bg-ink/40" onclick="moreOpen=false;render()"></div>
     <div class="noprint lg:hidden fixed inset-x-0 bottom-16 z-40 bg-white rounded-t-3xl p-4 pb-6 shadow-2xl">
       <div class="w-10 h-1 rounded-full bg-slate-300 mx-auto mb-4"></div>
       <div class="grid grid-cols-4 gap-2">${rest.map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="more-item ${view === k ? 'on' : ''}"><i class="fa-solid ${ic}"></i><span>${lb}</span></button>`).join('')}</div>
     </div>` : ''}`;
   setNet(netState);
+  if(view==='faculty') loadParentFaculty();
 }
 
 // ---------------------------------------------------------------- login / setup
@@ -2154,5 +2155,13 @@ VIEWS.studio=()=>head(U.role==='parent'?'Classroom & Copies':'Teacher Smart Stud
 
 for(const role of ['principal','teacher']) NAV[role].push(['toolkit','fa-wand-magic-sparkles','Teacher Toolkit']);
 VIEWS.toolkit=()=>head('Teacher Smart Toolkit','Less paperwork. More room to teach.')+'<iframe title="Teacher Smart Toolkit" src="toolkit.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
-function teacherCorner(date){const p=TeacherEnglish.today(date);return `<div class="card tk-mini"><div><span class="pill">Your teaching companion</span><h3 class="h3 mt-2">A little support for your day</h3><p class="text-sm">Paper drafts, teaching pictures, diary help and a private English practice corner.</p><button class="btn btn-p mt-2" onclick="go('toolkit')">Open Teacher Toolkit</button></div><div><b>${esc(p[0])}</b><details><summary>Hindi meaning</summary>${esc(p[1])}</details><button class="btn btn-sm btn-l mt-2" onclick="TeacherEnglish.say(TeacherEnglish.today('${date}')[0])">Listen & try</button></div></div>`;}
+function teacherCorner(date){const p=TeacherEnglish.today(date);return `<div class="modern-bento"><section class="modern-welcome"><span class="eyebrow">YOUR TEACHING COMPANION</span><h2>A little less admin.<br>More room to teach.</h2><p>Your lesson tools, classroom moments and professional identity, in one place.</p><div class="modern-links"><button class="btn btn-p" onclick="go('toolkit')">Open Teacher Toolkit</button><button class="btn btn-l" onclick="go('profile')">My Profile Studio →</button></div></section><section class="modern-mini"><small>A phrase for your classroom</small><b>${esc(p[0])}</b><details><summary>Hindi meaning</summary>${esc(p[1])}</details><button class="btn btn-sm btn-l" onclick="TeacherEnglish.say(TeacherEnglish.today('${date}')[0])">Listen & try</button></section></div>`;}
+
 function prepareDiaryDraft(date){if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;for(const b of myBells(U.tid,date)){const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;const plan=Object.values(S.lplan).find(p=>p.tid===U.tid&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');if(plan){field.value=plan.topics.split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';if(field.value)n++;}}toast(n?'Prepared '+n+' topic drafts. Edit and confirm each bell.':'No empty bells with approved plans. Enter the actual topics.');}
+
+for(const role of ['teacher','principal']) NAV[role].push(['profile','fa-id-card','My Profile'],['saathi','fa-feather','Secret Saathi']);
+VIEWS.profile=()=>head('Teacher Profile Studio','Your identity, credentials and growth, together.')+'<iframe class="edu-iframe" title="Teacher Profile Studio" src="faculty.php?embed=1"></iframe>';
+VIEWS.saathi=()=>head('Secret Saathi','A private reflection space for your own account.')+'<iframe class="edu-iframe" title="Secret Saathi" src="faculty.php?embed=1&tab=saathi"></iframe>';
+NAV.parent.push(['faculty','fa-chalkboard-user','Our Teachers']);
+VIEWS.faculty=()=>head('Our Teachers','School-reviewed professional profiles shared with your class.')+'<div id="parentFaculty" class="modern-bento">Loading teacher profiles…</div>';
+async function loadParentFaculty(){try{const r=await fetch('faculty_api.php?a=directory',{headers:{'X-School-Token':TOKEN}});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Profiles unavailable');const node=document.getElementById('parentFaculty');if(node)node.innerHTML=d.profiles.map(p=>`<article class="card">${p.photoData?`<img src="${p.photoData}" alt="Teacher portrait" style="width:72px;height:72px;object-fit:cover;border-radius:22px;margin-bottom:12px">`:''}<h3 class="h3">${esc(p.fullName)}</h3><p class="text-sm text-slate-500">${esc(p.designation)}</p><p class="text-sm mt-3">${esc(p.bio)}</p><p class="text-sm mt-2">${esc(p.quote)}</p><p class="text-xs text-slate-500 mt-3">${esc((p.subjects||[]).join(' · '))}</p></article>`).join('')||'<div class="card text-sm">Your teachers’ profiles will appear here after verification and sharing permission.</div>';}catch(e){const node=document.getElementById('parentFaculty');if(node)node.textContent=e.message;}}

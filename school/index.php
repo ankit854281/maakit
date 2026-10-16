@@ -24,6 +24,7 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="app.css?v=<?= $v('app.css') ?>">
 <link rel="stylesheet" href="toolkit.css?v=<?= $v('toolkit.css') ?>">
+<link rel="stylesheet" href="design-2026.css?v=<?= $v('design-2026.css') ?>">
 </head>
 <body class="bg-paper text-slate-800 min-h-screen">
 <div id="toasts" class="fixed top-3 right-3 z-50 flex flex-col gap-2 pointer-events-none max-w-xs"></div>

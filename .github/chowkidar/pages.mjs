@@ -88,6 +88,9 @@ export const PAGES = [
   { path: '/transport.php', naam: 'गाड़ी रजिस्टर',  chahiye: ['Maakit'] },
   { path: '/salon.php',     naam: 'सैलून',          chahiye: ['Maakit'] },
 
+  { path: '/school/faculty.php', naam: 'Teacher Profile Studio', chahiye: ['Teacher Profile Studio'], nahi: [] },
+  { path: '/school/faculty-public.php', naam: 'School Faculty', chahiye: ['Meet our educators'], nahi: [] },
+  { path: '/school/faculty-verify.php', naam: 'Staff ID Verification', chahiye: ['Staff ID Verification'], nahi: [] },
   { path: '/school/toolkit.php', naam: 'Teacher Toolkit', chahiye: ['Teacher'], nahi: [] },
 
   // ---------- dukaan panel ----------

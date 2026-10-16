@@ -78,7 +78,16 @@ jobs:
           php .github/jaanch/school-learning.php
           php .github/jaanch/studio-unit.php
           php .github/jaanch/toolkit-unit.php
+          php .github/jaanch/faculty-unit.php
           node .github/jaanch/toolkit-english.cjs
+
+      - name: Teacher Studio React and Prisma source checks
+        run: |
+          npm install --prefix /tmp/faculty-source --no-audit --no-fund typescript@5.9.3 react@19.2.0 @types/react@19.2.2 qrcode-generator@1.4.4 prisma@6.19.0
+          mkdir -p /tmp/faculty-source/check
+          cp school/next-profile/TeacherProfileStudio.tsx school/next-profile/php-adapter.ts /tmp/faculty-source/check/
+          node /tmp/faculty-source/node_modules/typescript/bin/tsc --noEmit --strict --jsx react-jsx --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom --esModuleInterop --skipLibCheck /tmp/faculty-source/check/TeacherProfileStudio.tsx /tmp/faculty-source/check/php-adapter.ts
+          DATABASE_URL=postgresql://test:test@localhost:5432/staging node /tmp/faculty-source/node_modules/prisma/build/index.js validate --schema school/next-profile/schema.prisma
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi
@@ -138,6 +147,9 @@ jobs:
           php .github/jaanch/school-flow.php
           php .github/jaanch/studio-flow.php
           php .github/jaanch/toolkit-flow.php
+          php .github/jaanch/faculty-flow.php
+          node --check school/faculty.js
+          node --check school/faculty-public.js
           node --check school/toolkit.js
           node --check school/toolkit_english.js
           node --check school/learning.js
@@ -161,6 +173,7 @@ jobs:
           node .github/jaanch/catalogue-ui.cjs
           node .github/jaanch/hub-ui.cjs
           node .github/jaanch/toolkit-ui.cjs
+          node .github/jaanch/faculty-ui.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
