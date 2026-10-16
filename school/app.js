@@ -516,13 +516,13 @@ const NAV = {
   teacher:   [['mytoday','fa-sun','Today'],['quizt','fa-bolt','Quiz Duel'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
-  student:   [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  parent:    [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
+  student:   [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
+  parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   chairman:  [['dash','fa-gauge','Dashboard'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
-const PRIMARY = { student: ['phome','quiz','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
-                  chairman: ['dash','results','fame','calendar'], parent: ['phome','quiz','phw','presults'] };
+const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
+                  chairman: ['dash','results','fame','calendar'], parent: ['phome','game','phw','presults'] };
 let moreOpen = false;
 function navLabel(k) { const n = NAV[U.role].find(x => x[0] === k); return n ? n[2] : ''; }
 function render() {
@@ -667,7 +667,7 @@ async function logout() {
   forceLogout();
 }
 function forceLogout() {
-  QZ = null; QT = null; QPLAY = null; qzStopTimer();
+  QZ = null; QT = null; QPLAY = null; qzStopTimer(); GZ = null; GP = null; GT = null; gStop();
   MUST = null; PD = null; PC_LAST = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
@@ -2461,7 +2461,7 @@ function vQuizT() {
   const appr = QT.questions.filter(q => q.status === 'approved');
   const weak = appr.filter(q => q.n >= 3).map(q => ({ ...q, pct: Math.round(q.ok / q.n * 100) })).sort((a, b) => a.pct - b.pct).slice(0, 8);
   const ws = appr.filter(q => q.cls === c0 && q.subj === s0);
-  return head('Quiz Duel', 'Approve students\' questions, add your own, see which topics need reteaching, and print worksheets.') + `
+  return head('Quiz Duel & Game Zone', 'Approve students\' questions, add your own, see which topics need reteaching, and print worksheets.') + gameTeacherCard() + `
     <div class="card space-y-3"><h3 class="h3">Waiting for you (${pend.length})</h3>
       ${pend.length ? pend.map(q => `<div class="border border-line rounded-2xl p-4 space-y-2"><div class="flex flex-wrap justify-between gap-2 text-sm"><span><b>Class ${esc(q.cls)} · ${esc(q.subj)}</b> · ${esc(q.topic)}</span><span class="text-slate-500">by ${esc(q.author)}</span></div>
         <p class="font-medium">${esc(q.text)}</p>
@@ -2601,11 +2601,157 @@ function vPFees() {
      <p class="text-xs text-slate-500 mt-2">For bank details and payment, contact the school office. This page shows the fee structure; it is not a bill.</p></div>`;
 }
 
+// ---------------------------------------------------------------- GAME ZONE (students + parents) — school/game_api.php
+// Short rounds, instant funny feedback, a rule and an English word after every answer,
+// combos, streaks, chests, spaced "revenge" rounds and a whole-class weekly mission.
+let GZ = null, GZBUSY = false, GP = null, GTIMER = null, GT = null;
+async function gapi(a, body, q) {
+  const url = 'game_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : '');
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null;
+  try { r = await fetch(url, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (r.status === 401) { forceLogout(); throw new Error('Please log in again.'); }
+  if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem. Please try again.');
+  return j;
+}
+async function loadGame() {
+  if (GZBUSY) return; GZBUSY = true;
+  try { GZ = await gapi('state', null, { sid: pKid().id }); } catch (e) { GZ = { error: e.message }; } finally { GZBUSY = false; }
+  if (view === 'game') render();
+}
+function gStop() { if (GTIMER) { clearInterval(GTIMER); GTIMER = null; } }
+function gTimer() {
+  gStop();
+  GTIMER = setInterval(() => {
+    if (!GP || GP.res) return gStop();
+    const left = Math.max(0, Math.ceil((GP.deadline - Date.now()) / 1000)), t = document.getElementById('g-left'), b = document.getElementById('g-bar');
+    if (t) t.textContent = left; if (b) b.style.width = (left / GZ.seconds * 100) + '%';
+    if (left <= 0) { gStop(); gAnswer(-1); }
+  }, 200);
+}
+async function gStart(mode) {
+  try { const r = await gapi('start', { sid: GZ.kid.id, mode }); GP = { rid: r.rid, q: r.q, i: r.i, n: r.n, deadline: Date.now() + r.left * 1000, combo: 0, right: 0, xp: 0 }; render(); window.scrollTo(0, 0); gTimer(); }
+  catch (e) { toast(e.message, 'a'); }
+}
+async function gContinue() {
+  try { const r = await gapi('next', { sid: GZ.kid.id, rid: GZ.open.rid });
+    if (!r.q) { GZ = null; return loadGame(); }
+    GP = { rid: GZ.open.rid, q: r.q, i: r.i, n: r.n, deadline: Date.now() + r.left * 1000, combo: 0, right: 0, xp: 0 }; render(); window.scrollTo(0, 0); gTimer(); }
+  catch (e) { toast(e.message, 'r'); }
+}
+async function gAnswer(choice) {
+  if (!GP || GP.res || GP.busy) return; GP.busy = true; gStop();
+  try {
+    const r = await gapi('answer', { sid: GZ.kid.id, rid: GP.rid, choice });
+    GP.res = r; GP.chosen = choice; GP.combo = r.combo; GP.xp += r.xp; if (r.correct) GP.right++;
+    render();
+    if (r.levelUp) setTimeout(() => toast('Level up! You are now a ' + r.levelUp + ' 🎉'), 400);
+  } catch (e) { toast(e.message, 'r'); GP = null; GZ = null; loadGame(); }
+  finally { if (GP) GP.busy = false; }
+}
+async function gNext() {
+  if (!GP || !GP.res) return;
+  if (!GP.res.more) { GP = { done: true, ...GP }; GP.res = null; render(); return; }
+  try { const r = await gapi('next', { sid: GZ.kid.id, rid: GP.rid });
+    if (!r.q) { GP.done = true; GP.res = null; return render(); }
+    Object.assign(GP, { q: r.q, i: r.i, res: null, chosen: null, deadline: Date.now() + r.left * 1000 }); render(); gTimer(); }
+  catch (e) { toast(e.message, 'r'); }
+}
+async function gFlag() {
+  try { const r = await gapi('flag', { sid: GZ.kid.id, rid: GP.rid, i: GP.res.i }); GP.res.flagged = true; render(); toast(r.hidden ? 'Thanks! This question is hidden until a teacher checks it.' : 'Thanks! Your teacher will check it.'); }
+  catch (e) { toast(e.message, 'a'); }
+}
+function gPlayCard() {
+  const p = GP;
+  if (p.done) {
+    const great = p.right >= p.n - 1;
+    return `<section class="game-card text-center space-y-3"><div class="text-6xl pop">${great ? '🏆' : p.right >= p.n / 2 ? '💪' : '🌱'}</div>
+      <h3 class="text-2xl font-semibold">${p.right} of ${p.n} right</h3><p class="text-white/80">+${p.xp} XP${great ? ' · Superb!' : p.right ? ' · Good going — the ones you missed come back in a revenge round.' : ' · Every wrong answer comes back later, and next time you will know it.'}</p>
+      ${p.chest ? `<p class="text-lg">🎁 Chest opened: <span class="text-3xl">${p.chest[0]}</span> ${esc(p.chest[1])}</p>` : ''}
+      <button onclick="GP=null;GZ=null;loadGame()" class="btn bg-marigold text-ink w-full py-3">Back to Game Zone</button></section>`;
+  }
+  const r = p.res, left = Math.max(0, Math.ceil((p.deadline - Date.now()) / 1000));
+  if (r && r.chest) p.chest = r.chest;
+  return `<section class="game-card space-y-4">
+    <div class="flex items-center justify-between gap-2 text-sm"><span class="text-white/70">${p.i + 1} / ${p.n} · ${esc(p.q.subj)}${p.q.topic ? ' · ' + esc(p.q.topic) : ''}</span>
+      ${p.combo >= 2 ? `<span class="pill bg-marigold text-ink pop">🔥 Combo ×${p.combo}${p.combo >= 3 ? ' +5' : ''}</span>` : ''}</div>
+    ${r ? '' : `<div class="flex items-center gap-3"><div class="flex-1 h-2 rounded-full bg-white/15 overflow-hidden"><div id="g-bar" class="h-2 bg-marigold" style="width:${left / GZ.seconds * 100}%"></div></div><b id="g-left" class="w-6 text-right">${left}</b></div>`}
+    <h3 class="text-2xl font-semibold leading-snug">${esc(p.q.q)}</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${p.q.opts.map((o, i) => {
+      const c = !r ? 'bg-white/10 border-white/20 hover:bg-white/20' : i === r.ans ? 'bg-leaf border-leaf' : i === p.chosen ? 'bg-rose border-rose' : 'bg-white/5 border-white/10 opacity-50';
+      return `<button ${r ? 'disabled' : ''} onclick="gAnswer(${i})" class="w-full text-left p-4 rounded-2xl border-2 ${c} text-lg font-medium">${esc(o)}</button>`; }).join('')}</div>
+    ${r ? `<div class="space-y-3 pop">
+      <p class="text-xl font-semibold">${r.correct ? ['Boom! ✅', 'Correct! 🎯', 'Sahi pakde! ✅', 'Wah! 🌟'][p.i % 4] : r.late ? 'Time up! ⏰' : 'Oops! 😅'} ${r.xp ? `<span class="text-marigold">+${r.xp} XP</span>` : ''}</p>
+      ${r.fun ? `<div class="rounded-2xl bg-white/10 p-3"><p class="text-sm text-marigold font-semibold">Yaad rakh</p><p>${esc(r.fun)}</p></div>` : ''}
+      ${r.rule ? `<div class="rounded-2xl bg-white p-3 text-ink"><p class="text-sm font-semibold">Rule</p><p>${esc(r.rule)}</p></div>` : ''}
+      ${r.word && r.word[0] ? `<p class="text-sm">📖 New English word: <b>${esc(r.word[0])}</b> = ${esc(r.word[1] || '')}</p>` : ''}
+      <div class="flex gap-2"><button onclick="gNext()" class="btn bg-marigold text-ink flex-1 py-3 text-base">${r.more ? 'Next question' : 'See my score'}</button>
+        ${r.flaggable && !r.flagged ? '<button onclick="gFlag()" class="btn bg-white/10 text-white text-xs">This looks wrong</button>' : ''}</div></div>` : ''}
+  </section>`;
+}
+function vGame() {
+  if (!PD || !PD.kids.length) return vPHome();
+  const kid = pKid();
+  if (!GZ || (GZ.kid && GZ.kid.id !== kid.id)) { if (!GZ || !GZ.error) { GZ = null; loadGame(); } }
+  if (!GZ) return `${kidSwitch()}<div class="card text-slate-500">Loading Game Zone…</div>`;
+  if (GZ.error) return `${kidSwitch()}<div class="card">${esc(GZ.error)} <button onclick="GZ=null;loadGame()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
+  if (GP) return gPlayCard();
+  const st = GZ.stats, m = GZ.mission, pct = Math.min(100, Math.round(m.right / m.target * 100));
+  const tile = (mode, emoji, title, sub, on, cls) => `<button ${on ? '' : 'disabled'} onclick="${mode === 'duel' ? "go('quiz')" : `gStart('${mode}')`}" class="game-tile ${cls || ''} ${on ? '' : 'opacity-40'}"><span class="text-4xl">${emoji}</span><span class="font-semibold text-lg leading-tight">${title}</span><span class="text-sm opacity-80 leading-snug">${sub}</span></button>`;
+  const noRounds = GZ.roundsLeft <= 0;
+  return `${kidSwitch()}
+    <section class="game-card"><div class="flex items-center gap-4">
+      <div class="avatar text-2xl">${st.level}</div>
+      <div class="flex-1 min-w-0"><p class="text-white/70 text-sm">${esc(GZ.kid.name)} · Class ${esc(GZ.kid.cls)}</p><h2 class="text-2xl font-semibold leading-tight">${esc(st.levelName)}</h2>
+        <div class="h-2 rounded-full bg-white/15 mt-2 overflow-hidden"><div class="h-2 bg-marigold" style="width:${Math.round(st.levelXp / st.levelNeed * 100)}%"></div></div>
+        <p class="text-xs text-white/70 mt-1">${st.levelXp} / ${st.levelNeed} XP to level ${st.level + 1}</p></div></div>
+      <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+        <div class="kstat"><b>${st.streak ? '🔥 ' + st.streak : '—'}</b><span>${st.streak === 1 ? 'day streak' : 'day streak'}${!st.playedToday && st.streak ? ' · play today to keep it!' : ''}</span></div>
+        <div class="kstat"><b>🎁 ${st.toChest}</b><span>right answers to the next chest</span></div>
+        <div class="kstat"><b>${st.xp}</b><span>total XP</span></div></div></section>
+    ${GZ.open ? `<button onclick="gContinue()" class="btn btn-p w-full py-3">Continue your round (${GZ.open.done} of ${GZ.open.n} done)</button>` : ''}
+    <div class="grid grid-cols-2 gap-3">
+      ${tile('daily', '⚡', "Today's Round", GZ.topicPacks ? 'What your class studied, plus words and maths' : 'Maths and English words — topics from class come soon', !noRounds && !GZ.open, 'game-tile-main col-span-2')}
+      ${tile('revenge', '😤', 'Revenge Round', GZ.revengeDue ? `${GZ.revengeDue} question${GZ.revengeDue > 1 ? 's' : ''} that beat you are back` : 'Nothing to avenge today', GZ.revengeDue > 0 && !noRounds && !GZ.open)}
+      ${tile('words', '💣', 'Word Bomb', GZ.words ? 'English words in 20 seconds' : 'Starts from Class 3', GZ.words && !noRounds && !GZ.open)}
+      ${tile('math', '🧮', 'Maths Sprint', 'Fast maths, your level', !noRounds && !GZ.open)}
+      ${tile('duel', '⚔️', 'Duel a Friend', 'Make a question, challenge a classmate', true)}
+    </div>
+    <p class="text-sm text-center text-slate-500">${noRounds ? 'That is all the rounds for today — your brain stores it while you sleep. 😴 Come back tomorrow!' : `${GZ.roundsLeft} round${GZ.roundsLeft > 1 ? 's' : ''} left today · ${GZ.seconds} seconds a question`}</p>
+    <div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">Class ${esc(GZ.kid.cls)} mission this week</h3><span class="text-sm text-slate-500">${m.right} / ${m.target}</span></div>
+      <div class="h-3 rounded-full bg-paper mt-3 overflow-hidden"><div class="h-3 bg-leaf" style="width:${pct}%"></div></div>
+      <p class="text-sm text-slate-600 mt-2">${pct >= 100 ? '🎉 Mission complete! Your whole class did it together.' : 'Every right answer from anyone in your class counts. Do it together!'}</p></div>
+    ${GZ.league.length ? `<div class="card"><h3 class="h3">This week's top players</h3><ol class="mt-2 space-y-1">${GZ.league.map((b, i) => `<li class="flex justify-between gap-2 ${b.me ? 'font-semibold text-ink' : ''}"><span>${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'} ${esc(b.name)}${b.me ? ' (you)' : ''}</span><span>${b.xp} XP</span></li>`).join('')}</ol>
+      <p class="text-xs text-slate-500 mt-2">A new week starts every Monday — anyone can top it.</p></div>` : ''}
+    <div class="card"><h3 class="h3">My sticker book</h3>${GZ.stickers.length ? `<div class="flex flex-wrap gap-2 mt-2">${GZ.stickers.map(x => `<span title="${esc(x[1])}" class="text-3xl">${x[0]}</span>`).join('')}</div>` : `<p class="text-sm text-slate-500 mt-1">Get ${st.toChest} more right answers to open your first chest.</p>`}</div>`;
+}
+
+// ---------------------------------------------------------------- GAME ZONE — teacher / principal card (inside Quiz Duel)
+async function loadGameT() { try { GT = await gapi('tpacks'); } catch (e) { GT = { error: e.message }; } if (view === 'quizt') render(); }
+function gameTeacherCard() {
+  if (!GT) { loadGameT(); return '<div class="card text-slate-500">Loading Game Zone…</div>'; }
+  if (GT.error) return `<div class="card">${esc(GT.error)}</div>`;
+  const flagged = GT.packs.flatMap(p => p.flagged.filter(f => f.q).map(f => ({ ...f, p })));
+  return `<div class="card space-y-3"><div class="flex flex-wrap justify-between gap-2"><h3 class="h3">Game Zone question packs</h3>
+      <span class="pill ${GT.aiReady ? 'bg-leaf/10 text-leaf' : 'bg-marigold/20 text-ink'}">${GT.aiReady ? 'AI connected' : 'AI not connected'}</span></div>
+    <p class="text-sm text-slate-600">Maths and English games run by themselves. ${GT.aiReady ? 'For school subjects, packs are made automatically from your diary topics and finished chapters, and every answer is checked a second time before students see it.' : 'To get school-subject questions made automatically from your diary topics, the office has to add the AI key (SCHOOL_AI_API_KEY and SCHOOL_AI_MODEL in config.php).'}</p>
+    <div class="flex flex-wrap gap-2 text-sm">${Object.entries(GT.taught).map(([c, n]) => `<span class="pill bg-paper text-ink">Class ${esc(c)}: ${GT.packs.filter(p => p.cls === c && p.qs.length).length} pack(s) · ${n} topic(s) taught</span>`).join('')}</div>
+    ${GT.aiReady ? '<button onclick="gMakePacks()" class="btn btn-l">Make packs now for topics without one</button>' : ''}
+    ${flagged.length ? `<div><h4 class="font-semibold mt-2">Reported by students</h4>${flagged.map(f => `<div class="border border-line rounded-2xl p-3 mt-2 text-sm"><b>Class ${esc(f.p.cls)} · ${esc(f.p.subj)} · ${esc(f.p.topic)}</b> — reported ${f.n}× ${f.hidden ? '<span class="pill bg-rose/10 text-rose">hidden</span>' : ''}
+      <p class="mt-1">${esc(f.q.q)}</p><p class="text-slate-600">Answer given: ${esc(f.q.opts[f.q.ans])}</p>
+      <div class="flex gap-2 mt-2"><button onclick="gFix(${jsq(f.p.id)},${f.i},'restore')" class="btn btn-sm btn-l">It is correct — show again</button><button onclick="gFix(${jsq(f.p.id)},${f.i},'remove')" class="btn btn-sm btn-r">Remove it</button></div></div>`).join('')}</div>` : ''}
+  </div>`;
+}
+async function gMakePacks() { toast('Making packs… this can take a minute', 'b'); try { const r = await gapi('makepacks', {}); toast(`${r.made} pack(s) made${r.failed ? ', ' + r.failed + ' could not be made' : ''}`); GT = null; render(); } catch (e) { toast(e.message, 'r'); } }
+async function gFix(pid, i, action) { try { await gapi('packfix', { pid, i, action }); toast(action === 'restore' ? 'Shown again' : 'Removed'); GT = null; render(); } catch (e) { toast(e.message, 'r'); } }
+
 // ---------------------------------------------------------------- routes
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, fees: vFees, pfees: vPFees, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 

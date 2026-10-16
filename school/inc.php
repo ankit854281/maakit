@@ -81,7 +81,7 @@ function sch_rows_to_records(array $rows): array {
     $out = [];
     foreach ($rows as $row) {
         // Learning content has its own subject/child-scoped API; keys never use legacy sync.
-        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz')) continue;
+        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game')) continue;
         if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck'], true)) continue;
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}
