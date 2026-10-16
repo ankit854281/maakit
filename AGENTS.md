@@ -210,6 +210,20 @@ push and every pull request. It lints every PHP file, runs all migrations
 twice on a fresh database, boots the site and opens the main pages. **If it
 goes red, fix it before telling the owner it is done.**
 
+**Run them all with `bash .github/jaanch/sab.sh`, not with your own loop.**
+
+Most checks run as `php <file>`, but `backup-flow.php` does not. It needs
+three steps — `export`, then restoring the dump into a *fresh empty*
+database, then `verify`. Run bare, it correctly refuses with "Choose export
+or verify". A hand-rolled `for f in .github/jaanch/*.php` loop reads that
+refusal as a failure, and the owner gets told something is broken when it is
+not. That has already happened once. `sab.sh` knows the three-step dance and
+prints an honest count.
+
+**A wrong count is more expensive than no count** — it either makes a broken
+thing look fine, or sends Ankit chasing a bug that was never there. Never
+report a number you have not produced with `sab.sh`.
+
 ---
 
 ## 7. The helper bots already running
