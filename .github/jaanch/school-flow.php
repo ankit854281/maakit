@@ -36,8 +36,8 @@ foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail
 
 // ---- panna ----
 [$c, $html] = sf_http('/school/');
-sf_check($c === 200 && str_contains($html, 'School ERP') && str_contains($html, 'Powered by'), 'page did not open');
-[$c] = sf_http('/school/app.js');  sf_check($c === 200, 'app.js missing');
+sf_check($c === 200 && str_contains($html, 'School ERP'), 'page did not open');
+[$c, $js] = sf_http('/school/app.js');  sf_check($c === 200 && str_contains($js, 'Powered by Maakit'), 'app.js missing');
 [$c] = sf_http('/school/app.css'); sf_check($c === 200, 'app.css missing');
 
 // ---- setup ----
@@ -128,6 +128,32 @@ sf_check(in_array('Login', $kinds, true) && in_array('PIN', $kinds, true) && in_
 sf_check($j2['ok'] && count($j2['records']) >= 10, 'since returned nothing');
 [$c] = sf_api('day', null, $P, '&date=' . $today);
 sf_check($c === 200, 'day fetch failed');
+
+// ---- parent: mobile + code, sirf apne bachche ----
+$pdo->prepare("INSERT INTO sch_records (k,r,d,deleted,ver) VALUES ('student','s2',?,0,1)")
+    ->execute([json_encode(['id' => 's2', 'adm' => '75', 'name' => 'Riya Pal', 'cls' => '9th', 'phone' => '98390 11111'])]);
+$pdo->prepare("UPDATE sch_records SET d=? WHERE k='student' AND r='s1'")
+    ->execute([json_encode(['id' => 's1', 'adm' => '74', 'name' => 'Shivam Dubey', 'cls' => '9th', 'phone' => '9839022222'])]);
+[$c] = sf_api('parentcode', ['phone' => '9839022222'], $K);
+sf_check($c === 403, 'teacher made a parent code');
+[$c] = sf_api('parentcode', ['phone' => '9000000000'], $P);
+sf_check($c === 400, 'parent code made for a number with no student');
+[$c, , $j] = sf_api('parentcode', ['phone' => '+91 98390 22222'], $P);
+sf_check($c === 200 && preg_match('/^\d{4}$/', $j['code']), 'principal could not make a parent code');
+$pcode = $j['code'];
+[$c] = sf_api('login', ['role' => 'parent', 'phone' => '9839022222', 'pin' => $pcode === '1234' ? '4321' : '1234']);
+sf_check($c === 403, 'parent logged in with a wrong code');
+[$c, , $j] = sf_api('login', ['role' => 'parent', 'phone' => '9839022222', 'pin' => $pcode]);
+sf_check($c === 200, 'parent could not log in');
+$PA = $j['token'];
+[$c, $raw, $j] = sf_api('pdata', null, $PA);
+sf_check($c === 200 && count($j['kids']) === 1 && $j['kids'][0]['name'] === 'Shivam Dubey', 'parent did not get exactly their own child');
+sf_check(!str_contains($raw, 'Riya Pal') && !str_contains($raw, '98390 11111'), "another child's data reached a parent");
+foreach ($j['marks'] as $m) sf_check($m['sid'] === 's1', 'parent saw marks of another child');
+[$c] = sf_api('load', null, $PA);
+sf_check($c === 403, 'parent could open the full school data');
+[, , $j] = sf_api('sync', ['put' => [['k' => 'studAtt', 'r' => "$today|9th", 'd' => ['absent' => []]]]], $PA);
+sf_check(count($j['rejected']) === 1, 'parent changed attendance');
 
 // ---- log export ----
 [$c, $csv] = sf_api('logcsv', null, $P);

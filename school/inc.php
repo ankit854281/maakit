@@ -93,8 +93,25 @@ function sch_teacher_name(?string $tid): string {
     return $t && isset($t['name']) ? (string)$t['name'] : $tid;
 }
 
+function sch_phone10(string $p): string { $d = preg_replace('/\D/', '', $p); return strlen($d) >= 10 ? substr($d, -10) : ''; }
+
+// Ek mobile number se jude saare bachche (parent ke bachche)
+function sch_children(string $phone10): array {
+    $out = [];
+    if ($phone10 === '') return $out;
+    foreach (sch_db()->query("SELECT d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
+        $s = json_decode((string)$row['d'], true);
+        if (is_array($s) && sch_phone10((string)($s['phone'] ?? '')) === $phone10) $out[] = $s;
+    }
+    return $out;
+}
+
 function sch_user_label(array $u): string {
     if ($u['role'] === 'chairman') return 'Chairman';
+    if ($u['role'] === 'parent') {
+        $names = array_map(fn($s) => (string)($s['name'] ?? ''), sch_children((string)$u['tid']));
+        return 'Parent of ' . ($names ? implode(', ', $names) : (string)$u['tid']);
+    }
     $n = sch_teacher_name($u['tid']);
     if ($u['role'] === 'principal') return ($n !== '' ? $n : 'Principal') . ' (Principal)';
     return $n;

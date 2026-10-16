@@ -102,6 +102,7 @@ const DELETABLE = ['student', 'notice', 'teacher', 'behav', 'speak', 'cal'];
 const SAFE_VIEWS = ['dash', 'staff', 'timetable', 'diaries', 'results', 'log', 'mytoday', 'myweek', 'attendance'];
 let syncTimer = null, syncing = false, netState = 'ok';
 
+function tokenRole() { try { return localStorage.getItem('sch_role'); } catch (e) { return null; } }
 function tokenGet() { try { return localStorage.getItem('sch_token'); } catch (e) { return null; } }
 function tokenSet(t) { try { t ? localStorage.setItem('sch_token', t) : localStorage.removeItem('sch_token'); } catch (e) {} }
 
@@ -200,7 +201,7 @@ function mergeLog(rows) {
   if (S.log.length > 1000) S.log.length = 1000;
 }
 
-function save() { clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); }
+function save() { if (U && U.role === 'parent') return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); }
 async function sync() {
   if (!TOKEN || !S) return;
   if (syncing) { save(); return; }
@@ -223,7 +224,7 @@ async function sync() {
   } finally { syncing = false; }
 }
 async function poll() {
-  if (!TOKEN || !S || document.hidden) return;
+  if (!TOKEN || !S || document.hidden || (U && U.role === 'parent')) return;
   try {
     const res = await api('since', null, { v: lastV, l: lastLogId });
     lastV = res.now;
@@ -239,10 +240,9 @@ function softRender() {
   const y = window.scrollY; render(); window.scrollTo(0, y);
 }
 function setNet(s) {
-  netState = s; const el = document.getElementById('net'); if (!el) return;
-  el.innerHTML = s === 'saving' ? '<i class="fa-solid fa-rotate fa-spin"></i> Saving…'
-    : s === 'off' ? '<i class="fa-solid fa-wifi"></i> Offline — will retry' : '<i class="fa-solid fa-cloud"></i> Saved';
-  el.className = 'text-[11px] font-semibold px-2 py-1 rounded-lg ' + (s === 'off' ? 'bg-rose-600' : s === 'saving' ? 'bg-amber-500 text-indigo-950' : 'bg-indigo-800');
+  netState = s;
+  const html = s === 'saving' ? '<span class="dot bg-marigold"></span>Saving' : s === 'off' ? '<span class="dot bg-rose"></span>Offline' : '<span class="dot bg-leaf"></span>Saved';
+  ['net', 'net-m'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = html; });
 }
 window.addEventListener('beforeunload', e => { if (syncing || pendingLog.length || (S && Object.entries(toRecords()).some(([k, v]) => SYNCED[k] !== v))) { e.preventDefault(); e.returnValue = ''; } });
 setInterval(poll, 45000);
@@ -508,62 +508,98 @@ const NAV = {
   teacher:   [['mytoday','fa-sun','Today'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
+  parent:    [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   chairman:  [['dash','fa-gauge','Dashboard'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
+const PRIMARY = { principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
+                  chairman: ['dash','results','fame','calendar'], parent: ['phome','phw','presults','pnotices'] };
+let moreOpen = false;
+function navLabel(k) { const n = NAV[U.role].find(x => x[0] === k); return n ? n[2] : ''; }
 function render() {
   const root = document.getElementById('root');
   if (!U || !S) { root.innerHTML = vLogin(); return; }
-  if (!view) view = NAV[U.role][0][0];
-  const nav = NAV[U.role].map(([k, ic, lb]) => `<button onclick="go('${k}')" class="navb ${view === k ? 'on' : ''}"><i class="fa-solid ${ic} mr-1.5"></i>${lb}</button>`).join('');
+  if (!view || !NAV[U.role].some(x => x[0] === view)) view = NAV[U.role][0][0];
   let body = '';
-  try { body = (VIEWS[view] || vDash)(); } catch (e) { console.error(e); body = `<div class="card text-rose-700">Something went wrong: ${esc(e.message)}</div>`; }
+  try { body = (VIEWS[view] || vDash)(); } catch (e) { console.error(e); body = `<div class="card text-rose">This screen could not open: ${esc(e.message)}. Please go back and try again.</div>`; }
+  const side = NAV[U.role].map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="side-link ${view === k ? 'on' : ''}"><i class="fa-solid ${ic} w-5 text-center"></i><span>${lb}</span></button>`).join('');
+  const prim = PRIMARY[U.role], rest = NAV[U.role].filter(x => !prim.includes(x[0]));
+  const tab = k => { const n = NAV[U.role].find(x => x[0] === k); return n ? `<button onclick="moreOpen=false;go('${k}')" class="tab ${view === k && !moreOpen ? 'on' : ''}"><i class="fa-solid ${n[1]}"></i><span>${n[2].split(' ')[0]}</span></button>` : ''; };
+  const initials = U.role === 'parent' ? 'P' : (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   root.innerHTML = `
-    <header class="noprint bg-indigo-900 text-white sticky top-0 z-30 shadow">
-      <div class="max-w-6xl mx-auto px-4 pt-3 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-xl bg-amber-400 text-indigo-950 font-black flex items-center justify-center shrink-0">SN</div>
-          <div class="min-w-0"><div class="font-bold leading-tight truncate">${esc(S.settings.school)}</div>
-          <div class="text-[11px] text-indigo-200">Academic ERP &bull; Session ${esc(S.settings.session)} &bull; <span class="text-amber-300 font-semibold">Powered by Maakit</span></div></div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <span id="net" class="text-[11px] font-semibold px-2 py-1 rounded-lg bg-indigo-800"><i class="fa-solid fa-cloud"></i> Saved</span>
-          <span class="hidden sm:block text-xs text-right"><span class="block font-bold">${esc(userName())}</span><span class="text-indigo-200 capitalize">${U.role}</span></span>
-          <button onclick="logout()" class="btn btn-sm bg-indigo-800 hover:bg-indigo-700"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></button>
-        </div>
+  <div class="lg:flex min-h-screen">
+    <aside class="noprint hidden lg:flex lg:flex-col w-64 shrink-0 bg-ink text-white sticky top-0 h-screen">
+      <div class="carpet"></div>
+      <div class="px-5 pt-5 pb-4 flex items-center gap-3"><div class="mark">SN</div>
+        <div class="min-w-0"><p class="font-semibold leading-tight">${esc(S.settings.school)}</p><p class="text-xs text-white/60">Session ${esc(S.settings.session || '')}</p></div></div>
+      <nav class="flex-1 overflow-y-auto px-3 space-y-0.5">${side}</nav>
+      <div class="p-4 border-t border-white/10">
+        <div class="flex items-center gap-3"><div class="avatar-sm">${esc(initials)}</div><div class="min-w-0 flex-1"><p class="text-sm font-medium truncate">${esc(userName())}</p><p class="text-xs text-white/60 capitalize">${U.role}</p></div></div>
+        <div class="flex items-center justify-between mt-3"><span id="net" class="net"></span><button onclick="logout()" class="text-sm text-white/80 hover:text-white">Log out</button></div>
+        <p class="text-[11px] text-white/40 mt-3">Powered by Maakit</p>
       </div>
-      <nav class="max-w-6xl mx-auto px-4 py-2 flex gap-1 overflow-x-auto noscroll">${nav}</nav>
-    </header>
-    <main class="max-w-6xl w-full mx-auto p-4 space-y-4">${body}</main>`;
+    </aside>
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="noprint lg:hidden sticky top-0 z-30 bg-ink text-white">
+        <div class="carpet"></div>
+        <div class="px-4 py-3 flex items-center gap-3"><div class="mark mark-sm">SN</div>
+          <p class="font-semibold leading-tight truncate flex-1">${esc(S.settings.school)}</p>
+          ${U.role === 'parent' ? '' : '<span id="net-m" class="net"></span>'}
+          <button onclick="logout()" class="avatar-sm" title="Log out">${esc(initials)}</button></div>
+      </header>
+      <main class="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-4 pb-28 lg:pb-10">${body}
+        <p class="text-center text-xs text-slate-400 pt-6 lg:hidden">Powered by Maakit</p></main>
+    </div>
+  </div>
+  <nav class="noprint lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-line grid ${rest.length ? 'grid-cols-5' : 'grid-cols-4'} pb-[env(safe-area-inset-bottom)]">
+    ${prim.map(tab).join('')}${rest.length ? `<button onclick="moreOpen=!moreOpen;render()" class="tab ${moreOpen || !prim.includes(view) ? 'on' : ''}"><i class="fa-solid fa-grip"></i><span>More</span></button>` : ''}
+  </nav>
+  ${moreOpen ? `<div class="noprint lg:hidden fixed inset-0 z-30 bg-ink/40" onclick="moreOpen=false;render()"></div>
+    <div class="noprint lg:hidden fixed inset-x-0 bottom-16 z-40 bg-white rounded-t-3xl p-4 pb-6 shadow-2xl">
+      <div class="w-10 h-1 rounded-full bg-slate-300 mx-auto mb-4"></div>
+      <div class="grid grid-cols-4 gap-2">${rest.map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="more-item ${view === k ? 'on' : ''}"><i class="fa-solid ${ic}"></i><span>${lb}</span></button>`).join('')}</div>
+    </div>` : ''}`;
+  setNet(netState);
 }
 
 // ---------------------------------------------------------------- login / setup
 let loginRole = 'teacher', busy = false;
 function vLogin() {
   if (!STATUS) return `<div class="flex-1 flex items-center justify-center p-6 text-slate-500">Loading…</div>`;
-  const card = inner => `<div class="flex-1 flex items-center justify-center p-4 bg-indigo-950">
-    <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 space-y-4">
-      <div class="text-center">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-400 text-indigo-950 font-black text-xl flex items-center justify-center">SN</div>
-        <h1 class="font-extrabold text-lg mt-2 leading-tight">${esc(STATUS.school)}</h1>
-        <p class="text-xs text-slate-500">Academic ERP</p>
-      </div>${inner}<p class="text-[11px] text-slate-400 text-center">Powered by Maakit</p></div></div>`;
-  if (STATUS.setup || STATUS.reset) return card(`
-      <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm">${STATUS.setup ? 'First-time setup.' : 'Reset the Principal PIN.'} Enter the <b>Maakit website update key</b> (the part after <code>key=</code> in your update link) and choose the Principal's PIN.</div>
-      <div><label class="lbl">Website update key</label><input id="su-key" type="password" class="inp" autocomplete="off"></div>
-      <div><label class="lbl">New Principal PIN (4–8 digits)</label><input id="su-pin" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.4em]"></div>
-      <div><label class="lbl">Type the PIN again</label><input id="su-pin2" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.4em]"></div>
-      <button onclick="doSetup()" class="btn btn-p w-full py-3">${STATUS.setup ? 'Set up school' : 'Save new PIN'}</button>
-      ${STATUS.reset ? '<button onclick="STATUS.reset=false;render()" class="btn btn-l w-full">Back to login</button>' : ''}`);
-  const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}${t.pin ? '' : ' (no PIN yet)'}</option>`).join('');
-  return card(`
-      <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl text-sm font-bold">
-        ${['teacher','principal','chairman'].map(r => `<button onclick="loginRole='${r}';render()" class="py-2 rounded-lg capitalize ${loginRole === r ? 'bg-white shadow text-indigo-800' : 'text-slate-500'}">${r}</button>`).join('')}
+  const shell = inner => `<div class="min-h-screen lg:grid lg:grid-cols-2">
+    <section class="bg-ink text-white relative overflow-hidden flex flex-col">
+      <div class="carpet"></div>
+      <div class="px-6 py-8 lg:p-14 flex-1 flex flex-col justify-center">
+        <div class="mark mark-lg">SN</div>
+        <h1 class="text-3xl lg:text-5xl font-semibold leading-tight mt-6 max-w-md">${esc(STATUS.school)}</h1>
+        <p class="text-white/70 mt-3 max-w-sm lg:text-lg">Attendance, diaries, lessons and results for every class — on every teacher's phone.</p>
       </div>
+      <div class="carpet carpet-wide hidden lg:block"></div>
+    </section>
+    <section class="flex items-start lg:items-center justify-center p-5 lg:p-10 -mt-6 lg:mt-0">
+      <div class="w-full max-w-sm bg-white rounded-3xl shadow-xl lg:shadow-none p-6 space-y-4">${inner}
+        <p class="text-xs text-slate-400 text-center pt-2">Powered by Maakit</p></div>
+    </section></div>`;
+  if (STATUS.setup || STATUS.reset) return shell(`
+      <h2 class="text-xl font-semibold">${STATUS.setup ? 'Set up the school' : 'Reset the Principal PIN'}</h2>
+      <p class="text-sm text-slate-600">Enter the Maakit website update key (the part after <code>key=</code> in your update link) and choose the Principal's PIN.</p>
+      <div><label class="lbl">Website update key</label><input id="su-key" type="password" class="inp" autocomplete="off"></div>
+      <div><label class="lbl">New Principal PIN (4–8 digits)</label><input id="su-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin"></div>
+      <div><label class="lbl">Type the PIN again</label><input id="su-pin2" type="password" inputmode="numeric" maxlength="8" class="inp pin"></div>
+      <button onclick="doSetup()" class="btn btn-p w-full py-3">${STATUS.setup ? 'Set up school' : 'Save new PIN'}</button>
+      ${STATUS.reset ? '<button onclick="STATUS.reset=false;render()" class="btn btn-l w-full">Back to log in</button>' : ''}`);
+  const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}${t.pin ? '' : ' (no PIN yet)'}</option>`).join('');
+  const roles = [['teacher', 'Teacher'], ['parent', 'Parent'], ['principal', 'Principal'], ['chairman', 'Chairman']];
+  return shell(`
+      <h2 class="text-xl font-semibold">Log in</h2>
+      <div class="seg">${roles.map(([r, l]) => `<button onclick="loginRole='${r}';render()" class="${loginRole === r ? 'on' : ''}">${l}</button>`).join('')}</div>
       ${loginRole === 'teacher' ? (STATUS.teachers.length ? `<div><label class="lbl">Your name</label><select id="lg-t" class="inp">${tOpts}</select></div>` : '<p class="text-sm text-slate-500">The Principal must log in once first.</p>') : ''}
-      <div><label class="lbl">PIN</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.5em] text-lg" onkeydown="if(event.key==='Enter')login()"></div>
-      <button onclick="login()" class="btn btn-p w-full py-3"><i class="fa-solid fa-lock-open"></i> Login</button>
-      <p class="text-[11px] text-slate-400 text-center">Teachers: forgot your PIN? Ask the Principal. Principal: <button onclick="STATUS.reset=true;render()" class="underline text-indigo-700">Forgot PIN</button></p>`);
+      ${loginRole === 'parent' ? `<div><label class="lbl">Mobile number given to the school</label><input id="lg-ph" type="tel" inputmode="numeric" maxlength="13" class="inp" placeholder="98390 00000"></div>` : ''}
+      <div><label class="lbl">${loginRole === 'parent' ? '4-digit parent code' : 'PIN'}</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin" onkeydown="if(event.key==='Enter')login()"></div>
+      <button onclick="login()" class="btn btn-p w-full py-3">Log in</button>
+      <p class="text-xs text-slate-500 text-center">${loginRole === 'parent' ? 'No code yet? Ask the school office — they send it on WhatsApp.'
+        : loginRole === 'principal' ? 'Forgot your PIN? <button onclick="STATUS.reset=true;render()" class="underline text-ink">Reset it with the update key</button>'
+        : 'Forgot your PIN? Ask the Principal to set a new one.'}</p>`);
 }
 async function doSetup() {
   if (busy) return;
@@ -578,22 +614,25 @@ async function login() {
   if (busy) return;
   const pin = document.getElementById('lg-pin').value.trim();
   const tid = loginRole === 'teacher' ? (document.getElementById('lg-t') || {}).value : null;
-  if (!pin) return toast('Enter your PIN', 'a');
+  const phone = loginRole === 'parent' ? (document.getElementById('lg-ph') || {}).value || '' : '';
+  if (loginRole === 'parent' && phone.replace(/\D/g, '').length < 10) return toast('Enter the 10-digit mobile number', 'a');
+  if (!pin) return toast(loginRole === 'parent' ? 'Enter the parent code' : 'Enter your PIN', 'a');
   busy = true;
-  try { await doLogin(loginRole, tid, pin); } catch (e) { toast(e.message, 'r'); } finally { busy = false; }
+  try { await doLogin(loginRole, tid, pin, phone); } catch (e) { toast(e.message, 'r'); } finally { busy = false; }
 }
-async function doLogin(role, tid, pin) {
-  const res = await api('login', { role, tid, pin });
-  TOKEN = res.token; tokenSet(TOKEN);
-  await loadAll();
+async function doLogin(role, tid, pin, phone) {
+  const res = await api('login', { role, tid, pin, phone });
+  TOKEN = res.token; tokenSet(TOKEN); try { localStorage.setItem('sch_role', res.me ? res.me.role : ''); } catch (e) {}
+  if (res.me && res.me.role === 'parent') await loadParent(); else await loadAll();
   view = null; render(); setNet('ok');
 }
 async function logout() {
-  await sync();
+  if (U && U.role !== 'parent') await sync();
   try { await api('logout', {}); } catch (e) {}
   forceLogout();
 }
 function forceLogout() {
+  PD = null; PC_LAST = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
 }
@@ -604,7 +643,7 @@ async function refreshStatus() {
 
 // ---------------------------------------------------------------- shared bits
 function head(title, sub, right) {
-  return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3"><div><h2 class="text-xl font-extrabold">${title}</h2>${sub ? `<p class="text-sm text-slate-500">${sub}</p>` : ''}</div>${right ? `<div class="flex flex-wrap gap-2 noprint">${right}</div>` : ''}</div>`;
+  return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3 pt-1"><div><h2 class="text-2xl lg:text-3xl font-semibold tracking-tight text-ink">${title}</h2>${sub ? `<p class="text-slate-500 mt-1 max-w-2xl">${sub}</p>` : ''}</div>${right ? `<div class="flex flex-wrap gap-2 noprint">${right}</div>` : ''}</div>`;
 }
 function dateInput(id, val, onchange) { return `<input type="date" id="${id}" value="${val}" onchange="${onchange}" class="inp w-auto">`; }
 function bellHead() { let h = ''; BELLS.forEach((b, i) => { h += `<th class="text-center">${b.n}<br><span class="font-mono font-normal normal-case">${t12(b.s)}</span></th>`; if (i === RECESS_AFTER) h += `<th class="text-center bg-slate-200">Recess</th>`; }); return h; }
@@ -628,7 +667,7 @@ function vDash() {
   const sylKeys = Object.keys(S.syl).filter(k => S.syl[k].chapters.length);
   const lag = sylKeys.filter(k => sylStatus(k, date).lag).length;
   const al = alerts(date);
-  const tile = (lbl, val, sub, ic, col) => `<div class="card flex items-center justify-between"><div><p class="text-[11px] font-bold uppercase text-slate-500">${lbl}</p><p class="text-2xl font-extrabold mt-1">${val}</p><p class="text-xs text-slate-500 mt-1">${sub}</p></div><div class="w-11 h-11 rounded-xl ${col} flex items-center justify-center text-lg"><i class="fa-solid ${ic}"></i></div></div>`;
+  const tile = (lbl, val, sub, ic, col) => `<div class="card tile"><div class="flex items-center gap-2 text-sm text-slate-600"><span class="w-8 h-8 rounded-full ${col} flex items-center justify-center text-sm"><i class="fa-solid ${ic}"></i></span>${lbl}</div><p class="text-3xl font-semibold mt-3 text-ink">${val}</p><p class="text-xs text-slate-500 mt-1">${sub}</p></div>`;
   const nT = Object.keys(S.teachers).length;
   const sum = dailySummary(date);
   return head('School Dashboard', fmtDate(date) + (dayIdx(date) >= 0 ? ' • ' + DAYS[dayIdx(date)] + ' timetable' : ''), dateInput('d-date', date, "go('dash',{date:this.value})")) + `
@@ -997,6 +1036,7 @@ function vStudents() {
   const c = P.c || 'ALL'; const list = (c === 'ALL' ? S.students : S.students.filter(s => s.cls === c)).sort((a, b) => CLASS_NAMES.indexOf(a.cls) - CLASS_NAMES.indexOf(b.cls) || a.name.localeCompare(b.name));
   const nSample = S.students.filter(s => s.sample).length;
   return head('Students', S.students.length + ' students' + (nSample ? ` • ${nSample} are sample entries` : ''), nSample ? `<button onclick="removeSamples()" class="btn btn-r"><i class="fa-solid fa-broom"></i> Remove sample students</button>` : '') + `
+    ${lastCodeCard()}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="card lg:col-span-2 overflow-x-auto">
         <div class="flex flex-wrap gap-1 mb-3">${['ALL', ...CLASS_NAMES].map(x => `<button onclick="go('students',{c:'${x}'})" class="btn btn-sm ${x === c ? 'btn-p' : 'btn-l'}">${x === 'ALL' ? 'All' : x}</button>`).join('')}</div>
@@ -1014,7 +1054,8 @@ function vStudents() {
           <textarea id="st-imp" rows="5" class="inp text-xs" placeholder="92	Yashvi Tiwari	10th	Dilip Kumar Tiwari	9839xxxxxx"></textarea>
           <button onclick="importStudents()" class="btn btn-g w-full"><i class="fa-solid fa-file-import"></i> Import</button></div>
       </div>
-    </div>`;
+    </div>
+    ${parentCodesCard()}`;
 }
 function addStudent() {
   const adm = document.getElementById('st-adm').value.trim(), name = document.getElementById('st-name').value.trim();
@@ -1673,15 +1714,15 @@ function wordShareText(iso) {
 }
 function wordCard(iso, compact) {
   const w = wordOf(iso);
-  return `<div class="card border-indigo-200 bg-indigo-50/60">
+  return `<div class="card word-card">
     <div class="flex items-start justify-between gap-2"><div>
-      <p class="text-[11px] font-bold uppercase text-indigo-700">Word of the Day</p>
+      <p class="text-sm font-semibold text-ink">Word of the Day</p>
       <p class="text-2xl font-extrabold mt-1">${esc(w.w)} <span class="text-base font-semibold text-slate-500">(${esc(w.h)})</span></p>
       <p class="text-sm text-slate-700">${esc(w.m)}</p>
       <p class="text-sm text-slate-600 italic mt-1">"${esc(w.e)}"</p></div>
       <a target="_blank" href="${waLink('', wordShareText(iso))}" class="btn btn-sm btn-wa noprint shrink-0"><i class="fa-brands fa-whatsapp"></i> Share</a></div>
-    ${compact ? '' : `<div class="mt-3 pt-3 border-t border-indigo-200"><p class="text-[11px] font-bold uppercase text-indigo-700">Conversation Starter</p><p class="text-sm font-semibold mt-1">${esc(starterOf(iso))}</p>
-    <p class="text-xs text-slate-500 mt-1">Ask 3–4 students to answer in full English sentences, then log it in Speaking.</p></div>`}
+    ${compact ? '' : `<div class="mt-3 pt-3 border-t border-indigo-200"><p class="text-sm font-semibold text-ink">Conversation Starter</p><p class="text-sm font-semibold mt-1">${esc(starterOf(iso))}</p>
+    <p class="text-xs text-slate-500 mt-1">${U && U.role === 'parent' ? 'Ask your child this at home and let them answer in English.' : 'Ask 3–4 students to answer in full English sentences, then log it in Speaking.'}</p></div>`}
   </div>`;
 }
 
@@ -1896,11 +1937,123 @@ function vFame() {
     </div>`;
 }
 
+// ---------------------------------------------------------------- PARENT / STUDENT PANEL
+// Parents log in with their mobile number + a 4-digit code from the school.
+// The server sends only their own children's data (api.php?a=pdata).
+let PD = null, PKID = null;
+async function loadParent() {
+  const res = await api('pdata');
+  PD = res; ME = res.me; U = { role: 'parent', tid: ME.tid };
+  S = emptyState(); S.settings = { school: res.school, session: res.session }; S.exams = res.exams || []; S.cal = res.cal || [];
+  if (!PKID || !PD.kids.some(k => k.id === PKID)) PKID = PD.kids.length ? PD.kids[0].id : null;
+}
+function pKid() { return PD.kids.find(k => k.id === PKID) || PD.kids[0]; }
+function kidSwitch() {
+  if (PD.kids.length < 2) return '';
+  return `<div class="flex gap-2 overflow-x-auto noscroll">${PD.kids.map(k => `<button onclick="PKID='${esc(k.id)}';render()" class="chip ${k.id === PKID ? 'chip-on' : ''}">${esc(k.name.split(' ')[0])} · ${esc(k.cls)}</button>`).join('')}</div>`;
+}
+function pAtt(kid) {
+  const rows = PD.att.filter(a => a.sid === kid.id).sort((a, b) => b.date.localeCompare(a.date));
+  const present = rows.filter(r => r.present).length;
+  return { rows, present, pct: rows.length ? Math.round(present / rows.length * 100) : null, today: rows.find(r => r.date === todayISO()) };
+}
+function vPHome() {
+  if (!PD.kids.length) return `<div class="card">No student is linked to this mobile number yet. Please contact the school office.</div>`;
+  const kid = pKid(), at = pAtt(kid), date = todayISO();
+  const hwToday = PD.hw.filter(h => h.cls === kid.cls && h.date === date && h.hw);
+  const pts = PD.behav.filter(b => b.sid === kid.id && b.date.slice(0, 7) === date.slice(0, 7)).reduce((s, b) => s + (+b.pts || 0), 0);
+  const spk = PD.speak.filter(x => x.sid === kid.id).length;
+  const badge = BADGES.find(([min]) => spk >= min);
+  const next = [...S.cal, ...S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam' }))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  const todayBox = at.today ? (at.today.present ? '<span class="text-leaf font-semibold">Present today</span>' : '<span class="text-rose font-semibold">Absent today</span>') : '<span class="text-slate-500">Today\'s attendance not marked yet</span>';
+  return `${kidSwitch()}
+    <section class="kid-hero">
+      <div class="flex items-center gap-4">
+        <div class="avatar">${esc((kid.name || '?').split(' ').map(x => x[0]).slice(0, 2).join(''))}</div>
+        <div class="min-w-0"><h2 class="text-2xl font-semibold leading-tight">${esc(kid.name)}</h2>
+          <p class="text-white/75 text-sm">Class ${esc(kid.cls)}${kid.ct ? ' · Class teacher ' + esc(kid.ct) : ''}</p></div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mt-5">
+        <div class="kstat"><b>${at.pct == null ? '—' : at.pct + '%'}</b><span>Attendance</span></div>
+        <div class="kstat"><b>${pts > 0 ? '+' : ''}${pts}</b><span>Good points this month</span></div>
+        <div class="kstat"><b>${spk}</b><span>${badge ? badge[1] : 'Speaking activities'}</span></div>
+      </div>
+    </section>
+    <div class="card flex items-center justify-between gap-3"><span>${todayBox}</span><span class="text-sm text-slate-500">${fmtDate(date)}</span></div>
+    <div class="card"><h3 class="h3">Homework today</h3>${hwToday.length ? `<ul class="space-y-2 mt-2">${hwToday.map(h => `<li class="flex gap-3"><span class="subj">${esc(h.subj)}</span><span>${esc(h.hw)}</span></li>`).join('')}</ul>` : '<p class="text-sm text-slate-500 mt-1">No homework written yet today.</p>'}
+      <button onclick="go('phw')" class="btn btn-l btn-sm mt-3">All homework</button></div>
+    ${wordCard(date)}
+    ${next.length ? `<div class="card"><h3 class="h3">Coming up</h3>${next.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}</span></div>`).join('')}</div>` : ''}`;
+}
+function vPHw() {
+  const kid = pKid(); if (!kid) return vPHome();
+  const rows = PD.hw.filter(h => h.cls === kid.cls).sort((a, b) => b.date.localeCompare(a.date));
+  const byDate = {}; rows.forEach(h => (byDate[h.date] = byDate[h.date] || []).push(h));
+  return `${kidSwitch()}${head('Homework & class work', `Class ${esc(kid.cls)} · last 10 days, from the teachers' diaries`)}
+    ${Object.keys(byDate).length ? Object.entries(byDate).map(([d, list]) => `<div class="card"><h3 class="h3">${fmtDate(d)}</h3><div class="mt-2 divide-y divide-slate-100">${list.map(h => `<div class="py-2"><span class="subj">${esc(h.subj)}</span>
+      <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}</div>`).join('')}</div></div>`).join('')
+      : '<div class="card text-sm text-slate-500">Nothing written in the last 10 days.</div>'}`;
+}
+function vPResults() {
+  const kid = pKid(); if (!kid) return vPHome();
+  const at = pAtt(kid);
+  const exams = S.exams.filter(e => PD.marks.some(m => m.sid === kid.id && m.exam === e.id));
+  const beh = PD.behav.filter(b => b.sid === kid.id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
+  return `${kidSwitch()}${head('Progress', esc(kid.name) + ' · Class ' + esc(kid.cls))}
+    ${exams.length ? exams.map(e => { const ms = PD.marks.filter(m => m.sid === kid.id && m.exam === e.id); let got = 0, max = 0;
+      ms.forEach(m => { if (m.mark !== 'AB' && m.mark !== '' && m.max) { got += +m.mark; max += +m.max; } }); const pct = max ? Math.round(got / max * 1000) / 10 : null;
+      return `<div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">${esc(e.name)}</h3>${pct != null ? `<span class="text-lg font-semibold">${pct}% <span class="text-sm text-slate-500">${grade(pct)}</span></span>` : ''}</div>
+        <table class="tbl mt-2"><tr><th>Subject</th><th class="text-right">Marks</th></tr>${ms.map(m => `<tr><td>${esc(m.subj)}</td><td class="text-right">${esc(m.mark)} / ${esc(m.max)}</td></tr>`).join('')}</table></div>`; }).join('')
+      : '<div class="card text-sm text-slate-500">No exam marks published yet.</div>'}
+    <div class="card"><h3 class="h3">Attendance, last ${at.rows.length} school day${at.rows.length === 1 ? '' : 's'}</h3>
+      <div class="flex flex-wrap gap-1 mt-3">${at.rows.slice(0, 60).reverse().map(r => `<span title="${fmtDate(r.date)}" class="w-4 h-4 rounded ${r.present ? 'bg-leaf' : 'bg-rose'}"></span>`).join('')}</div>
+      <p class="text-sm text-slate-500 mt-2">Present on ${at.present} of ${at.rows.length} day${at.rows.length === 1 ? '' : 's'} marked.</p></div>
+    <div class="card"><h3 class="h3">Teacher notes</h3>${beh.length ? beh.map(b => `<div class="flex gap-3 py-2 border-b border-slate-100 last:border-0 text-sm"><span class="pill ${b.pts > 0 ? 'bg-leaf/10 text-leaf' : 'bg-rose/10 text-rose'}">${b.pts > 0 ? '+' : ''}${b.pts}</span><span>${esc(b.reason)}${b.note ? ' — ' + esc(b.note) : ''} <span class="text-slate-400">${fmtDate(b.date)}</span></span></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">No notes yet.</p>'}</div>`;
+}
+function vPNotices() {
+  const date = todayISO();
+  const up = [...S.cal, ...S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam' }))].filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 12);
+  return `${head('Notices & calendar')}
+    ${PD.notices.length ? PD.notices.sort((a, b) => String(b.date).localeCompare(String(a.date))).map(n => `<div class="card"><div class="flex justify-between gap-2"><h3 class="h3">${esc(n.title)}</h3><span class="text-sm text-slate-500 shrink-0">${fmtDate(n.date)}</span></div><p class="text-sm whitespace-pre-wrap mt-1">${esc(n.body)}</p></div>`).join('') : '<div class="card text-sm text-slate-500">No notices.</div>'}
+    <div class="card"><h3 class="h3">Holidays, exams and events</h3>${up.length ? up.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}${e.to && e.to !== e.date ? ' – ' + fmtDate(e.to) : ''}</span></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing scheduled.</p>'}</div>`;
+}
+
+// ---------------------------------------------------------------- PARENT CODES (principal, in Students)
+function parentFamilies() {
+  const fam = {};
+  S.students.forEach(s => { const p = String(s.phone || '').replace(/\D/g, '').slice(-10); if (p.length === 10) (fam[p] = fam[p] || []).push(s); });
+  return Object.entries(fam).sort((a, b) => a[1][0].name.localeCompare(b[1][0].name));
+}
+function parentCodesCard() {
+  const fams = parentFamilies(), noPhone = S.students.filter(s => String(s.phone || '').replace(/\D/g, '').length < 10).length;
+  return `<div class="card space-y-3"><div class="flex flex-wrap justify-between gap-2"><h3 class="h3">Parent logins</h3><span class="text-sm text-slate-500">${fams.filter(([p]) => PINS['p:' + p]).length} of ${fams.length} families have a code</span></div>
+    <p class="text-sm text-slate-600">Parents open <b>${esc(location.origin + location.pathname)}</b>, choose Parent, and enter their mobile number and the 4-digit code. They see only their own children. Brothers and sisters with the same mobile number appear together.</p>
+    ${noPhone ? `<p class="text-sm text-amber-700">${noPhone} student(s) have no 10-digit mobile number — add it to give their parents a login.</p>` : ''}
+    <div class="max-h-96 overflow-y-auto divide-y divide-slate-100">${fams.map(([p, kids]) => `<div class="flex items-center justify-between gap-2 py-2"><span class="text-sm"><b>${kids.map(k => esc(k.name) + ' (' + k.cls + ')').join(', ')}</b><br><span class="text-slate-500">${p.slice(0, 5)} ${p.slice(5)}</span> ${PINS['p:' + p] ? '<span class="pill bg-leaf/10 text-leaf">Code given</span>' : ''}</span>
+      <button onclick="makeParentCode('${p}')" class="btn btn-sm ${PINS['p:' + p] ? 'btn-l' : 'btn-p'}">${PINS['p:' + p] ? 'New code' : 'Make code'}</button></div>`).join('') || '<p class="text-sm text-slate-500 py-2">Add students with a parent mobile number first.</p>'}</div></div>`;
+}
+let PC_LAST = null;
+function lastCodeCard() {
+  if (!PC_LAST) return '';
+  return `<div class="card border-leaf/40 bg-leaf/5 space-y-2"><p>Code for <b>${esc(PC_LAST.names)}</b>: <span class="text-2xl font-semibold tracking-widest">${PC_LAST.code}</span></p>
+    <p class="text-sm text-slate-600">Send it now — it is shown only once. Making a new code later replaces this one.</p>
+    <a target="_blank" href="${waLink(PC_LAST.p, PC_LAST.msg)}" class="btn btn-wa"><i class="fa-brands fa-whatsapp"></i> Send on WhatsApp</a></div>`;
+}
+async function makeParentCode(p) {
+  try {
+    const res = await api('parentcode', { phone: p }); PINS['p:' + p] = true;
+    const kids = parentFamilies().find(([x]) => x === p)[1];
+    const msg = `Namaste,\nYou can now see ${kids.map(k => k.name).join(', ')}'s attendance, homework, marks and school notices on your phone.\n\nOpen: ${location.origin + location.pathname}\nChoose: Parent\nMobile: ${p}\nCode: ${res.code}\n\nPlease keep this code private.\n— ${S.settings.school}`;
+    PC_LAST = { p, code: res.code, names: kids.map(k => k.name).join(', '), msg }; render();
+    window.scrollTo(0, 0);
+  } catch (e) { toast(e.message, 'r'); }
+}
+
 // ---------------------------------------------------------------- routes
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 
@@ -1908,7 +2061,7 @@ NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['
 (async function init() {
   TOKEN = tokenGet();
   if (TOKEN) {
-    try { await loadAll(); render(); return; }
+    try { if (tokenRole() === 'parent') await loadParent(); else await loadAll(); render(); return; }
     catch (e) {
       if (/internet|Server problem|reachable/i.test(e.message)) {
         document.getElementById('root').innerHTML = `<div class="flex-1 flex items-center justify-center p-6 text-center"><div><p class="font-bold">No connection to the school server.</p><p class="text-sm text-slate-500">${esc(e.message)}</p><button onclick="location.reload()" class="btn btn-p mt-3">Try again</button></div></div>`;
