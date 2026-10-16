@@ -2110,3 +2110,7 @@ VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','P
   }
   refreshStatus();
 })();
+
+// Smart Studio has its own class/child-scoped API; media never enters legacy sync.
+for (const role of ['principal','teacher','parent']) NAV[role].push(['studio','fa-camera','Smart Studio']);
+VIEWS.studio=()=>head(U.role==='parent'?'Classroom & Copies':'Teacher Smart Studio','Private notebook checking, classroom moments, badges and conversations.')+'<iframe title="Teacher Smart Studio" src="studio.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
