@@ -531,12 +531,13 @@ function vLogin() {
         <h1 class="font-extrabold text-lg mt-2 leading-tight">${esc(STATUS.school)}</h1>
         <p class="text-xs text-slate-500">Academic ERP</p>
       </div>${inner}<p class="text-[11px] text-slate-400 text-center">Powered by Maakit</p></div></div>`;
-  if (STATUS.setup) return card(`
-      <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm">First-time setup. Enter the <b>Maakit website update key</b> (the one in config.php) and choose the Principal's PIN.</div>
+  if (STATUS.setup || STATUS.reset) return card(`
+      <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm">${STATUS.setup ? 'First-time setup.' : 'Reset the Principal PIN.'} Enter the <b>Maakit website update key</b> (the part after <code>key=</code> in your update link) and choose the Principal's PIN.</div>
       <div><label class="lbl">Website update key</label><input id="su-key" type="password" class="inp" autocomplete="off"></div>
-      <div><label class="lbl">New Principal PIN (6–8 digits)</label><input id="su-pin" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.4em]"></div>
+      <div><label class="lbl">New Principal PIN (4–8 digits)</label><input id="su-pin" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.4em]"></div>
       <div><label class="lbl">Type the PIN again</label><input id="su-pin2" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.4em]"></div>
-      <button onclick="doSetup()" class="btn btn-p w-full py-3">Set up school</button>`);
+      <button onclick="doSetup()" class="btn btn-p w-full py-3">${STATUS.setup ? 'Set up school' : 'Save new PIN'}</button>
+      ${STATUS.reset ? '<button onclick="STATUS.reset=false;render()" class="btn btn-l w-full">Back to login</button>' : ''}`);
   const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}${t.pin ? '' : ' (no PIN yet)'}</option>`).join('');
   return card(`
       <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl text-sm font-bold">
@@ -545,15 +546,15 @@ function vLogin() {
       ${loginRole === 'teacher' ? (STATUS.teachers.length ? `<div><label class="lbl">Your name</label><select id="lg-t" class="inp">${tOpts}</select></div>` : '<p class="text-sm text-slate-500">The Principal must log in once first.</p>') : ''}
       <div><label class="lbl">PIN</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp text-center tracking-[0.5em] text-lg" onkeydown="if(event.key==='Enter')login()"></div>
       <button onclick="login()" class="btn btn-p w-full py-3"><i class="fa-solid fa-lock-open"></i> Login</button>
-      <p class="text-[11px] text-slate-400 text-center">Forgot your PIN? Ask the Principal to set a new one.</p>`);
+      <p class="text-[11px] text-slate-400 text-center">Teachers: forgot your PIN? Ask the Principal. Principal: <button onclick="STATUS.reset=true;render()" class="underline text-indigo-700">Forgot PIN</button></p>`);
 }
 async function doSetup() {
   if (busy) return;
   const key = document.getElementById('su-key').value.trim(), pin = document.getElementById('su-pin').value.trim();
   if (pin !== document.getElementById('su-pin2').value.trim()) return toast('The two PINs do not match', 'a');
-  if (!/^\d{6,8}$/.test(pin)) return toast('PIN must be 6 to 8 digits', 'a');
+  if (!/^\d{4,8}$/.test(pin)) return toast('PIN must be 4 to 8 digits', 'a');
   busy = true;
-  try { await api('setup', { key, pin }); loginRole = 'principal'; await doLogin('principal', null, pin); }
+  try { await api('setup', { key, pin }); loginRole = 'principal'; STATUS.reset = false; STATUS.setup = false; await doLogin('principal', null, pin); }
   catch (e) { toast(e.message, 'r'); } finally { busy = false; }
 }
 async function login() {
@@ -1065,8 +1066,8 @@ function applyLeave() {
 
 async function changeMyPin() {
   const old = prompt('Your current PIN'); if (old === null) return;
-  const pin = prompt('New PIN (6 to 8 digits)'); if (pin === null) return;
-  if (!/^\d{6,8}$/.test(pin.trim())) return toast('PIN must be 6 to 8 digits', 'a');
+  const pin = prompt('New PIN (4 to 8 digits)'); if (pin === null) return;
+  if (!/^\d{4,8}$/.test(pin.trim())) return toast('PIN must be 4 to 8 digits', 'a');
   try { await api('setpin', { old: old.trim(), pin: pin.trim() }); toast('PIN changed'); } catch (e) { toast(e.message, 'r'); }
 }
 
@@ -1107,7 +1108,7 @@ function vSettings() {
       <div class="card space-y-3"><h3 class="font-bold">Logins</h3>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Principal</b> (you) ${pinBadge('principal')}</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change my PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Chairman</b> ${pinBadge('chairman')}</span><button onclick="setPin('chairman','Chairman')" class="btn btn-sm btn-l">Set PIN</button></div>
-        <p class="text-xs text-slate-500">PINs are 6–8 digits and stored only in coded (hashed) form. Nobody, including you, can see a PIN after it is set — just set a new one if someone forgets.</p></div>
+        <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Nobody, including you, can see a PIN after it is set — just set a new one if someone forgets.</p></div>
       <div class="card lg:col-span-2 overflow-x-auto"><h3 class="font-bold mb-2">Teachers — login PIN & WhatsApp number</h3>
         <table class="tbl"><tr><th>Teacher</th><th>Role</th><th>Login</th><th>WhatsApp no.</th><th></th></tr>${Object.entries(S.teachers).map(([k, t]) => `<tr><td class="font-semibold">${esc(t.name)}</td><td class="text-xs">${esc(t.role)}</td>
           <td class="whitespace-nowrap">${pinBadge('t:' + k)} <button onclick="setPin('t:${esc(k)}',${jsq(t.name)})" class="btn btn-sm btn-l ml-1">Set PIN</button></td>
@@ -1130,8 +1131,8 @@ function saveSchool() {
   log('Settings', 'School settings updated'); toast('Saved'); render();
 }
 async function setPin(uidx, name) {
-  const pin = prompt('New PIN for ' + name + ' (6 to 8 digits). Tell it to them privately.'); if (pin === null) return;
-  if (!/^\d{6,8}$/.test(pin.trim())) return toast('PIN must be 6 to 8 digits', 'a');
+  const pin = prompt('New PIN for ' + name + ' (4 to 8 digits). Tell it to them privately.'); if (pin === null) return;
+  if (!/^\d{4,8}$/.test(pin.trim())) return toast('PIN must be 4 to 8 digits', 'a');
   await sync();
   try { await api('setpin', { uid: uidx, pin: pin.trim() }); PINS[uidx] = true; toast('PIN set for ' + name); render(); } catch (e) { toast(e.message, 'r'); }
 }

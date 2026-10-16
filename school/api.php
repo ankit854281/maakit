@@ -58,19 +58,23 @@ case 'status': {
 // ------------------------------------------------------------
 case 'setup': {
     if ($method !== 'POST') sch_fail('POST only', 405);
+    // Pehli baar setup, ya Principal PIN bhool gaye to wahi update-key se naya PIN
+    $st = $db->prepare('SELECT COUNT(*) FROM sch_login_fail WHERE ip=? AND at > (NOW() - INTERVAL 15 MINUTE)');
+    $st->execute([sch_ip()]);
+    if ((int)$st->fetchColumn() >= 20) sch_fail('Too many wrong tries. Please wait 15 minutes.', 429);
     $hasP = (int)$db->query("SELECT COUNT(*) FROM sch_users WHERE role='principal' AND pin_hash IS NOT NULL")->fetchColumn();
-    if ($hasP) sch_fail('Setup is already done. Please log in.');
     $key = defined('UPDATE_KEY') ? (string)UPDATE_KEY : '';
     if ($key === '' || !hash_equals($key, (string)($in['key'] ?? ''))) {
         $db->prepare('INSERT INTO sch_login_fail (ip) VALUES (?)')->execute([sch_ip()]);
         sch_fail('That is not the website update key.', 403);
     }
     $pin = (string)($in['pin'] ?? '');
-    if (!sch_pin_ok($pin)) sch_fail('PIN must be 6 to 8 digits.');
+    if (!sch_pin_ok($pin)) sch_fail('PIN must be 4 to 8 digits.');
     $db->prepare("INSERT INTO sch_users (uid, role, tid, pin_hash) VALUES ('principal','principal','P',?)
-                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), fails=0, locked_until=NULL")
+                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), fails=0, strikes=0, locked_until=NULL")
        ->execute([password_hash($pin, PASSWORD_DEFAULT)]);
-    sch_log(['label' => 'Principal', 'role' => 'principal'], 'Setup', 'School ERP set up; Principal PIN created');
+    if ($hasP) $db->exec("DELETE FROM sch_sessions WHERE uid='principal'");
+    sch_log(['label' => 'Principal', 'role' => 'principal'], 'Setup', $hasP ? 'Principal PIN reset with the website update key' : 'School ERP set up; Principal PIN created');
     sch_json(['ok' => true]);
 }
 
@@ -89,15 +93,20 @@ case 'login': {
     $u = $st->fetch();
     if (!$u || !$u['pin_hash']) sch_fail($role === 'teacher' ? 'No PIN set for you yet. Ask the Principal to set it in Settings.' : 'This login is not set up yet.');
     if ($u['locked_until'] && strtotime((string)$u['locked_until']) > time()) sch_fail('Too many wrong PINs. Please wait 15 minutes.', 429);
+    if ((int)$u['strikes'] >= SCH_MAX_STRIKES) sch_fail($role === 'principal'
+        ? 'This login is blocked after too many wrong PINs. Use "Forgot PIN" with the website update key.'
+        : 'This login is blocked after too many wrong PINs. Ask the Principal to set a new PIN.', 423);
 
     if (!password_verify((string)($in['pin'] ?? ''), (string)$u['pin_hash'])) {
         $db->prepare('INSERT INTO sch_login_fail (ip) VALUES (?)')->execute([$ip]);
         $f = (int)$u['fails'] + 1;
-        $db->prepare('UPDATE sch_users SET fails=?, locked_until=? WHERE uid=?')
-           ->execute([$f >= 5 ? 0 : $f, $f >= 5 ? date('Y-m-d H:i:s', time() + 900) : null, $uid]);
+        $strikes = (int)$u['strikes'] + 1;
+        $db->prepare('UPDATE sch_users SET fails=?, strikes=?, locked_until=? WHERE uid=?')
+           ->execute([$f >= 5 ? 0 : $f, $strikes, $f >= 5 ? date('Y-m-d H:i:s', time() + 900) : null, $uid]);
+        if ($strikes >= SCH_MAX_STRIKES) sch_fail('Too many wrong PINs. This login is now blocked until a new PIN is set.', 423);
         sch_fail($f >= 5 ? 'Too many wrong PINs. Please wait 15 minutes.' : 'Wrong PIN.', 403);
     }
-    $db->prepare('UPDATE sch_users SET fails=0, locked_until=NULL WHERE uid=?')->execute([$uid]);
+    $db->prepare('UPDATE sch_users SET fails=0, strikes=0, locked_until=NULL WHERE uid=?')->execute([$uid]);
     $tok = bin2hex(random_bytes(32));
     $db->prepare('INSERT INTO sch_sessions (token_hash, uid, expires_at, last_seen) VALUES (?,?,?,NOW())')
        ->execute([hash('sha256', $tok), $uid, date('Y-m-d H:i:s', time() + SCH_SESSION_DAYS * 86400)]);
@@ -201,7 +210,7 @@ case 'setpin': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $u = sch_auth();
     $pin = (string)($in['pin'] ?? '');
-    if (!sch_pin_ok($pin)) sch_fail('PIN must be 6 to 8 digits.');
+    if (!sch_pin_ok($pin)) sch_fail('PIN must be 4 to 8 digits.');
     $target = (string)($in['uid'] ?? '');
     $selfUid = $u['role'] === 'teacher' ? 't:' . $u['tid'] : $u['role'];
     if ($target === '' || $target === $selfUid) {
@@ -217,7 +226,7 @@ case 'setpin': {
     elseif (preg_match('/^t:([A-Za-z0-9_]{1,20})$/', $target, $m) && sch_rec_get('teacher', $m[1])) { $role = 'teacher'; $tid = $m[1]; }
     else sch_fail('Unknown user.');
     $db->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash) VALUES (?,?,?,?)
-                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), fails=0, locked_until=NULL, updated_at=NOW()')
+                  ON DUPLICATE KEY UPDATE pin_hash=VALUES(pin_hash), fails=0, strikes=0, locked_until=NULL, updated_at=NOW()')
        ->execute([$target, $role, $tid, password_hash($pin, PASSWORD_DEFAULT)]);
     if ($target !== $selfUid) $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$target]);   // purane phone se bahar
     $who = $role === 'teacher' ? sch_teacher_name($tid) : ucfirst($role);

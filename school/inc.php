@@ -100,7 +100,8 @@ function sch_user_label(array $u): string {
     return $n;
 }
 
-function sch_pin_ok(string $pin): bool { return (bool)preg_match('/^\d{6,8}$/', $pin); }
+function sch_pin_ok(string $pin): bool { return (bool)preg_match('/^\d{4,8}$/', $pin); }
+const SCH_MAX_STRIKES = 15;      // itni baar kul galat PIN = login band, naya PIN lagana padega
 
 // ---------- session ----------
 function sch_auth(): array {

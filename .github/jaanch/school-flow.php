@@ -120,6 +120,18 @@ sf_check($c === 200 && str_contains($csv, 'Activity'), 'principal could not expo
 [$c] = sf_api('logcsv', null, $K);
 sf_check($c === 403, 'teacher exported the log');
 
+// ---- 4 ank ka PIN chalta hai; 15 kul galti par login band, Principal naya PIN de to khulta ----
+[$c] = sf_api('setpin', ['uid' => 't:MA', 'pin' => '4826'], $P);
+sf_check($c === 200, '4-digit PIN refused');
+$pdo->exec("UPDATE sch_users SET strikes=14 WHERE uid='t:MA'");
+[$c] = sf_api('login', ['role' => 'teacher', 'tid' => 'MA', 'pin' => '1111']);
+sf_check($c === 423, 'no block after 15 wrong PINs');
+[$c] = sf_api('login', ['role' => 'teacher', 'tid' => 'MA', 'pin' => '4826']);
+sf_check($c === 423, 'blocked login opened with the right PIN');
+sf_api('setpin', ['uid' => 't:MA', 'pin' => '5937'], $P);
+[$c] = sf_api('login', ['role' => 'teacher', 'tid' => 'MA', 'pin' => '5937']);
+sf_check($c === 200, 'new PIN from Principal did not unblock');
+
 // ---- lock after 5 wrong PINs ----
 for ($i = 0; $i < 5; $i++) sf_api('login', ['role' => 'teacher', 'tid' => 'K', 'pin' => '000000']);
 [$c, , $j] = sf_api('login', ['role' => 'teacher', 'tid' => 'K', 'pin' => '135790']);
