@@ -2089,6 +2089,12 @@ const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: v
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 
+// Learning Lab uses a separate subject/child-scoped PHP API, sharing the existing login.
+NAV.principal.push(['learning','fa-seedling','Learning Lab']);
+NAV.teacher.push(['learning','fa-seedling','Learning Lab']);
+NAV.parent.push(['learning','fa-seedling','Learning Adventure']);
+VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','Practice, skill evidence and teacher-reviewed learning missions.')+'<iframe title="Learning Lab" src="learning.php?embed=1" style="width:100%;min-height:85vh;border:0;border-radius:16px"></iframe>';
+
 // ---------------------------------------------------------------- init
 (async function init() {
   TOKEN = tokenGet();

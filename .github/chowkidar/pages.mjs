@@ -36,6 +36,7 @@ export const GALAT_JAGAH = [
 ];
 
 export const PAGES = [
+  { path: '/school/learning.php', naam: 'School Learning Lab', chahiye: ['Learning Lab'] },
   { path: '/public/order-tools.php', naam: 'Customer delivery safety and fee login guard', chahiye: ['Maakit'] },
   { path: '/public/auth.php', naam: 'Role login gateway', chahiye: ['Maakit'] },
   { path: '/public/partner-apply.php?kind=vendor', naam: 'Seller application', chahiye: ['Maakit'] },

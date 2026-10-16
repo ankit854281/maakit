@@ -80,6 +80,8 @@ function sch_rec_del(string $k, string $r, string $uid): int {
 function sch_rows_to_records(array $rows): array {
     $out = [];
     foreach ($rows as $row) {
+        // Learning content has its own subject/child-scoped API; keys never use legacy sync.
+        if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck'], true)) continue;
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}
     }

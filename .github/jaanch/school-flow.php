@@ -154,6 +154,32 @@ foreach ($j['marks'] as $m) sf_check($m['sid'] === 's1', 'parent saw marks of an
 sf_check($c === 403, 'parent could open the full school data');
 [, , $j] = sf_api('sync', ['put' => [['k' => 'studAtt', 'r' => "$today|9th", 'd' => ['absent' => []]]]], $PA);
 sf_check(count($j['rejected']) === 1, 'parent changed attendance');
+// ---- Learning Lab: subject permissions, private keys and child-only practice ----
+$missionId='10000000-0000-4000-8000-000000000001';
+$mission=['id'=>$missionId,'cls'=>'9th','subj'=>'Social Science','topic'=>'Check reasoning','plan'=>'PRIVATE_TEACHER_PLAN_775','due'=>$today,'reviewed'=>true,'questions'=>[
+ ['prompt'=>'1000 + 247','answer'=>'1247','mode'=>'numeric','hint'=>'Add place values'],
+ ['prompt'=>'Explain your steps','answer'=>'PRIVATE_TEACHER_KEY_776','mode'=>'manual']]];
+[$c]=sf_http('/school/learning_api.php?a=mission',array_merge($mission,['reviewed'=>false]),$K);sf_check($c===400,'Unreviewed mission published');
+[$c]=sf_http('/school/learning_api.php?a=mission',array_merge($mission,['cls'=>'10th','subj'=>'Hindi']),$K);sf_check($c===403,'Teacher published another subject');
+[$c]=sf_http('/school/learning_api.php?a=mission',$mission,$K);sf_check($c===200,'Reviewed mission not saved');
+[$c]=sf_http('/school/learning_api.php?a=mission',$mission,$K);sf_check($c===200,'Mission retry not idempotent');
+[$c,$raw,$ls]=sf_http('/school/learning_api.php?a=state',null,$PA);
+sf_check($c===200&&count($ls['students'])===1&&$ls['students'][0]['id']==='s1','Parent sees another student in learning');
+sf_check(!str_contains($raw,'PRIVATE_TEACHER_PLAN_775')&&!str_contains($raw,'PRIVATE_TEACHER_KEY_776')&&!str_contains($raw,'"answer"'),'Parent received answer key or teacher plan');
+[$c]=sf_http('/school/learning_api.php?a=attempt',['id'=>'10000000-0000-4000-8000-000000000002','sid'=>'s2','mission'=>$missionId,'answers'=>['1247','steps']],$PA);sf_check($c===403,'Parent submitted for another child');
+[$c,,$tryResult]=sf_http('/school/learning_api.php?a=attempt',['id'=>'10000000-0000-4000-8000-000000000003','sid'=>'s1','mission'=>$missionId,'answers'=>['1247','steps'],'correct'=>999],$PA);
+sf_check($c===200&&$tryResult['result']['correct']===1&&$tryResult['result']['pending']===1,'Practice trusted client score or auto-graded writing');
+$review=['id'=>'10000000-0000-4000-8000-000000000005','cls'=>'9th','subj'=>'Social Science','attempt'=>'10000000-0000-4000-8000-000000000003','status'=>'Checked','feedback'=>'Explain the same method using a new example'];
+[$c]=sf_http('/school/learning_api.php?a=review',$review,$PA);sf_check($c===403,'Parent wrote teacher feedback');
+[$c]=sf_http('/school/learning_api.php?a=review',$review,$K);sf_check($c===200,'Teacher review could not be completed');
+[$c,,$reviewState]=sf_http('/school/learning_api.php?a=state',null,$PA);sf_check(count($reviewState['reviews'])===1&&$reviewState['reviews'][0]['status']==='Checked','Family cannot see checked practice feedback');
+$skill=['id'=>'10000000-0000-4000-8000-000000000004','cls'=>'9th','subj'=>'Social Science','sid'=>'s1','skill'=>'Understanding','level'=>1,'evidence'=>'Needed one hint to explain an example'];
+[$c]=sf_http('/school/learning_api.php?a=skill',$skill,$PA);sf_check($c===403,'Parent wrote teacher observation');
+[$c]=sf_http('/school/learning_api.php?a=skill',$skill,$K);sf_check($c===200,'Teacher could not save observed skill');
+[$c,,$ls]=sf_http('/school/learning_api.php?a=state',null,$PA);sf_check(count($ls['skills'])===1&&count($ls['attempts'])===1&&!isset($ls['attempts'][0]['answers']),'Parent evidence scope failed');
+[$c,$raw]=sf_api('load',null,$P);sf_check(!str_contains($raw,'PRIVATE_TEACHER_PLAN_775')&&!str_contains($raw,'PRIVATE_TEACHER_KEY_776'),'Legacy sync leaked learning keys');
+[$c,,$dr]=sf_http('/school/learning_api.php?a=draft',['cls'=>'9th','subj'=>'Social Science','topic'=>'Reasoning'],$K);sf_check($c===200&&str_contains($dr['mode'],'not AI'),'Template mislabeled as AI');
+
 // ---- verified ERP import: preview, stable IDs, same admission, repeat and permission ----
 $erp=['format'=>'snmishra-students-v1','session'=>'2026-27','students'=>[
  ['erpId'=>'901','adm'=>'ERP-DUP','name'=>'Import Child A','cls'=>'1st','father'=>'Parent A'],
