@@ -384,3 +384,14 @@ that already exist reachable from a phone.
 - Never ship a login that accepts a fixed/master OTP or trusts a plain cookie; real OTP needs an SMS provider.
 - OTP channels (`smartsarathi/inc/fast2sms.php`, shared by Maakit and Sarathi): WhatsApp Cloud API first (`WA_*` config, no DLT), then Fast2SMS SMS (`FAST2SMS_ROUTE='otp'` = no-DLT OTP route, or Smart OTP IDs). Codes are always generated and verified locally. Pickup/delivery codes go only through WhatsApp utility templates or DLT SMS templates — never as a bare "Your OTP". Setup: `docs/fast2sms-setup.md`.
 - One rider = one Smart Sarathi login for deliveries AND rides. `riders.do_delivery/do_ride` (rider's own choice in Profile), `riders.ride_ok` + `riders.vtype` (office sets after checking DL/RC). `job_auto_give` matches: delivery → do_delivery; ride → do_ride AND ride_ok AND vehicle fits (`sr_ride_fits`). Going online (`duty_on`) also hands out waiting jobs.
+
+## School ERP = maakit.in/school (16 Oct 2026, owner decision)
+
+- A separate product hosted under Maakit for SN Mishra Singapore International School, Bhadohi (Ankit was its principal). It shares only the hosting, `config.php` (database constants and `UPDATE_KEY`) and the "Powered by Maakit" credit. It never reads or writes any Maakit table.
+- Files: `school/index.php` (page), `school/app.js` (whole app, plain JS), `school/app.css` (pre-built static CSS — no build on the server; if you add new Tailwind classes, rebuild it locally with Tailwind 3 and commit the file), `school/api.php` + `school/inc.php` (JSON API). Tables: `sql/036-school-erp.sql` — `sch_users`, `sch_sessions`, `sch_records`, `sch_log`, `sch_login_fail`.
+- Data model: each piece of school data is one row in `sch_records` (`k` kind, `r` key) holding JSON, so two teachers saving at once never overwrite each other. Deletes are tombstones (`deleted=1`) so other phones learn about them. Phones fetch changes every 45 s (`?a=since`).
+- Login: first visit asks for the website `UPDATE_KEY` and creates the Principal PIN. The Principal sets every other PIN (6–8 digits, `password_hash`). 5 wrong PINs lock that login for 15 min; 20 wrong tries from one IP block it for 15 min. Token is sent in the `X-School-Token` header, never a cookie.
+- Permissions are enforced on the server (`sch_can_write`): Principal writes everything; Chairman reads only; a teacher writes only their own diary, attendance of the class they are class teacher of, syllabus and marks of subjects they teach, and their own leave request while it is Pending.
+- Every action goes to `sch_log` (Activity Log, exportable as CSV by Principal/Chairman).
+- Interface is English: the school is English-medium CBSE and staff asked for English. Parent WhatsApp messages are bilingual.
+- Test: `.github/jaanch/school-flow.php`.
