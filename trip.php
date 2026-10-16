@@ -43,7 +43,8 @@ if ($t) {
     try { $t = trip_sync($pdo, $t); } catch (Throwable $e) { error_log('trip_sync: ' . $e->getMessage()); }
     if (get('json') === '1') {
         header('Content-Type: application/json');
-        echo json_encode(['s' => $t['status'], 'r' => (string)$t['rider_name']]);
+        header('Cache-Control: no-store');
+        echo json_encode(['s' => $t['status'], 'r' => (string)$t['rider_name'], 'loc' => trip_location_payload($t)]);
         exit;
     }
 }
@@ -126,7 +127,9 @@ $V = trip_vehicles($pdo);
   <?php endif; ?>
 
   <section class="rd-card">
-    <div class="rt-map" id="rtMap" hidden data-a="<?= h((string)$t['pick_geo']) ?>" data-b="<?= h((string)$t['drop_geo']) ?>"></div>
+    <div class="rt-map" id="rtMap" hidden data-a="<?= h((string)$t['pick_geo']) ?>" data-b="<?= h((string)$t['drop_geo']) ?>" data-loc="<?= h(json_encode(trip_location_payload($t), JSON_UNESCAPED_SLASHES)) ?>"></div>
+    <p class="rt-map-status" id="rtMapStatus" hidden role="status" aria-live="polite"></p>
+    <p class="rt-map-status"><?= h(t('Dashed line is a direct line, not a road route.', 'टूटी रेखा सीधी दूरी है, सड़क का रास्ता नहीं।')) ?></p>
     <ol class="rt-route">
       <li><small><?= $ride ? t('Pickup', 'कहाँ से') : t('From', 'कहाँ से') ?></small><b><?= h($t['pick_address']) ?></b></li>
       <li class="b"><small><?= $ride ? t('Drop', 'कहाँ तक') : t('To', 'कहाँ तक') ?></small><b><?= !$ride && $t['drop_name'] && $t['drop_mobile'] !== $t['mobile'] ? h($t['drop_name']) . ' · ' : '' ?><?= h($t['drop_address']) ?></b></li>
@@ -157,50 +160,18 @@ $V = trip_vehicles($pdo);
   window.addEventListener('load', function () {
     var el = document.getElementById('rtMap');
     function p(g) { if (!g) return null; var x = g.split(','); return [+x[0], +x[1]]; }
-    var a = p(el.dataset.a), b = p(el.dataset.b);
-    if (window.L && (a || b)) {
-      el.hidden = false;
-      var map = L.map(el, { zoomControl: false, dragging: !L.Browser.mobile, scrollWheelZoom: false });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-      function ic(c, t) { return L.divIcon({ className: 'rd-mk ' + c, html: '<span>' + t + '</span>', iconSize: [30, 38], iconAnchor: [15, 36] }); }
-      if (a) L.marker(a, { icon: ic('a', 'A') }).addTo(map);
-      if (b) L.marker(b, { icon: ic('b', 'B') }).addTo(map);
-      if (a && b) { L.polyline([a, b], { color: '#111827', weight: 3, dashArray: '6 8' }).addTo(map); map.fitBounds([a, b], { padding: [30, 30], maxZoom: 16 }); }
-      else map.setView(a || b, 15);
-    }
-    <?php if ($live): ?>
-    // halat badli to panna taaza
-    var s = <?= json_encode($t['status']) ?>, r = <?= json_encode((string)$t['rider_name']) ?>;
-    setInterval(function () {
-      if (document.hidden) return;
-      fetch(location.pathname + '?no=<?= h(urlencode($t['trip_no'])) ?>&m=<?= h(urlencode($m)) ?>&json=1', { credentials: 'same-origin' })
-        .then(function (x) { return x.json(); }).then(function (j) {
-          if (j.s !== s || j.r !== r) { try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) {} location.replace(location.pathname + '?no=<?= h(urlencode($t['trip_no'])) ?>&m=<?= h(urlencode($m)) ?>'); }
-        }).catch(function () {});
-    }, 15000);
-    <?php endif; ?>
-  });
-  </script>
-
-<?php else: ?>
-  <form method="post" class="rd-card rt-find">
-    <label class="rd-f"><span><?= t('Booking number', 'बुकिंग नंबर') ?></span><input name="no" value="<?= h($no) ?>" placeholder="RD… / PL…" autocapitalize="characters" required></label>
-    <label class="rd-f"><span><?= t('Mobile used for booking (or receiver)', 'बुकिंग वाला मोबाइल (या पाने वाले का)') ?></span><input name="m" type="tel" inputmode="numeric" value="<?= h($m) ?>" required pattern="[6-9][0-9]{9}"></label>
-    <button class="rt-btn dark" type="submit"><?= t('Show status', 'हालत देखिए') ?></button>
-  </form>
-  <?php $list = trip_mine($pdo, (function_exists('cust') && cust()) ? cust()['mobile'] : null, 5); if ($list): ?>
-  <section class="rd-card rd-mine">
-    <h2 class="rd-h"><?= t('Your recent bookings', 'आपकी पिछली बुकिंग') ?></h2>
-    <?php foreach ($list as $tr): [$kk, $nm] = trip_steps($tr); ?>
-      <a href="/trip.php?no=<?= h(urlencode($tr['trip_no'])) ?>&amp;m=<?= h(urlencode($tr['mobile'])) ?>">
-        <span class="rd-mine-ic"><?= $tr['kind'] === 'parcel' ? '📦' : ($V[$tr['vehicle']]['emoji'] ?? '🏍️') ?></span>
-        <span class="rd-mine-t"><b><?= h(mb_strimwidth($tr['drop_address'], 0, 42, '…')) ?></b><small><?= h($tr['trip_no']) ?> · <?= h(date('d M, h:i A', strtotime($tr['created_at']))) ?></small></span>
-        <em class="st-<?= h($tr['status']) ?>"><?= $tr['status'] === 'cancelled' ? t('Cancelled', 'रद्द') : h($nm[max(0, $kk)]) ?></em>
-      </a>
-    <?php endforeach; ?>
-  </section>
-  <?php endif; ?>
-<?php endif; ?>
-</div>
-</main>
-<?php include __DIR__ . '/inc/foot.php'; ?>
+    var a = p(el.dataset.a), b = p(el.dataset.b), status = document.getElementById('rtMapStatus');
+    var map = null, riderMarker = null, active = <?= json_encode($live) ?>;
+    function cleanLoc(x) { return x && isFinite(+x.lat) && isFinite(+x.lng) && Math.abs(+x.lat) <= 90 && Math.abs(+x.lng) <= 180 && (+x.at) >= Date.now()/1000 - 120 && (+x.at) <= Date.now()/1000 + 30 ? [+x.lat, +x.lng] : null; }
+    function showLoc(x) {
+      var q = cleanLoc(x);
+      if (!q) {
+        if (riderMarker && map) { map.removeLayer(riderMarker); riderMarker = null; }
+        if (status && active) { status.hidden = false; status.textContent = <?= json_encode(t('The rider’s live location is not available right now.', 'राइडर की लाइव जगह अभी उपलब्ध नहीं है।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; }
+        return;
+      }
+      if (!map) makeMap(q);
+      if (!map) return;
+      var coords = (+x.lat).toFixed(5) + ', ' + (+x.lng).toFixed(5);
+      if (!riderMarker) riderMarker = L.circleMarker(q, {radius: 10, color: 'var(--on-brand)', weight: 3, fillColor: 'var(--brand)', fillOpacity: 1}).addTo(map).bindPopup(coords);
+    

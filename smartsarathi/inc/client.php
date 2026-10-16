@@ -187,7 +187,17 @@ function job_public(array $j) {
 }
 
 function job_status(PDO $pdo, array $client, $ref) {
-    $st = $pdo->prepare("SELECT j.*, r.name rider_name, r.mobile rider_mobile
+    sr_jobs_upgrade($pdo);
+    $st = $pdo->prepare("SELECT j.*, r.name rider_name, r.mobile rider_mobile,
+                                IF(j.status IN ('assigned','picked')
+                                   AND r.last_location_at >= UTC_TIMESTAMP() - INTERVAL 2 MINUTE,
+                                   r.last_lat, NULL) AS rider_lat,
+                                IF(j.status IN ('assigned','picked')
+                                   AND r.last_location_at >= UTC_TIMESTAMP() - INTERVAL 2 MINUTE,
+                                   r.last_lng, NULL) AS rider_lng,
+                                IF(j.status IN ('assigned','picked')
+                                   AND r.last_location_at >= UTC_TIMESTAMP() - INTERVAL 2 MINUTE,
+                                   TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', r.last_location_at), NULL) AS rider_location_at
                            FROM jobs j LEFT JOIN riders r ON r.id = j.rider_id
                           WHERE j.client_id=? AND j.client_ref=?");
     $st->execute([(int)$client['id'], (string)$ref]);
@@ -195,6 +205,9 @@ function job_status(PDO $pdo, array $client, $ref) {
     if (!$j) return [false, 'ये काम नहीं मिला'];
     $out = job_public($j);
     if ($j['rider_name']) $out['rider'] = ['name' => $j['rider_name'], 'mobile' => $j['rider_mobile']];
+    $out['rider_location'] = $j['rider_lat'] !== null && $j['rider_lng'] !== null && $j['rider_location_at'] !== null
+        ? ['lat' => (float)$j['rider_lat'], 'lng' => (float)$j['rider_lng'], 'at' => (int)$j['rider_location_at']]
+        : null;
     if ($j['pod_photo'])  $out['photo'] = '/uploads/' . $j['pod_photo'];
     return [true, $out];
 }
@@ -204,25 +217,4 @@ function job_status(PDO $pdo, array $client, $ref) {
  * tak rider ne uthaya na ho. Uthane ke baad saaman rider ke
  * paas hai; use radd karna phone par baat karke hi hoga.
  */
-function job_cancel(PDO $pdo, array $client, $ref) {
-    $up = $pdo->prepare("UPDATE jobs SET status='cancelled'
-                          WHERE client_id=? AND client_ref=? AND status IN ('new','assigned')");
-    $up->execute([(int)$client['id'], (string)$ref]);
-    if ($up->rowCount() !== 1) {
-        return [false, 'ये काम अब यहाँ से रद्द नहीं हो सकता — फ़ोन कीजिए'];
-    }
-    return [true, ['status' => 'cancelled']];
-}
-
-// ------------------------------------------------------------
-//  जवाब भेजने का तरीका
-// ------------------------------------------------------------
-function api_out($code, array $body) {
-    http_response_code($code);
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
-    header('X-Content-Type-Options: nosniff');
-    echo json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-function api_fail($code, $msg) { api_out($code, ['ok' => false, 'error' => $msg]); }
+function job

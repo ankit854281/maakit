@@ -52,6 +52,17 @@ try{
     rf_check(strpos($op,'No booking found')!==false&&strpos($op,'Start code')===false,'another mobile cannot open it');
     [$js]=rf_http('/trip.php?no='.$no.'&m='.$mob.'&json=1',null,200,$other);
     rf_check(json_decode($js,true)['s']==='new','status json works for the right mobile');
+    $pdo->prepare("UPDATE rides SET status='assigned', rider_name='CI Rider', rider_lat=25.3860000, rider_lng=82.5650000, rider_location_at=? WHERE trip_no=?")
+        ->execute([time(),$no]);
+    [$liveJson]=rf_http('/trip.php?no='.$no.'&m='.$mob.'&json=1',null,200,$other);
+    $liveData=json_decode($liveJson,true);
+    rf_check(isset($liveData['loc']['lat'],$liveData['loc']['lng'])
+        && abs($liveData['loc']['lat']-25.386)<0.000001 && abs($liveData['loc']['lng']-82.565)<0.000001,
+        'fresh rider location is visible to booking mobile');
+    $pdo->prepare('UPDATE rides SET rider_location_at=? WHERE trip_no=?')->execute([time()-121,$no]);
+    [$staleJson]=rf_http('/trip.php?no='.$no.'&m='.$mob.'&json=1',null,200,$other);
+    rf_check(json_decode($staleJson,true)['loc']===null,'stale rider location is hidden');
+    $pdo->prepare('UPDATE rides SET rider_location_at=? WHERE trip_no=?')->execute([time(),$no]);
     rf_http('/trip.php?no='.$no.'&lang=en',['csrf'=>rf_csrf($tp),'do'=>'cancel','no'=>$no,'m'=>$mob]);
     $q->execute([$no]);rf_check($q->fetch()['status']==='cancelled','customer can cancel before pickup');
     echo "✅ सवारी / पार्सल: बुकिंग, किराया, कोड, ट्रैकिंग और रद्द — सब ठीक\n";

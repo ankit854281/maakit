@@ -19,7 +19,21 @@ $rid = (int)$me['id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 
-    if ($do === 'bahar')    { rider_logout(); redirect('/'); }
+    if ($do === 'bahar')    { rider_location_clear($pdo, $rid); rider_logout(); redirect('/'); }
+    if ($do === 'location') {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        [$ok, $out] = rider_location_update($pdo, $rid, post('lat'), post('lng'));
+        echo json_encode($ok ? ['ok' => true, 'location' => $out] : ['ok' => false, 'error' => $out], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    if ($do === 'location_off') {
+        rider_location_clear($pdo, $rid);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode(['ok' => true]);
+        exit;
+    }
     if ($do === 'duty_on')  { duty_on($pdo, $rid);  flash(t('You are online for the next 90 minutes.', 'हाज़िरी लग गई — अगले 90 मिनट तक।')); redirect('/kaam.php'); }
     if ($do === 'duty_off') { duty_off($pdo, $rid); flash(t('You are now offline.', 'अब आप बंद हैं।'));                   redirect('/kaam.php'); }
 
@@ -108,6 +122,15 @@ $csrf = h(csrf());
   <div class="sx-stat"><small><?= h(t('Active jobs', 'अभी के काम')) ?></small><b><?= count($jobs) ?></b></div>
 </div>
 
+<?php if ($jobs): ?>
+<section class="sx-loc-share" data-location-share data-csrf="<?= $csrf ?>">
+  <div><b><?= h(t('Share your live location', 'अपनी लाइव जगह साझा करें')) ?></b>
+    <small><?= h(t('Customers with your active jobs can see your current position. You can stop sharing any time.', 'आपके चालू काम वाले ग्राहक आपकी अभी की जगह देख सकेंगे। आप इसे कभी भी बंद कर सकते हैं।')) ?></small></div>
+  <button type="button" data-location-toggle><?= h(t('Turn on sharing', 'जगह साझा करें')) ?></button>
+  <p role="status" aria-live="polite" data-location-status><?= h(t('Off — your location is not being shared.', 'बंद — आपकी जगह साझा नहीं हो रही है।')) ?></p>
+</section>
+<?php endif; ?>
+
 <?php if ($trip): ?>
   <div class="sx-trip">
     <span><?= sr_icon('route', 18) ?> <?= h(t('This trip', 'इस चक्कर में')) ?> <b><?= $chakkar ?></b> <?= h(t('jobs', 'काम')) ?></span>
@@ -130,6 +153,8 @@ $csrf = h(csrf());
     $mera  = ($j['trip_id'] && (int)$j['trip_seq'] > 1) ? $extra : $rate;
     $map   = maps_next($j);
     $isRide = ($j['kind'] ?? 'delivery') === 'ride';
+    $pickGeo = preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/D', (string)($j['pick_geo'] ?? '')) ? (string)$j['pick_geo'] : '';
+    $dropGeo = preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/D', (string)($j['drop_geo'] ?? '')) ? (string)$j['drop_geo'] : '';
     $hello = rawurlencode($isRide
         ? t('Hello, I am your Sarathi rider. I am coming to pick you up. Booking ', 'नमस्ते, मैं आपका सारथी राइडर हूँ। आपको लेने आ रहा हूँ। बुकिंग ') . ($j['client_ref'] ?: $j['job_no'])
         : t('Hello, I am your Sarathi delivery partner. I am on the way with your order ', 'नमस्ते, मैं सारथी डिलीवरी पार्टनर हूँ। आपका सामान लेकर आ रहा हूँ — ') . $j['job_no']);
@@ -148,6 +173,13 @@ $csrf = h(csrf());
         <li class="<?= $utha ? 'now' : '' ?>"><i></i><div><small><?= $isRide ? h(t('Drop passenger', 'सवारी यहाँ तक')) : h(t('Deliver to', 'पहुँचाइए')) ?></small>
           <b><?= h($j['drop_name']) ?></b><span><?= h($j['drop_address']) ?></span></div></li>
       </ol>
+
+      <?php if ($pickGeo || $dropGeo): ?>
+        <div class="sx-job-map" data-job-map data-pick="<?= h($pickGeo) ?>" data-drop="<?= h($dropGeo) ?>" data-next="<?= h($utha ? 'drop' : 'pick') ?>" aria-label="<?= h(t('Pickup and drop map', 'पिकअप और पहुँचने की जगह का नक्शा')) ?>"></div>
+        <p class="sx-map-caption"><?= h(t('Green pin: pickup · Yellow pin: drop. Dashed line is a direct line, not a road route. Navigate opens turn-by-turn directions.', 'हरा निशान: पिकअप · पीला निशान: पहुँचने की जगह। टूटी रेखा सीधी दूरी है, सड़क का रास्ता नहीं। रास्ता दबाने पर दिशा खुलेगी।')) ?></p>
+      <?php else: ?>
+        <p class="sx-map-caption missing"><?= h(t('No exact GPS pin was sent for this job. Use the address or call before leaving.', 'इस काम के लिए GPS पिन नहीं मिला। निकलने से पहले पता देखकर फ़ोन कर लें।')) ?></p>
+      <?php endif; ?>
 
       <?php if ($j['items']): ?><div class="sx-items"><?= sr_icon('box', 16) ?> <?= h($j['items']) ?></div><?php endif; ?>
       <?php if (!empty($j['note'])):
@@ -213,22 +245,37 @@ $csrf = h(csrf());
 <?php endforeach; endif; ?>
 
 <script>
-// Naya kaam aaya to ghanti + vibrate (pichhli baar se zyada kaam dikhe to)
+// Rider map and opt-in GPS sharing. The browser starts location access only
+// after the rider presses the button; only the latest point is sent.
 (function () {
-  var n = <?= count($jobs) ?>, key = 'sx_jobs_' + <?= (int)$rid ?>, old = null;
-  try { old = sessionStorage.getItem(key); sessionStorage.setItem(key, n); } catch (e) {}
-  if (old !== null && n > parseInt(old, 10)) {
-    try { navigator.vibrate && navigator.vibrate([120, 80, 120]); } catch (e) {}
-    try { var C = window.AudioContext || window.webkitAudioContext, c = new C(), o = c.createOscillator(), g = c.createGain();
-      o.frequency.value = 880; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(.2, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .6); o.start(); o.stop(c.currentTime + .6); } catch (e) {}
+  var maps = [];
+  function point(raw) {
+    if (!raw) return null;
+    var p = raw.split(',').map(Number);
+    return p.length === 2 && isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180 ? p : null;
   }
-})();
-</script>
-<?php if ($ready && !$jobs): ?>
-<script>
-// हाज़िर हैं पर काम नहीं — हर मिनट खुद देख लीजिए. Kaam khula ho to refresh NAHI (likha OTP ud jata).
-setTimeout(function () { location.reload(); }, 60000);
-</script>
-<?php endif; ?>
-
-<?php sr_foot('kaam', ['kaam' => count($jobs)]); ?>
+  function makeIcon(kind, label) {
+    return L.divIcon({className: 'sx-map-pin ' + kind, html: '<span>' + label + '</span>', iconSize: [30, 38], iconAnchor: [15, 36]});
+  }
+  function initMap(el) {
+    if (!window.L) { el.insertAdjacentHTML('afterend', '<p class="sx-map-caption missing"><?= h(t('Map could not load. Use Navigate or call the customer.', 'नक्शा नहीं खुला। रास्ता खोलें या ग्राहक को फ़ोन करें।')) ?></p>'); return; }
+    var a = point(el.dataset.pick), b = point(el.dataset.drop);
+    if (!a && !b) return;
+    var map = L.map(el, {zoomControl: false, scrollWheelZoom: false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
+    var pts = [];
+    if (a) { L.marker(a, {icon: makeIcon('pick', 'P')}).addTo(map).bindPopup(<?= json_encode(t('Pickup', 'पिकअप')) ?>); pts.push(a); }
+    if (b) { L.marker(b, {icon: makeIcon('drop', 'D')}).addTo(map).bindPopup(<?= json_encode(t('Drop', 'पहुँचने की जगह')) ?>); pts.push(b); }
+    if (a && b) L.polyline([a, b], {color: '#0C831F', weight: 3, dashArray: '6 7', opacity: .75}).addTo(map);
+    if (pts.length > 1) map.fitBounds(pts, {padding: [24, 24], maxZoom: 16}); else map.setView(pts[0], 15);
+    var rider = null;
+    function showRider(p) {
+      if (!p) { if (rider) { map.removeLayer(rider); rider = null; } return; }
+      if (!rider) rider = L.circleMarker(p, {radius: 9, color: 'var(--card)', weight: 3, fillColor: 'var(--mint2)', fillOpacity: 1}).addTo(map).bindPopup(<?= json_encode(t('You', 'आप')) ?>);
+      else rider.setLatLng(p);
+      if (!map.getBounds().contains(p)) map.panTo(p);
+    }
+    el._srMap = {map: map, showRider: showRider};
+    maps.push(el);
+    var job = el.closest('.sx-job');
+    if (job) job.addEventListener('toggle', function () { if (job.open)
