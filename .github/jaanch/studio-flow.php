@@ -32,7 +32,7 @@ try{
  [$c]=st_request('preference',$T,['id'=>st_id(),'sid'=>'studio-own','whatsapp'=>true]);st_ok($c===403,'Teacher opted parent into WhatsApp');[$c]=st_request('preference',$A,['id'=>st_id(),'sid'=>'studio-own','whatsapp'=>true]);st_ok($c===200,'Parent opt-in failed');
  [$c]=st_request('task',$C,$body);st_ok($c===403,'Chairman wrote studio data');
  // Main API cannot bypass new write permissions or expose keys/media via sync.
- $curl=curl_init('http://127.0.0.1:8099/school/api.php?a=load');curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['X-School-Token: '.$T]]);$raw=curl_exec($curl);curl_close($curl);st_ok(!str_contains($raw,'PRIVATE-ANSWER-KEY')&&!str_contains($raw,'studioMedia')&&!str_contains($raw,'studioMsg'),'Legacy sync leaked studio data');
+ $curl=curl_init('http://127.0.0.1:8099/school/api.php?a=load');curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['X-School-Token: '.$T]]);$raw=curl_exec($curl);curl_close($curl);$legacy=json_decode($raw,true);st_ok(is_array($legacy)&&!empty($legacy['ok']),'Legacy load failed');st_ok(!str_contains($raw,'PRIVATE-ANSWER-KEY'),'Legacy sync leaked private answer key');foreach($legacy['records']??[] as $record)st_ok(!str_starts_with($record['k'],'studio'),'Legacy sync leaked private studio record');
  echo "Studio integration: class/child isolation, upload privacy, reviewed marks, reactions, points, chat and consent passed\n";
 }finally{
  foreach($db->query("SELECT d FROM sch_records WHERE k='studioMedia'") as $row){$m=json_decode($row['d']??'',true);if($m&&isset($m['file'])){require_once __DIR__.'/../../school/learning_lib.php';require_once __DIR__.'/../../school/studio_lib.php';$path=studio_media_dir().'/'.$m['file'];if(is_file($path))unlink($path);}}
