@@ -136,6 +136,7 @@ jobs:
           php .github/jaanch/school-flow.php
           php .github/jaanch/studio-flow.php
           node --check school/studio.js
+          node .github/jaanch/studio-photo.cjs
           node --check school/app.js
           node --check assets/ride.js
           node --check assets/auth-gateway.js

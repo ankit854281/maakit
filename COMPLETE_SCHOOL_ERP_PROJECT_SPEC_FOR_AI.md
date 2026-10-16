@@ -23,7 +23,7 @@ Supporting kinds: studioMsg for private chat, studioPref for parent WhatsApp per
 
 1. Teacher selects an assigned class/subject, publishes instructions, due date, maximum marks, verified answer key and step-wise rubric.
 2. Parent uploads only for their linked child and assigned class. Teacher may upload for a child they teach. Up to five images per attempt.
-3. Browser preserves originals, rotates/straightens and optionally trims blank margins on a separate prepared image. Auto-trim is whitespace detection, not AI page detection. User checks every crop. Images up to 8 MiB / 25 megapixels, downscaled to 1800 px for prepared review.
+3. Browser preserves originals, rotates/straightens and optionally trims blank margins on a separate prepared image. Auto-trim uses whitespace detection; auto-straighten estimates text-line tilt locally over ±8° and leaves uncertain images unchanged. These are local image heuristics, not AI page detection. User checks every crop and tilt correction. Images up to 8 MiB / 25 megapixels, downscaled to 1800 px for prepared review.
 4. AI is optional. The teacher explicitly confirms transfer of prepared images and key to OpenAI. Names should be covered before submission. Server calls Responses with image inputs, `store:false`, strict JSON output and configured model. No API secrets enter the browser. At most ten draft requests per teacher per hour. Unreadable handwriting/insufficient keys must be marked uncertain.
 5. AI output is a draft: Hindi/English/maths transcript, proposed marks, constructive feedback, page-indexed normalised annotations. Maths uses the teacher's marking rubric for partial credit. Neatness is descriptive, not an intelligence or ability assessment.
 6. Teacher compares against originals, edits marks and feedback, adds/removes green ticks, red circles and notes. Every annotation and score is validated on the server.
@@ -45,7 +45,7 @@ No fixed five-second checking, three-second delivery, perfect OCR or automatic N
 
 ### Private media and deployment
 
-Media files live outside the website document root, default `dirname(project-root)/school-private-media`. Set `SCHOOL_MEDIA_DIR` to a separate private directory if needed. The API rejects a path inside the project/web root. Server must have write permission there. Files use random IDs, MIME inspection, size/pixel limits and private authenticated streaming; no public upload URLs or tokens in query strings. Include this private directory alongside database backups. Removing a post does not purge media bytes; retention/purge requires an explicit school policy.
+Media files live outside the website document root, default `dirname(project-root)/school-private-media`. Set `SCHOOL_MEDIA_DIR` to a separate private directory if needed. The API rejects a path inside the project/web root. Server must have write permission there. PHP needs GD, cURL, fileinfo and mbstring; set upload_max_filesize and post_max_size to at least 32M for videos, and memory_limit to at least 256M for large notebook photos. Files use random IDs, MIME inspection, size/pixel limits and private authenticated streaming; no public upload URLs or tokens in query strings. Include this private directory alongside database backups. Removing a post does not purge media bytes; retention/purge requires an explicit school policy.
 
 New provider secrets are deployment-only environment variables or constants in private config; never commit values:
 
