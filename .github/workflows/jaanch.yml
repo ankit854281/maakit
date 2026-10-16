@@ -138,6 +138,9 @@ jobs:
           php .github/jaanch/school-flow.php
           php .github/jaanch/studio-flow.php
           php .github/jaanch/toolkit-flow.php
+          node --check school/toolkit.js
+          node --check school/toolkit_english.js
+          node --check school/learning.js
           node --check school/studio.js
           node .github/jaanch/studio-photo.cjs
           node --check school/app.js
@@ -157,6 +160,7 @@ jobs:
           /tmp/maakit-ui/node_modules/.bin/playwright install --with-deps chromium
           node .github/jaanch/catalogue-ui.cjs
           node .github/jaanch/hub-ui.cjs
+          node .github/jaanch/toolkit-ui.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
