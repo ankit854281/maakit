@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__.'/inc.php';require __DIR__.'/learning_lib.php';
+require __DIR__.'/inc.php';require __DIR__.'/learning_lib.php';require __DIR__.'/homework_lib.php';
 try {
  $db=sch_db();$u=sch_auth();$action=(string)($_GET['a']??'state');$session=learn_session();
  if(!in_array($u['role'],['principal','teacher','parent','chairman'],true))sch_fail('Not allowed.',403);
@@ -48,7 +48,7 @@ try {
   if($action==='mission'){
    if(($in['reviewed']??false)!==true)sch_fail('Review the lesson and answer key before publishing.');$qs=learn_questions($in['questions']??null);
    $due=(string)($in['due']??'');$dueTime=strtotime($due);if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$due)||$dueTime===false||date('Y-m-d',$dueTime)!==$due)sch_fail('Choose a valid due date.');
-   $d=['cls'=>$cls,'subj'=>$subj,'topic'=>learn_string($in['topic']??'',200),'plan'=>learn_string($in['plan']??'',18000),'due'=>$due,'session'=>$session,'tid'=>$u['tid'],'questions'=>array_map(fn($q)=>array_intersect_key($q,array_flip(['prompt','mode','hint'])),$qs),'at'=>sch_now_ms(),'reviewedBy'=>$u['label']];$kind='learnMission';
+   $d=['minutes'=>$in['minutes']??null,'workDate'=>$in['workDate']??date('Y-m-d'),'cls'=>$cls,'subj'=>$subj,'topic'=>learn_string($in['topic']??'',200),'plan'=>learn_string($in['plan']??'',18000),'due'=>$due,'session'=>$session,'tid'=>$u['tid'],'questions'=>array_map(fn($q)=>array_intersect_key($q,array_flip(['prompt','mode','hint'])),$qs),'at'=>sch_now_ms(),'reviewedBy'=>$u['label']];$kind='learnMission';
   }elseif($action==='review'){
    $attemptId=(string)($in['attempt']??'');$attempt=$attempts[$attemptId]??null;$mission=$attempt?($missions[$attempt['mission']]??null):null;
    if(!$attempt||!$mission||$mission['cls']!==$cls||$mission['subj']!==$subj)sch_fail('Choose a submission from your assigned subject.',403);
@@ -61,8 +61,9 @@ try {
   }else sch_fail('Unknown action.',404);
  }
  $id=(string)($in['id']??'');if(!preg_match('/^[a-f0-9-]{36}$/',$id))sch_fail('Refresh this form and try again.');
- $d['id']=$id;$d['actor']=$u['uid'];$db->beginTransaction();
+ $d['id']=$id;$d['actor']=$u['uid'];$db->beginTransaction();$db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
  $old=sch_rec_get($kind,$id);if($old){$db->rollBack();if(($old['actor']??'')!==$u['uid'])sch_fail('Record conflict.',409);sch_json(['ok'=>true,'duplicate'=>true]);}
+ if($kind==='learnMission')tool_hw_guard($kind,$id,$d,$session);
  // Insert only: a retry/race never overwrites a reviewed mission, key, observation or attempt.
  $insert=$db->prepare('INSERT INTO sch_records (k,r,d,deleted,dkey,ver,by_uid,updated_at) VALUES (?,?,?,0,NULL,?,?,NOW())');
  if($kind==='learnMission')$insert->execute(['learnKey',$id,json_encode(['questions'=>$qs]),sch_now_ms(),$u['uid']]);

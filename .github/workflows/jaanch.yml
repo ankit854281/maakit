@@ -77,6 +77,8 @@ jobs:
           php .github/jaanch/school-import.php
           php .github/jaanch/school-learning.php
           php .github/jaanch/studio-unit.php
+          php .github/jaanch/toolkit-unit.php
+          node .github/jaanch/toolkit-english.cjs
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi
@@ -135,6 +137,7 @@ jobs:
           php .github/jaanch/ride-flow.php
           php .github/jaanch/school-flow.php
           php .github/jaanch/studio-flow.php
+          php .github/jaanch/toolkit-flow.php
           node --check school/studio.js
           node .github/jaanch/studio-photo.cjs
           node --check school/app.js

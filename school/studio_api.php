@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__.'/inc.php';require __DIR__.'/learning_lib.php';require __DIR__.'/studio_lib.php';
+require __DIR__.'/inc.php';require __DIR__.'/learning_lib.php';require __DIR__.'/studio_lib.php';require __DIR__.'/homework_lib.php';
 try {
  $db=sch_db();$u=sch_auth();$action=(string)($_GET['a']??'state');$session=learn_session();$role=$u['role'];$uid=(string)$u['uid'];$now=sch_now_ms();
  if(!in_array($role,['principal','teacher','parent','chairman'],true))sch_fail('Not allowed.',403);
@@ -41,7 +41,7 @@ try {
  $db->beginTransaction();$db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
  if($action==='task'){
   $cls=learn_string($in['cls']??'',20);$subj=learn_string($in['subj']??'',100);if(!learn_allowed($u,$cls,$subj))sch_fail('Choose your assigned subject.',403);if(($in['reviewed']??false)!==true)sch_fail('Check the answer key and rubric first.');$max=studio_marks($in['max']??null,1000);if($max<=0)sch_fail('Maximum marks must be positive.');
-  $kind='studioTask';$d=['id'=>$id,'cls'=>$cls,'subj'=>$subj,'title'=>learn_string($in['title']??'',200),'instructions'=>learn_string($in['instructions']??'',3000),'due'=>studio_date((string)($in['due']??'')),'max'=>$max,'work'=>in_array($in['work']??'',['Homework','Classwork'],true)?$in['work']:'Homework','teacher'=>$u['label'],'tid'=>$u['tid']];$private=['answer'=>learn_string($in['answer']??'',14000),'rubric'=>learn_string($in['rubric']??'',4000)];
+  $kind='studioTask';$d=['id'=>$id,'cls'=>$cls,'subj'=>$subj,'title'=>learn_string($in['title']??'',200),'instructions'=>learn_string($in['instructions']??'',3000),'due'=>studio_date((string)($in['due']??'')),'max'=>$max,'minutes'=>$in['minutes']??null,'workDate'=>$in['workDate']??date('Y-m-d'),'work'=>in_array($in['work']??'',['Homework','Classwork'],true)?$in['work']:'Homework','teacher'=>$u['label'],'tid'=>$u['tid']];$private=['answer'=>learn_string($in['answer']??'',14000),'rubric'=>learn_string($in['rubric']??'',4000)];
  }elseif($action==='submit'){
   $task=$assignments[(string)($in['task']??'')]??null;$sid=(string)($in['sid']??'');$s=$students[$sid]??null;if(!$task||!$s||$s['cls']!==$task['cls']||($role==='parent'?!in_array($sid,$sids,true):!learn_allowed($u,$task['cls'],$task['subj'])))sch_fail('Choose work assigned to this child.',403);
   $pages=$media($in['pages']??[]);if(!$pages)sch_fail('Add a notebook image.');$prepared=$media($in['prepared']??$pages);if(count($prepared)!==count($pages))sch_fail('Save each prepared page.');$kind='studioCopy';$d=['id'=>$id,'task'=>$task['id'],'sid'=>$sid,'cls'=>$task['cls'],'subj'=>$task['subj'],'pages'=>$pages,'prepared'=>$prepared,'status'=>'Submitted'];
@@ -83,5 +83,5 @@ try {
   $p=$posts[(string)($in['post']??'')]??null;if(!$p||!($role==='principal'||($role==='teacher'&&($p['actor']??'')===$uid)))sch_fail('Only the author or Principal can remove a post.',403);sch_rec_del('studioPost',$p['id'],$uid);sch_log($u,'Studio','Removed classroom post '.$p['id']);$db->commit();sch_json(['ok'=>true]);
  }else sch_fail('Unknown action.',404);
  $old=sch_rec_get($kind,$id);if($old&&!in_array($kind,['studioReact','studioHouse','studioPref'],true)){$db->rollBack();if(($old['actor']??'')!==$uid)sch_fail('Record conflict.',409);sch_json(['ok'=>true,'duplicate'=>true]);}
- $d['session']=$session;$d['actor']=$uid;$d['at']=$now;if($kind==='studioTask')sch_rec_put('studioKey',$id,$private,$uid);sch_rec_put($kind,$id,$d,$uid);sch_log($u,'Studio',$kind.' saved '.$id);$db->commit();sch_json(['ok'=>true]);
+ $d['session']=$session;if($kind==='studioTask')tool_hw_guard($kind,$id,$d,$session);$d['actor']=$uid;$d['at']=$now;if($kind==='studioTask')sch_rec_put('studioKey',$id,$private,$uid);sch_rec_put($kind,$id,$d,$uid);sch_log($u,'Studio',$kind.' saved '.$id);$db->commit();sch_json(['ok'=>true]);
 }catch(InvalidArgumentException $e){if(isset($db)&&$db->inTransaction())$db->rollBack();sch_fail($e->getMessage());}catch(Throwable $e){if(isset($db)&&$db->inTransaction())$db->rollBack();error_log('school studio: '.$e->getMessage());sch_fail('Could not confirm saving. Keep this form and try again.',500);}

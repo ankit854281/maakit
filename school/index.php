@@ -23,12 +23,14 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="app.css?v=<?= $v('app.css') ?>">
+<link rel="stylesheet" href="toolkit.css?v=<?= $v('toolkit.css') ?>">
 </head>
 <body class="bg-paper text-slate-800 min-h-screen">
 <div id="toasts" class="fixed top-3 right-3 z-50 flex flex-col gap-2 pointer-events-none max-w-xs"></div>
 <div id="root"><div class="min-h-screen flex items-center justify-center p-6 text-slate-500">Loading School ERP…</div></div>
 
 <noscript><p style="padding:16px">Please turn on JavaScript to use the School ERP.</p></noscript>
+<script src="toolkit_english.js?v=<?= $v('toolkit_english.js') ?>"></script>
 <script src="app.js?v=<?= $v('app.js') ?>"></script>
 </body>
 </html>

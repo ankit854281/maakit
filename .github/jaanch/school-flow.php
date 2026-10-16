@@ -156,7 +156,7 @@ sf_check($c === 403, 'parent could open the full school data');
 sf_check(count($j['rejected']) === 1, 'parent changed attendance');
 // ---- Learning Lab: subject permissions, private keys and child-only practice ----
 $missionId='10000000-0000-4000-8000-000000000001';
-$mission=['id'=>$missionId,'cls'=>'9th','subj'=>'Social Science','topic'=>'Check reasoning','plan'=>'PRIVATE_TEACHER_PLAN_775','due'=>$today,'reviewed'=>true,'questions'=>[
+$mission=['id'=>$missionId,'cls'=>'9th','subj'=>'Social Science','topic'=>'Check reasoning','minutes'=>10,'workDate'=>$today,'plan'=>'PRIVATE_TEACHER_PLAN_775','due'=>$today,'reviewed'=>true,'questions'=>[
  ['prompt'=>'1000 + 247','answer'=>'1247','mode'=>'numeric','hint'=>'Add place values'],
  ['prompt'=>'Explain your steps','answer'=>'PRIVATE_TEACHER_KEY_776','mode'=>'manual']]];
 [$c]=sf_http('/school/learning_api.php?a=mission',array_merge($mission,['reviewed'=>false]),$K);sf_check($c===400,'Unreviewed mission published');

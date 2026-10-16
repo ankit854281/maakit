@@ -132,7 +132,7 @@ function toRecords() {
   Object.entries(S.staffAtt).forEach(([d, v]) => put('staffAtt', d, v));
   Object.entries(S.studAtt).forEach(([d, byC]) => Object.entries(byC).forEach(([c, v]) => put('studAtt', d + '|' + c, v)));
   Object.entries(S.diary).forEach(([d, byT]) => Object.entries(byT).forEach(([t, byB]) => Object.entries(byB).forEach(([b, v]) => put('diary', d + '|' + t + '|' + b, v))));
-  Object.entries(S.signed).forEach(([d, byT]) => Object.entries(byT).forEach(([t, v]) => put('signed', d + '|' + t, v)));
+  Object.entries(S.signed).forEach(([d, byT]) => Object.entries(byT).forEach(([t, v]) => put('signed', d + '|' + t, typeof v === 'object' ? v : {at:v})));
   Object.entries(S.syl).forEach(([k, v]) => put('syl', k, v));
   Object.entries(S.marks).forEach(([e, byK]) => Object.entries(byK).forEach(([k, v]) => put('marks', e + '|' + k, v)));
   S.leaves.forEach(l => put('leave', l.id, l));
@@ -156,7 +156,7 @@ function setRec(k, r, d) {
     case 'staffAtt': S.staffAtt[r] = d; break;
     case 'studAtt': (S.studAtt[p[0]] = S.studAtt[p[0]] || {})[p[1]] = d; break;
     case 'diary': { const a = S.diary[p[0]] = S.diary[p[0]] || {}; (a[p[1]] = a[p[1]] || {})[p[2]] = d; break; }
-    case 'signed': (S.signed[p[0]] = S.signed[p[0]] || {})[p[1]] = d; break;
+    case 'signed': (S.signed[p[0]] = S.signed[p[0]] || {})[p[1]] = d.at || d; break;
     case 'syl': S.syl[r] = d; break;
     case 'marks': { const i = r.indexOf('|'); (S.marks[r.slice(0, i)] = S.marks[r.slice(0, i)] || {})[r.slice(i + 1)] = d; break; }
     case 'leave': { const i = S.leaves.findIndex(x => x.id === r); if (i >= 0) S.leaves[i] = d; else S.leaves.push(d); S.leaves.sort((a, b) => (b.at || 0) - (a.at || 0)); break; }
@@ -215,7 +215,7 @@ async function sync() {
     const res = await api('sync', { put: put.map(({ k, r, d }) => ({ k, r, d })), del, log: logs });
     put.forEach(p => SYNCED[p.k + SEP + p.r] = p.js);
     del.forEach(p => delete SYNCED[p.k + SEP + p.r]);
-    if (res.rejected && res.rejected.length) { toast(res.rejected.length + ' change(s) are not allowed for your login and were not saved.', 'a'); setTimeout(async () => { try { await loadAll(); render(); } catch (e) {} }, 800); }
+    if (res.rejected && res.rejected.length) { toast(res.rejected.map(x=>x.error||'Change not allowed for this login.').join(' '), 'a'); setTimeout(async () => { try { await loadAll(); render(); } catch (e) {} }, 800); }
     setNet('ok');
   } catch (e) {
     pendingLog.unshift(...logs);
@@ -813,7 +813,7 @@ function vMyToday() {
   const myLeaves = S.leaves.filter(l => l.tid === tid).slice(0, 2);
   return head(`Namaste, ${esc(T(tid).name)}`, fmtDate(date) + (dayIdx(date) >= 0 ? '' : ' • Sunday'), dateInput('m-date', date, "go('mytoday',{date:this.value})")) + `
     ${absent ? '<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">You are marked absent / on leave for this day.</div>' : ''}
-    ${wordCard(date)}
+    ${teacherCorner(date)}
     ${ctOf.map(c => { const a = attOf(date, c); return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a ? '' : 'border-amber-300 bg-amber-50'}">
       <span><b>Class ${c} attendance</b> (you are Class Teacher): ${a ? `<span class="text-emerald-700 font-semibold">Done — ${studentsOf(c).length - a.absent.length}/${studentsOf(c).length} present</span>` : '<span class="text-amber-700 font-semibold">Not marked yet</span>'}</span>
       <button onclick="go('attendance',{c:'${c}',date:'${date}'})" class="btn btn-sm ${a ? 'btn-l' : 'btn-p'}">${a ? 'View' : 'Mark now'}</button></div>`; }).join('')}
@@ -883,13 +883,14 @@ function homeworkText(date, c, hw) { return `*Class ${c} Homework — ${fmtDate(
 function vDiary() {
   const tid = U.tid, date = P.date || todayISO(), bells = myBells(tid, date);
   return head('My Diary (शिक्षक दैनंदिनी)', 'Topic and homework for each bell. Ticking "chapter finished" updates the syllabus automatically.', dateInput('dy-date', date, "go('diary',{date:this.value})")) + `
+    <div class="card"><button class="btn btn-p" onclick="prepareDiaryDraft('${date}')">Prepare today's draft</button><p class="text-sm mt-2">Uses approved weekly plans. Check what you actually taught before saving each bell.</p></div>
     ${bells.length ? bells.map(b => { const e = diaryEntry(date, tid, b.bell) || {}; const nx = nextChapter(b.cls, b.subj); const id = 'b' + b.bell;
       return `<div class="card space-y-2 ${P.bell === b.bell ? 'ring-2 ring-indigo-500' : ''}">
         <div class="flex justify-between items-start gap-2"><div><b>${BELLS[b.bell].n} bell • Class ${b.cls} • ${esc(b.subj)}</b> ${b.arr ? '<span class="pill bg-rose-600 text-white">Arrangement</span>' : ''}<br><span class="text-xs text-slate-500">${t12(BELLS[b.bell].s)}–${t12(BELLS[b.bell].e)}</span></div>
         ${e.at ? `<span class="pill bg-emerald-100 text-emerald-800">Saved ${fmtTime(e.at)}</span>` : ''}${S.signed[date] && S.signed[date][tid] ? '<span class="pill bg-indigo-100 text-indigo-800">Signed</span>' : ''}</div>
         <div><label class="lbl">Topic taught</label><input id="${id}-t" class="inp" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
           ${nx && !e.topic ? `<button onclick="document.getElementById('${id}-t').value=${esc(JSON.stringify(nx))}" class="text-xs text-indigo-700 font-bold mt-1">Use: ${esc(nx)}</button>` : ''}</div>
-        <div><label class="lbl">Homework (max 20 min)</label><input id="${id}-h" class="inp" value="${esc(e.hw || '')}" placeholder="e.g. Ex 4.1 Q1–Q4"></div>
+        <div><label class="lbl">Homework · class total limited to 45 minutes</label><input id="${id}-h" class="inp" value="${esc(e.hw || '')}" placeholder="e.g. Ex 4.1 Q1–Q4"></div><div class="flex gap-2"><label class="lbl">Estimated minutes<input id="${id}-min" class="inp" type="number" min="1" max="45" value="${e.hwMinutes || ''}"></label><label class="lbl">Homework day<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"></label></div><label class="text-sm"><input id="${id}-verify" type="checkbox"> I confirm this was actually taught and I checked the homework.</label>
         ${nx && !b.arr ? `<label class="flex items-center gap-2 text-sm"><input id="${id}-c" type="checkbox" class="w-4 h-4"> Chapter "<b>${esc(nx)}</b>" finished today</label>` : ''}
         <button onclick="diarySave('${date}',${b.bell})" class="btn btn-p w-full"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>`; }).join('')
       : `<div class="card text-sm text-slate-500">${dayIdx(date) < 0 ? 'Sunday — no classes.' : 'No bells for this day.'}</div>`}`;
@@ -898,13 +899,17 @@ function diarySave(date, bell) {
   const tid = U.tid, b = myBells(tid, date).find(x => x.bell === bell); if (!b) return;
   const id = 'b' + bell, topic = document.getElementById(id + '-t').value.trim(), hw = document.getElementById(id + '-h').value.trim();
   if (!topic) return toast('Write the topic taught', 'a');
+  if (S.signed[date]?.[tid]) return toast('This diary is signed. Ask the Principal before changing it.', 'a');
+  if (!document.getElementById(id+'-verify').checked) return toast('Confirm the actual teaching first.', 'a');
+  const hwMinutes=Number(document.getElementById(id+'-min').value), hwDate=document.getElementById(id+'-date').value;
+  if(hw && (!Number.isInteger(hwMinutes)||hwMinutes<1||hwMinutes>45||!hwDate)) return toast('Add homework minutes and date.', 'a');
   S.diary[date] = S.diary[date] || {}; S.diary[date][tid] = S.diary[date][tid] || {};
-  S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, arr: b.arr, at: Date.now() };
+  S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, hwMinutes:hw?hwMinutes:null, hwDate, arr: b.arr, at: Date.now() };
   log('Diary', `${BELLS[bell].n} bell, Class ${b.cls} ${b.subj}: "${topic}"` + (hw ? ` • HW: ${hw}` : ''));
   const cb = document.getElementById(id + '-c');
   if (cb && cb.checked) { const y = S.syl[sylKey(b.cls, b.subj)], ch = y && y.chapters.find(x => !x.done);
     if (ch) { ch.done = date; log('Syllabus', `Class ${b.cls} ${b.subj}: chapter "${ch.n}" completed (from diary)`); } }
-  save(); toast('Diary saved'); go('diary', { date });
+  save(); toast('Diary queued for saving'); go('diary', { date });
 }
 
 // ---------------------------------------------------------------- PRINCIPAL: DIARIES REVIEW
@@ -1020,14 +1025,15 @@ function vResults() {
       : '<p class="text-sm text-slate-500">No marks entered for this class and exam yet.</p>'}</div>
     ${weak.length ? `<div class="card bg-rose-50 border-rose-200"><h3 class="font-bold text-rose-800 mb-1">Below 40% — needs remedial classes</h3>${weak.map(w => `<p class="text-sm"><b>${esc((studentById(w.sid) || {}).name)}</b>: ${esc(w.subs.join(', '))}</p>`).join('')}</div>` : ''}`;
 }
-function printMarksheets(exId, c) {
+async function printMarksheets(exId, c) {
+  let remarks=[];try{const response=await fetch('toolkit_api.php?a=remarks&exam='+encodeURIComponent(exId)+'&cls='+encodeURIComponent(c),{headers:{'X-School-Token':TOKEN}});const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'Could not load report remarks');remarks=data.remarks||[];}catch(e){return toast(e.message,'a');}
   const ex = S.exams.find(e => e.id === exId); const { subs, rows, M } = resultTable(exId, c);
   if (!subs.length) return toast('No marks to print', 'a');
   printHTML('Marksheets', rows.map(r => `<div class="pb">${printHeader('Marksheet — ' + esc(ex.name) + ' • Session ' + esc(S.settings.session))}
     <h2>${esc(r.s.name)} • Class ${c} • Adm No ${esc(r.s.adm)}</h2>
     <table><tr><th>Subject</th><th>Max</th><th>Obtained</th><th>Grade</th></tr>${subs.map((sb, i) => { const v = r.cells[i], mx = M[c + '|' + sb].max; return `<tr><td>${esc(sb)}</td><td>${mx}</td><td>${esc(v)}</td><td>${v !== '' && v !== 'AB' ? grade(v / mx * 100) : '-'}</td></tr>`; }).join('')}
     <tr><th>Total</th><th>${r.max}</th><th>${r.got}</th><th>${r.pct != null ? r.pct + '% (' + grade(r.pct) + ')' : '-'}</th></tr></table>
-    <p>Rank in class: ${r.rank || '-'}</p><div class="f"><span>Class Teacher ________</span><span>Principal ________</span><span>Powered by Maakit</span></div></div>`).join(''));
+    ${remarks.filter(m=>m.sid===r.s.id).map(m=>`<p><b>${esc(m.subj)}:</b> ${esc(m.en)}<br>${esc(m.hi)}</p>`).join('')}<p>Rank in class: ${r.rank || '-'}</p><div class="f"><span>Class Teacher ________</span><span>Principal ________</span><span>Powered by Maakit</span></div></div>`).join(''));
   log('Results', `Printed ${ex.name} marksheets for Class ${c}`);
 }
 
@@ -2037,6 +2043,7 @@ function vPResults() {
       return `<div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">${esc(e.name)}</h3>${pct != null ? `<span class="text-lg font-semibold">${pct}% <span class="text-sm text-slate-500">${grade(pct)}</span></span>` : ''}</div>
         <table class="tbl mt-2"><tr><th>Subject</th><th class="text-right">Marks</th></tr>${ms.map(m => `<tr><td>${esc(m.subj)}</td><td class="text-right">${esc(m.mark)} / ${esc(m.max)}</td></tr>`).join('')}</table></div>`; }).join('')
       : '<div class="card text-sm text-slate-500">No exam marks published yet.</div>'}
+    ${(PD.remarks||[]).filter(r=>r.sid===kid.id).map(r=>`<div class="card"><h3 class="h3">Teacher remark · ${esc(r.subj)}</h3><p>${esc(r.en)}</p><p class="mt-2">${esc(r.hi)}</p></div>`).join('')}
     <div class="card"><h3 class="h3">Attendance, last ${at.rows.length} school day${at.rows.length === 1 ? '' : 's'}</h3>
       <div class="flex flex-wrap gap-1 mt-3">${at.rows.slice(0, 60).reverse().map(r => `<span title="${fmtDate(r.date)}" class="w-4 h-4 rounded ${r.present ? 'bg-leaf' : 'bg-rose'}"></span>`).join('')}</div>
       <p class="text-sm text-slate-500 mt-2">Present on ${at.present} of ${at.rows.length} day${at.rows.length === 1 ? '' : 's'} marked.</p></div>
@@ -2114,3 +2121,8 @@ VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','P
 // Smart Studio has its own class/child-scoped API; media never enters legacy sync.
 for (const role of ['principal','teacher','parent']) NAV[role].push(['studio','fa-camera','Smart Studio']);
 VIEWS.studio=()=>head(U.role==='parent'?'Classroom & Copies':'Teacher Smart Studio','Private notebook checking, classroom moments, badges and conversations.')+'<iframe title="Teacher Smart Studio" src="studio.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
+
+for(const role of ['principal','teacher']) NAV[role].push(['toolkit','fa-wand-magic-sparkles','Teacher Toolkit']);
+VIEWS.toolkit=()=>head('Teacher Smart Toolkit','Less paperwork. More room to teach.')+'<iframe title="Teacher Smart Toolkit" src="toolkit.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
+function teacherCorner(date){const p=TeacherEnglish.today(date);return `<div class="card tk-mini"><div><span class="pill">Your teaching companion</span><h3 class="h3 mt-2">A little support for your day</h3><p class="text-sm">Paper drafts, teaching pictures, diary help and a private English practice corner.</p><button class="btn btn-p mt-2" onclick="go('toolkit')">Open Teacher Toolkit</button></div><div><b>${esc(p[0])}</b><details><summary>Hindi meaning</summary>${esc(p[1])}</details><button class="btn btn-sm btn-l mt-2" onclick="TeacherEnglish.say(TeacherEnglish.today('${date}')[0])">Listen & try</button></div></div>`;}
+function prepareDiaryDraft(date){if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;for(const b of myBells(U.tid,date)){const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;const plan=Object.values(S.lplan).find(p=>p.tid===U.tid&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');if(plan){field.value=plan.topics.split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';if(field.value)n++;}}toast(n?'Prepared '+n+' topic drafts. Edit and confirm each bell.':'No empty bells with approved plans. Enter the actual topics.');}

@@ -11,7 +11,7 @@ try{
  sch_rec_put('settings','main',['school'=>'CI synthetic school','session'=>'2026-27'],'principal');sch_rec_put('alloc','main',[['c'=>'4th','s'=>'Maths','t'=>'ST'],['c'=>'5th','s'=>'English','t'=>'SX']],'principal');
  sch_rec_put('student','studio-own',['id'=>'studio-own','adm'=>'SDSD','name'=>'Synthetic Child A','cls'=>'4th','phone'=>'9111111111'],'principal');sch_rec_put('student','studio-other',['id'=>'studio-other','adm'=>'SDSD','name'=>'Synthetic Child B','cls'=>'5th','phone'=>'9222222222'],'principal');
  [$c]=st_request('state','bad-token');st_ok($c===401,'Unauthenticated studio access');
- $task=st_id();$body=['id'=>$task,'cls'=>'4th','subj'=>'Maths','title'=>'Synthetic arithmetic','instructions'=>'Show steps','due'=>'2026-10-20','max'=>25,'answer'=>'Two times two is four. PRIVATE-ANSWER-KEY','rubric'=>'Award for correct steps','reviewed'=>true];
+ $task=st_id();$body=['id'=>$task,'cls'=>'4th','subj'=>'Maths','title'=>'Synthetic arithmetic','minutes'=>10,'workDate'=>'2026-10-20','instructions'=>'Show steps','due'=>'2026-10-20','max'=>25,'answer'=>'Two times two is four. PRIVATE-ANSWER-KEY','rubric'=>'Award for correct steps','reviewed'=>true];
  [$c]=st_request('task',$X,$body);st_ok($c===403,'Teacher assigned another subject');[$c]=st_request('task',$T,$body);st_ok($c===200,'Assigned teacher cannot publish');
  [$c,$j,$raw]=st_request('state',$A);st_ok($c===200&&count($j['tasks'])===1&&!str_contains($raw,'PRIVATE-ANSWER-KEY'),'Parent received private answer key');[$c,$j]=st_request('state',$B);st_ok($c===200&&count($j['tasks'])===0,'Wrong class received assignment');
  // A submitted image is private, including on the legacy load/since endpoints.

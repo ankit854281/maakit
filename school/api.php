@@ -18,6 +18,7 @@
 
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
+require_once __DIR__ . '/homework_lib.php';
 
 $a = (string)($_GET['a'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -185,6 +186,7 @@ case 'sync': {
 
     $done = []; $rejected = [];
     $db->beginTransaction();
+    $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
     $putObj = isset($inObj->put) && is_array($inObj->put) ? $inObj->put : [];
     foreach ($put as $i => $p) {
         $k = (string)($p['k'] ?? ''); $r = (string)($p['r'] ?? ''); $d = $p['d'] ?? null;
@@ -192,6 +194,7 @@ case 'sync': {
         if ($r === '' || strlen($r) > 190 || !is_array($d) || $raw === null || strlen(json_encode($raw)) > SCH_MAX_RECORD || !sch_can_write($u, $k, $r, $d, false)) {
             $rejected[] = ['k' => $k, 'r' => $r]; continue;
         }
+        if ($k === 'diary') { try { tool_hw_guard($k,$r,$d,(string)((sch_rec_get('settings','main')??[])['session']??'')); } catch (InvalidArgumentException $e) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } }
         sch_rec_put($k, $r, $raw, $uid);
         $done[] = ['k' => $k, 'r' => $r];
     }
@@ -350,6 +353,7 @@ case 'pdata': {
     sch_json(['ok' => true, 'me' => ['role' => 'parent', 'tid' => $u['tid'], 'label' => $u['label']],
         'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? ''),
         'kids' => $kidsOut, 'att' => $att, 'hw' => $hw, 'marks' => $marks, 'behav' => $behav, 'speak' => $speak,
+        'remarks' => array_values(array_filter($get('toolRemark'), fn($r) => in_array($r['sid']??'', $ids, true) && ($r['session']??'')===(string)($set['session']??''))),
         'notices' => $notices, 'cal' => array_values($get('cal')), 'exams' => sch_rec_get('exams', 'main') ?? []]);
 }
 

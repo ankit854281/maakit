@@ -88,6 +88,8 @@ export const PAGES = [
   { path: '/transport.php', naam: 'गाड़ी रजिस्टर',  chahiye: ['Maakit'] },
   { path: '/salon.php',     naam: 'सैलून',          chahiye: ['Maakit'] },
 
+  { path: '/school/toolkit.php', naam: 'Teacher Toolkit', chahiye: ['Teacher'], nahi: [] },
+
   // ---------- dukaan panel ----------
   // Dukandar ka login khula rehna chahiye. "मेरा हिसाब" yahan nahi
   // dikhna chahiye — wo login ke BAAD aata hai. Bina login ke dikh

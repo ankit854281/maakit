@@ -81,7 +81,7 @@ function sch_rows_to_records(array $rows): array {
     $out = [];
     foreach ($rows as $row) {
         // Learning content has its own subject/child-scoped API; keys never use legacy sync.
-        if (str_starts_with($row['k'], 'studio')) continue;
+        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool')) continue;
         if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck'], true)) continue;
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}
@@ -172,7 +172,7 @@ function sch_can_write(array $u, string $k, string $r, $d, bool $isDelete): bool
             $old = sch_rec_get('lplan', $r);
             return $old === null || ($old['status'] ?? '') !== 'Approved';
         case 'diary':
-            return count($p) === 3 && $p[1] === $tid && preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[0]) && ctype_digit($p[2]);
+            return count($p) === 3 && $p[1] === $tid && preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[0]) && ctype_digit($p[2]) && !sch_diary_signed($p[0],$tid);
         case 'studAtt':
             if (count($p) !== 2) return false;
             static $classes = null; $classes ??= (array)sch_rec_get('classes', 'main');
@@ -206,3 +206,5 @@ function sch_in_class(string $tid, string $cls): bool {
     foreach ($classes as $c) if (($c['c'] ?? '') === $cls && ($c['ct'] ?? '') === $tid) return true;
     return false;
 }
+
+function sch_diary_signed(string $date,string $tid):bool{$q=sch_db()->prepare("SELECT 1 FROM sch_records WHERE k='signed' AND r=? AND deleted=0");$q->execute([$date.'|'.$tid]);return (bool)$q->fetchColumn();}
