@@ -278,4 +278,78 @@ $csrf = h(csrf());
     el._srMap = {map: map, showRider: showRider};
     maps.push(el);
     var job = el.closest('.sx-job');
-    if (job) job.addEventListener('toggle', function () { if (job.open)
+    if (job) job.addEventListener('toggle', function () { if (job.open) setTimeout(function () { map.invalidateSize(); }, 80); });
+  }
+  window.addEventListener('load', function () { document.querySelectorAll('[data-job-map]').forEach(initMap); });
+  document.addEventListener('sr:rider-location', function (e) {
+    var p = e.detail && e.detail.lat != null ? [e.detail.lat, e.detail.lng] : null;
+    maps.forEach(function (el) { if (el._srMap) el._srMap.showRider(p); });
+  });
+
+  var box = document.querySelector('[data-location-share]');
+  if (!box) return;
+  var button = box.querySelector('[data-location-toggle]'), status = box.querySelector('[data-location-status]');
+  var watch = null, active = false, lastSent = 0;
+  function post(action, coords, keepalive) {
+    var body = new URLSearchParams({csrf: box.dataset.csrf, do: action});
+    if (coords) { body.set('lat', String(coords.latitude)); body.set('lng', String(coords.longitude)); }
+    return fetch(location.pathname, {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}, body: body.toString(), keepalive: !!keepalive});
+  }
+  function stop(clear) {
+    active = false;
+    if (watch !== null && navigator.geolocation) navigator.geolocation.clearWatch(watch);
+    watch = null; button.textContent = <?= json_encode(t('Turn on sharing', 'जगह साझा करें'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    document.dispatchEvent(new CustomEvent('sr:rider-location', {detail: null}));
+    if (clear) post('location_off').then(function () { status.textContent = <?= json_encode(t('Off — your location is not being shared.', 'बंद — आपकी जगह साझा नहीं हो रही है।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; }).catch(function () {});
+  }
+  button.addEventListener('click', function () {
+    if (active) { stop(true); return; }
+    if (!navigator.geolocation) { status.textContent = <?= json_encode(t('This phone cannot share GPS here. Use Navigate or call the customer.', 'इस फ़ोन में GPS उपलब्ध नहीं। रास्ता खोलें या ग्राहक को फ़ोन करें।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; return; }
+    active = true; lastSent = 0;
+    button.textContent = <?= json_encode(t('Stop sharing', 'साझा करना बंद करें'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    status.textContent = <?= json_encode(t('Waiting for GPS permission…', 'GPS की अनुमति का इंतज़ार…'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    watch = navigator.geolocation.watchPosition(function (pos) {
+      if (!active || Date.now() - lastSent < 9000) return;
+      lastSent = Date.now();
+      post('location', pos.coords).then(function (r) { return r.json(); }).then(function (j) {
+        if (!j.ok) { status.textContent = j.error || <?= json_encode(t('Location sharing stopped.', 'जगह साझा करना रुक गया।')) ?>; stop(false); return; }
+        document.dispatchEvent(new CustomEvent('sr:rider-location', {detail: j.location}));
+        status.textContent = <?= json_encode(t('Live — shared with customers on your active jobs.', 'लाइव — आपके चालू काम वाले ग्राहकों से साझा है।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      }).catch(function () { status.textContent = <?= json_encode(t('Network weak — waiting to send your position.', 'नेट धीमा है — जगह भेजने का इंतज़ार है।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; });
+    }, function (err) {
+      status.textContent = err.code === 1
+        ? <?= json_encode(t('Location permission denied. Allow location in your browser to share it.', 'लोकेशन की अनुमति नहीं मिली। साझा करने के लिए ब्राउज़र में अनुमति दें।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
+        : <?= json_encode(t('GPS signal unavailable. Check the phone location setting and try again.', 'GPS सिग्नल नहीं मिला। फ़ोन की लोकेशन चालू करके फिर कोशिश करें।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      stop(true);
+    }, {enableHighAccuracy: true, maximumAge: 5000, timeout: 20000});
+  });
+  window.addEventListener('pagehide', function () {
+    if (!active) return;
+    active = false;
+    if (watch !== null && navigator.geolocation) navigator.geolocation.clearWatch(watch);
+    var body = new URLSearchParams({csrf: box.dataset.csrf, do: 'location_off'});
+    if (navigator.sendBeacon) navigator.sendBeacon(location.pathname, new Blob([body.toString()], {type: 'application/x-www-form-urlencoded;charset=UTF-8'}));
+  });
+})();
+</script>
+
+<script>
+// Naya kaam aaya to ghanti + vibrate (pichhli baar se zyada kaam dikhe to)
+(function () {
+  var n = <?= count($jobs) ?>, key = 'sx_jobs_' + <?= (int)$rid ?>, old = null;
+  try { old = sessionStorage.getItem(key); sessionStorage.setItem(key, n); } catch (e) {}
+  if (old !== null && n > parseInt(old, 10)) {
+    try { navigator.vibrate && navigator.vibrate([120, 80, 120]); } catch (e) {}
+    try { var C = window.AudioContext || window.webkitAudioContext, c = new C(), o = c.createOscillator(), g = c.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(.2, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .6); o.start(); o.stop(c.currentTime + .6); } catch (e) {}
+  }
+})();
+</script>
+<?php if ($ready && !$jobs): ?>
+<script>
+// हाज़िर हैं पर काम नहीं — हर मिनट खुद देख लीजिए. Kaam khula ho to refresh NAHI (likha OTP ud jata).
+setTimeout(function () { location.reload(); }, 60000);
+</script>
+<?php endif; ?>
+
+<?php sr_foot('kaam', ['kaam' => count($jobs)]); ?>

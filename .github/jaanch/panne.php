@@ -147,4 +147,55 @@ function lo($url) {
         CURLOPT_PROXY          => '',   // apni hi machine hai — proxy se mat jaiye
     ]);
     $raw  = curl_exec($c);
-    $code = (int)curl_getinfo($c, CURLINF
+    $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE);
+    $hlen = (int)curl_getinfo($c, CURLINFO_HEADER_SIZE);
+    $err  = curl_error($c);
+    curl_close($c);
+    if ($raw === false) return [0, '', '', $err];
+    return [$code, substr($raw, 0, $hlen), substr($raw, $hlen), ''];
+}
+
+$kharab = [];
+$theek  = 0;
+
+foreach ($PANNE as $p) {
+    $path = $p[0];
+    $naam = $p[1];
+    $chahiyeCode = $p['code'] ?? 200;
+
+    list($code, $head, $body, $err) = lo($BASE . $path);
+
+    $gadbad = [];
+    if ($err !== '')             $gadbad[] = "खुला ही नहीं — $err";
+    if ($code !== $chahiyeCode)  $gadbad[] = "code $code आया, $chahiyeCode आना चाहिए था";
+
+    if (!empty($p['location']) && !preg_match('~^location:\s*' . preg_quote($p['location'], '~') . '~mi', $head)) {
+        $gadbad[] = "'{$p['location']}' पर भेजना चाहिए था";
+    }
+    foreach ($p['chahiye'] ?? [] as $shabd) {
+        if (mb_strpos($body, $shabd) === false) $gadbad[] = "'$shabd' नहीं मिला";
+    }
+    foreach ($p['nahi'] ?? [] as $shabd) {
+        if (mb_strpos($body, $shabd) !== false) $gadbad[] = "'$shabd' दिख रहा है — नहीं दिखना चाहिए";
+    }
+
+    if ($gadbad) {
+        $kharab[] = [$path, $naam, $gadbad];
+        echo "❌ $naam  ($path)\n";
+        foreach ($gadbad as $g) echo "      · $g\n";
+    } else {
+        $theek++;
+        echo "✅ $naam\n";
+    }
+}
+
+echo "\n----------------------------------------\n";
+echo count($PANNE) . " पन्ने जाँचे · $theek ठीक · " . count($kharab) . " ख़राब\n";
+
+if ($kharab) {
+    foreach ($kharab as list($path, $naam, $g)) {
+        echo "::error title=जाँच — $naam::$path — " . implode('; ', $g) . "\n";
+    }
+    exit(1);
+}
+echo "सब ठीक है ✓\n";

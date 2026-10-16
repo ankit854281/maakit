@@ -174,4 +174,71 @@ $V = trip_vehicles($pdo);
       if (!map) return;
       var coords = (+x.lat).toFixed(5) + ', ' + (+x.lng).toFixed(5);
       if (!riderMarker) riderMarker = L.circleMarker(q, {radius: 10, color: 'var(--on-brand)', weight: 3, fillColor: 'var(--brand)', fillOpacity: 1}).addTo(map).bindPopup(coords);
-    
+      else { riderMarker.setLatLng(q); riderMarker.setPopupContent(coords); }
+      if (!map.getBounds().contains(q)) map.panTo(q);
+      if (status) {
+        status.hidden = false;
+        var mins = Math.max(0, Math.floor((Date.now()/1000 - (+x.at))/60));
+        status.textContent = <?= json_encode(t('Blue dot: rider · updated ', 'नीला निशान: राइडर · अपडेट '), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> + (mins < 1 ? <?= json_encode(t('just now', 'अभी')) ?> : mins + ' ' + <?= json_encode(t('min ago', 'मिनट पहले')) ?>);
+      }
+    }
+    function makeMap(livePoint) {
+      if (!window.L) {
+        if (status && active) { status.hidden = false; status.textContent = <?= json_encode(t('Map could not load. The pickup and drop addresses are below.', 'नक्शा नहीं खुला। पिकअप और पहुँचने का पता नीचे दिया है।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; }
+        return;
+      }
+      var current = livePoint || cleanLoc(JSON.parse(el.dataset.loc || 'null'));
+      if (!a && !b && !current) return;
+      el.hidden = false;
+      map = L.map(el, { zoomControl: false, dragging: !L.Browser.mobile, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+      function ic(c, t) { return L.divIcon({ className: 'rd-mk ' + c, html: '<span>' + t + '</span>', iconSize: [30, 38], iconAnchor: [15, 36] }); }
+      var pts = [];
+      if (a) { L.marker(a, { icon: ic('a', 'P') }).addTo(map).bindPopup(<?= json_encode(t('Pickup', 'पिकअप')) ?>); pts.push(a); }
+      if (b) { L.marker(b, { icon: ic('b', 'D') }).addTo(map).bindPopup(<?= json_encode(t('Drop', 'पहुँचने की जगह')) ?>); pts.push(b); }
+      if (a && b) L.polyline([a, b], { color: 'var(--rk)', weight: 3, dashArray: '6 8' }).addTo(map);
+      if (pts.length > 1) map.fitBounds(pts, { padding: [30, 30], maxZoom: 16 });
+      else map.setView(pts[0] || current, 15);
+      if ((!a || !b) && status) { status.hidden = false; status.textContent = <?= json_encode(t('An exact pickup or drop pin was not provided.', 'पिकअप या पहुँचने की जगह का सटीक GPS पिन नहीं मिला।'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; }
+    }
+    var initialLoc = null;
+    try { initialLoc = JSON.parse(el.dataset.loc || 'null'); } catch (e) {}
+    makeMap(cleanLoc(initialLoc));
+    showLoc(initialLoc);
+    <?php if ($live): ?>
+    // halat badli to panna taaza
+    var s = <?= json_encode($t['status']) ?>, r = <?= json_encode((string)$t['rider_name']) ?>;
+    setInterval(function () {
+      if (document.hidden) return;
+      fetch(location.pathname + '?no=<?= h(urlencode($t['trip_no'])) ?>&m=<?= h(urlencode($m)) ?>&json=1', { credentials: 'same-origin' })
+        .then(function (x) { return x.json(); }).then(function (j) {
+          if (j.s !== s || j.r !== r) { try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) {} location.replace(location.pathname + '?no=<?= h(urlencode($t['trip_no'])) ?>&m=<?= h(urlencode($m)) ?>'); }
+          else { active = ['new', 'assigned', 'picked'].indexOf(j.s) !== -1; showLoc(j.loc); }
+        }).catch(function () {});
+    }, 15000);
+    <?php endif; ?>
+  });
+  </script>
+
+<?php else: ?>
+  <form method="post" class="rd-card rt-find">
+    <label class="rd-f"><span><?= t('Booking number', 'बुकिंग नंबर') ?></span><input name="no" value="<?= h($no) ?>" placeholder="RD… / PL…" autocapitalize="characters" required></label>
+    <label class="rd-f"><span><?= t('Mobile used for booking (or receiver)', 'बुकिंग वाला मोबाइल (या पाने वाले का)') ?></span><input name="m" type="tel" inputmode="numeric" value="<?= h($m) ?>" required pattern="[6-9][0-9]{9}"></label>
+    <button class="rt-btn dark" type="submit"><?= t('Show status', 'हालत देखिए') ?></button>
+  </form>
+  <?php $list = trip_mine($pdo, (function_exists('cust') && cust()) ? cust()['mobile'] : null, 5); if ($list): ?>
+  <section class="rd-card rd-mine">
+    <h2 class="rd-h"><?= t('Your recent bookings', 'आपकी पिछली बुकिंग') ?></h2>
+    <?php foreach ($list as $tr): [$kk, $nm] = trip_steps($tr); ?>
+      <a href="/trip.php?no=<?= h(urlencode($tr['trip_no'])) ?>&amp;m=<?= h(urlencode($tr['mobile'])) ?>">
+        <span class="rd-mine-ic"><?= $tr['kind'] === 'parcel' ? '📦' : ($V[$tr['vehicle']]['emoji'] ?? '🏍️') ?></span>
+        <span class="rd-mine-t"><b><?= h(mb_strimwidth($tr['drop_address'], 0, 42, '…')) ?></b><small><?= h($tr['trip_no']) ?> · <?= h(date('d M, h:i A', strtotime($tr['created_at']))) ?></small></span>
+        <em class="st-<?= h($tr['status']) ?>"><?= $tr['status'] === 'cancelled' ? t('Cancelled', 'रद्द') : h($nm[max(0, $kk)]) ?></em>
+      </a>
+    <?php endforeach; ?>
+  </section>
+  <?php endif; ?>
+<?php endif; ?>
+</div>
+</main>
+<?php include __DIR__ . '/inc/foot.php'; ?>

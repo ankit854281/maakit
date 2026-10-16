@@ -477,4 +477,93 @@ function sr_jobs_upgrade(PDO $pdo) {
         // Ek hi rider — delivery bhi, sawari bhi (ek login, ek profile)
         $rh = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='riders'")->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('vtype', $rh, true))       $pdo->exec("ALTER TABLE riders ADD COLUMN vtype VARCHAR(10) DEFAULT NULL");
-        if (!in_array('do_delivery', $rh, true)) $pdo->exec("ALTER TABLE riders ADD COLUMN do_deliver
+        if (!in_array('do_delivery', $rh, true)) $pdo->exec("ALTER TABLE riders ADD COLUMN do_delivery TINYINT NOT NULL DEFAULT 1");
+        if (!in_array('do_ride', $rh, true))     $pdo->exec("ALTER TABLE riders ADD COLUMN do_ride TINYINT NOT NULL DEFAULT 0");
+        if (!in_array('ride_ok', $rh, true))     $pdo->exec("ALTER TABLE riders ADD COLUMN ride_ok TINYINT NOT NULL DEFAULT 0");
+        if (!in_array('last_lat', $rh, true))    $pdo->exec("ALTER TABLE riders ADD COLUMN last_lat DECIMAL(10,7) DEFAULT NULL");
+        if (!in_array('last_lng', $rh, true))    $pdo->exec("ALTER TABLE riders ADD COLUMN last_lng DECIMAL(10,7) DEFAULT NULL");
+        if (!in_array('last_location_at', $rh, true)) $pdo->exec("ALTER TABLE riders ADD COLUMN last_location_at DATETIME DEFAULT NULL");
+    } catch (Throwable $e) { error_log('Sarathi jobs upgrade: ' . $e->getMessage()); }
+}
+
+/** Keep one current point, only while this rider has active work. */
+function rider_location_update(PDO $pdo, $rid, $lat, $lng) {
+    sr_jobs_upgrade($pdo);
+    if (!is_numeric($lat) || !is_numeric($lng)) return [false, 'लोकेशन सही नहीं मिली।'];
+    $lat = (float)$lat; $lng = (float)$lng;
+    if (!is_finite($lat) || !is_finite($lng) || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+        return [false, 'लोकेशन सही नहीं मिली।'];
+    }
+    $st = $pdo->prepare("SELECT 1 FROM jobs WHERE rider_id=? AND status IN ('assigned','picked') LIMIT 1");
+    $st->execute([(int)$rid]);
+    if (!$st->fetchColumn()) { rider_location_clear($pdo, $rid); return [false, 'अभी कोई चालू काम नहीं है।']; }
+    $st = $pdo->prepare('SELECT active FROM riders WHERE id=?');
+    $st->execute([(int)$rid]);
+    if (!(int)$st->fetchColumn()) { rider_location_clear($pdo, $rid); return [false, 'यह सारथी खाता अभी चालू नहीं है।']; }
+    $pdo->prepare("UPDATE riders SET last_lat=?, last_lng=?, last_location_at=UTC_TIMESTAMP() WHERE id=? AND active=1")
+        ->execute([number_format($lat, 7, '.', ''), number_format($lng, 7, '.', ''), (int)$rid]);
+    return [true, ['lat' => $lat, 'lng' => $lng, 'at' => time()]];
+}
+
+function rider_location_clear(PDO $pdo, $rid) {
+    sr_jobs_upgrade($pdo);
+    $pdo->prepare("UPDATE riders SET last_lat=NULL, last_lng=NULL, last_location_at=NULL WHERE id=?")
+        ->execute([(int)$rid]);
+}
+
+function rider_location_clear_if_idle(PDO $pdo, $rid) {
+    $st = $pdo->prepare("SELECT 1 FROM jobs WHERE rider_id=? AND status IN ('assigned','picked') LIMIT 1");
+    $st->execute([(int)$rid]);
+    if (!$st->fetchColumn()) rider_location_clear($pdo, $rid);
+}
+
+/** Gaadi ke prakaar (rider ka vtype) */
+function sr_vtypes() {
+    return ['cycle' => t('Bicycle', 'साइकिल'), 'bike' => t('Motorcycle', 'बाइक'), 'ev' => t('Electric scooter', 'बिजली स्कूटी'),
+            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
+}
+/** Arzi ke likhe hue gaadi naam se vtype */
+function sr_vtype_guess($label) {
+    $l = mb_strtolower((string)$label);
+    foreach (['ई-रिक्शा' => 'erick', 'e-rick' => 'erick', 'ऑटो' => 'auto', 'auto' => 'auto', 'बिजली' => 'ev', 'electric' => 'ev', 'साइकिल' => 'cycle', 'bicycle' => 'cycle', 'cycle' => 'cycle', 'बाइक' => 'bike', 'bike' => 'bike', 'scoot' => 'bike', 'motor' => 'bike', 'नहीं' => 'none', 'no vehicle' => 'none'] as $k => $v) {
+        if (mb_strpos($l, mb_strtolower($k)) !== false) return $v;
+    }
+    return null;
+}
+/** Sawari ki gaadi maangi gayi ho to kaun-kaun si rider gaadi chalegi */
+function sr_ride_fits($want) {
+    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
+}
+
+/** Abhi kahan jaana hai — uthana baaki ho to pickup, warna drop. GPS ho to seedha wahi. */
+function maps_next($j) {
+    $picked = ($j['status'] ?? '') === 'picked';
+    $geo = $picked ? ($j['drop_geo'] ?? '') : ($j['pick_geo'] ?? '');
+    if (preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/', (string)$geo)) return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($geo);
+    if (!$picked && !empty($j['pick_address'])) return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($j['pick_address'] . ', Uttar Pradesh');
+    return maps_link($j);
+}
+
+/** phone ka apna naksha khol deta hai — koi API chaabi nahi, koi bill nahi */
+function maps_link($j) {
+    $parts = array_filter([$j['drop_address'] ?? '', $j['drop_village'] ?? '', 'Uttar Pradesh'],
+                          fn($x) => trim((string)$x) !== '');
+    if (!$parts) return null;
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(implode(', ', $parts));
+}
+
+// ------------------------------------------------------------
+//  छोटी चीज़ें
+// ------------------------------------------------------------
+/** चार अंक — गाँव में चार अंक बोलकर बताना आसान है */
+function otp4() { return str_pad((string)random_int(0, 9999), 4, '0', STR_PAD_LEFT); }
+
+function job_no(PDO $pdo) {
+    for ($i = 0; $i < 20; $i++) {
+        $no = 'SR' . date('ymd') . strtoupper(bin2hex(random_bytes(2)));
+        $st = $pdo->prepare("SELECT 1 FROM jobs WHERE job_no=?");
+        $st->execute([$no]);
+        if (!$st->fetch()) return $no;
+    }
+    throw new RuntimeException('job number nahi ban paya');
+}

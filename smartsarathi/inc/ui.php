@@ -151,4 +151,42 @@ function sr_foot($tab, $count = []) {
     tr.querySelector('.sx-sl-text').textContent = sl.dataset.label || btn.textContent.trim();
     tr.querySelector('.sx-sl-knob').setAttribute('aria-label', sl.dataset.label || btn.textContent.trim());
     sl.appendChild(tr); sl.classList.add('js');
-    var knob = tr.querySelector('.sx-sl-knob'),
+    var knob = tr.querySelector('.sx-sl-knob'), fill = tr.querySelector('.sx-sl-fill'), x0 = 0, max = 0, drag = false, done = false, cur = 0;
+    function need() {
+      if (!sl.hasAttribute('data-need-otp')) return false;
+      var o = form.querySelector('[data-otp]'); if (!o || o.classList.contains('full')) return false;
+      o.classList.add('shake'); setTimeout(function () { o.classList.remove('shake'); }, 400);
+      var first = Array.prototype.find.call(o.querySelectorAll('.sx-otp-b'), function (b) { return !b.value; }); if (first) first.focus();
+      var t = document.getElementById('sxToast'); if (t) { t.textContent = needMsg; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2000); }
+      return true;
+    }
+    function set(px) { cur = px; knob.style.transform = 'translateX(' + px + 'px)'; fill.style.width = (px + knob.offsetWidth + 6) + 'px'; tr.style.setProperty('--p', max ? px / max : 0); }
+    function reset() { done = false; tr.classList.remove('ok'); tr.classList.add('back'); set(0); setTimeout(function () { tr.classList.remove('back'); }, 260); }
+    function fire() {
+      done = true; set(max); tr.classList.add('ok'); try { navigator.vibrate && navigator.vibrate([20, 40, 30]); } catch (e) {}
+      btn.click();
+      setTimeout(function () { if (!form.dataset.sent) reset(); }, 500);
+    }
+    form.addEventListener('submit', function (e) { setTimeout(function () { if (!e.defaultPrevented) { form.dataset.sent = '1'; tr.classList.add('sending'); } }, 0); });
+    knob.addEventListener('pointerdown', function (e) { if (done) return; if (need()) return; drag = true; x0 = e.clientX - cur; max = tr.clientWidth - knob.offsetWidth - 8; try { knob.setPointerCapture(e.pointerId); } catch (x) {} tr.classList.add('drag'); });
+    knob.addEventListener('pointermove', function (e) { if (!drag) return; set(Math.max(0, Math.min(max, e.clientX - x0))); });
+    function up() { if (!drag) return; drag = false; tr.classList.remove('drag'); if (cur >= max * 0.82) fire(); else reset(); }
+    knob.addEventListener('pointerup', up); knob.addEventListener('pointercancel', up);
+    knob.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!need()) { max = tr.clientWidth - knob.offsetWidth - 8; fire(); } } });
+  });
+
+  // haazir hain to screen band na ho (Android Chrome)
+  if (document.body.classList.contains('is-online') && 'wakeLock' in navigator) {
+    var lock = null, ask = function () { navigator.wakeLock.request('screen').then(function (l) { lock = l; }).catch(function () {}); };
+    ask(); document.addEventListener('visibilitychange', function () { if (!document.hidden) ask(); });
+  }
+
+  // flash ko toast bana do
+  var f = document.querySelector('.sr-flash'), t = document.getElementById('sxToast');
+  if (f && t) { t.textContent = f.textContent.trim(); t.classList.add('show'); f.remove(); setTimeout(function () { t.classList.remove('show'); }, 3200); }
+})();
+</script>
+</body>
+</html>
+<?php
+}

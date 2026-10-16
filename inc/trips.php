@@ -239,4 +239,69 @@ function trip_apply(PDO $pdo, array $t, array $job) {
     }
     $pdo->prepare("UPDATE rides SET status=?, rider_name=COALESCE(?, rider_name), rider_mobile=COALESCE(?, rider_mobile),
                    rider_lat=?, rider_lng=?, rider_location_at=?,
-                   picked_at=IF(? IN ('picked','delivered'), COALESCE(picked_a
+                   picked_at=IF(? IN ('picked','delivered'), COALESCE(picked_at, NOW()), picked_at),
+                   done_at=IF(?='delivered', COALESCE(done_at, NOW()), done_at), checked_at=NOW() WHERE id=?")
+        ->execute([$s, $rn, $rm, $lat, $lng, $at, $s, $s, (int)$t['id']]);
+    return trip_get($pdo, $t['id']);
+}
+
+/** A booking holder sees only a fresh point for their active booking. */
+function trip_location_payload(array $t) {
+    if (!in_array($t['status'] ?? '', ['assigned', 'picked'], true)
+        || !isset($t['rider_lat'], $t['rider_lng'], $t['rider_location_at'])) return null;
+    $at = (int)$t['rider_location_at'];
+    if ($at < time() - 120 || $at > time() + 30) return null;
+    return ['lat' => (float)$t['rider_lat'], 'lng' => (float)$t['rider_lng'], 'at' => $at];
+}
+
+/** Halat taaza (har booking 15 sec me ek baar tak) */
+function trip_sync(PDO $pdo, array $t, $force = false) {
+    if (in_array($t['status'], ['delivered', 'cancelled'], true)) return $t;
+    if (!$t['sarathi_job']) {
+        // pehli baar na ja payi ho to dobara koshish (minute me ek baar)
+        if (!$t['checked_at'] || strtotime($t['checked_at']) < time() - 60) {
+            $pdo->prepare("UPDATE rides SET checked_at=NOW() WHERE id=?")->execute([(int)$t['id']]);
+            trip_send($pdo, $t['id']);
+        }
+        return trip_get($pdo, $t['id']);
+    }
+    if (!$force && $t['checked_at'] && strtotime($t['checked_at']) > time() - 15) return $t;
+    $pdo->prepare("UPDATE rides SET checked_at=NOW() WHERE id=?")->execute([(int)$t['id']]);
+    [$ok, $r] = sb_call($pdo, 'status', ['ref' => $t['trip_no']]);
+    if (!$ok || empty($r['job'])) return $t;
+    return trip_apply($pdo, $t, $r['job']);
+}
+
+/** Grahak radd kare — sirf rider ke uthane se pehle. [ok, msg] */
+function trip_cancel(PDO $pdo, array $t) {
+    if (!in_array($t['status'], ['new', 'assigned'], true)) return [false, t('The rider has already picked up. Please call us.', 'राइडर उठा चुका है। हमें फ़ोन कीजिए।')];
+    if ($t['sarathi_job']) {
+        [$ok, $r] = sb_call($pdo, 'cancel', ['ref' => $t['trip_no']]);
+        if (!$ok) return [false, t('Could not cancel right now — please call us.', 'अभी रद्द नहीं हो पाया — हमें फ़ोन कीजिए।')];
+    }
+    $pdo->prepare("UPDATE rides SET status='cancelled' WHERE id=? AND status IN ('new','assigned')")->execute([(int)$t['id']]);
+    return [true, t('Booking cancelled.', 'बुकिंग रद्द हो गई।')];
+}
+
+/** Grahak ki bhasha me halat: [kadam 0-3, naam] */
+function trip_steps(array $t) {
+    $ride = $t['kind'] === 'ride';
+    $names = $ride
+        ? [t('Booked', 'बुक हुई'), t('Rider on the way', 'राइडर आ रहा है'), t('On the ride', 'सफ़र चालू'), t('Reached', 'पहुँच गए')]
+        : [t('Booked', 'बुक हुआ'), t('Rider on the way', 'राइडर आ रहा है'), t('Picked up', 'उठा लिया'), t('Delivered', 'पहुँच गया')];
+    $k = ['new' => 0, 'assigned' => 1, 'picked' => 2, 'delivered' => 3][$t['status']] ?? -1;
+    return [$k, $names];
+}
+
+/** Is session/khate ki apni bookings (naye pehle) */
+function trip_mine(PDO $pdo, $mobile = null, $limit = 5) {
+    if (!trips_table($pdo)) return [];
+    $nos = array_slice(array_values(array_unique($_SESSION['my_trips'] ?? [])), -20);
+    $where = []; $args = [];
+    if ($mobile) { $where[] = 'mobile=?'; $args[] = $mobile; }
+    if ($nos) { $where[] = 'trip_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'; $args = array_merge($args, $nos); }
+    if (!$where) return [];
+    $st = $pdo->prepare("SELECT * FROM rides WHERE " . implode(' OR ', $where) . " ORDER BY id DESC LIMIT " . (int)$limit);
+    $st->execute($args);
+    return $st->fetchAll();
+}

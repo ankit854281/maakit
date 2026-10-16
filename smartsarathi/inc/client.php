@@ -217,4 +217,29 @@ function job_status(PDO $pdo, array $client, $ref) {
  * tak rider ne uthaya na ho. Uthane ke baad saaman rider ke
  * paas hai; use radd karna phone par baat karke hi hoga.
  */
-function job
+function job_cancel(PDO $pdo, array $client, $ref) {
+    $up = $pdo->prepare("UPDATE jobs SET status='cancelled'
+                          WHERE client_id=? AND client_ref=? AND status IN ('new','assigned')");
+    $up->execute([(int)$client['id'], (string)$ref]);
+    if ($up->rowCount() !== 1) {
+        return [false, 'ये काम अब यहाँ से रद्द नहीं हो सकता — फ़ोन कीजिए'];
+    }
+    $find = $pdo->prepare('SELECT rider_id FROM jobs WHERE client_id=? AND client_ref=?');
+    $find->execute([(int)$client['id'], (string)$ref]);
+    $rid = $find->fetchColumn();
+    if ($rid) rider_location_clear_if_idle($pdo, (int)$rid);
+    return [true, ['status' => 'cancelled']];
+}
+
+// ------------------------------------------------------------
+//  जवाब भेजने का तरीका
+// ------------------------------------------------------------
+function api_out($code, array $body) {
+    http_response_code($code);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+function api_fail($code, $msg) { api_out($code, ['ok' => false, 'error' => $msg]); }
