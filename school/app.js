@@ -82,7 +82,7 @@ function freshState() {
 }
 function emptyState() {
   return { settings: {}, classes: [], teachers: {}, alloc: [], grid: null, students: [], staffAtt: {}, studAtt: {}, diary: {},
-           signed: {}, syl: {}, exams: [], marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: [], log: [] };
+           signed: {}, syl: {}, exams: [], marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: [], fees: null, log: [] };
 }
 
 // ---------------------------------------------------------------- server sync
@@ -141,6 +141,7 @@ function toRecords() {
   S.speak.forEach(x => put('speak', x.id, x));
   Object.entries(S.lplan).forEach(([k, v]) => put('lplan', k, v));
   S.cal.forEach(e => put('cal', e.id, e));
+  if (S.fees) put('fees', 'main', S.fees);
   return R;
 }
 function setRec(k, r, d) {
@@ -164,6 +165,7 @@ function setRec(k, r, d) {
     case 'behav': (S.behav[p[0]] = S.behav[p[0]] || {})[p[1]] = d; break;
     case 'speak': { const i = S.speak.findIndex(x => x.id === r); if (i >= 0) S.speak[i] = d; else S.speak.push(d); break; }
     case 'lplan': S.lplan[r] = d; break;
+    case 'fees': S.fees = d; break;
     case 'cal': { const i = S.cal.findIndex(x => x.id === r); if (i >= 0) S.cal[i] = d; else S.cal.push(d); S.cal.sort((a, b) => a.date.localeCompare(b.date)); break; }
   }
 }
@@ -262,7 +264,7 @@ async function loadAll() {
     S.grid = ttGenerate(2026);
     log('Setup', 'School data created: 16 teachers, 13 classes, periods per week and first weekly timetable');
   }
-  if (U.role === 'principal') applyBoardPlan();
+  if (U.role === 'principal') { applyBoardPlan(); applyFeeSheet(); }
 }
 async function ensureDate(d) {
   if (!d || !loadedFrom || d >= loadedFrom || DAYS_LOADED[d]) return;
@@ -507,7 +509,7 @@ async function go(v, params) { view = v; P = params || {}; if (P.date) await ens
 const NAV = {
   principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
-              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
+              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
@@ -515,8 +517,8 @@ const NAV = {
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
   student:   [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  parent:    [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['exams','fa-file-pen','Exams'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
+  parent:    [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
+  chairman:  [['dash','fa-gauge','Dashboard'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
 const PRIMARY = { student: ['phome','quiz','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
@@ -1098,7 +1100,7 @@ function vStudents() {
           <div id="st-erp-preview" class="text-sm"></div>
           <button id="st-erp-apply" class="btn btn-g w-full" style="display:none" onclick="applyErpStudents()">Import verified students</button></div>
         <div class="card space-y-2"><h3 class="font-bold">Import from Excel</h3>
-          <p class="text-xs text-slate-500">Copy columns from Excel in this order and paste: <b>Adm No, Name, Class, Father, Mobile</b>. Class must be like 10th, 9th … 1st, UKG, LKG, PG.</p>
+          <p class="text-xs text-slate-500">Copy columns from Excel in this order and paste: <b>Adm No, Name, Class, Father, Mobile, Bus km</b> (bus km is optional). Class must be like 10th, 9th … 1st, UKG, LKG, PG.</p>
           <textarea id="st-imp" rows="5" class="inp text-xs" placeholder="92	Yashvi Tiwari	10th	Dilip Kumar Tiwari	9839xxxxxx"></textarea>
           <button onclick="importStudents()" class="btn btn-g w-full"><i class="fa-solid fa-file-import"></i> Import</button></div>
       </div>
@@ -1119,7 +1121,9 @@ function editStudent(id) {
   if (!CLASS_NAMES.includes(cls.trim())) return toast('Unknown class', 'r');
   const father = prompt("Father's name", s.father); if (father === null) return;
   const phone = prompt('Parent mobile', s.phone); if (phone === null) return;
-  Object.assign(s, { name: name.trim(), cls: cls.trim(), father: father.trim(), phone: phone.trim(), sample: false });
+  const km = prompt('School bus distance in km (leave blank if the child does not take the bus)', s.km ?? ''); if (km === null) return;
+  if (km.trim() !== '' && !(+km.trim() > 0)) return toast('Bus distance must be a number of km', 'r');
+  Object.assign(s, { name: name.trim(), cls: cls.trim(), father: father.trim(), phone: phone.trim(), km: km.trim() === '' ? null : +km.trim(), sample: false });
   log('Students', `Updated ${s.name} (Adm ${s.adm})`); render();
 }
 function delStudent(id) { const s = studentById(id); if (!s || !confirm('Remove ' + s.name + '?')) return; S.students = S.students.filter(x => x.id !== id); log('Students', `Removed ${s.name} (Adm ${s.adm})`); render(); }
@@ -1153,11 +1157,12 @@ async function applyErpStudents() {
 }
 function importStudents() {
   const lines = document.getElementById('st-imp').value.split('\n').map(l => l.trim()).filter(Boolean); let added = 0, skipped = [];
-  lines.forEach((l, i) => { const p = l.split(/\t|,/).map(x => x.trim()); const [adm, name, cls, father, phone] = p;
+  lines.forEach((l, i) => { const p = l.split(/\t|,/).map(x => x.trim()); const [adm, name, cls, father, phone, kmRaw] = p;
+    const km = kmRaw && +kmRaw > 0 ? +kmRaw : null;
     if (!adm || !name || !CLASS_NAMES.includes(cls)) { skipped.push(i + 1); return; }
     const ex = S.students.find(s => s.adm === adm);
-    if (ex) Object.assign(ex, { name, cls, father: father || ex.father, phone: phone || ex.phone, sample: false });
-    else S.students.push({ id: 's' + uid(), adm, name, cls, father: father || '', phone: phone || '' });
+    if (ex) Object.assign(ex, { name, cls, father: father || ex.father, phone: phone || ex.phone, km: km ?? ex.km ?? null, sample: false });
+    else S.students.push({ id: 's' + uid(), adm, name, cls, father: father || '', phone: phone || '', km });
     added++; });
   log('Students', `Imported ${added} student(s) from Excel` + (skipped.length ? `; skipped line(s) ${skipped.join(', ')}` : ''));
   toast(`${added} imported` + (skipped.length ? `, ${skipped.length} skipped (check class name)` : ''), skipped.length ? 'a' : 'g'); render();
@@ -2020,6 +2025,7 @@ let PD = null, PKID = null;
 async function loadParent() {
   const res = await api('pdata');
   PD = res; ME = res.me; U = { role: ME.role, tid: ME.tid };
+  PD.fees = res.fees || null;
   S = emptyState(); S.settings = { school: res.school, session: res.session }; S.exams = res.exams || []; S.cal = res.cal || [];
   if (!PKID || !PD.kids.some(k => k.id === PKID)) PKID = PD.kids.length ? PD.kids[0].id : null;
 }
@@ -2135,7 +2141,7 @@ async function makeParentCode(p) {
 // bells stop for those classes during the exam), sheet (date sheet: one paper per day,
 // a paper can combine several timetable subjects, e.g. Science = Physics/Chemistry + Biology),
 // time, reportDate (results go to parents from this day) and sent {studentId: time}.
-const BOARD_PLAN_ID = 'board-2026-27';
+const BOARD_PLAN_ID = 'board-2026-27-v2';
 function examClasses(e) { return e && e.classes && e.classes.length ? e.classes : CLASS_NAMES; }
 function examEnd(e) { return e.to || (e.sheet && e.sheet.length ? e.sheet.map(x => x.date).sort().pop() : e.date); }
 function examBlocks(date, cls) { return S.exams.some(e => e.noClasses && e.date <= date && examEnd(e) >= date && examClasses(e).includes(cls)); }
@@ -2152,25 +2158,36 @@ function paperTeachers(cls, p) { return [...new Set(p.subjects.map(s => (S.alloc
 function sylDeadline(cls) { return ((S.settings || {}).sylDeadlines || {})[cls] || null; }
 
 function applyBoardPlan() {
+  // v1 (Class 10 only, Pre-Board 2 in February) was replaced the same night by v2.
+  // Each version runs once (settings.plans); v2 also corrects data written by v1.
   const set = S.settings; set.plans = set.plans || {};
   if (set.plans[BOARD_PLAN_ID]) return;
-  const P10 = (date, title, subjects, max) => ({ date, title, subjects, max });
+  const P = (date, title, subjects, max) => ({ date, title, subjects, max });
+  const sheet = d => [P(d[0], 'Mathematics (Standard / Basic)', ['Mathematics'], 80), P(d[1], 'Hindi', ['Hindi'], 80),
+    P(d[2], 'English Language & Literature', ['English'], 80), P(d[3], 'Science (Physics, Chemistry, Biology)', ['Physics/Chemistry', 'Biology'], 80),
+    P(d[4], 'Social Science', ['Social Science'], 80), P(d[5], 'Computer / IT', ['Computer'], 50)];
   const upsert = e => { const i = S.exams.findIndex(x => x.id === e.id); if (i >= 0) S.exams[i] = { ...S.exams[i], ...e }; else S.exams.push(e); };
-  upsert({ id: 'pb1', name: 'Pre-Board 1 (Class 10)', date: '2026-12-21', to: '2026-12-28', classes: ['10th'], noClasses: true, time: '09:00–12:00', reportDate: '2026-12-30',
-    sheet: [P10('2026-12-21', 'Mathematics (Standard / Basic)', ['Mathematics'], 80), P10('2026-12-22', 'Hindi', ['Hindi'], 80),
-            P10('2026-12-23', 'English Language & Literature', ['English'], 80), P10('2026-12-24', 'Science (Physics, Chemistry, Biology)', ['Physics/Chemistry', 'Biology'], 80),
-            P10('2026-12-26', 'Social Science', ['Social Science'], 80), P10('2026-12-28', 'Computer / IT', ['Computer'], 50)] });
-  upsert({ id: 'pb2', name: 'Pre-Board 2 (Class 10)', date: '2027-02-01', to: '2027-02-08', classes: ['10th'], noClasses: true, time: '09:00–12:00', sheet: [] });
+  const both = ['9th', '10th'];
+  upsert({ id: 'pb1', name: 'Pre-Board 1 (Classes 9–10)', date: '2026-12-07', to: '2026-12-12', classes: both, noClasses: true, time: '09:00–12:00', reportDate: '2026-12-15',
+    sheet: sheet(['2026-12-07', '2026-12-08', '2026-12-09', '2026-12-10', '2026-12-11', '2026-12-12']) });
+  upsert({ id: 'pb2', name: 'Pre-Board 2 (Classes 9–10)', date: '2026-12-21', to: '2026-12-28', classes: both, noClasses: true, time: '09:00–12:00', reportDate: '2026-12-30',
+    sheet: sheet(['2026-12-21', '2026-12-22', '2026-12-23', '2026-12-24', '2026-12-26', '2026-12-28']) });
   upsert({ id: 'ann', name: 'Annual Exam (PG–9th)', date: '2027-02-23', to: '2027-03-11', classes: CLASS_NAMES.filter(c => c !== '10th'), noClasses: true });
   S.exams.sort((a, b) => a.date.localeCompare(b.date));
-  const cal = [['bp-syl', '2026-12-19', '', 'Class 10: full syllabus must be complete', 'Event'], ['bp-xmas', '2026-12-25', '', 'Christmas (BSA holiday list)', 'Holiday'],
-               ['bp-eval', '2026-12-29', '', 'Pre-Board 1: checking and marks entry', 'Event'], ['bp-ptm', '2026-12-30', '', 'Pre-Board 1 PTM (Class 10) and winter worksheets', 'PTM'],
-               ['bp-winter', '2026-12-31', '2027-01-14', 'Winter vacation (BSA)', 'Holiday'], ['bp-doubt', '2027-01-16', '2027-01-24', 'Class 10 doubt-clearing workshops', 'Event']];
+  S.cal = S.cal.filter(e => !['bp-syl', 'bp-eval', 'bp-ptm', 'bp-doubt'].includes(e.id));      // v1 entries that changed
+  const cal = [['bp2-syl', '2026-12-05', '', 'Classes 9 & 10: full syllabus must be complete', 'Event'],
+               ['bp2-res1', '2026-12-15', '', 'Pre-Board 1 results to parents (Classes 9 & 10)', 'Event'],
+               ['bp-xmas', '2026-12-25', '', 'Christmas (BSA holiday list)', 'Holiday'],
+               ['bp2-eval', '2026-12-29', '', 'Pre-Board 2: checking and marks entry', 'Event'],
+               ['bp2-ptm', '2026-12-30', '', 'Pre-Board 2 PTM (Classes 9 & 10) and winter worksheets', 'PTM'],
+               ['bp-winter', '2026-12-31', '2027-01-14', 'Winter vacation (BSA)', 'Holiday'],
+               ['bp2-leave10', '2027-01-16', '', 'Class 10 board study leave begins', 'Event'],
+               ['bp2-rev9', '2027-01-16', '2027-02-20', 'Class 9 revision', 'Event']];
   cal.forEach(([id, date, to, title, type]) => { if (!S.cal.some(e => e.id === id || (e.date === date && e.title === title))) S.cal.push({ id, date, to, title, type }); });
   S.cal.sort((a, b) => a.date.localeCompare(b.date));
-  set.sylDeadlines = { ...(set.sylDeadlines || {}), '10th': '2026-12-19' };
+  set.sylDeadlines = { ...(set.sylDeadlines || {}), '9th': '2026-12-05', '10th': '2026-12-05' };
   set.plans[BOARD_PLAN_ID] = Date.now();
-  log('Exam Plan', 'Class 10 board plan 2026–27 added: syllabus deadline 19 Dec; Pre-Board 1 21–28 Dec; PTM 30 Dec; winter vacation 31 Dec–14 Jan; doubt workshops 16–24 Jan; Pre-Board 2 1–8 Feb; Annual exam (PG–9th) 23 Feb–11 Mar');
+  log('Exam Plan', 'Board plan updated for Classes 9 & 10: full syllabus by 5 Dec; Pre-Board 1 7–12 Dec (results 15 Dec); Pre-Board 2 21–28 Dec; PTM 30 Dec; winter vacation 31 Dec–14 Jan; Class 10 study leave from 16 Jan; Class 9 revision 16 Jan–20 Feb; Annual exam (PG–9th) 23 Feb–11 Mar');
 }
 
 function boardAlerts(date) {
@@ -2231,34 +2248,35 @@ function vExams() {
   const ro = U.role !== 'principal';
   const e = S.exams.find(x => x.id === P.ex) || S.exams.filter(x => examEnd(x) >= todayISO()).sort((a, b) => a.date.localeCompare(b.date))[0] || S.exams[0];
   if (!e) return head('Exams') + '<div class="card text-sm">No exams yet. Add them in Settings › Exams.</div>';
-  const cls = examClasses(e), one = cls.length === 1 ? cls[0] : null;
+  const cls = examClasses(e), few = cls.length <= 3 ? cls : null, fewTxt = few ? few.join(' & ') : '';
   const sheet = (e.sheet || []).slice().sort((a, b) => a.date.localeCompare(b.date));
-  const marksState = p => one ? p.subjects.map(sb => { const r = (S.marks[e.id] || {})[one + '|' + sb]; return `${esc(sb)}: ${r ? '<span class="text-leaf font-semibold">entered</span>' : '<span class="text-slate-400">waiting</span>'}`; }).join('<br>') : '';
+  const marksState = p => few ? few.map(c => p.subjects.map(sb => { const r = (S.marks[e.id] || {})[c + '|' + sb]; return `${few.length > 1 ? c + ' ' : ''}${esc(sb)}: ${r ? '<span class="text-leaf font-semibold">entered</span>' : '<span class="text-slate-400">waiting</span>'}`; }).join('<br>')).join('<br>') : '';
+  const teachersOf = p => few ? [...new Set(few.flatMap(c => paperTeachers(c, p)))].join(', ') : '';
   const rep = examReport(e).filter(r => r.any);
-  const subsOf = one ? S.alloc.filter(a => a.c === one && a.n > 0).map(a => a.s) : [];
+  const subsOf = few ? [...new Set(S.alloc.filter(a => few.includes(a.c) && a.n > 0).map(a => a.s))] : [];
   return head('Exams & date sheets', 'Normal classes stop automatically for the classes sitting an exam. Results go to parents on WhatsApp from the report date.',
       `<select class="inp w-auto" onchange="go('exams',{ex:this.value})">${S.exams.map(x => `<option value="${esc(x.id)}" ${x.id === e.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`) + `
     <div class="card space-y-1"><h3 class="h3">${esc(e.name)}</h3>
       <p class="text-sm text-slate-600">${fmtDate(e.date)}${examEnd(e) !== e.date ? ' to ' + fmtDate(examEnd(e)) : ''} · ${cls.length === CLASS_NAMES.length ? 'All classes' : 'Class ' + cls.join(', ')}${e.time ? ' · ' + esc(e.time) : ''}${e.noClasses ? ' · no normal classes for these students in this period' : ''}</p>
-      ${one && sylDeadline(one) ? `<p class="text-sm"><b>Class ${one} syllabus deadline:</b> 100% by ${fmtDate(sylDeadline(one))}</p>` : ''}</div>
+      ${few ? few.filter(c => sylDeadline(c)).map(c => `<p class="text-sm"><b>Class ${c} syllabus deadline:</b> 100% by ${fmtDate(sylDeadline(c))}</p>`).join('') : ''}</div>
     <div class="card overflow-x-auto"><div class="flex flex-wrap justify-between gap-2 mb-2"><h3 class="h3">Date sheet</h3>
-      ${sheet.length && one ? `<span class="flex gap-2 noprint"><a target="_blank" href="${waLink('', dateSheetText({ ...e, sheet }, one))}" onclick="log('Exam Plan',${jsq('Date sheet shared: ' + e.name)})" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Share</a>
-        <button onclick="printHTML('Date sheet',printHeader(${jsq(e.name + ' — date sheet, Class ' + one)})+document.getElementById('dsheet').outerHTML+PRINT_FOOT)" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Print</button></span>` : ''}</div>
-      ${sheet.length ? `<table class="tbl" id="dsheet"><tr><th>Date</th><th>Paper</th><th>Marks</th><th>Teacher</th>${one ? '<th class="noprint">Marks entry</th>' : ''}${ro ? '' : '<th class="noprint"></th>'}</tr>
+      ${sheet.length && few ? `<span class="flex gap-2 noprint"><a target="_blank" href="${waLink('', dateSheetText({ ...e, sheet }, fewTxt))}" onclick="log('Exam Plan',${jsq('Date sheet shared: ' + e.name)})" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Share</a>
+        <button onclick="printHTML('Date sheet',printHeader(${jsq(e.name + ' — date sheet, Class ' + fewTxt)})+document.getElementById('dsheet').outerHTML+PRINT_FOOT)" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Print</button></span>` : ''}</div>
+      ${sheet.length ? `<table class="tbl" id="dsheet"><tr><th>Date</th><th>Paper</th><th>Marks</th><th>Teacher</th>${few ? '<th class="noprint">Marks entry</th>' : ''}${ro ? '' : '<th class="noprint"></th>'}</tr>
         ${sheet.map(p => { const i = e.sheet.indexOf(p); return `<tr><td class="whitespace-nowrap">${fmtDate(p.date)}</td><td class="font-semibold">${esc(p.title)}</td>
           <td>${ro ? p.max : `<input type="number" min="1" class="inp py-1 w-20" value="${p.max}" onchange="examPaperMax('${esc(e.id)}',${i},this.value)">`}</td>
-          <td>${one ? esc(paperTeachers(one, p).join(', ')) : ''}</td>${one ? `<td class="text-xs noprint">${marksState(p)}</td>` : ''}
+          <td>${esc(teachersOf(p))}</td>${few ? `<td class="text-xs noprint">${marksState(p)}</td>` : ''}
           ${ro ? '' : `<td class="noprint"><button onclick="examPaperDel('${esc(e.id)}',${i})" class="text-slate-300 hover:text-rose"><i class="fa-solid fa-trash"></i></button></td>`}</tr>`; }).join('')}</table>`
       : '<p class="text-sm text-slate-500">No papers added yet.</p>'}
-      ${!ro && one ? `<div class="mt-4 pt-4 border-t border-line grid grid-cols-1 md:grid-cols-4 gap-2 items-end noprint">
+      ${!ro && few ? `<div class="mt-4 pt-4 border-t border-line grid grid-cols-1 md:grid-cols-4 gap-2 items-end noprint">
         <div><label class="lbl">Date</label><input id="pp-date" type="date" class="inp" value="${e.date}"></div>
         <div class="md:col-span-2"><label class="lbl">Subjects in this paper</label><div class="flex flex-wrap gap-2">${subsOf.map(sb => `<label class="chip"><input type="checkbox" class="pp-sub mr-1" value="${esc(sb)}">${esc(sb)}</label>`).join('')}</div></div>
         <div><label class="lbl">Marks</label><div class="flex gap-2"><input id="pp-max" type="number" class="inp" value="80"><button onclick="examPaperAdd('${esc(e.id)}')" class="btn btn-p">Add</button></div></div></div>` : ''}
     </div>
     ${sheet.length ? `<div class="card overflow-x-auto"><div class="flex flex-wrap justify-between gap-2 mb-2"><h3 class="h3">Results for parents</h3>
         <span class="text-sm text-slate-500">${rep.filter(r => (e.sent || {})[r.s.id]).length} of ${rep.length} sent${e.reportDate ? ' · send from ' + fmtDate(e.reportDate) : ''}</span></div>
-      ${rep.length ? `<table class="tbl"><tr><th>Student</th>${sheet.map(p => `<th>${esc(p.title.replace(/\s*\(.*\)/, ''))}</th>`).join('')}<th>%</th><th>Needs practice</th>${ro ? '' : '<th class="noprint"></th>'}</tr>
-        ${rep.map(r => `<tr><td class="font-semibold whitespace-nowrap">${esc(r.s.name)}</td>${sheet.map(p => { const x = r.papers.find(y => y.p === p) || r.papers[e.sheet.indexOf(p)];
+      ${rep.length ? `<table class="tbl"><tr><th>Student</th>${cls.length > 1 ? '<th>Class</th>' : ''}${sheet.map(p => `<th>${esc(p.title.replace(/\s*\(.*\)/, ''))}</th>`).join('')}<th>%</th><th>Needs practice</th>${ro ? '' : '<th class="noprint"></th>'}</tr>
+        ${rep.map(r => `<tr><td class="font-semibold whitespace-nowrap">${esc(r.s.name)}</td>${cls.length > 1 ? `<td>${esc(r.cls)}</td>` : ''}${sheet.map(p => { const x = r.papers.find(y => y.p === p) || r.papers[e.sheet.indexOf(p)];
           return `<td class="${x && x.pct != null && x.pct < 33 ? 'text-rose font-semibold' : ''}">${x ? (x.ab ? 'AB' : x.pct != null ? x.got + '/' + x.max : '—') : '—'}</td>`; }).join('')}
           <td class="font-semibold">${r.pct ?? '—'}</td><td class="text-sm">${r.weak.map(x => esc(x.p.title.replace(/\s*\(.*\)/, ''))).join(', ') || '—'}</td>
           ${ro ? '' : `<td class="noprint whitespace-nowrap">${!r.complete ? '<span class="text-xs text-slate-500">Marks pending</span>' : `${(e.sent || {})[r.s.id] ? '<span class="pill bg-leaf/10 text-leaf">Sent</span> ' : ''}<a target="_blank" href="${waLink(r.s.phone, reportText(e, r))}" onclick="examSent('${esc(e.id)}','${esc(r.s.id)}')" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Send</a>`}</td>`}</tr>`).join('')}</table>
@@ -2486,11 +2504,108 @@ function qtWorksheet(cls, subj) {
   log('Quiz', `Printed a ${qs.length}-question worksheet for Class ${cls} ${subj}`);
 }
 
+// ---------------------------------------------------------------- FEE STRUCTURE (record fees/main; Principal edits, parents see their own child's fee)
+// Starting values are copied from the school's printed "Fee Structure 2024-2025" sheet.
+// Class 10 monthly fee and the "above 30 km" bus charge are blank on that sheet.
+function feeSheet2024() {
+  const m = {}; ['PG', 'LKG', 'UKG'].forEach(c => m[c] = 600); ['1st', '2nd', '3rd'].forEach(c => m[c] = 790); ['4th', '5th'].forEach(c => m[c] = 850);
+  ['6th', '7th'].forEach(c => m[c] = 990); m['8th'] = 1200; m['9th'] = 1500; m['10th'] = null;
+  return { session: '2024–25', source: 'Printed fee structure 2024–25', monthly: m,
+    yearly: [{ name: 'Exam fee', amt: 1800, skip: ['PG', 'LKG', 'UKG'] }, { name: 'Digital classroom', amt: 1200 }, { name: 'Sports', amt: 1000 }, { name: 'Health and safety', amt: 500 }],
+    admission: [{ name: 'Processing fee', amt: 0, was: 1200 }, { name: 'Admission fee', amt: 0, was: 6000 }],
+    transport: [{ upto: 6, amt: 600 }, { upto: 10, amt: 800 }, { upto: 18, amt: 1200 }, { upto: 25, amt: 1500 }, { upto: 30, amt: 2000 }, { upto: null, amt: null }],
+    thirdChildPct: 50,
+    notes: ['Fees can be paid online, or by cash, cheque or demand draft at the school campus only.', 'Make all payments in favour of "S.N Mishra Singapore International School", payable at Bhadohi.',
+      'Always take a proper receipt for every payment.', 'Fees once paid are not refundable.', 'Fees are paid every month.', 'The exam fee is paid once a year.',
+      'If a parent has three children in the school, the third child gets 50% off the composite fee. Transport and all other charges are paid in full.',
+      'Books and the school diary are sold only at the school counter.', 'The tie and belt are also sold at the counter.',
+      'For the ID card, give two passport-size photos at admission or at the start of the session. ID cards are ready by the end of June.',
+      'Transport charges may change if fuel prices rise.'] };
+}
+function applyFeeSheet() { if (S.fees) return; S.fees = feeSheet2024(); log('Fees', 'Fee structure added from the printed 2024–25 sheet (Class 10 monthly fee and above-30 km bus charge left blank)'); }
+const rs = n => n == null || n === '' ? '—' : '₹' + Number(n).toLocaleString('en-IN');
+function familyOf(s, all) { const p = String(s.phone || '').replace(/\D/g, '').slice(-10); return p.length === 10 ? all.filter(x => String(x.phone || '').replace(/\D/g, '').slice(-10) === p) : [s]; }
+function busFee(F, km) {
+  if (km == null || km === '' || !(+km > 0)) return { amt: 0, label: 'No school bus' };
+  const slab = F.transport.find(t => t.upto == null || +km <= +t.upto);
+  const prev = F.transport[F.transport.indexOf(slab) - 1];
+  return { amt: slab ? slab.amt : null, label: slab ? (slab.upto == null ? `above ${prev ? prev.upto : 0} km` : `${prev ? prev.upto : 0}–${slab.upto} km`) : '' };
+}
+function feeFor(s, family, F) {
+  F = F || S.fees; if (!F) return null;
+  const comp = F.monthly[s.cls] ?? null;
+  // Third and later children: the ones with the lowest composite fee get the discount.
+  const order = family.slice().sort((a, b) => (F.monthly[b.cls] || 0) - (F.monthly[a.cls] || 0) || String(a.adm).localeCompare(String(b.adm)));
+  const third = family.length >= 3 && order.indexOf(order.find(x => x.id === s.id)) >= 2;
+  const disc = third && comp != null ? Math.round(comp * (+F.thirdChildPct || 0) / 100) : 0;
+  const bus = busFee(F, s.km);
+  const yearly = F.yearly.filter(y => !(y.skip || []).includes(s.cls)).reduce((a, y) => a + (+y.amt || 0), 0);
+  const month = comp == null || bus.amt == null ? null : comp - disc + bus.amt;
+  return { comp, disc, third, bus, month, yearly };
+}
+function feeBreak(s, f) {
+  return `<table class="tbl mt-2"><tr><td>Composite fee, Class ${esc(s.cls)}</td><td class="text-right">${f.comp == null ? 'Ask the office' : rs(f.comp)}</td></tr>
+    ${f.third ? `<tr><td>Third-child discount (${S.fees.thirdChildPct}%)</td><td class="text-right text-leaf">− ${rs(f.disc)}</td></tr>` : ''}
+    <tr><td>School bus${f.bus.amt ? ' (' + esc(f.bus.label) + ')' : ''}</td><td class="text-right">${f.bus.amt === 0 ? 'None' : f.bus.amt == null ? 'Ask the office' : rs(f.bus.amt)}</td></tr>
+    <tr><th>Every month</th><th class="text-right">${f.month == null ? 'Ask the office' : rs(f.month)}</th></tr>
+    <tr><td>Once a year (${S.fees.yearly.filter(y => !(y.skip || []).includes(s.cls)).map(y => esc(y.name.toLowerCase())).join(', ')})</td><td class="text-right">${rs(f.yearly)}</td></tr></table>`;
+}
+function vFees() {
+  const F = S.fees; const ro = U.role !== 'principal';
+  if (!F) return head('Fee structure') + '<div class="card text-sm">Not set up yet. The Principal\'s login adds it.</div>';
+  const inp = (path, v, w) => ro ? rs(v) : `<input class="inp py-1 ${w || 'w-28'}" type="number" min="0" value="${v ?? ''}" onchange="feeSet(${jsq(path)},this.value)">`;
+  const groups = [['PG', 'LKG', 'UKG'], ['1st', '2nd', '3rd'], ['4th', '5th'], ['6th', '7th'], ['8th'], ['9th'], ['10th']];
+  const rows = S.students.slice().sort((a, b) => CLASS_NAMES.indexOf(a.cls) - CLASS_NAMES.indexOf(b.cls) || a.name.localeCompare(b.name));
+  const blank = CLASS_NAMES.filter(c => F.monthly[c] == null);
+  return head('Fee structure', `Session label: ${esc(F.session)} · ${esc(F.source || '')}`, ro ? '' : `<button onclick="feeSession()" class="btn btn-l">Change session label</button>`) + `
+    ${blank.length ? `<div class="card bg-marigold/10 border-marigold/40 text-sm">No monthly fee yet for Class ${blank.join(', ')}. Parents of these classes see "Ask the office" until you fill it in.</div>` : ''}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card"><h3 class="h3">Composite fee (every month)</h3><table class="tbl mt-2"><tr><th>Class</th><th class="text-right">Per month</th></tr>
+        ${ro ? groups.map(g => `<tr><td>${g.join(', ')}</td><td class="text-right">${rs(F.monthly[g[0]])}</td></tr>`).join('') : CLASS_NAMES.map(c => `<tr><td>${c}</td><td class="text-right">${inp('monthly.' + c, F.monthly[c])}</td></tr>`).join('')}</table></div>
+      <div class="space-y-4">
+        <div class="card"><h3 class="h3">Once a year</h3><table class="tbl mt-2">${F.yearly.map((y, i) => `<tr><td>${esc(y.name)}${(y.skip || []).length ? ` <span class="text-xs text-slate-500">(not for ${y.skip.join(', ')})</span>` : ''}</td><td class="text-right">${inp('yearly.' + i, y.amt)}</td></tr>`).join('')}
+          <tr><th>Total</th><th class="text-right">${rs(F.yearly.reduce((a, y) => a + (+y.amt || 0), 0))}</th></tr></table></div>
+        <div class="card"><h3 class="h3">New admission</h3><table class="tbl mt-2">${F.admission.map((y, i) => `<tr><td>${esc(y.name)}${y.was ? ` <span class="text-xs text-slate-500">(was ${rs(y.was)})</span>` : ''}</td><td class="text-right">${ro ? (y.amt ? rs(y.amt) : 'Nil') : inp('admission.' + i, y.amt)}</td></tr>`).join('')}</table></div>
+        <div class="card"><h3 class="h3">School bus (every month, optional)</h3><table class="tbl mt-2">${F.transport.map((t, i) => { const p = F.transport[i - 1];
+          return `<tr><td>${t.upto == null ? `Above ${p ? p.upto : 0} km` : `${p ? p.upto : 0}–${t.upto} km`}</td><td class="text-right">${t.amt == null && ro ? 'Ask the office' : inp('transport.' + i, t.amt)}</td></tr>`; }).join('')}</table>
+          <p class="text-xs text-slate-500 mt-2">Set each student's bus distance in Students (edit). Blank = no bus.</p></div>
+        <div class="card"><h3 class="h3">Third child</h3><p class="text-sm mt-1">${ro ? F.thirdChildPct + '%' : inp('thirdChildPct', F.thirdChildPct, 'w-20') + ' %'} off the composite fee for the third (and any further) child with the same parent mobile number. Bus and other charges in full.</p></div>
+      </div></div>
+    <div class="card"><h3 class="h3">Notes printed on the fee sheet</h3>${ro ? `<ol class="list-decimal pl-5 text-sm space-y-1 mt-2">${F.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ol>`
+      : `<textarea id="fee-notes" rows="8" class="inp mt-2 text-sm">${esc(F.notes.join('\n'))}</textarea><button onclick="feeNotes()" class="btn btn-sm btn-l mt-2">Save notes</button>`}
+      <p class="text-xs text-slate-500 mt-2">Bank account details are not shown here; parents get them from the office.</p></div>
+    <div class="card overflow-x-auto"><div class="flex flex-wrap justify-between gap-2"><h3 class="h3">Each student's fee</h3><button onclick="printHTML('Fees',printHeader('Monthly fee by student — '+${jsq(F.session)})+document.getElementById('feetab').outerHTML+PRINT_FOOT)" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Print</button></div>
+      ${rows.length ? `<table class="tbl mt-2" id="feetab"><tr><th>Student</th><th>Class</th><th>Bus</th><th class="text-right">Composite</th><th class="text-right">Bus</th><th class="text-right">Every month</th><th class="text-right">Once a year</th></tr>
+        ${rows.map(s => { const f = feeFor(s, familyOf(s, S.students)); return `<tr><td class="font-semibold">${esc(s.name)}${f.third ? ' <span class="pill bg-leaf/10 text-leaf">3rd child</span>' : ''}</td><td>${s.cls}</td><td>${s.km ? esc(s.km) + ' km' : '—'}</td>
+          <td class="text-right">${f.comp == null ? '—' : rs(f.comp - f.disc)}</td><td class="text-right">${f.bus.amt === 0 ? '—' : rs(f.bus.amt)}</td><td class="text-right font-semibold">${f.month == null ? 'Not set' : rs(f.month)}</td><td class="text-right">${rs(f.yearly)}</td></tr>`; }).join('')}</table>`
+      : '<p class="text-sm text-slate-500 mt-1">Add students first.</p>'}</div>`;
+}
+function feeSet(path, v) {
+  const F = S.fees, [k, key] = path.split('.'), n = v === '' ? null : Math.max(0, Math.round(+v));
+  if (k === 'monthly') F.monthly[key] = n; else if (k === 'thirdChildPct') F.thirdChildPct = n ?? 0; else F[k][+key].amt = n;
+  log('Fees', `Fee structure changed: ${k}${key ? ' ' + (k === 'monthly' ? key : (F[k][+key].name || (F[k][+key].upto == null ? 'above last slab' : 'up to ' + F[k][+key].upto + ' km'))) : ''} → ${n == null ? 'blank' : '₹' + n}`); render();
+}
+function feeNotes() { S.fees.notes = document.getElementById('fee-notes').value.split('\n').map(x => x.trim()).filter(Boolean); log('Fees', 'Fee notes updated'); toast('Saved'); render(); }
+function feeSession() { const v = prompt('Session these fees are for (e.g. 2026–27)', S.fees.session); if (v === null || !v.trim()) return; S.fees.session = v.trim(); S.fees.source = 'Set by the Principal'; log('Fees', 'Fee structure session set to ' + v.trim()); render(); }
+function vPFees() {
+  const F = PD.fees;
+  if (!F) return head('Fees') + '<div class="card text-sm">The school has not published the fee structure yet.</div>';
+  const fam = PD.kids.map(k => ({ ...k, phone: 'fam' }));
+  const sv = S.fees; S.fees = F;
+  const cards = PD.kids.map(k => { const f = feeFor(k, fam, F); return `<div class="card"><h3 class="h3">${esc(k.name)} · Class ${esc(k.cls)}</h3>${feeBreak(k, f)}</div>`; }).join('');
+  const total = PD.kids.map(k => feeFor(k, fam, F).month);
+  S.fees = sv;
+  return head('Fees', `Fee structure ${esc(F.session)} · paid every month`) + cards +
+    (PD.kids.length > 1 ? `<div class="card flex justify-between"><b>All children, every month</b><b>${total.some(x => x == null) ? 'Ask the office' : rs(total.reduce((a, b) => a + b, 0))}</b></div>` : '') +
+    `<div class="card"><h3 class="h3">Please note</h3><ol class="list-decimal pl-5 text-sm space-y-1 mt-2">${F.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ol>
+     <p class="text-xs text-slate-500 mt-2">For bank details and payment, contact the school office. This page shows the fee structure; it is not a bill.</p></div>`;
+}
+
 // ---------------------------------------------------------------- routes
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, fees: vFees, pfees: vPFees, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 

@@ -382,13 +382,14 @@ case 'pdata': {
     $teachers = $get('teacher');
     $ct = [];
     foreach ((array)sch_rec_get('classes', 'main') as $c) if (in_array($c['c'] ?? '', $classes, true)) $ct[$c['c']] = (string)($teachers[$c['ct'] ?? '']['name'] ?? '');
-    $kidsOut = array_map(fn($k) => ['id' => $k['id'], 'name' => $k['name'] ?? '', 'cls' => $k['cls'] ?? '', 'adm' => $k['adm'] ?? '', 'ct' => $ct[$k['cls'] ?? ''] ?? ''], $kids);
+    $kidsOut = array_map(fn($k) => ['id' => $k['id'], 'name' => $k['name'] ?? '', 'cls' => $k['cls'] ?? '', 'adm' => $k['adm'] ?? '', 'ct' => $ct[$k['cls'] ?? ''] ?? '',
+                                     'km' => isset($k['km']) && is_numeric($k['km']) ? (float)$k['km'] : null], $kids);
     $set = sch_rec_get('settings', 'main') ?? [];
     sch_json(['ok' => true, 'me' => ['role' => $u['role'], 'tid' => $u['tid'], 'label' => $u['label']],
         'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? ''),
         'kids' => $kidsOut, 'att' => $att, 'hw' => $hw, 'marks' => $marks, 'behav' => $behav, 'speak' => $speak,
         'remarks' => array_values(array_filter($get('toolRemark'), fn($r) => in_array($r['sid']??'', $ids, true) && ($r['session']??'')===(string)($set['session']??''))),
-        'notices' => $notices, 'cal' => array_values($get('cal')),
+        'notices' => $notices, 'cal' => array_values($get('cal')), 'fees' => sch_rec_get('fees', 'main'),
         // 'sent' = kis bachche ke ghar result gaya — doosre parents ko nahi dikhna chahiye
         'exams' => array_map(fn($e) => is_array($e) ? array_diff_key($e, ['sent' => 1]) : $e, (array)(sch_rec_get('exams', 'main') ?? []))]);
 }

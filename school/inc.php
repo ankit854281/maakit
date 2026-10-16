@@ -11,7 +11,7 @@ declare(strict_types=1);
 date_default_timezone_set('Asia/Kolkata');
 
 const SCH_KINDS = ['settings','classes','teacher','alloc','grid','exams','student','staffAtt','studAtt',
-                   'diary','signed','syl','marks','leave','notice','behav','speak','lplan','cal'];
+                   'diary','signed','syl','marks','leave','notice','behav','speak','lplan','cal','fees'];
 const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav'];
 const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal'];
 const SCH_SESSION_DAYS = 30;
