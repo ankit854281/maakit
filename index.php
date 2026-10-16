@@ -126,11 +126,11 @@ include __DIR__ . '/inc/head.php';
   <nav class="mk-go" aria-label="<?= h(t('Ride and parcel', 'सवारी और पार्सल')) ?>">
     <a class="mk-go-ride" href="/ride.php">
       <span class="mk-go-t"><small><?= t('Bike · Auto · E-rickshaw', 'बाइक · ऑटो · ई-रिक्शा') ?></small><b><?= t('Book a ride', 'सवारी बुक कीजिए') ?></b><em><?= t('Fare before you book', 'पहले किराया देखिए') ?> →</em></span>
-      <span class="mk-go-em" aria-hidden="true">🏍️</span>
+      <span class="mk-go-em" aria-hidden="true"><?= svc_icon('ride', 34) ?></span>
     </a>
     <a class="mk-go-parcel" href="/ride.php?t=parcel">
       <span class="mk-go-t"><small><?= t('Pick up & drop', 'उठाना · पहुँचाना') ?></small><b><?= t('Send a parcel', 'पार्सल भेजिए') ?></b><em><?= t('Tiffin, papers, medicine', 'टिफ़िन, काग़ज़, दवा') ?> →</em></span>
-      <span class="mk-go-em" aria-hidden="true">📦</span>
+      <span class="mk-go-em" aria-hidden="true"><?= svc_icon('box', 34) ?></span>
     </a>
   </nav>
   <?php if (!empty($tick_hul) && !empty($tick)): ?>
@@ -210,14 +210,51 @@ include __DIR__ . '/inc/head.php';
   </section>
   <?php endif; ?>
 
-  <section class="mk-sec">
-    <div class="mk-sec-head"><h2><?= t('More from Maakit', 'Maakit की और सेवाएँ') ?></h2></div>
-    <div class="mk-svcs">
-      <a href="/sewa.php"><span class="mk-cat-ic"><?= svc_icon('ride',26) ?></span><b><?= t('Book a vehicle','गाड़ी बुक करें') ?></b><small><?= t('Bolero, tempo, tent & more','बोलेरो, टेम्पो, टेंट') ?></small></a>
-      <a href="/order.php#pata"><span class="mk-cat-ic"><?= svc_icon('box',26) ?></span><b><?= t('Snap & order','फ़ोटो से ऑर्डर') ?></b><small><?= t('Photo of your list or an empty pack','लिस्ट या खाली पैकेट की फ़ोटो') ?></small></a>
-      <a href="/directory.php"><span class="mk-cat-ic"><?= svc_icon('shops',26) ?></span><b><?= t('Find a shop','दुकान खोजें') ?></b><small><?= t('Shops & local pros','दुकानें और कारीगर') ?></small></a>
-      <a href="/books.php"><span class="mk-cat-ic"><?= svc_icon('book',26) ?></span><b><?= t('Old books','पुरानी किताबें') ?></b><small><?= t('Buy, sell, exchange','खरीदें, बेचें') ?></small></a>
+  <section class="mk-sec mk-services" aria-labelledby="mk-services-title">
+    <div class="mk-services-head">
+      <div><span class="mk-services-kicker"><?= t('MAAKIT SERVICES', 'Maakit की सेवाएँ') ?></span>
+        <h2 id="mk-services-title"><?= t('Everyday needs, all in one place', 'रोज़ की ज़रूरतें, एक ही जगह') ?></h2>
+        <p><?= t('Shop nearby, book local help, or arrange a ride. Choose what you need.', 'पास की दुकान से सामान लें, स्थानीय सेवा बुक करें या सवारी मँगाएँ।') ?></p>
+      </div>
+      <a href="/public/index.php"><?= t('Explore all', 'सब देखें') ?> <span aria-hidden="true">→</span></a>
     </div>
+    <div class="mk-svcs mk-service-grid">
+      <a href="/bazaar.php" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('grocery', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Shop nearby', 'पास की दुकानों से') ?></b><small><?= t('Groceries, medicine & daily needs', 'राशन, दवाई और रोज़ का सामान') ?></small><em><?= t('Browse shops', 'दुकानें देखें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <a href="/ride.php" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('ride', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Book a ride', 'सवारी बुक करें') ?></b><small><?= t('Bike, auto & e-rickshaw', 'बाइक, ऑटो और ई-रिक्शा') ?></small><em><?= t('See fare first', 'पहले किराया देखें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <a href="/ride.php?t=parcel" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('box', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Send a parcel', 'पार्सल भेजें') ?></b><small><?= t('Local pick-up and drop', 'आस-पास से उठवाएँ, पहुँचवाएँ') ?></small><em><?= t('Arrange a drop', 'पिक-अप बुक करें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <a href="/sewa.php" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('all', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Book local services', 'स्थानीय सेवा बुक करें') ?></b><small><?= t('Vehicles, events & home help', 'गाड़ी, कार्यक्रम और घर के काम') ?></small><em><?= t('See bookings', 'बुकिंग देखें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <a href="/directory.php" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('shops', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Find local businesses', 'स्थानीय दुकानें खोजें') ?></b><small><?= t('Shops and nearby professionals', 'दुकानें और आस-पास के कारीगर') ?></small><em><?= t('Open directory', 'सूची देखें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <a href="/track.php" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('box', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Track an order', 'ऑर्डर की स्थिति देखें') ?></b><small><?= t('Check your order updates', 'अपने ऑर्डर की ताज़ा जानकारी') ?></small><em><?= t('View orders', 'ऑर्डर देखें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <a href="/books.php" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('book', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Second-hand books', 'पुरानी किताबें') ?></b><small><?= t('Find, buy or list used books', 'पुरानी किताबें खोजें या बेचें') ?></small><em><?= t('Browse books', 'किताबें देखें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <?php if ($live): ?>
+      <a href="/salon.php?id=<?= (int)$live[0]['id'] ?>" class="mk-service-card">
+        <span class="mk-cat-ic"><?= svc_icon('salon', 25) ?></span>
+        <span class="mk-service-copy"><b><?= t('Salon seat booking', 'नाई / पार्लर की सीट') ?></b><small><?= t('See live local salon availability', 'पास के सैलून की उपलब्धता देखें') ?></small><em><?= t('Open salon', 'सैलून खोलें') ?> <i aria-hidden="true">→</i></em></span>
+      </a>
+      <?php endif; ?>
+    </div>
+    <p class="mk-services-note"><?= t('Service availability depends on your selected area.', 'सेवा की उपलब्धता चुने हुए इलाके पर निर्भर है।') ?></p>
   </section>
 
   <?php if ($banners): ?>
