@@ -97,6 +97,21 @@ $try(['k' => 'marks',   'r' => 'hy|10th|Hindi',         'd' => ['max' => 40, 'm'
 $try(['k' => 'leave',   'r' => 'L1', 'd' => ['id' => 'L1', 'tid' => 'K', 'status' => 'Pending', 'from' => $today, 'to' => $today]], true, 'teacher could not ask leave');
 $try(['k' => 'leave',   'r' => 'L1', 'd' => ['id' => 'L1', 'tid' => 'K', 'status' => 'Approved', 'from' => $today, 'to' => $today]], false, 'teacher approved own leave');
 $try(['k' => 'syl',     'r' => '9th|Social Science', 'd' => ['chapters' => [['n' => 'Ch 1', 'done' => null]]]], true, 'teacher could not update own syllabus');
+// naye hisse: behaviour, speaking, lesson plan, calendar
+$try(['k' => 'behav', 'r' => "$today|b1", 'd' => ['id' => 'b1', 'sid' => 's1', 'cls' => '9th',  'pts' => 1, 'tid' => 'K']],  true,  'teacher could not give behaviour points in own class');
+$try(['k' => 'behav', 'r' => "$today|b2", 'd' => ['id' => 'b2', 'sid' => 's1', 'cls' => '10th', 'pts' => 1, 'tid' => 'K']],  false, 'teacher gave points in a class they do not teach');
+$try(['k' => 'behav', 'r' => "$today|b3", 'd' => ['id' => 'b3', 'sid' => 's1', 'cls' => '9th',  'pts' => 1, 'tid' => 'MA']], false, 'teacher wrote behaviour in another teacher\'s name');
+$try(['k' => 'speak', 'r' => 'sp1', 'd' => ['id' => 'sp1', 'cls' => '9th', 'students' => ['s1'], 'tid' => 'K']], true, 'teacher could not log speaking');
+$wk = date('Y-m-d', strtotime('monday this week'));
+$try(['k' => 'lplan', 'r' => "$wk|K|9th|Social Science", 'd' => ['tid' => 'K', 'status' => 'Submitted', 'topics' => 'Federalism']], true,  'teacher could not submit lesson plan');
+$try(['k' => 'lplan', 'r' => "$wk|K|9th|Social Science", 'd' => ['tid' => 'K', 'status' => 'Approved',  'topics' => 'Federalism']], false, 'teacher approved own lesson plan');
+$try(['k' => 'cal',   'r' => 'c1', 'd' => ['id' => 'c1', 'date' => $today, 'title' => 'Holiday', 'type' => 'Holiday']], false, 'teacher changed the calendar');
+[, , $j] = sf_api('sync', ['put' => [['k' => 'lplan', 'r' => "$wk|K|9th|Social Science", 'd' => ['tid' => 'K', 'status' => 'Approved', 'topics' => 'Federalism']]]], $P);
+sf_check(count($j['done']) === 1, 'principal could not approve a lesson plan');
+$try(['k' => 'lplan', 'r' => "$wk|K|9th|Social Science", 'd' => ['tid' => 'K', 'status' => 'Submitted', 'topics' => 'changed']], false, 'teacher changed an approved plan');
+[, , $j] = sf_api('sync', ['del' => [['k' => 'speak', 'r' => 'sp1']]], $K);
+sf_check(count($j['done']) === 1, 'teacher could not delete own speaking entry');
+
 [, , $j] = sf_api('sync', ['del' => [['k' => 'student', 'r' => 's1']]], $K);
 sf_check(count($j['rejected']) === 1, 'teacher deleted a student');
 

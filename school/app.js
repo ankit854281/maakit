@@ -77,12 +77,12 @@ function freshState() {
     staffAtt: {}, studAtt: {}, diary: {}, signed: {}, syl: seedSyllabus(),
     exams: [ { id:'ut1', name:'Unit Test 1', date:'2026-07-20' }, { id:'hy', name:'Half-Yearly', date:'2026-09-25' },
              { id:'ut2', name:'Unit Test 2', date:'2026-11-20' }, { id:'ann', name:'Annual Exam', date:'2027-03-10' } ],
-    marks: {}, leaves: [], notices: []
+    marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: []
   };
 }
 function emptyState() {
   return { settings: {}, classes: [], teachers: {}, alloc: [], grid: null, students: [], staffAtt: {}, studAtt: {}, diary: {},
-           signed: {}, syl: {}, exams: [], marks: {}, leaves: [], notices: [], log: [] };
+           signed: {}, syl: {}, exams: [], marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: [], log: [] };
 }
 
 // ---------------------------------------------------------------- server sync
@@ -98,7 +98,7 @@ let SYNCED = {};                 // record key -> JSON last confirmed by server
 let pendingLog = [];
 let lastV = 0, lastLogId = 0, loadedFrom = null;
 const DAYS_LOADED = {};
-const DELETABLE = ['student', 'notice', 'teacher'];
+const DELETABLE = ['student', 'notice', 'teacher', 'behav', 'speak', 'cal'];
 const SAFE_VIEWS = ['dash', 'staff', 'timetable', 'diaries', 'results', 'log', 'mytoday', 'myweek', 'attendance'];
 let syncTimer = null, syncing = false, netState = 'ok';
 
@@ -136,6 +136,10 @@ function toRecords() {
   Object.entries(S.marks).forEach(([e, byK]) => Object.entries(byK).forEach(([k, v]) => put('marks', e + '|' + k, v)));
   S.leaves.forEach(l => put('leave', l.id, l));
   S.notices.forEach(n => put('notice', n.id, n));
+  Object.entries(S.behav).forEach(([d, byId]) => Object.entries(byId).forEach(([id, v]) => put('behav', d + '|' + id, v)));
+  S.speak.forEach(x => put('speak', x.id, x));
+  Object.entries(S.lplan).forEach(([k, v]) => put('lplan', k, v));
+  S.cal.forEach(e => put('cal', e.id, e));
   return R;
 }
 function setRec(k, r, d) {
@@ -156,12 +160,19 @@ function setRec(k, r, d) {
     case 'marks': { const i = r.indexOf('|'); (S.marks[r.slice(0, i)] = S.marks[r.slice(0, i)] || {})[r.slice(i + 1)] = d; break; }
     case 'leave': { const i = S.leaves.findIndex(x => x.id === r); if (i >= 0) S.leaves[i] = d; else S.leaves.push(d); S.leaves.sort((a, b) => (b.at || 0) - (a.at || 0)); break; }
     case 'notice': { const i = S.notices.findIndex(x => x.id === r); if (i >= 0) S.notices[i] = d; else S.notices.push(d); S.notices.sort((a, b) => String(b.date).localeCompare(String(a.date))); break; }
+    case 'behav': (S.behav[p[0]] = S.behav[p[0]] || {})[p[1]] = d; break;
+    case 'speak': { const i = S.speak.findIndex(x => x.id === r); if (i >= 0) S.speak[i] = d; else S.speak.push(d); break; }
+    case 'lplan': S.lplan[r] = d; break;
+    case 'cal': { const i = S.cal.findIndex(x => x.id === r); if (i >= 0) S.cal[i] = d; else S.cal.push(d); S.cal.sort((a, b) => a.date.localeCompare(b.date)); break; }
   }
 }
 function removeRec(k, r) {
   if (k === 'student') S.students = S.students.filter(x => x.id !== r);
   else if (k === 'notice') S.notices = S.notices.filter(x => x.id !== r);
   else if (k === 'teacher') delete S.teachers[r];
+  else if (k === 'behav') { const p = r.split('|'); if (S.behav[p[0]]) delete S.behav[p[0]][p[1]]; }
+  else if (k === 'speak') S.speak = S.speak.filter(x => x.id !== r);
+  else if (k === 'cal') S.cal = S.cal.filter(x => x.id !== r);
 }
 function applyRemote(recs) {
   let changed = false; const local = toRecords();
@@ -364,7 +375,7 @@ function staffAbsent(date) {
   return [...new Set([...manual, ...onLeave])];
 }
 function arrangement(date) {
-  const d = dayIdx(date); if (d < 0 || !S.grid) return [];
+  const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const absent = staffAbsent(date), extra = {}, slips = [];
   absent.forEach(t => BELLS.forEach((b, i) => {
     const a = teacherAt(t, d, i); if (!a) return;
@@ -383,7 +394,7 @@ function arrangement(date) {
   return slips.sort((x, y) => x.bell - y.bell);
 }
 function myBells(tid, date) {
-  const d = dayIdx(date); if (d < 0 || !S.grid) return [];
+  const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   if (staffAbsent(date).includes(tid)) return [];
   const out = [];
   BELLS.forEach((b, i) => { const a = teacherAt(tid, d, i); if (a) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
@@ -446,6 +457,7 @@ function studentById(id) { return S.students.find(s => s.id === id); }
 function alerts(date) {
   const A = [], isToday = date === todayISO();
   if (dayIdx(date) < 0) return [{ lv:'b', x:'Sunday — no classes.' }];
+  const hol = holidayOn(date); if (hol) return [{ lv:'b', x:'Holiday: ' + hol.title + ' — no classes.' }];
   if (!isToday || nowMin() >= toMin(S.settings.attendanceCutoff)) {
     const missing = CLASS_NAMES.filter(c => studentsOf(c).length && !attOf(date, c));
     if (missing.length) A.push({ lv:'r', x:`Student attendance not marked: Class ${missing.join(', ')}`, go:'attendance' });
@@ -454,6 +466,8 @@ function alerts(date) {
   if (pend.length) A.push({ lv:'a', x:`Diary pending: ${pend.map(([t, n]) => T(t).name + ' (' + n + ')').join(', ')}`, go:'diaries', wa: pend.map(([t]) => t) });
   const unc = arrangement(date).filter(s => !s.sub);
   if (unc.length) A.push({ lv:'r', x:`${unc.length} bell(s) with no free teacher to cover — see Arrangement`, go:'staff' });
+  const lpw = Object.values(S.lplan).filter(p => p.status === 'Submitted');
+  if (lpw.length) A.push({ lv:'a', x:`${lpw.length} lesson plan(s) waiting for your approval`, go:'lplans' });
   const pl = S.leaves.filter(l => l.status === 'Pending');
   if (pl.length) A.push({ lv:'a', x:`${pl.length} leave request(s) waiting for approval`, go:'staff' });
   const ab3 = threeDayAbsentees(date);
@@ -487,11 +501,14 @@ async function go(v, params) { view = v; P = params || {}; if (P.date) await ens
 const NAV = {
   principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
-              ['results','fa-square-poll-vertical','Results'],['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
+              ['lplans','fa-clipboard-check','Lesson Plans'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
+              ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
+              ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
-  teacher:   [['mytoday','fa-sun','Today'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['syllabus','fa-list-check','Syllabus'],
-              ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['leave','fa-plane-departure','Leave']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['results','fa-square-poll-vertical','Results'],['syllabus','fa-list-check','Syllabus'],['log','fa-clock-rotate-left','Activity Log']]
+  teacher:   [['mytoday','fa-sun','Today'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
+              ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
+              ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
+  chairman:  [['dash','fa-gauge','Dashboard'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
 function render() {
@@ -621,6 +638,7 @@ function vDash() {
       ${tile('Teacher Diary', ds.filled + '/' + ds.due, 'bells filled (finished bells)', 'fa-book-open', 'bg-purple-50 text-purple-700')}
       ${tile('Syllabus Behind', lag, 'of ' + sylKeys.length + ' tracked subjects', 'fa-chart-line', lag ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700')}
     </div>
+    ${wordCard(date, true)}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="card lg:col-span-2 space-y-2">
         <h3 class="font-bold"><i class="fa-solid fa-bell text-amber-500 mr-1"></i> Automatic Alerts</h3>
@@ -756,6 +774,7 @@ function vMyToday() {
   const myLeaves = S.leaves.filter(l => l.tid === tid).slice(0, 2);
   return head(`Namaste, ${esc(T(tid).name)}`, fmtDate(date) + (dayIdx(date) >= 0 ? '' : ' • Sunday'), dateInput('m-date', date, "go('mytoday',{date:this.value})")) + `
     ${absent ? '<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">You are marked absent / on leave for this day.</div>' : ''}
+    ${wordCard(date)}
     ${ctOf.map(c => { const a = attOf(date, c); return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a ? '' : 'border-amber-300 bg-amber-50'}">
       <span><b>Class ${c} attendance</b> (you are Class Teacher): ${a ? `<span class="text-emerald-700 font-semibold">Done — ${studentsOf(c).length - a.absent.length}/${studentsOf(c).length} present</span>` : '<span class="text-amber-700 font-semibold">Not marked yet</span>'}</span>
       <button onclick="go('attendance',{c:'${c}',date:'${date}'})" class="btn btn-sm ${a ? 'btn-l' : 'btn-p'}">${a ? 'View' : 'Mark now'}</button></div>`; }).join('')}
@@ -766,7 +785,7 @@ function vMyToday() {
           ${b.arr ? `<span class="pill bg-rose-600 text-white ml-1">ARRANGEMENT for ${esc(T(b.for).name)}</span>` : ''}
           ${e ? `<p class="text-xs text-slate-600 mt-1">Topic: ${esc(e.topic)}</p>` : ''}</div>
           <button onclick="go('diary',{date:'${date}',bell:${b.bell}})" class="btn btn-sm ${e ? 'btn-l' : 'btn-p'}">${e ? '<i class="fa-solid fa-check text-emerald-600"></i> Diary' : 'Fill diary'}</button></div>`; }).join('')}</div>`
-        : `<p class="text-sm text-slate-500">${dayIdx(date) < 0 ? 'Sunday — no classes.' : 'No bells assigned.'}</p>`}</div>
+        : `<p class="text-sm text-slate-500">${dayIdx(date) < 0 ? 'Sunday — no classes.' : holidayOn(date) ? 'Holiday: ' + esc(holidayOn(date).title) : 'No bells assigned.'}</p>`}</div>
     ${notices.length ? `<div class="card"><h3 class="font-bold mb-2">Notices</h3>${notices.map(n => `<div class="border-l-4 border-indigo-500 pl-3 mb-2"><b>${esc(n.title)}</b> <span class="text-xs text-slate-400">${fmtDate(n.date)}</span><p class="text-sm text-slate-600 whitespace-pre-wrap">${esc(n.body)}</p></div>`).join('')}</div>` : ''}
     ${myLeaves.length ? `<div class="card"><h3 class="font-bold mb-2">My Leave Requests</h3>${myLeaves.map(l => `<p class="text-sm">${fmtDate(l.from)} • ${esc(l.reason)} — <b class="${l.status === 'Approved' ? 'text-emerald-700' : l.status === 'Rejected' ? 'text-rose-700' : 'text-amber-700'}">${l.status}</b></p>`).join('')}</div>` : ''}`;
 }
@@ -1151,12 +1170,739 @@ function removeTeacher(k) {
 function setCT(i, t) { const old = CLASSES[i].ct; S.classes = CLASSES.map(x => ({ ...x })); S.classes[i].ct = t; refreshClasses(); log('Settings', `Class ${CLASSES[i].c} class teacher: ${T(old).name} → ${T(t).name}`); render(); }
 function backup() { download('school-erp-copy-' + todayISO() + '.json', JSON.stringify({ ...S, log: undefined }), 'application/json'); log('Backup', 'Copy of data downloaded'); }
 
+// ---------------------------------------------------------------- WORD OF THE DAY + CONVERSATION STARTERS (built in)
+// word | meaning | हिंदी | example. One word per day of the year (day 1 = 1 Jan).
+const WORD_BANK = `abundant|more than enough|प्रचुर|Water is abundant in our village after the rains.
+accurate|correct in every detail|सटीक|Please give an accurate answer.
+achieve|to succeed in doing something|हासिल करना|She worked hard to achieve good marks.
+admire|to respect and like someone|प्रशंसा करना|I admire my grandfather's honesty.
+adventure|an exciting experience|साहसिक कार्य|The trip to the hills was a great adventure.
+advice|a suggestion about what to do|सलाह|My teacher gave me good advice.
+ancient|very old|प्राचीन|Varanasi is an ancient city.
+anxious|worried|चिंतित|He was anxious before the exam.
+appreciate|to value something|सराहना करना|We appreciate your help.
+approach|to come near|पास आना|The bus is approaching the stop.
+arrange|to put in order|व्यवस्थित करना|Arrange the books on the shelf.
+assist|to help|सहायता करना|Can you assist me with this bag?
+attentive|paying careful attention|ध्यान देने वाला|An attentive student learns quickly.
+available|ready to be used|उपलब्ध|Is the library available after school?
+aware|knowing about something|जागरूक|We must be aware of road safety.
+balance|an equal amount on both sides|संतुलन|Keep a balance between study and play.
+beneficial|helpful, good for you|लाभदायक|Exercise is beneficial for health.
+boast|to talk too proudly about yourself|डींग मारना|He likes to boast about his new bike.
+brave|ready to face danger|बहादुर|The brave soldier saved the child.
+brief|short|संक्षिप्त|Give a brief answer.
+brilliant|very clever or bright|शानदार|That was a brilliant idea.
+calm|peaceful, not excited|शांत|Stay calm during the fire drill.
+capable|able to do something|सक्षम|You are capable of doing better.
+careless|not paying attention|लापरवाह|A careless mistake cost him two marks.
+celebrate|to do something special for a happy event|उत्सव मनाना|We celebrate Diwali with our family.
+challenge|a difficult task|चुनौती|Learning a new language is a challenge.
+cheerful|happy and positive|प्रसन्नचित्त|Our class teacher is always cheerful.
+clever|quick to learn and understand|चतुर|The clever fox found a way out.
+collect|to bring things together|इकट्ठा करना|We collect old newspapers for recycling.
+comfortable|giving a pleasant, relaxed feeling|आरामदायक|This chair is very comfortable.
+compare|to see how things are alike or different|तुलना करना|Compare the two pictures.
+complete|to finish|पूरा करना|Complete your homework before playing.
+confident|sure of yourself|आत्मविश्वासी|Speak in a confident voice.
+confuse|to mix up|उलझन में डालना|These two words often confuse students.
+connect|to join together|जोड़ना|Connect the wires carefully.
+consider|to think carefully about|विचार करना|Consider all options before deciding.
+courage|bravery|साहस|It takes courage to tell the truth.
+courteous|polite and respectful|विनम्र|Be courteous to every visitor.
+create|to make something new|बनाना|Let us create a poster for Earth Day.
+curious|wanting to know more|जिज्ञासु|Curious children ask many questions.
+damage|harm|नुकसान|The storm caused damage to the crops.
+decide|to make a choice|निर्णय लेना|I decided to join the science club.
+decrease|to become less|घटना|Prices decrease after the festival.
+delicious|very tasty|स्वादिष्ट|Mother made delicious kheer.
+depend|to rely on|निर्भर होना|Farmers depend on the monsoon.
+describe|to tell what something is like|वर्णन करना|Describe your favourite place.
+deserve|to earn something by your actions|हकदार होना|You deserve the prize.
+determined|having a firm decision|दृढ़ निश्चयी|She is determined to become a doctor.
+develop|to grow or improve|विकसित करना|Reading develops your vocabulary.
+difference|the way things are not the same|अंतर|What is the difference between a frog and a toad?
+diligent|hard-working and careful|परिश्रमी|A diligent student never misses homework.
+disappear|to go out of sight|गायब होना|The sun disappeared behind the clouds.
+discover|to find something new|खोजना|Scientists discover new medicines.
+discuss|to talk about something with others|चर्चा करना|Let us discuss the story in groups.
+eager|very keen|उत्सुक|The children were eager to see the circus.
+effort|hard work|प्रयास|Your effort will bring success.
+elderly|old (polite word)|बुज़ुर्ग|Help elderly people cross the road.
+encourage|to give support and hope|प्रोत्साहित करना|Teachers encourage us to read.
+enormous|very big|विशाल|An elephant is an enormous animal.
+environment|the natural world around us|पर्यावरण|Keep the environment clean.
+essential|very important, necessary|आवश्यक|Water is essential for life.
+estimate|to guess the amount|अनुमान लगाना|Estimate the length of the room.
+examine|to look at closely|जांचना|The doctor examined the patient.
+excellent|very good|उत्कृष्ट|You did an excellent job.
+explain|to make something clear|समझाना|Can you explain this sum?
+explore|to travel to learn about a place|खोज करना|We explored the old fort.
+fair|treating everyone equally|निष्पक्ष|The umpire was fair to both teams.
+familiar|well known|परिचित|This song sounds familiar.
+famous|known by many people|प्रसिद्ध|Bhadohi is famous for its carpets.
+fascinate|to interest greatly|मोहित करना|Stars fascinate me.
+fierce|wild and violent|भयंकर|A fierce wind blew all night.
+flexible|able to bend easily|लचीला|Rubber is flexible.
+fortunate|lucky|भाग्यशाली|We are fortunate to have good teachers.
+fragile|easily broken|नाज़ुक|Glass is fragile; handle it with care.
+frequent|happening often|बार-बार होने वाला|We have frequent power cuts in summer.
+generous|happy to give to others|उदार|He is generous with his time.
+gentle|kind and soft|कोमल|Be gentle with the puppy.
+genuine|real, true|असली|This is a genuine leather bag.
+gigantic|extremely large|विशालकाय|The ship was gigantic.
+glance|a quick look|झलक|She took a quick glance at the clock.
+gradual|slow and steady|क्रमिक|There was a gradual rise in temperature.
+grateful|thankful|आभारी|I am grateful for your help.
+guide|to show the way|मार्गदर्शन करना|The teacher guided us through the museum.
+habit|something you do regularly|आदत|Reading daily is a good habit.
+harmful|causing harm|हानिकारक|Smoking is harmful to health.
+harvest|the gathering of crops|फसल कटाई|The wheat harvest is in April.
+hesitate|to pause before doing something|हिचकिचाना|Do not hesitate to ask questions.
+honest|truthful|ईमानदार|An honest boy returned the lost wallet.
+humble|not proud|विनम्र|Great people are humble.
+identify|to recognise|पहचानना|Can you identify this bird?
+imagine|to form a picture in the mind|कल्पना करना|Imagine a world without trees.
+immediate|happening at once|तुरंत|The injury needs immediate care.
+important|of great value|महत्वपूर्ण|Sleep is important for growth.
+improve|to make better|सुधारना|Practice will improve your handwriting.
+include|to make part of a group|शामिल करना|Include everyone in the game.
+increase|to become more|बढ़ना|The number of students has increased.
+independent|not needing help from others|स्वतंत्र|India became independent in 1947.
+inform|to tell|सूचित करना|Please inform the office if you are absent.
+innocent|not guilty|निर्दोष|The innocent man was set free.
+inspire|to fill with the wish to do something|प्रेरित करना|Kalam's life inspires students.
+intelligent|able to learn and understand well|बुद्धिमान|Dolphins are intelligent animals.
+interrupt|to stop someone while they speak|बीच में टोकना|Do not interrupt when others are speaking.
+invent|to make something for the first time|आविष्कार करना|Who invented the telephone?
+investigate|to find out the facts|जांच करना|The police investigated the theft.
+journey|travel from one place to another|यात्रा|The journey to Delhi took ten hours.
+judge|to form an opinion|आंकना|Do not judge a book by its cover.
+kind|caring and helpful|दयालु|Be kind to animals.
+knowledge|what you know|ज्ञान|Books give us knowledge.
+labour|hard physical work|श्रम|The house was built with great labour.
+lazy|not wanting to work|आलसी|The lazy cat slept all day.
+legend|a famous old story|किंवदंती|There is a legend about this temple.
+liberty|freedom|स्वतंत्रता|Liberty is a basic right.
+limit|the greatest amount allowed|सीमा|There is a speed limit near schools.
+locate|to find the place of|स्थान पता करना|Locate Bhadohi on the map.
+loyal|faithful|वफ़ादार|A dog is a loyal friend.
+magnificent|very beautiful and grand|भव्य|The Taj Mahal is magnificent.
+maintain|to keep in good condition|बनाए रखना|Maintain silence in the library.
+measure|to find the size or amount|मापना|Measure the table with a scale.
+memory|the power to remember|स्मृति|She has a sharp memory.
+method|a way of doing something|तरीका|Use the correct method to solve the sum.
+mischief|naughty behaviour|शरारत|The twins are full of mischief.
+modern|new, of the present time|आधुनिक|Our school has a modern computer lab.
+modest|not boasting|सरल स्वभाव का|He is modest about his success.
+motivate|to give a reason to act|प्रेरित करना|Prizes motivate students.
+mysterious|hard to explain|रहस्यमय|We heard a mysterious sound at night.
+narrow|not wide|संकरा|The lane is too narrow for a bus.
+necessary|needed|ज़रूरी|An admit card is necessary for the exam.
+neglect|to not take care of|उपेक्षा करना|Do not neglect your health.
+nervous|worried and afraid|घबराया हुआ|I felt nervous on stage.
+noble|good and honest in character|महान|Helping the poor is a noble act.
+notice|to see or become aware of|ध्यान देना|Did you notice the new board?
+nourish|to give food for growth|पोषण देना|Milk nourishes the body.
+numerous|many|अनेक|There are numerous stars in the sky.
+obey|to do what you are told|आज्ञा मानना|Obey the traffic rules.
+observe|to watch carefully|अवलोकन करना|Observe the plant for a week.
+obstacle|something in the way|बाधा|Hard work removes every obstacle.
+obtain|to get|प्राप्त करना|You can obtain the form from the office.
+occasion|a special event|अवसर|A birthday is a happy occasion.
+occupy|to fill or take up|घेरना|The books occupy the whole shelf.
+opinion|what you think about something|राय|What is your opinion about the film?
+opportunity|a good chance|मौका|This trip is a great opportunity to learn.
+opposite|completely different|विपरीत|Hot is the opposite of cold.
+ordinary|normal, not special|साधारण|It was an ordinary day.
+organise|to plan and arrange|आयोजित करना|We will organise a sports day.
+original|first, not copied|मौलिक|Write an original story.
+patient|able to wait calmly|धैर्यवान|Be patient; your turn will come.
+peculiar|strange|अजीब|There is a peculiar smell in the kitchen.
+perform|to do or act|प्रदर्शन करना|Our class will perform a skit.
+permanent|lasting for ever|स्थायी|Use a permanent marker on the label.
+permit|to allow|अनुमति देना|Mobile phones are not permitted in class.
+persuade|to make someone agree|मनाना|She persuaded her father to buy a cycle.
+pleasant|nice, enjoyable|सुहावना|The weather is pleasant today.
+polite|having good manners|शिष्ट|Always be polite to elders.
+popular|liked by many people|लोकप्रिय|Cricket is popular in India.
+positive|hopeful and confident|सकारात्मक|Keep a positive attitude.
+precious|very valuable|कीमती|Time is precious.
+predict|to say what will happen|भविष्यवाणी करना|Can you predict the weather?
+prefer|to like one thing more than another|पसंद करना|I prefer tea to coffee.
+prepare|to get ready|तैयार करना|Prepare well for the test.
+preserve|to keep safe|संरक्षित करना|We must preserve our forests.
+prevent|to stop something from happening|रोकना|Washing hands prevents disease.
+previous|coming before|पिछला|Revise the previous chapter.
+pride|a feeling of satisfaction|गर्व|We take pride in our school.
+probable|likely to happen|संभावित|Rain is probable this evening.
+produce|to make or grow|उत्पादन करना|Bhadohi produces fine carpets.
+progress|forward movement, improvement|प्रगति|Your progress in English is good.
+promise|to say you will surely do something|वादा करना|I promise to be on time.
+protect|to keep safe from harm|रक्षा करना|Helmets protect our heads.
+proud|feeling pleased about something|गर्वित|Parents are proud of their children.
+provide|to give|प्रदान करना|Trees provide shade.
+punctual|on time|समय का पाबंद|A punctual student is never late.
+purpose|the reason for something|उद्देश्य|What is the purpose of this meeting?
+puzzle|a problem to solve|पहेली|This maths puzzle is fun.
+quarrel|an angry argument|झगड़ा|The brothers had a quarrel over the remote.
+quality|how good something is|गुणवत्ता|This shop sells good quality cloth.
+quantity|amount|मात्रा|Add a small quantity of salt.
+quiet|making little noise|शांत|Please be quiet in the hall.
+rapid|very fast|तेज़|There was rapid growth in the town.
+rare|not common|दुर्लभ|The tiger is a rare animal now.
+reason|why something happens|कारण|What is the reason for your delay?
+recall|to remember|याद करना|Can you recall the poem?
+receive|to get something given|प्राप्त करना|I received a letter today.
+recognise|to know again|पहचानना|I did not recognise you in uniform.
+recommend|to suggest as good|सिफ़ारिश करना|I recommend this book.
+reduce|to make smaller|कम करना|Reduce the use of plastic.
+refuse|to say no|मना करना|He refused to give up.
+regular|happening at fixed times|नियमित|Regular practice brings success.
+relax|to rest|आराम करना|Relax after the exam.
+reliable|can be trusted|भरोसेमंद|He is a reliable friend.
+remarkable|worth noticing|उल्लेखनीय|She made remarkable progress.
+remind|to help someone remember|याद दिलाना|Remind me to bring the map.
+remove|to take away|हटाना|Remove your shoes before entering.
+repair|to fix|मरम्मत करना|The mechanic repaired the bus.
+replace|to put something new instead|बदलना|Replace the old bulb.
+request|to ask politely|अनुरोध करना|I request you to grant me leave.
+rescue|to save from danger|बचाना|The boatman rescued the child.
+respect|to admire and honour|सम्मान करना|Show respect to everyone.
+responsible|having a duty to look after|ज़िम्मेदार|The monitor is responsible for the class.
+result|what happens because of something|परिणाम|The result of hard work is success.
+reveal|to show something hidden|प्रकट करना|The magician revealed his trick.
+reward|a prize for good work|पुरस्कार|She got a reward for honesty.
+rough|not smooth|खुरदरा|The road is rough after the rain.
+rural|of the village|ग्रामीण|Most of India is rural.
+sacred|holy|पवित्र|The Ganga is a sacred river.
+satisfy|to make happy by giving what is needed|संतुष्ट करना|The answer satisfied the teacher.
+scarce|not enough|कम|Water is scarce in summer.
+scatter|to throw in different directions|बिखेरना|The wind scattered the papers.
+schedule|a plan of times|समय-सारणी|Check the exam schedule.
+select|to choose|चुनना|Select the correct answer.
+sensible|wise, having good sense|समझदार|That is a sensible decision.
+serious|important, not funny|गंभीर|Pollution is a serious problem.
+shelter|a place for safety|आश्रय|The tree gave us shelter from the rain.
+shiver|to shake from cold or fear|काँपना|We shivered in the cold wind.
+signal|a sign that gives a message|संकेत|Wait for the green signal.
+similar|almost the same|समान|The twins look similar.
+sincere|honest and true|सच्चा|Please accept my sincere thanks.
+skill|the ability to do something well|कौशल|Typing is a useful skill.
+solution|the answer to a problem|हल|We found a solution to the problem.
+spacious|having a lot of space|खुला-बड़ा|Our new classroom is spacious.
+splendid|very good, grand|शानदार|We had a splendid holiday.
+spread|to open out over an area|फैलाना|Spread the mat on the floor.
+steady|firm and not shaking|स्थिर|Hold the ladder steady.
+strength|power|शक्ति|Unity is strength.
+struggle|to try hard against difficulty|संघर्ष करना|The farmer struggled through the drought.
+succeed|to do what you tried to do|सफल होना|If you try hard, you will succeed.
+sudden|happening quickly without warning|अचानक|There was a sudden storm.
+suggest|to put forward an idea|सुझाव देना|I suggest we start early.
+suitable|right for the purpose|उपयुक्त|Wear suitable clothes for the trip.
+supply|to give what is needed|आपूर्ति करना|The well supplies water to the village.
+support|to help and encourage|समर्थन करना|Friends support each other.
+surface|the outside layer|सतह|The surface of the table is smooth.
+surround|to be all around|घेरना|Trees surround our school.
+survive|to stay alive|जीवित रहना|Camels survive in the desert.
+suspect|to think something may be true|संदेह करना|I suspect he forgot his book.
+sympathy|feeling sorry for someone|सहानुभूति|We felt sympathy for the injured dog.
+talent|a natural ability|प्रतिभा|She has a talent for singing.
+tasty|having a good flavour|स्वादिष्ट|The samosas were very tasty.
+temporary|lasting a short time|अस्थायी|This is a temporary classroom.
+tender|soft and gentle|कोमल|Cook the vegetables till they are tender.
+thorough|complete and careful|पूरी तरह|Do a thorough revision.
+thrill|a feeling of great excitement|रोमांच|Winning the match was a thrill.
+tidy|neat and in order|साफ़-सुथरा|Keep your desk tidy.
+tiny|very small|बहुत छोटा|An ant is a tiny insect.
+tradition|a custom passed down|परंपरा|Lighting diyas is a Diwali tradition.
+transport|to carry from one place to another|ढोना|The bus transports students to school.
+treasure|valuable things|ख़ज़ाना|Books are a treasure.
+tremble|to shake|काँपना|His hands trembled with fear.
+trust|to believe someone is honest|भरोसा करना|I trust my best friend.
+typical|usual|सामान्य|Rice and dal is a typical lunch.
+unique|one of a kind|अनोखा|Every fingerprint is unique.
+unite|to join together|एक होना|Let us unite to clean our town.
+urgent|needing quick action|अत्यावश्यक|This is an urgent message.
+useful|helpful|उपयोगी|A dictionary is useful.
+vacant|empty|खाली|The seat next to me is vacant.
+valuable|worth a lot|मूल्यवान|Your advice is valuable.
+variety|many different kinds|विविधता|The market has a variety of fruits.
+vast|very large|विशाल|The ocean is vast.
+victory|winning|जीत|Our team celebrated the victory.
+visible|can be seen|दिखाई देने वाला|The moon is visible tonight.
+vital|very important|अत्यंत आवश्यक|Oxygen is vital for life.
+volunteer|to offer to help|स्वेच्छा से काम करना|I volunteered to clean the garden.
+wander|to walk without a fixed aim|भटकना|Do not wander alone at night.
+wealthy|rich|धनी|The wealthy man built a school.
+weary|very tired|थका हुआ|The weary travellers rested under a tree.
+wisdom|good judgment|बुद्धिमत्ता|Grandparents share their wisdom.
+witness|a person who sees an event|गवाह|He was a witness to the accident.
+wonder|to think with curiosity|आश्चर्य करना|I wonder how birds fly.
+worry|to feel anxious|चिंता करना|Do not worry; you will do well.
+worthy|deserving|योग्य|She is a worthy winner.
+yield|to produce (crops)|उपज देना|This field yields good wheat.
+zeal|great energy and interest|जोश|He works with zeal.
+absorb|to soak up|सोखना|A sponge absorbs water.
+accept|to agree to take|स्वीकार करना|Please accept this gift.
+accompany|to go with|साथ जाना|I will accompany you to the market.
+acquire|to gain|प्राप्त करना|We acquire knowledge by reading.
+adapt|to change to fit|ढल जाना|Animals adapt to their surroundings.
+adequate|enough|पर्याप्त|Drink adequate water every day.
+admit|to agree that something is true|मान लेना|He admitted his mistake.
+affect|to have an effect on|प्रभावित करना|Noise affects our concentration.
+alert|watchful|सतर्क|Stay alert while crossing the road.
+ambition|a strong wish to achieve something|महत्वाकांक्षा|Her ambition is to become a pilot.
+amuse|to make someone laugh|मनोरंजन करना|The clown amused the children.
+analyse|to study in detail|विश्लेषण करना|Analyse the graph carefully.
+announce|to tell publicly|घोषणा करना|The principal announced the results.
+annual|happening every year|वार्षिक|Our annual function is in December.
+apologise|to say sorry|माफ़ी माँगना|He apologised for being late.
+applause|clapping to show approval|तालियाँ|The singer got loud applause.
+attempt|to try|प्रयास करना|Attempt all the questions.
+attract|to pull towards|आकर्षित करना|Flowers attract bees.
+authority|the power to give orders|अधिकार|The principal has authority in school.
+avoid|to keep away from|बचना|Avoid junk food.
+behave|to act in a certain way|व्यवहार करना|Behave well in the assembly.
+belief|something you think is true|विश्वास|It is my belief that hard work pays.
+border|the line between two places|सीमा|Nepal shares a border with India.
+bother|to disturb|परेशान करना|Do not bother him while he studies.
+bright|full of light; clever|उज्ज्वल|She has a bright future.
+budget|a plan for spending money|बजट|Make a budget for the class party.
+burden|a heavy load|बोझ|Do not make homework a burden.
+capture|to catch|पकड़ना|The camera captured the moment.
+career|the work you do for life|करियर|Choose a career you enjoy.
+caution|great care|सावधानी|Handle the chemicals with caution.
+certain|sure|निश्चित|I am certain about the answer.
+character|the qualities of a person|चरित्र|Honesty builds good character.
+citizen|a member of a country|नागरिक|Every citizen should vote.
+claim|to say something is true|दावा करना|He claims he saw a tiger.
+climate|the usual weather of a place|जलवायु|India has a tropical climate.
+combine|to join together|मिलाना|Combine the flour and water.
+comfort|to make someone feel better|सांत्वना देना|She comforted her crying friend.
+community|people living in one area|समुदाय|Our community planted 100 trees.
+compete|to try to win|प्रतिस्पर्धा करना|Five schools will compete in the quiz.
+concentrate|to give full attention|ध्यान केंद्रित करना|Concentrate on your studies.
+conclude|to end|समाप्त करना|Conclude your essay with a summary.
+conduct|to organise and carry out|संचालित करना|The teacher conducted a test.
+conserve|to save from waste|संरक्षण करना|Conserve electricity at home.
+contribute|to give for a common purpose|योगदान देना|Everyone contributed to the class library.
+convince|to make someone believe|विश्वास दिलाना|He convinced me to join the team.
+cooperate|to work together|सहयोग करना|Cooperate with your group members.
+crowd|a large number of people|भीड़|A crowd gathered at the fair.
+culture|the way of life of a people|संस्कृति|India has a rich culture.
+custom|a usual way of doing things|रिवाज|Touching elders' feet is our custom.
+dazzle|to shine very brightly|चकाचौंध करना|The lights dazzled our eyes.
+debate|a formal discussion with opposite views|वाद-विवाद|We had a debate on mobile phones.
+declare|to announce officially|घोषित करना|The judge declared the winner.
+defeat|to win against|हराना|Our team defeated the visitors.
+delay|to make late|देरी करना|The rain delayed the match.
+demand|to ask firmly|माँग करना|The workers demanded fair pay.
+destroy|to ruin completely|नष्ट करना|The flood destroyed many houses.
+detail|a small fact|विवरण|Read every detail of the notice.
+devote|to give time or effort|समर्पित करना|She devotes an hour to reading.
+dignity|self-respect|गरिमा|Treat every worker with dignity.
+disaster|a sudden great misfortune|आपदा|An earthquake is a natural disaster.
+display|to show|प्रदर्शित करना|Display your project on the board.
+distant|far away|दूर|We could see the distant hills.
+distribute|to give out|बाँटना|The teacher distributed the question papers.
+donate|to give for a good cause|दान करना|We donated clothes to the needy.
+doubt|a feeling of not being sure|संदेह|If you have a doubt, ask.
+dull|not bright; boring|नीरस|It was a dull, cloudy day.
+duty|what you must do|कर्तव्य|It is our duty to keep the school clean.
+economy|the money and trade of a country|अर्थव्यवस्था|Farming is important to our economy.
+educate|to teach|शिक्षित करना|Schools educate children.
+efficient|working well without waste|कुशल|An efficient worker saves time.
+elect|to choose by voting|चुनना|We will elect a class monitor.
+emergency|a sudden dangerous situation|आपातकाल|Call 112 in an emergency.
+enemy|someone who is against you|शत्रु|Laziness is our enemy.
+energy|the power to work|ऊर्जा|Solar energy comes from the sun.
+enjoy|to like doing something|आनंद लेना|We enjoy the sports period.
+entertain|to amuse|मनोरंजन करना|The magician entertained the guests.
+equal|the same in size or value|बराबर|All citizens are equal before law.
+escape|to get away|बचकर निकलना|The bird escaped from the cage.
+event|something that happens|घटना|Sports day is a big event.
+evidence|proof|प्रमाण|The police found evidence.
+exact|completely correct|ठीक-ठीक|Tell me the exact time.
+exchange|to give and receive|आदान-प्रदान करना|Let us exchange books.
+exhausted|very tired|थककर चूर|We were exhausted after the race.
+expand|to become bigger|फैलना|Metals expand when heated.
+expect|to think something will happen|उम्मीद करना|I expect good results.
+experience|knowledge gained by doing|अनुभव|Travel gives us experience.
+expert|a person with special knowledge|विशेषज्ञ|He is an expert in computers.
+express|to show feelings or ideas|व्यक्त करना|Express your ideas clearly.
+extraordinary|very unusual|असाधारण|She has an extraordinary memory.
+faithful|loyal|वफ़ादार|The dog was faithful to its master.
+feast|a large special meal|दावत|We had a feast at the wedding.
+fetch|to go and bring back|लाना|Please fetch some water.
+flourish|to grow well|फलना-फूलना|Plants flourish in sunlight.
+forgive|to stop being angry with someone|माफ़ करना|Forgive your friend's small mistakes.
+gather|to come together|इकट्ठा होना|Students gathered in the hall.`.split('\n').map(l => { const [w, m, h, e] = l.split('|'); return { w, m, h, e }; });
+
+const STARTERS = `What did you do last Sunday?
+What is your favourite festival, and why?
+Describe your best friend in three sentences.
+If you could visit any place in India, where would you go?
+What do you want to become when you grow up?
+What is the best thing about our school?
+Tell us about a book or story you liked.
+What is your favourite food, and how is it made?
+If you were the Principal for one day, what would you change?
+What makes a good friend?
+Describe your village or mohalla.
+What did you learn from your grandparents?
+Which game do you like most, and how is it played?
+What would you do if you found a lost wallet?
+Talk about a time you helped someone.
+What is the most interesting thing you learnt this week?
+If you had a magic power, what would it be?
+Describe the weather today and how it makes you feel.
+What is your morning routine?
+Which animal do you like most, and why?
+Talk about a festival fair (mela) you visited.
+How can we keep our school clean?
+What would you do on a rainy holiday?
+Describe your favourite teacher without saying the name.
+Why is it important to save water?
+What is one thing you are good at?
+What is one thing you want to get better at?
+Tell us about a funny moment in your family.
+What is the best gift you ever received?
+Should students have homework every day? Why or why not?
+How do you help at home?
+Describe a place in Bhadohi that visitors should see.
+How is a carpet made? Tell us what you know.
+What is your favourite season, and why?
+Talk about a journey you remember.
+What would you like to invent?
+If you could meet any famous person, who would it be?
+What does honesty mean to you?
+What do you do when you feel sad?
+Tell us about your favourite cartoon or TV show.
+What makes you laugh?
+How can we be kind to animals?
+What is the most important rule in our classroom?
+Describe your dream house.
+What did you eat for breakfast today?
+If you had ₹100, what would you buy?
+Why should we plant trees?
+What is your favourite subject, and why?
+Tell us about a time you were brave.
+How do you prepare for an exam?
+What would you take to a picnic?
+Describe a market you visit with your family.
+What does a farmer do in a day?
+Which sport would you like to learn?
+How can we use less plastic?
+What is your favourite song or poem?
+What will you do in the summer holidays?
+How do you feel before a test, and what helps you?
+Describe your school uniform.
+What is one good habit everyone should have?
+Talk about your favourite place at home.
+What would you say to a new student in our class?
+How can mobile phones be useful, and when are they harmful?
+Who is your hero, and why?
+What did you do yesterday after school?
+Describe a dream you remember.
+What would you cook for your family?
+Why is it important to be on time?
+What makes our country special?
+Tell us about a game you invented or changed.
+What is the hardest thing you have learnt?
+How do you say sorry when you make a mistake?
+What would you do if you were lost in a market?
+Describe the view from your house.
+What do you like about the rainy season?
+Why should we respect elders?
+If you could change one thing in your town, what would it be?
+Tell us about your favourite day of the week.
+What do you want to learn on the computer?
+How can we help people who are poor?
+What is your favourite fruit, and when does it grow?
+Describe a picture in our English book.
+What did you learn from a mistake?
+What would you do if you won a prize?
+How do festivals bring people together?
+Tell us about a wedding or function you attended.
+What do you think school will be like in 20 years?
+Why is reading important?
+What would you write in a letter to your future self?
+How do you spend time with your family on holidays?
+What makes you proud?
+If you were a bird, where would you fly?
+What is the best advice you have been given?
+How do you keep yourself healthy?
+Describe your favourite toy from childhood.
+What does a good leader do?
+Tell us about a time you worked in a team.
+What would you show a foreigner in India?
+What do you like to do in the evening?
+Describe your school in five sentences.
+What will you do to make tomorrow a good day?
+What is something new you tried recently?
+If you could talk to an animal, which one and what would you ask?
+What do you think is the most useful invention?
+How can we save electricity at school?
+Tell us about your favourite place in nature.
+What would you do if you saw someone being bullied?
+What do you enjoy most about weekends?
+Describe the sounds you hear in the morning.
+What would you like to say to our school's bus driver?
+What do you know about the Ganga river?
+What is one thing you are thankful for today?
+What is a good way to make a new friend?
+If you made a film, what would it be about?
+How would you explain your favourite game to someone new?
+What do you think about wearing helmets?
+Tell us about a teacher who helped you.
+What should every child learn before Class 10?
+What makes a day perfect for you?`.split('\n');
+
+const SPEAK_TYPES = ['Conversation', 'Speech', 'Reading Aloud', 'Storytelling', 'Debate', 'Role-play / Skit', 'Show & Tell'];
+const BADGES = [[20, 'Gold Speaker', 'bg-amber-400 text-amber-950'], [10, 'Silver Speaker', 'bg-slate-300 text-slate-900'], [5, 'Bronze Speaker', 'bg-orange-300 text-orange-950']];
+const GOOD_REASONS = ['Helpful', 'Homework done well', 'Class participation', 'Discipline', 'Cleanliness', 'Leadership', 'Kindness', 'Neat work'];
+const BAD_REASONS = ['Late', 'No homework', 'Indiscipline', 'Uniform', 'Fighting', 'Untidy work', 'Mobile phone'];
+
+function dayOfYear(iso) { const d = new Date(iso + 'T00:00:00'), s = new Date(d.getFullYear(), 0, 1); return Math.floor((d - s) / 86400000); }
+function wordOf(iso) { return WORD_BANK[dayOfYear(iso) % WORD_BANK.length]; }
+function starterOf(iso) { const d = new Date(iso + 'T00:00:00'); return STARTERS[Math.floor(d / 86400000) % STARTERS.length]; }
+function wordShareText(iso) {
+  const w = wordOf(iso);
+  return `*Word of the Day — ${fmtDate(iso)}*\n\n*${w.w}* — ${w.m}\n(${w.h})\nExample: ${w.e}\n\n*Talk at home:* ${starterOf(iso)}\n\n— ${S.settings.school}`;
+}
+function wordCard(iso, compact) {
+  const w = wordOf(iso);
+  return `<div class="card border-indigo-200 bg-indigo-50/60">
+    <div class="flex items-start justify-between gap-2"><div>
+      <p class="text-[11px] font-bold uppercase text-indigo-700">Word of the Day</p>
+      <p class="text-2xl font-extrabold mt-1">${esc(w.w)} <span class="text-base font-semibold text-slate-500">(${esc(w.h)})</span></p>
+      <p class="text-sm text-slate-700">${esc(w.m)}</p>
+      <p class="text-sm text-slate-600 italic mt-1">"${esc(w.e)}"</p></div>
+      <a target="_blank" href="${waLink('', wordShareText(iso))}" class="btn btn-sm btn-wa noprint shrink-0"><i class="fa-brands fa-whatsapp"></i> Share</a></div>
+    ${compact ? '' : `<div class="mt-3 pt-3 border-t border-indigo-200"><p class="text-[11px] font-bold uppercase text-indigo-700">Conversation Starter</p><p class="text-sm font-semibold mt-1">${esc(starterOf(iso))}</p>
+    <p class="text-xs text-slate-500 mt-1">Ask 3–4 students to answer in full English sentences, then log it in Speaking.</p></div>`}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- SCHOOL CALENDAR (holidays, exams, events)
+const CAL_TYPES = ['Holiday', 'Exam', 'Event', 'PTM'];
+function holidayOn(date) { return S.cal.find(e => e.type === 'Holiday' && e.date <= date && (e.to || e.date) >= date) || null; }
+function calOn(date) { return S.cal.filter(e => e.date <= date && (e.to || e.date) >= date); }
+function vCalendar() {
+  const ym = P.ym || todayISO().slice(0, 7), [y, m] = ym.split('-').map(Number);
+  const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate(), lead = (first.getDay() + 6) % 7;
+  const prev = new Date(y, m - 2, 1), next = new Date(y, m, 1);
+  const ymOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1);
+  const exams = S.exams.map(e => ({ date: e.date, title: e.name, type: 'Exam', exam: true }));
+  const items = d => [...calOn(d), ...exams.filter(e => e.date === d)];
+  const colour = t => t === 'Holiday' ? 'bg-rose-100 text-rose-800' : t === 'Exam' ? 'bg-purple-100 text-purple-800' : t === 'PTM' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
+  let cells = '';
+  for (let i = 0; i < lead; i++) cells += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const iso = y + '-' + pad(m) + '-' + pad(d), it = items(iso), sun = new Date(iso + 'T00:00:00').getDay() === 0;
+    cells += `<div class="min-h-[64px] rounded-lg border p-1 ${iso === todayISO() ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-200'} ${sun || it.some(e => e.type === 'Holiday') ? 'bg-rose-50/60' : 'bg-white'}">
+      <div class="text-xs font-bold ${sun ? 'text-rose-600' : 'text-slate-600'}">${d}</div>${it.map(e => `<div class="text-[10px] leading-tight mt-0.5 px-1 rounded ${colour(e.type)}">${esc(e.title)}</div>`).join('')}</div>`;
+  }
+  const list = [...S.cal.filter(e => (e.to || e.date).slice(0, 7) >= ym && e.date.slice(0, 7) <= ym), ...exams.filter(e => e.date.slice(0, 7) === ym)].sort((a, b) => a.date.localeCompare(b.date));
+  const canEdit = U.role === 'principal';
+  return head('School Calendar', 'Holidays here are automatically treated as no-class days everywhere in the ERP.',
+      `<button onclick="go('calendar',{ym:'${ymOf(prev)}'})" class="btn btn-l">‹</button><span class="btn btn-l pointer-events-none">${first.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span><button onclick="go('calendar',{ym:'${ymOf(next)}'})" class="btn btn-l">›</button>`) + `
+    <div class="card"><div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500 mb-1">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x => `<div>${x}</div>`).join('')}</div>
+      <div class="grid grid-cols-7 gap-1">${cells}</div></div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card"><h3 class="font-bold mb-2">This month</h3>${list.length ? list.map(e => `<div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100 text-sm">
+        <span><span class="pill ${colour(e.type)}">${e.type}</span> <b>${esc(e.title)}</b> <span class="text-slate-500">${fmtDate(e.date)}${e.to && e.to !== e.date ? ' – ' + fmtDate(e.to) : ''}</span></span>
+        ${canEdit && !e.exam ? `<button onclick="calDel('${esc(e.id)}')" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>` : ''}</div>`).join('') : '<p class="text-sm text-slate-500">Nothing this month.</p>'}
+        <p class="text-xs text-slate-400 mt-2">Exam dates come from Settings › Exams.</p></div>
+      ${canEdit ? `<div class="card space-y-2"><h3 class="font-bold">Add to calendar</h3>
+        <div class="grid grid-cols-2 gap-2"><div><label class="lbl">From</label><input id="cl-d" type="date" class="inp" value="${todayISO()}"></div><div><label class="lbl">To (optional)</label><input id="cl-t" type="date" class="inp"></div></div>
+        <input id="cl-title" class="inp" placeholder="e.g. Diwali holidays, Sports Day">
+        <select id="cl-type" class="inp">${CAL_TYPES.map(t => `<option>${t}</option>`).join('')}</select>
+        <button onclick="calAdd()" class="btn btn-p w-full">Add</button>
+        <button onclick="calFixed()" class="btn btn-l w-full btn-sm">Add fixed national holidays (26 Jan, 15 Aug, 2 Oct)</button>
+        <p class="text-xs text-slate-500">Festival holidays change every year — copy them from the UP Government / DM holiday list.</p></div>` : ''}
+    </div>`;
+}
+function calAdd() {
+  const date = document.getElementById('cl-d').value, to = document.getElementById('cl-t').value, title = document.getElementById('cl-title').value.trim(), type = document.getElementById('cl-type').value;
+  if (!date || !title) return toast('Write the date and title', 'a'); if (to && to < date) return toast('"To" date is before "From"', 'a');
+  S.cal.push({ id: uid(), date, to: to || '', title, type }); S.cal.sort((a, b) => a.date.localeCompare(b.date));
+  log('Calendar', `${type}: ${title} (${date}${to ? ' to ' + to : ''})`); toast('Added'); go('calendar', { ym: date.slice(0, 7) });
+}
+function calFixed() {
+  const st = new Date(S.settings.sessionStart + 'T00:00:00'), y = st.getFullYear();
+  const want = [[y + '-08-15', 'Independence Day'], [y + '-10-02', 'Gandhi Jayanti'], [(y + 1) + '-01-26', 'Republic Day']];
+  let n = 0; want.forEach(([date, title]) => { if (!S.cal.some(e => e.date === date && e.title === title)) { S.cal.push({ id: uid(), date, to: '', title, type: 'Holiday' }); n++; } });
+  S.cal.sort((a, b) => a.date.localeCompare(b.date)); log('Calendar', `Added ${n} national holiday(s)`); toast(n + ' added'); render();
+}
+function calDel(id) { const e = S.cal.find(x => x.id === id); if (!e || !confirm('Remove "' + e.title + '"?')) return; S.cal = S.cal.filter(x => x.id !== id); log('Calendar', `Removed ${e.title} (${e.date})`); render(); }
+
+// ---------------------------------------------------------------- BEHAVIOUR & DISCIPLINE
+function myClasses() { if (U.role === 'principal') return CLASS_NAMES; const s = new Set(myAllocs(U.tid).map(a => a.c)); CLASSES.filter(k => k.ct === U.tid).forEach(k => s.add(k.c)); return CLASS_NAMES.filter(c => s.has(c)); }
+function behavAll() { const out = []; Object.values(S.behav).forEach(byId => Object.values(byId).forEach(b => out.push(b))); return out; }
+function behavMonth(ym) { return behavAll().filter(b => b.date.slice(0, 7) === ym); }
+function vBehaviour() {
+  const cls = myClasses(); if (!cls.length) return head('Behaviour') + '<div class="card text-sm">No classes assigned.</div>';
+  const c = cls.includes(P.c) ? P.c : cls[0], date = todayISO(), ym = date.slice(0, 7);
+  const mon = behavMonth(ym).filter(b => b.cls === c), pts = sid => mon.filter(b => b.sid === sid).reduce((s, b) => s + b.pts, 0);
+  const todays = behavAll().filter(b => b.cls === c && b.date === date).sort((a, b) => b.at - a.at);
+  return head(`Behaviour — Class ${c}`, 'Pick a reason, then tap + or − next to the student. Points add up into the monthly Hall of Fame.',
+      cls.length > 1 ? `<select class="inp w-auto" onchange="go('behaviour',{c:this.value})">${cls.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select>` : '') + `
+    <div class="card grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div><label class="lbl text-emerald-700">Good reason (+)</label><select id="bh-good" class="inp">${GOOD_REASONS.map(r => `<option>${r}</option>`).join('')}</select></div>
+      <div><label class="lbl text-rose-700">Discipline reason (−)</label><select id="bh-bad" class="inp">${BAD_REASONS.map(r => `<option>${r}</option>`).join('')}</select></div></div>
+    <div class="card">${studentsOf(c).length ? `<div class="divide-y divide-slate-100">${studentsOf(c).map(s => { const p = pts(s.id);
+      return `<div class="flex items-center justify-between gap-2 py-2"><span><b class="text-sm">${esc(s.name)}</b> <span class="pill ${p > 0 ? 'bg-emerald-100 text-emerald-800' : p < 0 ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-500'}">${p > 0 ? '+' : ''}${p} this month</span></span>
+        <span class="flex gap-1"><button onclick="behavAdd('${s.id}',1)" class="btn btn-sm btn-g">+1</button><button onclick="behavAdd('${s.id}',2)" class="btn btn-sm btn-g">+2</button><button onclick="behavAdd('${s.id}',-1)" class="btn btn-sm btn-r">−1</button></span></div>`; }).join('')}</div>`
+      : '<p class="text-sm text-slate-500">No students in this class yet.</p>'}</div>
+    <div class="card"><h3 class="font-bold mb-2">Today's entries</h3>${todays.length ? todays.map(b => { const s = studentById(b.sid) || { name: '?' };
+      const msg = `Dear Parent,\n${s.name} (Class ${b.cls}) — note from school today (${fmtDate(b.date)}): ${b.reason}${b.note ? ' — ' + b.note : ''}.\nकृपया ध्यान दें। — ${S.settings.school}`;
+      return `<div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100 text-sm"><span><span class="pill ${b.pts > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${b.pts > 0 ? '+' : ''}${b.pts}</span> <b>${esc(s.name)}</b> — ${esc(b.reason)}${b.note ? ' (' + esc(b.note) + ')' : ''} <span class="text-xs text-slate-400">by ${esc(T(b.tid).name)}</span></span>
+        <span class="flex gap-1 shrink-0">${b.pts < 0 ? `<a target="_blank" href="${waLink(s.phone, msg)}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i></a>` : ''}${b.tid === U.tid || U.role === 'principal' ? `<button onclick="behavDel('${b.date}','${b.id}')" class="text-slate-300 hover:text-rose-500 px-1"><i class="fa-solid fa-trash"></i></button>` : ''}</span></div>`; }).join('') : '<p class="text-sm text-slate-500">Nothing yet today.</p>'}</div>`;
+}
+function behavAdd(sid, pts) {
+  const s = studentById(sid); if (!s) return;
+  const reason = document.getElementById(pts > 0 ? 'bh-good' : 'bh-bad').value;
+  let note = '';
+  if (pts < 0) { note = prompt(`Short note about ${s.name} (optional)`, '') ; if (note === null) return; note = note.trim().slice(0, 120); }
+  const date = todayISO(), id = uid();
+  (S.behav[date] = S.behav[date] || {})[id] = { id, date, sid, cls: s.cls, pts, reason, note, tid: U.tid, at: Date.now() };
+  log('Behaviour', `${pts > 0 ? '+' : ''}${pts} ${s.name} (${s.cls}): ${reason}${note ? ' — ' + note : ''}`);
+  toast(`${pts > 0 ? '+' : ''}${pts} for ${s.name}`, pts > 0 ? 'g' : 'a'); render();
+}
+function behavDel(date, id) { const b = S.behav[date] && S.behav[date][id]; if (!b || !confirm('Remove this entry?')) return; delete S.behav[date][id]; log('Behaviour', `Removed entry for ${(studentById(b.sid) || {}).name}: ${b.reason}`); render(); }
+
+// ---------------------------------------------------------------- SPEAKING ACTIVITIES + BADGES
+let spDraft = null;
+function speakCount(sid) { return S.speak.filter(x => x.students.includes(sid)).length; }
+function badgeOf(n) { const b = BADGES.find(([min]) => n >= min); return b ? `<span class="pill ${b[2]}">${b[1]}</span>` : ''; }
+function vSpeaking() {
+  const cls = myClasses(); if (!cls.length) return head('Speaking') + '<div class="card text-sm">No classes assigned.</div>';
+  const c = cls.includes(P.c) ? P.c : cls[0], date = todayISO();
+  if (!spDraft || spDraft.c !== c) spDraft = { c, students: [] };
+  const list = studentsOf(c);
+  const recent = S.speak.filter(x => x.cls === c).sort((a, b) => b.at - a.at).slice(0, 8);
+  return head(`Speaking — Class ${c}`, 'Every 5 activities earns a badge: Bronze (5), Silver (10), Gold (20).',
+      cls.length > 1 ? `<select class="inp w-auto" onchange="spDraft=null;go('speaking',{c:this.value})">${cls.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select>` : '') + `
+    ${wordCard(date)}
+    <div class="card space-y-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div><label class="lbl">Activity</label><select id="sp-type" class="inp">${SPEAK_TYPES.map(t => `<option>${t}</option>`).join('')}</select></div>
+        <div><label class="lbl">Topic</label><input id="sp-topic" class="inp" value="${esc(starterOf(date))}"></div></div>
+      <p class="lbl">Tap the students who spoke (${spDraft.students.length} selected)</p>
+      ${list.length ? `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">${list.map(s => { const on = spDraft.students.includes(s.id), n = speakCount(s.id);
+        return `<button onclick="spToggle('${s.id}')" class="text-left p-2 rounded-xl border ${on ? 'bg-indigo-50 border-indigo-400' : 'bg-white border-slate-200'}"><b class="text-sm">${esc(s.name)}</b><br><span class="text-[11px] text-slate-500">${n} activities</span> ${badgeOf(n)}</button>`; }).join('')}</div>
+        <button onclick="spSave('${c}')" class="btn btn-g w-full py-3"><i class="fa-solid fa-microphone"></i> Save activity</button>` : '<p class="text-sm text-slate-500">No students in this class yet.</p>'}
+    </div>
+    <div class="card"><h3 class="font-bold mb-2">Recent activities</h3>${recent.length ? recent.map(x => `<div class="flex justify-between gap-2 py-1.5 border-b border-slate-100 text-sm"><span><b>${esc(x.type)}</b> — ${esc(x.topic)} <span class="text-slate-500">• ${x.students.length} student${x.students.length === 1 ? '' : 's'} • ${fmtDate(x.date)} • ${esc(T(x.tid).name)}</span></span>
+      ${x.tid === U.tid || U.role === 'principal' ? `<button onclick="spDel('${x.id}')" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>` : ''}</div>`).join('') : '<p class="text-sm text-slate-500">None yet.</p>'}</div>`;
+}
+function spToggle(id) { const a = spDraft.students, i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); render(); }
+function spSave(c) {
+  if (!spDraft.students.length) return toast('Tap at least one student', 'a');
+  const type = document.getElementById('sp-type').value, topic = document.getElementById('sp-topic').value.trim().slice(0, 200);
+  const before = spDraft.students.map(id => speakCount(id));
+  const rec = { id: uid(), date: todayISO(), cls: c, type, topic, students: [...spDraft.students], tid: U.tid, at: Date.now() };
+  S.speak.push(rec);
+  const newBadges = rec.students.filter((id, i) => BADGES.some(([min]) => before[i] < min && before[i] + 1 >= min)).map(id => (studentById(id) || {}).name);
+  log('Speaking', `Class ${c} ${type}: "${topic}" — ${rec.students.length} students` + (newBadges.length ? `. New badge: ${newBadges.join(', ')}` : ''));
+  toast(newBadges.length ? 'Saved — new badge for ' + newBadges.join(', ') : 'Activity saved');
+  spDraft = { c, students: [] }; render();
+}
+function spDel(id) { const x = S.speak.find(r => r.id === id); if (!x || !confirm('Remove this activity?')) return; S.speak = S.speak.filter(r => r.id !== id); log('Speaking', `Removed ${x.type} of Class ${x.cls} (${x.date})`); render(); }
+
+// ---------------------------------------------------------------- LESSON PLANS (teacher submits, ERP checks against diary, principal approves)
+function weekStart(iso) { const d = new Date(iso + 'T00:00:00'); const off = (d.getDay() + 6) % 7; return addDays(iso, -off); }
+function lpKey(w, t, c, s) { return [w, t, c, s].join('|'); }
+function words(s) { return String(s).toLowerCase().replace(/[^a-z0-9ऀ-ॿ ]/g, ' ').split(/\s+/).filter(x => x.length >= 4); }
+function planCoverage(p) {
+  const topics = [];
+  for (let i = 0; i < 6; i++) { const d = addDays(p.week, i), byT = (S.diary[d] || {})[p.tid] || {};
+    Object.values(byT).forEach(e => { if (e.cls === p.cls && e.subj === p.subj) topics.push({ d, t: e.topic }); }); }
+  const lines = String(p.topics || '').split('\n').map(x => x.trim()).filter(Boolean);
+  const res = lines.map(line => { const w = words(line); const hit = topics.find(tp => { const tw = new Set(words(tp.t));
+      return w.length ? w.filter(x => tw.has(x)).length >= Math.ceil(w.length / 2) : tp.t.toLowerCase().includes(line.toLowerCase()); }); return { line, hit }; });
+  return { res, topics, covered: res.filter(r => r.hit).length };
+}
+function planCard(p, key, principal) {
+  const cv = planCoverage(p), past = addDays(p.week, 5) < todayISO();
+  const stc = p.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : p.status === 'Revise' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800';
+  return `<div class="card space-y-2"><div class="flex flex-wrap justify-between gap-2"><b>${principal ? esc(T(p.tid).name) + ' • ' : ''}Class ${p.cls} • ${esc(p.subj)}</b><span class="pill ${stc}">${p.status}</span></div>
+    ${p.goal ? `<p class="text-sm text-slate-600"><b>Aim / activity:</b> ${esc(p.goal)}</p>` : ''}
+    <div class="text-sm">${cv.res.map(r => `<div class="flex gap-2"><span class="${r.hit ? 'text-emerald-600' : 'text-slate-300'}"><i class="fa-solid ${r.hit ? 'fa-circle-check' : 'fa-circle'}"></i></span><span>${esc(r.line)}${r.hit ? ` <span class="text-xs text-slate-400">— taught ${fmtDate(r.hit.d)}</span>` : ''}</span></div>`).join('')}</div>
+    <p class="text-xs ${cv.covered === cv.res.length ? 'text-emerald-700' : past ? 'text-rose-700' : 'text-slate-500'} font-semibold">Diary check: ${cv.covered} of ${cv.res.length} planned topics found in the diary this week${past && cv.covered < cv.res.length ? ' — some were not taught' : ''}.</p>
+    ${p.feedback ? `<p class="text-sm bg-slate-50 rounded-lg p-2"><b>Principal:</b> ${esc(p.feedback)}</p>` : ''}
+    ${principal ? `<div class="flex gap-2"><button onclick="lpDecide(${jsq(key)},'Approved')" class="btn btn-sm btn-g">Approve</button><button onclick="lpDecide(${jsq(key)},'Revise')" class="btn btn-sm btn-l">Send back with feedback</button></div>` : ''}</div>`;
+}
+function vLessonPlan() {
+  const mine = myAllocs(U.tid); if (!mine.length) return head('Lesson Plan') + '<div class="card text-sm">No subjects assigned.</div>';
+  const thisW = weekStart(todayISO()), w = P.w || thisW, key0 = P.key && mine.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(mine[0].c, mine[0].s);
+  const [c, s] = key0.split('|'), k = lpKey(w, U.tid, c, s), p = S.lplan[k];
+  const nx = nextChapter(c, s);
+  const myPlans = Object.entries(S.lplan).filter(([kk, v]) => v.tid === U.tid && v.week === w);
+  return head('Weekly Lesson Plan', 'Write the topics you plan to teach this week. The ERP ticks each one automatically when it appears in your diary.',
+      `<select class="inp w-auto" onchange="go('lplan',{w:this.value,key:${jsq(key0)}})">${[addDays(thisW, -7), thisW, addDays(thisW, 7)].map(x => `<option value="${x}" ${x === w ? 'selected' : ''}>Week of ${fmtDate(x)}</option>`).join('')}</select>`) + `
+    <div class="card space-y-2"><label class="lbl">Class & subject</label><select class="inp" onchange="go('lplan',{w:'${w}',key:this.value})">${mine.map(a => { const kk = sylKey(a.c, a.s); return `<option value="${esc(kk)}" ${kk === key0 ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select>
+      ${p && p.status === 'Approved' ? '<p class="text-sm text-emerald-700 font-semibold">Approved by the Principal — locked.</p>' : `
+      <label class="lbl">Topics, one per line (one line ≈ one period)</label><textarea id="lp-top" rows="6" class="inp" placeholder="${nx ? esc(nx) + ' — introduction' : 'Topic 1\nTopic 2'}">${esc(p ? p.topics : '')}</textarea>
+      <label class="lbl">Aim / activity / teaching aid (optional)</label><input id="lp-goal" class="inp" value="${esc(p ? p.goal || '' : '')}">
+      <button onclick="lpSubmit('${w}',${jsq(key0)})" class="btn btn-p w-full">${p ? 'Update and resubmit' : 'Submit to Principal'}</button>`}</div>
+    ${myPlans.map(([kk, v]) => planCard(v, kk, false)).join('')}`;
+}
+function lpSubmit(w, key) {
+  const [c, s] = key.split('|'), topics = document.getElementById('lp-top').value.trim(), goal = document.getElementById('lp-goal').value.trim();
+  if (!topics) return toast('Write at least one topic', 'a');
+  S.lplan[lpKey(w, U.tid, c, s)] = { week: w, tid: U.tid, cls: c, subj: s, topics, goal, status: 'Submitted', feedback: '', at: Date.now() };
+  log('Lesson Plan', `Submitted: Class ${c} ${s}, week of ${w} (${topics.split('\n').filter(Boolean).length} topics)`); toast('Sent to Principal'); render();
+}
+function vLessonPlans() {
+  const thisW = weekStart(todayISO()), w = P.w || thisW;
+  const plans = Object.entries(S.lplan).filter(([k, v]) => v.week === w).sort((a, b) => (a[1].status === 'Submitted' ? 0 : 1) - (b[1].status === 'Submitted' ? 0 : 1));
+  const teaching = Object.keys(S.teachers).filter(t => myAllocs(t).some(a => !/Games|Library|Moral|Rhymes|Play|Craft|Phonics|Akshar|Numbers|Discovery/.test(a.s)));
+  const missing = teaching.filter(t => !plans.some(([k, v]) => v.tid === t));
+  return head('Lesson Plans', 'Each plan shows how much of it really appeared in the teacher\'s diary that week.',
+      `<select class="inp w-auto" onchange="go('lplans',{w:this.value})">${[addDays(thisW, -14), addDays(thisW, -7), thisW, addDays(thisW, 7)].map(x => `<option value="${x}" ${x === w ? 'selected' : ''}>Week of ${fmtDate(x)}</option>`).join('')}</select>`) + `
+    ${missing.length ? `<div class="card bg-amber-50 border-amber-200 text-sm"><b>No plan yet:</b> ${missing.map(t => esc(T(t).name)).join(', ')}</div>` : ''}
+    ${plans.length ? plans.map(([k, v]) => planCard(v, k, true)).join('') : '<div class="card text-sm text-slate-500">No plans submitted for this week.</div>'}`;
+}
+function lpDecide(key, st) {
+  const p = S.lplan[key]; if (!p) return;
+  let fb = '';
+  if (st === 'Revise') { fb = prompt('What should the teacher change?', ''); if (fb === null) return; fb = fb.trim(); }
+  p.status = st; p.feedback = fb; p.decidedAt = Date.now();
+  log('Lesson Plan', `${st === 'Approved' ? 'Approved' : 'Sent back'}: ${T(p.tid).name}, Class ${p.cls} ${p.subj}, week of ${p.week}${fb ? ' — ' + fb : ''}`); render();
+}
+
+// ---------------------------------------------------------------- HALL OF FAME (automatic, monthly)
+function vFame() {
+  const ym = P.ym || todayISO().slice(0, 7), [y, m] = ym.split('-').map(Number);
+  const prev = new Date(y, m - 2, 1), next = new Date(y, m, 1), ymOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1);
+  const label = new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const pts = {}; behavMonth(ym).forEach(b => pts[b.sid] = (pts[b.sid] || 0) + b.pts);
+  const spk = {}; S.speak.filter(x => x.date.slice(0, 7) === ym).forEach(x => x.students.forEach(id => spk[id] = (spk[id] || 0) + 1));
+  const stars = CLASS_NAMES.map(c => { const best = studentsOf(c).map(s => ({ s, p: pts[s.id] || 0 })).filter(x => x.p > 0).sort((a, b) => b.p - a.p)[0]; return best ? { c, ...best } : null; }).filter(Boolean);
+  const speakers = Object.entries(spk).map(([id, n]) => ({ s: studentById(id), n })).filter(x => x.s).sort((a, b) => b.n - a.n).slice(0, 10);
+  const ex = latestExamWithMarks(todayISO());
+  const toppers = ex ? CLASS_NAMES.map(c => { const { rows } = resultTable(ex.id, c); const r = rows.filter(r => r.pct != null).sort((a, b) => b.pct - a.pct)[0]; return r ? { c, s: r.s, pct: r.pct } : null; }).filter(Boolean) : [];
+  const certText = `*${S.settings.school} — Hall of Fame, ${label}*\n\n` + (stars.length ? '*Star of the Month*\n' + stars.map(x => `Class ${x.c}: ${x.s.name}`).join('\n') + '\n\n' : '') + (speakers.length ? '*Top Speakers*\n' + speakers.slice(0, 5).map(x => `${x.s.name} (${x.s.cls})`).join('\n') + '\n\n' : '') + (toppers.length ? `*Toppers — ${ex.name}*\n` + toppers.map(x => `Class ${x.c}: ${x.s.name} (${x.pct}%)`).join('\n') + '\n\n' : '') + 'Congratulations! — Powered by Maakit';
+  return head('Hall of Fame', 'Made automatically from behaviour points, speaking activities and exam marks.',
+      `<button onclick="go('fame',{ym:'${ymOf(prev)}'})" class="btn btn-l">‹</button><span class="btn btn-l pointer-events-none">${label}</span><button onclick="go('fame',{ym:'${ymOf(next)}'})" class="btn btn-l">›</button>
+       <a target="_blank" href="${waLink('', certText)}" class="btn btn-wa"><i class="fa-brands fa-whatsapp"></i> Share</a><button onclick="printHTML('Hall of Fame',printHeader('Hall of Fame — ${label}')+document.getElementById('fame').innerHTML+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-print"></i> Print</button>`) + `
+    <div id="fame" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="card"><h3 class="font-bold mb-2"><i class="fa-solid fa-star text-amber-500"></i> Star of the Month</h3>${stars.length ? `<table class="tbl"><tr><th>Class</th><th>Student</th><th>Points</th></tr>${stars.map(x => `<tr><td>${x.c}</td><td class="font-semibold">${esc(x.s.name)}</td><td>+${x.p}</td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500">No behaviour points this month yet.</p>'}</div>
+      <div class="card"><h3 class="font-bold mb-2"><i class="fa-solid fa-microphone text-indigo-600"></i> Top Speakers</h3>${speakers.length ? `<table class="tbl"><tr><th>Student</th><th>Class</th><th>Activities</th></tr>${speakers.map(x => `<tr><td class="font-semibold">${esc(x.s.name)} ${badgeOf(speakCount(x.s.id))}</td><td>${x.s.cls}</td><td>${x.n}</td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500">No speaking activities this month yet.</p>'}</div>
+      <div class="card"><h3 class="font-bold mb-2"><i class="fa-solid fa-trophy text-emerald-600"></i> Class Toppers${ex ? ' — ' + esc(ex.name) : ''}</h3>${toppers.length ? `<table class="tbl"><tr><th>Class</th><th>Student</th><th>%</th></tr>${toppers.map(x => `<tr><td>${x.c}</td><td class="font-semibold">${esc(x.s.name)}</td><td>${x.pct}</td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500">No exam marks entered yet.</p>'}</div>
+    </div>`;
+}
+
 // ---------------------------------------------------------------- routes
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
-  leave: vLeave, log: vLog, settings: vSettings };
+  leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
-NAV.principal.splice(10, 0, ['diary','fa-book','My Diary'], ['marks','fa-pen-to-square','Marks']);
+NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 
 // ---------------------------------------------------------------- init
 (async function init() {

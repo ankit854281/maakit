@@ -11,9 +11,9 @@ declare(strict_types=1);
 date_default_timezone_set('Asia/Kolkata');
 
 const SCH_KINDS = ['settings','classes','teacher','alloc','grid','exams','student','staffAtt','studAtt',
-                   'diary','signed','syl','marks','leave','notice'];
-const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed'];
-const SCH_DELETABLE  = ['student','notice','teacher'];
+                   'diary','signed','syl','marks','leave','notice','behav','speak','lplan','cal'];
+const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav'];
+const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal'];
 const SCH_SESSION_DAYS = 30;
 const SCH_MAX_RECORD = 400000;          // ek record max ~400 KB (timetable grid ke liye kaafi)
 
@@ -130,10 +130,27 @@ function sch_log(array $u, string $k, string $x): void {
 function sch_can_write(array $u, string $k, string $r, $d, bool $isDelete): bool {
     if (!in_array($k, SCH_KINDS, true)) return false;
     if ($u['role'] === 'principal') return !$isDelete || in_array($k, SCH_DELETABLE, true);
-    if ($u['role'] !== 'teacher' || $isDelete) return false;
+    if ($u['role'] !== 'teacher') return false;
     $tid = (string)$u['tid'];
     $p = explode('|', $r);
+    // Teacher apni hi daali behaviour/speaking entry hata sakta hai
+    if ($isDelete) {
+        if (!in_array($k, ['behav', 'speak'], true)) return false;
+        $old = sch_rec_get($k, $r);
+        return $old !== null && ($old['tid'] ?? '') === $tid;
+    }
     switch ($k) {
+        case 'behav':     // r = date|id — kisi bhi class ke bachche ko, jise padhate hain ya class teacher hain
+        case 'speak':     // r = id
+            if (!is_array($d) || ($d['tid'] ?? '') !== $tid || !sch_in_class($tid, (string)($d['cls'] ?? ''))) return false;
+            if ($k === 'behav' && (count($p) !== 2 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[0]))) return false;
+            $old = sch_rec_get($k, $r);
+            return $old === null || ($old['tid'] ?? '') === $tid;
+        case 'lplan':     // r = weekMonday|tid|cls|subj — sirf "Submitted"; Approved plan badla nahi ja sakta
+            if (count($p) !== 4 || $p[1] !== $tid || !sch_teaches($tid, $p[2], $p[3])) return false;
+            if (!is_array($d) || ($d['status'] ?? '') !== 'Submitted') return false;
+            $old = sch_rec_get('lplan', $r);
+            return $old === null || ($old['status'] ?? '') !== 'Approved';
         case 'diary':
             return count($p) === 3 && $p[1] === $tid && preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[0]) && ctype_digit($p[2]);
         case 'studAtt':
@@ -158,5 +175,14 @@ function sch_teaches(string $tid, string $cls, string $subj): bool {
     foreach ($alloc as $a) {
         if (($a['t'] ?? '') === $tid && ($a['c'] ?? '') === $cls && ($a['s'] ?? '') === $subj) return true;
     }
+    return false;
+}
+
+function sch_in_class(string $tid, string $cls): bool {
+    if ($cls === '') return false;
+    static $alloc = null; $alloc ??= (array)sch_rec_get('alloc', 'main');
+    foreach ($alloc as $a) if (($a['t'] ?? '') === $tid && ($a['c'] ?? '') === $cls) return true;
+    static $classes = null; $classes ??= (array)sch_rec_get('classes', 'main');
+    foreach ($classes as $c) if (($c['c'] ?? '') === $cls && ($c['ct'] ?? '') === $tid) return true;
     return false;
 }
