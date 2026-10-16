@@ -75,5 +75,6 @@ include __DIR__.'/../inc/head.php';
 <div class="field"><label><?= h(t($label[0],$label[1])) ?><input type="file" name="<?= h($field) ?>" accept="image/jpeg,image/png,application/pdf" <?= $kind==='RIDER'?'required':'' ?>></label></div>
 <?php endforeach; ?>
 <p class="help"><?= t('JPG, PNG or PDF; up to 5 MB each. B2B needs GST or PAN. Documents stay private for manual review. After approval, vendors sign in with mobile + code; riders use their mobile as username and password.','JPG, PNG या PDF; हर फ़ाइल अधिकतम 5 MB। B2B के लिए GST या PAN जरूरी है। दस्तावेज़ निजी जाँच के लिए सुरक्षित रखे जाएँगे। मंजूरी के बाद दुकानदार मोबाइल और कोड से; राइडर मोबाइल यूज़रनेम और पासवर्ड से लॉगिन करें।') ?></p>
+<p class="help" style="margin:14px 0 10px"><?= t('Submitting means you have read and accepted the ','भेजने का मतलब है कि आपने ') ?><a href="/niyam.php?k=sarathi" target="_blank" rel="noopener"><?= t('terms','नियम और शर्तें') ?></a><?= t('.',' पढ़कर मान लिए हैं।') ?></p>
 <button class="btn btn-brand" type="submit"><?= t('Submit for approval','मंजूरी के लिए भेजिए') ?></button></form><?php endif; ?></div></section>
 <?php include __DIR__.'/../inc/foot.php'; ?>

@@ -74,6 +74,10 @@ include __DIR__ . '/inc/head.php';
     <div class="field"><label>पता (पहचान के साथ)</label><input type="text" name="address" value="<?= h(post('address')) ?>"></div>
     <div class="field"><label>अपने काम के बारे में (कितने साल से, क्या-क्या करते हैं, समय)</label><textarea name="about"><?= h(post('about')) ?></textarea></div>
     <div class="field"><label>अपने काम या दुकान की फ़ोटो</label><input type="file" name="photo" accept="image/*"><p class="help">एक साफ़ फ़ोटो सबसे ज़्यादा भरोसा दिलाती है।</p></div>
+    <p class="help" style="margin:14px 0 10px">भेजने का मतलब है कि आपने
+      <a href="/niyam.php?k=dukan" target="_blank" rel="noopener">दुकानदार के नियम</a>
+      पढ़ लिए और मान लिए। सबसे ज़रूरी बात: <b>सामान का पूरा पैसा सीधे आपका है</b> —
+      Maakit सिर्फ़ पहुँचाने का चार्ज लेता है।</p>
     <button class="btn btn-brand" type="submit">भेजिए</button>
     <p class="help">भेजने के बाद जाँच होगी, फिर आपका नाम दिखने लगेगा। शराब, सूद पर पैसा, और ग़ैर-क़ानूनी काम नहीं जोड़े जाते।</p>
   </form>

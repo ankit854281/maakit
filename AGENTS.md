@@ -62,6 +62,38 @@ or an escrow/nodal account. By never touching the money we avoid that
 entirely. **Do not propose or build anything that routes customer money
 through Maakit.**
 
+### The terms page is the written form of this rule
+
+`niyam.php` (linked in the footer, and from the shop and rider join forms)
+states the money rule in plain Hindi for all three audiences. Sections:
+`?k=graahak` · `?k=dukan` · `?k=sarathi` · `?k=sab`.
+
+**If the way the business works ever changes, change `niyam.php` first and
+the code second — never the other way round.** Terms that do not match
+practice are worse than no terms: on the day of a dispute, they are read back
+against Ankit. `.github/jaanch/panne.php` asserts the money-rule sentences
+are present in each section; if you remove one, the जाँच goes red.
+
+### Two things still need a real lawyer — tell Ankit, do not quietly "fix" them
+
+No lawyer has read `niyam.php`. It describes Ankit's actual practice honestly,
+which is the right starting point, but two areas carry real legal weight:
+
+1. **Is a sarathi a worker or a partner?** The page says he sets his own
+   hours, has no fixed shift and may work elsewhere — all true today. But in
+   India this is decided by *how the relationship actually works*, not by what
+   a document calls it. Fixed shifts, exclusivity or penalties would make it
+   look like employment (PF/ESI, minimum wage, and the gig-worker provisions
+   of the Social Security Code). **Do not add features that impose shifts,
+   exclusivity or fines on riders without telling Ankit this is the trade-off.**
+2. **Grievance officer.** India's e-commerce rules expect a named grievance
+   officer with contact details and a response timeline. Right now the page
+   gives only Ankit's phone. A name and a stated timeline should be added.
+
+Also still missing by choice, and written as missing rather than hidden:
+**no accident insurance for riders.** It is stated plainly on the rider page.
+If Maakit ever provides cover, say so there.
+
 ---
 
 ## 3. Who uses this, and the one rule about them

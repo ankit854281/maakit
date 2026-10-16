@@ -64,7 +64,49 @@ $PANNE = [
         'nahi'=>['That order number and mobile do not match.', 'Fatal error']],
     ['/track.php?lang=en&b=BK-TEST-UNKNOWN&m=9000000000', 'नया booking link',
         'chahiye'=>['That booking number and mobile do not match.'], 'nahi'=>['Fatal error']],
-    ['/register-business.php', 'दुकान दर्ज कीजिए', 'chahiye' => ['Maakit'], 'nahi' => ['Fatal error']],
+    ['/register-business.php', 'दुकान दर्ज कीजिए',
+        'chahiye' => ['Maakit', 'niyam.php?k=dukan'], 'nahi' => ['Fatal error']],
+
+    // ---- नियम और शर्तें ----
+    // Paise ka niyam har hisse me saaf likha hona chahiye. Jis din
+    // ye line gayab hogi, us din jhagde ke waqt Maakit ke paas kuch
+    // likha hua nahi hoga -- aur yahi line Maakit ko RBI ke payment
+    // aggregator wale daayre se bahar rakhti hai.
+    //
+    // Dhyan: panna default ANGREZI me khulta hai, isliye Hindi
+    // shabd maangne wali jaanch me ?lang=hi lagana zaroori hai.
+    ['/niyam.php?lang=hi', 'नियम — बिना चुने भी खुले',
+        'chahiye' => ['नियम और शर्तें', 'Maakit दुकान नहीं है', 'ग्राहक के लिए'],
+        'nahi'    => ['Fatal error']],
+    ['/niyam.php?lang=hi&k=dukan', 'नियम — दुकानदार',
+        'chahiye' => ['दुकानदार के लिए', 'सामान का पूरा पैसा सीधे आपका है', 'दाम आप डालते हैं'],
+        'nahi'    => ['Fatal error']],
+    ['/niyam.php?lang=hi&k=sarathi', 'नियम — सारथी',
+        'chahiye' => ['सारथी के लिए', 'कोई तय shift नहीं',
+                      'Maakit आपका पैसा अपने पास नहीं रखता',
+                      'बीमा अभी Maakit की तरफ़ से नहीं है'],
+        'nahi'    => ['Fatal error']],
+    ['/niyam.php?lang=hi&k=graahak', 'नियम — ग्राहक',
+        'chahiye' => ['ग्राहक के लिए', 'वो पैसा कभी Maakit के पास नहीं आता'],
+        'nahi'    => ['Fatal error']],
+    ['/niyam.php?lang=hi&k=sab', 'नियम — सब एक साथ',
+        'chahiye' => ['ग्राहक के लिए', 'दुकानदार के लिए', 'सारथी के लिए', 'सबके लिए'],
+        'nahi'    => ['Fatal error']],
+
+    // Koi ulta-seedha k bheje to panna tootna nahi chahiye, aur jo
+    // bheja wo HTML ban kar panne par nahi aana chahiye.
+    //
+    // Dhyan: panne par <script> waise bhi hote hain (site ke apne),
+    // isliye unhe ginna bekar hai. Asli sawal ye hai ki BHEJI HUI
+    // cheez kacchi laut kar aayi ya nahi -- yaani quote tod kar
+    // tag khul gaya ya nahi. Wahi jaancha jata hai.
+    ['/niyam.php?lang=hi&k=%22%3E%3Cscript%3Ealert(1)%3C/script%3E', 'नियम — ग़लत k भेजने पर',
+        'chahiye' => ['ग्राहक के लिए'],
+        // Sirf wo nishan jo SIRF tab banta hai jab quote tooti ho.
+        // '"><' akela mat jaanchiye -- wo saadharan HTML me bhi hota
+        // hai (<span class="x"><b>), aur phir jaanch jhoothi chetavni
+        // deti hai.
+        'nahi'    => ['Fatal error', '"><script', "'><script", '<script>alert']],
     ['/location.php', 'सेवा क्षेत्र', 'chahiye'=>['Maakit'], 'nahi'=>['Fatal error']],
     ['/support.php', 'सहायता', 'chahiye'=>['Maakit'], 'nahi'=>['Fatal error']],
     ['/admin/shipment.php', 'Courier जानकारी बिना login', 'code'=>302],

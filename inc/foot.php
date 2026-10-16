@@ -44,7 +44,8 @@
       <a href="/ride.php"><?= t('Book a ride', 'सवारी बुक कीजिए') ?></a> ·
       <a href="/ride.php?t=parcel"><?= t('Send a parcel', 'पार्सल भेजिए') ?></a> ·
       <a href="/smartsarathi/apply.php"><?= t('Become a Sarathi rider', 'सारथी राइडर बनिए') ?></a> ·
-      <a href="/photo-credits.php"><?= t('Photo credits', 'फ़ोटो क्रेडिट') ?></a>
+      <a href="/photo-credits.php"><?= t('Photo credits', 'फ़ोटो क्रेडिट') ?></a> ·
+      <a href="/niyam.php"><?= t('Terms', 'नियम और शर्तें') ?></a>
     </div>
   </div>
 </footer>

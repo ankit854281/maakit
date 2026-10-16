@@ -169,6 +169,21 @@ $darwaze = [
 
         ['/login.php', t('Everyone else', 'बाकी सब'), t('one login for all', 'सबका एक ही login'),
             "Maakit में घुसने का रास्ता:\n\n{link}"],
+
+        // Niyam ka link har aadmi ke apne hisse par khulta hai --
+        // dukaandaar ko dukaan wala, sarathi ko sarathi wala. Poora
+        // panna bhejne par wo padhega hi nahi.
+        ['/niyam.php?k=dukan', t("Terms — shopkeeper", 'नियम — दुकानदार'),
+            t('send with the shop link', 'दुकान वाले link के साथ भेजिए'),
+            "जुड़ने से पहले ये एक बार पढ़ लीजिए — दो मिनट का है:\n\n{link}\n\n"
+          . "सबसे ज़रूरी बात: *सामान का पूरा पैसा सीधे आपका है।* Maakit उसमें से कुछ "
+          . "नहीं काटता और उसे अपने पास रखता भी नहीं — हम सिर्फ़ पहुँचाने का चार्ज लेते हैं।"],
+
+        ['/niyam.php?k=sarathi', t('Terms — rider', 'नियम — सारथी'),
+            t('send with the rider link', 'सारथी वाले link के साथ भेजिए'),
+            "काम शुरू करने से पहले ये एक बार पढ़ लीजिए:\n\n{link}\n\n"
+          . "छोटी-छोटी बातें हैं — हाज़िरी अपनी मर्ज़ी से, कमाई का हिसाब, दोनों कोड, "
+          . "और गाड़ी के काग़ज़।"],
     ],
     t('Send these to customers', 'ये ग्राहकों को भेजिए') => [
         ['/', t('Home', 'घर का पन्ना'), '',
