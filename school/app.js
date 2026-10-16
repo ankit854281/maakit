@@ -507,20 +507,20 @@ async function go(v, params) { view = v; P = params || {}; if (P.date) await ens
 const NAV = {
   principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
-              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
+              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
-  teacher:   [['mytoday','fa-sun','Today'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
+  teacher:   [['mytoday','fa-sun','Today'],['quizt','fa-bolt','Quiz Duel'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
-  student:   [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  parent:    [['phome','fa-house','Home'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
+  student:   [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
+  parent:    [['phome','fa-house','Home'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   chairman:  [['dash','fa-gauge','Dashboard'],['exams','fa-file-pen','Exams'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
-const PRIMARY = { student: ['phome','phw','presults','pnotices'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
-                  chairman: ['dash','results','fame','calendar'], parent: ['phome','phw','presults','pnotices'] };
+const PRIMARY = { student: ['phome','quiz','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
+                  chairman: ['dash','results','fame','calendar'], parent: ['phome','quiz','phw','presults'] };
 let moreOpen = false;
 function navLabel(k) { const n = NAV[U.role].find(x => x[0] === k); return n ? n[2] : ''; }
 function render() {
@@ -665,6 +665,7 @@ async function logout() {
   forceLogout();
 }
 function forceLogout() {
+  QZ = null; QT = null; QPLAY = null; qzStopTimer();
   MUST = null; PD = null; PC_LAST = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
@@ -2284,11 +2285,212 @@ function parentDateSheets(kid) {
       <table class="tbl mt-2"><tr><th>Date</th><th>Paper</th><th class="text-right">Marks</th></tr>${e.sheet.slice().sort((a, b) => a.date.localeCompare(b.date)).map(p => `<tr><td class="whitespace-nowrap">${fmtDate(p.date)}</td><td>${esc(p.title)}</td><td class="text-right">${p.max}</td></tr>`).join('')}</table></div>`).join('');
 }
 
+// ---------------------------------------------------------------- QUIZ DUEL (students + parents) — school/quiz_api.php
+// Students make questions only on topics their class was taught (teacher diaries,
+// last 14 days). A teacher approves each question. Approved questions can be sent
+// to classmates as timed challenges and feed a 5-question daily quiz.
+let QZ = null, QZBUSY = false, QPLAY = null, QTIMER = null, QT = null;
+async function qapi(a, body, q) {
+  const url = 'quiz_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : '');
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null;
+  try { r = await fetch(url, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (r.status === 401) { forceLogout(); throw new Error('Please log in again.'); }
+  if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem. Please try again.');
+  return j;
+}
+async function loadQuiz() {
+  if (QZBUSY) return; QZBUSY = true;
+  try { QZ = await qapi('state', null, { sid: pKid().id }); } catch (e) { QZ = { error: e.message }; } finally { QZBUSY = false; }
+  if (view === 'quiz') render();
+}
+function qzStopTimer() { if (QTIMER) { clearInterval(QTIMER); QTIMER = null; } }
+function qzStartTimer(total) {
+  qzStopTimer();
+  QTIMER = setInterval(() => {
+    if (!QPLAY || QPLAY.result) return qzStopTimer();
+    const left = Math.max(0, Math.ceil((QPLAY.deadline - Date.now()) / 1000));
+    const t = document.getElementById('qz-left'), b = document.getElementById('qz-bar');
+    if (t) t.textContent = left + 's';
+    if (b) b.style.width = Math.max(0, left / total * 100) + '%';
+    if (left <= 0) { qzStopTimer(); qzChoose(-1); }
+  }, 250);
+}
+function qzPlayCard() {
+  const p = QPLAY, total = p.kind === 'c' ? QZ.rules.challengeSeconds : QZ.rules.quizSeconds;
+  const left = Math.max(0, Math.ceil((p.deadline - Date.now()) / 1000));
+  return `<section class="card space-y-4 border-2 border-ink">
+    <div class="flex items-center justify-between gap-2"><span class="pill bg-marigold/25 text-ink">${p.kind === 'c' ? 'Challenge from ' + esc(p.from || 'a classmate') : `Today's quiz · question ${p.no} of ${p.n}`}</span>
+      <span class="text-sm text-slate-500">${esc(p.q.subj)} · ${esc(p.q.topic)}</span></div>
+    <h3 class="text-xl font-semibold text-ink leading-snug">${esc(p.q.text)}</h3>
+    ${p.result ? '' : `<div class="flex items-center gap-3"><div class="flex-1 h-2 rounded-full bg-paper overflow-hidden"><div id="qz-bar" class="h-2 bg-marigold" style="width:${left / total * 100}%"></div></div><b id="qz-left" class="w-10 text-right">${left}s</b></div>`}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${p.q.opts.map((o, i) => {
+      const r = p.result, cls = !r ? 'border-line bg-white hover:border-ink' : i === r.ans ? 'border-leaf bg-leaf/10' : i === p.chosen ? 'border-rose bg-rose/10' : 'border-line bg-white opacity-60';
+      return `<button ${r ? 'disabled' : ''} onclick="qzChoose(${i})" class="w-full text-left p-4 rounded-2xl border-2 ${cls} text-base font-medium"><span class="text-slate-400 mr-2">${'ABCD'[i]}</span>${esc(o)}</button>`; }).join('')}</div>
+    ${p.result ? `<p class="text-lg font-semibold ${p.result.correct ? 'text-leaf' : 'text-rose'}">${p.result.correct ? 'Correct!' : p.result.late || p.chosen < 0 ? 'Time is up.' : 'Not this time.'} ${p.kind === 'c' ? (p.result.correct ? 'You earn 2 points.' : 'Your classmate may earn a point.') : (p.result.correct ? '+1 point' : '')}</p>` : ''}
+  </section>`;
+}
+async function qzChoose(i) {
+  const p = QPLAY; if (!p || p.result || p.sending) return;
+  p.sending = true; qzStopTimer();
+  try {
+    if (p.kind === 'c') {
+      const res = await qapi('answer', { sid: QZ.kid.id, cid: p.cid, choice: i });
+      p.chosen = i; p.result = res; render();
+      setTimeout(() => { QPLAY = null; loadQuiz(); }, 2200);
+    } else {
+      const res = await qapi('quiz', { sid: QZ.kid.id, choice: i });
+      p.chosen = i; p.result = res.last || { correct: false, ans: -1 }; render();
+      setTimeout(() => {
+        if (res.q) { QPLAY = { kind: 'd', q: res.q, deadline: Date.now() + res.left * 1000, no: res.done + 1, n: res.n }; render(); qzStartTimer(QZ.rules.quizSeconds); }
+        else { QPLAY = null; toast(`Quiz finished: ${res.right} of ${res.n} correct`); loadQuiz(); }
+      }, 1600);
+    }
+  } catch (e) { p.sending = false; toast(e.message, 'r'); QPLAY = null; loadQuiz(); }
+}
+async function qzOpen(cid) {
+  try {
+    const res = await qapi('open', { sid: QZ.kid.id, cid });
+    const c = QZ.incoming.find(x => x.id === cid) || {};
+    if (res.done) { toast(res.correct ? 'You already answered this one correctly.' : 'This challenge is over.', 'b'); return loadQuiz(); }
+    QPLAY = { kind: 'c', cid, q: res.q, from: c.from, deadline: Date.now() + res.left * 1000 }; render(); window.scrollTo(0, 0); qzStartTimer(QZ.rules.challengeSeconds);
+  } catch (e) { toast(e.message, 'r'); }
+}
+async function qzDaily() {
+  try {
+    const res = await qapi('quiz', { sid: QZ.kid.id });
+    if (!res.q) { toast(`Today's quiz is done: ${res.right} of ${res.n}`, 'b'); return loadQuiz(); }
+    QPLAY = { kind: 'd', q: res.q, deadline: Date.now() + res.left * 1000, no: res.done + 1, n: res.n }; render(); window.scrollTo(0, 0); qzStartTimer(QZ.rules.quizSeconds);
+  } catch (e) { toast(e.message, 'r'); }
+}
+async function qzAsk() {
+  const ti = document.getElementById('qa-topic').value, text = document.getElementById('qa-text').value.trim();
+  const opts = [0, 1, 2, 3].map(i => document.getElementById('qa-o' + i).value.trim());
+  const pick = document.querySelector('input[name="qa-ans"]:checked');
+  if (ti === '') return toast('Choose the topic', 'a');
+  if (!pick) return toast('Tick the correct answer', 'a');
+  try { await qapi('ask', { sid: QZ.kid.id, topic: QZ.topics[+ti], text, opts, ans: +pick.value }); toast('Sent to your teacher to check'); QZ = null; loadQuiz(); }
+  catch (e) { toast(e.message, 'r'); }
+}
+async function qzSend() {
+  const qid = document.getElementById('qs-q').value, to = document.getElementById('qs-to').value;
+  if (!qid || !to) return toast('Choose a question and a classmate', 'a');
+  try { await qapi('challenge', { sid: QZ.kid.id, qid, to }); toast('Challenge sent'); loadQuiz(); } catch (e) { toast(e.message, 'r'); }
+}
+function vQuiz() {
+  if (!PD || !PD.kids.length) return vPHome();
+  const kid = pKid();
+  if (!QZ || (QZ.kid && QZ.kid.id !== kid.id)) { if (!QZ || !QZ.error) { QZ = null; loadQuiz(); } }
+  if (!QZ) return `${kidSwitch()}${head('Quiz Duel')}<div class="card text-slate-500">Loading…</div>`;
+  if (QZ.error) return `${kidSwitch()}${head('Quiz Duel')}<div class="card">${esc(QZ.error)} <button onclick="QZ=null;loadQuiz()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
+  const R = QZ.rules, pts = QZ.points, mine = QZ.mine, approved = mine.filter(q => q.status === 'approved' && q.sent < R.sendsPerQ);
+  const res = r => r === true ? '<span class="pill bg-leaf/10 text-leaf">Right</span>' : r === false ? '<span class="pill bg-rose/10 text-rose">Wrong</span>' : r === 'expired' ? '<span class="pill bg-slate-100 text-slate-500">Expired</span>' : '<span class="pill bg-marigold/20 text-ink">Waiting</span>';
+  const pendingIn = QZ.incoming.filter(c => c.result === null);
+  const st = { pending: '<span class="pill bg-marigold/20 text-ink">Teacher checking</span>', approved: '<span class="pill bg-leaf/10 text-leaf">Approved</span>', rejected: '<span class="pill bg-rose/10 text-rose">Not approved</span>' };
+  return `${kidSwitch()}${head('Quiz Duel', `Class ${esc(QZ.kid.cls)} · questions only from what your class studied in the last two weeks`)}
+    ${QPLAY ? qzPlayCard() : ''}
+    <section class="kid-hero"><div class="grid grid-cols-3 gap-2">
+      <div class="kstat"><b>${pts.total}</b><span>Points this month</span></div>
+      <div class="kstat"><b>${QZ.rank ? '#' + QZ.rank : '—'}</b><span>Rank in class</span></div>
+      <div class="kstat"><b>${pts.pending}</b><span>Points waiting for a fair-play check</span></div></div></section>
+    ${!QPLAY ? `<div class="card space-y-3"><h3 class="h3">Today's quick quiz</h3>
+      ${QZ.quiz.state === 'done' ? `<p>Done for today: <b>${QZ.quiz.right} of ${QZ.quiz.n}</b> correct. A new quiz comes tomorrow.</p>`
+        : QZ.quiz.state === 'open' ? `<p>You have a quiz in progress (${QZ.quiz.done} of ${QZ.quiz.n} answered). The clock keeps running.</p><button onclick="qzDaily()" class="btn btn-p">Continue</button>`
+        : QZ.quiz.available >= 3 ? `<p class="text-sm text-slate-600">${Math.min(QZ.quiz.available, 5)} questions, ${R.quizSeconds} seconds each, once a day. +1 for each right answer, +2 extra for all 5.</p><button onclick="qzDaily()" class="btn btn-p">Start today's quiz</button>`
+        : '<p class="text-sm text-slate-500">Not enough approved questions on recent topics yet. Make one below, or wait for your teachers to add some.</p>'}</div>` : ''}
+    <div class="card space-y-2"><h3 class="h3">Challenges for you</h3>
+      ${pendingIn.length ? pendingIn.map(c => `<div class="flex items-center justify-between gap-2 py-2 border-b border-line last:border-0"><span><b>${esc(c.from)}</b> <span class="text-sm text-slate-500">${esc(c.subj)} · ${esc(c.topic)}</span></span>
+        <button onclick="qzOpen('${esc(c.id)}')" class="btn btn-sm btn-p">${c.opened ? 'Continue' : 'Answer'} (${R.challengeSeconds}s)</button></div>`).join('') : '<p class="text-sm text-slate-500">No challenges right now.</p>'}
+      ${QZ.incoming.filter(c => c.result !== null).slice(0, 5).map(c => `<div class="flex justify-between gap-2 text-sm text-slate-600"><span>${esc(c.from)} · ${esc(c.subj)}</span>${res(c.result)}</div>`).join('')}</div>
+    <div class="card space-y-3"><h3 class="h3">Challenge a classmate</h3>
+      ${approved.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><select id="qs-q" class="inp">${approved.map(q => `<option value="${esc(q.id)}">${esc(q.subj)}: ${esc(q.text.slice(0, 60))}</option>`).join('')}</select>
+        <select id="qs-to" class="inp"><option value="">Choose a classmate</option>${QZ.mates.map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('')}</select></div>
+        <button onclick="qzSend()" class="btn btn-p" ${QZ.sentToday >= R.sendsPerDay ? 'disabled' : ''}>Send challenge (${R.sendsPerDay - QZ.sentToday} left today)</button>`
+        : '<p class="text-sm text-slate-500">You need an approved question first. Make one below — your teacher checks it.</p>'}
+      ${QZ.outgoing.slice(0, 6).map(c => `<div class="flex justify-between gap-2 text-sm text-slate-600"><span>To ${esc(c.to)} · ${esc(c.subj)}</span><span>${res(c.result)}${c.result === false && !c.fair ? ' <span class="text-xs">point waits until someone else answers it right</span>' : ''}</span></div>`).join('')}</div>
+    <div class="card space-y-3"><h3 class="h3">Make a question</h3>
+      ${QZ.topics.length ? `<select id="qa-topic" class="inp"><option value="">Topic your class studied</option>${QZ.topics.map((t, i) => `<option value="${i}">${esc(t.subj)} — ${esc(t.topic)} (${fmtDate(t.date)})</option>`).join('')}</select>
+      <textarea id="qa-text" rows="2" class="inp" maxlength="300" placeholder="Your question"></textarea>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${[0, 1, 2, 3].map(i => `<label class="flex items-center gap-2"><input type="radio" name="qa-ans" value="${i}" class="w-5 h-5" title="Correct answer"><input id="qa-o${i}" class="inp" maxlength="120" placeholder="Choice ${'ABCD'[i]}"></label>`).join('')}</div>
+      <p class="text-xs text-slate-500">Tick the circle next to the correct answer. Your teacher checks every question before it can be used.</p>
+      <button onclick="qzAsk()" class="btn btn-p">Send to my teacher</button>` : '<p class="text-sm text-slate-500">Topics appear here after your teachers fill in their diary.</p>'}</div>
+    ${mine.length ? `<div class="card space-y-2"><h3 class="h3">My questions</h3>${mine.slice(0, 10).map(q => `<div class="py-2 border-b border-line last:border-0"><div class="flex justify-between gap-2"><span class="text-sm"><b>${esc(q.subj)}</b> · ${esc(q.topic)}</span>${st[q.status] || ''}</div>
+      <p class="text-sm mt-1">${esc(q.text)}</p>${q.reason ? `<p class="text-xs text-rose mt-1">Teacher: ${esc(q.reason)}</p>` : ''}${q.status === 'approved' ? `<p class="text-xs text-slate-500 mt-1">Sent to ${q.sent} of ${R.sendsPerQ} classmates</p>` : ''}</div>`).join('')}</div>` : ''}
+    <div class="card"><h3 class="h3">Class leaderboard this month</h3>${QZ.board.length ? `<ol class="mt-2 space-y-1">${QZ.board.map((b, i) => `<li class="flex justify-between gap-2 ${b.me ? 'font-semibold text-ink' : ''}"><span>${i + 1}. ${esc(b.name)}${b.me ? ' (you)' : ''}</span><span>${b.pts}</span></li>`).join('')}</ol>` : '<p class="text-sm text-slate-500 mt-1">No points yet this month.</p>'}</div>
+    <details class="card"><summary class="h3 cursor-pointer">How points work</summary><ul class="text-sm text-slate-600 list-disc pl-5 mt-2 space-y-1">
+      <li>Daily quiz: +1 for each right answer, +2 extra if all 5 are right. One quiz a day, ${R.quizSeconds} seconds a question.</li>
+      <li>Answer a classmate's challenge right within ${R.challengeSeconds} seconds: +2 for you.</li>
+      <li>If your classmate gets your question wrong, you get +1 — but only after at least one other classmate has answered that question right. Trick questions earn nothing.</li>
+      <li>Each question can go to ${R.sendsPerQ} classmates; you can send ${R.sendsPerDay} challenges a day, only one a day to the same classmate; points between the same two friends are limited each week.</li>
+      <li>Once a question opens, the clock does not stop. Closing the page counts as a wrong answer.</li></ul></details>`;
+}
+
+// ---------------------------------------------------------------- QUIZ DUEL — teacher / principal
+async function loadQuizT() { try { QT = await qapi('tstate'); } catch (e) { QT = { error: e.message }; } if (view === 'quizt') render(); }
+function recentTopics(cls, subj) {
+  const out = new Set(); Object.entries(S.diary).forEach(([d, byT]) => Object.values(byT).forEach(byB => Object.values(byB).forEach(e => { if (e.cls === cls && (!subj || e.subj === subj) && e.topic) out.add(e.topic); })));
+  return [...out].slice(0, 30);
+}
+function vQuizT() {
+  if (!QT) { loadQuizT(); return head('Quiz Duel') + '<div class="card text-slate-500">Loading…</div>'; }
+  if (QT.error) return head('Quiz Duel') + `<div class="card">${esc(QT.error)} <button onclick="QT=null;render()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
+  const allocs = U.role === 'principal' ? S.alloc.filter(a => a.n > 0) : myAllocs(U.tid);
+  const k0 = P.key && allocs.some(a => sylKey(a.c, a.s) === P.key) ? P.key : (allocs[0] ? sylKey(allocs[0].c, allocs[0].s) : '');
+  const [c0, s0] = k0.split('|');
+  const pend = QT.questions.filter(q => q.status === 'pending');
+  const appr = QT.questions.filter(q => q.status === 'approved');
+  const weak = appr.filter(q => q.n >= 3).map(q => ({ ...q, pct: Math.round(q.ok / q.n * 100) })).sort((a, b) => a.pct - b.pct).slice(0, 8);
+  const ws = appr.filter(q => q.cls === c0 && q.subj === s0);
+  return head('Quiz Duel', 'Approve students\' questions, add your own, see which topics need reteaching, and print worksheets.') + `
+    <div class="card space-y-3"><h3 class="h3">Waiting for you (${pend.length})</h3>
+      ${pend.length ? pend.map(q => `<div class="border border-line rounded-2xl p-4 space-y-2"><div class="flex flex-wrap justify-between gap-2 text-sm"><span><b>Class ${esc(q.cls)} · ${esc(q.subj)}</b> · ${esc(q.topic)}</span><span class="text-slate-500">by ${esc(q.author)}</span></div>
+        <p class="font-medium">${esc(q.text)}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">${q.opts.map((o, i) => `<label class="flex items-center gap-2 text-sm"><input type="radio" name="qd-${esc(q.id)}" value="${i}" ${i === q.ans ? 'checked' : ''}> ${esc(o)}</label>`).join('')}</div>
+        <p class="text-xs text-slate-500">The ticked choice is the correct answer. Change it before approving if the student got it wrong.</p>
+        <div class="flex gap-2"><button onclick="qtDecide('${esc(q.id)}','approved')" class="btn btn-sm btn-g">Approve</button><button onclick="qtDecide('${esc(q.id)}','rejected')" class="btn btn-sm btn-l">Not approved</button></div></div>`).join('')
+        : '<p class="text-sm text-slate-500">Nothing to check.</p>'}</div>
+    ${allocs.length ? `<div class="card space-y-3"><div class="flex flex-wrap justify-between gap-2"><h3 class="h3">Add a question</h3>
+      <select class="inp w-auto" onchange="go('quizt',{key:this.value})">${allocs.map(a => { const k = sylKey(a.c, a.s); return `<option value="${esc(k)}" ${k === k0 ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select></div>
+      <input id="qt-topic" class="inp" list="qt-topics" placeholder="Topic (from your diary)"><datalist id="qt-topics">${recentTopics(c0, s0).map(t => `<option value="${esc(t)}">`).join('')}</datalist>
+      <textarea id="qt-text" rows="2" class="inp" maxlength="300" placeholder="Question"></textarea>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${[0, 1, 2, 3].map(i => `<label class="flex items-center gap-2"><input type="radio" name="qt-ans" value="${i}" class="w-5 h-5"><input id="qt-o${i}" class="inp" maxlength="120" placeholder="Choice ${'ABCD'[i]}"></label>`).join('')}</div>
+      <button onclick="qtAdd(${jsq(c0)},${jsq(s0)})" class="btn btn-p">Add approved question</button></div>` : ''}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card"><h3 class="h3">Topics students find hard</h3>${weak.length ? `<table class="tbl mt-2"><tr><th>Class · subject · topic</th><th class="text-right">Right</th></tr>${weak.map(q => `<tr><td>${esc(q.cls)} · ${esc(q.subj)} · ${esc(q.topic)}<br><span class="text-xs text-slate-500">${esc(q.text.slice(0, 80))}</span></td><td class="text-right font-semibold ${q.pct < 50 ? 'text-rose' : ''}">${q.pct}% <span class="text-xs text-slate-400">of ${q.n}</span></td></tr>`).join('')}</table>
+        <p class="text-xs text-slate-500 mt-2">Below 50% usually means the topic needs a short reteach.</p>` : '<p class="text-sm text-slate-500 mt-1">Shows up once questions have 3 or more answers.</p>'}</div>
+      <div class="card space-y-2"><h3 class="h3">Worksheet</h3><p class="text-sm text-slate-600">${ws.length} approved question(s) for Class ${esc(c0 || '')} ${esc(s0 || '')}. Prints as a worksheet, with the answer key on a separate page.</p>
+        <button onclick="qtWorksheet(${jsq(c0)},${jsq(s0)})" class="btn btn-l" ${ws.length ? '' : 'disabled'}><i class="fa-solid fa-print"></i> Print worksheet</button></div>
+    </div>
+    <div class="card"><h3 class="h3">Leaderboards this month</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">${Object.entries(QT.boards).filter(([c, r]) => r.length).map(([c, rows]) => `<div><b>Class ${esc(c)}</b><ol class="text-sm mt-1">${rows.slice(0, 5).map((r, i) => `<li>${i + 1}. ${esc(r.name)} — ${r.pts}</li>`).join('')}</ol></div>`).join('') || '<p class="text-sm text-slate-500">No points yet.</p>'}</div></div>`;
+}
+async function qtDecide(id, status) {
+  const q = QT.questions.find(x => x.id === id); if (!q) return;
+  const body = { qid: id, status };
+  if (status === 'rejected') { const r = prompt('Tell the student why (optional)', ''); if (r === null) return; body.reason = r; }
+  else { const pick = document.querySelector(`input[name="qd-${id}"]:checked`); if (pick && +pick.value !== q.ans) body.ans = +pick.value; }
+  try { await qapi('decide', body); toast(status === 'approved' ? 'Approved' : 'Sent back'); QT = null; render(); } catch (e) { toast(e.message, 'r'); }
+}
+async function qtAdd(cls, subj) {
+  const topic = document.getElementById('qt-topic').value.trim(), text = document.getElementById('qt-text').value.trim();
+  const opts = [0, 1, 2, 3].map(i => document.getElementById('qt-o' + i).value.trim()), pick = document.querySelector('input[name="qt-ans"]:checked');
+  if (!pick) return toast('Tick the correct answer', 'a');
+  try { await qapi('add', { cls, subj, topic, text, opts, ans: +pick.value }); toast('Question added'); QT = null; render(); } catch (e) { toast(e.message, 'r'); }
+}
+function qtWorksheet(cls, subj) {
+  const qs = QT.questions.filter(q => q.status === 'approved' && q.cls === cls && q.subj === subj).sort((a, b) => String(a.topic).localeCompare(String(b.topic)));
+  printHTML('Worksheet', printHeader(`Worksheet — Class ${esc(cls)} ${esc(subj)}`) + `<p>Name ____________________ &nbsp; Roll no. _____ &nbsp; Date __________</p>` +
+    qs.map((q, i) => `<div style="margin:10px 0;page-break-inside:avoid"><b>${i + 1}. ${esc(q.text)}</b> <span style="color:#666;font-size:10px">(${esc(q.topic)})</span><br>${q.opts.map((o, j) => `&nbsp;&nbsp;(${'abcd'[j]}) ${esc(o)}`).join('<br>')}</div>`).join('') +
+    `<div class="pb"></div><h2>Answer key</h2><p>${qs.map((q, i) => `${i + 1}. (${'abcd'[q.ans]})`).join(' &nbsp; ')}</p>` + PRINT_FOOT);
+  log('Quiz', `Printed a ${qs.length}-question worksheet for Class ${cls} ${subj}`);
+}
+
 // ---------------------------------------------------------------- routes
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 
