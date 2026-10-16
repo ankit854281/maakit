@@ -1049,6 +1049,11 @@ function vStudents() {
           <select id="st-cls" class="inp">${CLASS_NAMES.map(x => `<option>${x}</option>`).join('')}</select>
           <input id="st-fa" class="inp" placeholder="Father's name"><input id="st-ph" class="inp" placeholder="Parent mobile (10 digits)" inputmode="tel">
           <button onclick="addStudent()" class="btn btn-p w-full">Add</button></div>
+        <div class="card space-y-2"><h3 class="font-bold">Import verified ERP students</h3>
+          <p class="text-xs text-slate-500">Select the verified student JSON file. ERP IDs, admission numbers and session are preserved. Existing rows are never overwritten. Teachers are not changed.</p>
+          <input type="file" id="st-erp-file" class="inp" accept=".json,application/json" aria-label="Verified ERP student JSON" onchange="previewErpStudents(this)">
+          <div id="st-erp-preview" class="text-sm"></div>
+          <button id="st-erp-apply" class="btn btn-g w-full" style="display:none" onclick="applyErpStudents()">Import verified students</button></div>
         <div class="card space-y-2"><h3 class="font-bold">Import from Excel</h3>
           <p class="text-xs text-slate-500">Copy columns from Excel in this order and paste: <b>Adm No, Name, Class, Father, Mobile</b>. Class must be like 10th, 9th … 1st, UKG, LKG, PG.</p>
           <textarea id="st-imp" rows="5" class="inp text-xs" placeholder="92	Yashvi Tiwari	10th	Dilip Kumar Tiwari	9839xxxxxx"></textarea>
@@ -1076,6 +1081,33 @@ function editStudent(id) {
 }
 function delStudent(id) { const s = studentById(id); if (!s || !confirm('Remove ' + s.name + '?')) return; S.students = S.students.filter(x => x.id !== id); log('Students', `Removed ${s.name} (Adm ${s.adm})`); render(); }
 function removeSamples() { if (!confirm('Remove all sample students? Do this after importing your real list.')) return; const n = S.students.filter(s => s.sample).length; S.students = S.students.filter(s => !s.sample); log('Students', `Removed ${n} sample students`); render(); }
+let erpStudentImport=null;
+async function previewErpStudents(input) {
+  erpStudentImport=null;
+  const box=document.getElementById('st-erp-preview'),button=document.getElementById('st-erp-apply');
+  button.style.display='none';box.textContent='Checking file…';
+  try {
+    const file=input.files[0];if(!file){box.textContent='';return;}
+    if(file.size>2500000)throw new Error('File is too large. Use a student-only JSON file.');
+    const payload=JSON.parse(await file.text());
+    const result=await api('importstudents',{...payload,apply:false});
+    box.textContent=`Session ${result.session}: ${result.total} students; ${result.toAdd} to add; ${result.unchanged} already present; ${result.conflicts.length} conflicts. Repeated admission numbers are kept as separate ERP IDs.`;
+    if(result.conflicts.length)throw new Error('Existing student records need review. Nothing has been imported.');
+    erpStudentImport=payload;button.style.display='';
+  }catch(e){box.textContent=e.message;toast(e.message,'r');}
+}
+async function applyErpStudents() {
+  if(!erpStudentImport)return;
+  const button=document.getElementById('st-erp-apply');button.disabled=true;
+  try {
+    await sync();
+    if(syncing || netState!=='ok' || pendingLog.length || Object.entries(toRecords()).some(([k,v])=>SYNCED[k]!==v))throw new Error('Wait for pending changes to save, then try the import again.');
+    const result=await api('importstudents',{...erpStudentImport,apply:true});
+    erpStudentImport=null;
+    await loadAll();
+    go('students');toast(`${result.added} students imported; ${result.unchanged} already present. Teachers unchanged.`);
+  }catch(e){toast(e.message,'r');button.disabled=false;}
+}
 function importStudents() {
   const lines = document.getElementById('st-imp').value.split('\n').map(l => l.trim()).filter(Boolean); let added = 0, skipped = [];
   lines.forEach((l, i) => { const p = l.split(/\t|,/).map(x => x.trim()); const [adm, name, cls, father, phone] = p;

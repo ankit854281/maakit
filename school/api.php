@@ -213,6 +213,30 @@ case 'sync': {
 }
 
 // ------------------------------------------------------------
+case 'importstudents': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $u=sch_auth();
+    if ($u['role'] !== 'principal') sch_fail('Only the Principal can import student records.',403);
+    require_once __DIR__ . '/student_import.php';
+    try { $rows=sch_student_import_rows($in,(string)((sch_rec_get('settings','main')['session']??''))); }
+    catch (InvalidArgumentException $e) { sch_fail($e->getMessage()); }
+    $apply=($in['apply']??false)===true;
+    $db->beginTransaction();
+    // Serialise imports using the already-existing Principal user row, including an empty student table.
+    $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
+    $old=$db->query("SELECT r,d,deleted FROM sch_records WHERE k='student' FOR UPDATE")->fetchAll();
+    $plan=sch_student_import_plan($rows,$old);
+    if ($apply && $plan['conflicts']) { $db->rollBack(); sch_fail('Import stopped: existing student IDs or admission numbers need review. No records changed.',409); }
+    if ($apply) {
+        $insert=$db->prepare("INSERT INTO sch_records (k,r,d,deleted,dkey,ver,by_uid,updated_at) VALUES ('student',?,?,0,NULL,?,'principal',NOW())");
+        foreach($plan['new'] as $s) $insert->execute([$s['id'],json_encode($s,JSON_UNESCAPED_UNICODE),sch_now_ms()]);
+        sch_log($u,'Student Import',count($plan['new']).' ERP students imported for '.$in['session'].'; '.count($plan['unchanged']).' already present; teachers unchanged');
+    }
+    $db->commit();
+    sch_json(['ok'=>true,'applied'=>$apply,'session'=>$in['session'],'total'=>count($rows),'added'=>$apply?count($plan['new']):0,'toAdd'=>count($plan['new']),'unchanged'=>count($plan['unchanged']),'conflicts'=>$plan['conflicts'],'duplicateAdmissions'=>$plan['duplicateAdmissions']]);
+}
+
+// ------------------------------------------------------------
 case 'setpin': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $u = sch_auth();

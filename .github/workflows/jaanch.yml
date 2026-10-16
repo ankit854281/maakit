@@ -74,6 +74,7 @@ jobs:
           php tests/coverage.php
           php tests/customer.php
           php tests/fast2sms.php
+          php .github/jaanch/school-import.php
 
       # ---------- 2. SQL दो बार ----------
       # Updater kabhi do baar chal sakta hai. Migration tab bhi

@@ -154,6 +154,23 @@ foreach ($j['marks'] as $m) sf_check($m['sid'] === 's1', 'parent saw marks of an
 sf_check($c === 403, 'parent could open the full school data');
 [, , $j] = sf_api('sync', ['put' => [['k' => 'studAtt', 'r' => "$today|9th", 'd' => ['absent' => []]]]], $PA);
 sf_check(count($j['rejected']) === 1, 'parent changed attendance');
+// ---- verified ERP import: preview, stable IDs, same admission, repeat and permission ----
+$erp=['format'=>'snmishra-students-v1','session'=>'2026-27','students'=>[
+ ['erpId'=>'901','adm'=>'ERP-DUP','name'=>'Import Child A','cls'=>'1st','father'=>'Parent A'],
+ ['erpId'=>'902','adm'=>'ERP-DUP','name'=>'Import Child B','cls'=>'2nd','father'=>'Parent B']]];
+$teachersBefore=$pdo->query("SELECT r,d FROM sch_records WHERE k='teacher' ORDER BY r")->fetchAll();
+[$c,,$preview]=sf_api('importstudents',$erp,$P);
+sf_check($c===200&&$preview['toAdd']===2&&!$preview['applied'],'student preview failed');
+sf_check((int)$pdo->query("SELECT COUNT(*) FROM sch_records WHERE r IN ('erp-snmishra-901','erp-snmishra-902')")->fetchColumn()===0,'preview wrote students');
+[$c]=sf_api('importstudents',array_merge($erp,['apply'=>true]),$K);sf_check($c===403,'teacher imported students');
+[$c,,$done]=sf_api('importstudents',array_merge($erp,['apply'=>true]),$P);
+sf_check($c===200&&$done['added']===2,'same-admission students merged or import failed');
+[$c,,$again]=sf_api('importstudents',array_merge($erp,['apply'=>true]),$P);
+sf_check($c===200&&$again['added']===0&&$again['unchanged']===2,'repeat duplicated students');
+$changed=$erp;$changed['students'][0]['name']='Overwrite attempt';
+[$c]=sf_api('importstudents',array_merge($changed,['apply'=>true]),$P);sf_check($c===409,'import overwrote existing student');
+$wrong=$erp;$wrong['session']='2025-26';[$c]=sf_api('importstudents',$wrong,$P);sf_check($c===400,'wrong session accepted');
+sf_check($teachersBefore===$pdo->query("SELECT r,d FROM sch_records WHERE k='teacher' ORDER BY r")->fetchAll(),'student import changed teachers');
 
 // ---- log export ----
 [$c, $csv] = sf_api('logcsv', null, $P);
