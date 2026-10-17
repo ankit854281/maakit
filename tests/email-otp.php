@@ -1,0 +1,35 @@
+<?php
+require_once __DIR__.'/../inc/email-otp.php';
+function email_check($ok,$why) { if(!$ok) throw new RuntimeException($why); }
+email_check(!mk_email_enabled(),'Off until sender configured');
+email_check(mk_email_address("x@example.com\r\nBcc: y@example.com")==='', 'Header injection rejected');
+email_check(mk_email_address(['bad'])==='', 'Array rejected');
+email_check(mk_email_address(' User@Example.com ')==='user@example.com', 'Normalized address');
+$p=new PDO('sqlite::memory:');$p->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$p->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
+$sent=[];$s=new MaakitEmailOtp($p,function($body)use(&$sent){$sent[]=$body;return true;});
+$id=$s->send('one@example.com','customer_login','login:1','browser-a','ip-a');$code=$sent[0]['otp'];
+email_check(is_string($id),'Send succeeds');
+$row=$p->query('SELECT * FROM mk_email_challenges')->fetch();
+email_check($row['code_hash']!==$code && password_verify($code,$row['code_hash']),'Only hashed OTP stored');
+email_check(!$s->verify($id,'customer_link','login:1','browser-a',$code),'Wrong purpose denied');
+email_check(!$s->verify($id,'customer_login','login:2','browser-a',$code),'Wrong account denied');
+email_check(!$s->verify($id,'customer_login','login:1','browser-b',$code),'Wrong browser denied');
+email_check($s->verify($id,'customer_login','login:1','browser-a',$code),'Correct OTP accepted');
+email_check(!$s->verify($id,'customer_login','login:1','browser-a',$code),'Replay denied');
+email_check($s->send('one@example.com','customer_login','login:1','browser-a','ip-a')===null,'Cooldown');
+$id=$s->send('two@example.com','customer_login','login:2','browser-a','ip-a');$code=$sent[1]['otp'];
+$wrong=$code==='111111'?'222222':'111111';
+for($i=0;$i<5;$i++) email_check(!$s->verify($id,'customer_login','login:2','browser-a',$wrong),'Wrong OTP rejected');
+email_check(!$s->verify($id,'customer_login','login:2','browser-a',$code),'Five guesses exhaust challenge');
+$id=$s->send('three@example.com','customer_login','login:3','browser-a','ip-a');$code=$sent[2]['otp'];
+$p->prepare('UPDATE mk_email_challenges SET expires=? WHERE id=?')->execute([time()-1,$id]);
+email_check(!$s->verify($id,'customer_login','login:3','browser-a',$code),'Expired OTP rejected');
+$fail=new MaakitEmailOtp($p,fn($b)=>false);
+email_check($fail->send('four@example.com','customer_login','login:4','browser-a','ip-a')===null,'Mail failure fails closed');
+mk_email_install($p);mk_email_install($p);
+$p->exec('CREATE TABLE customers(id INTEGER PRIMARY KEY, active INTEGER, password TEXT); INSERT INTO customers VALUES(1,1,"hash"),(2,0,"hash")');
+$p->exec("INSERT INTO mk_customer_emails VALUES(1,'one@example.com',1),(2,'two@example.com',1)");
+email_check(mk_email_customer($p,'one@example.com')['id']===1,'Linked identity only');
+email_check(!mk_email_customer($p,'two@example.com'),'Inactive account denied');
+email_check(!mk_email_customer($p,'unknown@example.com'),'Unlinked email cannot claim account');
+echo "Email OTP security checks passed\n";

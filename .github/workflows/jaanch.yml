@@ -74,6 +74,7 @@ jobs:
           php tests/coverage.php
           php tests/customer.php
           php tests/fast2sms.php
+          php tests/email-otp.php
           php .github/jaanch/school-import.php
           php .github/jaanch/school-learning.php
           php .github/jaanch/studio-unit.php

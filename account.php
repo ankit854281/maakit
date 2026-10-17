@@ -4,6 +4,7 @@ require_once __DIR__ . '/inc/icons.php';
 require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/services.php';
 require_once __DIR__ . '/inc/customer.php';
+require_once __DIR__ . '/inc/email-otp.php';
 
 if (f2s_enabled() && !cust() && (get('m') === 'register' || ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'register'))) redirect('/otp.php');
 $tab = 'mere';
@@ -140,6 +141,7 @@ include __DIR__ . '/inc/head.php';
     <?php endforeach; ?>
   <?php endif; ?>
 
+  <?php if(mk_email_enabled()): ?><p><a class="btn btn-line" href="/email-otp.php"><?= h(t('Link / change email for OTP login','OTP लॉगिन के लिए email जोड़ें / बदलें')) ?></a></p><?php endif ?>
   <h3 class="ghead"><?= t('My details', 'मेरी जानकारी') ?></h3>
   <form method="post" class="box">
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="save">
@@ -197,6 +199,7 @@ include __DIR__ . '/inc/head.php';
       <div class="lg-info" data-hint hidden></div>
 
       <?php if(f2s_enabled()): ?><p><a class="btn btn-brand" href="/otp.php"><?= h(t('OTP login / new account / forgot password','OTP से लॉगिन / नया खाता / पासवर्ड भूल गए')) ?></a></p><?php endif ?>
+      <?php if(mk_email_enabled()): ?><p><a class="btn btn-brand" href="/email-otp.php"><?= h(t('Email OTP login / new account','Email OTP से लॉगिन / नया खाता')) ?></a></p><?php endif ?>
       <!-- Sign in -->
       <form method="post" class="lg-form" data-form="login"<?= $mode === 'register' ? ' hidden' : '' ?>>
         <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="login">
