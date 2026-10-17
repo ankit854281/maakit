@@ -15,6 +15,7 @@ const SCH_KINDS = ['settings','classes','teacher','alloc','grid','exams','studen
 const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav'];
 const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal'];
 const SCH_SESSION_DAYS = 30;
+const SCH_NO_LOAD = ['parent', 'student', 'accountant', 'reception'];   // inhe poore school ka data nahi milta
 const SCH_MAX_RECORD = 400000;          // ek record max ~400 KB (timetable grid ke liye kaafi)
 
 function sch_db(): PDO {
@@ -81,7 +82,7 @@ function sch_rows_to_records(array $rows): array {
     $out = [];
     foreach ($rows as $row) {
         // Learning content has its own subject/child-scoped API; keys never use legacy sync.
-        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game')) continue;
+        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct')) continue;
         if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck'], true)) continue;
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}
@@ -126,6 +127,11 @@ function sch_uid_of(array $u): string {
 
 function sch_user_label(array $u): string {
     if ($u['role'] === 'chairman') return 'Chairman';
+    if ($u['role'] === 'accountant' || $u['role'] === 'reception') {
+        $s = sch_rec_get('settings', 'main') ?? [];
+        $n = trim((string)($s[$u['role'] . 'Name'] ?? ''));
+        return ($n !== '' ? $n : ($u['role'] === 'accountant' ? 'Akash Tiwari' : 'Shiva Rai')) . ($u['role'] === 'accountant' ? ' (Accountant)' : ' (Reception)');
+    }
     if ($u['role'] === 'student') {
         $s = sch_rec_get('student', (string)$u['tid']);
         return ($s ? (string)($s['name'] ?? '') : (string)$u['tid']) . ' (Student)';

@@ -204,9 +204,9 @@ function mergeLog(rows) {
 }
 
 function isFam() { return !!U && (U.role === 'parent' || U.role === 'student'); }
-function save() { if (isFam()) return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); }
+function save() { if (isFam() || isOffice()) return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, 250); }
 async function sync() {
-  if (!TOKEN || !S) return;
+  if (!TOKEN || !S || isFam() || isOffice()) return;
   if (syncing) { save(); return; }
   const R = toRecords(), put = [], del = [];
   Object.entries(R).forEach(([key, js]) => { if (SYNCED[key] !== js) { const [k, r] = key.split(SEP); put.push({ k, r, d: JSON.parse(js), js }); } });
@@ -227,7 +227,7 @@ async function sync() {
   } finally { syncing = false; }
 }
 async function poll() {
-  if (!TOKEN || !S || document.hidden || isFam()) return;
+  if (!TOKEN || !S || document.hidden || isFam() || isOffice()) return;
   try {
     const res = await api('since', null, { v: lastV, l: lastLogId });
     lastV = res.now;
@@ -247,7 +247,7 @@ function setNet(s) {
   const html = s === 'saving' ? '<span class="dot bg-marigold"></span>Saving' : s === 'off' ? '<span class="dot bg-rose"></span>Offline' : '<span class="dot bg-leaf"></span>Saved';
   ['net', 'net-m'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = html; });
 }
-window.addEventListener('beforeunload', e => { if (syncing || pendingLog.length || (S && Object.entries(toRecords()).some(([k, v]) => SYNCED[k] !== v))) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (isFam() || isOffice()) return; if (syncing || pendingLog.length || (S && Object.entries(toRecords()).some(([k, v]) => SYNCED[k] !== v))) { e.preventDefault(); e.returnValue = ''; } });
 setInterval(poll, 45000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
 
@@ -303,6 +303,7 @@ let U = null; // { role:'principal'|'teacher'|'chairman', tid }
 function userName() {
   if (!U) return 'System';
   if (U.role === 'chairman') return 'Chairman';
+  if (isOffice()) return ME ? ME.label : U.role;
   const n = S && S.teachers[U.tid] ? S.teachers[U.tid].name : (ME ? ME.label : U.tid);
   return U.role === 'principal' ? n + ' (Principal)' : n;
 }
@@ -333,11 +334,15 @@ function ttTry(alloc, rand) {
   const heavy = alloc.map(a => /Math|Physics|Science|English|Biology/.test(a.s));
   const light = alloc.map(a => /Games|Drawing|Activity|Library|Rhymes|Craft|Play|Moral/.test(a.s));
   const occ = new Int16Array(tk.length * N), pd = new Int16Array(alloc.length * D);
+  // "Fixed bells": cnt[l][b] = on how many days lesson l sits in bell b. Rewarding cnt² pulls each
+  // subject into the same bell Monday–Saturday; it only moves where a clash or rule forces it.
+  const cnt = new Int16Array(alloc.length * Bn), W = 1.0;
+  const cMove = (l, a, b) => { if (l < 0 || a === b) return 0; const d = -2 * (cnt[l * Bn + b] - cnt[l * Bn + a] + 1); cnt[l * Bn + a]--; cnt[l * Bn + b]++; return W * d; };
   const cls = CLASS_NAMES.map(c => {
     const arr = []; alloc.forEach((a, i) => { if (a.c === c) for (let n = 0; n < (+a.n || 0); n++) arr.push(i); });
     while (arr.length < N) arr.push(-1);
     for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
-    arr.forEach((l, s) => { if (l >= 0) { occ[aT[l] * N + s]++; pd[l * D + ((s / Bn) | 0)]++; } });
+    arr.forEach((l, s) => { if (l >= 0) { occ[aT[l] * N + s]++; pd[l * D + ((s / Bn) | 0)]++; cnt[l * Bn + s % Bn]++; } });
     return arr;
   });
   const H = 10;
@@ -353,14 +358,14 @@ function ttTry(alloc, rand) {
   const hard = () => { let h = 0; for (let k = 0; k < occ.length; k++) if (occ[k] > 1) h += occ[k] - 1;
     for (let k = 0; k < pd.length; k++) h += Math.max(0, pd[k] - maxPD[(k / D) | 0]);
     cls.forEach(arr => arr.forEach((l, s) => { if (l >= 0 && okB[l] && !okB[l].includes(s % Bn)) h++; })); return h; };
-  const IT = 300000; let temp = 4; const cool = Math.pow(0.01 / temp, 1 / IT);
+  const IT = 450000; let temp = 4; const cool = Math.pow(0.01 / temp, 1 / IT);
   for (let it = 0; it < IT; it++, temp *= cool) {
     const arr = cls[(rand() * cls.length) | 0], p = (rand() * N) | 0, q = (rand() * N) | 0, x = arr[p], y = arr[q];
     if (p === q || x === y) continue;
-    const ks = keys(x, y, p, q), before = part(arr, ks, p, q);
+    const ks = keys(x, y, p, q), before = part(arr, ks, p, q), bp = p % Bn, bq = q % Bn;
     mv(x, p, q); mv(y, q, p); arr[p] = y; arr[q] = x;
-    const d = part(arr, ks, p, q) - before;
-    if (d > 0 && rand() >= Math.exp(-d / temp)) { mv(x, q, p); mv(y, p, q); arr[p] = x; arr[q] = y; }
+    const d = part(arr, ks, p, q) - before + cMove(x, bp, bq) + cMove(y, bq, bp);
+    if (d > 0 && rand() >= Math.exp(-d / temp)) { mv(x, q, p); mv(y, p, q); arr[p] = x; arr[q] = y; cMove(y, bp, bq); cMove(x, bq, bp); }
   }
   if (hard() > 0) return null;
   const grid = {}; CLASS_NAMES.forEach((c, ci) => grid[c] = Array.from({ length: D }, (_, d) => cls[ci].slice(d * Bn, d * Bn + Bn)));
@@ -378,31 +383,60 @@ function staffAbsent(date) {
   const onLeave = S.leaves.filter(l => l.status === 'Approved' && l.from <= date && l.to >= date).map(l => l.tid);
   return [...new Set([...manual, ...onLeave])];
 }
-function arrangement(date) {
+// Absence can be the whole day or "from bell N" (late arrival / leaving early = half day).
+function absentFrom(date, t) {           // null = present, 0 = whole day, n = absent from bell n onwards
+  if (S.leaves.some(l => l.status === 'Approved' && l.tid === t && l.from <= date && l.to >= date)) return 0;
+  const a = S.staffAtt[date]; if (!a || !(a.absent || []).includes(t)) return null;
+  return +((a.from || {})[t] || 0);
+}
+function absentAt(date, t, b) { const f = absentFrom(date, t); return f !== null && b >= f; }
+function busyAt(date, x, b) { const d = dayIdx(date); const q = d < 0 ? null : teacherAt(x, d, b); return !!q && !examBlocks(date, q.c); }
+// One day's arrangement. load = arrangement bells each teacher already did this month (fair sharing).
+// The Principal can fix a substitute for a bell: staffAtt[date].subs['absentTid|bell'] = tid, or '-' for "nobody".
+function arrangementBase(date, load) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
-  const absent = staffAbsent(date), extra = {}, slips = [];
+  const absent = staffAbsent(date), ov = (S.staffAtt[date] && S.staffAtt[date].subs) || {}, extra = {}, need = [];
   absent.forEach(t => BELLS.forEach((b, i) => {
+    if (!absentAt(date, t, i)) return;
     const a = teacherAt(t, d, i); if (!a || examBlocks(date, a.c)) return;
-    const taken = slips.filter(s => s.bell === i).map(s => s.sub);
-    const busy = x => { const q = teacherAt(x, d, i); return q && !examBlocks(date, q.c); };
-    const pool = Object.keys(S.teachers).filter(x => !absent.includes(x) && !busy(x) && !taken.includes(x)
-      && (!S.teachers[x].bells || S.teachers[x].bells.includes(i)));
-    const score = x => { let s = 0;
-      if (S.alloc.some(q => q.t === x && q.s === a.s)) s += 5;
-      if (S.alloc.some(q => q.t === x && q.c === a.c)) s += 2;
-      s -= (extra[x] || 0) * 3; s -= BELLS.filter((_, j) => teacherAt(x, d, j)).length * 0.3;
-      if (x === 'P') s -= 4; if (['RI','SH','MO'].includes(x)) s -= 10; return s; };
-    pool.sort((x, y) => score(y) - score(x));
-    const sub = pool[0] || null; if (sub) extra[sub] = (extra[sub] || 0) + 1;
-    slips.push({ bell: i, cls: a.c, subj: a.s, absent: t, sub });
+    need.push({ bell: i, cls: a.c, subj: a.s, absent: t });
   }));
-  return slips.sort((x, y) => x.bell - y.bell);
+  const taken = i => need.filter(n => n.bell === i && n.sub).map(n => n.sub);
+  const canTake = (x, n) => x !== n.absent && !absentAt(date, x, n.bell) && !busyAt(date, x, n.bell) && !taken(n.bell).includes(x)
+    && (!S.teachers[x].bells || S.teachers[x].bells.includes(n.bell));
+  const dayLoad = x => BELLS.filter((_, j) => busyAt(date, x, j)).length;
+  const score = (x, n) => { let s = 0;
+    if (S.alloc.some(q => q.t === x && q.s === n.subj)) s += 5;          // same subject
+    if (S.alloc.some(q => q.t === x && q.c === n.cls)) s += 2;           // knows the class
+    s -= (extra[x] || 0) * 3 + (load[x] || 0) * 0.8 + dayLoad(x) * 0.3;   // share the work fairly
+    if (x === 'P') s -= 4; if (['RI', 'SH', 'MO'].includes(x)) s -= 10;   // Principal last; pre-primary stays with toddlers
+    return s; };
+  need.forEach(n => { const w = ov[n.absent + '|' + n.bell]; n.sub = null; n.manual = false;     // 1st: the Principal's own choices
+    if (w === '-') n.manual = true; else if (w && S.teachers[w] && canTake(w, n)) { n.sub = w; n.manual = true; extra[w] = (extra[w] || 0) + 1; } });
+  need.forEach(n => { if (n.manual) return;                                                   // 2nd: everyone else, fairly
+    const pool = Object.keys(S.teachers).filter(x => canTake(x, n)).sort((x, y) => score(y, n) - score(x, n));
+    n.sub = pool[0] || null; if (n.sub) extra[n.sub] = (extra[n.sub] || 0) + 1; });
+  need.forEach(n => { n.options = Object.keys(S.teachers).filter(x => x === n.sub || canTake(x, n)); });
+  return need.sort((x, y) => x.bell - y.bell);
+}
+function monthLoad(date, includeDay) {
+  const out = {}; let d = date.slice(0, 8) + '01';
+  while (d < date || (includeDay && d === date)) {
+    if (staffAbsent(d).length) arrangementBase(d, {}).forEach(s => { if (s.sub) out[s.sub] = (out[s.sub] || 0) + 1; });
+    d = addDays(d, 1);
+  }
+  return out;
+}
+function arrangement(date) { return arrangementBase(date, monthLoad(date)); }
+function freeAt(date, b) {
+  const subs = arrangement(date).filter(s => s.bell === b && s.sub).map(s => s.sub);
+  return Object.keys(S.teachers).filter(x => !absentAt(date, x, b) && !busyAt(date, x, b) && !subs.includes(x) && (!S.teachers[x].bells || S.teachers[x].bells.includes(b)));
 }
 function myBells(tid, date) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
-  if (staffAbsent(date).includes(tid)) return [];
+  const from = absentFrom(date, tid);
   const out = [];
-  BELLS.forEach((b, i) => { const a = teacherAt(tid, d, i); if (a && !examBlocks(date, a.c)) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
+  BELLS.forEach((b, i) => { if (from !== null && i >= from) return; const a = teacherAt(tid, d, i); if (a && !examBlocks(date, a.c)) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
   arrangement(date).filter(s => s.sub === tid).forEach(s => out.push({ bell: s.bell, cls: s.cls, subj: s.subj, arr: true, for: s.absent }));
   return out.sort((x, y) => x.bell - y.bell);
 }
@@ -509,7 +543,7 @@ async function go(v, params) { view = v; P = params || {}; if (P.date) await ens
 const NAV = {
   principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
-              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
+              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
@@ -518,11 +552,14 @@ const NAV = {
               ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
   student:   [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
+  accountant:[['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts']],
+  reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts']],
+  chairman:  [['dash','fa-gauge','Dashboard'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
 const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
-                  chairman: ['dash','results','fame','calendar'], parent: ['phome','game','phw','presults'] };
+                  chairman: ['dash','results','fame','calendar'], parent: ['phome','game','phw','presults'],
+                  accountant: ['fdesk','fdues','fcalls','freceipts'], reception: ['fcalls','fdues','freceipts'] };
 let moreOpen = false;
 function navLabel(k) { const n = NAV[U.role].find(x => x[0] === k); return n ? n[2] : ''; }
 function render() {
@@ -606,10 +643,14 @@ function vLogin() {
       <button onclick="saveFirstPin()" class="btn btn-p w-full py-3">Save my PIN</button>
       <button onclick="forceLogout()" class="btn btn-l w-full">Cancel</button>`);
   const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}</option>`).join('');
-  const roles = [['teacher', 'Teacher'], ['student', 'Student'], ['parent', 'Parent'], ['principal', 'Principal'], ['chairman', 'Chairman']];
+  const STAFF = ['principal', 'chairman', 'accountant', 'reception'], isStaff = STAFF.includes(loginRole), off = STATUS.office || { accountant: 'Akash Tiwari', reception: 'Shiva Rai' };
+  const roles = [['teacher', 'Teacher'], ['student', 'Student'], ['parent', 'Parent'], ['principal', 'Staff']];
+  const staffSel = `<div><label class="lbl">Who are you?</label><select id="lg-staff" class="inp" onchange="loginRole=this.value;render()">${[['principal', 'Principal'], ['chairman', 'Chairman'], ['accountant', esc(off.accountant) + ' — Accountant'], ['reception', esc(off.reception) + ' — Reception']]
+    .map(([r, l]) => `<option value="${r}" ${loginRole === r ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
   return shell(`
       <h2 class="text-xl font-semibold">Log in</h2>
-      <div class="seg">${roles.map(([r, l]) => `<button onclick="loginRole='${r}';render()" class="${loginRole === r ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="seg">${roles.map(([r, l]) => `<button onclick="loginRole='${r}';render()" class="${loginRole === r || (r === 'principal' && isStaff) ? 'on' : ''}">${l}</button>`).join('')}</div>
+      ${isStaff ? staffSel : ''}
       ${loginRole === 'teacher' ? (STATUS.teachers.length ? `<div><label class="lbl">Your name</label><select id="lg-t" class="inp">${tOpts}</select></div>` : '<p class="text-sm text-slate-500">The Principal must log in once first.</p>') : ''}
       ${loginRole === 'student' ? `<div><label class="lbl">Admission number</label><input id="lg-adm" class="inp" autocomplete="off" placeholder="e.g. 92"></div>` : ''}
       ${loginRole === 'parent' ? `<div><label class="lbl">Mobile number given to the school</label><input id="lg-ph" type="tel" inputmode="numeric" maxlength="13" class="inp" placeholder="98390 00000"></div>` : ''}
@@ -648,7 +689,7 @@ async function doLogin(role, tid, pin, phone, adm) {
 }
 async function finishLogin(role) {
   MUST = null;
-  if (role === 'parent' || role === 'student') await loadParent(); else await loadAll();
+  if (role === 'parent' || role === 'student') await loadParent(); else if (role === 'accountant' || role === 'reception') await loadOffice(); else await loadAll();
   view = null; render(); setNet('ok');
 }
 async function saveFirstPin() {
@@ -668,7 +709,7 @@ async function logout() {
 }
 function forceLogout() {
   QZ = null; QT = null; QPLAY = null; qzStopTimer(); GZ = null; GP = null; GT = null; gStop();
-  MUST = null; PD = null; PC_LAST = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
+  MUST = null; PD = null; PC_LAST = null; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
 }
@@ -746,36 +787,62 @@ function vDash() {
 
 // ---------------------------------------------------------------- STAFF ATTENDANCE + ARRANGEMENT + LEAVE APPROVAL
 function vStaff() {
-  const date = P.date || todayISO(); const ab = staffAbsent(date), manual = (S.staffAtt[date] && S.staffAtt[date].absent) || [];
+  const date = P.date || todayISO(); const ab = staffAbsent(date), from = (S.staffAtt[date] && S.staffAtt[date].from) || {};
   const leaveFor = t => S.leaves.find(l => l.status === 'Approved' && l.tid === t && l.from <= date && l.to >= date);
+  const fromSel = k => `<select onclick="event.stopPropagation()" onchange="staffFrom('${date}','${k}',this.value)" class="inp py-1 px-1 text-[11px] w-auto mt-1">
+      <option value="0">Full day</option>${BELLS.map((b, i) => i ? `<option value="${i}" ${+from[k] === i ? 'selected' : ''}>Leaves before ${b.n} bell</option>` : '').join('')}</select>`;
   const cards = Object.entries(S.teachers).map(([k, t]) => { const isAb = ab.includes(k), lv = leaveFor(k);
-    return `<button onclick="${lv ? "toast('On approved leave — cancel the leave to mark present','a')" : `toggleStaff('${date}','${k}')`}" class="text-left p-3 rounded-xl border flex items-center justify-between gap-2 ${isAb ? 'bg-rose-50 border-rose-300' : 'bg-emerald-50/60 border-emerald-200'}">
-      <span><span class="block font-bold text-sm">${esc(t.name)}</span><span class="text-[11px] text-slate-500">${esc(t.role)}${lv ? ' • On leave' : ''}</span></span>
-      <span class="pill ${isAb ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}">${isAb ? 'ABSENT' : 'P'}</span></button>`; }).join('');
-  const arr = arrangement(date);
+    return `<div onclick="${lv ? "toast('On approved leave — cancel the leave to mark present','a')" : `toggleStaff('${date}','${k}')`}" class="cursor-pointer text-left p-3 rounded-xl border flex items-center justify-between gap-2 ${isAb ? 'bg-rose-50 border-rose-300' : 'bg-emerald-50/60 border-emerald-200'}">
+      <span><span class="block font-bold text-sm">${esc(t.name)}</span><span class="text-[11px] text-slate-500">${esc(t.role)}${lv ? ' • On leave' : ''}</span>${isAb && !lv ? '<br>' + fromSel(k) : ''}</span>
+      <span class="pill ${isAb ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}">${isAb ? (+from[k] && !lv ? 'HALF' : 'ABSENT') : 'P'}</span></div>`; }).join('');
+  const arr = arrangement(date), month = monthLoad(date, true);
   const pend = S.leaves.filter(l => l.status === 'Pending');
-  return head('Staff Attendance & Arrangement', 'Everyone is Present by default. Tap only the absent teachers — arrangement slips update instantly.',
-      dateInput('s-date', date, "go('staff',{date:this.value})") + `<button onclick="printSlips('${date}')" class="btn btn-l"><i class="fa-solid fa-print"></i> Print Slips</button>`) + `
+  const optList = s => `<select onchange="setSub('${date}','${s.absent}',${s.bell},this.value)" class="inp py-1 px-2 text-xs w-auto">
+      <option value="">Auto (best free teacher)</option>${s.options.map(x => `<option value="${x}" ${s.manual && s.sub === x ? 'selected' : ''}>${esc(T(x).name)} • ${month[x] || 0} this month</option>`).join('')}
+      <option value="-" ${s.manual && !s.sub ? 'selected' : ''}>Nobody — Principal supervises</option></select>`;
+  const freeRows = dayIdx(date) < 0 || holidayOn(date) ? '' : BELLS.map((b, i) => { const f = freeAt(date, i);
+    return `<tr><td class="font-bold whitespace-nowrap">${b.n} <span class="text-xs text-slate-500">${t12(b.s)}</span></td><td>${f.length ? f.map(x => `<span class="pill bg-emerald-100 text-emerald-800 mr-1 mb-1">${esc(T(x).name)}</span>`).join('') : '<span class="text-rose-700 text-xs font-bold">Nobody free</span>'}</td></tr>`; }).join('');
+  const duty = Object.entries(month).sort((a, b) => b[1] - a[1]);
+  return head('Staff Attendance & Arrangement', 'Everyone is Present by default. Tap only the absent teachers. For a half day, pick the bell they leave before.',
+      dateInput('s-date', date, "go('staff',{date:this.value})") + `<button onclick="printSlips('${date}')" class="btn btn-l"><i class="fa-solid fa-print"></i> Print Slips</button>`
+      + (arr.some(s => s.sub) ? `<a target="_blank" href="${waLink('', slipsText(date, arr))}" class="btn btn-wa"><i class="fa-brands fa-whatsapp"></i> Send all to staff group</a>` : '')) + `
     ${pend.length ? `<div class="card space-y-2"><h3 class="font-bold">Leave Requests</h3>${pend.map(l => `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
       <span class="text-sm"><b>${esc(T(l.tid).name)}</b> • ${fmtDate(l.from)}${l.to !== l.from ? ' to ' + fmtDate(l.to) : ''} • ${esc(l.reason)}</span>
       <span class="flex gap-2"><button onclick="decideLeave('${l.id}','Approved')" class="btn btn-sm btn-g">Approve</button><button onclick="decideLeave('${l.id}','Rejected')" class="btn btn-sm btn-r">Reject</button></span></div>`).join('')}</div>` : ''}
     <div class="card"><div class="flex justify-between mb-3"><h3 class="font-bold">${fmtDate(date)}</h3><span class="text-sm"><span class="pill bg-emerald-100 text-emerald-800">${Object.keys(S.teachers).length - ab.length} present</span> <span class="pill bg-rose-100 text-rose-800">${ab.length} absent</span></span></div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">${cards}</div></div>
-    <div class="card"><h3 class="font-bold mb-2">Arrangement Slips</h3>
-      ${dayIdx(date) < 0 ? '<p class="text-sm text-slate-500">Sunday.</p>' : arr.length ? `<div class="space-y-2">${arr.map((s, n) => `<div class="p-3 rounded-xl border ${s.sub ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-300'} flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <span class="text-sm"><span class="pill bg-rose-600 text-white mr-1">#${n + 1}</span><b>${BELLS[s.bell].n} bell (${t12(BELLS[s.bell].s)})</b> • Class ${s.cls} • ${esc(s.subj)}<br>
-        <span class="text-slate-600">${s.sub ? 'Substitute: <b>' + esc(T(s.sub).name) + '</b>' : '<b class="text-rose-700">No free teacher — Principal to supervise</b>'} (for ${esc(T(s.absent).name)})</span></span>
-        ${s.sub && S.teachers[s.sub].phone ? `<a target="_blank" href="${waLink(S.teachers[s.sub].phone, `Arrangement: ${BELLS[s.bell].n} bell (${t12(BELLS[s.bell].s)}), Class ${s.cls} ${s.subj}, in place of ${T(s.absent).name}. — Principal`)}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Inform</a>` : ''}</div>`).join('')}</div>`
-      : '<p class="text-sm text-slate-500">No arrangement needed.</p>'}</div>`;
+    <div class="card"><h3 class="font-bold mb-1">Arrangement Slips</h3><p class="text-xs text-slate-500 mb-2">Auto picks the same-subject teacher first and shares duty fairly across the month. Change any slip from its list.</p>
+      ${dayIdx(date) < 0 ? '<p class="text-sm text-slate-500">Sunday.</p>' : arr.length ? `<div class="space-y-2">${arr.map((s, n) => `<div class="p-3 rounded-xl border ${s.sub ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-300'} flex flex-col gap-2">
+        <span class="text-sm"><span class="pill bg-rose-600 text-white mr-1">#${n + 1}</span><b>${BELLS[s.bell].n} bell (${t12(BELLS[s.bell].s)})</b> • Class ${s.cls} • ${esc(s.subj)} • for ${esc(T(s.absent).name)}<br>
+        <span class="text-slate-600">${s.sub ? 'Substitute: <b>' + esc(T(s.sub).name) + '</b>' + (s.manual ? ' <span class="pill bg-indigo-100 text-indigo-800">chosen</span>' : '') : '<b class="text-rose-700">No free teacher — Principal to supervise</b>'}</span></span>
+        <span class="flex flex-wrap gap-2 items-center">${optList(s)}
+        ${s.sub && S.teachers[s.sub].phone ? `<a target="_blank" href="${waLink(S.teachers[s.sub].phone, `Arrangement: ${BELLS[s.bell].n} bell (${t12(BELLS[s.bell].s)}), Class ${s.cls} ${s.subj}, in place of ${T(s.absent).name}. — Principal`)}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Inform</a>` : ''}</span></div>`).join('')}</div>`
+      : '<p class="text-sm text-slate-500">No arrangement needed.</p>'}</div>
+    ${freeRows ? `<div class="card"><h3 class="font-bold mb-1">Who is free — ${DAYS[dayIdx(date)]}</h3><p class="text-xs text-slate-500 mb-2">Absent teachers and teachers already on arrangement are left out.</p>
+      <div class="overflow-x-auto"><table class="tbl"><tr><th>Bell</th><th>Free teachers</th></tr>${freeRows}</table></div></div>` : ''}
+    <div class="card"><h3 class="font-bold mb-2">Arrangement duty this month</h3>${duty.length ? `<div class="flex flex-wrap gap-2 text-xs">${duty.map(([k, n]) => `<span class="pill bg-slate-100 text-slate-700">${esc(T(k).name)}: ${n}</span>`).join('')}</div>` : '<p class="text-sm text-slate-500">None yet this month.</p>'}</div>`;
+}
+function slipsText(date, arr) {
+  return `${S.settings.school} — Arrangement ${fmtDate(date)}\n` + arr.map(s => `${BELLS[s.bell].n} bell ${t12(BELLS[s.bell].s)} • Class ${s.cls} ${s.subj} → ${s.sub ? T(s.sub).name : 'Principal'} (for ${T(s.absent).name})`).join('\n') + '\n— Principal';
 }
 function toggleStaff(date, t) {
   S.staffAtt[date] = S.staffAtt[date] || { absent: [] };
   const a = S.staffAtt[date].absent, i = a.indexOf(t);
-  if (i >= 0) a.splice(i, 1); else a.push(t);
+  if (i >= 0) { a.splice(i, 1); if (S.staffAtt[date].from) delete S.staffAtt[date].from[t]; } else a.push(t);
   log('Staff Attendance', `${T(t).name} marked ${i >= 0 ? 'PRESENT' : 'ABSENT'} for ${date}`);
   const slips = arrangement(date).filter(s => s.absent === t);
   if (i < 0 && slips.length) log('Arrangement', `Auto-arranged ${slips.length} bell(s) for ${T(t).name}: ` + slips.map(s => `${BELLS[s.bell].n} ${s.cls}→${s.sub ? T(s.sub).name : 'uncovered'}`).join('; '));
   render();
+}
+function staffFrom(date, t, v) {
+  const a = S.staffAtt[date]; if (!a) return; a.from = a.from || {};
+  if (+v) a.from[t] = +v; else delete a.from[t];
+  log('Staff Attendance', `${T(t).name}: ${+v ? 'half day — leaves before ' + BELLS[+v].n + ' bell' : 'full day absent'} on ${date}`); render();
+}
+function setSub(date, absent, bell, v) {
+  S.staffAtt[date] = S.staffAtt[date] || { absent: [] }; const a = S.staffAtt[date]; a.subs = a.subs || {};
+  const k = absent + '|' + bell; if (v) a.subs[k] = v; else delete a.subs[k];
+  log('Arrangement', `${BELLS[bell].n} bell for ${T(absent).name} on ${date}: ${v === '-' ? 'Principal supervises' : v ? T(v).name + ' (chosen)' : 'back to auto'}`); render();
 }
 function decideLeave(id, st) {
   const l = S.leaves.find(x => x.id === id); if (!l) return; l.status = st; l.decidedAt = Date.now();
@@ -791,30 +858,47 @@ function printSlips(date) {
 }
 
 // ---------------------------------------------------------------- TIMETABLE (principal)
+// Share of class-bells that keep the same subject Monday to Saturday (the rest are where it could not fit).
+function ttFixedInfo() {
+  if (!S.grid) return { pct: 0, odd: {} };
+  let same = 0, tot = 0; const odd = {};
+  CLASS_NAMES.forEach(c => BELLS.forEach((_, b) => { const cnt = {};
+    DAYS.forEach((_, d) => { const a = cell(c, d, b); const k = a ? a.s + '|' + a.t : '-'; cnt[k] = (cnt[k] || 0) + 1; });
+    const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; same += top[1]; tot += DAYS.length;
+    DAYS.forEach((_, d) => { const a = cell(c, d, b); if ((a ? a.s + '|' + a.t : '-') !== top[0]) odd[c + '|' + d + '|' + b] = 1; }); }));
+  return { pct: Math.round(same / tot * 100), odd };
+}
 function vTimetable() {
   const mode = P.mode || 'day', d = P.d != null ? P.d : Math.max(0, dayIdx(todayISO())), c = P.c || '10th';
-  const tabs = [['day','All Classes (Day)'],['class','One Class (Week)'],['teacher','Teacher-Wise'],['setup','Setup Periods']]
+  const tabs = [['day','All Classes (Day)'],['class','One Class (Week)'],['teacher','Teacher-Wise'],['free','Free Bells'],['setup','Setup Periods']]
     .map(([k, l]) => `<button onclick="go('timetable',{mode:'${k}',d:${d},c:'${c}'})" class="btn btn-sm ${mode === k ? 'btn-p' : 'btn-l'}">${l}</button>`).join('');
   const dayBtns = DAYS.map((x, i) => `<button onclick="go('timetable',{mode:'${mode}',d:${i},c:'${c}'})" class="btn btn-sm ${i === d ? 'bg-slate-900 text-white' : 'btn-l'}">${x.slice(0, 3)}</button>`).join('');
-  const { errors, warns } = ttCheck(S.alloc);
+  const { errors, warns } = ttCheck(S.alloc), fx = ttFixedInfo();
+  const oddCls = (cl, di, i) => fx.odd[cl + '|' + di + '|' + i] ? ' class="bg-amber-50"' : '';
   let body = '';
   if (mode === 'setup') body = ttSetup();
   else if (!S.grid) body = '<p class="text-sm">No timetable yet. Press <b>Generate New</b>.</p>';
   else if (mode === 'class') {
     body = `<div class="mb-2 flex items-center gap-2"><span class="lbl mb-0">Class</span><select class="inp w-auto" onchange="go('timetable',{mode:'class',d:${d},c:this.value})">${CLASS_NAMES.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
       <h3 class="font-bold mb-2">Class ${c} — Class Teacher: ${esc(T(CLASSES.find(k => k.c === c).ct).name)}</h3>
-      <div class="overflow-x-auto"><table class="tbl"><tr><th>Day</th>${bellHead()}</tr>${DAYS.map((day, di) => `<tr><td class="font-bold">${day}</td>${BELLS.map((b, i) => { const a = cell(c, di, i); return (a ? `<td><b>${esc(a.s)}</b><br><span class="text-xs text-slate-500">${esc(T(a.t).name)}</span></td>` : '<td class="text-slate-400 italic">Self Study</td>') + (i === RECESS_AFTER ? RECESS_TD : ''); }).join('')}</tr>`).join('')}</table></div>`;
+      <div class="overflow-x-auto"><table class="tbl"><tr><th>Day</th>${bellHead()}</tr>${DAYS.map((day, di) => `<tr><td class="font-bold">${day}</td>${BELLS.map((b, i) => { const a = cell(c, di, i); return (a ? `<td${oddCls(c, di, i)}><b>${esc(a.s)}</b><br><span class="text-xs text-slate-500">${esc(T(a.t).name)}</span></td>` : '<td class="text-slate-400 italic">Self Study</td>') + (i === RECESS_AFTER ? RECESS_TD : ''); }).join('')}</tr>`).join('')}</table></div>`;
   } else if (mode === 'teacher') {
     body = `<div class="flex flex-wrap gap-1 mb-2">${dayBtns}</div><h3 class="font-bold mb-2">${DAYS[d]} — Teacher-wise <span class="pill bg-emerald-100 text-emerald-800">Green = free bell</span></h3>
       <div class="overflow-x-auto"><table class="tbl"><tr><th>Teacher</th><th>Per week</th>${bellHead()}</tr>${Object.entries(S.teachers).map(([k, t]) => `<tr><td class="font-bold whitespace-nowrap">${esc(t.name)}</td><td class="text-center">${loadOf(k)}</td>${BELLS.map((b, i) => { const a = teacherAt(k, d, i);
         return (a ? `<td><b>${a.c}</b><br><span class="text-xs">${esc(a.s)}</span></td>` : (t.bells && !t.bells.includes(i)) ? '<td class="text-slate-300 text-xs">Not in school</td>' : '<td class="bg-emerald-100 text-emerald-800 font-bold text-center">FREE</td>') + (i === RECESS_AFTER ? RECESS_TD : ''); }).join('')}</tr>`).join('')}</table></div>`;
+  } else if (mode === 'free') {
+    body = `<h3 class="font-bold mb-2">Free teachers in each bell (weekly timetable)</h3><p class="text-xs text-slate-500 mb-2">For a real date with absences, use Staff &amp; Arrangement — it also leaves out absent and arranged teachers.</p>
+      <div class="overflow-x-auto"><table class="tbl"><tr><th>Bell</th>${DAYS.map(x => `<th>${x.slice(0, 3)}</th>`).join('')}</tr>${BELLS.map((b, i) => `<tr><td class="font-bold whitespace-nowrap">${b.n}<br><span class="text-xs text-slate-500">${t12(b.s)}</span></td>${DAYS.map((_, di) => {
+        const f = Object.keys(S.teachers).filter(k => !teacherAt(k, di, i) && (!S.teachers[k].bells || S.teachers[k].bells.includes(i)));
+        return `<td class="text-xs">${f.map(k => esc(T(k).name)).join(', ') || '<span class="text-rose-700 font-bold">None</span>'}</td>`; }).join('')}</tr>`).join('')}</table></div>`;
   } else {
     body = `<div class="flex flex-wrap gap-1 mb-2">${dayBtns}</div><h3 class="font-bold mb-2">${DAYS[d]} — All Classes</h3>
-      <div class="overflow-x-auto"><table class="tbl"><tr><th>Class</th>${bellHead()}</tr>${CLASS_NAMES.map(cl => `<tr><td class="font-bold">${cl}</td>${BELLS.map((b, i) => { const a = cell(cl, d, i); return (a ? `<td><b>${esc(a.s)}</b><br><span class="text-xs text-slate-500">${esc(T(a.t).name)}</span></td>` : '<td class="text-slate-400 italic">Self Study</td>') + (i === RECESS_AFTER ? RECESS_TD : ''); }).join('')}</tr>`).join('')}</table></div>`;
+      <div class="overflow-x-auto"><table class="tbl"><tr><th>Class</th>${bellHead()}</tr>${CLASS_NAMES.map(cl => `<tr><td class="font-bold">${cl}</td>${BELLS.map((b, i) => { const a = cell(cl, d, i); return (a ? `<td${oddCls(cl, d, i)}><b>${esc(a.s)}</b><br><span class="text-xs text-slate-500">${esc(T(a.t).name)}</span></td>` : '<td class="text-slate-400 italic">Self Study</td>') + (i === RECESS_AFTER ? RECESS_TD : ''); }).join('')}</tr>`).join('')}</table></div>`;
   }
   return head('Weekly Timetable', 'Assembly 08:40–09:00 • 7 bells • Recess 10:45–11:05 • Mon–Sat • Brijesh Sir: 1st & 2nd bell only',
       `<button onclick="genTT()" class="btn btn-g"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate New</button><button onclick="printTT()" class="btn btn-l"><i class="fa-solid fa-print"></i> Print</button>`) + `
     <div class="flex flex-wrap gap-2">${tabs}</div>
+    ${S.grid ? `<div class="card text-sm flex flex-wrap items-center gap-2"><span class="pill bg-emerald-100 text-emerald-800">${fx.pct}% fixed</span> of bells keep the same subject Monday to Saturday. <span class="pill bg-amber-50 border border-amber-200 text-amber-800">Shaded</span> = changed only where it could not fit.</div>` : ''}
     ${errors.length ? `<div class="card bg-rose-50 border-rose-200 text-sm text-rose-800">${errors.map(esc).join('<br>')}</div>` : ''}
     ${warns.length && mode === 'setup' ? `<div class="card bg-amber-50 border-amber-200 text-sm text-amber-800">${warns.map(esc).join('<br>')}</div>` : ''}
     <div class="card" id="tt-body">${body}</div>`;
@@ -848,7 +932,7 @@ function vMyToday() {
   const notices = S.notices.filter(n => n.to !== 'Parents').slice(0, 3);
   const myLeaves = S.leaves.filter(l => l.tid === tid).slice(0, 2);
   return head(`Namaste, ${esc(T(tid).name)}`, fmtDate(date) + (dayIdx(date) >= 0 ? '' : ' • Sunday'), dateInput('m-date', date, "go('mytoday',{date:this.value})")) + `
-    ${absent ? '<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">You are marked absent / on leave for this day.</div>' : ''}
+    ${absent ? `<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">${absentFrom(date, tid) ? 'Half day — you leave before the ' + BELLS[absentFrom(date, tid)].n + ' bell.' : 'You are marked absent / on leave for this day.'}</div>` : ''}
     ${teacherCorner(date)}
     ${ctOf.map(c => { const a = attOf(date, c); return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a ? '' : 'border-amber-300 bg-amber-50'}">
       <span><b>Class ${c} attendance</b> (you are Class Teacher): ${a ? `<span class="text-emerald-700 font-semibold">Done — ${studentsOf(c).length - a.absent.length}/${studentsOf(c).length} present</span>` : '<span class="text-amber-700 font-semibold">Not marked yet</span>'}</span>
@@ -1249,6 +1333,11 @@ function vSettings() {
       <div class="card space-y-3"><h3 class="font-bold">Logins</h3>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Principal</b> (you) ${pinBadge('principal')}</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change my PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Chairman</b> ${pinBadge('chairman')}</span><button onclick="setPin('chairman','Chairman')" class="btn btn-sm btn-l">Set PIN</button></div>
+        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Accountant</b> ${esc(S.settings.accountantName || 'Akash Tiwari')} ${pinBadge('accountant')}</span><button onclick="setPin('accountant','the Accountant')" class="btn btn-sm btn-l">Set PIN</button></div>
+        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Reception</b> ${esc(S.settings.receptionName || 'Shiva Rai')} ${pinBadge('reception')}</span><button onclick="setPin('reception','Reception')" class="btn btn-sm btn-l">Set PIN</button></div>
+        <div class="grid grid-cols-2 gap-2"><div><label class="lbl">Accountant's name</label><input id="se-acct" class="inp" value="${esc(S.settings.accountantName || 'Akash Tiwari')}"></div>
+          <div><label class="lbl">Reception's name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || 'Shiva Rai')}"></div></div>
+        <button onclick="saveOfficeNames()" class="btn btn-sm btn-l">Save names</button>
         <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Everyone except the Principal starts with PIN 1234 and must choose their own at first login. Nobody can see a PIN after it is set; if someone forgets, press Set PIN and type 1234 to reset it.</p></div>
       <div class="card lg:col-span-2 overflow-x-auto"><h3 class="font-bold mb-2">Teachers — login PIN & WhatsApp number</h3>
         <table class="tbl"><tr><th>Teacher</th><th>Role</th><th>Login</th><th>WhatsApp no.</th><th></th></tr>${Object.entries(S.teachers).map(([k, t]) => `<tr><td class="font-semibold">${esc(t.name)}</td><td class="text-xs">${esc(t.role)}</td>
@@ -1270,6 +1359,10 @@ function saveSchool() {
   const g = id => document.getElementById(id).value.trim();
   Object.assign(S.settings, { school: g('se-school'), session: g('se-session'), sessionStart: g('se-start'), attendanceCutoff: g('se-cut'), chairmanPhone: g('se-chph') });
   log('Settings', 'School settings updated'); toast('Saved'); render();
+}
+function saveOfficeNames() {
+  const a = document.getElementById('se-acct').value.trim() || 'Akash Tiwari', r = document.getElementById('se-recp').value.trim() || 'Shiva Rai';
+  S.settings.accountantName = a; S.settings.receptionName = r; log('Settings', `Office staff: Accountant ${a}, Reception ${r}`); toast('Saved'); render();
 }
 async function setPin(uidx, name) {
   const pin = prompt('New PIN for ' + name + ' (4 to 8 digits). Type 1234 to reset — they will then choose their own.'); if (pin === null) return;
@@ -2589,16 +2682,261 @@ function feeNotes() { S.fees.notes = document.getElementById('fee-notes').value.
 function feeSession() { const v = prompt('Session these fees are for (e.g. 2026–27)', S.fees.session); if (v === null || !v.trim()) return; S.fees.session = v.trim(); S.fees.source = 'Set by the Principal'; log('Fees', 'Fee structure session set to ' + v.trim()); render(); }
 function vPFees() {
   const F = PD.fees;
-  if (!F) return head('Fees') + '<div class="card text-sm">The school has not published the fee structure yet.</div>';
+  if (!F) return head('Fees') + pFeeDues() + '<div class="card text-sm">The school has not published the fee structure yet.</div>';
   const fam = PD.kids.map(k => ({ ...k, phone: 'fam' }));
   const sv = S.fees; S.fees = F;
   const cards = PD.kids.map(k => { const f = feeFor(k, fam, F); return `<div class="card"><h3 class="h3">${esc(k.name)} · Class ${esc(k.cls)}</h3>${feeBreak(k, f)}</div>`; }).join('');
   const total = PD.kids.map(k => feeFor(k, fam, F).month);
   S.fees = sv;
-  return head('Fees', `Fee structure ${esc(F.session)} · paid every month`) + cards +
+  return head('Fees', `Fee structure ${esc(F.session)} · paid every month`) + pFeeDues() + cards +
     (PD.kids.length > 1 ? `<div class="card flex justify-between"><b>All children, every month</b><b>${total.some(x => x == null) ? 'Ask the office' : rs(total.reduce((a, b) => a + b, 0))}</b></div>` : '') +
     `<div class="card"><h3 class="h3">Please note</h3><ol class="list-decimal pl-5 text-sm space-y-1 mt-2">${F.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ol>
-     <p class="text-xs text-slate-500 mt-2">For bank details and payment, contact the school office. This page shows the fee structure; it is not a bill.</p></div>`;
+     <p class="text-xs text-slate-500 mt-2">For bank details and payment, contact the school office. Always take a receipt — it then shows in the fee account above.</p></div>`;
+}
+
+// ---------------------------------------------------------------- SCHOOL OFFICE: FEE DESK (Accountant) + DUES CALLING (Reception) — school/office_api.php
+// Dues are worked out on the server (office_lib.php): old due + yearly fees + monthly fee × months so far − concession − receipts.
+// Office logins never get the whole school's data; only students, fees, receipts and calls.
+let OF = null, OFBUSY = false, OFSEL = null, OFOPEN = null, OFNONCE = null, OFQ = '';
+function isOffice() { return !!U && (U.role === 'accountant' || U.role === 'reception'); }
+async function oapi(a, body, q) {
+  const url = 'office_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : '');
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null;
+  try { r = await fetch(url, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (r.status === 401) { forceLogout(); throw new Error('Please log in again.'); }
+  if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem. Please try again.');
+  return j;
+}
+async function loadOffice() {       // office logins: this is their whole data
+  const res = await oapi('data');
+  OF = res; ME = res.me; U = { role: ME.role, tid: ME.tid };
+  S = emptyState(); S.settings = { school: res.school, session: res.session, place: res.place || 'Bhadohi', sessionStart: res.sessionStart }; S.fees = res.fees;
+}
+async function ofLoad(force) {
+  if (OFBUSY || (OF && !force)) return; OFBUSY = true;
+  try { const res = await oapi('data'); OF = res; } catch (e) { OF = { error: e.message }; } finally { OFBUSY = false; }
+  if (['fdesk', 'fdues', 'fcalls', 'freceipts'].includes(view)) { const y = window.scrollY; render(); window.scrollTo(0, y); }
+}
+function ofReady(title) {
+  if (OF && !OF.error) return null;
+  if (!OF) { ofLoad(); return head(title) + '<div class="card text-sm text-slate-500">Loading fee records…</div>'; }
+  return head(title) + `<div class="card text-sm text-rose-700">${esc(OF.error)} <button onclick="OF=null;render()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
+}
+function ofFamilies() {
+  const by = {};
+  OF.students.forEach(s => { (by[s.fam] = by[s.fam] || { key: s.fam, phone: s.phone, father: s.father, kids: [], due: 0, missing: false }).kids.push(s); });
+  return Object.values(by).map(f => { f.due = f.kids.reduce((a, k) => a + k.dues.due, 0); f.missing = f.kids.some(k => k.dues.missing);
+    f.calls = OF.calls.filter(c => c.fam === f.key); f.last = f.calls[0] || null; return f; });
+}
+function ofKidLine(f) { return f.kids.map(k => `${esc(k.name)} <span class="text-slate-500">(${esc(k.cls)})</span>`).join(', '); }
+function ofSummary() {
+  const today = OF.today, live = OF.payments.filter(p => !p.cancelled);
+  const tday = live.filter(p => p.date === today), mon = live.filter(p => p.date.slice(0, 7) === today.slice(0, 7));
+  const dueFam = ofFamilies().filter(f => f.due > 0), totalDue = dueFam.reduce((a, f) => a + f.due, 0);
+  const modes = {}; tday.forEach(p => modes[p.mode] = (modes[p.mode] || 0) + p.amt);
+  const missing = OF.students.filter(s => s.dues.missing).length;
+  return `<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="card"><p class="text-xs text-slate-500">Collected today</p><p class="text-2xl font-semibold">${rs(tday.reduce((a, p) => a + p.amt, 0))}</p><p class="text-xs text-slate-500">${tday.length} receipt(s)${Object.keys(modes).length ? ' · ' + Object.entries(modes).map(([m, v]) => esc(m) + ' ' + rs(v)).join(', ') : ''}</p></div>
+    <div class="card"><p class="text-xs text-slate-500">This month</p><p class="text-2xl font-semibold">${rs(mon.reduce((a, p) => a + p.amt, 0))}</p><p class="text-xs text-slate-500">${mon.length} receipt(s)</p></div>
+    <div class="card"><p class="text-xs text-slate-500">Still due</p><p class="text-2xl font-semibold text-rose-700">${rs(totalDue)}</p><p class="text-xs text-slate-500">${dueFam.length} famil${dueFam.length === 1 ? 'y' : 'ies'}</p></div>
+    <div class="card"><p class="text-xs text-slate-500">Fee not set</p><p class="text-2xl font-semibold ${missing ? 'text-amber-700' : ''}">${missing}</p><p class="text-xs text-slate-500">student(s) — set in Fee Structure or here</p></div></div>`;
+}
+function ofBreak(s) {
+  const d = s.dues;
+  return `<table class="tbl mt-2 text-sm">
+    ${d.opening ? `<tr><td>Old due (before this session)</td><td class="text-right">${rs(d.opening)}</td></tr>` : ''}
+    ${d.free ? `<tr><td colspan="2"><span class="pill bg-indigo-100 text-indigo-800">Free scheme${d.scheme ? ': ' + esc(d.scheme) : ''}</span> — no monthly or yearly fee</td></tr>` : `
+    <tr><td>Yearly fees</td><td class="text-right">${rs(d.yearly)}</td></tr>
+    <tr><td>Monthly ${d.monthly == null ? '<b class="text-amber-700">not set</b>' : rs(d.monthly) + (d.custom ? ' <span class="pill bg-slate-100 text-slate-600">own fee</span>' : '')} × ${d.months} month(s)</td><td class="text-right">${d.monthly == null ? '—' : rs(d.monthly * d.months)}</td></tr>`}
+    ${d.concession ? `<tr><td>Concession</td><td class="text-right text-leaf">− ${rs(d.concession)}</td></tr>` : ''}
+    <tr><td>Paid this session</td><td class="text-right text-leaf">− ${rs(d.paid)}</td></tr>
+    <tr><th>${d.due < 0 ? 'Advance' : 'Due now'}</th><th class="text-right ${d.due > 0 ? 'text-rose-700' : 'text-leaf'}">${rs(Math.abs(d.due))}</th></tr></table>`;
+}
+
+// ---- Fee Desk (Accountant / Principal)
+function vFDesk() {
+  const w = ofReady('Fee Desk'); if (w) return w;
+  const sel = OFSEL && OF.students.find(s => s.id === OFSEL);
+  return head('Fee Desk', `Session ${esc(OF.session)} · from ${fmtDate(OF.sessionStart)} · ${esc(OF.names.accountant)} (Accountant)`, `<button onclick="ofLoad(true)" class="btn btn-l"><i class="fa-solid fa-rotate"></i> Refresh</button>`) + ofSummary() + `
+    <div class="card"><label class="lbl">Find a student — name, admission no., class or mobile</label>
+      <input id="of-q" class="inp" value="${esc(OFQ)}" oninput="OFQ=this.value;document.getElementById('of-res').innerHTML=ofResults()" placeholder="e.g. Rahul, 92, 5th, 98390…" autocomplete="off">
+      <div id="of-res" class="mt-2">${ofResults()}</div></div>
+    ${sel ? ofStudentPanel(sel) : ''}`;
+}
+function ofResults() {
+  const q = OFQ.trim().toLowerCase(); if (q.length < 1) return '<p class="text-xs text-slate-500">Type to search.</p>';
+  const digits = q.replace(/\D/g, '');
+  const hit = OF.students.filter(s => s.name.toLowerCase().includes(q) || String(s.adm).toLowerCase() === q || s.cls.toLowerCase() === q || (digits.length >= 4 && String(s.phone).replace(/\D/g, '').includes(digits)) || (s.father || '').toLowerCase().includes(q)).slice(0, 25);
+  if (!hit.length) return '<p class="text-sm text-slate-500">No student found.</p>';
+  return `<div class="divide-y divide-slate-100">${hit.map(s => `<button onclick="OFSEL=${jsq(s.id)};OFNONCE=null;render();setTimeout(()=>{const e=document.getElementById('of-panel');e&&e.scrollIntoView({behavior:'smooth'})},50)" class="w-full text-left py-2 flex justify-between gap-2 hover:bg-slate-50">
+    <span><b>${esc(s.name)}</b> <span class="text-xs text-slate-500">Class ${esc(s.cls)} · Adm ${esc(s.adm)}${s.father ? ' · ' + esc(s.father) : ''}</span></span>
+    <span class="font-semibold ${s.dues.due > 0 ? 'text-rose-700' : 'text-leaf'}">${s.dues.missing ? 'Fee not set' : s.dues.due > 0 ? rs(s.dues.due) : 'Clear'}</span></button>`).join('')}</div>`;
+}
+function ofStudentPanel(s) {
+  const fam = OF.students.filter(x => x.fam === s.fam), ids = fam.map(x => x.id), can = OF.can, st = s.set || {};
+  if (!OFNONCE) OFNONCE = Array.from(crypto.getRandomValues(new Uint8Array(10)), b => b.toString(16).padStart(2, '0')).join('');
+  const hist = OF.payments.filter(p => ids.includes(p.sid));
+  return `<div id="of-panel" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="space-y-4">${fam.map(k => `<div class="card ${k.id === s.id ? 'ring-2 ring-marigold' : ''}"><div class="flex justify-between gap-2"><h3 class="h3">${esc(k.name)} · Class ${esc(k.cls)}</h3>
+        ${k.id !== s.id ? `<button onclick="OFSEL=${jsq(k.id)};OFNONCE=null;render()" class="btn btn-sm btn-l">Select</button>` : '<span class="pill bg-marigold/20 text-ink">Selected</span>'}</div>
+        <p class="text-xs text-slate-500">Adm ${esc(k.adm)}${k.father ? ' · Father ' + esc(k.father) : ''}${k.phone ? ' · ' + esc(k.phone) : ''}${k.dues.third ? ' · 3rd child discount' : ''}${k.dues.lastPaid ? ' · last paid ' + fmtDate(k.dues.lastPaid) : ''}</p>${ofBreak(k)}</div>`).join('')}
+      ${fam.length > 1 ? `<div class="card flex justify-between"><b>Whole family due</b><b class="text-rose-700">${rs(fam.reduce((a, k) => a + k.dues.due, 0))}</b></div>` : ''}</div>
+    <div class="space-y-4">
+      ${can.pay ? `<div class="card space-y-2"><h3 class="h3">Take fee — ${esc(s.name)}</h3>
+        <div class="grid grid-cols-2 gap-2"><div><label class="lbl">Amount (₹)</label><input id="of-amt" type="number" min="1" inputmode="numeric" class="inp" value="${s.dues.due > 0 ? s.dues.due : ''}"></div>
+          <div><label class="lbl">Date</label><input id="of-date" type="date" class="inp" value="${OF.today}" max="${OF.today}"></div>
+          <div><label class="lbl">Paid by</label><select id="of-mode" class="inp">${OF.modes.map(m => `<option>${esc(m)}</option>`).join('')}</select></div>
+          <div><label class="lbl">Cheque / UPI ref.</label><input id="of-ref" class="inp" maxlength="60"></div></div>
+        <div><label class="lbl">Note (optional)</label><input id="of-note" class="inp" maxlength="200" placeholder="e.g. April–June fee"></div>
+        <button onclick="ofPay(${jsq(s.id)})" class="btn btn-g w-full py-3"><i class="fa-solid fa-receipt"></i> Save & print receipt</button></div>` : ''}
+      ${can.set ? `<div class="card space-y-2"><h3 class="h3">Fee settings for ${esc(s.name)}</h3>
+        <div class="grid grid-cols-2 gap-2"><div><label class="lbl">Old due before ${fmtDate(OF.sessionStart)} (₹)</label><input id="os-open" type="number" class="inp" value="${st.opening || ''}" placeholder="0"></div>
+          <div><label class="lbl">Own monthly fee (₹)</label><input id="os-cust" type="number" min="0" class="inp" value="${st.custom ?? ''}" placeholder="Blank = as per structure"></div>
+          <div><label class="lbl">Concession this year (₹)</label><input id="os-conc" type="number" min="0" class="inp" value="${st.concession || ''}" placeholder="0"></div>
+          <div><label class="lbl">Scheme name</label><input id="os-sch" class="inp" maxlength="60" value="${esc(st.scheme || '')}" placeholder="e.g. FD company"></div></div>
+        <label class="flex items-center gap-2 text-sm"><input id="os-free" type="checkbox" ${st.free ? 'checked' : ''}> Free scheme — no monthly or yearly fee</label>
+        <div><label class="lbl">Note</label><input id="os-note" class="inp" maxlength="200" value="${esc(st.note || '')}"></div>
+        <button onclick="ofSetStu(${jsq(s.id)})" class="btn btn-l w-full">Save fee settings</button>
+        ${st.by ? `<p class="text-[11px] text-slate-500">Last changed by ${esc(st.by)}</p>` : ''}</div>` : ''}
+      <div class="card"><h3 class="h3">Receipts</h3>${hist.length ? `<table class="tbl mt-2 text-sm"><tr><th>No.</th><th>Date</th><th>Child</th><th class="text-right">Amount</th><th></th></tr>${hist.map(p => `<tr class="${p.cancelled ? 'line-through text-slate-400' : ''}"><td>${p.no}</td><td>${fmtDate(p.date)}</td><td>${esc(p.name)}</td><td class="text-right">${rs(p.amt)}</td>
+          <td class="text-right"><button onclick="ofPrint(${p.no})" class="text-indigo-700"><i class="fa-solid fa-print"></i></button></td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500 mt-1">No receipt this session.</p>'}</div>
+    </div></div>`;
+}
+async function ofPay(sid) {
+  if (OFBUSY) return;
+  const g = id => document.getElementById(id).value.trim(), amt = g('of-amt');
+  if (!(+amt > 0)) return toast('Enter the amount', 'a');
+  const s = OF.students.find(x => x.id === sid);
+  if (!confirm(`Take ${rs(+amt)} from ${s.name} (Class ${s.cls}) by ${g('of-mode')}?`)) return;
+  OFBUSY = true;
+  try {
+    const res = await oapi('pay', { sid, amt: +amt, mode: g('of-mode'), ref: g('of-ref'), date: g('of-date'), note: g('of-note'), nonce: OFNONCE });
+    OFNONCE = null; toast(res.again ? 'Already saved — receipt #' + res.receipt.no : 'Receipt #' + res.receipt.no + ' saved');
+    printReceipt(res.receipt);
+  } catch (e) { toast(e.message, 'r'); } finally { OFBUSY = false; }
+  ofLoad(true);
+}
+async function ofSetStu(sid) {
+  if (OFBUSY) return; OFBUSY = true;
+  const g = id => document.getElementById(id).value.trim();
+  try { await oapi('setstu', { sid, opening: g('os-open'), custom: g('os-cust'), concession: g('os-conc'), scheme: g('os-sch'), free: document.getElementById('os-free').checked, note: g('os-note') }); toast('Saved'); }
+  catch (e) { toast(e.message, 'r'); } finally { OFBUSY = false; }
+  ofLoad(true);
+}
+function ofPrint(no) { const p = OF.payments.find(x => x.no === no); if (p) printReceipt(p); }
+function printReceipt(p) {
+  const copy = who => `<div style="border:1.5px solid #17324D;padding:14px;margin-bottom:14px;page-break-inside:avoid">
+    <div style="display:flex;justify-content:space-between"><b style="font-size:15px">${esc(S.settings.school)}, ${esc(S.settings.place || 'Bhadohi')}</b><span style="font-size:11px;color:#666">${who}</span></div>
+    <div style="display:flex;justify-content:space-between;margin:6px 0"><b>FEE RECEIPT No. ${p.no}</b><span>Date: ${fmtDate(p.date)}</span></div>
+    ${p.cancelled ? `<div style="color:#b91c1c;font-weight:bold">CANCELLED — ${esc(p.cancelReason || '')}</div>` : ''}
+    <table style="width:100%;font-size:13px"><tr><td>Student</td><td><b>${esc(p.name)}</b></td><td>Class</td><td>${esc(p.cls)}</td></tr>
+      <tr><td>Adm. no.</td><td>${esc(p.adm || '')}</td><td>Father</td><td>${esc(p.father || '')}</td></tr>
+      <tr><td>Amount</td><td colspan="3"><b style="font-size:16px">${rs(p.amt)}</b> &nbsp; (${esc(p.words || '')})</td></tr>
+      <tr><td>Paid by</td><td>${esc(p.mode)}${p.ref ? ' — ' + esc(p.ref) : ''}</td><td>Session</td><td>${esc(p.session || '')}</td></tr>
+      ${p.note ? `<tr><td>Note</td><td colspan="3">${esc(p.note)}</td></tr>` : ''}</table>
+    <div style="display:flex;justify-content:space-between;margin-top:22px;font-size:12px"><span>Received by: ${esc(p.by || '')}</span><span>Signature ______________</span></div>
+    <div style="font-size:10px;color:#666;margin-top:6px">Fees once paid are not refundable. Please keep this receipt. · Powered by Maakit</div></div>`;
+  printHTML('Receipt ' + p.no, copy('Parent copy') + copy('Office copy'));
+}
+
+// ---- Dues list (everyone in the office; Chairman can only look)
+function vFDues() {
+  const w = ofReady('Fee Dues'); if (w) return w;
+  const c = P.c || '', rows = OF.students.filter(s => (!c || s.cls === c) && (s.dues.due > 0 || s.dues.missing)).sort((a, b) => b.dues.due - a.dues.due);
+  const total = rows.reduce((a, s) => a + Math.max(0, s.dues.due), 0);
+  return head('Fee Dues', `As on ${fmtDate(OF.today)} · monthly fee counted up to this month`, `<button onclick="printHTML('Dues',printHeader('Fee dues as on ${fmtDate(OF.today)}')+document.getElementById('of-dues').outerHTML+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-print"></i> Print</button><button onclick="ofLoad(true)" class="btn btn-l"><i class="fa-solid fa-rotate"></i></button>`) + ofSummary() + `
+    <div class="card overflow-x-auto"><div class="flex flex-wrap items-center gap-2 mb-2"><span class="lbl mb-0">Class</span><select class="inp w-auto" onchange="go('fdues',{c:this.value})"><option value="">All</option>${CLASS_NAMES.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select>
+      <span class="text-sm text-slate-600">${rows.length} student(s) · ${rs(total)}</span></div>
+      <table class="tbl" id="of-dues"><tr><th>Student</th><th>Class</th><th>Mobile</th><th class="text-right">Monthly</th><th class="text-right">Paid</th><th class="text-right">Due</th></tr>
+      ${rows.map(s => `<tr><td class="font-semibold">${esc(s.name)}${s.father ? `<br><span class="text-xs text-slate-500 font-normal">${esc(s.father)}</span>` : ''}</td><td>${esc(s.cls)}</td><td>${esc(s.phone)}</td>
+        <td class="text-right">${s.dues.missing ? '<span class="text-amber-700">Not set</span>' : s.dues.free ? 'Free' : rs(s.dues.monthly)}</td><td class="text-right">${rs(s.dues.paid)}</td><td class="text-right font-semibold text-rose-700">${rs(Math.max(0, s.dues.due))}</td></tr>`).join('') || '<tr><td colspan="6" class="text-slate-500">Nothing due.</td></tr>'}</table></div>`;
+}
+
+// ---- Dues calling (Reception: Shiva Rai)
+function vFCalls() {
+  const w = ofReady('Dues Calling'); if (w) return w;
+  const tab = P.tab || 'today', today = OF.today, c = P.c || '';
+  const fams = ofFamilies().filter(f => f.due > 0 && (!c || f.kids.some(k => k.cls === c)));
+  const promised = f => f.last && f.last.promise && f.last.outcome !== 'Wrong number' ? f.last.promise : null;
+  const due = fams.filter(f => promised(f) && promised(f) <= today);
+  const fresh = fams.filter(f => !f.last || (!promised(f) && f.last.date < addDays(today, -6)));
+  const lists = { today: due.sort((a, b) => b.due - a.due), new: fresh.sort((a, b) => b.due - a.due), all: fams.sort((a, b) => b.due - a.due) };
+  const tabs = [['today', `Follow-up today (${due.length})`], ['new', `Not called this week (${fresh.length})`], ['all', `All dues (${fams.length})`], ['log', 'Call log']]
+    .map(([k, l]) => `<button onclick="go('fcalls',{tab:'${k}',c:${jsq(c)}})" class="btn btn-sm ${tab === k ? 'btn-p' : 'btn-l'}">${l}</button>`).join('');
+  const body = tab === 'log' ? ofCallLog() : (lists[tab].length ? lists[tab].map(ofFamCard).join('') : '<div class="card text-sm text-slate-500">Nobody in this list. 🎉</div>');
+  return head('Dues Calling', `${esc(OF.names.reception)} (Reception) · call, then save what they said`, `<button onclick="ofLoad(true)" class="btn btn-l"><i class="fa-solid fa-rotate"></i> Refresh</button>`) + `
+    <div class="flex flex-wrap gap-2 items-center">${tabs}<select class="inp w-auto py-1 text-sm" onchange="go('fcalls',{tab:'${tab}',c:this.value})"><option value="">All classes</option>${CLASS_NAMES.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+    <div class="space-y-3">${body}</div>`;
+}
+function ofReminder(f) {
+  return `नमस्ते 🙏 ${OF.school} से ${OF.names.reception} बोल रही हूँ।\n` + f.kids.filter(k => k.dues.due > 0).map(k => `${k.name} (Class ${k.cls}) की फीस ₹${k.dues.due.toLocaleString('en-IN')} बाकी है।`).join('\n')
+    + `\nकृपया जल्द से जल्द विद्यालय कार्यालय में जमा करें। रसीद ज़रूर लें। धन्यवाद।`;
+}
+function ofFamCard(f) {
+  const open = OFOPEN === f.key, ph = String(f.phone || '').replace(/\D/g, '').slice(-10), id = 'oc-' + f.key.replace(/[^a-z0-9]/gi, '');
+  const L = f.last;
+  return `<div class="card"><div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+      <div><p class="font-semibold">${ofKidLine(f)}</p><p class="text-xs text-slate-500">${f.father ? esc(f.father) + ' · ' : ''}${ph ? esc(f.phone) : '<span class="text-rose-700">No mobile number</span>'}</p>
+        ${L ? `<p class="text-xs mt-1"><span class="pill ${L.outcome === 'Promised to pay' ? 'bg-emerald-100 text-emerald-800' : L.outcome === 'Wrong number' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700'}">${esc(L.outcome)}${L.promise ? ' · ' + fmtDate(L.promise) : ''}</span> <span class="text-slate-500">${fmtDate(L.date)} by ${esc(L.by)}${L.note ? ' — ' + esc(L.note) : ''}</span></p>` : '<p class="text-xs text-slate-500 mt-1">Not called yet</p>'}</div>
+      <p class="text-xl font-semibold text-rose-700 whitespace-nowrap">${rs(f.due)}</p></div>
+    <div class="flex flex-wrap gap-2 mt-3">${ph ? `<a href="tel:+91${ph}" class="btn btn-sm btn-p"><i class="fa-solid fa-phone"></i> Call</a><a target="_blank" href="${waLink(ph, ofReminder(f))}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Reminder</a>` : ''}
+      ${OF.can.call ? `<button onclick="OFOPEN=${open ? 'null' : jsq(f.key)};render()" class="btn btn-sm btn-l">${open ? 'Close' : 'Save call result'}</button>` : ''}</div>
+    ${open ? `<div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div><label class="lbl">What happened</label><select id="${id}-o" class="inp">${OF.outcomes.map(o => `<option>${esc(o)}</option>`).join('')}</select></div>
+      <div><label class="lbl">Date they gave</label><input id="${id}-d" type="date" class="inp" min="${OF.today}" value="${addDays(OF.today, 3)}"></div>
+      <div><label class="lbl">Note</label><input id="${id}-n" class="inp" maxlength="200" placeholder="optional"></div>
+      <button onclick="ofCall(${jsq(f.kids[0].id)},'${id}')" class="btn btn-g sm:col-span-3">Save</button></div>` : ''}
+    ${f.calls.length > 1 ? `<details class="mt-2 text-xs"><summary class="cursor-pointer text-slate-500">Earlier calls (${f.calls.length - 1})</summary>${f.calls.slice(1, 8).map(c => `<p>${fmtDate(c.date)} · ${esc(c.outcome)}${c.promise ? ' · ' + fmtDate(c.promise) : ''} · ${esc(c.by)}${c.note ? ' — ' + esc(c.note) : ''}</p>`).join('')}</details>` : ''}</div>`;
+}
+function ofCallLog() {
+  if (!OF.calls.length) return '<div class="card text-sm text-slate-500">No calls saved yet.</div>';
+  const name = sids => sids.map(i => { const s = OF.students.find(x => x.id === i); return s ? esc(s.name) + ' (' + esc(s.cls) + ')' : ''; }).join(', ');
+  return `<div class="card overflow-x-auto"><table class="tbl"><tr><th>Date</th><th>Family</th><th>Result</th><th>By</th></tr>${OF.calls.slice(0, 150).map(c => `<tr><td class="whitespace-nowrap">${fmtDate(c.date)}</td><td>${name(c.sids)}</td><td>${esc(c.outcome)}${c.promise ? ' · ' + fmtDate(c.promise) : ''}${c.note ? `<br><span class="text-xs text-slate-500">${esc(c.note)}</span>` : ''}</td><td class="text-xs">${esc(c.by)}</td></tr>`).join('')}</table></div>`;
+}
+async function ofCall(sid, id) {
+  if (OFBUSY) return;
+  const o = document.getElementById(id + '-o').value, needDate = ['Promised to pay', 'Call back later', 'Will visit school'].includes(o);
+  OFBUSY = true;
+  try { await oapi('call', { sid, outcome: o, promise: needDate ? document.getElementById(id + '-d').value : '', note: document.getElementById(id + '-n').value.trim() }); OFOPEN = null; toast('Saved'); }
+  catch (e) { toast(e.message, 'r'); } finally { OFBUSY = false; }
+  ofLoad(true);
+}
+
+// ---- Receipts (day book)
+function vFReceipts() {
+  const w = ofReady('Receipts'); if (w) return w;
+  const date = P.date || OF.today, month = !!P.month;
+  const rows = OF.payments.filter(p => month ? p.date.slice(0, 7) === date.slice(0, 7) : p.date === date);
+  const live = rows.filter(p => !p.cancelled), modes = {}; live.forEach(p => modes[p.mode] = (modes[p.mode] || 0) + p.amt);
+  return head('Receipts', month ? 'Whole month' : fmtDate(date), dateInput('of-rd', date, `go('freceipts',{date:this.value${month ? ',month:1' : ''}})`)
+      + `<button onclick="go('freceipts',{date:'${date}'${month ? '' : ',month:1'}})" class="btn btn-l">${month ? 'One day' : 'Whole month'}</button><button onclick="printHTML('Receipts',printHeader('Fee collection — ${month ? date.slice(0, 7) : fmtDate(date)}')+document.getElementById('of-rc').outerHTML+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-print"></i> Print</button>`) + `
+    <div class="card flex flex-wrap gap-3 items-center"><b class="text-lg">${rs(live.reduce((a, p) => a + p.amt, 0))}</b><span class="text-sm text-slate-600">${live.length} receipt(s)${Object.keys(modes).length ? ' · ' + Object.entries(modes).map(([m, v]) => esc(m) + ' ' + rs(v)).join(' · ') : ''}</span></div>
+    <div class="card overflow-x-auto"><table class="tbl" id="of-rc"><tr><th>No.</th><th>Date</th><th>Student</th><th class="text-right">Amount</th><th>Mode</th><th>By</th><th class="noprint"></th></tr>
+      ${rows.map(p => `<tr class="${p.cancelled ? 'text-slate-400' : ''}"><td>${p.no}</td><td class="whitespace-nowrap">${fmtDate(p.date)}</td><td>${esc(p.name)} <span class="text-xs">(${esc(p.cls)})</span>${p.cancelled ? `<br><span class="text-xs text-rose-700">Cancelled: ${esc(p.cancelReason || '')}</span>` : ''}</td>
+        <td class="text-right ${p.cancelled ? 'line-through' : 'font-semibold'}">${rs(p.amt)}</td><td>${esc(p.mode)}${p.ref ? `<br><span class="text-xs">${esc(p.ref)}</span>` : ''}</td><td class="text-xs">${esc(p.by)}</td>
+        <td class="noprint whitespace-nowrap"><button onclick="ofPrint(${p.no})" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i></button>${OF.can.cancel && !p.cancelled ? ` <button onclick="ofCancel(${p.no})" class="btn btn-sm btn-r">Cancel</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="text-slate-500">No receipts.</td></tr>'}</table></div>`;
+}
+async function ofCancel(no) {
+  const reason = prompt('Why cancel receipt #' + no + '? (this is kept in the activity log)'); if (reason === null) return;
+  if (!reason.trim()) return toast('Write a reason', 'a');
+  try { await oapi('cancel', { no, reason: reason.trim() }); toast('Receipt cancelled'); } catch (e) { toast(e.message, 'r'); }
+  ofLoad(true);
+}
+
+// ---- Parent / student: dues and receipts for their own children
+let PFD = null;
+async function loadPFees() { try { PFD = await oapi('mine'); } catch (e) { PFD = { error: e.message }; } if (view === 'pfees') render(); }
+function pFeeDues() {
+  if (!PFD) { loadPFees(); return '<div class="card text-sm text-slate-500">Loading your fee account…</div>'; }
+  if (PFD.error) return `<div class="card text-sm">${esc(PFD.error)}</div>`;
+  const kids = PFD.kids, tot = kids.reduce((a, k) => a + k.dues.due, 0);
+  return `<div class="card"><div class="flex justify-between items-center"><h3 class="h3">Fee account</h3><b class="text-xl ${tot > 0 ? 'text-rose-700' : 'text-leaf'}">${tot > 0 ? rs(tot) + ' due' : 'All clear'}</b></div>
+      ${kids.map(k => `<div class="mt-3"><p class="font-semibold">${esc(k.name)} · Class ${esc(k.cls)}</p>${ofBreak(k)}</div>`).join('')}
+      <p class="text-xs text-slate-500 mt-2">Monthly fee counted from ${fmtDate(PFD.sessionStart)} up to this month. If something looks wrong, please talk to the school office.</p></div>
+    ${PFD.receipts.length ? `<div class="card"><h3 class="h3">Receipts</h3><table class="tbl mt-2 text-sm"><tr><th>No.</th><th>Date</th><th>Child</th><th class="text-right">Amount</th><th>Mode</th></tr>${PFD.receipts.map(p => `<tr><td>${p.no}</td><td>${fmtDate(p.date)}</td><td>${esc(p.name)}</td><td class="text-right">${rs(p.amt)}</td><td>${esc(p.mode)}</td></tr>`).join('')}</table></div>` : ''}`;
 }
 
 // ---------------------------------------------------------------- GAME ZONE (students + parents) — school/game_api.php
@@ -2751,7 +3089,7 @@ async function gFix(pid, i, action) { try { await gapi('packfix', { pid, i, acti
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, fdesk: vFDesk, fdues: vFDues, fcalls: vFCalls, freceipts: vFReceipts, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 
@@ -2765,7 +3103,7 @@ VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','P
 (async function init() {
   TOKEN = tokenGet();
   if (TOKEN) {
-    try { if (tokenRole() === 'parent' || tokenRole() === 'student') await loadParent(); else await loadAll(); render(); return; }
+    try { if (tokenRole() === 'parent' || tokenRole() === 'student') await loadParent(); else if (tokenRole() === 'accountant' || tokenRole() === 'reception') await loadOffice(); else await loadAll(); render(); return; }
     catch (e) {
       if (/internet|Server problem|reachable/i.test(e.message)) {
         document.getElementById('root').innerHTML = `<div class="flex-1 flex items-center justify-center p-6 text-center"><div><p class="font-bold">No connection to the school server.</p><p class="text-sm text-slate-500">${esc(e.message)}</p><button onclick="location.reload()" class="btn btn-p mt-3">Try again</button></div></div>`;

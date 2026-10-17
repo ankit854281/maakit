@@ -53,6 +53,7 @@ case 'status': {
     usort($teachers, fn($x, $y) => strcmp($x['name'], $y['name']));
     $set = sch_rec_get('settings', 'main');
     sch_json(['ok' => true, 'setup' => $hasP === 0, 'teachers' => $teachers,
+              'office' => ['accountant' => trim((string)($set['accountantName'] ?? '')) ?: 'Akash Tiwari', 'reception' => trim((string)($set['receptionName'] ?? '')) ?: 'Shiva Rai'],
               'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School')]);
 }
 
@@ -93,6 +94,8 @@ case 'login': {
     switch ($role) {
         case 'principal': $uid = 'principal'; break;
         case 'chairman':  $uid = 'chairman'; $valid = true; break;
+        case 'accountant':
+        case 'reception': $uid = $role; $valid = true; break;   // school office (fees) — office_api.php
         case 'teacher':
             $tid = preg_replace('/[^A-Za-z0-9_]/', '', (string)($in['tid'] ?? ''));
             if ($tid === 'P') sch_fail('Please use the Principal login.');
@@ -165,7 +168,7 @@ case 'logout': {
 // ------------------------------------------------------------
 case 'load': {
     $u = sch_auth();
-    if (in_array($u['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
+    if (in_array($u['role'], SCH_NO_LOAD, true)) sch_fail('Not allowed.', 403);
     $days = max(7, min(400, (int)($_GET['days'] ?? 60)));
     $from = date('Y-m-d', time() - $days * 86400);
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE deleted=0 AND (dkey IS NULL OR dkey >= ?)');
@@ -180,7 +183,7 @@ case 'load': {
 
 // ------------------------------------------------------------
 case 'since': {
-    if (in_array(sch_auth()['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
+    if (in_array(sch_auth()['role'], SCH_NO_LOAD, true)) sch_fail('Not allowed.', 403);
     $v = (int)($_GET['v'] ?? 0) - 5000;          // 5 second peeche se — ek saath hue badlaav chhootein nahi
     $l = (int)($_GET['l'] ?? 0);
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE ver > ? ORDER BY ver LIMIT 2000');
@@ -193,7 +196,7 @@ case 'since': {
 
 // ------------------------------------------------------------
 case 'day': {
-    if (in_array(sch_auth()['role'], ['parent', 'student'], true)) sch_fail('Not allowed.', 403);
+    if (in_array(sch_auth()['role'], SCH_NO_LOAD, true)) sch_fail('Not allowed.', 403);
     $date = (string)($_GET['date'] ?? '');
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Bad date.');
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE deleted=0 AND dkey = ?');
@@ -234,7 +237,7 @@ case 'sync': {
     foreach ($logs as $g) {
         $k = trim((string)($g['k'] ?? '')); $x = trim((string)($g['x'] ?? ''));
         if ($k === '' || $x === '') continue;
-        if (in_array($u['role'], ['parent', 'student'], true)) continue;
+        if (in_array($u['role'], SCH_NO_LOAD, true)) continue;
         if ($u['role'] === 'chairman' && !in_array($k, ['Summary', 'Results'], true)) continue;
         sch_log($u, $k, $x);
     }
@@ -284,6 +287,7 @@ case 'setpin': {
         sch_fail('Only the Principal can set other PINs.', 403);
     }
     if ($target === 'chairman') { $role = 'chairman'; $tid = null; }
+    elseif ($target === 'accountant' || $target === 'reception') { $role = $target; $tid = null; }
     elseif ($target === 'principal') { $role = 'principal'; $tid = 'P'; }
     elseif (preg_match('/^t:([A-Za-z0-9_]{1,20})$/', $target, $m) && $m[1] !== 'P' && sch_rec_get('teacher', $m[1])) { $role = 'teacher'; $tid = $m[1]; }
     elseif (preg_match('/^p:(\d{10})$/', $target, $m) && sch_children($m[1])) { $role = 'parent'; $tid = $m[1]; }
@@ -297,7 +301,7 @@ case 'setpin': {
        ->execute([$target, $role, $tid, password_hash($pin, PASSWORD_DEFAULT), $must]);
     if ($target !== $selfUid) $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$target]);   // purane phone se bahar
     $who = match ($role) { 'teacher' => sch_teacher_name($tid), 'parent' => 'parent ' . substr((string)$tid, 0, 2) . 'xxxxxx' . substr((string)$tid, -2),
-                           'student' => sch_user_label(['role' => 'student', 'tid' => $tid]), default => ucfirst($role) };
+                           'student' => sch_user_label(['role' => 'student', 'tid' => $tid]), 'accountant', 'reception' => sch_user_label(['role' => $role, 'tid' => null]), default => ucfirst($role) };
     sch_log($u, 'PIN', 'PIN ' . ($target === $selfUid ? 'chosen by ' . $u['label'] : ($must ? 'reset to 1234 for ' : 'set for ') . $who));
     sch_json(['ok' => true]);
 }
