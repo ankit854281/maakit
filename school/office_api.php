@@ -24,6 +24,11 @@
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
 require __DIR__ . '/office_lib.php';
+require __DIR__ . '/finance_lib.php';
+function of_detailed_guard(string $sid):void {
+ $session=fin_session(of_session()['session'] ?: fin_current());
+ if(!empty(sch_rec_get('finAccount',$session.'|'.$sid)['active'])) sch_fail('This student now uses the detailed Fee Department. Open Fee Department to record payments or corrections.',409);
+}
 
 $a = (string)($_GET['a'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -77,6 +82,12 @@ function of_all(array $students, ?array $only = null): array {
     foreach ($students as $id => $s) {
         if ($only !== null && !in_array($id, $only, true)) continue;
         $out[$id] = $s + ['fam' => of_phone_key($s), 'dues' => of_dues($s, $fam[of_phone_key($s)], $F, $sets[$id] ?? [], $pays, $ss['start'], $today), 'set' => $sets[$id] ?? new stdClass()];
+        $ssKey=fin_session($ss['session'] ?: fin_current());
+        if(!empty(sch_rec_get('finAccount',$ssKey.'|'.$id)['active'])) {
+          $L=fin_ledger(fin_rows('finBill',$ssKey),fin_rows('finEntry',$ssKey),(string)$id,$ssKey);
+          $out[$id]['detailed']=true;
+          $out[$id]['dues']=array_replace($out[$id]['dues'],['due'=>($L['outstanding']-$L['advance'])/100,'paid'=>$L['paid']/100,'concession'=>$L['discount']/100,'missing'=>false,'detailed'=>true]);
+        }
     }
     return $out;
 }
@@ -120,6 +131,8 @@ case 'pay': {
     // Counter row is made once, outside the lock; then every desk waits its turn on that one row.
     $db->prepare("INSERT IGNORE INTO sch_records (k,r,d,deleted,dkey,ver,by_uid,updated_at) VALUES ('acctSeq','main','{\"n\":0}',0,NULL,?,?,NOW())")->execute([sch_now_ms(), $uid]);
     $db->beginTransaction();
+    $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
+    of_detailed_guard($sid);
     $seq = json_decode((string)$db->query("SELECT d FROM sch_records WHERE k='acctSeq' AND r='main' FOR UPDATE")->fetchColumn(), true);
     $old = sch_rec_get('acctNonce', $nonce);
     if ($old) { $db->commit(); sch_json(['ok' => true, 'receipt' => sch_rec_get('acctPay', (string)$old['r']), 'again' => true]); }
@@ -146,6 +159,7 @@ case 'cancel': {
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
     $p = sch_rec_get('acctPay', $r);
     if (!$p) { $db->rollBack(); sch_fail('Receipt not found.'); }
+    of_detailed_guard((string)$p['sid']);
     if (!empty($p['cancelled'])) { $db->rollBack(); sch_fail('This receipt is already cancelled.'); }
     $p['cancelled'] = true; $p['cancelReason'] = $reason; $p['cancelBy'] = $u['label']; $p['cancelAt'] = sch_now_ms();
     sch_rec_put('acctPay', $r, $p, sch_uid_of($u));
@@ -166,6 +180,9 @@ case 'setstu': {
           'free' => ($in['free'] ?? false) === true, 'scheme' => of_text($in['scheme'] ?? '', 60),
           'concession' => of_rupees($in['concession'] ?? 0, 0, 500000, 'Concession'), 'note' => of_text($in['note'] ?? '', 200),
           'by' => $u['label'], 'at' => sch_now_ms()];
+    $db->beginTransaction();
+    $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
+    of_detailed_guard($sid);
     $old = sch_rec_get('acctStu', $sid) ?? [];
     $ch = [];
     foreach (['opening' => 'old due', 'custom' => 'own monthly fee', 'concession' => 'concession'] as $k => $w)
@@ -175,6 +192,7 @@ case 'setstu': {
     if (($old['note'] ?? '') !== $d['note']) $ch[] = 'note changed';
     sch_rec_put('acctStu', $sid, $d, sch_uid_of($u));
     if ($ch) sch_log($u, 'Fee', "{$st[$sid]['name']} (Class {$st[$sid]['cls']}): " . implode(', ', $ch));
+    $db->commit();
     sch_json(['ok' => true, 'dues' => of_all($st, [$sid])[$sid]['dues']]);
 }
 
@@ -208,7 +226,7 @@ case 'mine': {
     $all = of_all($st, $ids); $ss = of_session();
     $pays = array_values(array_filter(of_rows('acctPay'), fn($p) => in_array($p['sid'] ?? '', $ids, true) && empty($p['cancelled']) && (string)$p['date'] >= $ss['start']));
     usort($pays, fn($x, $y) => strcmp((string)$y['date'], (string)$x['date']));
-    $kids = array_map(fn($i) => ['id' => $i, 'name' => $all[$i]['name'], 'cls' => $all[$i]['cls'], 'dues' => array_intersect_key($all[$i]['dues'], array_flip(['monthly', 'months', 'yearly', 'opening', 'concession', 'paid', 'due', 'free', 'missing']))], $ids);
+    $kids = array_map(fn($i) => ['id' => $i, 'name' => $all[$i]['name'], 'cls' => $all[$i]['cls'], 'dues' => array_intersect_key($all[$i]['dues'], array_flip(['monthly', 'months', 'yearly', 'opening', 'concession', 'paid', 'due', 'free', 'missing', 'detailed']))], $ids);
     $clean = array_map(fn($p) => array_intersect_key($p, array_flip(['no', 'sid', 'name', 'cls', 'amt', 'words', 'mode', 'date'])), $pays);
     sch_json(['ok' => true, 'kids' => $kids, 'receipts' => $clean, 'sessionStart' => $ss['start'], 'school' => $ss['school']]);
 }

@@ -2745,6 +2745,7 @@ function ofSummary() {
     <div class="card"><p class="text-xs text-slate-500">Fee not set</p><p class="text-2xl font-semibold ${missing ? 'text-amber-700' : ''}">${missing}</p><p class="text-xs text-slate-500">student(s) — set in Fee Structure or here</p></div></div>`;
 }
 function ofBreak(s) {
+  if(s.dues.detailed)return '<p class="text-sm">This child uses the detailed fee ledger. Current recorded balance: <b>'+rs(s.dues.due)+'</b>.</p><button class="btn btn-l" onclick="go(\'finance\')">Open Fee Department</button>';
   const d = s.dues;
   return `<table class="tbl mt-2 text-sm">
     ${d.opening ? `<tr><td>Old due (before this session)</td><td class="text-right">${rs(d.opening)}</td></tr>` : ''}
@@ -2776,7 +2777,7 @@ function ofResults() {
     <span class="font-semibold ${s.dues.due > 0 ? 'text-rose-700' : 'text-leaf'}">${s.dues.missing ? 'Fee not set' : s.dues.due > 0 ? rs(s.dues.due) : 'Clear'}</span></button>`).join('')}</div>`;
 }
 function ofStudentPanel(s) {
-  const fam = OF.students.filter(x => x.fam === s.fam), ids = fam.map(x => x.id), can = OF.can, st = s.set || {};
+  const fam = OF.students.filter(x => x.fam === s.fam), ids = fam.map(x => x.id), can = s.detailed ? {...OF.can,pay:false,set:false} : OF.can, st = s.set || {};
   if (!OFNONCE) OFNONCE = Array.from(crypto.getRandomValues(new Uint8Array(10)), b => b.toString(16).padStart(2, '0')).join('');
   const hist = OF.payments.filter(p => ids.includes(p.sid));
   return `<div id="of-panel" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -2933,7 +2934,7 @@ function pFeeDues() {
   if (!PFD) { loadPFees(); return '<div class="card text-sm text-slate-500">Loading your fee account…</div>'; }
   if (PFD.error) return `<div class="card text-sm">${esc(PFD.error)}</div>`;
   const kids = PFD.kids, tot = kids.reduce((a, k) => a + k.dues.due, 0);
-  return `<div class="card"><div class="flex justify-between items-center"><h3 class="h3">Fee account</h3><b class="text-xl ${tot > 0 ? 'text-rose-700' : 'text-leaf'}">${tot > 0 ? rs(tot) + ' due' : 'All clear'}</b></div>
+  return `<div class="card"><button class="btn btn-l" onclick="go('finance')">Open detailed fee ledger & receipts</button></div><div class="card"><div class="flex justify-between items-center"><h3 class="h3">Fee account</h3><b class="text-xl ${tot > 0 ? 'text-rose-700' : 'text-leaf'}">${tot > 0 ? rs(tot) + ' due' : 'All clear'}</b></div>
       ${kids.map(k => `<div class="mt-3"><p class="font-semibold">${esc(k.name)} · Class ${esc(k.cls)}</p>${ofBreak(k)}</div>`).join('')}
       <p class="text-xs text-slate-500 mt-2">Monthly fee counted from ${fmtDate(PFD.sessionStart)} up to this month. If something looks wrong, please talk to the school office.</p></div>
     ${PFD.receipts.length ? `<div class="card"><h3 class="h3">Receipts</h3><table class="tbl mt-2 text-sm"><tr><th>No.</th><th>Date</th><th>Child</th><th class="text-right">Amount</th><th>Mode</th></tr>${PFD.receipts.map(p => `<tr><td>${p.no}</td><td>${fmtDate(p.date)}</td><td>${esc(p.name)}</td><td class="text-right">${rs(p.amt)}</td><td>${esc(p.mode)}</td></tr>`).join('')}</table></div>` : ''}`;
@@ -3131,3 +3132,10 @@ VIEWS.saathi=()=>head('Secret Saathi','A private reflection space for your own a
 NAV.parent.push(['faculty','fa-chalkboard-user','Our Teachers']);
 VIEWS.faculty=()=>head('Our Teachers','School-reviewed professional profiles shared with your class.')+'<div id="parentFaculty" class="modern-bento">Loading teacher profiles…</div>';
 async function loadParentFaculty(){try{const r=await fetch('faculty_api.php?a=directory',{headers:{'X-School-Token':TOKEN}});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Profiles unavailable');const node=document.getElementById('parentFaculty');if(node)node.innerHTML=d.profiles.map(p=>`<article class="card">${p.photoData?`<img src="${p.photoData}" alt="Teacher portrait" style="width:72px;height:72px;object-fit:cover;border-radius:22px;margin-bottom:12px">`:''}<h3 class="h3">${esc(p.fullName)}</h3><p class="text-sm text-slate-500">${esc(p.designation)}</p><p class="text-sm mt-3">${esc(p.bio)}</p><p class="text-sm mt-2">${esc(p.quote)}</p><p class="text-xs text-slate-500 mt-3">${esc((p.subjects||[]).join(' · '))}</p></article>`).join('')||'<div class="card text-sm">Your teachers’ profiles will appear here after verification and sharing permission.</div>';}catch(e){const node=document.getElementById('parentFaculty');if(node)node.textContent=e.message;}}
+
+// Detailed Fee Department: shared token, scoped API, immutable financial entries.
+for (const role of ['principal','accountant','reception','chairman','teacher']) NAV[role].push(['finance','fa-wallet','Fee Department']);
+for (const role of ['parent','student']) NAV[role].push(['finance','fa-wallet','Fee Ledger']);
+for (const role of ['principal','accountant']) { const old=NAV[role].find(n=>n[0]==='fdesk');if(old)old[2]='Legacy Fee Desk'; }
+NAV.accountant.unshift(NAV.accountant.pop());PRIMARY.accountant=['finance','fdues','fcalls','freceipts'];
+VIEWS.finance=()=>head('Fee Department','Month-wise ledger, collection, receipts, advance and reports.')+'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1"></iframe>';

@@ -79,6 +79,7 @@ jobs:
           php .github/jaanch/studio-unit.php
           php .github/jaanch/toolkit-unit.php
           php .github/jaanch/faculty-unit.php
+          php .github/jaanch/finance-unit.php
           node .github/jaanch/toolkit-english.cjs
 
       - name: Teacher Studio React and Prisma source checks
@@ -151,6 +152,8 @@ jobs:
           php .github/jaanch/studio-flow.php
           php .github/jaanch/toolkit-flow.php
           php .github/jaanch/faculty-flow.php
+          php .github/jaanch/finance-flow.php
+          node --check school/finance.js
           node --check school/faculty.js
           node --check school/faculty-public.js
           node --check school/toolkit.js
@@ -177,6 +180,7 @@ jobs:
           node .github/jaanch/hub-ui.cjs
           node .github/jaanch/toolkit-ui.cjs
           node .github/jaanch/faculty-ui.cjs
+          node .github/jaanch/finance-ui.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
