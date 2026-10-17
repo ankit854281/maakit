@@ -468,21 +468,6 @@ function threeDayAbsentees(date) {
   return out;
 }
 function sylKey(c, s) { return c + '|' + s; }
-function sylStatus(key, date) {
-  const y = S.syl[key]; if (!y || !y.chapters.length) return null;
-  const done = y.chapters.filter(ch => ch.done).length, total = y.chapters.length;
-  let expected = null, lag = false;
-  const dl = sylDeadline(key.split('|')[0]);          // class-wide hard deadline (e.g. Class 10: 100% by 19 Dec)
-  const tCount = dl ? total : y.targetCount, tDate = dl || y.targetDate;
-  if (tCount && tDate) {
-    const st = new Date(S.settings.sessionStart + 'T00:00:00'), en = new Date(tDate + 'T00:00:00'), now = new Date(date + 'T00:00:00');
-    const f = Math.max(0, Math.min(1, (now - st) / Math.max(1, en - st)));
-    expected = Math.round(tCount * f * 10) / 10;
-    lag = expected - done >= 1;
-  }
-  return { done, total, expected, lag, pct: Math.round(done / total * 100) };
-}
-function nextChapter(c, s) { const y = S.syl[sylKey(c, s)]; if (!y) return null; const ch = y.chapters.find(x => !x.done); return ch ? ch.n : null; }
 function latestExamWithMarks(date) {
   return [...S.exams].filter(e => S.marks[e.id] && Object.keys(S.marks[e.id]).length && e.date <= addDays(date, 30)).sort((a, b) => b.date.localeCompare(a.date))[0] || null;
 }
@@ -709,7 +694,7 @@ async function logout() {
 }
 function forceLogout() {
   QZ = null; QT = null; QPLAY = null; qzStopTimer(); GZ = null; GP = null; GT = null; gStop();
-  MUST = null; PD = null; PC_LAST = null; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
+  MUST = null; PD = null; PC_LAST = null; SCAN = null; LPDRAFT = {}; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
 }
@@ -1048,44 +1033,204 @@ function signDiary(date, t) { S.signed[date] = S.signed[date] || {}; S.signed[da
 function signAll(date) { let n = 0; Object.keys(S.teachers).forEach(t => { if (myBells(t, date).some(b => diaryEntry(date, t, b.bell)) && !(S.signed[date] && S.signed[date][t])) { S.signed[date] = S.signed[date] || {}; S.signed[date][t] = Date.now(); n++; } });
   log('Diary Sign-off', `Principal signed ${n} diaries for ${date}`); toast(n + ' diaries signed'); render(); }
 
-// ---------------------------------------------------------------- SYLLABUS
+// ---------------------------------------------------------------- SYLLABUS (photo of the contents page → chapters → month plan → tick when done)
+// A chapter: { n, done, plan:'YYYY-MM' (month to finish it), topics:[...] (from the contents page, optional) }.
+function sylEndMonth(key) {
+  const y = S.syl[key] || {}, dl = sylDeadline(key.split('|')[0]) || y.targetDate;
+  if (dl) return dl.slice(0, 7);
+  const st = S.settings.sessionStart || todayISO(); return (+st.slice(0, 4) + 1) + '-02';   // annual exams in March
+}
+function ymAdd(ym, n) { const [y, m] = ym.split('-').map(Number), d = new Date(y, m - 1 + n, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+function ymName(ym) { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short', year: '2-digit' }); }
+function sylMonths(key) { const out = []; let m = (S.settings.sessionStart || todayISO()).slice(0, 7); const end = sylEndMonth(key); while (m <= end && out.length < 14) { out.push(m); m = ymAdd(m, 1); } return out; }
+function sylStatus(key, date) {
+  const y = S.syl[key]; if (!y || !y.chapters.length) return null;
+  const done = y.chapters.filter(ch => ch.done).length, total = y.chapters.length, ym = date.slice(0, 7);
+  let expected = null, lag = false;
+  if (y.chapters.some(ch => ch.plan)) {                      // month plan: chapters planned for months already over must be done
+    expected = y.chapters.filter(ch => ch.plan && ch.plan < ym).length;
+    lag = done < expected;
+  } else {
+    const dl = sylDeadline(key.split('|')[0]);
+    const tCount = dl ? total : y.targetCount, tDate = dl || y.targetDate;
+    if (tCount && tDate) {
+      const st = new Date(S.settings.sessionStart + 'T00:00:00'), en = new Date(tDate + 'T00:00:00'), now = new Date(date + 'T00:00:00');
+      const f = Math.max(0, Math.min(1, (now - st) / Math.max(1, en - st)));
+      expected = Math.round(tCount * f * 10) / 10; lag = expected - done >= 1;
+    }
+  }
+  const thisMonth = y.chapters.filter(ch => ch.plan === ym && !ch.done).map(ch => ch.n);
+  return { done, total, expected, lag, pct: Math.round(done / total * 100), thisMonth };
+}
+function nextChapter(c, s) {
+  const y = S.syl[sylKey(c, s)]; if (!y) return null;
+  const ym = todayISO().slice(0, 7), open = y.chapters.filter(x => !x.done);
+  const ch = open.find(x => x.plan && x.plan <= ym) || open[0]; return ch ? ch.n : null;
+}
 function vSyllabus() {
   const date = todayISO();
   if (U.role !== 'teacher' && !P.key) {
     const rows = S.alloc.filter(a => a.n > 0).map(a => { const k = sylKey(a.c, a.s), st = sylStatus(k, date);
       return `<tr><td class="font-bold">${a.c}</td><td>${esc(a.s)}</td><td>${esc(T(a.t).name)}</td>
         <td class="w-48">${st ? bar(st.pct, st.lag ? 'bg-rose-500' : 'bg-emerald-500') + `<span class="text-xs">${st.done}/${st.total} chapters</span>` : '<span class="text-xs text-slate-400">Not set up</span>'}</td>
-        <td>${st && st.expected != null ? `<span class="pill ${st.lag ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">${st.lag ? 'Behind' : 'On track'} (should be ${st.expected})</span>` : '—'}</td>
+        <td>${st && st.expected != null ? `<span class="pill ${st.lag ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">${st.lag ? 'Behind' : 'On track'} (should be ${st.expected})</span>` : '—'}${st && st.thisMonth.length ? `<br><span class="text-xs text-slate-500">This month: ${st.thisMonth.map(esc).join(', ')}</span>` : ''}</td>
         <td class="noprint">${U.role === 'principal' ? `<button onclick="go('syllabus',{key:${jsq(k)}})" class="btn btn-sm btn-l">Open</button>` : ''}</td></tr>`; }).join('');
-    return head('Syllabus Progress', 'Teachers tick chapters (or from their diary). Behind = fewer chapters done than the target date requires.') +
+    const pending = {};
+    S.alloc.filter(a => a.n > 0 && !/Games|Library|Moral|Rhymes|Play|Craft|Activity|PT\b/.test(a.s)).forEach(a => { const y = S.syl[sylKey(a.c, a.s)];
+      if (!y || !y.chapters.length || !y.chapters.some(c => c.plan)) (pending[a.t] = pending[a.t] || []).push(`${a.c} ${a.s}${y && y.chapters.length ? ' (month plan)' : ''}`); });
+    const msg = list => `Namaste. Please update your syllabus in the School ERP (Syllabus → Add chapters from a photo of the book's contents page, then "Spread month-wise"): ${list.join(', ')}. Then make this week's lesson plan from it (Lesson Plan → Fill from syllabus). — Principal`;
+    return head('Syllabus Progress', 'Teachers add chapters from a photo of the contents page, spread them month-wise, then tick each chapter when finished.') +
+      (Object.keys(pending).length && U.role === 'principal' ? `<div class="card space-y-2"><h3 class="font-bold">Still to update (${Object.keys(pending).length} teachers)</h3>${Object.entries(pending).map(([t, list]) => `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
+        <span class="text-sm"><b>${esc(T(t).name)}</b> — ${list.map(esc).join(', ')}</span>${S.teachers[t] && S.teachers[t].phone ? `<a target="_blank" href="${waLink(S.teachers[t].phone, msg(list))}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Remind</a>` : '<span class="text-xs text-slate-500">Add WhatsApp no. in Settings</span>'}</div>`).join('')}</div>` : '') +
       `<div class="card overflow-x-auto"><table class="tbl"><tr><th>Class</th><th>Subject</th><th>Teacher</th><th>Progress</th><th>Status</th><th class="noprint"></th></tr>${rows}</table></div>`;
   }
   const mine = U.role === 'teacher' ? myAllocs(U.tid) : S.alloc.filter(a => a.n > 0);
   if (!mine.length) return head('Syllabus') + '<div class="card text-sm">No subjects assigned.</div>';
   const key = P.key && mine.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(mine[0].c, mine[0].s);
-  const y = S.syl[key] || { chapters: [], targetCount: '', targetDate: '' }, st = sylStatus(key, date);
-  return head('Syllabus Tracker', 'Add chapters once, then tick each when finished.', U.role === 'principal' ? `<button onclick="go('syllabus')" class="btn btn-l">← All subjects</button>` : '') + `
-    <div class="card"><label class="lbl">Class & subject</label><select class="inp" onchange="go('syllabus',{key:this.value})">${mine.map(a => { const k = sylKey(a.c, a.s); return `<option value="${esc(k)}" ${k === key ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select></div>
-    ${st ? `<div class="card space-y-2">${bar(st.pct, st.lag ? 'bg-rose-500' : 'bg-emerald-500')}<p class="text-sm"><b>${st.done}/${st.total}</b> chapters done${st.expected != null ? ` • By today you should have finished about <b>${st.expected}</b> — <b class="${st.lag ? 'text-rose-700' : 'text-emerald-700'}">${st.lag ? 'Behind: plan extra periods' : 'On track'}</b>` : ''}</p></div>` : ''}
-    <div class="card space-y-2"><h3 class="font-bold">Chapters</h3>
-      ${y.chapters.length ? y.chapters.map((ch, i) => `<label class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50"><input type="checkbox" class="w-5 h-5" ${ch.done ? 'checked' : ''} onchange="sylTick(${jsq(key)},${i},this.checked)">
-        <span class="flex-1 ${ch.done ? 'line-through text-slate-400' : ''}">${i + 1}. ${esc(ch.n)}</span>${ch.done ? `<span class="text-xs text-slate-400">${fmtDate(ch.done)}</span>` : ''}
-        <button onclick="sylDel(${jsq(key)},${i})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button></label>`).join('') : '<p class="text-sm text-slate-500">No chapters yet. Add them below.</p>'}
+  const y = S.syl[key] || { chapters: [], targetCount: '', targetDate: '' }, st = sylStatus(key, date), months = sylMonths(key), ym = date.slice(0, 7);
+  const [c, s] = key.split('|');
+  const monthSel = (ch, i) => `<select onchange="sylPlan(${jsq(key)},${i},this.value)" class="inp py-1 px-1 text-xs w-24 ${ch.plan && ch.plan < ym && !ch.done ? 'border-rose-300 text-rose-700' : ''}"><option value="">Month…</option>${months.map(m => `<option value="${m}" ${ch.plan === m ? 'selected' : ''}>${ymName(m)}</option>`).join('')}</select>`;
+  return head('Syllabus', 'Step 1: photo of the book\'s contents page → chapters. Step 2: spread them month-wise. Step 3: tick each chapter when finished.', U.role === 'principal' ? `<button onclick="go('syllabus')" class="btn btn-l">← All subjects</button>` : '') + `
+    <div class="card"><label class="lbl">Class & subject</label><select class="inp" onchange="SCAN=null;go('syllabus',{key:this.value})">${mine.map(a => { const k = sylKey(a.c, a.s); return `<option value="${esc(k)}" ${k === key ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select></div>
+    ${scanCard('chapters', c, s, y.chapters.length ? 'Add or replace chapters from a photo' : 'Step 1 — add chapters from a photo of the contents page')}
+    ${st ? `<div class="card space-y-2">${bar(st.pct, st.lag ? 'bg-rose-500' : 'bg-emerald-500')}<p class="text-sm"><b>${st.done}/${st.total}</b> chapters done${st.expected != null ? ` • By now about <b>${st.expected}</b> should be finished — <b class="${st.lag ? 'text-rose-700' : 'text-emerald-700'}">${st.lag ? 'Behind: plan extra periods' : 'On track'}</b>` : ''}</p>
+      ${st.thisMonth.length ? `<p class="text-sm">This month (${ymName(ym)}): ${st.thisMonth.map(n => `<span class="pill bg-marigold/20 text-ink mr-1">${esc(n)}</span>`).join('')}</p>` : ''}</div>` : ''}
+    <div class="card space-y-2"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-bold">Chapters</h3>
+        ${y.chapters.length ? `<button onclick="sylSpread(${jsq(key)})" class="btn btn-sm btn-p"><i class="fa-solid fa-calendar-days"></i> ${y.chapters.some(ch => ch.plan) ? 'Spread again' : 'Step 2 — spread month-wise'}</button>` : ''}</div>
+      ${y.chapters.length ? `<div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">${sylDeadline(c) ? `Whole syllabus by ${fmtDate(sylDeadline(c))} (school plan for Class ${esc(c)}).` : `Finish all by <input type="date" class="inp py-1 px-2 text-xs w-auto" value="${y.targetDate || ''}" onchange="sylFinish(${jsq(key)},this.value)"> ${y.targetDate ? '' : '(blank = ' + ymName(sylEndMonth(key)) + ')'}`} Change any chapter's month from its list.</div>` + y.chapters.map((ch, i) => `<div class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50"><input type="checkbox" class="w-5 h-5 shrink-0" ${ch.done ? 'checked' : ''} onchange="sylTick(${jsq(key)},${i},this.checked)">
+        <span class="flex-1 min-w-0 ${ch.done ? 'line-through text-slate-400' : ''}">${i + 1}. ${esc(ch.n)}${(ch.topics || []).length ? `<span class="block text-[11px] text-slate-500 truncate">${ch.topics.map(esc).join(' · ')}</span>` : ''}</span>
+        ${ch.done ? `<span class="text-xs text-slate-400">${fmtDate(ch.done)}</span>` : monthSel(ch, i)}
+        <button onclick="sylRename(${jsq(key)},${i})" class="text-slate-300 hover:text-ink" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button onclick="sylMove(${jsq(key)},${i},-1)" class="text-slate-300 hover:text-ink" title="Move up"><i class="fa-solid fa-arrow-up"></i></button>
+        <button onclick="sylDel(${jsq(key)},${i})" class="text-slate-300 hover:text-rose-500" title="Remove"><i class="fa-solid fa-trash"></i></button></div>`).join('') : '<p class="text-sm text-slate-500">No chapters yet. Take a photo of the contents page above, or type them below.</p>'}
     </div>
-    <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div><label class="lbl">Add chapters (one per line)</label><textarea id="sy-add" rows="5" class="inp" placeholder="Chapter 1 name&#10;Chapter 2 name"></textarea><button onclick="sylAdd(${jsq(key)})" class="btn btn-p btn-sm mt-2"><i class="fa-solid fa-plus"></i> Add</button></div>
-      <div class="space-y-2"><label class="lbl">Target: finish this many chapters…</label><input id="sy-tc" type="number" min="0" class="inp" value="${y.targetCount || ''}">
-        <label class="lbl">…by this date (e.g. before next exam)</label><input id="sy-td" type="date" class="inp" value="${y.targetDate || ''}">
-        <button onclick="sylTarget(${jsq(key)})" class="btn btn-l btn-sm">Save target</button></div>
-    </div>`;
+    <div class="card"><label class="lbl">Or type chapters (one per line)</label><textarea id="sy-add" rows="4" class="inp" placeholder="Chapter 1 name&#10;Chapter 2 name"></textarea><button onclick="sylAdd(${jsq(key)})" class="btn btn-l btn-sm mt-2"><i class="fa-solid fa-plus"></i> Add</button></div>`;
 }
+function sylFinish(key, v) { const y = sylEnsure(key); y.targetDate = v || ''; y.targetCount = v ? y.chapters.length : ''; log('Syllabus', `${key.replace('|', ' ')}: finish by ${v || 'end of session'}`); render(); }
 function sylEnsure(key) { return S.syl[key] = S.syl[key] || { chapters: [], targetCount: '', targetDate: '' }; }
 function sylTick(key, i, on) { const y = sylEnsure(key); y.chapters[i].done = on ? todayISO() : null; log('Syllabus', `${key.replace('|', ' ')}: "${y.chapters[i].n}" ${on ? 'completed' : 'un-ticked'}`); render(); }
 function sylDel(key, i) { const y = sylEnsure(key); const n = y.chapters[i].n; if (!confirm('Remove chapter "' + n + '"?')) return; y.chapters.splice(i, 1); log('Syllabus', `${key.replace('|', ' ')}: removed chapter "${n}"`); render(); }
+function sylRename(key, i) { const y = sylEnsure(key), ch = y.chapters[i]; const v = prompt('Chapter name', ch.n); if (v === null || !v.trim()) return; const old = ch.n; ch.n = v.trim().slice(0, 120); log('Syllabus', `${key.replace('|', ' ')}: renamed "${old}" → "${ch.n}"`); render(); }
+function sylMove(key, i, d) { const y = sylEnsure(key), j = i + d; if (j < 0 || j >= y.chapters.length) return; [y.chapters[i], y.chapters[j]] = [y.chapters[j], y.chapters[i]]; save(); render(); }
+function sylPlan(key, i, v) { const y = sylEnsure(key); y.chapters[i].plan = v || null; log('Syllabus', `${key.replace('|', ' ')}: "${y.chapters[i].n}" planned for ${v ? ymName(v) : 'no month'}`); render(); }
 function sylAdd(key) { const lines = document.getElementById('sy-add').value.split('\n').map(s => s.trim()).filter(Boolean); if (!lines.length) return;
-  const y = sylEnsure(key); lines.forEach(n => y.chapters.push({ n, done: null })); log('Syllabus', `${key.replace('|', ' ')}: added ${lines.length} chapter(s)`); render(); }
-function sylTarget(key) { const y = sylEnsure(key); y.targetCount = parseInt(document.getElementById('sy-tc').value) || ''; y.targetDate = document.getElementById('sy-td').value;
-  log('Syllabus', `${key.replace('|', ' ')}: target ${y.targetCount} chapters by ${y.targetDate}`); toast('Target saved'); render(); }
+  const y = sylEnsure(key); lines.forEach(n => y.chapters.push({ n: n.slice(0, 120), done: null })); log('Syllabus', `${key.replace('|', ' ')}: added ${lines.length} chapter(s)`); render(); }
+// Spread the chapters not yet done over the months left (bigger chapters — more topics — get more room).
+function sylSpread(key) {
+  const y = sylEnsure(key), ym = todayISO().slice(0, 7), months = sylMonths(key).filter(m => m >= ym);
+  const open = y.chapters.filter(ch => !ch.done);
+  if (!open.length) return toast('All chapters are done', 'b');
+  if (!months.length) return toast('The finish month is already over — set a later target date', 'a');
+  if (y.chapters.some(ch => ch.plan) && !confirm('Plan the remaining chapters again from this month?')) return;
+  const w = open.map(ch => Math.max(1, (ch.topics || []).length || 1)), tot = w.reduce((a, b) => a + b, 0);
+  let acc = 0; open.forEach((ch, i) => { const mid = acc + w[i] / 2; acc += w[i]; ch.plan = months[Math.min(months.length - 1, Math.floor(mid / tot * months.length))]; });
+  log('Syllabus', `${key.replace('|', ' ')}: ${open.length} chapter(s) spread over ${ymName(months[0])}–${ymName(months[months.length - 1])}`); toast('Month plan ready — change any month if needed'); render();
+}
+
+// ---------------------------------------------------------------- PHOTO → TEXT (contents page / lesson plan)
+// The server's AI reads the photo when it is switched on (scan_api.php); otherwise the phone reads it (Tesseract.js, English + Hindi).
+// Nothing is saved until the teacher has checked and pressed Save.
+let SCAN = null, SCAN_AI = null;
+function scanCard(mode, c, s, title) {
+  const k = mode + '|' + c + '|' + s, cur = SCAN && SCAN.k === k ? SCAN : null, id = 'sc-' + mode;
+  const pick = `<input id="${id}" type="file" accept="image/*" capture="environment" multiple class="hidden" onchange="scanFiles('${mode}',${jsq(c)},${jsq(s)},this.files)">`;
+  if (!cur || (!cur.busy && !cur.chapters && !cur.topics)) return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div><h3 class="font-bold">${title}</h3><p class="text-xs text-slate-500">${mode === 'chapters' ? 'Hold the phone straight over the book\'s contents page. Up to 4 photos (if it runs over pages).' : 'A photo of your written plan or of the book page you will teach. Up to 4 photos.'} You check everything before it is saved.</p>
+        ${cur && cur.msg ? `<p class="text-xs text-rose-700 mt-1">${esc(cur.msg)}</p>` : ''}</div>
+      <label for="${id}" class="btn btn-p cursor-pointer shrink-0"><i class="fa-solid fa-camera"></i> Take photo</label>${pick}</div>`;
+  if (cur.busy) return `<div class="card"><p class="font-semibold"><i class="fa-solid fa-spinner fa-spin"></i> ${esc(cur.busy)}</p><p class="text-xs text-slate-500 mt-1">Please keep this page open.</p></div>`;
+  const warn = cur.uncertain ? '<p class="text-sm text-amber-700">Some parts were hard to read — please check carefully.</p>' : '';
+  if (mode === 'chapters') {
+    const y = S.syl[sylKey(c, s)], has = y && y.chapters.length;
+    return `<div class="card space-y-2 ring-2 ring-marigold"><div class="flex justify-between gap-2"><h3 class="font-bold">Check the chapters (${cur.chapters.length})</h3><span class="pill bg-slate-100 text-slate-600">${cur.via === 'ai' ? 'Read by AI' : 'Read by phone'}</span></div>${warn}
+      <p class="text-xs text-slate-500">Correct any spelling, remove wrong lines, then save. Topics are optional (separate with ;).</p>
+      ${cur.chapters.map((ch, i) => `<div class="flex gap-2 items-start"><span class="text-xs text-slate-400 pt-2 w-5">${i + 1}</span><div class="flex-1 space-y-1"><input class="inp py-1" value="${esc(ch.name)}" oninput="SCAN.chapters[${i}].name=this.value"><input class="inp py-1 text-xs" placeholder="Topics (optional)" value="${esc((ch.topics || []).join('; '))}" oninput="SCAN.chapters[${i}].topics=this.value.split(';').map(x=>x.trim()).filter(Boolean)"></div>
+        <button onclick="SCAN.chapters.splice(${i},1);render()" class="text-slate-400 hover:text-rose-500 pt-2"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}
+      <button onclick="SCAN.chapters.push({name:'',topics:[]});render()" class="text-indigo-700 text-xs font-bold"><i class="fa-solid fa-plus"></i> Add a line</button>
+      ${has ? `<label class="flex items-center gap-2 text-sm"><input id="sc-replace" type="checkbox"> Replace the ${y.chapters.length} chapters already saved (ticked ones keep their tick)</label>` : ''}
+      <div class="flex flex-wrap gap-2"><button onclick="scanSaveChapters(${jsq(c)},${jsq(s)})" class="btn btn-g"><i class="fa-solid fa-check"></i> Save chapters</button>
+        <label for="${id}" class="btn btn-l cursor-pointer">Take again</label>${pick}<button onclick="SCAN=null;render()" class="btn btn-l">Cancel</button></div></div>`;
+  }
+  return `<div class="card space-y-1 ring-2 ring-marigold"><b>Read from the photo — check the plan above, then submit.</b> <span class="pill bg-slate-100 text-slate-600">${cur.via === 'ai' ? 'Read by AI' : 'Read by phone'}</span>${warn}
+    <div class="flex gap-2 pt-1"><label for="${id}" class="btn btn-sm btn-l cursor-pointer">Take again</label>${pick}</div></div>`;
+}
+function scanShrink(file) {
+  return new Promise((ok, bad) => { const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const m = 1600, r = Math.min(1, m / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.82)); };
+    img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('This photo could not be opened. Please take it again.')); }; img.src = url; });
+}
+async function sapi(a, body) {
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null;
+  try { r = await fetch('scan_api.php?a=' + a, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (r.status === 401) { forceLogout(); throw new Error('Please log in again.'); }
+  if (!r.ok || !j || !j.ok) { const er = new Error((j && j.error) || 'Server problem. Please try again.'); er.noAi = !!(j && j.noAi); throw er; }
+  return j;
+}
+let TESS = null;
+function tessLoad() {
+  if (window.Tesseract) return Promise.resolve();
+  return TESS = TESS || new Promise((ok, bad) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    sc.onload = ok; sc.onerror = () => { TESS = null; bad(new Error('The phone reader could not load. Check the internet, or type the chapters.')); }; document.head.appendChild(sc); });
+}
+function scanLine(s) {
+  return String(s).replace(/\s+/g, ' ').trim()
+    .replace(/^(?:(?:chapter|ch\.?|lesson|unit|पाठ|अध्याय|इकाई)\s*)?[(\[]?(?:\d{1,3}|[ivxlc]{1,6})[)\].:\-–—]*\s+/i, '')
+    .replace(/[\s.·…_\-–—]*\d{1,4}(?:\s*[-–]\s*\d{1,4})?\s*$/, '').replace(/^[\s.\-–—:|•*]+|[\s.\-–—:|•*]+$/g, '').slice(0, 120);
+}
+function scanParseText(text, mode) {
+  const skip = /^(contents?|index|page|pages|s\.? ?no\.?|sr\.? ?no\.?|विषय[ -]?सूची|अनुक्रमणिका|पृष्ठ|क्रम)\b/i;
+  const lines = String(text).split('\n').map(scanLine).filter(l => l.length >= 3 && /[A-Za-zऀ-ॿ]{2}/.test(l) && !skip.test(l));
+  const uniq = [...new Set(lines)];
+  return mode === 'chapters' ? { chapters: uniq.slice(0, 60).map(name => ({ name, topics: [] })) } : { topics: uniq.slice(0, 15), goal: '', homework: '' };
+}
+async function scanFiles(mode, c, s, files) {
+  files = [...(files || [])].slice(0, 4); if (!files.length) return;
+  const k = mode + '|' + c + '|' + s;
+  SCAN = { k, busy: 'Preparing the photo…' }; render();
+  try {
+    const images = []; for (const f of files) images.push(await scanShrink(f));
+    let res = null;
+    if (SCAN_AI !== false) {
+      SCAN.busy = 'Reading the photo with AI… (10–30 seconds)'; render();
+      try { res = await sapi('read', { mode, cls: c, subj: s, images }); }
+      catch (e) { if (!e.noAi) throw e; SCAN_AI = false; }
+    }
+    if (!res) {
+      SCAN.busy = 'Your phone is reading the photo… (the first time takes about a minute)'; render();
+      await tessLoad(); let text = '';
+      for (let i = 0; i < images.length; i++) { SCAN.busy = `Your phone is reading photo ${i + 1} of ${images.length}…`; render();
+        const r = await window.Tesseract.recognize(images[i], 'eng+hin'); text += '\n' + ((r && r.data && r.data.text) || ''); }
+      res = { via: 'phone', uncertain: true, ...scanParseText(text, mode) };
+    }
+    const got = mode === 'chapters' ? res.chapters.length : res.topics.length;
+    if (!got) { SCAN = { k, msg: 'Nothing readable was found. Try a clearer, straighter photo in good light.' }; render(); return; }
+    SCAN = { k, via: res.via, uncertain: !!res.uncertain, chapters: res.chapters, topics: res.topics };
+    if (mode === 'lplan') {
+      const key = sylKey(c, s);
+      LPDRAFT[key] = { topics: res.topics.join('\n'), goal: [res.goal, res.homework ? 'Homework: ' + res.homework : ''].filter(Boolean).join(' • ') };
+    }
+    render();
+  } catch (e) { SCAN = { k, msg: e.message }; render(); }
+}
+function scanSaveChapters(c, s) {
+  const list = SCAN.chapters.map(ch => ({ name: String(ch.name || '').trim().slice(0, 120), topics: (ch.topics || []).map(x => String(x).trim().slice(0, 120)).filter(Boolean).slice(0, 15) })).filter(ch => ch.name.length >= 2);
+  if (!list.length) return toast('No chapter to save', 'a');
+  const key = sylKey(c, s), y = sylEnsure(key), rep = (document.getElementById('sc-replace') || {}).checked;
+  if (rep || !y.chapters.length) {
+    const old = {}; y.chapters.forEach(ch => old[ch.n.toLowerCase()] = ch);
+    y.chapters = list.map(ch => { const o = old[ch.name.toLowerCase()]; return { n: ch.name, done: o ? o.done : null, plan: o ? o.plan || null : null, topics: ch.topics }; });
+  } else {
+    const have = new Set(y.chapters.map(ch => ch.n.toLowerCase()));
+    list.filter(ch => !have.has(ch.name.toLowerCase())).forEach(ch => y.chapters.push({ n: ch.name, done: null, topics: ch.topics }));
+  }
+  log('Syllabus', `${c} ${s}: ${list.length} chapter(s) saved from a photo of the contents page (checked by ${userName()})`);
+  SCAN = null; toast('Chapters saved. Now press "Spread month-wise".'); render();
+}
 
 // ---------------------------------------------------------------- MARKS ENTRY (teacher / principal)
 function vMarks() {
@@ -2050,25 +2195,48 @@ function planCard(p, key, principal) {
     ${p.feedback ? `<p class="text-sm bg-slate-50 rounded-lg p-2"><b>Principal:</b> ${esc(p.feedback)}</p>` : ''}
     ${principal ? `<div class="flex gap-2"><button onclick="lpDecide(${jsq(key)},'Approved')" class="btn btn-sm btn-g">Approve</button><button onclick="lpDecide(${jsq(key)},'Revise')" class="btn btn-sm btn-l">Send back with feedback</button></div>` : ''}</div>`;
 }
+// Fill a week's plan from the syllabus: chapters planned for this month first, one line per period.
+let LPDRAFT = {};
+function lpFromSyllabus(w, key) {
+  const [c, s] = key.split('|'), y = S.syl[key], a = S.alloc.find(x => x.c === c && x.s === s && x.t === U.tid) || S.alloc.find(x => x.c === c && x.s === s);
+  if (!y || !y.chapters.length) return toast('Add the chapters in Syllabus first (photo of the contents page).', 'a');
+  const n = Math.max(1, Math.min(12, (a && +a.n) || 5)), ym = w.slice(0, 7);
+  const earlier = new Set(Object.values(S.lplan).filter(p => p.tid === U.tid && p.cls === c && p.subj === s && p.week < w).flatMap(p => String(p.topics || '').split('\n').map(x => x.trim().toLowerCase())));
+  const open = y.chapters.filter(ch => !ch.done).sort((x, z) => (x.plan || '9999') < (z.plan || '9999') ? -1 : (x.plan || '9999') > (z.plan || '9999') ? 1 : 0);
+  const lines = [];
+  for (const ch of open) {
+    const parts = (ch.topics || []).length ? ch.topics.map(t => `${ch.n} — ${t}`) : [`${ch.n} — introduction`, `${ch.n} — explanation`, `${ch.n} — examples and practice`, `${ch.n} — exercise / question-answer`, `${ch.n} — revision and test`];
+    for (const l of parts) { if (!earlier.has(l.toLowerCase())) lines.push(l); if (lines.length >= n) break; }
+    if (lines.length >= n) break;
+  }
+  if (!lines.length) return toast('Nothing left to plan — all chapters are done.', 'b');
+  const cur = LPDRAFT[key] || {};
+  LPDRAFT[key] = { topics: lines.join('\n'), goal: cur.goal || ((document.getElementById('lp-goal') || {}).value || '') };
+  toast(`${lines.length} period(s) filled from the syllabus${open[0] && open[0].plan && open[0].plan < ym ? ' — this chapter was planned for an earlier month' : ''}. Change anything, then submit.`); render();
+}
 function vLessonPlan() {
   const mine = myAllocs(U.tid); if (!mine.length) return head('Lesson Plan') + '<div class="card text-sm">No subjects assigned.</div>';
   const thisW = weekStart(todayISO()), w = P.w || thisW, key0 = P.key && mine.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(mine[0].c, mine[0].s);
-  const [c, s] = key0.split('|'), k = lpKey(w, U.tid, c, s), p = S.lplan[k];
+  const [c, s] = key0.split('|'), k = lpKey(w, U.tid, c, s), p = S.lplan[k], dr = LPDRAFT[key0];
   const nx = nextChapter(c, s);
   const myPlans = Object.entries(S.lplan).filter(([kk, v]) => v.tid === U.tid && v.week === w);
   return head('Weekly Lesson Plan', 'Write the topics you plan to teach this week. The ERP ticks each one automatically when it appears in your diary.',
       `<select class="inp w-auto" onchange="go('lplan',{w:this.value,key:${jsq(key0)}})">${[addDays(thisW, -7), thisW, addDays(thisW, 7)].map(x => `<option value="${x}" ${x === w ? 'selected' : ''}>Week of ${fmtDate(x)}</option>`).join('')}</select>`) + `
-    <div class="card space-y-2"><label class="lbl">Class & subject</label><select class="inp" onchange="go('lplan',{w:'${w}',key:this.value})">${mine.map(a => { const kk = sylKey(a.c, a.s); return `<option value="${esc(kk)}" ${kk === key0 ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select>
+    <div class="card space-y-2"><label class="lbl">Class & subject</label><select class="inp" onchange="SCAN=null;go('lplan',{w:'${w}',key:this.value})">${mine.map(a => { const kk = sylKey(a.c, a.s); return `<option value="${esc(kk)}" ${kk === key0 ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select>
       ${p && p.status === 'Approved' ? '<p class="text-sm text-emerald-700 font-semibold">Approved by the Principal — locked.</p>' : `
-      <label class="lbl">Topics, one per line (one line ≈ one period)</label><textarea id="lp-top" rows="6" class="inp" placeholder="${nx ? esc(nx) + ' — introduction' : 'Topic 1\nTopic 2'}">${esc(p ? p.topics : '')}</textarea>
-      <label class="lbl">Aim / activity / teaching aid (optional)</label><input id="lp-goal" class="inp" value="${esc(p ? p.goal || '' : '')}">
+      <div class="flex flex-wrap gap-2 pt-1"><button onclick="lpFromSyllabus('${w}',${jsq(key0)})" class="btn btn-sm btn-p"><i class="fa-solid fa-wand-magic-sparkles"></i> Fill from syllabus</button>
+        ${dr ? `<button onclick="delete LPDRAFT[${jsq(key0)}];SCAN=null;render()" class="btn btn-sm btn-l">Undo fill</button>` : ''}</div>
+      <label class="lbl">Topics, one per line (one line ≈ one period)${nx ? ` — next chapter: <b>${esc(nx)}</b>` : ''}</label><textarea id="lp-top" rows="7" class="inp" placeholder="${nx ? esc(nx) + ' — introduction' : 'Topic 1\nTopic 2'}" oninput="LPDRAFT[${jsq(key0)}]={topics:this.value,goal:document.getElementById('lp-goal').value}">${esc(dr ? dr.topics : p ? p.topics : '')}</textarea>
+      <label class="lbl">Aim / activity / teaching aid / homework (optional)</label><input id="lp-goal" class="inp" value="${esc(dr ? dr.goal || '' : p ? p.goal || '' : '')}" oninput="LPDRAFT[${jsq(key0)}]={topics:document.getElementById('lp-top').value,goal:this.value}">
       <button onclick="lpSubmit('${w}',${jsq(key0)})" class="btn btn-p w-full">${p ? 'Update and resubmit' : 'Submit to Principal'}</button>`}</div>
+    ${p && p.status === 'Approved' ? '' : scanCard('lplan', c, s, 'Or make it from a photo')}
     ${myPlans.map(([kk, v]) => planCard(v, kk, false)).join('')}`;
 }
 function lpSubmit(w, key) {
-  const [c, s] = key.split('|'), topics = document.getElementById('lp-top').value.trim(), goal = document.getElementById('lp-goal').value.trim();
+  const [c, s] = key.split('|'), topics = document.getElementById('lp-top').value.split('\n').map(x => x.trim()).filter(Boolean).join('\n').slice(0, 3000), goal = document.getElementById('lp-goal').value.trim().slice(0, 400);
   if (!topics) return toast('Write at least one topic', 'a');
   S.lplan[lpKey(w, U.tid, c, s)] = { week: w, tid: U.tid, cls: c, subj: s, topics, goal, status: 'Submitted', feedback: '', at: Date.now() };
+  delete LPDRAFT[key]; SCAN = null;
   log('Lesson Plan', `Submitted: Class ${c} ${s}, week of ${w} (${topics.split('\n').filter(Boolean).length} topics)`); toast('Sent to Principal'); render();
 }
 function vLessonPlans() {

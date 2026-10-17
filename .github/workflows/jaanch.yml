@@ -149,6 +149,7 @@ jobs:
           php .github/jaanch/quiz-flow.php
           php .github/jaanch/game-flow.php
           php .github/jaanch/office-flow.php
+          php .github/jaanch/scan-flow.php
           php .github/jaanch/studio-flow.php
           php .github/jaanch/toolkit-flow.php
           php .github/jaanch/faculty-flow.php
