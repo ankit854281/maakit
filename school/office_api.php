@@ -79,12 +79,12 @@ function of_all(array $students, ?array $only = null): array {
     $fam = [];
     foreach ($students as $s) $fam[of_phone_key($s)][] = $s;
     $out = [];
+    $ssKey=fin_session($ss['session'] ?: fin_current());$detailedAccounts=fin_rows('finAccount',$ssKey);$detailedBills=fin_rows('finBill',$ssKey);$detailedEntries=fin_rows('finEntry',$ssKey);
     foreach ($students as $id => $s) {
         if ($only !== null && !in_array($id, $only, true)) continue;
         $out[$id] = $s + ['fam' => of_phone_key($s), 'dues' => of_dues($s, $fam[of_phone_key($s)], $F, $sets[$id] ?? [], $pays, $ss['start'], $today), 'set' => $sets[$id] ?? new stdClass()];
-        $ssKey=fin_session($ss['session'] ?: fin_current());
-        if(!empty(sch_rec_get('finAccount',$ssKey.'|'.$id)['active'])) {
-          $L=fin_ledger(fin_rows('finBill',$ssKey),fin_rows('finEntry',$ssKey),(string)$id,$ssKey);
+        if(!empty($detailedAccounts[$ssKey.'|'.$id]['active'])) {
+          $L=fin_ledger($detailedBills,$detailedEntries,(string)$id,$ssKey);
           $out[$id]['detailed']=true;
           $out[$id]['dues']=array_replace($out[$id]['dues'],['due'=>($L['outstanding']-$L['advance'])/100,'paid'=>$L['paid']/100,'concession'=>$L['discount']/100,'missing'=>false,'detailed'=>true]);
         }
