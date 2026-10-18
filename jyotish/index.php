@@ -69,13 +69,19 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
 
     <section class="jaap-card" aria-labelledby="jaap-title">
-      <div class="jaap-card-copy"><div class="eyebrow">NAYA · BHAKTI CHALLENGE</div><h2 id="jaap-title">Naam Jaap Challenge</h2><p>30 second ka jaap round khelein. Apna record banayein ya ek hi phone par dost ke saath score compare karein.</p><div class="jaap-today-total">Aaj ka jaap <strong id="jaap-today">0</strong></div></div>
+      <div class="jaap-card-copy"><div class="eyebrow">BHAKTI · AAPKI RAFtaar</div><h2 id="jaap-title">Naam Jaap</h2><p>Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total">Aaj ke naam <strong id="jaap-today">0</strong></div></div>
       <div class="jaap-setup">
         <label>Kaunsa naam japna hai?
           <select id="jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
         </label>
-        <label>Round kaise khelenge?
-          <select id="jaap-mode"><option value="solo">Apna 30-second record</option><option value="duo">2-player, same phone</option></select>
+        <label>Jaap ka tareeka
+          <select id="jaap-mode"><option value="mala">Shaant mala · apna sankalp</option><option value="solo">30-second personal record</option><option value="duo">2-player friendly round</option></select>
+        </label>
+        <label>Aaj kis bhaav se?
+          <select id="jaap-bhav"><option value="sahaj">Bas jaap, bina kisi khaas sankalp ke</option><option value="shanti">Shaanti</option><option value="aabhar">Aabhaar</option><option value="sahas">Sahas</option><option value="ekagrata">Ekagrata</option></select>
+        </label>
+        <label id="jaap-goal-wrap">Aaj ka sankalp
+          <select id="jaap-goal"><option value="27">27 jaap</option><option value="54">54 jaap</option><option value="108" selected>108 jaap · 1 mala</option><option value="1008">1008 jaap</option></select>
         </label>
         <div class="jaap-names" id="jaap-names" hidden>
           <label>Player 1<input id="jaap-player1" maxlength="18" placeholder="Pehle khiladi ka naam"></label>
@@ -84,21 +90,24 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="jaap-audio-options">
           <label><input type="checkbox" id="jaap-bell" checked> Har tap par halki ghanti</label>
           <label><input type="checkbox" id="jaap-voice"> Naam ko bolkar bhi sunayein</label>
+          <label><input type="checkbox" id="jaap-vibrate" checked> Mala poori hone par vibration</label>
         </div>
-        <p class="note jaap-local-note">Score sirf isi phone par rehta hai. Koi public leaderboard ya personal data upload nahi hota.</p>
-        <button class="btn" id="jaap-start" type="button">Challenge shuru karein</button>
+        <p class="note jaap-local-note">Koi jaldi ya streak ka pressure nahi. Ginti isi phone par rehti hai; public leaderboard nahi hai.</p>
+        <button class="btn" id="jaap-start" type="button">Shaant jaap shuru karein</button>
       </div>
     </section>
 
     <section class="jaap-arena" id="jaap-arena" hidden aria-label="Naam Jaap game">
-      <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" aria-label="Challenge se bahar niklein">✕</button><div><div class="eyebrow">30-SECOND JAAP ROUND</div><strong id="jaap-current-player">Aapka round</strong></div><div class="jaap-clock" id="jaap-clock" aria-live="off">30</div></header>
+      <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" aria-label="Jaap se bahar niklein">✕</button><div><div class="eyebrow" id="jaap-round-label">SHAANT MALA</div><strong id="jaap-current-player">Aapka sankalp</strong></div><div class="jaap-clock" id="jaap-clock" aria-live="off" hidden>30</div></header>
       <div class="jaap-arena-main">
-        <div class="jaap-score-panel"><span>IS ROUND KA JAAP</span><strong id="jaap-count" aria-live="off">0</strong><small>Personal best: <b id="jaap-best">0</b></small></div>
+        <div class="jaap-score-panel"><span id="jaap-count-label">Aapka sankalp</span><strong id="jaap-count" aria-live="off">0</strong><small id="jaap-best-line" hidden>Personal best: <b id="jaap-best">0</b></small></div>
         <button class="jaap-tap" id="jaap-tap" type="button" aria-label="Naam jaap count karne ke liye tap karein"><span id="jaap-tap-name">राम</span><small>TAP KARKE JAAP GINEIN</small></button>
+        <div class="jaap-beads" id="jaap-beads" hidden aria-hidden="true"></div>
+        <button class="jaap-undo" id="jaap-undo" type="button" aria-label="Aakhri ginti wapas karein" hidden>↶ Ek ginti hataayein</button>
         <p class="jaap-progress-note" id="jaap-progress-note">Phone ko landscape ghumayein aur anguthe se tap karein. Portrait mein bhi chalega.</p>
       </div>
       <div class="jaap-between" id="jaap-between" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow">ROUND POORA</div><h2 id="jaap-result-title"></h2><p id="jaap-result-copy"></p><button class="btn" id="jaap-next" type="button">Agla khiladi</button></div></div>
-      <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow">CHALLENGE RESULT</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p>Yeh score isi phone par bana hai. Doston ko challenge dene ke liye result share karein.</p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener">WhatsApp par share</a><button class="btn ghost" id="jaap-done" type="button">Ho gaya</button></div></div></div>
+      <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">SANKALP POORA</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener">WhatsApp par share</a><button class="btn ghost" id="jaap-done" type="button">Ho gaya</button></div></div></div>
     </section>
 
     <div class="card" id="checkin" hidden>

@@ -347,60 +347,77 @@ function renderAaj(){
   $("aaj-ai").onclick=function(){ show("ai"); };
   $("aaj-redo").onclick=function(){ store("mj-checkin",null); renderAaj(); };
 }
-/* ---- Naam Jaap Challenge: local, thumb-first 30 second rounds ---- */
-var jaapState={active:false,mode:"solo",mantra:"राम",names:[],scores:[],round:0,count:0,left:30,timer:null,audio:null,bestBefore:0};
+/* ---- Naam jaap: mindful mala by default, timed play stays optional ---- */
+var jaapState={active:false,mode:"mala",mantra:"राम",bhav:"",names:[],scores:[],round:0,count:0,left:30,goal:108,timer:null,audio:null,bestBefore:0};
 function jaapBest(){ var all=store("mj-jaap-best")||{}; return Number(all[jaapState.mantra])||0; }
 function jaapDailyCount(){ var d=store("mj-jaap-day"); return d&&d.date===todayKey()?Number(d.count)||0:0; }
-function jaapSetDailyCount(n){ store("mj-jaap-day",{date:todayKey(),count:n}); }
+function jaapSetDailyCount(n){ store("mj-jaap-day",{date:todayKey(),count:Math.max(0,n)}); }
+function jaapBuildBeads(){ if($("jaap-beads").childElementCount===27)return; var f=document.createDocumentFragment(); for(var i=0;i<27;i++){f.appendChild(document.createElement("i"));} $("jaap-beads").appendChild(f); }
+function jaapRefreshProgress(){
+  $("jaap-count").textContent=String(jaapState.count);
+  if(jaapState.mode!=="mala")return;
+  var inMala=jaapState.count===0?0:((jaapState.count-1)%27)+1;
+  Array.prototype.forEach.call($("jaap-beads").children,function(b,i){b.classList.toggle("lit",i<inMala);});
+  var completed=Math.floor(jaapState.count/27),partial=jaapState.count%27,malaNow=completed+1;
+  $("jaap-progress-note").textContent=jaapState.count>=jaapState.goal?"Aapka sankalp poora hua. Thodi der is shaanti ko mehsoos karein.":(completed?completed+" mala poori"+(partial?" · ab mala "+malaNow+" mein "+partial+"/27":""):(partial?"Mala mein "+partial+"/27":"Aaram se shuru karein; har tap ek naam hai."))+" · kul "+jaapState.goal+" mein se "+jaapState.count;
+}
 function jaapBell(){
-  if(!$("jaap-bell").checked) return;
-  try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!jaapState.audio) jaapState.audio=new AC(); if(jaapState.audio.state==="suspended") jaapState.audio.resume().catch(function(){});
-    var ctx=jaapState.audio, osc=ctx.createOscillator(), gain=ctx.createGain(), now=ctx.currentTime;
-    osc.type="sine"; osc.frequency.setValueAtTime(720,now); osc.frequency.exponentialRampToValueAtTime(470,now+.11); gain.gain.setValueAtTime(.055,now); gain.gain.exponentialRampToValueAtTime(.001,now+.14); osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now+.15);
-  }catch(e){}
+  if(!$("jaap-bell").checked)return;
+  try{var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!jaapState.audio)jaapState.audio=new AC();if(jaapState.audio.state==="suspended")jaapState.audio.resume().catch(function(){});var ctx=jaapState.audio,osc=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime;osc.type="sine";osc.frequency.setValueAtTime(720,now);osc.frequency.exponentialRampToValueAtTime(470,now+.11);gain.gain.setValueAtTime(.055,now);gain.gain.exponentialRampToValueAtTime(.001,now+.14);osc.connect(gain);gain.connect(ctx.destination);osc.start(now);osc.stop(now+.15);}catch(e){}
 }
 function jaapSpeak(){
-  if(!$("jaap-voice").checked) return;
-  if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){ $("jaap-progress-note").textContent="Is browser mein bolkar sunane ki suvidha nahi mili; tap sound phir bhi chalega."; return; }
-  if(window.speechSynthesis.speaking||window.speechSynthesis.pending) return;
-  try{ var u=new SpeechSynthesisUtterance(jaapState.mantra); u.lang="hi-IN"; u.rate=.9; u.pitch=1; window.speechSynthesis.speak(u); }catch(e){}
+  if(!$("jaap-voice").checked)return;
+  if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){$("jaap-progress-note").textContent="Is browser mein bolkar sunane ki suvidha nahi mili; tap sound phir bhi chalega.";return;}
+  if(window.speechSynthesis.speaking||window.speechSynthesis.pending)return;
+  try{var u=new SpeechSynthesisUtterance(jaapState.mantra);u.lang="hi-IN";u.rate=.9;u.pitch=1;window.speechSynthesis.speak(u);}catch(e){}
 }
 function jaapClose(){
-  jaapState.active=false; if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;} if(window.speechSynthesis) window.speechSynthesis.cancel(); if(jaapState.audio){jaapState.audio.close().catch(function(){});jaapState.audio=null;} $("jaap-arena").hidden=true;
-  if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen().catch(function(){}); try{ if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+  jaapState.active=false;if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();if(jaapState.audio){jaapState.audio.close().catch(function(){});jaapState.audio=null;}$("jaap-arena").hidden=true;
+  if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(function(){});try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
 }
 function jaapStartRound(){
-  jaapState.active=true; jaapState.count=0; jaapState.left=30; $("jaap-count").textContent="0"; $("jaap-clock").textContent="30"; $("jaap-best").textContent=String(jaapBest()); $("jaap-tap-name").textContent=jaapState.mantra;
-  $("jaap-current-player").textContent=jaapState.mode==="duo"?jaapState.names[jaapState.round]+" ki baari":"Aapka round"; $("jaap-progress-note").textContent="Landscape mein anguthe se tap karein. Bolti awaaz chal rahi ho to agla naam repeat nahi hoga.";
-  $("jaap-between").hidden=true; $("jaap-final").hidden=true; $("jaap-tap").disabled=false; if(jaapState.timer) clearInterval(jaapState.timer);
-  jaapState.timer=setInterval(function(){jaapState.left--;$("jaap-clock").textContent=String(Math.max(jaapState.left,0));if(jaapState.left<=0)jaapFinishRound();},1000);
+  jaapState.active=true;jaapState.count=0;jaapState.left=30;$("jaap-clock").textContent="30";$("jaap-best").textContent=String(jaapBest());$("jaap-tap-name").textContent=jaapState.mantra;
+  $("jaap-current-player").textContent=jaapState.mode==="duo"?jaapState.names[jaapState.round]+" ki baari":(jaapState.mode==="mala"?"Aapka sankalp":"Aapka 30-second round");
+  $("jaap-round-label").textContent=jaapState.mode==="mala"?"SHAANT MALA":(jaapState.mode==="duo"?"DOSTANA ROUND":"PERSONAL RECORD");$("jaap-count-label").textContent=jaapState.mode==="mala"?"Aapka sankalp":"Aapki ginti";
+  $("jaap-clock").hidden=jaapState.mode==="mala";$("jaap-best-line").hidden=jaapState.mode!=="solo";$("jaap-beads").hidden=jaapState.mode!=="mala";$("jaap-undo").hidden=jaapState.mode!=="mala";
+  $("jaap-between").hidden=true;$("jaap-final").hidden=true;$("jaap-tap").disabled=false;if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;}jaapRefreshProgress();
+  if(jaapState.mode!=="mala")jaapState.timer=setInterval(function(){jaapState.left--;$("jaap-clock").textContent=String(Math.max(jaapState.left,0));if(jaapState.left<=0)jaapFinishRound();},1000);
 }
 function jaapFinal(){
-  $("jaap-tap").disabled=true; $("jaap-between").hidden=true; $("jaap-final").hidden=false; var title,scoreText,shareText;
+  $("jaap-tap").disabled=true;$("jaap-between").hidden=true;$("jaap-final").hidden=false;var title,scoreText,shareText;
   if(jaapState.mode==="duo"){
     var a=jaapState.scores[0],b=jaapState.scores[1],winner=a.count===b.count?"Tie! Dono ka score barabar hai.":(a.count>b.count?a.name:b.name)+" jeete!";
-    title=winner; scoreText='<div class="jaap-score-row"><span>'+esc(a.name)+'</span><b>'+a.count+'</b></div><div class="jaap-score-row"><span>'+esc(b.name)+'</span><b>'+b.count+'</b></div>'; shareText="Naam Jaap Challenge · "+jaapState.mantra+"\n"+a.name+": "+a.count+" taps\n"+b.name+": "+b.count+" taps\n"+winner;
+    title=winner;scoreText='<div class="jaap-score-row"><span>'+esc(a.name)+'</span><b>'+a.count+'</b></div><div class="jaap-score-row"><span>'+esc(b.name)+'</span><b>'+b.count+'</b></div>';shareText="Naam Jaap Challenge · "+jaapState.mantra+"\n"+a.name+": "+a.count+" taps\n"+b.name+": "+b.count+" taps\n"+winner;
+  }else if(jaapState.mode==="mala"){
+    title="Sankalp poora 🙏";scoreText='<div class="jaap-score-row"><span>Aapke jaap</span><b>'+jaapState.count+'</b></div><div class="jaap-score-row"><span>Aaj ka sankalp</span><b>'+jaapState.goal+'</b></div>';shareText="Aaj maine apna "+jaapState.goal+" naam jaap sankalp poora kiya 🙏\nhttps://maakit.in/jyotish/";
   }else{
-    var n=jaapState.scores[0].count,best=jaapBest(); title=n>jaapState.bestBefore&&n>0?"Naya personal best!":"Aaj ka round poora!";
-    scoreText='<div class="jaap-score-row"><span>Aapke taps</span><b>'+n+'</b></div><div class="jaap-score-row"><span>Personal best</span><b>'+best+'</b></div>'; shareText="Maine 30 second mein "+n+" baar "+jaapState.mantra+" jaapa! Aap bhi apna score banaiye.\nhttps://maakit.in/jyotish/";
+    var n=jaapState.scores[0].count,best=jaapBest();title=n>jaapState.bestBefore&&n>0?"Naya personal best!":"Aaj ka round poora!";
+    scoreText='<div class="jaap-score-row"><span>Aapke taps</span><b>'+n+'</b></div><div class="jaap-score-row"><span>Personal best</span><b>'+best+'</b></div>';shareText="Maine 30 second mein "+n+" baar "+jaapState.mantra+" jaapa! Aap bhi apna score banaiye.\nhttps://maakit.in/jyotish/";
   }
-  $("jaap-final-title").textContent=title; $("jaap-final-scores").innerHTML=scoreText; $("jaap-share").href="https://wa.me/?text="+encodeURIComponent(shareText);
+  $("jaap-final-label").textContent=jaapState.mode==="mala"?"SANKALP POORA":(jaapState.mode==="duo"?"DOSTANA RESULT":"PERSONAL ROUND");
+  $("jaap-final-copy").textContent=jaapState.mode==="mala"?"Aapne aaj "+jaapState.bhav+" samay nikala. Yeh aapka apna chuna hua focus hai—isse koi prediction ya ilaaj nahi maana jaata.":"Yeh score isi phone par bana hai. Doston ko challenge dene ke liye result share karein.";
+  $("jaap-final-title").textContent=title;$("jaap-final-scores").innerHTML=scoreText;$("jaap-share").href="https://wa.me/?text="+encodeURIComponent(shareText);
 }
 function jaapFinishRound(){
-  if(!jaapState.active) return; jaapState.active=false; if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;} if(window.speechSynthesis) window.speechSynthesis.cancel(); $("jaap-tap").disabled=true;
+  if(!jaapState.active)return;jaapState.active=false;if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();$("jaap-tap").disabled=true;
+  if(jaapState.mode==="mala"){jaapFinal();return;}
   jaapState.scores.push({name:jaapState.mode==="duo"?jaapState.names[jaapState.round]:"Aap",count:jaapState.count});
-  if(jaapState.mode==="solo"){
-    var all=store("mj-jaap-best")||{}; if(jaapState.count>(Number(all[jaapState.mantra])||0)){all[jaapState.mantra]=jaapState.count;store("mj-jaap-best",all);} jaapFinal(); return;
-  }
-  if(jaapState.round===0){$("jaap-between").hidden=false;$("jaap-result-title").textContent=jaapState.names[0]+" ka round poora";$("jaap-result-copy").textContent=jaapState.scores[0].count+" taps. Ab phone "+jaapState.names[1]+" ko dein.";return;} jaapFinal();
+  if(jaapState.mode==="solo"){var all=store("mj-jaap-best")||{};if(jaapState.count>(Number(all[jaapState.mantra])||0)){all[jaapState.mantra]=jaapState.count;store("mj-jaap-best",all);}jaapFinal();return;}
+  if(jaapState.round===0){$("jaap-between").hidden=false;$("jaap-result-title").textContent=jaapState.names[0]+" ka round poora";$("jaap-result-copy").textContent=jaapState.scores[0].count+" taps. Ab phone "+jaapState.names[1]+" ko dein.";return;}jaapFinal();
 }
-$("jaap-mode").onchange=function(){$("jaap-names").hidden=this.value!=="duo"};
+$("jaap-mode").onchange=function(){var mode=this.value;$("jaap-names").hidden=mode!=="duo";$("jaap-goal-wrap").hidden=mode!=="mala";$("jaap-bhav").parentElement.hidden=mode!=="mala";$("jaap-start").textContent=mode==="mala"?"Shaant jaap shuru karein":(mode==="duo"?"Dostana round shuru karein":"30-second round shuru karein");};
 $("jaap-start").onclick=function(){
-  jaapState.mode=$("jaap-mode").value; jaapState.mantra=$("jaap-mantra").value; jaapState.round=0; jaapState.scores=[]; jaapState.bestBefore=jaapBest(); jaapState.names=[$("jaap-player1").value.trim()||"Player 1",$("jaap-player2").value.trim()||"Player 2"];
-  $("jaap-arena").hidden=false; jaapStartRound(); try{var el=$("jaap-arena");if(el.requestFullscreen)el.requestFullscreen().then(function(){if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){});}).catch(function(){});}catch(e){}
+  jaapState.mode=$("jaap-mode").value;jaapState.mantra=$("jaap-mantra").value;jaapState.goal=Number($("jaap-goal").value)||108;jaapState.bhav={sahaj:"bina kisi khaas sankalp ke",shanti:"shaanti ke bhaav se",aabhar:"aabhaar ke bhaav se",sahas:"sahas ke bhaav se",ekagrata:"ekagrata ke bhaav se"}[$("jaap-bhav").value]||"bina kisi khaas sankalp ke";jaapState.round=0;jaapState.scores=[];jaapState.bestBefore=jaapBest();jaapState.names=[$("jaap-player1").value.trim()||"Player 1",$("jaap-player2").value.trim()||"Player 2"];
+  jaapBuildBeads();$("jaap-today").textContent=String(jaapDailyCount());$("jaap-arena").hidden=false;jaapStartRound();try{var el=$("jaap-arena");if(el.requestFullscreen)el.requestFullscreen().then(function(){if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){});}).catch(function(){});}catch(e){}
 };
-$("jaap-tap").onclick=function(){if(!jaapState.active)return;jaapState.count++;$("jaap-count").textContent=String(jaapState.count);jaapSetDailyCount(jaapDailyCount()+1);$("jaap-today").textContent=String(jaapDailyCount());jaapBell();jaapSpeak();if(jaapState.mode==="solo"&&jaapState.count>jaapBest())$("jaap-best").textContent=String(jaapState.count)};
-$("jaap-next").onclick=function(){jaapState.round=1;jaapStartRound()}; $("jaap-exit").onclick=jaapClose; $("jaap-done").onclick=jaapClose;
+$("jaap-tap").onclick=function(){
+  if(!jaapState.active)return;jaapState.count++;jaapSetDailyCount(jaapDailyCount()+1);$("jaap-today").textContent=String(jaapDailyCount());jaapRefreshProgress();jaapBell();jaapSpeak();
+  if(jaapState.mode==="mala"&&jaapState.count%27===0&&$("jaap-vibrate").checked&&navigator.vibrate)navigator.vibrate([35,45,35]);
+  if(jaapState.mode==="solo"&&jaapState.count>jaapBest())$("jaap-best").textContent=String(jaapState.count);
+  if(jaapState.mode==="mala"&&jaapState.count>=jaapState.goal)jaapFinishRound();
+};
+$("jaap-undo").onclick=function(){if(!jaapState.active||jaapState.mode!=="mala"||jaapState.count<1)return;jaapState.count--;jaapSetDailyCount(jaapDailyCount()-1);$("jaap-today").textContent=String(jaapDailyCount());jaapRefreshProgress();};
+$("jaap-next").onclick=function(){jaapState.round=1;jaapStartRound()};$("jaap-exit").onclick=jaapClose;$("jaap-done").onclick=jaapClose;
 
 function aiContext(){
   try{ var card=todayCard(); if(!card) return ""; var c=todayCheckin();
