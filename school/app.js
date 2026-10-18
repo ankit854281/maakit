@@ -582,28 +582,33 @@ function render() {
   const name = (userName() || '?').replace(/\s*\(.*\)/, '').trim();
   const initials = U.role === 'parent' ? 'P' : name.split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
   const roleName = { principal: 'Principal', teacher: 'Teacher', chairman: 'Chairman', parent: 'Parent', student: 'Student', accountant: 'Accountant', reception: 'Reception' }[U.role] || U.role;
+  const page = NAV[U.role].find(x => x[0] === view);
+  const menu = g => g.items.length === 1
+    ? `<button onclick="go('${g.items[0][0]}')" class="mn ${g === cur ? 'on' : ''}"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}</button>`
+    : `<div class="dd"><button onclick="ddToggle(this)" class="mn ${g === cur ? 'on' : ''}" aria-haspopup="true"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}<i class="fa-solid fa-chevron-down mn-cv"></i></button>
+        <div class="dd-panel ${g.items.length > 7 ? 'dd-2' : ''}">${g.items.map(([k, ic, lb]) => `<button onclick="ddClose();go('${k}')" class="dd-item ${view === k ? 'on' : ''}"><i class="fa-solid ${ic}"></i><span>${esc(lb)}</span></button>`).join('')}</div></div>`;
   root.innerHTML = `
   <div class="min-h-screen flex flex-col">
-    <header class="erp-head noprint">
-      <div class="erp-top"><div class="erp-wrap flex items-center gap-3">
-        <div class="erp-logo">SN</div>
-        <div class="min-w-0 flex-1"><p class="erp-school truncate">${esc(S.settings.school)}</p><p class="erp-meta truncate">${esc(S.settings.place || 'Bhadohi')} · Session ${esc(S.settings.session || '')}</p></div>
-        ${isFam() || isOffice() ? '' : '<span id="net" class="net hidden sm:inline-flex"></span>'}
-        <div class="erp-user"><span class="erp-avatar">${esc(initials)}</span><span class="hidden md:block min-w-0"><b class="block truncate">${esc(name)}</b><small>${esc(roleName)}</small></span></div>
-        <button onclick="logout()" class="erp-out" title="Log out"><i class="fa-solid fa-arrow-right-from-bracket"></i><span class="hidden sm:inline">Log out</span></button>
-      </div></div>
-      <nav class="erp-nav" aria-label="Main menu"><div class="erp-wrap">
-        ${groups.length > 1 ? `<div class="erp-row">${groups.map(g => `<button onclick="go('${g.items[0][0]}')" class="cap ${g === cur ? 'on' : ''}"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}</button>`).join('')}</div>` : ''}
-        ${cur.items.length > 1 || groups.length === 1 ? `<div class="erp-row erp-sub">${cur.items.map(([k, ic, lb]) => `<button onclick="go('${k}')" class="cap-s ${view === k ? 'on' : ''}"><i class="fa-solid ${ic}"></i>${esc(lb)}</button>`).join('')}</div>` : ''}
-      </div></nav>
-    </header>
-    <main class="erp-wrap w-full flex-1 py-5 lg:py-8 space-y-4">${body}</main>
+    <header class="erp-bar noprint"><div class="erp-wrap erp-bar-in">
+      <button onclick="go('${NAV[U.role][0][0]}')" class="erp-brand"><span class="erp-logo">SN</span><span class="min-w-0 text-left"><b>${esc(S.settings.school)}</b><small>${esc(S.settings.place || 'Bhadohi')} · Session ${esc(S.settings.session || '')}</small></span></button>
+      <nav class="erp-menu" aria-label="Main menu">${groups.map(menu).join('')}</nav>
+      <div class="erp-right">
+        ${isFam() || isOffice() ? '' : '<span id="net" class="net"></span>'}
+        <div class="dd dd-r"><button onclick="ddToggle(this)" class="erp-user"><span class="erp-avatar">${esc(initials)}</span><span class="erp-user-t"><b>${esc(name)}</b><small>${esc(roleName)}</small></span><i class="fa-solid fa-chevron-down mn-cv"></i></button>
+          <div class="dd-panel">${U.role === 'principal' ? `<button onclick="ddClose();go('settings')" class="dd-item"><i class="fa-solid fa-gear"></i><span>Settings & PINs</span></button>` : ''}
+            <button onclick="ddClose();logout()" class="dd-item"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Log out</span></button></div></div>
+      </div></div></header>
+    <div class="erp-crumb noprint"><div class="erp-wrap">${page && page[2] !== cur.name ? `${esc(cur.name)} <i class="fa-solid fa-chevron-right"></i> <b>${esc(page[2])}</b>` : `<b>${esc(cur.name)}</b>`}</div></div>
+    <main class="erp-wrap w-full flex-1 pb-8 space-y-4">${body}</main>
     <footer class="erp-wrap w-full py-6 text-center text-xs text-slate-400 noprint">Powered by <b class="text-slate-500">Maakit</b></footer>
   </div>`;
   setNet(netState);
-  root.querySelectorAll('.erp-row .on').forEach(on => { const r = on.parentElement; if (on.offsetLeft + on.offsetWidth > r.scrollLeft + r.clientWidth || on.offsetLeft < r.scrollLeft) r.scrollLeft = on.offsetLeft - 16; });
   if(view==='faculty') loadParentFaculty();
 }
+function ddClose() { document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open')); }
+function ddToggle(btn) { const d = btn.parentElement, was = d.classList.contains('open'); ddClose(); if (!was) d.classList.add('open'); }
+document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('.dd')) ddClose(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') ddClose(); });
 
 // ---------------------------------------------------------------- login / setup
 let loginRole = 'teacher', busy = false;
@@ -742,7 +747,7 @@ function vDash() {
   const hw = {}; Object.values(S.diary[date] || {}).forEach(byB => Object.values(byB).forEach(e => { if (e && e.hw && String(e.hw).trim()) hw[e.cls] = (hw[e.cls] || 0) + 1; }));
   const hwN = Object.values(hw).reduce((a, b) => a + b, 0), pct = as.total ? Math.round(as.present / as.total * 100) : null;
   const h = new Date().getHours(), hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  const kpi = (ic, col, lbl, val, sub, warn, go) => `<button ${go ? `onclick="go('${go}',{date:'${date}'})"` : 'disabled'} class="kpi ${warn ? 'kpi-warn' : ''}"><span class="kpi-ic ${col}"><i class="fa-solid ${ic}"></i></span><span class="kpi-lbl">${lbl}</span><span class="kpi-val">${val}</span><span class="kpi-sub">${sub}</span></button>`;
+  const kpi = (ic, acc, lbl, val, sub, warn, go) => `<button ${go ? `onclick="go('${go}',{date:'${date}'})"` : 'disabled'} class="kpi" style="--acc:${warn ? 'var(--bad)' : acc}"><span class="kpi-lbl">${lbl}</span><span class="kpi-val">${val}</span><span class="kpi-sub">${sub}</span></button>`;
   const tile = c => { const n = studentsOf(c).length, a = attOf(date, c);
     if (!n) return `<div class="att att-empty"><b>${esc(c)}</b><span>No students</span></div>`;
     if (!a) return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att att-none"><b>${esc(c)}</b><span>Not marked</span></button>`;
@@ -754,45 +759,48 @@ function vDash() {
   const sum = dailySummary(date);
   return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
       <div><p class="dash-eyebrow">${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-        <h2 class="text-2xl lg:text-[32px] font-extrabold text-ink mt-1">${isToday ? hello : 'Report for this day'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '') )}</h2></div>
+        <h2 class="text-2xl font-bold text-ink mt-1">${isToday ? hello : 'Report for this day'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '') )}</h2></div>
       <div class="flex flex-wrap gap-2 noprint">${dateInput('d-date', date, "go('dash',{date:this.value})")}
         <button onclick="printHTML('Day report',printHeader('Daily report — ${fmtDate(date)}')+'<pre style=&quot;white-space:pre-wrap;font-family:inherit&quot;>'+esc(dailySummary('${date}'))+'</pre>'+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-download"></i> Day report</button>
         ${ro ? '' : `<button onclick="go('notices')" class="btn btn-p"><i class="fa-solid fa-plus"></i> New notice</button>`}</div></div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      ${kpi('fa-children', 'bg-brand-soft text-brand', 'Students present', as.total ? `${as.present} <small>/ ${as.total}</small>` : '—', `${as.marked} of ${withKids.length} classes marked`, false, 'attendance')}
-      ${kpi('fa-user-check', 'bg-emerald-50 text-emerald-700', 'Staff present', `${nT - ab.length} <small>/ ${nT}</small>`, ab.length ? `${onLeave} on leave · ${ab.length - onLeave} absent` : 'Everyone present', false, ro ? '' : 'staff')}
-      ${kpi('fa-clock', pending.length ? 'bg-white text-amber-700' : 'bg-emerald-50 text-emerald-700', 'Attendance pending', pending.length ? `${pending.length} <small>class${pending.length > 1 ? 'es' : ''}</small>` : '0', pending.length ? 'Class ' + pending.slice(0, 4).join(', ') + (pending.length > 4 ? '…' : '') : 'All classes marked', pending.length > 0, 'attendance')}
-      ${kpi('fa-book', 'bg-amber-50 text-amber-700', 'Homework set', hwN, `across ${Object.keys(hw).length} class${Object.keys(hw).length === 1 ? '' : 'es'} · diary ${ds.filled}/${ds.due} bells`, false, ro ? '' : 'diaries')}
+      ${kpi('fa-children', 'var(--brand)', 'Students present', as.total ? `${as.present} <small>/ ${as.total}</small>` : '—', `${as.marked} of ${withKids.length} classes marked`, false, 'attendance')}
+      ${kpi('fa-user-check', 'var(--ok)', 'Staff present', `${nT - ab.length} <small>/ ${nT}</small>`, ab.length ? `${onLeave} on leave · ${ab.length - onLeave} absent` : 'Everyone present', false, ro ? '' : 'staff')}
+      ${kpi('fa-clock', 'var(--ok)', 'Attendance pending', pending.length ? `${pending.length} <small>class${pending.length > 1 ? 'es' : ''}</small>` : '0', pending.length ? 'Class ' + pending.slice(0, 4).join(', ') + (pending.length > 4 ? '…' : '') : 'All classes marked', pending.length > 0, 'attendance')}
+      ${kpi('fa-book', 'var(--violet)', 'Homework set', hwN, `across ${Object.keys(hw).length} class${Object.keys(hw).length === 1 ? '' : 'es'} · diary ${ds.filled}/${ds.due} bells`, false, ro ? '' : 'diaries')}
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="card lg:col-span-2"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h3 class="h3">Attendance by class</h3>
-          <div class="flex flex-wrap gap-3"><span class="legend"><i style="background:#1E4FD8"></i>95%+</span><span class="legend"><i style="background:#D3DEFB"></i>90–94%</span><span class="legend"><i style="background:#F5D9A8"></i>Below 90%</span><span class="legend"><i style="border:1.5px dashed #E5B25C"></i>Not marked</span></div></div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+      <div class="lg:col-span-2 space-y-4">
+        <div class="card"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h3 class="h3">Attendance by class</h3>
+          <div class="flex flex-wrap gap-3"><span class="legend"><i style="background:#16A34A"></i>95%+</span><span class="legend"><i style="background:#2563EB"></i>90–94%</span><span class="legend"><i style="background:#D97706"></i>Below 90%</span><span class="legend"><i style="border:1.5px dashed #E5484D"></i>Not marked</span></div></div>
         <div class="att-grid">${CLASS_NAMES.slice().reverse().map(tile).join('')}</div></div>
-      <div class="space-y-4">
-        <div class="today-card"><div class="ring" style="--p:${pct || 0}"><b>${pct == null ? '—' : pct + '%'}</b></div>
-          <div><p class="dash-eyebrow" style="color:#E3A72F">School today</p><p class="text-lg font-bold mt-1">${as.total ? `${as.present} of ${as.total} present` : 'Attendance not marked yet'}</p>
-            <p class="text-xs text-white/60 mt-1">${as.total ? `${as.total - as.present} absent` : ''}${pending.length ? ` · ${pending.length} class${pending.length > 1 ? 'es' : ''} still to mark` : ''}</p></div></div>
-        <div class="card"><h3 class="h3 mb-1">Needs your attention</h3>
-          ${al.length ? al.slice(0, 6).map(a => `<div class="att-row"><span class="flex items-start"><span class="dot-${a.lv} mt-1.5"></span><span>${esc(a.x)}</span></span>
-            ${a.go && !ro ? `<button onclick="go('${a.go}',{date:'${date}'})" class="link">Open</button>` : ''}</div>`).join('') + (al.length > 6 ? `<p class="text-xs text-slate-500 pt-2">+ ${al.length - 6} more</p>` : '')
-            : '<p class="text-sm text-emerald-700 font-semibold py-2"><i class="fa-solid fa-circle-check"></i> All clear. Nothing needs attention.</p>'}</div>
-      </div></div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Coming up</h3><button onclick="go('calendar')" class="link">Calendar</button></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Coming up</h3><button onclick="go('calendar')" class="link">Calendar</button></div>
         ${upcoming.length ? upcoming.map(e => `<div class="att-row justify-start"><span class="date-cap ${e.kind}">${shortD(e.date)}${e.to && e.to !== e.date ? '–' + shortD(e.to).split(' ')[0] : ''}</span><span class="flex-1">${esc(e.title)}</span></div>`).join('') : '<p class="text-sm text-slate-500">Nothing on the calendar.</p>'}</div>
-      <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Recent notices</h3>${ro ? '' : '<button onclick="go(\'notices\')" class="link">All notices</button>'}</div>
+          <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Recent notices</h3>${ro ? '' : '<button onclick="go(\'notices\')" class="link">All notices</button>'}</div>
         ${S.notices.slice(0, 3).map(n => `<div class="att-row block"><p class="font-semibold">${esc(n.title)}</p><p class="text-xs text-slate-500 mt-0.5">Sent to ${esc(n.to || 'everyone')} · ${fmtDate(n.date)}</p></div>`).join('') || '<p class="text-sm text-slate-500">No notices yet.</p>'}</div>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="card"><h3 class="h3 mb-2">Arrangement today</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div class="card"><h3 class="h3 mb-2">Arrangement today</h3>
         ${arr.length ? arr.map(s => `<div class="att-row"><span><b>${BELLS[s.bell].n}</b> · ${esc(s.cls)} ${esc(s.subj)}<br><span class="text-xs text-slate-500">for ${esc(T(s.absent).name)}</span></span><span class="pill ${s.sub ? 'bg-brand-soft text-brand' : 'bg-rose-100 text-rose-700'}">${s.sub ? esc(T(s.sub).name) : 'Not covered'}</span></div>`).join('') : '<p class="text-sm text-slate-500">No arrangement needed.</p>'}</div>
-      <div class="card space-y-3"><h3 class="h3">Daily summary</h3>
+          <div class="card space-y-3"><h3 class="h3">Daily summary</h3>
         <pre id="dash-sum" class="whitespace-pre-wrap text-xs bg-slate-50 border border-slate-200 rounded-2xl p-3 font-sans">${esc(sum)}</pre>
         <div class="flex flex-wrap gap-2">${!ro ? `<a target="_blank" onclick="log('Summary','Daily summary sent to Chairman for ${date}')" href="${waLink(S.settings.chairmanPhone, sum)}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Send to Chairman</a>` : ''}
           <button onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('dash-sum').innerText).then(()=>toast('Copied'))" class="btn btn-sm btn-l"><i class="fa-regular fa-copy"></i> Copy</button></div>
         ${!ro && !S.settings.chairmanPhone ? '<p class="text-[11px] text-slate-500">Add the Chairman\'s number in Settings to send directly.</p>' : ''}</div>
-      <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Recent activity</h3><button onclick="go('log')" class="link">Full log</button></div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="today-card"><div class="ring" style="--p:${pct || 0}"><b>${pct == null ? '—' : pct + '%'}</b></div>
+          <div><p class="dash-eyebrow">School today</p><p class="text-lg font-bold mt-1">${as.total ? `${as.present} of ${as.total} present` : 'Attendance not marked yet'}</p>
+            <p class="text-xs text-white/60 mt-1">${as.total ? `${as.total - as.present} absent` : ''}${pending.length ? ` · ${pending.length} class${pending.length > 1 ? 'es' : ''} still to mark` : ''}</p></div></div>
+        <div class="card"><h3 class="h3 mb-1">Needs your attention</h3>
+          ${al.length ? al.slice(0, 6).map(a => `<div class="att-row"><span class="flex items-start min-w-0"><span class="dot-${a.lv} mt-1.5"></span><span class="clamp2" title="${esc(a.x)}">${esc(a.x)}</span></span>
+            ${a.go && !ro ? `<button onclick="go('${a.go}',{date:'${date}'})" class="link">Open</button>` : ''}</div>`).join('') + (al.length > 6 ? `<p class="text-xs text-slate-500 pt-2">+ ${al.length - 6} more</p>` : '')
+            : '<p class="text-sm text-emerald-700 font-semibold py-2"><i class="fa-solid fa-circle-check"></i> All clear. Nothing needs attention.</p>'}</div>
+        <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Recent activity</h3><button onclick="go('log')" class="link">Full log</button></div>
         ${S.log.slice(0, 6).map(l => `<div class="att-row block text-sm"><p><b>${esc(l.u)}</b> — ${esc(l.x)}</p><p class="text-xs text-slate-400">${fmtTime(l.t)}</p></div>`).join('') || '<p class="text-sm text-slate-500">No activity yet.</p>'}</div>
+      </div>
     </div>
     ${wordCard(date, true)}`;
 }
@@ -3414,7 +3422,7 @@ NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['
 NAV.principal.push(['learning','fa-seedling','Learning Lab']);
 NAV.teacher.push(['learning','fa-seedling','Learning Lab']);
 NAV.parent.push(['learning','fa-seedling','Learning Adventure']);
-VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','Practice, skill evidence and teacher-reviewed learning missions.')+'<iframe title="Learning Lab" src="learning.php?embed=1" style="width:100%;min-height:85vh;border:0;border-radius:16px"></iframe>';
+VIEWS.learning=()=>'<iframe title="Learning Lab" src="learning.php?embed=1" style="width:100%;min-height:85vh;border:0;border-radius:16px"></iframe>';
 
 // ---------------------------------------------------------------- init
 (async function init() {
@@ -3434,17 +3442,17 @@ VIEWS.learning=()=>head(U.role==='parent'?'Learning Adventure':'Learning Lab','P
 
 // Smart Studio has its own class/child-scoped API; media never enters legacy sync.
 for (const role of ['principal','teacher','parent']) NAV[role].push(['studio','fa-camera','Smart Studio']);
-VIEWS.studio=()=>head(U.role==='parent'?'Classroom & Copies':'Teacher Smart Studio','Private notebook checking, classroom moments, badges and conversations.')+'<iframe title="Teacher Smart Studio" src="studio.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
+VIEWS.studio=()=>'<iframe title="Teacher Smart Studio" src="studio.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
 
 for(const role of ['principal','teacher']) NAV[role].push(['toolkit','fa-wand-magic-sparkles','Teacher Toolkit']);
-VIEWS.toolkit=()=>head('Teacher Smart Toolkit','Less paperwork. More room to teach.')+'<iframe title="Teacher Smart Toolkit" src="toolkit.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
+VIEWS.toolkit=()=>'<iframe title="Teacher Smart Toolkit" src="toolkit.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
 function teacherCorner(date){const p=TeacherEnglish.today(date);return `<div class="modern-bento"><section class="modern-welcome"><span class="eyebrow">YOUR TEACHING COMPANION</span><h2>A little less admin.<br>More room to teach.</h2><p>Your lesson tools, classroom moments and professional identity, in one place.</p><div class="modern-links"><button class="btn btn-p" onclick="go('toolkit')">Open Teacher Toolkit</button><button class="btn btn-l" onclick="go('profile')">My Profile Studio →</button></div></section><section class="modern-mini"><small>A phrase for your classroom</small><b>${esc(p[0])}</b><details><summary>Hindi meaning</summary>${esc(p[1])}</details><button class="btn btn-sm btn-l" onclick="TeacherEnglish.say(TeacherEnglish.today('${date}')[0])">Listen & try</button></section></div>`;}
 
 function prepareDiaryDraft(date){if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;for(const b of myBells(U.tid,date)){const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;const plan=Object.values(S.lplan).find(p=>p.tid===U.tid&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');if(plan){field.value=plan.topics.split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';if(field.value)n++;}}toast(n?'Prepared '+n+' topic drafts. Edit and confirm each bell.':'No empty bells with approved plans. Enter the actual topics.');}
 
 for(const role of ['teacher','principal']) NAV[role].push(['profile','fa-id-card','My Profile'],['saathi','fa-feather','Secret Saathi']);
-VIEWS.profile=()=>head('Teacher Profile Studio','Your identity, credentials and growth, together.')+'<iframe class="edu-iframe" title="Teacher Profile Studio" src="faculty.php?embed=1"></iframe>';
-VIEWS.saathi=()=>head('Secret Saathi','A private reflection space for your own account.')+'<iframe class="edu-iframe" title="Secret Saathi" src="faculty.php?embed=1&tab=saathi"></iframe>';
+VIEWS.profile=()=>'<iframe class="edu-iframe" title="Teacher Profile Studio" src="faculty.php?embed=1"></iframe>';
+VIEWS.saathi=()=>'<iframe class="edu-iframe" title="Secret Saathi" src="faculty.php?embed=1&tab=saathi"></iframe>';
 NAV.parent.push(['faculty','fa-chalkboard-user','Our Teachers']);
 VIEWS.faculty=()=>head('Our Teachers','School-reviewed professional profiles shared with your class.')+'<div id="parentFaculty" class="modern-bento">Loading teacher profiles…</div>';
 async function loadParentFaculty(){try{const r=await fetch('faculty_api.php?a=directory',{headers:{'X-School-Token':TOKEN}});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Profiles unavailable');const node=document.getElementById('parentFaculty');if(node)node.innerHTML=d.profiles.map(p=>`<article class="card">${p.photoData?`<img src="${p.photoData}" alt="Teacher portrait" style="width:72px;height:72px;object-fit:cover;border-radius:22px;margin-bottom:12px">`:''}<h3 class="h3">${esc(p.fullName)}</h3><p class="text-sm text-slate-500">${esc(p.designation)}</p><p class="text-sm mt-3">${esc(p.bio)}</p><p class="text-sm mt-2">${esc(p.quote)}</p><p class="text-xs text-slate-500 mt-3">${esc((p.subjects||[]).join(' · '))}</p></article>`).join('')||'<div class="card text-sm">Your teachers’ profiles will appear here after verification and sharing permission.</div>';}catch(e){const node=document.getElementById('parentFaculty');if(node)node.textContent=e.message;}}
@@ -3454,4 +3462,4 @@ for (const role of ['principal','accountant','reception','chairman','teacher']) 
 for (const role of ['parent','student']) NAV[role].push(['finance','fa-wallet','Fee Ledger']);
 for (const role of ['principal','accountant']) { const old=NAV[role].find(n=>n[0]==='fdesk');if(old)old[2]='Legacy Fee Desk'; }
 NAV.accountant.unshift(NAV.accountant.pop());PRIMARY.accountant=['finance','fdues','fcalls','freceipts'];
-VIEWS.finance=()=>head('Fee Department','Month-wise ledger, collection, receipts, advance and reports.')+'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1"></iframe>';
+VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1"></iframe>';
