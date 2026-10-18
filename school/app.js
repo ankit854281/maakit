@@ -526,7 +526,7 @@ let view = null, P = {}; // P = per-view params
 async function go(v, params) { view = v; P = params || {}; if (P.date) await ensureDate(P.date); render(); window.scrollTo(0, 0); }
 
 const NAV = {
-  principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
+  principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['salary','fa-money-check-dollar','Salary'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
               ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
@@ -534,10 +534,10 @@ const NAV = {
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
   teacher:   [['mytoday','fa-sun','Today'],['quizt','fa-bolt','Quiz Duel'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
-              ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave']],
+              ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave'],['salary','fa-money-check-dollar','My Salary']],
   student:   [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  accountant:[['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts']],
+  accountant:[['salary','fa-money-check-dollar','Staff Salary'],['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts']],
   reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts']],
   chairman:  [['dash','fa-gauge','Dashboard'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
@@ -545,6 +545,31 @@ const NAV = {
 const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
                   chairman: ['dash','results','fame','calendar'], parent: ['phome','game','phw','presults'],
                   accountant: ['fdesk','fdues','fcalls','freceipts'], reception: ['fcalls','fdues','freceipts'] };
+// Top navigation: header with the school name, then capsule groups (Dashboard · Staff · Students · Admin),
+// then the pages of the open group as smaller capsules. Any page not listed here falls into the last group,
+// so pages added later (by either AI) never disappear from the menu.
+const GROUPS = {
+  principal: [['Dashboard', 'fa-gauge', ['dash', 'log']],
+              ['Staff', 'fa-user-tie', ['staff', 'salary', 'timetable', 'lplans', 'diaries', 'mytoday', 'diary', 'lplan', 'marks', 'toolkit', 'profile', 'saathi']],
+              ['Students', 'fa-children', ['students', 'attendance', 'syllabus', 'exams', 'results', 'behaviour', 'speaking', 'fame', 'quizt', 'studio', 'learning']],
+              ['Admin', 'fa-building-columns', ['finance', 'fees', 'fdesk', 'fcalls', 'freceipts', 'fdues', 'notices', 'calendar', 'settings']]],
+  chairman:  [['Dashboard', 'fa-gauge', ['dash', 'log']], ['Students', 'fa-children', ['exams', 'results', 'fame', 'syllabus']],
+              ['Admin', 'fa-building-columns', ['finance', 'fdues', 'fees', 'calendar']]],
+  teacher:   [['Today', 'fa-sun', ['mytoday', 'myweek', 'calendar']], ['My Classes', 'fa-chalkboard', ['attendance', 'diary', 'marks', 'behaviour', 'speaking', 'quizt', 'studio', 'learning']],
+              ['Planning', 'fa-clipboard-check', ['lplan', 'syllabus', 'toolkit', 'fame']], ['Me', 'fa-user', ['leave', 'salary', 'profile', 'saathi', 'finance']]],
+  parent:    [['Home', 'fa-house', ['phome', 'pnotices', 'faculty']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning', 'studio']],
+              ['Progress & Fees', 'fa-chart-simple', ['presults', 'pfees', 'finance']]],
+  student:   [['Home', 'fa-house', ['phome', 'pnotices']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning']], ['Progress', 'fa-chart-simple', ['presults', 'finance']]],
+  accountant:[['Fees', 'fa-wallet', ['finance', 'fdesk', 'fdues', 'fcalls', 'freceipts']], ['Staff', 'fa-user-tie', ['salary']]],
+  reception: [['Fees', 'fa-wallet', ['fcalls', 'fdues', 'freceipts', 'finance']]]
+};
+function navGroups() {
+  const items = NAV[U.role], seen = new Set();
+  const groups = (GROUPS[U.role] || [['Menu', 'fa-bars', []]]).map(([name, ic, keys]) => ({ name, ic,
+    items: keys.map(k => items.find(x => x[0] === k)).filter(x => x && !seen.has(x[0]) && seen.add(x[0])) }));
+  const rest = items.filter(x => !seen.has(x[0])); if (rest.length) groups[groups.length - 1].items.push(...rest);
+  return groups.filter(g => g.items.length);
+}
 let moreOpen = false;
 function navLabel(k) { const n = NAV[U.role].find(x => x[0] === k); return n ? n[2] : ''; }
 function render() {
@@ -553,44 +578,30 @@ function render() {
   if (!view || !NAV[U.role].some(x => x[0] === view)) view = NAV[U.role][0][0];
   let body = '';
   try { body = (VIEWS[view] || vDash)(); } catch (e) { console.error(e); body = `<div class="card text-rose">This screen could not open: ${esc(e.message)}. Please go back and try again.</div>`; }
-  const side = NAV[U.role].map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="side-link ${view === k ? 'on' : ''}"><i class="fa-solid ${ic} w-5 text-center"></i><span>${lb}</span></button>`).join('');
-  const prim = PRIMARY[U.role], rest = NAV[U.role].filter(x => ['teacher','principal'].includes(U.role) ? !['studio','attendance','saathi','profile'].includes(x[0]) : !prim.includes(x[0]));
-  const tab = k => { const n = NAV[U.role].find(x => x[0] === k); return n ? `<button onclick="moreOpen=false;go('${k}')" class="tab ${view === k && !moreOpen ? 'on' : ''}"><i class="fa-solid ${n[1]}"></i><span>${n[2].split(' ')[0]}</span></button>` : ''; };
-  const initials = U.role === 'parent' ? 'P' : U.role === 'student' ? (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('') : (userName() || '?').replace(/\(.*\)/, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('');
+  const groups = navGroups(), cur = groups.find(g => g.items.some(x => x[0] === view)) || groups[0];
+  const name = (userName() || '?').replace(/\s*\(.*\)/, '').trim();
+  const initials = U.role === 'parent' ? 'P' : name.split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
+  const roleName = { principal: 'Principal', teacher: 'Teacher', chairman: 'Chairman', parent: 'Parent', student: 'Student', accountant: 'Accountant', reception: 'Reception' }[U.role] || U.role;
   root.innerHTML = `
-  <div class="lg:flex min-h-screen">
-    <aside class="noprint hidden lg:flex lg:flex-col w-64 shrink-0 bg-ink text-white sticky top-0 h-screen">
-      <div class="carpet"></div>
-      <div class="px-5 pt-5 pb-4 flex items-center gap-3"><div class="mark">SN</div>
-        <div class="min-w-0"><p class="font-semibold leading-tight">${esc(S.settings.school)}</p><p class="text-xs text-white/60">Session ${esc(S.settings.session || '')}</p></div></div>
-      <nav class="flex-1 overflow-y-auto px-3 space-y-0.5">${side}</nav>
-      <div class="p-4 border-t border-white/10">
-        <div class="flex items-center gap-3"><div class="avatar-sm">${esc(initials)}</div><div class="min-w-0 flex-1"><p class="text-sm font-medium truncate">${esc(userName())}</p><p class="text-xs text-white/60 capitalize">${U.role}</p></div></div>
-        <div class="flex items-center justify-between mt-3"><span id="net" class="net"></span><button onclick="logout()" class="text-sm text-white/80 hover:text-white">Log out</button></div>
-        <p class="text-[11px] text-white/40 mt-3">Powered by Maakit</p>
-      </div>
-    </aside>
-    <div class="flex-1 min-w-0 flex flex-col">
-      <header class="noprint lg:hidden sticky top-0 z-30 bg-ink text-white">
-        <div class="carpet"></div>
-        <div class="px-4 py-3 flex items-center gap-3"><div class="mark mark-sm">SN</div>
-          <p class="font-semibold leading-tight truncate flex-1">${esc(S.settings.school)}</p>
-          ${isFam() ? '' : '<span id="net-m" class="net"></span>'}
-          <button onclick="logout()" class="avatar-sm" title="Log out">${esc(initials)}</button></div>
-      </header>
-      <main class="w-full max-w-5xl mx-auto p-4 lg:p-8 space-y-4 pb-28 lg:pb-10">${body}
-        <p class="text-center text-xs text-slate-400 pt-6 lg:hidden">Powered by Maakit</p></main>
-    </div>
-  </div>
-  ${['teacher','principal'].includes(U.role)?`<nav class="modern-dock noprint" aria-label="Teacher quick actions"><button onclick="go('studio')" aria-label="Camera scan"><i class="fa-solid fa-camera"></i><span>Camera</span></button><button class="${view==='attendance'?'on':''}" onclick="go('attendance')"><i class="fa-solid fa-clipboard-user"></i><span>Roll call</span></button><button onclick="go('saathi')" class="${view==='saathi'?'on':''}"><i class="fa-solid fa-feather"></i><span>Saathi</span></button><button onclick="go('profile')" class="${view==='profile'?'on':''}"><i class="fa-solid fa-user"></i><span>My profile</span></button><button onclick="moreOpen=!moreOpen;render()"><i class="fa-solid fa-grip"></i><span>More</span></button></nav>`:`<nav class="noprint lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-line grid ${rest.length ? 'grid-cols-5' : 'grid-cols-4'} pb-[env(safe-area-inset-bottom)]">
-    ${prim.map(tab).join('')}${rest.length ? `<button onclick="moreOpen=!moreOpen;render()" class="tab ${moreOpen || !prim.includes(view) ? 'on' : ''}"><i class="fa-solid fa-grip"></i><span>More</span></button>` : ''}
-  </nav>`}
-  ${moreOpen ? `<div class="noprint lg:hidden fixed inset-0 z-30 bg-ink/40" onclick="moreOpen=false;render()"></div>
-    <div class="noprint lg:hidden fixed inset-x-0 bottom-16 z-40 bg-white rounded-t-3xl p-4 pb-6 shadow-2xl">
-      <div class="w-10 h-1 rounded-full bg-slate-300 mx-auto mb-4"></div>
-      <div class="grid grid-cols-4 gap-2">${rest.map(([k, ic, lb]) => `<button onclick="moreOpen=false;go('${k}')" class="more-item ${view === k ? 'on' : ''}"><i class="fa-solid ${ic}"></i><span>${lb}</span></button>`).join('')}</div>
-    </div>` : ''}`;
+  <div class="min-h-screen flex flex-col">
+    <header class="erp-head noprint">
+      <div class="erp-top"><div class="erp-wrap flex items-center gap-3">
+        <div class="erp-logo">SN</div>
+        <div class="min-w-0 flex-1"><p class="erp-school truncate">${esc(S.settings.school)}</p><p class="erp-meta truncate">${esc(S.settings.place || 'Bhadohi')} · Session ${esc(S.settings.session || '')}</p></div>
+        ${isFam() || isOffice() ? '' : '<span id="net" class="net hidden sm:inline-flex"></span>'}
+        <div class="erp-user"><span class="erp-avatar">${esc(initials)}</span><span class="hidden md:block min-w-0"><b class="block truncate">${esc(name)}</b><small>${esc(roleName)}</small></span></div>
+        <button onclick="logout()" class="erp-out" title="Log out"><i class="fa-solid fa-arrow-right-from-bracket"></i><span class="hidden sm:inline">Log out</span></button>
+      </div></div>
+      <nav class="erp-nav" aria-label="Main menu"><div class="erp-wrap">
+        ${groups.length > 1 ? `<div class="erp-row">${groups.map(g => `<button onclick="go('${g.items[0][0]}')" class="cap ${g === cur ? 'on' : ''}"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}</button>`).join('')}</div>` : ''}
+        ${cur.items.length > 1 || groups.length === 1 ? `<div class="erp-row erp-sub">${cur.items.map(([k, ic, lb]) => `<button onclick="go('${k}')" class="cap-s ${view === k ? 'on' : ''}"><i class="fa-solid ${ic}"></i>${esc(lb)}</button>`).join('')}</div>` : ''}
+      </div></nav>
+    </header>
+    <main class="erp-wrap w-full flex-1 py-5 lg:py-8 space-y-4">${body}</main>
+    <footer class="erp-wrap w-full py-6 text-center text-xs text-slate-400 noprint">Powered by <b class="text-slate-500">Maakit</b></footer>
+  </div>`;
   setNet(netState);
+  root.querySelectorAll('.erp-row .on').forEach(on => { const r = on.parentElement; if (on.offsetLeft + on.offsetWidth > r.scrollLeft + r.clientWidth || on.offsetLeft < r.scrollLeft) r.scrollLeft = on.offsetLeft - 16; });
   if(view==='faculty') loadParentFaculty();
 }
 
@@ -694,7 +705,7 @@ async function logout() {
 }
 function forceLogout() {
   QZ = null; QT = null; QPLAY = null; qzStopTimer(); GZ = null; GP = null; GT = null; gStop();
-  MUST = null; PD = null; PC_LAST = null; SCAN = null; LPDRAFT = {}; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
+  MUST = null; PD = null; PC_LAST = null; SAL = null; SALOPEN = null; SCAN = null; LPDRAFT = {}; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
 }
@@ -724,50 +735,66 @@ const PRINT_FOOT = `<div class="f"><span>Principal's Signature ______________</s
 
 // ---------------------------------------------------------------- PRINCIPAL / CHAIRMAN DASHBOARD
 function vDash() {
-  const date = P.date || todayISO(), ro = U.role === 'chairman';
-  const ab = staffAbsent(date), as = attStats(date), ds = diaryStats(date), arr = arrangement(date);
-  const sylKeys = Object.keys(S.syl).filter(k => S.syl[k].chapters.length);
-  const lag = sylKeys.filter(k => sylStatus(k, date).lag).length;
-  const al = alerts(date);
-  const tile = (lbl, val, sub, ic, col) => `<div class="card tile"><div class="flex items-center gap-2 text-sm text-slate-600"><span class="w-8 h-8 rounded-full ${col} flex items-center justify-center text-sm"><i class="fa-solid ${ic}"></i></span>${lbl}</div><p class="text-3xl font-semibold mt-3 text-ink">${val}</p><p class="text-xs text-slate-500 mt-1">${sub}</p></div>`;
-  const nT = Object.keys(S.teachers).length;
+  const date = P.date || todayISO(), ro = U.role === 'chairman', isToday = date === todayISO();
+  const ab = staffAbsent(date), as = attStats(date), ds = diaryStats(date), arr = arrangement(date), al = alerts(date);
+  const nT = Object.keys(S.teachers).length, onLeave = ab.filter(t => S.leaves.some(l => l.status === 'Approved' && l.tid === t && l.from <= date && l.to >= date)).length;
+  const withKids = CLASS_NAMES.filter(c => studentsOf(c).length), pending = dayIdx(date) >= 0 && !holidayOn(date) ? withKids.filter(c => !attOf(date, c)) : [];
+  const hw = {}; Object.values(S.diary[date] || {}).forEach(byB => Object.values(byB).forEach(e => { if (e && e.hw && String(e.hw).trim()) hw[e.cls] = (hw[e.cls] || 0) + 1; }));
+  const hwN = Object.values(hw).reduce((a, b) => a + b, 0), pct = as.total ? Math.round(as.present / as.total * 100) : null;
+  const h = new Date().getHours(), hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const kpi = (ic, col, lbl, val, sub, warn, go) => `<button ${go ? `onclick="go('${go}',{date:'${date}'})"` : 'disabled'} class="kpi ${warn ? 'kpi-warn' : ''}"><span class="kpi-ic ${col}"><i class="fa-solid ${ic}"></i></span><span class="kpi-lbl">${lbl}</span><span class="kpi-val">${val}</span><span class="kpi-sub">${sub}</span></button>`;
+  const tile = c => { const n = studentsOf(c).length, a = attOf(date, c);
+    if (!n) return `<div class="att att-empty"><b>${esc(c)}</b><span>No students</span></div>`;
+    if (!a) return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att att-none"><b>${esc(c)}</b><span>Not marked</span></button>`;
+    const p = Math.round((n - a.absent.length) / n * 100);
+    return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att ${p >= 95 ? 'att-hi' : p >= 90 ? 'att-mid' : 'att-lo'}" title="${n - a.absent.length} of ${n} present"><b>${esc(c)}</b><span>${p}%</span></button>`; };
+  const upcoming = [...S.cal.map(e => ({ ...e, kind: e.type === 'Holiday' ? 'hol' : '' })), ...examItems().map(e => ({ ...e, kind: 'exam' }))]
+    .filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  const shortD = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   const sum = dailySummary(date);
-  return head('School Dashboard', fmtDate(date) + (dayIdx(date) >= 0 ? ' • ' + DAYS[dayIdx(date)] + ' timetable' : ''), dateInput('d-date', date, "go('dash',{date:this.value})")) + `
+  return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
+      <div><p class="dash-eyebrow">${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        <h2 class="text-2xl lg:text-[32px] font-extrabold text-ink mt-1">${isToday ? hello : 'Report for this day'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '') )}</h2></div>
+      <div class="flex flex-wrap gap-2 noprint">${dateInput('d-date', date, "go('dash',{date:this.value})")}
+        <button onclick="printHTML('Day report',printHeader('Daily report — ${fmtDate(date)}')+'<pre style=&quot;white-space:pre-wrap;font-family:inherit&quot;>'+esc(dailySummary('${date}'))+'</pre>'+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-download"></i> Day report</button>
+        ${ro ? '' : `<button onclick="go('notices')" class="btn btn-p"><i class="fa-solid fa-plus"></i> New notice</button>`}</div></div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      ${tile('Staff Present', (nT - ab.length) + '/' + nT, ab.length ? 'Absent: ' + ab.map(t => T(t).name).join(', ') : 'Everyone present', 'fa-user-check', 'bg-emerald-50 text-emerald-700')}
-      ${tile('Students Present', as.total ? Math.round(as.present / as.total * 100) + '%' : '—', as.marked + '/' + CLASS_NAMES.length + ' classes marked', 'fa-children', 'bg-blue-50 text-blue-700')}
-      ${tile('Teacher Diary', ds.filled + '/' + ds.due, 'bells filled (finished bells)', 'fa-book-open', 'bg-purple-50 text-purple-700')}
-      ${tile('Syllabus Behind', lag, 'of ' + sylKeys.length + ' tracked subjects', 'fa-chart-line', lag ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700')}
+      ${kpi('fa-children', 'bg-brand-soft text-brand', 'Students present', as.total ? `${as.present} <small>/ ${as.total}</small>` : '—', `${as.marked} of ${withKids.length} classes marked`, false, 'attendance')}
+      ${kpi('fa-user-check', 'bg-emerald-50 text-emerald-700', 'Staff present', `${nT - ab.length} <small>/ ${nT}</small>`, ab.length ? `${onLeave} on leave · ${ab.length - onLeave} absent` : 'Everyone present', false, ro ? '' : 'staff')}
+      ${kpi('fa-clock', pending.length ? 'bg-white text-amber-700' : 'bg-emerald-50 text-emerald-700', 'Attendance pending', pending.length ? `${pending.length} <small>class${pending.length > 1 ? 'es' : ''}</small>` : '0', pending.length ? 'Class ' + pending.slice(0, 4).join(', ') + (pending.length > 4 ? '…' : '') : 'All classes marked', pending.length > 0, 'attendance')}
+      ${kpi('fa-book', 'bg-amber-50 text-amber-700', 'Homework set', hwN, `across ${Object.keys(hw).length} class${Object.keys(hw).length === 1 ? '' : 'es'} · diary ${ds.filled}/${ds.due} bells`, false, ro ? '' : 'diaries')}
     </div>
-    ${wordCard(date, true)}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="card lg:col-span-2 space-y-2">
-        <h3 class="font-bold"><i class="fa-solid fa-bell text-amber-500 mr-1"></i> Automatic Alerts</h3>
-        ${al.length ? al.map(a => `<div class="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a.lv === 'r' ? 'bg-rose-50 border-rose-200' : a.lv === 'a' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}">
-          <span class="text-sm">${esc(a.x)}</span>
-          <span class="flex gap-1 shrink-0">${a.wa && !ro ? a.wa.filter(t => S.teachers[t].phone).map(t => `<a target="_blank" href="${waLink(S.teachers[t].phone, 'Namaste ' + T(t).name + ', please fill today\'s diary in the school ERP. — Principal')}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i>${esc(T(t).name.split(' ')[0])}</a>`).join('') : ''}
-          ${a.go && !ro ? `<button onclick="go('${a.go}',{date:'${date}'})" class="btn btn-sm btn-l">Open</button>` : ''}</span></div>`).join('')
-          : '<p class="text-sm text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> All clear. Nothing needs attention.</p>'}
-      </div>
-      <div class="card space-y-3">
-        <h3 class="font-bold"><i class="fa-solid fa-file-lines text-indigo-600 mr-1"></i> Daily Summary (auto)</h3>
-        <pre class="whitespace-pre-wrap text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-sans">${esc(sum)}</pre>
-        <div class="flex flex-wrap gap-2">
-          ${!ro ? `<a target="_blank" onclick="log('Summary','Daily summary sent to Chairman for ${date}')" href="${waLink(S.settings.chairmanPhone, sum)}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Send to Chairman</a>` : ''}
-          <button onclick="navigator.clipboard&&navigator.clipboard.writeText(document.querySelector('pre').innerText).then(()=>toast('Copied'))" class="btn btn-sm btn-l"><i class="fa-regular fa-copy"></i> Copy</button>
-        </div>
-        ${!ro && !S.settings.chairmanPhone ? '<p class="text-[11px] text-slate-500">Add the Chairman\'s number in Settings to send directly.</p>' : ''}
-      </div>
-    </div>
+      <div class="card lg:col-span-2"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h3 class="h3">Attendance by class</h3>
+          <div class="flex flex-wrap gap-3"><span class="legend"><i style="background:#1E4FD8"></i>95%+</span><span class="legend"><i style="background:#D3DEFB"></i>90–94%</span><span class="legend"><i style="background:#F5D9A8"></i>Below 90%</span><span class="legend"><i style="border:1.5px dashed #E5B25C"></i>Not marked</span></div></div>
+        <div class="att-grid">${CLASS_NAMES.slice().reverse().map(tile).join('')}</div></div>
+      <div class="space-y-4">
+        <div class="today-card"><div class="ring" style="--p:${pct || 0}"><b>${pct == null ? '—' : pct + '%'}</b></div>
+          <div><p class="dash-eyebrow" style="color:#E3A72F">School today</p><p class="text-lg font-bold mt-1">${as.total ? `${as.present} of ${as.total} present` : 'Attendance not marked yet'}</p>
+            <p class="text-xs text-white/60 mt-1">${as.total ? `${as.total - as.present} absent` : ''}${pending.length ? ` · ${pending.length} class${pending.length > 1 ? 'es' : ''} still to mark` : ''}</p></div></div>
+        <div class="card"><h3 class="h3 mb-1">Needs your attention</h3>
+          ${al.length ? al.slice(0, 6).map(a => `<div class="att-row"><span class="flex items-start"><span class="dot-${a.lv} mt-1.5"></span><span>${esc(a.x)}</span></span>
+            ${a.go && !ro ? `<button onclick="go('${a.go}',{date:'${date}'})" class="link">Open</button>` : ''}</div>`).join('') + (al.length > 6 ? `<p class="text-xs text-slate-500 pt-2">+ ${al.length - 6} more</p>` : '')
+            : '<p class="text-sm text-emerald-700 font-semibold py-2"><i class="fa-solid fa-circle-check"></i> All clear. Nothing needs attention.</p>'}</div>
+      </div></div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="card"><h3 class="font-bold mb-2">Arrangement Today</h3>
-        ${arr.length ? `<table class="tbl"><tr><th>Bell</th><th>Class</th><th>Absent</th><th>Substitute</th></tr>${arr.map(s => `<tr><td>${BELLS[s.bell].n}</td><td>${s.cls} ${esc(s.subj)}</td><td>${esc(T(s.absent).name)}</td><td class="${s.sub ? 'font-semibold' : 'text-rose-600 font-bold'}">${s.sub ? esc(T(s.sub).name) : 'Not covered'}</td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500">No arrangement needed.</p>'}
-      </div>
-      <div class="card"><h3 class="font-bold mb-2">Recent Activity</h3>
-        <div class="space-y-1.5 text-sm">${S.log.slice(0, 8).map(l => `<div class="flex gap-2"><span class="text-slate-400 text-xs w-28 shrink-0">${fmtTime(l.t)}</span><span><b>${esc(l.u)}</b> — ${esc(l.x)}</span></div>`).join('') || '<p class="text-slate-500">No activity yet.</p>'}</div>
-        <button onclick="go('log')" class="btn btn-sm btn-l mt-3">Full Activity Log</button>
-      </div>
-    </div>`;
+      <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Coming up</h3><button onclick="go('calendar')" class="link">Calendar</button></div>
+        ${upcoming.length ? upcoming.map(e => `<div class="att-row justify-start"><span class="date-cap ${e.kind}">${shortD(e.date)}${e.to && e.to !== e.date ? '–' + shortD(e.to).split(' ')[0] : ''}</span><span class="flex-1">${esc(e.title)}</span></div>`).join('') : '<p class="text-sm text-slate-500">Nothing on the calendar.</p>'}</div>
+      <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Recent notices</h3>${ro ? '' : '<button onclick="go(\'notices\')" class="link">All notices</button>'}</div>
+        ${S.notices.slice(0, 3).map(n => `<div class="att-row block"><p class="font-semibold">${esc(n.title)}</p><p class="text-xs text-slate-500 mt-0.5">Sent to ${esc(n.to || 'everyone')} · ${fmtDate(n.date)}</p></div>`).join('') || '<p class="text-sm text-slate-500">No notices yet.</p>'}</div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="card"><h3 class="h3 mb-2">Arrangement today</h3>
+        ${arr.length ? arr.map(s => `<div class="att-row"><span><b>${BELLS[s.bell].n}</b> · ${esc(s.cls)} ${esc(s.subj)}<br><span class="text-xs text-slate-500">for ${esc(T(s.absent).name)}</span></span><span class="pill ${s.sub ? 'bg-brand-soft text-brand' : 'bg-rose-100 text-rose-700'}">${s.sub ? esc(T(s.sub).name) : 'Not covered'}</span></div>`).join('') : '<p class="text-sm text-slate-500">No arrangement needed.</p>'}</div>
+      <div class="card space-y-3"><h3 class="h3">Daily summary</h3>
+        <pre id="dash-sum" class="whitespace-pre-wrap text-xs bg-slate-50 border border-slate-200 rounded-2xl p-3 font-sans">${esc(sum)}</pre>
+        <div class="flex flex-wrap gap-2">${!ro ? `<a target="_blank" onclick="log('Summary','Daily summary sent to Chairman for ${date}')" href="${waLink(S.settings.chairmanPhone, sum)}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Send to Chairman</a>` : ''}
+          <button onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('dash-sum').innerText).then(()=>toast('Copied'))" class="btn btn-sm btn-l"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        ${!ro && !S.settings.chairmanPhone ? '<p class="text-[11px] text-slate-500">Add the Chairman\'s number in Settings to send directly.</p>' : ''}</div>
+      <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Recent activity</h3><button onclick="go('log')" class="link">Full log</button></div>
+        ${S.log.slice(0, 6).map(l => `<div class="att-row block text-sm"><p><b>${esc(l.u)}</b> — ${esc(l.x)}</p><p class="text-xs text-slate-400">${fmtTime(l.t)}</p></div>`).join('') || '<p class="text-sm text-slate-500">No activity yet.</p>'}</div>
+    </div>
+    ${wordCard(date, true)}`;
 }
 
 // ---------------------------------------------------------------- STAFF ATTENDANCE + ARRANGEMENT + LEAVE APPROVAL
@@ -3108,6 +3135,127 @@ function pFeeDues() {
     ${PFD.receipts.length ? `<div class="card"><h3 class="h3">Receipts</h3><table class="tbl mt-2 text-sm"><tr><th>No.</th><th>Date</th><th>Child</th><th class="text-right">Amount</th><th>Mode</th></tr>${PFD.receipts.map(p => `<tr><td>${p.no}</td><td>${fmtDate(p.date)}</td><td>${esc(p.name)}</td><td class="text-right">${rs(p.amt)}</td><td>${esc(p.mode)}</td></tr>`).join('')}</table></div>` : ''}`;
 }
 
+// ---------------------------------------------------------------- STAFF SALARY (school/salary_api.php — Principal + Accountant; teachers see their own paid slips)
+let SAL = null, SALBUSY = false, SALOPEN = null;
+async function salapi(a, body, q) {
+  const url = 'salary_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : '');
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null;
+  try { r = await fetch(url, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (r.status === 401) { forceLogout(); throw new Error('Please log in again.'); }
+  if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem. Please try again.');
+  return j;
+}
+async function salLoad(ym) {
+  if (SALBUSY) return; SALBUSY = true;
+  try { SAL = U.role === 'teacher' ? await salapi('mine') : await salapi('sheet', null, { ym }); } catch (e) { SAL = { error: e.message, ym }; } finally { SALBUSY = false; }
+  if (view === 'salary') { const y = window.scrollY; render(); window.scrollTo(0, y); }
+}
+const ymLong = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' }); };
+const dd = n => (Math.round(n * 10) / 10).toString();
+function vSalary() {
+  if (U.role === 'teacher') return vMySalary();
+  const ym = P.ym || todayISO().slice(0, 7);
+  if (!SAL || (SAL.ym !== ym && !SAL.error)) { salLoad(ym); return head('Staff Salary') + '<div class="card text-sm text-slate-500">Loading salary sheet…</div>'; }
+  if (SAL.error) return head('Staff Salary') + `<div class="card text-sm text-rose-700">${esc(SAL.error)} <button onclick="SAL=null;render()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
+  const rows = SAL.rows, set = rows.filter(r => r.status !== 'Not set'), paid = rows.filter(r => r.status === 'Paid');
+  const tot = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
+  const months = []; for (let i = -3; i <= 1; i++) months.push(ymAdd(todayISO().slice(0, 7), i));
+  const statusPill = r => r.status === 'Paid' ? '<span class="pill bg-emerald-100 text-emerald-800">Paid</span>' : r.status === 'Due' ? '<span class="pill bg-amber-100 text-amber-800">Due</span>' : '<span class="pill bg-slate-100 text-slate-600">Salary not set</span>';
+  const card = r => { const s = r.staff, c = r.calc, open = SALOPEN === s.id, id = s.id.replace(/[^a-z0-9]/gi, '');
+    const why = c.manual ? 'entered by office' : c.auto ? `${dd(c.auto.absent)} absent${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}${c.auto.leave ? ', ' + c.auto.leave + ' leave' : ''}` : 'enter days';
+    return `<div class="card ${s.active ? '' : 'opacity-60'}"><div class="flex flex-wrap items-start justify-between gap-2">
+        <div class="min-w-0"><p class="font-bold text-ink">${esc(s.name)} ${statusPill(r)}</p><p class="text-xs text-slate-500">${esc(s.role)}${s.teaching ? '' : ' · non-teaching'}${s.active ? '' : ' · inactive'}</p></div>
+        <div class="text-right"><p class="text-xs text-slate-500">Net pay</p><p class="text-xl font-extrabold text-ink">${r.status === 'Not set' ? '—' : rs(c.net)}</p></div></div>
+      ${r.status === 'Not set' ? '' : `<div class="flex flex-wrap gap-2 mt-3 text-xs">
+        <span class="pill bg-slate-100 text-slate-700">Salary ${rs(c.gross)}</span><span class="pill bg-slate-100 text-slate-700">Absent ${dd(c.absent)} (${why})</span>
+        <span class="pill bg-slate-100 text-slate-700">Paid leave ${dd(c.paidLeave)}</span>${c.deduction ? `<span class="pill bg-rose-50 text-rose-700">Cut ${rs(c.deduction)} for ${dd(c.unpaid)} day(s)</span>` : ''}
+        ${c.advance ? `<span class="pill bg-rose-50 text-rose-700">Advance −${rs(c.advance)}</span>` : ''}${c.bonus ? `<span class="pill bg-emerald-50 text-emerald-700">Bonus +${rs(c.bonus)}</span>` : ''}${c.note ? `<span class="pill bg-slate-100 text-slate-600">${esc(c.note)}</span>` : ''}</div>`}
+      ${r.pay ? `<p class="text-xs text-slate-500 mt-2">Paid ${fmtDate(r.pay.paidOn)} by ${esc(r.pay.mode)}${r.pay.ref ? ' (' + esc(r.pay.ref) + ')' : ''} · ${esc(r.pay.by)}</p>` : ''}
+      <div class="flex flex-wrap gap-2 mt-3">
+        ${r.status === 'Due' ? `<button onclick="SALOPEN=${open ? 'null' : jsq(s.id)};render()" class="btn btn-sm ${open ? 'btn-l' : 'btn-p'}">${open ? 'Close' : 'Adjust & pay'}</button>` : ''}
+        ${r.status === 'Paid' ? `<button onclick="salSlip(${jsq(s.id)})" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Salary slip</button>${SAL.can.unpay ? `<button onclick="salUnpay(${jsq(s.id)})" class="btn btn-sm btn-l">Reopen</button>` : ''}` : ''}
+        ${SAL.can.staff && r.status !== 'Paid' ? `<button onclick="salStaffEdit(${jsq(s.id)})" class="btn btn-sm btn-l">${r.status === 'Not set' ? 'Set salary' : 'Edit salary'}</button>` : ''}</div>
+      ${open ? `<div class="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-3"><div class="grid grid-cols-2 gap-2">
+        <div><label class="lbl">Absent days</label><input id="sa-${id}-ab" type="number" step="0.5" min="0" class="inp" value="${c.manual ? c.absent : ''}" placeholder="${s.teaching ? 'Auto: ' + dd(c.auto ? c.auto.total : 0) : 'Days'}"></div>
+        <div><label class="lbl">Advance (₹)</label><input id="sa-${id}-adv" type="number" min="0" class="inp" value="${c.advance || ''}"></div>
+        <div><label class="lbl">Bonus / other (₹)</label><input id="sa-${id}-bon" type="number" min="0" class="inp" value="${c.bonus || ''}"></div>
+        <div><label class="lbl">Note</label><input id="sa-${id}-note" class="inp" maxlength="200" value="${esc(c.note || '')}"></div>
+        <button onclick="salAdjust(${jsq(s.id)},'${id}')" class="btn btn-l col-span-2">Save changes</button></div>
+        <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200"><div><label class="lbl">Paid by</label><select id="sa-${id}-mode" class="inp">${SAL.modes.map(m => `<option>${esc(m)}</option>`).join('')}</select></div>
+        <div><label class="lbl">Ref. / cheque no.</label><input id="sa-${id}-ref" class="inp" maxlength="60"></div>
+        <div><label class="lbl">Paid on</label><input id="sa-${id}-date" type="date" class="inp" value="${SAL.today}" max="${SAL.today}"></div>
+        <button onclick="salPay(${jsq(s.id)},'${id}')" class="btn btn-g self-end"><i class="fa-solid fa-check"></i> Mark paid ${rs(c.net)}</button></div></div>` : ''}</div>`; };
+  return head('Staff Salary', `${ymLong(ym)} · ${SAL.workDays} working days (Sundays and holidays left out). Absences come from Staff Attendance and approved leave.`,
+      `<select class="inp w-auto" onchange="SAL=null;SALOPEN=null;go('salary',{ym:this.value})">${months.map(m => `<option value="${m}" ${m === ym ? 'selected' : ''}>${ymLong(m)}</option>`).join('')}</select>
+       <button onclick="salRegister()" class="btn btn-l"><i class="fa-solid fa-print"></i> Register</button>${SAL.can.staff ? '<button onclick="salStaffEdit(\'\')" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add staff</button>' : ''}`) + `
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="kpi"><span class="kpi-lbl">Total salary</span><span class="kpi-val">${rs(tot('gross'))}</span><span class="kpi-sub">${set.length} staff with salary set</span></div>
+      <div class="kpi"><span class="kpi-lbl">Cut for absence</span><span class="kpi-val">${rs(tot('deduction'))}</span><span class="kpi-sub">advance ${rs(tot('advance'))} · bonus ${rs(tot('bonus'))}</span></div>
+      <div class="kpi"><span class="kpi-lbl">Net to pay</span><span class="kpi-val">${rs(tot('net'))}</span><span class="kpi-sub">for ${ymLong(ym)}</span></div>
+      <div class="kpi ${paid.length < set.length ? 'kpi-warn' : ''}"><span class="kpi-lbl">Paid</span><span class="kpi-val">${paid.length} <small>/ ${set.length}</small></span><span class="kpi-sub">${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid so far</span></div></div>
+    ${rows.some(r => r.status === 'Not set') ? `<div class="card text-sm bg-amber-50 border-amber-200">${rows.filter(r => r.status === 'Not set').length} staff member(s) have no salary set yet${SAL.can.staff ? ' — press <b>Set salary</b> on their card.' : '. Ask the Principal to set it.'}</div>` : ''}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">${rows.map(card).join('')}</div>
+    <p class="text-xs text-slate-500">Only the Principal and the Accountant can see this page. Teachers see only their own paid salary slips.</p>`;
+}
+async function salStaffEdit(id) {
+  const s = id ? SAL.rows.find(r => r.staff.id === id).staff : { name: '', role: '', monthly: null, paidLeave: 1, active: true, teaching: false };
+  let name = s.name, role = s.role;
+  if (!s.teaching) { name = prompt('Name (e.g. Ramesh — driver)', s.name); if (name === null) return; role = prompt('Job (Driver, Peon, Guard, Accountant…)', s.role || ''); if (role === null) return; }
+  const m = prompt(`Monthly salary of ${name} (₹, blank = not set)`, s.monthly ?? ''); if (m === null) return;
+  const pl = prompt('Paid leave days per month (absences up to this are not cut)', s.paidLeave ?? 1); if (pl === null) return;
+  const active = id ? confirm(`Keep ${name} active?\nOK = active, Cancel = left the school (inactive)`) : true;
+  try { await salapi('staff', { id, name, role, monthly: m.trim() === '' ? null : +m, paidLeave: +pl, active }); toast('Saved'); } catch (e) { toast(e.message, 'r'); }
+  SAL = null; render();
+}
+async function salAdjust(id, k) {
+  const g = x => document.getElementById(`sa-${k}-${x}`).value.trim();
+  try { await salapi('adjust', { ym: SAL.ym, id, manualAbsent: g('ab'), advance: g('adv'), bonus: g('bon'), note: g('note') }); toast('Saved'); } catch (e) { return toast(e.message, 'r'); }
+  SAL = null; render();
+}
+async function salPay(id, k) {
+  const g = x => document.getElementById(`sa-${k}-${x}`).value.trim(), r = SAL.rows.find(x => x.staff.id === id);
+  if (g('ab') !== (r.calc.manual ? String(r.calc.absent) : '') || +g('adv') !== r.calc.advance || +g('bon') !== r.calc.bonus) return toast('Press "Save changes" first, then mark paid.', 'a');
+  if (!confirm(`Mark ${r.staff.name}'s salary for ${ymLong(SAL.ym)} as PAID: ${rs(r.calc.net)} by ${g('mode')}?`)) return;
+  try { await salapi('pay', { ym: SAL.ym, id, mode: g('mode'), ref: g('ref'), date: g('date') }); toast('Marked paid'); SALOPEN = null; } catch (e) { toast(e.message, 'r'); }
+  const ym = SAL.ym; SAL = null; await salLoad(ym); const p = SAL.rows && SAL.rows.find(x => x.staff.id === id); if (p && p.status === 'Paid') salSlip(id);
+}
+async function salUnpay(id) {
+  const reason = prompt('Why reopen this paid salary? (kept in the activity log)'); if (reason === null) return;
+  try { await salapi('unpay', { ym: SAL.ym, id, reason }); toast('Reopened'); } catch (e) { toast(e.message, 'r'); }
+  SAL = null; render();
+}
+function salSlipHTML(name, role, ym, c, pay) {
+  const row = (a, b) => `<tr><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb">${a}</td><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${b}</td></tr>`;
+  return `<div style="border:1.5px solid #0B1F3A;border-radius:14px;padding:16px;margin-bottom:16px;page-break-inside:avoid">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:16px">${esc(S.settings.school)}, ${esc(S.settings.place || 'Bhadohi')}</b><span>SALARY SLIP — ${ymLong(ym)}</span></div>
+    <p style="margin:8px 0"><b>${esc(name)}</b> · ${esc(role)}</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">${row('Monthly salary', rs(c.gross))}${row('Working days', c.workDays)}${row('Absent days', dd(c.absent))}${row('Paid leave allowed', dd(c.paidLeave))}
+      ${row(`Cut for ${dd(c.unpaid)} unpaid day(s)`, '− ' + rs(c.deduction))}${c.advance ? row('Advance recovered', '− ' + rs(c.advance)) : ''}${c.bonus ? row('Bonus / other', '+ ' + rs(c.bonus)) : ''}
+      <tr><td style="padding:8px"><b>Net paid</b></td><td style="padding:8px;text-align:right"><b style="font-size:16px">${rs(c.net)}</b></td></tr></table>
+    ${pay ? `<p style="font-size:12px;margin-top:6px">Paid on ${fmtDate(pay.paidOn)} by ${esc(pay.mode)}${pay.ref ? ' (' + esc(pay.ref) + ')' : ''}</p>` : ''}
+    <div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Principal ______________</span></div>
+    <div style="font-size:10px;color:#666;margin-top:6px">Powered by Maakit</div></div>`;
+}
+function salSlip(id) { const r = SAL.rows.find(x => x.staff.id === id); if (!r || r.status !== 'Paid') return; printHTML('Salary slip', salSlipHTML(r.staff.name, r.staff.role, SAL.ym, r.calc, r.pay)); }
+function salRegister() {
+  const rows = SAL.rows.filter(r => r.status !== 'Not set');
+  printHTML('Salary register', printHeader('Salary register — ' + ymLong(SAL.ym) + ' · ' + SAL.workDays + ' working days') + `<table class="t"><tr><th>Name</th><th>Job</th><th>Salary</th><th>Absent</th><th>Cut</th><th>Advance</th><th>Bonus</th><th>Net</th><th>Paid on</th><th>Sign</th></tr>
+    ${rows.map(r => `<tr><td>${esc(r.staff.name)}</td><td>${esc(r.staff.role)}</td><td>${rs(r.calc.gross)}</td><td>${dd(r.calc.absent)}</td><td>${rs(r.calc.deduction)}</td><td>${rs(r.calc.advance)}</td><td>${rs(r.calc.bonus)}</td><td><b>${rs(r.calc.net)}</b></td><td>${r.pay ? fmtDate(r.pay.paidOn) + ' ' + esc(r.pay.mode) : 'Due'}</td><td></td></tr>`).join('')}
+    <tr><th colspan="7">Total</th><th>${rs(rows.reduce((a, r) => a + r.calc.net, 0))}</th><th colspan="2"></th></tr></table>` + PRINT_FOOT);
+  log('Salary', 'Printed salary register for ' + SAL.ym);
+}
+function vMySalary() {
+  if (!SAL || SAL.error && !SAL.retry) { if (!SAL) { salLoad(); return head('My Salary') + '<div class="card text-sm text-slate-500">Loading…</div>'; } }
+  if (SAL.error) return head('My Salary') + `<div class="card text-sm">${esc(SAL.error)}</div>`;
+  return head('My Salary', 'Your salary slips appear here once the office marks the month as paid.') +
+    (SAL.slips && SAL.slips.length ? SAL.slips.map(s => `<div class="card flex flex-wrap items-center justify-between gap-3"><div><p class="font-bold text-ink">${ymLong(s.ym)}</p><p class="text-xs text-slate-500">Paid ${fmtDate(s.paidOn)} · ${esc(s.mode)} · ${dd(s.calc.absent)} absent day(s)</p></div>
+      <div class="flex items-center gap-3"><b class="text-xl">${rs(s.calc.net)}</b><button onclick="printHTML('Salary slip',salSlipHTML(${jsq(s.name)},${jsq(s.role)},'${s.ym}',SAL.slips.find(x=>x.ym==='${s.ym}').calc,SAL.slips.find(x=>x.ym==='${s.ym}')))" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Slip</button></div></div>`).join('')
+      : '<div class="card text-sm text-slate-500">No paid salary slips yet.</div>');
+}
+
 // ---------------------------------------------------------------- GAME ZONE (students + parents) — school/game_api.php
 // Short rounds, instant funny feedback, a rule and an English word after every answer,
 // combos, streaks, chests, spaced "revenge" rounds and a whole-class weekly mission.
@@ -3258,7 +3406,7 @@ async function gFix(pid, i, action) { try { await gapi('packfix', { pid, i, acti
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, fdesk: vFDesk, fdues: vFDues, fcalls: vFCalls, freceipts: vFReceipts, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, fdesk: vFDesk, salary: vSalary, fdues: vFDues, fcalls: vFCalls, freceipts: vFReceipts, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
 NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
 

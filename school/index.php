@@ -17,14 +17,15 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#17324D">
+<meta name="theme-color" content="#0B1F3A">
 <title>School ERP – SN Mishra SIS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="app.css?v=<?= $v('app.css') ?>">
 <link rel="stylesheet" href="toolkit.css?v=<?= $v('toolkit.css') ?>">
 <link rel="stylesheet" href="design-2026.css?v=<?= $v('design-2026.css') ?>">
+<link rel="stylesheet" href="erp-pro.css?v=<?= $v('erp-pro.css') ?>">
 </head>
 <body class="bg-paper text-slate-800 min-h-screen">
 <div id="toasts" class="fixed top-3 right-3 z-50 flex flex-col gap-2 pointer-events-none max-w-xs"></div>
