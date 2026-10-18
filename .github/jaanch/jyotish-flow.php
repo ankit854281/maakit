@@ -25,10 +25,10 @@ function jf_http(string $path, $body = null): array {
 // ---- the page ----
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'welcome-title', 'welcome-question', 'welcome-form', 'welcome-actions', 'AI se baat karein', 'ai-chat-welcome', 'k-question-hint'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'welcome-title', 'welcome-question', 'welcome-form', 'welcome-actions', 'AI se baat karein', 'ai-chat-welcome', 'k-question-hint', 'Naam Jaap Challenge', 'jaap-mantra', 'jaap-mode', 'jaap-arena', 'jaap-tap', 'jaap-voice', 'ek hi phone'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
 [$cJs, $js] = jf_http('/jyotish/app.js');
-jf_check($cJs === 200 && str_contains($js, 'pendingWelcomeQuestion') && str_contains($js, 'Personal jawaab ke liye pehle apni janam kundli banaiye'), 'welcome question should stay in draft until a real chart exists');
+jf_check($cJs === 200 && str_contains($js, 'pendingWelcomeQuestion') && str_contains($js, 'Personal jawaab ke liye pehle apni janam kundli banaiye') && str_contains($js, 'jaapFinishRound') && str_contains($js, 'mj-jaap-best') && str_contains($js, 'screen.orientation.lock("landscape")'), 'welcome draft and local landscape jaap challenge should be wired');
 
 // ---- AI off without a key: page says so, endpoint answers "off" ----
 if (!jy_ai_ready()) {
