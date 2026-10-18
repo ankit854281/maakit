@@ -1,0 +1,116 @@
+<?php
+// ============================================================
+// Maakit Jyotish — kundli, gun milan, rashifal aur AI Jyotishi
+//
+// Alag product, Maakit ke hosting par (jaise /school). Maakit ki
+// kisi table ko nahi chhoota. Saari ginti (grah, lagna, dasha,
+// milan) phone par hi hoti hai: engine.js + astronomy.min.js
+// (astronomy-engine 2.1.19, MIT). Server sirf AI chat (ai.php)
+// ke liye hai.
+// ============================================================
+declare(strict_types=1);
+require_once __DIR__ . '/ai_lib.php';
+$aiOn = jy_ai_ready();
+header('Content-Type: text/html; charset=utf-8');
+?><!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Maakit Jyotish — Kundli, Milan, Rashifal</title>
+<meta name="description" content="Free Janam Kundli, 36 gun Kundli Milan, daily rashifal and AI Jyotishi in Hinglish, Hindi and English. Powered by Maakit, Bhadohi.">
+<meta name="theme-color" content="#B8235A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hind:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="jyotish.css?v=1">
+</head>
+<body data-ai="<?= $aiOn ? '1' : '0' ?>" style="margin:0">
+<div class="wrap">
+  <header class="mast">
+    <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
+    <div class="powered">Powered by <b>Maakit</b> · Bhadohi</div>
+    <div class="panch" id="panch">Loading today's panchang…</div>
+  </header>
+
+  <!-- KUNDLI -->
+  <section class="tab" id="t-kundli">
+    <form class="card" id="f-k" autocomplete="off">
+      <div class="row" style="justify-content:space-between"><h2>Janam Kundli</h2><span class="badge" id="ex-badge">Example chart</span></div>
+      <div class="grid2">
+        <label>Name<input id="k-name" required value="Example Person"></label>
+        <label>Gender<select id="k-gender"><option>Male</option><option>Female</option><option>Other</option></select></label>
+        <label>Date of birth<input id="k-date" type="date" required value="2001-01-15"></label>
+        <label>Time of birth<input id="k-time" type="time" required value="08:30"></label>
+        <label>Place of birth<select id="k-city"></select></label>
+        <label>Time zone<select id="k-tz"><option value="5.5">IST (India, +5:30)</option><option value="5.75">Nepal (+5:45)</option><option value="6">Bangladesh (+6:00)</option><option value="4">UAE (+4:00)</option><option value="0">UK (GMT)</option><option value="-5">US Eastern (-5:00)</option></select></label>
+      </div>
+      <div class="grid2" id="k-custom" hidden>
+        <label>Latitude<input id="k-lat" type="number" step="0.0001" value="25.3953"></label>
+        <label>Longitude<input id="k-lon" type="number" step="0.0001" value="82.5683"></label>
+      </div>
+      <div class="row"><button class="btn" type="submit">Make my Kundli</button><span class="note">Saved on this device only.</span></div>
+    </form>
+    <div id="k-out" class="fade" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+
+  <!-- MILAN -->
+  <section class="tab" id="t-milan" hidden>
+    <form class="card" id="f-m" autocomplete="off">
+      <h2>Kundli Milan · 36 Gun</h2>
+      <p class="note" style="margin:0">Enter both birth details. The example pair is pre-filled.</p>
+      <div class="grid2">
+        <div class="card" style="background:var(--sunk);border:0">
+          <div class="eyebrow">Boy</div>
+          <label>Name<input id="b-name" value="Rahul (example)"></label>
+          <label>Date<input id="b-date" type="date" value="1998-06-12"></label>
+          <label>Time<input id="b-time" type="time" value="06:45"></label>
+          <label>Place<select id="b-city"></select></label>
+        </div>
+        <div class="card" style="background:var(--sunk);border:0">
+          <div class="eyebrow">Girl</div>
+          <label>Name<input id="g-name" value="Priya (example)"></label>
+          <label>Date<input id="g-date" type="date" value="2000-02-03"></label>
+          <label>Time<input id="g-time" type="time" value="14:20"></label>
+          <label>Place<select id="g-city"></select></label>
+        </div>
+      </div>
+      <div class="row"><button class="btn" type="submit">Check Gun Milan</button></div>
+    </form>
+    <div id="m-out" class="fade" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+
+  <!-- RASHIFAL -->
+  <section class="tab" id="t-rashi" hidden>
+    <div id="r-out" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+
+  <!-- AI -->
+  <section class="tab" id="t-ai" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h2>Ask AI Jyotishi</h2>
+        <label style="flex-direction:row;align-items:center;gap:6px">Reply in
+          <select id="lang" style="width:auto"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label></div>
+      <p class="note" style="margin:0" id="ai-who"></p>
+      <div class="chips" id="sugg"></div>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="note" id="ai-status"></div>
+    <form class="composer" id="f-ai"><textarea id="q" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit">Ask</button></form>
+    <p class="note">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
+  </section>
+
+  <div class="foot">Maakit Jyotish V1 · Vedic sidereal (Lahiri) · Whole-sign houses · Powered by Maakit</div>
+</div>
+
+<nav class="tabs" aria-label="Sections"><div class="in" role="tablist">
+  <button role="tab" data-t="kundli" aria-selected="true"><span class="d">कुंडली</span>Kundli</button>
+  <button role="tab" data-t="milan" aria-selected="false"><span class="d">मिलान</span>Milan</button>
+  <button role="tab" data-t="rashi" aria-selected="false"><span class="d">राशिफल</span>Rashifal</button>
+  <button role="tab" data-t="ai" aria-selected="false"><span class="d">पूछें</span>Ask AI</button>
+</div></nav>
+
+<script src="astronomy.min.js?v=2.1.19"></script>
+<script src="engine.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>

@@ -424,3 +424,12 @@ Owner explicitly requested bento surfaces, gradients and glass mobile dock for t
 ### Detailed Fee Department (17 October 2026)
 
 `school/finance.php` + `finance_api.php` / `finance_lib.php` / `finance.js` implement session-scoped immutable bills/events, partial collection, pending/cleared/bounced cheques, concessions, advance/refunds/transfers, private proof, reports and closing. All `fin*` kinds stay OUT of legacy sync / `SCH_KINDS`. Financial writes and legacy migration share the Principal row lock. Legacy `office_api.php` pay/settings/cancel refuse activated detailed accounts; original `acct*` receipts remain. Explicit reviewed migration carries only reconciled remaining balance plus covered months, not fabricated historic receipts. See `docs/school-fee-department.md`; tests finance-unit.php / finance-flow.php / finance-ui.cjs. Preserve private `school-private-finance` outside web root and include it in private backup. A code commit is not live deployment.
+
+## Maakit Jyotish = maakit.in/jyotish (18 Oct 2026, owner decision)
+
+- A separate product "powered by Maakit", like `/school`: free Janam Kundli (North Indian chart, planets, Manglik, Vimshottari dasha), 36-gun Kundli Milan, personalised daily Rashifal (Chandra gochar, Tarabala, Sade Sati) and an AI Jyotishi chat in Hinglish / Hindi / English. It never reads or writes any Maakit table except its own `jy_ai_use`.
+- All astrology maths runs on the phone: `jyotish/engine.js` on top of `jyotish/astronomy.min.js` (astronomy-engine 2.1.19, MIT, vendored — no CDN). Sidereal Lahiri ayanamsa (formula, about arc-minute accuracy), whole-sign houses. Profile stays only in the phone's localStorage.
+- AI: `jyotish/ai.php` + `ai_lib.php`. Key from config.php `JYOTISH_AI_API_KEY` + `JYOTISH_AI_MODEL`, falling back to `SCHOOL_AI_API_KEY` + `SCHOOL_AI_MODEL` (OpenAI Responses). No key → page shows "AI Jyotishi is starting soon" and everything else works. The reading rules live on the server (`jy_rules`), never sent from the phone.
+- Owner's honesty rule for this product: no "guaranteed / 100% real prediction" claims anywhere, timing only as windows, no fear, no selling gemstones or costly remedies. Keep it that way.
+- Limit: `JY_DAILY` (20) AI questions per IP per day, counted by a hashed IP+day in `jy_ai_use` (sql/040). No payments yet; if paid reports are added, follow section 2 (money rule) and ask the owner first.
+- Interface is English with Hindi labels (owner chose English replies). Tests: `.github/jaanch/jyotish-flow.php`, `jyotish-engine.cjs`.

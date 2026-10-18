@@ -64,6 +64,7 @@ export const PAGES = [
   { path: '/sewa.php',    naam: 'बुकिंग की सूची', chahiye: ['Maakit'],              nabz: true },
   { path: '/track.php',   naam: 'ऑर्डर देखिए',    chahiye: ['Maakit'],              nabz: true },
   { path: '/school/',     naam: 'स्कूल ERP',       chahiye: ['School ERP'] },
+  { path: '/jyotish/',    naam: 'Maakit Jyotish',  chahiye: ['Maakit Jyotish', 'Kundli Milan'] },
 
   // ---------- booking ke form ----------
   // "किताब नहीं मिली" isliye roka hai kyonki ek baar book.php ke
