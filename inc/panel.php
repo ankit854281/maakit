@@ -33,6 +33,7 @@ if ($role === 'admin') {
             '/bpo/bookings.php'    => [t('Bookings', 'बुकिंग'), 'calendar'],
             '/admin/summary.php'   => [t('Accounts', 'हिसाब'), 'rupee'],
             '/muneem.php'          => [t('Ledger (Muneem)', 'मुनीम'), 'book'],
+            '/admin/jyotish.php'   => [t('Jyotish usage', 'ज्योतिष — कौन क्या पूछ रहा'), 'chart'],
         ],
         t('Catalogue', 'सामान') => [
             '/admin/product-photos.php' => [t('Product photos', 'सामान की फ़ोटो'), 'image'],

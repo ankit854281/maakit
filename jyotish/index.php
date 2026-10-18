@@ -22,7 +22,7 @@ header('Content-Type: text/html; charset=utf-8');
 <meta name="theme-color" content="#B8235A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hind:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="jyotish.css?v=1">
+<link rel="stylesheet" href="jyotish.css?v=2">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>" style="margin:0">
 <div class="wrap">
@@ -30,10 +30,46 @@ header('Content-Type: text/html; charset=utf-8');
     <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
     <div class="powered">Powered by <b>Maakit</b> · Bhadohi</div>
     <div class="panch" id="panch">Loading today's panchang…</div>
+    <label class="langpick">Language
+      <select id="lang"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
   </header>
 
+  <div class="card notice" id="notice" hidden>
+    <p style="margin:0">Maakit Jyotish saves anonymous usage to learn what people need: which features are used, birth place, rashi, birth year, and the questions you ask the AI. <b>Never your name, exact birth date or time, or your check-in mood.</b> Please don't write names or phone numbers in questions.</p>
+    <div class="row"><button class="btn" type="button" id="share-yes">OK</button><button class="btn ghost" type="button" id="share-no">Don't send</button></div>
+  </div>
+
+  <!-- AAJ: check-in + daily card -->
+  <section class="tab" id="t-aaj">
+    <div class="card" id="checkin" hidden>
+      <div class="eyebrow" id="ci-eyebrow"></div>
+      <h2 id="ci-title"></h2>
+      <div class="ci-q"><div class="ci-l" id="ci-l-mood"></div><div class="chips" id="ci-mood"></div></div>
+      <div class="ci-q"><div class="ci-l" id="ci-l-energy"></div><div class="chips" id="ci-energy"></div></div>
+      <div class="ci-q"><div class="ci-l" id="ci-l-concern"></div><div class="chips" id="ci-concern"></div></div>
+      <label id="ci-l-text"><span></span><input id="ci-text" maxlength="300" autocomplete="off"></label>
+      <label class="consent"><input type="checkbox" id="ci-share"> <span id="ci-l-share"></span></label>
+      <p class="note" id="ci-private" style="margin:0"></p>
+      <div class="row"><button class="btn" type="button" id="ci-go"></button><button class="btn ghost" type="button" id="ci-skip"></button></div>
+      <button class="linkbtn" type="button" id="ci-help"></button>
+    </div>
+    <div id="card-out" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+
+  <!-- HELP: pareshani me — sirf madad, koi jyotish nahi -->
+  <section class="help" id="help" hidden aria-live="assertive">
+    <div class="card helpcard">
+      <h2 id="help-title"></h2>
+      <p id="help-body" style="margin:0"></p>
+      <div class="helpcall"><div><div class="eyebrow">Tele-MANAS</div><div class="big">14416</div><div class="note" id="help-tm"></div></div><a class="btn" href="tel:14416">Call 14416</a></div>
+      <div class="helpcall"><div><div class="eyebrow" id="help-em"></div><div class="big">112</div></div><a class="btn ghost" href="tel:112">Call 112</a></div>
+      <p class="note" id="help-friend" style="margin:0"></p>
+      <button class="btn ghost" type="button" id="help-ok"></button>
+    </div>
+  </section>
+
   <!-- KUNDLI -->
-  <section class="tab" id="t-kundli">
+  <section class="tab" id="t-kundli" hidden>
     <form class="card" id="f-k" autocomplete="off">
       <div class="row" style="justify-content:space-between"><h2>Janam Kundli</h2><span class="badge" id="ex-badge">Example chart</span></div>
       <div class="grid2">
@@ -48,9 +84,15 @@ header('Content-Type: text/html; charset=utf-8');
         <label>Latitude<input id="k-lat" type="number" step="0.0001" value="25.3953"></label>
         <label>Longitude<input id="k-lon" type="number" step="0.0001" value="82.5683"></label>
       </div>
-      <div class="row"><button class="btn" type="submit">Make my Kundli</button><span class="note">Saved on this device only.</span></div>
+      <div class="row"><button class="btn" type="submit">Make my Kundli</button><span class="note">Your name and exact birth details stay on this phone.</span></div>
     </form>
     <div id="k-out" class="fade" style="display:flex;flex-direction:column;gap:18px"></div>
+    <div class="card">
+      <h3>Your data</h3>
+      <p class="note" style="margin:0" id="priv-state"></p>
+      <div class="row"><button class="btn ghost" type="button" id="priv-toggle"></button><button class="btn ghost" type="button" id="priv-del">Delete my data</button></div>
+      <p class="note" id="priv-done" style="margin:0" hidden>Deleted. Everything saved on this phone and the usage log from this phone are gone.</p>
+    </div>
   </section>
 
   <!-- MILAN -->
@@ -88,8 +130,7 @@ header('Content-Type: text/html; charset=utf-8');
   <section class="tab" id="t-ai" hidden>
     <div class="card">
       <div class="row" style="justify-content:space-between"><h2>Ask AI Jyotishi</h2>
-        <label style="flex-direction:row;align-items:center;gap:6px">Reply in
-          <select id="lang" style="width:auto"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label></div>
+        <span class="note">Replies in the language chosen at the top</span></div>
       <p class="note" style="margin:0" id="ai-who"></p>
       <div class="chips" id="sugg"></div>
     </div>
@@ -99,11 +140,12 @@ header('Content-Type: text/html; charset=utf-8');
     <p class="note">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
   </section>
 
-  <div class="foot">Maakit Jyotish V1 · Vedic sidereal (Lahiri) · Whole-sign houses · Powered by Maakit</div>
+  <div class="foot">Maakit Jyotish V2 · Vedic sidereal (Lahiri) · Whole-sign houses · Powered by Maakit</div>
 </div>
 
 <nav class="tabs" aria-label="Sections"><div class="in" role="tablist">
-  <button role="tab" data-t="kundli" aria-selected="true"><span class="d">कुंडली</span>Kundli</button>
+  <button role="tab" data-t="aaj" aria-selected="true"><span class="d">आज</span>Today</button>
+  <button role="tab" data-t="kundli" aria-selected="false"><span class="d">कुंडली</span>Kundli</button>
   <button role="tab" data-t="milan" aria-selected="false"><span class="d">मिलान</span>Milan</button>
   <button role="tab" data-t="rashi" aria-selected="false"><span class="d">राशिफल</span>Rashifal</button>
   <button role="tab" data-t="ai" aria-selected="false"><span class="d">पूछें</span>Ask AI</button>
@@ -111,6 +153,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="app.js?v=1"></script>
+<script src="daily.js?v=2"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>

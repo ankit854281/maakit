@@ -1,7 +1,13 @@
 <?php
 // ============================================================
-// Maakit Jyotish — AI Jyotishi (POST JSON {lang, chart, turns})
-// Jawab: {text, left}  ya  {err: off|bad|limit|fail}
+// Maakit Jyotish — AI Jyotishi (POST JSON {lang, chart, turns, ctx?, device?, nolog?})
+// Jawab: {text, left}  ya  {crisis:true}  ya  {err: off|bad|limit|fail}
+//
+// Har sawaal (AI band ho tab bhi) jy_events me likha jaata hai — taaki
+// Ankit dekh sakein log kya poochh rahe hain. Bina naam. Agar user ne
+// "Mat bhejiye" chuna ho (nolog) to kuchh nahi likha jaata.
+// Pareshani ke shabd mile to: AI ko nahi bheja, text nahi likha,
+// sirf ek ginti — aur phone madad ka panna khol deta hai.
 // ============================================================
 declare(strict_types=1);
 date_default_timezone_set('Asia/Kolkata');
@@ -12,15 +18,22 @@ header('Cache-Control: no-store');
 function jy_out(int $code, array $d): never { http_response_code($code); echo json_encode($d, JSON_UNESCAPED_UNICODE); exit; }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jy_out(405, ['err' => 'bad']);
-if (!jy_ai_ready()) jy_out(503, ['err' => 'off']);
 $in = json_decode((string)file_get_contents('php://input', false, null, 0, 40000), true);
 try { $c = jy_clean(is_array($in) ? $in : []); } catch (InvalidArgumentException $e) { jy_out(400, ['err' => 'bad']); }
+$q = end($c['turns'])['content'];
+$ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
 
-try {
-    $db = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4', DB_USER, DB_PASS,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false]);
-    if (!jy_take($db, (string)($_SERVER['REMOTE_ADDR'] ?? ''), $left)) jy_out(429, ['err' => 'limit']);
-} catch (PDOException $e) { jy_out(503, ['err' => 'fail']); }
+try { $db = jy_db(); } catch (PDOException $e) { jy_out(503, ['err' => jy_ai_ready() ? 'fail' : 'off']); }
+
+if (jy_crisis($q)) {
+    try { if (jy_event_ok($db, $ip)) jy_log($db, 'crisis', []); } catch (PDOException $e) {}
+    jy_out(200, ['crisis' => true]);
+}
+if (!$c['nolog']) {
+    try { if (jy_event_ok($db, $ip)) jy_log($db, 'ai_q', ['device' => $c['device'], 'lang' => $c['lang'], 'topic' => jy_topic($q), 'q' => $q]); } catch (PDOException $e) {}
+}
+if (!jy_ai_ready()) jy_out(503, ['err' => 'off']);
+try { if (!jy_take($db, $ip, $left)) jy_out(429, ['err' => 'limit']); } catch (PDOException $e) { jy_out(503, ['err' => 'fail']); }
 
 try { jy_out(200, ['text' => jy_ask($c), 'left' => $left]); }
 catch (Throwable $e) { jy_out(502, ['err' => 'fail']); }

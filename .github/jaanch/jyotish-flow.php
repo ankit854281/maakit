@@ -25,8 +25,8 @@ function jf_http(string $path, $body = null): array {
 // ---- the page ----
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'app.js'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
-foreach (['astronomy.min.js', 'engine.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
 
 // ---- AI off without a key: page says so, endpoint answers "off" ----
 if (!jy_ai_ready()) {
@@ -66,4 +66,72 @@ jf_check(!jy_take($db, $ip, $left) && $left === 0, 'question over the limit allo
 jf_check(jy_take($db, $ip . 'other', $left), 'another phone blocked');
 $q = $db->prepare('SELECT COUNT(*) FROM jy_ai_use WHERE bucket = ?'); $q->execute([$ip]);
 jf_check((int)$q->fetchColumn() === 0, 'raw IP must not be stored');
+
+// ================= V2: usage log, questions, crisis, delete, admin =================
+$db->exec("DELETE FROM jy_events WHERE device IN ('aaaaaaaaaaaaaaaa','bbbbbbbbbbbbbbbb')");
+$post = fn(string $path, array $b) => jf_http($path, json_encode($b, JSON_UNESCAPED_UNICODE));
+[$c5] = $post('/jyotish/track.php', ['k' => 'kundli', 'device' => 'aaaaaaaaaaaaaaaa', 'lang' => 'Hinglish', 'city' => 'Bhadohi', 'rashi' => 5, 'lagna' => 9, 'nak' => 12,
+    'birth_year' => 2001, 'gender' => 'Male', 'name' => 'Ramesh', 'date' => '2001-01-15', 'q' => 'sneaky', 'topic' => 'x']);
+jf_check($c5 === 200, "track kundli $c5");
+$row = $db->query("SELECT * FROM jy_events WHERE device='aaaaaaaaaaaaaaaa' AND kind='kundli'")->fetch(PDO::FETCH_ASSOC);
+jf_check($row && $row['city'] === 'Bhadohi' && (int)$row['rashi'] === 5 && (int)$row['birth_year'] === 2001 && $row['lang'] === 'hinglish', 'kundli row: ' . json_encode($row));
+jf_check($row['q'] === null && $row['topic'] === '', 'track.php must never write question text');
+jf_check(!str_contains(json_encode($row), 'Ramesh') && !str_contains(json_encode($row), '2001-01-15'), 'name or birth date stored');
+[$c6] = $post('/jyotish/track.php', ['k' => 'ai_q', 'device' => 'aaaaaaaaaaaaaaaa']);
+jf_check($c6 === 400, "unknown/server-only kind accepted: $c6");
+[$c7] = $post('/jyotish/track.php', ['k' => 'upaya_done', 'device' => 'aaaaaaaaaaaaaaaa', 'cat' => 'gemstone']);
+jf_check($c7 === 200 && $db->query("SELECT cat FROM jy_events WHERE device='aaaaaaaaaaaaaaaa' AND kind='upaya_done'")->fetchColumn() === '', 'unknown upaya kind stored');
+
+// questions are kept even while the AI is off, with a topic
+$turn = fn(string $q) => ['lang' => 'Hinglish', 'chart' => 'LAGNA: Makara', 'device' => 'aaaaaaaaaaaaaaaa', 'turns' => [['role' => 'user', 'content' => $q]]];
+[$c8, $r8] = $post('/jyotish/ai.php', $turn('Meri shaadi kab hogi?'));
+if (!jy_ai_ready()) jf_check($c8 === 503 && (json_decode($r8, true)['err'] ?? '') === 'off', "ai off $c8 $r8");
+$qrow = $db->query("SELECT topic, q FROM jy_events WHERE device='aaaaaaaaaaaaaaaa' AND kind='ai_q' ORDER BY id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+jf_check($qrow && $qrow['topic'] === 'marriage' && $qrow['q'] === 'Meri shaadi kab hogi?', 'question not logged: ' . json_encode($qrow));
+// opted out = nothing stored
+$before = (int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='ai_q'")->fetchColumn();
+$post('/jyotish/ai.php', ['nolog' => true] + $turn('Business kaisa rahega?'));
+jf_check((int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='ai_q'")->fetchColumn() === $before, 'nolog question stored');
+// crisis: help, never the words
+$crBefore = (int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='crisis'")->fetchColumn();
+[$c9, $r9] = $post('/jyotish/ai.php', $turn('Ab jeena nahi chahta'));
+jf_check($c9 === 200 && (json_decode($r9, true)['crisis'] ?? false) === true, "crisis reply $c9 $r9");
+jf_check((int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='crisis'")->fetchColumn() === $crBefore + 1, 'crisis not counted');
+jf_check((int)$db->query("SELECT COUNT(*) FROM jy_events WHERE q LIKE '%jeena nahi%'")->fetchColumn() === 0, 'crisis words stored');
+foreach (['I want to die', 'आत्महत्या', 'zindagi khatam kar dunga', 'Mujhe marna chahta hoon'] as $w) jf_check(jy_crisis($w), "crisis miss: $w");
+foreach (['Shaadi kab hogi', 'Mera career', 'Shani ki dasha'] as $w) jf_check(!jy_crisis($w), "crisis false alarm: $w");
+foreach (['Meri naukri kab lagegi' => 'career', 'मेरी शादी' => 'marriage', 'loan kab chukega' => 'money', 'Kaunsa ratna pehnu' => 'remedy', 'hello' => 'other'] as $w => $t)
+    jf_check(jy_topic($w) === $t, "topic '$w' = " . jy_topic($w));
+// ctx is limited
+$bad2 = 0; try { jy_clean(['chart' => 'c', 'ctx' => str_repeat('x', JY_MAX_CTX + 1), 'turns' => [['role' => 'user', 'content' => 'a']]]); } catch (InvalidArgumentException $e) { $bad2++; }
+jf_check($bad2 === 1, 'long ctx accepted');
+// forget = this phone's log gone
+$post('/jyotish/track.php', ['k' => 'forget', 'device' => 'aaaaaaaaaaaaaaaa']);
+jf_check((int)$db->query("SELECT COUNT(*) FROM jy_events WHERE device='aaaaaaaaaaaaaaaa'")->fetchColumn() === 0, 'forget left rows');
+
+// admin page: closed without login, shows the questions to an admin
+$jar = tempnam(sys_get_temp_dir(), 'jy');
+$web = function (string $path, ?array $form = null) use ($jar): array {
+    $c = curl_init('http://127.0.0.1:8099' . $path);
+    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30, CURLOPT_PROXY => '', CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar];
+    if ($form !== null) { $o[CURLOPT_POST] = true; $o[CURLOPT_POSTFIELDS] = http_build_query($form); }
+    curl_setopt_array($c, $o); $raw = (string)curl_exec($c); $code = curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c);
+    jf_check(!preg_match('/Fatal error|Warning:|Uncaught|Deprecated|Notice:/', $raw), "PHP error at $path: " . substr($raw, 0, 300));
+    return [$code, $raw];
+};
+[$ca] = $web('/admin/jyotish.php');
+jf_check($ca === 302, "admin page open without login: $ca");
+$pass = bin2hex(random_bytes(10)); $uname = 'jaanch-jy-' . bin2hex(random_bytes(3));
+$db->prepare("INSERT INTO users(name,username,password,role,active) VALUES ('CI Jyotish',?,?,'admin',1)")->execute([$uname, password_hash($pass, PASSWORD_DEFAULT)]);
+[, $lh] = $web('/login.php?as=team');
+preg_match('/name="csrf" value="([^"]+)"/', $lh, $m);
+$web('/login.php?as=team', ['csrf' => $m[1] ?? '', 'do' => 'team', 'username' => $uname, 'password' => $pass]);
+$post('/jyotish/ai.php', ['device' => 'bbbbbbbbbbbbbbbb'] + array_slice($turn('Sarkari naukri milegi kya CI-' . $uname), 0, null, true));
+[$cb, $hb] = $web('/admin/jyotish.php?days=7&lang=en');
+jf_check($cb === 200 && str_contains($hb, 'what people check and ask') && str_contains($hb, 'CI-' . $uname), 'admin page lacks the latest question');
+[, $hc] = $web('/admin/jyotish.php?days=7&topic=career&lang=en');
+jf_check(str_contains($hc, 'CI-' . $uname), 'topic filter lost the career question');
+$db->prepare('DELETE FROM users WHERE username = ?')->execute([$uname]);
+$db->exec("DELETE FROM jy_events WHERE device IN ('aaaaaaaaaaaaaaaa','bbbbbbbbbbbbbbbb')");
+@unlink($jar);
 echo "Jyotish flow: theek\n";

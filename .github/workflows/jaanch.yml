@@ -168,6 +168,7 @@ jobs:
           node --check assets/ride.js
           node --check jyotish/engine.js
           node --check jyotish/app.js
+          node --check jyotish/daily.js
           node .github/jaanch/jyotish-engine.cjs
           node --check assets/auth-gateway.js
           node --check assets/maakit-api.js

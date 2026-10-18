@@ -7,7 +7,7 @@ fillCities($("k-city"),true); fillCities($("b-city")); fillCities($("g-city"));
 $("b-city").value="2"; $("g-city").value="3";
 $("k-city").onchange=function(){ $("k-custom").hidden = this.value!=="x"; };
 
-function store(k,v){ try{ if(v===undefined){ var x=localStorage.getItem(k); return x?JSON.parse(x):null } localStorage.setItem(k,JSON.stringify(v)) }catch(e){ return null } }
+function store(k,v){ try{ if(v===null){ localStorage.removeItem(k); return null } if(v===undefined){ var x=localStorage.getItem(k); return x?JSON.parse(x):null } localStorage.setItem(k,JSON.stringify(v)) }catch(e){ return null } }
 function toUTC(date,time,tz){ var p=date.split("-").map(Number), t=time.split(":").map(Number); return new Date(Date.UTC(p[0],p[1]-1,p[2],t[0],t[1]) - tz*3600000); }
 function fmtD(d){ return d.toLocaleDateString("en-IN",{month:"short",year:"numeric"}); }
 function fmtDeg(x){ var d=Math.floor(x), m=Math.floor((x-d)*60); return d+"°"+String(m).padStart(2,"0")+"′"; }
@@ -15,7 +15,7 @@ var S=Jy.SIGN_SHORT, SF=Jy.SIGNS, PN=Jy.PNAME;
 
 /* ---- tabs ---- */
 var tabs=document.querySelectorAll("nav.tabs button");
-function show(t){ tabs.forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===t)}); ["kundli","milan","rashi","ai"].forEach(function(n){$("t-"+n).hidden=n!==t}); if(t==="rashi") renderRashi(); if(t==="ai") renderAiHead(); window.scrollTo(0,0); }
+function show(t){ tabs.forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===t)}); ["aaj","kundli","milan","rashi","ai"].forEach(function(n){$("t-"+n).hidden=n!==t}); if(t==="aaj") renderAaj(); if(t==="rashi"){ renderRashi(); trackOnce("rashifal"); } if(t==="ai") renderAiHead(); window.scrollTo(0,0); }
 tabs.forEach(function(b){ b.onclick=function(){ show(b.dataset.t) } });
 
 /* ---- panchang strip ---- */
@@ -84,7 +84,8 @@ function renderKundli(){
   $("go-ai").onclick=function(){show("ai")}; $("go-r").onclick=function(){show("rashi")};
 }
 
-$("f-k").onsubmit=function(e){ e.preventDefault(); profile=readForm(); store("mj-profile",profile); chat=[]; $("chat").innerHTML=""; renderKundli(); $("k-out").scrollIntoView({behavior:"smooth"}); };
+$("f-k").onsubmit=function(e){ e.preventDefault(); profile=readForm(); store("mj-profile",profile); chat=[]; $("chat").innerHTML=""; renderKundli();
+  track("kundli",{city:profile.city==="x"?"Other":profile.place, rashi:K.moonSign, lagna:K.lagnaSign, nak:K.nak.i, birth_year:+profile.date.slice(0,4), gender:profile.gender}); $("k-out").scrollIntoView({behavior:"smooth"}); };
 
 /* ---- Milan ---- */
 function person(pre){ var c=CITIES[+$(pre+"-city").value]; var k=Jy.kundli({date:toUTC($(pre+"-date").value,$(pre+"-time").value,5.5),lat:c[1],lon:c[2]}); return {name:$(pre+"-name").value||pre, k:k}; }
@@ -104,8 +105,9 @@ function renderMilan(){
   notes.push("<b>Manglik</b>: boy "+(bm?"has":"has no")+" Mangal dosha, girl "+(gmg?"has":"has no")+" Mangal dosha (from Lagna)."+(bm===gmg?" Matched on this point.":" Usually checked further by an astrologer."));
   h+='<div class="card"><h3>What this means</h3>'+notes.map(function(n){return '<p class="note" style="margin:0">'+n+'</p>'}).join("")+'<p class="note" style="margin:0">Gun Milan is one traditional tool. Understanding, values and family support matter more for a good marriage than any score.</p></div>';
   $("m-out").innerHTML=h;
+  return t;
 }
-$("f-m").onsubmit=function(e){ e.preventDefault(); renderMilan(); $("m-out").scrollIntoView({behavior:"smooth"}); };
+$("f-m").onsubmit=function(e){ e.preventDefault(); track("milan",{score:renderMilan()}); $("m-out").scrollIntoView({behavior:"smooth"}); };
 
 /* ---- Rashifal ---- */
 var GOCHAR={1:["Mixed","warn","The Moon is over your own rashi. Feelings run high; keep a calm routine and avoid hasty decisions."],2:["Careful","warn","Money and speech need care today. Check spending and choose words gently with family."],3:["Good","good","Courage and energy are up. A good day for short trips, calls and pushing a pending task."],4:["Careful","warn","Home matters may need attention. Rest well and avoid arguments at home."],5:["Careful","warn","The mind may wander. Avoid speculation; study or creative work suits better than big bets."],6:["Good","good","You can beat obstacles and competition today. Good for clearing debts, work backlogs and health routines."],7:["Good","good","Partnerships and dealings go well. Good for meetings, business talks and time with your spouse."],8:["Careful","bad","Classically a weak day (Chandrashtama). Postpone important starts, drive carefully, keep plans simple."],9:["Mixed","warn","Mixed luck. Elders and teachers can guide you; keep expectations moderate."],10:["Good","good","Work and reputation are supported. Take initiative at your job or business."],11:["Very good","good","Gains and wishes are supported. A strong day for income, friends and networking."],12:["Careful","warn","Expenses and tiredness may rise. Rest, spiritual practice and planning suit today."]};
@@ -163,31 +165,169 @@ async function ask(q){
   q=(q||"").trim(); if(!q||busy) return;
   if(!profile){ $("ai-status").textContent="Make your kundli first."; return; }
   if(!K) K=compute(profile);
-  if(!AI_ON){ $("ai-status").textContent="AI Jyotishi is starting soon. Kundli, Milan and Rashifal work now."; return; }
+  if(Jd.crisis(q)){ $("q").value=""; showHelp(); return; }
   busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent="";
   bubble("u",esc(q)); chat.push({role:"user",content:q});
   var a=bubble("a",'<p class="note">Reading your chart…</p>');
   a.scrollIntoView({behavior:"smooth",block:"end"});
   try{
     var res=await fetch("ai.php",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({lang:$("lang").value,chart:chartContext(),turns:chat.slice(-10)})});
+      body:JSON.stringify({lang:$("lang").value,chart:chartContext(),turns:chat.slice(-10),ctx:aiContext(),device:device(),nolog:!sharing()})});
     var j=await res.json().catch(function(){return {}});
+    if(j.crisis){ chat.pop(); a.remove(); $("chat").lastChild&&$("chat").lastChild.remove(); busy=false; $("send").disabled=false; showHelp(); return; }
     if(!res.ok||!j.text) throw (j.err||"fail");
     a.innerHTML=md2html(j.text); chat.push({role:"assistant",content:j.text});
     if(typeof j.left==="number") $("ai-status").textContent=j.left+" questions left today.";
   }catch(e){
     chat.pop(); a.remove();
-    var msg={limit:"Today's free questions are used up. Come back tomorrow.",off:"AI Jyotishi is starting soon. Kundli, Milan and Rashifal work now.",bad:"Please write a shorter question."}[e];
+    var msg={off:sharing()?"Thank you. AI answers are starting soon; your question has been noted.":"AI answers are starting soon.",limit:"Today's free questions are used up. Come back tomorrow.",bad:"Please write a shorter question."}[e];
     $("ai-status").textContent=msg||"The AI could not answer right now. Check your internet and try again.";
   }
   busy=false; $("send").disabled=false;
 }
 $("f-ai").onsubmit=function(e){ e.preventDefault(); ask($("q").value) };
 $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); ask(this.value) } });
-if(!AI_ON) $("ai-status").textContent="AI Jyotishi is starting soon. Kundli, Milan and Rashifal work now.";
+if(!AI_ON) $("ai-status").textContent="AI Jyotishi is starting soon. You can still type your question: we read every one to plan what to add.";
+
+/* ==== V2: Aaj ka Card, check-in, madad ka panna, ginti, privacy ==== */
+function todayKey(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function device(){ var d=store("mj-dev"); if(typeof d!=="string"||!/^[a-f0-9]{16}$/.test(d)){ var a=new Uint8Array(8); try{ crypto.getRandomValues(a) }catch(e){ for(var i=0;i<8;i++) a[i]=Math.floor(Math.random()*256) } d=Array.prototype.map.call(a,function(x){return x.toString(16).padStart(2,"0")}).join(""); store("mj-dev",d); } return d; }
+function sharing(){ return store("mj-share")!=="no"; }
+function track(k,data){ if(!sharing()) return; try{ var b=Object.assign({k:k,device:device(),lang:$("lang").value},data||{}); fetch("track.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b),keepalive:true}).catch(function(){}); }catch(e){} }
+function trackOnce(k,data){ var key="mj-once-"+k, d=todayKey(); if(store(key)===d) return; store(key,d); track(k,data); }
+function lk(){ return {"Hinglish":"hl","Hindi (Devanagari script)":"hi","English":"en"}[$("lang").value]||"hl"; }
+
+var UI={
+ hl:{ciTitle:"Aaj aap kaisa mehsoos kar rahe hain?",lMood:"Mann",moods:["Bura","Theek-thaak","Achha","Bahut achha"],lEnergy:"Urja",energies:["Kam","Theek","Zyada"],lConcern:"Mann ki baat",
+  concerns:{tension:"Tension",gussa:"Gussa",akelapan:"Akelapan",neend:"Neend kharab",theek:"Sab theek"},lText:"Kuch aur kehna hai? (zaroori nahi)",lShare:"Aaj ka haal (sirf ek shabd) AI Jyotishi ko batayein",
+  priv:"Yeh check-in sirf aapke phone par rehta hai, server par nahi jaata. Yeh doctor ki jaanch nahi hai.",go:"Aaj ka card dikhaiye",skip:"Abhi nahi",helpBtn:"Bahut zyada pareshaan hoon",
+  card:"Aaj ka card",upaya:"Aaj ka upaya (muft, 10 minute)",done:"Ho gaya",doneToday:"Aaj ka diya jal gaya",kyun:"Kyun?",share:"WhatsApp par bhejiye",redo:"Check-in dobara",
+  week:"Is hafte ke diye",full:"Poora hafta! 7 mein se 4 din ho gaye.",weekNote:"7 din mein 4 din = poora hafta. Chhoot jaaye to koi baat nahi.",back:"Wapas aaye, achha laga. Aaj ka chhota sa kaam yeh raha.",
+  example:"Yeh example kundli ka card hai. Apni kundli banaiye, phir card aapka hoga.",makeK:"Apni kundli banaiye",askAi:"Iske baare mein AI se poochhiye",
+  disc:"Jyotish ek soch ka tareeka hai, guarantee nahi. Bade faisle (sehat, paisa, shaadi) apni samajh aur bharosemand logon se baat karke lein.",
+  hTitle:"Aap akele nahi hain",hBody:"Abhi kisi se baat kijiye. Tele-MANAS ki call muft hai aur wahan sunne wale log hain.",hTm:"Muft, 24x7, Hindi mein bhi",hEm:"Turant khatra ho to",hFriend:"Kisi bharose wale insaan ko abhi message ya call kijiye.",hOk:"Main theek hoon, wapas jaayein"},
+ hi:{ciTitle:"आज आप कैसा महसूस कर रहे हैं?",lMood:"मन",moods:["बुरा","ठीक-ठाक","अच्छा","बहुत अच्छा"],lEnergy:"ऊर्जा",energies:["कम","ठीक","ज़्यादा"],lConcern:"मन की बात",
+  concerns:{tension:"तनाव",gussa:"गुस्सा",akelapan:"अकेलापन",neend:"नींद ख़राब",theek:"सब ठीक"},lText:"कुछ और कहना है? (ज़रूरी नहीं)",lShare:"आज का हाल (सिर्फ़ एक शब्द) AI ज्योतिषी को बताइए",
+  priv:"यह check-in सिर्फ़ आपके फ़ोन पर रहता है, server पर नहीं जाता। यह डॉक्टर की जाँच नहीं है।",go:"आज का कार्ड दिखाइए",skip:"अभी नहीं",helpBtn:"बहुत ज़्यादा परेशान हूँ",
+  card:"आज का कार्ड",upaya:"आज का उपाय (मुफ़्त, 10 मिनट)",done:"हो गया",doneToday:"आज का दीया जल गया",kyun:"क्यों?",share:"WhatsApp पर भेजिए",redo:"Check-in दोबारा",
+  week:"इस हफ़्ते के दीये",full:"पूरा हफ़्ता! 7 में से 4 दिन हो गए।",weekNote:"7 दिन में 4 दिन = पूरा हफ़्ता। छूट जाए तो कोई बात नहीं।",back:"वापस आए, अच्छा लगा। आज का छोटा सा काम यह रहा।",
+  example:"यह example कुंडली का कार्ड है। अपनी कुंडली बनाइए, फिर कार्ड आपका होगा।",makeK:"अपनी कुंडली बनाइए",askAi:"इसके बारे में AI से पूछिए",
+  disc:"ज्योतिष एक सोच का तरीका है, गारंटी नहीं। बड़े फ़ैसले (सेहत, पैसा, शादी) अपनी समझ और भरोसेमंद लोगों से बात करके लीजिए।",
+  hTitle:"आप अकेले नहीं हैं",hBody:"अभी किसी से बात कीजिए। Tele-MANAS की call मुफ़्त है और वहाँ सुनने वाले लोग हैं।",hTm:"मुफ़्त, 24x7, हिंदी में भी",hEm:"तुरंत ख़तरा हो तो",hFriend:"किसी भरोसे वाले इंसान को अभी message या call कीजिए।",hOk:"मैं ठीक हूँ, वापस जाइए"},
+ en:{ciTitle:"How are you feeling today?",lMood:"Mood",moods:["Low","Okay","Good","Great"],lEnergy:"Energy",energies:["Low","Okay","High"],lConcern:"On your mind",
+  concerns:{tension:"Worry",gussa:"Anger",akelapan:"Lonely",neend:"Poor sleep",theek:"All fine"},lText:"Anything else? (optional)",lShare:"Tell the AI Jyotishi how I feel today (one word only)",
+  priv:"This check-in stays on your phone and is never sent to the server. It is not a medical test.",go:"Show today's card",skip:"Not now",helpBtn:"I am very upset",
+  card:"Today's card",upaya:"Today's upaya (free, 10 minutes)",done:"Done",doneToday:"Today's diya is lit",kyun:"Why?",share:"Send on WhatsApp",redo:"Check in again",
+  week:"Diyas this week",full:"A full week! 4 of 7 days done.",weekNote:"4 days out of 7 makes a full week. Missing a day is fine.",back:"Welcome back. Here is today's small step.",
+  example:"This card is for the example chart. Make your own kundli and the card becomes yours.",makeK:"Make my kundli",askAi:"Ask the AI about this",
+  disc:"Jyotish is a way of thinking, not a guarantee. Make big decisions (health, money, marriage) with your own judgement and people you trust.",
+  hTitle:"You are not alone",hBody:"Please talk to someone now. Calling Tele-MANAS is free, and trained people will listen.",hTm:"Free, 24x7, in Hindi too",hEm:"If you are in immediate danger",hFriend:"Message or call someone you trust right now.",hOk:"I am okay, go back"}
+};
+function U(){ return UI[lk()]; }
+
+/* ---- check-in ---- */
+var ci={mood:null,energy:null,concern:null};
+function chipRow(id,labels,key,values){
+  var box=$(id); box.innerHTML="";
+  labels.forEach(function(l,i){ var b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=l; var v=values?values[i]:i;
+    b.setAttribute("aria-pressed",ci[key]===v?"true":"false");
+    b.onclick=function(){ ci[key]=ci[key]===v?null:v; chipRow(id,labels,key,values); }; box.appendChild(b); });
+}
+function renderCheckin(){
+  var u=U(), keys=["tension","gussa","akelapan","neend","theek"];
+  $("ci-eyebrow").textContent=new Date().toLocaleDateString(lk()==="hi"?"hi-IN":"en-IN",{weekday:"long",day:"numeric",month:"long"});
+  $("ci-title").textContent=u.ciTitle; $("ci-l-mood").textContent=u.lMood; $("ci-l-energy").textContent=u.lEnergy; $("ci-l-concern").textContent=u.lConcern;
+  chipRow("ci-mood",u.moods,"mood"); chipRow("ci-energy",u.energies,"energy"); chipRow("ci-concern",keys.map(function(k){return u.concerns[k]}),"concern",keys);
+  $("ci-l-text").querySelector("span").textContent=u.lText; $("ci-l-share").textContent=u.lShare; $("ci-private").textContent=u.priv;
+  $("ci-go").textContent=u.go; $("ci-skip").textContent=u.skip; $("ci-help").textContent=u.helpBtn;
+}
+$("ci-go").onclick=function(){
+  if(Jd.crisis($("ci-text").value)){ $("ci-text").value=""; showHelp(); return; }
+  store("mj-checkin",{date:todayKey(),state:Jd.stateOf(ci),share:$("ci-share").checked}); $("ci-text").value="";
+  track("checkin"); renderAaj();
+};
+$("ci-skip").onclick=function(){ store("mj-checkin",{date:todayKey(),state:null,share:false}); renderAaj(); };
+$("ci-help").onclick=function(){ showHelp(); };
+
+/* ---- madad ka panna ---- */
+function showHelp(){
+  var u=U(); $("help-title").textContent=u.hTitle; $("help-body").textContent=u.hBody; $("help-tm").textContent=u.hTm; $("help-em").textContent=u.hEm;
+  $("help-friend").textContent=u.hFriend; $("help-ok").textContent=u.hOk; if($("help").hidden) track("help"); $("help").hidden=false; $("help-title").setAttribute("tabindex","-1"); $("help-title").focus();
+}
+$("help-ok").onclick=function(){ $("help").hidden=true; };
+
+/* ---- aaj ka card ---- */
+function todayCheckin(){ var c=store("mj-checkin"); return c&&c.date===todayKey()?c:null; }
+function todayCard(){
+  if(!profile) return null; if(!K) K=compute(profile);
+  var c=todayCheckin(), d=todayKey(), hist=store("mj-hist")||[];
+  var card=Jd.card(lk(),K,TD,c?c.state:null,d,hist,device(),S);
+  hist=hist.filter(function(h){return h&&h.date!==d}); hist.push({date:d,id:card.id}); store("mj-hist",hist.slice(-10));
+  return card;
+}
+function diyaSVG(lit){ return '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 3c3 4 4.5 6.5 4.5 8.5a4.5 4.5 0 0 1-9 0C9.5 9.5 11 7 14 3z" fill="'+(lit?'var(--gold)':'none')+'" stroke="'+(lit?'var(--gold)':'var(--line)')+'" stroke-width="1.5"/><path d="M3 17h22c-1.2 5-5.5 8-11 8S4.2 22 3 17z" fill="'+(lit?'var(--accent)':'var(--line)')+'"/></svg>'; }
+function renderAaj(){
+  var u=U(), c=todayCheckin();
+  if(!c){ $("checkin").hidden=false; $("card-out").innerHTML=""; ci={mood:null,energy:null,concern:null}; renderCheckin(); return; }
+  $("checkin").hidden=true;
+  var card=todayCard(); if(!card) return;
+  var d=todayKey(), done=store("mj-diya")||[], doneToday=done.indexOf(d)>=0, wk=Jd.week(done,d);
+  var last=done.length?done[done.length-1]:null, gap=last?Math.round((Date.parse(d)-Date.parse(last))/86400000):0;
+  var h='';
+  if(profile.example) h+='<div class="card notice"><p style="margin:0">'+esc(u.example)+'</p><div class="row"><button class="btn ghost" type="button" id="aaj-k">'+esc(u.makeK)+'</button></div></div>';
+  h+='<div class="card dcard">';
+  if(!doneToday&&gap>1) h+='<p class="note" style="margin:0">'+esc(u.back)+'</p>';
+  h+='<div class="eyebrow">'+esc(u.card)+' · '+esc(profile.name)+'</div><p class="insight">'+esc(card.insight)+'</p>';
+  card.extra.forEach(function(x){ h+='<p class="note" style="margin:0">'+esc(x)+'</p>'; });
+  h+='<div class="upaya"><div class="eyebrow">'+esc(u.upaya)+'</div><b>'+esc(card.upaya)+'</b><span>'+esc(card.mantra)+'</span></div>';
+  h+='<details><summary>'+esc(u.kyun)+'</summary><ul>'+card.why.map(function(w){return '<li>'+esc(w)+'</li>'}).join("")+'</ul></details>';
+  h+='<div class="row"><button class="btn" type="button" id="aaj-done"'+(doneToday?' disabled':'')+'>'+esc(doneToday?u.doneToday:u.done)+'</button>'+
+     '<a class="btn ghost" id="aaj-share" target="_blank" rel="noopener" style="text-decoration:none" href="https://wa.me/?text='+encodeURIComponent(u.card+' · Maakit Jyotish\n\n'+card.insight+'\n\n'+card.upaya+'\n'+card.mantra+'\n\n'+location.origin+'/jyotish/')+'">'+esc(u.share)+'</a></div>';
+  h+='</div>';
+  h+='<div class="card"><h3>'+esc(u.week)+'</h3><div class="diyas">'+wk.days.map(function(x){ var wd=new Date(Date.parse(x.date+"T12:00:00")).toLocaleDateString(lk()==="hi"?"hi-IN":"en-IN",{weekday:"short"}); return '<div class="diya">'+diyaSVG(x.lit)+'<span>'+esc(wd)+'</span></div>'; }).join("")+'</div>'+
+     '<p class="note" style="margin:0">'+esc(wk.full?u.full:u.weekNote)+'</p></div>';
+  h+='<div class="row"><button class="btn ghost" type="button" id="aaj-ai">'+esc(u.askAi)+'</button><button class="btn ghost" type="button" id="aaj-redo">'+esc(u.redo)+'</button></div>';
+  h+='<p class="note">'+esc(u.disc)+'</p>';
+  $("card-out").innerHTML=h;
+  trackOnce("card");
+  if($("aaj-k")) $("aaj-k").onclick=function(){ show("kundli"); };
+  $("aaj-done").onclick=function(){ var dd=store("mj-diya")||[]; if(dd.indexOf(d)<0){ dd.push(d); store("mj-diya",dd.slice(-60)); track("upaya_done",{cat:card.cat}); } renderAaj(); };
+  $("aaj-share").onclick=function(){ track("share"); };
+  $("aaj-ai").onclick=function(){ show("ai"); };
+  $("aaj-redo").onclick=function(){ store("mj-checkin",null); renderAaj(); };
+}
+function aiContext(){
+  try{ var card=todayCard(); if(!card) return ""; var c=todayCheckin();
+    var s=card.ctx+(c&&c.share&&c.state?" The user says they feel "+c.state+" today.":"");
+    return s.slice(0,400);
+  }catch(e){ return ""; }
+}
+
+/* ---- bhasha ---- */
+(function(){ var l=store("mj-lang"); if(l&&[].some.call($("lang").options,function(o){return o.value===l})) $("lang").value=l; })();
+$("lang").onchange=function(){ store("mj-lang",$("lang").value); if(!$("t-aaj").hidden) renderAaj(); if(!$("help").hidden) showHelp(); };
+
+/* ---- suchna aur privacy ---- */
+function renderNotice(){ $("notice").hidden = store("mj-share")!==null; }
+$("share-yes").onclick=function(){ store("mj-share","yes"); renderNotice(); renderPriv(); };
+$("share-no").onclick=function(){ store("mj-share","no"); renderNotice(); renderPriv(); };
+function renderPriv(){
+  $("priv-state").textContent = sharing() ? "Anonymous usage is shared with Maakit (no name, exact birth date or mood). Your questions to the AI are read to improve the app." : "Usage sharing is off. Nothing about your use is saved by Maakit.";
+  $("priv-toggle").textContent = sharing() ? "Stop sharing usage" : "Share usage";
+}
+$("priv-toggle").onclick=function(){ store("mj-share",sharing()?"no":"yes"); renderNotice(); renderPriv(); };
+var delArmed=false;
+$("priv-del").onclick=function(){
+  if(!delArmed){ delArmed=true; $("priv-del").textContent="Tap again to delete everything"; return; }
+  var dev=store("mj-dev");
+  if(typeof dev==="string") fetch("track.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({k:"forget",device:dev}),keepalive:true}).catch(function(){});
+  try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("mj-")===0) localStorage.removeItem(k); }); }catch(e){}
+  $("priv-done").hidden=false; $("priv-del").disabled=true;
+  setTimeout(function(){ location.reload(); },1500);
+};
 
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};
-writeForm(profile); renderKundli(); renderMilan();
+writeForm(profile); renderKundli(); renderMilan(); renderPriv(); renderNotice(); trackOnce("visit"); show("aaj");
 })();
