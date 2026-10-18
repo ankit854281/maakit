@@ -137,9 +137,36 @@ header('Content-Type: text/html; charset=utf-8');
         <button class="chip" type="button" id="mode-council" aria-pressed="false">Navagrah Council · Rishton ki clarity</button>
       </div>
       <p class="note" id="mode-note" style="margin:0"></p>
+      <div id="council-context" hidden>
+        <div class="grid2">
+          <label>Current situation
+            <select id="council-area">
+              <option value="">Choose what fits (optional)</option>
+              <option value="work or job">Work or job</option>
+              <option value="studies">Studies</option>
+              <option value="business">Business</option>
+              <option value="relationship">Relationship</option>
+              <option value="family">Family</option>
+              <option value="money">Money</option>
+              <option value="health">Health</option>
+              <option value="another situation">Another situation</option>
+            </select>
+          </label>
+          <label>What would help most?
+            <select id="council-goal">
+              <option value="">Choose a kind of help (optional)</option>
+              <option value="understanding the situation">Understand the situation</option>
+              <option value="one practical next step">One practical next step</option>
+              <option value="a safe boundary">A safe boundary</option>
+              <option value="calming down before deciding">Calm down before deciding</option>
+            </select>
+          </label>
+        </div>
+        <p class="note" style="margin:6px 0 0">Your message is the third part: describe what actually happened, in your own words.</p>
+      </div>
       <div class="chips" id="sugg"></div>
       <div class="council-privacy" id="council-privacy" hidden>
-        <p class="note" style="margin:0">Council mode sends your message and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
+        <p class="note" style="margin:0">Council mode sends your message, any context choices and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
         <label class="consent"><input type="checkbox" id="council-consent"> <span>I understand and want to send this question for an AI answer.</span></label>
       </div>
     </div>

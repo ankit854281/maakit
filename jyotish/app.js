@@ -169,10 +169,11 @@ function setAiMode(mode){
   $("mode-jyotish").setAttribute("aria-pressed",mode==="jyotish"?"true":"false");
   $("mode-council").setAttribute("aria-pressed",mode==="council"?"true":"false");
   $("council-privacy").hidden=mode!=="council";
+  $("council-context").hidden=mode!=="council";
   $("mode-note").textContent=mode==="council"
     ? "Chaar grahon ki awaaz, par faisla sirf bataye gaye facts par. Naam aur contact details mat likhiye."
     : "Ask about your chart. Birth identity and exact birth details are kept out of the chart sent to the AI.";
-  $("q").placeholder=mode==="council"?"Kya hua? Ek ya do specific incidents, unke exact words/actions aur aapne kya jawab diya likhiye…":"Type your question… e.g. Meri naukri kab lagegi?";
+  $("q").placeholder=mode==="council"?"What actually happened? Share one or two specific actions or words…":"Type your question… e.g. Meri naukri kab lagegi?";
   $("sugg").innerHTML=mode==="jyotish"?SUGG.map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join("")
     :'<span class="note">Council ko sahi tarah jaanchne ke liye ek real incident aur aapka goal likhiye.</span>';
   $("sugg").querySelectorAll("button.chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent,"jyotish") } });
@@ -191,6 +192,12 @@ async function ask(q, requestedMode){
   var mode=requestedMode||aiMode;
   if(!profile){ $("ai-status").textContent="Make your kundli first."; return; }
   if(mode==="council"&&!$("council-consent").checked){ $("ai-status").textContent="Pehle consent box select kijiye; tabhi aapka sawaal AI provider ko bheja jayega."; return; }
+  if(mode==="council"){
+    var selectedContext=[];
+    if($("council-area").value) selectedContext.push("Current area: "+$("council-area").value);
+    if($("council-goal").value) selectedContext.push("Help wanted: "+$("council-goal").value);
+    if(selectedContext.length) q="[Optional context: "+selectedContext.join("; ")+". Treat this as context, not proof.]\n\nWhat happened / my question: "+q;
+  }
   if(!K) K=compute(profile);
   if(Jd.crisis(q)){ $("q").value=""; showHelp(); return; }
   busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent=""; $("council-followups").hidden=true;

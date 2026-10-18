@@ -25,7 +25,7 @@ function jf_http(string $path, $body = null): array {
 // ---- the page ----
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'Rahu · Red flags?'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
 
 // ---- AI off without a key: page says so, endpoint answers "off" ----
