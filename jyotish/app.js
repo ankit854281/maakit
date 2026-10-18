@@ -15,7 +15,7 @@ var S=Jy.SIGN_SHORT, SF=Jy.SIGNS, PN=Jy.PNAME;
 
 /* ---- tabs ---- */
 var tabs=document.querySelectorAll("nav.tabs button");
-function show(t){ tabs.forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===t)}); ["aaj","kundli","milan","rashi","ai"].forEach(function(n){$("t-"+n).hidden=n!==t}); if(t==="aaj") renderAaj(); if(t==="rashi"){ renderRashi(); trackOnce("rashifal"); } if(t==="ai") renderAiHead(); window.scrollTo(0,0); }
+function show(t){ tabs.forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===t)}); ["aaj","kundli","milan","rashi","ai"].forEach(function(n){$("t-"+n).hidden=n!==t}); if(t==="aaj") renderAaj(); if(t==="rashi"){ renderRashi(); trackOnce("rashifal"); } if(t==="ai"){ renderAiHead(); $("ai-chat-welcome").hidden=chat.length>0; } window.scrollTo(0,0); }
 tabs.forEach(function(b){ b.onclick=function(){ show(b.dataset.t) } });
 
 /* ---- panchang strip ---- */
@@ -23,7 +23,7 @@ var TD=Jy.today(new Date());
 $("panch").innerHTML='Today: <strong>'+TD.tithi+'</strong> · Moon in <strong>'+S[TD.moonSign]+'</strong>, '+TD.nak.name+' nakshatra';
 
 /* ---- profile ---- */
-var profile=null, K=null;
+var profile=null, K=null, pendingWelcomeQuestion="";
 function readForm(){
   var ci=$("k-city").value, lat, lon, place;
   if(ci==="x"){ lat=+$("k-lat").value; lon=+$("k-lon").value; place=lat.toFixed(2)+", "+lon.toFixed(2); } else { var c=CITIES[+ci]; lat=c[1]; lon=c[2]; place=c[0]; }
@@ -84,8 +84,10 @@ function renderKundli(){
   $("go-ai").onclick=function(){show("ai")}; $("go-r").onclick=function(){show("rashi")};
 }
 
-$("f-k").onsubmit=function(e){ e.preventDefault(); profile=readForm(); store("mj-profile",profile); chat=[]; $("chat").innerHTML=""; renderKundli();
-  track("kundli",{city:profile.city==="x"?"Other":profile.place, rashi:K.moonSign, lagna:K.lagnaSign, nak:K.nak.i, birth_year:+profile.date.slice(0,4), gender:profile.gender}); $("k-out").scrollIntoView({behavior:"smooth"}); };
+$("f-k").onsubmit=function(e){ e.preventDefault(); var draft=pendingWelcomeQuestion||$("q").value.trim(); pendingWelcomeQuestion=""; profile=readForm(); store("mj-profile",profile); chat=[]; $("chat").innerHTML=""; renderKundli();
+  track("kundli",{city:profile.city==="x"?"Other":profile.place, rashi:K.moonSign, lagna:K.lagnaSign, nak:K.nak.i, birth_year:+profile.date.slice(0,4), gender:profile.gender});
+  if(draft){ $("k-question-hint").hidden=true; show("ai"); $("q").value=draft; $("ai-status").textContent="Aapka sawaal draft mein taiyaar hai. Bhejne se pehle neeche dekh lijiye."; $("q").focus(); }
+  else $("k-out").scrollIntoView({behavior:"smooth"}); };
 
 /* ---- Milan ---- */
 function person(pre){ var c=CITIES[+$(pre+"-city").value]; var k=Jy.kundli({date:toUTC($(pre+"-date").value,$(pre+"-time").value,5.5),lat:c[1],lon:c[2]}); return {name:$(pre+"-name").value||pre, k:k}; }
@@ -137,6 +139,13 @@ function renderRashi(){
 
 /* ---- AI ---- */
 var chat=[], busy=false, aiMode="jyotish", AI_ON=document.body.getAttribute("data-ai")==="1";
+$("welcome-form").onsubmit=function(e){
+  e.preventDefault(); var question=$("welcome-question").value.trim();
+  if(!question){ show("ai"); $("q").focus(); return; }
+  if(profile&&profile.example){ pendingWelcomeQuestion=question; $("k-question-hint").hidden=false; show("kundli"); $("f-k").scrollIntoView({behavior:"smooth",block:"start"}); $("k-name").focus(); return; }
+  show("ai"); $("q").value=question; $("ai-status").textContent="Sawaal draft mein taiyaar hai. Bhejne se pehle neeche dekh lijiye."; $("q").focus();
+};
+document.querySelectorAll("[data-home-action]").forEach(function(b){ b.onclick=function(){ show(b.getAttribute("data-home-action")); if(b.getAttribute("data-home-action")==="ai") $("q").focus(); }; });
 var SUGG=["Meri naukri / career kab achha hoga?","Shaadi kab tak hogi?","Is saal paisa aur business kaisa rahega?","Mere current dasha ka kya matlab hai?","Sade Sati ka mujh par kya asar hai?","Mere liye kaunsa field sahi hai?"];
 $("sugg").innerHTML=SUGG.map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join("");
 $("sugg").querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent) } });
@@ -166,6 +175,7 @@ function bubble(role,html){ var d=document.createElement("div"); d.className="ms
 function setAiMode(mode){
   if(busy||mode===aiMode) return;
   aiMode=mode; chat=[]; $("chat").innerHTML=""; $("council-consent").checked=false; $("council-followups").hidden=true;
+  $("ai-chat-welcome").hidden=false;
   $("mode-jyotish").setAttribute("aria-pressed",mode==="jyotish"?"true":"false");
   $("mode-council").setAttribute("aria-pressed",mode==="council"?"true":"false");
   $("council-privacy").hidden=mode!=="council";
@@ -191,6 +201,9 @@ async function ask(q, requestedMode){
   q=(q||"").trim(); if(!q||busy) return;
   var mode=requestedMode||aiMode;
   if(!profile){ $("ai-status").textContent="Make your kundli first."; return; }
+  if(profile.example&&mode==="jyotish"){
+    $("k-question-hint").hidden=false; $("ai-status").textContent="Personal jawaab ke liye pehle apni janam kundli banaiye. Aapka sawaal yahin draft mein rahega."; show("kundli"); $("f-k").scrollIntoView({behavior:"smooth",block:"start"}); $("k-name").focus(); return;
+  }
   if(mode==="council"&&!$("council-consent").checked){ $("ai-status").textContent="Pehle consent box select kijiye; tabhi aapka sawaal AI provider ko bheja jayega."; return; }
   if(mode==="council"){
     var selectedContext=[];
@@ -200,7 +213,7 @@ async function ask(q, requestedMode){
   }
   if(!K) K=compute(profile);
   if(Jd.crisis(q)){ $("q").value=""; showHelp(); return; }
-  busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent=""; $("council-followups").hidden=true;
+  busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent=""; $("council-followups").hidden=true; $("ai-chat-welcome").hidden=true;
   bubble("u",esc(q)); chat.push({role:"user",content:q});
   var a=bubble("a",'<p class="note">Reading your chart…</p>');
   a.scrollIntoView({behavior:"smooth",block:"end"});
@@ -209,13 +222,14 @@ async function ask(q, requestedMode){
     var res=await fetch("ai.php",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({lang:$("lang").value,mode:mode,chart:chartContext(mode),turns:chat.slice(-10),ctx:mode==="council"?"":aiContext(),device:mode==="council"?"":device(),nolog:mode==="council"||!sharing()})});
     var j=await res.json().catch(function(){return {}});
-    if(j.crisis){ chat.pop(); a.remove(); $("chat").lastChild&&$("chat").lastChild.remove(); busy=false; $("send").disabled=false; showHelp(); return; }
+    if(j.crisis){ chat.pop(); a.remove(); $("chat").lastChild&&$("chat").lastChild.remove(); $("ai-chat-welcome").hidden=chat.length>0; busy=false; $("send").disabled=false; showHelp(); return; }
     if(!res.ok||!j.text) throw (j.err||"fail");
     a.innerHTML=md2html(j.text); chat.push({role:"assistant",content:j.text});
     if(mode==="council") $("council-followups").hidden=false;
     if(typeof j.left==="number") $("ai-status").textContent=j.left+" questions left today.";
   }catch(e){
     chat.pop(); a.remove();
+    $("ai-chat-welcome").hidden=chat.length>0;
     var msg={off:mode==="council"||!sharing()?"AI answers are starting soon. Your Council question was not saved to Maakit's usage log.":"AI answers are starting soon; your question was noted for app planning.",limit:"Today's free questions are used up. Come back tomorrow.",bad:"Please write a shorter question."}[e];
     $("ai-status").textContent=msg||"The AI could not answer right now. Check your internet and try again.";
   }
@@ -303,6 +317,7 @@ function todayCard(){
 }
 function diyaSVG(lit){ return '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 3c3 4 4.5 6.5 4.5 8.5a4.5 4.5 0 0 1-9 0C9.5 9.5 11 7 14 3z" fill="'+(lit?'var(--gold)':'none')+'" stroke="'+(lit?'var(--gold)':'var(--line)')+'" stroke-width="1.5"/><path d="M3 17h22c-1.2 5-5.5 8-11 8S4.2 22 3 17z" fill="'+(lit?'var(--accent)':'var(--line)')+'"/></svg>'; }
 function renderAaj(){
+  $("welcome-sky").textContent=TD.tithi+" · Chandra "+S[TD.moonSign]+" mein, "+TD.nak.name+" nakshatra";
   var u=U(), c=todayCheckin();
   if(!c){ $("checkin").hidden=false; $("card-out").innerHTML=""; ci={mood:null,energy:null,concern:null}; renderCheckin(); return; }
   $("checkin").hidden=true;

@@ -41,6 +41,33 @@ header('Content-Type: text/html; charset=utf-8');
 
   <!-- AAJ: check-in + daily card -->
   <section class="tab" id="t-aaj">
+    <section class="welcome-hero" aria-labelledby="welcome-title">
+      <div class="welcome-main">
+        <div class="eyebrow">MAAKIT JYOTISH · AAPKI KUNDLI, AAPKE SAWAAL</div>
+        <h2 id="welcome-title">Namaste! Aaj aap kya jaana chahte hain?</h2>
+        <p>Career, rishton ya apni kundli par sawaal poochhiye. Jawaab ko ek soch aur agle practical kadam ki tarah dekhiye.</p>
+        <form class="welcome-composer" id="welcome-form">
+          <label class="sr-only" for="welcome-question">Apna sawaal likhiye</label>
+          <textarea id="welcome-question" maxlength="1500" placeholder="Yahan apna sawaal likhiye… jaise: career mein agla kadam kya ho?" aria-label="Apna sawaal likhiye"></textarea>
+          <button class="btn" type="submit">Jyotish se poochhein <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="welcome-note">Aapka sawaal AI ko bhejne se pehle review ke liye chat mein dikhega. Bina naam ya phone number likhein.</p>
+      </div>
+      <div class="welcome-aside">
+        <div class="welcome-orbit" aria-hidden="true"><span>☾</span><i>✦</i><b>ॐ</b></div>
+        <div class="eyebrow">AAJ KA AAKAASH</div>
+        <strong id="welcome-sky">Chandra gochar ke saath apni dincharya par gaur karein.</strong>
+        <span class="note">Koi pakki bhavishyavani nahi—sirf parampara, context aur practical soch.</span>
+      </div>
+    </section>
+
+    <div class="welcome-actions" aria-label="Quick actions">
+      <button class="welcome-action" type="button" data-home-action="ai"><span class="action-icon">✦</span><span><b>AI se baat karein</b><small>Apne sawaal ka jawaab poochhein</small></span><span class="action-arrow">→</span></button>
+      <button class="welcome-action" type="button" data-home-action="kundli"><span class="action-icon">◈</span><span><b>Janam kundli</b><small>Apni chart reading taiyaar karein</small></span><span class="action-arrow">→</span></button>
+      <button class="welcome-action" type="button" data-home-action="milan"><span class="action-icon">♡</span><span><b>Rishton ka milan</b><small>36-gun milan aur uska context</small></span><span class="action-arrow">→</span></button>
+      <button class="welcome-action" type="button" data-home-action="rashi"><span class="action-icon">☼</span><span><b>Aaj ka rashifal</b><small>Din ka sanket aur ek upaya</small></span><span class="action-arrow">→</span></button>
+    </div>
+
     <div class="card" id="checkin" hidden>
       <div class="eyebrow" id="ci-eyebrow"></div>
       <h2 id="ci-title"></h2>
@@ -72,6 +99,7 @@ header('Content-Type: text/html; charset=utf-8');
   <section class="tab" id="t-kundli" hidden>
     <form class="card" id="f-k" autocomplete="off">
       <div class="row" style="justify-content:space-between"><h2>Janam Kundli</h2><span class="badge" id="ex-badge">Example chart</span></div>
+      <p class="note" id="k-question-hint" hidden>Aapka sawaal surakshit hai. Apni janam jaankari bhariye; kundli banne ke baad sawaal chat mein draft rahega.</p>
       <div class="grid2">
         <label>Name<input id="k-name" required value="Example Person"></label>
         <label>Gender<select id="k-gender"><option>Male</option><option>Female</option><option>Other</option></select></label>
@@ -169,6 +197,11 @@ header('Content-Type: text/html; charset=utf-8');
         <p class="note" style="margin:0">Council mode sends your message, any context choices and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
         <label class="consent"><input type="checkbox" id="council-consent"> <span>I understand and want to send this question for an AI answer.</span></label>
       </div>
+    </div>
+    <div class="chat-welcome" id="ai-chat-welcome">
+      <div class="assistant-mark" aria-hidden="true">✦</div>
+      <div><div class="eyebrow">MAAKIT AI JYOTISHI</div><h3>Namaste! Aap apna sawaal bataiye.</h3>
+        <p>Apni kundli ko parampara ke nazariye se samjhein aur jawaab ke saath ek practical agla kadam paayein. Pehle se bana example chart personal reading nahi hai.</p></div>
     </div>
     <div class="chat" id="chat"></div>
     <div class="note" id="ai-status"></div>
