@@ -747,7 +747,7 @@ function vDash() {
   const hw = {}; Object.values(S.diary[date] || {}).forEach(byB => Object.values(byB).forEach(e => { if (e && e.hw && String(e.hw).trim()) hw[e.cls] = (hw[e.cls] || 0) + 1; }));
   const hwN = Object.values(hw).reduce((a, b) => a + b, 0), pct = as.total ? Math.round(as.present / as.total * 100) : null;
   const h = new Date().getHours(), hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  const kpi = (ic, acc, lbl, val, sub, warn, go) => `<button ${go ? `onclick="go('${go}',{date:'${date}'})"` : 'disabled'} class="kpi" style="--acc:${warn ? 'var(--bad)' : acc}"><span class="kpi-lbl">${lbl}</span><span class="kpi-val">${val}</span><span class="kpi-sub">${sub}</span></button>`;
+  const kpi = (ic, tint, lbl, val, sub, warn, go) => `<button ${go ? `onclick="go('${go}',{date:'${date}'})"` : 'disabled'} class="kpi ${warn ? 'kpi-warn' : tint}"><span class="kpi-ic"><i class="fa-solid ${ic}"></i></span><span class="kpi-val">${val}</span><span class="kpi-lbl">${lbl}</span><span class="kpi-sub">${sub}</span></button>`;
   const tile = c => { const n = studentsOf(c).length, a = attOf(date, c);
     if (!n) return `<div class="att att-empty"><b>${esc(c)}</b><span>No students</span></div>`;
     if (!a) return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att att-none"><b>${esc(c)}</b><span>Not marked</span></button>`;
@@ -758,21 +758,21 @@ function vDash() {
   const shortD = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   const sum = dailySummary(date);
   return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
-      <div><p class="dash-eyebrow">${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-        <h2 class="text-2xl font-bold text-ink mt-1">${isToday ? hello : 'Report for this day'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '') )}</h2></div>
+      <div><h2 class="text-2xl font-bold text-ink">${isToday ? 'Welcome' : 'Report for this day'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '').split(' ')[0])} ${isToday ? '🎉' : ''}</h2>
+        <p class="dash-eyebrow mt-1">${isToday ? `${hello}! Here's what's happening in your school today — ` : ''}${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
       <div class="flex flex-wrap gap-2 noprint">${dateInput('d-date', date, "go('dash',{date:this.value})")}
         <button onclick="printHTML('Day report',printHeader('Daily report — ${fmtDate(date)}')+'<pre style=&quot;white-space:pre-wrap;font-family:inherit&quot;>'+esc(dailySummary('${date}'))+'</pre>'+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-download"></i> Day report</button>
         ${ro ? '' : `<button onclick="go('notices')" class="btn btn-p"><i class="fa-solid fa-plus"></i> New notice</button>`}</div></div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      ${kpi('fa-children', 'var(--brand)', 'Students present', as.total ? `${as.present} <small>/ ${as.total}</small>` : '—', `${as.marked} of ${withKids.length} classes marked`, false, 'attendance')}
-      ${kpi('fa-user-check', 'var(--ok)', 'Staff present', `${nT - ab.length} <small>/ ${nT}</small>`, ab.length ? `${onLeave} on leave · ${ab.length - onLeave} absent` : 'Everyone present', false, ro ? '' : 'staff')}
-      ${kpi('fa-clock', 'var(--ok)', 'Attendance pending', pending.length ? `${pending.length} <small>class${pending.length > 1 ? 'es' : ''}</small>` : '0', pending.length ? 'Class ' + pending.slice(0, 4).join(', ') + (pending.length > 4 ? '…' : '') : 'All classes marked', pending.length > 0, 'attendance')}
-      ${kpi('fa-book', 'var(--violet)', 'Homework set', hwN, `across ${Object.keys(hw).length} class${Object.keys(hw).length === 1 ? '' : 'es'} · diary ${ds.filled}/${ds.due} bells`, false, ro ? '' : 'diaries')}
+      ${kpi('fa-children', 'kpi-peach', 'Students present', as.total ? `${as.present} <small>/ ${as.total}</small>` : '—', `${as.marked} of ${withKids.length} classes marked`, false, 'attendance')}
+      ${kpi('fa-user-check', 'kpi-lav', 'Staff present', `${nT - ab.length} <small>/ ${nT}</small>`, ab.length ? `${onLeave} on leave · ${ab.length - onLeave} absent` : 'Everyone present', false, ro ? '' : 'staff')}
+      ${kpi('fa-clock', 'kpi-mint', 'Attendance pending', pending.length ? `${pending.length} <small>class${pending.length > 1 ? 'es' : ''}</small>` : '0', pending.length ? 'Class ' + pending.slice(0, 4).join(', ') + (pending.length > 4 ? '…' : '') : 'All classes marked', pending.length > 0, 'attendance')}
+      ${kpi('fa-book', 'kpi-lime', 'Homework set', hwN, `across ${Object.keys(hw).length} class${Object.keys(hw).length === 1 ? '' : 'es'} · diary ${ds.filled}/${ds.due} bells`, false, ro ? '' : 'diaries')}
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
       <div class="lg:col-span-2 space-y-4">
         <div class="card"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h3 class="h3">Attendance by class</h3>
-          <div class="flex flex-wrap gap-3"><span class="legend"><i style="background:#16A34A"></i>95%+</span><span class="legend"><i style="background:#2563EB"></i>90–94%</span><span class="legend"><i style="background:#D97706"></i>Below 90%</span><span class="legend"><i style="border:1.5px dashed #E5484D"></i>Not marked</span></div></div>
+          <div class="flex flex-wrap gap-3"><span class="legend"><i style="background:#C5EEF2"></i>95%+</span><span class="legend"><i style="background:#E3D8FF"></i>90–94%</span><span class="legend"><i style="background:#FDE4C3"></i>Below 90%</span><span class="legend"><i style="border:1.5px dashed #F2A7AA"></i>Not marked</span></div></div>
         <div class="att-grid">${CLASS_NAMES.slice().reverse().map(tile).join('')}</div></div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Coming up</h3><button onclick="go('calendar')" class="link">Calendar</button></div>
@@ -2941,11 +2941,12 @@ function ofSummary() {
   const dueFam = ofFamilies().filter(f => f.due > 0), totalDue = dueFam.reduce((a, f) => a + f.due, 0);
   const modes = {}; tday.forEach(p => modes[p.mode] = (modes[p.mode] || 0) + p.amt);
   const missing = OF.students.filter(s => s.dues.missing).length;
+  const k = (ic, t, lbl, val, sub) => `<div class="kpi ${t}"><span class="kpi-ic"><i class="fa-solid ${ic}"></i></span><span class="kpi-val">${val}</span><span class="kpi-lbl">${lbl}</span><span class="kpi-sub">${sub}</span></div>`;
   return `<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="card"><p class="text-xs text-slate-500">Collected today</p><p class="text-2xl font-semibold">${rs(tday.reduce((a, p) => a + p.amt, 0))}</p><p class="text-xs text-slate-500">${tday.length} receipt(s)${Object.keys(modes).length ? ' · ' + Object.entries(modes).map(([m, v]) => esc(m) + ' ' + rs(v)).join(', ') : ''}</p></div>
-    <div class="card"><p class="text-xs text-slate-500">This month</p><p class="text-2xl font-semibold">${rs(mon.reduce((a, p) => a + p.amt, 0))}</p><p class="text-xs text-slate-500">${mon.length} receipt(s)</p></div>
-    <div class="card"><p class="text-xs text-slate-500">Still due</p><p class="text-2xl font-semibold text-rose-700">${rs(totalDue)}</p><p class="text-xs text-slate-500">${dueFam.length} famil${dueFam.length === 1 ? 'y' : 'ies'}</p></div>
-    <div class="card"><p class="text-xs text-slate-500">Fee not set</p><p class="text-2xl font-semibold ${missing ? 'text-amber-700' : ''}">${missing}</p><p class="text-xs text-slate-500">student(s) — set in Fee Structure or here</p></div></div>`;
+    ${k('fa-indian-rupee-sign', 'kpi-peach', 'Collected today', rs(tday.reduce((a, p) => a + p.amt, 0)), `${tday.length} receipt(s)${Object.keys(modes).length ? ' · ' + Object.entries(modes).map(([m, v]) => esc(m) + ' ' + rs(v)).join(', ') : ''}`)}
+    ${k('fa-calendar-check', 'kpi-lav', 'This month', rs(mon.reduce((a, p) => a + p.amt, 0)), `${mon.length} receipt(s)`)}
+    ${k('fa-hourglass-half', 'kpi-mint', 'Still due', rs(totalDue), `${dueFam.length} famil${dueFam.length === 1 ? 'y' : 'ies'}`)}
+    ${k('fa-circle-exclamation', missing ? 'kpi-warn' : 'kpi-lime', 'Fee not set', missing, 'student(s) — set in Fee Structure or here')}</div>`;
 }
 function ofBreak(s) {
   if(s.dues.detailed)return '<p class="text-sm">This child uses the detailed fee ledger. Current recorded balance: <b>'+rs(s.dues.due)+'</b>.</p><button class="btn btn-l" onclick="go(\'finance\')">Open Fee Department</button>';
@@ -3200,10 +3201,10 @@ function vSalary() {
       `<select class="inp w-auto" onchange="SAL=null;SALOPEN=null;go('salary',{ym:this.value})">${months.map(m => `<option value="${m}" ${m === ym ? 'selected' : ''}>${ymLong(m)}</option>`).join('')}</select>
        <button onclick="salRegister()" class="btn btn-l"><i class="fa-solid fa-print"></i> Register</button>${SAL.can.staff ? '<button onclick="salStaffEdit(\'\')" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add staff</button>' : ''}`) + `
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="kpi"><span class="kpi-lbl">Total salary</span><span class="kpi-val">${rs(tot('gross'))}</span><span class="kpi-sub">${set.length} staff with salary set</span></div>
-      <div class="kpi"><span class="kpi-lbl">Cut for absence</span><span class="kpi-val">${rs(tot('deduction'))}</span><span class="kpi-sub">advance ${rs(tot('advance'))} · bonus ${rs(tot('bonus'))}</span></div>
-      <div class="kpi"><span class="kpi-lbl">Net to pay</span><span class="kpi-val">${rs(tot('net'))}</span><span class="kpi-sub">for ${ymLong(ym)}</span></div>
-      <div class="kpi ${paid.length < set.length ? 'kpi-warn' : ''}"><span class="kpi-lbl">Paid</span><span class="kpi-val">${paid.length} <small>/ ${set.length}</small></span><span class="kpi-sub">${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid so far</span></div></div>
+      <div class="kpi kpi-peach"><span class="kpi-ic"><i class="fa-solid fa-wallet"></i></span><span class="kpi-val">${rs(tot('gross'))}</span><span class="kpi-lbl">Total salary</span><span class="kpi-sub">${set.length} staff with salary set</span></div>
+      <div class="kpi kpi-lav"><span class="kpi-ic"><i class="fa-solid fa-user-minus"></i></span><span class="kpi-val">${rs(tot('deduction'))}</span><span class="kpi-lbl">Cut for absence</span><span class="kpi-sub">advance ${rs(tot('advance'))} · bonus ${rs(tot('bonus'))}</span></div>
+      <div class="kpi kpi-mint"><span class="kpi-ic"><i class="fa-solid fa-money-bill-wave"></i></span><span class="kpi-val">${rs(tot('net'))}</span><span class="kpi-lbl">Net to pay</span><span class="kpi-sub">for ${ymLong(ym)}</span></div>
+      <div class="kpi ${paid.length < set.length ? 'kpi-warn' : 'kpi-lime'}"><span class="kpi-ic"><i class="fa-solid fa-check-double"></i></span><span class="kpi-val">${paid.length} <small>/ ${set.length}</small></span><span class="kpi-lbl">Paid</span><span class="kpi-sub">${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid so far</span></div></div>
     ${rows.some(r => r.status === 'Not set') ? `<div class="card text-sm bg-amber-50 border-amber-200">${rows.filter(r => r.status === 'Not set').length} staff member(s) have no salary set yet${SAL.can.staff ? ' — press <b>Set salary</b> on their card.' : '. Ask the Principal to set it.'}</div>` : ''}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">${rows.map(card).join('')}</div>
     <p class="text-xs text-slate-500">Only the Principal and the Accountant can see this page. Teachers see only their own paid salary slips.</p>`;
