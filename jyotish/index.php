@@ -132,10 +132,24 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="row" style="justify-content:space-between"><h2>Ask AI Jyotishi</h2>
         <span class="note">Replies in the language chosen at the top</span></div>
       <p class="note" style="margin:0" id="ai-who"></p>
+      <div class="mode-switch" role="group" aria-label="Choose a reading style">
+        <button class="chip" type="button" id="mode-jyotish" aria-pressed="true">Jyotish reading</button>
+        <button class="chip" type="button" id="mode-council" aria-pressed="false">Navagrah Council · Rishton ki clarity</button>
+      </div>
+      <p class="note" id="mode-note" style="margin:0"></p>
       <div class="chips" id="sugg"></div>
+      <div class="council-privacy" id="council-privacy" hidden>
+        <p class="note" style="margin:0">Council mode sends your message and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
+        <label class="consent"><input type="checkbox" id="council-consent"> <span>I understand and want to send this question for an AI answer.</span></label>
+      </div>
     </div>
     <div class="chat" id="chat"></div>
     <div class="note" id="ai-status"></div>
+    <div class="row council-followups" id="council-followups" hidden aria-label="Ask a follow-up question">
+      <button class="btn ghost" type="button" data-council-followup="rahu">Rahu · Red flags?</button>
+      <button class="btn ghost" type="button" data-council-followup="chandra">Chandrama · Emotions?</button>
+      <button class="btn ghost" type="button" data-council-followup="shani">Shani · Next boundary?</button>
+    </div>
     <form class="composer" id="f-ai"><textarea id="q" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit">Ask</button></form>
     <p class="note">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
   </section>

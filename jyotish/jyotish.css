@@ -119,3 +119,8 @@ nav.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accen
 .helpcall{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--sunk);border-radius:10px;padding:12px 14px}
 .helpcall .big{font-family:var(--display);font-size:34px;line-height:1.1}
 .helpcall .btn{text-decoration:none}
+.mode-switch{display:flex;gap:8px;flex-wrap:wrap}
+.mode-switch .chip{min-height:46px}
+.mode-switch .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.council-privacy{background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.council-followups .btn{min-height:46px}

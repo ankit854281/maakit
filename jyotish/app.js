@@ -132,23 +132,25 @@ function renderRashi(){
   '</div></div>';
   h+='<div class="card"><h3>Detailed reading</h3><p class="note" style="margin:0">Get today\'s full rashifal from the AI Jyotishi, written for your chart.</p><div class="row"><button class="btn" id="r-ai" type="button">Get detailed rashifal</button></div></div>';
   $("r-out").innerHTML=h;
-  $("r-ai").onclick=function(){ show("ai"); ask("Give me today's detailed rashifal based on my chart and today's transits: work, money, family, health, and one practical tip."); };
+  $("r-ai").onclick=function(){ if(aiMode!=="jyotish") setAiMode("jyotish"); show("ai"); ask("Give me today's detailed rashifal based on my chart and today's transits: work, money, family, health, and one practical tip.","jyotish"); };
 }
 
 /* ---- AI ---- */
-var chat=[], busy=false, AI_ON=document.body.getAttribute("data-ai")==="1";
+var chat=[], busy=false, aiMode="jyotish", AI_ON=document.body.getAttribute("data-ai")==="1";
 var SUGG=["Meri naukri / career kab achha hoga?","Shaadi kab tak hogi?","Is saal paisa aur business kaisa rahega?","Mere current dasha ka kya matlab hai?","Sade Sati ka mujh par kya asar hai?","Mere liye kaunsa field sahi hai?"];
 $("sugg").innerHTML=SUGG.map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join("");
 $("sugg").querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent) } });
 function renderAiHead(){ if(profile){ if(!K) K=compute(profile); $("ai-who").textContent="Reading the chart of "+profile.name+": "+S[K.lagnaSign]+" Lagna, "+S[K.moonSign]+" Rashi, "+K.nak.name+" nakshatra."+(profile.example?" (Example chart. Make your own in the Kundli tab.)":""); } }
-function chartContext(){
+function chartContext(mode){
   var k=K, now=new Date();
+  if((mode||aiMode)==="council") return profile.example
+    ? "No verified birth chart is available. Do not make a Nakshatra or planetary claim."
+    : "MOON SIGN: "+S[k.moonSign]+". NAKSHATRA: "+k.nak.name+" pada "+k.nak.pada+". CURRENT DASHA: "+(k.curMD?PN[k.curMD.lord]:"unknown")+"–"+(k.curAD?PN[k.curAD.lord]:"unknown")+". This is optional reflection, not evidence about anyone.\n";
   var pl=k.planets.map(function(p){return PN[p.k]+": "+S[p.sign]+" "+p.deg.toFixed(1)+"°, house "+p.house+", "+p.nak.name+" pada "+p.nak.pada+(p.retro&&p.k!=="Ra"&&p.k!=="Ke"?", retrograde":"")}).join("\n");
   var md=k.dashas.filter(function(d){return d.end>now}).slice(0,4).map(function(d){return PN[d.lord]+" "+d.start.getFullYear()+"-"+d.end.getFullYear()}).join("; ");
   var ad=k.antar.map(function(a){return PN[a.lord]+" "+a.start.toISOString().slice(0,7)+" to "+a.end.toISOString().slice(0,7)}).join("; ");
   var tr=["Su","Mo","Ma","Me","Ju","Ve","Sa","Ra"].map(function(x){var s=Math.floor(TD.pos[x].lon/30);return PN[x]+" in "+S[s]+" (house "+(((s-k.lagnaSign+12)%12)+1)+" from Lagna, "+(((s-k.moonSign+12)%12)+1)+" from Moon)"}).join("; ");
-  return "PERSON: "+profile.name+", "+profile.gender+", born "+profile.date+" "+profile.time+" at "+profile.place+".\n"+
-    "LAGNA: "+S[k.lagnaSign]+" "+(k.asc%30).toFixed(1)+"°. MOON SIGN: "+S[k.moonSign]+". NAKSHATRA: "+k.nak.name+" pada "+k.nak.pada+".\n"+
+  return "LAGNA: "+S[k.lagnaSign]+" "+(k.asc%30).toFixed(1)+"°. MOON SIGN: "+S[k.moonSign]+". NAKSHATRA: "+k.nak.name+" pada "+k.nak.pada+".\n"+
     "PLANETS (sidereal Lahiri, whole-sign houses):\n"+pl+"\n"+
     "MANGLIK: "+(k.manglik.fromLagna?"yes from Lagna":"no from Lagna")+", "+(k.manglik.fromMoon?"yes from Moon":"no from Moon")+".\n"+
     "VIMSHOTTARI: current Mahadasha "+(k.curMD?PN[k.curMD.lord]:"?")+", Antardasha "+(k.curAD?PN[k.curAD.lord]:"?")+". Upcoming mahadashas: "+md+". Antardashas in current mahadasha: "+ad+".\n"+
@@ -161,26 +163,53 @@ function md2html(t){
   return out+(inl?"</ul>":"");
 }
 function bubble(role,html){ var d=document.createElement("div"); d.className="msg "+role; d.innerHTML=html; $("chat").appendChild(d); return d; }
-async function ask(q){
+function setAiMode(mode){
+  if(busy||mode===aiMode) return;
+  aiMode=mode; chat=[]; $("chat").innerHTML=""; $("council-consent").checked=false; $("council-followups").hidden=true;
+  $("mode-jyotish").setAttribute("aria-pressed",mode==="jyotish"?"true":"false");
+  $("mode-council").setAttribute("aria-pressed",mode==="council"?"true":"false");
+  $("council-privacy").hidden=mode!=="council";
+  $("mode-note").textContent=mode==="council"
+    ? "Chaar grahon ki awaaz, par faisla sirf bataye gaye facts par. Naam aur contact details mat likhiye."
+    : "Ask about your chart. Birth identity and exact birth details are kept out of the chart sent to the AI.";
+  $("q").placeholder=mode==="council"?"Kya hua? Ek ya do specific incidents, unke exact words/actions aur aapne kya jawab diya likhiye…":"Type your question… e.g. Meri naukri kab lagegi?";
+  $("sugg").innerHTML=mode==="jyotish"?SUGG.map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join("")
+    :'<span class="note">Council ko sahi tarah jaanchne ke liye ek real incident aur aapka goal likhiye.</span>';
+  $("sugg").querySelectorAll("button.chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent,"jyotish") } });
+  $("ai-status").textContent=mode==="council"?"Council reading: aapki baat AI provider ko bheji jayegi; Maakit question text ko apne usage log mein nahi rakhega.":"";
+}
+$("mode-jyotish").onclick=function(){setAiMode("jyotish")};
+$("mode-council").onclick=function(){setAiMode("council")};
+var COUNCIL_FOLLOWUPS={
+  rahu:"Rahu se follow-up: Sirf mere bataye hue waqiat dekho. Kaunsi baat factually inconsistent hai, aur kaunsi sirf meri interpretation hai?",
+  chandra:"Chandrama se follow-up: Mere bataye waqiat ke baad apni feelings ko steady karne ke liye ek practical, bina-kharch step batao. Nakshatra ko sirf symbolic reflection rakho.",
+  shani:"Shani se follow-up: Mere bataye facts ke basis par agla safe boundary ya seedha message kya ho sakta hai? Jo maloom nahi, use unknown bolo."
+};
+$("council-followups").querySelectorAll("[data-council-followup]").forEach(function(b){b.onclick=function(){ask(COUNCIL_FOLLOWUPS[b.getAttribute("data-council-followup")],"council")}});
+async function ask(q, requestedMode){
   q=(q||"").trim(); if(!q||busy) return;
+  var mode=requestedMode||aiMode;
   if(!profile){ $("ai-status").textContent="Make your kundli first."; return; }
+  if(mode==="council"&&!$("council-consent").checked){ $("ai-status").textContent="Pehle consent box select kijiye; tabhi aapka sawaal AI provider ko bheja jayega."; return; }
   if(!K) K=compute(profile);
   if(Jd.crisis(q)){ $("q").value=""; showHelp(); return; }
-  busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent="";
+  busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent=""; $("council-followups").hidden=true;
   bubble("u",esc(q)); chat.push({role:"user",content:q});
   var a=bubble("a",'<p class="note">Reading your chart…</p>');
   a.scrollIntoView({behavior:"smooth",block:"end"});
   try{
+    if(mode==="council") $("council-consent").checked=false;
     var res=await fetch("ai.php",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({lang:$("lang").value,chart:chartContext(),turns:chat.slice(-10),ctx:aiContext(),device:device(),nolog:!sharing()})});
+      body:JSON.stringify({lang:$("lang").value,mode:mode,chart:chartContext(mode),turns:chat.slice(-10),ctx:mode==="council"?"":aiContext(),device:mode==="council"?"":device(),nolog:mode==="council"||!sharing()})});
     var j=await res.json().catch(function(){return {}});
     if(j.crisis){ chat.pop(); a.remove(); $("chat").lastChild&&$("chat").lastChild.remove(); busy=false; $("send").disabled=false; showHelp(); return; }
     if(!res.ok||!j.text) throw (j.err||"fail");
     a.innerHTML=md2html(j.text); chat.push({role:"assistant",content:j.text});
+    if(mode==="council") $("council-followups").hidden=false;
     if(typeof j.left==="number") $("ai-status").textContent=j.left+" questions left today.";
   }catch(e){
     chat.pop(); a.remove();
-    var msg={off:sharing()?"Thank you. AI answers are starting soon; your question has been noted.":"AI answers are starting soon.",limit:"Today's free questions are used up. Come back tomorrow.",bad:"Please write a shorter question."}[e];
+    var msg={off:mode==="council"||!sharing()?"AI answers are starting soon. Your Council question was not saved to Maakit's usage log.":"AI answers are starting soon; your question was noted for app planning.",limit:"Today's free questions are used up. Come back tomorrow.",bad:"Please write a shorter question."}[e];
     $("ai-status").textContent=msg||"The AI could not answer right now. Check your internet and try again.";
   }
   busy=false; $("send").disabled=false;

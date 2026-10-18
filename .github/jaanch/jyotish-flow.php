@@ -25,7 +25,7 @@ function jf_http(string $path, $body = null): array {
 // ---- the page ----
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'Rahu · Red flags?'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
 
 // ---- AI off without a key: page says so, endpoint answers "off" ----
@@ -41,6 +41,8 @@ jf_check($c4 === 405 || $c4 === 503, "GET ai.php should be refused, got $c4");
 $ok = jy_clean(['lang' => 'English', 'chart' => 'LAGNA: Makara', 'turns' => [['role' => 'user', 'content' => ' Career? ']]]);
 jf_check($ok['lang'] === 'English' && $ok['turns'][0]['content'] === 'Career?', 'clean basic');
 jf_check(jy_clean(['lang' => 'Klingon', 'chart' => 'c', 'turns' => [['role' => 'user', 'content' => 'a']]])['lang'] === 'Hinglish', 'unknown language falls back to Hinglish');
+jf_check(jy_clean(['mode' => 'council', 'chart' => 'c', 'turns' => [['role' => 'user', 'content' => 'a']]])['mode'] === 'council', 'Council mode accepted');
+jf_check(jy_clean(['mode' => 'system', 'chart' => 'c', 'turns' => [['role' => 'user', 'content' => 'a']]])['mode'] === 'jyotish', 'unknown mode falls back to Jyotish');
 $bad = 0;
 foreach ([
     ['chart' => '', 'turns' => [['role' => 'user', 'content' => 'a']]],
@@ -57,6 +59,9 @@ jf_check($bad === 8, "bad input refused: $bad of 8");
 // ---- rules live on the server ----
 $r = jy_rules('Hindi (Devanagari script)');
 foreach (['Parashari', 'never exact dates', 'Never frighten', 'gemstones', 'Reply in Hindi'] as $w) jf_check(str_contains($r, $w), "rules lack $w");
+$councilRules = jy_rules('Hinglish', 'council');
+foreach (['Rahu', 'Mangal', 'Chandrama', 'Shani', 'do not invent incidents', 'never use leading questions', 'consequences cannot be predicted', 'not evidence'] as $w)
+    jf_check(str_contains(mb_strtolower($councilRules), mb_strtolower($w)), "Council rules lack $w");
 
 // ---- daily limit per IP ----
 $db = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4', DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
@@ -92,6 +97,9 @@ jf_check($qrow && $qrow['topic'] === 'marriage' && $qrow['q'] === 'Meri shaadi k
 $before = (int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='ai_q'")->fetchColumn();
 $post('/jyotish/ai.php', ['nolog' => true] + $turn('Business kaisa rahega?'));
 jf_check((int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='ai_q'")->fetchColumn() === $before, 'nolog question stored');
+[$cCouncil] = $post('/jyotish/ai.php', ['mode' => 'council', 'nolog' => false] + $turn('Council privacy check: ek relationship incident'));
+jf_check(in_array($cCouncil, [200, 503, 502], true), "Council request response unexpected: $cCouncil");
+jf_check((int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='ai_q'")->fetchColumn() === $before, 'Council question stored despite private mode');
 // crisis: help, never the words
 $crBefore = (int)$db->query("SELECT COUNT(*) FROM jy_events WHERE kind='crisis'")->fetchColumn();
 [$c9, $r9] = $post('/jyotish/ai.php', $turn('Ab jeena nahi chahta'));

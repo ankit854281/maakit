@@ -3,9 +3,9 @@
 // Maakit Jyotish — AI Jyotishi (POST JSON {lang, chart, turns, ctx?, device?, nolog?})
 // Jawab: {text, left}  ya  {crisis:true}  ya  {err: off|bad|limit|fail}
 //
-// Har sawaal (AI band ho tab bhi) jy_events me likha jaata hai — taaki
-// Ankit dekh sakein log kya poochh rahe hain. Bina naam. Agar user ne
-// "Mat bhejiye" chuna ho (nolog) to kuchh nahi likha jaata.
+// Sawaal tabhi jy_events me likha jaata hai jab usage sharing on ho —
+// Council mode ka personal text kabhi log nahi hota. "Mat bhejiye" (nolog)
+// chune par bhi text save nahi hota.
 // Pareshani ke shabd mile to: AI ko nahi bheja, text nahi likha,
 // sirf ek ginti — aur phone madad ka panna khol deta hai.
 // ============================================================
@@ -29,7 +29,9 @@ if (jy_crisis($q)) {
     try { if (jy_event_ok($db, $ip)) jy_log($db, 'crisis', []); } catch (PDOException $e) {}
     jy_out(200, ['crisis' => true]);
 }
-if (!$c['nolog']) {
+// Personal Council questions are sent to the AI provider to answer, but are
+// never copied into Maakit's Jyotish usage log.
+if (!$c['nolog'] && $c['mode'] !== 'council') {
     try { if (jy_event_ok($db, $ip)) jy_log($db, 'ai_q', ['device' => $c['device'], 'lang' => $c['lang'], 'topic' => jy_topic($q), 'q' => $q]); } catch (PDOException $e) {}
 }
 if (!jy_ai_ready()) jy_out(503, ['err' => 'off']);
