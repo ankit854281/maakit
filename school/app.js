@@ -526,20 +526,20 @@ let view = null, P = {}; // P = per-view params
 async function go(v, params) { view = v; P = params || {}; if (P.date) await ensureDate(P.date); render(); window.scrollTo(0, 0); }
 
 const NAV = {
-  principal: [['dash','fa-gauge','Dashboard'],['staff','fa-user-check','Staff & Arrangement'],['salary','fa-money-check-dollar','Salary'],['timetable','fa-calendar-week','Timetable'],
+  principal: [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['staff','fa-user-check','Staff & Arrangement'],['salary','fa-money-check-dollar','Salary'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
-              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
+              ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Report Cards & Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
               ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
   teacher:   [['mytoday','fa-sun','Today'],['quizt','fa-bolt','Quiz Duel'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
-              ['marks','fa-pen-to-square','Marks'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave'],['salary','fa-money-check-dollar','My Salary']],
+              ['marks','fa-pen-to-square','Marks Entry'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave'],['salary','fa-money-check-dollar','My Salary'],['rules','fa-scale-balanced','School Rules']],
   student:   [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   accountant:[['salary','fa-money-check-dollar','Staff Salary'],['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts']],
   reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
+  chairman:  [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Report Cards & Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
 };
 
 const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
@@ -549,22 +549,23 @@ const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash'
 // then the pages of the open group as smaller capsules. Any page not listed here falls into the last group,
 // so pages added later (by either AI) never disappear from the menu.
 const GROUPS = {
-  principal: [['Dashboard', 'fa-gauge', ['dash', 'log']],
-              ['Staff', 'fa-user-tie', ['staff', 'salary', 'timetable', 'lplans', 'diaries', 'mytoday', 'diary', 'lplan', 'marks', 'toolkit', 'profile', 'saathi']],
-              ['Students', 'fa-children', ['students', 'attendance', 'syllabus', 'exams', 'results', 'behaviour', 'speaking', 'fame', 'quizt', 'studio', 'learning']],
-              ['Admin', 'fa-building-columns', ['finance', 'fees', 'fdesk', 'fcalls', 'freceipts', 'fdues', 'notices', 'calendar', 'settings']]],
-  chairman:  [['Dashboard', 'fa-gauge', ['dash', 'log']], ['Students', 'fa-children', ['exams', 'results', 'fame', 'syllabus']],
-              ['Admin', 'fa-building-columns', ['finance', 'fdues', 'fees', 'calendar']]],
+  principal: [['Dashboard', 'fa-gauge', ['dash']],
+              ['Staff', 'fa-user-tie', ['staff', 'salary', 'timetable', 'lplans', 'diaries', 'mytoday', 'diary', 'lplan', 'toolkit', 'profile', 'saathi']],
+              ['Students', 'fa-children', ['students', 'attendance', 'syllabus', 'exams', 'behaviour', 'speaking', 'fame', 'quizt', 'studio', 'learning']],
+              ['Admin', 'fa-building-columns', ['admin', 'fdesk', 'finance', 'fdues', 'fcalls', 'freceipts', 'fees', 'marks', 'results', 'notices', 'calendar', 'rules', 'log']]],
+  chairman:  [['Dashboard', 'fa-gauge', ['dash']], ['Students', 'fa-children', ['exams', 'results', 'fame', 'syllabus']],
+              ['Admin', 'fa-building-columns', ['admin', 'finance', 'fdues', 'fees', 'calendar', 'rules', 'log']]],
   teacher:   [['Today', 'fa-sun', ['mytoday', 'myweek', 'calendar']], ['My Classes', 'fa-chalkboard', ['attendance', 'diary', 'marks', 'behaviour', 'speaking', 'quizt', 'studio', 'learning']],
-              ['Planning', 'fa-clipboard-check', ['lplan', 'syllabus', 'toolkit', 'fame']], ['Me', 'fa-user', ['leave', 'salary', 'profile', 'saathi', 'finance']]],
+              ['Planning', 'fa-clipboard-check', ['lplan', 'syllabus', 'toolkit', 'fame']], ['Me', 'fa-user', ['leave', 'salary', 'rules', 'profile', 'saathi', 'finance']]],
   parent:    [['Home', 'fa-house', ['phome', 'pnotices', 'faculty']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning', 'studio']],
               ['Progress & Fees', 'fa-chart-simple', ['presults', 'pfees', 'finance']]],
   student:   [['Home', 'fa-house', ['phome', 'pnotices']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning']], ['Progress', 'fa-chart-simple', ['presults', 'finance']]],
   accountant:[['Fees', 'fa-wallet', ['finance', 'fdesk', 'fdues', 'fcalls', 'freceipts']], ['Staff', 'fa-user-tie', ['salary']]],
   reception: [['Fees', 'fa-wallet', ['fcalls', 'fdues', 'freceipts', 'finance']]]
 };
+const NAV_HIDDEN = { principal: ['settings'] };      // reached from the gear button in the header
 function navGroups() {
-  const items = NAV[U.role], seen = new Set();
+  const items = NAV[U.role], seen = new Set(NAV_HIDDEN[U.role] || []);
   const groups = (GROUPS[U.role] || [['Menu', 'fa-bars', []]]).map(([name, ic, keys]) => ({ name, ic,
     items: keys.map(k => items.find(x => x[0] === k)).filter(x => x && !seen.has(x[0]) && seen.add(x[0])) }));
   const rest = items.filter(x => !seen.has(x[0])); if (rest.length) groups[groups.length - 1].items.push(...rest);
@@ -593,15 +594,20 @@ function render() {
       <button onclick="go('${NAV[U.role][0][0]}')" class="erp-brand"><span class="erp-logo">SN</span><span class="min-w-0 text-left"><b>${esc(S.settings.school)}</b><small>${esc(S.settings.place || 'Bhadohi')} · Session ${esc(S.settings.session || '')}</small></span></button>
       <nav class="erp-menu" aria-label="Main menu">${groups.map(menu).join('')}</nav>
       <div class="erp-right">
-        ${isFam() || isOffice() ? '' : '<span id="net" class="net"></span>'}
-        <div class="dd dd-r"><button onclick="ddToggle(this)" class="erp-user"><span class="erp-avatar">${esc(initials)}</span><span class="erp-user-t"><b>${esc(name)}</b><small>${esc(roleName)}</small></span><i class="fa-solid fa-chevron-down mn-cv"></i></button>
-          <div class="dd-panel">${U.role === 'principal' ? `<button onclick="ddClose();go('settings')" class="dd-item"><i class="fa-solid fa-gear"></i><span>Settings & PINs</span></button>` : ''}
+        ${isFam() || isOffice() ? '' : '<span id="net" class="net" title="Changes are saved to the school server"></span>'}
+        ${canProfile() ? `<div class="srch"><div class="srch-box" onclick="this.parentElement.classList.add('open');this.querySelector('input').focus()"><i class="fa-solid fa-magnifying-glass"></i>
+          <input id="g-q" placeholder="Search any teacher or student…" autocomplete="off" oninput="gsearch(this.value)" onkeydown="if(event.key==='Enter')openProfile(null,null,this.value);if(event.key==='Escape'){this.value='';gsearch('');this.blur();this.closest('.srch').classList.remove('open')}" onblur="setTimeout(()=>{if(!this.value){this.closest('.srch').classList.remove('open');}const r=document.getElementById('g-res');if(r)r.classList.remove('show')},200)"></div>
+          <div id="g-res" class="srch-res"></div></div>` : ''}
+        ${U.role === 'principal' ? `<button onclick="go('settings')" class="erp-ic ${view === 'settings' ? 'on' : ''}" title="Settings"><i class="fa-solid fa-gear"></i></button>` : ''}
+        <div class="dd dd-r"><button onclick="ddToggle(this)" class="erp-av-btn" title="${esc(name)} · ${esc(roleName)}"><span class="erp-avatar">${esc(initials)}</span></button>
+          <div class="dd-panel"><div class="px-3 py-2"><b class="block text-sm">${esc(name)}</b><small class="text-slate-500">${esc(roleName)}</small></div>
+            ${U.role === 'principal' ? `<button onclick="ddClose();go('settings')" class="dd-item"><i class="fa-solid fa-gear"></i><span>Settings & PINs</span></button>` : ''}
             <button onclick="ddClose();logout()" class="dd-item"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Log out</span></button></div></div>
       </div></div></header>
     <div class="erp-crumb noprint"><div class="erp-wrap">${page && page[2] !== cur.name ? `${esc(cur.name)} <i class="fa-solid fa-chevron-right"></i> <b>${esc(page[2])}</b>` : `<b>${esc(cur.name)}</b>`}</div></div>
     <main class="erp-wrap w-full flex-1 pb-8 space-y-4">${body}</main>
     <footer class="erp-wrap w-full py-6 text-center text-xs text-slate-400 noprint">Powered by <b class="text-slate-500">Maakit</b></footer>
-  </div>`;
+  </div>${PROF && canProfile() ? vProfileWindow() : ''}`;
   setNet(netState);
   if(view==='faculty') loadParentFaculty();
 }
@@ -710,7 +716,7 @@ async function logout() {
 }
 function forceLogout() {
   QZ = null; QT = null; QPLAY = null; qzStopTimer(); GZ = null; GP = null; GT = null; gStop();
-  MUST = null; PD = null; PC_LAST = null; SAL = null; SALOPEN = null; SCAN = null; LPDRAFT = {}; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
+  MUST = null; PD = null; PC_LAST = null; PROF = null; PROFDATA = {}; SALSUM = null; HIST_FROM = null; SAL = null; SALOPEN = null; SCAN = null; LPDRAFT = {}; OF = null; OFSEL = null; OFOPEN = null; OFQ = ''; PFD = null; moreOpen = false; try { localStorage.removeItem('sch_role'); } catch (e) {}
   TOKEN = null; tokenSet(null); U = null; ME = null; S = null; SYNCED = {}; pendingLog = [];
   refreshStatus();
 }
@@ -739,8 +745,9 @@ function printHeader(sub) { return `<h1>${esc(S.settings.school)}, ${esc(S.setti
 const PRINT_FOOT = `<div class="f"><span>Principal's Signature ______________</span><span>Powered by Maakit</span></div>`;
 
 // ---------------------------------------------------------------- PRINCIPAL / CHAIRMAN DASHBOARD
+function lastSchoolDay(d) { for (let i = 0; i < 20 && (dayIdx(d) < 0 || holidayOn(d)); i++) d = addDays(d, -1); return d; }
 function vDash() {
-  const date = P.date || todayISO(), ro = U.role === 'chairman', isToday = date === todayISO();
+  const date = P.date || lastSchoolDay(todayISO()), ro = U.role === 'chairman', isToday = date === todayISO();
   const ab = staffAbsent(date), as = attStats(date), ds = diaryStats(date), arr = arrangement(date), al = alerts(date);
   const nT = Object.keys(S.teachers).length, onLeave = ab.filter(t => S.leaves.some(l => l.status === 'Approved' && l.tid === t && l.from <= date && l.to >= date)).length;
   const withKids = CLASS_NAMES.filter(c => studentsOf(c).length), pending = dayIdx(date) >= 0 && !holidayOn(date) ? withKids.filter(c => !attOf(date, c)) : [];
@@ -750,16 +757,23 @@ function vDash() {
   const kpi = (ic, tint, lbl, val, sub, warn, go) => `<button ${go ? `onclick="go('${go}',{date:'${date}'})"` : 'disabled'} class="kpi ${warn ? 'kpi-warn' : tint}"><span class="kpi-ic"><i class="fa-solid ${ic}"></i></span><span class="kpi-val">${val}</span><span class="kpi-lbl">${lbl}</span><span class="kpi-sub">${sub}</span></button>`;
   const tile = c => { const n = studentsOf(c).length, a = attOf(date, c);
     if (!n) return `<div class="att att-empty"><b>${esc(c)}</b><span>No students</span></div>`;
-    if (!a) return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att att-none"><b>${esc(c)}</b><span>Not marked</span></button>`;
+    if (dayIdx(date) < 0 || holidayOn(date)) return `<div class="att att-empty"><b>${esc(c)}</b><span>No school</span><em>${n} students</em></div>`;
+    if (!a) return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att att-none"><b>${esc(c)}</b><span>Not marked</span><em>${n} students</em></button>`;
     const p = Math.round((n - a.absent.length) / n * 100);
-    return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att ${p >= 95 ? 'att-hi' : p >= 90 ? 'att-mid' : 'att-lo'}" title="${n - a.absent.length} of ${n} present"><b>${esc(c)}</b><span>${p}%</span></button>`; };
+    return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att ${p >= 95 ? 'att-hi' : p >= 90 ? 'att-mid' : 'att-lo'}" title="Class ${esc(c)}: ${n - a.absent.length} present, ${a.absent.length} absent, ${n} on roll"><b>${esc(c)}</b><span>${p}%</span><em>${n - a.absent.length}/${n} present</em><em class="${a.absent.length ? 'ab' : ''}">${a.absent.length ? a.absent.length + ' absent' : 'none absent'}</em></button>`; };
+  const trendDays = []; for (let d = date, i = 0; trendDays.length < 12 && i < 40; i++, d = addDays(d, -1)) if (dayIdx(d) >= 0 && !holidayOn(d)) trendDays.unshift(d);
+  const trend = trendDays.map(d => { const st = attStats(d); return st.total ? Math.round(st.present / st.total * 100) : null; });
+  if (!ro) ofFresh();
+  const ofOk = OF && !OF.error && OF.payments, feeM = ofOk ? OF.payments.filter(p => !p.cancelled && p.date.slice(0, 7) === date.slice(0, 7)).reduce((a, p) => a + p.amt, 0) : null;
+  const feeDue = ofOk ? OF.students.reduce((a, s) => a + Math.max(0, s.dues.due), 0) : null;
   const upcoming = [...S.cal.map(e => ({ ...e, kind: e.type === 'Holiday' ? 'hol' : '' })), ...examItems().map(e => ({ ...e, kind: 'exam' }))]
     .filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   const shortD = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   const sum = dailySummary(date);
   return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
-      <div><h2 class="text-2xl font-bold text-ink">${isToday ? 'Welcome' : 'Report for this day'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '').split(' ')[0])} ${isToday ? '🎉' : ''}</h2>
-        <p class="dash-eyebrow mt-1">${isToday ? `${hello}! Here's what's happening in your school today — ` : ''}${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+      <div><h2 class="text-2xl font-bold text-ink">${P.date ? 'Report for this day' : 'Welcome'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '').split(' ')[0])} ${P.date ? '' : '🎉'}</h2>
+        <p class="dash-eyebrow mt-1">${P.date ? '' : isToday ? `${hello}! Here's what's happening in your school today — ` : `${hello}! Today is ${dayIdx(todayISO()) < 0 ? 'Sunday' : 'a holiday'}, so this shows the last school day — `}${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+      <div class="flex flex-wrap items-end gap-6 noprint"><div class="hero-n"><b>${S.students.length}</b><small>Students</small></div><div class="hero-n"><b>${nT}</b><small>Staff</small></div><div class="hero-n"><b>${CLASS_NAMES.length}</b><small>Classes</small></div></div>
       <div class="flex flex-wrap gap-2 noprint">${dateInput('d-date', date, "go('dash',{date:this.value})")}
         <button onclick="printHTML('Day report',printHeader('Daily report — ${fmtDate(date)}')+'<pre style=&quot;white-space:pre-wrap;font-family:inherit&quot;>'+esc(dailySummary('${date}'))+'</pre>'+PRINT_FOOT)" class="btn btn-l"><i class="fa-solid fa-download"></i> Day report</button>
         ${ro ? '' : `<button onclick="go('notices')" class="btn btn-p"><i class="fa-solid fa-plus"></i> New notice</button>`}</div></div>
@@ -774,6 +788,8 @@ function vDash() {
         <div class="card"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h3 class="h3">Attendance by class</h3>
           <div class="flex flex-wrap gap-3"><span class="legend"><i style="background:#C5EEF2"></i>95%+</span><span class="legend"><i style="background:#E3D8FF"></i>90–94%</span><span class="legend"><i style="background:#FDE4C3"></i>Below 90%</span><span class="legend"><i style="border:1.5px dashed #F2A7AA"></i>Not marked</span></div></div>
         <div class="att-grid">${CLASS_NAMES.slice().reverse().map(tile).join('')}</div></div>
+        <div class="card"><div class="flex justify-between items-center"><h3 class="h3">Student attendance — last ${trendDays.length} school days</h3><span class="text-xs text-slate-500">present ÷ marked</span></div>
+          ${trend.some(v => v != null) ? svgLine(trendDays.map(d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })), trend, { unit: '%', min: Math.min(70, ...trend.filter(v => v != null)), max: 100, color: CH.teal, h: 170, title: 'Attendance trend' }) : '<p class="text-sm text-slate-500 py-6">Attendance not marked on these days yet.</p>'}</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Coming up</h3><button onclick="go('calendar')" class="link">Calendar</button></div>
         ${upcoming.length ? upcoming.map(e => `<div class="att-row justify-start"><span class="date-cap ${e.kind}">${shortD(e.date)}${e.to && e.to !== e.date ? '–' + shortD(e.to).split(' ')[0] : ''}</span><span class="flex-1">${esc(e.title)}</span></div>`).join('') : '<p class="text-sm text-slate-500">Nothing on the calendar.</p>'}</div>
@@ -794,6 +810,8 @@ function vDash() {
         <div class="today-card"><div class="ring" style="--p:${pct || 0}"><b>${pct == null ? '—' : pct + '%'}</b></div>
           <div><p class="dash-eyebrow">School today</p><p class="text-lg font-bold mt-1">${as.total ? `${as.present} of ${as.total} present` : 'Attendance not marked yet'}</p>
             <p class="text-xs text-white/60 mt-1">${as.total ? `${as.total - as.present} absent` : ''}${pending.length ? ` · ${pending.length} class${pending.length > 1 ? 'es' : ''} still to mark` : ''}</p></div></div>
+        ${ro ? '' : `<div class="grid grid-cols-2 gap-3"><button onclick="go('admin')" class="kpi kpi-peach"><span class="kpi-val text-[22px]">${feeM == null ? '…' : rs(feeM)}</span><span class="kpi-lbl">Fee this month</span></button>
+          <button onclick="go('fdues')" class="kpi ${feeDue ? 'kpi-warn' : 'kpi-lime'}"><span class="kpi-val text-[22px]">${feeDue == null ? '…' : rs(feeDue)}</span><span class="kpi-lbl">Fee still due</span></button></div>`}
         <div class="card"><h3 class="h3 mb-1">Needs your attention</h3>
           ${al.length ? al.slice(0, 6).map(a => `<div class="att-row"><span class="flex items-start min-w-0"><span class="dot-${a.lv} mt-1.5"></span><span class="clamp2" title="${esc(a.x)}">${esc(a.x)}</span></span>
             ${a.go && !ro ? `<button onclick="go('${a.go}',{date:'${date}'})" class="link">Open</button>` : ''}</div>`).join('') + (al.length > 6 ? `<p class="text-xs text-slate-500 pt-2">+ ${al.length - 6} more</p>` : '')
@@ -1349,7 +1367,7 @@ function vStudents() {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="card lg:col-span-2 overflow-x-auto">
         <div class="flex flex-wrap gap-1 mb-3">${['ALL', ...CLASS_NAMES].map(x => `<button onclick="go('students',{c:'${x}'})" class="btn btn-sm ${x === c ? 'btn-p' : 'btn-l'}">${x === 'ALL' ? 'All' : x}</button>`).join('')}</div>
-        <table class="tbl"><tr><th>Adm</th><th>Name</th><th>Class</th><th>Father</th><th>Phone</th><th></th></tr>${list.map(s => `<tr><td>${esc(s.adm)}</td><td class="font-semibold">${esc(s.name)}${s.sample ? ' <span class="pill bg-slate-100 text-slate-500">sample</span>' : ''}</td><td>${s.cls}</td><td>${esc(s.father)}</td><td>${esc(s.phone)}</td>
+        <table class="tbl"><tr><th>Adm</th><th>Name</th><th>Class</th><th>Father</th><th>Phone</th><th></th></tr>${list.map(s => `<tr><td>${esc(s.adm)}</td><td class="font-semibold"><button onclick="openProfile('s',${jsq(s.id)},'')" class="hover:underline text-left" title="Open full profile">${esc(s.name)}</button>${s.sample ? ' <span class="pill bg-slate-100 text-slate-500">sample</span>' : ''}</td><td>${s.cls}</td><td>${esc(s.father)}</td><td>${esc(s.phone)}</td>
           <td class="whitespace-nowrap"><button onclick="setPin('s:' + ${jsq(s.id)}, ${jsq(s.name)})" class="text-slate-500 mr-2" title="Set or reset student PIN"><i class="fa-solid fa-key"></i></button><button onclick="editStudent('${s.id}')" class="text-indigo-600"><i class="fa-solid fa-pen"></i></button> <button onclick="delStudent('${s.id}')" class="text-rose-500 ml-2"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')}</table>
       </div>
       <div class="space-y-4">
@@ -2920,9 +2938,10 @@ async function loadOffice() {       // office logins: this is their whole data
 }
 async function ofLoad(force) {
   if (OFBUSY || (OF && !force)) return; OFBUSY = true;
-  try { const res = await oapi('data'); OF = res; } catch (e) { OF = { error: e.message }; } finally { OFBUSY = false; }
-  if (['fdesk', 'fdues', 'fcalls', 'freceipts'].includes(view)) { const y = window.scrollY; render(); window.scrollTo(0, y); }
+  try { const res = await oapi('data'); OF = res; OF._at = Date.now(); } catch (e) { OF = { error: e.message, _at: Date.now() }; } finally { OFBUSY = false; }
+  if (['fdesk', 'fdues', 'fcalls', 'freceipts', 'admin', 'dash'].includes(view) || PROF) { const y = window.scrollY; render(); window.scrollTo(0, y); }
 }
+function ofFresh() { if (!OF || (OF._at && Date.now() - OF._at > 120000)) ofLoad(!!OF); }   // dashboards: refresh fee data every 2 minutes
 function ofReady(title) {
   if (OF && !OF.error) return null;
   if (!OF) { ofLoad(); return head(title) + '<div class="card text-sm text-slate-500">Loading fee records…</div>'; }
@@ -3265,6 +3284,313 @@ function vMySalary() {
       : '<div class="card text-sm text-slate-500">No paid salary slips yet.</div>');
 }
 
+// ---------------------------------------------------------------- CHARTS (small SVG, no library)
+// One hue per job; values written on the marks (so colour is never the only carrier); <title> = hover tooltip.
+const CH = { violet: '#7C5CE6', orange: '#E8920E', teal: '#14A9BC', grid: '#ECECF1', ink: '#1C1C1E', muted: '#6E6E78' };
+function svgBars(items, o = {}) {
+  const W = 560, H = o.h || 200, padB = 28, padT = 22, n = Math.max(1, items.length), max = Math.max(1, ...items.map(i => +i.value || 0)) * 1.12;
+  const bw = Math.min(42, (W / n) * .55), gap = W / n;
+  const grid = [0, .5, 1].map(f => { const y = padT + (H - padT - padB) * (1 - f); return `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="${CH.grid}" stroke-width="1"/>`; }).join('');
+  const bars = items.map((it, i) => { const v = +it.value || 0, h = Math.max(v ? 3 : 0, (H - padT - padB) * v / max), x = gap * i + (gap - bw) / 2, y = H - padB - h;
+    return `<g><title>${esc(it.label)}: ${esc(it.display ?? v)}</title><rect x="${x - 6}" y="${padT}" width="${bw + 12}" height="${H - padT - padB}" fill="transparent"/>
+      <path d="M${x},${H - padB} V${y + Math.min(4, h)} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${H - padB} Z" fill="${it.color || o.color || CH.violet}"/>
+      <text x="${x + bw / 2}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="${CH.ink}">${esc(it.display ?? v)}</text>
+      <text x="${x + bw / 2}" y="${H - 9}" text-anchor="middle" font-size="11" fill="${CH.muted}">${esc(it.label)}</text></g>`; }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" style="max-height:${Math.round(H * 1.3)}px" role="img" aria-label="${esc(o.title || 'chart')}">${grid}${bars}</svg>`;
+}
+function svgGroupBars(labels, series, o = {}) {
+  const W = 560, H = o.h || 210, padB = 28, padT = 22, n = Math.max(1, labels.length), gap = W / n, k = series.length;
+  const max = Math.max(1, ...series.flatMap(s => s.values.map(v => +v || 0))) * 1.15, bw = Math.min(22, gap * .7 / k);
+  const grid = [0, .5, 1].map(f => { const y = padT + (H - padT - padB) * (1 - f); return `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="${CH.grid}"/>`; }).join('');
+  const g = labels.map((lb, i) => { const x0 = gap * i + (gap - (bw * k + 2 * (k - 1))) / 2;
+    return series.map((s, j) => { const v = +s.values[i] || 0, h = Math.max(v ? 3 : 0, (H - padT - padB) * v / max), x = x0 + j * (bw + 2), y = H - padB - h;
+      return `<g><title>${esc(lb)} · ${esc(s.name)}: ${esc(s.fmt ? s.fmt(v) : v)}</title><path d="M${x},${H - padB} V${y + Math.min(4, h)} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${H - padB} Z" fill="${s.color}"/></g>`; }).join('')
+      + `<text x="${gap * i + gap / 2}" y="${H - 9}" text-anchor="middle" font-size="11" fill="${CH.muted}">${esc(lb)}</text>`; }).join('');
+  return `<div class="flex flex-wrap gap-4 mb-2">${series.map(s => `<span class="legend"><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>
+    <svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" style="max-height:${Math.round(H * 1.3)}px" role="img" aria-label="${esc(o.title || 'chart')}">${grid}${g}</svg>`;
+}
+function svgLine(labels, values, o = {}) {
+  const W = 560, H = o.h || 180, padB = 26, padT = 20, padX = 24, n = labels.length, lo = o.min ?? 0, hi = o.max ?? Math.max(1, ...values.filter(v => v != null));
+  const X = i => padX + (n < 2 ? (W - 2 * padX) / 2 : i * (W - 2 * padX) / (n - 1)), Y = v => padT + (H - padT - padB) * (1 - (v - lo) / Math.max(1e-9, hi - lo));
+  const pts = values.map((v, i) => v == null ? null : [X(i), Y(v)]), seg = []; let cur = [];
+  pts.forEach(p => { if (p) cur.push(p); else if (cur.length) { seg.push(cur); cur = []; } }); if (cur.length) seg.push(cur);
+  const path = seg.map(s => 'M' + s.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L')).join(' ');
+  const grid = [lo, (lo + hi) / 2, hi].map(v => `<line x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="${CH.grid}"/><text x="${W}" y="${Y(v) - 4}" text-anchor="end" font-size="10" fill="${CH.muted}">${Math.round(v)}${o.unit || ''}</text>`).join('');
+  const dots = pts.map((p, i) => p ? `<g><title>${esc(labels[i])}: ${values[i]}${o.unit || ''}</title><circle cx="${p[0]}" cy="${p[1]}" r="12" fill="transparent"/><circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="${o.color || CH.violet}" stroke-width="2"/></g>` : '').join('');
+  const xl = labels.map((l, i) => (n <= 7 || (n - 1 - i) % Math.ceil(n / 6) === 0) ? `<text x="${X(i)}" y="${H - 7}" text-anchor="${i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'}" font-size="10.5" fill="${CH.muted}">${esc(l)}</text>` : '').join('');
+  const last = pts.map((p, i) => [p, i]).filter(x => x[0]).pop();
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" style="max-height:${Math.round(H * 1.3)}px" role="img" aria-label="${esc(o.title || 'chart')}">${grid}<path d="${path}" fill="none" stroke="${o.color || CH.violet}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}
+    ${last ? `<text x="${Math.min(W - 20, last[0][0])}" y="${last[0][1] - 10}" text-anchor="middle" font-size="11" font-weight="700" fill="${CH.ink}">${values[last[1]]}${o.unit || ''}</text>` : ''}${xl}</svg>`;
+}
+
+// ---------------------------------------------------------------- ATTENDANCE HISTORY (for profiles, admin dashboard) — profile_api.php?a=att
+let HIST_FROM = null, HISTBUSY = false;
+async function pfapi(a, body, q) {
+  const url = 'profile_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : '');
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null;
+  try { r = await fetch(url, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (r.status === 401) { forceLogout(); throw new Error('Please log in again.'); }
+  if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem. Please try again.');
+  return j;
+}
+function histStart() { const d = new Date(); d.setMonth(d.getMonth() - 5, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-01'; }
+async function loadHistory() {
+  const from = histStart();
+  if (HISTBUSY || (HIST_FROM && HIST_FROM <= from) || (loadedFrom && loadedFrom <= from)) return;
+  HISTBUSY = true;
+  try { const res = await pfapi('att', null, { from, to: todayISO() }); res.records.forEach(rec => { if (!SYNCED[rec.k + SEP + rec.r]) { setRec(rec.k, rec.r, rec.d); SYNCED[rec.k + SEP + rec.r] = JSON.stringify(rec.d); } }); HIST_FROM = from; }
+  catch (e) { toast(e.message, 'r'); } finally { HISTBUSY = false; }
+  if (PROF || view === 'admin') { const y = window.scrollY; render(); window.scrollTo(0, y); }
+}
+function lastMonths(n) { const out = [], d = new Date(); d.setDate(1); for (let i = n - 1; i >= 0; i--) { const x = new Date(d.getFullYear(), d.getMonth() - i, 1); out.push(x.getFullYear() + '-' + pad(x.getMonth() + 1)); } return out; }
+function schoolDays(ym) { const out = [], [y, m] = ym.split('-').map(Number), n = new Date(y, m, 0).getDate(), t = todayISO();
+  for (let i = 1; i <= n; i++) { const d = ym + '-' + pad(i); if (d > t) break; if (dayIdx(d) >= 0 && !holidayOn(d)) out.push(d); } return out; }
+function studentMonth(s, ym) { let marked = 0, absent = 0; schoolDays(ym).forEach(d => { const a = attOf(d, s.cls); if (!a) return; marked++; if (a.absent.includes(s.id)) absent++; }); return { marked, absent, present: marked - absent, pct: marked ? Math.round((marked - absent) / marked * 100) : null }; }
+function teacherMonth(t, ym) { let abs = 0, half = 0, leave = 0; const days = schoolDays(ym);
+  days.forEach(d => { const f = absentFrom(d, t); if (f === null) return; if (S.leaves.some(l => l.status === 'Approved' && l.tid === t && l.from <= d && l.to >= d)) leave++; else if (f > 0) half++; else abs++; });
+  const off = abs + leave + half * .5; return { days: days.length, abs, half, leave, present: days.length - off, pct: days.length ? Math.round((days.length - off) / days.length * 100) : null }; }
+
+// ---------------------------------------------------------------- HEADER SEARCH → PROFILE WINDOW
+let PROF = null, PROFDATA = {};
+function canProfile() { return U && ['principal', 'chairman'].includes(U.role); }
+function people(q) {
+  q = String(q || '').trim().toLowerCase(); const dig = q.replace(/\D/g, '');
+  const tch = Object.entries(S.teachers).filter(([k, t]) => !q || t.name.toLowerCase().includes(q) || (t.role || '').toLowerCase().includes(q) || (dig.length >= 4 && String(t.phone || '').includes(dig))).map(([k, t]) => ({ kind: 't', id: k, name: t.name, sub: t.role || 'Teacher' }));
+  const stu = S.students.filter(s => !q || s.name.toLowerCase().includes(q) || String(s.adm).toLowerCase() === q || s.cls.toLowerCase() === q || (s.father || '').toLowerCase().includes(q) || (dig.length >= 4 && String(s.phone || '').replace(/\D/g, '').includes(dig)))
+    .map(s => ({ kind: 's', id: s.id, name: s.name, sub: `Class ${s.cls} · Adm ${s.adm}` }));
+  return { tch, stu };
+}
+function gsearch(v) {
+  const box = document.getElementById('g-res'); if (!box) return;
+  if (!v.trim()) { box.innerHTML = ''; box.classList.remove('show'); return; }
+  const { tch, stu } = people(v), row = p => `<button onclick="openProfile('${p.kind}',${jsq(p.id)},${jsq(v)})" class="srch-item"><span class="erp-avatar">${esc(initialsOf(p.name))}</span><span class="min-w-0"><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></span></button>`;
+  box.innerHTML = (tch.length ? `<p class="srch-h">Teachers (${tch.length})</p>${tch.slice(0, 6).map(row).join('')}` : '') + (stu.length ? `<p class="srch-h">Students (${stu.length})</p>${stu.slice(0, 8).map(row).join('')}` : '')
+    + (!tch.length && !stu.length ? '<p class="srch-h">Nobody found</p>' : `<button onclick="openProfile(null,null,${jsq(v)})" class="srch-all">See all results</button>`);
+  box.classList.add('show');
+}
+function initialsOf(n) { return String(n || '?').replace(/\s*\(.*\)/, '').replace(/\b(Sir|Ma'am|Mr|Mrs|Ms)\b\.?/g, '').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase(); }
+function openProfile(kind, id, q) {
+  const r = people(q || ''), first = r.tch[0] ? { kind: 't', id: r.tch[0].id } : r.stu[0] ? { kind: 's', id: r.stu[0].id } : null;
+  PROF = { kind: kind || (first && first.kind), id: id || (first && first.id), q: q || '', tab: 'all' };
+  loadHistory(); profFetch(); render();
+}
+function closeProfile() { PROF = null; render(); }
+async function profFetch() {
+  if (!PROF || !PROF.id) return; const key = PROF.kind + ':' + PROF.id; if (PROFDATA[key]) return;
+  PROFDATA[key] = { busy: true };
+  try {
+    const notes = await pfapi('notes', null, { who: key });
+    const d = { notes: notes.notes, types: notes.types };
+    if (PROF.kind === 't' && U.role === 'principal') { try { d.salary = (await pfapi('teacher', null, { tid: PROF.id })).salary; } catch (e) { d.salaryErr = e.message; } }
+    PROFDATA[key] = d;
+  } catch (e) { PROFDATA[key] = { error: e.message }; }
+  if (PROF && PROF.kind === 's') ofFresh();
+  if (PROF) render();
+}
+function profPick(kind, id) { PROF.kind = kind; PROF.id = id; profFetch(); render(); }
+function vProfileWindow() {
+  const { tch, stu } = people(PROF.q), sel = PROF.kind + ':' + PROF.id;
+  const item = p => `<button onclick="profPick('${p.kind}',${jsq(p.id)})" class="pw-item ${p.kind + ':' + p.id === sel ? 'on' : ''}"><span class="erp-avatar">${esc(initialsOf(p.name))}</span><span class="min-w-0 text-left"><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></span></button>`;
+  let body = '<div class="p-10 text-center text-slate-500">Choose a teacher or student on the left.</div>';
+  try { if (PROF.kind === 't' && S.teachers[PROF.id]) body = profTeacher(PROF.id); else if (PROF.kind === 's' && studentById(PROF.id)) body = profStudent(studentById(PROF.id)); }
+  catch (e) { console.error(e); body = `<div class="card text-rose-700">${esc(e.message)}</div>`; }
+  return `<div class="pw-back noprint" onclick="closeProfile()"><div class="pw" onclick="event.stopPropagation()" role="dialog" aria-label="Profile">
+    <aside class="pw-side"><div class="flex items-center gap-2 mb-3"><input class="inp" value="${esc(PROF.q)}" placeholder="Search teacher or student…" oninput="PROF.q=this.value;clearTimeout(window.__pq);window.__pq=setTimeout(()=>{const el=document.getElementById('pw-list');if(el)el.innerHTML=pwList()},120)" autofocus></div>
+      <div id="pw-list" class="pw-list">${pwList()}</div></aside>
+    <section class="pw-main"><button onclick="closeProfile()" class="pw-close" title="Close"><i class="fa-solid fa-xmark"></i> Close</button>${body}</section></div></div>`;
+}
+function pwList() {
+  const { tch, stu } = people(PROF.q), sel = PROF.kind + ':' + PROF.id;
+  const item = p => `<button onclick="profPick('${p.kind}',${jsq(p.id)})" class="pw-item ${p.kind + ':' + p.id === sel ? 'on' : ''}"><span class="erp-avatar">${esc(initialsOf(p.name))}</span><span class="min-w-0 text-left"><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></span></button>`;
+  return (tch.length ? `<p class="srch-h">Teachers · ${tch.length}</p>${tch.slice(0, 30).map(item).join('')}` : '') + (stu.length ? `<p class="srch-h">Students · ${stu.length}</p>${stu.slice(0, 80).map(item).join('')}${stu.length > 80 ? '<p class="text-xs text-slate-500 px-3 py-2">Type more to narrow the list.</p>' : ''}` : '')
+    || '<p class="text-sm text-slate-500 p-3">Nobody found.</p>';
+}
+const cap = (lbl, val, t) => `<div class="cap-t ${t || ''}"><small>${lbl}</small><b>${val}</b></div>`;
+function since(s) {
+  if (!s.joinDate) return null;
+  const a = new Date(s.joinDate + 'T00:00:00'), b = new Date(), m = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+  return { years: Math.floor(m / 12), months: m % 12 };
+}
+function profNotes(who) {
+  const d = PROFDATA[who] || {}; if (d.busy) return '<p class="text-sm text-slate-500">Loading…</p>'; if (d.error) return `<p class="text-sm text-rose-700">${esc(d.error)}</p>`;
+  const col = { Complaint: 'bg-rose-50 text-rose-700', 'Warning' : 'bg-amber-50 text-amber-800', Appreciation: 'bg-emerald-50 text-emerald-700' };
+  return (d.notes || []).map(n => `<div class="att-row"><span class="min-w-0"><span class="pill ${col[n.type] || 'bg-slate-100 text-slate-600'} mr-2">${esc(n.type)}</span>${esc(n.text)}<br><small class="text-slate-500">${fmtDate(n.date)} · ${esc(n.by)}</small></span>${U.role === 'principal' ? `<button onclick="profDelNote(${jsq(who)},'${n.id}')" class="text-slate-400 hover:text-rose-500" title="Remove"><i class="fa-solid fa-trash"></i></button>` : ''}</div>`).join('') || '<p class="text-sm text-slate-500">No complaints or notes yet.</p>'
+    + (U.role === 'principal' ? `<div class="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 mt-3"><select id="pn-type" class="inp">${(d.types || ['Complaint', 'Appreciation', 'Note']).map(t => `<option>${t}</option>`).join('')}</select>
+      <input id="pn-text" class="inp" maxlength="1000" placeholder="What happened? (only the Principal sees this)"><button onclick="profAddNote(${jsq(who)})" class="btn btn-p">Add</button></div>` : '');
+}
+async function profAddNote(who) {
+  const text = document.getElementById('pn-text').value.trim(); if (text.length < 3) return toast('Write the note', 'a');
+  try { const r = await pfapi('note', { who, type: document.getElementById('pn-type').value, text }); PROFDATA[who].notes.unshift(r.note); toast('Saved'); render(); } catch (e) { toast(e.message, 'r'); }
+}
+async function profDelNote(who, id) { if (!confirm('Remove this note?')) return; try { await pfapi('delnote', { id }); PROFDATA[who].notes = PROFDATA[who].notes.filter(n => n.id !== id); render(); } catch (e) { toast(e.message, 'r'); } }
+
+function profTeacher(tid) {
+  const t = S.teachers[tid], who = 't:' + tid, d = PROFDATA[who] || {}, months = lastMonths(5), ym = todayISO().slice(0, 7);
+  const allocs = myAllocs(tid), ct = CLASSES.filter(k => k.ct === tid).map(k => k.c), tm = months.map(m => ({ m, ...teacherMonth(tid, m) }));
+  const absent5 = tm.reduce((a, x) => a + x.abs + x.half * .5, 0), leave5 = tm.reduce((a, x) => a + x.leave, 0);
+  const lpW = Object.values(S.lplan).filter(p => p.tid === tid && p.week.slice(0, 7) === ym), duty = monthLoad(todayISO(), true)[tid] || 0;
+  const syl = [...new Set(allocs.map(a => sylKey(a.c, a.s)))].map(k => ({ k, st: sylStatus(k, todayISO()) })).filter(x => x.st);
+  const sal = d.salary;
+  return `<div class="pw-head"><span class="pw-av">${esc(initialsOf(t.name))}</span><div class="min-w-0"><h2 class="text-2xl font-semibold">${esc(t.name)}</h2>
+      <p class="text-slate-500">${esc(t.role || 'Teacher')}${ct.length ? ' · Class teacher of ' + ct.map(esc).join(', ') : ''}${t.phone ? ' · ' + esc(t.phone) : ''}</p>
+      <div class="flex flex-wrap gap-2 mt-2">${t.phone ? `<a target="_blank" href="${waLink(t.phone, 'Namaste ' + t.name + ', ')}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a><a href="tel:+91${String(t.phone).replace(/\D/g, '').slice(-10)}" class="btn btn-sm btn-l"><i class="fa-solid fa-phone"></i> Call</a>` : ''}
+        <span class="pill ${PINS['t:' + tid] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}">${PINS['t:' + tid] ? 'Own PIN' : 'Uses 1234'}</span></div></div></div>
+    <div class="cap-row">${cap('Periods / week', loadOf(tid), 'c-lav')}${cap('Subjects', allocs.length, 'c-peach')}${cap('Present this month', tm[4].pct == null ? '—' : tm[4].pct + '%', 'c-mint')}
+      ${cap('Absent (5 months)', dd(absent5) + ' days', absent5 > 6 ? 'c-red' : 'c-lime')}${cap('Leave (5 months)', leave5 + ' days', 'c-lav')}${cap('Arrangements this month', duty, 'c-peach')}
+      ${cap('Lesson plans this month', lpW.length, 'c-mint')}${cap('Monthly salary', sal ? (sal.monthly == null ? 'Not set' : rs(sal.monthly)) : U.role === 'principal' ? '…' : '—', 'c-lime')}</div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="card"><h3 class="h3 mb-2">Attendance — last 5 months</h3>${HISTBUSY ? '<p class="text-xs text-slate-500">Loading older months…</p>' : ''}
+        <table class="tbl"><tr><th>Month</th><th class="text-right">School days</th><th class="text-right">Absent</th><th class="text-right">Half day</th><th class="text-right">Leave</th><th class="text-right">Present</th></tr>
+        ${tm.slice().reverse().map(x => `<tr><td>${ymLong(x.m)}</td><td class="text-right">${x.days}</td><td class="text-right ${x.abs ? 'text-rose-700 font-semibold' : ''}">${x.abs}</td><td class="text-right">${x.half}</td><td class="text-right">${x.leave}</td><td class="text-right font-semibold">${x.pct == null ? '—' : x.pct + '%'}</td></tr>`).join('')}</table></div>
+      <div class="card"><h3 class="h3 mb-2">Salary</h3>${U.role !== 'principal' ? '<p class="text-sm text-slate-500">Only the Principal sees salary.</p>' : d.busy ? '<p class="text-sm text-slate-500">Loading…</p>' : d.salaryErr ? `<p class="text-sm text-rose-700">${esc(d.salaryErr)}</p>` : !sal ? '' : `
+        <p class="text-sm mb-2">Monthly <b>${sal.monthly == null ? 'not set' : rs(sal.monthly)}</b> · paid leave ${dd(sal.paidLeave)} day(s) a month</p>
+        ${sal.months.length ? `<table class="tbl"><tr><th>Month</th><th class="text-right">Absent</th><th class="text-right">Net</th><th>Status</th></tr>${sal.months.map(m => `<tr><td>${ymLong(m.ym)}</td><td class="text-right">${m.absent == null ? '—' : dd(m.absent)}</td><td class="text-right font-semibold">${m.net == null ? '—' : rs(m.net)}</td><td>${m.status === 'Paid' ? `<span class="pill bg-emerald-50 text-emerald-700">Paid ${m.paidOn ? fmtDate(m.paidOn) : ''}</span>` : '<span class="pill bg-amber-50 text-amber-800">Not paid</span>'}</td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500">No salary month saved yet.</p>'}
+        <button onclick="closeProfile();go('salary')" class="btn btn-sm btn-l mt-3">Open Salary</button>`}</div>
+      <div class="card"><h3 class="h3 mb-2">Classes &amp; subjects</h3><div class="flex flex-wrap gap-2">${allocs.map(a => `<span class="cap-t c-lav sm"><small>Class ${esc(a.c)}</small><b>${esc(a.s)} · ${a.n}/wk</b></span>`).join('') || '<p class="text-sm text-slate-500">No periods.</p>'}</div>
+        ${syl.length ? `<h4 class="font-semibold mt-4 mb-1 text-sm">Syllabus</h4>${syl.map(x => `<div class="att-row"><span>${esc(x.k.replace('|', ' · '))}</span><span class="text-sm ${x.st.lag ? 'text-rose-700 font-semibold' : 'text-slate-600'}">${x.st.done}/${x.st.total} chapters${x.st.lag ? ' · behind' : ''}</span></div>`).join('')}` : ''}</div>
+      <div class="card"><h3 class="h3 mb-2">This week's timetable</h3>${teacherWeek(tid)}</div>
+    </div>
+    <div class="card"><h3 class="h3 mb-2">Complaints, appreciation &amp; notes</h3>${profNotes(who)}</div>`;
+}
+function teacherWeek(tid) {
+  if (!S.grid) return '<p class="text-sm text-slate-500">No timetable yet.</p>';
+  return `<div class="overflow-x-auto"><table class="tbl text-xs"><tr><th>Day</th>${BELLS.map(b => `<th class="text-center">${b.n}</th>`).join('')}</tr>${DAYS.map((day, d) => `<tr><td class="font-semibold">${day.slice(0, 3)}</td>${BELLS.map((b, i) => { const a = teacherAt(tid, d, i); return a ? `<td class="text-center"><b>${esc(a.c)}</b><br><span class="text-slate-500">${esc(a.s.split(/[ /]/)[0])}</span></td>` : '<td class="text-center text-emerald-700">Free</td>'; }).join('')}</tr>`).join('')}</table></div>`;
+}
+function examResult(s, e) {
+  const M = S.marks[e.id] || {}, rows = [];
+  Object.entries(M).forEach(([k, r]) => { const [c, subj] = k.split('|'); if (c !== s.cls) return; const v = r.m ? r.m[s.id] : undefined; if (v === undefined || v === '') return; rows.push({ subj, v, max: +r.max || 0 }); });
+  const got = rows.filter(r => r.v !== 'AB').reduce((a, r) => a + (+r.v || 0), 0), max = rows.filter(r => r.v !== 'AB').reduce((a, r) => a + r.max, 0);
+  return { rows, got, max, pct: max ? Math.round(got / max * 100) : null };
+}
+function profStudent(s) {
+  const who = 's:' + s.id, months = lastMonths(6), am = months.map(m => ({ m, ...studentMonth(s, m) })), sn = since(s);
+  const totM = am.reduce((a, x) => a + x.marked, 0), totA = am.reduce((a, x) => a + x.absent, 0);
+  const exams = S.exams.slice().sort((a, b) => a.date.localeCompare(b.date)).map(e => ({ e, r: examResult(s, e) })).filter(x => x.r.rows.length);
+  const subs = [...new Set(exams.flatMap(x => x.r.rows.map(r => r.subj)))];
+  const beh = Object.values(S.behav).flatMap(o => Object.values(o)).filter(b => b.sid === s.id).sort((a, b) => b.date.localeCompare(a.date));
+  const pts = beh.reduce((a, b) => a + (+b.pts || 0), 0), spk = S.speak.filter(x => (x.sids || []).includes(s.id) || x.sid === s.id).length;
+  const ct = (CLASSES.find(k => k.c === s.cls) || {}).ct, fam = familyOf(s, S.students).filter(x => x.id !== s.id);
+  const of = OF && !OF.error ? OF.students.find(x => x.id === s.id) : null, rec = OF && OF.payments ? OF.payments.filter(p => p.sid === s.id) : [];
+  const last = exams[exams.length - 1];
+  return `<div class="pw-head"><span class="pw-av">${esc(initialsOf(s.name))}</span><div class="min-w-0"><h2 class="text-2xl font-semibold">${esc(s.name)}</h2>
+      <p class="text-slate-500">Class ${esc(s.cls)}${s.section ? '-' + esc(s.section) : ''} · Adm ${esc(s.adm)}${ct ? ' · Class teacher ' + esc(T(ct).name) : ''}</p>
+      <div class="flex flex-wrap gap-2 mt-2">${s.phone ? `<a target="_blank" href="${waLink(s.phone, 'Namaste, this is from ' + S.settings.school + '. ')}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Parent</a><a href="tel:+91${String(s.phone).replace(/\D/g, '').slice(-10)}" class="btn btn-sm btn-l"><i class="fa-solid fa-phone"></i> Call</a>` : ''}
+        <button onclick="printStudentReport(${jsq(s.id)})" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Report card</button>${U.role === 'principal' ? `<button onclick="profJoin(${jsq(s.id)})" class="btn btn-sm btn-l">Edit joining details</button>` : ''}</div></div></div>
+    <div class="cap-row">${cap('In school since', sn ? `${sn.years} yr ${sn.months} mo` : 'Not entered', 'c-lav')}${cap('Joined in', s.joinClass ? 'Class ' + esc(s.joinClass) + (s.joinDate ? ' · ' + new Date(s.joinDate + 'T00:00:00').getFullYear() : '') : '—', 'c-peach')}
+      ${cap('Attendance (6 months)', totM ? Math.round((totM - totA) / totM * 100) + '%' : '—', 'c-mint')}${cap('Days absent', totA, totA > 10 ? 'c-red' : 'c-lime')}
+      ${cap('Last exam', last ? (last.r.pct == null ? '—' : last.r.pct + '% · ' + grade(last.r.pct)) : '—', 'c-lav')}${cap('Behaviour points', pts, pts < 0 ? 'c-red' : 'c-peach')}
+      ${cap('Speaking activities', spk, 'c-mint')}${cap('Fee due', of ? (of.dues.missing ? 'Not set' : rs(Math.max(0, of.dues.due))) : '…', of && of.dues.due > 0 ? 'c-red' : 'c-lime')}</div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="card"><h3 class="h3 mb-2">Personal details</h3><div class="grid grid-cols-2 gap-x-6 text-sm">${[['Father', s.father], ['Mother', s.mother], ['Mobile', s.phone], ['Date of birth', s.dob ? fmtDate(s.dob) : ''], ['Address', s.address], ['School bus', s.km ? s.km + ' km' : 'No'], ['Brothers / sisters here', fam.map(x => x.name + ' (' + x.cls + ')').join(', ')], ['Joining date', s.joinDate ? fmtDate(s.joinDate) : '']]
+        .map(([k, v]) => `<div class="py-2 border-b border-slate-100"><small class="text-slate-500 block">${k}</small><span>${v ? esc(v) : '—'}</span></div>`).join('')}</div></div>
+      <div class="card"><h3 class="h3 mb-2">Attendance month by month</h3>${HISTBUSY ? '<p class="text-xs text-slate-500">Loading older months…</p>' : ''}
+        <table class="tbl"><tr><th>Month</th><th class="text-right">Marked days</th><th class="text-right">Present</th><th class="text-right">Absent</th><th class="w-32">%</th></tr>
+        ${am.slice().reverse().map(x => `<tr><td>${ymLong(x.m)}</td><td class="text-right">${x.marked}</td><td class="text-right">${x.present}</td><td class="text-right ${x.absent ? 'text-rose-700 font-semibold' : ''}">${x.absent}</td><td>${x.pct == null ? '—' : `<div class="flex items-center gap-2"><span class="w-10 text-right font-semibold">${x.pct}%</span><span class="flex-1">${bar(x.pct, x.pct >= 90 ? 'bg-emerald-500' : x.pct >= 75 ? 'bg-amber-400' : 'bg-rose-500')}</span></div>`}</td></tr>`).join('')}</table></div>
+    </div>
+    <div class="card"><div class="flex justify-between items-center mb-2"><h3 class="h3">Marksheet</h3>${last ? `<span class="text-sm text-slate-500">Last exam: ${esc(last.e.name)}</span>` : ''}</div>
+      ${exams.length ? `<div class="overflow-x-auto"><table class="tbl"><tr><th>Subject</th>${exams.map(x => `<th class="text-right">${esc(x.e.name)}</th>`).join('')}</tr>
+        ${subs.map(sb => `<tr><td>${esc(sb)}</td>${exams.map(x => { const r = x.r.rows.find(y => y.subj === sb); return `<td class="text-right">${r ? (r.v === 'AB' ? '<span class="text-rose-700">AB</span>' : `${r.v}<span class="text-slate-400">/${r.max}</span>`) : '—'}</td>`; }).join('')}</tr>`).join('')}
+        <tr><th>Total</th>${exams.map(x => `<th class="text-right">${x.r.got}/${x.r.max} · ${x.r.pct == null ? '—' : x.r.pct + '% ' + grade(x.r.pct)}</th>`).join('')}</tr></table></div>
+        ${exams.length > 1 ? `<div class="mt-3">${svgLine(exams.map(x => examShort(x.e)), exams.map(x => x.r.pct), { unit: '%', max: 100, h: 150, title: 'Exam percentage' })}</div>` : ''}` : '<p class="text-sm text-slate-500">No marks entered yet.</p>'}</div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="card"><h3 class="h3 mb-2">Fees</h3>${!OF ? '<p class="text-sm text-slate-500">Loading fee account…</p>' : OF.error ? `<p class="text-sm text-rose-700">${esc(OF.error)}</p>` : of ? ofBreak(of) + `
+        <h4 class="font-semibold text-sm mt-4 mb-1">Receipts</h4>${rec.length ? rec.map(p => `<div class="att-row"><span>#${p.no} · ${fmtDate(p.date)} · ${esc(p.mode)}${p.cancelled ? ' <span class="pill bg-rose-50 text-rose-700">cancelled</span>' : ''}</span><b>${rs(p.amt)}</b></div>`).join('') : '<p class="text-sm text-slate-500">No receipt this session.</p>'}
+        ${U.role === 'principal' ? `<button onclick="OFSEL=${jsq(s.id)};OFQ=${jsq(s.name)};OFNONCE=null;closeProfile();go('fdesk')" class="btn btn-sm btn-p mt-3"><i class="fa-solid fa-receipt"></i> Take fee</button>` : ''}` : '<p class="text-sm text-slate-500">No fee account.</p>'}</div>
+      <div class="card"><h3 class="h3 mb-2">Behaviour</h3>${beh.slice(0, 8).map(b => `<div class="att-row"><span>${esc(b.reason)}${b.note ? ' — ' + esc(b.note) : ''}<br><small class="text-slate-500">${fmtDate(b.date)} · ${esc(T(b.tid).name)}</small></span><span class="pill ${b.pts > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">${b.pts > 0 ? '+' : ''}${b.pts}</span></div>`).join('') || '<p class="text-sm text-slate-500">Nothing recorded.</p>'}</div>
+    </div>
+    <div class="card"><h3 class="h3 mb-2">Complaints, parent meetings &amp; notes</h3>${profNotes(who)}</div>`;
+}
+function profJoin(id) {
+  const s = studentById(id); if (!s) return;
+  const d = prompt('Date of joining the school (YYYY-MM-DD)', s.joinDate || ''); if (d === null) return;
+  if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) return toast('Write the date like 2023-04-01', 'a');
+  const c = prompt('Class at joining (e.g. 6th)', s.joinClass || ''); if (c === null) return;
+  if (c && !CLASS_NAMES.includes(c.trim())) return toast('Class must be one of: ' + CLASS_NAMES.slice().reverse().join(', '), 'a');
+  s.joinDate = d.trim(); s.joinClass = c.trim(); log('Students', `${s.name}: joined ${s.joinClass ? 'Class ' + s.joinClass : ''} ${s.joinDate}`); render();
+}
+function printStudentReport(id) {
+  const s = studentById(id); if (!s) return;
+  const exams = S.exams.slice().sort((a, b) => a.date.localeCompare(b.date)).map(e => ({ e, r: examResult(s, e) })).filter(x => x.r.rows.length);
+  const subs = [...new Set(exams.flatMap(x => x.r.rows.map(r => r.subj)))], am = lastMonths(6).map(m => ({ m, ...studentMonth(s, m) }));
+  printHTML('Report card', printHeader(`Progress Report · Session ${esc(S.settings.session)}`) + `<p><b>${esc(s.name)}</b> · Class ${esc(s.cls)} · Adm ${esc(s.adm)} · Father ${esc(s.father || '')}</p>
+    <table><tr><th>Subject</th>${exams.map(x => `<th>${esc(x.e.name)}</th>`).join('')}</tr>${subs.map(sb => `<tr><td>${esc(sb)}</td>${exams.map(x => { const r = x.r.rows.find(y => y.subj === sb); return `<td>${r ? (r.v === 'AB' ? 'AB' : r.v + '/' + r.max) : '—'}</td>`; }).join('')}</tr>`).join('')}
+    <tr><th>Total</th>${exams.map(x => `<th>${x.r.got}/${x.r.max} (${x.r.pct ?? '—'}% ${x.r.pct != null ? grade(x.r.pct) : ''})</th>`).join('')}</tr></table>
+    <h2>Attendance</h2><table><tr>${am.map(x => `<th>${ymLong(x.m)}</th>`).join('')}</tr><tr>${am.map(x => `<td>${x.marked ? x.present + '/' + x.marked : '—'}</td>`).join('')}</tr></table>
+    <p style="margin-top:30px">Class teacher ____________ &nbsp;&nbsp; Parent ____________</p>` + PRINT_FOOT);
+  log('Report', 'Report card printed for ' + s.name);
+}
+
+// ---------------------------------------------------------------- ADMIN DASHBOARD (reports with graphs)
+let SALSUM = null;
+async function loadSalSum() { if (SALSUM) return; SALSUM = { busy: true }; try { SALSUM = (await salapi('summary')).months; } catch (e) { SALSUM = { error: e.message }; } if (view === 'admin') render(); }
+function vAdmin() {
+  ofFresh(); if (!SALSUM) loadSalSum(); loadHistory();
+  const ym = todayISO().slice(0, 7), months = lastMonths(6), shortM = m => new Date(m + '-01T00:00:00').toLocaleString('en-IN', { month: 'short' });
+  const ofOk = OF && !OF.error && OF.payments, live = ofOk ? OF.payments.filter(p => !p.cancelled) : [];
+  const feeBy = months.map(m => live.filter(p => p.date.slice(0, 7) === m).reduce((a, p) => a + p.amt, 0));
+  const dueBy = CLASS_NAMES.slice().reverse().map(c => ({ c, v: ofOk ? OF.students.filter(s => s.cls === c).reduce((a, s) => a + Math.max(0, s.dues.due), 0) : 0 }));
+  const totalDue = dueBy.reduce((a, x) => a + x.v, 0), salOk = Array.isArray(SALSUM), salNow = salOk ? SALSUM[SALSUM.length - 1] : null;
+  const attBy = months.map(m => { let mk = 0, ab = 0; schoolDays(m).forEach(d => CLASS_NAMES.forEach(c => { const a = attOf(d, c), n = studentsOf(c).length; if (!a || !n) return; mk += n; ab += a.absent.length; })); return mk ? Math.round((mk - ab) / mk * 100) : null; });
+  const staffBy = months.map(m => { const ts = Object.keys(S.teachers); const v = ts.map(t => teacherMonth(t, m).pct).filter(x => x != null); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; });
+  const k = (ic, t, lbl, val, sub, go) => `<button ${go ? `onclick="go('${go}')"` : 'disabled'} class="kpi ${t}"><span class="kpi-ic"><i class="fa-solid ${ic}"></i></span><span class="kpi-val">${val}</span><span class="kpi-lbl">${lbl}</span><span class="kpi-sub">${sub}</span></button>`;
+  const act = (ic, lbl, sub, goTo, t) => `<button onclick="go('${goTo}')" class="act-t ${t}"><span class="kpi-ic"><i class="fa-solid ${ic}"></i></span><b>${lbl}</b><small>${sub}</small></button>`;
+  const strength = CLASS_NAMES.slice().reverse().map(c => ({ label: c, value: studentsOf(c).length }));
+  return head('Admin Dashboard', 'Money, staff and student reports for the whole school — every figure opens its page.', `<button onclick="OF=null;SALSUM=null;render()" class="btn btn-l"><i class="fa-solid fa-rotate"></i> Refresh</button>`) + `
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      ${k('fa-indian-rupee-sign', 'kpi-peach', 'Fee collected this month', ofOk ? rs(feeBy[5]) : '…', ofOk ? `${live.filter(p => p.date.slice(0, 7) === ym).length} receipts · last month ${rs(feeBy[4])}` : 'Loading', 'freceipts')}
+      ${k('fa-hourglass-half', totalDue ? 'kpi-warn' : 'kpi-lime', 'Fee still due', ofOk ? rs(totalDue) : '…', ofOk ? `${new Set(OF.students.filter(s => s.dues.due > 0).map(s => s.fam)).size} families to call` : '', 'fdues')}
+      ${k('fa-wallet', 'kpi-lav', 'Salary this month', salNow ? rs(salNow.net) : '…', salNow ? `${salNow.paid}/${salNow.staff} paid · cut ${rs(salNow.cut)}` : (SALSUM && SALSUM.error) || 'Loading', 'salary')}
+      ${k('fa-user-check', 'kpi-mint', 'Attendance this month', attBy[5] == null ? '—' : attBy[5] + '%', `students · staff ${staffBy[5] == null ? '—' : staffBy[5] + '%'}`, 'attendance')}
+    </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="card"><div class="flex justify-between items-center"><h3 class="h3">Fee collected by month</h3><button onclick="go('freceipts')" class="link">Receipts</button></div>
+        <p class="text-xs text-slate-500 mb-2">Live receipts (cancelled ones left out)</p>${ofOk ? svgBars(months.map((m, i) => ({ label: shortM(m), value: feeBy[i], display: feeBy[i] ? '₹' + (feeBy[i] >= 100000 ? (feeBy[i] / 100000).toFixed(1) + 'L' : Math.round(feeBy[i] / 1000) + 'k') : '0' })), { color: CH.orange, title: 'Fee collected by month' }) : '<p class="text-sm text-slate-500">Loading…</p>'}</div>
+      <div class="card"><div class="flex justify-between items-center"><h3 class="h3">Fee due by class</h3><button onclick="go('fcalls')" class="link">Dues calling</button></div>
+        <p class="text-xs text-slate-500 mb-2">Old due + yearly + monthly up to this month, less payments</p>${ofOk ? svgBars(dueBy.map(x => ({ label: x.c, value: x.v, display: x.v ? (x.v >= 100000 ? (x.v / 100000).toFixed(1) + 'L' : Math.round(x.v / 1000) + 'k') : '0' })), { color: CH.violet, title: 'Fee due by class' }) : '<p class="text-sm text-slate-500">Loading…</p>'}</div>
+      <div class="card"><div class="flex justify-between items-center"><h3 class="h3">Salary bill vs paid</h3><button onclick="go('salary')" class="link">Salary</button></div>
+        <p class="text-xs text-slate-500 mb-2">Net salary for staff with a salary set</p>${salOk ? svgGroupBars(SALSUM.map(x => shortM(x.ym)), [{ name: 'Salary bill', color: CH.violet, values: SALSUM.map(x => x.net), fmt: rs }, { name: 'Paid', color: CH.teal, values: SALSUM.map(x => x.paidAmt), fmt: rs }], { title: 'Salary by month' }) : `<p class="text-sm text-slate-500">${SALSUM && SALSUM.error ? esc(SALSUM.error) : 'Loading…'}</p>`}</div>
+      <div class="card"><div class="flex justify-between items-center"><h3 class="h3">Student attendance by month</h3><button onclick="go('attendance')" class="link">Attendance</button></div>
+        <p class="text-xs text-slate-500 mb-2">Present ÷ marked, all classes${HISTBUSY ? ' · loading older months…' : ''}</p>${svgLine(months.map(shortM), attBy, { unit: '%', min: Math.min(60, ...attBy.filter(x => x != null)), max: 100, color: CH.teal, title: 'Attendance by month' })}</div>
+      <div class="card"><h3 class="h3">Students in each class</h3><p class="text-xs text-slate-500 mb-2">${S.students.length} students in all</p>${svgBars(strength, { color: CH.teal, title: 'Students per class' })}</div>
+      <div class="card"><h3 class="h3">Staff attendance by month</h3><p class="text-xs text-slate-500 mb-2">Average present days, including approved leave as absent</p>${svgLine(months.map(shortM), staffBy, { unit: '%', min: Math.min(60, ...staffBy.filter(x => x != null)), max: 100, color: CH.violet, title: 'Staff attendance by month' })}</div>
+    </div>
+    <div class="card"><h3 class="h3 mb-3">Quick actions</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      ${act('fa-receipt', 'Take a fee', 'Fee Desk · receipt', 'fdesk', 'kpi-peach')}${act('fa-money-check-dollar', 'Pay salary', 'Staff Salary', 'salary', 'kpi-lav')}
+      ${act('fa-pen-to-square', 'Enter marks', 'Marks entry', 'marks', 'kpi-mint')}${act('fa-file-lines', 'Report cards', 'Results & print', 'results', 'kpi-lime')}
+      ${act('fa-phone', 'Call dues', 'Reception list', 'fcalls', 'kpi-mint')}${act('fa-bullhorn', 'Send a notice', 'Parents & staff', 'notices', 'kpi-peach')}
+      ${act('fa-scale-balanced', 'Rules & policies', 'School rules', 'rules', 'kpi-lav')}${act('fa-clock-rotate-left', 'Activity log', 'Who did what', 'log', 'kpi-lime')}</div></div>`;
+}
+
+// ---------------------------------------------------------------- RULES & POLICIES (settings.rules; Principal edits, staff read)
+function vRules() {
+  const R = S.settings.rules || [], ed = U.role === 'principal', groups = ['Students', 'Staff', 'Parents', 'Fees', 'Exams', 'Transport'];
+  return head('Rules & Policies', 'The school\'s written rules in one place. Teachers can read them on their phones.', ed ? `<button onclick="ruleAdd()" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add a rule</button>${R.length ? '' : '<button onclick="ruleStarter()" class="btn btn-l">Add starter rules</button>'}` : '') +
+    (R.length ? groups.filter(g => R.some(r => r.for === g)).map(g => `<div class="card"><h3 class="h3 mb-2">${g}</h3>${R.filter(r => r.for === g).map(r => `<div class="att-row items-start"><span><b>${esc(r.title)}</b><br><span class="text-sm text-slate-600 whitespace-pre-line">${esc(r.text)}</span></span>
+      ${ed ? `<span class="flex gap-2 shrink-0"><button onclick="ruleEdit('${r.id}')" class="link">Edit</button><button onclick="ruleDel('${r.id}')" class="link">Remove</button></span>` : ''}</div>`).join('')}</div>`).join('')
+      : '<div class="card text-sm text-slate-500">No rules written yet.</div>');
+}
+function ruleForm(r) {
+  const title = prompt('Rule title', r.title || ''); if (title === null || !title.trim()) return null;
+  const text = prompt('What the rule says', r.text || ''); if (text === null) return null;
+  const f = prompt('Who is it for? Students, Staff, Parents, Fees, Exams or Transport', r.for || 'Students'); if (f === null) return null;
+  const fr = ['Students', 'Staff', 'Parents', 'Fees', 'Exams', 'Transport'].find(x => x.toLowerCase() === f.trim().toLowerCase()) || 'Students';
+  return { title: title.trim().slice(0, 120), text: text.trim().slice(0, 1500), for: fr };
+}
+function ruleAdd() { const r = ruleForm({}); if (!r) return; (S.settings.rules = S.settings.rules || []).push({ id: uid(), ...r }); log('Rules', 'Added rule: ' + r.title); render(); }
+function ruleEdit(id) { const x = (S.settings.rules || []).find(r => r.id === id); if (!x) return; const r = ruleForm(x); if (!r) return; Object.assign(x, r); log('Rules', 'Edited rule: ' + r.title); render(); }
+function ruleDel(id) { const x = (S.settings.rules || []).find(r => r.id === id); if (!x || !confirm('Remove "' + x.title + '"?')) return; S.settings.rules = S.settings.rules.filter(r => r.id !== id); log('Rules', 'Removed rule: ' + x.title); render(); }
+function ruleStarter() {
+  const R = [['Students', 'School timing', 'Assembly starts at 8:40 AM. Students must reach before 8:35 AM.'], ['Students', 'Uniform', 'Full school uniform with ID card every day; winter uniform as announced.'],
+    ['Students', 'Attendance', 'At least 75% attendance is needed to sit the annual exam. Absence must be explained by a parent.'], ['Students', 'Mobile phones', 'Phones are not allowed in class.'],
+    ['Staff', 'Diary', 'Fill the teacher diary for every bell on the same day.'], ['Staff', 'Leave', 'Apply for leave in the ERP at least one day before, except emergencies.'],
+    ['Parents', 'Meetings', 'Parents may meet teachers on PTM days or by appointment through the office.'], ['Fees', 'Fee date', 'Monthly fee is paid by the 10th of each month at the school office. Always take a receipt.'],
+    ['Exams', 'Unfair means', 'Any unfair means in an exam cancels that paper.'], ['Transport', 'Bus', 'Students must be at the bus stop five minutes before the bus time.']];
+  S.settings.rules = R.map(([f, t, x]) => ({ id: uid(), for: f, title: t, text: x })); log('Rules', 'Added starter school rules (edit them to match the school)'); render();
+}
+
 // ---------------------------------------------------------------- GAME ZONE (students + parents) — school/game_api.php
 // Short rounds, instant funny feedback, a rule and an English word after every answer,
 // combos, streaks, chests, spaced "revenge" rounds and a whole-class weekly mission.
@@ -3415,9 +3741,9 @@ async function gFix(pid, i, action) { try { await gapi('packfix', { pid, i, acti
 const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
-  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, fdesk: vFDesk, salary: vSalary, fdues: vFDues, fcalls: vFCalls, freceipts: vFReceipts, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
+  lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, fdesk: vFDesk, salary: vSalary, admin: vAdmin, rules: vRules, fdues: vFDues, fcalls: vFCalls, freceipts: vFReceipts, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
 // principal also teaches: give the principal access to diary/marks from "My Teaching"
-NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks']);
+NAV.principal.splice(NAV.principal.findIndex(x => x[0] === 'mytoday') + 1, 0, ['diary','fa-book','My Diary'], ['lplan','fa-clipboard-check','My Lesson Plan'], ['marks','fa-pen-to-square','Marks Entry']);
 
 // Learning Lab uses a separate subject/child-scoped PHP API, sharing the existing login.
 NAV.principal.push(['learning','fa-seedling','Learning Lab']);

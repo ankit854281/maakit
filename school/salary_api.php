@@ -9,6 +9,7 @@
 //   POST ?a=pay    {ym, id, mode, ref, date}                       Principal / Accountant
 //   POST ?a=unpay  {ym, id, reason}                                sirf Principal
 //   GET  ?a=mine                  Teacher — sirf apni paid salary slips
+//   GET  ?a=summary               Principal / Accountant / Chairman — 6 mahine ka jod (Admin dashboard)
 //
 // Salary ki baat kisi aur ko nahi dikhni chahiye: records "sal" prefix
 // (salStaff, salMonth) aam sync / load me kabhi nahi jaate.
@@ -35,6 +36,20 @@ case 'sheet': {
     $ym = (string)($_GET['ym'] ?? date('Y-m'));
     if (!sal_ym_ok($ym)) sch_fail('Choose a month.');
     sch_json(['ok' => true, 'can' => ['staff' => $u['role'] === 'principal', 'unpay' => $u['role'] === 'principal'], 'modes' => SAL_MODES, 'today' => date('Y-m-d')] + sal_sheet($ym));
+}
+
+case 'summary': {                      // Admin dashboard: last 6 months, totals only
+    $u = sch_auth(); sal_need($u, ['principal', 'accountant', 'chairman']);
+    $out = [];
+    for ($i = 5; $i >= 0; $i--) {
+        $ym = date('Y-m', strtotime(date('Y-m-01') . " -$i month"));
+        $rows = array_filter(sal_sheet($ym)['rows'], fn($r) => $r['status'] !== 'Not set');
+        $paid = array_filter($rows, fn($r) => $r['status'] === 'Paid');
+        $out[] = ['ym' => $ym, 'staff' => count($rows), 'gross' => array_sum(array_map(fn($r) => (int)$r['calc']['gross'], $rows)),
+                  'net' => array_sum(array_map(fn($r) => (int)$r['calc']['net'], $rows)), 'cut' => array_sum(array_map(fn($r) => (int)$r['calc']['deduction'], $rows)),
+                  'paid' => count($paid), 'paidAmt' => array_sum(array_map(fn($r) => (int)$r['calc']['net'], $paid))];
+    }
+    sch_json(['ok' => true, 'months' => $out]);
 }
 
 case 'staff': {

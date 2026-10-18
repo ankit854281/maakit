@@ -165,3 +165,55 @@ iframe.edu-iframe, main iframe { background: transparent; border-radius: var(--r
 
 @media print { .erp-bar, .erp-crumb, footer { display: none !important; } body { background: #fff; } .card, .kpi { box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .mn, .btn, button.kpi { transition: none !important; } }
+
+/* ---------- header: expanding search, settings gear, avatar only ---------- */
+.srch { position: relative; width: 50px; height: 50px; flex-shrink: 0; }
+.srch-box { position: absolute; right: 0; top: 0; z-index: 61; display: flex; align-items: center; gap: 8px; width: 50px; height: 50px; padding: 0 17px; border-radius: 999px; background: var(--pill); cursor: text; transition: width .25s ease, background .15s; }
+.srch-box > i { font-size: 15px; color: var(--text); flex-shrink: 0; }
+.srch-box input { width: 0; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13.5px; color: var(--text); }
+.srch.open .srch-box, .srch:focus-within .srch-box { width: 380px; background: var(--surface); box-shadow: 0 0 0 2px var(--lime-2), var(--shadow-pop); }
+.srch.open .srch-box input, .srch:focus-within .srch-box input { width: 100%; }
+.srch-res { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 380px; max-height: 70vh; overflow-y: auto; padding: 8px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-pop); z-index: 60; }
+.srch-res.show { display: block; }
+.srch-h { font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 8px 12px 4px; text-transform: uppercase; letter-spacing: .05em; }
+.srch-item, .pw-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; border-radius: 16px; text-align: left; }
+.srch-item:hover, .pw-item:hover { background: #F3F3F6; } .pw-item.on { background: var(--lime); }
+.srch-item b, .pw-item b { display: block; font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srch-item small, .pw-item small { display: block; font-size: 11.5px; color: var(--muted); }
+.srch-item .erp-avatar, .pw-item .erp-avatar { width: 34px; height: 34px; background: var(--lav); color: #5B3CC4; font-size: 11.5px; }
+.srch-all { display: block; width: 100%; margin-top: 6px; padding: 10px; border-radius: 999px; background: #F2F2F5; font-weight: 600; font-size: 13px; } .srch-all:hover { background: var(--lime); }
+.erp-ic { width: 50px; height: 50px; border-radius: 999px; background: var(--pill); display: grid; place-items: center; font-size: 16px; color: var(--text); flex-shrink: 0; }
+.erp-ic:hover { background: var(--pill-2); } .erp-ic.on { background: var(--lime); }
+.erp-av-btn { width: 50px; height: 50px; border-radius: 999px; background: var(--text); display: grid; place-items: center; flex-shrink: 0; }
+.erp-av-btn .erp-avatar { width: 44px; height: 44px; background: var(--text); color: var(--lime); font-size: 13.5px; }
+.erp-av-btn:hover { box-shadow: 0 0 0 3px var(--lime); }
+@media (max-width: 1180px) { .srch.open .srch-box, .srch:focus-within .srch-box { width: 280px; } }
+
+/* ---------- profile window (teacher / student) ---------- */
+.pw-back { position: fixed; inset: 0; z-index: 70; background: rgb(28 28 30 / .35); backdrop-filter: blur(3px); display: flex; align-items: stretch; justify-content: center; padding: 24px; }
+.pw { width: min(1340px, 100%); display: grid; grid-template-columns: 300px 1fr; gap: 0; background: var(--page); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow-pop); }
+.pw-side { background: var(--surface); padding: 18px 12px; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
+.pw-list { overflow-y: auto; flex: 1; min-height: 0; }
+.pw-main { position: relative; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+.pw-close { position: absolute; top: 18px; right: 22px; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; background: var(--pill); font-weight: 600; font-size: 13px; }
+.pw-close:hover { background: var(--lime); }
+.pw-head { display: flex; align-items: center; gap: 18px; padding-right: 110px; }
+.pw-av { width: 76px; height: 76px; border-radius: 26px; background: var(--text); color: var(--lime); font-size: 24px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+.cap-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cap-t { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 20px; background: var(--surface); }
+.cap-t small { font-size: 11.5px; color: var(--muted); font-weight: 500; } .cap-t b { font-size: 17px; font-weight: 600; color: var(--text); }
+.cap-t.sm { padding: 8px 14px; border-radius: 999px; } .cap-t.sm b { font-size: 13px; }
+.c-lav { background: var(--lav); } .c-peach { background: var(--peach); } .c-mint { background: var(--mint); } .c-lime { background: var(--limebg); } .c-red { background: var(--bad-soft); } .c-red b { color: var(--bad); }
+.pw-main .card { box-shadow: none; }
+@media (max-width: 900px) { .pw { grid-template-columns: 1fr; } .pw-side { max-height: 30vh; } .pw-back { padding: 8px; } .pw-head { padding-right: 0; flex-wrap: wrap; } }
+
+/* ---------- dashboard extras ---------- */
+.hero-n { display: flex; flex-direction: column; align-items: flex-start; }
+.hero-n b { font-size: 32px; font-weight: 600; letter-spacing: -.03em; line-height: 1; }
+.hero-n small { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.att em { display: block; font-style: normal; font-size: 11.5px; color: var(--muted); line-height: 1.35; } .att em:first-of-type { margin-top: 3px; } .att em.ab { color: var(--bad); font-weight: 600; }
+.att { min-height: 84px; }
+.act-t { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 16px; border-radius: 22px; text-align: left; transition: transform .15s; }
+.act-t:hover { transform: translateY(-1px); } .act-t .kpi-ic { width: 42px; height: 42px; border-radius: 14px; margin-bottom: 6px; }
+.act-t b { font-size: 14.5px; font-weight: 600; } .act-t small { font-size: 12px; color: var(--muted); }
+.kpi.kpi-peach .kpi-val.text-\[22px\], .kpi .kpi-val.text-\[22px\] { font-size: 22px; }
