@@ -382,8 +382,10 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <div class="jg-hud jg-right">
     <button class="jg-btn main" id="jg-auto" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5z"/></svg><span id="jg-auto-label">Auto Jaap</span></button>
-    <button class="jg-btn" id="jg-batch" type="button" aria-pressed="false"><span id="jg-batch-label">+1 / +12</span></button>\n    <button class="jg-btn" id="jg-undo" type="button" disabled>Undo</button>\n    <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
-    <button class="jg-btn" id="jg-voice" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="jg-voice-label">Ginti bolein</span></button>
+    <button class="jg-btn" id="jg-batch" type="button" aria-pressed="false"><span id="jg-batch-label">+1 / +12</span></button>
+    <button class="jg-btn" id="jg-undo" type="button" disabled>Undo</button>
+    <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
+    <button class="jg-btn" id="jg-voice" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="jg-voice-label" data-i18n="voiceOff">Awaaz band</span></button>
     <button class="jg-btn" id="jg-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span data-i18n="bellShort">Ghanti</span></button>
   </div>
   <div class="jg-combo" id="jg-combo" hidden aria-live="polite"></div>
