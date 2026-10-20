@@ -25,6 +25,18 @@ function jf_http(string $path, $body = null): array {
 // ---- the page ----
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
+// PANNA AB i18n SE CHALTA HAI (jyotish/i18n.js). Yaani dikhne wale
+// shabd HTML me hain hi nahi -- wo JavaScript bhar-ta hai. Isliye
+// DIKHNE WALE SHABD par jaanch lagana ab HAMESHA ke liye galat hai;
+// wo khali HTML me kabhi milega hi nahi.
+//
+// Pehle yahan 'welcome-title', 'welcome-question', 'welcome-form',
+// 'welcome-actions' aur 'AI se baat karein' jaanche jaate the. Wo
+// hissa HATA nahi -- naye sire se banaya gaya hai (ab chat-welcome
+// / ai-chat-welcome, text data-i18n="cwTitle" se aata hai).
+//
+// Isliye ab id, class aur data-i18n ki chaabi jaanchi jaati hai --
+// wo roop badalne par bhi wahi rehti hain.
 // Dhyan: pehle yahan 'Naam Jaap Challenge' jaancha jata tha. Us
 // hisse ka naam badal kar sirf "Naam Jaap" kar diya gaya (commit
 // "Make Naam Jaap mindful by default" -- "Challenge" shabd
@@ -32,8 +44,24 @@ jf_check($code === 200, "page code $code");
 // Feature salamat hai: niche ke saare jaap-* hisse mil rahe hain.
 // Isliye ab shabd ki jagah 'jaap-title' jaancha jata hai, jo naam
 // badalne par bhi nahi badlega.
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'welcome-title', 'welcome-question', 'welcome-form', 'welcome-actions', 'AI se baat karein', 'ai-chat-welcome', 'k-question-hint', 'jaap-title', 'jaap-mantra', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'jaap-local-note'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'chat-welcome', 'ai-chat-welcome', 'data-i18n="cwTitle"', 'data-i18n="cwBody"', 'i18n.js', 'k-question-hint', 'jaap-title', 'jaap-mantra', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'jaap-local-note'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
+// ⚠️  YAHAN SE AAGE KI JAANCH ABHI LAAL HAI -- aur jaanbujh kar
+//     laal chhodi gayi hai.
+//
+//     ChatGPT ne app.js naye sire se likha (685 line badli) par
+//     apni ye jaanch nahi badli. Neeche jo shabd maange ja rahe
+//     hain (pendingWelcomeQuestion, jaapFinishRound wagairah) wo
+//     naye app.js me shayad doosre naam se hain.
+//
+//     Ise bina app.js samjhe "theek" karna SABSE KHATARNAK hota:
+//     ho sakta hai ye sach me kuch toota pakad rahi ho, aur hum
+//     use chup kara dete. Isliye chhod diya gaya hai.
+//
+//     JISNE app.js BADLA HAI, WAHI ISE SUDHAARE.
+//
+//     Upar wali HTML/i18n ki jaanch sudhaar di gayi hai aur wo
+//     chal rahi hai.
 [$cJs, $js] = jf_http('/jyotish/app.js');
 jf_check($cJs === 200 && str_contains($js, 'pendingWelcomeQuestion') && str_contains($js, 'Personal jawaab ke liye pehle apni janam kundli banaiye') && str_contains($js, 'jaapFinishRound') && str_contains($js, 'mj-jaap-best') && str_contains($js, 'screen.orientation.lock("landscape")') && str_contains($js, 'function jaapRefreshProgress') && str_contains($js, 'jaap-undo') && str_contains($js, 'jaap-vibrate') && str_contains($js, 'jaap-bhav') && str_contains($js, 'Sankalp poora'), 'welcome draft and mindful local jaap modes should be wired');
 
