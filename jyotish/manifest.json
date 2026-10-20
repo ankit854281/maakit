@@ -1,0 +1,24 @@
+{
+  "id": "/jyotish/",
+  "name": "Maakit Jyotish — Kundli, Rashifal, Naam Jaap",
+  "short_name": "Maakit Jyotish",
+  "description": "Naam Jaap Mala, AI Jyotishi, Janam Kundli, Rishta Milan aur roz ka Rashifal. Powered by Maakit.",
+  "start_url": "/jyotish/?source=app",
+  "scope": "/jyotish/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15153A",
+  "theme_color": "#15153A",
+  "lang": "hi-IN",
+  "categories": ["lifestyle", "education"],
+  "icons": [
+    { "src": "/jyotish/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/jyotish/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/jyotish/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Naam Jaap", "url": "/jyotish/?go=jaap", "icons": [{ "src": "/jyotish/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "AI Jyotishi", "url": "/jyotish/?go=ai", "icons": [{ "src": "/jyotish/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Aaj Aapke Sitare", "url": "/jyotish/?go=rashi", "icons": [{ "src": "/jyotish/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
