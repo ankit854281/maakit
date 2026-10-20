@@ -25,7 +25,14 @@ function jf_http(string $path, $body = null): array {
 // ---- the page ----
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'welcome-title', 'welcome-question', 'welcome-form', 'welcome-actions', 'AI se baat karein', 'ai-chat-welcome', 'k-question-hint', 'Naam Jaap Challenge', 'jaap-mantra', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'ek hi phone'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+// Dhyan: pehle yahan 'Naam Jaap Challenge' jaancha jata tha. Us
+// hisse ka naam badal kar sirf "Naam Jaap" kar diya gaya (commit
+// "Make Naam Jaap mindful by default" -- "Challenge" shabd
+// jaan-boojh kar hataya gaya tha, kyunki jaap daud nahi hai).
+// Feature salamat hai: niche ke saare jaap-* hisse mil rahe hain.
+// Isliye ab shabd ki jagah 'jaap-title' jaancha jata hai, jo naam
+// badalne par bhi nahi badlega.
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'welcome-title', 'welcome-question', 'welcome-form', 'welcome-actions', 'AI se baat karein', 'ai-chat-welcome', 'k-question-hint', 'jaap-title', 'jaap-mantra', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'jaap-local-note'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
 [$cJs, $js] = jf_http('/jyotish/app.js');
 jf_check($cJs === 200 && str_contains($js, 'pendingWelcomeQuestion') && str_contains($js, 'Personal jawaab ke liye pehle apni janam kundli banaiye') && str_contains($js, 'jaapFinishRound') && str_contains($js, 'mj-jaap-best') && str_contains($js, 'screen.orientation.lock("landscape")') && str_contains($js, 'function jaapRefreshProgress') && str_contains($js, 'jaap-undo') && str_contains($js, 'jaap-vibrate') && str_contains($js, 'jaap-bhav') && str_contains($js, 'Sankalp poora'), 'welcome draft and mindful local jaap modes should be wired');
