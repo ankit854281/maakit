@@ -401,6 +401,6 @@ header('Content-Type: text/html; charset=utf-8');
 <script src="engine.js?v=1"></script>
 <script src="i18n.js?v=5"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

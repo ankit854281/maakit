@@ -478,7 +478,7 @@ var JAAP_EVOLUTION_STEPS=[
 ["चरण 2.3 · पुष्प सज्जा","पूजा स्थल पर पुष्प अर्पित किए जा रहे हैं","दिव्य रूप के लिए {n} जप और"],
 ["चरण 3.1 · दिव्य रूप स्थापना","आपका चुना हुआ पवित्र रूप प्रकट हो रहा है","श्रृंगार और पुष्पांजलि के लिए {n} जप और"],
 ["चरण 3.2 · श्रृंगार और पुष्पांजलि","प्रेम से पुष्प अर्पित, दिव्य आभा जाग रही है","पूर्ण दिव्य आभा के लिए {n} जप और"],
-["चरण 3.3 · दिव्य दर्शन","पूर्ण प्रभामंडल · आज का संकल्प पूरा 🙏","संकल्प पूरा 🙏"]
+["चरण 3.3 · दिव्य दर्शन","पूर्ण प्रभामंडल प्रकट हो रहा है","आज का संकल्प पूरा 🙏"]
 ];
 var JAAP_EVOLUTION_STEPS_HL=[
 ["Stage 1.1 · Beej bona","Dharti mein sadhna ka beej boya ja raha hai","Pavitra ankur ke liye {n} jaap aur"],
@@ -489,7 +489,7 @@ var JAAP_EVOLUTION_STEPS_HL=[
 ["Stage 2.3 · Pushp sajja","Pooja sthal par phool arpit ho rahe hain","Divya roop ke liye {n} jaap aur"],
 ["Stage 3.1 · Divya roop sthapana","Aapka chuna pavitra roop pragat ho raha hai","Shringar aur pushpanjali ke liye {n} jaap aur"],
 ["Stage 3.2 · Shringar aur pushpanjali","Prem se pushp arpit, divya aabha jag rahi hai","Poori divya aabha ke liye {n} jaap aur"],
-["Stage 3.3 · Divya darshan","Poorna prabha-mandal · Aaj ka sankalp poora 🙏","Sankalp poora 🙏"]
+["Stage 3.3 · Divya darshan","Poorna prabha-mandal pragat ho raha hai","Aaj ka sankalp poora 🙏"]
 ];
 var JAAP_EVOLUTION_STEPS_EN=[
 ["Step 1.1 · Sow the seed","Your practice is taking root in sacred ground","{n} more jaap to the first sprout"],
@@ -500,10 +500,10 @@ var JAAP_EVOLUTION_STEPS_EN=[
 ["Step 2.3 · Flower offering","Flowers are adorning the sacred space","{n} more jaap to reveal your chosen form"],
 ["Step 3.1 · Sacred form","Your chosen sacred form appears beneath the tree","{n} more jaap for shringar and pushpanjali"],
 ["Step 3.2 · Shringar and offering","Flowers are offered as a golden aura awakens","{n} more jaap for the full divine aura"],
-["Step 3.3 · Divine darshan","Full radiant halo · Today's sankalp is complete 🙏","Sankalp complete 🙏"]
+["Step 3.3 · Divine darshan","The full radiant halo is appearing","Today's sankalp is complete 🙏"]
 ];
 function jaapEvolutionInfo(n,goal){goal=Math.max(1,Number(goal)||108);n=Math.max(0,Number(n)||0);var stage=n>=goal?9:Math.min(9,Math.floor(n*9/goal)+1),next=stage===9?goal:Math.ceil(goal*stage/9),start=Math.ceil(goal*(stage-1)/9),pct=n>=goal?100:Math.max(0,Math.min(100,Math.round((n-start)/Math.max(1,next-start)*100)));return {stage:stage,next:next,pct:pct,goal:goal};}
-function jaapEvolutionRender(n,announce){var goal=jprefs.target*MALA,info=jaapEvolutionInfo(n,goal),previous=Number(store("mj-jaap-evolution-stage"))||1,language=lk(),steps=language==="en"?JAAP_EVOLUTION_STEPS_EN:(language==="hi"?JAAP_EVOLUTION_STEPS:JAAP_EVOLUTION_STEPS_HL),step=steps[info.stage-1],nextLine=info.stage===9?step[1]+" · "+step[2]:step[1]+" · "+step[2].replace("{n}",String(Math.max(0,info.next-n)));store("mj-jaap-evolution-stage",info.stage);store("mj-jaap-evolution",{date:todayKey(),count:n,goal:goal,avatar:Math.ceil(info.stage/3),subStage:(info.stage-1)%3+1,stage:info.stage});$("jaap-evolution-title").textContent=step[0];$("jaap-evolution-next").textContent=nextLine;$("jaap-evolution-fill").style.width=info.pct+"%";$("jaap-evolution-bar").setAttribute("aria-valuenow",String(info.pct));$("jaap-evolution-bar").setAttribute("aria-valuetext",step[0]+", "+nextLine);if(announce&&n>0&&info.stage!==previous){toast(step[0]+" 🙏");petalShower();goldRipple($("home-mala"));}jaapDress($("home-mala"),jaapActive());var arena=document.querySelector(".mala-lg");if(arena)jaapDress(arena,jaapState.active||jaapState.paused?jaapState.mantra:jaapActive());}
+function jaapEvolutionRender(n,announce){var goal=jprefs.target*MALA,info=jaapEvolutionInfo(n,goal),previous=Number(store("mj-jaap-evolution-stage"))||1,language=lk(),steps=language==="en"?JAAP_EVOLUTION_STEPS_EN:(language==="hi"?JAAP_EVOLUTION_STEPS:JAAP_EVOLUTION_STEPS_HL),step=steps[info.stage-1],nextLine=info.stage===9?(n>=goal?step[2]:step[1]+" · "+(language==="en"?String(goal-n)+" more jaap to complete today's sankalp":(language==="hi"?"आज का संकल्प पूरा करने के लिए ":"Aaj ka sankalp poora karne ke liye ")+String(goal-n)+(language==="hi"?" जप और":" jaap aur"))):step[1]+" · "+step[2].replace("{n}",String(Math.max(0,info.next-n)));store("mj-jaap-evolution-stage",info.stage);store("mj-jaap-evolution",{date:todayKey(),count:n,goal:goal,avatar:Math.ceil(info.stage/3),subStage:(info.stage-1)%3+1,stage:info.stage});$("jaap-evolution-title").textContent=step[0];$("jaap-evolution-next").textContent=nextLine;$("jaap-evolution-fill").style.width=info.pct+"%";$("jaap-evolution-bar").setAttribute("aria-valuenow",String(info.pct));$("jaap-evolution-bar").setAttribute("aria-valuetext",step[0]+", "+nextLine);if(announce&&n>0&&info.stage!==previous){toast(step[0]+" 🙏");petalShower();goldRipple($("home-mala"));}jaapDress($("home-mala"),jaapActive());var arena=document.querySelector(".mala-lg");if(arena)jaapDress(arena,jaapState.active||jaapState.paused?jaapState.mantra:jaapActive());}
 
 try{ localStorage.removeItem("mj-jaap-photo"); }catch(e){} /* purani "ek photo sab mantron ke liye" setting band — galat devta dikhati thi */
 function jaapPhotos(){ return store("mj-jaap-photos")||{}; }
