@@ -197,19 +197,30 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 
 /* ---------- floating jaap (other tabs) ---------- */
 .mini-jaap{position:fixed;z-index:30;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(80px + env(safe-area-inset-bottom,0px))}
-.mini-jaap-toggle{display:grid;place-items:center;width:54px;height:54px;padding:0;border:0;border-radius:50%;background:var(--accent);color:var(--on-accent);font-family:var(--display);font-size:24px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer;touch-action:manipulation}
-.mini-jaap-toggle span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-.mini-jaap-panel{position:absolute;right:0;bottom:64px;width:min(300px,calc(100vw - 28px));max-height:min(76vh,540px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--fg);box-shadow:0 10px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:8px}
+.mini-jaap-dock{display:flex;align-items:flex-end;gap:8px}
+.mini-jaap-toggle{position:relative;display:grid;place-items:center;width:64px;height:64px;padding:0;border:1px solid #fff8;border-radius:50%;background:radial-gradient(circle at 34% 24%,#ffeaa5,var(--accent) 58%,#bb6c16);color:var(--on-accent);font-family:var(--display);font-size:19px;font-variant-numeric:tabular-nums;box-shadow:0 5px 14px rgba(0,0,0,.28),inset 0 2px 4px #fff8;cursor:pointer;touch-action:manipulation;user-select:none}
+.mini-jaap-toggle i{position:absolute;top:7px;left:9px;font-size:12px;font-style:normal;opacity:.8}
+.mini-jaap-toggle .mini-jaap-fab-count{display:block;width:auto;height:auto;position:static;clip:auto;overflow:visible;font-size:17px;font-weight:700}
+.mini-jaap-toggle small{position:absolute;right:-4px;bottom:-2px;min-width:31px;padding:4px 5px;border:2px solid var(--surface);border-radius:99px;background:var(--fg);color:var(--surface);font:700 11px/1 var(--ui);text-align:center}
+.mini-jaap-open{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--fg);font:700 23px/1 var(--ui);box-shadow:0 4px 12px rgba(0,0,0,.22);cursor:pointer;touch-action:manipulation}
+.mini-jaap-panel{position:absolute;right:0;bottom:74px;width:min(300px,calc(100vw - 28px));max-height:min(76vh,540px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--fg);box-shadow:0 10px 28px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:8px}
 .mini-jaap-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .mini-jaap-head div{display:flex;flex-direction:column}
 .mini-jaap-head small{color:var(--muted);font-size:12px}
-.mini-jaap-head button{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--sunk);color:var(--fg);font-size:20px;cursor:pointer}
+.mini-jaap-head button{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:var(--sunk);color:var(--fg);font-size:20px;cursor:pointer;touch-action:manipulation}
 .mini-jaap-panel label{font-size:13px}
 .mini-jaap-tap{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center;min-height:84px;padding:10px 16px;border:1px solid var(--line);border-radius:14px;background:var(--sunk);color:var(--fg);text-align:left;font:inherit;cursor:pointer;touch-action:manipulation;user-select:none}
 .mini-jaap-tap span{grid-row:1 / span 2;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
 .mini-jaap-tap small{font-family:var(--display);font-size:20px}
 .mini-jaap-tap b{font-size:12px;font-weight:400;color:var(--muted)}
-.mini-jaap-panel>.btn{min-height:42px;font-size:14px}
+.mini-jaap-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mini-jaap-batch,.mini-jaap-undo{display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;padding:6px 9px;border:1px solid var(--line);border-radius:12px;background:var(--sunk);color:var(--fg);font:inherit;font-size:13px;cursor:pointer;touch-action:manipulation}
+.mini-jaap-batch strong{font-size:17px;color:var(--accent)}
+.mini-jaap-batch[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.mini-jaap-undo:disabled{opacity:.45;cursor:default}
+.mini-jaap-panel>.btn{min-height:44px;font-size:14px;touch-action:manipulation}
+@media(max-height:560px){.mini-jaap-panel{position:fixed;right:10px;bottom:calc(80px + env(safe-area-inset-bottom,0px));max-height:calc(100vh - 100px);max-height:calc(100dvh - 100px)}}
+@media(max-width:380px){.mini-jaap{right:10px}.mini-jaap-panel{width:calc(100vw - 20px);right:-2px}}
 
 /* ---------- Kundli, Milan, Rashifal ---------- */
 .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
