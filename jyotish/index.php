@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=8">
+<link rel="stylesheet" href="jyotish.css?v=9">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -80,6 +80,8 @@ header('Content-Type: text/html; charset=utf-8');
         <span class="mbadge"><span id="home-mala-label">Mala</span>: <b id="home-mala-num">1</b> (<b id="home-mala-in">0</b>/108)</span>
         <span class="mbadge"><span id="home-jaap-count-label">Aaj ka Kul Jaap</span>: <b id="home-jaap-total">0</b></span>
       </div>
+      <div class="jaap-evolution"><div><b id="jaap-evolution-title">Beej se shuruaat</b><small id="jaap-evolution-next">Agla padaav: Vriksh</small></div><div class="jaap-evolution-track" id="jaap-evolution-bar" role="progressbar" aria-label="Sadhna ki pragati" data-i18n-aria="jtEvolutionLabel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="jaap-evolution-fill"></i></div></div>
+      <div class="jaap-batch-tools"><button class="jaap-batch-button" id="jt-batch" type="button" aria-pressed="false"><strong id="jt-batch-value">+1</strong><span id="jt-batch-label">per tap</span></button><span id="jaap-batch-hint">Har mantra ke baad ek tap</span><button class="jaap-undo-inline" id="home-jaap-undo" type="button" disabled data-i18n="jtUndo">↶ Undo</button></div><p class="sr-only" id="jaap-batch-status" aria-live="polite" aria-atomic="true"></p>
       <div class="jaap-toggles" role="group" aria-label="Jaap settings">
         <button class="tpill" id="jt-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span id="jt-bell-label">Ghanti</span></button>
         <button class="tpill" id="jt-vibe" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8M1.5 10v4M22.5 10v4"/></svg><span id="jt-vibe-label">Vibration</span></button>
@@ -99,6 +101,7 @@ header('Content-Type: text/html; charset=utf-8');
 
     <section class="jaap-card" id="jaap-card" aria-labelledby="jaap-title" hidden>
       <div class="jaap-card-copy"><h2 id="jaap-title" data-i18n="jsTitle">Jaap settings</h2><p id="jaap-home-description" data-i18n="jsDesc">Mantra, jaap ka tareeka, lakshya aur photo yahan badlein.</p><div class="jaap-today-total"><span id="jaap-home-today-label" data-i18n="todayTotal">Aaj ka kul jaap</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label" data-i18n="last7">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label" data-i18n="sittings">baar jaap kiya</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p></div></div>
+      <div class="jaap-month-history"><div class="jaap-month-head"><b id="jaap-month-title" data-i18n="jtMonth">Mahine ka jaap</b><div><button type="button" id="jaap-month-prev" aria-label="Pichhla mahina" data-i18n-aria="jtPrev">‹</button><span id="jaap-month-label"></span><button type="button" id="jaap-month-next" aria-label="Agla mahina" data-i18n-aria="jtNext">›</button></div></div><div class="jaap-calendar-weekdays" id="jaap-calendar-weekdays"></div><div class="jaap-calendar" id="jaap-calendar"></div><p id="jaap-month-summary" class="note"></p></div>
       <div class="jaap-setup">
         <label><span data-i18n="lMantra">Mantra</span>
           <select id="jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option><option value="__custom__" data-i18n="optOwn">Apna mantra</option></select></label><label id="jaap-custom-mantra-wrap" hidden><span data-i18n="lOwn">Apna mantra likhein</span><input id="jaap-custom-mantra" type="text" maxlength="60" data-i18n-ph="phOwn" placeholder="Jaise: ॐ गं गणपतये नमः" autocomplete="off"></label><div class="jaap-guide" id="jaap-guide"><b id="jaap-guide-title">Mantra ka arth</b><p id="jaap-guide-copy">Mantra chunne par uska arth yahan dikhega.</p><button class="btn ghost" id="jaap-ask-ai" type="button" data-i18n="askMantra">Is mantra ka arth AI se poochhein</button></div>
@@ -114,11 +117,11 @@ header('Content-Type: text/html; charset=utf-8');
           <label><span data-i18n="p1">Player 1</span><input id="jaap-player1" maxlength="18" data-i18n-ph="ph1" placeholder="Pehla naam"></label>
           <label><span data-i18n="p2">Player 2</span><input id="jaap-player2" maxlength="18" data-i18n-ph="ph2" placeholder="Doosra naam"></label>
         </div>
-        <div class="jaap-photo-control"><div class="jaap-photo-actions"><button class="btn ghost" id="jaap-photo-choose" type="button" data-i18n="photoChoose">Is mantra ke liye photo lagayein</button><button class="linkbtn" id="jaap-photo-clear" type="button" hidden data-i18n="photoClear">Photo hatayein</button></div><input id="jaap-photo-file" type="file" accept="image/*" hidden><p class="note" id="jaap-photo-note"></p></div>
+        <div class="jaap-photo-control"><div class="jaap-photo-actions"><button class="btn ghost" id="jaap-photo-choose" type="button" data-i18n="photoChoose">Is mantra ke liye photo lagayein</button><button class="linkbtn" id="jaap-photo-clear" type="button" hidden data-i18n="photoClear">Photo hatayein</button></div><input id="jaap-photo-file" type="file" accept="image/*" hidden><div class="jaap-photo-position"><label><span data-i18n="jtPhotoX">Photo left/right</span><input id="jaap-photo-x" type="range" min="0" max="100" value="50"></label><label><span data-i18n="jtPhotoY">Photo up/down</span><input id="jaap-photo-y" type="range" min="0" max="100" value="50"></label><label><span data-i18n="jtPhotoZoom">Photo zoom</span><input id="jaap-photo-zoom" type="range" min="100" max="180" value="100"></label><button id="jaap-photo-position-reset" type="button" data-i18n="jtPhotoReset">Reset photo position</button></div><p class="note" id="jaap-photo-note"></p></div>
         <div class="jaap-audio-options">
           <label><input type="checkbox" id="jaap-bell" checked> <span data-i18n="bellOpt">Har jaap par ghanti ki awaaz</span></label>
           <label><input type="checkbox" id="jaap-voice"> <span data-i18n="voiceOpt">Mantra bolkar sunayein</span></label>
-          <label><input type="checkbox" id="jaap-vibrate" checked> <span data-i18n="vibeOpt">Vibration (har jaap par halka, mala poori hone par lamba)</span></label>
+          <label><input type="checkbox" id="jaap-vibrate" checked> <span data-i18n="vibeOpt">Vibration (har jaap par halka, mala poori hone par lamba)</span></label><label><input type="checkbox" id="jaap-motion" checked> <span data-i18n="jtMotion">Jaap animations dikhayein</span></label>
         </div>
         <p class="note jaap-local-note" data-i18n="localNote">Ginti, mantra aur photo sirf is phone par save hote hain.</p>
         <button class="btn" id="jaap-start" type="button">Jaap shuru karein</button>
@@ -135,11 +138,11 @@ header('Content-Type: text/html; charset=utf-8');
           <div class="petals" id="arena-petals" aria-hidden="true"></div>
         </div>
         <div class="jaap-score-panel"><span id="jaap-count-label" data-i18n="count">Ginti</span><strong id="jaap-count" aria-live="off">0</strong><small id="jaap-best-line" hidden><span data-i18n="best">Personal best:</span> <b id="jaap-best">0</b></small></div>
-        <button class="jaap-undo" id="jaap-undo" type="button" aria-label="Aakhri ginti wapas karein" hidden data-i18n="undo">↶ Pichhli ginti hatayein</button>
+        <button class="jaap-undo" id="jaap-undo" type="button" aria-label="Aakhri ginti wapas karein" hidden data-i18n="undo">↶ Pichhli ginti hatayein</button><button id="jaap-arena-batch" type="button" aria-pressed="false">+1 per tap</button>
         <p class="jaap-progress-note" id="jaap-progress-note">Beech ke gol par tap karein. Har tap ek jaap hai.</p>
       </div>
       <div class="jaap-between" id="jaap-between" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" data-i18n="roundDone">Round poora</div><h2 id="jaap-result-title"></h2><p id="jaap-result-copy"></p><button class="btn" id="jaap-next" type="button" data-i18n="nextPlayer">Agle ki baari</button></div></div>
-      <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">Lakshya poora</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener" data-i18n="shareWA">WhatsApp par share karein</a><button class="btn ghost" id="jaap-done" type="button" data-i18n="done">Ho gaya</button></div></div></div>
+      <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">Lakshya poora</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener" data-i18n="shareWA">WhatsApp par share karein</a><button class="btn ghost" id="jaap-done" type="button" data-i18n="done">Ho gaya</button></div><button class="linkbtn" id="jaap-final-undo" type="button" hidden data-i18n="jtUndo">Pichhli ginti wapas</button></div></div>
     </section>
 
   </section>
@@ -379,7 +382,7 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <div class="jg-hud jg-right">
     <button class="jg-btn main" id="jg-auto" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5z"/></svg><span id="jg-auto-label">Auto Jaap</span></button>
-    <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
+    <button class="jg-btn" id="jg-batch" type="button" aria-pressed="false"><span id="jg-batch-label">+1 / +12</span></button>\n    <button class="jg-btn" id="jg-undo" type="button" disabled>Undo</button>\n    <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
     <button class="jg-btn" id="jg-voice" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="jg-voice-label">Ginti bolein</span></button>
     <button class="jg-btn" id="jg-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span data-i18n="bellShort">Ghanti</span></button>
   </div>
@@ -394,8 +397,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=4"></script>
+<script src="i18n.js?v=5"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

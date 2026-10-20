@@ -100,7 +100,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .mala-name.long{font-size:27px}
 .mala-disk strong{font-size:40px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
 .mala-disk small{font-size:12px;line-height:1.3;color:var(--muted);max-width:64%;text-align:center;margin-top:2px}
-.mala-photo{position:absolute;inset:0;background-size:cover;background-position:center;display:none}
+.mala-photo{position:absolute;inset:0;background-size:cover;background-position:center;display:none}.mala-photo{overflow:hidden;background-image:none!important}
+.mala-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;transform:scale(1);transform-origin:center;will-change:transform}
 .has-photo .mala-photo{display:block}
 .has-photo .mala-photo:after{content:"";position:absolute;inset:0;background:rgba(21,21,58,.62)}
 .has-photo .mala-disk small{color:var(--fg)}
@@ -309,6 +310,27 @@ nav.tabs button[aria-selected="true"]:before{content:"";position:absolute;top:0;
 .petal.pm{background:#F6A21E;border-radius:55% 55% 50% 50%/65% 65% 40% 40%;box-shadow:inset -2px -2px 0 #E07B12}
 .petal.pr{width:11px;height:14px;background:#D7263D;border-radius:2px 80% 2px 80%;box-shadow:inset 2px 2px 0 #F05A6B}
 .mala.auto .mala-thread{stroke:var(--accent);stroke-dasharray:3 6}
+.jaap-evolution{display:grid;gap:8px;margin:2px 0 4px;padding:11px 13px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(120deg,var(--accent-soft),var(--surface))}
+.jaap-evolution>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:13px}.jaap-evolution small{color:var(--muted);text-align:right}
+.jaap-evolution-track{height:6px;overflow:hidden;border-radius:99px;background:var(--sunk)}.jaap-evolution-track i{display:block;width:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#75a76b,var(--accent));transition:width .45s}
+.jaap-batch-tools{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;margin:2px 0;padding:0 2px}
+.jaap-batch-button,.jaap-undo-inline{min-height:40px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--accent);font:inherit;font-size:12px;cursor:pointer}
+.jaap-batch-button[aria-pressed=true]{background:var(--accent);color:#fff}.jaap-batch-button strong{font-size:18px}
+.jaap-batch-tools>span{font-size:12px;color:var(--muted)}.jaap-undo-inline:disabled{opacity:.45}
+.jaap-month-history{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.jaap-month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.jaap-month-head>div{display:flex;align-items:center;gap:9px}
+.jaap-month-head button{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);font-size:22px}.jaap-calendar-weekdays,.jaap-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.jaap-calendar-weekdays{text-align:center;color:var(--muted);font-size:11px;margin-bottom:5px}
+.jaap-calendar-day{display:grid;place-content:center;gap:2px;min-height:40px;border-radius:9px;background:var(--sunk);color:var(--muted);text-align:center;font-size:12px}
+.jaap-calendar-day.active{background:var(--accent-soft);color:var(--accent);font-weight:700}.jaap-calendar-day.today{outline:1px solid var(--accent)}.jaap-calendar-day small{font-size:9px}
+.jaap-photo-position{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:10px}.jaap-photo-position label{display:grid;gap:4px;color:var(--muted);font-size:12px}.jaap-photo-position input[type=range]{width:100%;accent-color:var(--accent)}
+.jaap-no-motion .mala-ring,.jaap-no-motion .petal,.jaap-no-motion .ripple{animation:none!important;transition:none!important}
+.mala[class*="growth-"] .mala-art{inset:auto;top:8%;left:50%;width:74px;height:74px;transform:translateX(-50%);opacity:1;z-index:2;filter:drop-shadow(0 3px 7px rgba(63,125,67,.28));transition:filter .35s,opacity .35s}
+.mala.growth-7 .mala-art,.mala.growth-8 .mala-art,.mala.growth-9 .mala-art{filter:drop-shadow(0 0 10px rgba(253,204,91,.72))}
+.mala.growth-8 .mala-disk,.mala.growth-9 .mala-disk{box-shadow:inset 0 0 0 8px var(--sunk),0 0 24px rgba(243,190,65,.3)}
+.mala.growth-9 .mala-disk{box-shadow:inset 0 0 0 8px rgba(243,190,65,.38),0 0 34px rgba(243,190,65,.55)}
+.has-photo .mala-art{display:none}
+
 .jaap-toggles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .tpill{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:62px;padding:8px 4px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:13px;font-weight:500;cursor:pointer;touch-action:manipulation;text-align:center}
 .tpill svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
