@@ -81,11 +81,21 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .foot b{color:var(--fg);font-weight:500}
 
 /* ---------- Home: the mala (sabse khaas hissa) ---------- */
-.home-jaap-spotlight{display:flex;flex-direction:column;gap:14px;padding:6px 0 10px}
+.home-jaap-spotlight{display:flex;flex-direction:column;gap:12px;padding:20px 16px;border:1px solid var(--line);border-radius:26px;background:var(--bg);color:var(--fg)}
+.home-jaap-spotlight[data-look="silver"]{--bg:#f1f3f8;--surface:#fff;--sunk:#e5e9f0;--line:#ccd4e0;--fg:#24334a;--muted:#536179;--accent:#4c5e91;--accent-soft:#e0e6f4;--on-accent:#fff;--disk-hi:#fff;--glow1:#dce2f0;--gold:#6278a3}
+.home-jaap-spotlight[data-look="forest"]{--bg:#0b302b;--surface:#15463c;--sunk:#0a2824;--line:#366459;--fg:#fff5df;--muted:#b5d0bd;--accent:#d8b86d;--accent-soft:#365345;--on-accent:#102e28;--disk-hi:#275b49;--glow1:#2c6148}
+.jaap-designs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px;background:var(--sunk);border-radius:16px}
+.jaap-designs button{min-height:46px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--muted);font:inherit;font-size:14px;cursor:pointer}
+.jaap-designs button[aria-pressed=true]{background:var(--surface);border-color:var(--line);color:var(--fg);font-weight:700}
+.jaap-mini-launch{min-height:48px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--accent);font:inherit;cursor:pointer}
+.card-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card-options label{display:grid;gap:5px;font-size:14px}.card-options .btn{min-width:0}
+#jaap-share-canvas{display:block;width:auto;max-width:100%;max-height:42dvh;object-fit:contain;align-self:center;border-radius:16px}
+.home-jaap-spotlight button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media(max-width:380px){.home-jaap-spotlight{padding:14px 10px;border-radius:20px}}
 .jaap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.jaap-head h2{font-size:28px}
+.jaap-head h2{font-family:var(--body);font-size:25px;font-weight:700;letter-spacing:-.4px}
 .jaap-head p{color:var(--muted);font-size:15px;margin-top:2px}
-.mala{position:relative;width:min(80vw,300px);aspect-ratio:1/1;margin:0 auto}
+.mala{position:relative;width:min(100%,280px);aspect-ratio:1/1;margin:0 auto}
 .mala-ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .mala-thread{fill:none;stroke:var(--line);stroke-width:1.4}
 .bead{fill:#3B3B7C}
@@ -109,7 +119,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .mala-meta{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .mbadge{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--muted)}
 .mbadge b{color:var(--fg);font-weight:700}
-.mantra-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:2px}
+.mantra-chips{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:4px 2px;scrollbar-width:thin}.mantra-chips .mchip{flex:none;min-height:46px}
 .mantra-chips::-webkit-scrollbar{display:none}
 .mchip{flex:none;font-family:var(--display);font-size:18px;line-height:1.2;min-height:44px;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
 .mchip[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -324,10 +334,10 @@ nav.tabs button[aria-selected="true"]:before{content:"";position:absolute;top:0;
 .jaap-evolution{display:grid;gap:8px;margin:2px 0 4px;padding:11px 13px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(120deg,var(--accent-soft),var(--surface))}
 .jaap-evolution>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:13px}.jaap-evolution small{color:var(--muted);text-align:right}
 .jaap-evolution-track{height:6px;overflow:hidden;border-radius:99px;background:var(--sunk)}.jaap-evolution-track i{display:block;width:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#75a76b,var(--accent));transition:width .45s}
-.jaap-batch-tools{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;margin:2px 0;padding:0 2px}
-.jaap-batch-button,.jaap-undo-inline{min-height:40px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--accent);font:inherit;font-size:12px;cursor:pointer}
+.jaap-batch-tools{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:8px;margin:2px 0;padding:0 2px}
+.jaap-batch-button,.jaap-undo-inline{min-height:50px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--accent);font:inherit;font-size:13px;cursor:pointer}
 .jaap-batch-button[aria-pressed=true]{background:var(--accent);color:#fff}.jaap-batch-button strong{font-size:18px}
-.jaap-batch-tools>span{font-size:12px;color:var(--muted)}.jaap-undo-inline:disabled{opacity:.45}
+.jaap-batch-tools>span{grid-column:1/-1;grid-row:2;font-size:12px;color:var(--muted);text-align:center}.jaap-undo-inline:disabled{opacity:.45}
 .jaap-month-history{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
 .jaap-month-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.jaap-month-head>div{display:flex;align-items:center;gap:9px}
 .jaap-month-head button{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);font-size:22px}.jaap-calendar-weekdays,.jaap-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
@@ -421,7 +431,7 @@ body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .install-pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #t-ai{padding-top:18px;border-top:1px solid var(--line);margin-top:6px}
 .composer{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-.mini-jaap{bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+.mini-jaap{bottom:calc(100px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .drawer{position:fixed;inset:0;z-index:75;background:rgba(5,5,20,.6)}
 .drawer-panel{position:absolute;inset:0 auto 0 0;width:min(86vw,340px);display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--line);padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px));overflow-y:auto;animation:slideIn .2s ease-out}
@@ -517,3 +527,4 @@ body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .jaap-evolution>div:not(.jaap-evolution-track) b{font-size:15px}
 .jaap-evolution small{text-align:left;font-size:13px;line-height:1.4}
 .jaap-batch-button{display:inline-flex;align-items:baseline;gap:6px}
+
