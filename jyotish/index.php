@@ -85,6 +85,7 @@ header('Content-Type: text/html; charset=utf-8');
           <label>Player 1<input id="jaap-player1" maxlength="18" placeholder="Pehle khiladi ka naam"></label>
           <label>Player 2<input id="jaap-player2" maxlength="18" placeholder="Doosre khiladi ka naam"></label>
         </div>
+        <div class="jaap-photo-control"><div class="jaap-photo-actions"><button class="btn ghost" id="jaap-photo-choose" type="button">Bhagwan ki photo chunein</button><button class="linkbtn" id="jaap-photo-clear" type="button" hidden>Photo hataayein</button></div><input id="jaap-photo-file" type="file" accept="image/*" hidden><p class="note" id="jaap-photo-note">Photo isi phone par rahegi; upload nahi hogi.</p></div>
         <div class="jaap-audio-options">
           <label><input type="checkbox" id="jaap-bell" checked> Har tap par halki ghanti</label>
           <label><input type="checkbox" id="jaap-voice"> Naam ko bolkar bhi sunayein</label>
@@ -252,6 +253,15 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
     <form class="composer" id="f-ai"><textarea id="q" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit">Ask</button></form>
     <p class="note">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
+    <div class="mini-jaap" id="mini-jaap">
+      <button class="mini-jaap-toggle" id="mini-jaap-toggle" type="button" aria-expanded="false" aria-controls="mini-jaap-panel">ॐ <span>Naam Jaap</span></button>
+      <div class="mini-jaap-panel" id="mini-jaap-panel" hidden>
+        <div class="mini-jaap-head"><div><b>Naam Jaap</b><small>Chat ke saath · silent mode</small></div><button id="mini-jaap-close" type="button" aria-label="Jaap popup band karein">×</button></div>
+        <label for="mini-jaap-mantra">Mantra</label><select id="mini-jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
+        <button class="mini-jaap-tap" id="mini-jaap-tap" type="button" aria-label="Naam jaap ek baar ginen"><span id="mini-jaap-count">0</span><small id="mini-jaap-name">राम</small><b>Tap karke ginein</b></button>
+        <p class="note">Aaj ka jaap: <strong id="mini-jaap-today">0</strong> · ginti isi phone par</p>
+      </div>
+    </div>
   </section>
 
   <div class="foot">Maakit Jyotish V2 · Vedic sidereal (Lahiri) · Whole-sign houses · Powered by Maakit</div>
