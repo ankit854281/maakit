@@ -23,6 +23,7 @@ function jf_http(string $path, $body = null): array {
 }
 
 // ---- the page ----
+// 20 Oct 2026: Home = Naam Jaap Mala + AI chat; baaki sab ☰ menu (main-navigation) mein. Purane home cards hata diye gaye.
 [$code, $html] = jf_http('/jyotish/');
 jf_check($code === 200, "page code $code");
 // Dhyan: pehle yahan 'Naam Jaap Challenge' jaancha jata tha. Us
@@ -32,7 +33,7 @@ jf_check($code === 200, "page code $code");
 // Feature salamat hai: niche ke saare jaap-* hisse mil rahe hain.
 // Isliye ab shabd ki jagah 'jaap-title' jaancha jata hai, jo naam
 // badalne par bhi nahi badlega.
-foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'welcome-title', 'welcome-actions', 'home-modules', 'home-module-title', 'home-jaap-spotlight', 'home-jaap-count', 'home-jaap-tap', 'module-card', 'language-label', 'home-ai-title', 'main-navigation', 'tab-chat-label', 'mini-jaap-full', 'mini-jaap-photo', 'AI Jyotishi', 'ai-chat-welcome', 'k-question-hint', 'jaap-title', 'jaap-mantra', 'jaap-custom-mantra', 'jaap-custom-goal', 'Apna target', 'jaap-week-bars', 'jaap-pause', 'jaap-ask-ai', 'jaap-photo-file', 'jaap-photo-clear', 'mini-jaap-toggle', 'mini-jaap-panel', 'mini-jaap-tap', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'jaap-local-note'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
+foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'home-jaap-spotlight', 'home-jaap-count', 'home-jaap-tap', 'language-label', 'main-navigation', 'menu-open', 'manifest.json', 'install-menu', 't-card', 'mini-jaap-full', 'mini-jaap-photo', 'AI Jyotishi', 'ai-chat-welcome', 'k-question-hint', 'jaap-title', 'jaap-mantra', 'jaap-custom-mantra', 'jaap-custom-goal', 'Apna target', 'jaap-week-bars', 'jaap-pause', 'jaap-ask-ai', 'jaap-photo-file', 'jaap-photo-clear', 'mini-jaap-toggle', 'mini-jaap-panel', 'mini-jaap-tap', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'jaap-local-note'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'i18n.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
 [$cJs, $js] = jf_http('/jyotish/app.js');
 // Saare shabd ab jyotish/i18n.js mein hain (20 Oct 2026), isliye dono files saath jaanchi jaati hain.

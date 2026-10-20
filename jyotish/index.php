@@ -21,11 +21,18 @@ header('Content-Type: text/html; charset=utf-8');
 <meta name="description" content="Free Janam Kundli, 36 gun Kundli Milan, daily rashifal and AI Jyotishi in Hinglish, Hindi and English. Powered by Maakit, Bhadohi.">
 <meta name="theme-color" content="#15153A">
 <script>/* rang pehle hi laga do, taaki page jhapke nahi */try{var t=JSON.parse(localStorage.getItem("mj-theme"));if(t==="kesar"||t==="mor")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maakit Jyotish">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=6">
+<link rel="stylesheet" href="jyotish.css?v=7">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -36,10 +43,9 @@ header('Content-Type: text/html; charset=utf-8');
 </defs></svg>
 <div class="wrap">
   <header class="mast">
+    <button class="iconbtn menu-btn" id="menu-open" type="button" aria-controls="menu" aria-expanded="false" data-i18n-aria="menu" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
-    <button class="theme-btn" id="theme-open" type="button" data-i18n-aria="themeTitle" aria-label="App ka rang"><span aria-hidden="true"></span></button>
-    <label class="langpick"><span id="language-label" class="sr-only">Language</span>
-      <select id="lang" aria-label="Language"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
+    <button class="install-pill" id="install-top" type="button" hidden><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span data-i18n="installShort">App</span></button>
     <div class="panch" id="panch" data-i18n="panchLoading">Loading today's panchang…</div>
   </header>
 
@@ -88,22 +94,7 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </section>
 
-    <section class="welcome-hero" aria-labelledby="welcome-title">
-      <h2 id="welcome-title">Aapke sawaal, kundli ke jawaab</h2>
-      <p id="welcome-description">Kundli, career, vivah ya aaj ke din par apna sawaal poochhein.</p>
-      <button class="askbar" id="home-primary" type="button" data-home-action="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg><span id="home-primary-label">Apna sawaal yahan likhein…</span></button>
-      <p class="home-trustline" id="home-trustline">Aapki janam ki jaankari sirf aapke phone mein rehti hai.</p>
-    </section>
 
-    <section class="home-module-section" aria-labelledby="home-module-title">
-      <h2 id="home-module-title">Jyotish Seva</h2>
-      <div class="home-modules" id="welcome-actions" aria-label="Jyotish features">
-        <button class="module-card module-ai" type="button" data-home-action="ai"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-4.3A2.5 2.5 0 0 1 4 13.5z"/><path d="M12 6.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg></span><b id="home-ai-title">AI Jyotishi</b><small id="home-ai-note">Career, vivah ya kisi faisle par margdarshan</small></button>
-        <button class="module-card module-kundli" type="button" data-home-action="kundli"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 3l18 18M21 3L3 21M12 3l9 9-9 9-9-9z"/></svg></span><b id="home-kundli-title">Janam Kundli</b><small id="home-kundli-note">Grah, lagna aur dasha ki poori jaankari</small></button>
-        <button class="module-card module-milan" type="button" data-home-action="milan"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg></span><b id="home-milan-title">Kundli Milan</b><small id="home-milan-note">Vivah se pehle 36 gun milan</small></button>
-        <button class="module-card module-rashi" type="button" data-home-action="rashi"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b id="home-rashi-title">Aaj ka Rashifal</b><small id="home-rashi-note">Aaj ka din aur ek saral upay</small></button>
-      </div>
-    </section>
 
     <section class="jaap-card" id="jaap-card" aria-labelledby="jaap-title" hidden>
       <div class="jaap-card-copy"><h2 id="jaap-title" data-i18n="jsTitle">Jaap settings</h2><p id="jaap-home-description" data-i18n="jsDesc">Mantra, jaap ka tareeka, lakshya aur photo yahan badlein.</p><div class="jaap-today-total"><span id="jaap-home-today-label" data-i18n="todayTotal">Aaj ka kul jaap</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label" data-i18n="last7">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label" data-i18n="sittings">baar jaap kiya</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p></div></div>
@@ -150,6 +141,10 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">Lakshya poora</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener" data-i18n="shareWA">WhatsApp par share karein</a><button class="btn ghost" id="jaap-done" type="button" data-i18n="done">Ho gaya</button></div></div></div>
     </section>
 
+  </section>
+
+  <!-- AAJ KA MARGDARSHAN: mood check-in + roz ka card -->
+  <section class="tab" id="t-card" hidden>
     <div class="card" id="checkin" hidden>
       <div class="eyebrow" id="ci-eyebrow"></div>
       <h2 id="ci-title"></h2>
@@ -239,7 +234,7 @@ header('Content-Type: text/html; charset=utf-8');
   <!-- AI -->
   <section class="tab" id="t-ai" hidden>
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h2 data-i18n="aiTitle">Ask AI Jyotishi</h2>
+      <div class="row" style="justify-content:space-between"><h2 data-i18n="aiTitle" id="chat-title">Ask AI Jyotishi</h2>
         <span class="note" data-i18n="aiLangNote">Replies in the language chosen at the top</span></div>
       <p class="note" style="margin:0" id="ai-who"></p>
       <div class="mode-switch" role="group" aria-label="Choose a reading style">
@@ -309,6 +304,34 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </div>
 
+<div class="drawer" id="menu" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <div class="drawer-head"><div><b id="menu-title">Maakit Jyotish</b><small data-i18n="menuSub">Kundli · Rashifal · Naam Jaap</small></div><button class="iconbtn" id="menu-close" type="button" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
+    <nav class="menu-list" id="main-navigation" aria-label="Main navigation">
+      <button class="menu-item" type="button" data-t="aaj" aria-current="page"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-6h6v6"/></svg></span><span data-i18n="mHome">mHome</span></button>
+      <button class="menu-item" type="button" data-t="ai"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-4.3A2.5 2.5 0 0 1 4 13.5z"/></svg></span><span data-i18n="mChat">mChat</span></button>
+      <button class="menu-item" type="button" data-t="card"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 4.5 6.5 4.5 8.5a4.5 4.5 0 0 1-9 0C7.5 9.5 9 7 12 3z"/><path d="M3 17h18c-1 4-4.6 5-9 5s-8-1-9-5z"/></svg></span><span data-i18n="mCard">mCard</span></button>
+      <button class="menu-item" type="button" data-t="kundli"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 3l18 18M21 3L3 21M12 3l9 9-9 9-9-9z"/></svg></span><span data-i18n="mKundli">mKundli</span></button>
+      <button class="menu-item" type="button" data-t="rashi"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><span data-i18n="mRashi">mRashi</span></button>
+      <button class="menu-item" type="button" data-t="milan"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg></span><span data-i18n="mMilan">mMilan</span></button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" type="button" data-go="settings"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></span><span data-i18n="jsTitle">Mala ki Settings</span></button>
+      <button class="menu-item" type="button" id="theme-open"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg></span><span data-i18n="themeTitle">Apna Rang Chunein</span><span class="theme-dot" aria-hidden="true"></span></button>
+      <label class="menu-item langpick"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-9 4 9M14.5 18h5"/></svg></span><span id="language-label" data-i18n="mLang">Bhasha</span>
+        <select id="lang" aria-label="Language"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
+      <button class="menu-item" type="button" data-go="data"><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span><span data-i18n="mData">Data aur Privacy</span></button>
+      <button class="menu-item install" type="button" id="install-menu" hidden><span class="mi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span><span><span data-i18n="installTitle">App install karein</span><small data-i18n="installSub">Home screen par Maakit Jyotish, bina Play Store</small></span></button>
+    </nav>
+    <p class="drawer-foot">Powered by <b>Maakit</b>, Bhadohi</p>
+  </div>
+</div>
+<div class="sheet" id="ios-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="ios-title">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2 id="ios-title" data-i18n="installTitle">App install karein</h2><button class="iconbtn" type="button" data-close-sheet="ios-sheet" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
+    <p data-i18n="iosSteps">iPhone par: neeche Share button (⬆) dabaiye, phir "Add to Home Screen" chuniye.</p>
+    <p class="note" data-i18n="iosNote">Android par Chrome ke menu (⋮) mein "Install app" ya "Add to Home screen" dabaiye.</p>
+  </div>
+</div>
 <div class="sheet" id="jm-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="jm-title">
   <div class="sheet-body">
     <div class="sheet-head"><h2 id="jm-title" data-i18n="jmTitle">Apna mantra jodein</h2><button class="iconbtn" type="button" data-close-sheet="jm-sheet" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
@@ -340,17 +363,11 @@ header('Content-Type: text/html; charset=utf-8');
 <div class="petal-rain" id="petal-rain" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<nav class="tabs" aria-label="Main navigation" id="main-navigation"><div class="in" role="tablist">
-  <button role="tab" data-t="aaj" aria-selected="true"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-6h6v6"/></svg></span><span class="tab-label" id="tab-home-label">Home</span></button>
-  <button role="tab" data-t="ai" aria-selected="false"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-4.5A2.5 2.5 0 0 1 4 14z"/><path d="M8 8h8M8 12h5"/></svg></span><span class="tab-label" id="tab-chat-label">AI Chat</span></button>
-  <button role="tab" data-t="kundli" aria-selected="false"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7z"/><path d="m3 7 9 5 9-5M12 12v9.5M8.2 4.4l7.6 15.2"/></svg></span><span class="tab-label" id="tab-kundli-label">Kundli</span></button>
-  <button role="tab" data-t="rashi" aria-selected="false"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.4 1.4m11.34 11.34 1.4 1.4M2 12h2m16 0h2M4.93 19.07l1.4-1.4M17.67 6.33l1.4-1.4"/></svg></span><span class="tab-label" id="tab-today-label">Rashifal</span></button>
-</div></nav>
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=2"></script>
+<script src="i18n.js?v=3"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

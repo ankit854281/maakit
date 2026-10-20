@@ -13,10 +13,31 @@ function fmtD(d){ return d.toLocaleDateString("en-IN",{month:"short",year:"numer
 function fmtDeg(x){ var d=Math.floor(x), m=Math.floor((x-d)*60); return d+"°"+String(m).padStart(2,"0")+"′"; }
 var S=Jy.SIGN_SHORT, SF=Jy.SIGNS, PN=Jy.PNAME;
 
-/* ---- tabs ---- */
-var tabs=document.querySelectorAll("nav.tabs button");
-function show(t){ tabs.forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===t)}); ["aaj","kundli","milan","rashi","ai"].forEach(function(n){$("t-"+n).hidden=n!==t}); if(t==="aaj") renderAaj(); if(t==="milan"&&!milanReady) renderMilan(); var mj=document.getElementById("mini-jaap"); if(mj) mj.hidden=t==="aaj"||t==="ai"; if(t==="rashi"){ renderRashi(); trackOnce("rashifal"); } if(t==="ai"){ renderAiHead(); $("ai-chat-welcome").hidden=chat.length>0; } window.scrollTo(0,0); }
+/* ---- screens ----
+   Home = Naam Jaap Mala + AI chat (dono saath). Baaki sab ☰ menu se.
+   "ai" bhi Home hi hai, bas seedha chat par le jaata hai. */
+var tabs=document.querySelectorAll(".menu-list [data-t]"), curTab="aaj", navPushed=false;
+function show(t,opts){ opts=opts||{}; var home=t==="aaj"||t==="ai";
+  tabs.forEach(function(b){ if(b.dataset.t===t) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  ["aaj","card","kundli","milan","rashi","ai"].forEach(function(n){ $("t-"+n).hidden=home?(n!=="aaj"&&n!=="ai"):n!==t; });
+  if(t==="card") renderAaj(); if(t==="milan"&&!milanReady) renderMilan();
+  var mj=document.getElementById("mini-jaap"); if(mj) mj.hidden=home;
+  if(t==="rashi"){ renderRashi(); trackOnce("rashifal"); }
+  if(home){ renderAiHead(); $("ai-chat-welcome").hidden=chat.length>0; }
+  /* Back button: andar ke panne par ek hi kadam peeche Home. */
+  if(!opts.fromHistory){ try{ if(!home){ if(navPushed) history.replaceState({t:t},""); else { history.pushState({t:t},""); navPushed=true; } } else if(navPushed){ navPushed=false; history.back(); } }catch(e){} }
+  curTab=t; menuClose(true);
+  if(t==="ai") setTimeout(function(){ $("t-ai").scrollIntoView({block:"start"}); },0); else window.scrollTo(0,0); }
+/* Phone ka "back" button: menu band ho, ya Home par wapas aayein — app se bahar na nikle. */
+window.addEventListener("popstate",function(e){ menuClose(true); navPushed=false; var t=e.state&&e.state.t; show(t||"aaj",{fromHistory:true}); });
 tabs.forEach(function(b){ b.onclick=function(){ show(b.dataset.t) } });
+
+/* ---- ☰ menu ---- */
+function menuOpen(){ $("menu").hidden=false; $("menu-open").setAttribute("aria-expanded","true"); document.body.classList.add("sheet-open"); setTimeout(function(){ var c=$("menu").querySelector('[aria-current="page"]')||$("menu-close"); c.focus(); },30); }
+function menuClose(silent){ if($("menu").hidden) return; $("menu").hidden=true; $("menu-open").setAttribute("aria-expanded","false"); document.body.classList.remove("sheet-open"); if(!silent) $("menu-open").focus(); }
+$("menu-open").onclick=menuOpen; $("menu-close").onclick=function(){ menuClose(); };
+$("menu").addEventListener("click",function(e){ if(e.target===$("menu")) menuClose(); });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("menu").hidden) menuClose(); });
 
 /* ---- panchang strip ---- */
 var TD=Jy.today(new Date());
@@ -606,7 +627,7 @@ var UI_COPY={
 };
 function applyUiLanguage(){if(typeof jlApply==="function")jlApply();var d=UI_COPY[lk()]||UI_COPY.hl;var m={"language-label":d.lang,"welcome-title":d.title,"welcome-description":d.body,"home-primary-label":d.primary,"home-trustline":d.trust,"home-module-title":d.moduleTitle,"welcome-actions":d.quick,"home-ai-title":d.ai,"home-ai-note":d.aiNote,"home-kundli-title":d.kundli,"home-kundli-note":d.kundliNote,"home-milan-title":d.milan,"home-milan-note":d.milanNote,"home-rashi-title":d.rashi,"home-rashi-note":d.rashiNote,"home-jaap-heading":d.jaapHeading,"home-jaap-description":d.jaapDescription,"home-jaap-mantra-label":d.jaapMantra,"home-jaap-count-label":d.jaapCountLabel,"home-mala-label":d.malaLabel,"home-jaap-tap-label":d.jaapTap,"jt-bell-label":d.bell,"jt-vibe-label":d.vibe,"jt-auto-label":d.auto,"jt-target-label":d.target,"js-share-label":d.share,"js-copy-label":d.copy,"js-challenge-label":d.challenge,"home-jaap-settings":d.settings,"tab-home-label":d.tabs[0],"tab-chat-label":d.tabs[1],"tab-kundli-label":d.tabs[2],"tab-today-label":d.tabs[3],"mini-jaap-photo":d.photo,"mini-jaap-full":d.fullJaap};Object.keys(m).forEach(function(id){var x=$(id);if(x){if(id==="welcome-actions"||id==="home-jaap-settings")x.setAttribute("aria-label",m[id]);else x.textContent=m[id];}});if(typeof jaapChips==="function"&&$("home-jaap-chips").childElementCount)jaapChips();if(typeof jaapTargetLine==="function"&&typeof jprefs!=="undefined")jaapTargetLine();if(typeof TD!=="undefined")$("panch").innerHTML=d.panch+': <strong>'+TD.tithi+'</strong> · '+(lk()==="hi"?"चंद्रमा ":"Moon ")+(lk()==="hi"?"राशि ":"in ")+'<strong>'+S[TD.moonSign]+'</strong>, '+TD.nak.name+(lk()==="hi"?" नक्षत्र":" nakshatra");}
 applyUiLanguage();
-$("lang").onchange=function(){store("mj-lang",$("lang").value);applyUiLanguage();renderPanch();renderKundli();if(milanReady)renderMilan();if(!$("t-rashi").hidden)renderRashi();renderAiHead();aiModeText();renderPriv();$("jaap-mode").onchange();jaapUpdateGuide();if(!$("t-aaj").hidden)renderAaj();if(!$("help").hidden)showHelp();};
+$("lang").onchange=function(){store("mj-lang",$("lang").value);applyUiLanguage();renderPanch();renderKundli();if(milanReady)renderMilan();if(!$("t-rashi").hidden)renderRashi();renderAiHead();aiModeText();renderPriv();$("jaap-mode").onchange();jaapUpdateGuide();if(!$("t-card").hidden)renderAaj();if(!$("help").hidden)showHelp();};
 
 /* ---- suchna aur privacy ---- */
 function renderNotice(){ $("notice").hidden = store("mj-share")!==null; }
@@ -633,10 +654,26 @@ var THEME_BG={neel:"#15153A",kesar:"#2A0E12",mor:"#05252A"};
 function themeNow(){ return document.documentElement.getAttribute("data-theme")||"neel"; }
 function themeShow(){ var cur=themeNow(); document.querySelectorAll("[data-theme-pick]").forEach(function(b){ b.setAttribute("aria-checked",String(b.getAttribute("data-theme-pick")===cur)); }); var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",THEME_BG[cur]); }
 document.querySelectorAll("[data-theme-pick]").forEach(function(b){ b.onclick=function(){ var t=b.getAttribute("data-theme-pick"); if(t==="neel") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme",t); store("mj-theme",t); themeShow(); toast(jl("themeSet")); setTimeout(function(){ jaapSheet("th-sheet",false); },250); }; });
-$("theme-open").onclick=function(){ themeShow(); jaapSheet("th-sheet",true); };
+$("theme-open").onclick=function(){ menuClose(true); themeShow(); jaapSheet("th-sheet",true); };
 themeShow();
+
+/* ---- menu ke baaki kaam ---- */
+document.querySelectorAll("[data-go]").forEach(function(b){ b.onclick=function(){ var g=b.getAttribute("data-go"); menuClose(true);
+  if(g==="settings"){ show("aaj"); $("jaap-card").hidden=false; jaapRenderStats(); jaapApplyPhoto(); setTimeout(function(){ $("jaap-card").scrollIntoView({behavior:"smooth",block:"start"}); },30); }
+  if(g==="data"){ show("kundli"); setTimeout(function(){ $("priv-state").closest(".card").scrollIntoView({behavior:"smooth",block:"center"}); },30); } }; });
+
+/* ---- App version (PWA): offline chale, home screen par icon ---- */
+if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("/jyotish/sw.js",{scope:"/jyotish/"}).catch(function(){}); }); }
+var installEvt=null, standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true,
+    isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+function installShow(){ var can=!standalone&&(installEvt||isIOS); $("install-top").hidden=!can; $("install-menu").hidden=standalone; }
+window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); installEvt=e; installShow(); });
+window.addEventListener("appinstalled",function(){ installEvt=null; standalone=true; installShow(); toast(T3("App install ho gaya 🙏","ऐप इंस्टॉल हो गया 🙏","App installed 🙏")); });
+function installGo(){ menuClose(true); if(installEvt){ installEvt.prompt(); installEvt.userChoice.finally(function(){ installEvt=null; installShow(); }); } else jaapSheet("ios-sheet",true); }
+$("install-top").onclick=installGo; $("install-menu").onclick=installGo;
+installShow();
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};
-writeForm(profile); renderKundli(); renderPriv(); renderNotice(); $("jaap-today").textContent=String(jaapDailyCount());jaapRenderStats();jaapUpdateGuide();jaapApplyPhoto();jaapHomeInit();jaapUpdateMini(); trackOnce("visit"); show("aaj"); aiModeText(); if(!AI_ON) $("ai-status").textContent=jl("aiSoon");
+writeForm(profile); renderKundli(); renderPriv(); renderNotice(); $("jaap-today").textContent=String(jaapDailyCount());jaapRenderStats();jaapUpdateGuide();jaapApplyPhoto();jaapHomeInit();jaapUpdateMini(); trackOnce("visit"); (function(){ var g=""; try{ g=new URLSearchParams(location.search).get("go")||""; }catch(e){} show(["ai","rashi","kundli","milan","card"].indexOf(g)>=0?g:"aaj"); if(g==="jaap") setTimeout(function(){ $("home-mala").scrollIntoView({block:"center"}); },50); })(); aiModeText(); if(!AI_ON) $("ai-status").textContent=jl("aiSoon");
 })();
