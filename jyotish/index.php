@@ -24,7 +24,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=4">
+<link rel="stylesheet" href="jyotish.css?v=5">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <div class="wrap">
@@ -32,19 +32,19 @@ header('Content-Type: text/html; charset=utf-8');
     <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
     <label class="langpick"><span id="language-label" class="sr-only">Language</span>
       <select id="lang" aria-label="Language"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
-    <div class="panch" id="panch">Loading today's panchang…</div>
+    <div class="panch" id="panch" data-i18n="panchLoading">Loading today's panchang…</div>
   </header>
 
   <div class="card notice" id="notice" hidden>
-    <p style="margin:0">Maakit Jyotish saves anonymous usage to learn what people need: which features are used, birth place, rashi, birth year, and the questions you ask the AI. <b>Never your name, exact birth date or time, or your check-in mood.</b> Please don't write names or phone numbers in questions.</p>
-    <div class="row"><button class="btn" type="button" id="share-yes">OK</button><button class="btn ghost" type="button" id="share-no">Don't send</button></div>
+    <p style="margin:0"><span data-i18n="noticeBody">Maakit Jyotish saves anonymous usage to learn what people need: which features are used, birth place, rashi, birth year, and the questions you ask the AI.</span> <b data-i18n="noticeStrong">Never your name, exact birth date or time, or your check-in mood.</b> <span data-i18n="noticeTail">Please don't write names or phone numbers in questions.</span></p>
+    <div class="row"><button class="btn" type="button" id="share-yes" data-i18n="ok">OK</button><button class="btn ghost" type="button" id="share-no" data-i18n="dontSend">Don't send</button></div>
   </div>
 
   <!-- AAJ: check-in + daily card -->
   <section class="tab" id="t-aaj">
     <div class="card invite" id="jc-invite" hidden role="region" aria-label="Jaap Challenge">
       <p id="jc-invite-text"></p>
-      <div class="row"><button class="btn" id="jc-accept" type="button">Challenge shuru karein</button><button class="btn ghost" id="jc-decline" type="button">Abhi nahi</button></div>
+      <div class="row"><button class="btn" id="jc-accept" type="button" data-i18n="jcAccept">Challenge shuru karein</button><button class="btn ghost" id="jc-decline" type="button" data-i18n="notNow">Abhi nahi</button></div>
     </div>
 
     <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
@@ -98,35 +98,35 @@ header('Content-Type: text/html; charset=utf-8');
     </section>
 
     <section class="jaap-card" id="jaap-card" aria-labelledby="jaap-title" hidden>
-      <div class="jaap-card-copy"><h2 id="jaap-title">Jaap settings</h2><p id="jaap-home-description">Mantra, tareeka, lakshya aur photo yahan badlein. Aapki ginti sirf is phone par save rehti hai.</p><div class="jaap-today-total"><span id="jaap-home-today-label">Aaj ka kul jaap</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label">baar baithe</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p></div></div>
+      <div class="jaap-card-copy"><h2 id="jaap-title" data-i18n="jsTitle">Jaap settings</h2><p id="jaap-home-description" data-i18n="jsDesc">Mantra, jaap ka tareeka, lakshya aur photo yahan badlein.</p><div class="jaap-today-total"><span id="jaap-home-today-label" data-i18n="todayTotal">Aaj ka kul jaap</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label" data-i18n="last7">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label" data-i18n="sittings">baar jaap kiya</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p></div></div>
       <div class="jaap-setup">
-        <label>Mantra
-          <select id="jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option><option value="__custom__">Apna mantra</option></select></label><label id="jaap-custom-mantra-wrap" hidden>Apna mantra likhein<input id="jaap-custom-mantra" type="text" maxlength="60" placeholder="Jaise: ॐ गं गणपतये नमः" autocomplete="off"></label><div class="jaap-guide" id="jaap-guide"><b id="jaap-guide-title">Mantra ka arth</b><p id="jaap-guide-copy">Mantra chunne par uska arth yahan dikhega.</p><button class="btn ghost" id="jaap-ask-ai" type="button">Is mantra ka arth AI se poochhein</button></div>
-        <label>Jaap ka tareeka
-          <select id="jaap-mode"><option value="mala">Mala jaap · apne lakshya tak</option><option value="solo">Speed round · 30 second</option><option value="duo">Do logon ka mukabla</option></select>
+        <label><span data-i18n="lMantra">Mantra</span>
+          <select id="jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option><option value="__custom__" data-i18n="optOwn">Apna mantra</option></select></label><label id="jaap-custom-mantra-wrap" hidden><span data-i18n="lOwn">Apna mantra likhein</span><input id="jaap-custom-mantra" type="text" maxlength="60" data-i18n-ph="phOwn" placeholder="Jaise: ॐ गं गणपतये नमः" autocomplete="off"></label><div class="jaap-guide" id="jaap-guide"><b id="jaap-guide-title">Mantra ka arth</b><p id="jaap-guide-copy">Mantra chunne par uska arth yahan dikhega.</p><button class="btn ghost" id="jaap-ask-ai" type="button" data-i18n="askMantra">Is mantra ka arth AI se poochhein</button></div>
+        <label><span data-i18n="lMode">Jaap ka tareeka</span>
+          <select id="jaap-mode"><option value="mala" data-i18n="modeMala">Mala jaap · apne lakshya tak</option><option value="solo" data-i18n="modeSolo">Speed round · 30 second</option><option value="duo" data-i18n="modeDuo">Do logon ka mukabla</option></select>
         </label>
-        <label>Jaap ka bhaav
-          <select id="jaap-bhav"><option value="sahaj">Koi vishesh bhaav nahi</option><option value="shanti">Shaanti</option><option value="aabhar">Aabhaar</option><option value="sahas">Sahas</option><option value="ekagrata">Ekagrata</option></select>
+        <label><span data-i18n="lBhav">Jaap ka bhaav</span>
+          <select id="jaap-bhav"><option value="sahaj" data-i18n="bhavSahaj">Koi vishesh bhaav nahi</option><option value="shanti" data-i18n="bhavShanti">Shaanti</option><option value="aabhar" data-i18n="bhavAabhar">Aabhaar</option><option value="sahas" data-i18n="bhavSahas">Saahas</option><option value="ekagrata" data-i18n="bhavEk">Ekagrata</option></select>
         </label>
-        <label id="jaap-goal-wrap">Lakshya
-          <select id="jaap-goal"><option value="27">27 jaap</option><option value="54">54 jaap</option><option value="108" selected>108 jaap · 1 mala</option><option value="1008">1008 jaap</option><option value="custom">Apna target</option></select></label><label id="jaap-custom-goal-wrap" hidden>Kitne jaap<input id="jaap-custom-goal" type="number" min="1" max="1008" step="1" value="108" inputmode="numeric"></label>
+        <label id="jaap-goal-wrap"><span data-i18n="lGoal">Lakshya</span>
+          <select id="jaap-goal"><option value="27" data-i18n="g27">27 jaap</option><option value="54" data-i18n="g54">54 jaap</option><option value="108" selected data-i18n="g108">108 jaap · 1 mala</option><option value="1008" data-i18n="g1008">1008 jaap</option><option value="custom" data-i18n="gCustom">Apna target</option></select></label><label id="jaap-custom-goal-wrap" hidden><span data-i18n="lCustomGoal">Kitne jaap</span><input id="jaap-custom-goal" type="number" min="1" max="1008" step="1" value="108" inputmode="numeric"></label>
         <div class="jaap-names" id="jaap-names" hidden>
-          <label>Player 1<input id="jaap-player1" maxlength="18" placeholder="Pehla naam"></label>
-          <label>Player 2<input id="jaap-player2" maxlength="18" placeholder="Doosra naam"></label>
+          <label><span data-i18n="p1">Player 1</span><input id="jaap-player1" maxlength="18" data-i18n-ph="ph1" placeholder="Pehla naam"></label>
+          <label><span data-i18n="p2">Player 2</span><input id="jaap-player2" maxlength="18" data-i18n-ph="ph2" placeholder="Doosra naam"></label>
         </div>
-        <div class="jaap-photo-control"><div class="jaap-photo-actions"><button class="btn ghost" id="jaap-photo-choose" type="button">Is mantra ke liye photo lagayein</button><button class="linkbtn" id="jaap-photo-clear" type="button" hidden>Photo hatayein</button></div><input id="jaap-photo-file" type="file" accept="image/*" hidden><p class="note" id="jaap-photo-note"></p></div>
+        <div class="jaap-photo-control"><div class="jaap-photo-actions"><button class="btn ghost" id="jaap-photo-choose" type="button" data-i18n="photoChoose">Is mantra ke liye photo lagayein</button><button class="linkbtn" id="jaap-photo-clear" type="button" hidden data-i18n="photoClear">Photo hatayein</button></div><input id="jaap-photo-file" type="file" accept="image/*" hidden><p class="note" id="jaap-photo-note"></p></div>
         <div class="jaap-audio-options">
-          <label><input type="checkbox" id="jaap-bell" checked> Har jaap par ghanti ki awaaz</label>
-          <label><input type="checkbox" id="jaap-voice"> Mantra bolkar sunayein</label>
-          <label><input type="checkbox" id="jaap-vibrate" checked> Vibration (har jaap par halka, mala poori hone par lamba)</label>
+          <label><input type="checkbox" id="jaap-bell" checked> <span data-i18n="bellOpt">Har jaap par ghanti ki awaaz</span></label>
+          <label><input type="checkbox" id="jaap-voice"> <span data-i18n="voiceOpt">Mantra bolkar sunayein</span></label>
+          <label><input type="checkbox" id="jaap-vibrate" checked> <span data-i18n="vibeOpt">Vibration (har jaap par halka, mala poori hone par lamba)</span></label>
         </div>
-        <p class="note jaap-local-note">Ginti, mantra aur photo sirf is phone par save hote hain.</p>
+        <p class="note jaap-local-note" data-i18n="localNote">Ginti, mantra aur photo sirf is phone par save hote hain.</p>
         <button class="btn" id="jaap-start" type="button">Jaap shuru karein</button>
       </div>
     </section>
 
     <section class="jaap-arena" id="jaap-arena" hidden aria-label="Naam Jaap game">
-      <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" aria-label="Jaap band karein">✕</button><div><div class="eyebrow" id="jaap-round-label">Mala jaap</div><strong id="jaap-current-player">Aapka jaap</strong></div><button class="jaap-pause" id="jaap-pause" type="button" aria-pressed="false">⏸ Rokein</button><div class="jaap-clock" id="jaap-clock" aria-live="off" hidden>30</div></header>
+      <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" data-i18n-aria="closeJaap" aria-label="Jaap band karein">✕</button><div><div class="eyebrow" id="jaap-round-label">Mala jaap</div><strong id="jaap-current-player">Aapka jaap</strong></div><button class="jaap-pause" id="jaap-pause" type="button" aria-pressed="false">⏸ Rokein</button><div class="jaap-clock" id="jaap-clock" aria-live="off" hidden>30</div></header>
       <div class="jaap-arena-main">
         <div class="mala mala-lg">
           <svg class="mala-ring" id="jaap-beads" viewBox="0 0 300 300" aria-hidden="true"></svg>
@@ -134,12 +134,12 @@ header('Content-Type: text/html; charset=utf-8');
           <button class="jaap-tap mala-disk" id="jaap-tap" type="button" aria-label="Ek jaap ginein"><span class="mala-photo" aria-hidden="true"></span><span class="mala-art" aria-hidden="true"></span><b class="mala-name" id="jaap-tap-name">राधा</b><small>Tap karein · Pushp chadhayein</small></button>
           <div class="petals" id="arena-petals" aria-hidden="true"></div>
         </div>
-        <div class="jaap-score-panel"><span id="jaap-count-label">Ginti</span><strong id="jaap-count" aria-live="off">0</strong><small id="jaap-best-line" hidden>Personal best: <b id="jaap-best">0</b></small></div>
-        <button class="jaap-undo" id="jaap-undo" type="button" aria-label="Aakhri ginti wapas karein" hidden>↶ Pichhli ginti hatayein</button>
+        <div class="jaap-score-panel"><span id="jaap-count-label" data-i18n="count">Ginti</span><strong id="jaap-count" aria-live="off">0</strong><small id="jaap-best-line" hidden><span data-i18n="best">Personal best:</span> <b id="jaap-best">0</b></small></div>
+        <button class="jaap-undo" id="jaap-undo" type="button" aria-label="Aakhri ginti wapas karein" hidden data-i18n="undo">↶ Pichhli ginti hatayein</button>
         <p class="jaap-progress-note" id="jaap-progress-note">Beech ke gol par tap karein. Har tap ek jaap hai.</p>
       </div>
-      <div class="jaap-between" id="jaap-between" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow">Round poora</div><h2 id="jaap-result-title"></h2><p id="jaap-result-copy"></p><button class="btn" id="jaap-next" type="button">Agle ki baari</button></div></div>
-      <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">Lakshya poora</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener">WhatsApp par share</a><button class="btn ghost" id="jaap-done" type="button">Ho gaya</button></div></div></div>
+      <div class="jaap-between" id="jaap-between" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" data-i18n="roundDone">Round poora</div><h2 id="jaap-result-title"></h2><p id="jaap-result-copy"></p><button class="btn" id="jaap-next" type="button" data-i18n="nextPlayer">Agle ki baari</button></div></div>
+      <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">Lakshya poora</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener" data-i18n="shareWA">WhatsApp par share karein</a><button class="btn ghost" id="jaap-done" type="button" data-i18n="done">Ho gaya</button></div></div></div>
     </section>
 
     <div class="card" id="checkin" hidden>
@@ -162,8 +162,8 @@ header('Content-Type: text/html; charset=utf-8');
     <div class="card helpcard">
       <h2 id="help-title"></h2>
       <p id="help-body" style="margin:0"></p>
-      <div class="helpcall"><div><div class="eyebrow">Tele-MANAS</div><div class="big">14416</div><div class="note" id="help-tm"></div></div><a class="btn" href="tel:14416">Call 14416</a></div>
-      <div class="helpcall"><div><div class="eyebrow" id="help-em"></div><div class="big">112</div></div><a class="btn ghost" href="tel:112">Call 112</a></div>
+      <div class="helpcall"><div><div class="eyebrow">Tele-MANAS</div><div class="big">14416</div><div class="note" id="help-tm"></div></div><a class="btn" href="tel:14416" data-i18n="callNow">Call 14416</a></div>
+      <div class="helpcall"><div><div class="eyebrow" id="help-em"></div><div class="big">112</div></div><a class="btn ghost" href="tel:112" data-i18n="callNow">Call 112</a></div>
       <p class="note" id="help-friend" style="margin:0"></p>
       <button class="btn ghost" type="button" id="help-ok"></button>
     </div>
@@ -172,53 +172,53 @@ header('Content-Type: text/html; charset=utf-8');
   <!-- KUNDLI -->
   <section class="tab" id="t-kundli" hidden>
     <form class="card" id="f-k" autocomplete="off">
-      <div class="row" style="justify-content:space-between"><h2>Janam Kundli</h2><span class="badge" id="ex-badge">Example chart</span></div>
-      <p class="note" id="k-question-hint" hidden>Aapka sawaal surakshit hai. Apni janam jaankari bhariye; kundli banne ke baad sawaal chat mein draft rahega.</p>
+      <div class="row" style="justify-content:space-between"><h2 data-i18n="kTitle">Janam Kundli</h2><span class="badge" id="ex-badge" data-i18n="sample">Example chart</span></div>
+      <p class="note" id="k-question-hint" hidden data-i18n="kHint">Aapka sawaal surakshit hai. Apni janam jaankari bhariye; kundli banne ke baad sawaal chat mein draft rahega.</p>
       <div class="grid2">
-        <label>Name<input id="k-name" required value="Example Person"></label>
-        <label>Gender<select id="k-gender"><option>Male</option><option>Female</option><option>Other</option></select></label>
-        <label>Date of birth<input id="k-date" type="date" required value="2001-01-15"></label>
-        <label>Time of birth<input id="k-time" type="time" required value="08:30"></label>
-        <label>Place of birth<select id="k-city"></select></label>
-        <label>Time zone<select id="k-tz"><option value="5.5">IST (India, +5:30)</option><option value="5.75">Nepal (+5:45)</option><option value="6">Bangladesh (+6:00)</option><option value="4">UAE (+4:00)</option><option value="0">UK (GMT)</option><option value="-5">US Eastern (-5:00)</option></select></label>
+        <label><span data-i18n="name">Name</span><input id="k-name" required value="Example Person"></label>
+        <label><span data-i18n="gender">Gender</span><select id="k-gender"><option value="Male" data-i18n="male">Male</option><option value="Female" data-i18n="female">Female</option><option value="Other" data-i18n="other">Other</option></select></label>
+        <label><span data-i18n="dob">Date of birth</span><input id="k-date" type="date" required value="2001-01-15"></label>
+        <label><span data-i18n="tob">Time of birth</span><input id="k-time" type="time" required value="08:30"></label>
+        <label><span data-i18n="pob">Place of birth</span><select id="k-city"></select></label>
+        <label><span data-i18n="tz">Time zone</span><select id="k-tz"><option value="5.5" data-i18n="tzIST">IST (India, +5:30)</option><option value="5.75">Nepal (+5:45)</option><option value="6">Bangladesh (+6:00)</option><option value="4">UAE (+4:00)</option><option value="0">UK (GMT)</option><option value="-5">US Eastern (-5:00)</option></select></label>
       </div>
       <div class="grid2" id="k-custom" hidden>
-        <label>Latitude<input id="k-lat" type="number" step="0.0001" value="25.3953"></label>
-        <label>Longitude<input id="k-lon" type="number" step="0.0001" value="82.5683"></label>
+        <label><span data-i18n="lat">Latitude</span><input id="k-lat" type="number" step="0.0001" value="25.3953"></label>
+        <label><span data-i18n="lon">Longitude</span><input id="k-lon" type="number" step="0.0001" value="82.5683"></label>
       </div>
-      <div class="row"><button class="btn" type="submit">Make my Kundli</button><span class="note">Your name and exact birth details stay on this phone.</span></div>
+      <div class="row"><button class="btn" type="submit" data-i18n="makeK">Make my Kundli</button><span class="note" data-i18n="kPrivate">Your name and exact birth details stay on this phone.</span></div>
     </form>
     <div id="k-out" class="fade" style="display:flex;flex-direction:column;gap:18px"></div>
     <div class="card">
-      <h3>Your data</h3>
+      <h3 data-i18n="yourData">Your data</h3>
       <p class="note" style="margin:0" id="priv-state"></p>
-      <div class="row"><button class="btn ghost" type="button" id="priv-toggle"></button><button class="btn ghost" type="button" id="priv-del">Delete my data</button></div>
-      <p class="note" id="priv-done" style="margin:0" hidden>Deleted. Everything saved on this phone and the usage log from this phone are gone.</p>
+      <div class="row"><button class="btn ghost" type="button" id="priv-toggle"></button><button class="btn ghost" type="button" id="priv-del" data-i18n="delData">Delete my data</button></div>
+      <p class="note" id="priv-done" style="margin:0" hidden data-i18n="delDone">Deleted. Everything saved on this phone and the usage log from this phone are gone.</p>
     </div>
   </section>
 
   <!-- MILAN -->
   <section class="tab" id="t-milan" hidden>
     <form class="card" id="f-m" autocomplete="off">
-      <h2>Kundli Milan · 36 Gun</h2>
-      <p class="note" style="margin:0">Enter both birth details. The example pair is pre-filled.</p>
+      <h2 data-i18n="mTitle">Kundli Milan · 36 Gun</h2>
+      <p class="note" style="margin:0" data-i18n="mIntro">Enter both birth details. The example pair is pre-filled.</p>
       <div class="grid2">
         <div class="card" style="background:var(--sunk);border:0">
-          <div class="eyebrow">Boy</div>
-          <label>Name<input id="b-name" value="Rahul (example)"></label>
-          <label>Date<input id="b-date" type="date" value="1998-06-12"></label>
-          <label>Time<input id="b-time" type="time" value="06:45"></label>
-          <label>Place<select id="b-city"></select></label>
+          <div class="eyebrow" data-i18n="boy">Boy</div>
+          <label><span data-i18n="name">Name</span><input id="b-name" value="Rahul (example)"></label>
+          <label><span data-i18n="date">Date</span><input id="b-date" type="date" value="1998-06-12"></label>
+          <label><span data-i18n="time">Time</span><input id="b-time" type="time" value="06:45"></label>
+          <label><span data-i18n="place">Place</span><select id="b-city"></select></label>
         </div>
         <div class="card" style="background:var(--sunk);border:0">
-          <div class="eyebrow">Girl</div>
-          <label>Name<input id="g-name" value="Priya (example)"></label>
-          <label>Date<input id="g-date" type="date" value="2000-02-03"></label>
-          <label>Time<input id="g-time" type="time" value="14:20"></label>
-          <label>Place<select id="g-city"></select></label>
+          <div class="eyebrow" data-i18n="girl">Girl</div>
+          <label><span data-i18n="name">Name</span><input id="g-name" value="Priya (example)"></label>
+          <label><span data-i18n="date">Date</span><input id="g-date" type="date" value="2000-02-03"></label>
+          <label><span data-i18n="time">Time</span><input id="g-time" type="time" value="14:20"></label>
+          <label><span data-i18n="place">Place</span><select id="g-city"></select></label>
         </div>
       </div>
-      <div class="row"><button class="btn" type="submit">Check Gun Milan</button></div>
+      <div class="row"><button class="btn" type="submit" data-i18n="checkMilan">Check Gun Milan</button></div>
     </form>
     <div id="m-out" class="fade" style="display:flex;flex-direction:column;gap:18px"></div>
   </section>
@@ -231,92 +231,92 @@ header('Content-Type: text/html; charset=utf-8');
   <!-- AI -->
   <section class="tab" id="t-ai" hidden>
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h2>Ask AI Jyotishi</h2>
-        <span class="note">Replies in the language chosen at the top</span></div>
+      <div class="row" style="justify-content:space-between"><h2 data-i18n="aiTitle">Ask AI Jyotishi</h2>
+        <span class="note" data-i18n="aiLangNote">Replies in the language chosen at the top</span></div>
       <p class="note" style="margin:0" id="ai-who"></p>
       <div class="mode-switch" role="group" aria-label="Choose a reading style">
-        <button class="chip" type="button" id="mode-jyotish" aria-pressed="true">Jyotish reading</button>
-        <button class="chip" type="button" id="mode-council" aria-pressed="false">Navagrah Council · Rishton ki clarity</button>
+        <button class="chip" type="button" id="mode-jyotish" aria-pressed="true" data-i18n="modeJy">Jyotish reading</button>
+        <button class="chip" type="button" id="mode-council" aria-pressed="false" data-i18n="modeCouncil">Navagrah Council · Rishton ki clarity</button>
       </div>
       <p class="note" id="mode-note" style="margin:0"></p>
       <div id="council-context" hidden>
         <div class="grid2">
-          <label>Current situation
+          <label><span data-i18n="lArea">Current situation</span>
             <select id="council-area">
-              <option value="">Choose what fits (optional)</option>
-              <option value="work or job">Work or job</option>
-              <option value="studies">Studies</option>
-              <option value="business">Business</option>
-              <option value="relationship">Relationship</option>
-              <option value="family">Family</option>
-              <option value="money">Money</option>
-              <option value="health">Health</option>
-              <option value="another situation">Another situation</option>
+              <option value="" data-i18n="area0">Choose what fits (optional)</option>
+              <option value="work or job" data-i18n="aWork">Work or job</option>
+              <option value="studies" data-i18n="aStudy">Studies</option>
+              <option value="business" data-i18n="aBiz">Business</option>
+              <option value="relationship" data-i18n="aRel">Relationship</option>
+              <option value="family" data-i18n="aFam">Family</option>
+              <option value="money" data-i18n="aMoney">Money</option>
+              <option value="health" data-i18n="aHealth">Health</option>
+              <option value="another situation" data-i18n="aOther">Another situation</option>
             </select>
           </label>
-          <label>What would help most?
+          <label><span data-i18n="lHelp">What would help most?</span>
             <select id="council-goal">
-              <option value="">Choose a kind of help (optional)</option>
-              <option value="understanding the situation">Understand the situation</option>
-              <option value="one practical next step">One practical next step</option>
-              <option value="a safe boundary">A safe boundary</option>
-              <option value="calming down before deciding">Calm down before deciding</option>
+              <option value="" data-i18n="help0">Choose a kind of help (optional)</option>
+              <option value="understanding the situation" data-i18n="hUnderstand">Understand the situation</option>
+              <option value="one practical next step" data-i18n="hStep">One practical next step</option>
+              <option value="a safe boundary" data-i18n="hBoundary">A safe boundary</option>
+              <option value="calming down before deciding" data-i18n="hCalm">Calm down before deciding</option>
             </select>
           </label>
         </div>
-        <p class="note" style="margin:6px 0 0">Your message is the third part: describe what actually happened, in your own words.</p>
+        <p class="note" style="margin:6px 0 0" data-i18n="councilThird">Your message is the third part: describe what actually happened, in your own words.</p>
       </div>
       <div class="chips" id="sugg"></div>
       <div class="council-privacy" id="council-privacy" hidden>
-        <p class="note" style="margin:0">Council mode sends your message, any context choices and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
-        <label class="consent"><input type="checkbox" id="council-consent"> <span>I understand and want to send this question for an AI answer.</span></label>
+        <p class="note" style="margin:0" data-i18n="councilPriv">Council mode sends your message, any context choices and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
+        <label class="consent"><input type="checkbox" id="council-consent"> <span data-i18n="consent">I understand and want to send this question for an AI answer.</span></label>
       </div>
     </div>
     <div class="chat-welcome" id="ai-chat-welcome">
       <div class="assistant-mark" aria-hidden="true">✦</div>
-      <div><h3>Namaste! Apna sawaal likhiye.</h3>
-        <p>Jawaab aapki kundli aur Parashari jyotish par aadharit hoga, saath mein ek vyavaharik agla kadam bhi. Personal jawaab ke liye pehle apni kundli banaiye.</p></div>
+      <div><h3 data-i18n="cwTitle">Namaste! Apna sawaal likhiye.</h3>
+        <p data-i18n="cwBody">Jawaab aapki kundli aur Parashari jyotish par aadharit hoga, saath mein ek vyavaharik agla kadam bhi. Personal jawaab ke liye pehle apni kundli banaiye.</p></div>
     </div>
     <div class="chat" id="chat"></div>
     <div class="note" id="ai-status"></div>
     <div class="row council-followups" id="council-followups" hidden aria-label="Ask a follow-up question">
-      <button class="btn ghost" type="button" data-council-followup="rahu">Rahu · Red flags?</button>
-      <button class="btn ghost" type="button" data-council-followup="chandra">Chandrama · Emotions?</button>
-      <button class="btn ghost" type="button" data-council-followup="shani">Shani · Next boundary?</button>
+      <button class="btn ghost" type="button" data-council-followup="rahu" data-i18n="fuRahu">Rahu · Red flags?</button>
+      <button class="btn ghost" type="button" data-council-followup="chandra" data-i18n="fuChandra">Chandrama · Emotions?</button>
+      <button class="btn ghost" type="button" data-council-followup="shani" data-i18n="fuShani">Shani · Next boundary?</button>
     </div>
-    <form class="composer" id="f-ai"><textarea id="q" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit">Ask</button></form>
-    <p class="note">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
+    <form class="composer" id="f-ai"><textarea id="q" data-i18n-ph="phQ" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit" data-i18n="askBtn">Ask</button></form>
+    <p class="note" data-i18n="aiDisc">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
     
   </section>
 
-  <div class="foot">Powered by <b>Maakit</b>, Bhadohi<br>Vedic sidereal (Lahiri), whole-sign houses</div>
+  <div class="foot">Powered by <b>Maakit</b>, Bhadohi<br><span data-i18n="foot">Vedic sidereal (Lahiri), whole-sign houses</span></div>
 </div>
 <div class="mini-jaap" id="mini-jaap">
       <button class="mini-jaap-toggle" id="mini-jaap-toggle" type="button" aria-expanded="false" aria-controls="mini-jaap-panel">ॐ <span>Jaap kholein</span></button>
       <div class="mini-jaap-panel" id="mini-jaap-panel" hidden>
-        <div class="mini-jaap-head"><div><b>Jaap</b><small>Chalte-chalte jaap karein</small></div><button id="mini-jaap-close" type="button" aria-label="Band karein">×</button></div>
-        <label for="mini-jaap-mantra">Mantra</label><select id="mini-jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
-        <button class="mini-jaap-tap" id="mini-jaap-tap" type="button" aria-label="Naam jaap ek baar ginen"><span id="mini-jaap-count">0</span><small id="mini-jaap-name">राम</small><b>Tap karein</b></button>
-        <p class="note">Aaj ka kul jaap: <strong id="mini-jaap-today">0</strong></p><button class="btn ghost" id="mini-jaap-photo" type="button">Bhagwan ki photo lagayein</button><button class="btn ghost mini-jaap-full" id="mini-jaap-full" type="button">Jaap settings kholein</button>
+        <div class="mini-jaap-head"><div><b data-i18n="miniTitle">Jaap</b><small data-i18n="miniSub">Chalte-chalte jaap karein</small></div><button id="mini-jaap-close" type="button" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
+        <label for="mini-jaap-mantra" data-i18n="lMantra">Mantra</label><select id="mini-jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
+        <button class="mini-jaap-tap" id="mini-jaap-tap" type="button" aria-label="Naam jaap ek baar ginen"><span id="mini-jaap-count">0</span><small id="mini-jaap-name">राम</small><b data-i18n="miniTap">Tap karein</b></button>
+        <p class="note"><span data-i18n="miniToday">Aaj ka kul jaap:</span> <strong id="mini-jaap-today">0</strong></p><button class="btn ghost" id="mini-jaap-photo" type="button">Bhagwan ki photo lagayein</button><button class="btn ghost mini-jaap-full" id="mini-jaap-full" type="button">Jaap settings kholein</button>
       </div>
     </div>
 
 <div class="sheet" id="jm-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="jm-title">
   <div class="sheet-body">
-    <div class="sheet-head"><h2 id="jm-title">Apna mantra jodein</h2><button class="iconbtn" type="button" data-close-sheet="jm-sheet" aria-label="Band karein">×</button></div>
-    <label>Mantra ya naam<input id="jm-input" maxlength="40" placeholder="Jaise: ॐ गं गणपतये नमः" autocomplete="off"></label>
-    <p class="note err" id="jm-error" hidden>Mantra likhiye (40 akshar tak).</p>
-    <button class="btn" id="jm-save" type="button">Mantra jodein</button>
-    <div id="jm-own-wrap" hidden><h3 class="sheet-sub">Aapke jode hue mantra</h3><div id="jm-own"></div></div>
+    <div class="sheet-head"><h2 id="jm-title" data-i18n="jmTitle">Apna mantra jodein</h2><button class="iconbtn" type="button" data-close-sheet="jm-sheet" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
+    <label><span data-i18n="jmLabel">Mantra ya naam</span><input id="jm-input" maxlength="40" data-i18n-ph="phOwn" placeholder="Jaise: ॐ गं गणपतये नमः" autocomplete="off"></label>
+    <p class="note err" id="jm-error" hidden data-i18n="jmErr">Mantra likhiye (40 akshar tak).</p>
+    <button class="btn" id="jm-save" type="button" data-i18n="jmSave">Mantra jodein</button>
+    <div id="jm-own-wrap" hidden><h3 class="sheet-sub" data-i18n="jmOwn">Aapke jode hue mantra</h3><div id="jm-own"></div></div>
   </div>
 </div>
 <div class="sheet" id="jc-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="jc-title">
   <div class="sheet-body">
-    <div class="sheet-head"><h2 id="jc-title">Jaap Challenge</h2><button class="iconbtn" type="button" data-close-sheet="jc-sheet" aria-label="Band karein">×</button></div>
-    <p class="note">Doston ke saath aaj ka sankalp lein. Mantra: <b id="jc-mantra"></b></p>
-    <button class="jc-opt" type="button" data-jc="108"><b>1 Mala</b><span>108 jaap · roz ke liye</span></button>
-    <button class="jc-opt" type="button" data-jc="1188"><b>11 Mala</b><span>1188 jaap · vishesh sankalp</span></button>
-    <p class="note">Link WhatsApp par jaayega. Dost link kholenge to wahi mantra aur lakshya ke saath unka jaap shuru hoga.</p>
+    <div class="sheet-head"><h2 id="jc-title">Jaap Challenge</h2><button class="iconbtn" type="button" data-close-sheet="jc-sheet" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
+    <p class="note"><span data-i18n="jcIntro">Doston ke saath aaj ka sankalp lein. Mantra:</span> <b id="jc-mantra"></b></p>
+    <button class="jc-opt" type="button" data-jc="108"><b data-i18n="jc1">1 Mala</b><span data-i18n="jc1s">108 jaap · roz ke liye</span></button>
+    <button class="jc-opt" type="button" data-jc="1188"><b data-i18n="jc11">11 Mala</b><span data-i18n="jc11s">1188 jaap · vishesh sankalp</span></button>
+    <p class="note" data-i18n="jcNote">Link WhatsApp par jaayega. Dost link kholenge to wahi mantra aur lakshya ke saath unka jaap shuru hoga.</p>
   </div>
 </div>
 <div class="petal-rain" id="petal-rain" aria-hidden="true"></div>
@@ -331,7 +331,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
+<script src="i18n.js?v=1"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

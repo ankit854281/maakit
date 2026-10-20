@@ -2,7 +2,7 @@
 var CITIES=[["Bhadohi",25.3953,82.5683],["Gyanpur",25.3333,82.4667],["Varanasi",25.3176,82.9739],["Prayagraj",25.4358,81.8463],["Mirzapur",25.146,82.569],["Jaunpur",25.7464,82.6837],["Azamgarh",26.0739,83.1859],["Gorakhpur",26.7606,83.3732],["Ayodhya",26.7922,82.1998],["Lucknow",26.8467,80.9462],["Kanpur",26.4499,80.3319],["Agra",27.1767,78.0081],["Mathura",27.4924,77.6737],["Patna",25.5941,85.1376],["Ranchi",23.3441,85.3096],["Delhi",28.6139,77.209],["Dehradun",30.3165,78.0322],["Jaipur",26.9124,75.7873],["Bhopal",23.2599,77.4126],["Indore",22.7196,75.8577],["Ahmedabad",23.0225,72.5714],["Surat",21.1702,72.8311],["Mumbai",19.076,72.8777],["Pune",18.5204,73.8567],["Hyderabad",17.385,78.4867],["Bengaluru",12.9716,77.5946],["Chennai",13.0827,80.2707],["Kolkata",22.5726,88.3639]];
 var $=function(id){return document.getElementById(id)};
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})}
-function fillCities(sel, other){ sel.innerHTML=CITIES.map(function(c,i){return '<option value="'+i+'">'+c[0]+'</option>'}).join("")+(other?'<option value="x">Other (enter latitude/longitude)</option>':''); }
+function fillCities(sel, other){ sel.innerHTML=CITIES.map(function(c,i){return '<option value="'+i+'">'+c[0]+'</option>'}).join("")+(other?'<option value="x" data-i18n="otherPlace">'+jl("otherPlace")+'</option>':''); }
 fillCities($("k-city"),true); fillCities($("b-city")); fillCities($("g-city"));
 $("b-city").value="2"; $("g-city").value="3";
 $("k-city").onchange=function(){ $("k-custom").hidden = this.value!=="x"; };
@@ -20,7 +20,8 @@ tabs.forEach(function(b){ b.onclick=function(){ show(b.dataset.t) } });
 
 /* ---- panchang strip ---- */
 var TD=Jy.today(new Date());
-$("panch").innerHTML='Today: <strong>'+TD.tithi+'</strong> · Moon in <strong>'+S[TD.moonSign]+'</strong>, '+TD.nak.name+' nakshatra';
+function renderPanch(){ $("panch").innerHTML=esc(jl("panchToday"))+': <strong>'+TD.tithi+'</strong> · '+esc(jl("panchMoon"))+' <strong>'+S[TD.moonSign]+'</strong>, '+TD.nak.name+' '+esc(jl("panchNak")); }
+renderPanch();
 
 /* ---- profile ---- */
 var profile=null, K=null, pendingWelcomeQuestion="";
@@ -57,36 +58,36 @@ function renderKundli(){
   var h='';
   h+='<div class="card"><div class="eyebrow">'+esc(profile.name)+' · '+esc(profile.date)+' · '+esc(profile.time)+' · '+esc(profile.place)+'</div>';
   h+='<div class="facts">'+
-    '<div class="fact"><div class="k">Lagna</div><div class="v">'+S[K.lagnaSign]+'</div><div class="s">'+fmtDeg(K.asc%30)+' · lord '+PN[Jy.LORD[K.lagnaSign]]+'</div></div>'+
-    '<div class="fact"><div class="k">Rashi (Moon)</div><div class="v">'+S[K.moonSign]+'</div><div class="s">lord '+PN[Jy.LORD[K.moonSign]]+'</div></div>'+
-    '<div class="fact"><div class="k">Nakshatra</div><div class="v">'+K.nak.name+'</div><div class="s">Pada '+K.nak.pada+'</div></div>'+
-    '<div class="fact"><div class="k">Current dasha</div><div class="v">'+(md?PN[md.lord]+' – '+PN[ad.lord]:'—')+'</div><div class="s">'+(ad?'till '+fmtD(ad.end):'')+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("lagna")+'</div><div class="v">'+S[K.lagnaSign]+'</div><div class="s">'+fmtDeg(K.asc%30)+' · '+jl("lord")+' '+PN[Jy.LORD[K.lagnaSign]]+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("moonRashi")+'</div><div class="v">'+S[K.moonSign]+'</div><div class="s">'+jl("lord")+' '+PN[Jy.LORD[K.moonSign]]+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("nakshatra")+'</div><div class="v">'+K.nak.name+'</div><div class="s">'+jl("pada")+' '+K.nak.pada+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("curDasha")+'</div><div class="v">'+(md?PN[md.lord]+' – '+PN[ad.lord]:'—')+'</div><div class="s">'+(ad?jl("till",{d:fmtD(ad.end)}):'')+'</div></div>'+
   '</div></div>';
-  h+='<div class="card"><h3>Birth chart (North Indian)</h3><div class="chartbox">'+chartSVG(K)+'</div><p class="note" style="margin:0">Numbers are signs (1 = Mesha). House 1 is the top centre diamond. (R) = retrograde.</p></div>';
-  h+='<div class="card"><h3>Planets</h3><div class="tbl"><table><thead><tr><th>Graha</th><th>Rashi</th><th>Degree</th><th>House</th><th>Nakshatra</th></tr></thead><tbody>';
+  h+='<div class="card"><h3>'+jl("chartTitle")+'</h3><div class="chartbox">'+chartSVG(K)+'</div><p class="note" style="margin:0">'+jl("chartNote")+'</p></div>';
+  h+='<div class="card"><h3>'+jl("planets")+'</h3><div class="tbl"><table><thead><tr><th>'+jl("thGraha")+'</th><th>'+jl("thRashi")+'</th><th>'+jl("thDeg")+'</th><th>'+jl("thHouse")+'</th><th>'+jl("thNak")+'</th></tr></thead><tbody>';
   K.planets.forEach(function(p){ h+='<tr><td>'+p.name+(p.retro&&p.k!=="Ra"&&p.k!=="Ke"?' <span class="R">R</span>':'')+'</td><td>'+S[p.sign]+'</td><td>'+fmtDeg(p.deg)+'</td><td>'+p.house+'</td><td>'+p.nak.name+' '+p.nak.pada+'</td></tr>' });
   h+='</tbody></table></div></div>';
   var mg=K.manglik, mtxt = mg.fromLagna||mg.fromMoon
-    ? '<span class="pill warn">Mangal dosha present</span> <span class="note">Mars is in house '+mg.house+' from Lagna and '+mg.houseFromMoon+' from Moon.'+(mg.fromLagna&&mg.fromMoon?'':' Counted from only one reference, so it is mild.')+' Many classical exceptions can cancel it; it is common and not a reason for fear.</span>'
-    : '<span class="pill good">No Mangal dosha</span> <span class="note">Mars is in house '+mg.house+' from Lagna and '+mg.houseFromMoon+' from Moon.</span>';
-  h+='<div class="card"><h3>Manglik check</h3><div>'+mtxt+'</div></div>';
-  h+='<div class="card"><h3>Vimshottari Mahadasha</h3><div class="dasha">';
+    ? '<span class="pill warn">'+jl("manglikYes")+'</span> <span class="note">'+jl("manglikWhere",{a:mg.house,b:mg.houseFromMoon})+(mg.fromLagna&&mg.fromMoon?'':jl("manglikMild"))+jl("manglikCalm")+'</span>'
+    : '<span class="pill good">'+jl("manglikNo")+'</span> <span class="note">'+jl("manglikWhere",{a:mg.house,b:mg.houseFromMoon})+'</span>';
+  h+='<div class="card"><h3>'+jl("manglikTitle")+'</h3><div>'+mtxt+'</div></div>';
+  h+='<div class="card"><h3>'+jl("mdTitle")+'</h3><div class="dasha">';
   var shown=K.dashas.filter(function(d){return d.end.getTime()>toUTC(profile.date,profile.time,profile.tz).getTime()}).slice(0,9);
   shown.forEach(function(d){ var cur=d===md, pct=cur?Math.round((now-d.start)/(d.end-d.start)*100):(d.end<now?100:0);
     h+='<div class="dl'+(cur?' cur':'')+'"><b>'+PN[d.lord]+'</b><div class="bar"><i style="width:'+pct+'%"></i></div><span class="when">'+fmtD(d.start)+' – '+fmtD(d.end)+'</span></div>' });
   h+='</div>';
-  if(md){ h+='<div class="eyebrow" style="margin-top:6px">Antardasha in '+PN[md.lord]+' Mahadasha</div><div class="dasha">';
+  if(md){ h+='<div class="eyebrow" style="margin-top:6px">'+jl("adTitle",{p:PN[md.lord]})+'</div><div class="dasha">';
     K.antar.forEach(function(a){ var cur=a===ad; h+='<div class="dl'+(cur?' cur':'')+'"><b>'+PN[a.lord]+'</b><div class="bar"><i style="width:'+(cur?Math.round((now-a.start)/(a.end-a.start)*100):(a.end<now?100:0))+'%"></i></div><span class="when">'+fmtD(a.start)+' – '+fmtD(a.end)+'</span></div>' });
     h+='</div>'; }
   h+='</div>';
-  h+='<div class="card"><h3>Want a reading?</h3><p class="note" style="margin:0">Ask the AI Jyotishi about career, marriage, money or health. It reads this exact chart and shows its reasoning.</p><div class="row"><button class="btn" type="button" id="go-ai">Ask about my chart</button><button class="btn ghost" type="button" id="go-r">Today\'s rashifal</button></div></div>';
+  h+='<div class="card"><h3>'+jl("wantReading")+'</h3><p class="note" style="margin:0">'+jl("wantReadingNote")+'</p><div class="row"><button class="btn" type="button" id="go-ai">'+jl("askChart")+'</button><button class="btn ghost" type="button" id="go-r">'+jl("todayRashi")+'</button></div></div>';
   $("k-out").innerHTML=h;
   $("go-ai").onclick=function(){show("ai")}; $("go-r").onclick=function(){show("rashi")};
 }
 
 $("f-k").onsubmit=function(e){ e.preventDefault(); var draft=pendingWelcomeQuestion||$("q").value.trim(); pendingWelcomeQuestion=""; profile=readForm(); store("mj-profile",profile); chat=[]; $("chat").innerHTML=""; renderKundli();
   track("kundli",{city:profile.city==="x"?"Other":profile.place, rashi:K.moonSign, lagna:K.lagnaSign, nak:K.nak.i, birth_year:+profile.date.slice(0,4), gender:profile.gender});
-  if(draft){ $("k-question-hint").hidden=true; show("ai"); $("q").value=draft; $("ai-status").textContent="Aapka sawaal draft mein taiyaar hai. Bhejne se pehle neeche dekh lijiye."; $("q").focus(); }
+  if(draft){ $("k-question-hint").hidden=true; show("ai"); $("q").value=draft; $("ai-status").textContent=jl("draftReady"); $("q").focus(); }
   else $("k-out").scrollIntoView({behavior:"smooth"}); };
 
 /* ---- Milan ---- */
@@ -95,45 +96,46 @@ var milanReady=false;
 function renderMilan(){ milanReady=true;
   var b=person("b"), g=person("g");
   var m=Jy.milan({sign:b.k.moonSign,nak:b.k.nak.i},{sign:g.k.moonSign,nak:g.k.nak.i});
-  var t=m.total, v = t>=32?["Excellent match","good"]:t>=25?["Very good match","good"]:t>=18?["Acceptable match","warn"]:["Below the traditional minimum of 18","bad"];
-  var h='<div class="card"><div class="eyebrow">'+esc(b.name)+' &amp; '+esc(g.name)+'</div><div class="score"><span class="big">'+t+'</span><span class="of">/ 36 gun</span></div><div class="meter"><i style="width:'+(t/36*100)+'%"></i></div><div><span class="pill '+v[1]+'">'+v[0]+'</span></div>'+
-    '<div class="facts"><div class="fact"><div class="k">Boy</div><div class="v">'+S[b.k.moonSign]+'</div><div class="s">'+b.k.nak.name+' '+b.k.nak.pada+'</div></div><div class="fact"><div class="k">Girl</div><div class="v">'+S[g.k.moonSign]+'</div><div class="s">'+g.k.nak.name+' '+g.k.nak.pada+'</div></div></div></div>';
-  h+='<div class="card"><h3>Ashtakoot breakdown</h3><div>';
-  m.rows.forEach(function(r){ var full=r.got===r.max, zero=r.got===0; h+='<div class="koot"><div><b>'+r.name+'</b><div class="sub">'+r.about+'</div></div><div><div class="meter" style="height:6px"><i style="width:'+(r.got/r.max*100)+'%;background:'+(zero?'var(--bad)':full?'var(--good)':'var(--gold)')+'"></i></div><div class="sub">'+r.note+'</div></div><div class="pts">'+r.got+'/'+r.max+'</div></div>' });
+  var t=m.total, v = t>=32?[jl("vExcellent"),"good"]:t>=25?[jl("vVeryGood"),"good"]:t>=18?[jl("vOk"),"warn"]:[jl("vLow"),"bad"];
+  var h='<div class="card"><div class="eyebrow">'+esc(b.name)+' &amp; '+esc(g.name)+'</div><div class="score"><span class="big">'+t+'</span><span class="of">'+jl("gun")+'</span></div><div class="meter"><i style="width:'+(t/36*100)+'%"></i></div><div><span class="pill '+v[1]+'">'+v[0]+'</span></div>'+
+    '<div class="facts"><div class="fact"><div class="k">'+jl("boy")+'</div><div class="v">'+S[b.k.moonSign]+'</div><div class="s">'+b.k.nak.name+' '+b.k.nak.pada+'</div></div><div class="fact"><div class="k">'+jl("girl")+'</div><div class="v">'+S[g.k.moonSign]+'</div><div class="s">'+g.k.nak.name+' '+g.k.nak.pada+'</div></div></div></div>';
+  h+='<div class="card"><h3>'+jl("kootTitle")+'</h3><div>';
+  m.rows.forEach(function(r){ var full=r.got===r.max, zero=r.got===0; h+='<div class="koot"><div><b>'+r.name+'</b><div class="sub">'+(JL.kootAbout[r.name]?jl("kootAbout."+r.name):r.about)+'</div></div><div><div class="meter" style="height:6px"><i style="width:'+(r.got/r.max*100)+'%;background:'+(zero?'var(--bad)':full?'var(--good)':'var(--gold)')+'"></i></div><div class="sub">'+String(r.note).replace("Birth-star compatibility",jl("taraNote")).replace("sign distance",jl("signDist"))+'</div></div><div class="pts">'+r.got+'/'+r.max+'</div></div>' });
   h+='</div></div>';
   var notes=[];
-  if(m.rows[7].got===0) notes.push("<b>Nadi dosha</b>: both have the same Nadi. Traditionally serious, but classical texts list exceptions (for example same rashi with different nakshatras).");
-  if(m.rows[6].got===0) notes.push("<b>Bhakoot dosha</b>: the moon signs are in a 2/12, 5/9 or 6/8 relation. It is cancelled when both rashi lords are friends or the same planet.");
+  if(m.rows[7].got===0) notes.push(jl("nadiNote"));
+  if(m.rows[6].got===0) notes.push(jl("bhakootNote"));
   var bm=b.k.manglik.fromLagna, gmg=g.k.manglik.fromLagna;
-  notes.push("<b>Manglik</b>: boy "+(bm?"has":"has no")+" Mangal dosha, girl "+(gmg?"has":"has no")+" Mangal dosha (from Lagna)."+(bm===gmg?" Matched on this point.":" Usually checked further by an astrologer."));
-  h+='<div class="card"><h3>What this means</h3>'+notes.map(function(n){return '<p class="note" style="margin:0">'+n+'</p>'}).join("")+'<p class="note" style="margin:0">Gun Milan is one traditional tool. Understanding, values and family support matter more for a good marriage than any score.</p></div>';
+  notes.push(jl("manglikPair",{b:jl(bm?"has":"hasNot"),g:jl(gmg?"has":"hasNot")})+jl(bm===gmg?"matched":"checkFurther"));
+  h+='<div class="card"><h3>'+jl("meansTitle")+'</h3>'+notes.map(function(n){return '<p class="note" style="margin:0">'+n+'</p>'}).join("")+'<p class="note" style="margin:0">'+jl("milanCalm")+'</p></div>';
   $("m-out").innerHTML=h;
   return t;
 }
 $("f-m").onsubmit=function(e){ e.preventDefault(); track("milan",{score:renderMilan()}); $("m-out").scrollIntoView({behavior:"smooth"}); };
 
 /* ---- Rashifal ---- */
+var GOCHAR_LEVEL={Mixed:"dayMixed",Careful:"dayCareful",Good:"dayGood","Very good":"dayVeryGood"};
 var GOCHAR={1:["Mixed","warn","The Moon is over your own rashi. Feelings run high; keep a calm routine and avoid hasty decisions."],2:["Careful","warn","Money and speech need care today. Check spending and choose words gently with family."],3:["Good","good","Courage and energy are up. A good day for short trips, calls and pushing a pending task."],4:["Careful","warn","Home matters may need attention. Rest well and avoid arguments at home."],5:["Careful","warn","The mind may wander. Avoid speculation; study or creative work suits better than big bets."],6:["Good","good","You can beat obstacles and competition today. Good for clearing debts, work backlogs and health routines."],7:["Good","good","Partnerships and dealings go well. Good for meetings, business talks and time with your spouse."],8:["Careful","bad","Classically a weak day (Chandrashtama). Postpone important starts, drive carefully, keep plans simple."],9:["Mixed","warn","Mixed luck. Elders and teachers can guide you; keep expectations moderate."],10:["Good","good","Work and reputation are supported. Take initiative at your job or business."],11:["Very good","good","Gains and wishes are supported. A strong day for income, friends and networking."],12:["Careful","warn","Expenses and tiredness may rise. Rest, spiritual practice and planning suit today."]};
 var TARA=["Janma","Sampat","Vipat","Kshema","Pratyari","Sadhana","Naidhana","Mitra","Param Mitra"];
 function renderRashi(){
-  if(!profile){ $("r-out").innerHTML='<div class="card"><p>Make your kundli first.</p></div>'; return; }
+  if(!profile){ $("r-out").innerHTML='<div class="card"><p>'+jl("needKundli")+'</p></div>'; return; }
   if(!K) K=compute(profile);
   var hm=((TD.moonSign-K.moonSign+12)%12)+1, g=GOCHAR[hm];
   var tn=((TD.nak.i-K.nak.i+27)%27)%9, tgood=[2,4,6].indexOf(tn)<0;
   var sh=((TD.satSign-K.moonSign+12)%12)+1;
-  var sade = sh===12?["Sade Sati, phase 1 (rising)","warn"]:sh===1?["Sade Sati, phase 2 (peak)","warn"]:sh===2?["Sade Sati, phase 3 (setting)","warn"]:sh===4?["Kantak Shani (Dhaiya)","warn"]:sh===8?["Ashtam Shani (Dhaiya)","warn"]:["No Sade Sati or Dhaiya","good"];
+  var sade = sh===12?[jl("sade1"),"warn"]:sh===1?[jl("sade2"),"warn"]:sh===2?[jl("sade3"),"warn"]:sh===4?[jl("kantak"),"warn"]:sh===8?[jl("ashtam"),"warn"]:[jl("noSade"),"good"];
   var jh=((TD.jupSign-K.moonSign+12)%12)+1, jgood=[2,5,7,9,11].indexOf(jh)>=0;
-  var d=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
-  var h='<div class="card"><div class="eyebrow">'+d+' · for '+esc(profile.name)+' ('+S[K.moonSign]+' rashi)</div><h2>Aaj ka Rashifal</h2>'+
-    '<div><span class="pill '+g[1]+'">'+g[0]+' day</span></div><p style="margin:0">'+g[2]+'</p>'+
-    '<p class="note" style="margin:0">Why: today\'s Moon is in '+S[TD.moonSign]+', house '+hm+' counted from your Moon sign '+S[K.moonSign]+' (Chandra gochar).</p></div>';
-  h+='<div class="card"><h3>Your transits now</h3><div class="facts">'+
-    '<div class="fact"><div class="k">Tarabala</div><div class="v '+(tgood?'good':'warn')+'">'+TARA[tn]+'</div><div class="s">'+TD.nak.name+' from your '+K.nak.name+'</div></div>'+
-    '<div class="fact"><div class="k">Shani</div><div class="v '+sade[1]+'" style="font-size:15px">'+sade[0]+'</div><div class="s">Saturn in '+S[TD.satSign]+', house '+sh+' from Moon</div></div>'+
-    '<div class="fact"><div class="k">Guru</div><div class="v '+(jgood?'good':'warn')+'">'+(jgood?'Supportive':'Neutral')+'</div><div class="s">Jupiter in '+S[TD.jupSign]+', house '+jh+' from Moon</div></div>'+
-    '<div class="fact"><div class="k">Dasha</div><div class="v">'+(K.curMD?PN[K.curMD.lord]+' – '+PN[K.curAD.lord]:'—')+'</div><div class="s">Mahadasha – Antardasha</div></div>'+
+  var d=new Date().toLocaleDateString(lk()==="hi"?"hi-IN":"en-IN",{weekday:"long",day:"numeric",month:"long"});
+  var h='<div class="card"><div class="eyebrow">'+d+' · '+esc(jl("forName",{n:profile.name,r:S[K.moonSign]}))+'</div><h2>'+jl("rTitle")+'</h2>'+
+    '<div><span class="pill '+g[1]+'">'+jl("dayIs",{d:jl(GOCHAR_LEVEL[g[0]])})+'</span></div><p style="margin:0">'+jl("gochar."+hm)+'</p>'+
+    '<p class="note" style="margin:0">'+jl("rWhy",{s:S[TD.moonSign],h:hm,m:S[K.moonSign]})+'</p></div>';
+  h+='<div class="card"><h3>'+jl("transits")+'</h3><div class="facts">'+
+    '<div class="fact"><div class="k">'+jl("tarabala")+'</div><div class="v '+(tgood?'good':'warn')+'">'+TARA[tn]+'</div><div class="s">'+jl("taraFrom",{t:TD.nak.name,b:K.nak.name})+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("shani")+'</div><div class="v '+sade[1]+'" style="font-size:15px">'+sade[0]+'</div><div class="s">'+jl("satIn",{s:S[TD.satSign],h:sh})+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("guru")+'</div><div class="v '+(jgood?'good':'warn')+'">'+jl(jgood?"supportive":"neutral")+'</div><div class="s">'+jl("jupIn",{s:S[TD.jupSign],h:jh})+'</div></div>'+
+    '<div class="fact"><div class="k">'+jl("dasha")+'</div><div class="v">'+(K.curMD?PN[K.curMD.lord]+' – '+PN[K.curAD.lord]:'—')+'</div><div class="s">'+jl("mdAd")+'</div></div>'+
   '</div></div>';
-  h+='<div class="card"><h3>Detailed reading</h3><p class="note" style="margin:0">Get today\'s full rashifal from the AI Jyotishi, written for your chart.</p><div class="row"><button class="btn" id="r-ai" type="button">Get detailed rashifal</button></div></div>';
+  h+='<div class="card"><h3>'+jl("detailed")+'</h3><p class="note" style="margin:0">'+jl("detailedNote")+'</p><div class="row"><button class="btn" id="r-ai" type="button">'+jl("getDetailed")+'</button></div></div>';
   $("r-out").innerHTML=h;
   $("r-ai").onclick=function(){ if(aiMode!=="jyotish") setAiMode("jyotish"); show("ai"); ask("Give me today's detailed rashifal based on my chart and today's transits: work, money, family, health, and one practical tip.","jyotish"); };
 }
@@ -141,10 +143,10 @@ function renderRashi(){
 /* ---- AI ---- */
 var chat=[], busy=false, aiMode="jyotish", AI_ON=document.body.getAttribute("data-ai")==="1";
 document.querySelectorAll("[data-home-action]").forEach(function(b){b.onclick=function(){var action=b.getAttribute("data-home-action");if(action==="jaap"){$("mini-jaap-toggle").click();return;}show(action);if(action==="ai")$("q").focus();};});
-var SUGG=["Meri naukri / career kab achha hoga?","Shaadi kab tak hogi?","Is saal paisa aur business kaisa rahega?","Mere current dasha ka kya matlab hai?","Sade Sati ka mujh par kya asar hai?","Mere liye kaunsa field sahi hai?"];
-$("sugg").innerHTML=SUGG.map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join("");
-$("sugg").querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent) } });
-function renderAiHead(){ if(profile){ if(!K) K=compute(profile); $("ai-who").textContent="Reading the chart of "+profile.name+": "+S[K.lagnaSign]+" Lagna, "+S[K.moonSign]+" Rashi, "+K.nak.name+" nakshatra."+(profile.example?" (Example chart. Make your own in the Kundli tab.)":""); } }
+function SUGG(){ return JL.sugg.map(function(x){ return x[jlIdx()]||x[0]; }); }
+function renderSugg(){ if(aiMode!=="jyotish")return; $("sugg").innerHTML=SUGG().map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join(""); $("sugg").querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent,"jyotish") } }); }
+renderSugg();
+function renderAiHead(){ if(profile){ if(!K) K=compute(profile); $("ai-who").textContent=jl("aiWho",{n:profile.name,l:S[K.lagnaSign],r:S[K.moonSign],k:K.nak.name})+(profile.example?jl("aiWhoSample"):""); } }
 function chartContext(mode){
   var k=K, now=new Date();
   if((mode||aiMode)==="council") return profile.example
@@ -169,21 +171,16 @@ function md2html(t){
 function bubble(role,html){ var d=document.createElement("div"); d.className="msg "+role; d.innerHTML=html; $("chat").appendChild(d); return d; }
 function setAiMode(mode){
   if(busy||mode===aiMode) return;
-  aiMode=mode; chat=[]; $("chat").innerHTML=""; $("council-consent").checked=false; $("council-followups").hidden=true;
+  aiMode=mode; aiModeText(); chat=[]; $("chat").innerHTML=""; $("council-consent").checked=false; $("council-followups").hidden=true;
   $("ai-chat-welcome").hidden=false;
   $("mode-jyotish").setAttribute("aria-pressed",mode==="jyotish"?"true":"false");
   $("mode-council").setAttribute("aria-pressed",mode==="council"?"true":"false");
   $("council-privacy").hidden=mode!=="council";
   $("council-context").hidden=mode!=="council";
-  $("mode-note").textContent=mode==="council"
-    ? "Chaar grahon ki awaaz, par faisla sirf bataye gaye facts par. Naam aur contact details mat likhiye."
-    : "Ask about your chart. Birth identity and exact birth details are kept out of the chart sent to the AI.";
-  $("q").placeholder=mode==="council"?"What actually happened? Share one or two specific actions or words…":"Type your question… e.g. Meri naukri kab lagegi?";
-  $("sugg").innerHTML=mode==="jyotish"?SUGG.map(function(s){return '<button class="chip" type="button">'+esc(s)+'</button>'}).join("")
-    :'<span class="note">Council ko sahi tarah jaanchne ke liye ek real incident aur aapka goal likhiye.</span>';
-  $("sugg").querySelectorAll("button.chip").forEach(function(c){ c.onclick=function(){ ask(c.textContent,"jyotish") } });
-  $("ai-status").textContent=mode==="council"?"Council reading: aapki baat AI provider ko bheji jayegi; Maakit question text ko apne usage log mein nahi rakhega.":"";
+  $("ai-status").textContent=mode==="council"?jl("councilStatus"):"";
 }
+function aiModeText(){ var c=aiMode==="council"; $("mode-note").textContent=jl(c?"noteCouncil":"noteJy"); $("q").placeholder=jl(c?"phCouncil":"phQ");
+  if(c) $("sugg").innerHTML='<span class="note">'+esc(jl("councilHint"))+'</span>'; else renderSugg(); }
 $("mode-jyotish").onclick=function(){setAiMode("jyotish")};
 $("mode-council").onclick=function(){setAiMode("council")};
 var COUNCIL_FOLLOWUPS={
@@ -195,11 +192,11 @@ $("council-followups").querySelectorAll("[data-council-followup]").forEach(funct
 async function ask(q, requestedMode){
   q=(q||"").trim(); if(!q||busy) return;
   var mode=requestedMode||aiMode;
-  if(!profile){ $("ai-status").textContent="Make your kundli first."; return; }
+  if(!profile){ $("ai-status").textContent=jl("needKundli"); return; }
   if(profile.example&&mode==="jyotish"){
-    $("k-question-hint").hidden=false; $("ai-status").textContent="Personal jawaab ke liye pehle apni janam kundli banaiye. Aapka sawaal yahin draft mein rahega."; show("kundli"); $("f-k").scrollIntoView({behavior:"smooth",block:"start"}); $("k-name").focus(); return;
+    $("k-question-hint").hidden=false; $("ai-status").textContent=lk()==="hl"?"Personal jawaab ke liye pehle apni janam kundli banaiye. Aapka sawaal save rahega.":jl("kHint"); show("kundli"); $("f-k").scrollIntoView({behavior:"smooth",block:"start"}); $("k-name").focus(); return;
   }
-  if(mode==="council"&&!$("council-consent").checked){ $("ai-status").textContent="Pehle consent box select kijiye; tabhi aapka sawaal AI provider ko bheja jayega."; return; }
+  if(mode==="council"&&!$("council-consent").checked){ $("ai-status").textContent=jl("consentFirst"); return; }
   if(mode==="council"){
     var selectedContext=[];
     if($("council-area").value) selectedContext.push("Current area: "+$("council-area").value);
@@ -210,7 +207,7 @@ async function ask(q, requestedMode){
   if(Jd.crisis(q)){ $("q").value=""; showHelp(); return; }
   busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent=""; $("council-followups").hidden=true; $("ai-chat-welcome").hidden=true;
   bubble("u",esc(q)); chat.push({role:"user",content:q});
-  var a=bubble("a",'<p class="note">Reading your chart…</p>');
+  var a=bubble("a",'<p class="note">'+esc(jl("reading"))+'</p>');
   a.scrollIntoView({behavior:"smooth",block:"end"});
   try{
     if(mode==="council") $("council-consent").checked=false;
@@ -221,18 +218,18 @@ async function ask(q, requestedMode){
     if(!res.ok||!j.text) throw (j.err||"fail");
     a.innerHTML=md2html(j.text); chat.push({role:"assistant",content:j.text});
     if(mode==="council") $("council-followups").hidden=false;
-    if(typeof j.left==="number") $("ai-status").textContent=j.left+" questions left today.";
+    if(typeof j.left==="number") $("ai-status").textContent=jl("left",{n:j.left});
   }catch(e){
     chat.pop(); a.remove();
     $("ai-chat-welcome").hidden=chat.length>0;
-    var msg={off:mode==="council"||!sharing()?"AI answers are starting soon. Your Council question was not saved to Maakit's usage log.":"AI answers are starting soon; your question was noted for app planning.",limit:"Today's free questions are used up. Come back tomorrow.",bad:"Please write a shorter question."}[e];
-    $("ai-status").textContent=msg||"The AI could not answer right now. Check your internet and try again.";
+    var msg={off:jl(mode==="council"||!sharing()?"aiOffCouncil":"aiOff"),limit:jl("aiLimit"),bad:jl("aiBad")}[e];
+    $("ai-status").textContent=msg||jl("aiFail");
   }
   busy=false; $("send").disabled=false;
 }
 $("f-ai").onsubmit=function(e){ e.preventDefault(); ask($("q").value) };
 $("q").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); ask(this.value) } });
-if(!AI_ON) $("ai-status").textContent="AI Jyotishi is starting soon. You can still type your question: we read every one to plan what to add.";
+if(!AI_ON) $("ai-status").textContent=jl("aiSoon");
 
 /* ==== V2: Aaj ka Card, check-in, madad ka panna, ginti, privacy ==== */
 function todayKey(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -243,30 +240,30 @@ function trackOnce(k,data){ var key="mj-once-"+k, d=todayKey(); if(store(key)===
 function lk(){ return {"Hinglish":"hl","Hindi (Devanagari script)":"hi","English":"en"}[$("lang").value]||"hl"; }
 
 var UI={
- hl:{ciTitle:"Aaj aap kaisa mehsoos kar rahe hain?",lMood:"Mann",moods:["Bura","Theek-thaak","Achha","Bahut achha"],lEnergy:"Urja",energies:["Kam","Theek","Zyada"],lConcern:"Mann ki baat",
-  concerns:{tension:"Tension",gussa:"Gussa",akelapan:"Akelapan",neend:"Neend kharab",theek:"Sab theek"},lText:"Kuch aur kehna hai? (zaroori nahi)",lShare:"Aaj ka haal (sirf ek shabd) AI Jyotishi ko batayein",
-  priv:"Yeh check-in sirf aapke phone par rehta hai, server par nahi jaata. Yeh doctor ki jaanch nahi hai.",go:"Aaj ka card dikhaiye",skip:"Abhi nahi",helpBtn:"Bahut zyada pareshaan hoon",
-  card:"Aaj ka card",upaya:"Aaj ka upaya (muft, 10 minute)",done:"Ho gaya",doneToday:"Aaj ka diya jal gaya",kyun:"Kyun?",share:"WhatsApp par bhejiye",redo:"Check-in dobara",
-  week:"Is hafte ke diye",full:"Poora hafta! 7 mein se 4 din ho gaye.",weekNote:"7 din mein 4 din = poora hafta. Chhoot jaaye to koi baat nahi.",back:"Wapas aaye, achha laga. Aaj ka chhota sa kaam yeh raha.",
-  example:"Yeh example kundli ka card hai. Apni kundli banaiye, phir card aapka hoga.",makeK:"Apni kundli banaiye",askAi:"Iske baare mein AI se poochhiye",
-  disc:"Jyotish ek soch ka tareeka hai, guarantee nahi. Bade faisle (sehat, paisa, shaadi) apni samajh aur bharosemand logon se baat karke lein.",
-  hTitle:"Aap akele nahi hain",hBody:"Abhi kisi se baat kijiye. Tele-MANAS ki call muft hai aur wahan sunne wale log hain.",hTm:"Muft, 24x7, Hindi mein bhi",hEm:"Turant khatra ho to",hFriend:"Kisi bharose wale insaan ko abhi message ya call kijiye.",hOk:"Main theek hoon, wapas jaayein"},
- hi:{ciTitle:"आज आप कैसा महसूस कर रहे हैं?",lMood:"मन",moods:["बुरा","ठीक-ठाक","अच्छा","बहुत अच्छा"],lEnergy:"ऊर्जा",energies:["कम","ठीक","ज़्यादा"],lConcern:"मन की बात",
-  concerns:{tension:"तनाव",gussa:"गुस्सा",akelapan:"अकेलापन",neend:"नींद ख़राब",theek:"सब ठीक"},lText:"कुछ और कहना है? (ज़रूरी नहीं)",lShare:"आज का हाल (सिर्फ़ एक शब्द) AI ज्योतिषी को बताइए",
-  priv:"यह check-in सिर्फ़ आपके फ़ोन पर रहता है, server पर नहीं जाता। यह डॉक्टर की जाँच नहीं है।",go:"आज का कार्ड दिखाइए",skip:"अभी नहीं",helpBtn:"बहुत ज़्यादा परेशान हूँ",
-  card:"आज का कार्ड",upaya:"आज का उपाय (मुफ़्त, 10 मिनट)",done:"हो गया",doneToday:"आज का दीया जल गया",kyun:"क्यों?",share:"WhatsApp पर भेजिए",redo:"Check-in दोबारा",
-  week:"इस हफ़्ते के दीये",full:"पूरा हफ़्ता! 7 में से 4 दिन हो गए।",weekNote:"7 दिन में 4 दिन = पूरा हफ़्ता। छूट जाए तो कोई बात नहीं।",back:"वापस आए, अच्छा लगा। आज का छोटा सा काम यह रहा।",
-  example:"यह example कुंडली का कार्ड है। अपनी कुंडली बनाइए, फिर कार्ड आपका होगा।",makeK:"अपनी कुंडली बनाइए",askAi:"इसके बारे में AI से पूछिए",
-  disc:"ज्योतिष एक सोच का तरीका है, गारंटी नहीं। बड़े फ़ैसले (सेहत, पैसा, शादी) अपनी समझ और भरोसेमंद लोगों से बात करके लीजिए।",
-  hTitle:"आप अकेले नहीं हैं",hBody:"अभी किसी से बात कीजिए। Tele-MANAS की call मुफ़्त है और वहाँ सुनने वाले लोग हैं।",hTm:"मुफ़्त, 24x7, हिंदी में भी",hEm:"तुरंत ख़तरा हो तो",hFriend:"किसी भरोसे वाले इंसान को अभी message या call कीजिए।",hOk:"मैं ठीक हूँ, वापस जाइए"},
- en:{ciTitle:"How are you feeling today?",lMood:"Mood",moods:["Low","Okay","Good","Great"],lEnergy:"Energy",energies:["Low","Okay","High"],lConcern:"On your mind",
-  concerns:{tension:"Worry",gussa:"Anger",akelapan:"Lonely",neend:"Poor sleep",theek:"All fine"},lText:"Anything else? (optional)",lShare:"Tell the AI Jyotishi how I feel today (one word only)",
-  priv:"This check-in stays on your phone and is never sent to the server. It is not a medical test.",go:"Show today's card",skip:"Not now",helpBtn:"I am very upset",
-  card:"Today's card",upaya:"Today's upaya (free, 10 minutes)",done:"Done",doneToday:"Today's diya is lit",kyun:"Why?",share:"Send on WhatsApp",redo:"Check in again",
-  week:"Diyas this week",full:"A full week! 4 of 7 days done.",weekNote:"4 days out of 7 makes a full week. Missing a day is fine.",back:"Welcome back. Here is today's small step.",
-  example:"This card is for the example chart. Make your own kundli and the card becomes yours.",makeK:"Make my kundli",askAi:"Ask the AI about this",
-  disc:"Jyotish is a way of thinking, not a guarantee. Make big decisions (health, money, marriage) with your own judgement and people you trust.",
-  hTitle:"You are not alone",hBody:"Please talk to someone now. Calling Tele-MANAS is free, and trained people will listen.",hTm:"Free, 24x7, in Hindi too",hEm:"If you are in immediate danger",hFriend:"Message or call someone you trust right now.",hOk:"I am okay, go back"}
+ hl:{ciTitle:"Aaj aapka mann kaisa hai?",lMood:"Mood",moods:["Udaas","Theek","Achha","Bahut achha"],lEnergy:"Energy",energies:["Kam","Normal","Bharpoor"],lConcern:"Aaj kis baat ki chinta hai?",
+  concerns:{tension:"Tension",gussa:"Gussa",akelapan:"Akelapan",neend:"Neend poori nahi",theek:"Koi chinta nahi"},lText:"Aur kuch batana chahein? (zaroori nahi)",lShare:"AI Jyotishi ko mera aaj ka mood batayein (sirf ek shabd jaata hai)",
+  priv:"Yeh jaankari sirf aapke phone mein rehti hai, kahin bheji nahi jaati. Yeh medical salah nahi hai.",go:"Mera aaj ka card dekhein",skip:"Abhi skip karein",helpBtn:"Main bahut pareshan hoon, madad chahiye",
+  card:"Aaj ka card",upaya:"Aaj ka upay · muft, 10 minute",done:"Upay kar liya",doneToday:"Aaj ka upay ho gaya ✓",kyun:"Yeh upay kyun?",share:"WhatsApp par share karein",redo:"Mood dobara chunein",
+  week:"Is hafte ke diye",full:"Shabaash! Is hafte 4 din poore ho gaye.",weekNote:"Hafte mein 4 din upay karne par poora hafta maana jaata hai. Ek din chhoot jaaye to koi baat nahi.",back:"Phir se swagat hai! Aaj ka chhota sa upay yeh raha.",
+  example:"Yeh sample kundli ka card hai. Apni kundli banayein, taaki card aapke liye bane.",makeK:"Apni kundli banayein",askAi:"AI Jyotishi se is par poochhein",
+  disc:"Jyotish margdarshan ke liye hai, guarantee ke liye nahi. Sehat, paisa aur vivah jaise bade faisle soch-samajhkar aur bharosemand logon se salah lekar lein.",
+  hTitle:"Aap akele nahi hain",hBody:"Abhi kisi se baat kijiye. Tele-MANAS par call muft hai, wahan trained log aapki baat sunenge.",hTm:"Muft · 24 ghante · Hindi mein bhi",hEm:"Turant khatra ho to",hFriend:"Kisi bharosemand insaan ko abhi call ya message kijiye.",hOk:"Main theek hoon, wapas jaayein"},
+ hi:{ciTitle:"आज आपका मन कैसा है?",lMood:"मूड",moods:["उदास","ठीक","अच्छा","बहुत अच्छा"],lEnergy:"ऊर्जा",energies:["कम","सामान्य","भरपूर"],lConcern:"आज किस बात की चिंता है?",
+  concerns:{tension:"तनाव",gussa:"गुस्सा",akelapan:"अकेलापन",neend:"नींद पूरी नहीं",theek:"कोई चिंता नहीं"},lText:"और कुछ बताना चाहें? (ज़रूरी नहीं)",lShare:"AI ज्योतिषी को मेरा आज का मूड बताएं (सिर्फ़ एक शब्द जाता है)",
+  priv:"यह जानकारी सिर्फ़ आपके फ़ोन में रहती है, कहीं भेजी नहीं जाती। यह चिकित्सा सलाह नहीं है।",go:"मेरा आज का कार्ड देखें",skip:"अभी छोड़ें",helpBtn:"मैं बहुत परेशान हूँ, मदद चाहिए",
+  card:"आज का कार्ड",upaya:"आज का उपाय · मुफ़्त, 10 मिनट",done:"उपाय कर लिया",doneToday:"आज का उपाय हो गया ✓",kyun:"यह उपाय क्यों?",share:"WhatsApp पर शेयर करें",redo:"मूड दोबारा चुनें",
+  week:"इस हफ़्ते के दीये",full:"शाबाश! इस हफ़्ते 4 दिन पूरे हो गए।",weekNote:"हफ़्ते में 4 दिन उपाय करने पर पूरा हफ़्ता माना जाता है। एक दिन छूट जाए तो कोई बात नहीं।",back:"फिर से स्वागत है! आज का छोटा सा उपाय यह रहा।",
+  example:"यह नमूना कुंडली का कार्ड है। अपनी कुंडली बनाएं, ताकि कार्ड आपके लिए बने।",makeK:"अपनी कुंडली बनाएं",askAi:"AI ज्योतिषी से इस पर पूछें",
+  disc:"ज्योतिष मार्गदर्शन के लिए है, गारंटी के लिए नहीं। सेहत, पैसा और विवाह जैसे बड़े फ़ैसले सोच-समझकर और भरोसेमंद लोगों से सलाह लेकर लें।",
+  hTitle:"आप अकेले नहीं हैं",hBody:"अभी किसी से बात कीजिए। Tele-MANAS पर कॉल मुफ़्त है, वहाँ प्रशिक्षित लोग आपकी बात सुनेंगे।",hTm:"मुफ़्त · 24 घंटे · हिंदी में भी",hEm:"तुरंत ख़तरा हो तो",hFriend:"किसी भरोसेमंद इंसान को अभी कॉल या मैसेज कीजिए।",hOk:"मैं ठीक हूँ, वापस जाएं"},
+ en:{ciTitle:"How are you feeling today?",lMood:"Mood",moods:["Low","Okay","Good","Great"],lEnergy:"Energy",energies:["Low","Normal","High"],lConcern:"Anything worrying you today?",
+  concerns:{tension:"Stress",gussa:"Anger",akelapan:"Loneliness",neend:"Poor sleep",theek:"Nothing, all good"},lText:"Anything else to add? (optional)",lShare:"Tell the AI Jyotishi my mood today (only one word is sent)",
+  priv:"This stays only on your phone and is never sent anywhere. It is not medical advice.",go:"Show my card for today",skip:"Skip for now",helpBtn:"I'm very upset and need help",
+  card:"Today's card",upaya:"Today's remedy · free, 10 minutes",done:"I did it",doneToday:"Today's remedy is done ✓",kyun:"Why this remedy?",share:"Share on WhatsApp",redo:"Choose my mood again",
+  week:"This week's diyas",full:"Well done! 4 days completed this week.",weekNote:"Doing the remedy on 4 days counts as a full week. Missing a day is fine.",back:"Welcome back! Here is today's small remedy.",
+  example:"This card is for the sample chart. Create your own Kundli so the card is made for you.",makeK:"Create my Kundli",askAi:"Ask the AI Jyotishi about this",
+  disc:"Jyotish offers guidance, not guarantees. Make big decisions about health, money or marriage thoughtfully and with advice from people you trust.",
+  hTitle:"You are not alone",hBody:"Please talk to someone now. Calling Tele-MANAS is free, and trained people will listen.",hTm:"Free · 24 hours · Hindi too",hEm:"If you are in immediate danger",hFriend:"Call or message someone you trust right now.",hOk:"I'm okay, go back"}
 };
 function U(){ return UI[lk()]; }
 
@@ -350,7 +347,7 @@ function jaapDailyCount(){ var k=todayKey(); if(!jaapDay||jaapDay.date!==k){ var
 function jaapSave(){ if(jaapSaveT){clearTimeout(jaapSaveT);jaapSaveT=null;} if(!jaapDay)return; store("mj-jaap-day",{date:jaapDay.date,count:jaapDay.count});var days=store("mj-jaap-days")||{};days[jaapDay.date]=jaapDay.count;var keys=Object.keys(days).sort();keys.slice(0,Math.max(0,keys.length-90)).forEach(function(k){delete days[k];});store("mj-jaap-days",days); }
 document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") jaapSave(); }); window.addEventListener("pagehide",jaapSave);
 function jaapSetDailyCount(n){ jaapDailyCount(); jaapDay.count=Math.max(0,n); if(!jaapSaveT) jaapSaveT=setTimeout(jaapSave,600); if(!$("jaap-card").hidden&&!jaapStatsT) jaapStatsT=setTimeout(function(){jaapStatsT=null;jaapRenderStats();},800); jaapUpdateMini(); }
-function jaapRenderStats(){jaapSave();var days=store("mj-jaap-days")||{},sessions=store("mj-jaap-sessions")||[],bars=$("jaap-week-bars"),total=0,activeDays=0,labels=["रवि","सोम","मंगल","बुध","गुरु","शुक्र","शनि"],summary=[];if(!bars)return;bars.textContent="";var now=new Date();now.setHours(12,0,0,0);var max=Math.max.apply(null,Object.keys(days).map(function(k){return Number(days[k])||0}).concat([1]));for(var i=6;i>=0;i--){var day=new Date(now);day.setDate(now.getDate()-i);var key=day.getFullYear()+"-"+String(day.getMonth()+1).padStart(2,"0")+"-"+String(day.getDate()).padStart(2,"0"),count=Number(days[key])||0;total+=count;if(count>0)activeDays++;summary.push(labels[day.getDay()]+": "+count);var col=document.createElement("div"),fill=document.createElement("i"),lab=document.createElement("small");col.className="jaap-daybar";col.title=labels[day.getDay()]+": "+count;fill.style.height=(count?Math.max(8,Math.min(100,Math.round(count/max*100))):3)+"%";lab.textContent=labels[day.getDay()];col.appendChild(fill);col.appendChild(lab);bars.appendChild(col);}var since=new Date(now);since.setDate(now.getDate()-6);var from=since.getFullYear()+"-"+String(since.getMonth()+1).padStart(2,"0")+"-"+String(since.getDate()).padStart(2,"0");$("jaap-week-sessions").textContent=String(sessions.filter(function(x){return x.date>=from&&x.date<=todayKey()}).length);$("jaap-week-summary").textContent="Pichhle 7 din: kul "+total+" jaap, "+activeDays+" din jaap kiya.";}
+function jaapRenderStats(){jaapSave();var days=store("mj-jaap-days")||{},sessions=store("mj-jaap-sessions")||[],bars=$("jaap-week-bars"),total=0,activeDays=0,labels=["रवि","सोम","मंगल","बुध","गुरु","शुक्र","शनि"],summary=[];if(!bars)return;bars.textContent="";var now=new Date();now.setHours(12,0,0,0);var max=Math.max.apply(null,Object.keys(days).map(function(k){return Number(days[k])||0}).concat([1]));for(var i=6;i>=0;i--){var day=new Date(now);day.setDate(now.getDate()-i);var key=day.getFullYear()+"-"+String(day.getMonth()+1).padStart(2,"0")+"-"+String(day.getDate()).padStart(2,"0"),count=Number(days[key])||0;total+=count;if(count>0)activeDays++;summary.push(labels[day.getDay()]+": "+count);var col=document.createElement("div"),fill=document.createElement("i"),lab=document.createElement("small");col.className="jaap-daybar";col.title=labels[day.getDay()]+": "+count;fill.style.height=(count?Math.max(8,Math.min(100,Math.round(count/max*100))):3)+"%";lab.textContent=labels[day.getDay()];col.appendChild(fill);col.appendChild(lab);bars.appendChild(col);}var since=new Date(now);since.setDate(now.getDate()-6);var from=since.getFullYear()+"-"+String(since.getMonth()+1).padStart(2,"0")+"-"+String(since.getDate()).padStart(2,"0");$("jaap-week-sessions").textContent=String(sessions.filter(function(x){return x.date>=from&&x.date<=todayKey()}).length);$("jaap-week-summary").textContent=jl("weekSummary",{t:total,d:activeDays});}
 var MALA=108, SVGNS="http://www.w3.org/2000/svg";
 /* 108 manke + upar ek bada sumeru manka. Har tap par sirf ek manka badalta hai, poori mala dobara nahi banti. */
 function malaBuild(svg){ if(!svg||svg.malaBeads)return; var beads=[],f=document.createDocumentFragment(),track=document.createElementNS(SVGNS,"circle");track.setAttribute("cx","150");track.setAttribute("cy","150");track.setAttribute("r","132");track.setAttribute("class","mala-thread");f.appendChild(track);
@@ -374,7 +371,7 @@ function jaapRefreshProgress(){
   var pos=malaPos(jaapState.count),inMala=pos.inMala;
   malaPaint($("jaap-beads"),inMala);
   var completed=pos.done,partial=jaapState.count%MALA,malaNow=completed+1;
-  $("jaap-progress-note").textContent=jaapState.count>=jaapState.goal?"Lakshya poora hua. Pranaam 🙏":(completed||partial?"Mala "+(partial?malaNow:completed)+": "+(partial||MALA)+"/"+MALA+(completed?" · "+completed+" poori":""):"Beech ke gol par tap karein. Har tap ek jaap hai.")+" · Lakshya: "+jaapState.count+" / "+jaapState.goal;
+  $("jaap-progress-note").textContent=jaapState.count>=jaapState.goal?jl("goalReached"):(completed||partial?jl("progress",{m:(partial?malaNow:completed),i:(partial||MALA),d:(completed?jl("progressDone",{n:completed}):""),c:jaapState.count,g:jaapState.goal}):jl("progressStart",{g:jaapState.goal}));
 }
 function jaapBell(){
   if(!$("jaap-bell").checked)return;
@@ -393,8 +390,8 @@ function jaapClose(){
 function jaapRunClock(){if(jaapState.mode==="mala"||jaapState.timer)return;jaapState.timer=setInterval(function(){if(!jaapState.active)return;jaapState.left--;$("jaap-clock").textContent=String(Math.max(jaapState.left,0));if(jaapState.left<=0)jaapFinishRound();},1000);}
 function jaapStartRound(){
   jaapState.active=true;jaapState.paused=false;jaapState.count=0;jaapState.left=30;$("jaap-clock").textContent="30";$("jaap-best").textContent=String(jaapBest());$("jaap-tap-name").textContent=jaapState.mantra;
-  $("jaap-current-player").textContent=jaapState.mode==="duo"?jaapState.names[jaapState.round]+" ki baari":(jaapState.mode==="mala"?"Aapka jaap · "+jaapState.mantra:"30 second · jitna ho sake");
-  $("jaap-round-label").textContent=jaapState.mode==="mala"?"Mala jaap":(jaapState.mode==="duo"?"Do logon ka mukabla":"Speed round");$("jaap-count-label").textContent="Ginti";
+  $("jaap-current-player").textContent=jaapState.mode==="duo"?jl("turnOf",{n:jaapState.names[jaapState.round]}):(jaapState.mode==="mala"?jl("yourJaap")+" · "+jaapState.mantra:jl("soloSub"));
+  $("jaap-round-label").textContent=jl(jaapState.mode==="mala"?"roundMala":(jaapState.mode==="duo"?"roundDuo":"roundSolo"));$("jaap-count-label").textContent=jl("count");
   $("jaap-clock").hidden=jaapState.mode==="mala";$("jaap-best-line").hidden=jaapState.mode!=="solo";$("jaap-beads").hidden=jaapState.mode!=="mala";$("jaap-undo").hidden=jaapState.mode!=="mala";
   $("jaap-between").hidden=true;$("jaap-final").hidden=true;$("jaap-tap").disabled=false;jaapDress(document.querySelector(".mala-lg"),jaapState.mantra);if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;}jaapRefreshProgress();
   jaapRunClock();
@@ -402,16 +399,16 @@ function jaapStartRound(){
 function jaapFinal(){
   $("jaap-tap").disabled=true;$("jaap-between").hidden=true;$("jaap-final").hidden=false;var title,scoreText,shareText;
   if(jaapState.mode==="duo"){
-    var a=jaapState.scores[0],b=jaapState.scores[1],winner=a.count===b.count?"Tie! Dono ka score barabar hai.":(a.count>b.count?a.name:b.name)+" jeete!";
+    var a=jaapState.scores[0],b=jaapState.scores[1],winner=a.count===b.count?jl("tie"):jl("wins",{n:(a.count>b.count?a.name:b.name)});
     title=winner;scoreText='<div class="jaap-score-row"><span>'+esc(a.name)+'</span><b>'+a.count+'</b></div><div class="jaap-score-row"><span>'+esc(b.name)+'</span><b>'+b.count+'</b></div>';shareText="Naam Jaap Challenge · "+jaapState.mantra+"\n"+a.name+": "+a.count+" taps\n"+b.name+": "+b.count+" taps\n"+winner;
   }else if(jaapState.mode==="mala"){
-    title="Sankalp poora 🙏";scoreText='<div class="jaap-score-row"><span>Aapka jaap</span><b>'+jaapState.count+'</b></div><div class="jaap-score-row"><span>Lakshya</span><b>'+jaapState.goal+'</b></div>';shareText="Aaj maine apna "+jaapState.goal+" naam jaap sankalp poora kiya 🙏\nhttps://maakit.in/jyotish/";
+    title=jl("malaDoneTitle");scoreText='<div class="jaap-score-row"><span>'+jl("rowJaap")+'</span><b>'+jaapState.count+'</b></div><div class="jaap-score-row"><span>'+jl("rowGoal")+'</span><b>'+jaapState.goal+'</b></div>';shareText=T3("🙏 Aaj maine \""+jaapState.mantra+"\" ka "+jaapState.goal+" jaap ka sankalp poora kiya.\nAap bhi jaap kijiye: https://maakit.in/jyotish/","🙏 आज मैंने \""+jaapState.mantra+"\" के "+jaapState.goal+" जप का संकल्प पूरा किया।\nआप भी जप कीजिए: https://maakit.in/jyotish/","🙏 Today I completed my vow of "+jaapState.goal+" chants of \""+jaapState.mantra+"\".\nJoin me: https://maakit.in/jyotish/");
   }else{
-    var n=jaapState.scores[0].count,best=jaapBest();title=n>jaapState.bestBefore&&n>0?"Naya personal best!":"Aaj ka round poora!";
-    scoreText='<div class="jaap-score-row"><span>Aapke taps</span><b>'+n+'</b></div><div class="jaap-score-row"><span>Personal best</span><b>'+best+'</b></div>';shareText="Maine 30 second mein "+n+" baar "+jaapState.mantra+" jaapa! Aap bhi apna score banaiye.\nhttps://maakit.in/jyotish/";
+    var n=jaapState.scores[0].count,best=jaapBest();title=n>jaapState.bestBefore&&n>0?jl("newBest"):jl("roundOver");
+    scoreText='<div class="jaap-score-row"><span>'+jl("rowTaps")+'</span><b>'+n+'</b></div><div class="jaap-score-row"><span>'+jl("rowBest")+'</span><b>'+best+'</b></div>';shareText=T3("30 second mein maine "+n+" baar \""+jaapState.mantra+"\" ka jaap kiya. Aap kitna kar sakte hain?\nhttps://maakit.in/jyotish/","30 सेकंड में मैंने "+n+" बार \""+jaapState.mantra+"\" का जप किया। आप कितना कर सकते हैं?\nhttps://maakit.in/jyotish/","I chanted \""+jaapState.mantra+"\" "+n+" times in 30 seconds. How many can you do?\nhttps://maakit.in/jyotish/");
   }
-  $("jaap-final-label").textContent=jaapState.mode==="mala"?"Lakshya poora":(jaapState.mode==="duo"?"Mukabla ka nateeja":"Speed round ka nateeja");
-  $("jaap-final-copy").textContent=jaapState.mode==="mala"?"Aapne aaj "+jaapState.bhav+" jaap poora kiya. Roz thoda samay bhakti ke liye nikaalte rahiye.":"Doston ko challenge dene ke liye nateeja share karein.";
+  $("jaap-final-label").textContent=jl(jaapState.mode==="mala"?"goalDoneLabel":(jaapState.mode==="duo"?"duoResult":"soloResult"));
+  $("jaap-final-copy").textContent=jaapState.mode==="mala"?jl("malaDoneCopy",{b:jaapState.bhav}):jl("gameCopy");
   $("jaap-final-title").textContent=title;$("jaap-final-scores").innerHTML=scoreText;$("jaap-share").href="https://wa.me/?text="+encodeURIComponent(shareText);
 }
 function jaapRecordSession(){var a=store("mj-jaap-sessions")||[];a.push({date:todayKey(),mode:jaapState.mode,count:jaapState.count});store("mj-jaap-sessions",a.slice(-180));jaapRenderStats();}
@@ -420,13 +417,15 @@ function jaapFinishRound(){
   if(jaapState.mode==="mala"){jaapFinal();return;}
   jaapState.scores.push({name:jaapState.mode==="duo"?jaapState.names[jaapState.round]:"Aap",count:jaapState.count});
   if(jaapState.mode==="solo"){var all=store("mj-jaap-best")||{};if(jaapState.count>(Number(all[jaapState.mantra])||0)){all[jaapState.mantra]=jaapState.count;store("mj-jaap-best",all);}jaapFinal();return;}
-  if(jaapState.round===0){$("jaap-between").hidden=false;$("jaap-result-title").textContent=jaapState.names[0]+" ka round poora";$("jaap-result-copy").textContent=jaapState.scores[0].count+" taps. Ab phone "+jaapState.names[1]+" ko dein.";return;}jaapFinal();
+  if(jaapState.round===0){$("jaap-between").hidden=false;$("jaap-result-title").textContent=jl("roundDoneTitle",{n:jaapState.names[0]});$("jaap-result-copy").textContent=jl("roundDoneCopy",{c:jaapState.scores[0].count,n:jaapState.names[1]});return;}jaapFinal();
 }
-$("jaap-mode").onchange=function(){var mode=this.value;$("jaap-names").hidden=mode!=="duo";$("jaap-goal-wrap").hidden=mode!=="mala";$("jaap-custom-goal-wrap").hidden=mode!=="mala"||$("jaap-goal").value!=="custom";$("jaap-bhav").parentElement.hidden=mode!=="mala";$("jaap-start").textContent=mode==="mala"?"Jaap shuru karein":(mode==="duo"?"Mukabla shuru karein":"Speed round shuru karein");};
+$("jaap-mode").onchange=function(){var mode=this.value;$("jaap-names").hidden=mode!=="duo";$("jaap-goal-wrap").hidden=mode!=="mala";$("jaap-custom-goal-wrap").hidden=mode!=="mala"||$("jaap-goal").value!=="custom";$("jaap-bhav").parentElement.hidden=mode!=="mala";$("jaap-start").textContent=jl(mode==="mala"?"startMala":(mode==="duo"?"startDuo":"startSolo"));};
 $("jaap-mantra").onchange=function(){$("jaap-custom-mantra-wrap").hidden=this.value!=="__custom__";jaapSyncMiniMantra(this.value==="__custom__"?$("jaap-custom-mantra").value.trim()||"Apna mantra":this.value);jaapUpdateGuide();};
 $("jaap-goal").onchange=function(){$("jaap-custom-goal-wrap").hidden=this.value!=="custom";};
+var JAAP_MEAN={hi:{"राधा":"राधा नाम को प्रेम और भक्ति का सार माना जाता है; ब्रज की परंपरा में राधा-नाम का जप श्रीकृष्ण भक्ति का मार्ग है।","राम":"राम नाम को भक्ति, मर्यादा और धैर्य से जोड़ा जाता है।","ॐ नमः शिवाय":"यह शिव पंचाक्षर मंत्र है; परंपरा में इसका अर्थ अपने भीतर के शिव-तत्व को नमन माना जाता है।","हरे कृष्ण":"यह नाम-स्मरण का मंत्र है; परंपरा में यह भक्ति और स्मरण का भाव रखता है।","जय माता दी":"माँ के प्रति श्रद्धा और साहस का जयकारा।"},
+ en:{"राधा":"Radha's name is seen as the essence of love and devotion; in the Braj tradition, chanting it is a path of devotion to Shri Krishna.","राम":"The name Ram is linked with devotion, righteousness and patience.","ॐ नमः शिवाय":"This is Shiva's five-syllable mantra; traditionally it means bowing to the Shiva within.","हरे कृष्ण":"A mantra of remembering the divine name, carrying the feeling of devotion.","जय माता दी":"A call of faith and courage to the Divine Mother."}};
 var jaapMeanings={"राधा":"Radha naam ko prem aur bhakti ka saar maana jata hai; Braj ki parampara mein Radha-naam ka jaap Shri Krishna ki bhakti ka marg hai.","राम":"राम नाम ko bhakti, maryada aur dhairya se joda jata hai.","ॐ नमः शिवाय":"Yeh Shiv mantra hai; parampara mein iska arth apne andar ke Shiv-tattva ko naman karna maana jata hai.","हरे कृष्ण":"Yeh naam-smaran ka mantra hai; parampara mein bhakti aur smaran ka bhaav rakhta hai.","जय माता दी":"Maa ke prati shraddha aur sahas ka jaikara."};
-function jaapUpdateGuide(){var m=$("jaap-mantra").value==="__custom__"?$("jaap-custom-mantra").value.trim():$("jaap-mantra").value;$("jaap-guide-title").textContent=m||"Apna mantra";$("jaap-guide-copy").textContent=jaapMeanings[m]||"Aapke chune hue naam ka arth alag paramparaon mein alag ho sakta hai. Apne vishwas aur bhaav ke saath jaap karein."; }
+function jaapUpdateGuide(){var m=$("jaap-mantra").value==="__custom__"?$("jaap-custom-mantra").value.trim():$("jaap-mantra").value;$("jaap-guide-title").textContent=m||jl("optOwn");$("jaap-guide-copy").textContent=(lk()==="hl"?jaapMeanings[m]:(JAAP_MEAN[lk()]||{})[m])||T3("Har parampara mein is naam ka arth thoda alag ho sakta hai. Apni shraddha aur bhaav ke saath jaap karein.","हर परंपरा में इस नाम का अर्थ थोड़ा अलग हो सकता है। अपनी श्रद्धा और भाव के साथ जप करें।","The meaning of this name can differ between traditions. Chant with your own faith and feeling."); }
 $("jaap-custom-mantra").oninput=jaapUpdateGuide;
 /* ---- Har mantra ki apni tasveer ----
    Pehle se: har devta ka haath-se-bana chitra (SVG, internet se nahi, kuch KB).
@@ -576,10 +575,10 @@ function jaapHomeInit(){ var saved=store("mj-jaap-active"), m=typeof saved==="st
 $("mini-jaap-photo").onclick=function(){$("jaap-photo-file").click();};
 $("mini-jaap-full").onclick=function(){$("mini-jaap-panel").hidden=true;$("mini-jaap-toggle").setAttribute("aria-expanded","false");show("aaj");$("jaap-card").hidden=false;jaapRenderStats();$("jaap-card").scrollIntoView({behavior:"smooth",block:"start"});};
 $("jaap-ask-ai").onclick=function(){var m=$("jaap-mantra").value==="__custom__"?$("jaap-custom-mantra").value.trim():$("jaap-mantra").value;if(!m){$("jaap-custom-mantra-wrap").hidden=false;$("jaap-custom-mantra").focus();return;}var q="Please explain the traditional meaning of the mantra “"+m+"” in "+$("lang").value+". Suggest a gentle beginner jaap routine for "+($("jaap-goal").value==="custom"?$("jaap-custom-goal").value:$("jaap-goal").value)+" repetitions. Do not promise supernatural results or present it as treatment.";show("ai");$("q").value=q;$("q").focus();};
-$("jaap-pause").onclick=function(){if(jaapState.active){jaapState.active=false;jaapState.paused=true;if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;}$("jaap-tap").disabled=true;this.textContent="▶ Jaari rakhein";this.setAttribute("aria-pressed","true");$("jaap-progress-note").textContent="Aapka jaap ruka hua hai. Taiyaar hon to jaari rakhein.";}else if(jaapState.paused){jaapState.active=true;jaapState.paused=false;$("jaap-tap").disabled=false;this.textContent="⏸ Rokein";this.setAttribute("aria-pressed","false");jaapRefreshProgress();jaapRunClock();}};
+$("jaap-pause").onclick=function(){if(jaapState.active){jaapState.active=false;jaapState.paused=true;if(jaapState.timer){clearInterval(jaapState.timer);jaapState.timer=null;}$("jaap-tap").disabled=true;this.textContent=jl("resume");this.setAttribute("aria-pressed","true");$("jaap-progress-note").textContent=jl("paused");}else if(jaapState.paused){jaapState.active=true;jaapState.paused=false;$("jaap-tap").disabled=false;this.textContent=jl("pause");this.setAttribute("aria-pressed","false");jaapRefreshProgress();jaapRunClock();}};
 
 $("jaap-start").onclick=function(){
-  jaapState.mode=$("jaap-mode").value;var chosen=$("jaap-mantra").value;jaapState.mantra=chosen==="__custom__"?$("jaap-custom-mantra").value.trim():chosen;jaapSyncMiniMantra(jaapState.mantra);if(!jaapState.mantra){$("jaap-custom-mantra-wrap").hidden=false;$("jaap-custom-mantra").focus();return;}if(jaapState.mantra.length>60){$("jaap-custom-mantra").focus();return;}var goalChoice=$("jaap-goal").value;jaapState.goal=goalChoice==="custom"?Math.max(1,Math.min(1008,Math.floor(Number($("jaap-custom-goal").value)||0))):(Number(goalChoice)||108);if(jaapState.mode==="mala"&&goalChoice==="custom"&&!Number($("jaap-custom-goal").value)){$("jaap-custom-goal").focus();return;}jaapState.bhav={sahaj:"shraddha se",shanti:"shaanti ke bhaav se",aabhar:"aabhaar ke bhaav se",sahas:"sahas ke bhaav se",ekagrata:"ekagrata ke bhaav se"}[$("jaap-bhav").value]||"bina kisi khaas sankalp ke";jaapState.round=0;jaapState.scores=[];jaapState.bestBefore=jaapBest();jaapState.names=[$("jaap-player1").value.trim()||"Player 1",$("jaap-player2").value.trim()||"Player 2"];
+  jaapState.mode=$("jaap-mode").value;var chosen=$("jaap-mantra").value;jaapState.mantra=chosen==="__custom__"?$("jaap-custom-mantra").value.trim():chosen;jaapSyncMiniMantra(jaapState.mantra);if(!jaapState.mantra){$("jaap-custom-mantra-wrap").hidden=false;$("jaap-custom-mantra").focus();return;}if(jaapState.mantra.length>60){$("jaap-custom-mantra").focus();return;}var goalChoice=$("jaap-goal").value;jaapState.goal=goalChoice==="custom"?Math.max(1,Math.min(1008,Math.floor(Number($("jaap-custom-goal").value)||0))):(Number(goalChoice)||108);if(jaapState.mode==="mala"&&goalChoice==="custom"&&!Number($("jaap-custom-goal").value)){$("jaap-custom-goal").focus();return;}jaapState.bhav=jl("bhavWord."+($("jaap-bhav").value in JL.bhavWord?$("jaap-bhav").value:"sahaj"));jaapState.round=0;jaapState.scores=[];jaapState.bestBefore=jaapBest();jaapState.names=[$("jaap-player1").value.trim()||"Player 1",$("jaap-player2").value.trim()||"Player 2"];
   jaapBuildBeads();$("jaap-today").textContent=String(jaapDailyCount());$("jaap-arena").hidden=false;jaapStartRound();try{var el=$("jaap-arena");if(jaapState.mode!=="mala"&&el.requestFullscreen)el.requestFullscreen().then(function(){if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(function(){});}).catch(function(){});}catch(e){}
 };
 onTap($("jaap-tap"),function(){
@@ -605,22 +604,22 @@ var UI_COPY={
   hi:{lang:"भाषा",title:"नमस्ते! आज आप क्या जानना चाहेंगे?",body:"कुंडली, करियर, विवाह या आज के दिन पर अपना सवाल पूछें।",primary:"अपना सवाल यहाँ लिखें…",trust:"आपकी जन्म की जानकारी सिर्फ़ आपके फ़ोन में रहती है।",moduleTitle:"हमारी सेवाएं",quick:"ज्योतिष सेवाएं",ai:"AI ज्योतिषी",aiNote:"करियर, विवाह या किसी फ़ैसले पर मार्गदर्शन",kundli:"जन्म कुंडली",kundliNote:"ग्रह, लग्न और दशा की पूरी जानकारी",milan:"कुंडली मिलान",milanNote:"विवाह से पहले 36 गुण मिलान",rashi:"आज का राशिफल",rashiNote:"आज का दिन और एक सरल उपाय",jaapHeading:"आज का जप",jaapDescription:"अपना मंत्र चुनें और माला चक्र पर टैप करके जप शुरू करें।",jaapMantra:"मंत्र चुनें",jaapCountLabel:"आज का कुल जप",malaLabel:"माला",jaapTap:"टैप करें · पुष्प चढ़ाएं",bell:"घंटी",vibe:"कंपन",auto:"ऑटो जप",target:"लक्ष्य",share:"जप शेयर करें",copy:"लिंक कॉपी",challenge:"जप चैलेंज",settings:"जप सेटिंग्स",tabs:["होम","AI चैट","कुंडली","राशिफल"],photo:"भगवान की फ़ोटो लगाएं",fullJaap:"जप सेटिंग्स खोलें",panch:"आज"},
   en:{lang:"Language",title:"Namaste! What would you like to know today?",body:"Ask about your Kundli, career, marriage or the day ahead.",primary:"Type your question…",trust:"Your birth details stay only on your phone.",moduleTitle:"Our services",quick:"Jyotish services",ai:"AI Jyotishi",aiNote:"Guidance on career, marriage or any decision",kundli:"Birth Kundli",kundliNote:"Planets, lagna and dasha in full",milan:"Kundli Milan",milanNote:"36-gun match before marriage",rashi:"Today's Rashifal",rashiNote:"Your day and one simple remedy",jaapHeading:"Today's Jaap",jaapDescription:"Choose your mantra and tap the mala to begin chanting.",jaapMantra:"Choose a mantra",jaapCountLabel:"Today's total",malaLabel:"Mala",jaapTap:"Tap · Offer a flower",bell:"Bell",vibe:"Vibration",auto:"Auto Jaap",target:"Goal",share:"Share Jaap",copy:"Copy Link",challenge:"Jaap Challenge",settings:"Jaap settings",tabs:["Home","AI Chat","Kundli","Horoscope"],photo:"Add a deity photo",fullJaap:"Open Jaap settings",panch:"Today"}
 };
-function applyUiLanguage(){var d=UI_COPY[lk()]||UI_COPY.hl;var m={"language-label":d.lang,"welcome-title":d.title,"welcome-description":d.body,"home-primary-label":d.primary,"home-trustline":d.trust,"home-module-title":d.moduleTitle,"welcome-actions":d.quick,"home-ai-title":d.ai,"home-ai-note":d.aiNote,"home-kundli-title":d.kundli,"home-kundli-note":d.kundliNote,"home-milan-title":d.milan,"home-milan-note":d.milanNote,"home-rashi-title":d.rashi,"home-rashi-note":d.rashiNote,"home-jaap-heading":d.jaapHeading,"home-jaap-description":d.jaapDescription,"home-jaap-mantra-label":d.jaapMantra,"home-jaap-count-label":d.jaapCountLabel,"home-mala-label":d.malaLabel,"home-jaap-tap-label":d.jaapTap,"jt-bell-label":d.bell,"jt-vibe-label":d.vibe,"jt-auto-label":d.auto,"jt-target-label":d.target,"js-share-label":d.share,"js-copy-label":d.copy,"js-challenge-label":d.challenge,"home-jaap-settings":d.settings,"tab-home-label":d.tabs[0],"tab-chat-label":d.tabs[1],"tab-kundli-label":d.tabs[2],"tab-today-label":d.tabs[3],"mini-jaap-photo":d.photo,"mini-jaap-full":d.fullJaap};Object.keys(m).forEach(function(id){var x=$(id);if(x){if(id==="welcome-actions"||id==="home-jaap-settings")x.setAttribute("aria-label",m[id]);else x.textContent=m[id];}});if(typeof jaapChips==="function"&&$("home-jaap-chips").childElementCount)jaapChips();if(typeof jaapTargetLine==="function"&&typeof jprefs!=="undefined")jaapTargetLine();if(typeof TD!=="undefined")$("panch").innerHTML=d.panch+': <strong>'+TD.tithi+'</strong> · '+(lk()==="hi"?"चंद्रमा ":"Moon ")+(lk()==="hi"?"राशि ":"in ")+'<strong>'+S[TD.moonSign]+'</strong>, '+TD.nak.name+(lk()==="hi"?" नक्षत्र":" nakshatra");}
+function applyUiLanguage(){if(typeof jlApply==="function")jlApply();var d=UI_COPY[lk()]||UI_COPY.hl;var m={"language-label":d.lang,"welcome-title":d.title,"welcome-description":d.body,"home-primary-label":d.primary,"home-trustline":d.trust,"home-module-title":d.moduleTitle,"welcome-actions":d.quick,"home-ai-title":d.ai,"home-ai-note":d.aiNote,"home-kundli-title":d.kundli,"home-kundli-note":d.kundliNote,"home-milan-title":d.milan,"home-milan-note":d.milanNote,"home-rashi-title":d.rashi,"home-rashi-note":d.rashiNote,"home-jaap-heading":d.jaapHeading,"home-jaap-description":d.jaapDescription,"home-jaap-mantra-label":d.jaapMantra,"home-jaap-count-label":d.jaapCountLabel,"home-mala-label":d.malaLabel,"home-jaap-tap-label":d.jaapTap,"jt-bell-label":d.bell,"jt-vibe-label":d.vibe,"jt-auto-label":d.auto,"jt-target-label":d.target,"js-share-label":d.share,"js-copy-label":d.copy,"js-challenge-label":d.challenge,"home-jaap-settings":d.settings,"tab-home-label":d.tabs[0],"tab-chat-label":d.tabs[1],"tab-kundli-label":d.tabs[2],"tab-today-label":d.tabs[3],"mini-jaap-photo":d.photo,"mini-jaap-full":d.fullJaap};Object.keys(m).forEach(function(id){var x=$(id);if(x){if(id==="welcome-actions"||id==="home-jaap-settings")x.setAttribute("aria-label",m[id]);else x.textContent=m[id];}});if(typeof jaapChips==="function"&&$("home-jaap-chips").childElementCount)jaapChips();if(typeof jaapTargetLine==="function"&&typeof jprefs!=="undefined")jaapTargetLine();if(typeof TD!=="undefined")$("panch").innerHTML=d.panch+': <strong>'+TD.tithi+'</strong> · '+(lk()==="hi"?"चंद्रमा ":"Moon ")+(lk()==="hi"?"राशि ":"in ")+'<strong>'+S[TD.moonSign]+'</strong>, '+TD.nak.name+(lk()==="hi"?" नक्षत्र":" nakshatra");}
 applyUiLanguage();
-$("lang").onchange=function(){store("mj-lang",$("lang").value);applyUiLanguage();if(!$("t-aaj").hidden)renderAaj();if(!$("help").hidden)showHelp();};
+$("lang").onchange=function(){store("mj-lang",$("lang").value);applyUiLanguage();renderPanch();renderKundli();if(milanReady)renderMilan();if(!$("t-rashi").hidden)renderRashi();renderAiHead();aiModeText();renderPriv();$("jaap-mode").onchange();jaapUpdateGuide();if(!$("t-aaj").hidden)renderAaj();if(!$("help").hidden)showHelp();};
 
 /* ---- suchna aur privacy ---- */
 function renderNotice(){ $("notice").hidden = store("mj-share")!==null; }
 $("share-yes").onclick=function(){ store("mj-share","yes"); renderNotice(); renderPriv(); };
 $("share-no").onclick=function(){ store("mj-share","no"); renderNotice(); renderPriv(); };
 function renderPriv(){
-  $("priv-state").textContent = sharing() ? "Anonymous usage is shared with Maakit (no name, exact birth date or mood). Your questions to the AI are read to improve the app." : "Usage sharing is off. Nothing about your use is saved by Maakit.";
-  $("priv-toggle").textContent = sharing() ? "Stop sharing usage" : "Share usage";
+  $("priv-state").textContent = jl(sharing()?"privOn":"privOff");
+  $("priv-toggle").textContent = jl(sharing()?"privStop":"privStart");
 }
 $("priv-toggle").onclick=function(){ store("mj-share",sharing()?"no":"yes"); renderNotice(); renderPriv(); };
 var delArmed=false;
 $("priv-del").onclick=function(){
-  if(!delArmed){ delArmed=true; $("priv-del").textContent="Tap again to delete everything"; return; }
+  if(!delArmed){ delArmed=true; $("priv-del").textContent=jl("delAgain"); return; }
   var dev=store("mj-dev");
   if(typeof dev==="string") fetch("track.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({k:"forget",device:dev}),keepalive:true}).catch(function(){});
   try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("mj-")===0) localStorage.removeItem(k); }); }catch(e){}
@@ -631,5 +630,5 @@ $("priv-del").onclick=function(){
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};
-writeForm(profile); renderKundli(); renderPriv(); renderNotice(); $("jaap-today").textContent=String(jaapDailyCount());jaapRenderStats();jaapUpdateGuide();jaapApplyPhoto();jaapHomeInit();jaapUpdateMini(); trackOnce("visit"); show("aaj");
+writeForm(profile); renderKundli(); renderPriv(); renderNotice(); $("jaap-today").textContent=String(jaapDailyCount());jaapRenderStats();jaapUpdateGuide();jaapApplyPhoto();jaapHomeInit();jaapUpdateMini(); trackOnce("visit"); show("aaj"); aiModeText(); if(!AI_ON) $("ai-status").textContent=jl("aiSoon");
 })();
