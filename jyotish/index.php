@@ -57,7 +57,7 @@ header('Content-Type: text/html; charset=utf-8');
 
     <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
       <div class="jaap-head">
-        <div><h2 id="home-jaap-heading">Aaj ka Jaap</h2>
+        <div><h2 id="home-jaap-heading">Naam Jaap Mala</h2>
         <p id="home-jaap-description">Apna mantra chunein aur mala chakra par tap karke jaap shuru karein.</p></div>
         <button class="iconbtn" id="home-jaap-settings" type="button" aria-label="Jaap settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></button>
       </div>
@@ -89,14 +89,14 @@ header('Content-Type: text/html; charset=utf-8');
     </section>
 
     <section class="welcome-hero" aria-labelledby="welcome-title">
-      <h2 id="welcome-title">Namaste! Aaj aap kya jaanna chahenge?</h2>
+      <h2 id="welcome-title">Aapke sawaal, kundli ke jawaab</h2>
       <p id="welcome-description">Kundli, career, vivah ya aaj ke din par apna sawaal poochhein.</p>
       <button class="askbar" id="home-primary" type="button" data-home-action="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg><span id="home-primary-label">Apna sawaal yahan likhein…</span></button>
       <p class="home-trustline" id="home-trustline">Aapki janam ki jaankari sirf aapke phone mein rehti hai.</p>
     </section>
 
     <section class="home-module-section" aria-labelledby="home-module-title">
-      <h2 id="home-module-title">Hamari sevayein</h2>
+      <h2 id="home-module-title">Jyotish Seva</h2>
       <div class="home-modules" id="welcome-actions" aria-label="Jyotish features">
         <button class="module-card module-ai" type="button" data-home-action="ai"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-4.3A2.5 2.5 0 0 1 4 13.5z"/><path d="M12 6.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg></span><b id="home-ai-title">AI Jyotishi</b><small id="home-ai-note">Career, vivah ya kisi faisle par margdarshan</small></button>
         <button class="module-card module-kundli" type="button" data-home-action="kundli"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 3l18 18M21 3L3 21M12 3l9 9-9 9-9-9z"/></svg></span><b id="home-kundli-title">Janam Kundli</b><small id="home-kundli-note">Grah, lagna aur dasha ki poori jaankari</small></button>
