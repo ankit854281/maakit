@@ -33,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         if (!$err) {
             $pdo->beginTransaction();
             $tok = in_array($cat, ['nai', 'parlour'], true) ? 1 : 0;
-            $pdo->prepare("INSERT INTO businesses (name, owner, category, work, mobile, village, address, about, photo, token_enabled, shop_type, items_on, status)
-                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'pending')")
-                ->execute([$name, $owner, $cat, $work, $mobile, $village, $address, $about, $photo, $tok, $shop_type ?: null, $shop_type !== '' ? 1 : 0]);
+            $pdo->prepare("INSERT INTO businesses (added_by, name, owner, category, work, mobile, village, address, about, photo, token_enabled, shop_type, items_on, status)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, 'pending')")
+                ->execute([(int)(user()['id'] ?? 0) ?: null, $name, $owner, $cat, $work, $mobile, $village, $address, $about, $photo, $tok, $shop_type ?: null, $shop_type !== '' ? 1 : 0]);
             if ($shop_type !== '') dukan_kism_bharo($pdo, (int)$pdo->lastInsertId(), $shop_type);
             $pdo->commit();
             $done = true;

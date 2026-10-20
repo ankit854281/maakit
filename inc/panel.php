@@ -59,6 +59,8 @@ if ($role === 'admin') {
         t('Settings', 'सेटिंग') => [
             '/admin/settings.php'  => [t('Hours & festival', 'समय/त्योहार'), 'clock'],
             '/admin/users.php'     => [t('Team', 'टीम'), 'user'],
+            // Kaun kya kar raha hai -- gina hua, kisi ke bataye bina
+            '/admin/staff.php'     => [t('Who did what', 'किसने क्या किया'), 'check'],
             '/admin/readiness.php' => [t('Launch readiness', 'Launch तैयारी'), 'check'],
             '/nakal.php'           => [t('Backups', 'नक़ल'), 'shield'],
         ],

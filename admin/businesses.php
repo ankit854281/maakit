@@ -6,7 +6,15 @@ $page_title = 'दुकान / कारीगर — Maakit';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $id = (int)post('id');
     if (post('do') === 'status') {
-        $pdo->prepare("UPDATE businesses SET status=? WHERE id=?")->execute([post('status'), $id]);
+        // Manzoori par bhi naam. Jodna field wale ka kaam hai, manzoori
+        // maalik ka -- dono alag darj hone chahiye, warna jodne wala
+        // khud hi apni jodi hui dukaan pass karta dikhega.
+        $pdo->prepare("UPDATE businesses SET status=?,
+                              approved_by = IF(?='approved', ?, approved_by),
+                              approved_at = IF(?='approved', NOW(), approved_at)
+                        WHERE id=?")
+            ->execute([post('status'), post('status'), (int)(user()['id'] ?? 0) ?: null,
+                       post('status'), $id]);
         // Manzoori ke saath hi code bana dete hain — tabhi dukandar
         // /shop.php par andar aakar apna saaman aur hisab chala sakta hai.
         if (post('status') === 'approved') {

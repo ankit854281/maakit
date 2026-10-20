@@ -25,9 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
         $calc = calc_charge($village, $market, $w, $sz, $pdo, (bool)$first);
         $charge = post('delivery_charge') !== '' ? staff_order_amount(post('delivery_charge')) : $calc['total'];
         $order_no = new_order_no($pdo); $code = new_code();
-        $pdo->prepare("INSERT INTO orders (order_no, code, source, customer_name, mobile, village, landmark, items, shop, market, sector, weight_extra, size_extra, first_order, delivery_charge, payment, status)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'Confirm')")
-            ->execute([$order_no, $code, $src, $name, $mobile, $village, $landmark, $items, $shop, $market, $sector, $w, $sz, $first, $charge, $pay]);
+        $pdo->prepare("INSERT INTO orders (order_no, code, source, customer_name, mobile, village, landmark, items, shop, market, sector, weight_extra, size_extra, first_order, delivery_charge, payment, staff_user, status)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'Confirm')")
+            // Kaam par naam. Isi se baad me gin kar dikhaya jata hai ki kis
+            // staff ne kitne order daale -- uske kehne par nahi, record par.
+            ->execute([$order_no, $code, $src, $name, $mobile, $village, $landmark, $items, $shop, $market, $sector, $w, $sz, $first, $charge, $pay, (int)(user()['id'] ?? 0) ?: null]);
 
         $created_id=(int)$pdo->lastInsertId();
         dispatch_assign($pdo,$created_id);

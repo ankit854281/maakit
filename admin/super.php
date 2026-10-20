@@ -134,6 +134,7 @@ $darwaze = [
     t('For you', 'आपके लिए') => [
         ['/admin/super.php',    t('Everything in one place', 'सब एक जगह'),      t('this page', 'यही पन्ना'), ''],
         ['/admin/dash.php',     t('Numbers & charts', 'आँकड़े और चार्ट'),        t('week-on-week', 'हफ़्ते की तुलना'), ''],
+        ['/admin/staff.php',    t('Who did what', 'किसने क्या किया'),        t('counted, not self-reported', 'गिना हुआ, किसी के बताए बिना'), ''],
         ['/admin/summary.php',  t('Monthly accounts', 'महीने का हिसाब'),        '', ''],
         ['/admin/readiness.php',t('Launch readiness', 'Launch की तैयारी'),      t('what is still missing in setup', 'setup में क्या बाकी है'), ''],
         ['/delivery/',          t("Office's hand", 'दफ़्तर का हाथ'),            t("record an order in the rider's place", 'सारथी की जगह ऑर्डर दर्ज करना'), ''],
