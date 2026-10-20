@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=9">
+<link rel="stylesheet" href="jyotish.css?v=10">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -80,7 +80,7 @@ header('Content-Type: text/html; charset=utf-8');
         <span class="mbadge"><span id="home-mala-label">Mala</span>: <b id="home-mala-num">1</b> (<b id="home-mala-in">0</b>/108)</span>
         <span class="mbadge"><span id="home-jaap-count-label">Aaj ka Kul Jaap</span>: <b id="home-jaap-total">0</b></span>
       </div>
-      <div class="jaap-evolution"><div><b id="jaap-evolution-title">Beej se shuruaat</b><small id="jaap-evolution-next">Agla padaav: Vriksh</small></div><div class="jaap-evolution-track" id="jaap-evolution-bar" role="progressbar" aria-label="Sadhna ki pragati" data-i18n-aria="jtEvolutionLabel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="jaap-evolution-fill"></i></div></div>
+      <div class="jaap-evolution"><span class="jaap-evo-art" id="jaap-evo-art" aria-hidden="true"></span><div><b id="jaap-evolution-title">Beej se shuruaat</b><small id="jaap-evolution-next">Agla padaav: Vriksh</small></div><div class="jaap-evolution-track" id="jaap-evolution-bar" role="progressbar" aria-label="Sadhna ki pragati" data-i18n-aria="jtEvolutionLabel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="jaap-evolution-fill"></i></div></div>
       <div class="jaap-batch-tools"><button class="jaap-batch-button" id="jt-batch" type="button" aria-pressed="false"><strong id="jt-batch-value">+1</strong><span id="jt-batch-label">per tap</span></button><span id="jaap-batch-hint">Har mantra ke baad ek tap</span><button class="jaap-undo-inline" id="home-jaap-undo" type="button" disabled data-i18n="jtUndo">↶ Undo</button></div><p class="sr-only" id="jaap-batch-status" aria-live="polite" aria-atomic="true"></p>
       <div class="jaap-toggles" role="group" aria-label="Jaap settings">
         <button class="tpill" id="jt-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span id="jt-bell-label">Ghanti</span></button>
@@ -382,8 +382,8 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <div class="jg-hud jg-right">
     <button class="jg-btn main" id="jg-auto" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5z"/></svg><span id="jg-auto-label">Auto Jaap</span></button>
-    <button class="jg-btn" id="jg-batch" type="button" aria-pressed="false"><span id="jg-batch-label">+1 / +12</span></button>
-    <button class="jg-btn" id="jg-undo" type="button" disabled>Undo</button>
+    <button class="jg-btn" id="jg-batch" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="8" cy="16" r="2.5"/><circle cx="16" cy="16" r="2.5"/></svg><span id="jg-batch-label">Har tap: +1</span></button>
+    <button class="jg-btn" id="jg-undo" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span data-i18n="jtUndo">Pichhli ginti wapas</span></button>
     <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
     <button class="jg-btn" id="jg-voice" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="jg-voice-label" data-i18n="voiceOff">Awaaz band</span></button>
     <button class="jg-btn" id="jg-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span data-i18n="bellShort">Ghanti</span></button>
@@ -401,6 +401,6 @@ header('Content-Type: text/html; charset=utf-8');
 <script src="engine.js?v=1"></script>
 <script src="i18n.js?v=5"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=10"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>
