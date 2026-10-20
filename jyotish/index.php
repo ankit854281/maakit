@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=7">
+<link rel="stylesheet" href="jyotish.css?v=8">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -87,6 +87,7 @@ header('Content-Type: text/html; charset=utf-8');
         <label class="tpill select"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg><span class="sr-only" id="jt-target-label">Lakshya</span><select id="jt-target"><option value="1">1 Mala</option><option value="3">3 Mala</option><option value="5">5 Mala</option><option value="11">11 Mala</option></select></label>
       </div>
       <p class="goalbar" id="jt-progress" aria-live="polite"></p>
+      <button class="game-btn" id="js-game" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 10v4M5 12h4M15.5 11h.01M18 13h.01"/></svg><span><b data-i18n="gameBtn">Game Mode</b><small data-i18n="gameBtnSub">Phone tircha karein ya yahan dabaiye</small></span></button>
       <div class="jaap-actions">
         <button class="abtn" id="js-share" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/></svg><span id="js-share-label">Share Jaap</span></button>
         <button class="abtn" id="js-copy" type="button"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3.6-3.6a4 4 0 0 0-5.7-5.7L12 6.3"/><path d="M14 10a4 4 0 0 0-5.7 0l-3.6 3.6a4 4 0 0 0 5.7 5.7l1.6-1.6"/></svg><span id="js-copy-label">Copy Link</span></button>
@@ -360,14 +361,41 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
   </div>
 </div>
+<section class="jgame" id="jgame" hidden role="dialog" aria-modal="true" aria-label="Jaap Game Mode">
+  <div class="jg-burst" id="jg-burst" aria-hidden="true"></div>
+  <div class="jg-hud jg-left">
+    <button class="jg-x" id="jg-exit" type="button" data-i18n-aria="gameExit" aria-label="Game band karein"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="jg-mantra" id="jg-mantra">राधा</div>
+    <div class="jg-count"><strong id="jg-count">0</strong><span data-i18n="todayTotal">Aaj ka kul jaap</span></div>
+    <div class="jg-stats"><span><span data-i18n="malaWord">Mala</span> <b id="jg-mala">1</b> · <b id="jg-in">0</b>/108</span><span><b id="jg-speed">0</b> <span data-i18n="perMin">jaap/min</span></span></div>
+    <div class="jg-goal"><i id="jg-goal-bar"></i></div>
+    <div class="jg-goal-row"><span id="jg-goal-text"></span><span class="jg-diyas" id="jg-diyas" aria-hidden="true"></span></div>
+  </div>
+  <div class="mala mala-game" id="jg-mala-wrap">
+    <svg class="mala-ring" id="jg-ring" viewBox="0 0 300 300" aria-hidden="true"></svg>
+    <span class="ripple" aria-hidden="true"></span>
+    <button class="mala-disk" id="jg-tap" type="button" data-i18n-aria="tapOne" aria-label="Ek jaap ginein"><span class="mala-photo" aria-hidden="true"></span><span class="mala-art" aria-hidden="true"></span><b class="mala-name" id="jg-name">राधा</b><small data-i18n="tapLabel">Tap karein · Pushp chadhayein</small></button>
+    <div class="petals" id="jg-petals" aria-hidden="true"></div>
+  </div>
+  <div class="jg-hud jg-right">
+    <button class="jg-btn main" id="jg-auto" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5z"/></svg><span id="jg-auto-label">Auto Jaap</span></button>
+    <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
+    <button class="jg-btn" id="jg-voice" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="jg-voice-label">Ginti bolein</span></button>
+    <button class="jg-btn" id="jg-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span data-i18n="bellShort">Ghanti</span></button>
+  </div>
+  <div class="jg-combo" id="jg-combo" hidden aria-live="polite"></div>
+  <div class="jg-banner" id="jg-banner" hidden aria-live="polite"><b></b><small></small></div>
+  <div class="jg-floats" id="jg-floats" aria-hidden="true"></div>
+  <p class="jg-hint" data-i18n="gameHint">Screen par kahin bhi tap karein · har tap ek jaap</p>
+</section>
 <div class="petal-rain" id="petal-rain" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=3"></script>
+<script src="i18n.js?v=4"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

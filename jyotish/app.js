@@ -470,7 +470,7 @@ $("jaap-photo-choose").onclick=function(){$("jaap-photo-file").click();};
 $("jaap-photo-file").onchange=function(){var file=this.files&&this.files[0],mantra=jaapActive(),input=this;if(!file||file.type.indexOf("image/")!==0){$("jaap-photo-note").textContent="Photo wali file chunein (JPG ya PNG).";return;}var reader=new FileReader();reader.onload=function(){var image=new Image();image.onload=function(){var max=640,scale=Math.min(1,max/Math.max(image.width,image.height)),canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);var data=canvas.toDataURL("image/webp",.74),all=jaapPhotos();all[mantra]=data;store("mj-jaap-photos",all);input.value="";if(jaapPhotos()[mantra]!==data){$("jaap-photo-note").textContent="Phone mein jagah kam hai, photo save nahi hui. Chhoti photo chunein.";return;}jaapApplyPhoto();toast("Photo \""+mantra+"\" ke saath lag gayi");};image.onerror=function(){$("jaap-photo-note").textContent="Yeh photo khul nahi paayi. Koi doosri photo chunein.";};image.src=reader.result;};reader.onerror=function(){$("jaap-photo-note").textContent="Photo padhi nahi ja saki. Dobara chunein.";};reader.readAsDataURL(file);};
 $("jaap-photo-clear").onclick=function(){var all=jaapPhotos();delete all[jaapActive()];store("mj-jaap-photos",all);jaapApplyPhoto();toast("Photo hata di gayi");};
 function jaapSyncMiniMantra(value){var m=$("mini-jaap-mantra");if(!m)return;var active=value||"राम",found=Array.prototype.filter.call(m.options,function(o){return o.value===active;})[0];if(found){m.value=active;}else{var opt=Array.prototype.filter.call(m.options,function(o){return o.value==="__session_custom__";})[0];if(!opt){opt=document.createElement("option");opt.value="__session_custom__";m.appendChild(opt);}opt.textContent=active;m.value=opt.value;}var home=$("home-jaap-mantra"),full=$("jaap-mantra");if(home&&Array.prototype.some.call(home.options,function(o){return o.value===active;}))home.value=active;if(full&&Array.prototype.some.call(full.options,function(o){return o.value===active;})){full.value=active;}else if(full&&$("jaap-custom-mantra")){full.value="__custom__";$("jaap-custom-mantra").value=active;} $("mini-jaap-name").textContent=active;jaapHomeMantra(active);}
-function jaapUpdateMini(){if(!$("mini-jaap-mantra"))return;var n=jaapDailyCount();$("mini-jaap-count").textContent=String(n);$("mini-jaap-today").textContent=String(n);if($("home-jaap-count")){var pos=malaPos(n);$("home-jaap-count").textContent=String(pos.inMala);$("home-jaap-total").textContent=String(n);$("home-mala-num").textContent=String(pos.inMala===MALA?pos.done:pos.done+1);$("home-mala-in").textContent=String(pos.inMala);if(typeof jaapTargetLine==="function"&&typeof jprefs!=="undefined")jaapTargetLine();malaPaint($("home-ring"),pos.inMala);}$("mini-jaap-tap").setAttribute("aria-label","Naam jaap ek baar ginen. Aaj ki kul ginti "+n);}
+function jaapUpdateMini(){if(!$("mini-jaap-mantra"))return;var n=jaapDailyCount();$("mini-jaap-count").textContent=String(n);$("mini-jaap-today").textContent=String(n);if($("home-jaap-count")){var pos=malaPos(n);$("home-jaap-count").textContent=String(pos.inMala);$("home-jaap-total").textContent=String(n);$("home-mala-num").textContent=String(pos.inMala===MALA?pos.done:pos.done+1);$("home-mala-in").textContent=String(pos.inMala);if(typeof jaapTargetLine==="function"&&typeof jprefs!=="undefined")jaapTargetLine();malaPaint($("home-ring"),pos.inMala);}if(typeof jgHud==="function")jgHud();$("mini-jaap-tap").setAttribute("aria-label","Naam jaap ek baar ginen. Aaj ki kul ginti "+n);}
 $("mini-jaap-mantra").onchange=function(){var active=this.value==="__session_custom__"?this.options[this.selectedIndex].text:this.value;$("mini-jaap-name").textContent=active;if($("home-jaap-mantra")){var home=Array.prototype.filter.call($("home-jaap-mantra").options,function(o){return o.value===this.value;},this)[0];if(home)$("home-jaap-mantra").value=this.value;}};
 $("mini-jaap-toggle").onclick=function(){var p=$("mini-jaap-panel"),open=p.hidden;p.hidden=!open;this.setAttribute("aria-expanded",String(open));};
 $("mini-jaap-close").onclick=function(){$("mini-jaap-panel").hidden=true;$("mini-jaap-toggle").setAttribute("aria-expanded","false");$("mini-jaap-toggle").focus();};
@@ -672,6 +672,112 @@ window.addEventListener("appinstalled",function(){ installEvt=null; standalone=t
 function installGo(){ menuClose(true); if(installEvt){ installEvt.prompt(); installEvt.userChoice.finally(function(){ installEvt=null; installShow(); }); } else jaapSheet("ios-sheet",true); }
 $("install-top").onclick=installGo; $("install-menu").onclick=installGo;
 installShow();
+
+/* ============================================================
+   Jaap GAME MODE — phone tircha (landscape) karte hi khulta hai.
+   Poori screen par kahin bhi tap = ek jaap. Auto Jaap mein phone
+   khud ginta hai aur ginti bolkar sunata hai. Ghanti, shankh,
+   pushp, roshni — sab yahin. Ginti wahi Home wali (aaj ka kul jaap).
+   ============================================================ */
+var SND=(function(){ var ctx=null, hiVoice=null;
+  function ac(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null; if(!ctx) ctx=new AC(); if(ctx.state==="suspended") ctx.resume().catch(function(){}); return ctx; }catch(e){ return null; } }
+  /* Mandir ki ghanti: kuch suron ka mel, dheere-dheere gunj kam hoti hai */
+  function bell(pitch,vol){ var c=ac(); if(!c) return; var t=c.currentTime, base=pitch||660, v=vol||1;
+    [[1,.075,1.4],[2.76,.04,.9],[5.4,.022,.55],[8.93,.01,.35]].forEach(function(p){ var o=c.createOscillator(), g=c.createGain(); o.type="sine"; o.frequency.value=base*p[0];
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(p[1]*v,t+.006); g.gain.exponentialRampToValueAtTime(.0001,t+p[2]); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+p[2]+.05); }); }
+  /* Shankh: dheere uthti, gehri awaaz — har mala poori hone par */
+  function shankh(){ var c=ac(); if(!c) return; var t=c.currentTime, d=2.2, out=c.createGain(), lp=c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.setValueAtTime(500,t); lp.frequency.linearRampToValueAtTime(1300,t+.5); lp.Q.value=3;
+    out.gain.setValueAtTime(0,t); out.gain.linearRampToValueAtTime(.16,t+.35); out.gain.setValueAtTime(.16,t+d-.6); out.gain.exponentialRampToValueAtTime(.0001,t+d); lp.connect(out); out.connect(c.destination);
+    var lfo=c.createOscillator(), lg=c.createGain(); lfo.frequency.value=5.2; lg.gain.value=2.4; lfo.connect(lg);
+    [[233,"sawtooth",1],[466,"triangle",.35],[699,"sine",.15]].forEach(function(x){ var o=c.createOscillator(), g=c.createGain(); o.type=x[1]; o.frequency.setValueAtTime(x[0]*.97,t); o.frequency.linearRampToValueAtTime(x[0],t+.4); lg.connect(o.frequency); g.gain.value=x[2]; o.connect(g); g.connect(lp); o.start(t); o.stop(t+d+.05); });
+    lfo.start(t); lfo.stop(t+d+.05); }
+  function pickVoice(){ if(!window.speechSynthesis) return null; var vs=speechSynthesis.getVoices()||[]; hiVoice=vs.filter(function(v){return /^hi/i.test(v.lang);})[0]||null; return hiVoice; }
+  if(window.speechSynthesis){ pickVoice(); try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
+  function speak(text){ if(!window.speechSynthesis||!window.SpeechSynthesisUtterance) return false; try{ speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(String(text)); var v=hiVoice||pickVoice(); if(v){ u.voice=v; u.lang=v.lang; } else u.lang="hi-IN"; u.rate=1; u.pitch=1; speechSynthesis.speak(u); return true; }catch(e){ return false; } }
+  return {bell:bell, shankh:shankh, speak:speak, unlock:ac};
+})();
+/* Purani chhoti "beep" ki jagah asli ghanti */
+jaapBell=function(){ if(!$("jaap-bell").checked) return; SND.bell(660,.9); };
+
+/* ---- settings: awaaz aur raftaar ---- */
+(function(){ var p=store("mj-jaap-prefs")||{}; jprefs.voice=["count","mantra","off"].indexOf(p.voice)>=0?p.voice:"count"; jprefs.pace=[3500,2400,1500].indexOf(Number(p.pace))>=0?Number(p.pace):2400; })();
+var PACE_KEY={3500:"paceSlow",2400:"paceMid",1500:"paceFast"}, VOICE_KEY={count:"voiceCount",mantra:"voiceMantra",off:"voiceOff"};
+
+/* Auto jaap ab raftaar ke hisaab se chalta hai */
+jaapAuto=function(on){ if(autoT){clearInterval(autoT);autoT=null;} var onb=!!on;
+  $("jt-auto").setAttribute("aria-pressed",String(onb)); $("jg-auto").setAttribute("aria-pressed",String(onb)); $("jg-auto-label").textContent=jl(onb?"autoStop":"autoStart");
+  $("home-mala").classList.toggle("auto",onb); $("jg-mala-wrap").classList.toggle("auto",onb);
+  if(onb){ SND.unlock(); autoT=setInterval(function(){ if(document.visibilityState==="hidden"){ jaapAuto(false); return; } jaapCountHome(true); },jprefs.pace); toast(jl("autoOnToast")); } };
+$("jt-auto").onclick=function(){ jaapAuto(!autoT); };
+
+/* ---- har ginti par asar (Home ya Game, jo khula ho) ---- */
+var gameOpen=false, tapTimes=[], combo=0, lastTap=0;
+jaapCountHome=function(isAuto,pt){ var before=jaapDailyCount(), n=before+1, goal=jprefs.target*MALA, inMala=((n-1)%MALA)+1; jaapSetDailyCount(n);
+  var now=Date.now(); tapTimes.push(now); if(tapTimes.length>24) tapTimes.shift();
+  if(!isAuto){ combo=(now-lastTap<1500)?combo+1:1; lastTap=now; }
+  if(gameOpen){ malaPulse($("jg-tap")); goldRipple($("jg-mala-wrap")); petalsOnDisk($("jg-petals"),isAuto?3:5); jgBurst(); if(pt) jgFloat(pt.x,pt.y); jgCombo(); }
+  else { if(!isAuto) malaPulse($("home-jaap-tap")); goldRipple($("home-mala")); petalsOnDisk($("home-petals"),isAuto?3:5); }
+  var milestone=n%MALA===0;
+  if(!milestone){ if(inMala%27===0) SND.bell(990,.7); else jaapBell(); }
+  /* Awaaz: auto mein har manka bolkar; haath se tap par sirf 27/54/81 par */
+  if(jprefs.voice!=="off"&&!milestone){ if(isAuto) SND.speak(jprefs.voice==="mantra"?jaapActive():inMala); else if(inMala%27===0&&jprefs.voice==="count") SND.speak(inMala); }
+  if(jprefs.vibe&&navigator.vibrate&&!isAuto) navigator.vibrate(9);
+  if(milestone){ var done=n/MALA, goalHit=n>=goal&&before<goal; malaPulse(gameOpen?$("jg-ring"):$("home-ring"),true); petalShower(); SND.shankh();
+    if(jprefs.voice!=="off") setTimeout(function(){ SND.speak(T3(done+" mala poori",done+" माला पूरी",done+" mala complete")); },900);
+    if(jprefs.vibe&&navigator.vibrate) navigator.vibrate([40,50,40]);
+    var msg=goalHit?T3("Lakshya poora hua — "+jprefs.target+" mala 🙏","लक्ष्य पूरा हुआ — "+jprefs.target+" माला 🙏","Goal complete — "+jprefs.target+" mala 🙏"):T3("Mala "+done+" poori hui 🙏","माला "+done+" पूरी हुई 🙏","Mala "+done+" complete 🙏");
+    if(gameOpen) jgBanner(msg,jl("bannerSub",{n:n})); else toast(msg); }
+  if(n>=goal&&before<goal&&autoT) jaapAuto(false);
+  jaapTargetLine(); };
+
+/* ---- game screen ---- */
+function jgSpeed(){ if(tapTimes.length<3) return 0; var span=(tapTimes[tapTimes.length-1]-tapTimes[0])/60000; if(Date.now()-tapTimes[tapTimes.length-1]>8000) return 0; return Math.round((tapTimes.length-1)/span); }
+function jgHud(){ if(!gameOpen) return; var n=jaapDailyCount(), pos=malaPos(n), goal=jprefs.target*MALA;
+  $("jg-count").textContent=String(n); $("jg-mala").textContent=String(pos.inMala===MALA?pos.done:pos.done+1); $("jg-in").textContent=String(pos.inMala); $("jg-speed").textContent=String(jgSpeed());
+  $("jg-goal-bar").style.width=Math.min(100,n/goal*100).toFixed(1)+"%"; $("jg-goal-text").textContent=jl("goalLine",{d:Math.min(pos.done,jprefs.target),t:jprefs.target});
+  malaPaint($("jg-ring"),pos.inMala); var dy=$("jg-diyas"); if(dy.childElementCount!==jprefs.target){ dy.textContent=""; for(var i=0;i<jprefs.target;i++){ var s=document.createElement("i"); dy.appendChild(s); } }
+  Array.prototype.forEach.call(dy.children,function(el,i){ el.className=i<pos.done?"lit":""; }); }
+var floatPool=[];
+function jgFloat(x,y){ var host=$("jg-floats"); if(calm||!host.animate||host.childElementCount>12) return; var el=floatPool.pop()||document.createElement("b"); el.textContent="+1"; el.style.left=x+"px"; el.style.top=y+"px"; host.appendChild(el);
+  var an=el.animate([{transform:"translate(-50%,-50%) scale(.7)",opacity:0},{transform:"translate(-50%,-90%) scale(1.1)",opacity:1,offset:.25},{transform:"translate(-50%,-220%) scale(1)",opacity:0}],{duration:800,easing:"ease-out"}); an.onfinish=function(){ if(el.parentNode) el.parentNode.removeChild(el); floatPool.push(el); }; }
+function jgBurst(){ var b=$("jg-burst"); if(calm||!b.animate) return; b.animate([{opacity:0,transform:"scale(.85)"},{opacity:.85,transform:"scale(1)",offset:.2},{opacity:0,transform:"scale(1.25)"}],{duration:520,easing:"ease-out"}); }
+var comboT=null;
+function jgCombo(){ var el=$("jg-combo"); if([11,21,51,108].indexOf(combo)<0) return; el.textContent=jl("comboText",{n:combo}); el.hidden=false; if(el.animate&&!calm) el.animate([{transform:"translate(-50%,0) scale(.6)",opacity:0},{transform:"translate(-50%,0) scale(1.15)",opacity:1,offset:.3},{transform:"translate(-50%,0) scale(1)",opacity:1}],{duration:420,easing:"ease-out"}); SND.bell(1320,.5); if(comboT) clearTimeout(comboT); comboT=setTimeout(function(){ el.hidden=true; },1500); }
+var bannerT=null;
+function jgBanner(title,sub){ var b=$("jg-banner"); b.querySelector("b").textContent=title; b.querySelector("small").textContent=sub; b.hidden=false; if(b.animate&&!calm) b.animate([{transform:"translate(-50%,-50%) scale(.7)",opacity:0},{transform:"translate(-50%,-50%) scale(1.05)",opacity:1,offset:.4},{transform:"translate(-50%,-50%) scale(1)",opacity:1}],{duration:500,easing:"ease-out"}); if(bannerT) clearTimeout(bannerT); bannerT=setTimeout(function(){ b.hidden=true; },2800); }
+function jgButtons(){ $("jg-pace-label").textContent=jl(PACE_KEY[jprefs.pace]); $("jg-voice-label").textContent=jl(VOICE_KEY[jprefs.voice]); $("jg-voice").setAttribute("aria-pressed",String(jprefs.voice!=="off")); $("jg-bell").setAttribute("aria-pressed",String(jprefs.bell)); $("jg-auto-label").textContent=jl(autoT?"autoStop":"autoStart"); $("jg-auto").setAttribute("aria-pressed",String(!!autoT)); }
+$("jg-pace").onclick=function(){ var order=[3500,2400,1500]; jprefs.pace=order[(order.indexOf(jprefs.pace)+1)%3]; jaapPrefsSave(); jgButtons(); if(autoT){ jaapAuto(false); jaapAuto(true); } };
+$("jg-voice").onclick=function(){ var order=["count","mantra","off"]; jprefs.voice=order[(order.indexOf(jprefs.voice)+1)%3]; jaapPrefsSave(); jgButtons(); if(jprefs.voice==="count") SND.speak(T3("ek","एक","one")); else if(jprefs.voice==="mantra") SND.speak(jaapActive()); };
+$("jg-bell").onclick=function(){ jprefs.bell=!jprefs.bell; jaapPrefsSave(); jaapPrefsShow(); jgButtons(); if(jprefs.bell) SND.bell(660,.9); };
+$("jg-auto").onclick=function(){ jaapAuto(!autoT); jgButtons(); };
+
+/* Screen ko jagaaye rakho (auto jaap mein phone so na jaaye) */
+var wakeLock=null;
+function wakeOn(){ try{ if(navigator.wakeLock&&gameOpen) navigator.wakeLock.request("screen").then(function(w){ wakeLock=w; }).catch(function(){}); }catch(e){} }
+function wakeOff(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock=null; }
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible"&&gameOpen) wakeOn(); });
+
+var openedByTurn=false;
+function gameOpenFn(byTurn){ if(gameOpen) return; gameOpen=true; openedByTurn=!!byTurn; SND.unlock();
+  $("jg-mantra").textContent=jaapActive(); var nm=$("jg-name"); nm.textContent=jaapActive(); nm.classList.toggle("long",jaapActive().length>6); nm.classList.toggle("xlong",jaapActive().length>12);
+  jaapDress($("jg-mala-wrap"),jaapActive()); $("jgame").hidden=false; document.body.classList.add("sheet-open"); jgButtons(); jgHud(); wakeOn();
+  if(!byTurn){ try{ var el=document.documentElement; if(el.requestFullscreen) el.requestFullscreen({navigationUI:"hide"}).then(function(){ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock("landscape").catch(function(){}); }).catch(function(){}); }catch(e){} }
+  }
+function gameCloseFn(){ if(!gameOpen) return; gameOpen=false; openedByTurn=false; $("jgame").hidden=true; document.body.classList.remove("sheet-open"); wakeOff();
+  try{ if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock(); }catch(e){} try{ if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen().catch(function(){}); }catch(e){} jaapUpdateMini(); }
+$("jg-exit").onclick=gameCloseFn; $("js-game").onclick=function(){ gameOpenFn(false); };
+/* Kahin bhi tap = ek jaap (buttons ko chhodkar) */
+$("jgame").addEventListener("pointerdown",function(e){ if(e.button>0) return; if(e.target.closest("button,select,a")&&!e.target.closest("#jg-tap")) return; e.preventDefault(); jaapCountHome(false,{x:e.clientX,y:e.clientY}); });
+$("jg-tap").addEventListener("click",function(e){ if(e.detail===0) jaapCountHome(false); });
+document.addEventListener("keydown",function(e){ if(gameOpen&&(e.key===" "||e.key==="Enter")&&!e.target.closest("button:not(#jg-tap),select")){ e.preventDefault(); jaapCountHome(false); } if(gameOpen&&e.key==="Escape") gameCloseFn(); });
+/* Phone tircha → game; seedha → wapas (agar ghumane se khula tha) */
+var turnMQ=window.matchMedia?matchMedia("(orientation: landscape) and (max-height: 600px)"):null;
+function onTurn(){ if(!turnMQ) return; var homeOn=!$("t-aaj").hidden, busyUI=!$("menu").hidden||!$("jaap-arena").hidden||document.querySelector(".sheet:not([hidden])")||(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
+  if(turnMQ.matches&&homeOn&&!busyUI) gameOpenFn(true); else if(!turnMQ.matches&&openedByTurn) gameCloseFn(); }
+if(turnMQ){ if(turnMQ.addEventListener) turnMQ.addEventListener("change",onTurn); else if(turnMQ.addListener) turnMQ.addListener(onTurn); }
+setInterval(function(){ if(gameOpen) $("jg-speed").textContent=String(jgSpeed()); },1500);
+setTimeout(onTurn,400); /* page tircha phone par hi khula ho to seedha game */
+
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};
