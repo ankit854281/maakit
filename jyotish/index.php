@@ -44,13 +44,13 @@ header('Content-Type: text/html; charset=utf-8');
     <section class="welcome-hero" aria-labelledby="welcome-title">
       <div class="welcome-main">
         <div class="eyebrow" id="welcome-eyebrow">MAAKIT JYOTISH · AAPKI KUNDLI, AAPKE SAWAAL</div>
-        <h2 id="welcome-title">Namaste! Aaj apne liye kya samjhein?</h2>
-        <p id="welcome-description">Kundli, rishton aur roz ke sawaalon ko simple modules mein dekhein. Jo chahiye, bas us feature ko kholiye.</p>
+        <h2 id="welcome-title">Namaste! Aaj kis baat par clarity chahiye?</h2>
+        <p id="welcome-description">Career, rishton, kundli ya aaj ke din par sawaal chunein. Neeche se ek feature kholiye.</p>
         <div class="home-hero-actions">
-          <button class="btn" id="home-primary" type="button" data-home-action="ai">AI Jyotishi se baat karein <span aria-hidden="true">→</span></button>
+          <button class="btn" id="home-primary" type="button" data-home-action="ai">Apna sawaal poochhein <span aria-hidden="true">→</span></button>
           <button class="btn ghost" id="home-secondary" type="button" data-home-action="kundli">Janam Kundli banayein</button>
         </div>
-        <p class="home-trustline" id="home-trustline">Free Kundli · 36-gun Milan · Rashifal · Naam Jaap</p>
+        <p class="home-trustline" id="home-trustline">Aapki janam details isi phone par rehti hain.</p>
       </div>
       <div class="welcome-aside">
         <div class="welcome-orbit" aria-hidden="true"><span>☾</span><i>✦</i><b>ॐ</b></div>
@@ -60,17 +60,33 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
     </section>
 
+    <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
+      <div class="home-jaap-top">
+        <div class="home-jaap-mark" aria-hidden="true">ॐ</div>
+        <div class="home-jaap-intro"><div class="eyebrow" id="home-jaap-kicker">AAPKI ROZ KI BHAKTI</div><h2 id="home-jaap-heading">Aaj ka Jaap</h2><p id="home-jaap-description">Mantra chunein, phir har tap par ek naam ginen.</p></div>
+      </div>
+      <div class="home-jaap-controls">
+        <label for="home-jaap-mantra" id="home-jaap-mantra-label">Aaj ka mantra</label>
+        <select id="home-jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
+        <div class="home-jaap-count">
+          <div><span id="home-jaap-count-label">Aaj ki ginti</span><strong id="home-jaap-count" aria-live="polite">0</strong><small id="home-jaap-private-note">Ginti isi phone par rehti hai.</small></div>
+          <button class="btn home-jaap-tap" id="home-jaap-tap" type="button"><span aria-hidden="true">ॐ</span> <span id="home-jaap-tap-label">Tap karke jaap ginen</span></button>
+        </div>
+        <button class="home-jaap-options" id="home-jaap-options" type="button">Jaap ke aur tareeke <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+
     <section class="home-module-section" aria-labelledby="home-module-title">
       <div class="home-module-head">
-        <div><div class="eyebrow" id="home-module-kicker">EXPLORE</div><h2 id="home-module-title">Aap kya karna chahte hain?</h2></div>
+        <div><div class="eyebrow" id="home-module-kicker">EXPLORE</div><h2 id="home-module-title">Ek feature chunein</h2></div>
         <span class="module-hint" id="home-module-hint">Swipe karke dekhein <span aria-hidden="true">→</span></span>
       </div>
       <div class="home-modules" id="welcome-actions" aria-label="Jyotish features">
-        <button class="module-card module-ai" type="button" data-home-action="ai"><span class="module-icon" aria-hidden="true">✦</span><b id="home-ai-title">AI Jyotishi</b><small id="home-ai-note">Sawaal poochhein, practical jawaab paayein</small><span class="module-open" id="home-ai-open">Chat kholein <span aria-hidden="true">→</span></span></button>
+        <button class="module-card module-ai" type="button" data-home-action="ai"><span class="module-icon" aria-hidden="true">✦</span><b id="home-ai-title">AI Jyotishi</b><small id="home-ai-note">Career, rishton ya faisle par apni baat likhein</small><span class="module-open" id="home-ai-open">Sawaal poochhein <span aria-hidden="true">→</span></span></button>
         <button class="module-card module-kundli" type="button" data-home-action="kundli"><span class="module-icon" aria-hidden="true">◈</span><b id="home-kundli-title">Janam Kundli</b><small id="home-kundli-note">Graha, rashi aur dasha samjhein</small><span class="module-open" id="home-kundli-open">Kundli banayein <span aria-hidden="true">→</span></span></button>
         <button class="module-card module-milan" type="button" data-home-action="milan"><span class="module-icon" aria-hidden="true">♡</span><b id="home-milan-title">Kundli Milan</b><small id="home-milan-note">36-gun milan ko context ke saath dekhein</small><span class="module-open" id="home-milan-open">Milan dekhein <span aria-hidden="true">→</span></span></button>
         <button class="module-card module-rashi" type="button" data-home-action="rashi"><span class="module-icon" aria-hidden="true">☼</span><b id="home-rashi-title">Aaj ka Rashifal</b><small id="home-rashi-note">Aaj ka sanket aur ek chhota upaya</small><span class="module-open" id="home-rashi-open">Aaj dekhein <span aria-hidden="true">→</span></span></button>
-        <button class="module-card module-jaap" type="button" data-home-action="jaap"><span class="module-icon" aria-hidden="true">ॐ</span><b id="home-jaap-title">Naam Jaap</b><small id="home-jaap-note">Shaant ginti, apni raftaar se</small><span class="module-open" id="home-jaap-open">Jaap shuru karein <span aria-hidden="true">→</span></span></button>
+        <button class="module-card module-jaap" type="button" data-home-action="jaap"><span class="module-icon" aria-hidden="true">ॐ</span><b id="home-jaap-title">Naam Jaap</b><small id="home-jaap-note">Har tap par ek jaap ginen</small><span class="module-open" id="home-jaap-open">Jaap shuru karein <span aria-hidden="true">→</span></span></button>
       </div>
     </section>
 
