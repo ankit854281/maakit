@@ -494,10 +494,10 @@ body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 }
 
 /* evolution picture sits beside the progress strip; the mala circle keeps the chosen deity's symbol */
-.jaap-evolution{grid-template-columns:44px 1fr;align-items:center;column-gap:12px}
+.jaap-evolution{grid-template-columns:88px 1fr;align-items:center;column-gap:13px;min-height:104px}
 .jaap-evolution .jaap-evolution-track{grid-column:2}
-.jaap-evo-art{grid-row:1 / span 2;width:44px;height:44px;border-radius:12px;background:var(--sunk);display:grid;place-items:center;overflow:hidden}
-.jaap-evo-art svg{width:40px;height:40px}
+.jaap-evo-art{grid-row:1 / span 2;width:88px;height:88px;border-radius:22px;background:radial-gradient(circle at 34% 24%,#fffdf3,var(--accent-soft) 58%,var(--sunk));display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);box-shadow:inset 0 2px 5px #fff8,0 4px 12px #29195218}
+.jaap-evo-art svg{width:86px;height:86px;display:block}
 .jg-btn:disabled{opacity:.45}
 
 /* fix 21 Oct: deity symbol stays a soft watermark behind the mantra (growth pictures moved to the progress card) */
