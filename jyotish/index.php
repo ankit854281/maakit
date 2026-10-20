@@ -20,16 +20,24 @@ header('Content-Type: text/html; charset=utf-8');
 <title>Maakit Jyotish — Kundli, Milan, Rashifal</title>
 <meta name="description" content="Free Janam Kundli, 36 gun Kundli Milan, daily rashifal and AI Jyotishi in Hinglish, Hindi and English. Powered by Maakit, Bhadohi.">
 <meta name="theme-color" content="#15153A">
+<script>/* rang pehle hi laga do, taaki page jhapke nahi */try{var t=JSON.parse(localStorage.getItem("mj-theme"));if(t==="kesar"||t==="mor")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=5">
+<link rel="stylesheet" href="jyotish.css?v=6">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <radialGradient id="jg-dim" cx="35%" cy="32%" r="70%"><stop offset="0" style="stop-color:var(--bead-hi)"/><stop offset="1" style="stop-color:var(--bead)"/></radialGradient>
+  <radialGradient id="jg-lit" cx="35%" cy="30%" r="72%"><stop offset="0" style="stop-color:var(--lit-hi)"/><stop offset=".55" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--lit-lo)"/></radialGradient>
+  <radialGradient id="jg-now" cx="40%" cy="35%" r="70%"><stop offset="0" style="stop-color:var(--now-hi)"/><stop offset=".6" style="stop-color:var(--lit-hi)"/><stop offset="1" style="stop-color:var(--accent)"/></radialGradient>
+  <radialGradient id="jg-sum" cx="35%" cy="30%" r="72%"><stop offset="0" style="stop-color:var(--sum-hi)"/><stop offset="1" style="stop-color:var(--kumkum)"/></radialGradient>
+</defs></svg>
 <div class="wrap">
   <header class="mast">
     <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
+    <button class="theme-btn" id="theme-open" type="button" data-i18n-aria="themeTitle" aria-label="App ka rang"><span aria-hidden="true"></span></button>
     <label class="langpick"><span id="language-label" class="sr-only">Language</span>
       <select id="lang" aria-label="Language"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
     <div class="panch" id="panch" data-i18n="panchLoading">Loading today's panchang…</div>
@@ -319,6 +327,16 @@ header('Content-Type: text/html; charset=utf-8');
     <p class="note" data-i18n="jcNote">Link WhatsApp par jaayega. Dost link kholenge to wahi mantra aur lakshya ke saath unka jaap shuru hoga.</p>
   </div>
 </div>
+<div class="sheet" id="th-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="th-title">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2 id="th-title" data-i18n="themeTitle">App ka rang</h2><button class="iconbtn" type="button" data-close-sheet="th-sheet" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
+    <div role="radiogroup" aria-labelledby="th-title" style="display:flex;flex-direction:column;gap:10px">
+      <button class="th-opt" type="button" role="radio" data-theme-pick="neel"><span class="th-prev" style="background:radial-gradient(circle at 30% 0,#4B3FC0,#15153A 70%);--p-acc:#F2A93B"></span><span><b data-i18n="thNeel">Neela Aasmaan</b><small data-i18n="thNeelS">Raat ka aasmaan aur sunehri mala</small></span><span class="th-check"></span></button>
+      <button class="th-opt" type="button" role="radio" data-theme-pick="kesar"><span class="th-prev" style="background:radial-gradient(circle at 30% 0,#B4401A,#2A0E12 70%);--p-acc:#FF9F1C"></span><span><b data-i18n="thKesar">Kesariya</b><small data-i18n="thKesarS">Mandir jaisa sindoori aur kesariya rang</small></span><span class="th-check"></span></button>
+      <button class="th-opt" type="button" role="radio" data-theme-pick="mor"><span class="th-prev" style="background:radial-gradient(circle at 30% 0,#1C8F86,#05252A 70%);--p-acc:#E9B949"></span><span><b data-i18n="thMor">Mor Pankh</b><small data-i18n="thMorS">Mor pankh jaisa hara-neela aur sona</small></span><span class="th-check"></span></button>
+    </div>
+  </div>
+</div>
 <div class="petal-rain" id="petal-rain" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
@@ -331,8 +349,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=1"></script>
+<script src="i18n.js?v=2"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

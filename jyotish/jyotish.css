@@ -341,3 +341,36 @@ nav.tabs button[aria-selected="true"]:before{content:"";position:absolute;top:0;
 .jc-opt:active{border-color:var(--accent)}
 body.sheet-open{overflow:hidden}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:var(--fg);color:var(--bg);font-size:15px;font-weight:500;box-shadow:0 6px 18px rgba(0,0,0,.35);text-align:center}
+
+/* ---------- Teen rang (themes) + graphics, 20 Oct 2026 ----------
+   html[data-theme] — neel (default) | kesar | mor. Sirf tokens badalte hain.
+   Effects sab static hain (koi chalta hua blur nahi), sasta phone bhi theek chale. */
+:root{--glow1:rgba(124,92,255,.24);--glow2:rgba(242,169,59,.10);--bead:#2E2E6A;--bead-hi:#5A5AA8;--lit-hi:#FFE6A8;--lit-lo:#C77A12;--now-hi:#FFFFFF;--disk-hi:#2D2D68;--sum-hi:#FF9A80;--star:rgba(255,255,255,.55)}
+html[data-theme="kesar"]{--bg:#2A0E12;--sunk:#331217;--surface:#3D161C;--raise:#4A1C23;--line:#622A33;--fg:#FFF1DE;--muted:#E5C2B1;--accent:#FF9F1C;--on-accent:#2A0E12;--accent-soft:#5A2A1E;--gold:#FFD166;--kumkum:#FF5A4E;--glow1:rgba(255,120,40,.26);--glow2:rgba(255,209,102,.12);--bead:#53222A;--bead-hi:#86424B;--lit-hi:#FFE2A0;--lit-lo:#D9650A;--disk-hi:#55212A;--sum-hi:#FFB3A8;--star:rgba(255,220,170,.5)}
+html[data-theme="mor"]{--bg:#05252A;--sunk:#072E34;--surface:#0A3940;--raise:#0E4650;--line:#195A63;--fg:#EAF7F2;--muted:#9FCBC4;--accent:#E9B949;--on-accent:#05252A;--accent-soft:#1E4A45;--gold:#F2D16B;--kumkum:#3D7BFF;--good:#7BE0B4;--glow1:rgba(46,196,182,.24);--glow2:rgba(61,123,255,.12);--bead:#124A52;--bead-hi:#2A7380;--lit-hi:#FFF0B8;--lit-lo:#B3841C;--disk-hi:#0F4A52;--sum-hi:#9DBBFF;--star:rgba(200,255,245,.5)}
+body{background:radial-gradient(120% 55% at 50% -12%,var(--glow1),transparent 62%) no-repeat,radial-gradient(90% 40% at 100% 30%,var(--glow2),transparent 70%) no-repeat,var(--bg)}
+.home-jaap-spotlight{position:relative}
+.home-jaap-spotlight:before{content:"";position:absolute;inset:-6px -16px 0;z-index:-1;pointer-events:none;opacity:.55;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='white'%3E%3Ccircle cx='12' cy='18' r='1'/%3E%3Ccircle cx='78' cy='9' r='.7'/%3E%3Ccircle cx='121' cy='42' r='1.1'/%3E%3Ccircle cx='40' cy='66' r='.6'/%3E%3Ccircle cx='97' cy='88' r='.9'/%3E%3Ccircle cx='20' cy='112' r='.7'/%3E%3Ccircle cx='132' cy='126' r='.6'/%3E%3Ccircle cx='64' cy='131' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+.mala:before{content:"";position:absolute;inset:-8%;border-radius:50%;background:radial-gradient(circle,var(--glow1) 0%,transparent 66%);pointer-events:none;z-index:-1}
+.bead{fill:url(#jg-dim)}
+.bead.lit{fill:url(#jg-lit)}
+.bead.now{fill:url(#jg-now)}
+.sumeru{fill:url(#jg-sum)}
+.mala-disk{background:radial-gradient(circle at 50% 30%,var(--disk-hi),var(--surface) 72%);box-shadow:inset 0 0 0 9px var(--sunk),inset 0 0 0 10px var(--line),0 10px 30px rgba(0,0,0,.28)}
+.btn{background:linear-gradient(180deg,var(--lit-hi) -60%,var(--accent) 55%,var(--lit-lo) 160%)}
+.btn.ghost{background:transparent}
+.mchip[aria-checked="true"],#js-challenge{background:linear-gradient(180deg,var(--lit-hi) -60%,var(--accent) 55%,var(--lit-lo) 160%)}
+.theme-btn{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.theme-btn span{width:20px;height:20px;border-radius:50%;background:conic-gradient(#4B3FC0 0 33%,#E05A1E 0 66%,#1C8F86 0)}
+.mast{grid-template-columns:1fr auto auto}
+.panch{grid-column:1 / -1}
+.th-opt{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:14px;min-height:72px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--sunk);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
+.th-opt[aria-checked="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.th-opt b{font-size:17px}
+.th-opt small{display:block;color:var(--muted);font-size:13px}
+.th-prev{width:64px;height:48px;border-radius:10px;position:relative;overflow:hidden}
+.th-prev:after{content:"";position:absolute;right:10px;top:12px;width:24px;height:24px;border-radius:50%;border:3px dotted var(--p-acc);box-sizing:border-box}
+.th-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line)}
+.th-opt[aria-checked="true"] .th-check{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 45%,transparent 50%)}

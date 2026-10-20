@@ -627,6 +627,14 @@ $("priv-del").onclick=function(){
   setTimeout(function(){ location.reload(); },1500);
 };
 
+
+/* ---- App ka rang: neel | kesar | mor (sirf is phone mein yaad rehta hai) ---- */
+var THEME_BG={neel:"#15153A",kesar:"#2A0E12",mor:"#05252A"};
+function themeNow(){ return document.documentElement.getAttribute("data-theme")||"neel"; }
+function themeShow(){ var cur=themeNow(); document.querySelectorAll("[data-theme-pick]").forEach(function(b){ b.setAttribute("aria-checked",String(b.getAttribute("data-theme-pick")===cur)); }); var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",THEME_BG[cur]); }
+document.querySelectorAll("[data-theme-pick]").forEach(function(b){ b.onclick=function(){ var t=b.getAttribute("data-theme-pick"); if(t==="neel") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme",t); store("mj-theme",t); themeShow(); toast(jl("themeSet")); setTimeout(function(){ jaapSheet("th-sheet",false); },250); }; });
+$("theme-open").onclick=function(){ themeShow(); jaapSheet("th-sheet",true); };
+themeShow();
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};

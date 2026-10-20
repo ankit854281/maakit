@@ -323,6 +323,14 @@ var JL = {
   jc11: ["11 Mala", "11 माला", "11 Malas"],
   jc11s: ["1188 jaap · vishesh sankalp", "1188 जप · विशेष संकल्प", "1188 chants · special vow"],
   jcNote: ["Link WhatsApp par jaayega. Dost link kholenge to usi mantra aur lakshya ke saath unka jaap shuru hoga.", "लिंक WhatsApp पर जाएगा। मित्र लिंक खोलेंगे तो उसी मंत्र और लक्ष्य के साथ उनका जप शुरू होगा।", "The link opens WhatsApp. When friends open it, their jaap starts with the same mantra and goal."],
+  themeTitle: ["App ka rang", "ऐप का रंग", "App colour"],
+  thNeel: ["Neela Aasmaan", "नीला आसमान", "Night Sky"],
+  thNeelS: ["Raat ka aasmaan aur sunehri mala", "रात का आसमान और सुनहरी माला", "Night sky with a golden mala"],
+  thKesar: ["Kesariya", "केसरिया", "Saffron"],
+  thKesarS: ["Mandir jaisa sindoori aur kesariya rang", "मंदिर जैसा सिंदूरी और केसरिया रंग", "Temple sindoor red with saffron"],
+  thMor: ["Mor Pankh", "मोर पंख", "Peacock"],
+  thMorS: ["Mor pankh jaisa hara-neela aur sona", "मोर पंख जैसा हरा-नीला और सोना", "Peacock teal with gold"],
+  themeSet: ["Rang badal gaya", "रंग बदल गया", "Colour changed"],
   foot: ["Vedic sidereal (Lahiri), whole-sign bhaav", "वैदिक निरयण (लाहिड़ी), पूर्ण-राशि भाव", "Vedic sidereal (Lahiri), whole-sign houses"]
 };
 function jlIdx() { var v = (document.getElementById("lang") || {}).value; return v === "Hindi (Devanagari script)" ? 1 : (v === "English" ? 2 : 0); }
