@@ -330,6 +330,7 @@ var JL = {
   /* mini jaap + sheets */
   miniTitle: ["Jaap", "जप", "Jaap"],
   miniSub: ["Chalte-chalte jaap karein", "चलते-चलते जप करें", "Chant on the go"],
+  miniFabOpen: ["Jaap ke controls kholen", "जप के नियंत्रण खोलें", "Open jaap controls"],
   miniTap: ["Tap karein", "टैप करें", "Tap"],
   miniToday: ["Aaj ka kul jaap:", "आज का कुल जप:", "Today's total:"],
   closeBtn: ["Band karein", "बंद करें", "Close"],
