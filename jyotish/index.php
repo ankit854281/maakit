@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=11">
+<link rel="stylesheet" href="jyotish.css?v=12">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -298,12 +298,13 @@ header('Content-Type: text/html; charset=utf-8');
 
   <div class="foot">Powered by <b>Maakit</b>, Bhadohi<br><span data-i18n="foot">Vedic sidereal (Lahiri), whole-sign houses</span></div>
 </div>
-<div class="mini-jaap" id="mini-jaap">
-      <button class="mini-jaap-toggle" id="mini-jaap-toggle" type="button" aria-expanded="false" aria-controls="mini-jaap-panel">ॐ <span>Jaap kholein</span></button>
+<div class="mini-jaap" id="mini-jaap" hidden>
+      <div class="mini-jaap-dock"><button class="mini-jaap-open" id="mini-jaap-open" type="button" aria-expanded="false" aria-controls="mini-jaap-panel" data-i18n-aria="miniFabOpen" aria-label="Jaap ke controls kholen">⋯</button><button class="mini-jaap-toggle" id="mini-jaap-toggle" type="button" aria-label="Ek tap mein 1 jaap ginein"><i aria-hidden="true">ॐ</i><span class="mini-jaap-fab-count" id="mini-jaap-bubble-count">0</span><small id="mini-jaap-amount">+1</small></button></div>
       <div class="mini-jaap-panel" id="mini-jaap-panel" hidden>
         <div class="mini-jaap-head"><div><b data-i18n="miniTitle">Jaap</b><small data-i18n="miniSub">Chalte-chalte jaap karein</small></div><button id="mini-jaap-close" type="button" data-i18n-aria="closeBtn" aria-label="Band karein">×</button></div>
         <label for="mini-jaap-mantra" data-i18n="lMantra">Mantra</label><select id="mini-jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
         <button class="mini-jaap-tap" id="mini-jaap-tap" type="button" aria-label="Naam jaap ek baar ginen"><span id="mini-jaap-count">0</span><small id="mini-jaap-name">राम</small><b data-i18n="miniTap">Tap karein</b></button>
+        <div class="mini-jaap-controls"><button class="mini-jaap-batch" id="mini-jaap-batch" type="button" aria-pressed="false"><strong id="mini-jaap-batch-value">+1</strong><span data-i18n="jtBatchOne">per tap</span></button><button class="mini-jaap-undo" id="mini-jaap-undo" type="button" disabled data-i18n="jtUndo" aria-label="Pichhli ginti wapas">↶ Undo</button></div>
         <p class="note"><span data-i18n="miniToday">Aaj ka kul jaap:</span> <strong id="mini-jaap-today">0</strong></p><button class="btn ghost" id="mini-jaap-photo" type="button">Bhagwan ki photo lagayein</button><button class="btn ghost mini-jaap-full" id="mini-jaap-full" type="button">Jaap settings kholein</button>
       </div>
     </div>
@@ -399,8 +400,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=5"></script>
+<script src="i18n.js?v=6"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>
