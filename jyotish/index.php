@@ -69,11 +69,10 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
 
     <section class="jaap-card" aria-labelledby="jaap-title">
-      <div class="jaap-card-copy"><div class="eyebrow">BHAKTI · AAPKI RAFtaar</div><h2 id="jaap-title">Naam Jaap</h2><p>Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total">Aaj ke naam <strong id="jaap-today">0</strong></div></div>
+      <div class="jaap-card-copy"><div class="eyebrow">BHAKTI · AAPKI RAFtaar</div><h2 id="jaap-title">Naam Jaap</h2><p>Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total">Aaj ke naam <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b>Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> sessions</span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p><p class="note jaap-private-note">Aapki progress isi phone par private rehti hai.</p></div></div>
       <div class="jaap-setup">
         <label>Kaunsa naam japna hai?
-          <select id="jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
-        </label>
+          <select id="jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option><option value="__custom__">Apna mantra</option></select></label><label id="jaap-custom-mantra-wrap" hidden>Apna mantra likhein<input id="jaap-custom-mantra" type="text" maxlength="60" placeholder="Mantra yahan likhein" autocomplete="off"></label><div class="jaap-guide" id="jaap-guide"><b id="jaap-guide-title">Mantra ka bhaav</b><p id="jaap-guide-copy">Apna mantra chunne par uska chhota sa parichay yahan dikhega.</p><button class="btn ghost" id="jaap-ask-ai" type="button">Is mantra ke baare mein AI se poochhein</button></div>
         <label>Jaap ka tareeka
           <select id="jaap-mode"><option value="mala">Shaant mala · apna sankalp</option><option value="solo">30-second personal record</option><option value="duo">2-player friendly round</option></select>
         </label>
@@ -81,8 +80,7 @@ header('Content-Type: text/html; charset=utf-8');
           <select id="jaap-bhav"><option value="sahaj">Bas jaap, bina kisi khaas sankalp ke</option><option value="shanti">Shaanti</option><option value="aabhar">Aabhaar</option><option value="sahas">Sahas</option><option value="ekagrata">Ekagrata</option></select>
         </label>
         <label id="jaap-goal-wrap">Aaj ka sankalp
-          <select id="jaap-goal"><option value="27">27 jaap</option><option value="54">54 jaap</option><option value="108" selected>108 jaap · 1 mala</option><option value="1008">1008 jaap</option></select>
-        </label>
+          <select id="jaap-goal"><option value="27">27 jaap</option><option value="54">54 jaap</option><option value="108" selected>108 jaap · 1 mala</option><option value="1008">1008 jaap</option><option value="custom">Apna target</option></select></label><label id="jaap-custom-goal-wrap" hidden>Apni ginti chunein<input id="jaap-custom-goal" type="number" min="1" max="1008" step="1" value="108" inputmode="numeric"></label>
         <div class="jaap-names" id="jaap-names" hidden>
           <label>Player 1<input id="jaap-player1" maxlength="18" placeholder="Pehle khiladi ka naam"></label>
           <label>Player 2<input id="jaap-player2" maxlength="18" placeholder="Doosre khiladi ka naam"></label>
@@ -98,7 +96,7 @@ header('Content-Type: text/html; charset=utf-8');
     </section>
 
     <section class="jaap-arena" id="jaap-arena" hidden aria-label="Naam Jaap game">
-      <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" aria-label="Jaap se bahar niklein">✕</button><div><div class="eyebrow" id="jaap-round-label">SHAANT MALA</div><strong id="jaap-current-player">Aapka sankalp</strong></div><div class="jaap-clock" id="jaap-clock" aria-live="off" hidden>30</div></header>
+      <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" aria-label="Jaap se bahar niklein">✕</button><div><div class="eyebrow" id="jaap-round-label">SHAANT MALA</div><strong id="jaap-current-player">Aapka sankalp</strong></div><button class="jaap-pause" id="jaap-pause" type="button" aria-pressed="false">⏸ Rokein</button><div class="jaap-clock" id="jaap-clock" aria-live="off" hidden>30</div></header>
       <div class="jaap-arena-main">
         <div class="jaap-score-panel"><span id="jaap-count-label">Aapka sankalp</span><strong id="jaap-count" aria-live="off">0</strong><small id="jaap-best-line" hidden>Personal best: <b id="jaap-best">0</b></small></div>
         <button class="jaap-tap" id="jaap-tap" type="button" aria-label="Naam jaap count karne ke liye tap karein"><span id="jaap-tap-name">राम</span><small>TAP KARKE JAAP GINEIN</small></button>
