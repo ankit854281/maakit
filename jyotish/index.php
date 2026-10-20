@@ -30,7 +30,7 @@ header('Content-Type: text/html; charset=utf-8');
     <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
     <div class="powered">Powered by <b>Maakit</b> · Bhadohi</div>
     <div class="panch" id="panch">Loading today's panchang…</div>
-    <label class="langpick">Language
+    <label class="langpick"><span id="language-label">Language</span>
       <select id="lang"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
   </header>
 
@@ -43,33 +43,35 @@ header('Content-Type: text/html; charset=utf-8');
   <section class="tab" id="t-aaj">
     <section class="welcome-hero" aria-labelledby="welcome-title">
       <div class="welcome-main">
-        <div class="eyebrow">MAAKIT JYOTISH · AAPKI KUNDLI, AAPKE SAWAAL</div>
+        <div class="eyebrow" id="welcome-eyebrow">MAAKIT JYOTISH · AAPKI KUNDLI, AAPKE SAWAAL</div>
         <h2 id="welcome-title">Namaste! Aaj aap kya jaana chahte hain?</h2>
-        <p>Career, rishton ya apni kundli par sawaal poochhiye. Jawaab ko ek soch aur agle practical kadam ki tarah dekhiye.</p>
+        <p id="welcome-description">Career, rishton ya apni kundli par sawaal poochhiye. Jawaab ko ek soch aur agle practical kadam ki tarah dekhiye.</p>
         <form class="welcome-composer" id="welcome-form">
           <label class="sr-only" for="welcome-question">Apna sawaal likhiye</label>
           <textarea id="welcome-question" maxlength="1500" placeholder="Yahan apna sawaal likhiye… jaise: career mein agla kadam kya ho?" aria-label="Apna sawaal likhiye"></textarea>
-          <button class="btn" type="submit">Jyotish se poochhein <span aria-hidden="true">→</span></button>
+          <button class="btn" id="welcome-submit" type="submit">Jyotish se poochhein <span aria-hidden="true">→</span></button>
         </form>
-        <p class="welcome-note">Aapka sawaal AI ko bhejne se pehle review ke liye chat mein dikhega. Bina naam ya phone number likhein.</p>
+        <p class="welcome-note" id="welcome-note">Aapka sawaal AI ko bhejne se pehle review ke liye chat mein dikhega. Bina naam ya phone number likhein.</p>
       </div>
       <div class="welcome-aside">
         <div class="welcome-orbit" aria-hidden="true"><span>☾</span><i>✦</i><b>ॐ</b></div>
-        <div class="eyebrow">AAJ KA AAKAASH</div>
+        <div class="eyebrow" id="welcome-sky-label">AAJ KA AAKAASH</div>
         <strong id="welcome-sky">Chandra gochar ke saath apni dincharya par gaur karein.</strong>
-        <span class="note">Koi pakki bhavishyavani nahi—sirf parampara, context aur practical soch.</span>
+        <span class="note" id="welcome-sky-note">Koi pakki bhavishyavani nahi—sirf parampara, context aur practical soch.</span>
       </div>
     </section>
 
-    <div class="welcome-actions" aria-label="Quick actions">
-      <button class="welcome-action" type="button" data-home-action="ai"><span class="action-icon">✦</span><span><b>AI se baat karein</b><small>Apne sawaal ka jawaab poochhein</small></span><span class="action-arrow">→</span></button>
-      <button class="welcome-action" type="button" data-home-action="kundli"><span class="action-icon">◈</span><span><b>Janam kundli</b><small>Apni chart reading taiyaar karein</small></span><span class="action-arrow">→</span></button>
-      <button class="welcome-action" type="button" data-home-action="milan"><span class="action-icon">♡</span><span><b>Rishton ka milan</b><small>36-gun milan aur uska context</small></span><span class="action-arrow">→</span></button>
-      <button class="welcome-action" type="button" data-home-action="rashi"><span class="action-icon">☼</span><span><b>Aaj ka rashifal</b><small>Din ka sanket aur ek upaya</small></span><span class="action-arrow">→</span></button>
+    <div class="welcome-actions" id="welcome-actions" aria-label="Quick actions">
+      <button class="welcome-action" type="button" data-home-action="ai"><span class="action-icon">✦</span><span><b id="home-ai-title">AI se baat karein</b><small id="home-ai-note">Apne sawaal ka jawaab poochhein</small></span><span class="action-arrow">→</span></button>
+      <button class="welcome-action" type="button" data-home-action="kundli"><span class="action-icon">◈</span><span><b id="home-kundli-title">Janam kundli</b><small id="home-kundli-note">Apni chart reading taiyaar karein</small></span><span class="action-arrow">→</span></button>
+      <button class="welcome-action" type="button" data-home-action="milan"><span class="action-icon">♡</span><span><b id="home-milan-title">Rishton ka milan</b><small id="home-milan-note">36-gun milan aur uska context</small></span><span class="action-arrow">→</span></button>
+      <button class="welcome-action" type="button" data-home-action="rashi"><span class="action-icon">☼</span><span><b id="home-rashi-title">Aaj ka rashifal</b><small id="home-rashi-note">Din ka sanket aur ek upaya</small></span><span class="action-arrow">→</span></button>
     </div>
 
+    <section class="getting-started" aria-labelledby="getting-started-title"><div class="getting-started-heading"><span class="eyebrow" id="getting-started-kicker">SIMPLE GUIDE · BAS 3 KADAM</span><h2 id="getting-started-title">Yahan se shuru karein</h2><p id="getting-started-description">Jo kaam chahiye, woh chunein. Zaroori jaankari bharein, phir result ya AI se baat dekhein.</p></div><div class="getting-started-steps"><article><span>01</span><div><b id="getting-step1-title">Feature chunein</b><p id="getting-step1-copy">Kundli, Milan, Rashifal, AI sawaal ya Naam Jaap mein se ek chunein.</p></div></article><article><span>02</span><div><b id="getting-step2-title">Jaankari bharein</b><p id="getting-step2-copy">Sirf chune gaye feature ke liye maangi gayi details dein.</p></div></article><article><span>03</span><div><b id="getting-step3-title">Samajhkar aage badhein</b><p id="getting-step3-copy">Result ko reflection aur practical agle kadam ki tarah dekhein.</p></div></article></div></section>
+
     <section class="jaap-card" aria-labelledby="jaap-title">
-      <div class="jaap-card-copy"><div class="eyebrow">BHAKTI · AAPKI RAFtaar</div><h2 id="jaap-title">Naam Jaap</h2><p>Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total">Aaj ke naam <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b>Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> sessions</span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p><p class="note jaap-private-note">Aapki progress isi phone par private rehti hai.</p></div></div>
+      <div class="jaap-card-copy"><div class="eyebrow" id="jaap-home-kicker">BHAKTI · AAPKI RAFtaar</div><h2 id="jaap-title">Naam Jaap</h2><p id="jaap-home-description">Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total"><span id="jaap-home-today-label">Aaj ke naam</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label">sessions</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p><p class="note jaap-private-note" id="jaap-home-private">Aapki progress isi phone par private rehti hai.</p></div></div>
       <div class="jaap-setup">
         <label>Kaunsa naam japna hai?
           <select id="jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option><option value="__custom__">Apna mantra</option></select></label><label id="jaap-custom-mantra-wrap" hidden>Apna mantra likhein<input id="jaap-custom-mantra" type="text" maxlength="60" placeholder="Mantra yahan likhein" autocomplete="off"></label><div class="jaap-guide" id="jaap-guide"><b id="jaap-guide-title">Mantra ka bhaav</b><p id="jaap-guide-copy">Apna mantra chunne par uska chhota sa parichay yahan dikhega.</p><button class="btn ghost" id="jaap-ask-ai" type="button">Is mantra ke baare mein AI se poochhein</button></div>
@@ -268,11 +270,11 @@ header('Content-Type: text/html; charset=utf-8');
 </div>
 
 <nav class="tabs" aria-label="Sections"><div class="in" role="tablist">
-  <button role="tab" data-t="aaj" aria-selected="true"><span class="d">आज</span>Today</button>
-  <button role="tab" data-t="kundli" aria-selected="false"><span class="d">कुंडली</span>Kundli</button>
-  <button role="tab" data-t="milan" aria-selected="false"><span class="d">मिलान</span>Milan</button>
-  <button role="tab" data-t="rashi" aria-selected="false"><span class="d">राशिफल</span>Rashifal</button>
-  <button role="tab" data-t="ai" aria-selected="false"><span class="d">पूछें</span>Ask AI</button>
+  <button role="tab" data-t="aaj" aria-selected="true"><span class="d">आज</span><span class="tab-label" id="tab-today-label">Today</span></button>
+  <button role="tab" data-t="kundli" aria-selected="false"><span class="d">कुंडली</span><span class="tab-label" id="tab-kundli-label">Kundli</span></button>
+  <button role="tab" data-t="milan" aria-selected="false"><span class="d">मिलान</span><span class="tab-label" id="tab-milan-label">Milan</span></button>
+  <button role="tab" data-t="rashi" aria-selected="false"><span class="d">राशिफल</span><span class="tab-label" id="tab-rashi-label">Rashifal</span></button>
+  <button role="tab" data-t="ai" aria-selected="false"><span class="d">पूछें</span><span class="tab-label" id="tab-ai-label">Ask AI</span></button>
 </div></nav>
 
 <script src="astronomy.min.js?v=2.1.19"></script>
