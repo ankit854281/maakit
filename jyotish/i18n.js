@@ -6,6 +6,26 @@
    {x} = jagah jahan JS value bharta hai.
    ============================================================ */
 var JL = {
+  jaapSimple: ["Mantra chunein. Ginti ke liye beech mein tap karein.","मंत्र चुनें। गिनती के लिए बीच में टैप करें।","Choose a mantra. Tap the centre to count."],
+  lookTitle: ["Design chunein", "डिज़ाइन चुनें", "Choose design"],
+  lookSilver: ["Silver", "सिल्वर", "Silver"],
+  lookForest: ["Vriksh", "वृक्ष", "Sacred tree"],
+  lookTemple: ["Mandir", "मंदिर", "Temple"],
+  miniLaunch: ["Chhota counter kholein", "छोटा काउंटर खोलें", "Open mini counter"],
+  cardTitle: ["Jaap ka card", "जप का कार्ड", "Your jaap card"],
+  cardPreview: ["Aapke jaap card ka preview", "आपके जप कार्ड का प्रीव्यू", "Preview of your jaap card"],
+  cardSize: ["Card ka size", "कार्ड का आकार", "Card size"],
+  cardSquare: ["Square · 1:1", "वर्गाकार · 1:1", "Square · 1:1"],
+  cardStory: ["Status · 9:16", "स्टेटस · 9:16", "Story · 9:16"],
+  cardPrivacy: ["Sirf mantra aur aaj ki ginti share hogi.", "सिर्फ मंत्र और आज की गिनती साझा होगी।", "Only your mantra and today’s count are shared."],
+  cardSend: ["Card share karein", "कार्ड साझा करें", "Share card"],
+  cardSave: ["Image save karein", "इमेज सेव करें", "Save image"],
+  cardCount: ["Aaj ke jaap", "आज के जप", "Chants today"],
+  cardMalas: ["{n} mala poori", "{n} माला पूरी", "{n} malas complete"],
+  cardSaved: ["Image taiyaar hai — Downloads dekhein.", "इमेज तैयार है — डाउनलोड देखें।", "Image ready — check Downloads."],
+  cardError: ["Card nahi bana. Dobara koshish karein.", "कार्ड नहीं बना। दोबारा कोशिश करें।", "Could not create the card. Please try again."],
+  miniScope: ["Is app ke doosre pannon par bhi jaap karein.", "इस ऐप के दूसरे पन्नों पर भी जप करें।", "Keep counting on other pages in this app."],
+
   /* header + notice */
   panchLoading: ["Aaj ka panchang aa raha hai…", "आज का पंचांग आ रहा है…", "Loading today's panchang…"],
   panchToday: ["Aaj", "आज", "Today"],
@@ -404,3 +424,4 @@ function jlApply(root) {
   root.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.setAttribute("placeholder", jl(el.getAttribute("data-i18n-ph"))); });
   root.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", jl(el.getAttribute("data-i18n-aria"))); });
 }
+
