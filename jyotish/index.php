@@ -19,19 +19,20 @@ header('Content-Type: text/html; charset=utf-8');
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Maakit Jyotish — Kundli, Milan, Rashifal</title>
 <meta name="description" content="Free Janam Kundli, 36 gun Kundli Milan, daily rashifal and AI Jyotishi in Hinglish, Hindi and English. Powered by Maakit, Bhadohi.">
-<meta name="theme-color" content="#B8235A">
+<meta name="theme-color" content="#15153A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hind:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="jyotish.css?v=2">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="jyotish.css?v=3">
 </head>
-<body data-ai="<?= $aiOn ? '1' : '0' ?>" style="margin:0">
+<body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <div class="wrap">
   <header class="mast">
     <div class="brand"><h1>Maakit Jyotish</h1><span class="dev">माकित ज्योतिष</span></div>
-    <div class="powered">Powered by <b>Maakit</b> · Bhadohi</div>
+    <label class="langpick"><span id="language-label" class="sr-only">Language</span>
+      <select id="lang" aria-label="Language"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
     <div class="panch" id="panch">Loading today's panchang…</div>
-    <label class="langpick"><span id="language-label">Language</span>
-      <select id="lang"><option>Hinglish</option><option value="Hindi (Devanagari script)">हिंदी</option><option>English</option></select></label>
   </header>
 
   <div class="card notice" id="notice" hidden>
@@ -41,57 +42,41 @@ header('Content-Type: text/html; charset=utf-8');
 
   <!-- AAJ: check-in + daily card -->
   <section class="tab" id="t-aaj">
-    <section class="welcome-hero" aria-labelledby="welcome-title">
-      <div class="welcome-main">
-        <div class="eyebrow" id="welcome-eyebrow">MAAKIT JYOTISH · AAPKI KUNDLI, AAPKE SAWAAL</div>
-        <h2 id="welcome-title">Namaste! Aaj kis baat par clarity chahiye?</h2>
-        <p id="welcome-description">Career, rishton, kundli ya aaj ke din par sawaal chunein. Neeche se ek feature kholiye.</p>
-        <div class="home-hero-actions">
-          <button class="btn" id="home-primary" type="button" data-home-action="ai">Apna sawaal poochhein <span aria-hidden="true">→</span></button>
-          <button class="btn ghost" id="home-secondary" type="button" data-home-action="kundli">Janam Kundli banayein</button>
-        </div>
-        <p class="home-trustline" id="home-trustline">Aapki janam details isi phone par rehti hain.</p>
+    <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
+      <div class="jaap-head">
+        <h2 id="home-jaap-heading">Aaj ka Jaap</h2>
+        <p id="home-jaap-description">Mantra chunein aur beech ke gol par tap karein. 108 manke = ek mala.</p>
       </div>
-      <div class="welcome-aside">
-        <div class="welcome-orbit" aria-hidden="true"><span>☾</span><i>✦</i><b>ॐ</b></div>
-        <div class="eyebrow" id="welcome-sky-label">AAPKA JYOTISH SPACE</div>
-        <strong id="welcome-sky">Parampara ko samjhein, apne faisle soch-samajhkar lein.</strong>
-        <span class="note" id="welcome-sky-note">Yeh chintan aur jaankari ke liye hai—pakki bhavishyavani nahi.</span>
+      <div class="mala" id="home-mala">
+        <svg class="mala-ring" id="home-ring" viewBox="0 0 300 300" aria-hidden="true"></svg>
+        <button class="mala-disk" id="home-jaap-tap" type="button" aria-label="Naam jaap ek baar ginen"><span class="mala-photo" aria-hidden="true"></span><b class="mala-name" id="home-jaap-name">राम</b><strong id="home-jaap-count" aria-live="polite">0</strong><small id="home-jaap-tap-label">Tap karke ginein</small></button>
       </div>
+      <div class="mala-meta"><span id="home-mala-line">Mala 1 · 0 / 108</span><span><span id="home-jaap-count-label">Aaj ki ginti</span> <b id="home-jaap-total">0</b></span></div>
+      <div class="mantra-chips" id="home-jaap-chips" role="radiogroup" aria-labelledby="home-jaap-mantra-label"></div>
+      <label class="sr-only" for="home-jaap-mantra" id="home-jaap-mantra-label">Aaj ka mantra</label>
+      <select id="home-jaap-mantra" hidden><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
+      <div class="jaap-foot"><small id="home-jaap-private-note">Ginti isi phone par rehti hai.</small><button class="textbtn" id="home-jaap-options" type="button">Jaap ke aur tareeke</button></div>
     </section>
 
-    <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
-      <div class="home-jaap-top">
-        <div class="home-jaap-mark" aria-hidden="true">ॐ</div>
-        <div class="home-jaap-intro"><div class="eyebrow" id="home-jaap-kicker">AAPKI ROZ KI BHAKTI</div><h2 id="home-jaap-heading">Aaj ka Jaap</h2><p id="home-jaap-description">Mantra chunein, phir har tap par ek naam ginen.</p></div>
-      </div>
-      <div class="home-jaap-controls">
-        <label for="home-jaap-mantra" id="home-jaap-mantra-label">Aaj ka mantra</label>
-        <select id="home-jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
-        <div class="home-jaap-count">
-          <div><span id="home-jaap-count-label">Aaj ki ginti</span><strong id="home-jaap-count" aria-live="polite">0</strong><small id="home-jaap-private-note">Ginti isi phone par rehti hai.</small></div>
-          <button class="btn home-jaap-tap" id="home-jaap-tap" type="button"><span aria-hidden="true">ॐ</span> <span id="home-jaap-tap-label">Tap karke jaap ginen</span></button>
-        </div>
-        <button class="home-jaap-options" id="home-jaap-options" type="button">Jaap ke aur tareeke <span aria-hidden="true">→</span></button>
-      </div>
+    <section class="welcome-hero" aria-labelledby="welcome-title">
+      <h2 id="welcome-title">Namaste! Aaj kis baat par clarity chahiye?</h2>
+      <p id="welcome-description">Career, rishton, kundli ya aaj ke din par sawaal chunein.</p>
+      <button class="askbar" id="home-primary" type="button" data-home-action="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg><span id="home-primary-label">Apna sawaal poochhein</span></button>
+      <p class="home-trustline" id="home-trustline">Aapki janam details isi phone par rehti hain.</p>
     </section>
 
     <section class="home-module-section" aria-labelledby="home-module-title">
-      <div class="home-module-head">
-        <div><div class="eyebrow" id="home-module-kicker">EXPLORE</div><h2 id="home-module-title">Ek feature chunein</h2></div>
-        <span class="module-hint" id="home-module-hint">Swipe karke dekhein <span aria-hidden="true">→</span></span>
-      </div>
+      <h2 id="home-module-title">Ek feature chunein</h2>
       <div class="home-modules" id="welcome-actions" aria-label="Jyotish features">
-        <button class="module-card module-ai" type="button" data-home-action="ai"><span class="module-icon" aria-hidden="true">✦</span><b id="home-ai-title">AI Jyotishi</b><small id="home-ai-note">Career, rishton ya faisle par apni baat likhein</small><span class="module-open" id="home-ai-open">Sawaal poochhein <span aria-hidden="true">→</span></span></button>
-        <button class="module-card module-kundli" type="button" data-home-action="kundli"><span class="module-icon" aria-hidden="true">◈</span><b id="home-kundli-title">Janam Kundli</b><small id="home-kundli-note">Graha, rashi aur dasha samjhein</small><span class="module-open" id="home-kundli-open">Kundli banayein <span aria-hidden="true">→</span></span></button>
-        <button class="module-card module-milan" type="button" data-home-action="milan"><span class="module-icon" aria-hidden="true">♡</span><b id="home-milan-title">Kundli Milan</b><small id="home-milan-note">36-gun milan ko context ke saath dekhein</small><span class="module-open" id="home-milan-open">Milan dekhein <span aria-hidden="true">→</span></span></button>
-        <button class="module-card module-rashi" type="button" data-home-action="rashi"><span class="module-icon" aria-hidden="true">☼</span><b id="home-rashi-title">Aaj ka Rashifal</b><small id="home-rashi-note">Aaj ka sanket aur ek chhota upaya</small><span class="module-open" id="home-rashi-open">Aaj dekhein <span aria-hidden="true">→</span></span></button>
-        <button class="module-card module-jaap" type="button" data-home-action="jaap"><span class="module-icon" aria-hidden="true">ॐ</span><b id="home-jaap-title">Naam Jaap</b><small id="home-jaap-note">Har tap par ek jaap ginen</small><span class="module-open" id="home-jaap-open">Jaap shuru karein <span aria-hidden="true">→</span></span></button>
+        <button class="module-card module-ai" type="button" data-home-action="ai"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-5 4v-4.3A2.5 2.5 0 0 1 4 13.5z"/><path d="M12 6.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg></span><b id="home-ai-title">AI Jyotishi</b><small id="home-ai-note">Career, rishton ya faisle par apni baat likhein</small></button>
+        <button class="module-card module-kundli" type="button" data-home-action="kundli"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 3l18 18M21 3L3 21M12 3l9 9-9 9-9-9z"/></svg></span><b id="home-kundli-title">Janam Kundli</b><small id="home-kundli-note">Graha, rashi aur dasha samjhein</small></button>
+        <button class="module-card module-milan" type="button" data-home-action="milan"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg></span><b id="home-milan-title">Kundli Milan</b><small id="home-milan-note">36-gun milan ko context ke saath dekhein</small></button>
+        <button class="module-card module-rashi" type="button" data-home-action="rashi"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b id="home-rashi-title">Aaj ka Rashifal</b><small id="home-rashi-note">Aaj ka sanket aur ek chhota upaya</small></button>
       </div>
     </section>
 
     <section class="jaap-card" id="jaap-card" aria-labelledby="jaap-title" hidden>
-      <div class="jaap-card-copy"><div class="eyebrow" id="jaap-home-kicker">BHAKTI · AAPKI RAFtaar</div><h2 id="jaap-title">Naam Jaap</h2><p id="jaap-home-description">Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total"><span id="jaap-home-today-label">Aaj ke naam</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label">sessions</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p><p class="note jaap-private-note" id="jaap-home-private">Aapki progress isi phone par private rehti hai.</p></div></div>
+      <div class="jaap-card-copy"><h2 id="jaap-title">Naam Jaap</h2><p id="jaap-home-description">Aaram se apna jaap sankalp poora karein. Chahein to baad mein 30-second friendly challenge bhi khel sakte hain.</p><div class="jaap-today-total"><span id="jaap-home-today-label">Aaj ke naam</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label">sessions</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p><p class="note jaap-private-note" id="jaap-home-private">Aapki progress isi phone par private rehti hai.</p></div></div>
       <div class="jaap-setup">
         <label>Kaunsa naam japna hai?
           <select id="jaap-mantra"><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option><option value="__custom__">Apna mantra</option></select></label><label id="jaap-custom-mantra-wrap" hidden>Apna mantra likhein<input id="jaap-custom-mantra" type="text" maxlength="60" placeholder="Mantra yahan likhein" autocomplete="off"></label><div class="jaap-guide" id="jaap-guide"><b id="jaap-guide-title">Mantra ka bhaav</b><p id="jaap-guide-copy">Apna mantra chunne par uska chhota sa parichay yahan dikhega.</p><button class="btn ghost" id="jaap-ask-ai" type="button">Is mantra ke baare mein AI se poochhein</button></div>
@@ -121,9 +106,11 @@ header('Content-Type: text/html; charset=utf-8');
     <section class="jaap-arena" id="jaap-arena" hidden aria-label="Naam Jaap game">
       <header class="jaap-topbar"><button class="jaap-exit" type="button" id="jaap-exit" aria-label="Jaap se bahar niklein">✕</button><div><div class="eyebrow" id="jaap-round-label">SHAANT MALA</div><strong id="jaap-current-player">Aapka sankalp</strong></div><button class="jaap-pause" id="jaap-pause" type="button" aria-pressed="false">⏸ Rokein</button><div class="jaap-clock" id="jaap-clock" aria-live="off" hidden>30</div></header>
       <div class="jaap-arena-main">
+        <div class="mala mala-lg">
+          <svg class="mala-ring" id="jaap-beads" viewBox="0 0 300 300" aria-hidden="true"></svg>
+          <button class="jaap-tap mala-disk" id="jaap-tap" type="button" aria-label="Naam jaap count karne ke liye tap karein"><span class="mala-photo" aria-hidden="true"></span><b class="mala-name" id="jaap-tap-name">राम</b><small>Tap karke ginein</small></button>
+        </div>
         <div class="jaap-score-panel"><span id="jaap-count-label">Aapka sankalp</span><strong id="jaap-count" aria-live="off">0</strong><small id="jaap-best-line" hidden>Personal best: <b id="jaap-best">0</b></small></div>
-        <button class="jaap-tap" id="jaap-tap" type="button" aria-label="Naam jaap count karne ke liye tap karein"><span id="jaap-tap-name">राम</span><small>TAP KARKE JAAP GINEIN</small></button>
-        <div class="jaap-beads" id="jaap-beads" hidden aria-hidden="true"></div>
         <button class="jaap-undo" id="jaap-undo" type="button" aria-label="Aakhri ginti wapas karein" hidden>↶ Ek ginti hataayein</button>
         <p class="jaap-progress-note" id="jaap-progress-note">Phone ko landscape ghumayein aur anguthe se tap karein. Portrait mein bhi chalega.</p>
       </div>
@@ -263,7 +250,7 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
     <div class="chat-welcome" id="ai-chat-welcome">
       <div class="assistant-mark" aria-hidden="true">✦</div>
-      <div><div class="eyebrow">MAAKIT AI JYOTISHI</div><h3>Namaste! Aap apna sawaal bataiye.</h3>
+      <div><h3>Namaste! Aap apna sawaal bataiye.</h3>
         <p>Apni kundli ko parampara ke nazariye se samjhein aur jawaab ke saath ek practical agla kadam paayein. Pehle se bana example chart personal reading nahi hai.</p></div>
     </div>
     <div class="chat" id="chat"></div>
@@ -278,7 +265,7 @@ header('Content-Type: text/html; charset=utf-8');
     
   </section>
 
-  <div class="foot">Maakit Jyotish V2 · Vedic sidereal (Lahiri) · Whole-sign houses · Powered by Maakit</div>
+  <div class="foot">Powered by <b>Maakit</b>, Bhadohi<br>Vedic sidereal (Lahiri), whole-sign houses</div>
 </div>
 <div class="mini-jaap" id="mini-jaap">
       <button class="mini-jaap-toggle" id="mini-jaap-toggle" type="button" aria-expanded="false" aria-controls="mini-jaap-panel">ॐ <span>Naam Jaap</span></button>
@@ -300,6 +287,6 @@ header('Content-Type: text/html; charset=utf-8');
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
