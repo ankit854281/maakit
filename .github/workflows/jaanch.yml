@@ -125,7 +125,17 @@ jobs:
             $c = preg_replace("/define\(.DB_PASS.,[^)]*\);/", "define(\"DB_PASS\", \"jaanch\");", $c);
             file_put_contents("config.php", $c);
           '
+          # Muneem aur Sanduk ki jaanch bina chaabi ke CHUP-CHAAP
+          # chhoot jaati hai -- aur chhooti hui jaanch se bura kuch
+          # nahi, kyunki ginti hari dikhti hai aur jaancha kuch nahi
+          # jata. Isliye yahan ek jaanch wali chaabi bana di jaati
+          # hai. Ye asli chaabi NAHI hai; asli config.php ko ye file
+          # chhuti tak nahi.
+          echo "define('MUNEEM_KEY', 'ci-jaanch-key-$(openssl rand -hex 8)');" >> config.php
+          php -l config.php
           mkdir -p uploads && chmod 755 uploads
+          # nakal web se BAHAR rakhi jaati hai -- wo folder bana dijiye
+          mkdir -p ../maakit-backups/db
           PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8099 > /tmp/php.log 2>&1 &
           for i in $(seq 1 25); do
             curl -s -o /dev/null http://127.0.0.1:8099/ && break
@@ -148,6 +158,7 @@ jobs:
           php .github/jaanch/kahani-flow.php
           php .github/jaanch/kisne-kiya.php
           php .github/jaanch/munafa-flow.php
+          php .github/jaanch/sanduk-flow.php
           php .github/jaanch/ride-flow.php
           php .github/jaanch/school-flow.php
           php .github/jaanch/quiz-flow.php
