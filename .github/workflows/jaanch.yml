@@ -147,6 +147,7 @@ jobs:
           php .github/jaanch/super-panna.php
           php .github/jaanch/kahani-flow.php
           php .github/jaanch/kisne-kiya.php
+          php .github/jaanch/munafa-flow.php
           php .github/jaanch/ride-flow.php
           php .github/jaanch/school-flow.php
           php .github/jaanch/quiz-flow.php

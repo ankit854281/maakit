@@ -69,6 +69,52 @@ $B['hafta'] = [
 ];
 
 // ============================================================
+// 1क. मुनाफ़ा या नुक़सान — वो एक नंबर जो सबसे ज़्यादा मायने रखता है
+//
+// Muneem ab tak sirf ye batata tha ki kitna AAYA. Kitna GAYA, ye
+// kabhi nahi batata tha -- aur dhandha "kitna aaya" se nahi,
+// "kitna bacha" se chalta hai.
+//
+// Kharche ka hisaab pehle se maujood tha (operating_costs --
+// petrol, staff, baaki), par wo sirf admin/summary.php par baithi
+// thi, jahan Ankit khud kholne jaata. Muneem use chhuta hi nahi
+// tha.
+//
+// Do baatein jaanbujh kar aisi hain:
+//
+// 1. SAAMAAN KA PAISA YAHAN GINA HI NAHI JATA. Wo graahak se
+//    seedha dukaan ko jaata hai; Maakit use chhuta tak nahi.
+//    Use kamai me jodna apne aap ko bada dikhane wala jhooth
+//    hota -- aur usi jhooth par Ankit galat faisla le leta.
+//    Maakit ki kamai sirf pahunchane ka charge hai.
+//
+// 2. JIN DINON KA KHARCHA DARJ HI NAHI HUA, WO ALAG GINE JAATE
+//    HAIN. Bina kharche ke din munafa apne aap bada dikhta hai.
+//    Isliye saaf likha jata hai ki kitne din ka hisaab adhoora
+//    hai -- warna muneem jhootha bharosa de dega.
+// ============================================================
+$kh_ab = "cost_date >= CURDATE() - INTERVAL 7 DAY";
+
+$aaya  = (int)$B['hafta']['delivery_paisa'];
+$gaya  = (int)ek($pdo, "SELECT COALESCE(SUM(fuel + staff + other),0) FROM operating_costs WHERE $kh_ab");
+$din_darj = (int)ek($pdo, "SELECT COUNT(DISTINCT cost_date) FROM operating_costs WHERE $kh_ab");
+
+$B['paisa'] = [
+    'aaya'        => $aaya,            // sirf delivery charge -- saaman ka paisa NAHI
+    'gaya'        => $gaya,            // petrol + staff + baaki
+    'bacha'       => $aaya - $gaya,    // munafa (ya nuksan, agar minus me ho)
+    'din_darj'    => $din_darj,        // 7 me se kitne din ka kharcha likha gaya
+    'din_adhoore' => max(0, 7 - $din_darj),
+    'petrol'      => (int)ek($pdo, "SELECT COALESCE(SUM(fuel),0)  FROM operating_costs WHERE $kh_ab"),
+    'staff'       => (int)ek($pdo, "SELECT COALESCE(SUM(staff),0) FROM operating_costs WHERE $kh_ab"),
+    'baaki'       => (int)ek($pdo, "SELECT COALESCE(SUM(other),0) FROM operating_costs WHERE $kh_ab"),
+    // Ek delivery par kitna bacha -- yahi wo number hai jisse pata
+    // chalta hai ki dhandha badhane layak hai ya nahi.
+    'per_order'   => $B['hafta']['order'] > 0
+                     ? (int)round(($aaya - $gaya) / $B['hafta']['order']) : 0,
+];
+
+// ============================================================
 // 2. Logon ne kya dhoondha aur NAHI mila  (sabse keemti)
 // ============================================================
 $B['nahi_mila'] = sab($pdo,
@@ -294,6 +340,42 @@ ul{margin:0;padding-left:20px}li{margin-bottom:5px}
 <?php if ($B['hafta']['radd'] > 0): ?>
   <p class="note"><?= $f($B['hafta']['radd']) ?> ऑर्डर रद्द हुए।</p>
 <?php endif; ?>
+
+<?php
+// ---- मुनाफ़ा या नुक़सान ----
+// Ye wo ek nambar hai jiske liye baaki sab ginti hoti hai. Isliye
+// ise ginti ke theek baad, sabse upar rakha gaya hai.
+$P = $B['paisa'];
+?>
+<h2>मुनाफ़ा या नुक़सान</h2>
+<div class="n">
+  <div><b>₹<?= $f($P['aaya']) ?></b><i>आया (डिलीवरी से)</i></div>
+  <div><b>₹<?= $f($P['gaya']) ?></b><i>गया (पेट्रोल, स्टाफ़, बाकी)</i></div>
+  <div><b style="color:<?= $P['bacha'] >= 0 ? '#1F6B3A' : '#A33427' ?>">₹<?= $f(abs($P['bacha'])) ?></b><i><?=
+      $P['bacha'] >= 0 ? 'बचा' : 'घाटा' ?></i></div>
+  <?php if ($B['hafta']['order'] > 0): ?>
+    <?php // "₹-15" padhne me ajeeb lagta hai. Nishan alag, rakam alag. ?>
+    <div><b style="color:<?= $P['per_order'] >= 0 ? '#1F6B3A' : '#A33427' ?>">₹<?= $f(abs($P['per_order'])) ?></b><i>हर ऑर्डर पर <?=
+        $P['per_order'] >= 0 ? 'बचा' : 'घाटा' ?></i></div>
+  <?php endif; ?>
+</div>
+
+<?php if ($P['gaya'] > 0): ?>
+  <p class="note">पेट्रोल ₹<?= $f($P['petrol']) ?> · स्टाफ़ ₹<?= $f($P['staff']) ?> · बाकी ₹<?= $f($P['baaki']) ?></p>
+<?php endif; ?>
+
+<?php if ($P['din_adhoore'] > 0): ?>
+  <p class="note"><b>ध्यान दीजिए:</b> 7 में से <?= (int)$P['din_adhoore'] ?> दिन का ख़र्चा दर्ज ही नहीं हुआ।
+    <?php if ($P['din_darj'] === 0): ?>
+      यानी ऊपर वाला "बचा" <b>सच नहीं है</b> — ख़र्चा गिना ही नहीं गया।
+    <?php else: ?>
+      यानी असली बचत इससे कम होगी।
+    <?php endif; ?>
+    <a href="/admin/summary.php">ख़र्चा यहाँ भरिए</a>।</p>
+<?php endif; ?>
+
+<p class="note">सामान का पैसा इसमें नहीं गिना गया — वो ग्राहक सीधे दुकान को देता है,
+  Maakit उसे छूता तक नहीं। यहाँ सिर्फ़ Maakit की अपनी कमाई है।</p>
 
 <?php if ($B['nahi_mila']): ?>
 <h2>लोगों ने खोजा, पर नहीं मिला</h2>
