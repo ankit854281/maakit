@@ -75,7 +75,37 @@ if (!$no_tabbar && !$no_ticker) {
 {"@context":"https://schema.org","@type":"WebSite","@id":"https://maakit.in/#website","name":"Maakit","alternateName":"maakit.in","url":"https://maakit.in/"}
 </script>
 <?php endif; ?>
-<meta property="og:image" content="/assets/icon-512.png">
+<?php
+// ---------- WhatsApp me link kaisa dikhega ----------
+//
+// Jab koi Maakit ka link WhatsApp me bhejta hai, wahan ek bada
+// card banta hai -- tasveer, naam aur ek line. Wahi card tay karta
+// hai ki saamne wala link dabayega ya nahi.
+//
+// Pehle yahan "/assets/icon-512.png" likha tha -- aadha pata.
+// WhatsApp aur Facebook ADHA PATA NAHI PADHTE; unhe poora chahiye.
+// Isliye card banta hi nahi tha aur link sookha dikhta tha.
+//
+// og:description bhi nahi tha, isliye card par ek bhi line nahi
+// aati thi. Dono theek kiye gaye.
+$og_ghar = 'https://maakit.in';
+$og_desc = t('Order from any village shop on Maakit — the shop\'s own price, delivered to your door. Call or WhatsApp ' . MAAKIT_NUMBER_SHOW . '.',
+             'गाँव की किसी भी दुकान का सामान Maakit से मँगाइए — दुकान का ही दाम, घर तक। फ़ोन या WhatsApp — ' . MAAKIT_NUMBER_SHOW . '।');
+?>
+<meta property="og:description" content="<?= h($og_desc) ?>">
+<meta property="og:image" content="<?= h($og_ghar) ?>/assets/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="Maakit">
+<meta property="og:locale" content="<?= h(($_GET['lang'] ?? '') === 'en' ? 'en_IN' : 'hi_IN') ?>">
+<?php if (empty($seo['canonical'])): ?>
+<?php // canonical na ho to bhi card ko ek pata chahiye, warna adhoora banta hai ?>
+<meta property="og:url" content="<?= h($og_ghar . strtok($_SERVER['REQUEST_URI'] ?? '/', '?')) ?>">
+<?php endif; ?>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<?= h($page_title) ?>">
+<meta name="twitter:description" content="<?= h($og_desc) ?>">
+<meta name="twitter:image" content="<?= h($og_ghar) ?>/assets/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">

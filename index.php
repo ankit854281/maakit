@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
+require_once __DIR__ . '/inc/story.php';
 require_once __DIR__ . '/inc/salon.php';
 require_once __DIR__ . '/inc/items.php';
 require_once __DIR__ . '/inc/icons.php';
@@ -138,6 +139,42 @@ include __DIR__ . '/inc/head.php';
     <span class="mk-live-l"><i></i><?= t('Live', 'अभी-अभी') ?></span>
     <div class="mk-live-run"><div><?php for ($p = 0; $p < 2; $p++): foreach ($tick as $v): ?><span><?= h($v) ?></span><?php endforeach; endfor; ?></div></div>
   </div>
+  <?php endif; ?>
+
+  <?php
+    // ---- आज दुकानों पर क्या आया ----
+    //
+    // Gaon me khabar vigyapan se nahi, dekhne se phailti hai. Yahi
+    // wo photo hai jo dukaandaar apne WhatsApp Status par daalta
+    // hai -- par us tak bhi pahunchti hai jiske paas uska number
+    // nahi hai.
+    //
+    // Sabse upar isliye hai ki ye panne ki SABSE TAAZA cheez hai.
+    // Neeche ki har cheez kal bhi wahi thi; ye sirf aaj ki hai.
+    // Koi story na ho to poora hissa gayab -- khali patti panne
+    // ko sookha dikhati hai.
+    $kahaniyan = [];
+    try { $kahaniyan = story_taaza($pdo, 12); } catch (Throwable $e) { $kahaniyan = []; }
+  ?>
+  <?php if ($kahaniyan): ?>
+  <section class="mk-sec">
+    <div class="mk-sec-head"><h2><?= t('Today at the shops', 'आज दुकानों पर') ?></h2></div>
+    <nav class="mk-kah" aria-label="<?= h(t('Shop stories', 'दुकान की कहानियाँ')) ?>">
+      <?php foreach ($kahaniyan as $kh): ?>
+        <a class="mk-kah-c" href="/business.php?id=<?= (int)$kh['bid'] ?>&amp;kh=<?= (int)$kh['id'] ?>">
+          <span class="mk-kah-p">
+            <?php if ($kh['photo']): ?>
+              <img src="/uploads/<?= h($kh['photo']) ?>" alt="" loading="lazy">
+            <?php else: ?>
+              <i><?= h(mb_substr(trim((string)$kh['dukaan']), 0, 1)) ?></i>
+            <?php endif; ?>
+          </span>
+          <b><?= h($kh['dukaan']) ?></b>
+          <?php if ($kh['baat']): ?><small><?= h($kh['baat']) ?></small><?php endif; ?>
+        </a>
+      <?php endforeach; ?>
+    </nav>
+  </section>
   <?php endif; ?>
 
   <section class="mk-sec">

@@ -184,3 +184,25 @@ th{background:var(--brand);color:#fff;font-weight:600;font-size:14px}
 .category-query{width:100%;min-height:50px}
 .hnam.light .hnam-l{color:var(--muted)}
 .hnam.light a{color:var(--brand);background:var(--soft);border-color:var(--line)}
+
+/* ---- आज दुकानों पर (दुकान की कहानी) ----
+   Ek kataar me, bagal se sarakti hui -- jaisa gaon ka aadmi
+   WhatsApp Status me pehle se dekhta hai. Scrollbar chhupi hui
+   hai; ungli se sarakta hai. */
+.mk-kah{display:flex;gap:12px;overflow-x:auto;padding:2px 0 8px;
+        scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.mk-kah::-webkit-scrollbar{display:none}
+.mk-kah{scrollbar-width:none}
+.mk-kah-c{flex:0 0 118px;scroll-snap-align:start;text-decoration:none;color:inherit;
+          display:flex;flex-direction:column;gap:6px}
+.mk-kah-p{display:block;width:118px;height:118px;border-radius:14px;overflow:hidden;
+          background:#F1EADF;position:relative;
+          /* gol ghera -- "ye nayi hai" ka ishara, Status jaisa */
+          box-shadow:0 0 0 2px #fff,0 0 0 4px var(--gold,#E0A526)}
+.mk-kah-p img{width:100%;height:100%;object-fit:cover;display:block}
+.mk-kah-p i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+            font-style:normal;font-size:40px;font-weight:800;color:var(--brand,#7A1F1F)}
+.mk-kah-c b{font-size:13.5px;font-weight:700;line-height:1.3;
+            display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.mk-kah-c small{font-size:12.5px;color:#6B5D55;line-height:1.35;
+                display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/salon.php';
 require_once __DIR__ . '/inc/dukan.php';
+require_once __DIR__ . '/inc/story.php';
 $no_tabbar = true;
 $shop_panel = true;            // naya dukaan panel shell (mk.css .sp-*)
 $page_title = t('Shop panel — Maakit', 'दुकान पैनल — Maakit');
@@ -43,6 +44,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('do') === 'logout' && csrf_ok(
 if ($b && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do'); $bid = (int)$b['id'];
     $wapas = '/shop.php?tab=' . urlencode(post('tab') ?: 'kaam');
+
+    // --- आज की कहानी ---
+    // Jo dukaandaar roz apne WhatsApp Status par "aaj ka maal aa
+    // gaya" daalta hai, uska saamaan bikta hai. Wahi cheez yahan
+    // hai -- par us tak bhi pahunchti hai jiske paas dukaan ka
+    // number nahi hai.
+    if ($do === 'kahani') {
+        $photo = save_item_photo('photo', 'st', 900);
+        [$ok, $m] = story_daalo($pdo, $bid, post('baat'), $photo);
+        if (!$ok && $photo) { drop_photo($photo); }
+        sp_reply($m, '/shop.php?tab=kahani', ['ok' => $ok]);
+    }
+    if ($do === 'kahani_hatao') {
+        $ok = story_hatao($pdo, $bid, (int)post('sid'));
+        sp_reply($ok ? t('Removed.', 'हटा दी गई।') : t('Not found.', 'नहीं मिली।'),
+                 '/shop.php?tab=kahani', ['ok' => $ok]);
+    }
 
     // --- दुकान खुली / बंद ---
     if ($do === 'khuli') {
@@ -321,7 +339,7 @@ $bid   = (int)$b['id'];
 $nai   = (int)$b['salon_on'] === 1;          // नाई / पार्लर है?
 
 // ---- कौन-कौन से tab दिखेंगे ----
-$tabs = ['kaam' => t('My shop', 'मेरी दुकान'), 'saaman' => t('My products', 'मेरा सामान'), 'order' => t('Orders', 'ऑर्डर'),
+$tabs = ['kaam' => t('My shop', 'मेरी दुकान'), 'kahani' => t("Today's story", 'आज की कहानी'), 'saaman' => t('My products', 'मेरा सामान'), 'order' => t('Orders', 'ऑर्डर'),
          'hisab' => t('My accounts', 'मेरा हिसाब'), 'khata' => t('Payments & settings', 'खाता और सेटिंग')];
 if ($nai) { $tabs = ['live' => t("Today's bookings", 'आज की बुकिंग'), 'setup' => t('Rates & settings', 'रेट और सेटिंग')] + $tabs; }
 $tab = get('tab');
@@ -341,6 +359,7 @@ $aaj = date('Y-m-d');
 include __DIR__ . '/inc/dukan-shell.php';
 
 if ($tab === 'kaam')   { include __DIR__ . '/inc/dukan-kaam.php'; }
+if ($tab === 'kahani') { include __DIR__ . '/inc/dukan-kahani.php'; }
 if ($tab === 'saaman') { include __DIR__ . '/inc/dukan-saaman.php'; }
 if ($tab === 'order')  { include __DIR__ . '/inc/dukan-order.php'; }
 if ($tab === 'hisab')  { include __DIR__ . '/inc/dukan-hisab.php'; }
