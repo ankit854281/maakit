@@ -6,6 +6,8 @@
    {x} = jagah jahan JS value bharta hai.
    ============================================================ */
 var JL = {
+  chatFirst: ["AI Jyotishi se baat karein","AI ज्योतिषी से बात करें","Chat with AI Jyotishi"],
+  jaapDrawer: ["Naam Jaap · Counter kholein / band karein","नाम जप · काउंटर खोलें / बंद करें","Naam Jaap · Expand / collapse counter"],
   jaapSimple: ["Mantra chunein. Ginti ke liye beech mein tap karein.","मंत्र चुनें। गिनती के लिए बीच में टैप करें।","Choose a mantra. Tap the centre to count."],
   lookTitle: ["Design chunein", "डिज़ाइन चुनें", "Choose design"],
   lookSilver: ["Silver", "सिल्वर", "Silver"],
