@@ -25,6 +25,20 @@ function pf_license_ok($lic) {
     return (bool)preg_match('/^(cc0|cc-zero|pd|public domain|cc-by(-sa)?(-\d|$|\s)|cc by(-sa)?(\s|$)|attribution)/', $l);
 }
 
+/** Wikimedia now serves thumbnails from thumb.wikimedia.org. Download the
+ * canonical Commons original instead; never broaden the download allowlist. */
+function pf_source_url($url) {
+    $url = (string)$url;
+    $p = parse_url($url);
+    if (!$p || strtolower($p['host'] ?? '') !== 'thumb.wikimedia.org') return $url;
+    if (($p['scheme'] ?? '') !== 'https' || isset($p['user']) || isset($p['pass']) || isset($p['port'])) return '';
+    $path = $p['path'] ?? '';
+    if (!preg_match('#^/wikipedia/commons/thumb/([a-f0-9])/([a-f0-9]{2})/([^/]+)/[0-9]+px-[^/]+$#D', $path, $m)) return '';
+    $file = rawurldecode($m[3]);
+    if (strpos($file, '/') !== false || strpos($file, chr(92)) !== false || preg_match('/[\x00-\x1f]/', $file) || !preg_match('/\.(jpe?g|png|webp)$/iD', $file)) return '';
+    return 'https://upload.wikimedia.org/wikipedia/commons/' . $m[1] . '/' . $m[2] . '/' . $m[3];
+}
+
 /** URL theek library ka hai? */
 function pf_url_ok($url) {
     $p = parse_url((string)$url);
@@ -37,6 +51,7 @@ function pf_url_ok($url) {
  * 8 MB se badi, ya photo na ho, to null.
  */
 function pf_download($url) {
+    $url = pf_source_url($url);
     if (!pf_url_ok($url)) return null;
     // Sirf jaanch (test) ke liye: library ki jagah local server. Live par ye env kabhi set nahi hota.
     $fake = getenv('MAAKIT_PF_TEST');
@@ -83,7 +98,8 @@ function pf_take(PDO $pdo, $catId, array $d, $uid) {
     $lic = pf_clean($d['license'] ?? '', 40);
     if ($src === 'off' && $lic === '') $lic = 'CC BY-SA 3.0';
     if (!pf_license_ok($lic)) return [false, t('This photo’s licence does not allow shop use', 'इस फ़ोटो का लाइसेंस दुकान में इस्तेमाल की इजाज़त नहीं देता')];
-    if (!pf_url_ok($d['url'] ?? '')) return [false, t('Only Wikimedia Commons or Open Food Facts photos are allowed', 'सिर्फ़ Wikimedia Commons या Open Food Facts की फ़ोटो ली जा सकती है')];
+    $d['url'] = pf_source_url($d['url'] ?? '');
+    if (!pf_url_ok($d['url'])) return [false, t('Only Wikimedia Commons or Open Food Facts photos are allowed', 'सिर्फ़ Wikimedia Commons या Open Food Facts की फ़ोटो ली जा सकती है')];
     $page = (string)($d['page'] ?? '');
     if ($page !== '' && !preg_match('#^https://(commons\.wikimedia\.org|world\.openfoodfacts\.org|[a-z]{2}\.openfoodfacts\.org)/#', $page)) $page = '';
 
