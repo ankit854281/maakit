@@ -256,6 +256,25 @@ prints an honest count.
 thing look fine, or sends Ankit chasing a bug that was never there. Never
 report a number you have not produced with `sab.sh`.
 
+### A check must only go red when something is actually broken
+
+Three checks went red on 21 Oct 2026 while nothing was broken, and all three
+were the test's fault, not the code's:
+
+- `kisne-kiya.php` wanted the literal string `2/7`. Two seed orders arrived
+  in the test database and the page correctly showed `4/9`. **Never assert an
+  absolute count that includes rows you did not create.** Count first, then
+  assert the difference.
+- `jyotish-flow.php` wanted the words `Sankalp poora`; the code now says
+  `sankalp poora`. **Assert on ids, classes, `data-i18n` keys and function
+  names — never on visible prose.** Visible language changes, and should.
+- `partner-flow.php` tripped the live 15-minute flood guard on a second local
+  run. A check must clear its own scope rows first (see `earning-flow.php`)
+  instead of going red because a safety feature worked.
+
+A red mark that means nothing is worse than no mark, because after two of
+them nobody looks at red again.
+
 ---
 
 ## 7. The helper bots already running
@@ -263,8 +282,10 @@ report a number you have not produced with `sab.sh`.
 | Name | What it does |
 |---|---|
 | **चौकीदार** | Every 15 min checks the live site's pulse; twice a day a full check (tiles, photos, forms, order list, shop login). Opens a GitHub issue if something breaks. |
-| **मुनीम** | A weekly ledger — what sold, what didn't, which items have no photo or price, which shops have gone quiet, **what people searched for and did not find**. |
-| **नक़ल** | Gzipped database backup. Weekly automatically, and before every migration run. |
+| **मुनीम** | A weekly ledger — what sold, what didn't, which items have no photo or price, which shops have gone quiet, **what people searched for and did not find**. Since 21 Oct 2026 it also shows profit and loss (`$B['paisa']`: in, out, left, per order, petrol, staff) and says plainly which days have no costs recorded, because a day with no costs recorded looks more profitable than it was. **Goods money is deliberately excluded** — it never belongs to Maakit. |
+| **नक़ल** | Gzipped database backup. Weekly automatically, and before every migration run. Stored on the same hosting, so it survives a bad migration but not a lost account. |
+| **संदूक़** | `.github/workflows/sanduk.yml` — every night it has नक़ल make a backup, **downloads it** and keeps it on GitHub for 90 days, off the hosting. It checks the file is really gzip and really contains tables; a 403 page saved as `.sql.gz` was caught exactly this way. Needs `MUNEEM_KEY` in GitHub Secrets. |
+| **एक काम** | `.github/workflows/ek-kaam.yml` + `inc/ek-kaam.php` — every morning it names **one** task, the one whose being stuck is holding up everything else, and keeps one GitHub issue open until it is done. Never two: given a list, a person picks the easiest item, not the most important one. The same single task is shown at the top of `admin/super.php` and inside मुनीम — one truth in three places, which `.github/jaanch/ek-kaam.php` checks. If you add a stage to the ladder in `inc/ek-kaam.php`, **order matters**: the OTP key stays first, because without it there is no first order however many shops have joined. |
 | **डाकिया** | One-tap WhatsApp messages for each order stage. |
 | **जाँच** | Checks every push and pull request (section 6). |
 

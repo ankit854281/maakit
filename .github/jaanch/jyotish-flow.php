@@ -46,24 +46,33 @@ jf_check($code === 200, "page code $code");
 // badalne par bhi nahi badlega.
 foreach (['Maakit Jyotish', 'Kundli Milan', 'Powered by', 'astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'Tele-MANAS', 'Delete my data', 'Navagrah Council', 'council-consent', 'council-area', 'council-goal', 'any context choices', 'Rahu · Red flags?', 'chat-welcome', 'ai-chat-welcome', 'data-i18n="cwTitle"', 'data-i18n="cwBody"', 'i18n.js', 'k-question-hint', 'jaap-title', 'jaap-mantra', 'jaap-mode', 'jaap-goal', 'jaap-bhav', 'jaap-vibrate', 'jaap-arena', 'jaap-tap', 'jaap-beads', 'jaap-undo', 'jaap-voice', 'jaap-local-note'] as $w) jf_check(str_contains($html, $w), "page lacks $w");
 foreach (['astronomy.min.js', 'engine.js', 'daily.js', 'app.js', 'jyotish.css'] as $f) { [$c2] = jf_http('/jyotish/' . $f); jf_check($c2 === 200, "$f code $c2"); }
-// ⚠️  YAHAN SE AAGE KI JAANCH ABHI LAAL HAI -- aur jaanbujh kar
-//     laal chhodi gayi hai.
+// Ye jaanch pehle laal thi aur jaan-boojh kar laal chhodi gayi
+// thi, kyunki ChatGPT ne app.js naye sire se likha tha aur pata
+// nahi tha ki kuch sach me toota hai ya sirf naam badle hain.
 //
-//     ChatGPT ne app.js naye sire se likha (685 line badli) par
-//     apni ye jaanch nahi badli. Neeche jo shabd maange ja rahe
-//     hain (pendingWelcomeQuestion, jaapFinishRound wagairah) wo
-//     naye app.js me shayad doosre naam se hain.
+// Ab ek-ek shabd alag karke dekha gaya. Das me se nau hisse app.js
+// me maujood hain. Sirf EK shabd nahi mila -- aur wo bhi sirf bade
+// chhote akshar ka farq tha: jaanch 'Sankalp poora' maang rahi thi,
+// app.js me 'sankalp poora' likha hai (mala poori hone par share
+// hone wala sandesh, line 425). Feature salamat hai.
 //
-//     Ise bina app.js samjhe "theek" karna SABSE KHATARNAK hota:
-//     ho sakta hai ye sach me kuch toota pakad rahi ho, aur hum
-//     use chup kara dete. Isliye chhod diya gaya hai.
+// Yahi wo purani galti hai jiske liye AGENTS.md me niyam likha hai:
 //
-//     JISNE app.js BADLA HAI, WAHI ISE SUDHAARE.
+//     JAANCH SHABD PAR NAHI, DHANCHE PAR HONI CHAHIYE.
 //
-//     Upar wali HTML/i18n ki jaanch sudhaar di gayi hai aur wo
-//     chal rahi hai.
+// Dikhne wali bhasha badalti rehti hai -- aur badalni bhi chahiye.
+// Shabd par tiki jaanch us din laal ho jaati hai jis din kuch TOOTA
+// NAHI hota, aur phir aadmi laal rang par bharosa karna chhod deta
+// hai. Isliye dono dikhne wale shabd hata kar unki jagah pakki
+// cheezein rakh di gayi hain:
+//
+//     'Personal jawaab ke liye...'  ->  'k-question-hint'  (id)
+//     'Sankalp poora'               ->  'malaDoneTitle'    (i18n kunji)
+//
+// Baaki nau hisse pehle jaise hi maange ja rahe hain -- unme se
+// koi bhi gayab hua to ye jaanch phir laal ho jayegi.
 [$cJs, $js] = jf_http('/jyotish/app.js');
-jf_check($cJs === 200 && str_contains($js, 'pendingWelcomeQuestion') && str_contains($js, 'Personal jawaab ke liye pehle apni janam kundli banaiye') && str_contains($js, 'jaapFinishRound') && str_contains($js, 'mj-jaap-best') && str_contains($js, 'screen.orientation.lock("landscape")') && str_contains($js, 'function jaapRefreshProgress') && str_contains($js, 'jaap-undo') && str_contains($js, 'jaap-vibrate') && str_contains($js, 'jaap-bhav') && str_contains($js, 'Sankalp poora'), 'welcome draft and mindful local jaap modes should be wired');
+jf_check($cJs === 200 && str_contains($js, 'pendingWelcomeQuestion') && str_contains($js, 'k-question-hint') && str_contains($js, 'jaapFinishRound') && str_contains($js, 'mj-jaap-best') && str_contains($js, 'screen.orientation.lock("landscape")') && str_contains($js, 'function jaapRefreshProgress') && str_contains($js, 'jaap-undo') && str_contains($js, 'jaap-vibrate') && str_contains($js, 'jaap-bhav') && str_contains($js, 'malaDoneTitle'), 'welcome draft and mindful local jaap modes should be wired');
 
 // ---- AI off without a key: page says so, endpoint answers "off" ----
 if (!jy_ai_ready()) {

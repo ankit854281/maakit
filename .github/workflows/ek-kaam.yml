@@ -1,0 +1,159 @@
+# ============================================================
+#  Maakit ka एक काम
+#
+#  Ankit ke paas jaankari ki kami nahi hai. Super panel sab
+#  dikhata hai, muneem sab ginta hai, chowkidar khabar deta hai.
+#
+#  Jo nahi tha wo ye: har subah ek SAAF jawab ki "aaj mujhe
+#  kaun sa EK kaam karna hai".
+#
+#  TEEN NIYAM -- aur teeno jaan-boojh kar hain:
+#
+#  1. EK HI KAAM. Teen kaam dikhane ka matlab koi bhi na hona --
+#     aadmi sabse AASAN wala uthata hai, ZAROORI wala nahi.
+#
+#  2. JAB TAK HO NA JAYE, WAHI. Kal bhi wahi, parson bhi wahi.
+#     Badalne ka ek hi tareeka hai -- kar dena.
+#
+#  3. EK HI ISSUE. Roz naya issue kholne se inbox bhar jata hai
+#     aur phir aadmi sabko dekhna band kar deta hai. Isliye ek
+#     hi issue rehta hai, aur usi ka naam badalta rehta hai.
+#
+#  Kaam ho jane par wo issue APNE AAP band ho jata hai, aur agla
+#  kaam naye issue me aa jata hai. Issue band hona = kaam hua.
+#
+#  Ye kuch BADALTA NAHI -- sirf dekh kar batata hai.
+#
+#  Chahiye: GitHub Secrets me MUNEEM_KEY (wahi jo muneem ki hai)
+#           aur MAAKIT_URL (na dein to https://maakit.in)
+# ============================================================
+name: एक काम
+
+on:
+  schedule:
+    # Roz subah 7:10 (Bharat ka samay) = 1:40 UTC.
+    # Subah isliye ki din shuru hone se pehle pata ho ki aaj
+    # karna kya hai.
+    - cron: '40 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ek-kaam
+  cancel-in-progress: false
+
+jobs:
+  kaam:
+    runs-on: ubuntu-latest
+    steps:
+      - name: आज का काम पूछिए
+        id: poocho
+        env:
+          KEY: ${{ secrets.MUNEEM_KEY }}
+          URL: ${{ secrets.MAAKIT_URL }}
+        run: |
+          set -uo pipefail
+          GHAR="${URL:-https://maakit.in}"; GHAR="${GHAR%/}"
+
+          if [ -z "${KEY}" ]; then
+            echo "mila=nahi" >> "$GITHUB_OUTPUT"
+            echo "galti=MUNEEM_KEY नहीं दी गई" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+
+          code=$(curl -sS --max-time 120 --retry 2 --retry-delay 15 \
+                      -o jawab.json -w '%{http_code}' \
+                      --fail-with-body "$GHAR/muneem.php?f=json&key=$KEY" || true)
+          if [ "$code" != "200" ]; then
+            echo "mila=nahi" >> "$GITHUB_OUTPUT"
+            echo "galti=बही खुली नहीं (HTTP $code)" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          try:
+              d = json.load(open('jawab.json'))
+          except Exception as e:
+              print("mila=nahi"); print(f"galti=जवाब पढ़ा नहीं गया: {e}"); raise SystemExit
+          k = d.get('ek_kaam')
+          if not k:
+              print("mila=khali")          # sab theek, kuch ruka nahi
+          else:
+              # GitHub output me nayi line nahi ja sakti
+              saaf = lambda s: str(s or '').replace('\n', ' ').replace('\r', ' ').strip()
+              print("mila=haan")
+              print(f"kya={saaf(k.get('kya'))}")
+              print(f"kyun={saaf(k.get('kyun'))}")
+              print(f"kahan={saaf(k.get('kahan'))}")
+              print(f"kitna={saaf(k.get('kitna'))}")
+          PY
+
+      - name: काम सामने रखिए
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const o = ${{ toJSON(steps.poocho.outputs) }};
+            const kab = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata',
+                          day: 'numeric', month: 'short' });
+
+            // Ek hi issue rehta hai. Naam me kaam likha hota hai,
+            // taaki phone ki khabar me hi dikh jaye aur kholna na pade.
+            const { data: khule } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: 'ek-kaam', per_page: 20 });
+
+            // ---- kuch ruka nahi ----
+            if (o.mila === 'khali') {
+              for (const i of khule) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: i.number,
+                  body: `✅ ये काम हो गया — ${kab}` });
+                await github.rest.issues.update({ owner, repo, issue_number: i.number, state: 'closed' });
+              }
+              core.notice('कुछ नहीं रुका है');
+              return;
+            }
+
+            // ---- bahi hi nahi khuli ----
+            if (o.mila === 'nahi') {
+              const t = '⚠️ एक काम — बही नहीं खुली';
+              const b = [`**${kab}** को बही नहीं खुली।`, '', `**वजह:** ${o.galti}`, '',
+                         'MUNEEM_KEY सही है? maakit.in खुल रहा है?'].join('\n');
+              const purana = khule.find(i => i.title === t);
+              if (purana) await github.rest.issues.createComment({
+                            owner, repo, issue_number: purana.number, body: b });
+              else await github.rest.issues.create({
+                            owner, repo, title: t, body: b, labels: ['ek-kaam'] });
+              return;
+            }
+
+            // ---- aaj ka kaam ----
+            const bada  = o.kitna === 'bada';
+            const title = (bada ? '🔴 ' : '📌 ') + o.kya;
+            const link  = o.kahan
+              ? (o.kahan.startsWith('http') ? o.kahan : `https://maakit.in${o.kahan}`)
+              : null;
+
+            const body = [
+              `## ${o.kya}`, '',
+              o.kyun, '',
+              link ? `👉 **[यहाँ कीजिए](${link})**` : '',
+              '', '---',
+              bada
+                ? '_जब तक ये नहीं होगा, आगे का कुछ नहीं चलेगा। इसीलिए रोज़ यही दिखेगा।_'
+                : '_हो जाने पर ये अपने आप बंद हो जाएगा और अगला काम आ जाएगा।_',
+            ].filter(Boolean).join('\n');
+
+            // Wahi kaam pehle se khula hai? To kuch mat kijiye --
+            // roz "yaad dilana" bhi shor hi hai. Chup rehna behtar.
+            const wahi = khule.find(i => i.title === title);
+            if (wahi) { core.notice('वही काम अब भी बाकी है — कुछ नया नहीं कहा'); return; }
+
+            // Kaam badal gaya -> purana band, naya khol dijiye
+            for (const i of khule) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: i.number,
+                body: `✅ ये काम हो गया — ${kab}` });
+              await github.rest.issues.update({ owner, repo, issue_number: i.number, state: 'closed' });
+            }
+            await github.rest.issues.create({ owner, repo, title, body, labels: ['ek-kaam'] });

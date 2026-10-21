@@ -35,6 +35,7 @@
 //  hai -- seedhe database me jhaankna nahi.
 // ============================================================
 require_once __DIR__ . '/../inc/fn.php';
+require_once __DIR__ . '/../inc/ek-kaam.php';
 need_role('admin');
 $page_title = t('Everything in one place — Maakit', 'सब एक जगह — Maakit');
 
@@ -212,6 +213,14 @@ include __DIR__ . '/../inc/panel.php';
   .sp-h{margin:0 0 4px}
   .sp-lead{color:var(--mut,#6B5D55);margin:0 0 20px}
   .sp-sec{margin:26px 0 10px;font-size:20px}
+  .sp-ek{display:block;text-decoration:none;color:inherit;margin:0 0 22px;
+         background:#fff;border:1px solid var(--line,#E3D8C6);
+         border-left:5px solid var(--gold,#E0A526);border-radius:14px;padding:16px 18px}
+  .sp-ek-bada{border-left-color:var(--brand,#7A1F1F);background:#FDF6E3}
+  .sp-ek-t{display:block;font-size:13px;font-weight:700;letter-spacing:.04em;
+           text-transform:uppercase;color:var(--mut,#6B5D55);margin-bottom:6px}
+  .sp-ek b{display:block;font-size:19px;line-height:1.45}
+  .sp-ek small{display:block;margin-top:7px;color:var(--mut,#6B5D55);font-size:14.5px;line-height:1.6}
   .sp-ok{background:#E8F3EA;border:1px solid #BFDCC6;color:#1C5130;
          border-radius:14px;padding:18px;font-weight:700}
   .sp-ruk{display:flex;align-items:center;gap:14px;background:#fff;
@@ -252,6 +261,25 @@ include __DIR__ . '/../inc/panel.php';
   <h1 class="sp-h"><?= h(t('Everything in one place', 'सब एक जगह')) ?></h1>
   <p class="sp-lead"><?= h(t('Open this page first. Whatever needs you is at the top.',
      'सुबह यही पन्ना खोलिए। जो आपका इंतज़ार कर रहा है वो सबसे ऊपर है।')) ?></p>
+
+  <?php
+    // ---- आज का एक काम — सबसे ऊपर ----
+    // Neeche "ruka hua kaam" ki poori soochi hai. Par soochi dekh
+    // kar aadmi sabse AASAN wala uthata hai, sabse ZAROORI wala
+    // nahi. Isliye upar sirf EK -- wahi jiske ruke rehne se baaki
+    // sab ruka hua hai.
+    $ekk = null;
+    try { $ekk = ek_kaam($pdo); } catch (Throwable $e) { $ekk = null; }
+  ?>
+  <?php if ($ekk): ?>
+    <a class="sp-ek <?= $ekk['kitna'] === 'bada' ? 'sp-ek-bada' : '' ?>"
+       href="<?= h($ekk['kahan'] ?: '#') ?>"<?= strpos((string)$ekk['kahan'], 'http') === 0
+       ? ' target="_blank" rel="noopener"' : '' ?>>
+      <span class="sp-ek-t"><?= h(t('Today’s one task', 'आज का एक काम')) ?></span>
+      <b><?= h($ekk['kya']) ?></b>
+      <small><?= h($ekk['kyun']) ?></small>
+    </a>
+  <?php endif; ?>
 
   <!-- ===== 1. अभी क्या रुका है ===== -->
   <h2 class="sp-sec"><?= h(t('Waiting for you', 'अभी क्या रुका है')) ?><?php

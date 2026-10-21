@@ -48,6 +48,22 @@ function kk_num($html,$naam,$label){
 }
 
 try{
+    // ---- pehle ginti le lijiye, taaki pakka number na likhna pade ----
+    // Pehle yahan "2/7" likha hua tha. Jab jaanch ke database me do
+    // purane order aa gaye, to ye jaanch TOOT GAYI -- halanki panna
+    // bilkul sahi 4/9 dikha raha tha.
+    //
+    // Pakka number likhna aisi hi galti hai: jaanch tab chillati hai
+    // jab kuch TOOTA nahi hota, aur phir aadmi jaanch par bharosa
+    // karna chhod deta hai. Isliye ab ginti pehle le kar FARQ dekha
+    // jata hai -- database me pehle se kya pada hai, usse matlab nahi.
+    $se7 = date('Y-m-d', strtotime('-6 day'));      // staff.php?din=7 ka hi daira
+    $pehle = function($jod) use ($pdo, $se7) {
+        $q = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE DATE(created_at)>=? $jod");
+        $q->execute([$se7]); return (int)$q->fetchColumn(); };
+    $base_khud = $pehle('AND staff_user IS NULL');
+    $base_kul  = $pehle('');
+
     $mk=function($n,$un,$role)use($pdo){
         $pdo->prepare("INSERT INTO users(name,username,password,role,active) VALUES (?,?,?,?,1)")
             ->execute([$n,$un,password_hash('kk-pass-123',PASSWORD_DEFAULT),$role]);
@@ -117,8 +133,10 @@ try{
     // ---- 3. kisi aur ka kaam kisi ke khate me na jaye ----
     kk_check(kk_num($html,'CI KK Boss','ऑर्डर डाले')===null,'Boss ke khate me koi order nahi hona chahiye');
     kk_check(kk_num($html,'CI KK Ramu','दुकानें जोड़ीं')===null,'Ramu ke khate me koi dukaan nahi honi chahiye');
-    kk_check(preg_match('#<b>2</b>/7#',$html)===1,
-             'website se aaye 2/7 order kisi ke khate me nahi, alag likhe hone chahiye');
+    // Jaanch ne 7 order daale: 5 Rekha ke naam par, 2 graahak ke khud ke.
+    $chahiye = ($base_khud + 2) . '</b>/' . ($base_kul + 7);
+    kk_check(strpos($html, '<b>' . $chahiye) !== false,
+             "website se aaye order alag likhe hone chahiye -- $chahiye dikhna chahiye tha");
 
     // ---- "aaj" me sirf aaj ka ----
     $pdo->prepare("UPDATE orders SET created_at = NOW() - INTERVAL 3 DAY WHERE staff_user=?")->execute([$bpo]);

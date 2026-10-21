@@ -21,7 +21,8 @@
 // Yani GitHub par chaabi daalna ZAROORI NAHI. Wo sirf isliye hai
 // ki har somvaar bahi apne aap aa jaye, bina aapke khole.
 // ============================================================
-require_once __DIR__ . '/inc/fn.php';   // session, $pdo aur user() yahin se
+require_once __DIR__ . '/inc/fn.php';        // session, $pdo aur user() yahin se
+require_once __DIR__ . '/inc/ek-kaam.php';   // आज का एक काम
 
 // ---------- kaun dekh sakta hai ----------
 $u      = user();
@@ -67,6 +68,16 @@ $B['hafta'] = [
     'delivery_paisa'=> (int)ek($pdo, "SELECT COALESCE(SUM(delivery_charge),0) FROM orders WHERE $ab AND status='Delivered'"),
     'radd'         => (int)ek($pdo, "SELECT COUNT(*) FROM orders WHERE $ab AND status='Cancel'"),
 ];
+
+// ============================================================
+// 0. आज का एक काम
+//
+// Naya panna nahi banaya gaya. Muneem ka darwaza aur chaabi
+// pehle se hai, aur roz wala bot yahin se padh lega -- ek aur
+// panna matlab ek aur jagah jo toot sakti hai.
+// ============================================================
+try { $B['ek_kaam'] = ek_kaam($pdo); }
+catch (Throwable $e) { error_log('muneem ek_kaam: ' . $e->getMessage()); $B['ek_kaam'] = null; }
 
 // ============================================================
 // 1क. मुनाफ़ा या नुक़सान — वो एक नंबर जो सबसे ज़्यादा मायने रखता है
@@ -329,6 +340,14 @@ ul{margin:0;padding-left:20px}li{margin-bottom:5px}
 
 <h1>मुनीम की बही</h1>
 <p class="kab"><?= htmlspecialchars($B['kab']) ?> · Maakit v<?= htmlspecialchars($B['version']) ?></p>
+
+<?php if (!empty($B['ek_kaam'])): $EK = $B['ek_kaam']; ?>
+<h2>आज का एक काम</h2>
+<div class="n" style="display:block">
+  <p style="font-size:17px;font-weight:700;margin:0 0 6px"><?= htmlspecialchars($EK['kya']) ?></p>
+  <p class="note" style="margin:0"><?= htmlspecialchars($EK['kyun']) ?></p>
+</div>
+<?php endif; ?>
 
 <h2>पिछले 7 दिन</h2>
 <div class="n">

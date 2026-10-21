@@ -22,6 +22,13 @@ function partner_http(string $path,$data=null,int $expected=200,array $headers=[
 function partner_csrf(string $body): string {preg_match('/(?:name="csrf" value|data-csrf)="([^"]+)"/',$body,$m);partner_check(isset($m[1]),'CSRF field');return html_entity_decode($m[1],ENT_QUOTES,'UTF-8');}
 function partner_user(string $role,string $mobile,int $active=0): int {global $pdo,$users;$pdo->prepare('INSERT INTO users(name,username,password,role,mobile,active) VALUES(?,?,?,?,?,?)')->execute(['CI Partner',$mobile,password_hash('CI-Secure-1234',PASSWORD_DEFAULT),$role,$mobile,$active]);$id=(int)$pdo->lastInsertId();$users[]=$id;return $id;}
 try {
+ // Partner-apply has a 15-minute flood guard (429 after a few tries).
+ // Back-to-back local runs trip it, so this test used to go red while
+ // nothing was broken -- the guard was doing its job. A red mark that
+ // means nothing is worse than no mark, so clear this scope first.
+ // Only this test's scope, only in the CI database, and the guard
+ // itself is untouched.
+ $pdo->prepare('DELETE FROM auth_failures WHERE scope=?')->execute(['partner_signup']);
  $admin=partner_user('admin','9000081000',1);
  // File contents, size, and origin are validated independently of client names and MIME hints.
  partner_check(document_metadata(['error'=>UPLOAD_ERR_OK,'tmp_name'=>$temp,'size'=>$fileSize])['mime']==='application/pdf','real PDF allowed');
