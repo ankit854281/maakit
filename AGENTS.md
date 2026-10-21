@@ -288,27 +288,33 @@ were the test's fault, not the code's:
 A red mark that means nothing is worse than no mark, because after two of
 them nobody looks at red again.
 
-### Open on GitHub: `faculty-flow.php` (School ERP) — not fixed here
+### The lesson from `faculty-flow.php` (21 Oct 2026)
 
-As of 21 Oct 2026 `bash .github/jaanch/sab.sh` is green locally (42/42) and
-every check also passes against a CI-identical database and config. On GitHub
-one check still fails, and only there:
+For days this check was green here and **red on GitHub every single time**:
 
 ```
-Faculty: Credential save   (.github/jaanch/faculty-flow.php line 19)
+Faculty: Credential save   (.github/jaanch/faculty-flow.php)
 ```
 
-That line posts `faculty_api.php?a=credential` with `type=CPD`,
-`date=2026-10-01` and expects HTTP 200. The endpoint rejects a CPD date
-outside the active school session (`settings.sessionStart` / `sessionEnd`,
-defaulting to 1 April – 31 March), so start there. The runner differs from
-this workspace in two ways worth checking first: **PHP 8.2** (local 8.4) and
-**MariaDB 11** (local 10.11).
+The cause was not the environment. The check assumed a `settings.main` row
+with a `session` already existed — and in this workspace one did, left behind
+by an older run of a different check. CI builds the database from migrations
+every time, so there it never existed.
 
-This is School ERP code and its own check — **whoever owns that code should
-fix it**, as with `app.js` earlier. It is written here so the next session
-does not have to rediscover it, and so nobody "fixes" the check by silencing
-it: it may be catching something real.
+Behind it sat a real product bug: with no session saved,
+`school/faculty_api.php` built the CPD window from `substr('', 0, 4)`, i.e.
+from `-04-01` to `1-03-31`, so **every** CPD date fell "outside the session"
+and the teacher was told the date was wrong. The honest answer is that the
+school session was never filled in, and the endpoint now says exactly that.
+
+Two rules come out of it:
+
+- **A check sets up everything it needs and puts back what it found.** One
+  that leans on another check's leftovers passes here and fails there, and a
+  check that is red every time is the same as having no check at all.
+- **A defaulted value that cannot be right is worse than an error.** Guessing
+  a session window from an empty string produced a confident, wrong message
+  that pointed at the wrong thing.
 
 ---
 

@@ -5,6 +5,22 @@ function fi(){return sprintf('%s-%s-%s-%s-%s',bin2hex(random_bytes(4)),bin2hex(r
 function ft($uid,$role,$tid){$db=sch_db();$db->prepare('INSERT INTO sch_users(uid,role,tid) VALUES(?,?,?) ON DUPLICATE KEY UPDATE role=VALUES(role),tid=VALUES(tid)')->execute([$uid,$role,$tid]);$t=bin2hex(random_bytes(32));$db->prepare('INSERT INTO sch_sessions(token_hash,uid,expires_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 1 DAY))')->execute([hash('sha256',$t),$uid]);return $t;}
 function fh($action,$token='',$body=null,$target=''){$h=['X-School-Token: '.$token];$o=[CURLOPT_RETURNTRANSFER=>true,CURLOPT_PROXY=>'',CURLOPT_TIMEOUT=>20];if($body!==null){$o[CURLOPT_POST]=true;if(isset($body['file'])&&$body['file'] instanceof CURLFile)$o[CURLOPT_POSTFIELDS]=$body;else{$h[]='Content-Type: application/json';$o[CURLOPT_POSTFIELDS]=json_encode($body);}}$o[CURLOPT_HTTPHEADER]=$h;$c=curl_init('http://127.0.0.1:8099/school/faculty_api.php?a='.$action.($target?'&tid='.rawurlencode($target):''));curl_setopt_array($c,$o);$raw=curl_exec($c);$status=curl_getinfo($c,CURLINFO_HTTP_CODE);curl_close($c);ff(is_string($raw)&&!preg_match('/Fatal error|Warning:|Uncaught/',$raw),'PHP response warning');return [$status,json_decode($raw,true),$raw];}
 $P=ft('principal','principal','P');$T=ft('t:FF','teacher','FF');$X=ft('t:FX','teacher','FX');$A=ft('p:9555555555','parent','9555555555');$oldAlloc=sch_rec_get('alloc','main');$oldGrid=sch_rec_get('grid','main');$oldBrand=sch_rec_get('facultyBrand','main');$files=[];$photoId='';$cred=fi();
+// Ye jaanch school ka session KHUD set karti hai.
+//
+// Pehle wo maan baithi thi ki settings.main pehle se hai. Jaanch ke
+// database me wo hota tha -- kisi PURANI jaanch ka chhoda hua. CI
+// me database har baar khali banta hai, isliye wahan ye jaanch
+// HAMESHA laal thi aur local par hari: "Credential save".
+//
+// Jo jaanch kisi aur ke chhode hue data par tiki ho, wo kisi din
+// bina wajah laal hoti hai -- aur yahan to roz laal thi.
+$oldSettings=sch_rec_get('settings','main');
+if(!is_array($oldSettings)||($oldSettings['session']??'')===''){
+    $y=(int)date('n')>=4?(int)date('Y'):((int)date('Y')-1);
+    sch_rec_put('settings','main',array_merge(is_array($oldSettings)?$oldSettings:[],
+        ['session'=>$y.'-'.substr((string)($y+1),2),
+         'sessionStart'=>$y.'-04-01','sessionEnd'=>($y+1).'-03-31']),'principal');
+}
 try{
  sch_rec_put('teacher','FF',['name'=>'Synthetic Faculty'],'principal');sch_rec_put('teacher','FX',['name'=>'Other Faculty'],'principal');sch_rec_put('student','faculty-own',['id'=>'faculty-own','cls'=>'6th','name'=>'Synthetic Child','phone'=>'9555555555'],'principal');sch_rec_put('alloc','main',[['c'=>'6th','s'=>'Maths','t'=>'FF']],'principal');sch_rec_put('grid','main',['6th'=>[[0]]],'principal');
  [$c]=fh('state','invalid');ff($c===401,'Unauthenticated profile');[$c]=fh('state',$A);ff($c===403,'Parent private profile');
@@ -26,6 +42,8 @@ try{
  $curl=curl_init('http://127.0.0.1:8099/school/api.php?a=load');curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_PROXY=>'',CURLOPT_HTTPHEADER=>['X-School-Token: '.$T]]);$raw=curl_exec($curl);curl_close($curl);ff(!str_contains($raw,'PRIVATE_REFLECTION_FF')&&!str_contains($raw,'PRIVATE_EMERGENCY')&&!str_contains($raw,$idToken),'Legacy faculty leak');
  [$c]=fh('revoke',$P,[],'FF');ff($c===200,'Revoke failed');[$c]=fh('verify&token='.$idToken);ff($c===404,'Revoked ID still valid');echo "Faculty approval, privacy, consent, QR revocation, metrics and private reflection passed\n";
 }finally{
+ if($oldSettings!==null)sch_rec_put('settings','main',$oldSettings,'principal');
+ else $db->exec("DELETE FROM sch_records WHERE k='settings' AND r='main'");
  if($oldAlloc!==null)sch_rec_put('alloc','main',$oldAlloc,'principal');if($oldGrid!==null)sch_rec_put('grid','main',$oldGrid,'principal');else $db->exec("DELETE FROM sch_records WHERE k='grid' AND r='main'");if($oldBrand!==null)sch_rec_put('facultyBrand','main',$oldBrand,'principal');
  foreach(['FF','FX'] as $tid){foreach(['facultyProfile','facultyApproved','facultyReflection','teacher'] as $k)$db->prepare('DELETE FROM sch_records WHERE k=? AND r=?')->execute([$k,$tid]);}$db->exec("DELETE FROM sch_records WHERE (k IN ('facultyId','facultyService','facultyThanks','facultyCredential') AND (JSON_UNQUOTE(JSON_EXTRACT(d,'$.tid'))='FF' OR r LIKE '%|FF')) OR (k='student' AND r='faculty-own')");
  if($photoId){$m=sch_rec_get('facultyPhoto',$photoId);if($m){$path=dirname(__DIR__,3).'/school-private-faculty/'.$m['file'];if(is_file($path))unlink($path);}$db->prepare("DELETE FROM sch_records WHERE k='facultyPhoto' AND r=?")->execute([$photoId]);}foreach($files as $file)if(is_file($file))unlink($file);foreach(['t:FF','t:FX','p:9555555555'] as $uid){$db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$uid]);$db->prepare('DELETE FROM sch_users WHERE uid=?')->execute([$uid]);}
