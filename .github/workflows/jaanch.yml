@@ -160,6 +160,7 @@ jobs:
           bash .github/jaanch/sab.sh
 
           node --check school/finance.js
+          node --check school/registers.js
           node --check school/faculty.js
           node --check school/faculty-public.js
           node --check school/toolkit.js

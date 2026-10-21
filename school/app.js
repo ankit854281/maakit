@@ -531,15 +531,15 @@ const NAV = {
               ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Report Cards & Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
-              ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings']],
+              ['mytoday','fa-chalkboard-user','My Teaching'],['log','fa-clock-rotate-left','Activity Log'],['settings','fa-gear','Settings'],['office','fa-folder-tree','School Office']],
   teacher:   [['mytoday','fa-sun','Today'],['quizt','fa-bolt','Quiz Duel'],['attendance','fa-clipboard-user','Attendance'],['diary','fa-book','Diary'],['lplan','fa-clipboard-check','Lesson Plan'],
               ['speaking','fa-microphone','Speaking'],['behaviour','fa-hand-holding-heart','Behaviour'],['syllabus','fa-list-check','Syllabus'],
-              ['marks','fa-pen-to-square','Marks Entry'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave'],['salary','fa-money-check-dollar','My Salary'],['rules','fa-scale-balanced','School Rules']],
+              ['marks','fa-pen-to-square','Marks Entry'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave'],['salary','fa-money-check-dollar','My Salary'],['rules','fa-scale-balanced','School Rules'],['office','fa-folder-tree','School Office']],
   student:   [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  accountant:[['salary','fa-money-check-dollar','Staff Salary'],['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts']],
-  reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Report Cards & Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log']]
+  accountant:[['salary','fa-money-check-dollar','Staff Salary'],['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
+  reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
+  chairman:  [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Report Cards & Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log'],['office','fa-folder-tree','School Office']]
 };
 
 const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
@@ -552,16 +552,16 @@ const GROUPS = {
   principal: [['Dashboard', 'fa-gauge', ['dash']],
               ['Staff', 'fa-user-tie', ['staff', 'salary', 'timetable', 'lplans', 'diaries', 'mytoday', 'diary', 'lplan', 'toolkit', 'profile', 'saathi']],
               ['Students', 'fa-children', ['students', 'attendance', 'syllabus', 'exams', 'behaviour', 'speaking', 'fame', 'quizt', 'studio', 'learning']],
-              ['Admin', 'fa-building-columns', ['admin', 'fdesk', 'finance', 'fdues', 'fcalls', 'freceipts', 'fees', 'marks', 'results', 'notices', 'calendar', 'rules', 'log']]],
+              ['Admin', 'fa-building-columns', ['admin', 'office', 'fdesk', 'finance', 'fdues', 'fcalls', 'freceipts', 'fees', 'marks', 'results', 'notices', 'calendar', 'rules', 'log']]],
   chairman:  [['Dashboard', 'fa-gauge', ['dash']], ['Students', 'fa-children', ['exams', 'results', 'fame', 'syllabus']],
-              ['Admin', 'fa-building-columns', ['admin', 'finance', 'fdues', 'fees', 'calendar', 'rules', 'log']]],
+              ['Admin', 'fa-building-columns', ['admin', 'office', 'finance', 'fdues', 'fees', 'calendar', 'rules', 'log']]],
   teacher:   [['Today', 'fa-sun', ['mytoday', 'myweek', 'calendar']], ['My Classes', 'fa-chalkboard', ['attendance', 'diary', 'marks', 'behaviour', 'speaking', 'quizt', 'studio', 'learning']],
-              ['Planning', 'fa-clipboard-check', ['lplan', 'syllabus', 'toolkit', 'fame']], ['Me', 'fa-user', ['leave', 'salary', 'rules', 'profile', 'saathi', 'finance']]],
+              ['Planning', 'fa-clipboard-check', ['lplan', 'syllabus', 'toolkit', 'fame', 'office']], ['Me', 'fa-user', ['leave', 'salary', 'rules', 'profile', 'saathi', 'finance']]],
   parent:    [['Home', 'fa-house', ['phome', 'pnotices', 'faculty']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning', 'studio']],
               ['Progress & Fees', 'fa-chart-simple', ['presults', 'pfees', 'finance']]],
   student:   [['Home', 'fa-house', ['phome', 'pnotices']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning']], ['Progress', 'fa-chart-simple', ['presults', 'finance']]],
-  accountant:[['Fees', 'fa-wallet', ['finance', 'fdesk', 'fdues', 'fcalls', 'freceipts']], ['Staff', 'fa-user-tie', ['salary']]],
-  reception: [['Fees', 'fa-wallet', ['fcalls', 'fdues', 'freceipts', 'finance']]]
+  accountant:[['Fees', 'fa-wallet', ['finance', 'fdesk', 'fdues', 'fcalls', 'freceipts']], ['Staff', 'fa-user-tie', ['salary']], ['Office', 'fa-folder-tree', ['office']]],
+  reception: [['Fees', 'fa-wallet', ['fcalls', 'fdues', 'freceipts', 'finance']], ['Office', 'fa-folder-tree', ['office']]]
 };
 const NAV_HIDDEN = { principal: ['settings'] };      // reached from the gear button in the header
 function navGroups() {
@@ -3790,3 +3790,5 @@ for (const role of ['parent','student']) NAV[role].push(['finance','fa-wallet','
 for (const role of ['principal','accountant']) { const old=NAV[role].find(n=>n[0]==='fdesk');if(old)old[2]='Legacy Fee Desk'; }
 NAV.accountant.unshift(NAV.accountant.pop());PRIMARY.accountant=['finance','fdues','fcalls','freceipts'];
 VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1"></iframe>';
+// School Office (18 Oct 2026+): the old ERP's remaining menus as registers — registers.php / registers_api.php / registers_lib.php
+VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1"></iframe>';
