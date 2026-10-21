@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=16">
+<link rel="stylesheet" href="jyotish.css?v=17">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -57,9 +57,15 @@ header('Content-Type: text/html; charset=utf-8');
   <!-- AI -->
   <section class="tab" id="t-ai" hidden>
     <h2 class="chat-top-title" data-i18n="chatFirst">AI Jyotishi se baat karein</h2>
-    <form class="composer" id="f-ai"><textarea id="q" data-i18n-ph="phQ" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit" data-i18n="askBtn">Ask</button></form>
 
-    <div class="card">
+    <div class="home-chat-scroll" id="home-chat-scroll">
+    <div class="chat-welcome" id="ai-chat-welcome">
+      <div class="assistant-mark" aria-hidden="true">✦</div>
+      <div><h3 data-i18n="cwTitle">Namaste! Apna sawaal likhiye.</h3>
+        <p data-i18n="cwBody">Jawaab aapki kundli aur Parashari jyotish par aadharit hoga, saath mein ek vyavaharik agla kadam bhi. Personal jawaab ke liye pehle apni kundli banaiye.</p></div>
+    </div>
+    <div class="chat" id="chat"></div>
+<details class="home-chat-options"><summary data-i18n="chatOptions">Chat settings</summary>    <div class="card">
       <div class="row" style="justify-content:space-between"><h2 data-i18n="aiTitle" id="chat-title">Ask AI Jyotishi</h2>
         <span class="note" data-i18n="aiLangNote">Replies in the language chosen at the top</span></div>
       <p class="note" style="margin:0" id="ai-who"></p>
@@ -101,12 +107,7 @@ header('Content-Type: text/html; charset=utf-8');
         <label class="consent"><input type="checkbox" id="council-consent"> <span data-i18n="consent">I understand and want to send this question for an AI answer.</span></label>
       </div>
     </div>
-    <div class="chat-welcome" id="ai-chat-welcome">
-      <div class="assistant-mark" aria-hidden="true">✦</div>
-      <div><h3 data-i18n="cwTitle">Namaste! Apna sawaal likhiye.</h3>
-        <p data-i18n="cwBody">Jawaab aapki kundli aur Parashari jyotish par aadharit hoga, saath mein ek vyavaharik agla kadam bhi. Personal jawaab ke liye pehle apni kundli banaiye.</p></div>
-    </div>
-    <div class="chat" id="chat"></div>
+</details>
     <div class="note" id="ai-status"></div>
     <div class="row council-followups" id="council-followups" hidden aria-label="Ask a follow-up question">
       <button class="btn ghost" type="button" data-council-followup="rahu" data-i18n="fuRahu">Rahu · Red flags?</button>
@@ -115,6 +116,8 @@ header('Content-Type: text/html; charset=utf-8');
     </div>
     <p class="note" data-i18n="aiDisc">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
     
+    </div>
+    <form class="composer" id="f-ai"><textarea id="q" data-i18n-ph="phQ" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit" data-i18n="askBtn">Ask</button></form>
   </section>
 
 
@@ -125,51 +128,60 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="row"><button class="btn" id="jc-accept" type="button" data-i18n="jcAccept">Challenge shuru karein</button><button class="btn ghost" id="jc-decline" type="button" data-i18n="notNow">Abhi nahi</button></div>
     </div>
 
-    <details id="home-jaap-drawer" class="jaap-drawer">
-      <summary><span data-i18n="jaapDrawer">Naam Jaap counter</span><span class="jaap-drawer-cue" aria-hidden="true">⌄</span></summary>
     <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
       <div class="jaap-head">
-        <div><h2 id="home-jaap-heading">Naam Jaap Mala</h2>
+        <div class="jaap-title-row"><h2 id="home-jaap-heading">Naam Jaap Mala</h2><span class="update-tag" data-i18n="updateTag">NEW</span>
         <p id="home-jaap-description">Apna mantra chunein aur mala chakra par tap karke jaap shuru karein.</p></div>
         <button class="iconbtn" id="home-jaap-settings" type="button" aria-label="Jaap settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></button>
-      </div>
-      <div class="jaap-designs" role="group" data-i18n-aria="lookTitle" aria-label="Design">
-        <button type="button" data-jaap-look="silver" data-i18n="lookSilver">Silver</button>
-        <button type="button" data-jaap-look="forest" data-i18n="lookForest">Vriksh</button>
-        <button type="button" data-jaap-look="temple" data-i18n="lookTemple">Mandir</button>
       </div>
       <div class="mantra-chips" id="home-jaap-chips" role="radiogroup" aria-labelledby="home-jaap-mantra-label"></div>
       <label class="sr-only" for="home-jaap-mantra" id="home-jaap-mantra-label">Aaj ka mantra</label>
       <select id="home-jaap-mantra" hidden><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
+      <div class="home-counter-row">
       <div class="mala" id="home-mala">
         <svg class="mala-ring" id="home-ring" viewBox="0 0 300 300" aria-hidden="true"></svg>
         <span class="ripple" aria-hidden="true"></span>
         <button class="mala-disk" id="home-jaap-tap" type="button" aria-label="Ek jaap ginein"><span class="mala-photo" aria-hidden="true"></span><span class="mala-art" aria-hidden="true"></span><b class="mala-name" id="home-jaap-name">राधा</b><strong id="home-jaap-count" aria-live="polite">0</strong><small id="home-jaap-tap-label">Tap karein · Pushp chadhayein</small></button>
         <div class="petals" id="home-petals" aria-hidden="true"></div>
       </div>
-      <div class="jaap-batch-tools"><button class="jaap-batch-button" id="jt-batch" type="button" aria-pressed="false"><strong id="jt-batch-value">+1</strong><span id="jt-batch-label">per tap</span></button><span id="jaap-batch-hint">Har mantra ke baad ek tap</span><button class="jaap-undo-inline" id="home-jaap-undo" type="button" disabled data-i18n="jtUndo">↶ Undo</button></div><p class="sr-only" id="jaap-batch-status" aria-live="polite" aria-atomic="true"></p>
+      <div class="jaap-batch-tools"><button class="jaap-batch-button" id="jt-batch" type="button" aria-pressed="false"><strong id="jt-batch-value">+1</strong><span id="jt-batch-label">per tap</span></button><span id="jaap-batch-hint">Har mantra ke baad ek tap</span><button class="jaap-undo-inline" id="home-jaap-undo" type="button" disabled data-i18n="gameUndo" data-i18n-aria="jtUndo">↶ Undo</button></div><p class="sr-only" id="jaap-batch-status" aria-live="polite" aria-atomic="true"></p>
+      </div>
       <div class="mala-meta">
         <span class="mbadge"><span id="home-mala-label">Mala</span>: <b id="home-mala-num">1</b> (<b id="home-mala-in">0</b>/108)</span>
         <span class="mbadge"><span id="home-jaap-count-label">Aaj ka Kul Jaap</span>: <b id="home-jaap-total">0</b></span>
       </div>
-      <div class="jaap-toggles" role="group" aria-label="Jaap settings">
+      <div class="jaap-slider-nav" role="group" data-i18n-aria="sliderLabel" aria-label="Jaap options">
+        <button type="button" data-jaap-slide="0" aria-pressed="true" data-i18n="slideControls">Controls</button>
+        <button type="button" data-jaap-slide="1" aria-pressed="false" data-i18n="slideDesign">Design · 3D</button>
+        <button type="button" data-jaap-slide="2" aria-pressed="false" data-i18n="slideJourney">Yatra</button>
+        <button type="button" id="jaap-slide-next" data-i18n-aria="slideNext" aria-label="Next options">›</button>
+      </div>
+      <div class="jaap-slider" id="jaap-slider" tabindex="0" data-i18n-aria="sliderLabel" aria-label="Swipe for Jaap options">
+        <div class="jaap-slide">      <div class="jaap-toggles" role="group" aria-label="Jaap settings">
         <button class="tpill" id="jt-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span id="jt-bell-label">Ghanti</span></button>
         <button class="tpill" id="jt-vibe" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8M1.5 10v4M22.5 10v4"/></svg><span id="jt-vibe-label">Vibration</span></button>
         <button class="tpill" id="jt-auto" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M10 8.5v7l5.5-3.5z"/></svg><span id="jt-auto-label">Auto Jaap</span></button>
         <label class="tpill select"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg><span class="sr-only" id="jt-target-label">Lakshya</span><select id="jt-target"><option value="1">1 Mala</option><option value="3">3 Mala</option><option value="5">5 Mala</option><option value="11">11 Mala</option></select></label>
       </div>
-      <p class="goalbar" id="jt-progress" aria-live="polite"></p>
-      <button class="jaap-mini-launch" id="jaap-mini-launch" type="button" data-i18n="miniLaunch">Chhota counter</button>
+<div class="jaap-slide-actions">      <button class="jaap-mini-launch" id="jaap-mini-launch" type="button" data-i18n="miniLaunch">Chhota counter</button>
       <button class="game-btn" id="js-game" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 10v4M5 12h4M15.5 11h.01M18 13h.01"/></svg><span><b data-i18n="gameBtn">Game Mode</b><small data-i18n="gameBtnSub">Phone tircha karein ya yahan dabaiye</small></span></button>
+</div></div>
+        <div class="jaap-slide">      <div class="jaap-designs" role="group" data-i18n-aria="lookTitle" aria-label="Design">
+        <button type="button" data-jaap-look="silver" data-i18n="lookSilver">Silver</button>
+        <button type="button" data-jaap-look="forest" data-i18n="lookForest">Vriksh</button>
+        <button type="button" data-jaap-look="temple" data-i18n="lookTemple">Mandir</button>
+      </div>
       <div class="jaap-actions">
         <button class="abtn" id="js-share" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/></svg><span id="js-share-label">Share Jaap</span></button>
         <button class="abtn" id="js-copy" type="button"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3.6-3.6a4 4 0 0 0-5.7-5.7L12 6.3"/><path d="M14 10a4 4 0 0 0-5.7 0l-3.6 3.6a4 4 0 0 0 5.7 5.7l1.6-1.6"/></svg><span id="js-copy-label">Copy Link</span></button>
         <button class="abtn" id="js-challenge" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8.5 20h7M10 17h4"/></svg><span id="js-challenge-label">Jaap Challenge</span></button>
       </div>
+</div>
+        <div class="jaap-slide">      <p class="goalbar" id="jt-progress" aria-live="polite"></p>
       <div class="jaap-evolution"><span class="jaap-evo-art" id="jaap-evo-art" aria-hidden="true"></span><div><b id="jaap-evolution-title">Beej se shuruaat</b><small id="jaap-evolution-next">Agla padaav: Vriksh</small></div><div class="jaap-evolution-track" id="jaap-evolution-bar" role="progressbar" aria-label="Sadhna ki pragati" data-i18n-aria="jtEvolutionLabel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="jaap-evolution-fill"></i></div></div>
+</div>
+      </div>
     </section>
-
-    </details>
 
     <section class="jaap-card" id="jaap-card" aria-labelledby="jaap-title" hidden>
       <div class="jaap-card-copy"><h2 id="jaap-title" data-i18n="jsTitle">Jaap settings</h2><p id="jaap-home-description" data-i18n="jsDesc">Mantra, jaap ka tareeka, lakshya aur photo yahan badlein.</p><div class="jaap-today-total"><span id="jaap-home-today-label" data-i18n="todayTotal">Aaj ka kul jaap</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label" data-i18n="last7">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label" data-i18n="sittings">baar jaap kiya</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p></div></div>
@@ -430,9 +442,9 @@ header('Content-Type: text/html; charset=utf-8');
 </div>
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=9"></script>
+<script src="i18n.js?v=10"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=16"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
 
