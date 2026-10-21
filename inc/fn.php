@@ -42,7 +42,7 @@ function need_role($roles) {
     if (!$u || !in_array($u['role'], (array)$roles, true)) { redirect('/login.php'); }
     $q=$pdo->prepare('SELECT role FROM users WHERE id=? AND active=1');$q->execute([(int)$u['id']]);
     $role=$q->fetchColumn();
-    if (!$role || $role!==$u['role']) { unset($_SESSION['user']);redirect('/login.php'); }
+    if (!$role || $role!==$u['role']) { unset($_SESSION['user']);http_response_code(403);exit; }
     return $u;
 }
 /**

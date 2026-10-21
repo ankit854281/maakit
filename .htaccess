@@ -18,14 +18,14 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Private order images: old URLs must pass the same access check as new ones.
-  RewriteCond %{HTTP_HOST} !^(www\.)?smartsarathi\.in$ [NC]
-  RewriteRule ^uploads/((?:list|bill|pod)-[0-9]{6}-[a-f0-9]{8,32}\.(?:jpg|png|webp))$ order-photo.php?file=$1 [END]
-
   # pehle se https ho to kuchh mat kijiye
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # Keep HTTPS first; old private image URLs then pass the order ACL.
+  RewriteCond %{HTTP_HOST} !^(www\.)?smartsarathi\.in$ [NC]
+  RewriteRule ^uploads/((?:list|bill|pod)-[0-9]{6}-[a-f0-9]{8,32}\.(?:jpg|png|webp))$ order-photo.php?file=$1 [END]
 
   # ----------------------------------------------------------
   # 1क. smartsarathi.in — apni alag website, usi hosting par
