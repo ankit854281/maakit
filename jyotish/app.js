@@ -17,7 +17,7 @@ var S=Jy.SIGN_SHORT, SF=Jy.SIGNS, PN=Jy.PNAME;
    Home = Naam Jaap Mala + AI chat (dono saath). Baaki sab ☰ menu se.
    "ai" bhi Home hi hai, bas seedha chat par le jaata hai. */
 var tabs=document.querySelectorAll(".menu-list [data-t]"), curTab="aaj", navPushed=false;
-function show(t,opts){ opts=opts||{}; var home=t==="aaj"||t==="ai";
+function show(t,opts){ opts=opts||{}; var home=t==="aaj"||t==="ai";document.body.classList.toggle("home-layout",home);
   tabs.forEach(function(b){ if(b.dataset.t===t) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   ["aaj","card","kundli","milan","rashi","ai"].forEach(function(n){ $("t-"+n).hidden=home?(n!=="aaj"&&n!=="ai"):n!==t; });
   if(t==="card") renderAaj(); if(t==="milan"&&!milanReady) renderMilan();
@@ -229,7 +229,7 @@ async function ask(q, requestedMode){
   busy=true; $("send").disabled=true; $("q").value=""; $("ai-status").textContent=""; $("council-followups").hidden=true; $("ai-chat-welcome").hidden=true;
   bubble("u",esc(q)); chat.push({role:"user",content:q});
   var a=bubble("a",'<p class="note">'+esc(jl("reading"))+'</p>');
-  a.scrollIntoView({behavior:"smooth",block:"end"});
+  var chatViewport=$("home-chat-scroll");chatViewport.scrollTop=chatViewport.scrollHeight;
   try{
     if(mode==="council") $("council-consent").checked=false;
     var res=await fetch("ai.php",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -529,9 +529,15 @@ onTap($("mini-jaap-toggle"),function(){jaapCountHome(false,jprefs.batch);malaPul
 onTap($("mini-jaap-tap"),function(){jaapCountHome(false,jprefs.batch);malaPulse($("mini-jaap-tap"));});
 $("mini-jaap-batch").onclick=function(){jprefs.batch=jprefs.batch===12?1:12;jaapPrefsSave();jaapBatchShow();};
 $("mini-jaap-undo").onclick=jaapUndoLatest;
-function jaapMiniVisibility(){var mini=$("mini-jaap");if(!mini)return;if(gameOpen||!$("jaap-arena").hidden){mini.hidden=true;return;}if(miniPinned||$("t-aaj").hidden||!$("home-jaap-drawer").open){mini.hidden=false;return;}var panel=$("mini-jaap-panel");if(panel&&!panel.hidden){mini.hidden=false;return;}var target=$("home-jaap-tap");if(!target){mini.hidden=false;return;}var r=target.getBoundingClientRect(),center=r.top+r.height/2;mini.hidden=center>=0&&center<=window.innerHeight;}
+function jaapMiniVisibility(){var mini=$("mini-jaap");if(!mini)return;if(gameOpen||!$("jaap-arena").hidden){mini.hidden=true;return;}if(miniPinned||$("t-aaj").hidden){mini.hidden=false;return;}var panel=$("mini-jaap-panel");if(panel&&!panel.hidden){mini.hidden=false;return;}var target=$("home-jaap-tap");if(!target){mini.hidden=false;return;}var r=target.getBoundingClientRect(),center=r.top+r.height/2;mini.hidden=center>=0&&center<=window.innerHeight;}
 var miniPinned=false;
-$("home-jaap-drawer").addEventListener("toggle",function(){jaapMiniVisibilityOnScroll();});
+var jaapSlideIndex=0;
+function jaapSlideTo(i){var el=$("jaap-slider");jaapSlideIndex=(i+3)%3;el.scrollTo({left:el.clientWidth*jaapSlideIndex,behavior:"auto"});}
+document.querySelectorAll("[data-jaap-slide]").forEach(function(b){b.onclick=function(){jaapSlideTo(Number(b.dataset.jaapSlide));};});
+$("jaap-slide-next").onclick=function(){jaapSlideTo(jaapSlideIndex+1);};
+window.addEventListener("resize",function(){$("jaap-slider").scrollLeft=jaapSlideIndex*$("jaap-slider").clientWidth;});
+$("jaap-slider").addEventListener("scroll",function(){var el=this;jaapSlideIndex=Math.round(el.scrollLeft/el.clientWidth);document.querySelectorAll("[data-jaap-slide]").forEach(function(b){b.setAttribute("aria-pressed",String(Number(b.dataset.jaapSlide)===jaapSlideIndex));});},{passive:true});
+$("jaap-slider").addEventListener("keydown",function(e){if(e.target!==this)return;if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault();jaapSlideTo(jaapSlideIndex+(e.key==="ArrowRight"?1:-1));}});
 $("jaap-mini-launch").onclick=function(){miniPinned=true;$("mini-jaap-panel").hidden=false;$("mini-jaap-open").setAttribute("aria-expanded","true");jaapMiniVisibility();};
 var miniVisFrame=0;function jaapMiniVisibilityOnScroll(){if(miniVisFrame)return;miniVisFrame=requestAnimationFrame(function(){miniVisFrame=0;jaapMiniVisibility();});}
 if(window.visualViewport){window.visualViewport.addEventListener("resize",function(){var v=window.visualViewport;$("mini-jaap").style.bottom=(Math.max(0,window.innerHeight-v.height-v.offsetTop)+18)+"px";jaapMiniVisibilityOnScroll();});}
@@ -856,7 +862,7 @@ $("jg-tap").addEventListener("click",function(e){ if(e.detail===0) jaapCountHome
 document.addEventListener("keydown",function(e){ if(gameOpen&&(e.key===" "||e.key==="Enter")&&!e.target.closest("button:not(#jg-tap),select")){ e.preventDefault(); jaapCountHome(false); } if(gameOpen&&e.key==="Escape") gameCloseFn(); });
 /* Phone tircha → game; seedha → wapas (agar ghumane se khula tha) */
 var turnMQ=window.matchMedia?matchMedia("(orientation: landscape) and (max-height: 600px)"):null;
-function onTurn(){ if(!turnMQ) return; var homeOn=!$("t-aaj").hidden&&$("home-jaap-drawer").open, busyUI=!$("menu").hidden||!$("jaap-arena").hidden||document.querySelector(".sheet:not([hidden])")||(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
+function onTurn(){ if(!turnMQ) return; var homeOn=!$("t-aaj").hidden, busyUI=!$("menu").hidden||!$("jaap-arena").hidden||document.querySelector(".sheet:not([hidden])")||(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
   if(turnMQ.matches&&homeOn&&!busyUI&&!gameDocked) gameOpenFn(true); else if(!turnMQ.matches&&openedByTurn) gameCloseFn(); }
 if(turnMQ){ if(turnMQ.addEventListener) turnMQ.addEventListener("change",onTurn); else if(turnMQ.addListener) turnMQ.addListener(onTurn); }
 setInterval(function(){ if(gameOpen) $("jg-speed").textContent=String(jgSpeed()); },1500);
@@ -865,6 +871,6 @@ setTimeout(onTurn,400); /* page tircha phone par hi khula ho to seedha game */
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};
-writeForm(profile); renderKundli(); renderPriv(); renderNotice(); $("jaap-today").textContent=String(jaapDailyCount());jaapRenderStats();jaapUpdateGuide();jaapApplyPhoto();jaapHomeInit();jaapUpdateMini(); trackOnce("visit"); (function(){ var g=""; try{ g=new URLSearchParams(location.search).get("go")||""; }catch(e){} show(["ai","rashi","kundli","milan","card"].indexOf(g)>=0?g:"aaj"); if(g==="jaap") setTimeout(function(){ $("home-jaap-drawer").open=true; $("home-mala").scrollIntoView({block:"center"}); },50); })(); aiModeText(); if(!AI_ON) $("ai-status").textContent=jl("aiSoon");
+writeForm(profile); renderKundli(); renderPriv(); renderNotice(); $("jaap-today").textContent=String(jaapDailyCount());jaapRenderStats();jaapUpdateGuide();jaapApplyPhoto();jaapHomeInit();jaapUpdateMini(); trackOnce("visit"); (function(){ var g=""; try{ g=new URLSearchParams(location.search).get("go")||""; }catch(e){} show(["ai","rashi","kundli","milan","card"].indexOf(g)>=0?g:"aaj"); if(g==="jaap") setTimeout(function(){ $("home-mala").scrollIntoView({block:"center"}); },50); })(); aiModeText(); if(!AI_ON) $("ai-status").textContent=jl("aiSoon");
 })();
 
