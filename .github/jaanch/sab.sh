@@ -34,8 +34,16 @@ chalao() {                       # chalao <naam> <hukm...>
     theek=$((theek+1)); printf '  ठीक   %s\n' "$naam"
   else
     tooti=$((tooti+1)); naam_tooti+=("$naam")
+    wajah=$(echo "$out" | grep -oE 'RuntimeException: .*|Fatal error: .*|Error: .*' | head -1 | cut -c1-200)
     printf '  टूटी   %s\n' "$naam"
-    printf '         %s\n' "$(echo "$out" | grep -oE 'RuntimeException: .*' | head -1 | cut -c1-90)"
+    printf '         %s\n' "$(echo "$wajah" | cut -c1-90)"
+    # GitHub par log padhna aasan nahi hota -- wo doosre server se
+    # aata hai. "::error::" likhne par wajah SEEDHA run ke panne par
+    # dikh jati hai, bina log kholne ke. Ek baar iski kami me ghante
+    # lag gaye the sirf ye pata karne me ki kaun si jaanch laal hai.
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+      echo "::error title=जाँच टूटी: ${naam}::${wajah:-$(echo "$out" | tail -3 | tr '\n' ' ')}"
+    fi
   fi
 }
 
@@ -70,5 +78,8 @@ if [ "$tooti" -eq 0 ]; then
 else
   echo "ठीक: $theek   टूटी: $tooti"
   for n in "${naam_tooti[@]}"; do echo "   • $n"; done
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "::error title=जाँच::$tooti जाँच टूटी हैं — ऊपर हर एक की वजह लिखी है"
+  fi
 fi
 exit "$tooti"

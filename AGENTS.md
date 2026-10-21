@@ -243,6 +243,19 @@ twice on a fresh database, boots the site and opens the main pages. **If it
 goes red, fix it before telling the owner it is done.**
 
 **Run them all with `bash .github/jaanch/sab.sh`, not with your own loop.**
+The जाँच workflow runs that same script (21 Oct 2026), so a new check file is
+picked up automatically. Before that, CI had a hand-written list of test files
+and four finished checks — एक काम, पैकेट, ढिंढोरची, घंटी — were missing from
+it, so on GitHub they never ran at all. **A check that does not run is not a
+check.** When it fails, `sab.sh` also prints a GitHub `::error::` line per
+broken check, because the run log lives on another host and is awkward to
+read; the reason now shows on the run page itself.
+
+To reproduce CI locally, build the database the way CI does — drop
+`maakit_jaanch`, run every `sql/*.sql` twice, and use a `config.php` copied
+from `config.sample.php` with only DB_* and a generated `MUNEEM_KEY` filled
+in. A local database carrying seed rows from earlier work hides exactly the
+failures CI finds.
 
 Most checks run as `php <file>`, but `backup-flow.php` does not. It needs
 three steps — `export`, then restoring the dump into a *fresh empty*

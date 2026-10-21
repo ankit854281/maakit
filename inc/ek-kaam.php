@@ -49,12 +49,55 @@ function ek_kaam(PDO $pdo) {
     // Sabse upar isliye: iske bina graahak login hi nahi kar
     // payega, aur sarathi ko pakka code nahi milega. Sau dukaanein
     // jud jayein, pehla order phir bhi nahi hoga.
-    $otp = defined('FAST2SMS_ENABLED') && FAST2SMS_ENABLED
-        && defined('FAST2SMS_API_KEY') && trim((string)FAST2SMS_API_KEY) !== '';
-    if (!$otp) {
-        return ['kya'   => 'Fast2SMS पर मुफ़्त account बनाइए और उसकी API key config.php में डालिए',
+    //
+    // DHYAN: pehle yahan sirf FAST2SMS_ENABLED aur FAST2SMS_API_KEY
+    // dekhe jate the. Wo GALAT tha. Asli code (f2s_enabled) ye
+    // poochta hai:
+    //
+    //     (FAST2SMS_ENABLED ya OTP_ENABLED) AUR
+    //     (WhatsApp taiyar HO YA Fast2SMS taiyar ho)
+    //
+    // Yani WhatsApp se bhi kaam chal jata hai. Agar Ankit WhatsApp
+    // laga leta aur ye file sirf Fast2SMS poochti rehti, to ye kaam
+    // KABHI poora na hota -- roz wahi dikhta, chahe OTP chal raha
+    // ho. Aisa kaam poore bot ka bharosa kha jata hai.
+    //
+    // Isliye ab wahi sawaal poocha jata hai jo code khud poochta
+    // hai -- ek hi jagah se jawab, do jagah se nahi.
+    require_once __DIR__ . '/../smartsarathi/inc/fast2sms.php';
+    if (!f2s_enabled()) {
+        // Ek kaam batana kaafi nahi -- wo batana chahiye jo ASLI me
+        // ruka hua hai. Teen haalat ho sakti hain, aur teeno ka
+        // kaam alag hai. "Fast2SMS account banaiye" un dino bhi
+        // dikhta rehta jab account pehle se bana hua hai aur sirf
+        // ek line baaki hai -- aur aadmi wahi ek line kabhi nahi
+        // dhoondh pata.
+        $key  = f2s_config('FAST2SMS_API_KEY') !== '';
+        $chalu = f2s_config('FAST2SMS_ENABLED') === '1' || f2s_config('OTP_ENABLED') === '1';
+
+        if ($key && $chalu && f2s_mode() !== 'otp' && f2s_config('FAST2SMS_LOGIN_ID') === '') {
+            // Sabse kareeb wali haalat: chaabi lagi hai, par route
+            // 'smart' hai jisme DLT template ID chahiye. Ankit ko
+            // DLT nahi mil sakta -- use 'otp' route chahiye, jisme
+            // nahi lagti. Ye ek line ka kaam hai.
+            return ['kya'   => "config.php में एक लाइन जोड़िए: define('FAST2SMS_ROUTE', 'otp');",
+                    'kyun'  => 'Fast2SMS की चाबी लगी हुई है, पर रास्ता "smart" है जिसमें DLT template ID '
+                             . 'चाहिए। "otp" रास्ते में DLT नहीं लगता और login OTP चल जाता है। '
+                             . 'बस यही एक लाइन बाक़ी है।',
+                    'kahan' => '',
+                    'kitna' => 'bada'];
+        }
+        if ($key && !$chalu) {
+            return ['kya'   => "config.php में एक लाइन जोड़िए: define('FAST2SMS_ENABLED', '1');",
+                    'kyun'  => 'चाबी लगी है पर OTP बंद है — इसी एक लाइन से चालू हो जाएगा।',
+                    'kahan' => '',
+                    'kitna' => 'bada'];
+        }
+        return ['kya'   => 'Fast2SMS पर मुफ़्त account बनाइए, API key config.php में डालिए, '
+                         . "और साथ में define('FAST2SMS_ROUTE', 'otp'); भी लिखिए",
                 'kyun'  => 'इसके बिना OTP नहीं जाएगा — और OTP के बिना पहला ऑर्डर नहीं होगा। '
-                         . 'DLT की ज़रूरत नहीं है, सिर्फ़ account चाहिए।',
+                         . '"otp" रास्ते में DLT की ज़रूरत नहीं पड़ती। (WhatsApp Business से भी '
+                         . 'काम चल जाता है, जो चाहें।)',
                 'kahan' => 'https://www.fast2sms.com',
                 'kitna' => 'bada'];
     }

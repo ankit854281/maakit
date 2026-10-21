@@ -141,37 +141,24 @@ jobs:
             curl -s -o /dev/null http://127.0.0.1:8099/ && break
             sleep 1
           done
-          php .github/jaanch/panne.php
-          php .github/jaanch/category-flow.php
-          php .github/jaanch/catalogue-expansion.php
-          php .github/jaanch/earning-flow.php
-          php .github/jaanch/coverage-flow.php
-          php .github/jaanch/request-flow.php
-          php .github/jaanch/dispatch-flow.php
-          php .github/jaanch/tracking-flow.php
-          php .github/jaanch/traffic-flow.php
-          php .github/jaanch/hub-flow.php
-          php .github/jaanch/partner-flow.php
-          php .github/jaanch/sarathi-flow.php
-          php .github/jaanch/ek-darwaza.php
-          php .github/jaanch/super-panna.php
-          php .github/jaanch/kahani-flow.php
-          php .github/jaanch/kisne-kiya.php
-          php .github/jaanch/munafa-flow.php
-          php .github/jaanch/sanduk-flow.php
-          php .github/jaanch/ride-flow.php
-          php .github/jaanch/school-flow.php
-          php .github/jaanch/quiz-flow.php
-          php .github/jaanch/game-flow.php
-          php .github/jaanch/office-flow.php
-          php .github/jaanch/scan-flow.php
-          php .github/jaanch/salary-flow.php
-          php .github/jaanch/profile-flow.php
-          php .github/jaanch/studio-flow.php
-          php .github/jaanch/toolkit-flow.php
-          php .github/jaanch/faculty-flow.php
-          php .github/jaanch/finance-flow.php
-          php .github/jaanch/jyotish-flow.php
+          # ---- SAARI JAANCH EK HI HUKM SE ----
+          #
+          # Pehle yahan har jaanch ka naam HAATH SE likha hua tha.
+          # Do nuksaan hue:
+          #
+          #  1. Nayi jaanch likhna BHOOL jaate the. एक काम, पैकेट,
+          #     ढिंढोरची aur घंटी ki jaanch bani hui thi par is soochi
+          #     me nahi thi -- yani GitHub par wo chalti hi nahi
+          #     thi. Jo jaanch chalti nahi, wo jaanch nahi hai.
+          #
+          #  2. backup-flow.php ko teen kadam chahiye, aur wo is
+          #     soochi me chhoot gayi thi.
+          #
+          # sab.sh ko dono baatein pata hain, aur wo apne aap nayi
+          # jaanch bhi uthata hai. Isliye ab wahi chalta hai.
+          export MYSQL="mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch"
+          bash .github/jaanch/sab.sh
+
           node --check school/finance.js
           node --check school/faculty.js
           node --check school/faculty-public.js
