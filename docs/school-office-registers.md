@@ -1,0 +1,62 @@
+# School Office registers (`/school/registers.php`)
+
+Owner request, 22 Oct 2026: build the old ERP's blueprint (schoolerpindia.net/school/snmishra, 45 menu groups) into the new ERP,
+and move the old data across with **the same receipt numbers**.
+
+## What maps where
+
+| Old ERP menu | New ERP |
+|---|---|
+| Dashboard(s), Setting, Class/Section/Subject master, Session | Existing app (Dashboard, Admin Dashboard, Settings) |
+| Fee Master, Fee, Fee Report (31 reports) | Existing Fee Structure, Fee Desk, Fee Department, Dues, Calls, Receipts |
+| Student Attendance, Timetable, Examination I/II/III, Marks, Progress cards | Existing Attendance, Timetable, Exams & Date Sheets, Marks Entry, Report Cards |
+| HR Management, Salary, Leave, Lesson Plan, Homework/Mobile app, Circular, Calendar | Existing Staff, Salary, Leave, Lesson Plans, Diary/Homework, Notices, Calendar |
+| Everything else (below) | **School Office registers** (this page) |
+
+School Office groups: **Admission** (Enquiry with follow-ups, Admission form), **Students** (Student Full Record with every
+old field + status, TC, Certificates & Awards, ID cards, Student leave, Tags, Alumni), **Exams** (Exam rooms, Admit cards,
+Previous question papers), **Transport** (Vehicles, Drivers & helpers, Routes & stops, Log book, Diesel), **Store** (Suppliers,
+Items + stock report, Purchases, Issue, Sale, Repair), **Accounts** (Heads, Parties & banks, Cash book + running balance,
+Cash verification), **Front Office** (Gate pass, Visitors, Reminders, Events & PTM, Feedback, Documents, Online class links,
+SMS/WhatsApp templates — never auto-sent, Website content), **Masters**, and the **Old ERP Archive** (read-only: Old ERP
+Receipts with original numbers, Old ERP Fee Statement, Old ERP Marks).
+
+## Code
+
+- `school/registers_lib.php` — every register is ONE array entry in `reg_modules()`: fields (text, area, num, money in paise,
+  date, time, sel, yn, phone, student, teacher, cls, json), list columns, totals, who reads (`r`) and writes (`w`) by role letter
+  (P principal, C chairman, A accountant, R reception, T teacher), optional auto number (`TC/2026-27/0001`), due-date highlight,
+  print layout. Add an old-ERP menu by adding an entry — no new screen.
+- `school/registers_api.php` — `meta`, `rows`, `report` (stock, cashbook), `save`, `del` (reason required, logged), `import`
+  (Principal; preview then apply; rows that exist with other values block the whole import; nothing is ever overwritten),
+  `carry` (Principal; old-ERP net due → Fee Desk `acctStu.opening`, only where empty, preview first).
+- `school/registers.php|js|css` — the screen, embedded in the app as view `office` (Admin group; teacher Planning; Office for
+  accountant/reception).
+- Storage: `sch_records` kinds `regRow` (r = `module|id`) and `regSeq`. The `reg` prefix is excluded from legacy load/sync in
+  `inc.php`, so office registers never reach teachers' phones.
+- Test: `.github/jaanch/registers-flow.php`.
+
+## Import file formats (made from the old ERP by Claude)
+
+`{"module": "<id>", "rows": [ … ]}` — import order: students first through Students › "Import verified ERP students"
+(`snmishra-students-v1`), then:
+
+| module | key (never duplicated) | main fields |
+|---|---|---|
+| `studinfo` | student | student (`erp-snmishra-<old id>`), status, gender, category, caste, religion, aadhar, mother mobile, PEN, … `extra` = any other old field |
+| `oldreceipt` | session + receiptNo | session `2024-25`, receiptNo exactly as old (`1-708`), date, student, name, months, total, discount, lateFee, received, mode, user |
+| `oldfee` | session + student | billed, transport, discount, otherDiscount, adjust, received, due, status |
+| `oldmarks` | session + exam + student | exam, marks `{subject: {component (max): mark}}`, total, percent, grade, rank, attendance |
+
+Money is written in rupees in the file and stored in paise. Bank account numbers are reduced to the last 4 digits.
+
+## Why old receipts are an archive, not ledger entries
+
+The Fee Department numbers its own receipts (`RC/2026-27/000001`) and its ledger must never contain invented history
+(AGENTS.md, Detailed Fee Department). So old receipts keep their **original numbers** in the read-only Old ERP Receipts
+register (printable as a copy), and only the **net due** moves into the live fee system through "Carry old dues to Fee Desk".
+
+## Verified (22 Oct 2026, Class 1st, session 2024-25)
+
+44 students, 44 full records (35 Active, 9 Deactive), 81 receipts (₹2,79,415, all original numbers), 44 fee statements
+(billed ₹6,76,922, due ₹2,36,189), 105 mark rows (Term-1, Term-2, Final) — 0 differences against the old ERP.
