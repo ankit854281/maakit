@@ -80,6 +80,23 @@ try { $B['ek_kaam'] = ek_kaam($pdo); }
 catch (Throwable $e) { error_log('muneem ek_kaam: ' . $e->getMessage()); $B['ek_kaam'] = null; }
 
 // ============================================================
+// 0ख. घंटी — जो अभी रुका हुआ है
+//
+// Ye muneem ki tarah hafte ka hisab nahi hai -- ye "abhi" ki baat
+// hai, aur 15 minute wala bot yahin se padhta hai. Panna yahi
+// rakha gaya kyunki darwaza aur chaabi pehle se hai.
+//
+// Saath me: kis sarathi ka paisa baaki hai. Per order kamane wala
+// aadmi roz ka kamane wala hota hai -- uska paisa rokne ka matlab
+// hai use kho dena.
+// ============================================================
+require_once __DIR__ . '/inc/ghanti.php';
+try { $B['ghanti'] = ghanti_dekho($pdo); }
+catch (Throwable $e) { error_log('muneem ghanti: ' . $e->getMessage()); $B['ghanti'] = []; }
+try { $B['saathi_baaki'] = saathi_baaki($pdo); }
+catch (Throwable $e) { error_log('muneem saathi: ' . $e->getMessage()); $B['saathi_baaki'] = []; }
+
+// ============================================================
 // 1क. मुनाफ़ा या नुक़सान — वो एक नंबर जो सबसे ज़्यादा मायने रखता है
 //
 // Muneem ab tak sirf ye batata tha ki kitna AAYA. Kitna GAYA, ye

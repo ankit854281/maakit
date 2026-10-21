@@ -225,6 +225,12 @@ include __DIR__ . '/../inc/panel.php';
            text-transform:uppercase;color:var(--mut,#6B5D55);margin-bottom:6px}
   .sp-ek b{display:block;font-size:19px;line-height:1.45}
   .sp-ek small{display:block;margin-top:7px;color:var(--mut,#6B5D55);font-size:14.5px;line-height:1.6}
+  .sp-gh{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:14px;padding:14px 16px;margin:0 0 14px}
+  .sp-gh-r{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:inherit;
+           padding:6px 0;border-top:1px solid #FECACA}
+  .sp-gh-r:first-of-type{border-top:0}
+  .sp-gh-r b{font-size:20px;color:#B91C1C;min-width:28px}
+  .sp-gh-r span{font-size:15.5px;line-height:1.5}
   .sp-ok{background:#E8F3EA;border:1px solid #BFDCC6;color:#1C5130;
          border-radius:14px;padding:18px;font-weight:700}
   .sp-ruk{display:flex;align-items:center;gap:14px;background:#fff;
@@ -265,6 +271,31 @@ include __DIR__ . '/../inc/panel.php';
   <h1 class="sp-h"><?= h(t('Everything in one place', 'सब एक जगह')) ?></h1>
   <p class="sp-lead"><?= h(t('Open this page first. Whatever needs you is at the top.',
      'सुबह यही पन्ना खोलिए। जो आपका इंतज़ार कर रहा है वो सबसे ऊपर है।')) ?></p>
+
+  <?php
+    // ---- घंटी — जो अभी बज रही है, एक काम से भी ऊपर ----
+    // एक काम aaj ki yojna hai; ghanti "abhi" ki baat hai. Graahak
+    // ne 20 minute pehle order kiya aur kisi ne chhua nahi -- ye
+    // aaj ki yojna se pehle wali baat hai.
+    //
+    // Kaam ke waqt ke bahar ghanti nahi dikhti. Raat 2 baje ki
+    // ghanti par koi kuch nahi kar sakta -- wo sirf ye sikhati hai
+    // ki ghanti ko anna-suna kar dena theek hai.
+    require_once __DIR__ . '/../inc/ghanti.php';
+    $gh = [];
+    try { if (ghanti_waqt()) $gh = ghanti_dekho($pdo); } catch (Throwable $e) { $gh = []; }
+  ?>
+  <?php if ($gh): ?>
+    <div class="sp-gh">
+      <span class="sp-ek-t" style="color:#7F1D1D"><?= h(t('Right now', 'अभी')) ?></span>
+      <?php foreach ($gh as $g): ?>
+        <a class="sp-gh-r" href="<?= h($g['kahan']) ?>">
+          <b><?= (int)$g['ginti'] ?></b>
+          <span><?= h($g['kya']) ?></span>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
 
   <?php
     // ---- आज का एक काम — सबसे ऊपर ----

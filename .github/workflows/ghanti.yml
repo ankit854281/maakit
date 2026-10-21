@@ -1,0 +1,137 @@
+# ============================================================
+#  Maakit ki घंटी
+#
+#  Teen bot pehle se hain aur teeno ka apna waqt hai:
+#     चौकीदार — website theek hai ya nahi (har 15 minute)
+#     एक काम  — aaj ka ek kaam (roz subah)
+#     मुनीम    — hafte ka hisab
+#
+#  Ek cheez ke liye teeno bekaar hain: JO AB RUKA HUA HAI.
+#
+#  Graahak ne 8 baje order kiya aur 8:25 tak kisi ne chhua nahi --
+#  ye kal subah batane ki baat nahi hai. Kal tak wo khud dukaan
+#  chala gaya hoga, aur dobara nahi aayega. Gaon me ek naaraz
+#  graahak chaar aur logon ko bata deta hai.
+#
+#  DO CHEEZEIN JAAN-BOOJH KAR HAIN
+#  -------------------------------
+#  1. SIRF KAAM KE WAQT. Cron subah 6:45 se raat 10:30 (Bharat)
+#     tak hi chalta hai. Raat 2 baje ki ghanti par koi kuch nahi
+#     kar sakta -- wo sirf ye sikhati hai ki ghanti ko anna-suna
+#     kar dena theek hai. Aur jis din asli ghanti bajegi, us din
+#     bhi aadmi nahi dekhega.
+#
+#  2. EK HI ISSUE, aur jab tak baat wahi hai TAB TAK CHUP. Har 15
+#     minute me "abhi bhi ruka hai" likhna phone ko bekar kar deta
+#     hai. Baat badalne par hi likhta hai, aur theek hone par
+#     issue apne aap band ho jata hai.
+#
+#  Ye kuch BADALTA NAHI -- sirf padh kar batata hai.
+#
+#  Chahiye: GitHub Secrets me MUNEEM_KEY (wahi jo muneem ki hai)
+# ============================================================
+name: घंटी
+
+on:
+  schedule:
+    # Har 15 minute, par sirf 1:15–16:45 UTC = 6:45–22:15 (Bharat).
+    - cron: '*/15 1-16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ghanti
+  cancel-in-progress: false
+
+jobs:
+  bajao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: अभी क्या रुका है
+        id: dekho
+        env:
+          KEY: ${{ secrets.MUNEEM_KEY }}
+          URL: ${{ secrets.MAAKIT_URL }}
+        run: |
+          set -uo pipefail
+          GHAR="${URL:-https://maakit.in}"; GHAR="${GHAR%/}"
+
+          # Chaabi na ho to CHUP. Ghanti ka kaam dhandha dekhna hai;
+          # setting ki galti एक काम aur संदूक़ pehle se batate hain,
+          # aur teen jagah ek hi baat likhna shor hai.
+          if [ -z "${KEY}" ]; then echo "mila=nahi" >> "$GITHUB_OUTPUT"; exit 0; fi
+
+          code=$(curl -sS --max-time 90 --retry 1 --retry-delay 10 \
+                      -o jawab.json -w '%{http_code}' \
+                      --fail-with-body "$GHAR/muneem.php?f=json&key=$KEY" || true)
+          if [ "$code" != "200" ]; then echo "mila=nahi" >> "$GITHUB_OUTPUT"; exit 0; fi
+
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          try:
+              d = json.load(open('jawab.json'))
+          except Exception:
+              print("mila=nahi"); raise SystemExit
+          g = d.get('ghanti') or []
+          s = d.get('saathi_baaki') or []
+          saaf = lambda t: str(t or '').replace('\n', ' ').replace('\r', ' ').strip()
+          lines = [f"- **{x.get('ginti')}** — {saaf(x.get('kya'))}" for x in g]
+          for r in s[:3]:
+              lines.append(f"- **₹{r.get('baaki')}** — {saaf(r.get('naam'))} का पैसा "
+                           f"{r.get('din')} दिन से बाक़ी")
+          if not lines:
+              print("mila=khali")
+          else:
+              print("mila=haan")
+              print("ginti=%d" % len(lines))
+              print("baat<<EOF"); print("\n".join(lines)); print("EOF")
+          PY
+
+      - name: घंटी बजाइए
+        if: steps.dekho.outputs.mila == 'haan' || steps.dekho.outputs.mila == 'khali'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const o = ${{ toJSON(steps.dekho.outputs) }};
+            const kab = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+            const { data: khule } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: 'ghanti', per_page: 10 });
+
+            // ---- sab chal raha hai ----
+            if (o.mila === 'khali') {
+              for (const i of khule) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: i.number,
+                  body: `✅ अब कुछ नहीं रुका — ${kab}` });
+                await github.rest.issues.update({ owner, repo, issue_number: i.number, state: 'closed' });
+              }
+              core.notice('कुछ नहीं रुका है');
+              return;
+            }
+
+            const title = `🔔 घंटी — ${o.ginti} चीज़ें अभी रुकी हैं`;
+            const body = [
+              `**${kab}**`, '', o.baat, '',
+              '---',
+              'यह घंटी सिर्फ़ वही बताती है जो **अभी** बिगड़ रहा है।',
+              'ठीक हो जाने पर यह issue अपने आप बंद हो जाएगा।',
+            ].join('\n');
+
+            // Baat wahi hai? To CHUP. Har 15 minute me "abhi bhi
+            // ruka hai" likhne se phone bekar ho jata hai.
+            const wahi = khule.find(i => i.title === title && (i.body || '').includes(o.baat.trim()));
+            if (wahi) { core.notice('वही बात है — कुछ नया नहीं कहा'); return; }
+
+            const purana = khule.find(i => i.title === title);
+            if (purana) {
+              await github.rest.issues.update({ owner, repo, issue_number: purana.number, body });
+              return;
+            }
+            for (const i of khule) {
+              await github.rest.issues.update({ owner, repo, issue_number: i.number, state: 'closed' });
+            }
+            await github.rest.issues.create({ owner, repo, title, body, labels: ['ghanti'] });

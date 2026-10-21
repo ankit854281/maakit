@@ -112,6 +112,14 @@ $pdo->beginTransaction();
 try{
     $pdo->exec("UPDATE businesses SET status='approved' WHERE status='pending'");
     dhindhora_le_liya($pdo);
+    // Sarathi ka rate tay kijiye aur uska baaki paisa de dijiye --
+    // dono ek kaam hain, aur dono nipta dene par hi "kuch nahi
+    // ruka" sach hota hai.
+    require_once __DIR__.'/../../inc/ghanti.php';
+    require_once __DIR__.'/../../inc/sarathi.php';
+    $pdo->exec("UPDATE users SET rider_rate=25
+                 WHERE active=1 AND role IN ('delivery','rider') AND (rider_rate IS NULL OR rider_rate=0)");
+    foreach(saathi_baaki($pdo) as $r) sarathi_diya_likho($pdo,$r['id'],$r['baaki'],'nagad','CI jaanch');
     $k = ek_kaam($pdo);
     ek_check($k===null, 'kuch nahi ruka to null laute, aaya: '.json_encode($k,256));
 } finally { $pdo->rollBack(); }

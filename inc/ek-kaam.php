@@ -132,6 +132,35 @@ function ek_kaam(PDO $pdo) {
           'नए ऑर्डर पड़े हैं जिन्हें किसी ने छुआ नहीं — दाम पूछकर पक्का कीजिए',
           'जितनी देर, उतना ज़्यादा मौक़ा कि ग्राहक दुकान चला जाए।', '/bpo/');
 
+    // ---- सारथी का पैसा ----
+    // Ankit ne tay kiya: "order par paisa milega, salary nahi".
+    // Per order kamane wala roz ka kamane wala hota hai. Salary
+    // wale aadmi ko mahine bhar rok sakte hain; isko nahi -- wo
+    // chup-chaap kisi aur ka kaam pakad lega, aur jis din order
+    // aayega us din uthane wala koi nahi hoga.
+    try {
+        require_once __DIR__ . '/ghanti.php';
+
+        // Pehle rate, phir paisa. Bina rate ke "baaki paisa" ki
+        // ginti chup-chaap 0 nikalti hai -- aur phir lagta hai sab
+        // chukta hai, jabki rider ne bees order pahunchaye hain.
+        $jodo(saathi_rate_nahi($pdo),
+              'सारथी ने काम किया पर उसका रेट ही तय नहीं है — प्रति ऑर्डर रेट भरिए',
+              'बिना रेट के हिसाब चुपचाप ज़ीरो निकलता है। आपको लगेगा सब चुकता है, '
+              . 'और सारथी को लगेगा उसे ठगा गया।', '/admin/sarathi.php');
+
+        $baaki = saathi_baaki($pdo);
+        if ($baaki) {
+            $p = $baaki[0];
+            $ruke[] = ['n' => 0, 'kitna' => 'roz',
+                       'kya'   => $p['naam'] . ' का ₹' . $p['baaki'] . ' ' . $p['din']
+                                  . ' दिन से बाक़ी है — आज दे दीजिए',
+                       'kyun'  => 'ऑर्डर पर कमाने वाला रोज़ का कमाने वाला है। पैसा रुका तो '
+                                  . 'वो कहीं और काम पकड़ लेगा, और ऑर्डर वाले दिन कोई नहीं होगा।',
+                       'kahan' => '/admin/sarathi.php'];
+        }
+    } catch (Throwable $e) { error_log('ek-kaam saathi: ' . $e->getMessage()); }
+
     $jodo($ginti("SELECT COUNT(*) FROM transports WHERE verified=0 AND status='approved'"),
           'गाड़ी के काग़ज़ अपनी आँख से देखकर verified कीजिए',
           'बिना देखे मंज़ूरी देना सबसे बड़ा ख़तरा है — ज़िम्मेदारी आप पर आएगी।',
