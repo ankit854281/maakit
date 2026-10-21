@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=15">
+<link rel="stylesheet" href="jyotish.css?v=16">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -316,7 +316,7 @@ header('Content-Type: text/html; charset=utf-8');
         <label for="mini-jaap-mantra" data-i18n="lMantra">Mantra</label><select id="mini-jaap-mantra"><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
         <button class="mini-jaap-tap" id="mini-jaap-tap" type="button" aria-label="Naam jaap ek baar ginen"><span id="mini-jaap-count">0</span><small id="mini-jaap-name">राम</small><b data-i18n="miniTap">Tap karein</b></button>
         <p class="note" data-i18n="miniScope">Is app ke doosre pannon par bhi jaap karein.</p><div class="mini-jaap-controls"><button class="mini-jaap-batch" id="mini-jaap-batch" type="button" aria-pressed="false"><strong id="mini-jaap-batch-value">+1</strong><span data-i18n="jtBatchOne">per tap</span></button><button class="mini-jaap-undo" id="mini-jaap-undo" type="button" disabled data-i18n="jtUndo" aria-label="Pichhli ginti wapas">↶ Undo</button></div>
-        <p class="note"><span data-i18n="miniToday">Aaj ka kul jaap:</span> <strong id="mini-jaap-today">0</strong></p><button class="btn ghost" id="mini-jaap-photo" type="button">Bhagwan ki photo lagayein</button><button class="btn ghost mini-jaap-full" id="mini-jaap-full" type="button">Jaap settings kholein</button>
+        <button class="btn ghost" id="mini-jaap-share" type="button" data-i18n="gameShare">Share</button><p class="note"><span data-i18n="miniToday">Aaj ka kul jaap:</span> <strong id="mini-jaap-today">0</strong></p><button class="btn ghost" id="mini-jaap-photo" type="button">Bhagwan ki photo lagayein</button><button class="btn ghost mini-jaap-full" id="mini-jaap-full" type="button">Jaap settings kholein</button>
       </div>
     </div>
 
@@ -395,11 +395,15 @@ header('Content-Type: text/html; charset=utf-8');
   <div class="jg-hud jg-right">
     <button class="jg-btn main" id="jg-auto" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5z"/></svg><span id="jg-auto-label">Auto Jaap</span></button>
     <button class="jg-btn" id="jg-batch" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="8" cy="16" r="2.5"/><circle cx="16" cy="16" r="2.5"/></svg><span id="jg-batch-label">Har tap: +1</span></button>
-    <button class="jg-btn" id="jg-undo" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span data-i18n="jtUndo">Pichhli ginti wapas</span></button>
+    <button class="jg-btn" id="jg-undo" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span data-i18n="gameUndo">Undo</span></button>
     <button class="jg-btn" id="jg-pace" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg><span id="jg-pace-label">Madhyam</span></button>
     <button class="jg-btn" id="jg-voice" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="jg-voice-label" data-i18n="voiceOff">Awaaz band</span></button>
     <button class="jg-btn" id="jg-bell" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span data-i18n="bellShort">Ghanti</span></button>
+    <button class="jg-btn" id="jg-popup" type="button" data-i18n="gamePopup">Popup</button>
+    <button class="jg-btn" id="jg-share" type="button" data-i18n="gameShare">Share</button>
   </div>
+  <button class="jg-thumb jg-thumb-left" id="jg-thumb-left" type="button" data-i18n-aria="thumbCount" aria-label="Tap to count"><span class="jg-thumb-amount">+1</span></button>
+  <button class="jg-thumb jg-thumb-right" id="jg-thumb-right" type="button" data-i18n-aria="thumbCount" aria-label="Tap to count"><span class="jg-thumb-amount">+1</span></button>
   <div class="jg-combo" id="jg-combo" hidden aria-live="polite"></div>
   <div class="jg-banner" id="jg-banner" hidden aria-live="polite"><b></b><small></small></div>
   <div class="jg-floats" id="jg-floats" aria-hidden="true"></div>
@@ -419,14 +423,16 @@ header('Content-Type: text/html; charset=utf-8');
   </div>
   <p class="note" data-i18n="cardPrivacy">Sirf mantra aur aaj ki ginti share hogi.</p>
   <div class="card-options"><button class="btn" id="jaap-card-share" type="button" data-i18n="cardSend">Card share karein</button><button class="btn ghost" id="jaap-card-save" type="button" data-i18n="cardSave">Image save karein</button></div>
+  <a class="btn ghost" id="jaap-card-whatsapp" href="https://wa.me/" target="_blank" rel="noopener" data-i18n="whatsappJaap">WhatsApp par jaap share karein</a>
+  <p class="note" data-i18n="whatsappImage">Photo bhejne ke liye Share card mein WhatsApp chunein.</p>
   <p id="jaap-card-status" role="status" class="note"></p>
  </div>
 </div>
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=8"></script>
+<script src="i18n.js?v=9"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
 
