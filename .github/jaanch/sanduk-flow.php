@@ -83,8 +83,20 @@ try{
     $pdo->exec("DROP DATABASE IF EXISTS $naya");
     $pdo->exec("CREATE DATABASE $naya CHARACTER SET utf8mb4");
     try{
+        // DB_HOST me "host:port" bhi likha ho sakta hai (CI me
+        // "127.0.0.1:3306" hota hai). PDO use samajh leta hai, par
+        // mysql ka hukm nahi -- wo "Unknown MySQL server host"
+        // kehkar ruk jata hai. Isi wajah se ye jaanch GitHub par
+        // laal thi aur local par hari: local config me sirf host
+        // likha hai.
+        $db_host = DB_HOST; $db_port = '';
+        if (strpos($db_host, ':') !== false) {
+            [$db_host, $db_port] = explode(':', $db_host, 2);
+        }
         $cmd = 'gzip -dc '.escapeshellarg($utri).' | mysql'
-             . ' -h '.escapeshellarg(DB_HOST).' -u '.escapeshellarg(DB_USER)
+             . ' -h '.escapeshellarg($db_host)
+             . ($db_port !== '' ? ' -P '.escapeshellarg($db_port) : '')
+             . ' -u '.escapeshellarg(DB_USER)
              . (DB_PASS!=='' ? ' -p'.escapeshellarg(DB_PASS) : '')
              . ' '.escapeshellarg($naya).' 2>&1';
         exec($cmd,$out,$rc);

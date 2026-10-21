@@ -288,6 +288,28 @@ were the test's fault, not the code's:
 A red mark that means nothing is worse than no mark, because after two of
 them nobody looks at red again.
 
+### Open on GitHub: `faculty-flow.php` (School ERP) — not fixed here
+
+As of 21 Oct 2026 `bash .github/jaanch/sab.sh` is green locally (42/42) and
+every check also passes against a CI-identical database and config. On GitHub
+one check still fails, and only there:
+
+```
+Faculty: Credential save   (.github/jaanch/faculty-flow.php line 19)
+```
+
+That line posts `faculty_api.php?a=credential` with `type=CPD`,
+`date=2026-10-01` and expects HTTP 200. The endpoint rejects a CPD date
+outside the active school session (`settings.sessionStart` / `sessionEnd`,
+defaulting to 1 April – 31 March), so start there. The runner differs from
+this workspace in two ways worth checking first: **PHP 8.2** (local 8.4) and
+**MariaDB 11** (local 10.11).
+
+This is School ERP code and its own check — **whoever owns that code should
+fix it**, as with `app.js` earlier. It is written here so the next session
+does not have to rediscover it, and so nobody "fixes" the check by silencing
+it: it may be catching something real.
+
 ---
 
 ## 7. The helper bots already running
