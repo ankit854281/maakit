@@ -5,8 +5,8 @@
    - ai.php, track.php aur koi bhi POST: kabhi cache nahi
    Naya version bhejte waqt V badaliye.
    ============================================================ */
-const V = 'mj-v14';
-const CORE = ['/jyotish/', '/jyotish/jyotish.css?v=14', '/jyotish/i18n.js?v=7', '/jyotish/app.js?v=14', '/jyotish/daily.js?v=2',
+const V = 'mj-v15';
+const CORE = ['/jyotish/', '/jyotish/jyotish.css?v=15', '/jyotish/i18n.js?v=8', '/jyotish/app.js?v=15', '/jyotish/daily.js?v=2',
   '/jyotish/engine.js?v=1', '/jyotish/astronomy.min.js?v=2.1.19', '/jyotish/manifest.json', '/jyotish/icons/icon-192.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => Promise.allSettled(CORE.map(u => c.add(u)))).then(() => self.skipWaiting()));
