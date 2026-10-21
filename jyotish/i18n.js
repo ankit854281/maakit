@@ -6,6 +6,14 @@
    {x} = jagah jahan JS value bharta hai.
    ============================================================ */
 var JL = {
+chatOptions:["Chat settings","चैट सेटिंग्स","Chat settings"],
+slideControls:["Controls", "कंट्रोल", "Controls"],
+slideDesign:["Design · 3D", "डिज़ाइन · 3D", "Design · 3D"],
+slideJourney:["Yatra", "यात्रा", "Journey"],
+slideNext:["Agla panel", "अगला पैनल", "Next panel"],
+sliderLabel:["Jaap options — swipe karein", "जप विकल्प — स्वाइप करें", "Jaap options — swipe to browse"],
+updateTag:["NEW", "नया", "NEW"],
+
 thumbCount:["Tap karke jaap ginein", "टैप करके जप गिनें", "Tap to count"],
 thumbAmount:["Ek tap: {n} jaap", "एक टैप: {n} जप", "One tap: {n} chants"],
 gamePopup:["Popup", "पॉपअप", "Popup"],
