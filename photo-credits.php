@@ -9,14 +9,14 @@ require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/catalog.php';
 $page_title = t('Photo credits — Maakit', 'फ़ोटो क्रेडिट — Maakit');
 $PER = 120; $p = max(1, (int)get('p', 1));
-$rows = []; $kul = 0;
+$photoCreditRows = []; $kul = 0;
 try {
     $kul = (int)$pdo->query("SELECT COUNT(*) FROM catalog_photos WHERE source IS NOT NULL")->fetchColumn();
     $st = $pdo->query("SELECT p.file, p.credit, p.license, p.source, p.source_url, ci.id, ci.name_en, ci.name_hi
                          FROM catalog_photos p JOIN catalog_items ci ON ci.id=p.cat_id
                         WHERE p.source IS NOT NULL ORDER BY ci.name_en, p.id LIMIT $PER OFFSET " . (($p - 1) * $PER));
-    $rows = $st->fetchAll();
-} catch (Throwable $e) { $rows = []; }
+    $photoCreditRows = $st->fetchAll();
+} catch (Throwable $e) { $photoCreditRows = []; }
 $pages = max(1, (int)ceil($kul / $PER));
 include __DIR__ . '/inc/head.php';
 ?>
@@ -24,9 +24,9 @@ include __DIR__ . '/inc/head.php';
   <h1><?= t('Photo credits', 'फ़ोटो क्रेडिट') ?></h1>
   <p class="pfc-lead"><?= t('Many product photos on Maakit come from free photo libraries — Wikimedia Commons and Open Food Facts — under Creative Commons licences. We thank every photographer. Photos are cropped to a square and resized. Click a credit to see the original and its licence. Our own and shop photos are not listed here.', 'Maakit पर कई सामान की फ़ोटो मुफ़्त फ़ोटो लाइब्रेरी — Wikimedia Commons और Open Food Facts — से Creative Commons लाइसेंस के तहत ली गई हैं। हर फ़ोटोग्राफ़र का धन्यवाद। फ़ोटो को चौकोर काटा और छोटा किया गया है। असली फ़ोटो और लाइसेंस देखने के लिए क्रेडिट दबाइए। हमारी और दुकानों की अपनी फ़ोटो यहाँ नहीं हैं।') ?></p>
   <p class="pfc-lead"><?= t('Photo is yours and you want it removed or credited differently?', 'फ़ोटो आपकी है और हटवाना या नाम बदलवाना है?') ?> <a href="/support.php"><?= t('Tell us', 'हमें बताइए') ?></a>.</p>
-  <?php if (!$rows): ?><p class="pfc-lead"><?= t('No library photos yet.', 'अभी कोई लाइब्रेरी फ़ोटो नहीं।') ?></p><?php endif; ?>
+  <?php if (!$photoCreditRows): ?><p class="pfc-lead"><?= t('No library photos yet.', 'अभी कोई लाइब्रेरी फ़ोटो नहीं।') ?></p><?php endif; ?>
   <div class="pfc-grid">
-    <?php foreach ($rows as $r): ?>
+    <?php foreach ($photoCreditRows as $r): ?>
       <figure>
         <a href="<?= h(catalog_url(['product' => (int)$r['id']])) ?>"><img src="/uploads/<?= h($r['file']) ?>" alt="<?= h($r['name_en']) ?>" loading="lazy" width="120" height="120"></a>
         <figcaption><b><?= h(t($r['name_en'], $r['name_hi'] ?: $r['name_en'])) ?></b>
