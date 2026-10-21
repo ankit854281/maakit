@@ -6,6 +6,14 @@
    {x} = jagah jahan JS value bharta hai.
    ============================================================ */
 var JL = {
+thumbCount:["Tap karke jaap ginein", "टैप करके जप गिनें", "Tap to count"],
+thumbAmount:["Ek tap: {n} jaap", "एक टैप: {n} जप", "One tap: {n} chants"],
+gamePopup:["Popup", "पॉपअप", "Popup"],
+gameShare:["Share", "शेयर", "Share"],
+gameUndo:["Undo", "वापस", "Undo"],
+whatsappJaap:["WhatsApp par jaap share karein", "WhatsApp पर जप साझा करें", "Share jaap on WhatsApp"],
+whatsappImage:["Card ki photo bhejne ke liye Share card dabayein aur WhatsApp chunein. Agar option na mile to image save karke WhatsApp mein lagayein.", "कार्ड की फ़ोटो भेजने के लिए Share card दबाएं और WhatsApp चुनें। विकल्प न मिले तो इमेज सेव करके WhatsApp में लगाएं।", "To send the image, tap Share card and choose WhatsApp. If unavailable, save the image and attach it in WhatsApp."],
+
   chatFirst: ["AI Jyotishi se baat karein","AI ज्योतिषी से बात करें","Chat with AI Jyotishi"],
   jaapDrawer: ["Naam Jaap · Counter kholein / band karein","नाम जप · काउंटर खोलें / बंद करें","Naam Jaap · Expand / collapse counter"],
   jaapSimple: ["Mantra chunein. Ginti ke liye beech mein tap karein.","मंत्र चुनें। गिनती के लिए बीच में टैप करें।","Choose a mantra. Tap the centre to count."],
@@ -370,7 +378,7 @@ var JL = {
   gameBtn: ["Game Mode", "गेम मोड", "Game Mode"],
   gameBtnSub: ["Phone tircha karein ya yahan dabaiye", "फ़ोन तिरछा करें या यहाँ दबाइए", "Turn your phone sideways or tap here"],
   gameExit: ["Game band karein", "गेम बंद करें", "Close game mode"],
-  gameHint: ["Screen par kahin bhi tap karein · har tap ek jaap", "स्क्रीन पर कहीं भी टैप करें · हर टैप एक जप", "Tap anywhere on the screen · each tap is one chant"],
+  gameHint: ["Neeche ke gol button ya khaali jagah par tap karein", "नीचे के गोल बटन या खाली जगह पर टैप करें", "Tap a bottom circle or an empty area"],
   malaWord: ["Mala", "माला", "Mala"],
   perMin: ["jaap/min", "जप/मिनट", "per min"],
   goalLine: ["Lakshya: {d}/{t} mala", "लक्ष्य: {d}/{t} माला", "Goal: {d}/{t} mala"],
