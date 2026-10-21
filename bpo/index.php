@@ -89,7 +89,7 @@ include __DIR__ . '/../inc/panel.php';
         <div><b><?= h($o['customer_name']) ?></b> · <a href="tel:+91<?= h($o['mobile']) ?>"><?= h($o['mobile']) ?></a></div>
         <div class="meta"><?= h($o['village']) ?><?= $o['landmark'] ? ' · ' . h($o['landmark']) : '' ?>
           <?php if ($o['lat'] !== null): ?> · <a href="https://www.google.com/maps/dir/?api=1&destination=<?= h($o['lat']) ?>,<?= h($o['lng']) ?>" target="_blank" rel="noopener">📍 नक्शा</a><?php endif; ?>
-          <?php if ($o['photo']): ?> · <a href="/uploads/<?= h($o['photo']) ?>" target="_blank" rel="noopener">📷 ग्राहक की फ़ोटो</a><?php endif; ?>
+          <?php if ($o['photo']): ?> · <a href="<?= h(order_photo_url($o['photo'])) ?>" target="_blank" rel="noopener">📷 ग्राहक की फ़ोटो</a><?php endif; ?>
         </div>
         <div style="margin-top:6px;background:var(--soft);border-radius:10px;padding:9px 11px;font-size:15.5px;line-height:1.55">
           <?= nl2br(h($o['items'])) ?>

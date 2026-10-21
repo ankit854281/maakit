@@ -16,7 +16,7 @@ $links=[
 $context=null;$dashboard=$links[$role]['login'];
 if($role==='customer' && cust()){$context='customer';$dashboard='/account.php';}
 elseif($role==='vendor' && shop_login_business($pdo)){$context='shop';$dashboard='/shop.php';}
-elseif(user()){
+elseif($role!=='rider' && user()){
  $u=Maakit\Api\query($pdo,'SELECT role FROM users WHERE id=? AND active=1',[(int)user()['id']])->fetch();
  if($u && (($role==='admin' && $u['role']==='admin') || ($role==='vendor' && $u['role']==='vendor') || ($role==='rider' && in_array($u['role'],['rider','delivery'],true)))){$context='staff';$dashboard=panel_home($u['role']);}
 }
@@ -32,7 +32,7 @@ include __DIR__.'/../inc/head.php';
 <?php if($role==='admin'): ?><p><?= t('Admin accounts are created by the Maakit team. Public admin registration is disabled.','एडमिन खाते Maakit टीम बनाती है।') ?></p><?php endif; ?>
 <?php if($role==='rider'): ?><p><?= t('Rider applications require verification and approval before dispatch access.','डिलीवरी के लिए राइडर आवेदन की जाँच और मंजूरी जरूरी है।') ?></p><?php endif; ?>
 <?php if(!$context && f2s_enabled() && in_array($role,['customer','vendor','rider'],true)): ?><p><a class="btn btn-brand" href="<?= $role==='rider'?'/smartsarathi/otp.php':('/otp.php?role='.($role==='vendor'?'shop':'customer')) ?>"><?= h(t('Sign in with OTP','OTP से लॉगिन')) ?></a></p><?php endif ?>
-<?php if(!$context): ?>
+<?php if(!$context && $role!=='rider'): ?>
 <form method="post" action="<?= $role==='customer'?'/account.php':'/login.php' ?>" data-role-login>
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="<?= $role==='customer'?'login':($role==='vendor'?'dukan':'team') ?>">
 <label><?= $role==='admin'?t('Username','यूज़रनेम'):t('Mobile number','मोबाइल नंबर') ?><input name="<?= in_array($role,['admin','rider'],true)?'username':'mobile' ?>" autocomplete="username" maxlength="40" required></label>

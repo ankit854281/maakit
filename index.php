@@ -299,7 +299,7 @@ include __DIR__ . '/inc/head.php';
     <div class="mk-sec-head"><h2><?= t('Offers', 'ऑफ़र') ?></h2></div>
     <div class="mk-offers" id="bann">
       <?php foreach ($banners as $b): $ti = is_hi() ? $b['title_hi'] : $b['title_en']; $su = is_hi() ? $b['sub_hi'] : $b['sub_en']; ?>
-        <a class="mk-offer tone-<?= h($b['tone']) ?>" href="<?= h($b['link'] ?: '/order.php') ?>" data-bid="<?= (int)$b['id'] ?>">
+        <a class="mk-offer tone-<?= h($b['tone']) ?>" href="<?= h($b['link'] === '/book.php?s=gaadi' ? '/sewa.php?s=safar' : ($b['link'] ?: '/order.php')) ?>" data-bid="<?= (int)$b['id'] ?>">
           <span><b><?= h($ti) ?></b><?php if ($su): ?><small><?= h($su) ?></small><?php endif; ?></span>
           <?php if ($b['photo']): ?><img src="/uploads/<?= h($b['photo']) ?>" alt="" loading="lazy"><?php endif; ?>
         </a>

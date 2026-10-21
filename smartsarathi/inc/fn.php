@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/../../inc/order-media.php';
 // ============================================================
 //  सारथी — बुनियाद
 //
@@ -220,9 +221,9 @@ function save_photo($field, $prefix = 'pod', $max = 900) {
     $ext = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$info['mime']] ?? null;
     if (!$ext) return null;
 
-    $dir = __DIR__ . '/../uploads';
-    if (!is_dir($dir)) @mkdir($dir, 0755, true);
-    $name = $prefix . '-' . date('ymd') . '-' . bin2hex(random_bytes(5)) . '.jpg';
+    $dir = order_media_directory('sarathi',true);
+    if (!$dir) return null;
+    $name = $prefix . '-' . date('ymd') . '-' . bin2hex(random_bytes(16)) . '.jpg';
 
     // GD ho to chhoti kar dijiye, na ho to jaisi hai waisi rakh lijiye
     if (function_exists('imagecreatetruecolor') && max($w, $h) > $max) {
@@ -241,17 +242,22 @@ function save_photo($field, $prefix = 'pod', $max = 900) {
             imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
             $ok = imagejpeg($dst, $dir . '/' . $name, 78);
             imagedestroy($src); imagedestroy($dst);
-            if ($ok) { @chmod($dir . '/' . $name, 0644); return $name; }
+            if ($ok) { @chmod($dir . '/' . $name, 0600); return $name; }
         }
     }
 
-    $name = $prefix . '-' . date('ymd') . '-' . bin2hex(random_bytes(5)) . '.' . $ext;
+    $name = $prefix . '-' . date('ymd') . '-' . bin2hex(random_bytes(16)) . '.' . $ext;
     if (!@move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) return null;
-    @chmod($dir . '/' . $name, 0644);
+    @chmod($dir . '/' . $name, 0600);
     return $name;
 }
 
 function drop_photo($name) {
+    if (order_media_name($name)) {
+        $dir=order_media_directory('sarathi');
+        if($dir && is_file($dir.'/'.$name)) @unlink($dir.'/'.$name);
+        return;
+    }
     if (!$name || !preg_match('/^[a-z]{2,6}-\d{6}-[a-f0-9]{8,12}\.(jpg|png|webp)$/', $name)) return;
     @unlink(__DIR__ . '/../uploads/' . $name);
 }

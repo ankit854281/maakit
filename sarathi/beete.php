@@ -53,7 +53,7 @@ sr_shell_head($me, 'beete', 'बीते काम', $duty_tak, ['kaam' => coun
           · <?= h(date('g:i a', strtotime($r['kab']))) ?></small>
       </div>
       <?php if ($r['pod_photo']): ?>
-        <a class="sr-past-pic" href="/uploads/<?= h($r['pod_photo']) ?>" target="_blank" rel="noopener">फ़ोटो</a>
+        <a class="sr-past-pic" href="<?= h(order_photo_url($r['pod_photo'])) ?>" target="_blank" rel="noopener">फ़ोटो</a>
       <?php endif; ?>
     </div>
   <?php endforeach; ?>

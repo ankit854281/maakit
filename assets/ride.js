@@ -108,11 +108,11 @@
   }
   function setA(g, named) {
     geoA.value = g; marks(); fare();
-    if (named) reverse(g, function (n) { pa.value = n || L$.pin; pa.dataset.auto = '1'; });
+    if (named) reverse(g, function (n) { if(geoA.value!==g)return; pa.value = n || L$.pin; pa.dataset.auto = '1'; pa.dataset.geoText=pa.value; findBtn(); });
   }
   function setB(g, named) {
     geoB.value = g; marks(); fare(); hideResults();
-    if (named) reverse(g, function (n) { da.value = n || L$.pin; da.dataset.geoText = da.value; findBtn(); });
+    if (named) reverse(g, function (n) { if(geoB.value!==g)return; da.value = n || L$.pin; da.dataset.geoText = da.value; findBtn(); });
   }
 
   // ---------- GPS ----------
@@ -125,25 +125,30 @@
       var g = p.coords.latitude.toFixed(6) + ',' + p.coords.longitude.toFixed(6);
       geoA.value = g; marks(); fare();
       if (map) map.setView([p.coords.latitude, p.coords.longitude], 16);
-      reverse(g, function (n) { if (!pa.value.trim() || pa.dataset.auto === '1' || quiet) { pa.value = n || L$.here; pa.dataset.auto = '1'; } });
+      reverse(g, function (n) { if (!pa.value.trim() || pa.dataset.auto === '1' || quiet) { pa.value = n || L$.here; pa.dataset.auto = '1'; pa.dataset.geoText=pa.value; findBtn(); } });
     }, function () { gps.classList.remove('busy'); if (!quiet) toast(L$.nogps); }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   }
   gps.addEventListener('click', function () { locate(false); });
   var lb = document.querySelector('[data-locate]'); if (lb) lb.addEventListener('click', function () { locate(false); });
-  pa.addEventListener('input', function () { pa.dataset.auto = ''; });
+  pa.addEventListener('input', function () {
+    pa.dataset.auto = ''; pa.dataset.geoText = '';
+    geoA.value = ''; marks(); fare(); hideResults(); findBtn();
+  });
 
   // ---------- drop: khojiye ----------
-  var fb = $('[data-find]'), res = $('[data-results]');
-  function findBtn() { fb.hidden = da.value.trim().length < 3 || da.value === da.dataset.geoText; }
-  function hideResults() { res.hidden = true; res.innerHTML = ''; }
+  var fb = $('[data-find]'), fp = $('[data-find-pick]'), res = $('[data-results]'), generation = 0;
+  function findBtn() { fb.hidden = da.value.trim().length < 3 || da.value === da.dataset.geoText; fp.hidden = pa.value.trim().length < 3 || pa.value === pa.dataset.geoText; }
+  function hideResults() { generation++; res.hidden = true; res.innerHTML = ''; }
   da.addEventListener('input', function () {
     if (da.value !== da.dataset.geoText && geoB.value) { geoB.value = ''; marks(); fare(); }
-    findBtn(); quick();
+    hideResults(); findBtn(); quick();
   });
-  da.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search(); } });
-  fb.addEventListener('click', search);
+  da.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search(da); } });
+  pa.addEventListener('keydown', function(e){if(e.key==='Enter'){e.preventDefault();search(pa);}});
+  fb.addEventListener('click', function(){search(da);});
+  fp.addEventListener('click', function(){search(pa);});
   var lastQ = 0;
-  function showPlaces(list) {
+  function showPlaces(list, input) {
     if (!list || !list.length) { res.innerHTML = '<p class="rd-res-msg">' + esc(L$.none) + '</p>'; return; }
     res.innerHTML = '';
     list.forEach(function (it) {
@@ -151,8 +156,10 @@
       var main = (it.name || (it.display_name || '').split(',')[0]), sub = short(it.address) || it.display_name;
       b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0-5z"/></svg><span><b>' + esc(main) + '</b><small>' + esc(sub) + '</small></span>';
       b.addEventListener('click', function () {
-        da.value = main + (sub && sub.indexOf(main) !== 0 ? ', ' + sub : ''); da.dataset.geoText = da.value;
-        setB((+it.lat).toFixed(6) + ',' + (+it.lon).toFixed(6), false); findBtn();
+        input.value = main + (sub && sub.indexOf(main) !== 0 ? ', ' + sub : ''); input.dataset.geoText = input.value;
+        var point=(+it.lat).toFixed(6) + ',' + (+it.lon).toFixed(6);
+        if(input===pa){setA(point,false);hideResults();}else setB(point,false);
+        findBtn();
       });
       res.appendChild(b);
     });
@@ -171,17 +178,32 @@
       }).filter(function (it) { return it && Number.isFinite(+it.lat) && Number.isFinite(+it.lon); });
     });
   }
-  function search() {
-    var q = da.value.trim(); if (q.length < 3) return;
+  function search(input) {
+    var q = input.value.trim(); if (q.length < 3) return;
     if (Date.now() - lastQ < 1100) return; lastQ = Date.now(); // Nominatim: 1 second me ek
     res.hidden = false; res.innerHTML = '<p class="rd-res-msg">' + esc(L$.searching) + '</p>';
-    var a = parse(geoA.value) || C.center, d = 0.45;
+    var request=++generation;
+    var a = (input===pa ? null : parse(geoA.value)) || C.center, d = Math.min(1,Math.max(0.1,(+C.max || 30)/90));
+    function show(list){
+      if(request!==generation || input.value.trim()!==q)return;
+      // A regional bias alone can return a bus stand in the wrong town. Require
+      // the typed locality terms and a coordinate inside the configured radius.
+      var terms=q.toLocaleLowerCase().split(/\s+/).filter(function(w){return w.length>2&&!/^(bus|stand|railway|station|road|near)$/.test(w);});
+      list=(list||[]).filter(function(it){
+        if(!Number.isFinite(+it.lat)||!Number.isFinite(+it.lon)||Math.abs(+it.lat)>90||Math.abs(+it.lon)>180)return false;
+        var r=Math.PI/180, h=Math.sin((+it.lat-a[0])*r/2)**2+Math.cos(a[0]*r)*Math.cos(+it.lat*r)*Math.sin((+it.lon-a[1])*r/2)**2;
+        var distance=12742*Math.asin(Math.min(1,Math.sqrt(h)));
+        var label=[it.name,it.display_name,short(it.address)].join(' ').toLocaleLowerCase();
+        return distance<=(+C.max||30)&&terms.every(function(w){return label.indexOf(w)!==-1;});
+      });
+      showPlaces(list,input);
+    }
     var vb = (a[1] - d) + ',' + (a[0] + d) + ',' + (a[1] + d) + ',' + (a[0] - d);
-    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=in&accept-language=' + C.lang + '&viewbox=' + vb + '&q=' + encodeURIComponent(q))
+    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=in&accept-language=' + C.lang + '&bounded=1&viewbox=' + vb + '&q=' + encodeURIComponent(q))
       .then(function (r) { if (!r.ok) throw new Error('Geocoder unavailable'); return r.json(); }).then(function (list) {
-        if (list && list.length) { showPlaces(list); return; }
-        return searchPhoton(q, a).then(showPlaces);
-      }).catch(function () { searchPhoton(q, a).then(showPlaces).catch(function () { showPlaces([]); }); });
+        if (list && list.length) { show(list); return; }
+        return searchPhoton(q, a).then(show);
+      }).catch(function () { searchPhoton(q, a).then(show).catch(function () { show([]); }); });
   }
   var om = $('[data-onmap]');
   om.addEventListener('click', function () { pinMode = true; tip(true); document.getElementById('rdMap').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
@@ -205,7 +227,7 @@
   sw.addEventListener('click', function () {
     var t = pa.value; pa.value = da.value; da.value = t;
     t = geoA.value; geoA.value = geoB.value; geoB.value = t;
-    da.dataset.geoText = geoB.value ? da.value : ''; findBtn(); marks(); fare();
+    pa.dataset.geoText = geoA.value ? pa.value : ''; da.dataset.geoText = geoB.value ? da.value : ''; hideResults(); findBtn(); marks(); fare();
   });
 
   // ---------- parcel: main khud lunga ----------

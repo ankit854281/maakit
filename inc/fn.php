@@ -32,13 +32,17 @@ if (!function_exists('mb_strlen')) {
 
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function redirect($u) { header('Location: ' . $u); exit; }
-function post($k, $d = '') { return isset($_POST[$k]) ? trim($_POST[$k]) : $d; }
-function get($k, $d = '') { return isset($_GET[$k]) ? trim($_GET[$k]) : $d; }
+function post($k, $d = '') { return isset($_POST[$k]) && is_string($_POST[$k]) ? trim($_POST[$k]) : $d; }
+function get($k, $d = '') { return isset($_GET[$k]) && is_string($_GET[$k]) ? trim($_GET[$k]) : $d; }
 
 function user() { return $_SESSION['user'] ?? null; }
 function need_role($roles) {
+    global $pdo;
     $u = user();
     if (!$u || !in_array($u['role'], (array)$roles, true)) { redirect('/login.php'); }
+    $q=$pdo->prepare('SELECT role FROM users WHERE id=? AND active=1');$q->execute([(int)$u['id']]);
+    $role=$q->fetchColumn();
+    if (!$role || $role!==$u['role']) { unset($_SESSION['user']);redirect('/login.php'); }
     return $u;
 }
 /**
@@ -153,12 +157,16 @@ function cat_icon($icon, $size = 34) {
 
 // ---------- Delivery charge ----------
 function weight_extras() {
-    return ['0'=>'5 किलो तक (एक थैला)','10'=>'5 से 15 किलो','20'=>'15 से 30 किलो (बोरी, सिलेंडर)','40'=>'30 से 50 किलो','van'=>'50 किलो से ज़्यादा'];
+    return ['0'=>t('Up to 5 kg (one bag)','5 किलो तक (एक थैला)'), '10'=>t('5–15 kg','5 से 15 किलो'), '20'=>t('15–30 kg (sack, cylinder)','15 से 30 किलो (बोरी, सिलेंडर)'), '40'=>t('30–50 kg','30 से 50 किलो'), 'van'=>t('More than 50 kg','50 किलो से ज़्यादा')];
 }
 function size_extras() {
-    return ['0'=>'सामान्य (थैले/डिब्बे में)','15'=>'नाज़ुक (काँच, अंडे, टीवी)','20'=>'लंबा या बड़ा (पाइप, चटाई, पंखा)','van'=>'बहुत बड़ा (अलमारी, कूलर, साइकिल)'];
+    return ['0'=>t('Regular (bags / boxes)','सामान्य (थैले/डिब्बे में)'), '15'=>t('Fragile (glass, eggs, TV)','नाज़ुक (काँच, अंडे, टीवी)'), '20'=>t('Long or bulky (pipe, mat, fan)','लंबा या बड़ा (पाइप, चटाई, पंखा)'), 'van'=>t('Very large (cupboard, cooler, bicycle)','बहुत बड़ा (अलमारी, कूलर, साइकिल)')];
 }
-function markets() { return ['local'=>t('Local shop / area rate','स्थानीय दुकान / इलाके का रेट'),'kapsethi'=>'कपसेठी','chauri'=>'चौरी','kachhawa'=>'कछवा चौराहा']; }
+function markets() { return ['local'=>t('Local shop / area rate','स्थानीय दुकान / इलाके का रेट'),'kapsethi'=>t('Kapsethi','कपसेठी'),'chauri'=>t('Chauri','चौरी'),'kachhawa'=>t('Kachhwa Chauraha','कछवा चौराहा')]; }
+// Persist existing Hindi values: old receipts and COD detection depend on them.
+function payment_options() {
+    return ['डिलीवरी पर कैश'=>t('Cash on delivery','डिलीवरी पर कैश'), 'डिलीवरी पर UPI'=>t('UPI on delivery','डिलीवरी पर UPI'), 'मैं खुद दुकान को UPI करूँगा'=>t('I will pay the shop directly by UPI','मैं खुद दुकान को UPI करूँगा')];
+}
 
 function village_list(PDO $pdo) {
     return array_values(array_filter(coverage_areas($pdo), fn($a) => coverage_enabled($a)));

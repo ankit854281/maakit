@@ -11,7 +11,7 @@
    - panel, login, POST: kabhi cache nahi (hamesha taaza)
    ============================================================ */
 
-const V     = 'maakit-v23';
+const V     = 'maakit-v24';
 const SHELL = V + '-shell';
 const PAGES = V + '-pages';
 
@@ -24,7 +24,7 @@ const CORE = [
 ];
 
 // jin raaston ko kabhi cache nahi karna
-const NEVER = /^\/(api/|public/(auth|partner|admin|dispatch)|admin|bpo|delivery|login\.php|logout\.php|shop\.php|account\.php|track\.php|location\.php|support\.php|api\.php|dukan-se\.php|book-mine\.php|uploads)/;
+const NEVER = /^\/(api\/|public\/(auth|partner|admin|dispatch)|admin|bpo|delivery|smartsarathi|sarathi|order-photo\.php|email-otp\.php|otp\.php|login\.php|logout\.php|shop\.php|account\.php|track\.php|location\.php|support\.php|api\.php|dukan-se\.php|book-mine\.php|uploads)/;
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -55,7 +55,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       caches.match(req).then(hit => {
         const live = fetch(req).then(res => {
-          if (res && res.ok) { caches.open(SHELL).then(c => c.put(req, res.clone())); }
+          if (res && res.ok && !/no-store|private/i.test(res.headers.get('Cache-Control') || '')) { caches.open(SHELL).then(c => c.put(req, res.clone())); }
           return res;
         }).catch(() => hit);
         return hit || live;

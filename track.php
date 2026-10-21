@@ -36,6 +36,7 @@ if ($no !== '' && strlen($mob) === 10) {
         else {
             // Smart Sarathi ke rider ne uthaya/pahunchaya ho to wahi halat yahan
             if (!empty($o['sarathi_job'])) { require_once __DIR__ . '/inc/sarathi-bridge.php'; try { $o = sb_sync($pdo, $o); } catch (Throwable $e) {} }
+            order_media_grant($o);
             $steps = order_steps($o['status'], $o);
         }
     }
@@ -221,15 +222,15 @@ include __DIR__ . '/inc/head.php';
     <div class="box" style="margin-top:14px">
       <h3 style="margin:0 0 4px;font-size:18px"><?= t('Shop bill', 'दुकान का बिल') ?></h3>
       <p class="help" style="margin:0 0 10px"><?= t('This is the slip the shop gave. Please check the amounts.', 'यही पर्ची दुकान ने दी है। दाम मिला लीजिए।') ?></p>
-      <a href="/uploads/<?= h($o['bill_photo']) ?>" target="_blank" rel="noopener">
-        <img src="/uploads/<?= h($o['bill_photo']) ?>" alt="" class="proof"></a>
+      <a href="<?= h(order_photo_url($o['bill_photo'])) ?>" target="_blank" rel="noopener">
+        <img src="<?= h(order_photo_url($o['bill_photo'])) ?>" alt="" class="proof"></a>
     </div>
   <?php endif; ?>
 
   <?php if (!empty($o['photo'])): ?>
     <div class="box" style="margin-top:14px">
       <h3 style="margin:0 0 10px;font-size:18px"><?= t('The photo you sent', 'आपकी भेजी फ़ोटो') ?></h3>
-      <img src="/uploads/<?= h($o['photo']) ?>" alt="" class="proof">
+      <img src="<?= h(order_photo_url($o['photo'])) ?>" alt="" class="proof">
     </div>
   <?php endif; ?>
 

@@ -97,7 +97,7 @@ $og_desc = t('Order from any village shop on Maakit — the shop\'s own price, d
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
 <meta property="og:image:alt" content="Maakit">
-<meta property="og:locale" content="<?= h(($_GET['lang'] ?? '') === 'en' ? 'en_IN' : 'hi_IN') ?>">
+<meta property="og:locale" content="<?= is_hi() ? 'hi_IN' : 'en_IN' ?>">
 <?php if (empty($seo['canonical'])): ?>
 <?php // canonical na ho to bhi card ko ek pata chahiye, warna adhoora banta hai ?>
 <meta property="og:url" content="<?= h($og_ghar . strtok($_SERVER['REQUEST_URI'] ?? '/', '?')) ?>">

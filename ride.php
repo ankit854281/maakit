@@ -86,7 +86,8 @@ include __DIR__ . '/inc/head.php';
         <div class="rd-pt a">
           <i></i>
           <label><small data-l-ride<?= $kind === 'parcel' ? ' hidden' : '' ?>><?= t('Pickup', 'कहाँ से') ?></small><small data-l-parcel<?= $kind === 'ride' ? ' hidden' : '' ?>><?= t('Pick up parcel from', 'पार्सल कहाँ से उठाना है') ?></small>
-            <input name="pick_address" value="<?= $val('pick_address', $me['village'] ?? '') ?>" required placeholder="<?= h(t('Your place, mohalla, landmark', 'आपकी जगह, मोहल्ला, पहचान')) ?>" autocomplete="street-address" data-pa></label>
+            <input name="pick_address" value="<?= $val('pick_address', $me['village'] ?? '') ?>" required placeholder="<?= h(t('Your place, mohalla, landmark', 'आपकी जगह, मोहल्ला, पहचान')) ?>" autocomplete="street-address" data-pa enterkeyhint="search"></label>
+          <button type="button" class="rd-gps find" data-find-pick hidden aria-label="<?= h(t('Find pickup','उठाने की जगह खोजिए')) ?>"><span><?= t('Find','खोजिए') ?></span></button>
           <button type="button" class="rd-gps" data-gps title="<?= h(t('Use my current location', 'मेरी अभी की लोकेशन')) ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span><?= t('GPS', 'GPS') ?></span></button>
         </div>
         <div class="rd-pt b">
@@ -97,7 +98,7 @@ include __DIR__ . '/inc/head.php';
         </div>
         <button type="button" class="rd-swap" data-swap hidden aria-label="<?= h(t('Swap', 'उलटिए')) ?>"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/></svg></button>
       </div>
-      <div class="rd-results" data-results hidden></div>
+      <div class="rd-results" data-results hidden role="status" aria-live="polite"></div>
       <div class="rd-quick" data-quick hidden></div>
       <button type="button" class="rd-onmap" data-onmap hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg> <?= t('Set drop on map', 'नक्शे पर जगह लगाइए') ?></button>
     </section>
@@ -198,9 +199,9 @@ include __DIR__ . '/inc/head.php';
     'L' => [
         'approx' => t('approx.', 'लगभग'), 'from' => t('from', 'शुरू'), 'km' => t('km', 'km'), 'far' => t('Too far — max ', 'बहुत दूर — ज़्यादा से ज़्यादा '),
         'finding' => t('Finding you…', 'लोकेशन ढूँढ रहे हैं…'), 'nogps' => t('Location not available — please type the place', 'लोकेशन नहीं मिली — जगह लिख दीजिए'),
-        'here' => t('Current location', 'अभी की लोकेशन'), 'none' => t('No place found. Try a nearby landmark or tap the map.', 'जगह नहीं मिली। पास की कोई पहचान लिखिए या नक्शे पर छूइए।'),
+        'here' => t('Current location', 'अभी की लोकेशन'), 'none' => t('No matching place in the local service range. Add the town name or pin the exact place on the map.', 'इलाके में सही जगह नहीं मिली। कस्बे का नाम जोड़ें या नक्शे पर सही जगह लगाएँ।'),
         'need' => t('Please fill the highlighted fields', 'लाल वाले खाने भरिए'), 'pin' => t('Pinned on map', 'नक्शे पर लगाई जगह'),
-        'after' => t('Fare shown after drop', 'जगह डालते ही किराया'), 'searching' => t('Searching…', 'खोज रहे हैं…'),
+        'after' => t('Pin pickup and drop for fare', 'किराए के लिए दोनों जगह लगाइए'), 'searching' => t('Searching…', 'खोज रहे हैं…'),
         'ride' => t('Book ride', 'सवारी बुक कीजिए'), 'busy' => t('Booking…', 'बुक हो रहा है…'),
     ],
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>

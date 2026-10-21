@@ -73,6 +73,7 @@ function sb_send(PDO $pdo, $oid) {
         'drop_mobile'  => $o['mobile'],
         'drop_address' => trim($o['village'] . ($o['landmark'] ? ' — ' . $o['landmark'] : '')),
         'drop_village' => $o['village'],
+        'drop_geo'     => sb_geo_pair($o['lat'] ?? null, $o['lng'] ?? null),
         'items'        => mb_substr((string)$o['items'], 0, 1900),
         'note'         => trim((string)$o['goods_note'] . ' ' . (string)$o['note']),
         'cod_amount'   => ($cash && $total > 0) ? $total : null,
@@ -94,9 +95,40 @@ function sb_sync(PDO $pdo, array $o, $force = false) {
     $pdo->prepare("UPDATE orders SET sarathi_checked=NOW() WHERE id=?")->execute([(int)$o['id']]);
     [$ok, $r] = sb_call($pdo, 'status', ['ref' => $o['order_no']]);
     if (!$ok || empty($r['job']['status'])) return $o;
-    $s = $r['job']['status'];
+    return sb_apply_job($pdo,$o,$r['job']);
+}
+
+function sb_geo_pair($lat, $lng) {
+    if (!is_numeric($lat) || !is_numeric($lng)) return null;
+    $lat=(float)$lat; $lng=(float)$lng;
+    if (!is_finite($lat) || !is_finite($lng) || abs($lat)>90 || abs($lng)>180) return null;
+    return $lat.','.$lng;
+}
+function sb_job_location(array $job) {
+    $loc=$job['rider_location'] ?? null;
+    if (!in_array($job['status'] ?? '',['assigned','picked'],true) || !is_array($loc)
+        || !isset($loc['lat'],$loc['lng'],$loc['at']) || sb_geo_pair($loc['lat'],$loc['lng'])===null
+        || !is_numeric($loc['at'])) return null;
+    $at=(int)$loc['at'];
+    if ($at < time()-120 || $at > time()+30) return null;
+    return ['lat'=>(float)$loc['lat'],'lng'=>(float)$loc['lng'],'at'=>$at];
+}
+/** The remote rider belongs to Smart Sarathi, never to legacy users/live_tracks. */
+function sb_apply_job(PDO $pdo,array $o,array $job) {
+    $s=$job['status'] ?? '';
+    if (!in_array($s,['new','assigned','picked','delivered','cancelled'],true) || $pdo->inTransaction()) return $o;
+    $pdo->beginTransaction();
+    try {
+    $lock=$pdo->prepare('SELECT * FROM orders WHERE id=? FOR UPDATE');$lock->execute([(int)$o['id']]);
+    $current=$lock->fetch();
+    if (!$current || in_array($current['status'],['Delivered','Cancel','Paisa jama'],true)) { $pdo->rollBack();return $current ?: $o; }
+    $o=$current;
     $map = ['assigned' => 'Assign', 'picked' => 'Pickup', 'delivered' => 'Delivered'];
     $new = $map[$s] ?? null;
+    $rank=['Naya'=>0,'Confirm'=>1,'Assign'=>2,'Pickup'=>3,'Delivered'=>4];
+    // Out-of-order provider responses must not undo pickup/delivery.
+    if ($s==='cancelled' && $o['status']!=='Pickup') $new='Cancel';
+    if ($new && $new!=='Cancel' && ($rank[$new] ?? 0)<($rank[$o['status']] ?? 0)) $new=null;
     $sql = "UPDATE orders SET sarathi_status=?";
     $args = [$s];
     if ($new && $new !== $o['status']) {
@@ -107,8 +139,14 @@ function sb_sync(PDO $pdo, array $o, $force = false) {
     }
     $args[] = (int)$o['id'];
     $pdo->prepare($sql . " WHERE id=?")->execute($args);
+    $loc=sb_job_location($job);
+    $name=is_string($job['rider']['name'] ?? null) ? mb_substr($job['rider']['name'],0,120) : null;
+    $pdo->prepare('INSERT INTO order_sarathi_locations(order_id,rider_name,lat,lng,captured_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE rider_name=VALUES(rider_name),lat=VALUES(lat),lng=VALUES(lng),captured_at=VALUES(captured_at)')
+        ->execute([(int)$o['id'],$name,$loc['lat'] ?? null,$loc['lng'] ?? null,$loc['at'] ?? null]);
+    $pdo->commit();
     $o['sarathi_status'] = $s;
     return $o;
+    } catch(Throwable $e) { if($pdo->inTransaction())$pdo->rollBack();throw $e; }
 }
 
 /** "Apne aap" chalu ho to: Confirm hue, abhi tak na bheje order (ek baar me 10) */

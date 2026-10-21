@@ -1,6 +1,22 @@
 <?php
 require_once __DIR__.'/../inc/fn.php';
 need_role('admin');
+require_once __DIR__.'/../inc/email-otp.php';
+require_once __DIR__.'/../inc/sarathi-bridge.php';
+$setupError='';
+if($_SERVER['REQUEST_METHOD']==='POST' && csrf_ok()) {
+    $name=post('grievance_name');$email=post('grievance_email');$hours=post('grievance_hours');
+    if(mb_strlen($name)>100 || ($email!=='' && !filter_var($email,FILTER_VALIDATE_EMAIL)) || ($hours!=='' && (!ctype_digit($hours)||(int)$hours<1||(int)$hours>720))) {
+        $setupError=t('Check the contact name, email and response hours.','संपर्क नाम, email और जवाब के घंटे जाँचिए।');
+    } else {
+        $set=$pdo->prepare('INSERT INTO settings(k,v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)');
+        foreach(['grievance_name'=>$name,'grievance_email'=>$email,'grievance_hours'=>$hours] as $key=>$value)$set->execute([$key,$value]);
+        redirect('/admin/readiness.php');
+    }
+}
+$contactName=(string)setg($pdo,'grievance_name','');$contactEmail=(string)setg($pdo,'grievance_email','');$contactHours=(string)setg($pdo,'grievance_hours','');
+$defaultAdmin=false;
+foreach($pdo->query("SELECT password FROM users WHERE role='admin' AND active=1") as $account) if(password_verify('maakit123',$account['password'])) $defaultAdmin=true;
 $page_title=t('Launch readiness — Maakit','Launch की तैयारी — Maakit');
 $counts=$pdo->query("SELECT COUNT(*) shops, COALESCE(SUM(items_on=1),0) catalogues FROM businesses WHERE status='approved'")->fetch();
 $goods=$pdo->query("SELECT COUNT(*) total,COALESCE(SUM(i.price>0),0) priced,COALESCE(SUM(i.photo IS NOT NULL AND i.photo<>''),0) pictured,COALESCE(SUM(i.price>0 AND i.stock='hai' AND b.items_on=1),0) orderable FROM shop_items i JOIN businesses b ON b.id=i.business_id WHERE b.status='approved' AND i.active=1")->fetch();
@@ -23,6 +39,20 @@ include __DIR__.'/../inc/panel.php';
 ?>
 <section><div class="wrap">
 <h1><?=t('Launch readiness','Launch की तैयारी')?></h1>
+<div class="box">
+<h2><?=t('Login, dispatch and contact setup','लॉगिन, डिलीवरी और संपर्क setup')?></h2>
+<p><?=t('Email OTP','Email OTP')?>: <?=mk_email_enabled()?t('Configured — inbox delivery still needs testing','जुड़ा है — inbox में पहुँचने की जाँच बाकी'):t('Sender setup pending','भेजने वाले mailbox का setup बाकी')?></p>
+<p><?=t('SMS / WhatsApp OTP','SMS / WhatsApp OTP')?>: <?=f2s_enabled()?t('Configured — real delivery needs testing','जुड़ा है — असली संदेश की जाँच बाकी'):t('Provider setup pending','Provider setup बाकी')?></p>
+<p>Smart Sarathi: <?=sb_ready($pdo)?t('Bridge configured — complete a real delivery','Bridge जुड़ा है — असली delivery जाँचिए'):t('Bridge URL/key missing','Bridge URL/key बाकी')?></p>
+<?php if($defaultAdmin):?><p role="alert"><?=t('An active admin still uses the original installation password. Change it before launch.','एक चालू admin पर अब भी installation वाला पासवर्ड है। Launch से पहले बदलें।')?></p><?php endif;?>
+<?php if($setupError):?><p role="alert"><?=h($setupError)?></p><?php endif;?>
+<form method="post"><input type="hidden" name="csrf" value="<?=h(csrf())?>">
+<label><?=t('Public complaints contact name','शिकायत संपर्क का सार्वजनिक नाम')?><input name="grievance_name" maxlength="100" value="<?=h($contactName)?>"></label>
+<label><?=t('Public complaints email','शिकायत का सार्वजनिक email')?><input type="email" name="grievance_email" maxlength="254" value="<?=h($contactEmail)?>"></label>
+<label><?=t('Acknowledgement target (hours)','शिकायत मिलने की पुष्टि का समय (घंटे)')?><input type="number" name="grievance_hours" min="1" max="720" value="<?=h($contactHours)?>"></label>
+<p><?=t('Save only details and response times your team has agreed to publish. Legal review and actual response handling remain necessary.','केवल टीम से पक्के नाम, email और समय प्रकाशित करें। कानूनी समीक्षा और असली शिकायत का जवाब देना फिर भी ज़रूरी है।')?></p>
+<button class="btn btn-brand"><?=t('Save public contact','सार्वजनिक संपर्क सेव करें')?></button></form>
+</div>
 <p class="lead"><?=t('Live database counts help you decide the next task. Account counts do not prove staff availability, photos are not independently verified, and active areas do not prove nationwide delivery.','Database की गिनती से अगला काम तय करें। खाता होने से staff की उपलब्धता साबित नहीं होती, फ़ोटो की स्वतंत्र जाँच नहीं हुई है और चालू इलाके का मतलब पूरे भारत में डिलीवरी नहीं है।')?></p>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
 <?php foreach($cards as $card):?><a class="box" href="<?=h($card[2])?>"><b style="font-size:28px"><?=h($card[1])?></b><div><?=h($card[0])?></div></a><?php endforeach;?>

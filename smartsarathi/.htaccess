@@ -36,6 +36,7 @@ RedirectMatch 404 ^/(smartsarathi/)?(inc|sql)(/|$)
 # chhupi hui file (.git, .env wagairah)
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteRule ^uploads/(pod-[0-9]{6}-[a-f0-9]{8,32}\.(?:jpg|png|webp))$ proof.php?file=$1 [END]
   RewriteRule "(^|/)\.(?!well-known)" - [F,L]
 </IfModule>
 

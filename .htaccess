@@ -18,6 +18,10 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Private order images: old URLs must pass the same access check as new ones.
+  RewriteCond %{HTTP_HOST} !^(www\.)?smartsarathi\.in$ [NC]
+  RewriteRule ^uploads/((?:list|bill|pod)-[0-9]{6}-[a-f0-9]{8,32}\.(?:jpg|png|webp))$ order-photo.php?file=$1 [END]
+
   # pehle se https ho to kuchh mat kijiye
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
@@ -92,7 +96,7 @@ Options -Indexes
   # doosri website ko pura pata mat bhejiye
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   # camera, mic, jagah — jab tak khud na maangein, band
-  Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(self), payment=()"
+  Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=(self), payment=()"
 </IfModule>
 
 # ------------------------------------------------------------

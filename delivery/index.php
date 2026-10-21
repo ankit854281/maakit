@@ -165,9 +165,9 @@ include __DIR__ . '/../inc/panel.php';
       <div class="note" style="margin-top:12px">
         <?php if ($o['bill_photo']): ?>
           <div style="display:flex;align-items:center;gap:12px">
-            <img src="/uploads/<?= h($o['bill_photo']) ?>" alt="बिल" style="width:56px;height:56px;border-radius:10px;object-fit:cover">
+            <img src="<?= h(order_photo_url($o['bill_photo'])) ?>" alt="बिल" style="width:56px;height:56px;border-radius:10px;object-fit:cover">
             <div><b>बिल लग चुका है</b><div class="help" style="margin:0">ग्राहक को दिख रहा है<?= $o['goods_amount'] ? ' · सामान ₹' . (int)$o['goods_amount'] : '' ?></div></div>
-            <a class="btn btn-sm" href="/uploads/<?= h($o['bill_photo']) ?>" target="_blank" rel="noopener" style="margin-left:auto;background:var(--soft);color:var(--brand)">देखिए</a>
+            <a class="btn btn-sm" href="<?= h(order_photo_url($o['bill_photo'])) ?>" target="_blank" rel="noopener" style="margin-left:auto;background:var(--soft);color:var(--brand)">देखिए</a>
           </div>
         <?php else: ?>
           <b>दुकान से निकलते ही बिल की फ़ोटो खींचिए</b>

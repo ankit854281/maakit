@@ -71,9 +71,9 @@ include __DIR__ . '/../inc/panel.php';
       <div style="margin-top:8px;font-size:16px">बिल का कुल: <b>₹<?= (int)$o['goods_amount'] ?></b></div>
     <?php endif; ?>
     <?php if ($o['bill_photo']): ?>
-      <a href="/uploads/<?= h($o['bill_photo']) ?>" target="_blank" rel="noopener"
+      <a href="<?= h(order_photo_url($o['bill_photo'])) ?>" target="_blank" rel="noopener"
          style="display:inline-block;margin-top:10px">
-        <img src="/uploads/<?= h($o['bill_photo']) ?>" alt="बिल"
+        <img src="<?= h(order_photo_url($o['bill_photo'])) ?>" alt="बिल"
              style="max-width:180px;border-radius:10px;border:1.5px solid var(--line)">
         <div class="help">बिल की फ़ोटो — खोलकर देखिए</div>
       </a>

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/../middleware/legacy.php';
 require_once __DIR__.'/auth-attempts.php';
+require_once __DIR__.'/order-media.php';
 require_once __DIR__.'/../smartsarathi/inc/fast2sms.php';
 // ============================================================
 // Maakit — customer ka apna khata (account)
@@ -27,7 +28,7 @@ function cust_set($c) {
 function cust_logout() {
     global $pdo;
     if ($pdo instanceof PDO) Maakit\Api\revoke_legacy_sessions($pdo,'customer');
-    unset($_SESSION['cust'], $_SESSION['sms_customer_recovery']);
+    unset($_SESSION['cust'], $_SESSION['sms_customer_recovery'], $_SESSION['order_media']);
     if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
 }
 
@@ -104,6 +105,7 @@ function cust_bookings(PDO $pdo, $id, $limit = 20) {
  * Sirf asli tasveer, 4 MB tak. Naam hum khud banate hain.
  */
 function save_photo($field, $prefix = 'p') {
+    if (!in_array($prefix,['list','bill','pod'],true)) return null;
     if (empty($_FILES[$field]) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) return null;
     $f = $_FILES[$field];
     if ($f['size'] > 4 * 1024 * 1024) return null;
@@ -111,11 +113,11 @@ function save_photo($field, $prefix = 'p') {
     if (!$info) return null;                              // tasveer hai hi nahi
     $ext = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'][$info['mime']] ?? null;
     if (!$ext) return null;
-    $name = $prefix . '-' . date('ymd') . '-' . bin2hex(random_bytes(5)) . '.' . $ext;
-    $dir  = __DIR__ . '/../uploads';
-    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $name = $prefix . '-' . date('ymd') . '-' . bin2hex(random_bytes(16)) . '.' . $ext;
+    $dir = order_media_directory('orders',true);
+    if (!$dir) return null;
     if (!@move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) return null;
-    @chmod($dir . '/' . $name, 0644);
+    @chmod($dir . '/' . $name, 0600);
     return $name;
 }
 
@@ -126,6 +128,7 @@ function save_photo($field, $prefix = 'p') {
  * GD na ho to photo jaisi hai waisi rakh lete hain.
  */
 function save_item_photo($field, $prefix = 'it', $max = 500) {
+    if ($prefix === 'pod') return save_photo($field,'pod');
     if (empty($_FILES[$field]) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) return null;
     return save_photo_from($_FILES[$field]['tmp_name'], $_FILES[$field]['size'], $prefix, $max);
 }
@@ -181,6 +184,11 @@ function save_photo_from($tmp, $size, $prefix = 'it', $max = 500) {
 
 /** purani photo hatao (sirf uploads folder se, sirf hamari banai file) */
 function drop_photo($name) {
+    if (order_media_name($name)) {
+        $dir=order_media_directory();
+        if ($dir && is_file($dir.'/'.$name)) @unlink($dir.'/'.$name);
+        return;
+    }
     if (!$name || !preg_match('/^[a-z]{2,6}-\d{6}-[a-f0-9]{8,12}\.(jpg|png|webp)$/', $name)) return;
     @unlink(__DIR__ . '/../uploads/' . $name);
 }

@@ -208,7 +208,7 @@ function job_status(PDO $pdo, array $client, $ref) {
     $out['rider_location'] = $j['rider_lat'] !== null && $j['rider_lng'] !== null && $j['rider_location_at'] !== null
         ? ['lat' => (float)$j['rider_lat'], 'lng' => (float)$j['rider_lng'], 'at' => (int)$j['rider_location_at']]
         : null;
-    if ($j['pod_photo'])  $out['photo'] = '/uploads/' . $j['pod_photo'];
+    if ($j['pod_photo']) $out['photo'] = '/proof.php?file=' . rawurlencode($j['pod_photo']); // Requires this client's Bearer key.
     return [true, $out];
 }
 

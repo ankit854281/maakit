@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
     $shop    = post('shop');
     $market  = post('market', 'kapsethi');
     $pay     = post('payment');
+    if ($pay === 'cash') $pay='डिलीवरी पर कैश'; // Existing form/API clients.
     $cart    = cart_parse($pdo, post('cart_json'));
     $photo   = save_photo('photo', 'list');
     $lat = post('lat'); $lng = post('lng');
@@ -84,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && !$done && !$err) {
     elseif (strlen($mobile) !== 10)    { $err = t('Mobile number must be 10 digits.', 'मोबाइल नंबर 10 अंकों का लिखिए।'); }
     elseif (!coverage_enabled(coverage_area($pdo,$village))) { $err=coverage_error(); }
     elseif (!array_key_exists($market,markets())) { $err=t('Choose a valid pickup area.', 'सही pickup क्षेत्र चुनिए।'); }
+    elseif (!array_key_exists($pay,payment_options())) { $err=t('Choose a valid payment method.', 'सही भुगतान तरीका चुनिए।'); }
     elseif (mb_strlen($items_text) < 3 && !$photo){ $err = t('Pick at least one item, write it, or send a photo.', 'कम से कम एक सामान चुनिए, लिख दीजिए या फ़ोटो भेजिए।'); }
     else {
         // ---- ek hi number se bahut saare order na aayein ----
@@ -362,10 +364,9 @@ try{
       <div class="box" style="margin-bottom:14px">
         <h3 style="margin:0 0 12px;font-size:18px"><?= t('Payment', 'पेमेंट') ?></h3>
         <div class="field" style="margin-bottom:12px">
+          <label for="payment"><?= t('Payment method', 'भुगतान का तरीका') ?></label>
           <select id="payment" name="payment">
-            <option>डिलीवरी पर कैश</option>
-            <option>डिलीवरी पर UPI</option>
-            <option>मैं खुद दुकान को UPI करूँगा</option>
+            <?php foreach(payment_options() as $value=>$label): ?><option value="<?= h($value) ?>"><?= h($label) ?></option><?php endforeach; ?>
           </select>
         </div>
         <div class="sticky-tot" id="tot"></div>

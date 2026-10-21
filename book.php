@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/inc/fn.php';
+// Old offer URLs meant vehicle booking, not a used-book detail.
+if (!isset($_GET['id']) && get('s') === 'gaadi') {
+    header('Location: /sewa.php?s=safar', true, 301);
+    exit;
+}
 require_once __DIR__ . '/inc/icons.php';
 require_once __DIR__ . '/inc/books.php';
 

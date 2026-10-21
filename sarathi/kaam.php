@@ -293,8 +293,8 @@ sr_shell_head($me, 'kaam', 'काम', $duty_tak, ['kaam' => count($kaam)]);
            /delivery/ me tha. -->
       <div class="sr-bill">
         <?php if (!empty($o['bill_photo'])): ?>
-          <a class="sr-bill-done" href="/uploads/<?= h($o['bill_photo']) ?>" target="_blank" rel="noopener">
-            <img src="/uploads/<?= h($o['bill_photo']) ?>" alt="बिल">
+          <a class="sr-bill-done" href="<?= h(order_photo_url($o['bill_photo'])) ?>" target="_blank" rel="noopener">
+            <img src="<?= h(order_photo_url($o['bill_photo'])) ?>" alt="बिल">
             <span><b>बिल लग चुका है</b><small>ग्राहक को दिख रहा है<?=
               $o['goods_amount'] !== null ? ' · सामान ₹' . (int)$o['goods_amount'] : '' ?></small></span>
           </a>

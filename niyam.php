@@ -265,6 +265,10 @@ include __DIR__ . '/inc/head.php';
 </ul>
 
 <h3>कुछ भी शिकायत हो तो</h3>
+<?php $gn=(string)setg($pdo,'grievance_name','');$ge=(string)setg($pdo,'grievance_email','');$gh=(string)setg($pdo,'grievance_hours',''); ?>
+<?php if($gn!=='' && filter_var($ge,FILTER_VALIDATE_EMAIL) && ctype_digit($gh) && (int)$gh>0): ?>
+<p><?=h(t('Complaints contact','शिकायत संपर्क'))?>: <b><?=h($gn)?></b> · <a href="mailto:<?=h($ge)?>"><?=h($ge)?></a> · <?=h(t('We aim to acknowledge your complaint within ','शिकायत मिलने की पुष्टि का लक्ष्य '))?><?=(int)$gh?> <?=h(t('hours.','घंटे है।'))?></p>
+<?php endif; ?>
 <p>सीधे फ़ोन कीजिए — <b><?= h(MAAKIT_NUMBER_SHOW) ?></b>, या
 <a href="/support.php">यहाँ लिखिए</a>। हम जवाब देंगे।</p>
 

@@ -88,6 +88,20 @@ if ($a === 'where') {
     $r = $st->fetch();
     if (!$r) { http_response_code(404); echo json_encode(['ok' => 0]); exit; }
 
+    // Sync only after proving the order reference/mobile pair. Never mix rider IDs
+    // from the separate Sarathi database with legacy delivery_user identities.
+    $q=$pdo->prepare('SELECT * FROM orders WHERE id=?');$q->execute([(int)$r['id']]);$order=$q->fetch();
+    if (!empty($order['sarathi_job'])) {
+        require_once __DIR__.'/inc/sarathi-bridge.php';
+        try { $order=sb_sync($pdo,$order); } catch(Throwable $e) { error_log('Order tracking sync unavailable'); }
+        $q=$pdo->prepare('SELECT * FROM order_sarathi_locations WHERE order_id=?');$q->execute([(int)$order['id']]);$loc=$q->fetch();
+        $r['status']=$order['status'];$r['rider']=$loc['rider_name'] ?? null;
+        $r['lat']=$loc['lat'] ?? null;$r['lng']=$loc['lng'] ?? null;
+        $r['captured_at']=$loc['captured_at'] ?? null;
+        $r['location_age']=$loc && $loc['captured_at']!==null ? max(0,time()-(int)$loc['captured_at']) : null;
+        if ($r['location_age']===null || $r['location_age']>120) $r['captured_at']=null;
+    }
+
     $live = false; $age = null;
     if ($r['captured_at'] !== null && $r['lat'] !== null && in_array($r['status'], ['Assign', 'Pickup'], true)) {
         $age = max(0,(int)$r['location_age']);
