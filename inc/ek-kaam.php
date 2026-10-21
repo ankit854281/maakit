@@ -153,6 +153,13 @@ function ek_kaam(PDO $pdo) {
           'बिना दाम का सामान पड़ा है — दुकानदार से दाम भरवाइए',
           'ग्राहक उसे मँगा ही नहीं सकता, वो सूची में दिखता तक नहीं।', '/admin/daam.php');
 
+    // Sabse neeche, kyunki ye graahak ko rok nahi raha -- par bot ne
+    // kaam kar diya hai aur wo bekaar pada hai. Packet tabhi dikhta
+    // hai jab aap use dekh kar chalu karein.
+    $jodo($ginti("SELECT COUNT(*) FROM packs WHERE status='suggested'"),
+          'बॉट ने पैकेट बना दिए हैं — देख कर चालू कीजिए',
+          'जब तक आप नहीं देखेंगे, ग्राहक को कोई पैकेट नहीं दिखेगा।', '/admin/packet.php');
+
     if ($ruke) {
         $p = $ruke[0];
         $p['kya'] = $p['n'] . ' — ' . $p['kya'];

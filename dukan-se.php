@@ -13,6 +13,7 @@
 require_once __DIR__ . '/inc/fn.php';
 require_once __DIR__ . '/inc/dukan.php';
 require_once __DIR__ . '/inc/items.php';
+require_once __DIR__ . '/inc/packet.php';
 
 // id URL se bhi aa sakti hai aur form se bhi — dono chalein
 $id = (int)(get('id') ?: post('id'));
@@ -141,6 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'mangao
             $up = $pdo->prepare("UPDATE shop_items SET sold = sold + ? WHERE id=? AND business_id=?");
             foreach ($lines as $l) { $up->execute([$l['qty'], $l['id'], $id]); }
 
+            // Packet se aaya order? Ginti rakhiye -- jo packet sach
+            // me chalta hai wo upar aana chahiye, aur jo nahi chalta
+            // use hatana chahiye. Ye ginti order ko kabhi nahi
+            // rokegi, isliye chup-chaap.
+            if ((int)post('pack_id')) pack_manga($pdo, (int)post('pack_id'));
+
             $done = ['no' => $order_no, 'code' => $code, 'maal' => $maal,
                      'charge' => $calc, 'lines' => $lines, 'pay' => $pay, 'mobile' => $mobile];
             $_SESSION['shop_checkout'][$id][$checkout_key]['done'] = $done;
@@ -218,6 +225,50 @@ include __DIR__ . '/inc/head.php';
     <input type="hidden" name="do" value="mangao">
     <input type="hidden" name="checkout_key" value="<?= h($checkout_key) ?>">
     <input type="hidden" name="id" value="<?= $id ?>">
+
+    <?php
+      // ---------- पैकेट — बना हुआ सेट, एक टैप में ----------
+      // Gaon me graahak 40 cheezon ki soochi me se nahi chunta.
+      // Wo kehta hai "sau rupaye ki sabzi bhej do".
+      //
+      // Dhyan dijiye: packet koi NAYA order ka rasta nahi hai. Wo
+      // sirf neeche wale usi form ki ginti bhar deta hai. Isliye
+      // daam ki jaanch, ilaake ki jaanch, dukaan khuli hai ya
+      // nahi -- sab kuch jaisa tha waisa hi chalta hai. Naya
+      // rasta banane ka matlab hota hai nayi jagah jo toot sakti
+      // hai, aur paisa wale raste me wo galti sabse mehengi hai.
+      $packs = empty($b['packs_on']) ? [] : pack_list($pdo, $id, true);
+    ?>
+    <?php if ($packs): ?>
+      <input type="hidden" name="pack_id" id="pack_id" value="">
+      <div class="box" style="margin-bottom:12px">
+        <b style="font-size:17px"><?= h(t('Ready-made sets', 'बने हुए पैकेट')) ?></b>
+        <div class="meta" style="margin:2px 0 10px">
+          <?= h(t('One tap fills the list below. Prices are this shop’s own.',
+                  'एक टैप में नीचे की गिनती भर जाएगी। दाम इसी दुकान के हैं।')) ?>
+        </div>
+        <?php foreach ($packs as $p): ?>
+          <?php
+            $bharo = [];
+            foreach ($p['saaman'] as $s) $bharo[(int)$s['id']] = max(1, (int)$s['qty']);
+            $kya = [];
+            foreach ($p['saaman'] as $s) $kya[] = $s['name'] . ' × ' . max(1, (int)$s['qty']);
+          ?>
+          <button type="button" class="pk" data-pk="<?= (int)$p['id'] ?>"
+                  data-bharo="<?= h(json_encode($bharo)) ?>"
+                  style="display:flex;width:100%;gap:10px;align-items:center;text-align:left;
+                         background:#fff;border:1px solid var(--line);border-radius:12px;
+                         padding:11px 12px;margin-bottom:8px;cursor:pointer;font:inherit">
+            <span style="flex:1;min-width:0">
+              <b style="display:block"><?= h($p['name']) ?></b>
+              <span class="meta" style="display:block"><?= h(implode(', ', $kya)) ?></span>
+            </span>
+            <span style="font-weight:800;flex:none;color:var(--brand)">₹<?= (int)$p['daam'] ?></span>
+          </button>
+        <?php endforeach; ?>
+        <div class="meta" id="pk-bhara" hidden style="color:var(--brand);font-weight:700"></div>
+      </div>
+    <?php endif; ?>
 
     <div class="box">
       <?php foreach ($items as $it): ?>
@@ -310,6 +361,46 @@ include __DIR__ . '/inc/head.php';
     f.addEventListener('input', jodo);
     f.addEventListener('change', jodo);
     jodo();
+
+    // ---- पैकेट: एक टैप में नीचे की गिनती भर जाए ----
+    // Packet sirf isi form ko bharta hai. Koi doosra rasta nahi.
+    // Purani ginti pehle saaf ki jati hai, warna do packet dabane
+    // par chupke se dono jud jate -- aur graahak ko pata bhi nahi
+    // chalta ki usne dugna manga liya.
+    f.querySelectorAll('.pk').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var bharo = {};
+        try { bharo = JSON.parse(btn.getAttribute('data-bharo') || '{}'); } catch (e) { return; }
+        f.querySelectorAll('.qn').forEach(function (i) { i.value = 0; });
+        var mile = 0;
+        Object.keys(bharo).forEach(function (id) {
+          var box = f.querySelector('.qn[name="q[' + id + ']"]');
+          if (box) { box.value = bharo[id]; mile++; }
+        });
+        var pid = document.getElementById('pack_id');
+        if (pid) pid.value = btn.getAttribute('data-pk') || '';
+        jodo();
+        var kaha = document.getElementById('pk-bhara');
+        if (kaha) {
+          kaha.hidden = false;
+          kaha.textContent = mile + (document.documentElement.lang === 'en'
+            ? ' items filled below — change any quantity if you like.'
+            : ' सामान नीचे भर दिए — गिनती बदलनी हो तो बदल लीजिए।');
+        }
+        var pehla = f.querySelector('.qn');
+        if (pehla && pehla.scrollIntoView) pehla.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+
+    // Haath se ginti badalne par packet ka naam hata dijiye -- phir
+    // wo order packet ka nahi, graahak ka apna hai. Ginti sach
+    // bole, isi se pata chalega kaun packet sach me chal raha hai.
+    f.addEventListener('input', function (e) {
+      if (e.target && e.target.classList && e.target.classList.contains('qn')) {
+        var pid = document.getElementById('pack_id');
+        if (pid) pid.value = '';
+      }
+    });
   })();
   </script>
 
