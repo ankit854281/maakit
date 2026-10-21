@@ -474,14 +474,14 @@ body{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 .game-btn small{display:block;font-size:13px;color:var(--muted)}
 .jgame{position:fixed;inset:0;z-index:90;overflow:hidden;color:var(--fg);touch-action:manipulation;user-select:none;-webkit-user-select:none;
   background:radial-gradient(70% 90% at 50% 50%,var(--glow1),transparent 70%),radial-gradient(60% 50% at 50% 100%,var(--glow2),transparent 70%),var(--bg);
-  display:grid;grid-template-columns:minmax(150px,1fr) auto minmax(150px,1fr);align-items:center;gap:12px;
+  display:grid;grid-template-columns:minmax(110px,1fr) auto minmax(130px,1fr);align-items:center;gap:12px;
   padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
 .jgame:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.6;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='white'%3E%3Ccircle cx='14' cy='20' r='1'/%3E%3Ccircle cx='90' cy='12' r='.8'/%3E%3Ccircle cx='140' cy='50' r='1.2'/%3E%3Ccircle cx='46' cy='78' r='.7'/%3E%3Ccircle cx='110' cy='100' r='1'/%3E%3Ccircle cx='24' cy='130' r='.8'/%3E%3Ccircle cx='150' cy='146' r='.7'/%3E%3Ccircle cx='72' cy='150' r='1.1'/%3E%3C/g%3E%3C/svg%3E")}
 .jg-burst{position:absolute;left:50%;top:50%;width:min(110vh,90vw);aspect-ratio:1;margin:calc(min(110vh,90vw) / -2) 0 0 calc(min(110vh,90vw) / -2);border-radius:50%;pointer-events:none;opacity:0;
   background:radial-gradient(circle,rgba(255,217,138,.55) 0%,rgba(255,170,60,.18) 30%,transparent 62%)}
 .jg-hud{position:relative;z-index:2;display:flex;flex-direction:column;gap:10px;min-width:0}
 .jg-left{align-items:flex-start}
-.jg-right{align-items:stretch}
+.jg-right{display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:6px;max-width:210px;justify-self:end}
 .jg-x{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
 .jg-x svg,.jg-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .jg-mantra{font-family:var(--display);font-size:24px;color:var(--accent);line-height:1.2}
@@ -495,15 +495,15 @@ body{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 .jg-diyas{display:flex;flex-wrap:wrap;gap:5px;max-width:220px}
 .jg-diyas i{width:14px;height:18px;border-radius:50% 50% 40% 40%/60% 60% 40% 40%;background:var(--line)}
 .jg-diyas i.lit{background:radial-gradient(circle at 50% 35%,#FFF3C4,var(--accent) 60%,var(--lit-lo));box-shadow:0 0 10px var(--accent)}
-.mala-game{width:min(86vh,52vw,460px);z-index:1}
+.mala-game{width:min(72vh,42vw,400px);z-index:1}
 .mala-game .mala-name{font-size:clamp(34px,9vh,64px)}
 .mala-game .mala-name.long{font-size:clamp(24px,6vh,40px)}
 .mala-game .mala-name.xlong{font-size:clamp(18px,4.5vh,28px)}
 .mala-game .bead{r:4.8px}
 .mala-game .bead.now{r:6.4px}
-.jg-btn{display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:14px;font-weight:500;cursor:pointer;text-align:left}
+.jg-btn{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;min-height:44px;padding:5px 6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:11px;line-height:1.2;font-weight:500;cursor:pointer;text-align:center}
 .jg-btn[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
-.jg-btn.main{min-height:58px;font-size:16px;font-weight:700;color:var(--on-accent);border:0;background:linear-gradient(180deg,var(--lit-hi) -60%,var(--accent) 55%,var(--lit-lo) 160%)}
+.jg-btn.main{min-height:44px;font-size:11px;font-weight:700;color:var(--on-accent);border:0;background:linear-gradient(180deg,var(--lit-hi) -60%,var(--accent) 55%,var(--lit-lo) 160%)}
 .jg-btn.main[aria-pressed="true"]{color:var(--on-accent);background:linear-gradient(180deg,#FFB3A8 -60%,var(--kumkum) 60%)}
 .jg-combo{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:4;padding:8px 18px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:17px;box-shadow:0 0 24px var(--accent);pointer-events:none}
 .jg-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;min-width:min(420px,80vw);padding:20px 26px;border-radius:22px;text-align:center;pointer-events:none;
@@ -512,15 +512,18 @@ body{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 .jg-banner small{display:block;margin-top:4px;font-size:15px;color:var(--muted)}
 .jg-floats{position:absolute;inset:0;pointer-events:none;z-index:4}
 .jg-floats b{position:absolute;font-size:24px;font-weight:700;color:var(--lit-hi);text-shadow:0 0 12px var(--accent)}
-.jg-hint{position:absolute;left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2;margin:0;font-size:13px;color:var(--muted);white-space:nowrap;pointer-events:none}
+.jg-thumb{position:absolute;bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:3;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;border:2px solid var(--accent);background:var(--accent-soft);color:var(--fg);box-shadow:inset 0 0 0 4px var(--surface);font:700 16px var(--body);cursor:pointer;touch-action:manipulation}
+.jg-thumb:active{background:var(--accent);color:var(--on-accent)}
+.jg-thumb-left{left:max(18px,env(safe-area-inset-left,0px))}.jg-thumb-right{right:max(18px,env(safe-area-inset-right,0px))}
+.jg-hint{position:absolute;max-width:calc(100% - 160px);overflow:hidden;text-overflow:ellipsis;left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2;margin:0;font-size:13px;color:var(--muted);white-space:nowrap;pointer-events:none}
 .mala-game.auto .mala-thread{stroke:var(--accent);stroke-dasharray:3 6}
 /* phone seedha ho to bhi game theek dikhe */
 @media (orientation:portrait){
   .jgame{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;align-content:space-between}
   .jg-left{grid-column:1 / -1;grid-row:1;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"x mantra" "count stats" "goal goal" "row row";column-gap:14px;align-items:center}
   .jg-x{grid-area:x}.jg-mantra{grid-area:mantra}.jg-count{grid-area:count}.jg-stats{grid-area:stats}.jg-goal{grid-area:goal;max-width:none}.jg-goal-row{grid-area:row;flex-direction:row;justify-content:space-between;align-items:center}
-  .mala-game{grid-column:1 / -1;grid-row:2;justify-self:center;width:min(88vw,52vh)}
-  .jg-right{grid-column:1 / -1;grid-row:3;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:20px}
+  .mala-game{grid-column:1 / -1;grid-row:2;justify-self:center;width:min(68vw,32vh)}
+  .jg-right{grid-column:1 / -1;grid-row:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-bottom:56px;max-width:none;width:100%}
   .jg-count strong{font-size:40px}
 }
 
