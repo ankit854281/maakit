@@ -419,7 +419,7 @@ body{background:radial-gradient(120% 55% at 50% -12%,var(--glow1),transparent 62
 .th-opt[aria-checked="true"] .th-check{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 45%,transparent 50%)}
 
 /* ---------- App layout v8: ☰ menu, Home = jaap + chat, no bottom bar ---------- */
-body{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+body{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 .mast{grid-template-columns:auto 1fr auto;align-items:center;column-gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 0 10px}
 .mast .panch{grid-column:1 / -1}
 .menu-btn{width:44px;height:44px}
@@ -429,17 +429,45 @@ body{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 .brand .dev{font-size:13px}
 .install-pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;border-radius:999px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .install-pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#t-ai{padding-top:8px;margin-top:0}
-.chat-top-title{font-family:var(--body);font-size:24px;line-height:1.35}
-#t-ai .composer{position:static;order:0;margin:0}
-.jaap-drawer{border:1px solid var(--line);border-radius:20px;background:var(--surface);overflow:hidden}
-.jaap-drawer>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:14px 18px;list-style:none;cursor:pointer;font-weight:700;color:var(--accent);touch-action:manipulation}
-.jaap-drawer>summary::-webkit-details-marker{display:none}
-.jaap-drawer>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
-.jaap-drawer-cue{font-size:26px;transition:transform .2s}
-.jaap-drawer[open] .jaap-drawer-cue{transform:rotate(180deg)}
-.jaap-drawer .home-jaap-spotlight{border:0;border-radius:0}
-@media(prefers-reduced-motion:reduce){.jaap-drawer-cue{transition:none}}
+/* Home: visible chat above visible counter; only extra controls slide. */
+#t-ai{padding:4px 0 8px;margin:0;gap:6px}
+.chat-top-title{font-family:var(--body);font-size:18px;line-height:1.3}
+.home-chat-scroll{height:80px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.home-chat-scroll>.card{border:0;padding:10px}
+.home-chat-scroll .chat-welcome{margin:0;padding:8px;border:0;gap:8px}.home-chat-scroll .chat-welcome h3{font-family:var(--body);font-size:14px;margin:0}.home-chat-scroll .chat-welcome p{display:none}.home-chat-scroll .assistant-mark{width:28px;height:28px;flex-basis:28px}.home-chat-options>summary{cursor:pointer;padding:8px;font-size:12px}.home-chat-scroll .chat{padding:8px}
+#t-ai .composer{position:static;order:0;margin:0;padding:3px}
+#t-ai .composer textarea{height:44px;min-height:44px;padding:8px}
+#t-ai .composer .btn{min-height:44px;padding:8px 16px}
+#t-aaj{padding:0 0 8px;gap:8px}
+#t-aaj .home-jaap-spotlight{padding:10px 12px;gap:6px;border-radius:22px}
+.jaap-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#home-jaap-heading{font-size:19px}#home-jaap-description{display:none}
+.update-tag{padding:3px 7px;border-radius:6px;background:var(--accent);color:var(--on-accent);font:700 10px var(--body);box-shadow:0 2px 0 var(--line)}
+.home-counter-row{display:grid;grid-template-columns:minmax(140px,1fr) minmax(110px,.8fr);align-items:center;gap:12px}
+.home-counter-row .mala{width:160px;max-width:100%;margin:auto}
+.home-counter-row .mala-name{font-size:26px}.home-counter-row .mala-name.long{font-size:17px}.home-counter-row .mala-name.xlong{font-size:14px}
+.home-counter-row .mala-disk strong{font-size:32px}.home-counter-row .mala-disk small{font-size:10px;max-width:80%}
+.home-counter-row .jaap-batch-tools{display:flex;flex-direction:column;gap:7px;padding:0}
+.home-counter-row .jaap-batch-tools button{width:100%;min-height:44px;box-shadow:0 4px 0 var(--line),inset 0 1px 0 #ffffff88}
+.home-counter-row .jaap-batch-tools>span{font-size:10px;line-height:1.2;order:3}
+#t-aaj .mala-meta{gap:5px}#t-aaj .mbadge{padding:3px 8px;font-size:11px}
+#t-aaj .mantra-chips{padding:3px 2px;gap:6px}#t-aaj .mchip{min-height:38px;padding:6px 12px;font-size:15px}
+#t-aaj .goalbar{padding:4px 8px;font-size:11px}
+.jaap-slider-nav{display:grid;grid-template-columns:1fr 1fr 1fr 36px;gap:5px}
+.jaap-slider-nav button{min-height:36px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font:600 12px var(--body);cursor:pointer;box-shadow:0 3px 0 var(--line)}
+.jaap-slider-nav button[aria-pressed=true]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.jaap-slider{height:100px;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;overscroll-behavior-x:contain;width:100%;min-width:0}
+.jaap-slide{overflow-y:auto;flex:0 0 100%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;padding:4px 1px 6px;box-sizing:border-box}
+.jaap-slide .tpill,.jaap-slide .abtn{min-height:44px;padding:4px;font-size:11px;border-radius:10px}
+.jaap-slide .tpill svg,.jaap-slide .abtn svg{width:16px;height:16px}
+.jaap-slide-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.jaap-slide .game-btn,.jaap-slide .jaap-mini-launch{min-height:38px;font-size:11px;margin:0;padding:4px 8px;border-radius:10px}
+.jaap-slide .game-btn b{font-size:12px;line-height:1.2;white-space:nowrap}.jaap-slide .game-btn small{display:none}.jaap-slide .game-btn svg{width:20px;height:20px}
+.jaap-slide .jaap-designs{padding:3px;margin:0}.jaap-slide .jaap-designs button{min-height:34px;font-size:11px}
+.jaap-slide .jaap-evolution{margin:0;min-height:92px;padding:6px;grid-template-columns:64px 1fr;font-size:12px}
+.jaap-slide .jaap-evo-art,.jaap-slide .jaap-evo-art svg{width:64px;height:64px}
+.jaap-slide button:active,.jaap-slider-nav button:active,.home-counter-row button:active{transform:translateY(2px)}
+@media(max-height:720px){.home-layout .mast .panch{display:none}.home-layout .brand .dev{display:none}.home-chat-scroll{height:46px}.home-counter-row .mala{width:132px}.home-counter-row .mala-name{font-size:21px}.home-counter-row .mala-disk strong{font-size:28px}.home-counter-row .mala-disk small{font-size:9px}.mast .panch{font-size:10px}.brand h1{font-size:19px}#t-aaj .home-jaap-spotlight{gap:4px;padding:8px 10px}.chat-top-title{font-size:16px}}
 .composer{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
 .mini-jaap{bottom:calc(18px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
