@@ -419,7 +419,7 @@ body{background:radial-gradient(120% 55% at 50% -12%,var(--glow1),transparent 62
 .th-opt[aria-checked="true"] .th-check{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 45%,transparent 50%)}
 
 /* ---------- App layout v8: ☰ menu, Home = jaap + chat, no bottom bar ---------- */
-body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+body{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 .mast{grid-template-columns:auto 1fr auto;align-items:center;column-gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 0 10px}
 .mast .panch{grid-column:1 / -1}
 .menu-btn{width:44px;height:44px}
@@ -429,9 +429,19 @@ body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .brand .dev{font-size:13px}
 .install-pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;border-radius:999px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .install-pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#t-ai{padding-top:18px;border-top:1px solid var(--line);margin-top:6px}
+#t-ai{padding-top:8px;margin-top:0}
+.chat-top-title{font-family:var(--body);font-size:24px;line-height:1.35}
+#t-ai .composer{position:static;order:0;margin:0}
+.jaap-drawer{border:1px solid var(--line);border-radius:20px;background:var(--surface);overflow:hidden}
+.jaap-drawer>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:14px 18px;list-style:none;cursor:pointer;font-weight:700;color:var(--accent);touch-action:manipulation}
+.jaap-drawer>summary::-webkit-details-marker{display:none}
+.jaap-drawer>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
+.jaap-drawer-cue{font-size:26px;transition:transform .2s}
+.jaap-drawer[open] .jaap-drawer-cue{transform:rotate(180deg)}
+.jaap-drawer .home-jaap-spotlight{border:0;border-radius:0}
+@media(prefers-reduced-motion:reduce){.jaap-drawer-cue{transition:none}}
 .composer{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-.mini-jaap{bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+.mini-jaap{bottom:calc(18px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .drawer{position:fixed;inset:0;z-index:75;background:rgba(5,5,20,.6)}
 .drawer-panel{position:absolute;inset:0 auto 0 0;width:min(86vw,340px);display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--line);padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px));overflow-y:auto;animation:slideIn .2s ease-out}
