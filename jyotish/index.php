@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=14">
+<link rel="stylesheet" href="jyotish.css?v=15">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -54,6 +54,70 @@ header('Content-Type: text/html; charset=utf-8');
     <div class="row"><button class="btn" type="button" id="share-yes" data-i18n="ok">OK</button><button class="btn ghost" type="button" id="share-no" data-i18n="dontSend">Don't send</button></div>
   </div>
 
+  <!-- AI -->
+  <section class="tab" id="t-ai" hidden>
+    <h2 class="chat-top-title" data-i18n="chatFirst">AI Jyotishi se baat karein</h2>
+    <form class="composer" id="f-ai"><textarea id="q" data-i18n-ph="phQ" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit" data-i18n="askBtn">Ask</button></form>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h2 data-i18n="aiTitle" id="chat-title">Ask AI Jyotishi</h2>
+        <span class="note" data-i18n="aiLangNote">Replies in the language chosen at the top</span></div>
+      <p class="note" style="margin:0" id="ai-who"></p>
+      <div class="mode-switch" role="group" aria-label="Choose a reading style">
+        <button class="chip" type="button" id="mode-jyotish" aria-pressed="true" data-i18n="modeJy">Jyotish reading</button>
+        <button class="chip" type="button" id="mode-council" aria-pressed="false" data-i18n="modeCouncil">Navagrah Council · Rishton ki clarity</button>
+      </div>
+      <p class="note" id="mode-note" style="margin:0"></p>
+      <div id="council-context" hidden>
+        <div class="grid2">
+          <label><span data-i18n="lArea">Current situation</span>
+            <select id="council-area">
+              <option value="" data-i18n="area0">Choose what fits (optional)</option>
+              <option value="work or job" data-i18n="aWork">Work or job</option>
+              <option value="studies" data-i18n="aStudy">Studies</option>
+              <option value="business" data-i18n="aBiz">Business</option>
+              <option value="relationship" data-i18n="aRel">Relationship</option>
+              <option value="family" data-i18n="aFam">Family</option>
+              <option value="money" data-i18n="aMoney">Money</option>
+              <option value="health" data-i18n="aHealth">Health</option>
+              <option value="another situation" data-i18n="aOther">Another situation</option>
+            </select>
+          </label>
+          <label><span data-i18n="lHelp">What would help most?</span>
+            <select id="council-goal">
+              <option value="" data-i18n="help0">Choose a kind of help (optional)</option>
+              <option value="understanding the situation" data-i18n="hUnderstand">Understand the situation</option>
+              <option value="one practical next step" data-i18n="hStep">One practical next step</option>
+              <option value="a safe boundary" data-i18n="hBoundary">A safe boundary</option>
+              <option value="calming down before deciding" data-i18n="hCalm">Calm down before deciding</option>
+            </select>
+          </label>
+        </div>
+        <p class="note" style="margin:6px 0 0" data-i18n="councilThird">Your message is the third part: describe what actually happened, in your own words.</p>
+      </div>
+      <div class="chips" id="sugg"></div>
+      <div class="council-privacy" id="council-privacy" hidden>
+        <p class="note" style="margin:0" data-i18n="councilPriv">Council mode sends your message, any context choices and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
+        <label class="consent"><input type="checkbox" id="council-consent"> <span data-i18n="consent">I understand and want to send this question for an AI answer.</span></label>
+      </div>
+    </div>
+    <div class="chat-welcome" id="ai-chat-welcome">
+      <div class="assistant-mark" aria-hidden="true">✦</div>
+      <div><h3 data-i18n="cwTitle">Namaste! Apna sawaal likhiye.</h3>
+        <p data-i18n="cwBody">Jawaab aapki kundli aur Parashari jyotish par aadharit hoga, saath mein ek vyavaharik agla kadam bhi. Personal jawaab ke liye pehle apni kundli banaiye.</p></div>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="note" id="ai-status"></div>
+    <div class="row council-followups" id="council-followups" hidden aria-label="Ask a follow-up question">
+      <button class="btn ghost" type="button" data-council-followup="rahu" data-i18n="fuRahu">Rahu · Red flags?</button>
+      <button class="btn ghost" type="button" data-council-followup="chandra" data-i18n="fuChandra">Chandrama · Emotions?</button>
+      <button class="btn ghost" type="button" data-council-followup="shani" data-i18n="fuShani">Shani · Next boundary?</button>
+    </div>
+    <p class="note" data-i18n="aiDisc">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
+    
+  </section>
+
+
   <!-- AAJ: check-in + daily card -->
   <section class="tab" id="t-aaj">
     <div class="card invite" id="jc-invite" hidden role="region" aria-label="Jaap Challenge">
@@ -61,6 +125,8 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="row"><button class="btn" id="jc-accept" type="button" data-i18n="jcAccept">Challenge shuru karein</button><button class="btn ghost" id="jc-decline" type="button" data-i18n="notNow">Abhi nahi</button></div>
     </div>
 
+    <details id="home-jaap-drawer" class="jaap-drawer">
+      <summary><span data-i18n="jaapDrawer">Naam Jaap counter</span><span class="jaap-drawer-cue" aria-hidden="true">⌄</span></summary>
     <section class="home-jaap-spotlight" aria-labelledby="home-jaap-heading">
       <div class="jaap-head">
         <div><h2 id="home-jaap-heading">Naam Jaap Mala</h2>
@@ -102,6 +168,8 @@ header('Content-Type: text/html; charset=utf-8');
       </div>
       <div class="jaap-evolution"><span class="jaap-evo-art" id="jaap-evo-art" aria-hidden="true"></span><div><b id="jaap-evolution-title">Beej se shuruaat</b><small id="jaap-evolution-next">Agla padaav: Vriksh</small></div><div class="jaap-evolution-track" id="jaap-evolution-bar" role="progressbar" aria-label="Sadhna ki pragati" data-i18n-aria="jtEvolutionLabel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="jaap-evolution-fill"></i></div></div>
     </section>
+
+    </details>
 
     <section class="jaap-card" id="jaap-card" aria-labelledby="jaap-title" hidden>
       <div class="jaap-card-copy"><h2 id="jaap-title" data-i18n="jsTitle">Jaap settings</h2><p id="jaap-home-description" data-i18n="jsDesc">Mantra, jaap ka tareeka, lakshya aur photo yahan badlein.</p><div class="jaap-today-total"><span id="jaap-home-today-label" data-i18n="todayTotal">Aaj ka kul jaap</span> <strong id="jaap-today">0</strong></div><div class="jaap-insights"><div class="jaap-insights-head"><b id="jaap-home-week-label" data-i18n="last7">Pichhle 7 din</b><span><strong id="jaap-week-sessions">0</strong> <span id="jaap-home-sessions-label" data-i18n="sittings">baar jaap kiya</span></span></div><div class="jaap-week-bars" id="jaap-week-bars" aria-hidden="true"></div><p class="note" id="jaap-week-summary" aria-live="polite"></p></div></div>
@@ -239,67 +307,6 @@ header('Content-Type: text/html; charset=utf-8');
     <div id="r-out" style="display:flex;flex-direction:column;gap:18px"></div>
   </section>
 
-  <!-- AI -->
-  <section class="tab" id="t-ai" hidden>
-    <div class="card">
-      <div class="row" style="justify-content:space-between"><h2 data-i18n="aiTitle" id="chat-title">Ask AI Jyotishi</h2>
-        <span class="note" data-i18n="aiLangNote">Replies in the language chosen at the top</span></div>
-      <p class="note" style="margin:0" id="ai-who"></p>
-      <div class="mode-switch" role="group" aria-label="Choose a reading style">
-        <button class="chip" type="button" id="mode-jyotish" aria-pressed="true" data-i18n="modeJy">Jyotish reading</button>
-        <button class="chip" type="button" id="mode-council" aria-pressed="false" data-i18n="modeCouncil">Navagrah Council · Rishton ki clarity</button>
-      </div>
-      <p class="note" id="mode-note" style="margin:0"></p>
-      <div id="council-context" hidden>
-        <div class="grid2">
-          <label><span data-i18n="lArea">Current situation</span>
-            <select id="council-area">
-              <option value="" data-i18n="area0">Choose what fits (optional)</option>
-              <option value="work or job" data-i18n="aWork">Work or job</option>
-              <option value="studies" data-i18n="aStudy">Studies</option>
-              <option value="business" data-i18n="aBiz">Business</option>
-              <option value="relationship" data-i18n="aRel">Relationship</option>
-              <option value="family" data-i18n="aFam">Family</option>
-              <option value="money" data-i18n="aMoney">Money</option>
-              <option value="health" data-i18n="aHealth">Health</option>
-              <option value="another situation" data-i18n="aOther">Another situation</option>
-            </select>
-          </label>
-          <label><span data-i18n="lHelp">What would help most?</span>
-            <select id="council-goal">
-              <option value="" data-i18n="help0">Choose a kind of help (optional)</option>
-              <option value="understanding the situation" data-i18n="hUnderstand">Understand the situation</option>
-              <option value="one practical next step" data-i18n="hStep">One practical next step</option>
-              <option value="a safe boundary" data-i18n="hBoundary">A safe boundary</option>
-              <option value="calming down before deciding" data-i18n="hCalm">Calm down before deciding</option>
-            </select>
-          </label>
-        </div>
-        <p class="note" style="margin:6px 0 0" data-i18n="councilThird">Your message is the third part: describe what actually happened, in your own words.</p>
-      </div>
-      <div class="chips" id="sugg"></div>
-      <div class="council-privacy" id="council-privacy" hidden>
-        <p class="note" style="margin:0" data-i18n="councilPriv">Council mode sends your message, any context choices and a limited Moon-sign/Nakshatra summary to our AI provider for an answer. Maakit does not save Council question text in its Jyotish usage log. Please leave out names, phone numbers and identifying details.</p>
-        <label class="consent"><input type="checkbox" id="council-consent"> <span data-i18n="consent">I understand and want to send this question for an AI answer.</span></label>
-      </div>
-    </div>
-    <div class="chat-welcome" id="ai-chat-welcome">
-      <div class="assistant-mark" aria-hidden="true">✦</div>
-      <div><h3 data-i18n="cwTitle">Namaste! Apna sawaal likhiye.</h3>
-        <p data-i18n="cwBody">Jawaab aapki kundli aur Parashari jyotish par aadharit hoga, saath mein ek vyavaharik agla kadam bhi. Personal jawaab ke liye pehle apni kundli banaiye.</p></div>
-    </div>
-    <div class="chat" id="chat"></div>
-    <div class="note" id="ai-status"></div>
-    <div class="row council-followups" id="council-followups" hidden aria-label="Ask a follow-up question">
-      <button class="btn ghost" type="button" data-council-followup="rahu" data-i18n="fuRahu">Rahu · Red flags?</button>
-      <button class="btn ghost" type="button" data-council-followup="chandra" data-i18n="fuChandra">Chandrama · Emotions?</button>
-      <button class="btn ghost" type="button" data-council-followup="shani" data-i18n="fuShani">Shani · Next boundary?</button>
-    </div>
-    <form class="composer" id="f-ai"><textarea id="q" data-i18n-ph="phQ" placeholder="Type your question… e.g. Meri naukri kab lagegi?" aria-label="Your question"></textarea><button class="btn" id="send" type="submit" data-i18n="askBtn">Ask</button></form>
-    <p class="note" data-i18n="aiDisc">Readings follow classical Parashari Jyotish. They are guidance for reflection, not guaranteed predictions. For health, legal or money decisions, consult a qualified professional.</p>
-    
-  </section>
-
   <div class="foot">Powered by <b>Maakit</b>, Bhadohi<br><span data-i18n="foot">Vedic sidereal (Lahiri), whole-sign houses</span></div>
 </div>
 <div class="mini-jaap" id="mini-jaap" hidden>
@@ -417,9 +424,9 @@ header('Content-Type: text/html; charset=utf-8');
 </div>
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=7"></script>
+<script src="i18n.js?v=8"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=14"></script>
+<script src="app.js?v=15"></script>
 </body>
 </html>
 
