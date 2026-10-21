@@ -41,6 +41,7 @@ if ($role === 'admin') {
             '/admin/items.php'     => [t('Products', 'सामान'), 'bag'],
             '/admin/daam.php'      => [t('Prices & brands', 'दाम/ब्रांड'), 'tag'],
             '/admin/packet.php'    => [t('Ready-made packs', 'पैकेट — बने हुए सेट'), 'bag'],
+            '/admin/dhindhora.php' => [t('Today’s message', 'ढिंढोरची — आज का संदेश'), 'star'],
             '/admin/photos.php'    => [t('Bulk item photos', 'फ़ोटो एक साथ'), 'image'],
             '/admin/banners.php'   => [t('Offers & banners', 'ऑफ़र'), 'star'],
             '/admin/books.php'     => [t('Old books', 'किताबें'), 'book'],

@@ -55,6 +55,7 @@ export const PAGES = [
   { path: '/admin/readiness.php', naam: 'Launch तैयारी login guard', chahiye: ['Maakit'] },
   { path: '/admin/jyotish.php', naam: 'ज्योतिष usage login guard', chahiye: ['Maakit'] },
   { path: '/admin/packet.php', naam: 'पैकेट login guard', chahiye: ['Maakit'] },
+  { path: '/admin/dhindhora.php', naam: 'ढिंढोरची login guard', chahiye: ['Maakit'] },
   { path: '/otp.php', naam: 'SMS login', chahiye: ['Maakit'] },
   { path: '/location.php', naam: 'सेवा क्षेत्र चुनें', chahiye: ['Maakit'] },
   { path: '/support.php', naam: 'ग्राहक सहायता', chahiye: ['Maakit'] },

@@ -150,6 +150,8 @@ $darwaze = [
         ['/admin/daam.php',       t('Prices', 'दाम'),                   '', ''],
         ['/admin/packet.php',     t('Packs', 'पैकेट'),
          t('ready-made sets — one tap for the customer', 'बने हुए सेट — ग्राहक को एक टैप'), ''],
+        ['/admin/dhindhora.php',  t('Today’s message', 'आज का संदेश'),
+         t('built from your own records', 'आपके ही रिकॉर्ड से बना'), ''],
         ['/admin/support.php',    t('Complaints', 'शिकायत'),            '', ''],
         ['/admin/settings.php',   t('Settings', 'सेटिंग'),               '', ''],
     ],

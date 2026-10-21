@@ -28,6 +28,8 @@
 //  Ye file kuch BADALTI NAHI -- sirf dekh kar batati hai.
 // ============================================================
 
+require_once __DIR__ . '/dhindhora.php';   // aaj ka sandesh taiyar hai ya nahi
+
 /**
  * Aaj ka ek kaam.
  *
@@ -160,9 +162,31 @@ function ek_kaam(PDO $pdo) {
           'बॉट ने पैकेट बना दिए हैं — देख कर चालू कीजिए',
           'जब तक आप नहीं देखेंगे, ग्राहक को कोई पैकेट नहीं दिखेगा।', '/admin/packet.php');
 
+    // ---- ढिंढोरची का संदेश ----
+    // Sabse neeche, kyunki koi graahak iske liye intezaar nahi kar
+    // raha. Par ye wo ek kaam hai jo NAYA graahak laata hai -- baaki
+    // sab purane graahak ko sambhalta hai.
+    //
+    // Dhyan: ye kaam tabhi dikhta hai jab aaj ka sandesh liya nahi
+    // gaya. Warna ye roz dikhta rehta aur kabhi "ho gaya" na hota --
+    // aur aisa kaam poore bot ka bharosa kha jata hai.
+    try {
+        if (dhindhora_bheja($pdo) !== date('Y-m-d') && dhindhora_aaj($pdo)) {
+            // ginti 0 = naam ke aage koi number nahi lagega
+            $ruke[] = ['n' => 0, 'kitna' => 'roz',
+                       'kya'   => 'आज का संदेश तैयार है — WhatsApp पर भेज दीजिए',
+                       'kyun'  => 'यही एक काम नया ग्राहक लाता है; बाक़ी सब पुराने ग्राहक को सँभालता है।',
+                       'kahan' => '/admin/dhindhora.php'];
+        }
+    } catch (Throwable $e) { error_log('ek-kaam dhindhora: ' . $e->getMessage()); }
+
     if ($ruke) {
         $p = $ruke[0];
-        $p['kya'] = $p['n'] . ' — ' . $p['kya'];
+        // Ginti naam ke saath likhiye -- "2 dukaanein" aur "20
+        // dukaanein" dekh kar aadmi alag faisla leta hai. Jiski
+        // ginti ka matlab nahi (jaise aaj ka sandesh), uske aage
+        // n=0 hota hai aur number nahi lagta.
+        if ((int)$p['n'] > 0) $p['kya'] = $p['n'] . ' — ' . $p['kya'];
         return $p;
     }
 

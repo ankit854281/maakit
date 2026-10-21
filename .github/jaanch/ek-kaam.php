@@ -101,10 +101,20 @@ ek_jaanch($pdo, ["UPDATE orders SET status='Naya' WHERE status='Pickup'"],
     });
 
 // ---- 4. कुछ न रुका हो तो चुप ----
-ek_jaanch($pdo, ["UPDATE businesses SET status='approved' WHERE status='pending'"],
-    function($k){
-        ek_check($k===null, 'kuch nahi ruka to null laute, aaya: '.json_encode($k,256));
-    });
+// Jhootha kaam bata dena sabse bura hai -- do din me aadmi bot ko
+// dekhna hi band kar deta hai, aur jis din ASLI kaam aata hai us
+// din bhi nahi dekhta.
+//
+// Aaj ka sandesh bhi ek kaam hai, isliye use bhi "le liya" karna
+// padta hai -- warna ye jaanch us baat par laal hoti jo sach me
+// baaki hai.
+$pdo->beginTransaction();
+try{
+    $pdo->exec("UPDATE businesses SET status='approved' WHERE status='pending'");
+    dhindhora_le_liya($pdo);
+    $k = ek_kaam($pdo);
+    ek_check($k===null, 'kuch nahi ruka to null laute, aaya: '.json_encode($k,256));
+} finally { $pdo->rollBack(); }
 
 // ---- 5. OTP सबसे ऊपर रहे ----
 // Ise chala kar nahi jaancha ja sakta -- CI me chaabi lagi hui
