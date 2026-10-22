@@ -47,6 +47,7 @@ Receipts with original numbers, Old ERP Fee Statement, Old ERP Marks).
 | `oldreceipt` | session + receiptNo | session `2024-25`, receiptNo exactly as old (`1-708`), date, student, name, months, total, discount, lateFee, received, mode, user |
 | `oldfee` | session + student | billed, transport, discount, otherDiscount, adjust, received, due, status |
 | `oldrcptdet` | session + receiptNo | the whole printed receipt: title, date, name, class, adm, mother, father, scheme, `lines` = [[sno, particular, month, amount]…], balance, payable, lateFee, adjustment, received, mode, bank, cheque, remark, user — text exactly as the old ERP printed it |
+| `oldfeecard` | session + oldId | the old Fee › Fee Receipt card of every student in every session (also students not in the new ERP): profile rows, `months` (Fee Details: month rows + head rows with amount / paid / balance / status), `receipts`, `tables` (Fee Refund, Enquiry Receipt, Cancel Receipt/Cheque, Fees Transfer, Other Fee Receipt, Fee Discount, Fee Adjustment, siblings), summary (old fee … fee due), next receipt number, copied-on date. Text exactly as the old ERP showed it. |
 | `oldmarks` | session + exam + student | exam, marks `{subject: {component (max): mark}}`, total, percent, grade, rank, attendance |
 
 Money is written in rupees in the file and stored in paise. Bank account numbers are reduced to the last 4 digits.
@@ -78,3 +79,11 @@ register (printable as a copy), and only the **net due** moves into the live fee
 `school/classic.js` / `classic.css`: office roles see the old ERP's frame (same 47 menu groups, item names and order, colours
 #2D353C / #EDEDED / #F64015 / #F7F7F7, tiles #FC8675 #6BAFBD #F3CE85 #65CEA7). Every old item opens the new screen that does
 the job; items with no new screen yet stay in the menu, dimmed, and open a short note. ADMIN ▸ New look switches back.
+
+## Fee Receipt in the old layout (22 Oct 2026)
+
+Owner: "fee receipt same to same jaise old software me hai". Fee › Fee Receipt (and Fee Statement, Fee Card) in the classic menu
+open the `oldfeecard` register, which School Office draws like the old studentfee.php: Session / School / Class / Section / Name /
+Search For, the student details on the left, Fee Details month by month on the right (green #4AC598 heads), the yellow
+#F0C164 totals box, then Fee Receipt (each with Print in the old receipt layout), Refund, Transfer, Other Fee, Discount and
+Adjustment tables. It is the old ERP's record as on the copy date; new fees are taken in the Fee Department ("New fee").
