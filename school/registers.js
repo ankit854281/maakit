@@ -1,6 +1,8 @@
 'use strict';
 // School Office — one screen for every register defined in registers_lib.php.
-let META = null, CUR = '', ROWS = [], Q = '', FCLS = '', FSTAT = '', BUSY = false, IMPORT = null;
+let META = null, CUR = '', ROWS = [], Q = '', FCLS = '', FSTAT = '', BUSY = false, IMPORT = null, DET = null;
+// Session chosen in the app header (old-ERP style session menu); '' = all sessions.
+let VSES = (new URLSearchParams(location.search).get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
@@ -33,6 +35,7 @@ async function openMod(id) { CUR = id; Q = ''; FCLS = ''; FSTAT = ''; ROWS = [];
 function filtered() {
   const m = mod(), st = STU(), q = Q.toLowerCase(), sf = m.fields.find(f => f.type === 'student');
   return ROWS.filter(r => {
+    if (VSES && m.fields.some(f => f.k === 'session') && String(r.session || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2') !== VSES) return false;
     if (FSTAT && (r.status || '') !== FSTAT) return false;
     if (FCLS) { const c = r.cls || r.lastCls || (sf && st[r[sf.k]] ? st[r[sf.k]].cls : ''); if (c !== FCLS) return false; }
     if (!q) return true;
@@ -57,6 +60,7 @@ function render(loading) {
     <div class="rg-kpis"><div class="rg-kpi"><b>${rows.length.toLocaleString('en-IN')}</b><small>entries</small></div>${sums.map(([f, v]) => `<div class="rg-kpi"><b>${esc(f.type === 'money' ? rs(v) : v.toLocaleString('en-IN'))}</b><small>${esc(f.label)}</small></div>`).join('')}${m.due ? `<div class="rg-kpi"><b>${dueCount}</b><small>due today or overdue</small></div>` : ''}</div>
     <div class="rg-tools" style="margin-bottom:12px"><input class="rg-search" type="search" placeholder="Search" value="${esc(Q)}" oninput="Q=this.value;render()" aria-label="Search">
     ${hasCls ? `<select class="rg-filter" onchange="FCLS=this.value;render()" aria-label="Class"><option value="">All classes</option>${['PG','LKG','UKG','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'].map(c => `<option ${c === FCLS ? 'selected' : ''}>${c}</option>`).join('')}</select>` : ''}
+    ${m.fields.some(f => f.k === 'session') ? `<select class="rg-filter" onchange="VSES=this.value;render()" aria-label="Session"><option value="">All sessions</option>${[...new Set(ROWS.map(r => String(r.session || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2')).concat(VSES ? [VSES] : []))].filter(Boolean).sort().reverse().map(x => `<option ${x === VSES ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
     ${hasStatus ? `<select class="rg-filter" onchange="FSTAT=this.value;render()" aria-label="Status"><option value="">All status</option>${fk.status.opts.map(o => `<option ${o === FSTAT ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}</div>
     ${body}</section></div>`;
   const s = document.querySelector('.rg-search'); if (s && document.activeElement !== s && Q) { s.focus(); s.setSelectionRange(Q.length, Q.length); }
@@ -108,8 +112,35 @@ function printList() {
   $('regPrint').innerHTML = `<div class="pr-page">${head()}<div class="pr-title">${esc(m.title)} (${rows.length})</div><table class="pr-list"><tr><th>#</th>${cols.map(f => `<th>${esc(f.label)}</th>`).join('')}</tr>${rows.map((r, i) => `<tr><td>${i + 1}</td>${cols.map(f => `<td>${esc(show(f, r[f.k], r))}</td>`).join('')}</tr>`).join('')}</table></div>`;
   window.print();
 }
+// Old ERP receipt, laid out like the old ERP's print.php (logo, red school name, barcode strip, particulars table).
+function oldReceiptHtml(d) {
+  const t = v => esc(v === undefined || v === null ? '' : v);
+  const lines = Array.isArray(d.lines) ? d.lines : [];
+  return `<div class="or-wrap"><table class="or-head"><tr><td rowspan="2" class="or-logo"><img src="img/snmsis-logo.png" alt=""></td><td class="or-name"><span>${t(META.school)}</span><br><b>Jagannathpur, Near Sikhdi Khandak, Bhadohi - 221403, UP</b></td></tr>
+    <tr><td class="or-bar"><img src="img/receipt-barcode.gif" alt=""></td></tr></table>
+    <div class="or-title">${t(d.title || ('Fee Receipt(' + (d.session || '') + ')'))}</div>
+    <table class="or-k"><tr><td><b>Receipt No</b></td><td>${t(d.receiptNo)}</td><td><b>Date</b></td><td>${t(d.date)}</td></tr>
+      <tr><td><b>Name</b></td><td><b>${t(d.name)}</b></td><td><b>Class</b></td><td>${t(d.cls)}</td></tr>
+      <tr><td><b>Adm No</b></td><td>${t(d.adm)}</td><td><b>Mother's Name</b></td><td>${t(d.mother)}</td></tr>
+      <tr><td><b>Father's Name</b></td><td>${t(d.father)}</td><td><b>Schemes<br>Transport</b></td><td>${t(d.scheme).replace(/ \| /g, '<br>')}</td></tr></table>
+    <table class="or-k or-p"><tr><th>Sno</th><th>PARTICULARS</th><th>Month</th><th>Amount</th></tr>${lines.map(l => `<tr><td>${t(l[0])}</td><td>${t(l[1])}</td><td>${t(l[2])}</td><td>${t(l[3])}</td></tr>`).join('')}</table>
+    <table class="or-k"><tr><td><b>Balance<br>Amount</b></td><td><b>${t(d.balance)}</b></td><td><b>Payable Fee</b></td><td><b>${t(d.payable)}</b></td></tr>
+      <tr><td><b>Late Fee</b></td><td><b>${t(d.lateFee)}</b></td><td><b>Adjustment</b></td><td><b>${t(d.adjustment)}</b></td></tr>
+      <tr><td><b>Payment Mode</b></td><td><b>${t(d.mode)}</b></td><td><b>Currently Received</b></td><td><b>${t(d.received)}</b></td></tr>
+      <tr><td><b>Bank Name</b></td><td><b>${t(d.bank)}</b></td><td><b>Cheque No/Date</b></td><td><b>${t(d.cheque)}</b></td></tr></table>
+    <div class="or-rem"><b>Remark : </b>${t(d.remark)}</div>
+    <div class="or-foot"><span><span class="or-copy">Parent Copy</span> Printed on ${new Date().toLocaleString('en-GB')}</span><span class="or-sign">${t(d.user)}<br>Auth. Sign</span></div></div>`;
+}
+async function printOldReceipt(r) {
+  if (!DET) { try { DET = (await api('rows&m=oldrcptdet')).rows; } catch (e) { DET = []; } }
+  const norm = x => String(x || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
+  const d = r.lines !== undefined ? r : DET.find(x => norm(x.session) === norm(r.session) && x.receiptNo === r.receiptNo);
+  if (!d) return toast('The full receipt (with fee heads) for ' + r.receiptNo + ' has not been imported yet.');
+  $('regPrint').innerHTML = `<div class="pr-page">${oldReceiptHtml(d)}</div>`; window.print();
+}
 function printRow(id) {
   const m = mod(), r = ROWS.find(x => x._id === id), s = STU()[r.student] || {}, fk = Object.fromEntries(m.fields.map(f => [f.k, f]));
+  if (m.print === 'oldreceipt') return printOldReceipt(r);
   const kv = keys => `<table class="pr-kv">${keys.filter(k => fk[k]).map(k => `<tr><td>${esc(fk[k].label)}</td><td>${esc(show(fk[k], r[k], r))}</td></tr>`).join('')}</table>`;
   const sign = (a, b) => `<div class="pr-sign"><span>${a}</span><span>${b}</span></div>`;
   const stu = s.name ? `<table class="pr-kv"><tr><td>Student</td><td>${esc(s.name)}</td></tr><tr><td>Father's name</td><td>${esc(s.father)}</td></tr><tr><td>Class</td><td>${esc(s.cls + (s.section ? '-' + s.section : ''))}</td></tr><tr><td>Scholar / Adm. No</td><td>${esc(s.adm)}</td></tr></table><br>` : '';

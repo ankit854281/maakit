@@ -46,9 +46,21 @@ Receipts with original numbers, Old ERP Fee Statement, Old ERP Marks).
 | `studinfo` | student | student (`erp-snmishra-<old id>`), status, gender, category, caste, religion, aadhar, mother mobile, PEN, … `extra` = any other old field |
 | `oldreceipt` | session + receiptNo | session `2024-25`, receiptNo exactly as old (`1-708`), date, student, name, months, total, discount, lateFee, received, mode, user |
 | `oldfee` | session + student | billed, transport, discount, otherDiscount, adjust, received, due, status |
+| `oldrcptdet` | session + receiptNo | the whole printed receipt: title, date, name, class, adm, mother, father, scheme, `lines` = [[sno, particular, month, amount]…], balance, payable, lateFee, adjustment, received, mode, bank, cheque, remark, user — text exactly as the old ERP printed it |
 | `oldmarks` | session + exam + student | exam, marks `{subject: {component (max): mark}}`, total, percent, grade, rank, attendance |
 
 Money is written in rupees in the file and stored in paise. Bank account numbers are reduced to the last 4 digits.
+
+## Session menu and old-style receipt (Oct 2026)
+
+- App header (Principal, Chairman, Accountant, Reception): a session menu like the old ERP's. It lists 2023-24 to next year,
+  stores the choice in `localStorage` `sch_view_session` (removed when the current session is picked), and passes
+  `&session=` to the Fee Department and School Office frames. It never changes `settings.session` — the working session
+  is still changed only in Settings.
+- School Office: registers with a `session` field are filtered to that session; a session select sits next to the filters.
+- Old ERP Receipts → Print uses the old ERP's `print.php` layout (logo `img/snmsis-logo.png`, red school name, address,
+  barcode strip `img/receipt-barcode.gif`, particulars table, totals grid, "Parent Copy … Auth. Sign"), filled from the
+  matching `oldrcptdet` row. If that row is not imported yet it says so instead of printing a half receipt.
 
 ## Why old receipts are an archive, not ledger entries
 
