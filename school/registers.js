@@ -1,5 +1,7 @@
 'use strict';
 // School Office — one screen for every register defined in registers_lib.php.
+// Old-ERP look when opened from the classic school panel (school/classic.css).
+if (new URLSearchParams(location.search).get('look') === 'classic') document.documentElement.classList.add('classic');
 let META = null, CUR = '', ROWS = [], Q = '', FCLS = '', FSTAT = '', BUSY = false, IMPORT = null, DET = null;
 // Session chosen in the app header (old-ERP style session menu); '' = all sessions.
 let VSES = (new URLSearchParams(location.search).get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');

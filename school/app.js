@@ -584,6 +584,10 @@ function render() {
   const initials = U.role === 'parent' ? 'P' : name.split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
   const roleName = { principal: 'Principal', teacher: 'Teacher', chairman: 'Chairman', parent: 'Parent', student: 'Student', accountant: 'Accountant', reception: 'Reception' }[U.role] || U.role;
   const page = NAV[U.role].find(x => x[0] === view);
+  // Old-ERP look for office roles (school/classic.js): same menu, names and colours as the old ERP.
+  const classic = typeof classicOn === 'function' && classicOn();
+  document.documentElement.classList.toggle('classic', classic);
+  if (classic) { root.innerHTML = classicShell(body, name, roleName) + (PROF && canProfile() ? vProfileWindow() : ''); setNet(netState); return; }
   const menu = g => g.items.length === 1
     ? `<button onclick="go('${g.items[0][0]}')" class="mn ${g === cur ? 'on' : ''}"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}</button>`
     : `<div class="dd"><button onclick="ddToggle(this)" class="mn ${g === cur ? 'on' : ''}" aria-haspopup="true"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}<i class="fa-solid fa-chevron-down mn-cv"></i></button>
@@ -604,6 +608,7 @@ function render() {
         <div class="dd dd-r"><button onclick="ddToggle(this)" class="erp-av-btn" title="${esc(name)} · ${esc(roleName)}"><span class="erp-avatar">${esc(initials)}</span></button>
           <div class="dd-panel"><div class="px-3 py-2"><b class="block text-sm">${esc(name)}</b><small class="text-slate-500">${esc(roleName)}</small></div>
             ${U.role === 'principal' ? `<button onclick="ddClose();go('settings')" class="dd-item"><i class="fa-solid fa-gear"></i><span>Settings & PINs</span></button>` : ''}
+            ${['principal','chairman','accountant','reception'].includes(U.role) ? `<button onclick="ddClose();setLook('old')" class="dd-item"><i class="fa-solid fa-table-columns"></i><span>Old ERP look</span></button>` : ''}
             <button onclick="ddClose();logout()" class="dd-item"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Log out</span></button></div></div>
       </div></div></header>
     <div class="erp-crumb noprint"><div class="erp-wrap">${page && page[2] !== cur.name ? `${esc(cur.name)} <i class="fa-solid fa-chevron-right"></i> <b>${esc(page[2])}</b>` : `<b>${esc(cur.name)}</b>`}</div></div>
@@ -3799,6 +3804,6 @@ function sessionList() { const c = curSession(); const y = c ? +c.slice(0, 4) : 
 function viewSession() { let v = ''; try { v = localStorage.getItem('sch_view_session') || ''; } catch (e) {} return sessionList().includes(v) ? v : curSession(); }
 function setViewSession(x) { try { if (x === curSession()) localStorage.removeItem('sch_view_session'); else localStorage.setItem('sch_view_session', x); } catch (e) {} toast('Showing session ' + x); render(); }
 function canViewSession() { return !!U && ['principal', 'chairman', 'accountant', 'reception'].includes(U.role); }
-VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1&session='+encodeURIComponent(viewSession())+'"></iframe>';
+VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // School Office (18 Oct 2026+): the old ERP's remaining menus as registers — registers.php / registers_api.php / registers_lib.php
-VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+'"></iframe>';
+VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.m?'&m='+encodeURIComponent(P.m):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';

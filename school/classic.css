@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Old-ERP look ("classic") — owner decision, 22 Oct 2026
+   Colours, font and layout measured from the old ERP
+   (schoolerpindia.net/school/snmishra) so the office staff see the same
+   screen they are used to: dark left menu #2D353C, grey top bar #EDEDED with
+   the orange menu button #F64015, page #F7F7F7, Arial 12px text #555, and
+   the four dashboard tile colours (#FC8675 #6BAFBD #F3CE85 #65CEA7).
+   Everything is under html.classic, which school/classic.js (school panel)
+   or ?look=classic (Fee Department, School Office frames) switches on.
+   Loaded after erp-pro.css, so it wins only while html.classic is set.
+   ========================================================================== */
+html.classic {
+  --page: #F7F7F7; --surface: #FFFFFF; --pill: #F0F0F0; --pill-2: #E6E6E6; --line: #DDDDDD; --line-2: #EEEEEE;
+  --text: #555555; --muted: #73879C; --lime: #E6E6E6; --lime-2: #DADADA;
+  --r: 3px; --r-sm: 3px; --shadow: none; --shadow-pop: 0 6px 12px rgb(0 0 0 / .18);
+}
+html.classic, html.classic body { font-family: Arial, Helvetica, sans-serif; }
+html.classic body, html.classic body:has(#root) { background: #F7F7F7; color: #555; font-size: 12px; }
+
+/* ---------- frame: left menu + top bar ---------- */
+.cl-body { display: flex; min-height: 100vh; }
+.cl-left { width: 230px; flex-shrink: 0; background: #2D353C; color: #CCC; position: sticky; top: 0; height: 100vh; overflow-y: auto; scrollbar-width: thin; }
+.cl-mini .cl-left { display: none; }
+.cl-title { display: flex; align-items: center; gap: 8px; height: 57px; padding: 0 12px; cursor: pointer; color: #fff; }
+.cl-title img { width: 34px; height: 34px; border-radius: 50%; background: #fff; }
+.cl-title span { font: 700 22px/1 'Arial Black', Arial, sans-serif; letter-spacing: 1px; color: #fff; }
+.cl-search { display: flex; gap: 4px; padding: 4px 8px; position: relative; }
+.cl-search input { flex: 1; min-width: 0; height: 26px; border: 1px solid #ccc; border-radius: 3px; padding: 2px 6px; font: 12px Arial; color: #333; background: #fff; }
+.cl-search button { width: 30px; height: 26px; border-radius: 3px; background: #E6E6E6; color: #333; }
+.cl-search .srch-res { left: 8px; right: auto; top: 32px; width: 320px; border-radius: 4px; }
+.cl-side { list-style: none; margin: 10px 0 30px; padding: 0; }
+.cl-side > li > a { display: flex; align-items: center; gap: 10px; padding: 11px 14px; color: #E7E7E7; font-size: 12.5px; cursor: pointer; text-shadow: rgb(0 0 0 / .25) 0 -1px 0; }
+.cl-side > li > a > i:first-child { width: 22px; text-align: center; font-size: 15px; opacity: .99; }
+.cl-side > li > a:hover { color: #fff; background: rgb(255 255 255 / .05); }
+.cl-side > li.active { border-right: 5px solid #1ABB9C; }
+.cl-side > li.active > a { background: linear-gradient(#334556, #2C4257), #2A3F54; color: #fff; box-shadow: rgb(0 0 0 / .25) 0 1px 0, inset rgb(255 255 255 / .16) 0 1px 0; }
+.cl-cv { margin-left: auto; font-size: 10px; }
+.cl-child { list-style: none; margin: 0; padding: 0 0 6px; }
+.cl-child li { position: relative; padding-left: 32px; }
+.cl-child li::before { content: ''; position: absolute; left: 23px; top: 0; bottom: 0; border-left: 1px solid #425668; }
+.cl-child li::after { content: ''; position: absolute; left: 20px; top: 13px; width: 7px; height: 7px; border-radius: 50%; border: 1px solid #425668; background: #2D353C; }
+.cl-child a { display: block; padding: 7px 8px 7px 10px; color: rgb(255 255 255 / .75); font-size: 12px; cursor: pointer; }
+.cl-child a:hover { color: #fff; }
+.cl-child li.current a { color: #fff; font-weight: 700; }
+.cl-child li.current::after { background: #1ABB9C; border-color: #1ABB9C; }
+.cl-child li.cl-none a { color: rgb(255 255 255 / .4); }
+.cl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cl-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 57px; padding: 0 16px; background: #EDEDED; border-bottom: 1px solid #D9DEE4; position: sticky; top: 0; z-index: 40; }
+.cl-burger { font-size: 26px; color: #F64015; padding: 4px 8px; }
+.cl-top-r { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.cl-tl { display: inline-flex; align-items: center; gap: 5px; padding: 8px 10px; color: #515356; font: 700 12px Arial, sans-serif; white-space: nowrap; }
+.cl-tl:hover { color: #000; }
+.cl-school { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.cl-school i { color: #2E7D32; }
+.cl-right { padding: 10px 20px 40px; flex: 1; }
+.cl-head h3 { font-size: 18px; color: #555; margin: 6px 0 10px; }
+.cl-top .dd-panel { border-radius: 4px; }
+
+/* ---------- shared screens inside the classic frame ---------- */
+html.classic .card { border: 1px solid #E6E9ED; border-radius: 3px; box-shadow: none; padding: 10px 17px; }
+html.classic .cl-right h2 { font-size: 18px !important; font-weight: 400; color: #555; letter-spacing: 0; }
+html.classic .h3, html.classic .card h3 { font-size: 15px; color: #73879C; font-weight: 400; border-bottom: 2px solid #E6E9ED; padding-bottom: 6px; }
+html.classic .btn { border-radius: 3px; min-height: 30px; font-size: 12px; font-weight: 400; padding: 0 12px; }
+html.classic .btn-sm { min-height: 24px; font-size: 11.5px; padding: 0 9px; border-radius: 3px; }
+html.classic .btn-p { background: #337AB7; color: #fff; } html.classic .btn-p:hover { background: #286090; }
+html.classic .btn-g { background: #26B99A; color: #fff; } html.classic .btn-g:hover { background: #169F85; }
+html.classic .btn-l, html.classic .card .btn-l { background: #fff; color: #333; border: 1px solid #ccc; } html.classic .btn-l:hover { background: #E6E6E6; }
+html.classic .inp { min-height: 32px; border-radius: 3px; border: 1px solid #ccc; background: #fff; font-size: 12px; padding: 5px 8px; }
+html.classic .inp:focus { border-color: #66AFE9; box-shadow: 0 0 6px rgb(102 175 233 / .6); }
+html.classic .pill { border-radius: 3px; }
+html.classic .tbl { border: 1px solid #ddd; }
+html.classic .tbl th { background: #EDEDED; color: #333; font-weight: 700; font-size: 12px; border: 1px solid #ddd; padding: 6px 8px; }
+html.classic .tbl td { border: 1px solid #ddd; padding: 6px 8px; font-size: 12px; }
+html.classic .tbl tr:nth-child(even) td { background: #F9F9F9; }
+html.classic .kpi { border-radius: 10px; color: #fff; min-height: 100px; }
+html.classic .kpi-val, html.classic .kpi-lbl, html.classic .kpi-sub, html.classic .kpi-sub b, html.classic .kpi-val small { color: #fff; opacity: 1; font-weight: 700; }
+html.classic .kpi-val { font-size: 26px; }
+html.classic .kpi-ic { color: rgb(255 255 255 / .9) !important; background: rgb(255 255 255 / .25) !important; }
+html.classic .kpi-peach, html.classic .kpi-warn { background: #FC8675; } html.classic .kpi-lav { background: #6BAFBD; }
+html.classic .kpi-mint { background: #F3CE85; } html.classic .kpi-lime { background: #65CEA7; }
+html.classic .edu-iframe { border-radius: 0; }
+
+/* ---------- School Office frame (registers.css) ---------- */
+html.classic body:has(#regRoot) { background: #F7F7F7; }
+html.classic #regRoot { padding: 0 0 40px; font-size: 12px; color: #555; }
+html.classic .rg-side, html.classic .rg-panel { border-radius: 3px; border: 1px solid #E6E9ED; }
+html.classic .rg-side button.on { background: #2D353C; color: #fff; }
+html.classic button, html.classic .rg-btn { border-radius: 3px; min-height: 30px; padding: 5px 12px; font-size: 12px; }
+html.classic button.go { background: #26B99A; color: #fff; font-weight: 400; }
+html.classic button.dark { background: #337AB7; }
+html.classic #regRoot input, html.classic #regRoot select, html.classic #regRoot textarea { border-radius: 3px; border-color: #ccc; background: #fff; font-size: 12px; padding: 5px 8px; }
+html.classic .rg-table { font-size: 12px; }
+html.classic .rg-table th { background: #EDEDED; color: #333; font-weight: 700; border: 1px solid #ddd; padding: 6px 8px; }
+html.classic .rg-table td { border: 1px solid #ddd; padding: 6px 8px; }
+html.classic .rg-table tr:nth-child(even) td { background: #F9F9F9; }
+html.classic .rg-wrap { border-radius: 0; }
+html.classic .rg-kpi { border-radius: 10px; color: #fff; background: #6BAFBD; }
+html.classic .rg-kpi:nth-child(4n+1) { background: #FC8675; } html.classic .rg-kpi:nth-child(4n+3) { background: #F3CE85; } html.classic .rg-kpi:nth-child(4n+4) { background: #65CEA7; }
+html.classic .rg-kpi small, html.classic .rg-kpi .rg-muted { color: #fff; }
+html.classic h1 { font-size: 20px; letter-spacing: 0; color: #555; }
+html.classic dialog { border-radius: 4px; }
+
+/* ---------- Fee Department frame (finance.css) ---------- */
+html.classic body:has(#feeRoot) { background: #F7F7F7; color: #555; font: 12px/1.5 Arial, Helvetica, sans-serif; }
+html.classic #feeRoot { padding: 0 0 40px; }
+html.classic .fn-header h1 { font-size: 20px; }
+html.classic .fn-panel, html.classic .fn-stat, html.classic .fn-nav { border-radius: 3px; border-color: #E6E9ED; box-shadow: none; }
+html.classic .fn-nav button.on { background: #2D353C; }
+html.classic #feeRoot button { border-radius: 3px; min-height: 30px; font: 12px Arial, sans-serif; background: #337AB7; }
+html.classic #feeRoot button.secondary, html.classic #feeRoot .fn-nav button:not(.on) { background: #fff; color: #333; }
+html.classic #feeRoot .fn-primary { background: #26B99A; }
+html.classic #feeRoot input, html.classic #feeRoot select, html.classic #feeRoot textarea { border-radius: 3px; border-color: #ccc; min-height: 32px; padding: 5px 8px; font-size: 12px; }
+html.classic .fn-table th { background: #EDEDED; color: #333; font-size: 12px; text-transform: none; letter-spacing: 0; border: 1px solid #ddd; }
+html.classic .fn-table td { border: 1px solid #ddd; padding: 6px 8px; }
+html.classic .fn-stats .fn-stat { color: #fff; border: 0; border-radius: 10px; background: #6BAFBD; }
+html.classic .fn-stats .fn-stat:nth-child(4n+1) { background: #FC8675; } html.classic .fn-stats .fn-stat:nth-child(4n+3) { background: #F3CE85; } html.classic .fn-stats .fn-stat:nth-child(4n+4) { background: #65CEA7; }
+html.classic .fn-stats .fn-stat small { color: #fff; }
+
+@media (max-width: 860px) {
+  .cl-left { position: fixed; z-index: 70; left: 0; top: 0; box-shadow: 4px 0 12px rgb(0 0 0 / .3); }
+  .cl-body:not(.cl-mini) .cl-main { pointer-events: auto; }
+  .cl-school { display: none; }
+  .cl-right { padding: 10px 10px 40px; }
+}
+@media print { .cl-left, .cl-top { display: none !important; } .cl-right { padding: 0; } }
