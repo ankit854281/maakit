@@ -191,6 +191,7 @@ jobs:
           node .github/jaanch/catalogue-ui.cjs
           node .github/jaanch/hub-ui.cjs
           node .github/jaanch/launch-ui.cjs
+          node .github/jaanch/login-ui.cjs
           node .github/jaanch/toolkit-ui.cjs
           node .github/jaanch/faculty-ui.cjs
           node .github/jaanch/finance-ui.cjs

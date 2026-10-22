@@ -108,10 +108,11 @@ export const PAGES = [
   // "मेरा हिसाब" yahan nahi dikhna chahiye — wo login ke BAAD aata
   // hai. Bina login ke dikh gaya to andar ka panna khula pada hai.
   { path: '/login.php', naam: 'दुकान / टीम लॉगिन',
-    chahiye: ['मैं दुकानदार हूँ', 'मैं Maakit टीम से हूँ', 'कोड'],
+    // Match working controls, not translated copy (the default can be English).
+    chahiye: ['href="/login.php"', 'href="/login.php?as=team"', 'data-remember="dukan"', 'name="mobile"', 'name="code"', 'name="csrf"'],
     nahi: ['मेरा हिसाब'], nabz: true },
   { path: '/login.php?as=team', naam: 'टीम का लॉगिन',
-    chahiye: ['यूज़रनेम', 'पासवर्ड'], nahi: ['मेरा हिसाब'] },
+    chahiye: ['href="/login.php"', 'href="/login.php?as=team"', 'data-remember="team"', 'name="username"', 'name="password"', 'name="csrf"'], nahi: ['मेरा हिसाब'] },
   { path: '/public/company-delivery.php', naam: 'कंपनी delivery login', chahiye: ['Maakit'] },
   { path: '/admin/company-delivery.php', naam: 'कंपनी approval login', chahiye: ['Maakit'] },
   { path: '/public/company-track.php', naam: 'कंपनी tracking', chahiye: ['Maakit'] },

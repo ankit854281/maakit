@@ -120,8 +120,8 @@ include __DIR__ . '/inc/head.php';
 
     <div class="lg-card">
       <div class="lg-tabs" role="tablist">
-        <a role="tab" aria-selected="<?= $as === 'dukan' ? 'true' : 'false' ?>" class="<?= $as === 'dukan' ? 'on' : '' ?>" href="/login.php"><?= t('Shopkeeper', 'दुकानदार') ?></a>
-        <a role="tab" aria-selected="<?= $as === 'team' ? 'true' : 'false' ?>" class="<?= $as === 'team' ? 'on' : '' ?>" href="/login.php?as=team"><?= t('Maakit team', 'Maakit टीम') ?></a>
+        <a role="tab" aria-selected="<?= $as === 'dukan' ? 'true' : 'false' ?>" class="<?= $as === 'dukan' ? 'on' : '' ?>" href="/login.php"><?= t('I am a shopkeeper', 'मैं दुकानदार हूँ') ?></a>
+        <a role="tab" aria-selected="<?= $as === 'team' ? 'true' : 'false' ?>" class="<?= $as === 'team' ? 'on' : '' ?>" href="/login.php?as=team"><?= t('I am from the Maakit team', 'मैं Maakit टीम से हूँ') ?></a>
       </div>
 
       <?php if ($err): ?><div class="lg-err" role="alert"><?= h($err) ?></div><?php endif; ?>
