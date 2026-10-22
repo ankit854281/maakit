@@ -72,3 +72,9 @@ register (printable as a copy), and only the **net due** moves into the live fee
 
 44 students, 44 full records (35 Active, 9 Deactive), 81 receipts (₹2,79,415, all original numbers), 44 fee statements
 (billed ₹6,76,922, due ₹2,36,189), 105 mark rows (Term-1, Term-2, Final) — 0 differences against the old ERP.
+
+## Old-ERP look (22 Oct 2026)
+
+`school/classic.js` / `classic.css`: office roles see the old ERP's frame (same 47 menu groups, item names and order, colours
+#2D353C / #EDEDED / #F64015 / #F7F7F7, tiles #FC8675 #6BAFBD #F3CE85 #65CEA7). Every old item opens the new screen that does
+the job; items with no new screen yet stay in the menu, dimmed, and open a short note. ADMIN ▸ New look switches back.

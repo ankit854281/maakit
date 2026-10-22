@@ -26,6 +26,7 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <link rel="stylesheet" href="toolkit.css?v=<?= $v('toolkit.css') ?>">
 <link rel="stylesheet" href="design-2026.css?v=<?= $v('design-2026.css') ?>">
 <link rel="stylesheet" href="erp-pro.css?v=<?= $v('erp-pro.css') ?>">
+<link rel="stylesheet" href="classic.css?v=<?= $v('classic.css') ?>">
 </head>
 <body class="bg-paper text-slate-800 min-h-screen">
 <div id="toasts" class="fixed top-3 right-3 z-50 flex flex-col gap-2 pointer-events-none max-w-xs"></div>
@@ -34,5 +35,6 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <noscript><p style="padding:16px">Please turn on JavaScript to use the School ERP.</p></noscript>
 <script src="toolkit_english.js?v=<?= $v('toolkit_english.js') ?>"></script>
 <script src="app.js?v=<?= $v('app.js') ?>"></script>
+<script src="classic.js?v=<?= $v('classic.js') ?>"></script>
 </body>
 </html>
