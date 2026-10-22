@@ -598,6 +598,8 @@ function render() {
         ${canProfile() ? `<div class="srch"><div class="srch-box" onclick="this.parentElement.classList.add('open');this.querySelector('input').focus()"><i class="fa-solid fa-magnifying-glass"></i>
           <input id="g-q" placeholder="Search any teacher or student…" autocomplete="off" oninput="gsearch(this.value)" onkeydown="if(event.key==='Enter')openProfile(null,null,this.value);if(event.key==='Escape'){this.value='';gsearch('');this.blur();this.closest('.srch').classList.remove('open')}" onblur="setTimeout(()=>{if(!this.value){this.closest('.srch').classList.remove('open');}const r=document.getElementById('g-res');if(r)r.classList.remove('show')},200)"></div>
           <div id="g-res" class="srch-res"></div></div>` : ''}
+        ${canViewSession() ? `<div class="dd dd-r"><button onclick="ddToggle(this)" class="mn" title="Session shown in School Office and Fee Department" aria-haspopup="true"><i class="fa-solid fa-calendar"></i>${esc(viewSession())}<i class="fa-solid fa-chevron-down mn-cv"></i></button>
+          <div class="dd-panel">${sessionList().map(x => `<button onclick="ddClose();setViewSession('${x}')" class="dd-item ${x === viewSession() ? 'on' : ''}"><i class="fa-solid fa-calendar-day"></i><span>${x}${x === curSession() ? ' (current)' : ''}</span></button>`).join('')}</div></div>` : ''}
         ${U.role === 'principal' ? `<button onclick="go('settings')" class="erp-ic ${view === 'settings' ? 'on' : ''}" title="Settings"><i class="fa-solid fa-gear"></i></button>` : ''}
         <div class="dd dd-r"><button onclick="ddToggle(this)" class="erp-av-btn" title="${esc(name)} · ${esc(roleName)}"><span class="erp-avatar">${esc(initials)}</span></button>
           <div class="dd-panel"><div class="px-3 py-2"><b class="block text-sm">${esc(name)}</b><small class="text-slate-500">${esc(roleName)}</small></div>
@@ -3789,6 +3791,14 @@ for (const role of ['principal','accountant','reception','chairman','teacher']) 
 for (const role of ['parent','student']) NAV[role].push(['finance','fa-wallet','Fee Ledger']);
 for (const role of ['principal','accountant']) { const old=NAV[role].find(n=>n[0]==='fdesk');if(old)old[2]='Legacy Fee Desk'; }
 NAV.accountant.unshift(NAV.accountant.pop());PRIMARY.accountant=['finance','fdues','fcalls','freceipts'];
-VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1"></iframe>';
+// Session switcher (22 Oct 2026, owner: "old ERP had a session button"): like the old ERP's 2023-2024…2026-2027 menu.
+// It only changes which session THIS login looks at in School Office and Fee Department (kept in this browser);
+// the school's current session is still set by the Principal in Settings, so nobody else's screen changes.
+function curSession() { const m = String(S && S.settings && S.settings.session || '').replace(/[–—]/g, '-').match(/^(20\d{2})-(?:20)?(\d{2})$/); return m ? m[1] + '-' + m[2] : ''; }
+function sessionList() { const c = curSession(); const y = c ? +c.slice(0, 4) : new Date().getFullYear(); const out = []; for (let k = 2023; k <= y + 1; k++) out.push(k + '-' + String((k + 1) % 100).padStart(2, '0')); return out.reverse(); }
+function viewSession() { let v = ''; try { v = localStorage.getItem('sch_view_session') || ''; } catch (e) {} return sessionList().includes(v) ? v : curSession(); }
+function setViewSession(x) { try { if (x === curSession()) localStorage.removeItem('sch_view_session'); else localStorage.setItem('sch_view_session', x); } catch (e) {} toast('Showing session ' + x); render(); }
+function canViewSession() { return !!U && ['principal', 'chairman', 'accountant', 'reception'].includes(U.role); }
+VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1&session='+encodeURIComponent(viewSession())+'"></iframe>';
 // School Office (18 Oct 2026+): the old ERP's remaining menus as registers — registers.php / registers_api.php / registers_lib.php
-VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1"></iframe>';
+VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+'"></iframe>';

@@ -80,6 +80,12 @@ try {
     $changed = $rows; $changed[0]['received'] = '1';
     [$c] = rq('import', $P, ['m' => 'oldreceipt', 'rows' => $changed, 'apply' => true]); rc($c === 409, 'changed row blocks import');
     [$c, $d] = rq('import', $P, ['m' => 'oldreceipt', 'rows' => [$rows[0], $rows[0]]]); rc($c === 400, 'duplicate in file refused');
+    // Full receipt (every fee head, as printed by the old ERP) kept exactly, keyed by session + receipt number
+    $det = [['session' => '2024-25', 'receiptNo' => '1-708', 'name' => 'Synthetic Register One', 'lines' => [['1', 'Tuition Fee', 'Apr', '1000'], ['2', 'Exam Fee', 'Apr', '500']], 'payable' => '1500', 'received' => '1500', 'mode' => 'Cash']];
+    [$c] = rq('save', $P, ['m' => 'oldrcptdet', 'row' => $det[0]]); rc($c === 403, 'receipt details are read-only');
+    [$c, $d] = rq('import', $P, ['m' => 'oldrcptdet', 'rows' => $det, 'apply' => true]); rc($c === 200 && $d['added'] === 1, 'receipt details import');
+    [$c, $d] = rq('rows&m=oldrcptdet', $A); rc(($d['rows'][0]['lines'][1][1] ?? '') === 'Exam Fee' && $d['rows'][0]['payable'] === '1500', 'receipt lines kept as printed ' . json_encode($d['rows'][0] ?? null));
+    [$c] = rq('rows&m=oldrcptdet', $R); rc($c === 403, 'reception cannot read old receipts');
 
     // Old dues carried to Fee Desk only where none is set
     sch_rec_put('acctStu', 'reg-s2', ['opening' => 50], 'principal');
