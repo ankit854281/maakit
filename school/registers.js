@@ -45,6 +45,7 @@ function filtered() {
   }).sort((a, b) => String(b.date || b._created || '').localeCompare(String(a.date || a._created || '')) || String(b.no || b.receiptNo || '').localeCompare(String(a.no || a.receiptNo || ''), 'en', { numeric: true }));
 }
 function render(loading) {
+  if (CUR === 'oldfeecard' && !loading) return renderFeeCard();
   const m = mod(), fk = Object.fromEntries(m.fields.map(f => [f.k, f])), groups = {};
   META.modules.forEach(x => (groups[x.group] = groups[x.group] || []).push(x));
   const side = Object.entries(groups).map(([g, ms]) => `<h3>${esc(g)}</h3>` + ms.map(x => `<button class="${x.id === CUR ? 'on' : ''}" onclick="openMod('${x.id}')">${esc(x.title)}</button>`).join('')).join('');
@@ -67,6 +68,59 @@ function render(loading) {
     ${body}</section></div>`;
   const s = document.querySelector('.rg-search'); if (s && document.activeElement !== s && Q) { s.focus(); s.setSelectionRange(Q.length, Q.length); }
 }
+// ---------------------------------------------------------------- Fee Receipt, laid out like the old ERP (studentfee.php)
+// Owner, 22 Oct 2026: "fee receipt same to same jaise old software me hai". The card of each student is copied from the old
+// ERP (getstufee.php) for every session and shown here exactly: details, month-wise fee heads, receipts, discounts, balance.
+let FC = { ses: '', cls: '', sec: '', id: '' };
+const CLS_ORDER = ['PG','LKG','UKG','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'];
+const sesShort = x => String(x || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
+function fcTable(rows, opts) {
+  if (!rows || !rows.length) return '';
+  const head = rows[0], drop = head.map((h, i) => /^(Delete|Edit|Uploaded Receipt)$/i.test(h) ? i : -1).filter(i => i >= 0);
+  const keep = r => r.filter((_, i) => !drop.includes(i));
+  const printAt = head.indexOf('Print'), rnoAt = head.indexOf('R.No.');
+  return `<table class="fc-t"><tr>${keep(head).map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.slice(1).map(r => {
+    if (r.length === 1 && opts && opts.months) return `<tr class="fc-month"><td colspan="${keep(head).length}">${esc(r[0])}</td></tr>`;
+    return `<tr>${r.map((c, i) => drop.includes(i) ? '' : i === printAt && rnoAt >= 0 && r[rnoAt] ? `<td><button class="fc-print" onclick="printOldReceipt({session:'${esc(FC.ses)}',receiptNo:'${esc(r[rnoAt])}'})">Print</button></td>` : `<td>${esc(c)}</td>`).join('')}</tr>`;
+  }).join('')}</table>`;
+}
+function renderFeeCard() {
+  const all = ROWS, sessions = [...new Set(all.map(r => sesShort(r.session)))].sort().reverse();
+  if (!FC.ses || !sessions.includes(FC.ses)) FC.ses = sessions.includes(VSES) ? VSES : (sessions[0] || '');
+  const inSes = all.filter(r => sesShort(r.session) === FC.ses);
+  const classes = [...new Set(inSes.map(r => r.cls))].sort((a, b) => (CLS_ORDER.indexOf(a) + 99 * (CLS_ORDER.indexOf(a) < 0)) - (CLS_ORDER.indexOf(b) + 99 * (CLS_ORDER.indexOf(b) < 0)));
+  const secs = [...new Set(inSes.filter(r => r.cls === FC.cls).map(r => r.section))].sort();
+  const names = inSes.filter(r => (!FC.cls || r.cls === FC.cls) && (!FC.sec || r.section === FC.sec)).sort((a, b) => a.name.localeCompare(b.name));
+  const c = inSes.find(r => r._id === FC.id);
+  const opt = (v, t, on) => `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(t)}</option>`;
+  const prof = c && Array.isArray(c.profile) ? c.profile : [];
+  const T = c && c.tables && typeof c.tables === 'object' ? c.tables : {};
+  const sum = c ? [['Old Fee', c.oldFee], ['Transfer Fee', c.transferFee], ['Net Amount', c.net], ['Currently Received', c.received], ['Other Fee Receipt', c.otherFee], ['Balance Amount', c.balance], ['Transport Due', c.transportDue], ['Fee Due', c.feeDue], ['Store Due Amount', c.storeDue]] : [];
+  $('regRoot').innerHTML = `<div class="fc">
+    <div class="fc-top"><h3>Fee Receipt <span class="fc-red">Old ERP record</span></h3>
+      <div class="rg-tools"><button onclick="openMod(META.modules[0].id)">All registers</button>${META.modules.some(x => x.id === 'oldfeecard' && x.import) ? '<button onclick="openImport()">Import from old ERP</button>' : ''}${c ? '<button onclick="printFeeCard()">Print fee card</button>' : ''}<a class="rg-btn" href="finance.php?embed=1&tab=students${document.documentElement.classList.contains('classic') ? '&look=classic' : ''}">New fee (Fee Department)</a></div></div>
+    <div class="fc-sel">
+      <label>Session<select onchange="FC={ses:this.value,cls:'',sec:'',id:''};render()">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === FC.ses)).join('')}</select></label>
+      <label>School<select><option>${esc(META.school)}</option></select></label>
+      <label>Class<select onchange="FC.cls=this.value;FC.sec='';FC.id='';render()">${opt('', 'Select Class', !FC.cls)}${classes.map(x => opt(x, x, x === FC.cls)).join('')}</select></label>
+      <label>Section<select onchange="FC.sec=this.value;FC.id='';render()">${opt('', 'Select', !FC.sec)}${secs.map(x => opt(x, x, x === FC.sec)).join('')}</select></label>
+      <label>Name<select onchange="FC.id=this.value;render()">${opt('', 'Select Name', !FC.id)}${names.map(r => opt(r._id, r.name + '-' + (r.father || ''), r._id === FC.id)).join('')}</select></label>
+      <label>Search For<input list="fcNames" placeholder="Enter Student Name &amp; Select From List" onchange="const r=ROWS.find(x=>sesShort(x.session)===FC.ses&&(x.name+'-'+(x.father||'')+' ('+x.cls+(x.section?' '+x.section:'')+')')===this.value);if(r){FC.cls=r.cls;FC.sec=r.section;FC.id=r._id;render()}"><datalist id="fcNames">${inSes.map(r => `<option value="${esc(r.name + '-' + (r.father || '') + ' (' + r.cls + (r.section ? ' ' + r.section : '') + ')')}"></option>`).join('')}</datalist></label>
+    </div>
+    ${!all.length ? '<p class="rg-muted">The fee cards from the old ERP have not been imported yet.</p>' : !c ? `<p class="rg-muted">${inSes.length} student fee cards in ${esc(FC.ses)}. Choose class, section and name.</p>` : `
+    <div class="fc-grid" id="fcCard">
+      <div><table class="fc-prof">${prof.map((r, i) => i === 0 ? `<tr><td colspan="4" class="fc-red fc-school">${esc(r[0])}</td></tr>` : `<tr><th>${esc(r[0] || '')}</th><td>${esc(r[2] || '')}</td><th>${esc(r[3] || '')}</th><td>${esc(r[4] || '')}</td></tr>`).join('')}</table>
+        ${T.siblings ? '<h4>Brother / Sister</h4>' + fcTable(T.siblings) : ''}</div>
+      <div>${fcTable(c.months, { months: true }) || '<p class="rg-muted">No fee details in the old ERP for this session.</p>'}
+        ${['Fees Transfer', 'Other Fee Receipt'].map(t => T[t] ? `<h4 class="fc-red">${t}</h4>` + fcTable(T[t]) : '').join('')}
+        <table class="fc-sum">${[0, 2, 4, 6, 8].map(i => `<tr>${[sum[i], sum[i + 1]].map(x => x ? `<td>${esc(x[0])} : <b>${esc(x[1] ?? '')}</b></td>` : '<td></td>').join('')}</tr>`).join('')}</table>
+        ${c.nextReceipt ? `<p class="rg-muted">Next receipt number in the old ERP was ${esc(c.nextReceipt)}. Copied on ${esc(c.asOn || '')}.</p>` : ''}</div>
+    </div>
+    <h4 class="fc-red">Fee Receipt</h4>${fcTable(c.receipts) || '<p class="rg-muted">No receipts.</p>'}
+    ${['Fee Refund', 'Enquiry Receipt', 'Cancel Receipt/Cheque', 'Fee Discount', 'Fee Adjustment'].map(t => T[t] && T[t].length > 1 ? `<h4 class="fc-red">${t}</h4>` + fcTable(T[t]) : '').join('')}`}
+  </div>`;
+}
+function printFeeCard() { const el = document.querySelector('.fc'); if (!el) return; $('regPrint').innerHTML = `<div class="pr-page fc fc-printing">${el.innerHTML}</div>`; window.print(); }
 function input(f, v) {
   const id = 'f_' + f.k, req = f.req ? ' required' : '';
   if (f.type === 'area') return `<textarea id="${id}"${req}>${esc(v)}</textarea>`;

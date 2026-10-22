@@ -86,6 +86,14 @@ try {
     [$c, $d] = rq('import', $P, ['m' => 'oldrcptdet', 'rows' => $det, 'apply' => true]); rc($c === 200 && $d['added'] === 1, 'receipt details import');
     [$c, $d] = rq('rows&m=oldrcptdet', $A); rc(($d['rows'][0]['lines'][1][1] ?? '') === 'Exam Fee' && $d['rows'][0]['payable'] === '1500', 'receipt lines kept as printed ' . json_encode($d['rows'][0] ?? null));
     [$c] = rq('rows&m=oldrcptdet', $R); rc($c === 403, 'reception cannot read old receipts');
+    // Old ERP fee card (Fee › Fee Receipt): kept for every old student, even one not in the new ERP; keyed by session + old id
+    $card = [['session' => '2026-27', 'oldId' => '502', 'liveId' => '', 'name' => 'Synthetic Left Child', 'cls' => '1st', 'section' => 'A',
+              'months' => [['', 'D/A', 'Fee Name', 'Amount', 'Paid/Disc Amount', 'Balance', 'N Paid', 'Status'], ['April'], ['', '', 'Tution Fee', '790', '790', '0', '', 'Paid']],
+              'receipts' => [['Sno', 'Status', 'R.No.', 'Date', 'Net Amt'], ['1', 'Cleared', '1-34', '14-07-2026', '6080']], 'net' => '13980', 'received' => '7660', 'feeDue' => '6320']];
+    [$c] = rq('save', $A, ['m' => 'oldfeecard', 'row' => $card[0]]); rc($c === 403, 'fee card is read-only');
+    [$c, $d] = rq('import', $P, ['m' => 'oldfeecard', 'rows' => $card, 'apply' => true]); rc($c === 200 && $d['added'] === 1, 'fee card import');
+    [$c, $d] = rq('rows&m=oldfeecard', $A); $fc = $d['rows'][0] ?? [];
+    rc(($fc['months'][2][2] ?? '') === 'Tution Fee' && ($fc['receipts'][1][2] ?? '') === '1-34' && $fc['feeDue'] === '6320', 'fee card kept as in the old ERP ' . json_encode($fc));
 
     // Old dues carried to Fee Desk only where none is set
     sch_rec_put('acctStu', 'reg-s2', ['opening' => 50], 'principal');
