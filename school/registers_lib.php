@@ -53,6 +53,10 @@ function reg_modules(): array {
         'list' => ['no','date','name','cls','father','phone','fee'], 'sum' => ['fee'], 'print' => 'admission'],
 
     // ---------------- Student records ----------------
+    'inactivestu' => ['title' => 'Inactive / Left Students', 'group' => 'Students', 'old' => 'Student Master (Deactive / TC / not continuing) — kept so their old records stay linked', 'r' => 'PCAR', 'w' => 'P', 'import' => 'P', 'keyFrom' => ['oldId'],
+        'fields' => [reg_f('oldId','Old ERP student id','text',['req'=>1]), reg_f('name','Name','text',['req'=>1]), reg_f('cls','Class (last)'), reg_f('section','Section'), reg_f('adm','Scholar / Adm No'),
+            reg_f('father','Father\'s name'), reg_f('mother','Mother\'s name'), reg_f('phone','Mobile'), reg_f('dob','Date of birth'), reg_f('status','Status','sel',['opts'=>['Inactive','Deactive','TC issued','Left'],'req'=>1]), reg_f('reason','Why inactive','area')],
+        'list' => ['oldId','name','cls','section','adm','father','status']],
     'studinfo' => ['title' => 'Student Full Record', 'group' => 'Students', 'old' => 'Student Master / Student Edit (all 131 fields)', 'r' => 'PC', 'w' => 'P', 'keyed' => 'student',
         'fields' => [reg_f('student','Student','student',['req'=>1]), reg_f('status','Status','sel',['opts'=>['Active','Inactive (left)','TC issued','Deactive'],'req'=>1]),
             reg_f('admAs','Admission as','sel',['opts'=>['Day Scholar','Day Boarder','Boarder','Provisional']]), reg_f('stuType','Student type','sel',['opts'=>['New Student','Old Student']]),
@@ -240,6 +244,14 @@ function reg_students(): array {
         if (is_array($s)) $out[(string)$row['r']] = ['id' => (string)$row['r'], 'name' => (string)($s['name'] ?? ''), 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''),
             'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)($s['erpId'] ?? ''),
             'mother' => (string)($s['mother'] ?? ''), 'dob' => (string)($s['dob'] ?? '')];
+    }
+    // Inactive / left children (register inactivestu): linkable from School Office records as 'old-<old ERP id>', never in class lists.
+    $st = sch_db()->prepare("SELECT d FROM sch_records WHERE k='regRow' AND r LIKE 'inactivestu|%' AND deleted=0"); $st->execute();
+    foreach ($st as $row) {
+        $s = json_decode((string)$row['d'], true); if (!is_array($s) || ($s['oldId'] ?? '') === '') continue;
+        $id = 'old-' . $s['oldId']; if (isset($out[$id])) continue;
+        $out[$id] = ['id' => $id, 'name' => (string)$s['name'], 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''), 'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''),
+            'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)$s['oldId'], 'mother' => (string)($s['mother'] ?? ''), 'dob' => (string)($s['dob'] ?? ''), 'inactive' => true];
     }
     return $out;
 }

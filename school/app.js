@@ -3472,6 +3472,17 @@ function examResult(s, e) {
   const got = rows.filter(r => r.v !== 'AB').reduce((a, r) => a + (+r.v || 0), 0), max = rows.filter(r => r.v !== 'AB').reduce((a, r) => a + r.max, 0);
   return { rows, got, max, pct: max ? Math.round(got / max * 100) : null };
 }
+// Student photo — one stored copy (progress_api.php, imported from the old ERP), shown wherever the child appears.
+const STU_PH = {};
+function stuPhoto(sid) {
+  if (STU_PH[sid] !== undefined) return STU_PH[sid] || '';
+  STU_PH[sid] = null;
+  fetch('progress_api.php?a=photos&sid=' + encodeURIComponent(sid), { headers: { 'X-School-Token': TOKEN || '' } }).then(r => r.json()).then(d => {
+    const u = (d.photos || {})[sid] || ''; STU_PH[sid] = /^data:image\/(jpeg|png|webp);base64,/.test(u) ? u : '';
+    if (STU_PH[sid]) document.querySelectorAll('[data-stuphoto="' + CSS.escape(sid) + '"]').forEach(el => { el.innerHTML = `<img src="${STU_PH[sid]}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`; });
+  }).catch(() => { STU_PH[sid] = ''; });
+  return '';
+}
 function profStudent(s) {
   const who = 's:' + s.id, months = lastMonths(6), am = months.map(m => ({ m, ...studentMonth(s, m) })), sn = since(s);
   const totM = am.reduce((a, x) => a + x.marked, 0), totA = am.reduce((a, x) => a + x.absent, 0);
@@ -3482,7 +3493,7 @@ function profStudent(s) {
   const ct = (CLASSES.find(k => k.c === s.cls) || {}).ct, fam = familyOf(s, S.students).filter(x => x.id !== s.id);
   const of = OF && !OF.error ? OF.students.find(x => x.id === s.id) : null, rec = OF && OF.payments ? OF.payments.filter(p => p.sid === s.id) : [];
   const last = exams[exams.length - 1];
-  return `<div class="pw-head"><span class="pw-av">${esc(initialsOf(s.name))}</span><div class="min-w-0"><h2 class="text-2xl font-semibold">${esc(s.name)}</h2>
+  return `<div class="pw-head"><span class="pw-av" data-stuphoto="${esc(s.id)}">${stuPhoto(s.id) ? `<img src="${stuPhoto(s.id)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : esc(initialsOf(s.name))}</span><div class="min-w-0"><h2 class="text-2xl font-semibold">${esc(s.name)}</h2>
       <p class="text-slate-500">Class ${esc(s.cls)}${s.section ? '-' + esc(s.section) : ''} · Adm ${esc(s.adm)}${ct ? ' · Class teacher ' + esc(T(ct).name) : ''}</p>
       <div class="flex flex-wrap gap-2 mt-2">${s.phone ? `<a target="_blank" href="${waLink(s.phone, 'Namaste, this is from ' + S.settings.school + '. ')}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Parent</a><a href="tel:+91${String(s.phone).replace(/\D/g, '').slice(-10)}" class="btn btn-sm btn-l"><i class="fa-solid fa-phone"></i> Call</a>` : ''}
         <button onclick="printStudentReport(${jsq(s.id)})" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Report card</button>${U.role === 'principal' ? `<button onclick="profJoin(${jsq(s.id)})" class="btn btn-sm btn-l">Edit joining details</button>` : ''}</div></div></div>

@@ -112,7 +112,7 @@ async function copyLedger() { const from = $('nlFrom').value; if (!from) return 
 
 // ---------------------------------------------------------------- drawing
 function opt(v, t, on) { return `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(t)}</option>`; }
-function stuLabel(s) { return s.name + '-' + (s.father || ''); }
+function stuLabel(s) { return s.name + '-' + (s.father || '') + (s.inactive ? ' (Inactive)' : ''); }
 function render() {
   if (!ST) return;
   const list = ST.students.filter(s => (!SEL.cls || s.cls === SEL.cls) && (!SEL.sec || s.section === SEL.sec)).sort((a, b) => a.name.localeCompare(b.name));

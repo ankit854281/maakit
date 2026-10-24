@@ -126,7 +126,7 @@ function input(f, v) {
   if (f.type === 'area') return `<textarea id="${id}"${req}>${esc(v)}</textarea>`;
   if (f.type === 'sel' || f.type === 'cls') { const o = f.opts.slice(); if (v && !o.includes(v)) o.unshift(v); return `<select id="${id}"${req}><option value="">—</option>${o.map(x => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`; }
   if (f.type === 'yn') return `<select id="${id}"><option value="">—</option>${['Yes', 'No'].map(x => `<option ${x === v ? 'selected' : ''}>${x}</option>`).join('')}</select>`;
-  if (f.type === 'student') { const list = META.students.slice().sort((a, b) => (a.cls + a.name).localeCompare(b.cls + b.name)); return `<select id="${id}"${req}><option value="">— choose student —</option>${list.map(s => `<option value="${esc(s.id)}" ${s.id === v ? 'selected' : ''}>${esc(s.cls + (s.section ? '-' + s.section : '') + ' · ' + s.name + ' · ' + s.adm)}</option>`).join('')}</select>`; }
+  if (f.type === 'student') { const list = META.students.slice().sort((a, b) => (a.cls + a.name).localeCompare(b.cls + b.name)); return `<select id="${id}"${req}><option value="">— choose student —</option>${list.map(s => `<option value="${esc(s.id)}" ${s.id === v ? 'selected' : ''}>${esc(s.cls + (s.section ? '-' + s.section : '') + ' · ' + s.name + ' · ' + s.adm + (s.inactive ? ' · Inactive' : ''))}</option>`).join('')}</select>`; }
   if (f.type === 'teacher') return `<select id="${id}"><option value="">—</option>${META.teachers.map(t => `<option value="${esc(t.id)}" ${t.id === v ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>`;
   if (f.type === 'json') return `<textarea id="${id}" readonly>${esc(v ? JSON.stringify(v, null, 1) : '')}</textarea>`;
   const type = { date: 'date', time: 'time', num: 'number', money: 'text', phone: 'tel' }[f.type] || 'text';
@@ -145,6 +145,7 @@ function openRow(id) {
     <form class="rg-form" onsubmit="event.preventDefault();saveRow('${r ? esc(r._id) : ''}')">${fields}</form>
     <div class="rg-tools" style="margin-top:16px;justify-content:flex-end">${r && m.print ? `<button onclick="printRow('${esc(r._id)}')">Print</button>` : ''}${r && (m.write || (META.role === 'principal' && m.import)) ? `<button class="danger" onclick="delRow('${esc(r._id)}')">Remove</button>` : ''}<button onclick="$('regDialog').close()">Close</button>${m.write ? `<button class="go" onclick="saveRow('${r ? esc(r._id) : ''}')">Save</button>` : ''}</div>`;
   $('regDialog').showModal();
+  if (r && r.student) stuPhoto(r.student).then(u => { const h = $('regDialogBody').querySelector('h2'); if (u && h && !h.querySelector('img')) h.insertAdjacentHTML('afterbegin', `<img class="rg-photo" src="${u}" alt="">`); });
 }
 async function saveRow(id) {
   if (BUSY) return; const m = mod(), row = {};
@@ -194,16 +195,25 @@ async function printOldReceipt(r) {
   if (!d) return toast('The full receipt (with fee heads) for ' + r.receiptNo + ' has not been imported yet.');
   $('regPrint').innerHTML = `<div class="pr-page">${oldReceiptHtml(d)}</div>`; window.print();
 }
-function printRow(id) {
+// Student photo — the one stored copy (progress_api.php), shown on the record, TC, certificates, ID cards, gate pass and admit card.
+const PH = {};
+async function stuPhoto(sid) {
+  if (!sid) return '';
+  if (PH[sid] !== undefined) return PH[sid];
+  try { const r = await fetch('progress_api.php?a=photos&sid=' + encodeURIComponent(sid), { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json(); const u = (d.photos || {})[sid] || ''; PH[sid] = /^data:image\/(jpeg|png|webp);base64,/.test(u) ? u : ''; } catch (e) { PH[sid] = ''; }
+  return PH[sid];
+}
+async function printRow(id) {
   const m = mod(), r = ROWS.find(x => x._id === id), s = STU()[r.student] || {}, fk = Object.fromEntries(m.fields.map(f => [f.k, f]));
   if (m.print === 'oldreceipt') return printOldReceipt(r);
   const kv = keys => `<table class="pr-kv">${keys.filter(k => fk[k]).map(k => `<tr><td>${esc(fk[k].label)}</td><td>${esc(show(fk[k], r[k], r))}</td></tr>`).join('')}</table>`;
   const sign = (a, b) => `<div class="pr-sign"><span>${a}</span><span>${b}</span></div>`;
-  const stu = s.name ? `<table class="pr-kv"><tr><td>Student</td><td>${esc(s.name)}</td></tr><tr><td>Father's name</td><td>${esc(s.father)}</td></tr><tr><td>Class</td><td>${esc(s.cls + (s.section ? '-' + s.section : ''))}</td></tr><tr><td>Scholar / Adm. No</td><td>${esc(s.adm)}</td></tr></table><br>` : '';
+  const ph = await stuPhoto(r.student), img = ph ? `<img class="pr-photo" src="${ph}" alt="">` : '';
+  const stu = s.name ? img + `<table class="pr-kv"><tr><td>Student</td><td>${esc(s.name)}</td></tr><tr><td>Father's name</td><td>${esc(s.father)}</td></tr><tr><td>Class</td><td>${esc(s.cls + (s.section ? '-' + s.section : ''))}</td></tr><tr><td>Scholar / Adm. No</td><td>${esc(s.adm)}</td></tr></table><br>` : '';
   let html = '';
   if (m.print === 'tc') html = `${head()}<div class="pr-title">TRANSFER CERTIFICATE</div><p>TC No: <b>${esc(r.no)}</b> &nbsp; Date: <b>${dmy(r.date)}</b></p>${stu}${kv(['admDate','lastCls','leaveDate','result','promoted','dues','conduct','reason','workingDays','present','remarks'])}${sign('Prepared by', 'Principal')}`;
   else if (m.print === 'cert') html = `${head()}<div class="pr-title">${esc((r.kind || 'Certificate').toUpperCase())} CERTIFICATE</div><p>No: <b>${esc(r.no)}</b> &nbsp; Date: <b>${dmy(r.date)}</b></p><p style="font-size:15px;line-height:2">This is to certify that <b>${esc(s.name || '')}</b>, son/daughter of <b>${esc(s.father || '')}</b>, is a student of Class <b>${esc(s.cls || '')}</b> (Scholar No <b>${esc(s.adm || '')}</b>) of this school${r.occasion ? ' and took part in <b>' + esc(r.occasion) + '</b>' : ''}${r.position ? ', securing <b>' + esc(r.position) + '</b>' : ''}.${r.purpose ? ' This certificate is issued for ' + esc(r.purpose) + '.' : ''}</p>${sign('Class Teacher', 'Principal')}`;
-  else if (m.print === 'idcard') html = `<div class="pr-cards"><div class="pr-card"><h4>${esc(META.school)}</h4><b>${esc(r.kind)}</b><br>${esc(s.name || '')}<br>Class ${esc(s.cls || '')}${s.section ? '-' + esc(s.section) : ''} · Adm ${esc(s.adm || '')}<br>Father: ${esc(s.father || '')}<br>Mobile: ${esc(s.phone || '')}${r.blood ? '<br>Blood group: ' + esc(r.blood) : ''}${r.route ? '<br>Route: ' + esc(r.route) : ''}<br>Valid till: ${dmy(r.valid)}</div></div>`;
+  else if (m.print === 'idcard') html = `<div class="pr-cards"><div class="pr-card"><h4>${esc(META.school)}</h4>${img}<b>${esc(r.kind)}</b><br>${esc(s.name || '')}<br>Class ${esc(s.cls || '')}${s.section ? '-' + esc(s.section) : ''} · Adm ${esc(s.adm || '')}<br>Father: ${esc(s.father || '')}<br>Mobile: ${esc(s.phone || '')}${r.blood ? '<br>Blood group: ' + esc(r.blood) : ''}${r.route ? '<br>Route: ' + esc(r.route) : ''}<br>Valid till: ${dmy(r.valid)}</div></div>`;
   else if (m.print === 'gatepass') html = `${head()}<div class="pr-title">GATE PASS</div>${stu}${kv(['no','date','time','kind','person','relation','phone','reason'])}${sign('Guardian / Employee', 'Office')}`;
   else if (m.print === 'admit') html = `${head()}<div class="pr-title">ADMIT CARD — ${esc(r.exam)}</div>${stu}${kv(['roll','room','noDues','temporary'])}${sign('Class Teacher', 'Principal')}`;
   else if (m.print === 'receipt') html = `${head()}<div class="pr-title">${m.id === 'oldreceipt' ? 'FEE RECEIPT (copy from old ERP)' : 'RECEIPT'}</div>${stu}${kv(m.fields.map(f => f.k).filter(k => k !== 'student' && r[k] !== '' && r[k] !== null && r[k] !== undefined))}${sign('Parent', 'Accountant')}`;
@@ -228,7 +238,17 @@ async function readImport(file) {
   try {
     const d = JSON.parse(await file.text()), rows = Array.isArray(d) ? d : d.rows;
     if (!Array.isArray(rows)) throw Error('This file has no rows.');
-    if (d.module && d.module !== CUR) throw Error('This file is for "' + d.module + '", not ' + mod().title + '.');
+    if (d.module && !['relink', 'bundle'].includes(d.module) && d.module !== CUR) throw Error('This file is for "' + d.module + '", not ' + mod().title + '.');
+    if (d.module === 'bundle') {   // several steps from the old ERP in one file (Principal); preview runs them and undoes them
+      IMPORT = { bundle: d }; const p = await api('bundle', { steps: d.steps, title: d.title || '', apply: false });
+      out.innerHTML = `<p><b>${esc(d.title || 'Old ERP fixes')}</b></p><ul>${p.steps.map(x => `<li>Step ${x.step}: ${esc(x.what)} — ${x.new} to do, ${x.already} already right</li>`).join('')}</ul><button class="go" onclick="applyImport()">Do all steps</button>`;
+      return;
+    }
+    if (d.module === 'relink') {   // a file of Old ERP records to move to the right child (Principal)
+      IMPORT = { relink: rows }; const p = await api('relinkBatch', { rows, apply: false });
+      out.innerHTML = `<div class="rg-kpis"><div class="rg-kpi"><b>${p.total}</b><small>records in file</small></div><div class="rg-kpi"><b>${p.toMove}</b><small>to move to the right child</small></div><div class="rg-kpi"><b>${p.already}</b><small>already right</small></div></div>${p.toMove ? `<button class="go" onclick="applyImport()">Move ${p.toMove} records</button>` : '<p>Nothing to move.</p>'}`;
+      return;
+    }
     IMPORT = rows; const p = await api('import', { m: CUR, rows, apply: false });
     out.innerHTML = `<div class="rg-kpis"><div class="rg-kpi"><b>${p.total}</b><small>rows in file</small></div><div class="rg-kpi"><b>${p.toAdd}</b><small>new</small></div><div class="rg-kpi"><b>${p.unchanged}</b><small>already here, same</small></div><div class="rg-kpi"><b>${p.conflicts.length}</b><small>already here, different</small></div></div>
       ${p.conflicts.length ? `<p>These rows already exist with different values, so the import is blocked: ${esc(p.conflicts.slice(0, 15).join(', '))}</p>` : p.toAdd ? `<button class="go" onclick="applyImport()">Import ${p.toAdd} rows</button>` : '<p>Nothing new to import.</p>'}`;
@@ -236,7 +256,9 @@ async function readImport(file) {
 }
 async function applyImport() {
   if (BUSY || !IMPORT) return; BUSY = true;
-  try { const p = await api('import', { m: CUR, rows: IMPORT, apply: true }); toast(p.added + ' rows imported'); $('regDialog').close(); await openMod(CUR); } catch (e) { toast(e.message); } finally { BUSY = false; }
+  try { if (IMPORT.bundle) { const p = await api('bundle', { steps: IMPORT.bundle.steps, title: IMPORT.bundle.title || '', apply: true }); toast('Done: ' + p.steps.map(x => x.new).reduce((a, b) => a + b, 0) + ' changes'); IMPORT = null; $('regDialog').close(); await openMod(CUR); return; }
+    if (IMPORT.relink) { const p = await api('relinkBatch', { rows: IMPORT.relink, apply: true }); toast(p.toMove + ' records moved to the right child'); IMPORT = null; $('regDialog').close(); await openMod(CUR); return; }
+    const p = await api('import', { m: CUR, rows: IMPORT, apply: true }); toast(p.added + ' rows imported'); $('regDialog').close(); await openMod(CUR); } catch (e) { toast(e.message); } finally { BUSY = false; }
 }
 function openCarry() {
   const sessions = [...new Set(ROWS.map(r => r.session))].sort();
