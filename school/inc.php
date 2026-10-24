@@ -82,7 +82,7 @@ function sch_rows_to_records(array $rows): array {
     $out = [];
     foreach ($rows as $row) {
         // Learning content has its own subject/child-scoped API; keys never use legacy sync.
-        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct') || str_starts_with($row['k'], 'scan') || str_starts_with($row['k'], 'sal') || str_starts_with($row['k'], 'prof') || str_starts_with($row['k'], 'fin') || str_starts_with($row['k'], 'reg')) continue;   // reg* = School Office registers (registers_api.php)
+        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct') || str_starts_with($row['k'], 'scan') || str_starts_with($row['k'], 'sal') || str_starts_with($row['k'], 'prof') || str_starts_with($row['k'], 'fin') || str_starts_with($row['k'], 'reg') || str_starts_with($row['k'], 'ofc') || str_starts_with($row['k'], 'prc') || str_starts_with($row['k'], 'pho')) continue;   // reg* = School Office registers (registers_api.php), ofc* = Fee Receipt (feecollect_api.php), prc*/pho* = Progress Report + photos (progress_api.php)
         if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck'], true)) continue;
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}

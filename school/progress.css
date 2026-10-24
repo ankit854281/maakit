@@ -1,0 +1,13 @@
+/* Progress Report — screen around the old ERP cards (the cards keep their own .k/.k1/.k2/.k3/.k4 styles). */
+*{box-sizing:border-box}body{margin:0;background:#F7F7F7;color:#555;font:12px Arial,Helvetica,sans-serif}
+.pr{background:#fff;min-height:100vh;padding:10px 16px 40px}.pr-title{font-size:18px;margin:10px 0}.pr-muted{color:#73879C}
+.pr-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid #E6E9ED;padding-bottom:6px}.pr-tabs button{background:#fff;color:#333;border:1px solid #ccc}.pr-tabs button.on{background:#2D353C;color:#fff;border-color:#2D353C}
+.pr-sel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 20px;max-width:1000px;margin:8px 0}.pr-sel label{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px}.pr-inline{display:inline-flex;gap:6px;align-items:center;margin:6px 0}
+select,input{font:12px Arial,sans-serif;border:1px solid #ccc;border-radius:4px;padding:5px 7px;background:#fff;color:#333;max-width:100%}
+button{font:12px Arial,sans-serif;border:1px solid #2e6da4;background:#337ab7;color:#fff;border-radius:3px;padding:5px 14px;cursor:pointer}button:disabled{opacity:.6}
+.pr-tools{margin:8px 0}.pr-box{border:1px solid #F0C164;background:#FFFBF0;padding:10px;border-radius:3px}
+.pr-e{border-collapse:collapse;margin:8px 0}.pr-e th{background:#EDEDED;border:1px solid #ddd;padding:4px 6px}.pr-e td{border:1px solid #ddd;padding:3px 5px}.pr-n{width:52px;text-align:center}.pr-t{text-align:center;font-weight:700;min-width:44px}
+.pr-cards{background:#fff;color:#000}.pr-cards>table{margin:0 auto 18px}
+#prToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2D353C;color:#fff;border-radius:4px;z-index:9}#prToast:not(:empty){padding:10px 18px}
+@media(max-width:860px){.pr-sel{grid-template-columns:1fr}}
+@media print{body,.pr{background:#fff;padding:0}.pr-tabs,.pr-title,.pr-sel,.pr-tools,#prToast,.pr-muted{display:none!important}.pr-cards>table{margin:0 auto}}

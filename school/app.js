@@ -3807,3 +3807,9 @@ function canViewSession() { return !!U && ['principal', 'chairman', 'accountant'
 VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // School Office (18 Oct 2026+): the old ERP's remaining menus as registers — registers.php / registers_api.php / registers_lib.php
 VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.m?'&m='+encodeURIComponent(P.m):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Fee Receipt — old-ERP style fee collection (school/feecollect.php), the one place fees are taken once a session is started there.
+for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['feereceipt','fa-receipt','Fee Receipt']);
+VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Progress Report — old ERP Examination-I cards + marks entry in the same components (school/progress.php).
+for (const role of ['principal','chairman','teacher']) NAV[role].push(['progress','fa-file-lines','Progress Report']);
+VIEWS.progress=()=>'<iframe class="edu-iframe" title="Progress Report" src="progress.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
