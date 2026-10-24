@@ -26,7 +26,7 @@ $oldSettings = sch_rec_get('settings', 'main');
 $P = rtoken('principal', 'principal', 'P'); $A = rtoken('accountant', 'accountant'); $R = rtoken('reception', 'reception');
 $C = rtoken('chairman', 'chairman'); $T = rtoken('t:REGT', 'teacher', 'REGT'); $F = rtoken('p:9811122233', 'parent', '9811122233');
 try {
-    $db->exec("DELETE FROM sch_records WHERE k IN ('regRow','regSeq')");
+    $db->exec("DELETE FROM sch_records WHERE k IN ('regRow','regSeq','regHist')");
     sch_rec_put('settings', 'main', ['session' => '2026-27', 'sessionStart' => '2026-04-01', 'school' => 'Synthetic Registers School', 'place' => 'Test'], 'principal');
     sch_rec_put('student', 'reg-s1', ['id' => 'reg-s1', 'adm' => 'RG1', 'name' => 'Synthetic Register One', 'cls' => '1st', 'section' => 'A', 'phone' => '9811122233', 'father' => 'Synthetic Father'], 'principal');
     sch_rec_put('student', 'reg-s2', ['id' => 'reg-s2', 'adm' => 'RG2', 'name' => 'Synthetic Register Two', 'cls' => '1st', 'section' => 'A', 'phone' => '9822233344', 'father' => 'Synthetic Father 2'], 'principal');
@@ -95,11 +95,24 @@ try {
     [$c, $d] = rq('rows&m=oldfeecard', $A); $fc = $d['rows'][0] ?? [];
     rc(($fc['months'][2][2] ?? '') === 'Tution Fee' && ($fc['receipts'][1][2] ?? '') === '1-34' && $fc['feeDue'] === '6320', 'fee card kept as in the old ERP ' . json_encode($fc));
 
+    // Inactive children: linkable from old records, never in class lists; a fix file moves old records to the right child, safely twice
+    $bundle = ['steps' => [
+        ['kind' => 'import', 'm' => 'inactivestu', 'rows' => [['oldId' => '9145', 'name' => 'Synthetic Inactive', 'cls' => '1st', 'section' => 'A', 'adm' => 'RG9', 'status' => 'Inactive', 'reason' => 'Synthetic']]],
+        ['kind' => 'relink', 'rows' => [['m' => 'oldreceipt', 'key' => ['session' => '2024-25', 'receiptNo' => '1-7'], 'to' => 'old-9145', 'reason' => 'Synthetic wrong match']]],
+        ['kind' => 'import', 'm' => 'oldfee', 'rows' => [['session' => '2024-25', 'student' => 'old-9145', 'name' => 'Synthetic Inactive', 'due' => '10']]]]];
+    [$c] = rq('bundle', $A, $bundle); rc($c === 403, 'only Principal runs a fix file');
+    [$c, $d] = rq('bundle', $P, $bundle); rc($c === 200 && !$d['applied'] && $d['steps'][1]['new'] === 1, 'fix file preview ' . json_encode($d));
+    [$c, $d] = rq('rows&m=inactivestu', $P); rc(!$d['rows'], 'preview changed nothing');
+    [$c, $d] = rq('bundle', $P, $bundle + ['apply' => true]); rc($c === 200 && $d['applied'] && $d['steps'][2]['new'] === 1, 'fix file apply');
+    [$c, $d] = rq('bundle', $P, $bundle + ['apply' => true]); rc($c === 200 && $d['steps'][0]['already'] === 1 && $d['steps'][1]['already'] === 1 && $d['steps'][2]['already'] === 1, 'fix file twice changes nothing ' . json_encode($d));
+    [$c, $d] = rq('rows&m=oldreceipt', $A); rc(array_column($d['rows'], 'student', 'receiptNo')['1-7'] === 'old-9145', 'receipt moved to the inactive child');
+    [$c, $d] = rq('meta', $P); $ina = array_column($d['students'], null, 'id')['old-9145'] ?? null; rc($ina && !empty($ina['inactive']), 'inactive child can be chosen in School Office');
+    [$c, , $raw] = rq('load', $P, null, 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null); rc(!str_contains($recs, 'Synthetic Inactive'), 'inactive children are not in class lists or sync');
     // Old dues carried to Fee Desk only where none is set
     sch_rec_put('acctStu', 'reg-s2', ['opening' => 50], 'principal');
     rq('import', $P, ['m' => 'oldfee', 'rows' => [['session' => '2024-25', 'student' => 'reg-s1', 'name' => 'One', 'due' => '1234.50'], ['session' => '2024-25', 'student' => 'reg-s2', 'name' => 'Two', 'due' => '99']], 'apply' => true]);
     [$c] = rq('carry', $A, ['session' => '2024-25']); rc($c === 403, 'only Principal carries dues');
-    [$c, $d] = rq('carry', $P, ['session' => '2024-25', 'apply' => false]); rc($c === 200 && $d['students'] === 1 && $d['total'] === 123450 && count($d['skipped']) === 1, 'carry preview');
+    [$c, $d] = rq('carry', $P, ['session' => '2024-25', 'apply' => false]); rc($c === 200 && $d['students'] === 1 && $d['total'] === 123450 && count($d['skipped']) === 2 && str_contains(implode(',', $d['skipped']), 'inactive'), 'carry preview (inactive child skipped)');
     rc((sch_rec_get('acctStu', 'reg-s1')['opening'] ?? null) === null, 'preview did not write');
     rq('carry', $P, ['session' => '2024-25', 'apply' => true]);
     rc(abs((float)sch_rec_get('acctStu', 'reg-s1')['opening'] - 1234.5) < 0.001 && (float)sch_rec_get('acctStu', 'reg-s2')['opening'] === 50.0, 'carry wrote only the empty one');
@@ -110,7 +123,7 @@ try {
     [$c, , $raw] = rq('load', $P, null, 'api.php'); rc($c === 200 && !str_contains($raw, 'regRow') && !str_contains($raw, 'Family shifted') && !str_contains($raw, '1-708'), 'legacy sync hides registers');
     echo "Registers: role scoping, auto numbers, validation, paise, stock, cash book, read-only old-ERP import with original receipt numbers, old-due carry and sync privacy passed\n";
 } finally {
-    $db->exec("DELETE FROM sch_records WHERE k IN ('regRow','regSeq') OR (k IN ('student','acctStu') AND r IN ('reg-s1','reg-s2')) OR (k='teacher' AND r='REGT')");
+    $db->exec("DELETE FROM sch_records WHERE k IN ('regRow','regSeq','regHist') OR (k IN ('student','acctStu') AND r IN ('reg-s1','reg-s2')) OR (k='teacher' AND r='REGT')");
     if ($oldSettings !== null) sch_rec_put('settings', 'main', $oldSettings, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='settings' AND r='main'");
     foreach (['t:REGT', 'p:9811122233'] as $uid) { $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$uid]); $db->prepare('DELETE FROM sch_users WHERE uid=?')->execute([$uid]); }
 }

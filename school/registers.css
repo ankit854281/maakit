@@ -24,7 +24,7 @@ dialog{border:0;border-radius:24px;padding:22px;width:min(1000px,96vw);max-heigh
 #regToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--rg-ink);color:#fff;border-radius:999px;padding:0 18px;max-width:90vw}#regToast:not(:empty){padding:10px 18px}
 .rg-kpis{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 14px}.rg-kpi{background:#f6f6f8;border-radius:14px;padding:8px 14px}.rg-kpi b{display:block;font-size:17px}
 .rg-old{font-size:12px;color:var(--rg-muted)}.rg-note{background:#f6f6f8;border-radius:14px;padding:10px 14px;margin:10px 0}
-#regPrint{display:none}
+#regPrint{display:none}.rg-photo{width:64px;height:76px;object-fit:cover;border-radius:6px;float:right;margin-left:10px}.pr-photo{float:right;width:90px;height:108px;object-fit:cover;border:1px solid #000;margin:0 0 8px 10px}.pr-card .pr-photo{width:64px;height:76px}
 .or-wrap{border:1px solid #000;font:10px Verdana,Arial,sans-serif;color:#000;max-width:760px}.or-head{width:100%;border-collapse:collapse}.or-logo{width:11%;text-align:center}.or-logo img{height:100px}
 .or-name{text-align:center;font-family:Arial;font-size:12pt}.or-name span{font-size:22pt;color:#f00;font-family:'Times New Roman',serif;font-weight:700}.or-bar{text-align:center}.or-bar img{height:50px}
 .or-title{text-align:center;font-size:14px;font-weight:700;border-top:1px solid #000;padding:2px}.or-k{width:100%;border-collapse:collapse;margin-top:2px}.or-k td,.or-k th{border:1px solid #000;padding:2px 3px;font-size:10px;text-align:left}

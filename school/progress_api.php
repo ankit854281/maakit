@@ -97,7 +97,7 @@ case 'marks': {
         if (!$readCards) sch_fail('Not open for this login.', 403);
         $subs = []; foreach ((array)sch_rec_get('alloc', 'main') as $al) if (($al['c'] ?? '') === $cls && ($al['s'] ?? '') !== '' && !in_array($al['s'], $subs, true)) $subs[] = (string)$al['s'];
         $mine = array_values(array_filter($subs, fn($x) => $teachesSubject($cls, $x)));
-        $kids = array_values(array_filter(reg_students(), fn($x) => $x['cls'] === $cls)); usort($kids, fn($x, $y) => strcmp($x['name'], $y['name']));
+        $kids = array_values(array_filter(reg_students(), fn($x) => $x['cls'] === $cls && empty($x['inactive']))); usort($kids, fn($x, $y) => strcmp($x['name'], $y['name']));
         $photoIds = []; foreach ($kids as $k) if (sch_rec_get('phoStu', $k['id'])) $photoIds[] = $k['id'];
         sch_json(['ok' => true, 'subjects' => $subs, 'mySubjects' => $mine, 'classTeacher' => $classTeacher($cls), 'students' => $kids, 'withPhoto' => $photoIds, 'marks' => $rows('prcMarks', "$ses|$exam|$cls|"), 'extra' => sch_rec_get('prcExtra', "$ses|$exam|$cls") ?? ['rows' => []],
             'other' => $exam === 'Term-2' ? ['marks' => $rows('prcMarks', "$ses|Term-1|$cls|"), 'extra' => sch_rec_get('prcExtra', "$ses|Term-1|$cls") ?? ['rows' => []]] : null]);
@@ -107,7 +107,7 @@ case 'marks': {
     if (!$teachesSubject($cls, $subj)) sch_fail('Only the teacher of this subject or the Principal can enter these marks.', 403);
     $students = reg_students(); $clean = [];
     foreach ((array)($in['rows'] ?? []) as $sid => $m) {
-        if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls) throw new InvalidArgumentException('A student in the list is not in class ' . $cls . '.');
+        if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls || !empty($students[$sid]['inactive'])) throw new InvalidArgumentException('A student in the list is not in class ' . $cls . '.');
         $r = [];
         foreach (PRC_PARTS as [$k, $label, $max]) {
             $v = strtoupper(trim((string)(((array)$m)[$k] ?? '')));
@@ -128,7 +128,7 @@ case 'extra': {
     if (!$classTeacher($cls)) sch_fail('Only the class teacher or the Principal can enter this.', 403);
     $students = reg_students(); $clean = []; $grades = ['', 'A', 'B', 'C'];
     foreach ((array)($in['rows'] ?? []) as $sid => $x) {
-        if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls) throw new InvalidArgumentException('A student in the list is not in class ' . $cls . '.');
+        if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls || !empty($students[$sid]['inactive'])) throw new InvalidArgumentException('A student in the list is not in class ' . $cls . '.');
         $x = (array)$x; $r = [];
         foreach (['art', 'work', 'health', 'disc'] as $k) { $g = strtoupper(trim((string)($x[$k] ?? ''))); if (!in_array($g, $grades, true)) throw new InvalidArgumentException('Co-scholastic grades are A, B or C.'); $r[$k] = $g; }
         foreach (['days', 'present'] as $k) { $v = trim((string)($x[$k] ?? '')); if ($v !== '' && !preg_match('/^\d{1,3}$/', $v)) throw new InvalidArgumentException('Working days and presents are whole numbers.'); $r[$k] = $v; }

@@ -46,7 +46,7 @@ case 'state': {
     foreach ($st as $row) $led[substr((string)$row['r'], strlen($ses) + 1)] = true;
     $seq = sch_rec_get('ofcSeq', $ses);
     $list = [];
-    foreach ($students as $id => $s) $list[] = ['id' => $id, 'name' => (string)($s['name'] ?? ''), 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'adm' => (string)($s['adm'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'ledger' => isset($led[$id])];
+    foreach ($students as $id => $s) $list[] = ['id' => $id, 'name' => (string)($s['name'] ?? ''), 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'adm' => (string)($s['adm'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'ledger' => isset($led[$id]), 'inactive' => !empty($s['inactive'])];
     $set = sch_rec_get('settings', 'main') ?? [];
     sch_json(['ok' => true, 'ses' => $ses, 'sessions' => $sessions, 'live' => $cfg['sessions'][$ses] ?? null, 'students' => $list, 'role' => $role, 'canCollect' => $canCollect, 'isPrincipal' => $isP,
         'next' => $seq ? $seq['prefix'] . ($seq['n'] + 1) : '', 'banks' => $banks, 'modes' => OFC_MODES, 'months' => OFC_MONTHS, 'today' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Kolkata')))->format('Y-m-d'),
