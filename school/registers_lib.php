@@ -238,7 +238,8 @@ function reg_students(): array {
     foreach (sch_db()->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
         $s = json_decode((string)$row['d'], true);
         if (is_array($s)) $out[(string)$row['r']] = ['id' => (string)$row['r'], 'name' => (string)($s['name'] ?? ''), 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''),
-            'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)($s['erpId'] ?? '')];
+            'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)($s['erpId'] ?? ''),
+            'mother' => (string)($s['mother'] ?? ''), 'dob' => (string)($s['dob'] ?? '')];
     }
     return $out;
 }

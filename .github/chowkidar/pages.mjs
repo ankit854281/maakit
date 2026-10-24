@@ -39,6 +39,8 @@ export const PAGES = [
   { path: '/email-otp.php', naam: 'Email OTP login', chahiye: ['Maakit'] },
   { path: '/school/finance.php', naam: 'School Fee Department', chahiye: ['Fee Department'] },
   { path: '/school/registers.php', naam: 'School Office registers', chahiye: ['School Office'] },
+  { path: '/school/feecollect.php', naam: 'Fee Receipt', chahiye: ['Fee Receipt'] },
+  { path: '/school/progress.php', naam: 'Progress Report', chahiye: ['Progress Report'] },
   { path: '/school/studio.php', naam: 'School Smart Studio', chahiye: ['Teacher Smart Studio'] },
   { path: '/school/learning.php', naam: 'School Learning Lab', chahiye: ['Learning Lab'] },
   { path: '/public/order-tools.php', naam: 'Customer delivery safety and fee login guard', chahiye: ['Maakit'] },
