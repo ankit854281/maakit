@@ -23,7 +23,7 @@ function frq($a, $token, $q = '', $body = null, $api = 'feereports_api.php') {
 }
 $db = sch_db();
 $P = frtok('principal', 'principal'); $A = frtok('accountant', 'accountant'); $R = frtok('reception', 'reception');
-$clean = fn() => $db->exec("DELETE FROM sch_records WHERE k='ofcRcpt' OR (k='regRow' AND (r LIKE 'oldreceipt|%' OR r LIKE 'oldrcptdet|%'))");
+$clean = fn() => $db->exec("DELETE FROM sch_records WHERE k='ofcRcpt' OR (k='regRow' AND (r LIKE 'oldreceipt|%' OR r LIKE 'oldrcptdet|%' OR r LIKE 'oldfeecard|%')) OR (k='student' AND r='fr-s1')");
 try {
     $clean();
     $old = [['session' => '2026-27', 'receiptNo' => '1-10', 'date' => '2026-10-01', 'student' => '', 'scholarNo' => 'S1', 'name' => 'Synthetic One', 'cls' => '5th', 'section' => 'A', 'father' => 'F1', 'months' => 'April', 'total' => '6100', 'discount' => '1900', 'received' => '4200', 'mode' => 'Cash', 'status' => 'Cleared', 'user' => 'admin'],
@@ -55,6 +55,19 @@ try {
     // A receipt taken here with the same number as an archive row is counted once
     $mk('1-11', 11, '2026-10-02', 200000, 'Online', 'Cleared');
     [$c, $d] = frq('report', $A, $q); frc($d['count'] === 3 && $d['total'][15] === '7700', 'never counted twice ' . json_encode($d['total']));
+    // Dues reports from the old fee card (session not started): heads up to the month, old due, the receipts' discount
+    sch_rec_put('student', 'fr-s1', ['id' => 'fr-s1', 'adm' => 'S9', 'name' => 'Synthetic Due', 'cls' => '7th', 'section' => 'A', 'phone' => '9811100000'], 'principal');
+    $card = ['session' => '2025-26', 'oldId' => '9001', 'liveId' => 'fr-s1', 'name' => 'Synthetic Due', 'cls' => '7th', 'section' => 'A', 'scholar' => 'S9 /', 'father' => 'F9', 'mobile' => '9811100000,', 'oldFee' => '200', 'asOn' => '22-10-2026',
+        'profile' => [['School'], ['Class', '', '7th - NA', 'NA | Active'], ['Section', '', 'A'], ['Session', '', '2025-2026', 'Scholar No /Roll No', 'S9 /'], ['Admitted Class', '', '-', 'Student Type', 'Old Student']],
+        'months' => [['', 'D/A', 'Fee Name', 'Amount', 'Paid/Disc Amount', 'Balance', 'N Paid', 'Status'], ['April'], ['', '', 'Tution Fee', '1000', '600', '400', '', 'Not Paid'], ['May'], ['', '', 'Transport', '500', '0', '500', '', 'Not Paid']]];
+    [$c, $d] = frq('import', $P, '', ['m' => 'oldfeecard', 'rows' => [$card], 'apply' => true], 'registers_api.php'); frc($c === 200, 'card import ' . json_encode($d));
+    [$c, $d] = frq('import', $P, '', ['m' => 'oldreceipt', 'rows' => [['session' => '2025-26', 'receiptNo' => '1-90', 'date' => '2025-04-10', 'student' => 'fr-s1', 'scholarNo' => 'S9', 'name' => 'Synthetic Due', 'cls' => '7th', 'section' => 'A', 'total' => '600', 'discount' => '100', 'received' => '500', 'mode' => 'Cash', 'status' => 'Cleared', 'user' => 'admin']], 'apply' => true], 'registers_api.php'); frc($c === 200, 'receipt import');
+    [$c, $d] = frq('report', $A, '&k=stmt&ses=2025-26&month=3'); $H = $d['head'][1]; $r = array_combine($H, $d['rows'][0]);
+    frc($r['Old Due'] === '200' && $r['Cur Session Fee'] === '1500' && $r['Transport/H Amount'] === '500' && $r['Discount Amount'] === '100' && $r['Currently Received'] === '500' && $r['Transport Due Amount'] === '500' && $r['Fee Due Amount'] === '600' && $r['Net Due Amount'] === '1100' && $r['Status'] === 'Active' && $r['Student Type'] === 'Old Student', 'Fee Statement ' . json_encode($r));
+    [$c, $d] = frq('report', $A, '&k=stmt&ses=2025-26&month=4'); $r = array_combine($d['head'][1], $d['rows'][0]); frc($r['Cur Session Fee'] === '1000' && $r['Net Due Amount'] === '600', 'upto April only');
+    [$c, $d] = frq('report', $A, '&k=def2&ses=2025-26&month=3'); $r = array_combine($d['head'][0], $d['rows'][0]); frc($r['Total Fee - Disc - Rec + Trns = Due'] === '1700 - 100 - 500 + =1100 (Payble Due)' && $r['Due Fees'] === '1100', 'Fee Defaulter - II ' . json_encode($r));
+    [$c, $d] = frq('report', $A, '&k=clswise&ses=2025-26'); $r = array_column($d['rows'], null, 0)['7th A']; frc($r === ['7th A', '1500', '100', '500', '200', '1100'], 'class wise ' . json_encode($r));
+    [$c] = frq('report', $A, '&k=stmt&ses='); frc($c === 400, 'dues reports need a session');
     [$c] = frq('report', $A, '&k=nope'); frc($c === 400, 'unknown report');
     echo "Fee Reports: old ERP columns, archive + new receipts once each, filters, head/day/month/bank/deleted reports and roles passed\n";
 } finally { $clean(); }

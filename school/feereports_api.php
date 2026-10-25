@@ -2,7 +2,7 @@
 // ============================================================
 // Old ERP Fee Reports API (see feereports_lib.php) — read-only
 //   GET ?a=meta                       reports, sessions, classes, users, modes
-//   GET ?a=report&k=&ses=&from=&to=&cls=&sec=&mode=&user=
+//   GET ?a=report&k=&ses=&from=&to=&cls=&sec=&mode=&user=   (dues reports: &month=<upto month 1-12>&due=1)
 // Principal, Chairman and Accountant (the old ERP's Fee Report menu).
 // ============================================================
 declare(strict_types=1);
@@ -31,7 +31,7 @@ try {
         $k = (string)($_GET['k'] ?? ''); if (!isset(fr_reports()[$k])) throw new InvalidArgumentException('Choose a report.');
         $ses = ofc_ses((string)($_GET['ses'] ?? ''));
         $f = ['from' => $q('from', '/^\d{4}-\d\d-\d\d$/'), 'to' => $q('to', '/^\d{4}-\d\d-\d\d$/'), 'cls' => $q('cls', '/^[\w ]{1,10}$/'), 'sec' => $q('sec', '/^[\w ]{1,10}$/'),
-            'mode' => $q('mode', '/^[\w ]{1,20}$/'), 'user' => $q('user', '/^.{1,60}$/u')];
+            'mode' => $q('mode', '/^[\w ]{1,20}$/'), 'user' => $q('user', '/^.{1,60}$/u'), 'month' => (int)$q('month', '/^\d{1,2}$/'), 'due' => $q('due', '/^1$/')];
         [$head, $body, $tot] = fr_build($k, $ses, $f);
         $sum = null;
         if (in_array($k, ['fee1', 'fee2'], true)) {
