@@ -59,7 +59,7 @@ function render() {
     ${IX.isPrincipal ? `<div class="or-box"><b>Import from old ERP</b> — file <b>11-Old-ERP-Reports.json</b>. It is sent in small parts; a page already here is never changed.<br><input type="file" accept=".json" onchange="readImport(this.files[0])">
       ${IMP ? `<p>${IMP.pages.length} pages in the file. ${BUSY ? 'Sending part ' + (IMP.done + 1) + '…' : ''}</p><button onclick="applyImport()" ${BUSY ? 'disabled' : ''}>Import</button>` : ''}</div>` : ''}
     <p>${IX.pages.length} pages here.</p>`;
-  $('orRoot').innerHTML = `<div class="or"><aside class="or-side"><label>Session <select onchange="SES=this.value;CUR=null;render()">${sessions.map(s => `<option ${s === SES ? 'selected' : ''} value="${esc(s)}">${esc(s.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'))}</option>`).join('')}</select></label>${CUR ? '<button onclick="CUR=null;render()">‹ All reports</button>' : ''}${side}</aside><main class="or-main">${main}</main></div>`;
+  $('orRoot').innerHTML = `<div class="or${CUR ? ' open' : ''}"><aside class="or-side"><label>Session <select onchange="SES=this.value;CUR=null;render()">${sessions.map(s => `<option ${s === SES ? 'selected' : ''} value="${esc(s)}">${esc(s.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'))}</option>`).join('')}</select></label>${CUR ? '<button class="back" onclick="CUR=null;render()">‹ All reports</button>' : ''}${side}</aside><main class="or-main">${main}</main></div>`;
   const s = $('orQ'); if (s && Q && document.activeElement !== s) { s.focus(); s.setSelectionRange(Q.length, Q.length); }
 }
 boot();
