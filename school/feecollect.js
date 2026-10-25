@@ -22,7 +22,12 @@ async function api(a, body, q) {
 const nonce = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
 
 async function boot(ses) {
-  try { ST = await api('state', null, { ses: ses || SES0 || '' }); START = null; if (SEL.sid) await openStudent(SEL.sid, true); else render(); }
+  try {
+    ST = await api('state', null, { ses: ses || SES0 || '' }); START = null;
+    const want = boot.sid === undefined ? (boot.sid = new URLSearchParams(location.search).get('sid') || '') : '';   // opened from Student Search
+    const w = want && ST.students.find(x => x.id === want); if (w) { SEL.cls = w.cls; SEL.sec = w.section; SEL.sid = w.id; }
+    if (SEL.sid) await openStudent(SEL.sid, true); else render();
+  }
   catch (e) { $('ofcRoot').innerHTML = `<div class="fr-box"><h3>Fee Receipt</h3><p>${esc(e.message)}</p></div>`; }
 }
 async function openStudent(sid, keep) {

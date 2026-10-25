@@ -3820,7 +3820,7 @@ VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="financ
 VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.m?'&m='+encodeURIComponent(P.m):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Fee Receipt — old-ERP style fee collection (school/feecollect.php), the one place fees are taken once a session is started there.
 for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['feereceipt','fa-receipt','Fee Receipt']);
-VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.sid?'&sid='+encodeURIComponent(P.sid):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Progress Report — old ERP Examination-I cards + marks entry in the same components (school/progress.php).
 for (const role of ['principal','chairman','teacher']) NAV[role].push(['progress','fa-file-lines','Progress Report']);
 // Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).

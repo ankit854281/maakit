@@ -123,3 +123,11 @@ html.classic .fn-stats .fn-stat small { color: #fff; }
   .cl-right { padding: 10px 10px 40px; }
 }
 @media print { .cl-left, .cl-top { display: none !important; } .cl-right { padding: 0; } }
+/* Student Search (old student_search.php / student_search_det.php) */
+.cl-ss{font:12px Arial,Helvetica,sans-serif;color:#555}.cl-ss-box{border:1px solid #ccc;border-radius:4px;background:#fff;margin-bottom:14px}.cl-ss-box h3{margin:0;padding:8px 10px;color:#fff;font:700 17px Helvetica,Arial,sans-serif;background:linear-gradient(#3c3c3c,#6b6b6b);border-radius:4px 4px 0 0}
+.cl-ss-f{display:grid;grid-template-columns:135px 240px 155px 170px auto;align-items:center;gap:6px;padding:20px 30px}.cl-ss-f select,.cl-ss-f input{height:30px;border:1px solid #ccc;border-radius:4px;padding:4px 7px;font:14px Arial}.cl-ss-f .fb{justify-self:start}
+.cl-ss-t{font:700 17px Helvetica,Arial,sans-serif;margin:8px 10px}.cl-ss-wrap{overflow:auto}.cl-ss-tb{border-collapse:collapse;width:100%;font:11px Verdana,Geneva,sans-serif}.cl-ss-tb th{border:2px solid #ddd;padding:8px 4px;font-weight:700;color:#555;text-align:center}
+.cl-ss-tb td{border:1px solid #ddd;padding:8px 4px;text-align:center;vertical-align:top;color:#f00}.cl-ss-tb td:first-child{color:#f00}.cl-ss-ph{display:inline-block;width:50px;height:50px;border:1px solid #ccc;overflow:hidden}.cl-ss-ph img{width:100%;height:100%;object-fit:cover}
+.fb{display:inline-block;color:#fff!important;font:12px Verdana,Geneva,sans-serif;padding:1px 5px;border-radius:3px;line-height:1.5;cursor:pointer;text-decoration:none;border:1px solid transparent;white-space:nowrap}
+.fb-g{background:#3EC291;border-color:#3EC291}.fb-w{background:#EEBB57;border-color:#EEBB57}.fb-r{background:#FB5A43;border-color:#FB5A43}
+@media(max-width:860px){.cl-ss-f{grid-template-columns:1fr;padding:12px}}

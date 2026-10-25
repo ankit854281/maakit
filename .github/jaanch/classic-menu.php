@@ -12,7 +12,7 @@ $mods = reg_modules(); $tabs = ['dashboard', 'students', 'billing', 'receipts', 
 foreach ($m as [, $label, $t]) {
     if ($t === '') continue;
     [$k, $v] = explode(':', $t);
-    $ok = $k === 'p' ? (str_contains($app, "['feereports','fa-") && isset($fr[$v])) : ($k === 'r' ? str_contains($app, "['oldreports','fa-") : ($k === 'o' ? isset($mods[$v]) : ($k === 'f' ? in_array($v, $tabs, true) : (bool)preg_match("/\\['" . preg_quote($v, '/') . "','fa-/", $app))));
+    $ok = $k === 'p' ? (str_contains($app, "['feereports','fa-") && isset($fr[$v])) : ($k === 'r' ? str_contains($app, "['oldreports','fa-") : ($k === 'o' ? isset($mods[$v]) : ($k === 'f' ? in_array($v, $tabs, true) : (bool)preg_match("/\\['" . preg_quote($v, '/') . "', ?'fa-/", $app . $js))));
     if (!$ok) $bad[] = "$label → $t";
 }
 if ($bad) throw new RuntimeException('Classic menu points at screens that do not exist: ' . implode('; ', $bad));
