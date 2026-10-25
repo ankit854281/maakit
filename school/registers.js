@@ -237,13 +237,14 @@ async function readImport(file) {
   const out = $('impOut'); if (!file) return;
   try {
     const d = JSON.parse(await file.text()), rows = Array.isArray(d) ? d : d.rows;
-    if (!Array.isArray(rows)) throw Error('This file has no rows.');
     if (d.module && !['relink', 'bundle'].includes(d.module) && d.module !== CUR) throw Error('This file is for "' + d.module + '", not ' + mod().title + '.');
-    if (d.module === 'bundle') {   // several steps from the old ERP in one file (Principal); preview runs them and undoes them
+    if (d.module === 'bundle') {   // a bundle carries steps, not rows
+      if (!Array.isArray(d.steps) || !d.steps.length) throw Error('This file has no steps.');   // several steps from the old ERP in one file (Principal); preview runs them and undoes them
       IMPORT = { bundle: d }; const p = await api('bundle', { steps: d.steps, title: d.title || '', apply: false });
       out.innerHTML = `<p><b>${esc(d.title || 'Old ERP fixes')}</b></p><ul>${p.steps.map(x => `<li>Step ${x.step}: ${esc(x.what)} — ${x.new} to do, ${x.already} already right</li>`).join('')}</ul><button class="go" onclick="applyImport()">Do all steps</button>`;
       return;
     }
+    if (!Array.isArray(rows)) throw Error('This file has no rows.');
     if (d.module === 'relink') {   // a file of Old ERP records to move to the right child (Principal)
       IMPORT = { relink: rows }; const p = await api('relinkBatch', { rows, apply: false });
       out.innerHTML = `<div class="rg-kpis"><div class="rg-kpi"><b>${p.total}</b><small>records in file</small></div><div class="rg-kpi"><b>${p.toMove}</b><small>to move to the right child</small></div><div class="rg-kpi"><b>${p.already}</b><small>already right</small></div></div>${p.toMove ? `<button class="go" onclick="applyImport()">Move ${p.toMove} records</button>` : '<p>Nothing to move.</p>'}`;

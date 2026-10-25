@@ -14,7 +14,8 @@
 //    by item (22 Oct 2026). Each item points at the new screen that does that
 //    job:  'v:<view>' = a screen of app.js, 'o:<module>' = a School Office
 //    register (registers_lib.php), 'f:<tab>' = a Fee Department tab
-//    (finance.js). '' = the new ERP has no such screen yet: the item is kept
+//    (finance.js), 'r:<page.php>' = that old ERP page as copied into Old ERP
+//    Reports (oldreports.php). '' = the new ERP has no such screen yet: the item is kept
 //    in the menu (so the menu stays the same) and opens a short note.
 //  - Only the layout and colours change. No data is read or written here.
 // ============================================================================
@@ -41,7 +42,7 @@ const CLASSIC_MENU = [
   ['Student Attendance', 'fa-clipboard', [['Student Attendance', 'v:attendance'], ['Student Holiday Mgmt', 'v:calendar'], ['Attendance Register', 'v:attendance'], ['Attendance Status', 'v:attendance'], ['Absentees Report', 'v:attendance'], ['Absentees Report II', 'v:attendance'], ['Attendance Summary', 'v:attendance']]],
   ['SMS', 'fa-comment', [['Due Fee SMS 1', 'o:msgtpl'], ['Due Fee SMS 2', 'o:msgtpl'], ['Send SMS to Employee', 'o:msgtpl'], ['Send APP Link', 'o:msgtpl'], ['Send Bulk Sms', 'o:msgtpl'], ['Send  Sms', 'o:msgtpl'], ['Send Exam Marks', 'o:msgtpl']]],
   ['Student TC', 'fa-clone', [['Create New TC', 'o:tc'], ['Student TC', 'o:tc'], ['TC Register', 'o:tc']]],
-  ['Student Report', 'fa-bars', [['Year Wise Report', 'v:students'], ['Religion Wise Report', 'o:studinfo'], ['Age Wise Report', 'v:students'], ['Student Dynamic Report Master', 'o:studinfo'], ['Student Report Master', 'o:studinfo'], ['Student Dynamic Report', 'o:studinfo'], ['Any Notice', 'v:notices'], ['Scholar Register', 'o:studinfo'], ['Admission Register', 'o:studinfo'], ['Student List', 'v:students'], ['APP Link', ''], ['Student  Document Report', 'o:document'], ['Category Wise Report', 'o:studinfo'], ['Student Sibling Report', 'v:students'], ['Admission/TC Report', 'o:tc'], ['Student Strength Format I', 'v:students'], ['Student Strength Format III', 'v:students'], ['Student Strength Format II', 'v:students'], ['Student Strength Format IV', 'v:students'], ['I Card Print-I', 'o:idcard'], ['I Card Print-II', 'o:idcard'], ['Parent Card', 'o:idcard'], ['Transport Card Print', 'o:idcard'], ['Sport Card Print', 'o:idcard'], ['SN I Card Print', 'o:idcard'], ['SN I Card Print-II', 'o:idcard'], ['Library Card Print', 'o:idcard']]],
+  ['Student Report', 'fa-bars', [['Year Wise Report', 'v:students'], ['Religion Wise Report', 'o:studinfo'], ['Age Wise Report', 'v:students'], ['Student Dynamic Report Master', 'o:studinfo'], ['Student Report Master', 'o:studinfo'], ['Student Dynamic Report', 'o:studinfo'], ['Any Notice', 'v:notices'], ['Scholar Register', 'o:studinfo'], ['Admission Register', 'o:studinfo'], ['Student List', 'v:students'], ['APP Link', 'r:report_applink.php'], ['Student  Document Report', 'o:document'], ['Category Wise Report', 'o:studinfo'], ['Student Sibling Report', 'v:students'], ['Admission/TC Report', 'o:tc'], ['Student Strength Format I', 'v:students'], ['Student Strength Format III', 'v:students'], ['Student Strength Format II', 'v:students'], ['Student Strength Format IV', 'v:students'], ['I Card Print-I', 'o:idcard'], ['I Card Print-II', 'o:idcard'], ['Parent Card', 'o:idcard'], ['Transport Card Print', 'o:idcard'], ['Sport Card Print', 'o:idcard'], ['SN I Card Print', 'o:idcard'], ['SN I Card Print-II', 'o:idcard'], ['Library Card Print', 'o:idcard']]],
   ['Reminders', 'fa-calendar', [['Add Reminder', 'o:reminder'], ['Reminder Details', 'o:reminder']]],
   ['Mobile APP', 'fa-mobile-screen', [['Calender', 'v:calendar'], ['Subject Master', 'v:syllabus'], ['Gallery / Video Category', 'o:website'], ['Homework', 'v:diaries'], ['Home work Details', 'v:diaries'], ['Assignment Details', 'v:diaries'], ['Syllabus', 'v:syllabus'], ['Contact us', 'o:website'], ['Circular', 'v:notices'], ['News/Gallery', 'o:website'], ['Video', 'o:website'], ['Academic Video', 'v:learning'], ['Academic Video Details', 'v:learning'], ['Academic Notes', 'v:learning'], ['Academic Notes Details', 'v:learning'], ['Download', 'o:website'], ['APP Attendance Present Report', 'v:attendance']]],
   ['Live Classes', 'fa-table-cells-large', [['Add Online Class URL', 'o:liveclass'], ['Live Class', 'o:liveclass']]],
@@ -66,7 +67,9 @@ const CLASSIC_MENU = [
   ['Feedback', 'fa-comment', [['Add Feedback', 'o:feedback'], ['Pending Feedback', 'o:feedback'], ['App Feedback Report', 'o:feedback']]],
   ['Lesson Plan', 'fa-chart-pie', [['Add Lesson Plan', 'v:lplans'], ['Lesson Plan Report', 'v:lplans'], ['Lesson Plan', 'v:lplans'], ['Prev. Ques. Paper Report', 'o:qpaper']]],
   ['Visitor Mgmt', 'fa-square-arrow-up-right', [['Visiting Type', 'o:visitor'], ['Add New Visitor', 'o:visitor'], ['Visitor Report', 'o:visitor']]],
-  ['Event/PTM', 'fa-indent', [['Add Event/PTM', 'o:event'], ['Create Event/PTM', 'o:event'], ['Event/PTM Report', 'o:event']]]
+  ['Event/PTM', 'fa-indent', [['Add Event/PTM', 'o:event'], ['Create Event/PTM', 'o:event'], ['Event/PTM Report', 'o:event']]],
+  // Not in the old ERP's menu: every list/report page copied from it before the licence ends (oldreports.php).
+  ['Old ERP Data', 'fa-box-archive', [['Old ERP Reports', 'v:oldreports']]]
 ];
 
 let CL_OPEN = '', CL_ITEM = '', CL_Q = '', CL_SIDE = window.innerWidth > 860, CL_NOTE = '';
@@ -77,7 +80,7 @@ function setLook(x) { try { if (x === 'new') localStorage.setItem('sch_look', 'n
 function clCan(t) {
   if (!t) return true;
   const [k, v] = [t[0], t.slice(2)], has = x => NAV[U.role].some(n => n[0] === x);
-  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : false;
+  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : false;
 }
 function clMenu() {
   return CLASSIC_MENU.map(([g, ic, items]) => [g, ic, items.filter(([, t]) => clCan(t))]).filter(([, , items]) => items.length);
@@ -89,6 +92,7 @@ function clGo(t, label) {
   if (t[0] === 'v') return go(v);
   if (t[0] === 'o') return go('office', { m: v });
   if (t[0] === 'f') return go('finance', { tab: v });
+  if (t[0] === 'r') return go('oldreports', { page: v });
 }
 function clGroupToggle(g) { CL_OPEN = CL_OPEN === g ? '' : g; render(); }
 function clSearch(v) { CL_Q = v; const box = document.getElementById('cl-menu'); if (box) box.innerHTML = clMenuHtml(); }
