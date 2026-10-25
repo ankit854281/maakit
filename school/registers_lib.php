@@ -21,6 +21,9 @@ const REG_MAX_ROWS = 20000;          // per module
 const REG_MAX_TEXT = 2000;
 
 // Roles: P principal, C chairman, A accountant, R reception, T teacher
+/** Old ERP registers a newer old ERP copy may refresh (cut-over day). Keys never depend on the matched child. */
+const REG_REFRESH = ['oldfeecard', 'oldreceipt', 'oldrcptdet'];
+
 function reg_roles(string $s): array {
     $m = ['P' => 'principal', 'C' => 'chairman', 'A' => 'accountant', 'R' => 'reception', 'T' => 'teacher'];
     return array_values(array_map(fn($c) => $m[$c], array_filter(str_split($s), fn($c) => isset($m[$c]))));

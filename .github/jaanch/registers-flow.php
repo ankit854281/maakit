@@ -106,6 +106,23 @@ try {
     [$c, $d] = rq('bundle', $P, $bundle + ['apply' => true]); rc($c === 200 && $d['applied'] && $d['steps'][2]['new'] === 1, 'fix file apply');
     [$c, $d] = rq('bundle', $P, $bundle + ['apply' => true]); rc($c === 200 && $d['steps'][0]['already'] === 1 && $d['steps'][1]['already'] === 1 && $d['steps'][2]['already'] === 1, 'fix file twice changes nothing ' . json_encode($d));
     [$c, $d] = rq('rows&m=oldreceipt', $A); rc(array_column($d['rows'], 'student', 'receiptNo')['1-7'] === 'old-9145', 'receipt moved to the inactive child');
+    // Cut-over day refresh: a newer old ERP copy updates changed receipts/cards, keeps corrected links, keeps history, never touches a started session
+    $newer = [array_merge($rows[1], ['status' => 'Cancelled']), ['session' => '2024-25', 'receiptNo' => '1-709', 'date' => '2024-04-20', 'student' => 'reg-s1', 'name' => 'Synthetic Register One', 'received' => '500', 'mode' => 'Cash']];
+    [$c] = rq('import', $A, ['m' => 'oldreceipt', 'rows' => $newer, 'refresh' => true]); rc($c === 403, 'only Principal refreshes');
+    [$c] = rq('import', $P, ['m' => 'oldfee', 'rows' => [['session' => '2024-25', 'student' => 'reg-s1', 'name' => 'One', 'due' => '1']], 'refresh' => true]); rc($c === 403, 'fee statements (keyed by child) are never refreshed');
+    [$c, $d] = rq('import', $P, ['m' => 'oldreceipt', 'rows' => $newer, 'refresh' => true]); rc($c === 200 && $d['toAdd'] === 1 && $d['toReplace'] === 1 && !$d['applied'], 'refresh preview ' . json_encode($d));
+    [$c, $d] = rq('import', $P, ['m' => 'oldreceipt', 'rows' => $newer, 'refresh' => true, 'apply' => true]); rc($c === 200 && $d['added'] === 1 && $d['replaced'] === 1, 'refresh apply');
+    [$c, $d] = rq('rows&m=oldreceipt', $A); $r7 = array_column($d['rows'], null, 'receiptNo')['1-7'] ?? [];
+    rc(count($d['rows']) === 3 && $r7['student'] === 'old-9145' && $r7['status'] === 'Cancelled', 'refresh updated the receipt and kept the corrected child ' . json_encode($r7));
+    rc((int)$db->query("SELECT COUNT(*) FROM sch_records WHERE k='regHist' AND r LIKE 'oldreceipt|%' AND d LIKE '%Newer copy from the old ERP%'")->fetchColumn() === 1, 'earlier copy kept in history');
+    [$c, $d] = rq('import', $P, ['m' => 'oldreceipt', 'rows' => $newer, 'refresh' => true]); rc($c === 200 && $d['toAdd'] === 0 && $d['toReplace'] === 0 && $d['unchanged'] === 2, 'refresh twice changes nothing');
+    $oldCfg = sch_rec_get('ofcCfg', 'main');
+    sch_rec_put('ofcCfg', 'main', ['sessions' => ['2026-27' => ['from' => '2026-11-15']]], 'principal');
+    $card2 = $card; $card2[0]['feeDue'] = '0';
+    [$c] = rq('import', $P, ['m' => 'oldfeecard', 'rows' => $card2, 'refresh' => true]);
+    if ($oldCfg !== null) sch_rec_put('ofcCfg', 'main', $oldCfg, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='ofcCfg' AND r='main'");
+    rc($c === 409, 'a started Fee Receipt session is never refreshed');
+    [$c, $d] = rq('import', $P, ['m' => 'oldfeecard', 'rows' => $card2, 'refresh' => true, 'apply' => true]); rc($c === 200 && $d['replaced'] === 1, 'fee card refresh before start');
     [$c, $d] = rq('meta', $P); $ina = array_column($d['students'], null, 'id')['old-9145'] ?? null; rc($ina && !empty($ina['inactive']), 'inactive child can be chosen in School Office');
     [$c, , $raw] = rq('load', $P, null, 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null); rc(!str_contains($recs, 'Synthetic Inactive'), 'inactive children are not in class lists or sync');
     // Old dues carried to Fee Desk only where none is set

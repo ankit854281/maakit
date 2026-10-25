@@ -250,6 +250,12 @@ async function readImport(file) {
       out.innerHTML = `<div class="rg-kpis"><div class="rg-kpi"><b>${p.total}</b><small>records in file</small></div><div class="rg-kpi"><b>${p.toMove}</b><small>to move to the right child</small></div><div class="rg-kpi"><b>${p.already}</b><small>already right</small></div></div>${p.toMove ? `<button class="go" onclick="applyImport()">Move ${p.toMove} records</button>` : '<p>Nothing to move.</p>'}`;
       return;
     }
+    if (d.refresh === true) {   // cut-over day: a newer copy of the old ERP fee cards / receipts (Principal)
+      IMPORT = { refresh: rows }; const p = await api('import', { m: CUR, rows, refresh: true, apply: false });
+      out.innerHTML = `<div class="rg-note"><b>Newer copy from the old ERP.</b> Rows that changed there are replaced; the earlier copy is kept in history. Nothing is removed, and a child already linked here keeps that link.</div><div class="rg-kpis"><div class="rg-kpi"><b>${p.total}</b><small>rows in file</small></div><div class="rg-kpi"><b>${p.toAdd}</b><small>new</small></div><div class="rg-kpi"><b>${p.toReplace}</b><small>changed in old ERP — will be updated</small></div><div class="rg-kpi"><b>${p.unchanged}</b><small>same as here</small></div></div>
+        ${p.toAdd || p.toReplace ? `<button class="go" onclick="applyImport()">Add ${p.toAdd} and update ${p.toReplace}</button>` : '<p>Everything is already up to date.</p>'}`;
+      return;
+    }
     IMPORT = rows; const p = await api('import', { m: CUR, rows, apply: false });
     out.innerHTML = `<div class="rg-kpis"><div class="rg-kpi"><b>${p.total}</b><small>rows in file</small></div><div class="rg-kpi"><b>${p.toAdd}</b><small>new</small></div><div class="rg-kpi"><b>${p.unchanged}</b><small>already here, same</small></div><div class="rg-kpi"><b>${p.conflicts.length}</b><small>already here, different</small></div></div>
       ${p.conflicts.length ? `<p>These rows already exist with different values, so the import is blocked: ${esc(p.conflicts.slice(0, 15).join(', '))}</p>` : p.toAdd ? `<button class="go" onclick="applyImport()">Import ${p.toAdd} rows</button>` : '<p>Nothing new to import.</p>'}`;
@@ -258,6 +264,7 @@ async function readImport(file) {
 async function applyImport() {
   if (BUSY || !IMPORT) return; BUSY = true;
   try { if (IMPORT.bundle) { const p = await api('bundle', { steps: IMPORT.bundle.steps, title: IMPORT.bundle.title || '', apply: true }); toast('Done: ' + p.steps.map(x => x.new).reduce((a, b) => a + b, 0) + ' changes'); IMPORT = null; $('regDialog').close(); await openMod(CUR); return; }
+    if (IMPORT.refresh) { const p = await api('import', { m: CUR, rows: IMPORT.refresh, refresh: true, apply: true }); toast(p.added + ' added, ' + p.replaced + ' updated from the old ERP'); IMPORT = null; $('regDialog').close(); await openMod(CUR); return; }
     if (IMPORT.relink) { const p = await api('relinkBatch', { rows: IMPORT.relink, apply: true }); toast(p.toMove + ' records moved to the right child'); IMPORT = null; $('regDialog').close(); await openMod(CUR); return; }
     const p = await api('import', { m: CUR, rows: IMPORT, apply: true }); toast(p.added + ' rows imported'); $('regDialog').close(); await openMod(CUR); } catch (e) { toast(e.message); } finally { BUSY = false; }
 }
