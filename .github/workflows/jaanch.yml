@@ -178,6 +178,10 @@ jobs:
           node --check jyotish/app.js
           node --check jyotish/daily.js
           node .github/jaanch/jyotish-engine.cjs
+          node --check jyotish/pandit.js
+          node .github/jaanch/jyotish-calendar.cjs
+          node --check jyotish/book.js
+          node .github/jaanch/jyotish-book.cjs
           node --check assets/auth-gateway.js
           node --check assets/maakit-api.js
           node tests/php-api/browser-auth.cjs
