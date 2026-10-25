@@ -1,20 +1,29 @@
 /* Fee Receipt — measured from the old ERP's studentfee.php: Arial 11–12px #555, green #4AC598 rows, yellow #F0C164 heads/totals, red section titles. */
 *{box-sizing:border-box}body{margin:0;background:#F7F7F7;color:#555;font:12px Arial,Helvetica,sans-serif}
 .fr{background:#fff;padding:10px 16px 40px;min-height:100vh}.fr-title{font-size:20px;margin:4px 0 10px;color:#555}.fr-red{color:#f00}.fr-blue{color:#00f}.fr-b{font-weight:700}
-.fr-sel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 24px;margin-bottom:10px;max-width:1100px}.fr-sel label{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:6px}
+.fr-sel{display:grid;grid-template-columns:368px 368px;gap:6px 180px;margin-bottom:10px}.fr-sel label{display:grid;grid-template-columns:128px 240px;align-items:start}.fr-sel select,.fr-sel input{height:30px}
 select,input,textarea{font:12px Arial,sans-serif;border:1px solid #ccc;border-radius:4px;padding:5px 7px;background:#fff;color:#333;max-width:100%}textarea{height:30px}
 button{font:12px Arial,sans-serif;border:1px solid #2e6da4;background:#337ab7;color:#fff;border-radius:3px;padding:5px 12px;cursor:pointer}button:disabled{opacity:.6}
-.fr-submit{background:#26B99A;border-color:#169F85;padding:7px 24px;font-size:13px}.fr-sm{padding:1px 8px;font-size:11px}
+.fr-submit{background:#2D353C;border:0;padding:7px 14px;font:12px Verdana,Geneva,sans-serif;border-radius:3px}.fr-sm{padding:1px 8px;font-size:11px}
 .fr-note{background:#FCF8E3;border:1px solid #FAEBCC;color:#8A6D3B;padding:6px 10px;border-radius:3px}.fr-box{border:1px solid #F0C164;background:#FFFBF0;padding:10px;border-radius:3px;margin:8px 0}.fr-box p{margin:6px 0}.fr-box label{margin-right:10px}
-.fr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
-.fr-prof{width:100%;border-collapse:collapse;font-size:11px}.fr-prof td{padding:4px;vertical-align:top}.fr-prof td:nth-child(odd){width:22%}
-.fr-form{width:100%;border-collapse:collapse;margin-top:8px;font-size:11px}.fr-form td{padding:4px;height:37px}.fr-form input,.fr-form select,.fr-form textarea{width:120px}
-.fr-t{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;background:#fff}.fr-t td{border:1px solid #ddd;padding:3px 4px}.fr-g td{background:#4AC598}.fr-y td{background:#F0C164;font-weight:700;text-align:center}.fr-fee td{border-color:#000}
+/* The card: copied cell by cell from studentfee.php — table.k Verdana 11px, every cell 1px solid #000, padding 4px; label | 6px gap | value | label | value. */
+.fr-outer{border-collapse:separate;border-spacing:0;width:100%;max-width:1100px;font:11px Verdana,Geneva,sans-serif;color:#555}.fr-outer>tbody>tr>td{vertical-align:top;padding:0}
+.fr-left{width:600px;border:1px solid #000}.fr-right{width:490px;border:1px solid #000;padding:4px!important}
+.fr-k{width:100%;border-collapse:collapse}.fr-k>tbody>tr>td{border:1px solid #000;padding:4px;vertical-align:top;font:11px Verdana,Geneva,sans-serif}
+.fr-k>tbody>tr>td:nth-child(1){width:83px}.fr-k>tbody>tr>td:nth-child(2){width:6px}
+.fr-h{display:block;color:#F00;font-size:14px;font-family:'Times New Roman',serif;font-weight:700;padding:2px 0}
+.fr-scroll{overflow:auto;width:100%}.fr-noimg{display:inline-block;width:60px;height:60px;border:1px solid #ccc}
+.fb{display:inline-block;color:#fff;font:12px Verdana,Geneva,sans-serif;padding:1px 5px;border-radius:3px;line-height:1.5;cursor:pointer;text-decoration:none;border:1px solid transparent;margin:1px 0}
+.fb-g{background:#3EC291;border-color:#3EC291}.fb-w{background:#EEBB57;border-color:#EEBB57}.fb-r{background:#FB5A43;border-color:#FB5A43}.fb-d{background:#424F63;border-color:#2E3744}.fb-i{background:#6BAFBD;border-color:#4C99A9}
+.fr-btns{width:100%;border-collapse:collapse}.fr-btns td{text-align:center;padding:3px}
+.fr-t{width:100%;border-collapse:collapse;font:11px Verdana,Geneva,sans-serif;color:#555}.fr-t td{padding:4px;vertical-align:top}.fr-t td.c{text-align:center}
+.k.fr-t td{border:1px solid #000}.k5.fr-t td{border-top:1px solid #EEE;padding:8px}.fr-g td{background:#4AC598}.fr-y td,.fr-y0 td{background:#F0C164}
+.fr-fee{width:100%;border-collapse:collapse;font:11px Verdana,Geneva,sans-serif}.fr-fee td{border:1px solid #000;padding:2px 4px;height:25px}.fr-fee td.c{text-align:center}
 .fr-cx td{color:#999;text-decoration:line-through}
-.fr-sum{width:100%;border-collapse:collapse;margin-top:8px;font-size:11px}.fr-sum td{padding:4px 6px;width:50%}.fr-sum tr:first-child td{background:#F0C164}
+.fr-sum{width:450px;max-width:100%;border-collapse:collapse;margin:6px 0;font:11px Verdana,Geneva,sans-serif}.fr-sum td{padding:4px 6px;width:50%;border:1px solid #000}
 #ofcToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2D353C;color:#fff;border-radius:4px;max-width:90vw;z-index:9}#ofcToast:not(:empty){padding:10px 18px}
 #ofcPrint{display:none}.or-cx{text-align:center;color:#c00;font-size:20px;font-weight:700;border-top:1px solid #000}
-@media(max-width:900px){.fr-grid,.fr-sel{grid-template-columns:1fr}}
+@media(max-width:900px){.fr-sel{grid-template-columns:1fr;gap:6px}.fr-sel label{grid-template-columns:100px minmax(0,1fr)}.fr-outer,.fr-outer>tbody,.fr-outer>tbody>tr,.fr-outer>tbody>tr>td{display:block;width:100%!important}}
 .or-wrap{border:1px solid #000;font:10px Verdana,Arial,sans-serif;color:#000;max-width:760px}.or-head{width:100%;border-collapse:collapse}.or-logo{width:11%;text-align:center}.or-logo img{height:100px}
 .or-name{text-align:center;font-family:Arial;font-size:12pt}.or-name span{font-size:22pt;color:#f00;font-family:'Times New Roman',serif;font-weight:700}.or-bar{text-align:center}.or-bar img{height:50px}
 .or-title{text-align:center;font-size:14px;font-weight:700;border-top:1px solid #000;padding:2px}.or-k{width:100%;border-collapse:collapse;margin-top:2px}.or-k td,.or-k th{border:1px solid #000;padding:2px 3px;font-size:10px;text-align:left}
