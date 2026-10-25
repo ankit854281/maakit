@@ -285,12 +285,14 @@ function printReceipt(r) {
     lines: r.lines.map(l => [l[0], l[1], l[2], R(l[3])]), balance: R(r.balanceAfter), payable: R(r.total), lateFee: R(r.late), adjustment: R(r.discount), mode: r.mode, received: R(r.received),
     bank: r.bank, cheque: r.cheque ? r.cheque + (r.chequeDate ? ' / ' + r.chequeDate : '') : '-', remark: r.remark, user: r.by, cancelled: r.status === 'Cancelled' }));
 }
-async function printOld(no) {
+async function printOld(no, ses) {
   try {
-    const r = await fetch('registers_api.php?a=rows&m=oldrcptdet', { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json();
-    const x = (d.rows || []).find(z => z.session.replace(/^(20\d\d)-20(\d\d)$/, '$1-$2') === ST.ses && z.receiptNo === no);
-    if (!x) return toast('The full old receipt ' + no + ' is not in the Old ERP Receipt Details.');
+    let d; try { d = await api('receipt', null, { ses: ses || ST.ses, no }); } catch (e) { return toast('The full old receipt ' + no + ' is not in the Old ERP Receipt Details.'); }
+    if (d.receipt) return printReceipt(d.receipt);
+    const x = d.old;
     printHtml(receiptHtml({ title: x.title, receiptNo: x.receiptNo, date: x.date, name: x.name, cls: x.cls, adm: x.adm, mother: x.mother, father: x.father, scheme: x.scheme, lines: x.lines, balance: x.balance, payable: x.payable, lateFee: x.lateFee, adjustment: x.adjustment, mode: x.mode, received: x.received, bank: x.bank, cheque: x.cheque, remark: x.remark, user: x.user }));
   } catch (e) { toast(e.message); }
 }
-boot();
+// Opened from an old-style report (feereports.php): ?print=<session>|<receipt no> prints that one receipt.
+const PRINT0 = new URLSearchParams(location.search).get('print');
+if (PRINT0 && /^20\d\d-\d\d\|[\w\/-]{1,30}$/.test(PRINT0)) api('state', null, { ses: PRINT0.split('|')[0] }).then(s => { ST = s; $('ofcRoot').innerHTML = ''; printOld(PRINT0.split('|')[1], PRINT0.split('|')[0]); }).catch(e => toast(e.message)); else boot();
