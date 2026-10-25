@@ -3823,4 +3823,7 @@ for (const role of ['principal','chairman','accountant','reception']) NAV[role].
 VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Progress Report — old ERP Examination-I cards + marks entry in the same components (school/progress.php).
 for (const role of ['principal','chairman','teacher']) NAV[role].push(['progress','fa-file-lines','Progress Report']);
+// Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).
+for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['oldreports','fa-box-archive','Old ERP Reports']);
+VIEWS.oldreports=()=>'<iframe class="edu-iframe" title="Old ERP Reports" src="oldreports.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(P&&P.page?'&page='+encodeURIComponent(P.page):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 VIEWS.progress=()=>'<iframe class="edu-iframe" title="Progress Report" src="progress.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
