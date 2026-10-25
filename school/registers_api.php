@@ -240,23 +240,42 @@ case 'import': {
     }
     if ($errors) sch_json(['ok' => false, 'error' => 'Nothing was imported. Fix these rows first.', 'rows' => $errors], 400);
     $apply = ($in['apply'] ?? false) === true;
+    // Refresh (cut-over day): a newer copy of the old ERP fee cards / receipts replaces the rows that changed there.
+    // Only these three, whose key never depends on the matched child; the old version goes to regHist; a child
+    // already linked here (incl. a corrected link) keeps that link; nothing is removed; a session whose
+    // Fee Receipt is started is never refreshed (from then on the new ERP is the record).
+    $refresh = ($in['refresh'] ?? false) === true;
+    if ($refresh && ($role !== 'principal' || !in_array($m['id'], REG_REFRESH, true))) sch_fail('Only the Principal can refresh ' . $m['title'] . ' from the old ERP.', 403);
+    if ($refresh) {
+        require_once __DIR__ . '/feecollect_lib.php';
+        $liveSes = array_values(array_unique(array_filter(array_map(fn($c) => ofc_live((string)$c['session']) ? (string)$c['session'] : '', $clean))));
+        if ($liveSes) sch_fail('Fee Receipt is already started here for ' . implode(', ', $liveSes) . ', so old ERP copies of that session cannot change any more. Nothing was imported.', 409);
+    }
+    $link = $m['id'] === 'oldfeecard' ? 'liveId' : 'student';
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
-    $new = []; $same = 0; $conflicts = [];
+    $new = []; $same = 0; $conflicts = []; $replace = [];
     foreach ($clean as $key => $c) {
         $old = sch_rec_get('regRow', $m['id'] . '|' . $key);
         if (!$old) { $new[$key] = $c; continue; }
+        if ($refresh && (string)($old[$link] ?? '') !== '') $c[$link] = $old[$link];
         $equal = true; foreach ($c as $k => $v) if (($old[$k] ?? null) !== $v) { $equal = false; break; }
-        if ($equal) $same++; else $conflicts[] = $c[$m['list'][1] ?? $m['list'][0]] ?? $key;
+        if ($equal) { $same++; continue; }
+        if ($refresh) $replace[$key] = [$old, $c]; else $conflicts[] = $c[$m['list'][1] ?? $m['list'][0]] ?? $key;
     }
     if ($apply && $conflicts) { $db->rollBack(); sch_fail('Import stopped: ' . count($conflicts) . ' rows already exist with different values. Nothing changed.', 409); }
     if ($apply) {
-        $now = sch_now_ms();
+        $now = sch_now_ms(); $i = 0;
         foreach ($new as $key => $c) sch_rec_put('regRow', $m['id'] . '|' . $key, $c + ['_id' => $key, '_by' => 'Old ERP import', '_at' => $now, '_created' => $now, '_createdBy' => 'Old ERP import (' . $u['label'] . ')'], $uid);
-        sch_log($u, 'Old ERP Import', count($new) . ' rows imported into ' . $m['title'] . '; ' . $same . ' already present');
+        foreach ($replace as $key => [$old, $c]) {
+            sch_rec_put('regHist', $m['id'] . '|' . $key . '|' . $now . ($i++), ['row' => $old, 'reason' => 'Newer copy from the old ERP', 'by' => $u['label']], $uid);
+            $meta = array_filter($old, fn($k) => is_string($k) && str_starts_with($k, '_'), ARRAY_FILTER_USE_KEY);
+            sch_rec_put('regRow', $m['id'] . '|' . $key, $c + ['_by' => 'Old ERP refresh (' . $u['label'] . ')', '_at' => $now] + $meta, $uid);
+        }
+        sch_log($u, 'Old ERP Import', count($new) . ' rows imported into ' . $m['title'] . ($refresh ? '; ' . count($replace) . ' replaced by a newer old ERP copy (old kept in history)' : '') . '; ' . $same . ' already present');
     }
     $db->commit();
-    sch_json(['ok' => true, 'applied' => $apply, 'total' => count($clean), 'toAdd' => count($new), 'added' => $apply ? count($new) : 0, 'unchanged' => $same, 'conflicts' => array_slice($conflicts, 0, 50)]);
+    sch_json(['ok' => true, 'applied' => $apply, 'refresh' => $refresh, 'total' => count($clean), 'toAdd' => count($new), 'added' => $apply ? count($new) : 0, 'toReplace' => count($replace), 'replaced' => $apply ? count($replace) : 0, 'unchanged' => $same, 'conflicts' => array_slice($conflicts, 0, 50)]);
 }
 case 'carry': {
     // Old ERP net due of a session becomes the Fee Desk "old due" of each student,
