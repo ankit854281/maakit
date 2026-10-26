@@ -15,7 +15,8 @@
 //    job:  'v:<view>' = a screen of app.js, 'o:<module>' = a School Office
 //    register (registers_lib.php), 'f:<tab>' = a Fee Department tab
 //    (finance.js), 'r:<page.php>' = that old ERP page as copied into Old ERP
-//    Reports (oldreports.php). '' = the new ERP has no such screen yet: the item is kept
+//    Reports (oldreports.php), 'p:<report>' = an old Fee Report page rebuilt
+//    from the receipts (feereports.php). '' = the new ERP has no such screen yet: the item is kept
 //    in the menu (so the menu stays the same) and opens a short note.
 //  - Only the layout and colours change. No data is read or written here.
 // ============================================================================
@@ -33,10 +34,10 @@ const CLASSIC_MENU = [
   ['Tag Mgmt', 'fa-tags', [['Add Tag', 'o:tag'], ['TAG Allocation', 'o:tag'], ['TAG Deallocation', 'o:tag'], ['Tags Pending Followup', 'o:tag'], ['Tags Done Followup', 'o:tag'], ['TAG Delete', 'o:tag']]],
   ['Transport', 'fa-bus', [['Add Driver/Helper', 'o:driver'], ['Add Vehicle', 'o:vehicle'], ['Log Book', 'o:logbook'], ['Diesel IN', 'o:diesel'], ['Logbook & Diesel Report', 'o:logbook'], ['Vehicle & Driver List', 'o:vehicle'], ['Class Wise Bus Student', 'o:route']]],
   ['Enquiry', 'fa-phone', [['New Enquiry', 'o:enquiry'], ['Enquiry Details', 'o:enquiry'], ['Enquiry Details - II', 'o:enquiry'], ['Done Followup', 'o:enquiry'], ['Pending follow up', 'o:enquiry'], ['Enquiry Search', 'o:enquiry'], ['Enquiry Status', 'o:enquiry']]],
-  ['Student Master', 'fa-child', [['Add Payment Mode', 'f:setup'], ['Add Student', 'v:students'], ['Student Search', 'v:students'], ['Create Group Leader', 'v:students'], ['Group Leader List', 'v:students'], ['Promote Student', 'v:students'], ['Student Edit', 'o:studinfo'], ['Shift Student', 'v:students']]],
+  ['Student Master', 'fa-child', [['Add Payment Mode', 'f:setup'], ['Add Student', 'v:students'], ['Student Search', 'v:stusearch'], ['Create Group Leader', 'v:students'], ['Group Leader List', 'v:students'], ['Promote Student', 'v:students'], ['Student Edit', 'o:studinfo'], ['Shift Student', 'v:students']]],
   ['Student Edit/Update', 'fa-pen-to-square', [['Edit/Update Student', 'o:studinfo'], ['Edit/Update Admission Details', 'o:studinfo'], ['Edit/Update Scholarship Section', 'o:studinfo'], ['Edit/Update Student Details', 'o:studinfo'], ['Edit/Update Family Details', 'o:studinfo'], ['Edit/Update Address', 'o:studinfo'], ['Edit/Update Previous School Information', 'o:studinfo'], ['Edit/Update Fee Details', 'f:billing'], ['Edit/Update Student Health Details', 'o:studinfo']]],
   ['Fee', 'fa-indian-rupee-sign', [['Fee Receipt', 'v:feereceipt'], ['Fee Receipt(Head Wise)', 'v:feereceipt'], ['Fee Discount(Head Wise)', 'f:billing'], ['Student Fees Received -II', 'v:feereceipt'], ['Fee Receipt Transport', 'v:feereceipt'], ['Fee  Adjustment', 'f:billing'], ['Fee  Discount', 'f:billing'], ['Advance Fee Receipt', 'f:students'], ['Other Fee Receipt', 'f:students'], ['Fee Refund', 'f:receipts'], ['Add Other Fee', 'f:billing'], ['Add Other Fee(Bulk)', 'f:billing']]],
-  ['Fee Report', 'fa-credit-card', [['Add Other Fee Report', 'f:reports'], ['Other Fee Receipt', 'f:receipts'], ['Fee Refund', 'f:receipts'], ['Fee Reminder', 'v:fcalls'], ['Discount Todays Fee', 'f:reports'], ['Demand Bill', 'f:billing'], ['Demand Bill - II', 'f:billing'], ['Student Fee Card Bulk', 'o:oldfeecard'], ['Fee Defaulter', 'f:follow'], ['Fee Defaulter - II', 'f:follow'], ['Fee Defaulter Head Wise', 'f:follow'], ['Fee Statement Head Wise', 'f:reports'], ['Zero Due Report', 'f:reports'], ['Fee Statement', 'o:oldfeecard'], ['Fee Statement-III', 'f:reports'], ['Fee Statement-II', 'f:reports'], ['Fee Statement(Deactive)', 'o:oldfee'], ['Fee Collection (Hold Fee)', 'f:reports'], ['Fee Register', 'f:receipts'], ['Fee Collection Report I', 'f:reports'], ['Fee Collection Report II', 'f:reports'], ['Fee Collection(Settlement Date Wise)', 'f:reports'], ['Fees Concession Report', 'f:reports'], ['Bank Report I', 'f:reports'], ['Bank Report II', 'f:reports'], ['Fees Pending Followup', 'v:fcalls'], ['Fees Done Followup', 'v:fcalls'], ['Deleted Fee Receipt', 'f:receipts'], ['Class Wise Collection Report', 'f:reports'], ['Monthly Collection Report', 'f:reports'], ['Fee Collection Report IV', 'f:reports'], ['Fee Collection Report V', 'f:reports'], ['Fee  Adjustment Report', 'f:reports'], ['Session Wise Fee', 'o:oldfee'], ['Head Wise Collection Report', 'f:reports'], ['Head Wise Fee Statement', 'f:reports'], ['Old ERP Receipts', 'o:oldreceipt']]],
+  ['Fee Report', 'fa-credit-card', [['Add Other Fee Report', 'f:reports'], ['Other Fee Receipt', 'f:receipts'], ['Fee Refund', 'f:receipts'], ['Fee Reminder', 'v:fcalls'], ['Discount Todays Fee', 'f:reports'], ['Demand Bill', 'f:billing'], ['Demand Bill - II', 'f:billing'], ['Student Fee Card Bulk', 'o:oldfeecard'], ['Fee Defaulter', 'f:follow'], ['Fee Defaulter - II', 'p:def2'], ['Fee Defaulter Head Wise', 'f:follow'], ['Fee Statement Head Wise', 'f:reports'], ['Zero Due Report', 'f:reports'], ['Fee Statement', 'p:stmt'], ['Fee Statement-III', 'f:reports'], ['Fee Statement-II', 'f:reports'], ['Fee Statement(Deactive)', 'o:oldfee'], ['Fee Collection (Hold Fee)', 'f:reports'], ['Fee Register', 'f:receipts'], ['Fee Collection Report I', 'p:fee1'], ['Fee Collection Report II', 'p:fee2'], ['Fee Collection(Settlement Date Wise)', 'f:reports'], ['Fees Concession Report', 'p:conc'], ['Bank Report I', 'p:bank1'], ['Bank Report II', 'p:bank2'], ['Fees Pending Followup', 'v:fcalls'], ['Fees Done Followup', 'v:fcalls'], ['Deleted Fee Receipt', 'p:deleted'], ['Class Wise Collection Report', 'p:clswise'], ['Monthly Collection Report', 'p:monthly'], ['Fee Collection Report IV', 'p:fee4'], ['Fee Collection Report V', 'p:fee5'], ['Fee  Adjustment Report', 'f:reports'], ['Session Wise Fee', 'p:sesfee'], ['Head Wise Collection Report', 'p:head'], ['Head Wise Fee Statement', 'p:headst'], ['Old ERP Receipts', 'o:oldreceipt']]],
   ['Leave Mgmt', 'fa-right-from-bracket', [['Student Leave Apply', 'o:sleave'], ['Student Leave Apply Details', 'o:sleave']]],
   ['Exam Room Allocation', 'fa-mobile-screen', [['Layout Master', 'o:examroom'], ['Room Master', 'o:examroom'], ['Room Allocation', 'o:examroom'], ['Room Deallocation', 'o:examroom']]],
   ['Student Attendance', 'fa-clipboard', [['Student Attendance', 'v:attendance'], ['Student Holiday Mgmt', 'v:calendar'], ['Attendance Register', 'v:attendance'], ['Attendance Status', 'v:attendance'], ['Absentees Report', 'v:attendance'], ['Absentees Report II', 'v:attendance'], ['Attendance Summary', 'v:attendance']]],
@@ -50,7 +51,7 @@ const CLASSIC_MENU = [
   ['Online Exam', 'fa-table-cells-large', [['Add New Exam', 'v:quizt'], ['Add New Question', 'v:quizt'], ['MCQ Exam Details', 'v:quizt'], ['Add New Question Excel', 'v:quizt'], ['Subjective Exam Details', 'v:quizt'], ['Add New Question(SUBJECTIVE)', 'v:quizt']]],
   ['Account Master', 'fa-building-columns', [['Bank Master', 'o:party'], ['Cheque Entry', 'o:party'], ['Head Master', 'o:acchead'], ['Sub Head Master', 'o:acchead'], ['Party Master', 'o:party']]],
   ['Account', 'fa-calculator', [['Bill  Entry', 'o:cashbook'], ['Payment', 'o:cashbook'], ['Receipt', 'o:cashbook'], ['Self Withdrawal', 'o:cashbook'], ['Bank Deposit', 'o:cashbook'], ['Cash Verification', 'o:cashverify']]],
-  ['Account Report', 'fa-indian-rupee-sign', [['Due Bill', 'o:purchase'], ['Dainikee', 'o:cashbook'], ['Cashbook', 'o:cashbook'], ['Bank  Statement', 'o:cashbook'], ['Cash Summary Report', 'o:cashbook'], ['Bank  Report', 'o:cashbook'], ['Income & Expenditure Report', 'o:cashbook'], ['Receipts & Payments Consolidated', 'o:cashbook'], ['Receipts & Payments Detailed', 'o:cashbook'], ['Receipts & Payments', 'o:cashbook'], ['Receipt Summary', 'o:cashbook'], ['Bill Summary', 'o:cashbook'], ['Payment Report', 'o:cashbook'], ['Payment Summary', 'o:cashbook'], ['Party Ledger (Bill/Payment)', 'o:party'], ['Bank Deposit Report', 'o:cashbook'], ['Party Ledger (Receive/Payment)', 'o:party'], ['Employee Ledger', 'v:salary'], ['Userwise Collection Report', 'f:reports']]],
+  ['Account Report', 'fa-indian-rupee-sign', [['Due Bill', 'o:purchase'], ['Dainikee', 'o:cashbook'], ['Cashbook', 'o:cashbook'], ['Bank  Statement', 'o:cashbook'], ['Cash Summary Report', 'o:cashbook'], ['Bank  Report', 'o:cashbook'], ['Income & Expenditure Report', 'o:cashbook'], ['Receipts & Payments Consolidated', 'o:cashbook'], ['Receipts & Payments Detailed', 'o:cashbook'], ['Receipts & Payments', 'o:cashbook'], ['Receipt Summary', 'o:cashbook'], ['Bill Summary', 'o:cashbook'], ['Payment Report', 'o:cashbook'], ['Payment Summary', 'o:cashbook'], ['Party Ledger (Bill/Payment)', 'o:party'], ['Bank Deposit Report', 'o:cashbook'], ['Party Ledger (Receive/Payment)', 'o:party'], ['Employee Ledger', 'v:salary'], ['Userwise Collection Report', 'p:user']]],
   ['Admit Card', 'fa-table-list', [['Exam Type Management', 'v:exams'], ['Admit Card  Master', 'o:admit'], ['Admit Card  Details', 'o:admit'], ['Student Check List', 'o:admit'], ['Admit Card Print', 'o:admit'], ['Student Roll No Allocation', 'o:admit'], ['Blank Sheet - I', 'v:exams'], ['Blank Sheet - II', 'v:exams'], ['Admit Card Print II', 'o:admit'], ['Admit Card Print III', 'o:admit'], ['Admit Card-V', 'o:admit'], ['No Dues Print', 'o:admit'], ['Temporary Admit Card', 'o:admit'], ['Temporary Admit Card Details', 'o:admit']]],
   ['Timetable Mgmt', 'fa-table', [['Period Master', 'v:timetable'], ['Time Table Allocation', 'v:timetable']]],
   ['Examination(Master)', 'fa-table-cells', [['Progress Card Send to Student', 'v:results'], ['Grade Master', 'v:exams'], ['Subject Master', 'v:exams'], ['Co-Scholastic Master', 'v:exams'], ['Student Ranking', 'v:results']]],
@@ -80,7 +81,7 @@ function setLook(x) { try { if (x === 'new') localStorage.setItem('sch_look', 'n
 function clCan(t) {
   if (!t) return true;
   const [k, v] = [t[0], t.slice(2)], has = x => NAV[U.role].some(n => n[0] === x);
-  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : false;
+  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : k === 'p' ? has('feereports') : false;
 }
 function clMenu() {
   return CLASSIC_MENU.map(([g, ic, items]) => [g, ic, items.filter(([, t]) => clCan(t))]).filter(([, , items]) => items.length);
@@ -93,6 +94,7 @@ function clGo(t, label) {
   if (t[0] === 'o') return go('office', { m: v });
   if (t[0] === 'f') return go('finance', { tab: v });
   if (t[0] === 'r') return go('oldreports', { page: v });
+  if (t[0] === 'p') return go('feereports', { k: v });
 }
 function clGroupToggle(g) { CL_OPEN = CL_OPEN === g ? '' : g; render(); }
 function clSearch(v) { CL_Q = v; const box = document.getElementById('cl-menu'); if (box) box.innerHTML = clMenuHtml(); }
@@ -118,7 +120,7 @@ function classicShell(body, name, roleName) {
   return `<div class="cl-body ${CL_SIDE ? '' : 'cl-mini'}">
   <aside class="cl-left noprint" id="sidebar">
     <div class="cl-title" onclick="CL_ITEM='Dashboard';CL_OPEN='Dashboard';clGo('v:${NAV[U.role][0][0]}','Dashboard')"><img src="img/snmsis-logo.png" alt=""><span>SCHOOL ERP</span></div>
-    ${canProfile() ? `<div class="cl-search"><input id="g-q" placeholder="Student Search" autocomplete="off" oninput="gsearch(this.value)" onkeydown="if(event.key==='Enter')openProfile(null,null,this.value)"><button onclick="openProfile(null,null,document.getElementById('g-q').value)" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button><div id="g-res" class="srch-res"></div></div>` : ''}
+    ${NAV[U.role].some(n => n[0] === 'stusearch') ? `<div class="cl-search"><input id="g-q" placeholder="Student Search" autocomplete="off" oninput="${canProfile() ? 'gsearch(this.value)' : ''}" onkeydown="if(event.key==='Enter'){CL_ITEM='Student Search';go('stusearch',{q:this.value})}"><button onclick="CL_ITEM='Student Search';go('stusearch',{q:document.getElementById('g-q').value})" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button><div id="g-res" class="srch-res"></div></div>` : ''}
     <div class="cl-search"><input placeholder="Search Menu" value="${esc(CL_Q)}" oninput="clSearch(this.value)" autocomplete="off"></div>
     <ul class="cl-side" id="cl-menu">${clMenuHtml()}</ul>
   </aside>
@@ -140,3 +142,32 @@ function classicShell(body, name, roleName) {
     <main class="cl-right space-y-4">${body}</main>
   </div></div>`;
 }
+
+// ---- Student Search (old student_search_det.php): the box at the top of the menu lists every match in the old table.
+for (const r of ['principal', 'chairman', 'accountant', 'reception']) if (NAV[r] && !NAV[r].some(n => n[0] === 'stusearch')) NAV[r].push(['stusearch', 'fa-magnifying-glass', 'Student Search']);
+let CL_SQ = '', CL_SBY = 'name', CL_SINFO = null;
+// Roll No and Gender live in the Student Full Record (School Office › studinfo), which the Principal and Chairman may read.
+function clStuInfo() {
+  if (CL_SINFO || !['principal', 'chairman'].includes(U.role)) return CL_SINFO || {};
+  CL_SINFO = {};
+  fetch('registers_api.php?a=rows&m=studinfo', { headers: { 'X-School-Token': TOKEN || '' } }).then(r => r.json()).then(d => { (d.rows || []).forEach(r => { CL_SINFO[r.student] = r; }); if (view === 'stusearch') render(); }).catch(() => {});
+  return CL_SINFO;
+}
+function clStuFind(q, by) {
+  q = String(q || '').trim().toLowerCase(); if (!q) return [];
+  const f = { name: s => s.name, mobile: s => s.phone, father: s => s.father, scholar: s => s.adm }[by] || (s => s.name);
+  return (S.students || []).filter(s => String(f(s) || '').toLowerCase().includes(q)).sort((a, b) => a.name.localeCompare(b.name));
+}
+VIEWS.stusearch = () => {
+  if (P && P.q !== undefined) { CL_SQ = P.q; P.q = undefined; }
+  const rows = clStuFind(CL_SQ, CL_SBY), info = CL_SQ ? clStuInfo() : {}, ph = s => String(s.phone || '').replace(/\D/g, '').slice(-10);
+  const btn = (cls, label, on) => `<a class="fb ${cls}" onclick="${on}">${label}</a>`;
+  return `<div class="cl-ss"><div class="cl-ss-box"><h3>Student Search</h3><div class="cl-ss-f"><span>Search By</span><select onchange="CL_SBY=this.value;render()">${[['name', 'Student Name'], ['mobile', 'Mobile No'], ['father', "Father's Name"], ['scholar', 'Scholar No']].map(([v, t]) => `<option value="${v}" ${v === CL_SBY ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      <span>Search For</span><input id="cl-ssq" value="${esc(CL_SQ)}" onkeydown="if(event.key==='Enter'){CL_SQ=this.value;render()}" autocomplete="off"><button class="fb fb-g" onclick="CL_SQ=document.getElementById('cl-ssq').value;render()">Search</button></div></div>
+    ${CL_SQ ? `<h3 class="cl-ss-t">Search Student</h3><div class="cl-ss-wrap"><table class="cl-ss-tb"><tr>${['Sr No', 'Search', 'Edit/Update', 'Add Sibling', 'Fee', 'Call', 'whatsapp', 'Photo', 'Student Name', 'Class', 'Sec', 'Adm No', 'Roll No', 'Gender', 'Father\'s Name', 'Father\'s Mobile No'].map(h => `<th>${esc(h)}</th>`).join('')}</tr>
+      ${rows.map((s, i) => `<tr><td>${i + 1}</td><td>${canProfile() ? btn('fb-g', 'Search', `openProfile('s',${jsq(s.id)},${jsq(s.name)})`) : ''}</td><td>${U.role === 'principal' ? btn('fb-r', 'Edit/Update', `editStudent(${jsq(s.id)})`) : ''}</td>
+        <td>${U.role === 'principal' ? btn('fb-r', 'Add Sibling', `go('students')`) : ''}</td><td>${['principal', 'chairman', 'accountant', 'reception'].includes(U.role) ? btn('fb-g', 'Fee Receipt', `go('feereceipt',{sid:${jsq(s.id)}})`) : ''}</td>
+        <td>${ph(s) ? `<a class="fb fb-g" href="tel:+91${ph(s)}">Call</a>` : ''}</td><td>${ph(s) ? `<a class="fb fb-w" href="https://wa.me/91${ph(s)}" target="_blank" rel="noopener">Whatsapp</a>` : ''}</td>
+        <td><span class="cl-ss-ph" data-stuphoto="${esc(s.id)}">${stuPhoto(s.id) ? `<img src="${stuPhoto(s.id)}" alt="">` : ''}</span></td>
+        <td><b>${esc(s.name)}</b></td><td><b>${esc(s.cls)}</b></td><td><b>${esc(s.section || 'A')}</b></td><td><b>${esc(s.adm)}</b></td><td>${esc((info[s.id] || {}).rollNo || '')}</td><td><b>${esc((info[s.id] || {}).gender || '')}</b></td><td><b>${esc(s.father || '')}</b></td><td><b>${esc(s.phone || '')}</b></td></tr>`).join('') || '<tr><td colspan="16">No student found.</td></tr>'}</table></div>` : ''}</div>`;
+};

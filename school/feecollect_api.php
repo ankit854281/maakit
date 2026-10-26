@@ -5,6 +5,7 @@
 //   GET  ?a=state&ses=2026-27          sessions, students, who may do what, next receipt no
 //   GET  ?a=ledger&ses=&sid=           one child: heads, totals, old due, receipts, old card
 //   POST ?a=collect {ses,sid,alloc[{i,amt}],late,discount,mode,…,nonce}   Accountant / Principal
+//   GET  ?a=receipt&ses=&no=           one receipt to print (new or old ERP copy)
 //   POST ?a=cancel  {ses,no,reason,nonce}                                  Principal
 //   POST ?a=start   {ses,apply,confirm:'START'}                            Principal
 //   POST ?a=newLedger {ses,sid,from}                                       Principal
@@ -109,6 +110,14 @@ case 'collect': {
     sch_log($u, 'ofcRcpt', 'Fee Receipt ' . $no . ' · ' . $L['name'] . ' · ₹' . number_format($p['received'] / 100, 2) . ' ' . $mode);
     $db->commit();
     sch_json(['ok' => true, 'receipt' => $r]);
+}
+case 'receipt': {
+    // One receipt for printing (Fee Receipt here, or the old ERP's own print copy).
+    $no = (string)($_GET['no'] ?? ''); if ($ses === '' || !preg_match('/^[\w\/-]{1,30}$/', $no)) sch_fail('Choose the receipt.');
+    $r = sch_rec_get('ofcRcpt', $ses . '|' . $no);
+    if ($r) sch_json(['ok' => true, 'receipt' => $r]);
+    foreach (reg_rows('oldrcptdet') as $d) if (ofc_ses((string)$d['session']) === $ses && (string)$d['receiptNo'] === $no) sch_json(['ok' => true, 'old' => $d]);
+    sch_fail('Receipt ' . $no . ' is not here.', 404);
 }
 case 'cancel': {
     if ($method !== 'POST') sch_fail('POST only', 405);

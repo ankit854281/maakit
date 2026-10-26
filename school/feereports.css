@@ -1,0 +1,16 @@
+/* Old ERP Fee Report pages: form like report_fee.php (Arial 12px #555 on #F7F7F7), result like report_fee1.php (table.k Verdana 11px, black 1px cells, #999 head row). */
+*{box-sizing:border-box}body{margin:0;background:#F7F7F7;color:#555;font:12px Arial,Helvetica,sans-serif}
+.rp{padding:14px 30px 40px}.rp h3{font:700 17px Helvetica,Arial,sans-serif;color:#555;margin:10px 0 14px}
+.rp-form{display:grid;grid-template-columns:247px 240px;gap:6px 0;margin-left:290px}.rp-form label{display:contents}.rp-form span{padding-top:4px}
+select,input{font:14px Arial,sans-serif;border:1px solid #ccc;border-radius:4px;padding:5px 7px;background:#fff;color:#555;height:30px;width:240px}
+.rp-cols{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px 10px;margin:16px 0;max-width:1100px}.rp-cols label{font-weight:700;display:flex;gap:4px;align-items:flex-start}.rp-cols input{width:auto;height:auto}
+.rp-bar{display:flex;align-items:center;gap:4px;max-width:1100px}.rp-bar .sp{flex:1}
+.b-y{background:#9A6100;border:1px solid #8a5600;color:#fff;font:12px Arial;padding:4px 8px;border-radius:2px;cursor:pointer}
+.b-d{background:#2D353C;border:0;color:#fff;font:13px Arial;padding:6px 13px;border-radius:3px;cursor:pointer}.b-g{background:#26B99A;border:1px solid #169F85;color:#fff;font:14px Arial;padding:6px 12px;border-radius:3px;cursor:pointer}
+.rk{border-collapse:collapse;width:100%;font:11px Verdana,Geneva,sans-serif;color:#555}.rk td{border:1px solid #000;padding:4px;vertical-align:top}
+.rk-name td{text-align:center}.rk-name .n{font-size:30px;font-weight:700}.rk-name .a{font-size:16px;font-weight:700}
+.rk-t h3{text-align:center;margin:8px 0}.rk-h td{background:#999;text-align:center;font-weight:700}.rk .r{text-align:right}.rk .sno{display:inline-block;color:#F00;background:#6BAFBD;border:1px solid #4C99A9;border-radius:3px;padding:6px 12px;font-size:14px}
+.rk a{color:#F00;text-decoration:none;cursor:pointer}.rk-y td{background:#F0C164;text-align:center}.rk-sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:1px solid #000;padding:4px}
+.rk-wrap{overflow:auto}#rpToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2D353C;color:#fff;border-radius:4px;z-index:9}#rpToast:not(:empty){padding:10px 18px}
+@media(max-width:900px){.rp{padding:10px}.rp-form{margin:0;grid-template-columns:110px minmax(0,1fr)}select,input{width:100%}.rp-cols{grid-template-columns:repeat(2,1fr)}.rk-sum{grid-template-columns:1fr}}
+@media print{body{background:#fff}.noprint,#rpToast{display:none!important}.rp{padding:0}}

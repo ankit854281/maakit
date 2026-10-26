@@ -22,7 +22,12 @@ async function api(a, body, q) {
 const nonce = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
 
 async function boot(ses) {
-  try { ST = await api('state', null, { ses: ses || SES0 || '' }); START = null; if (SEL.sid) await openStudent(SEL.sid, true); else render(); }
+  try {
+    ST = await api('state', null, { ses: ses || SES0 || '' }); START = null;
+    const want = boot.sid === undefined ? (boot.sid = new URLSearchParams(location.search).get('sid') || '') : '';   // opened from Student Search
+    const w = want && ST.students.find(x => x.id === want); if (w) { SEL.cls = w.cls; SEL.sec = w.section; SEL.sid = w.id; }
+    if (SEL.sid) await openStudent(SEL.sid, true); else render();
+  }
   catch (e) { $('ofcRoot').innerHTML = `<div class="fr-box"><h3>Fee Receipt</h3><p>${esc(e.message)}</p></div>`; }
 }
 async function openStudent(sid, keep) {
@@ -144,24 +149,60 @@ function startBox() {
     <p>First receipt number here: <b>${esc(START.firstNo || '')}</b>. The cards were copied from the old ERP on <b>${esc(START.copiedOn || '?')}</b> — any fee taken in the old ERP after that day is NOT on them. Copy the cards again first if the old ERP took fees after that day.</p>
     <label>First date fees are taken here <input type="date" id="stFrom" value="${esc(ST.today)}"></label> <label>Type START <input id="stConfirm" autocomplete="off" style="width:90px"></label> <button onclick="startApply()">Start</button></div>`;
 }
+// ---- the card, laid out cell by cell like the old studentfee.php (table.k: Verdana 11px, 1px black borders; label | gap | value | label | value)
+const FR_NOTE = 'Not in this ERP yet';
+function goParent(v, p) { try { if (parent && parent !== window && parent.go) return parent.go(v, p); } catch (e) {} toast(FR_NOTE); }
 function profRows() {
-  const c = LD.card, L = LD.ledger;
-  if (c && Array.isArray(c.profile)) return c.profile.slice(1).map(r => `<tr><td>${esc(r[0] || '')}</td><td><b>${esc(r[2] || '')}</b></td><td>${esc(r[3] || '')}</td><td><b>${esc(r[4] || '')}</b></td></tr>`).join('');
-  const s = ST.students.find(x => x.id === SEL.sid) || {};
-  return [['Class', (L && L.cls) || s.cls, 'Section', (L && L.section) || s.section], ['Session', ST.ses.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), 'Scholar No /Roll No', s.adm], ['Name', s.name, "Father's Name", s.father], ["Father's Mobile No", s.phone, 'Schemes', L ? L.scheme : '']]
-    .map(r => `<tr><td>${esc(r[0])}</td><td><b>${esc(r[1] || '')}</b></td><td>${esc(r[2])}</td><td><b>${esc(r[3] || '')}</b></td></tr>`).join('');
+  const c = LD.card, L = LD.ledger, s = ST.students.find(x => x.id === SEL.sid) || {};
+  let rows = c && Array.isArray(c.profile) ? c.profile.slice(3).filter(r => !/^Custom Text/.test(r[0] || '')) : null;
+  if (!rows) rows = [['Session', '', ST.ses.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), 'Scholar No /Roll No', s.adm], ['Name', '', s.name, "Father's Name", s.father], ["Father's Mobile No", '', s.phone, 'Schemes', L ? L.scheme : '']];
+  return rows.map(r => r.length <= 3 ? `<tr><td>${esc(r[0])}</td><td></td><td colspan="3">${esc(r[2] || '')}</td></tr>`
+    : `<tr><td>${esc(r[0])}</td><td></td><td>${/^(Name|Father's Name)$/.test(r[0]) ? '<b>' + esc(r[2] || '') + '</b>' : esc(r[2] || '')}</td><td>${esc(r[3] || '')}</td><td>${r[3] === 'Schemes' ? '<span class="fr-red">' + esc(r[4] || '') + '</span>' : /Name$/.test(r[3] || '') ? '<b>' + esc(r[4] || '') + '</b>' : esc(r[4] || '')}</td></tr>`).join('');
+}
+function topRows() {
+  const c = LD.card, L = LD.ledger, s = ST.students.find(x => x.id === SEL.sid) || {}, pr = c && Array.isArray(c.profile) ? c.profile : [];
+  const ph = String((L && L.mobile) || s.phone || (pr[8] || [])[2] || '').replace(/\D/g, '').slice(-10);
+  const cls = (pr[1] || [])[2] || [(L && L.cls) || s.cls, (L && L.section) || s.section].filter(Boolean).join(' - ');
+  const st = String((pr[1] || [])[3] || 'NA | Active').split('|');
+  const sec = (pr[2] || [])[2] || (L && L.section) || s.section || '';
+  const img = /^data:image\/(jpeg|png|webp);base64,/.test(LD.photo || '') ? `<img src="${LD.photo}" width="60" height="60" alt="" style="object-fit:cover">` : '<span class="fr-noimg"></span>';
+  return `<tr><td colspan="3"><span class="fr-red">${esc(ST.school)}</span></td><td rowspan="3" style="text-align:center">${img}</td><td>${ph ? `<a class="fb fb-g" href="tel:+91${ph}">Call</a> <a class="fb fb-w" href="https://wa.me/91${ph}" target="_blank" rel="noopener">Whatsapp</a>` : ''}</td></tr>
+    <tr><td>Class</td><td></td><td>${esc(cls)}</td><td><b>${esc(st[0].trim())}</b> | <span class="fr-red">${esc((st[1] || 'Active').trim())}</span></td></tr>
+    <tr><td>Section</td><td></td><td>${esc(sec)}</td><td><a class="fb fb-r" onclick="goParent('fcalls')">Fee Followup</a> <a class="fb fb-g" onclick="goParent('office',{m:'tag'})">Tag Followup</a></td></tr>`;
 }
 function cardHtml() {
   const L = LD.ledger, live = ST.live, T = (LD.card && LD.card.tables) || {};
   const formOn = live && L && ST.canCollect;
-  const left = `<table class="fr-prof"><tr><td colspan="3" class="fr-red fr-b">${esc(ST.school)}</td><td rowspan="3" style="text-align:right">${/^data:image\/(jpeg|png|webp);base64,/.test(LD.photo || '') ? `<img src="${LD.photo}" height="60" width="60" alt="" style="object-fit:cover">` : ''}</td></tr>${profRows()}</table>
-    ${formOn ? formHtml() : ''}${live && !L ? noLedger() : ''}${!live ? '<p class="fr-note">Old ERP record (copied ' + esc((LD.card || {}).asOn || '') + ').</p>' : ''}`;
-  const right = `${L ? detailsHtml() : oldDetails()}
-    ${['Fees Transfer', 'Other Fee Receipt'].map(t => T[t] ? `<h4 class="fr-red">${t}</h4>${tbl(T[t])}` : '').join('')}
-    ${sumHtml()}`;
-  return `<div class="fr-grid"><div>${left}</div><div>${right}</div></div>
-    <h4 class="fr-red">Fee Receipt</h4>${receiptsHtml()}
-    ${['Fee Refund', 'Enquiry Receipt', 'Cancel Receipt/Cheque', 'Fee Discount', 'Fee Adjustment'].map(t => T[t] && T[t].length > 1 ? `<h4 class="fr-red">${t}</h4>${tbl(T[t])}` : '').join('')}`;
+  const box = (title, rows, h, opts) => `<tr><td colspan="5"><b class="fr-h">${title}</b></td></tr><tr><td colspan="5"><div class="fr-scroll" style="height:${h}px">${opts && opts.html ? opts.html : tbl(rows || [[title]], opts && opts.months)}</div></td></tr>`;
+  const sib = T.siblings && T.siblings.length > 1 ? T.siblings : null;
+  const left = `<table class="k fr-k">${topRows()}${profRows()}
+    ${formOn ? formHtml() : ''}
+    ${live && !L ? `<tr><td colspan="5">${noLedger()}</td></tr>` : ''}
+    ${!live ? `<tr><td colspan="5"><div class="fr-note">Fees for ${esc(ST.ses.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'))} are still taken in the old ERP — this card was copied from it on ${esc((LD.card || {}).asOn || '')}.</div></td></tr>` : ''}
+    <tr><td colspan="5"><table class="fr-btns"><tr>
+      <td><a class="fb fb-d" onclick="toast('Online payment is not set up in this ERP.')">Online Transaction</a></td><td><a class="fb fb-g" onclick="goParent('office',{m:'document'})">Document</a></td>
+      <td><a class="fb fb-i" onclick="goParent('office',{m:'cert'})">Fee Cert.</a></td><td><a class="fb fb-r" onclick="window.print()">Fee Card</a></td>
+      <td><a class="fb fb-r" onclick="goParent('office',{m:'oldfee'})">Fee Statement</a></td><td><a class="fb fb-g" onclick="goParent('office',{m:'oldfeecard'})">Fees Consolidate</a></td></tr></table></td></tr>
+    ${formOn ? `<tr><td></td><td colspan="3" style="text-align:center"><button class="fr-submit" onclick="submitFee()" ${BUSY ? 'disabled' : ''}>${BUSY ? 'Saving…' : 'Submit'}</button></td><td></td></tr>` : ''}
+    ${sib ? `<tr><td colspan="5"><div class="fr-scroll" style="height:150px">${sibHtml(sib)}</div></td></tr>` : ''}
+    ${box('Fee Receipt', null, 150, { html: receiptsHtml() })}
+    ${box('Fee Refund', T['Fee Refund'] || [['Sno', 'Date', 'Fee', 'Amount', 'Remark', 'Print', 'Delete']], 150)}
+    ${box('Enquiry Receipt', T['Enquiry Receipt'] || [['Sno', 'Date', 'Head', 'Amount', 'Remark', 'Print']], 100)}
+    ${box('Cancel Receipt/Cheque', T['Cancel Receipt/Cheque'] || [['Sno', 'Date', 'Cheque Details', 'Amount', 'Remark']], 100)}</table>`;
+  const rbox = (title, rows, h) => `<b class="fr-h">${title}</b><div class="fr-scroll" style="height:${h}px">${tbl(rows)}</div>`;
+  const right = `<div class="fr-scroll" style="height:350px">${L ? detailsHtml() : oldDetails()}</div>
+    ${rbox('Fees Transfer', T['Fees Transfer'] || [['Sno', 'Date', 'Type', 'Transfer Session', 'Amount', 'Remark', 'Delete']], 70)}
+    ${rbox('Other Fee Receipt', T['Other Fee Receipt'] || [['Sno', 'Date', 'Fee', 'Amount', 'Remark', 'Print', 'Delete']], 100)}
+    ${sumHtml()}
+    ${rbox('Fee Discount', T['Fee Discount'] || [['Sno', 'Edit', 'Date', 'Month', 'Fee', 'Discount Amount', 'UName', 'Delete']], 150)}`;
+  return `<table class="fr-outer"><tr><td class="fr-left">${left}</td><td class="fr-right">${right}</td></tr>
+    <tr><td class="fr-left"><b class="fr-h">Fee Adjustment</b><div class="fr-scroll" style="height:150px">${tbl(T['Fee Adjustment'] || [['Sno', 'Date', 'Amount', 'Remark', 'Print', 'Delete']])}</div></td><td></td></tr></table>`;
+}
+function sibHtml(rows) {
+  return `<table class="k fr-t"><tr class="fr-g">${rows[0].map(h => `<td class="c">${/Brother|Roll/.test(h) ? '<b>' + esc(h) + '</b>' : esc(h)}</td>`).join('')}</tr>${rows.slice(1).map(r => {
+    const m = ST.students.find(x => x.name.toLowerCase() === String(r[3] || '').toLowerCase() && String(r[6] || '').startsWith(x.cls));
+    return `<tr>${r.map((c, i) => `<td class="c">${i === 1 ? (m ? `<a class="fb fb-g" onclick="SEL.cls='${esc(m.cls)}';SEL.sec='${esc(m.section)}';openStudent('${esc(m.id)}')">Fee Receipt</a>` : '') : i === 7 || i === 8 ? '<b>' + esc(c) + '</b>' : esc(c)}</td>`).join('')}</tr>`;
+  }).join('')}</table>`;
 }
 function noLedger() {
   if (!ST.isPrincipal) return '<p class="fr-note">This child has no fee card for this session yet. The Principal sets it.</p>';
@@ -171,40 +212,45 @@ function noLedger() {
 }
 function formHtml() {
   const nc = F.mode !== 'Cash';
-  const inp = (k, extra) => `<input value="${esc(F[k])}" oninput="F.${k}=this.value;${extra || ''}" autocomplete="off">`;
-  return `<table class="fr-form">
-    <tr><td>Upto Month</td><td><select onchange="F.upto=this.value;fcalcu();render()">${opt('No', 'No', F.upto === 'No')}${opt('All', 'All', F.upto === 'All')}${MORDER.map(m => opt(String(m), ST.months[m], F.upto === String(m))).join('')}</select></td><td>Apply Fee</td><td><input value="${esc(F.apply)}" readonly></td></tr>
-    <tr><td>Date</td><td><input type="date" value="${esc(F.date)}" max="${esc(ST.today)}" min="${esc(ST.live.from)}" onchange="F.date=this.value"></td><td>Receipt No</td><td><b>${esc(ST.next)}</b></td></tr>
-    <tr><td>Total Fee</td><td><input id="fTotal" value="${esc(F.total)}" oninput="F.total=this.value;calcfee();rerenderKeep('fTotal')" autocomplete="off"></td><td class="fr-red">Late Fee</td><td><input id="fLate" value="${esc(F.late)}" oninput="F.late=this.value;calcudis();rerenderKeep('fLate')" autocomplete="off"></td></tr>
-    <tr><td>Discount</td><td><input id="fDisc" value="${esc(F.discount)}" oninput="F.discount=this.value;calcudis();rerenderKeep('fDisc')" autocomplete="off"></td><td>Currently Received</td><td><input value="${esc(F.paid)}" readonly></td></tr>
-    <tr><td>Remark</td><td><textarea oninput="F.remark=this.value">${esc(F.remark)}</textarea></td><td></td><td></td></tr>
-    <tr><td>Payment Mode</td><td><select onchange="setMode(this.value)">${ST.modes.map(m => opt(m, m, m === F.mode)).join('')}</select></td><td>${nc ? 'Bank Name' : ''}</td><td>${nc ? inp('bank') : ''}</td></tr>
-    ${nc ? `<tr><td>Cheque No</td><td>${inp('cheque')}</td><td>Cheque Date</td><td><input type="date" value="${esc(F.chequeDate)}" onchange="F.chequeDate=this.value"></td></tr>
-    <tr><td>Deposit Bank Name</td><td><select onchange="F.depositBank=this.value">${opt('', 'Select', !F.depositBank)}${ST.banks.map(b => opt(b.name, b.name, b.name === F.depositBank)).join('')}</select></td><td>Bank Deposit Date</td><td><input type="date" value="${esc(F.depositDate)}" onchange="F.depositDate=this.value"></td></tr>` : ''}
-    <tr><td>Followup Date</td><td><input type="date" value="${esc(F.fdate)}" onchange="F.fdate=this.value"></td><td>Followup Remark</td><td><textarea oninput="F.fremark=this.value">${esc(F.fremark)}</textarea></td></tr>
-    <tr><td colspan="4" style="text-align:center"><button class="fr-submit" onclick="submitFee()" ${BUSY ? 'disabled' : ''}>${BUSY ? 'Saving…' : 'Submit'}</button></td></tr></table>`;
+  const inp = (k, extra) => `<input style="width:120px" value="${esc(F[k])}" oninput="F.${k}=this.value;${extra || ''}" autocomplete="off">`;
+  const row = (a, b, c, d) => `<tr><td>${a}</td><td></td><td>${b}</td><td>${c}</td><td>${d}</td></tr>`;
+  return row('Upto Month', `<select style="width:100px" onchange="F.upto=this.value;fcalcu();render()">${opt('No', 'No', F.upto === 'No')}${opt('All', 'All', F.upto === 'All')}${MORDER.map(m => opt(String(m), ST.months[m], F.upto === String(m))).join('')}</select>`, 'Apply Fee', `<input style="width:100px" value="${esc(F.apply)}" readonly>`)
+    + row('Date', `<input type="date" style="width:130px" value="${esc(F.date)}" max="${esc(ST.today)}" min="${esc(ST.live.from)}" onchange="F.date=this.value">`, 'Receipt No', esc(ST.next))
+    + row('Total Fee', `<input id="fTotal" style="width:100px" value="${esc(F.total)}" oninput="F.total=this.value;calcfee();rerenderKeep('fTotal')" autocomplete="off">`, '<span class="fr-red">Late Fee</span>', `<input id="fLate" style="width:100px" value="${esc(F.late)}" oninput="F.late=this.value;calcudis();rerenderKeep('fLate')" autocomplete="off">`)
+    + row('Discount', `<input id="fDisc" style="width:100px" value="${esc(F.discount)}" oninput="F.discount=this.value;calcudis();rerenderKeep('fDisc')" autocomplete="off">`, 'Currently Received', `<input style="width:100px" value="${esc(F.paid)}" readonly>`)
+    + row('Remark', `<textarea style="width:100px;height:30px" oninput="F.remark=this.value">${esc(F.remark)}</textarea>`, '', '')
+    + row('Payment Mode', `<select style="width:35mm" onchange="setMode(this.value)">${ST.modes.map(m => opt(m, m, m === F.mode)).join('')}</select>`, nc ? 'Bank Name' : '', nc ? inp('bank') : '')
+    + (nc ? row('Cheque No', inp('cheque'), 'Cheque Date', `<input type="date" style="width:130px" value="${esc(F.chequeDate)}" onchange="F.chequeDate=this.value">`)
+      + row('Deposit Bank Name', `<select style="width:35mm" onchange="F.depositBank=this.value">${opt('', 'Select', !F.depositBank)}${ST.banks.map(b => opt(b.name, b.name, b.name === F.depositBank)).join('')}</select>`, 'Bank Deposit Date', `<input type="date" style="width:130px" value="${esc(F.depositDate)}" onchange="F.depositDate=this.value">`) : '')
+    + row('Followup Date', `<input type="date" style="width:130px" value="${esc(F.fdate)}" onchange="F.fdate=this.value">`, 'Followup Remark', `<textarea style="width:100px;height:30px" oninput="F.fremark=this.value">${esc(F.fremark)}</textarea>`);
 }
 function rerenderKeep(id) { const el = $(id), pos = el ? el.selectionStart : null; render(); const n = $(id); if (n) { n.focus(); if (pos !== null) n.setSelectionRange(pos, pos); } }
 function detailsHtml() {
   const H = heads(), formOn = ST.live && ST.canCollect;
-  return `<table class="fr-t fr-fee"><tr class="fr-g"><td colspan="8" style="text-align:center"><b>Fee Details</b></td></tr>
-    <tr class="fr-y"><td></td><td>D/A</td><td>Fee Name</td><td>Amount</td><td>Paid/Disc Amount</td><td>Balance</td><td>N Paid</td><td>Status</td></tr>
-    ${MORDER.filter(m => H.some(h => h.m === m)).map(m => `<tr class="fr-g"><td colspan="8">${formOn ? `<input type="checkbox" onclick="tickMonth(${m})"> ` : ''}<b>${esc(ST.months[m])}</b></td></tr>` +
-      H.filter(h => h.m === m).map(h => `<tr><td>${formOn ? `<input type="checkbox" ${F.chk[h.i] ? 'checked' : ''} ${open(h) ? '' : 'disabled'} onclick="F.chk[${h.i}]=this.checked;calcuamt();render()">` : ''}</td>
+  return `<table class="k1 fr-fee"><tr class="fr-g"><td colspan="8" class="c"><b>Fee Details</b></td></tr>
+    <tr class="fr-y"><td></td><td class="c"><b>D/A</b></td><td class="c"><b>Fee Name</b></td><td class="c"><b>Amount</b></td><td class="c"><b>Paid/Disc Amount</b></td><td class="c"><b>Balance</b></td><td class="c"><b>N Paid</b></td><td class="c"><b>Status</b></td></tr>
+    ${MORDER.filter(m => H.some(h => h.m === m)).map(m => `<tr class="fr-g"><td colspan="8">${formOn ? `<input type="checkbox" onclick="tickMonth(${m})">` : ''}<b>${esc(ST.months[m])}</b></td></tr>` +
+      H.filter(h => h.m === m).map(h => `<tr class="fr-y0"><td style="text-align:right">${formOn ? `<input type="checkbox" ${F.chk[h.i] ? 'checked' : ''} ${open(h) ? '' : 'disabled'} onclick="F.chk[${h.i}]=this.checked;calcuamt();render()">` : ''}</td>
         <td>${formOn ? `<input type="checkbox" ${F.dchk[h.i] ? 'checked' : ''} ${open(h) ? '' : 'disabled'} onclick="F.dchk[${h.i}]=this.checked;calcuamt();render()">` : ''}</td>
-        <td>${esc(h.name)}</td><td>${R(h.amt)}</td><td>${R(h.paid)}</td><td>${R(bal(h))}</td><td>${F && F.npaid[h.i] ? R(F.npaid[h.i]) : ''}</td><td>${h.na ? 'Not-Active' : bal(h) <= 0 ? 'Paid' : 'Not Paid'}</td></tr>`).join('')).join('')}</table>`;
+        <td>${esc(h.name)}</td><td>${R(h.amt)}</td><td>${R(h.paid)}</td><td>${R(bal(h))}</td><td>${F && F.npaid[h.i] ? R(F.npaid[h.i]) : R(bal(h))}</td><td>${h.na ? 'Not-Active' : bal(h) <= 0 ? 'Paid' : 'Not Paid'}</td></tr>`).join('')).join('')}</table>`;
 }
-function oldDetails() { return LD.cardMonths ? tbl([['', 'D/A', 'Fee Name', 'Amount', 'Paid/Disc Amount', 'Balance', 'N Paid', 'Status']].concat(LD.cardMonths.slice(1)), true) : '<p class="fr-note">No fee details for this session.</p>'; }
+function oldDetails() {
+  if (!LD.cardMonths) return '<p class="fr-note">No fee details for this session.</p>';
+  return `<table class="k1 fr-fee"><tr class="fr-g"><td colspan="8" class="c"><b>Fee Details</b></td></tr>
+    <tr class="fr-y"><td></td><td class="c"><b>D/A</b></td><td class="c"><b>Fee Name</b></td><td class="c"><b>Amount</b></td><td class="c"><b>Paid/Disc Amount</b></td><td class="c"><b>Balance</b></td><td class="c"><b>N Paid</b></td><td class="c"><b>Status</b></td></tr>
+    ${LD.cardMonths.slice(1).map(r => r.length === 1 ? `<tr class="fr-g"><td colspan="8"><b>${esc(r[0])}</b></td></tr>` : `<tr class="fr-y0">${r.slice(0, 8).map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;
+}
 function sumHtml() {
   const t = LD.totals, c = LD.card || {};
   const v = t ? { old: R(LD.oldDue), tr: R((LD.ledger.transferFee) || 0), net: R(t.net), rec: R(t.received), bal: R(t.balance), due: R(t.balance) } : { old: c.oldFee, tr: c.transferFee, net: c.net, rec: c.received, bal: c.balance, due: c.feeDue };
-  return `<table class="fr-sum"><tr><td>Old Fee : <b>${esc(v.old)}</b></td><td>Transfer Fee : <b>${esc(v.tr)}</b></td></tr><tr><td>Net Amount : <b>${esc(v.net)}</b></td><td>Currently Received : <b>${esc(v.rec)}</b></td></tr>
-    <tr><td>Other Fee Receipt : <b>${esc(c.otherFee || '0')}</b></td><td>Balance Amount : <b class="fr-blue">${esc(v.bal)}</b></td></tr><tr><td>Transport Due : <b>${esc(c.transportDue || '0')}</b></td><td>Fee Due : <b class="fr-blue">${esc(v.due)}</b></td></tr><tr><td>Store Due Amount : <b>${esc(c.storeDue || '0')}</b></td><td></td></tr></table>`;
+  return `<table class="fr-sum"><tr class="fr-y"><td><b>Old Fee : ${esc(v.old)}</b></td><td><b>Transfer Fee : ${esc(v.tr)}</b></td></tr><tr><td><b>Net Amount : ${esc(v.net)}</b></td><td><b>Currently Received : ${esc(v.rec)}</b></td></tr>
+    <tr><td><b>Other Fee Receipt : ${esc(c.otherFee || '0')}</b></td><td><b class="fr-blue">Balance Amount : ${esc(v.bal)}</b></td></tr><tr><td><b>Transport Due : ${esc(c.transportDue || '0')}</b></td><td><b>Fee Due : ${esc(v.due)}</b></td></tr><tr><td><b>Store Due Amount : ${esc(c.storeDue || '0')}</b></td><td></td></tr></table>`;
 }
-function tbl(rows, months) {
+// Old ERP side tables (k5): green head row; Delete/Edit columns stay as headings only — nothing is deleted from here.
+function tbl(rows) {
   if (!rows || !rows.length) return '';
-  const head = rows[0], drop = head.map((h, i) => /^(Delete|Edit|Uploaded Receipt|Print)$/i.test(h) ? i : -1).filter(i => i >= 0), keep = r => r.filter((_, i) => !drop.includes(i));
-  return `<table class="fr-t"><tr class="fr-g">${keep(head).map(h => `<td><b>${esc(h)}</b></td>`).join('')}</tr>${rows.slice(1).map(r => r.length === 1 && months ? `<tr class="fr-g"><td colspan="${keep(head).length}"><b>${esc(r[0])}</b></td></tr>` : `<tr>${keep(r).map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;
+  const n = rows[0].length;
+  return `<table class="k5 fr-t"><tr class="fr-g">${rows[0].map(h => `<td class="c"><b>${esc(h)}</b></td>`).join('')}</tr>${rows.slice(1).map(r => `<tr>${Array.from({ length: n }, (_, i) => `<td>${/^TOTAL$/i.test(r[i] || '') ? '<b>' + esc(r[i]) + '</b>' : esc(r[i] ?? '')}</td>`).join('')}</tr>`).join('')}</table>`;
 }
 function receiptsHtml() {
   const old = ((LD.card || {}).receipts || []).slice(1).filter(r => r[2]), mine = LD.receipts || [];
@@ -212,10 +258,10 @@ function receiptsHtml() {
     .concat(mine.map(r => ({ status: r.status, no: r.no, date: r.date.split('-').reverse().join('-'), net: R(r.total), late: R(r.late), disc: R(r.discount), paid: R(r.received), mode: r.mode, by: r.by, remark: r.status === 'Cancelled' ? 'Cancelled: ' + r.cancelReason : r.remark, r })));
   rows.forEach((r, i) => r.sno = i + 1);
   const sum = k => R(rows.filter(r => r.status !== 'Cancelled').reduce((a, r) => a + P(r[k]), 0));
-  return `<table class="fr-t"><tr class="fr-g"><td><b>Sno</b></td><td><b>Status</b></td><td><b>R.No.</b></td><td><b>Date</b></td><td><b>Net Amt</b></td><td><b>Late Fee</b></td><td><b>Discount</b></td><td><b>Paid Amt</b></td><td><b>PMode</b></td><td><b>UName</b></td><td><b>Remark</b></td><td><b>Print</b></td>${ST.isPrincipal ? '<td></td>' : ''}</tr>
-    ${rows.map(r => `<tr class="${r.status === 'Cancelled' ? 'fr-cx' : ''}"><td>${r.sno}</td><td>${esc(r.status)}</td><td>${esc(r.no)}</td><td>${esc(r.date)}</td><td>${esc(r.net)}</td><td>${esc(r.late)}</td><td>${esc(r.disc)}</td><td>${esc(r.paid)}</td><td>${esc(r.mode)}</td><td>${esc(r.by)}</td><td>${esc(r.remark || '')}</td>
-      <td><button class="fr-sm" onclick="${r.old ? `printOld('${esc(r.no)}')` : `printReceipt(LD.receipts.find(x=>x.no==='${esc(r.no)}'))`}">Print</button></td>${ST.isPrincipal ? `<td>${!r.old && r.status !== 'Cancelled' ? `<button class="fr-sm" onclick="cancelReceipt('${esc(r.no)}')">Cancel</button>` : ''}</td>` : ''}</tr>`).join('')}
-    <tr><td></td><td></td><td></td><td><b>Total</b></td><td><b>${sum('net')}</b></td><td><b>${sum('late')}</b></td><td><b>${sum('disc')}</b></td><td><b>${sum('paid')}</b></td><td colspan="${ST.isPrincipal ? 5 : 4}"></td></tr></table>`;
+  return `<table class="k fr-t fr-rc"><tr class="fr-g">${['Sno', 'Status', 'R.No.', 'Date', 'Net Amt', 'Late Fee', 'Discount', 'Paid Amt', 'PMode', 'UName', 'Uploaded Receipt', 'Remark', 'Print', 'Delete'].map(h => `<td class="c"><b>${h}</b></td>`).join('')}</tr>
+    ${rows.map(r => `<tr class="${r.status === 'Cancelled' ? 'fr-cx' : ''}"><td>${r.sno}</td><td>${esc(r.status)}</td><td>${esc(r.no)}</td><td>${esc(r.date)}</td><td class="c">${esc(r.net)}</td><td class="c">${esc(r.late)}</td><td class="c">${esc(r.disc)}</td><td class="c">${esc(r.paid)}</td><td>${esc(r.mode)}</td><td>${esc(r.by)}</td><td></td><td>${esc(r.remark || '')}</td>
+      <td><a class="fb fb-g" onclick="${r.old ? `printOld('${esc(r.no)}')` : `printReceipt(LD.receipts.find(x=>x.no==='${esc(r.no)}'))`}">Print</a></td><td>${ST.isPrincipal && !r.old && r.status !== 'Cancelled' ? `<a class="fb fb-r" onclick="cancelReceipt('${esc(r.no)}')">Cancel</a>` : ''}</td></tr>`).join('')}
+    <tr><td></td><td></td><td></td><td class="c"><b>Total</b></td><td class="c">${sum('net')}</td><td class="c">${sum('late')}</td><td class="c">${sum('disc')}</td><td class="c">${sum('paid')}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>`;
 }
 
 // ---------------------------------------------------------------- receipt print, laid out like the old ERP's print.php
@@ -244,12 +290,14 @@ function printReceipt(r) {
     lines: r.lines.map(l => [l[0], l[1], l[2], R(l[3])]), balance: R(r.balanceAfter), payable: R(r.total), lateFee: R(r.late), adjustment: R(r.discount), mode: r.mode, received: R(r.received),
     bank: r.bank, cheque: r.cheque ? r.cheque + (r.chequeDate ? ' / ' + r.chequeDate : '') : '-', remark: r.remark, user: r.by, cancelled: r.status === 'Cancelled' }));
 }
-async function printOld(no) {
+async function printOld(no, ses) {
   try {
-    const r = await fetch('registers_api.php?a=rows&m=oldrcptdet', { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json();
-    const x = (d.rows || []).find(z => z.session.replace(/^(20\d\d)-20(\d\d)$/, '$1-$2') === ST.ses && z.receiptNo === no);
-    if (!x) return toast('The full old receipt ' + no + ' is not in the Old ERP Receipt Details.');
+    let d; try { d = await api('receipt', null, { ses: ses || ST.ses, no }); } catch (e) { return toast('The full old receipt ' + no + ' is not in the Old ERP Receipt Details.'); }
+    if (d.receipt) return printReceipt(d.receipt);
+    const x = d.old;
     printHtml(receiptHtml({ title: x.title, receiptNo: x.receiptNo, date: x.date, name: x.name, cls: x.cls, adm: x.adm, mother: x.mother, father: x.father, scheme: x.scheme, lines: x.lines, balance: x.balance, payable: x.payable, lateFee: x.lateFee, adjustment: x.adjustment, mode: x.mode, received: x.received, bank: x.bank, cheque: x.cheque, remark: x.remark, user: x.user }));
   } catch (e) { toast(e.message); }
 }
-boot();
+// Opened from an old-style report (feereports.php): ?print=<session>|<receipt no> prints that one receipt.
+const PRINT0 = new URLSearchParams(location.search).get('print');
+if (PRINT0 && /^20\d\d-\d\d\|[\w\/-]{1,30}$/.test(PRINT0)) api('state', null, { ses: PRINT0.split('|')[0] }).then(s => { ST = s; $('ofcRoot').innerHTML = ''; printOld(PRINT0.split('|')[1], PRINT0.split('|')[0]); }).catch(e => toast(e.message)); else boot();
