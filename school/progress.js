@@ -7,6 +7,12 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const NEXT = { PG: 'LKG', LKG: 'UKG', UKG: '1st', '1st': '2nd', '2nd': '3rd', '3rd': '4th', '4th': '5th', '5th': '6th', '6th': '7th', '7th': '8th', '8th': '9th', '9th': '10th', '10th': '11th', '11th': '12th', '12th': '—' };
 let IX = null, TAB = 'card', Q = { ses: '', cls: '1st', sec: '', exam: 'Term-2', stu: '', src: 'auto' }, CARDS = [], MK = null, BUSY = false, IMP = null;
 const SES0 = (new URLSearchParams(location.search).get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
+{ // old ERP menu deep links: ?tab=card|entry|extra|sheet&exam=Final
+  const u = new URLSearchParams(location.search), t = u.get('tab'), e = u.get('exam');
+  if (['card', 'entry', 'extra', 'sheet', 'import'].includes(t)) TAB = t;
+  if (['Term-1', 'Term-2', 'Final'].includes(e)) Q.exam = e;
+}
+let SH = null;   // Result Sheet: {key, rows, subjects, parts}
 const PHOTO = {};   // old path or 'sid:<id>' -> data URL
 
 function toast(t) { const el = $('prToast'); el.textContent = t; clearTimeout(toast.t); toast.t = setTimeout(() => { el.textContent = ''; }, 7000); }
@@ -154,7 +160,7 @@ const OLDCSS = `.k td, .k th{ border-style: solid; border-width: 1px; border-col
 
 // ---------------------------------------------------------------- loading
 async function boot() {
-  try { IX = await api('index'); Q.ses = SES0 || IX.session || Object.keys(IX.summary).sort().reverse()[0] || ''; render(); }
+  try { IX = await api('index'); Q.ses = SES0 || IX.session || Object.keys(IX.summary).sort().reverse()[0] || ''; if (TAB === 'entry' || TAB === 'extra') openEntry(); else render(); }
   catch (e) { $('prRoot').innerHTML = `<div class="pr"><h3>Progress Report</h3><p>${esc(e.message)}</p></div>`; }
 }
 async function showCards() {
@@ -221,16 +227,61 @@ async function readImport(file) {
 }
 async function applyImport() { try { const r = await api('import', { ...IMP.d, apply: true }); toast('Imported: ' + (r.toAdd || 0) + ' new' + (r.linked !== undefined ? ', ' + r.linked + ' photos linked to students' : '') + '.'); IMP = null; IX = await api('index'); render(); } catch (e) { toast(e.message); } }
 
+// ---------------------------------------------------------------- Result Sheet (old exam_resultsheet_termnew.php / exam_resultsheet_final.php)
+// The old ERP's own result sheets were copied into Old ERP Marks (register oldmarks); a class/exam without them is built from
+// the marks entered here with the same components, totals, 9-point grade and rank.
+let OLDMK = null;
+async function showSheet() {
+  if (BUSY) return; BUSY = true; SH = null; render();
+  try {
+    if (!OLDMK) { const r = await fetch('registers_api.php?a=rows&m=oldmarks', { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json(); OLDMK = d.ok ? d.rows : []; }
+    const ex = Q.exam === 'Final' ? 'Final (Term-1 + Term-2)' : Q.exam;
+    const old = OLDMK.filter(r => r.session === Q.ses && r.exam === ex && r.cls === Q.cls).sort((a, b) => (+a.roll || 999) - (+b.roll || 999) || a.name.localeCompare(b.name));
+    if (old.length) {
+      const subjects = [...new Set(old.flatMap(r => Object.keys(r.marks || {})))];
+      const parts = {}; subjects.forEach(su => { parts[su] = [...new Set(old.flatMap(r => Object.keys((r.marks || {})[su] || {})))]; });
+      SH = { from: 'old', subjects, parts, rows: old.map(r => ({ roll: r.roll, name: r.name, cells: subjects.map(su => parts[su].map(k => ((r.marks || {})[su] || {})[k] ?? '')), total: r.total, p: r.percent, g: r.grade, rank: r.rank, att: r.attendance })) };
+    } else {
+      const A = await api('marks', null, { ses: Q.ses, exam: Q.exam === 'Final' ? 'Term-2' : Q.exam, cls: Q.cls });
+      const used = Object.values(A.marks).concat(Q.exam === 'Final' && A.other ? Object.values(A.other.marks) : []).map(m => m.subject);
+      const subjects = A.subjects.filter(s => used.includes(s)).concat([...new Set(used)].filter(s => !A.subjects.includes(s)));
+      const P4 = ['PAT (10)', 'N.B.A (5)', 'S.E.A. (5)', 'Term (80)', 'Total (100)'], K = ['pt', 'nb', 'sea', 'te'];
+      const comp = r => K.map(k => show(r.m[k])).concat([K.some(k => show(r.m[k]) !== '') ? String(r.t) : '']);
+      const ex1 = (o, sid) => (((o || {}).extra || {}).rows || {})[sid] || {}, att = (...xs) => { const p = xs.reduce((a, x) => a + num(x.present), 0), d = xs.reduce((a, x) => a + num(x.days), 0); return d ? p + '/' + d : '/'; };
+      let rows;
+      if (Q.exam !== 'Final') {
+        rows = A.students.map(s => ({ s, T: termOf(A.marks, s.id, subjects) })).filter(x => x.T.any)
+          .map(x => ({ roll: x.s.roll || '', name: x.s.name, sum: x.T.sum, cells: x.T.rows.map(comp), total: x.T.sum + '/' + x.T.max, p: x.T.p, g: x.T.g, att: att(ex1(A, x.s.id)) }));
+        SH = { from: 'new', subjects, parts: Object.fromEntries(subjects.map(su => [su, P4])), rows };
+      } else {
+        rows = A.students.map(s => ({ s, a: termOf(A.other.marks, s.id, subjects), b: termOf(A.marks, s.id, subjects) })).filter(x => x.a.any || x.b.any)
+          .map(x => { const sum = x.a.sum + x.b.sum, max = x.a.max + x.b.max; return { roll: x.s.roll || '', name: x.s.name, sum, cells: subjects.map((_, i) => comp(x.a.rows[i]).concat(comp(x.b.rows[i]))), total: sum + '/' + max, p: pct(sum, max), g: grade(pct(sum, max)), att: att(ex1(A.other, x.s.id), ex1(A, x.s.id)) }; });
+        SH = { from: 'new', subjects, parts: Object.fromEntries(subjects.map(su => [su, P4.map(k => 'Term-1 ' + k).concat(P4.map(k => 'Term-2 ' + k))])), rows };
+      }
+      const order = [...rows].sort((a, b) => b.sum - a.sum); rows.forEach(r => { r.rank = String(order.indexOf(r) + 1); });
+    }
+  } catch (e) { toast(e.message); }
+  BUSY = false; render();
+}
+function sheetHtml() {
+  if (!SH) return '';
+  if (!SH.rows.length) return '<p class="pr-muted">No marks for this class and exam.</p>';
+  return `<div class="pr-sheet"><table class="pr-rs"><tr><th rowspan="2">Sno</th><th rowspan="2">Roll No</th><th rowspan="2">Name</th>${SH.subjects.map(su => `<th colspan="${SH.parts[su].length}">${esc(su)}</th>`).join('')}<th rowspan="2">Total</th><th rowspan="2">Percentage</th><th rowspan="2">Grade</th><th rowspan="2">Rank</th><th rowspan="2">Attendance</th></tr>
+    <tr>${SH.subjects.map(su => SH.parts[su].map(k => `<th>${esc(k)}</th>`).join('')).join('')}</tr>
+    ${SH.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.roll)}</td><td class="l">${esc(r.name)}</td>${r.cells.map(c => c.map(v => `<td>${esc(v)}</td>`).join('')).join('')}<td>${esc(r.total)}</td><td>${esc(r.p)}</td><td>${esc(r.g)}</td><td>${esc(r.rank)}</td><td>${esc(r.att)}</td></tr>`).join('')}</table></div>
+    <p class="pr-muted">${SH.from === 'old' ? 'As copied from the old ERP result sheet.' : 'Built from the marks entered here (Pre. Test + Notebook + SEA + Term Exam, 9-point grade, rank by total).'}</p>`;
+}
+
 // ---------------------------------------------------------------- drawing
 const opt = (v, t, on) => `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(t)}</option>`;
 function render() {
   if (!IX) return;
   const sessions = [...new Set([Q.ses, IX.session, ...Object.keys(IX.summary)].filter(Boolean))].sort().reverse();
-  const tabs = [['card', 'Progress Card'], ['entry', 'Marks Entry'], ['extra', 'Co-Scholastic / Remark / Attendance']].concat(IX.isPrincipal ? [['import', 'Import from old ERP']] : []);
+  const tabs = [['card', 'Progress Card'], ['sheet', 'Result Sheet'], ['entry', 'Marks Entry'], ['extra', 'Co-Scholastic / Remark / Attendance']].concat(IX.isPrincipal ? [['import', 'Import from old ERP']] : []);
   const sel = `<div class="pr-sel">
-    <label>Session<select onchange="Q.ses=this.value;CARDS=[];${TAB === 'card' ? 'render()' : 'openEntry()'}">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === Q.ses)).join('')}</select></label>
-    <label>Class<select onchange="Q.cls=this.value;Q.sec='';Q.stu='';CARDS=[];${TAB === 'card' ? 'render()' : 'openEntry()'}">${IX.classes.map(c => opt(c, c, c === Q.cls)).join('')}</select></label>
-    <label>Exam Type<select onchange="Q.exam=this.value;CARDS=[];${TAB === 'card' ? 'render()' : 'openEntry()'}">${(TAB === 'card' ? IX.exams : ['Term-1', 'Term-2']).map(e => opt(e, e === 'Final' ? 'Final (Term-1 + Term-2)' : e, e === Q.exam)).join('')}</select></label>
+    <label>Session<select onchange="Q.ses=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === Q.ses)).join('')}</select></label>
+    <label>Class<select onchange="Q.cls=this.value;Q.sec='';Q.stu='';CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${IX.classes.map(c => opt(c, c, c === Q.cls)).join('')}</select></label>
+    <label>Exam Type<select onchange="Q.exam=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${(TAB === 'card' || TAB === 'sheet' ? IX.exams : ['Term-1', 'Term-2']).map(e => opt(e, e === 'Final' ? 'Final (Term-1 + Term-2)' : e, e === Q.exam)).join('')}</select></label>
     ${TAB === 'card' ? `<label>Section<select onchange="Q.sec=this.value;CARDS=[]">${opt('', 'All', !Q.sec)}${['A', 'B', 'C', 'D', 'E'].map(x => opt(x, x, x === Q.sec)).join('')}</select></label>
     <label>Student<input value="${esc(Q.stu)}" placeholder="All" onchange="Q.stu=this.value.trim();CARDS=[]"></label>
     <label>Marks from<select onchange="Q.src=this.value;CARDS=[]">${opt('auto', 'Automatic', Q.src === 'auto')}${opt('old', 'Old ERP card', Q.src === 'old')}${opt('new', 'Marks entered here', Q.src === 'new')}</select></label>` : ''}
@@ -240,6 +291,8 @@ function render() {
     const n = ((IX.summary[Q.ses] || {})[Q.exam] || {})[Q.cls] || 0;
     body = `${sel}<div class="pr-tools"><button onclick="showCards()" ${BUSY ? 'disabled' : ''}>${BUSY ? 'Loading…' : 'Show'}</button> <button onclick="printCards()">Print</button> <span class="pr-muted">${n} old ERP card(s) for this class and exam.</span></div>
       <style>${OLDCSS}</style><div id="prCards" class="pr-cards">${CARDS.join('')}</div>`;
+  } else if (TAB === 'sheet') {
+    body = `${sel}<div class="pr-tools"><button onclick="showSheet()" ${BUSY ? 'disabled' : ''}>${BUSY ? 'Loading…' : 'Show'}</button> <button onclick="window.print()">Print</button></div>${sheetHtml()}`;
   } else if (TAB === 'entry') {
     body = sel + (!MK ? '<p class="pr-muted">Opening…</p>' : !MK.mySubjects.length ? '<p class="pr-muted">No subject of this class is given to you in the timetable allocation.</p>' : `
       <label class="pr-inline">Subject <select onchange="MK.subject=this.value;render()">${MK.mySubjects.map(s => opt(s, s, s === MK.subject)).join('')}</select></label>
@@ -262,7 +315,7 @@ function render() {
       <p class="pr-muted">Old ERP cards here: ${Object.entries(IX.summary).sort().map(([s, e]) => esc(s) + ' — ' + Object.entries(e).map(([x, c]) => esc(x) + ' ' + Object.values(c).reduce((a, b) => a + b, 0)).join(', ')).join(' · ') || 'none yet'}.</p>`;
   }
   $('prRoot').innerHTML = `<div class="pr"><div class="pr-tabs">${tabs.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="TAB='${k}';${k === 'entry' || k === 'extra' ? 'openEntry()' : 'render()'}">${esc(l)}</button>`).join('')}</div>
-    <h3 class="pr-title">${TAB === 'card' ? (Q.exam === 'Final' ? 'Progress Card(I-VIII)' : 'Term Progress Card') : TAB === 'entry' ? 'Marks Entry(Term)' : TAB === 'extra' ? 'Class Teacher Attendance/Remark' : 'Import from old ERP'}</h3>${body}</div>`;
+    <h3 class="pr-title">${TAB === 'card' ? (Q.exam === 'Final' ? 'Progress Card(I-VIII)' : 'Term Progress Card') : TAB === 'sheet' ? (Q.exam === 'Final' ? 'Result Sheet(Term1+Term2)' : 'Result Sheet ( Term)') : TAB === 'entry' ? 'Marks Entry(Term)' : TAB === 'extra' ? 'Class Teacher Attendance/Remark' : 'Import from old ERP'}</h3>${body}</div>`;
   if (TAB === 'card' && CARDS.length) fillPhotos([...document.querySelectorAll('img[data-ph]')].map(i => i.getAttribute('data-ph')));
 }
 boot();
