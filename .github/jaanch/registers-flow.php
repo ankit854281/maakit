@@ -123,6 +123,15 @@ try {
     if ($oldCfg !== null) sch_rec_put('ofcCfg', 'main', $oldCfg, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='ofcCfg' AND r='main'");
     rc($c === 409, 'a started Fee Receipt session is never refreshed');
     [$c, $d] = rq('import', $P, ['m' => 'oldfeecard', 'rows' => $card2, 'refresh' => true, 'apply' => true]); rc($c === 200 && $d['replaced'] === 1, 'fee card refresh before start');
+    // Old ERP masters and lists into ordinary registers: Principal only, preview first, twice adds nothing, archive and keyed registers refused
+    $seed = ['steps' => [['kind' => 'seed', 'm' => 'route', 'rows' => [['name' => 'Synthetic Route', 'facility' => 'Transport', 'vehicle' => '1-MINI BUS-SYN', 'status' => 'Active']]],
+                         ['kind' => 'seed', 'm' => 'master', 'rows' => [['list' => 'Caste', 'value' => 'Synthetic Caste', 'order' => '1'], ['list' => 'Caste', 'value' => 'Synthetic Caste', 'order' => '1']]]]];
+    [$c] = rq('bundle', $A, $seed); rc($c === 403, 'only Principal seeds');
+    [$c, $d] = rq('bundle', $P, $seed); rc($c === 200 && !$d['applied'] && $d['steps'][0]['new'] === 1, 'seed preview ' . json_encode($d));
+    rc(!$db->query("SELECT COUNT(*) FROM sch_records WHERE k='regRow' AND r LIKE 'route|%' AND d LIKE '%Synthetic Route%'")->fetchColumn(), 'seed preview wrote nothing');
+    [$c, $d] = rq('bundle', $P, $seed + ['apply' => true]); rc($c === 200 && $d['steps'][0]['new'] === 1 && $d['steps'][1]['new'] === 1 && $d['steps'][1]['already'] === 1, 'seed apply (same row twice kept once) ' . json_encode($d));
+    [$c, $d] = rq('bundle', $P, $seed + ['apply' => true]); rc($c === 200 && $d['steps'][0]['new'] === 0 && $d['steps'][0]['already'] === 1, 'seed twice adds nothing');
+    [$c] = rq('bundle', $P, ['steps' => [['kind' => 'seed', 'm' => 'oldreceipt', 'rows' => [['session' => '2024-25', 'receiptNo' => '9-9', 'name' => 'X', 'received' => '1']]]], 'apply' => true]); rc($c === 400, 'archive registers are not seeded');
     [$c, $d] = rq('meta', $P); $ina = array_column($d['students'], null, 'id')['old-9145'] ?? null; rc($ina && !empty($ina['inactive']), 'inactive child can be chosen in School Office');
     [$c, , $raw] = rq('load', $P, null, 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null); rc(!str_contains($recs, 'Synthetic Inactive'), 'inactive children are not in class lists or sync');
     // Old dues carried to Fee Desk only where none is set
