@@ -57,6 +57,16 @@ try {
     $o = $d['f']; $o['remarks'] = 'Synthetic note';
     [$c, $d] = smq('save', $P, ['id' => 'sm-old', 'f' => $o]); smc($c === 200 && $d['changed'], 'old record saves when only other fields change ' . json_encode($d));
     smc(sch_rec_get('student', 'sm-old')['dob'] === '5-6-2017' && sch_rec_get('regRow', 'studinfo|smoldinfo')['remarks'] === 'Synthetic note', 'old values left as they were');
+    // Old ERP details fill only empty fields, only when the Scholar No matches, twice is harmless
+    $fill = ['rows' => [['id' => 'sm-old', 'adm' => 'SMOLD', 'f' => ['section' => 'B', 'dob' => '01/01/2017', 'mother' => 'Synthetic Old Mother', 'address' => 'Synthetic Old Village', 'phone' => '0000000000']],
+                        ['id' => $sid, 'adm' => 'WRONG', 'f' => ['mother' => 'Should Not Land']]]];
+    [$c] = smq('fill', $C, $fill); smc($c === 403, 'only the Principal fills');
+    [$c, $d] = smq('fill', $P, $fill); smc($c === 200 && !$d['applied'] && $d['students'] === 1 && $d['fields']['mother'] === 1 && !isset($d['fields']['dob']) && !isset($d['fields']['phone']) && $d['mismatch'] === ['Synthetic Master One'], 'fill preview ' . json_encode($d));
+    smc((sch_rec_get('student', 'sm-old')['mother'] ?? '') === '', 'preview wrote nothing');
+    [$c, $d] = smq('fill', $P, $fill + ['apply' => true]); $o = sch_rec_get('student', 'sm-old');
+    smc($c === 200 && $o['section'] === 'A' && $o['mother'] === 'Synthetic Old Mother' && $o['address'] === 'Synthetic Old Village' && $o['dob'] === '5-6-2017' && $o['phone'] === '0000000000', 'only empty fields filled ' . json_encode($o));
+    smc(sch_rec_get('student', $sid)['mother'] === 'Synthetic Mother', 'a wrong Scholar No changes nothing');
+    [$c, $d] = smq('fill', $P, $fill + ['apply' => true]); smc($c === 200 && $d['students'] === 0, 'fill twice changes nothing');
     // Photo: one stored copy, used everywhere
     $png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     [$c] = smq('photo', $P, ['id' => $sid, 'data' => 'data:text/html;base64,PGI+']); smc($c === 400, 'only pictures');

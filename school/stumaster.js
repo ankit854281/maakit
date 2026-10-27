@@ -209,6 +209,7 @@ function listHtml() {
   const shown = FLT._go ? listRows() : null;
   return `<div class="sm"><h3>Edit/Update Student</h3><div class="np"><table class="flt"><tr><td class="l">Session</td><td><input type="text" value="${esc(longSes(META.session))}" readonly></td><td class="l">School</td><td><input type="text" value="${esc(META.school)}" readonly></td></tr>${rows}</table>
     <button class="btn" onclick="FLT._go=1;render();loadPhotos()">Submit</button> ${shown ? `<button class="btn alt" onclick="excel()">Excel</button> <button class="btn alt" onclick="window.print()">Print</button>` : ''} ${META.canEdit ? '<a class="btn alt" href="?m=add">Add Student</a>' : ''}</div>
+    ${META.canEdit ? `<div class="np" style="margin:14px 0;padding:10px;border:1px solid #F0C164;background:#FFFBF0"><b>Import from old ERP</b> — file <b>12-Old-ERP-Student-Details.json</b>. Fills Section, DOB, Mother's Name, Address, SMS No and Child Id only where they are empty. <input type="file" accept=".json" onchange="readFill(this.files[0])">${FILL ? `<p>${FILL.p.students} students will get: ${Object.entries(FILL.p.fields).map(([k, n]) => esc(k) + ' ' + n).join(', ') || 'nothing (already filled)'}.${FILL.p.mismatch.length ? ' Not matching Scholar No: ' + esc(FILL.p.mismatch.join(', ')) + '.' : ''}</p>${FILL.p.students ? '<button class="btn" style="margin-top:4px" onclick="applyFill()">Fill now</button>' : ''}` : ''}</div>` : ''}
     ${shown ? table(shown, 'Stream: ' + (FLT.egroup || 'All')) : ''}</div>`;
 }
 async function loadPhotos(rows) {
@@ -221,6 +222,15 @@ function excel() {
   const rows = listRows(), cols = [['rollno', 'Adm No'], ['rfid_no', 'RFID(UID)'], ['crollno', 'Roll No'], ['childid', 'Child Id'], ['name', 'Student Name'], ['clsid', 'Class'], ['secid', 'Sec'], ['gender', 'Gender'], ['fname', "Father's Name"], ['mname', "Mother's Name"], ['fmobno', "Father's Mobile No"], ['telphno', 'SMS/Whatsapp No.'], ['dob', 'DOB'], ['feeapply', 'Schemes'], ['cast', 'Category'], ['faclty', 'Facilities'], ['routeid', 'Route Hostel'], ['cstatus', 'Status'], ['scount_status', 'Current Session Status'], ['paddr', 'Address']];
   const txt = [cols.map(c => c[1]), ...rows.map(r => cols.map(c => r[c[0]] ?? ''))].map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + txt], { type: 'text/csv' })); a.download = 'Edit Update Student.csv'; a.click();
+}
+let FILL = null;
+async function readFill(file) {
+  try { const d = JSON.parse(await file.text()); if (d.kind !== 'studentFill') throw Error('This is not the old ERP student details file.'); FILL = { rows: d.rows, p: await api('fill', { rows: d.rows }) }; } catch (e) { FILL = null; toast(e.message); }
+  render();
+}
+async function applyFill() {
+  try { const p = await api('fill', { rows: FILL.rows, apply: true }); toast(p.students + ' students updated from the old ERP.'); FILL = null; ROWS = (await api('list')).rows; } catch (e) { toast(e.message); }
+  render();
 }
 // ---------- Student Search (student_search.php) ----------
 const BY = [['name', 'Student Name'], ['fmobno', 'Mobile No'], ['fname', "Father's Name"], ['rollno', ' Scholar No']];
