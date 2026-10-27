@@ -414,7 +414,7 @@ function arrangementBase(date, load) {
   need.forEach(n => { const w = ov[n.absent + '|' + n.bell]; n.sub = null; n.manual = false;     // 1st: the Principal's own choices
     if (w === '-') n.manual = true; else if (w && S.teachers[w] && canTake(w, n)) { n.sub = w; n.manual = true; extra[w] = (extra[w] || 0) + 1; } });
   need.forEach(n => { if (n.manual) return;                                                   // 2nd: everyone else, fairly
-    const pool = Object.keys(S.teachers).filter(x => canTake(x, n)).sort((x, y) => score(y, n) - score(x, n));
+    const pool = Object.keys(S.teachers).filter(x => canTake(x, n)).sort((x, y) => score(y, n) - score(x, n) || (x < y ? -1 : x > y ? 1 : 0));
     n.sub = pool[0] || null; if (n.sub) extra[n.sub] = (extra[n.sub] || 0) + 1; });
   need.forEach(n => { n.options = Object.keys(S.teachers).filter(x => x === n.sub || canTake(x, n)); });
   return need.sort((x, y) => x.bell - y.bell);
@@ -2288,16 +2288,19 @@ function vLessonPlan() {
   return head('Weekly Lesson Plan', 'Write the topics you plan to teach this week. The ERP ticks each one automatically when it appears in your diary.',
       `<select class="inp w-auto" onchange="go('lplan',{w:this.value,key:${jsq(key0)}})">${[addDays(thisW, -7), thisW, addDays(thisW, 7)].map(x => `<option value="${x}" ${x === w ? 'selected' : ''}>Week of ${fmtDate(x)}</option>`).join('')}</select>`) + `
     <div class="card space-y-2"><label class="lbl">Class & subject</label><select class="inp" onchange="SCAN=null;go('lplan',{w:'${w}',key:this.value})">${mine.map(a => { const kk = sylKey(a.c, a.s); return `<option value="${esc(kk)}" ${kk === key0 ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select>
-      ${p && p.status === 'Approved' ? '<p class="text-sm text-emerald-700 font-semibold">Approved by the Principal — locked.</p>' : `
+      ${p && Object.prototype.hasOwnProperty.call(p, 'days') ? '<p data-daily-plan-lock class="text-sm">This plan has daily teaching details. Open Daily Teaching to view or revise it.</p><button onclick="go(\'academics\')" class="btn btn-p">Open Daily Teaching</button>' : p && p.status === 'Approved' ? '<p class="text-sm text-emerald-700 font-semibold">Approved by the Principal — locked.</p>' : `
       <div class="flex flex-wrap gap-2 pt-1"><button onclick="lpFromSyllabus('${w}',${jsq(key0)})" class="btn btn-sm btn-p"><i class="fa-solid fa-wand-magic-sparkles"></i> Fill from syllabus</button>
         ${dr ? `<button onclick="delete LPDRAFT[${jsq(key0)}];SCAN=null;render()" class="btn btn-sm btn-l">Undo fill</button>` : ''}</div>
       <label class="lbl">Topics, one per line (one line ≈ one period)${nx ? ` — next chapter: <b>${esc(nx)}</b>` : ''}</label><textarea id="lp-top" rows="7" class="inp" placeholder="${nx ? esc(nx) + ' — introduction' : 'Topic 1\nTopic 2'}" oninput="LPDRAFT[${jsq(key0)}]={topics:this.value,goal:document.getElementById('lp-goal').value}">${esc(dr ? dr.topics : p ? p.topics : '')}</textarea>
       <label class="lbl">Aim / activity / teaching aid / homework (optional)</label><input id="lp-goal" class="inp" value="${esc(dr ? dr.goal || '' : p ? p.goal || '' : '')}" oninput="LPDRAFT[${jsq(key0)}]={topics:document.getElementById('lp-top').value,goal:this.value}">
       <button onclick="lpSubmit('${w}',${jsq(key0)})" class="btn btn-p w-full">${p ? 'Update and resubmit' : 'Submit to Principal'}</button>`}</div>
-    ${p && p.status === 'Approved' ? '' : scanCard('lplan', c, s, 'Or make it from a photo')}
+    ${p && (p.status === 'Approved' || Object.prototype.hasOwnProperty.call(p, 'days')) ? '' : scanCard('lplan', c, s, 'Or make it from a photo')}
     ${myPlans.map(([kk, v]) => planCard(v, kk, false)).join('')}`;
 }
 function lpSubmit(w, key) {
+  const old = S.lplan[lpKey(w, U.tid, ...key.split('|'))];
+  if (old && Object.prototype.hasOwnProperty.call(old, 'days')) return toast('Open Daily Teaching to revise this daily plan.', 'a');
+  if (old && old.status === 'Approved') return toast('Approved plan is locked.', 'a');
   const [c, s] = key.split('|'), topics = document.getElementById('lp-top').value.split('\n').map(x => x.trim()).filter(Boolean).join('\n').slice(0, 3000), goal = document.getElementById('lp-goal').value.trim().slice(0, 400);
   if (!topics) return toast('Write at least one topic', 'a');
   S.lplan[lpKey(w, U.tid, c, s)] = { week: w, tid: U.tid, cls: c, subj: s, topics, goal, status: 'Submitted', feedback: '', at: Date.now() };

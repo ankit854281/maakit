@@ -13,8 +13,8 @@ try {
         if($family)sch_fail('Daily staff reports are private.',403);$date=ac_date($_GET['date']??date('Y-m-d'));if(!ac_in_session($date,$session)||$date>date('Y-m-d'))sch_fail('Choose a current or past day in this session.');
         $teachers=ac_rows('teacher');if($u['role']==='teacher')$teachers=array_intersect_key($teachers,[(string)$u['tid']=>true]);$students=ac_rows('student');$tracks=ac_rows('acTrack');$attendance=ac_rows('studAtt');$diaries=ac_rows('diary');
         $catch=ac_catchup($attendance,$diaries,ac_rows('acCatch'),array_values($students),$session);$homework=ac_pending($tracks,ac_rows('acResolve'),array_values($students),$session);
-        $report=ac_report($date,ac_schedule_data(),$teachers,$students,$diaries,ac_rows('lplan'),$tracks,$attendance,ac_rows('acRound'),sch_rec_get('acDuty',$date)??[],$catch,$homework,ac_rows('acBell'),$session,ac_rows('acRoundFix'));
-        sch_json(['ok'=>true,'date'=>$date,'report'=>$report,'text'=>ac_report_text($report,$date),'generatedAt'=>sch_now_ms(),'configured'=>(bool)(sch_rec_get('grid','main')??[])]);
+        $schedule=ac_schedule_data();$configured=ac_timetable_ready($schedule);$report=$configured?ac_report($date,$schedule,$teachers,$students,$diaries,ac_rows('lplan'),$tracks,$attendance,ac_rows('acRound'),sch_rec_get('acDuty',$date)??[],$catch,$homework,ac_rows('acBell'),$session,ac_rows('acRoundFix')):[];
+        sch_json(['ok'=>true,'date'=>$date,'report'=>$report,'text'=>$configured?ac_report_text($report,$date):'Timetable incomplete: this report is not ready.','generatedAt'=>sch_now_ms(),'configured'=>$configured]);
     }
     if($a==='roundPhoto'){
         if($family)sch_fail('Not allowed.',403);$id=ac_text($_GET['id']??'',32);$photo=null;
@@ -34,12 +34,12 @@ try {
         $units=[];$unitRevs=[];foreach($pairs as $p){$pair=$p['c'].'|'.$p['s'];$units[$pair]=ac_units($p['c'],$p['s'],$session);$unitRevs[$pair]=(sch_rec_get('acUnit',$session.'|'.$pair)['rev']??0);}
         $oral=array_filter(ac_rows('acOral'),fn($t)=>($t['session']??'')===$session&&($u['role']==='chairman'||ac_allowed($u,$t['cls'],$t['subj'])));
         $catchup=array_values(array_filter(ac_catchup(ac_rows('studAtt'),ac_rows('diary'),ac_rows('acCatch'),$kids,$session),fn($t)=>$u['role']==='chairman'||ac_allowed($u,$t['cls'],$t['subj'])));
-        $viewDate=ac_date($_GET['date']??date('Y-m-d'));$bells=[];$plans=ac_rows('lplan');foreach(ac_bells($viewDate,ac_schedule_data()) as $bell)if(in_array($u['role'],['principal','chairman'],true)||$bell['tid']===$u['tid']){$bell['plan']=ac_bell_plan($bell,$viewDate,$plans);$bell['activity']=preg_match('/Games|Sports|Play|PE\b/i',$bell['subj'])?ac_activity($bell['cls']):null;$bell['done']=sch_rec_get('acBell',$viewDate.'|'.$bell['tid'].'|'.$bell['bell'])!==null;$bells[]=$bell;}
+        $schedule=ac_schedule_data();$configured=ac_timetable_ready($schedule);$viewDate=ac_date($_GET['date']??date('Y-m-d'));$bells=[];$plans=ac_rows('lplan');foreach(($configured?ac_bells($viewDate,$schedule):[]) as $bell)if(in_array($u['role'],['principal','chairman'],true)||$bell['tid']===$u['tid']){$bell['plan']=ac_bell_plan($bell,$viewDate,$plans);$bell['activity']=preg_match('/Games|Sports|Play|PE\b/i',$bell['subj'])?ac_activity($bell['cls']):null;$bell['done']=sch_rec_get('acBell',$viewDate.'|'.$bell['tid'].'|'.$bell['bell'])!==null;$bells[]=$bell;}
         $duty=sch_rec_get('acDuty',$viewDate)??['tids'=>[],'target'=>1];$rounds=array_values(array_filter(ac_rows('acRound'),fn($r)=>($r['session']??'')===$session&&($r['date']??'')===$viewDate&&(in_array($u['role'],['principal','chairman'],true)||($r['tid']??'')===$u['tid'])));
         foreach($rounds as &$round)foreach($round['rounds'] as &$r)$r['resolution']=sch_rec_get('acRoundFix',$r['id']);unset($r,$round);
         $teachers=[];if($u['role']==='principal')foreach(ac_rows('teacher') as $id=>$t)$teachers[]=['id'=>$id,'name'=>$t['name']??$id];
         $planVersions=[];foreach($plans as $key=>$p)if($u['role']!=='teacher'||($p['tid']??'')===$u['tid'])$planVersions[$key]=hash('sha256',json_encode($p));
-        sch_json(['ok'=>true,'role'=>$u['role'],'tid'=>$u['tid'],'session'=>$session,'pairs'=>$pairs,'kids'=>array_map(fn($s)=>array_intersect_key($s,array_flip(['id','name','cls','adm'])),$kids),'teachers'=>$teachers,'duty'=>$duty,'rounds'=>$rounds,'bells'=>$bells,'viewDate'=>$viewDate,'planVersions'=>$planVersions,'catchup'=>$catchup,'units'=>$units,'unitRevs'=>$unitRevs,'oral'=>$oral,'tracks'=>$tracks,'pending'=>ac_pending($tracks,ac_rows('acResolve'),$kids,$session)]);
+        sch_json(['ok'=>true,'role'=>$u['role'],'tid'=>$u['tid'],'session'=>$session,'pairs'=>$pairs,'kids'=>array_map(fn($s)=>array_intersect_key($s,array_flip(['id','name','cls','adm'])),$kids),'teachers'=>$teachers,'duty'=>$duty,'rounds'=>$rounds,'configured'=>$configured,'bells'=>$bells,'viewDate'=>$viewDate,'planVersions'=>$planVersions,'catchup'=>$catchup,'units'=>$units,'unitRevs'=>$unitRevs,'oral'=>$oral,'tracks'=>$tracks,'pending'=>ac_pending($tracks,ac_rows('acResolve'),$kids,$session)]);
     }
     if($family||!in_array($u['role'],['principal','teacher'],true))sch_fail('Teacher login required.',403);
     if(($_SERVER['REQUEST_METHOD']??'GET')!=='POST')sch_fail('Use the save button.',405);
@@ -69,6 +69,7 @@ try {
         sch_log($u,'Academics',$a.' '.$date);$db->commit();sch_json(['ok'=>true,'record'=>$data]);
     }
     if($a==='bellDone'){
+        if(!ac_timetable_ready(ac_schedule_data()))throw new InvalidArgumentException('Complete and check the timetable before recording period plans.');
         $date=ac_date($in['date']??'');$tid=$u['role']==='principal'?ac_text($in['tid']??'',100):(string)$u['tid'];$bell=$in['bell']??null;$found=null;
         foreach(ac_bells($date,ac_schedule_data()) as $b)if($b['tid']===$tid&&$b['bell']===$bell&&$b['cls']===$cls&&$b['subj']===$subj)$found=$b;
         $ends=['09:35','10:10','10:45','11:40','12:15','12:50','13:30'];

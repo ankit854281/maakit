@@ -225,6 +225,12 @@ case 'sync': {
         if ($r === '' || strlen($r) > 190 || !is_array($d) || $raw === null || strlen(json_encode($raw)) > SCH_MAX_RECORD || !sch_can_write($u, $k, $r, $d, false)) {
             $rejected[] = ['k' => $k, 'r' => $r]; continue;
         }
+        // Cached weekly forms cannot replace Daily Teaching content; Principal review keeps that content intact.
+        if ($k === 'lplan' && ($old = sch_rec_get($k, $r)) !== null && array_key_exists('days', $old)) {
+            $content = $old; $incoming = $d;
+            foreach (['status','feedback','decidedAt'] as $field) { unset($content[$field], $incoming[$field]); }
+            if ($u['role'] !== 'principal' || $content != $incoming) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>'Open Daily Teaching to revise this daily plan.']; continue; }
+        }
         if ($k === 'diary') { try { tool_hw_guard($k,$r,$d,(string)((sch_rec_get('settings','main')??[])['session']??'')); } catch (InvalidArgumentException $e) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } }
         sch_rec_put($k, $r, $raw, $uid);
         $done[] = ['k' => $k, 'r' => $r];
