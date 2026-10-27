@@ -30,7 +30,8 @@ const FL = {
   mode: () => [['Payment Mode', 'mode', ['All', ...MODES]]],
   bank: () => [['Bank', 'bank', ['Select', ...uniq(D.receipts.map(r => r.bank)).sort()]]],
   head: () => [['Fee Head', 'head', ['All', ...HEADS]]],
-  month: () => [['Month', 'month', ['All', ...MONTHS]]]
+  month: () => [['Month', 'month', ['All', ...MONTHS]]],
+  rno: () => [['Receipt No', 'rno', 'text']]
 };
 function pass(r, f) {
   const g = k => f[k] ?? (k === 'sdate' || k === 'edate' ? '' : 'All');
@@ -51,6 +52,15 @@ const tr = cells => `<tr>${cells.map(c => typeof c === 'object' && c ? `<td clas
 const sum = (rows, k) => rows.reduce((a, r) => a + (typeof k === 'function' ? k(r) : r[k]), 0);
 // ---------- the reports ----------
 const REP = {
+  // Search Receipt (search_receipt.php): Session + Receipt No → that receipt, old ERP or new, with its printed head lines.
+  search: { title: 'Search Receipt', page: 'search_receipt.php', f: ['session', 'rno'],
+    run(rows) {
+      const no = String(F.rno || '').trim(); const x = no ? rows.filter(r => r.no === no) : [];
+      if (!no) return '<p>Enter the Receipt No.</p>';
+      return x.length ? x.map(r => T(['Session', 'Receipt No', 'Date', 'Scholar No', 'Name', "Father's Name", 'Class', 'Section', 'Month', 'Total Amount', 'Discount', 'Late Fee', 'Currently Received', 'PMode', 'Status', 'UName', 'Remark'],
+        [tr([longSes(r.session), r.no, dmy(r.date), r.adm, { v: r.name, c: 't' }, { v: r.father, c: 't' }, r.cls, r.section, r.months, n0(r.total), n0(r.discount), n0(r.late), n0(r.received), r.mode, r.status, r.user, { v: r.remark, c: 't' }])])
+        + T(['Sno', 'PARTICULARS', 'Month', 'Amount'], r.lines.map((l, i) => tr([i + 1, l.head, l.months || '', n0(l.amt)])))).join('') : '<p>No receipt ' + esc(no) + ' in this session.</p>';
+    } },
   fee1: { title: 'Fee Collection Report 1', page: 'report_fee.php', f: ['dates', 'session', 'cls', 'user', 'scheme', 'mode'],
     cols: [['Session', 0, r => longSes(r.session)], ['Last Followup Remark', 0, r => r.followRemark], ['Receipt No', 0, r => r.no], ['Date', 1, r => dmy(r.date)], ['Scholar No', 1, r => r.adm], ['Class', 1, r => r.cls], ['Section', 1, r => r.section], ['Name', 1, r => r.name], ["Father's Name", 0, r => r.father], ['Month', 0, r => r.months], ['Remark', 0, r => r.remark]],
     cols2: [['Customer Bank', 0, r => r.custBank], ['Cheque No', 0, r => r.cheque], ['Status', 0, r => r.status], ['Bank', 0, r => r.bank], ['PMode', 0, r => r.mode], ['UName', 0, r => r.user]],
@@ -292,6 +302,7 @@ function formHtml(rep) {
   const ctl = ([label, k, t]) => {
     const v = F[k] ?? (t === 'date' ? ymdSlash(new Date()) : t[0]);
     if (t === 'date') return `<tr><td class="l">${esc(label)}</td><td><input type="text" value="${esc(v)}" placeholder="YYYY/MM/DD" onchange="F['${k}']=this.value"></td></tr>`;
+    if (t === 'text') return `<tr><td class="l">${esc(label)}</td><td><input type="text" value="${esc(F[k] ?? '')}" onchange="F['${k}']=this.value" oninput="F['${k}']=this.value"></td></tr>`;
     return `<tr><td class="l">${esc(label)}</td><td><select onchange="F['${k}']=this.value">${t.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></td></tr>`;
   };
   const chooser = rep.cols ? `<div class="cols">${[...rep.cols, ...rep.cols2].map(c => `<label><input type="checkbox" ${(F['c:' + c[0]] ?? !!c[1]) ? 'checked' : ''} onchange="F['c:${c[0]}']=this.checked">${esc(c[0])}</label>`).join('')}</div>
