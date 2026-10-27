@@ -17,7 +17,8 @@
 //    (finance.js), 'r:<page.php>' = that old ERP page as copied into Old ERP
 //    Reports (oldreports.php), 'm:<mode>' = Student Master in the old ERP's
 //    own form (stumaster.php: add, list, search), 'q:<report>' = a fee report
-//    in the old ERP's layout (feereports.php). '' = the new ERP has no such screen yet: the item is kept
+//    in the old ERP's layout (feereports.php), 'a:<mode>' = Student Attendance
+//    in the old layout (oldlook.js). '' = the new ERP has no such screen yet: the item is kept
 //    in the menu (so the menu stays the same) and opens a short note.
 //  - Only the layout and colours change. No data is read or written here.
 // ============================================================================
@@ -41,7 +42,7 @@ const CLASSIC_MENU = [
   ['Fee Report', 'fa-credit-card', [['Add Other Fee Report', 'f:reports'], ['Other Fee Receipt', 'f:receipts'], ['Fee Refund', 'f:receipts'], ['Fee Reminder', 'v:fcalls'], ['Discount Todays Fee', 'f:reports'], ['Demand Bill', 'f:billing'], ['Demand Bill - II', 'f:billing'], ['Student Fee Card Bulk', 'o:oldfeecard'], ['Fee Defaulter', 'q:defaulter'], ['Fee Defaulter - II', 'f:follow'], ['Fee Defaulter Head Wise', 'f:follow'], ['Fee Statement Head Wise', 'f:reports'], ['Zero Due Report', 'q:zerodue'], ['Fee Statement', 'q:statement'], ['Fee Statement-III', 'f:reports'], ['Fee Statement-II', 'f:reports'], ['Fee Statement(Deactive)', 'o:oldfee'], ['Fee Collection (Hold Fee)', 'f:reports'], ['Fee Register', 'q:register'], ['Fee Collection Report I', 'q:fee1'], ['Fee Collection Report II', 'q:fee2'], ['Fee Collection(Settlement Date Wise)', 'f:reports'], ['Fees Concession Report', 'q:conc'], ['Bank Report I', 'q:bank1'], ['Bank Report II', 'q:bank2'], ['Fees Pending Followup', 'v:fcalls'], ['Fees Done Followup', 'v:fcalls'], ['Deleted Fee Receipt', 'f:receipts'], ['Class Wise Collection Report', 'q:classwise'], ['Monthly Collection Report', 'q:monthly'], ['Fee Collection Report IV', 'q:fee4'], ['Fee Collection Report V', 'q:fee5'], ['Fee  Adjustment Report', 'f:reports'], ['Session Wise Fee', 'o:oldfee'], ['Head Wise Collection Report', 'q:headwise'], ['Head Wise Fee Statement', 'f:reports'], ['Old ERP Receipts', 'o:oldreceipt']]],
   ['Leave Mgmt', 'fa-right-from-bracket', [['Student Leave Apply', 'o:sleave'], ['Student Leave Apply Details', 'o:sleave']]],
   ['Exam Room Allocation', 'fa-mobile-screen', [['Layout Master', 'o:examroom'], ['Room Master', 'o:examroom'], ['Room Allocation', 'o:examroom'], ['Room Deallocation', 'o:examroom']]],
-  ['Student Attendance', 'fa-clipboard', [['Student Attendance', 'v:attendance'], ['Student Holiday Mgmt', 'v:calendar'], ['Attendance Register', 'v:attendance'], ['Attendance Status', 'v:attendance'], ['Absentees Report', 'v:attendance'], ['Absentees Report II', 'v:attendance'], ['Attendance Summary', 'v:attendance']]],
+  ['Student Attendance', 'fa-clipboard', [['Student Attendance', 'a:mark'], ['Student Holiday Mgmt', 'v:calendar'], ['Attendance Register', 'a:register'], ['Attendance Status', 'a:status'], ['Absentees Report', 'a:abs'], ['Absentees Report II', 'a:abs2'], ['Attendance Summary', 'a:summary']]],
   ['SMS', 'fa-comment', [['Due Fee SMS 1', 'o:msgtpl'], ['Due Fee SMS 2', 'o:msgtpl'], ['Send SMS to Employee', 'o:msgtpl'], ['Send APP Link', 'o:msgtpl'], ['Send Bulk Sms', 'o:msgtpl'], ['Send  Sms', 'o:msgtpl'], ['Send Exam Marks', 'o:msgtpl']]],
   ['Student TC', 'fa-clone', [['Create New TC', 'o:tc'], ['Student TC', 'o:tc'], ['TC Register', 'o:tc']]],
   ['Student Report', 'fa-bars', [['Year Wise Report', 'v:students'], ['Religion Wise Report', 'o:studinfo'], ['Age Wise Report', 'v:students'], ['Student Dynamic Report Master', 'o:studinfo'], ['Student Report Master', 'o:studinfo'], ['Student Dynamic Report', 'o:studinfo'], ['Any Notice', 'v:notices'], ['Scholar Register', 'o:studinfo'], ['Admission Register', 'o:studinfo'], ['Student List', 'v:students'], ['APP Link', 'r:report_applink.php'], ['Student  Document Report', 'o:document'], ['Category Wise Report', 'o:studinfo'], ['Student Sibling Report', 'v:students'], ['Admission/TC Report', 'o:tc'], ['Student Strength Format I', 'v:students'], ['Student Strength Format III', 'v:students'], ['Student Strength Format II', 'v:students'], ['Student Strength Format IV', 'v:students'], ['I Card Print-I', 'o:idcard'], ['I Card Print-II', 'o:idcard'], ['Parent Card', 'o:idcard'], ['Transport Card Print', 'o:idcard'], ['Sport Card Print', 'o:idcard'], ['SN I Card Print', 'o:idcard'], ['SN I Card Print-II', 'o:idcard'], ['Library Card Print', 'o:idcard']]],
@@ -82,7 +83,7 @@ function setLook(x) { try { if (x === 'new') localStorage.setItem('sch_look', 'n
 function clCan(t) {
   if (!t) return true;
   const [k, v] = [t[0], t.slice(2)], has = x => NAV[U.role].some(n => n[0] === x);
-  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : k === 'm' ? has('stumaster') : k === 'q' ? has('feereports') : false;
+  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : k === 'm' ? has('stumaster') : k === 'q' ? has('feereports') : k === 'a' ? has('attendance') : false;
 }
 function clMenu() {
   return CLASSIC_MENU.map(([g, ic, items]) => [g, ic, items.filter(([, t]) => clCan(t))]).filter(([, , items]) => items.length);
@@ -97,6 +98,7 @@ function clGo(t, label) {
   if (t[0] === 'r') return go('oldreports', { page: v });
   if (t[0] === 'm') return go('stumaster', { m: v });
   if (t[0] === 'q') return go('feereports', { r: v });
+  if (t[0] === 'a') return go('attendance', { am: v });
 }
 function clGroupToggle(g) { CL_OPEN = CL_OPEN === g ? '' : g; render(); }
 function clSearch(v) { CL_Q = v; const box = document.getElementById('cl-menu'); if (box) box.innerHTML = clMenuHtml(); }

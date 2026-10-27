@@ -162,6 +162,7 @@ jobs:
           node --check school/finance.js
           node --check school/registers.js
           node --check school/classic.js
+          node --check school/oldlook.js
           node --check school/feecollect.js
           node --check school/progress.js
           node --check school/oldreports.js
