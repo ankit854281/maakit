@@ -52,7 +52,7 @@ case 'dues': {
         $i = $info[$sid] ?? []; $x = (array)($i['extra'] ?? []); $rs = $rc[$sid] ?? [];
         $heads = array_values(array_map(fn($h) => ['m' => (int)$h['m'], 'name' => (string)$h['name'], 'amt' => $h['amt'] / 100, 'paid' => $h['paid'] / 100], array_filter($L['heads'], fn($h) => empty($h['na']))));
         $ok = array_values(array_filter($rs, fn($r) => $r['status'] !== 'Cancelled'));
-        $oldPaid = 0.0; foreach ($ok as $r) foreach ($r['lines'] as $l) if ($l['head'] === 'Old Due') $oldPaid += $l['amt'];
+        $oldPaid = 0.0; if (!$live) foreach ($ok as $r) foreach ($r['lines'] as $l) if ($l['head'] === 'Old Due') $oldPaid += $l['amt'];
         $last = $ok ? $ok[count($ok) - 1] : null;
         $out[] = ['sid' => $sid, 'name' => $s['name'], 'adm' => $s['adm'], 'cls' => $s['cls'], 'section' => $s['section'] ?: (string)$L['section'], 'father' => $s['father'], 'mother' => (string)($s['mother'] ?? ''),
             'phone' => $s['phone'], 'fatherMobile' => (string)($i['fatherMobile'] ?? ''), 'motherMobile' => (string)($i['motherMobile'] ?? ''), 'address' => (string)(sch_rec_get('student', $sid)['address'] ?? ''),

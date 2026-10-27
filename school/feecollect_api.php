@@ -8,6 +8,10 @@
 //   POST ?a=cancel  {ses,no,reason,nonce}                                  Principal
 //   POST ?a=start   {ses,apply,confirm:'START'}                            Principal
 //   POST ?a=newLedger {ses,sid,from}                                       Principal
+//   POST ?a=addFee  {ses,sids[],m,type,amt,remark,nonce}  Add Other Fee / Old Due (one child or a class)   Accountant / Principal
+//   POST ?a=dropFee {ses,sid,i,reason}                    remove an added head nothing was paid on            Principal
+//   POST ?a=discount {ses,sid,i,amt,reason}               Fee Discount (Head Wise)                            Principal
+//   POST ?a=undoDisc {ses,sid,i,reason}                   take a head-wise discount back                      Principal
 // ============================================================
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
@@ -49,7 +53,7 @@ case 'state': {
     foreach ($students as $id => $s) $list[] = ['id' => $id, 'name' => (string)($s['name'] ?? ''), 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'adm' => (string)($s['adm'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'ledger' => isset($led[$id]), 'inactive' => !empty($s['inactive'])];
     $set = sch_rec_get('settings', 'main') ?? [];
     sch_json(['ok' => true, 'ses' => $ses, 'sessions' => $sessions, 'live' => $cfg['sessions'][$ses] ?? null, 'students' => $list, 'role' => $role, 'canCollect' => $canCollect, 'isPrincipal' => $isP,
-        'next' => $seq ? $seq['prefix'] . ($seq['n'] + 1) : '', 'banks' => $banks, 'modes' => OFC_MODES, 'months' => OFC_MONTHS, 'today' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Kolkata')))->format('Y-m-d'),
+        'next' => $seq ? $seq['prefix'] . ($seq['n'] + 1) : '', 'banks' => $banks, 'modes' => OFC_MODES, 'feeTypes' => OFC_FEE_TYPES, 'months' => OFC_MONTHS, 'today' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Kolkata')))->format('Y-m-d'),
         'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School')]);
 }
 case 'ledger': {
@@ -59,7 +63,7 @@ case 'ledger': {
     if ($card) unset($card['months']);   // the live heads come from the ledger once a session is started
     $t = $L ? ofc_totals($L) : null;
     $ph = sch_rec_get('phoStu', $sid); $photo = $ph ? (string)((sch_rec_get('phoImg', (string)$ph['img']) ?? [])['data'] ?? '') : '';
-    sch_json(['ok' => true, 'photo' => $photo, 'ledger' => $L, 'totals' => $t, 'oldDue' => $L ? ofc_old_due($ses, $sid, $L) : null, 'receipts' => $rcpts($ses, $sid), 'card' => $card,
+    sch_json(['ok' => true, 'photo' => $photo, 'ledger' => $L, 'totals' => $t, 'oldDue' => $L ? ofc_old_due($ses, $sid, $L) : null, 'receipts' => $rcpts($ses, $sid), 'card' => $card, 'adj' => ofc_adj_list($ses, $sid),
         'cardMonths' => $L ? null : ((ofc_cards($ses)[$sid] ?? [])['months'] ?? null)]);
 }
 case 'collect': {
@@ -172,6 +176,78 @@ case 'newLedger': {
         'heads' => $heads, 'from' => 'Copied from the fee card of ' . $src['name'] . ' by ' . ($u['label'] ?? $uid)];
     sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
     sch_log($u, 'ofcLed', 'Fee card for ' . $L['name'] . ' (' . $ses . ') copied from ' . $src['name']);
+    $db->commit(); sch_json(['ok' => true, 'ledger' => $L]);
+}
+case 'addFee': {
+    // Old ERP Fee › Add Other Fee (studentothfee.php / bulk stu_addotherfee.php): a fee head added to the child's card in a
+    // month. Fee Type "Old Due" puts the child's old due on the card (blank amount = all of it) so it can be collected.
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if (!$canCollect) sch_fail('Only the Accountant or the Principal can add fees.', 403);
+    if (!ofc_live($ses)) throw new InvalidArgumentException('Fees for ' . $ses . ' are not taken here yet.');
+    $type = (string)($in['type'] ?? ''); if (!in_array($type, OFC_FEE_TYPES, true)) throw new InvalidArgumentException('Select Fee Type');
+    $m = (int)($in['m'] ?? 4); if (!isset(OFC_MONTHS[$m])) throw new InvalidArgumentException('Select Month');
+    $remark = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['remark'] ?? ''))), 0, 80);
+    $amtIn = trim((string)($in['amt'] ?? ''));
+    $amt = $amtIn === '' ? 0 : ofc_amount($amtIn, 'Amount', false);
+    if ($type !== 'Old Due' && $amt <= 0) throw new InvalidArgumentException('Enter Amount');
+    $sids = array_values(array_unique(array_map('strval', (array)($in['sids'] ?? []))));
+    if (!$sids || count($sids) > 600) throw new InvalidArgumentException('Choose the student.');
+    $nonce = (string)($in['nonce'] ?? ''); if (!preg_match('/^[a-f0-9]{16,64}$/', $nonce)) sch_fail('Bad request.');
+    $lock();
+    if ($prior = sch_rec_get('ofcReq', $nonce)) { $db->commit(); sch_json(['ok' => true, 'repeat' => true] + $prior['res']); }
+    $added = 0; $skipped = []; $one = count($sids) === 1;
+    foreach ($sids as $sid) {
+        $L = sch_rec_get('ofcLed', $ses . '|' . $sid);
+        if (!$L) { if ($one) throw new InvalidArgumentException('This child has no fee card for ' . $ses . '.'); $skipped[] = $sid . ' (no fee card)'; continue; }
+        $x = $amt;
+        if ($type === 'Old Due') {
+            $od = ofc_old_due($ses, $sid, $L); $x = $amt ?: $od;
+            if ($od <= 0 || $x > $od) { $why = $od <= 0 ? 'has no old due' : 'old due is only ' . number_format($od / 100, 2); if ($one) throw new InvalidArgumentException('This child ' . $why . '.'); $skipped[] = $L['name'] . ' (' . $why . ')'; continue; }
+            $L['oldMoved'] = (int)($L['oldMoved'] ?? 0) + $x;
+        }
+        $i = max(array_merge([0], array_column($L['heads'], 'i'))) + 1;
+        $name = $type . ($remark !== '' ? ' - ' . $remark : '');
+        $L['heads'][] = ['i' => $i, 'm' => $m, 'name' => $name, 'amt' => $x, 'paid' => 0, 'na' => false, 'add' => ['type' => $type, 'by' => $u['label'] ?? $uid, 'at' => sch_now_ms()]];
+        sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
+        ofc_adj_log($ses, $sid, ['act' => 'add', 'type' => $type, 'i' => $i, 'm' => $m, 'name' => $name, 'amt' => $x, 'remark' => $remark, 'by' => $u['label'] ?? $uid], $uid);
+        $added++;
+    }
+    if (!$added) throw new InvalidArgumentException('Nothing was added: ' . implode(', ', array_slice($skipped, 0, 5)));
+    $res = ['added' => $added, 'skipped' => $skipped];
+    sch_rec_put('ofcReq', $nonce, ['res' => $res], $uid);
+    sch_log($u, 'ofcLed', 'Add Other Fee ' . $type . ' (' . OFC_MONTHS[$m] . ') ' . ($amt ? '₹' . number_format($amt / 100, 2) : 'all old due') . ' to ' . $added . ' fee card(s), ' . $ses);
+    $db->commit(); sch_json(['ok' => true] + $res);
+}
+case 'dropFee':
+case 'discount':
+case 'undoDisc': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if (!$isP) sch_fail('Only the Principal can do this.', 403);
+    if (!ofc_live($ses)) throw new InvalidArgumentException('Fees for ' . $ses . ' are not taken here yet.');
+    $sid = (string)($in['sid'] ?? ''); $i = (int)($in['i'] ?? 0);
+    $reason = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['reason'] ?? ''))), 0, 200);
+    if (mb_strlen($reason) < 3) throw new InvalidArgumentException('Write the reason.');
+    $amt = $a === 'discount' ? ofc_amount($in['amt'] ?? '', 'Discount Amount', false) : 0;
+    $lock();
+    $L = sch_rec_get('ofcLed', $ses . '|' . $sid); if (!$L) throw new InvalidArgumentException('This child has no fee card for ' . $ses . '.');
+    $k = array_search($i, array_column($L['heads'], 'i'), true); if ($k === false) throw new InvalidArgumentException('Select the fee head.');
+    $h = $L['heads'][$k]; $disc = (int)($h['disc'] ?? 0); $label = $h['name'] . ' (' . OFC_MONTHS[$h['m']] . ')';
+    if ($a === 'dropFee') {
+        if (empty($h['add'])) throw new InvalidArgumentException('Only a fee added here (Add Other Fee) can be removed.');
+        if ($h['paid'] > 0) throw new InvalidArgumentException($label . ' is already paid or discounted. Cancel that first.');
+        if ($h['add']['type'] === 'Old Due') $L['oldMoved'] = max(0, (int)($L['oldMoved'] ?? 0) - $h['amt']);
+        array_splice($L['heads'], $k, 1); $amt = $h['amt'];
+    } elseif ($a === 'discount') {
+        if (!empty($h['na'])) throw new InvalidArgumentException($label . ' is not active for this child.');
+        if ($amt > $h['amt'] - $h['paid']) throw new InvalidArgumentException('Discount is more than the balance of ' . $label . ' (' . number_format(($h['amt'] - $h['paid']) / 100, 2) . ').');
+        $L['heads'][$k]['paid'] += $amt; $L['heads'][$k]['disc'] = $disc + $amt;
+    } else {
+        if ($disc <= 0) throw new InvalidArgumentException($label . ' has no discount given here.');
+        $L['heads'][$k]['paid'] = max(0, $h['paid'] - $disc); $L['heads'][$k]['disc'] = 0; $amt = $disc;
+    }
+    sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
+    ofc_adj_log($ses, $sid, ['act' => $a === 'dropFee' ? 'drop' : ($a === 'discount' ? 'disc' : 'undisc'), 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $amt, 'remark' => $reason, 'by' => $u['label'] ?? $uid], $uid);
+    sch_log($u, 'ofcLed', ['dropFee' => 'Removed added fee ', 'discount' => 'Fee discount ', 'undoDisc' => 'Discount taken back '][$a] . $label . ' ₹' . number_format($amt / 100, 2) . ' · ' . $L['name'] . ' · ' . $reason);
     $db->commit(); sch_json(['ok' => true, 'ledger' => $L]);
 }
 default: sch_fail('Unknown action.', 404);
