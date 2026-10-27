@@ -20,7 +20,7 @@ function frq($token) {
 }
 $db = sch_db();
 $A = frtok('frx:acc', 'accountant'); $R = frtok('frx:rec', 'reception');
-$clean = fn() => $db->exec("DELETE FROM sch_records WHERE (k='regRow' AND (r LIKE 'oldreceipt|frx%' OR r LIKE 'oldrcptdet|frx%')) OR (k='ofcRcpt' AND r LIKE '2099-00|%') OR (k='regPage' AND r='2099-00|report_fee.php') OR (k='regRow' AND r LIKE 'oldfeecard|frx%') OR (k='student' AND r='frx-s')");
+$clean = fn() => $db->exec("DELETE FROM sch_records WHERE (k='regRow' AND (r LIKE 'oldreceipt|frx%' OR r LIKE 'oldrcptdet|frx%')) OR (k='ofcRcpt' AND r LIKE '2099-00|%') OR (k='regPage' AND r IN ('2099-00|report_fee.php','2099-00|report_cashbook.php')) OR (k='regRow' AND r LIKE 'oldfeecard|frx%') OR (k='student' AND r='frx-s')");
 try {
     $clean();
     sch_rec_put('regRow', 'oldreceipt|frx1', ['session' => '2099-00', 'receiptNo' => '1-7', 'date' => '2099-04-08', 'student' => '', 'scholarNo' => 'FRX', 'name' => 'Synthetic Fee', 'father' => 'F', 'cls' => 'LKG', 'section' => 'A', 'months' => 'April',
@@ -47,6 +47,16 @@ try {
     $row = array_values(array_filter($d['rows'] ?? [], fn($r) => $r['sid'] === 'frx-s'))[0] ?? null;
     frc($d['ok'] && !$d['live'] && $d['asOn'] === '22-10-2099' && $row && $row['oldDue'] == 500 && count($row['heads']) === 3 && $row['received'] == 1000 && $row['count'] === 1 && $row['lastDate'] === '2099-04-10', 'dues from the copied card ' . json_encode($row));
     frc(array_sum(array_map(fn($h) => $h['amt'] - $h['paid'], $row['heads'])) == 1300, 'balance of heads equals the card');
+    // Accounts: fee receipts into cash, old vouchers from the copied old Cashbook (fee lines skipped), new Cash Book entries
+    $cbp = [['Sno', 'Date', 'Session', 'Vch No/Rec No', 'Name', 'Scholar No', 'Class', 'Remark', 'Particular', 'Debit(Receipts)', 'Credit(Payments)', '', '', ''], ['Cash Dr', 'Bank Dr', 'Cash Cr', 'Bank Cr', 'PMode', 'UName', 'Print'],
+        ['1', '08-04-209908:00:00 AM', '2099-2000', '1-7', 'Synthetic Fee', 'FRX', 'LKG', '', 'Fee', '600', '0', '0', '0', 'Cash', 'Swati', 'Print'],
+        ['2', '09-04-2099', '', 'JV-1-0499-1', 'Synthetic Vendor', '', '', 'g pay', 'Diesel', '0', '0', '0', '700', 'UPI 7985293903', 'Swati', ''],
+        ['3', '09-04-2099', '', 'BD-0499-1', 'UBI xxxx8120', '', '', '', 'BD', '0', '400', '400', '0', 'Online NA', 'Swati', '']];
+    sch_rec_put('regPage', '2099-00|report_cashbook.php', ['session' => '2099-00', 'page' => 'report_cashbook.php', 'title' => 'Cashbook', 'group' => '11 Accounts', 'h' => base64_encode(gzencode(json_encode($cbp)))], 'principal');
+    $c = curl_init('http://127.0.0.1:8099/school/feereports_api.php?a=accounts'); curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_PROXY => '', CURLOPT_HTTPHEADER => ['X-School-Token: ' . $A]]); $d = json_decode((string)curl_exec($c), true); curl_close($c);
+    $mine = array_values(array_filter($d['rows'] ?? [], fn($r) => str_starts_with($r['date'], '2099-04')));
+    $by = array_column($mine, null, 'vno');
+    frc(count(array_filter($mine, fn($r) => $r['vno'] === '1-7')) === 1 && $by['1-7']['drCash'] == 600 && $by['JV-1-0499-1']['crBank'] == 700 && $by['JV-1-0499-1']['kind'] === 'JV' && $by['BD-0499-1']['drBank'] == 400 && $by['BD-0499-1']['crCash'] == 400, 'cash book entries, fee counted once ' . json_encode($mine));
     echo "Fee Reports: old ERP and new receipts in one list (rupees, printed head lines, banks and follow-up remark), dues from the fee card and roles passed\n";
 } finally {
     $clean();

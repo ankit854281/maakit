@@ -169,6 +169,50 @@ Object.assign(REP, {
       return `<div class="lw"><table class="lst">${head}${body}${tot}</table></div>`;
     } }
 });
+// ---------- Account reports (old ERP Account Report menu): fee receipts + old vouchers + School Office Cash Book ----------
+let ACC = null, ACCLOAD = false;
+async function loadAcc() {
+  if (ACC || ACCLOAD) return; ACCLOAD = true;
+  try { const r = await fetch('feereports_api.php?a=accounts', { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json(); if (!r.ok || !d.ok) throw Error(d.error || 'Could not open the report.'); ACC = d; }
+  catch (e) { toast(e.message); }
+  ACCLOAD = false; render();
+}
+const accIn = rows => { const s = iso(F.sdate), e = iso(F.edate); return rows.filter(r => (!s || r.date >= s) && (!e || r.date <= e) && (!F.user || F.user === 'All' || r.user === F.user)); };
+const AFL = ['dates', 'auser'];
+FL.auser = () => [['User', 'user', ['All', ...uniq((ACC ? ACC.rows : []).map(r => r.user))]]];
+const kindName = { Fee: 'Fee', RV: 'Receipt', OFREC: 'Other Fee', JV: 'Payment', SV: 'Payment', BD: 'Bank Deposit', SW: 'Self Withdrawal' };
+Object.assign(REP, {
+  cashbook: { title: 'Cashbook', page: 'report_cashbook.php', acc: 1, f: AFL,
+    run(rows) {
+      const t = k => sum(rows, k), cashRec = t('drCash'), bankDr = t('drBank'), cashCr = t('crCash'), bankCr = t('crBank');
+      const bd = sum(rows.filter(r => r.kind === 'BD'), 'crCash'), cashPay = cashCr - bd, selfW = sum(rows.filter(r => r.kind === 'SW'), 'crBank');
+      return T(['Sno', 'Date', 'Session', 'Vch No/Rec No', 'Name', 'Scholar No', 'Class', 'Remark', 'Particular', 'Cash Dr', 'Bank Dr', 'Cash Cr', 'Bank Cr', 'PMode', 'UName'],
+        rows.map((r, i) => tr([i + 1, dmy(r.date), longSes(r.session), r.vno, { v: r.name, c: 't' }, r.adm, r.cls, { v: r.remark, c: 't' }, r.sub, n0(r.drCash), n0(r.drBank), n0(r.crCash), n0(r.crBank), r.pmode, r.user])),
+        ['', '', '', '', '', '', '', '', 'Total', 'Cash Receipts ' + n0(cashRec) + ' Total ' + n0(cashRec), 'Bank Deposit ' + n0(bankDr - selfW * 0) + ' Total ' + n0(bankDr), 'Cash Payments ' + n0(cashPay) + ' Bank Deposit ' + n0(bd) + ' Total ' + n0(cashCr), 'Bank Payments ' + n0(bankCr - selfW) + ' Self Withdrawal ' + n0(selfW) + ' Total ' + n0(bankCr), '', '']);
+    } },
+  cashsum: { title: 'Cash Summary Report', page: 'report_cashb.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.drCash || r.crCash); return T(['Sno', 'Date', 'Name', 'Particular', 'Vch/Rec No', 'Cash Debit', 'Cash Credit', 'PMode', 'UName'], x.map((r, i) => tr([i + 1, dmy(r.date), { v: r.name, c: 't' }, r.sub, r.vno, n0(r.crCash), n0(r.drCash), r.pmode, r.user])), ['', '', '', '', 'Total', n0(sum(x, 'crCash')), n0(sum(x, 'drCash')), '', '']); } },
+  bankstmt: { title: 'Bank Statement', page: 'report_bankstatement.php', acc: 1, f: AFL,
+    run(rows) {
+      const s = iso(F.sdate); let bal = ACC.openBank + sum(ACC.rows.filter(r => s && r.date < s), r => r.drBank - r.crBank);
+      const x = rows.filter(r => r.drBank || r.crBank);
+      return T(['Sno', 'Date', 'Name', 'Particular', 'Remark', 'Vch/Rec No', 'Opening Balance', 'Bank Debit', 'Bank Credit', 'Closing Balance', 'PMode', 'UName'],
+        x.map((r, i) => { const o = bal; bal += r.drBank - r.crBank; return tr([i + 1, dmy(r.date), { v: r.name, c: 't' }, r.kind === 'BD' ? 'BD' : r.sub, { v: r.remark, c: 't' }, r.vno, n0(o), r.crBank ? n0(r.crBank) : '', r.drBank ? n0(r.drBank) : '', n0(bal), r.pmode, r.user]); }),
+        ['', '', '', '', '', 'Total', '', n0(sum(x, 'crBank')), n0(sum(x, 'drBank')), n0(bal), '', '']);
+    } },
+  bankrep: { title: 'Bank Report', page: 'report_bank.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.drBank || r.crBank); return T(['Sno', 'Date', 'Name', 'Particular', 'Vch/Rec No', 'Remark', 'Bank Debit', 'Bank Credit', 'PMode', 'UName'], x.map((r, i) => tr([i + 1, dmy(r.date), { v: r.name, c: 't' }, r.kind === 'BD' ? 'BD' : r.sub, r.vno, { v: r.remark, c: 't' }, n0(r.crBank), n0(r.drBank), r.pmode, r.user])), ['', '', '', '', 'Total', '', n0(sum(x, 'crBank')), n0(sum(x, 'drBank')), '', '']); } },
+  payment: { title: 'Payment Report', page: 'cashbook_summery.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.kind === 'JV' || r.kind === 'SV'); return T(['Sno', 'Date', 'Name', 'Particular', 'Vch/Rec No', 'Remark', 'Amount', 'Status', 'PMode', 'UName'], x.map((r, i) => tr([i + 1, dmy(r.date), { v: r.name, c: 't' }, r.sub, r.vno, { v: r.remark, c: 't' }, n0(r.crCash + r.crBank), 'Active', r.pmode, r.user])), ['', '', '', '', '', 'Total', n0(sum(x, r => r.crCash + r.crBank)), '', '', '']); } },
+  incexp: { title: 'Income & Expenditure Report', page: 'report_incexpregrpt.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.kind === 'JV' || r.kind === 'SV'); return T(['Sno', 'Date', 'Name', 'Particular', 'Voucher No', 'Amount', 'Cash/ Cheque', 'Remarks'], x.map((r, i) => tr([i + 1, dmy(r.date), { v: r.name, c: 't' }, r.head !== r.sub ? r.head + '->' + r.sub : r.sub, r.vno, n0(r.crCash + r.crBank), r.mode, { v: r.remark, c: 't' }])), ['', '', '', 'Total', '', n0(sum(x, r => r.crCash + r.crBank)), '', '']); } },
+  rcptsum: { title: 'Receipt Summary', page: 'report_receipt_summary.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.kind === 'RV' || r.kind === 'OFREC'); return T(['Sno', 'Date', 'Scholar No', 'Name', 'Particular', 'Voucher No', 'Amount', 'Cash/Cheque', 'Remarks'], x.map((r, i) => tr([i + 1, dmy(r.date), r.adm, { v: r.name, c: 't' }, r.sub, r.vno, n0(r.drCash), r.mode, { v: r.remark, c: 't' }])), ['', '', '', '', '', 'Total', n0(sum(x, 'drCash')), '', '']); } },
+  bdeposit: { title: 'Bank Deposit Report', page: 'report_bdeposit.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.kind === 'BD'); return T(['Sno', 'Deposit Date', 'Voucher No', 'Bank', 'Amount', 'PMode', 'Remark', 'UName'], x.map((r, i) => tr([i + 1, dmy(r.date), r.vno, { v: r.name, c: 't' }, n0(r.drBank), r.pmode, { v: r.remark, c: 't' }, r.user])), ['', '', '', 'Total', n0(sum(x, 'drBank')), '', '', '']); } },
+  dainikee: { title: 'Dainikee', page: 'report_dainikee.php', acc: 1, f: AFL,
+    run(rows) { const x = rows.filter(r => r.drCash); return T(['Date', 'Session', 'Rcpt No', 'Amount', 'Payment Mode', 'Scholar No', 'Particular', 'Head', 'Class/Ledger Folio', 'Remark', 'Uname'], x.map(r => tr([dmy(r.date), longSes(r.session), r.vno, n0(r.drCash), r.mode, r.adm, { v: r.name, c: 't' }, r.kind === 'Fee' ? 'Fee-> Fee' : r.head + '-> ' + r.sub, r.cls, { v: r.remark, c: 't' }, r.user])), ['', '', 'Total', n0(sum(x, 'drCash')), '', '', '', '', '', '', '']); } }
+});
 async function loadDues2(ses, key) {
   if (DUELOAD === key) return; DUELOAD = key;
   try { const r = await fetch('feereports_api.php?a=dues&ses=' + encodeURIComponent(ses), { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json(); if (!r.ok || !d.ok) throw Error(d.error || 'Could not open the report.'); DUES[key] = d; }
@@ -205,10 +249,11 @@ function render() {
   // Monthly and Class Wise had no form in the old ERP: they open on the running session straight away.
   if ((R === 'monthly' || R === 'classwise') && F.ses === undefined) { F.ses = longSes(D.session); if (R === 'classwise') { F.sdate = ''; F.edate = ''; } OUT = true; }
   if (rep.dues) { if (!F.dses) F.dses = longSes(D.session); if (!F.upto) F.upto = MONTHS[(new Date().getMonth() + 9) % 12]; const ses = F.dses.replace(/^(20\d\d)-20(\d\d)$/, '$1-$2'); if (!DUES[F.dses]) { DUES[F.dses] = null; delete DUES[F.dses]; loadDues2(ses, F.dses); } }
+  if (rep.acc) loadAcc();
   const dd = rep.dues ? DUES[F.dses] : null;
-  const rows = OUT ? (rep.dues ? (dd ? dd.rows.filter(dpass).sort(byClass) : null) : D.receipts.filter(r => pass(r, rep.f.includes('dates') ? F : { ...F, sdate: '', edate: '' }))) : null;
+  const rows = OUT ? rep.acc ? (ACC ? accIn(ACC.rows) : null) : (rep.dues ? (dd ? dd.rows.filter(dpass).sort(byClass) : null) : D.receipts.filter(r => pass(r, rep.f.includes('dates') ? F : { ...F, sdate: '', edate: '' }))) : null;
   $('frRoot').innerHTML = `<div class="sm"><h3>${esc(rep.title)}</h3><div class="np">${formHtml(rep)}</div>
-    ${OUT && rep.dues && !dd ? '<p>Opening…</p>' : ''}
+    ${OUT && ((rep.dues && !dd) || (rep.acc && !ACC)) ? '<p>Opening…</p>' : ''}
     ${rows ? `<div class="sch">${esc(D.school)}</div><div class="sub">${esc(rep.title)}${rep.f.includes('dates') ? ' — ' + esc(F.sdate) + ' to ' + esc(F.edate) : ''}</div>${dd && !dd.live ? `<p class="note" style="text-align:center">Fee Receipt is not started for this session yet, so dues are from the old ERP fee cards as copied on ${esc(dd.asOn)}.</p>` : ''}
     <div class="np" style="text-align:right"><button class="btn alt" onclick="excel()">Excel</button> <button class="btn alt" onclick="window.print()">Print</button></div>${rep.run(rows)}` : ''}</div>`;
 }
