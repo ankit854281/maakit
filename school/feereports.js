@@ -261,6 +261,23 @@ Object.assign(REP, {
     run(rows) { const x = rows.filter(r => r.kind === 'RV' || r.kind === 'OFREC'); return T(['Sno', 'Date', 'Scholar No', 'Name', 'Particular', 'Voucher No', 'Amount', 'Cash/Cheque', 'Remarks'], x.map((r, i) => tr([i + 1, dmy(r.date), r.adm, { v: r.name, c: 't' }, r.sub, r.vno, n0(r.drCash), r.mode, { v: r.remark, c: 't' }])), ['', '', '', '', '', 'Total', n0(sum(x, 'drCash')), '', '']); } },
   bdeposit: { title: 'Bank Deposit Report', page: 'report_bdeposit.php', acc: 1, f: AFL,
     run(rows) { const x = rows.filter(r => r.kind === 'BD'); return T(['Sno', 'Deposit Date', 'Voucher No', 'Bank', 'Amount', 'PMode', 'Remark', 'UName'], x.map((r, i) => tr([i + 1, dmy(r.date), r.vno, { v: r.name, c: 't' }, n0(r.drBank), r.pmode, { v: r.remark, c: 't' }, r.user])), ['', '', '', 'Total', n0(sum(x, 'drBank')), '', '', '']); } },
+  // Userwise Collection Report (report_monthcoll.php): each day, each user's cash taken in, cash paid out (vouchers, not bank
+  // deposits) and the difference — the old columns in the old order. Checked: income 52,71,607 and expense 72,885 = Cashbook.
+  userwise: { title: 'Userwise Collection Report', page: 'report_monthcoll.php', acc: 1, f: ['dates'],
+    run(rows) {
+      const old = ['Swati', 'Ramesh', 'ShivaniSingh', 'shubhash', 'ritu', 'Manisha', 'Nishi', 'Shivani resp', 'Payal', 'Shivani', 'Monika', 'Priyanka', 'Astha', 'Kajal', 'Anshika', 'Vinod', 'Mamata', 'Atul', 'kajal', 'admin', 'Amisha pandey', 'Shreya Pandey', 'Ritu singh', 'Priyanka jaiswal', 'Priyanka Singh', 'Shiva Rai', 'Riya Tripathi', 'Shivani Singh', 'Uday Pratap Singh', 'Rati Singh', 'Priya'];
+      // The old report groups by login, under the login's present name: receipts printed "Uday Pratap Singh" (Apr 2026) are
+      // that login, since renamed "Shiva Rai" (checked: 32,600 = 32,600). Any other name is its own column.
+      const AKA = { 'Uday Pratap Singh': 'Shiva Rai' }; rows = rows.map(r => AKA[r.user] ? { ...r, user: AKA[r.user] } : r);
+      const users = uniq([...old, ...rows.map(r => r.user)]);
+      const inc = r => r.drCash, exp = r => (r.kind === 'JV' || r.kind === 'SV') ? r.crCash : 0;
+      const by = {}; rows.forEach(r => { const k = r.date + '|' + r.user; const o = by[k] || (by[k] = [0, 0]); o[0] += inc(r); o[1] += exp(r); });
+      const s = iso(F.sdate) || (rows[0] || {}).date, e = iso(F.edate) || (rows[rows.length - 1] || {}).date, days = [];
+      if (s && e) for (let d = new Date(s + 'T00:00:00Z'); d.toISOString().slice(0, 10) <= e && days.length < 4000; d.setUTCDate(d.getUTCDate() + 1)) days.push(d.toISOString().slice(0, 10));
+      const tot = users.map(() => [0, 0]);
+      const body = days.map((d, i) => tr([i + 1, dmy(d), ...users.flatMap((u, j) => { const o = by[d + '|' + u] || [0, 0]; tot[j][0] += o[0]; tot[j][1] += o[1]; return [n0(o[0]), n0(o[1]), n0(o[0] - o[1])]; })]));
+      return T(['Sno', 'Date', ...users.flatMap(u => [u + '(Cash Income)', u + '(Cash Expense)', u + '(Remaining)'])], body, ['TOTAL', '', ...tot.flatMap(([a, b]) => [n0(a), n0(b), n0(a - b)])]);
+    } },
   dainikee: { title: 'Dainikee', page: 'report_dainikee.php', acc: 1, f: AFL,
     run(rows) { const x = rows.filter(r => r.drCash); return T(['Date', 'Session', 'Rcpt No', 'Amount', 'Payment Mode', 'Scholar No', 'Particular', 'Head', 'Class/Ledger Folio', 'Remark', 'Uname'], x.map(r => tr([dmy(r.date), longSes(r.session), r.vno, n0(r.drCash), r.mode, r.adm, { v: r.name, c: 't' }, r.kind === 'Fee' ? 'Fee-> Fee' : r.head + '-> ' + r.sub, r.cls, { v: r.remark, c: 't' }, r.user])), ['', '', 'Total', n0(sum(x, 'drCash')), '', '', '', '', '', '', '']); } }
 });
