@@ -4,6 +4,16 @@
 if (new URLSearchParams(location.search).get('look') === 'classic') document.documentElement.classList.add('classic');
 let META = null, CUR = '', ROWS = [], Q = '', FCLS = '', FSTAT = '', BUSY = false, IMPORT = null, DET = null;
 // Session chosen in the app header (old-ERP style session menu); '' = all sessions.
+// Opened from the old-ERP menu: each register is drawn like the old ERP's own page ("Add …" form on top, list below).
+const OLDLOOK = document.documentElement.classList.contains('classic');
+let EDIT = '';
+// The old menu item that opened this page ("Add Religion", "Caste Master" …) is its heading; for Masters it also picks the list.
+const OLDTITLE = new URLSearchParams(location.search).get('t') || '';
+function preset(m) {
+  if (m.id !== 'master' || !OLDTITLE) return '';
+  const t = OLDTITLE.toLowerCase(), opts = m.fields.find(f => f.k === 'list').opts;
+  return opts.find(o => t.includes(o.toLowerCase().split(' ')[0])) || '';
+}
 let VSES = (new URLSearchParams(location.search).get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -46,6 +56,7 @@ function filtered() {
 }
 function render(loading) {
   if (CUR === 'oldfeecard' && !loading) return renderFeeCard();
+  if (OLDLOOK) return renderOld(loading);
   const m = mod(), fk = Object.fromEntries(m.fields.map(f => [f.k, f])), groups = {};
   META.modules.forEach(x => (groups[x.group] = groups[x.group] || []).push(x));
   const side = Object.entries(groups).map(([g, ms]) => `<h3>${esc(g)}</h3>` + ms.map(x => `<button class="${x.id === CUR ? 'on' : ''}" onclick="openMod('${x.id}')">${esc(x.title)}</button>`).join('')).join('');
@@ -68,6 +79,31 @@ function render(loading) {
     ${body}</section></div>`;
   const s = document.querySelector('.rg-search'); if (s && document.activeElement !== s && Q) { s.focus(); s.setSelectionRange(Q.length, Q.length); }
 }
+// ---------------------------------------------------------------- the old ERP's page layout (master_*.php, transport_vehicle.php, enquiry_student.php …)
+// Owner, 27 Oct 2026: "bilkul difference na feel ho". Old pages: heading "Add <name>", a two-column form (label | box, red label
+// for a required field, Submit), and under it the list — SNo., Edit, the fields, thin black lines. Same data and checks as before.
+function renderOld(loading) {
+  const m = mod(), fk = Object.fromEntries(m.fields.map(f => [f.k, f])), pre = preset(m);
+  const rows = filtered().filter(x => !pre || x.list === pre), cols = m.list.map(k => fk[k]).filter(f => f && !(pre && f.k === 'list')).map(f => pre && f.k === 'value' ? { ...f, label: pre } : f);
+  const r = EDIT ? ROWS.find(x => x._id === EDIT) : null, ff = m.fields.filter(f => f.type !== 'json' && f.k !== m.auto && !(pre && f.k === 'list')).map(f => pre && f.k === 'value' ? { ...f, label: pre } : f);
+  const cell = f => { const v = r ? r[f.k] : (f.today ? today() : ''); return `<td class="ol-l${f.req ? ' req' : ''}">${esc(f.label)}${f.req ? '*' : ''}</td><td class="ol-c">${input(f, v)}</td>`; };
+  const pairs = []; for (let i = 0; i < ff.length; i += 2) pairs.push(`<tr>${cell(ff[i])}${ff[i + 1] ? cell(ff[i + 1]) : '<td></td><td></td>'}</tr>`);
+  const form = m.write ? `<form id="olForm" onsubmit="event.preventDefault();saveOld()">${pre ? `<input type="hidden" id="f_list" value="${esc(pre)}">` : ''}<table class="ol-f">${pairs.join('')}</table>
+    <div class="ol-btns"><button class="ol-sub" type="submit">${r ? 'Update' : 'Submit'}</button>${r ? ` <button type="button" class="ol-sub ol-alt" onclick="EDIT='';render()">Cancel</button>${m.print ? ` <button type="button" class="ol-sub ol-alt" onclick="printRow('${esc(r._id)}')">Print</button>` : ''} <button type="button" class="ol-sub ol-del" onclick="delRow('${esc(r._id)}')">Delete</button>` : ''}</div></form>` : '';
+  const sums = (m.sum || []).map(k => [k, rows.reduce((a, x) => a + (Number(x[k]) || 0), 0)]);
+  const list = loading ? '<p>Opening…</p>' : `<div class="ol-w"><table class="ol-t"><tr><th>SNo.</th><th>${m.write ? 'Edit' : 'View'}</th>${cols.map(f => `<th>${esc(f.label)}</th>`).join('')}</tr>${rows.slice(0, 2000).map((x, i) => `<tr><td>${i + 1}</td><td><a onclick="${m.write ? `EDIT='${esc(x._id)}';render();scrollTo(0,0)` : `openRow('${esc(x._id)}')`}">${m.write ? 'Edit' : 'View'}</a></td>${cols.map(f => `<td class="${f.type === 'money' || f.type === 'num' ? 'n' : ''}">${esc(show(f, x[f.k], x))}</td>`).join('')}</tr>`).join('')}
+    ${sums.length ? `<tr class="ol-tot"><td></td><td>Total</td>${cols.map(f => { const t = sums.find(z => z[0] === f.k); return `<td class="n">${t ? esc(f.type === 'money' ? rs(t[1]) : t[1]) : ''}</td>`; }).join('')}</tr>` : ''}</table></div>${rows.length > 2000 ? '<p>Showing the first 2,000. Search or Excel for all.</p>' : ''}${!rows.length ? '<p>No entries yet.</p>' : ''}`;
+  const hasCls = m.fields.some(f => f.type === 'student' || f.k === 'cls' || f.k === 'lastCls');
+  const h = OLDTITLE ? (r ? OLDTITLE.replace(/^(Add|New) /, 'Edit ') : OLDTITLE) : m.write ? (r ? 'Edit ' : 'Add ') + m.title.replace(/^(Add|New) /, '') : m.title;
+  $('regRoot').innerHTML = `<div class="ol"><h3>${esc(h)}</h3>${form}
+    <div class="ol-bar"><input type="search" placeholder="Search" value="${esc(Q)}" oninput="Q=this.value;render()" class="ol-q">
+    ${hasCls ? `<select onchange="FCLS=this.value;render()"><option value="">All Class</option>${CLS_ORDER.map(c => `<option ${c === FCLS ? 'selected' : ''}>${c}</option>`).join('')}</select>` : ''}
+    ${m.fields.some(f => f.k === 'session') ? `<select onchange="VSES=this.value;render()"><option value="">All Session</option>${[...new Set(ROWS.map(x => String(x.session || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2')).concat(VSES ? [VSES] : []))].filter(Boolean).sort().reverse().map(x => `<option ${x === VSES ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>` : ''}
+    ${fk.status && fk.status.opts ? `<select onchange="FSTAT=this.value;render()"><option value="">All Status</option>${fk.status.opts.map(o => `<option ${o === FSTAT ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}
+    <span class="ol-n">${rows.length} entries</span>${m.import ? '<button onclick="openImport()">Import from old ERP</button>' : ''}${m.report ? `<button onclick="openReport('${m.report}')">${m.report === 'stock' ? 'Stock Report' : 'Cash Book'}</button>` : ''}${m.id === 'oldfee' && META.canCarry ? '<button onclick="openCarry()">Carry old dues to Fee Desk</button>' : ''}<button onclick="csv()">Excel</button><button onclick="printList()">Print</button></div>${list}</div>`;
+  const q = document.querySelector('.ol-q'); if (q && Q && document.activeElement !== q) { q.focus(); q.setSelectionRange(Q.length, Q.length); }
+}
+async function saveOld() { await saveRow(EDIT); }
 // ---------------------------------------------------------------- Fee Receipt, laid out like the old ERP (studentfee.php)
 // Owner, 22 Oct 2026: "fee receipt same to same jaise old software me hai". The card of each student is copied from the old
 // ERP (getstufee.php) for every session and shown here exactly: details, month-wise fee heads, receipts, discounts, balance.
@@ -151,8 +187,8 @@ async function saveRow(id) {
   if (BUSY) return; const m = mod(), row = {};
   for (const f of m.fields) { if (f.k === m.auto || f.type === 'json') { const old = id ? ROWS.find(x => x._id === id) : null; if (f.type === 'json' && old) row[f.k] = old[f.k]; continue; } const el = $('f_' + f.k); if (el) row[f.k] = el.value; }
   BUSY = true;
-  try { const d = await api('save', { m: m.id, id, row }); const i = ROWS.findIndex(x => x._id === d.row._id); if (i >= 0) ROWS[i] = d.row; else ROWS.push(d.row); $('regDialog').close(); toast('Saved' + (m.auto && d.row[m.auto] ? ' — ' + d.row[m.auto] : '')); render(); }
-  catch (e) { toast(e.message); } finally { BUSY = false; }
+  try { const d = await api('save', { m: m.id, id, row }); const i = ROWS.findIndex(x => x._id === d.row._id); if (i >= 0) ROWS[i] = d.row; else ROWS.push(d.row); $('regDialog').close(); toast('Saved' + (m.auto && d.row[m.auto] ? ' — ' + d.row[m.auto] : '')); BUSY = false; if (OLDLOOK) EDIT = ''; render(); return true; }
+  catch (e) { toast(e.message); return false; } finally { BUSY = false; }
 }
 async function delRow(id) {
   const reason = prompt('Why is this row being removed? (kept in the Activity Log)'); if (!reason) return;

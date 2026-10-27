@@ -92,7 +92,7 @@ function clGo(t, label) {
   if (!t) { CL_NOTE = label; render(); window.scrollTo(0, 0); return; }
   const v = t.slice(2);
   if (t[0] === 'v') return go(v);
-  if (t[0] === 'o') return go('office', { m: v });
+  if (t[0] === 'o') return go('office', { m: v, t: label });
   if (t[0] === 'f') return go('finance', { tab: v });
   if (t[0] === 'r') return go('oldreports', { page: v });
   if (t[0] === 'm') return go('stumaster', { m: v });
