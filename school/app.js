@@ -3826,6 +3826,9 @@ for (const role of ['principal','chairman','teacher']) NAV[role].push(['progress
 // Student Master — the old ERP's Add Student / Edit-Update Student / Student Search form, field for field (school/stumaster.php).
 for (const role of ['principal','chairman']) NAV[role].push(['stumaster','fa-user-graduate','Student Master']);
 VIEWS.stumaster=()=>'<iframe class="edu-iframe" title="Student Master" src="stumaster.php?embed=1&m='+encodeURIComponent(P&&P.m?P.m:'list')+(P&&P.id?'&id='+encodeURIComponent(P.id):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Fee Reports — the old ERP's fee reports in its own layout (school/feereports.php), old ERP and new receipts together.
+for (const role of ['principal','chairman','accountant']) NAV[role].push(['feereports','fa-file-invoice','Fee Reports']);
+VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).
 for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['oldreports','fa-box-archive','Old ERP Reports']);
 VIEWS.oldreports=()=>'<iframe class="edu-iframe" title="Old ERP Reports" src="oldreports.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(P&&P.page?'&page='+encodeURIComponent(P.page):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
