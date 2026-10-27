@@ -10,10 +10,12 @@
 //  the printed rupee text for the lines; ofcRcpt keeps paise).
 //
 //   GET ?a=receipts           every receipt, every session (no deleted ones)
+//   GET ?a=dues&ses=          each child's heads, old due and receipts for the dues reports
 // ============================================================================
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
 require __DIR__ . '/registers_lib.php';
+require __DIR__ . '/feecollect_lib.php';
 
 $a = (string)($_GET['a'] ?? 'receipts');
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
@@ -30,6 +32,48 @@ function fr_date(string $d): string {
 try {
 switch ($a) {
 case 'receipts': {
+    $set = sch_rec_get('settings', 'main') ?? [];
+    sch_json(['ok' => true, 'receipts' => fr_receipts($db), 'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? '')]);
+}
+case 'dues': {
+    // Fee Defaulter / Fee Statement / Zero Due / Fee Register: each child's month-wise heads for the session —
+    // the Fee Receipt ledger once the session is started here, otherwise the copied old ERP fee card (as on its copy date).
+    $ses = ofc_ses((string)($_GET['ses'] ?? '')); if ($ses === '') sch_fail('Choose the session.');
+    $live = ofc_live($ses); $students = reg_students(); $cards = ofc_cards($ses);
+    $info = []; foreach (reg_rows('studinfo') as $r) if (($r['student'] ?? '') !== '') $info[(string)$r['student']] = $r;
+    $rc = []; foreach (fr_receipts($db) as $r) if (ofc_ses($r['session']) === $ses && $r['sid'] !== '') $rc[$r['sid']][] = $r;
+    $out = []; $asOn = '';
+    foreach ($students as $sid => $s) {
+        if (!empty($s['inactive'])) continue;
+        $L = $live ? sch_rec_get('ofcLed', $ses . '|' . $sid) : null; $c = $cards[$sid] ?? null;
+        if (!$L && $c) { $L = ofc_ledger_from_card($ses, (string)$sid, $c, $s); $d = (string)($c['asOn'] ?? ''); if ($d !== '' && ($asOn === '' || strcmp($d, $asOn) < 0)) $asOn = $d; }
+        if (!$L) continue;
+        $i = $info[$sid] ?? []; $x = (array)($i['extra'] ?? []); $rs = $rc[$sid] ?? [];
+        $heads = array_values(array_map(fn($h) => ['m' => (int)$h['m'], 'name' => (string)$h['name'], 'amt' => $h['amt'] / 100, 'paid' => $h['paid'] / 100], array_filter($L['heads'], fn($h) => empty($h['na']))));
+        $ok = array_values(array_filter($rs, fn($r) => $r['status'] !== 'Cancelled'));
+        $oldPaid = 0.0; foreach ($ok as $r) foreach ($r['lines'] as $l) if ($l['head'] === 'Old Due') $oldPaid += $l['amt'];
+        $last = $ok ? $ok[count($ok) - 1] : null;
+        $out[] = ['sid' => $sid, 'name' => $s['name'], 'adm' => $s['adm'], 'cls' => $s['cls'], 'section' => $s['section'] ?: (string)$L['section'], 'father' => $s['father'], 'mother' => (string)($s['mother'] ?? ''),
+            'phone' => $s['phone'], 'fatherMobile' => (string)($i['fatherMobile'] ?? ''), 'motherMobile' => (string)($i['motherMobile'] ?? ''), 'address' => (string)(sch_rec_get('student', $sid)['address'] ?? ''),
+            'status' => (string)($x['Student Status'] ?? 'Active'), 'sesStatus' => (string)($i['status'] ?? 'Active'), 'admAs' => (string)($i['admAs'] ?? ''), 'stuType' => (string)($i['stuType'] ?? ''), 'stream' => (string)($i['stream'] ?? ''),
+            'scheme' => (string)($i['scheme'] ?? $L['scheme'] ?? ''), 'route' => (string)($i['route'] ?? ''), 'faclty' => (string)(sch_rec_get('student', $sid)['facilities'] ?? ($x['Facilites'] ?? '')), 'tag' => (string)($x['Tag'] ?? ''),
+            'oldDue' => ofc_old_due($ses, (string)$sid, $L) / 100, 'oldPaid' => $oldPaid, 'transfer' => ((int)($L['transferFee'] ?? 0)) / 100, 'heads' => $heads,
+            'received' => array_sum(array_column($ok, 'received')), 'discount' => array_sum(array_column($ok, 'discount')), 'late' => array_sum(array_column($ok, 'late')), 'count' => count($ok),
+            'first' => $ok ? $ok[0]['date'] : '', 'lastDate' => $last['date'] ?? '', 'lastAmt' => $last['received'] ?? 0, 'lastMonths' => $last['months'] ?? '', 'followRemark' => $last['followRemark'] ?? '',
+            'receipts' => array_map(fn($r) => ['no' => $r['no'], 'date' => $r['date'], 'received' => $r['received'], 'lines' => $r['lines']], $ok)];
+    }
+    $set = sch_rec_get('settings', 'main') ?? [];
+    sch_json(['ok' => true, 'ses' => $ses, 'live' => (bool)$live, 'asOn' => $asOn, 'rows' => $out, 'school' => (string)($set['school'] ?? '')]);
+}
+default: sch_fail('Unknown action.', 404);
+}
+} catch (Throwable $e) {
+    error_log('feereports_api: ' . $e->getMessage());
+    sch_fail('Could not open the report. Please try again.', 500);
+}
+
+/** Every receipt, old ERP and new, in rupees, sorted by date. */
+function fr_receipts(PDO $db): array {
     $students = reg_students();
     $info = []; foreach (reg_rows('studinfo') as $r) if (($r['student'] ?? '') !== '') $info[(string)$r['student']] = $r;
     $det = []; foreach (reg_rows('oldrcptdet') as $r) $det[(string)$r['session'] . '|' . (string)$r['receiptNo']] = $r;
@@ -75,12 +119,5 @@ case 'receipts': {
             'status' => (string)($r['status'] ?? 'Cleared'), 'user' => (string)($r['by'] ?? ''), 'remark' => (string)($r['remark'] ?? ''), 'followRemark' => (string)($r['followupRemark'] ?? ''), 'lines' => $lines] + $stu($sid);
     }
     usort($out, fn($x, $y) => [$x['date'], $x['session'], (int)preg_replace('/\D/', '', $x['no'])] <=> [$y['date'], $y['session'], (int)preg_replace('/\D/', '', $y['no'])]);
-    $set = sch_rec_get('settings', 'main') ?? [];
-    sch_json(['ok' => true, 'receipts' => $out, 'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? '')]);
-}
-default: sch_fail('Unknown action.', 404);
-}
-} catch (Throwable $e) {
-    error_log('feereports_api: ' . $e->getMessage());
-    sch_fail('Could not open the report. Please try again.', 500);
+    return $out;
 }
