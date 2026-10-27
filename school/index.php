@@ -36,5 +36,6 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <script src="toolkit_english.js?v=<?= $v('toolkit_english.js') ?>"></script>
 <script src="app.js?v=<?= $v('app.js') ?>"></script>
 <script src="classic.js?v=<?= $v('classic.js') ?>"></script>
+<script src="oldlook.js?v=<?= $v('oldlook.js') ?>"></script>
 </body>
 </html>

@@ -123,3 +123,20 @@ html.classic .fn-stats .fn-stat small { color: #fff; }
   .cl-right { padding: 10px 10px 40px; }
 }
 @media print { .cl-left, .cl-top { display: none !important; } .cl-right { padding: 0; } }
+
+/* Old-ERP screens drawn by oldlook.js (attendance …): the old style.css look. */
+html.classic .olk{font:12px Arial,Helvetica,sans-serif;color:#555;padding:4px 6px 30px}
+html.classic .olk h3{font-size:17px;font-weight:bold;color:#555;margin:10px 0 16px 6px}
+html.classic .olk table.f{width:100%;border-collapse:collapse}html.classic .olk table.f td{padding:4px 6px;vertical-align:top}
+html.classic .olk table.f td.l{width:20%;text-align:center;padding-top:10px}html.classic .olk table.f td.c{width:30%}html.classic .olk td.req{color:#f00}
+html.classic .olk input[type=text],html.classic .olk input[type=date],html.classic .olk select{font:13px Arial,Helvetica,sans-serif;color:#333;background:#fff;border:1px solid #d5d5d5;border-radius:0;padding:5px 6px;width:240px;max-width:100%;height:30px}
+html.classic .olk input:focus,html.classic .olk select:focus{background:#ffffcc;border:2px solid #f00;outline:0}
+html.classic .olk .b{text-align:center;margin:12px 0}html.classic .olk .np{text-align:right}
+html.classic .olk button.sub{background:#2d353c;color:#fff;border:0;border-radius:3px;padding:7px 14px;font:12px Arial;cursor:pointer}html.classic .olk button.alt{background:#5a6268}
+html.classic .olk .info{margin:6px 0;font-weight:bold}
+html.classic .olk .w{overflow-x:auto}html.classic .olk table.lst{border-collapse:collapse;width:100%;background:#fff;font:11px Verdana,Arial,sans-serif}
+html.classic .olk table.lst th{background:#f00;color:#fff;border:1px solid #ddd;padding:3px;font-weight:bold;text-align:center}
+html.classic .olk table.lst td{border:1px solid #999;padding:3px 4px;color:#f00;text-align:center;vertical-align:top}html.classic .olk table.lst td.t{text-align:left}
+html.classic .olk td.att label{display:inline-block!important;margin:0 8px!important;padding:0!important;border:0!important;background:none!important;border-radius:0!important;white-space:nowrap;color:#333;width:auto!important}html.classic .olk td.att input{width:auto!important;height:auto!important;margin:0 3px 0 0!important;display:inline!important}
+html.classic .olk .sch{color:#00f;text-align:center;font-size:19px;font-weight:bold;margin:8px 0 0}html.classic .olk .sub{color:#00f;text-align:center;font-weight:bold;margin:2px 0 6px}
+@media(max-width:860px){html.classic .olk table.f,html.classic .olk table.f tbody,html.classic .olk table.f tr,html.classic .olk table.f td{display:block;width:100%!important;text-align:left!important}}
