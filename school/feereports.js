@@ -169,6 +169,57 @@ Object.assign(REP, {
       return `<div class="lw"><table class="lst">${head}${body}${tot}</table></div>`;
     } }
 });
+// ---------- more dues reports (Fee Report menu) ----------
+// Heads on the old fee card keep paid and discount together ("Paid/Disc Amount"), so these reports show that one column.
+const upto = (r, M) => r.heads.filter(h => ord(h.m) <= ord(MNUM[M] || 3));
+const headNames = rows => uniq(rows.flatMap(r => r.heads.map(h => h.name))).sort();
+FD.dhead = () => [['Fee Head', 'dhead', headNames(curDues())]];
+Object.assign(REP, {
+  defaulter2: { title: 'Fee Defaulter - II', page: 'studuedfaulter_new.php', dues: 1, f: ['dses', 'dcls', 'dsec', 'dadm', 'dtype', 'dmonth'],
+    run(rows) {
+      const M = F.upto || 'March', x = rows.map(r => [r, due(r, M)]).filter(([, d]) => d.due > 0);
+      return T(['Sno', 'Sch No', 'Name', 'Class', 'Sec', 'Mobile Number', 'Student Type', 'AC Type', 'Total Fee - Disc - Rec + Trns = Due', 'Late Fee', 'Payable Due', 'Total Payable', 'Cur FEE', 'PRV DUE', 'Trns Fee', 'Apply Fees', 'Disc', 'Disc(%)', 'Recv Fees', 'Due Fees', 'Due %', 'Last Pay'],
+        x.map(([r, d], i) => { const apply = d.cur + r.oldDue + r.transfer; return tr([i + 1, r.adm, { v: r.name + ' / ' + r.father, c: 't' }, r.cls, r.section, r.phone, r.stuType, 'Single', `${n0(apply)} - ${n0(r.discount)} - ${n0(r.received)} + ${n0(r.transfer)} = ${n0(d.due)}`, n0(r.late), n0(d.due), n0(d.due + r.late), n0(d.cur), n0(r.oldDue), n0(r.transfer), n0(apply), n0(r.discount), apply ? (r.discount * 100 / apply).toFixed(2) + '%' : '0%', n0(r.received), n0(d.due), apply ? (d.due * 100 / apply).toFixed(2) + '%' : '0%', r.lastDate ? dmy(r.lastDate) : '']); }),
+        ['', '', 'Total (' + x.length + ')', '', '', '', '', '', '', n0(sum(x, ([r]) => r.late)), n0(sum(x, ([, d]) => d.due)), n0(sum(x, ([r, d]) => d.due + r.late)), n0(sum(x, ([, d]) => d.cur)), n0(sum(x, ([r]) => r.oldDue)), n0(sum(x, ([r]) => r.transfer)), '', n0(sum(x, ([r]) => r.discount)), '', n0(sum(x, ([r]) => r.received)), n0(sum(x, ([, d]) => d.due)), '', '']);
+    } },
+  statement2: { title: 'Fee Statement-II', page: 'studuefeedet_quarter.php', dues: 1, f: ['dses', 'dcls', 'dsec', 'dadm', 'dtype', 'dmonth', 'dstatus', 'dscheme'],
+    run(rows) {
+      const M = F.upto || 'March', x = rows.map(r => [r, due(r, M)]);
+      return `<div class="sub">Session: ${esc(F.dses)} Installment : ${esc(M)}</div>` + T(['Sno', 'Status', 'Student Type', 'Class', 'Section', 'Stream', 'Scholar No', 'Name', "Father's Name", 'Scheme', 'Total Amount', 'Currently Received', 'Net Due Amount'],
+        x.map(([r, d], i) => tr([i + 1, r.status, r.stuType, r.cls, r.section, r.stream, r.adm, { v: r.name, c: 't' }, { v: r.father, c: 't' }, r.scheme, n0(d.total + r.oldDue), n0(r.received), n0(d.due)])),
+        ['', '', '', '', '', '', '', 'Total (' + x.length + ')', '', '', n0(sum(x, ([r, d]) => d.total + r.oldDue)), n0(sum(x, ([r]) => r.received)), n0(sum(x, ([, d]) => d.due))]);
+    } },
+  statement3: { title: 'Fee Statement-III', page: 'studuefeedet_quarter_new.php', dues: 1, f: ['dses', 'dcls', 'dsec', 'dadm', 'dtype', 'dstatus', 'dscheme'],
+    run(rows) {
+      const ms = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3], mt = (r, m, k) => sum(r.heads.filter(h => h.m === m), k);
+      const head = `<tr>${['Sno', 'Status', 'Student Type', 'Class', 'Section', 'Stream', 'Scholar No', 'Name', "Father's Name", "Father's Mobile No", "Mother's Mobile No", 'Scheme'].map(h => `<th rowspan="2">${h}</th>`).join('')}${MONTHS.map(m => `<th colspan="3">${m}</th>`).join('')}<th rowspan="2">Net Paid Amount</th><th rowspan="2">Net Due Amount</th></tr><tr>${MONTHS.map(() => '<th>Total</th><th>Paid/Disc</th><th>Due</th>').join('')}</tr>`;
+      const body = rows.map((r, i) => `<tr>${[i + 1, r.status, r.stuType, r.cls, r.section, r.stream, r.adm].map(c => `<td>${esc(c)}</td>`).join('')}<td class="t">${esc(r.name)}</td><td class="t">${esc(r.father)}</td><td>${esc(r.fatherMobile)}</td><td>${esc(r.motherMobile)}</td><td>${esc(r.scheme)}</td>${ms.map(m => { const a = mt(r, m, 'amt'), p = mt(r, m, 'paid'); return `<td>${n0(a)}</td><td>${n0(p)}</td><td>${n0(a - p)}</td>`; }).join('')}<td>${n0(sum(r.heads, 'paid'))}</td><td>${n0(due(r, 'March').due)}</td></tr>`).join('');
+      return `<div class="sub">Session: ${esc(F.dses)}</div><div class="lw"><table class="lst">${head}${body}</table></div>`;
+    } },
+  headstmt: { title: 'Head Wise Fee Statement', page: 'report_feestatement.php', dues: 1, f: ['dses', 'dcls', 'dsec', 'dmonth'],
+    run(rows) {
+      const M = F.upto || 'March', hs = headNames(rows), sumH = (n, k) => sum(rows, r => sum(upto(r, M).filter(h => h.name === n), k));
+      return T(['Fee Head', 'Amount', 'Paid/Disc Amount', 'Due Amount'], hs.map(n => tr([n, n0(sumH(n, 'amt')), n0(sumH(n, 'paid')), n0(sumH(n, 'amt') - sumH(n, 'paid'))])),
+        ['Total', n0(sum(hs, n => sumH(n, 'amt'))), n0(sum(hs, n => sumH(n, 'paid'))), n0(sum(hs, n => sumH(n, 'amt') - sumH(n, 'paid')))]);
+    } },
+  sthead: { title: 'Fee Statement Head Wise', page: 'stu_fee_statement_head.php', dues: 1, f: ['dses', 'dcls', 'dsec', 'dmonth', 'dstatus'],
+    run(rows) {
+      const M = F.upto || 'March', hs = headNames(rows), v = (r, n, k) => sum(upto(r, M).filter(h => h.name === n), k);
+      const head = `<tr>${['Sno', 'Status', 'Admission As', 'Student Type', 'Class', 'Section', 'Scholar No', 'Name', 'Mobile Number', "Father's Name", 'Route'].map(h => `<th rowspan="2">${h}</th>`).join('')}${hs.map(n => `<th colspan="3">${esc(n)}</th>`).join('')}<th rowspan="2">Total Amt</th><th rowspan="2">Total Paid/Disc</th><th rowspan="2">Total Due Amt</th><th rowspan="2">Old Due</th><th rowspan="2">Discount Amount</th><th rowspan="2">Currently Received</th><th rowspan="2">Due Amount</th></tr><tr>${hs.map(() => '<th>Amt</th><th>Paid/Disc</th><th>Due</th>').join('')}</tr>`;
+      const body = rows.map((r, i) => { const d = due(r, M), ta = sum(upto(r, M), 'amt'), tp = sum(upto(r, M), 'paid'); return `<tr>${[i + 1, r.status, r.admAs, r.stuType, r.cls, r.section, r.adm].map(c => `<td>${esc(c)}</td>`).join('')}<td class="t">${esc(r.name)}</td><td>${esc(r.phone)}</td><td class="t">${esc(r.father)}</td><td class="t">${esc(r.route)}</td>${hs.map(n => `<td>${n0(v(r, n, 'amt'))}</td><td>${n0(v(r, n, 'paid'))}</td><td>${n0(v(r, n, 'amt') - v(r, n, 'paid'))}</td>`).join('')}<td>${n0(ta)}</td><td>${n0(tp)}</td><td>${n0(ta - tp)}</td><td>${n0(r.oldDue)}</td><td>${n0(r.discount)}</td><td>${n0(r.received)}</td><td>${n0(d.due)}</td></tr>`; }).join('');
+      return `<div class="sub">Session: ${esc(F.dses)} Month ${esc(M)}</div><div class="lw"><table class="lst">${head}${body}</table></div>`;
+    } },
+  defhead: { title: 'Fee Defaulter Head Wise', page: 'studuedfaulter_head.php', dues: 1, f: ['dses', 'dcls', 'dsec', 'dhead', 'dmonth'],
+    run(rows) {
+      const M = F.upto || 'March', n = F.dhead || headNames(rows)[0], v = (r, k) => sum(upto(r, M).filter(h => h.name === n), k);
+      const x = rows.filter(r => v(r, 'amt') - v(r, 'paid') > 0);
+      return `<div class="sub">Session: ${esc(F.dses)} Month ${esc(M)}</div>` + T(['Sno', 'Status', 'Admission As', 'Student Type', 'Class', 'Section', 'Stream', 'Scholar No', 'Name', 'Mobile Number', "Father's Name", 'Address', 'Route', 'Total Amount', n + ' (Amt)', n + ' (Paid/Disc Amt)', n + ' (Due Amt)', 'Old Due', 'Discount Amount', 'Currently Received', 'Due Amount'],
+        x.map((r, i) => { const d = due(r, M); return tr([i + 1, r.status, r.admAs, r.stuType, r.cls, r.section, r.stream, r.adm, { v: r.name, c: 't' }, r.phone, { v: r.father, c: 't' }, { v: r.address, c: 't' }, { v: r.route, c: 't' }, n0(d.total), n0(v(r, 'amt')), n0(v(r, 'paid')), n0(v(r, 'amt') - v(r, 'paid')), n0(r.oldDue), n0(r.discount), n0(r.received), n0(d.due)]); }),
+        ['', '', '', '', '', '', '', '', 'Total (' + x.length + ')', '', '', '', '', '', n0(sum(x, r => v(r, 'amt'))), n0(sum(x, r => v(r, 'paid'))), n0(sum(x, r => v(r, 'amt') - v(r, 'paid'))), '', '', '', '']);
+    } },
+  deleted: { title: 'Deleted Fee Receipt', page: 'report_delete_fee.php', f: ['dates', 'session'],
+    run(rows) { const x = rows.filter(r => r.status === 'Cancelled'); return T(['Sno', 'Session', 'Receipt No', 'Date', 'Scholar No', 'Class', 'Section', 'Name', 'Total Amount', 'Discount', 'Late Fee', 'Currently Received', 'PMode', 'Remark', 'UName'], x.map((r, i) => tr([i + 1, longSes(r.session), r.no, dmy(r.date), r.adm, r.cls, r.section, { v: r.name, c: 't' }, n0(r.total), n0(r.discount), n0(r.late), n0(r.received), r.mode, { v: r.remark, c: 't' }, r.user])), ['', '', '', '', '', '', '', 'Total', n0(sum(x, 'total')), n0(sum(x, 'discount')), n0(sum(x, 'late')), n0(sum(x, 'received')), '', '', '']) + '<p class="note">Receipts cancelled in the new Fee Receipt (with the reason). Old ERP deletions are in Old ERP Reports.</p>'; } }
+});
 // ---------- Account reports (old ERP Account Report menu): fee receipts + old vouchers + School Office Cash Book ----------
 let ACC = null, ACCLOAD = false;
 async function loadAcc() {
