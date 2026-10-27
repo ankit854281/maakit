@@ -85,7 +85,7 @@ async function submitFee() {
   if (total > LD.totals.balance) { F.paid = '0'; F.discount = '0'; F.late = '0'; F.total = '0'; render(); return toast('not received negative amount-2'); }
   if (F.mode !== 'Cash' && !F.depositBank) return toast('Select Deposit Bank Name First');
   if (F.mode !== 'Cash' && !F.depositDate) return toast('Enter Bank Deposit Date');
-  if (LD.oldDue > 0) return toast('Firstly Paid Old Due Amount');
+  if (LD.oldDue > 0) return toast('Firstly Paid Old Due Amount — use "Add Old Due to the card" first.');
   if (F.paid === '' || !total) return toast('Select Month');
   if (isNaN(parseFloat(F.paid))) return toast('Please Check Amount');
   const alloc = heads().filter(h => F.npaid[h.i] > 0).map(h => ({ i: h.i, amt: R(F.npaid[h.i]) }));
@@ -108,6 +108,22 @@ async function startApply() {
   const from = $('stFrom').value, c = $('stConfirm').value.trim();
   try { await api('start', { ses: ST.ses, apply: true, confirm: c, from }); toast('Fee Receipt started for ' + ST.ses + '.'); await boot(ST.ses); } catch (e) { toast(e.message); }
 }
+// ---- old Add Other Fee (studentothfee.php; bulk stu_addotherfee.php) and Fee Discount (Head Wise) (studentfee_dischead.php)
+async function addFee(sids, bulk) {
+  const v = id => ($(id) || {}).value || '';
+  const type = v(bulk ? 'bfType' : 'afType'), m = v(bulk ? 'bfMonth' : 'afMonth'), amt = v(bulk ? 'bfAmt' : 'afAmt').trim(), remark = v(bulk ? 'bfRemark' : 'afRemark');
+  if (!type) return toast('Select Fee Type'); if (!m) return toast('Select Month');
+  if (type !== 'Old Due' && !(parseFloat(amt) > 0)) return toast('Enter Amount');
+  if (!confirm(bulk ? `Add ${type} ${amt ? '₹' + amt : '(each child\'s whole old due)'} to ${sids.length} children?` : 'Are you sure you want to Add this Record ?')) return;
+  try { const d = await api('addFee', { ses: ST.ses, sids, type, m, amt, remark, nonce: nonce() }); toast(`Added to ${d.added} fee card(s).` + (d.skipped.length ? ` Not added: ${d.skipped.slice(0, 6).join(', ')}${d.skipped.length > 6 ? '…' : ''}` : '')); if (SEL.sid) await openStudent(SEL.sid, true); }
+  catch (e) { toast(e.message); }
+}
+async function moveOldDue() { try { await api('addFee', { ses: ST.ses, sids: [SEL.sid], type: 'Old Due', m: 4, amt: '', remark: '', nonce: nonce() }); toast('Old Due added to April. Collect it like any fee head.'); await openStudent(SEL.sid, true); } catch (e) { toast(e.message); } }
+async function headAct(a, i, amt) {
+  const reason = prompt({ discount: 'Reason for the discount', undoDisc: 'Why is this discount taken back?', dropFee: 'Why is this fee removed?' }[a]); if (!reason) return;
+  try { await api(a, { ses: ST.ses, sid: SEL.sid, i, amt, reason }); toast('Saved.'); await openStudent(SEL.sid, true); } catch (e) { toast(e.message); }
+}
+function giveDisc() { const i = +(($('dhHead') || {}).value || 0), amt = (($('dhAmt') || {}).value || '').trim(); if (!i) return toast('Select Fee'); if (!(parseFloat(amt) > 0)) return toast('Enter Discount Amount'); headAct('discount', i, amt); }
 async function copyLedger() { const from = $('nlFrom').value; if (!from) return toast('Choose a classmate.'); try { await api('newLedger', { ses: ST.ses, sid: SEL.sid, from }); await openStudent(SEL.sid, true); } catch (e) { toast(e.message); } }
 
 // ---------------------------------------------------------------- drawing
@@ -133,7 +149,7 @@ function render() {
       <datalist id="frList">${ST.students.filter(s => byField(s)).map(s => `<option value="${esc(s.name + ' · ' + s.cls + (s.section ? ' ' + s.section : '') + ' · ' + (s.father || '') + ' · ' + (s.phone || '') + ' · ' + (s.adm || ''))}">${esc(byField(s))}</option>`).join('')}</datalist></label>
   </div>
   ${live ? `<p class="fr-note">Fees for ${esc(ST.ses)} are taken here from ${esc(live.from)} (started by ${esc(live.by)}). Next receipt number: <b>${esc(ST.next)}</b>.</p>` : startBox()}
-  ${SEL.sid ? (LD ? cardHtml() : '<p class="fr-note">Opening…</p>') : ''}
+  ${SEL.sid ? (LD ? cardHtml() : '<p class="fr-note">Opening…</p>') : live && ST.canCollect && SEL.cls ? bulkHtml() : ''}
   </div>`;
 }
 function startBox() {
@@ -156,7 +172,7 @@ function cardHtml() {
   const formOn = live && L && ST.canCollect;
   const left = `<table class="fr-prof"><tr><td colspan="3" class="fr-red fr-b">${esc(ST.school)}</td><td rowspan="3" style="text-align:right">${/^data:image\/(jpeg|png|webp);base64,/.test(LD.photo || '') ? `<img src="${LD.photo}" height="60" width="60" alt="" style="object-fit:cover">` : ''}</td></tr>${profRows()}</table>
     ${formOn ? formHtml() : ''}${live && !L ? noLedger() : ''}${!live ? '<p class="fr-note">Old ERP record (copied ' + esc((LD.card || {}).asOn || '') + ').</p>' : ''}`;
-  const right = `${L ? detailsHtml() : oldDetails()}
+  const right = `${L ? detailsHtml() : oldDetails()}${formOn ? adjHtml() : ''}
     ${['Fees Transfer', 'Other Fee Receipt'].map(t => T[t] ? `<h4 class="fr-red">${t}</h4>${tbl(T[t])}` : '').join('')}
     ${sumHtml()}`;
   return `<div class="fr-grid"><div>${left}</div><div>${right}</div></div>
@@ -193,6 +209,27 @@ function detailsHtml() {
       H.filter(h => h.m === m).map(h => `<tr><td>${formOn ? `<input type="checkbox" ${F.chk[h.i] ? 'checked' : ''} ${open(h) ? '' : 'disabled'} onclick="F.chk[${h.i}]=this.checked;calcuamt();render()">` : ''}</td>
         <td>${formOn ? `<input type="checkbox" ${F.dchk[h.i] ? 'checked' : ''} ${open(h) ? '' : 'disabled'} onclick="F.dchk[${h.i}]=this.checked;calcuamt();render()">` : ''}</td>
         <td>${esc(h.name)}</td><td>${R(h.amt)}</td><td>${R(h.paid)}</td><td>${R(bal(h))}</td><td>${F && F.npaid[h.i] ? R(F.npaid[h.i]) : ''}</td><td>${h.na ? 'Not-Active' : bal(h) <= 0 ? 'Paid' : 'Not Paid'}</td></tr>`).join('')).join('')}</table>`;
+}
+function adjHtml() {
+  const H = heads(), mo = (id, on) => `<select id="${id}">${MORDER.map(m => opt(String(m), ST.months[m], m === on)).join('')}</select>`;
+  const A = LD.adj || [], act = { add: 'Added', drop: 'Removed', disc: 'Discount', undisc: 'Discount taken back' };
+  return `${LD.oldDue > 0 ? `<div class="fr-box"><b class="fr-red">Old Fee ${R(LD.oldDue)} is not on the fee card.</b> Like the old ERP, no receipt can be made until it is paid ("Firstly Paid Old Due Amount"). Add it to the card as the head "Old Due" (April), then collect it like any other fee. <button onclick="moveOldDue()">Add Old Due to the card</button></div>` : ''}
+  <h4 class="fr-red">Add Other Fee</h4><table class="fr-form"><tr><td>Fee Type</td><td><select id="afType">${ST.feeTypes.map(t => opt(t, t)).join('')}</select></td><td>Month</td><td>${mo('afMonth', 4)}</td></tr>
+    <tr><td>Amount</td><td><input id="afAmt" autocomplete="off" placeholder="Old Due: blank = all"></td><td>Remark</td><td><input id="afRemark" autocomplete="off"></td></tr>
+    <tr><td colspan="4" style="text-align:center"><button onclick="addFee([SEL.sid])">Add Fee</button></td></tr></table>
+  ${ST.isPrincipal ? `<h4 class="fr-red">Fee Discount (Head Wise)</h4><table class="fr-form"><tr><td>Fee</td><td><select id="dhHead">${opt('', 'Select')}${H.filter(open).map(h => opt(h.i, ST.months[h.m] + ' - ' + h.name + ' (' + R(bal(h)) + ')')).join('')}</select></td><td>Discount</td><td><input id="dhAmt" autocomplete="off"></td></tr>
+    <tr><td colspan="4" style="text-align:center"><button onclick="giveDisc()">Give Discount</button></td></tr></table>` : ''}
+  ${A.length ? `<h4 class="fr-red">Other Fee / Fee Discount (added here)</h4><table class="fr-t"><tr class="fr-g"><td><b>Sno</b></td><td><b>Date</b></td><td><b>Type</b></td><td><b>Month</b></td><td><b>Fee</b></td><td><b>Amount</b></td><td><b>Remark</b></td><td><b>UName</b></td>${ST.isPrincipal ? '<td></td>' : ''}</tr>
+    ${A.map((x, n) => { const h = H.find(y => y.i === x.i); const can = ST.isPrincipal && h && (x.act === 'add' ? h.add && h.paid === 0 && !A.slice(n + 1).some(z => z.i === x.i) : x.act === 'disc' && (h.disc || 0) > 0 && !A.slice(n + 1).some(z => z.i === x.i && z.act !== 'disc'));
+      return `<tr><td>${n + 1}</td><td>${esc(new Date(x.at).toLocaleDateString('en-GB'))}</td><td>${esc(act[x.act] || x.act)}</td><td>${esc(ST.months[x.m] || '')}</td><td>${esc(x.name)}</td><td>${R(x.amt)}</td><td>${esc(x.remark || '')}</td><td>${esc(x.by || '')}</td>${ST.isPrincipal ? `<td>${can ? `<button class="fr-sm" onclick="headAct('${x.act === 'add' ? 'dropFee' : 'undoDisc'}',${x.i})">${x.act === 'add' ? 'Remove' : 'Undo'}</button>` : ''}</td>` : ''}</tr>`; }).join('')}</table>` : ''}`;
+}
+function bulkHtml() {
+  const kids = ST.students.filter(s => s.ledger && s.cls === SEL.cls && (!SEL.sec || s.section === SEL.sec));
+  if (!kids.length) return '';
+  return `<div class="fr-box"><b>Add Other Fee to all ${kids.length} children of ${esc(SEL.cls)}${SEL.sec ? ' ' + esc(SEL.sec) : ''}</b> (old ERP: Add Other Fee - Bulk)
+    <table class="fr-form"><tr><td>Fee Type</td><td><select id="bfType">${ST.feeTypes.map(t => opt(t, t)).join('')}</select></td><td>Month</td><td><select id="bfMonth">${MORDER.map(m => opt(String(m), ST.months[m], m === 4)).join('')}</select></td></tr>
+    <tr><td>Amount</td><td><input id="bfAmt" autocomplete="off" placeholder="Old Due: blank = each child's all"></td><td>Remark</td><td><input id="bfRemark" autocomplete="off"></td></tr>
+    <tr><td colspan="4" style="text-align:center"><button onclick='addFee(${JSON.stringify(kids.map(s => s.id))}, true)'>Add to all</button></td></tr></table></div>`;
 }
 function oldDetails() { return LD.cardMonths ? tbl([['', 'D/A', 'Fee Name', 'Amount', 'Paid/Disc Amount', 'Balance', 'N Paid', 'Status']].concat(LD.cardMonths.slice(1)), true) : '<p class="fr-note">No fee details for this session.</p>'; }
 function sumHtml() {

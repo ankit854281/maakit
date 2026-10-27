@@ -25,11 +25,21 @@
 //    ofcLed  'ses|sid'         one child's heads for a session
 //    ofcRcpt 'ses|no'          one receipt
 //    ofcSeq  'ses'             {prefix:'1-', n}
-//    ofcReq  nonce             idempotency for collect / cancel
+//    ofcReq  nonce             idempotency for collect / cancel / addFee
+//    ofcAdj  'ses|sid|stamp'   history of Add Other Fee / Old Due / head-wise discount (who, when, why)
+//
+//  Old due (owner's old ERP, Fee › Add Other Fee, Fee Type "Old Due"): the old
+//  ERP refuses a receipt while the child has Old Fee ("Firstly Paid Old Due
+//  Amount"). It is paid by adding it to the card as a head "Old Due" (April);
+//  from then on it is collected like any other head. $L['oldMoved'] keeps how
+//  much old due is already on the card, so it is never counted twice.
+//  Head-wise discount is kept inside 'paid' like the old card's
+//  "Paid/Disc Amount" column, and separately in 'disc'.
 // ============================================================================
 declare(strict_types=1);
 
 const OFC_MONTHS = [4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December', 1 => 'January', 2 => 'February', 3 => 'March'];
+const OFC_FEE_TYPES = ['Old Due', 'Board Fee X', 'Book', 'Diary', 'Dress'];
 const OFC_MODES = ['Cash', 'Cheque', 'Card', 'Wallet', 'NEFT', 'UPI', 'Net Banking', 'Online'];
 
 function ofc_ses(string $s): string {
@@ -76,11 +86,20 @@ function ofc_totals(array $L): array {
     foreach ($L['heads'] as $h) { if (!empty($h['na'])) continue; $net += $h['amt']; $paid += $h['paid']; }
     return ['net' => $net, 'received' => $paid, 'balance' => $net - $paid];
 }
-/** Old due for a session: the new ledger of the session before, if it exists; else the old ERP's "Old Fee". */
-function ofc_old_due(string $ses, string $sid, array $L): int {
-    $p = sch_rec_get('ofcLed', ofc_prev($ses) . '|' . $sid);
-    if ($p) return max(0, ofc_totals($p)['balance']);
-    return max(0, (int)($L['oldFee'] ?? 0));
+/** Old due for a session still to be put on the card: the session before (its unpaid balance plus its own old due not
+ *  put on its card) if that ledger exists here, else the old ERP's "Old Fee"; less what is already added as "Old Due". */
+function ofc_old_due(string $ses, string $sid, array $L, int $depth = 0): int {
+    $ps = ofc_prev($ses); $p = $depth < 20 ? sch_rec_get('ofcLed', $ps . '|' . $sid) : null;
+    $base = $p ? max(0, ofc_totals($p)['balance']) + ofc_old_due($ps, $sid, $p, $depth + 1) : max(0, (int)($L['oldFee'] ?? 0));
+    return max(0, $base - (int)($L['oldMoved'] ?? 0));
+}
+function ofc_adj_log(string $ses, string $sid, array $e, string $uid): void {
+    sch_rec_put('ofcAdj', $ses . '|' . $sid . '|' . sch_now_ms() . bin2hex(random_bytes(2)), $e + ['ses' => $ses, 'sid' => $sid, 'at' => sch_now_ms()], $uid);
+}
+function ofc_adj_list(string $ses, string $sid): array {
+    $st = sch_db()->prepare("SELECT d FROM sch_records WHERE k='ofcAdj' AND r LIKE ? AND deleted=0"); $st->execute([$ses . '|' . $sid . '|%']); $out = [];
+    foreach ($st as $row) { $r = json_decode((string)$row['d'], true); if (is_array($r)) $out[] = $r; }
+    usort($out, fn($a, $b) => $a['at'] <=> $b['at']); return $out;
 }
 
 /** Old ERP fee cards of a session, keyed by new student id. */

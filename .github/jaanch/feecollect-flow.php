@@ -70,6 +70,38 @@ try {
     // Old due first (old ERP: "Firstly Paid Old Due Amount")
     [$c, $d] = freq('collect', $A, ['ses' => '2026-27', 'sid' => 'fc-s2', 'alloc' => [['i' => 3, 'amt' => '790']], 'nonce' => $n()]); fc($c === 400 && str_contains($d['error'], 'Old Due'), 'old due blocks ' . json_encode($d));
 
+    // Old due goes on the card as the head "Old Due" (old ERP Add Other Fee, Fee Type Old Due), then is collected like any head
+    [$c] = freq('addFee', $R, ['ses' => '2026-27', 'sids' => ['fc-s2'], 'type' => 'Old Due', 'm' => 4, 'nonce' => $n()]); fc($c === 403, 'reception cannot add fees');
+    [$c, $d] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s2'], 'type' => 'Old Due', 'm' => 4, 'amt' => '2200', 'nonce' => $n()]); fc($c === 400, 'more than the old due refused');
+    [$c, $d] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s2'], 'type' => 'Old Due', 'm' => 4, 'amt' => '', 'nonce' => $n()]); fc($c === 200 && $d['added'] === 1, 'old due added ' . json_encode($d));
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s2'); $od = end($d['ledger']['heads']);
+    fc($d['oldDue'] === 0 && $od['name'] === 'Old Due' && $od['amt'] === 210000 && $od['m'] === 4 && $d['totals']['balance'] === 357000 + 210000 && count($d['adj']) === 1, 'old due is a head now ' . json_encode([$d['oldDue'], $od, $d['totals']]));
+    [$c] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s2'], 'type' => 'Old Due', 'm' => 4, 'nonce' => $n()]); fc($c === 400, 'old due cannot be added twice');
+    [$c] = freq('dropFee', $A, ['ses' => '2026-27', 'sid' => 'fc-s2', 'i' => $od['i'], 'reason' => 'test']); fc($c === 403, 'only Principal removes');
+    [$c] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s2', 'i' => 3, 'reason' => 'test']); fc($c === 400, 'a head from the old card cannot be removed');
+    [$c, $d] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s2', 'i' => $od['i'], 'reason' => 'wrong month']); fc($c === 200, 'Principal removes an unpaid added head');
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s2'); fc($d['oldDue'] === 210000 && $d['totals']['balance'] === 357000, 'old due back after removal');
+    [$c, $d] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s2'], 'type' => 'Old Due', 'm' => 4, 'amt' => '', 'nonce' => $n()]); fc($c === 200, 'old due added again');
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s2'); $odi = end($d['ledger']['heads'])['i'];
+    [$c, $d] = freq('collect', $A, ['ses' => '2026-27', 'sid' => 'fc-s2', 'alloc' => [['i' => $odi, 'amt' => '2100'], ['i' => 3, 'amt' => '790']], 'mode' => 'Cash', 'nonce' => $n()]);
+    fc($c === 200 && $d['receipt']['lines'] === [['1', 'Old Due', 'April', 210000], ['2', 'Tution Fee', 'May', 79000]], 'old due collected with a month ' . json_encode($d));
+    [$c] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s2', 'i' => $odi, 'reason' => 'test']); fc($c === 400, 'a paid added head cannot be removed');
+    // Bulk Add Other Fee (a class): children without a fee card are skipped and listed
+    $bn = $n();
+    [$c, $d] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s1', 'fc-s2', 'fc-none'], 'type' => 'Book', 'm' => 6, 'amt' => '450', 'remark' => 'Class 1 set', 'nonce' => $bn]); fc($c === 200 && $d['added'] === 2 && count($d['skipped']) === 1, 'bulk add ' . json_encode($d));
+    [$c, $d] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s1', 'fc-s2', 'fc-none'], 'type' => 'Book', 'm' => 6, 'amt' => '450', 'remark' => 'Class 1 set', 'nonce' => $bn]); fc($c === 200 && !empty($d['repeat']), 'bulk add sent twice adds once');
+    [$c] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s1'], 'type' => 'Pizza', 'm' => 6, 'amt' => '1', 'nonce' => $n()]); fc($c === 400, 'only the old fee types');
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); $bk = end($d['ledger']['heads']); fc($bk['name'] === 'Book - Class 1 set' && $bk['amt'] === 45000 && $bk['m'] === 6 && $d['totals']['balance'] === 39000 + 45000, 'book fee on the card ' . json_encode($bk));
+    // Fee Discount (Head Wise): Principal only, kept in Paid/Disc like the old card, can be taken back
+    [$c] = freq('discount', $A, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '50', 'reason' => 'sibling']); fc($c === 403, 'only Principal gives discount');
+    [$c] = freq('discount', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '500', 'reason' => 'sibling']); fc($c === 400, 'discount more than the head balance refused');
+    [$c, $d] = freq('discount', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '50', 'reason' => 'sibling']); fc($c === 200, 'discount given');
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); $bk2 = end($d['ledger']['heads']); fc($bk2['paid'] === 5000 && $bk2['disc'] === 5000 && $d['totals']['balance'] === 39000 + 40000, 'discount lowers the balance ' . json_encode($bk2));
+    [$c] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'reason' => 'x y']); fc($c === 400, 'a discounted head cannot be removed');
+    [$c, $d] = freq('undoDisc', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'reason' => 'by mistake']); fc($c === 200 && end($d['ledger']['heads'])['paid'] === 0, 'discount taken back');
+    [$c, $d] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'reason' => 'not needed']); fc($c === 200, 'added head removed');
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); fc($d['totals']['balance'] === 39000 && count($d['adj']) === 4, 'history kept after removal ' . json_encode($d['adj']));
+
     // Cancel: Principal only, reason, heads go back to Not Paid
     [$c] = freq('cancel', $A, ['ses' => '2026-27', 'no' => '1-383', 'reason' => 'Wrong child', 'nonce' => $n()]); fc($c === 403, 'only Principal cancels');
     [$c, $d] = freq('cancel', $P, ['ses' => '2026-27', 'no' => '1-383', 'reason' => 'Wrong child', 'nonce' => $n()]); fc($c === 200 && $d['receipt']['status'] === 'Cancelled', 'cancel');
@@ -82,7 +114,7 @@ try {
     // One place to take fees: Fee Desk refuses a started session; Fee Receipt rows never reach legacy sync
     [$c, $d] = freq('pay', $A, ['sid' => 'fc-s1', 'amt' => '100', 'mode' => 'Cash'], '', 'office_api.php'); fc($c === 409, 'Fee Desk refuses a started session ' . json_encode($d));
     [$c, , $raw] = freq('load', $P, null, '', 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null); fc($c === 200 && $recs !== 'null' && !str_contains($recs, 'ofc') && !str_contains($recs, '1-382'), 'legacy sync hides Fee Receipt records');
-    echo "Fee Receipt: start, numbering from the old ERP, Upto Month maths, late fee and discount, balance and old-due checks, deposit bank, idempotency, cancel, new admission and one-place-to-collect passed\n";
+    echo "Fee Receipt: start, numbering from the old ERP, Upto Month maths, late fee and discount, balance and old-due checks, deposit bank, idempotency, cancel, new admission and one-place-to-collect passed, plus Old Due on the card, Add Other Fee (single and bulk) and head-wise discount\n";
 } finally {
     $clean();
     if ($oldSettings !== null) sch_rec_put('settings', 'main', $oldSettings, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='settings' AND r='main'");
