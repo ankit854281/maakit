@@ -18,6 +18,8 @@
 //   GET  ?a=get&id=                    one student, all old fields
 //   POST ?a=save {id?, f:{…}}          add or update (Principal)
 //   GET  ?a=photos&ids=a,b            list thumbnails (40 at a time)
+//   POST ?a=fill {rows, apply}         Principal: old ERP section / DOB / mother / address / SMS no / Child Id
+//                                      into student records — only where the field is empty
 //   POST ?a=photo {id, data}           student photo (Principal), one stored copy
 // ============================================================================
 declare(strict_types=1);
@@ -185,6 +187,36 @@ case 'save': {
     }
     $db->commit();
     sch_json(['ok' => true, 'id' => $sid, 'added' => $isNew, 'changed' => $changed]);
+}
+case 'fill': {
+    // The first student import carried name, class, father and phone only. The old ERP's other columns are
+    // filled here, but only into fields that are still empty, and only when the Scholar No matches.
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if ($role !== 'principal') sch_fail('Only the Principal imports from the old ERP.', 403);
+    $rows = (array)($in['rows'] ?? []); if (!$rows || count($rows) > 2000) throw new InvalidArgumentException('The file must have 1 to 2000 students.');
+    $apply = ($in['apply'] ?? false) === true; $plan = []; $count = []; $mismatch = []; $skipped = [];
+    $db->beginTransaction();
+    $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
+    foreach ($rows as $r) {
+        $r = (array)$r; $sid = (string)($r['id'] ?? ''); $s = sch_rec_get('student', $sid);
+        if (!$s) { $skipped[] = (string)($r['name'] ?? $sid); continue; }
+        if (strcasecmp(trim((string)($s['adm'] ?? '')), trim((string)($r['adm'] ?? ''))) !== 0) { $mismatch[] = (string)($s['name'] ?? $sid); continue; }
+        $new = $s; $did = false;
+        foreach (['section', 'dob', 'mother', 'address', 'phone', 'childId'] as $k) {
+            $v = trim(str_replace("\r", '', (string)(((array)($r['f'] ?? []))[$k] ?? '')));
+            if ($v === '' || mb_strlen($v) > 500 || trim((string)($s[$k] ?? '')) !== '') continue;
+            if ($k === 'phone' && !preg_match('/^[6-9]\d{9}$/', $v)) continue;
+            if ($k === 'dob' && !preg_match('#^\d{1,2}/\d{1,2}/(19|20)\d\d$#', $v)) continue;
+            $new[$k] = $v; $count[$k] = ($count[$k] ?? 0) + 1; $did = true;
+        }
+        if ($did) $plan[$sid] = $new;
+    }
+    if ($apply) {
+        foreach ($plan as $sid => $new) sch_rec_put('student', $sid, $new, $uid);
+        sch_log($u, 'Old ERP Import', count($plan) . ' students: empty Section / DOB / Mother / Address / SMS No / Child Id filled from the old ERP');
+    }
+    $db->commit();
+    sch_json(['ok' => true, 'applied' => $apply, 'students' => count($plan), 'fields' => $count, 'mismatch' => $mismatch, 'notHere' => $skipped]);
 }
 case 'photo': {
     if ($method !== 'POST') sch_fail('POST only', 405);
