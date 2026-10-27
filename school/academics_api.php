@@ -113,7 +113,7 @@ try {
         $roster=array_values(array_filter(ac_rows('student'),fn($s)=>($s['cls']??'')===$cls));$units=ac_units($cls,$subj,$session);
         $key=$session.'|'.$cls.'|'.$subj;$data=ac_save('acOral',$key,['session'=>$session,'cls'=>$cls,'subj'=>$subj,'cells'=>ac_oral_cells($in['cells']??null,$roster,$units),'date'=>date('Y-m-d')],$u,$in['rev']??-1);
     }elseif($a==='resolve'){
-        $origin=ac_text($in['origin']??'',200);$sid=ac_text($in['sid']??'',100);$track=sch_rec_get('acTrack',$origin);$student=sch_rec_get('student',$sid);
+        $origin=ac_origin($in['origin']??'');$sid=ac_text($in['sid']??'',100);$track=sch_rec_get('acTrack',$origin);$student=sch_rec_get('student',$sid);
         if(!$track||($track['session']??'')!==$session||$track['cls']!==$cls||$track['subj']!==$subj||($student['cls']??'')!==$cls||!in_array($track['students'][$sid]['hw']??'',['not done','incomplete'],true))throw new InvalidArgumentException('Choose a pending homework item from this class.');
         $source=ac_work_source(['task'=>$track['task']??'','status'=>$track['students'][$sid]]);
         $key=hash('sha256',$session.'|'.$origin.'|'.$sid);$data=ac_save('acResolve',$key,['session'=>$session,'origin'=>$origin,'sid'=>$sid,'cls'=>$cls,'subj'=>$subj,'source'=>$source,'date'=>date('Y-m-d')],$u);

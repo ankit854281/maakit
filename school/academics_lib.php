@@ -40,6 +40,10 @@ function ac_text($v,int $max=200,bool $required=true): string {
     $v=trim($v);if($required&&$v==='')throw new InvalidArgumentException('Complete the required fields.');return $v;
 }
 function ac_date($v): string {if(!is_string($v))throw new InvalidArgumentException('Choose a date.');$d=DateTimeImmutable::createFromFormat('!Y-m-d',$v);if(!$d||$d->format('Y-m-d')!==$v)throw new InvalidArgumentException('Choose a valid date.');return $v;}
+function ac_origin($v): string {
+    if(!is_string($v)||strlen($v)>190||!preg_match('/^\d{4}-\d{2}-\d{2}\|[^|\x00-\x1F]+\|[^|\x00-\x1F]+$/u',$v))throw new InvalidArgumentException('Choose a saved homework record.');
+    ac_date(explode('|',$v)[0]);return $v;
+}
 function ac_allowed(array $u,string $cls,string $subj): bool {return $u['role']==='principal'||($u['role']==='teacher'&&sch_teaches((string)$u['tid'],$cls,$subj));}
 function ac_children(array $u): array {
     if($u['role']==='parent')return sch_children((string)$u['tid']);

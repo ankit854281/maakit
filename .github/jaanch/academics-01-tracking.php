@@ -9,6 +9,8 @@ ac_check(ac_projection($rows,$kids,'other')===[],'Another session leaked');
 $p=ac_pending($rows,[],[$kids[0]],'test');ac_check(count($p)===1,'Pending homework lost');
 $key=hash('sha256','test|2026-10-27|1st|English|synthetic-1');$resolution=[$key=>['date'=>'2026-10-28','source'=>ac_work_source($p[0])]];ac_check(ac_pending($rows,$resolution,[$kids[0]],'test')===[],'Resolved homework still pending');
 $changed=$rows;$changed['2026-10-27|1st|English']['task']='Corrected task';ac_check(count(ac_pending($changed,$resolution,[$kids[0]],'test'))===1,'Changed task incorrectly stayed resolved');
+ac_check(ac_origin('2026-10-27|1st|English')==='2026-10-27|1st|English','Valid composite homework key refused');
+foreach(['2026-02-31|1st|English','2026-10-27|1st|English|extra','invalid'] as $badOrigin){try{ac_origin($badOrigin);throw new RuntimeException('Invalid origin key accepted');}catch(InvalidArgumentException $e){}}
 try{ac_track_students(['synthetic-1'=>$status],$kids,['synthetic-1']);throw new RuntimeException('Absent child accepted');}catch(InvalidArgumentException $e){}
 try{ac_track_students(['foreign-child'=>$status],$kids,[]);throw new RuntimeException('Foreign child accepted');}catch(InvalidArgumentException $e){}
 ac_check(ac_track_students(['synthetic-1'=>$status],$kids,[])['synthetic-1']===$status,'Status changed');
