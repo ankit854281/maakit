@@ -15,7 +15,8 @@
 //    job:  'v:<view>' = a screen of app.js, 'o:<module>' = a School Office
 //    register (registers_lib.php), 'f:<tab>' = a Fee Department tab
 //    (finance.js), 'r:<page.php>' = that old ERP page as copied into Old ERP
-//    Reports (oldreports.php). '' = the new ERP has no such screen yet: the item is kept
+//    Reports (oldreports.php), 'm:<mode>' = Student Master in the old ERP's
+//    own form (stumaster.php: add, list, search). '' = the new ERP has no such screen yet: the item is kept
 //    in the menu (so the menu stays the same) and opens a short note.
 //  - Only the layout and colours change. No data is read or written here.
 // ============================================================================
@@ -33,8 +34,8 @@ const CLASSIC_MENU = [
   ['Tag Mgmt', 'fa-tags', [['Add Tag', 'o:tag'], ['TAG Allocation', 'o:tag'], ['TAG Deallocation', 'o:tag'], ['Tags Pending Followup', 'o:tag'], ['Tags Done Followup', 'o:tag'], ['TAG Delete', 'o:tag']]],
   ['Transport', 'fa-bus', [['Add Driver/Helper', 'o:driver'], ['Add Vehicle', 'o:vehicle'], ['Log Book', 'o:logbook'], ['Diesel IN', 'o:diesel'], ['Logbook & Diesel Report', 'o:logbook'], ['Vehicle & Driver List', 'o:vehicle'], ['Class Wise Bus Student', 'o:route']]],
   ['Enquiry', 'fa-phone', [['New Enquiry', 'o:enquiry'], ['Enquiry Details', 'o:enquiry'], ['Enquiry Details - II', 'o:enquiry'], ['Done Followup', 'o:enquiry'], ['Pending follow up', 'o:enquiry'], ['Enquiry Search', 'o:enquiry'], ['Enquiry Status', 'o:enquiry']]],
-  ['Student Master', 'fa-child', [['Add Payment Mode', 'f:setup'], ['Add Student', 'v:students'], ['Student Search', 'v:students'], ['Create Group Leader', 'v:students'], ['Group Leader List', 'v:students'], ['Promote Student', 'v:students'], ['Student Edit', 'o:studinfo'], ['Shift Student', 'v:students']]],
-  ['Student Edit/Update', 'fa-pen-to-square', [['Edit/Update Student', 'o:studinfo'], ['Edit/Update Admission Details', 'o:studinfo'], ['Edit/Update Scholarship Section', 'o:studinfo'], ['Edit/Update Student Details', 'o:studinfo'], ['Edit/Update Family Details', 'o:studinfo'], ['Edit/Update Address', 'o:studinfo'], ['Edit/Update Previous School Information', 'o:studinfo'], ['Edit/Update Fee Details', 'f:billing'], ['Edit/Update Student Health Details', 'o:studinfo']]],
+  ['Student Master', 'fa-child', [['Add Payment Mode', 'f:setup'], ['Add Student', 'm:add'], ['Student Search', 'm:search'], ['Create Group Leader', 'v:students'], ['Group Leader List', 'v:students'], ['Promote Student', 'v:students'], ['Student Edit', 'm:list'], ['Shift Student', 'v:students']]],
+  ['Student Edit/Update', 'fa-pen-to-square', [['Edit/Update Student', 'm:list'], ['Edit/Update Admission Details', 'm:list'], ['Edit/Update Scholarship Section', 'm:list'], ['Edit/Update Student Details', 'm:list'], ['Edit/Update Family Details', 'm:list'], ['Edit/Update Address', 'm:list'], ['Edit/Update Previous School Information', 'm:list'], ['Edit/Update Fee Details', 'f:billing'], ['Edit/Update Student Health Details', 'm:list']]],
   ['Fee', 'fa-indian-rupee-sign', [['Fee Receipt', 'v:feereceipt'], ['Fee Receipt(Head Wise)', 'v:feereceipt'], ['Fee Discount(Head Wise)', 'f:billing'], ['Student Fees Received -II', 'v:feereceipt'], ['Fee Receipt Transport', 'v:feereceipt'], ['Fee  Adjustment', 'f:billing'], ['Fee  Discount', 'f:billing'], ['Advance Fee Receipt', 'f:students'], ['Other Fee Receipt', 'f:students'], ['Fee Refund', 'f:receipts'], ['Add Other Fee', 'f:billing'], ['Add Other Fee(Bulk)', 'f:billing']]],
   ['Fee Report', 'fa-credit-card', [['Add Other Fee Report', 'f:reports'], ['Other Fee Receipt', 'f:receipts'], ['Fee Refund', 'f:receipts'], ['Fee Reminder', 'v:fcalls'], ['Discount Todays Fee', 'f:reports'], ['Demand Bill', 'f:billing'], ['Demand Bill - II', 'f:billing'], ['Student Fee Card Bulk', 'o:oldfeecard'], ['Fee Defaulter', 'f:follow'], ['Fee Defaulter - II', 'f:follow'], ['Fee Defaulter Head Wise', 'f:follow'], ['Fee Statement Head Wise', 'f:reports'], ['Zero Due Report', 'f:reports'], ['Fee Statement', 'o:oldfeecard'], ['Fee Statement-III', 'f:reports'], ['Fee Statement-II', 'f:reports'], ['Fee Statement(Deactive)', 'o:oldfee'], ['Fee Collection (Hold Fee)', 'f:reports'], ['Fee Register', 'f:receipts'], ['Fee Collection Report I', 'f:reports'], ['Fee Collection Report II', 'f:reports'], ['Fee Collection(Settlement Date Wise)', 'f:reports'], ['Fees Concession Report', 'f:reports'], ['Bank Report I', 'f:reports'], ['Bank Report II', 'f:reports'], ['Fees Pending Followup', 'v:fcalls'], ['Fees Done Followup', 'v:fcalls'], ['Deleted Fee Receipt', 'f:receipts'], ['Class Wise Collection Report', 'f:reports'], ['Monthly Collection Report', 'f:reports'], ['Fee Collection Report IV', 'f:reports'], ['Fee Collection Report V', 'f:reports'], ['Fee  Adjustment Report', 'f:reports'], ['Session Wise Fee', 'o:oldfee'], ['Head Wise Collection Report', 'f:reports'], ['Head Wise Fee Statement', 'f:reports'], ['Old ERP Receipts', 'o:oldreceipt']]],
   ['Leave Mgmt', 'fa-right-from-bracket', [['Student Leave Apply', 'o:sleave'], ['Student Leave Apply Details', 'o:sleave']]],
@@ -80,7 +81,7 @@ function setLook(x) { try { if (x === 'new') localStorage.setItem('sch_look', 'n
 function clCan(t) {
   if (!t) return true;
   const [k, v] = [t[0], t.slice(2)], has = x => NAV[U.role].some(n => n[0] === x);
-  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : false;
+  return k === 'v' ? has(v) : k === 'o' ? has('office') : k === 'f' ? has('finance') : k === 'r' ? has('oldreports') : k === 'm' ? has('stumaster') : false;
 }
 function clMenu() {
   return CLASSIC_MENU.map(([g, ic, items]) => [g, ic, items.filter(([, t]) => clCan(t))]).filter(([, , items]) => items.length);
@@ -93,6 +94,7 @@ function clGo(t, label) {
   if (t[0] === 'o') return go('office', { m: v });
   if (t[0] === 'f') return go('finance', { tab: v });
   if (t[0] === 'r') return go('oldreports', { page: v });
+  if (t[0] === 'm') return go('stumaster', { m: v });
 }
 function clGroupToggle(g) { CL_OPEN = CL_OPEN === g ? '' : g; render(); }
 function clSearch(v) { CL_Q = v; const box = document.getElementById('cl-menu'); if (box) box.innerHTML = clMenuHtml(); }
