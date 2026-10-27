@@ -41,6 +41,7 @@ export const PAGES = [
   { path: '/school/registers.php', naam: 'School Office registers', chahiye: ['School Office'] },
   { path: '/school/feecollect.php', naam: 'Fee Receipt', chahiye: ['Fee Receipt'] },
   { path: '/school/progress.php', naam: 'Progress Report', chahiye: ['Progress Report'] },
+  { path: '/school/feereports.php', naam: 'Fee Reports', chahiye: ['Fee Reports'] },
   { path: '/school/stumaster.php', naam: 'Student Master', chahiye: ['Student Master'] },
   { path: '/school/oldreports.php', naam: 'Old ERP Reports', chahiye: ['Old ERP Reports'] },
   { path: '/school/studio.php', naam: 'School Smart Studio', chahiye: ['Teacher Smart Studio'] },
