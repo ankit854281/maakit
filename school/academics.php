@@ -1,0 +1,3 @@
+<?php
+header('Content-Type: text/html; charset=utf-8');header('Cache-Control: no-store');
+?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Daily Teaching · School</title><link rel="stylesheet" href="academics.css?v=<?=filemtime(__DIR__.'/academics.css')?>"></head><body><main id="academics"><p>Opening daily teaching…</p></main><p id="message" role="status" aria-live="polite"></p><script src="academics.js?v=<?=filemtime(__DIR__.'/academics.js')?>"></script></body></html>

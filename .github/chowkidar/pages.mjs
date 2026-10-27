@@ -104,6 +104,7 @@ export const PAGES = [
   { path: '/school/faculty-public.php', naam: 'School Faculty', chahiye: ['Meet our educators'], nahi: [] },
   { path: '/school/faculty-verify.php', naam: 'Staff ID Verification', chahiye: ['Staff ID Verification'], nahi: [] },
   { path: '/school/toolkit.php', naam: 'Teacher Toolkit', chahiye: ['Teacher'], nahi: [] },
+  { path: '/school/academics.php', naam: 'Daily Teaching', chahiye: ['academics.js'], nahi: [] },
 
   // ---------- dukaan panel ----------
   // Dukandar ka login khula rehna chahiye. "मेरा हिसाब" yahan nahi

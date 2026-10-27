@@ -777,7 +777,7 @@ function vDash() {
     .filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   const shortD = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   const sum = dailySummary(date);
-  return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
+  return `${academicReminderCard(date)}<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
       <div><h2 class="text-2xl font-bold text-ink">${P.date ? 'Report for this day' : 'Welcome'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '').split(' ')[0])} ${P.date ? '' : '🎉'}</h2>
         <p class="dash-eyebrow mt-1">${P.date ? '' : isToday ? `${hello}! Here's what's happening in your school today — ` : `${hello}! Today is ${dayIdx(todayISO()) < 0 ? 'Sunday' : 'a holiday'}, so this shows the last school day — `}${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
       <div class="flex flex-wrap items-end gap-6 noprint"><div class="hero-n"><b>${S.students.length}</b><small>Students</small></div><div class="hero-n"><b>${nT}</b><small>Staff</small></div><div class="hero-n"><b>${CLASS_NAMES.length}</b><small>Classes</small></div></div>
@@ -977,6 +977,7 @@ function vMyToday() {
   const notices = S.notices.filter(n => n.to !== 'Parents').slice(0, 3);
   const myLeaves = S.leaves.filter(l => l.tid === tid).slice(0, 2);
   return head(`Namaste, ${esc(T(tid).name)}`, fmtDate(date) + (dayIdx(date) >= 0 ? '' : ' • Sunday'), dateInput('m-date', date, "go('mytoday',{date:this.value})")) + `
+    ${academicReminderCard(date)}
     ${absent ? `<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">${absentFrom(date, tid) ? 'Half day — you leave before the ' + BELLS[absentFrom(date, tid)].n + ' bell.' : 'You are marked absent / on leave for this day.'}</div>` : ''}
     ${teacherCorner(date)}
     ${ctOf.map(c => { const a = attOf(date, c); return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a ? '' : 'border-amber-300 bg-amber-50'}">
@@ -1055,6 +1056,9 @@ function vDiary() {
         ${e.at ? `<span class="pill bg-emerald-100 text-emerald-800">Saved ${fmtTime(e.at)}</span>` : ''}${S.signed[date] && S.signed[date][tid] ? '<span class="pill bg-indigo-100 text-indigo-800">Signed</span>' : ''}</div>
         <div><label class="lbl">Topic taught</label><input id="${id}-t" class="inp" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
           ${nx && !e.topic ? `<button onclick="document.getElementById('${id}-t').value=${esc(JSON.stringify(nx))}" class="text-xs text-indigo-700 font-bold mt-1">Use: ${esc(nx)}</button>` : ''}</div>
+        <label class="lbl">Class work<input id="${id}-cw" class="inp" maxlength="500" value="${esc(e.classwork||'')}"></label>
+        <label class="lbl">Books / copies to bring<input id="${id}-books" class="inp" maxlength="300" value="${esc(e.books||'')}"></label>
+        <label class="lbl">Revision to revisit<input id="${id}-revision" class="inp" maxlength="400" value="${esc(e.revision||'')}"></label>
         <div><label class="lbl">Homework · class total limited to 45 minutes</label><input id="${id}-h" class="inp" value="${esc(e.hw || '')}" placeholder="e.g. Ex 4.1 Q1–Q4"></div><div class="flex gap-2"><label class="lbl">Estimated minutes<input id="${id}-min" class="inp" type="number" min="1" max="45" value="${e.hwMinutes || ''}"></label><label class="lbl">Homework day<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"></label></div><label class="text-sm"><input id="${id}-verify" type="checkbox"> I confirm this was actually taught and I checked the homework.</label>
         ${nx && !b.arr ? `<label class="flex items-center gap-2 text-sm"><input id="${id}-c" type="checkbox" class="w-4 h-4"> Chapter "<b>${esc(nx)}</b>" finished today</label>` : ''}
         <button onclick="diarySave('${date}',${b.bell})" class="btn btn-p w-full"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>`; }).join('')
@@ -1069,7 +1073,7 @@ function diarySave(date, bell) {
   const hwMinutes=Number(document.getElementById(id+'-min').value), hwDate=document.getElementById(id+'-date').value;
   if(hw && (!Number.isInteger(hwMinutes)||hwMinutes<1||hwMinutes>45||!hwDate)) return toast('Add homework minutes and date.', 'a');
   S.diary[date] = S.diary[date] || {}; S.diary[date][tid] = S.diary[date][tid] || {};
-  S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, hwMinutes:hw?hwMinutes:null, hwDate, arr: b.arr, at: Date.now() };
+  S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, classwork:document.getElementById(id+'-cw').value.trim().slice(0,500),books:document.getElementById(id+'-books').value.trim().slice(0,300),revision:document.getElementById(id+'-revision').value.trim().slice(0,400), hwMinutes:hw?hwMinutes:null, hwDate, arr: b.arr, at: Date.now() };
   log('Diary', `${BELLS[bell].n} bell, Class ${b.cls} ${b.subj}: "${topic}"` + (hw ? ` • HW: ${hw}` : ''));
   const cb = document.getElementById(id + '-c');
   if (cb && cb.checked) { const y = S.syl[sylKey(b.cls, b.subj)], ch = y && y.chapters.find(x => !x.done);
@@ -2250,6 +2254,7 @@ function planCard(p, key, principal) {
   const stc = p.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : p.status === 'Revise' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800';
   return `<div class="card space-y-2"><div class="flex flex-wrap justify-between gap-2"><b>${principal ? esc(T(p.tid).name) + ' • ' : ''}Class ${p.cls} • ${esc(p.subj)}</b><span class="pill ${stc}">${p.status}</span></div>
     ${p.goal ? `<p class="text-sm text-slate-600"><b>Aim / activity:</b> ${esc(p.goal)}</p>` : ''}
+    ${(p.days||[]).map(d=>`<div class="text-sm bg-slate-50 rounded-lg p-2"><b>${esc(d.date)} · ${esc(d.topic)}</b><p>Classwork: ${esc(d.classwork)}</p><p>Homework (${Number(d.hwMinutes)||0} min): ${esc(d.hw)}</p><p>Bring: ${esc(d.books)}</p><p>Revision: ${esc(d.revision)}</p></div>`).join('')}
     <div class="text-sm">${cv.res.map(r => `<div class="flex gap-2"><span class="${r.hit ? 'text-emerald-600' : 'text-slate-300'}"><i class="fa-solid ${r.hit ? 'fa-circle-check' : 'fa-circle'}"></i></span><span>${esc(r.line)}${r.hit ? ` <span class="text-xs text-slate-400">— taught ${fmtDate(r.hit.d)}</span>` : ''}</span></div>`).join('')}</div>
     <p class="text-xs ${cv.covered === cv.res.length ? 'text-emerald-700' : past ? 'text-rose-700' : 'text-slate-500'} font-semibold">Diary check: ${cv.covered} of ${cv.res.length} planned topics found in the diary this week${past && cv.covered < cv.res.length ? ' — some were not taught' : ''}.</p>
     ${p.feedback ? `<p class="text-sm bg-slate-50 rounded-lg p-2"><b>Principal:</b> ${esc(p.feedback)}</p>` : ''}
@@ -2393,9 +2398,9 @@ function vPHw() {
   const kid = pKid(); if (!kid) return vPHome();
   const rows = PD.hw.filter(h => h.cls === kid.cls).sort((a, b) => b.date.localeCompare(a.date));
   const byDate = {}; rows.forEach(h => (byDate[h.date] = byDate[h.date] || []).push(h));
-  return `${kidSwitch()}${head('Homework & class work', `Class ${esc(kid.cls)} · last 10 days, from the teachers' diaries`)}
+  return `${kidSwitch()}${head('Homework & class work', `Class ${esc(kid.cls)} · last 10 days, from the teachers' diaries`)}${parentAcademicChecks(kid)}
     ${Object.keys(byDate).length ? Object.entries(byDate).map(([d, list]) => `<div class="card"><h3 class="h3">${fmtDate(d)}</h3><div class="mt-2 divide-y divide-slate-100">${list.map(h => `<div class="py-2"><span class="subj">${esc(h.subj)}</span>
-      <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}</div>`).join('')}</div></div>`).join('')
+      <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}${h.classwork?`<p class="text-sm">Class work: ${esc(h.classwork)}</p>`:''}${h.books?`<p class="text-sm"><b>Bring: ${esc(h.books)}</b></p>`:''}${h.revision?`<p class="text-sm">Revision: ${esc(h.revision)}</p>`:''}</div>`).join('')}</div></div>`).join('')
       : '<div class="card text-sm text-slate-500">Nothing written in the last 10 days.</div>'}`;
 }
 function vPResults() {
@@ -3793,7 +3798,24 @@ for(const role of ['principal','teacher']) NAV[role].push(['toolkit','fa-wand-ma
 VIEWS.toolkit=()=>'<iframe title="Teacher Smart Toolkit" src="toolkit.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
 function teacherCorner(date){const p=TeacherEnglish.today(date);return `<div class="modern-bento"><section class="modern-welcome"><span class="eyebrow">YOUR TEACHING COMPANION</span><h2>A little less admin.<br>More room to teach.</h2><p>Your lesson tools, classroom moments and professional identity, in one place.</p><div class="modern-links"><button class="btn btn-p" onclick="go('toolkit')">Open Teacher Toolkit</button><button class="btn btn-l" onclick="go('profile')">My Profile Studio →</button></div></section><section class="modern-mini"><small>A phrase for your classroom</small><b>${esc(p[0])}</b><details><summary>Hindi meaning</summary>${esc(p[1])}</details><button class="btn btn-sm btn-l" onclick="TeacherEnglish.say(TeacherEnglish.today('${date}')[0])">Listen & try</button></section></div>`;}
 
-function prepareDiaryDraft(date){if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;for(const b of myBells(U.tid,date)){const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;const plan=Object.values(S.lplan).find(p=>p.tid===U.tid&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');if(plan){field.value=plan.topics.split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';if(field.value)n++;}}toast(n?'Prepared '+n+' topic drafts. Edit and confirm each bell.':'No empty bells with approved plans. Enter the actual topics.');}
+function prepareDiaryDraft(date){
+  if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;const used=new Set(myBells(U.tid,date).filter(b=>diaryEntry(date,U.tid,b.bell)?.hw).map(b=>b.cls+'|'+b.subj));
+  for(const b of myBells(U.tid,date)){
+    const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;
+    const plan=Object.values(S.lplan).find(p=>p.tid===(b.for||U.tid)&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');
+    if(!plan)continue;const day=(plan.days||[]).find(d=>d.date===date),key=b.cls+'|'+b.subj;
+    if(day){field.value=day.topic;const hw=document.getElementById('b'+b.bell+'-h'),mins=document.getElementById('b'+b.bell+'-min');if(!used.has(key)&&hw&&!hw.value){hw.value=day.hw||'';mins.value=day.hwMinutes||'';}used.add(key);for(const [suffix,name] of [['cw','classwork'],['books','books'],['revision','revision']]){const f=document.getElementById('b'+b.bell+'-'+suffix);if(f&&!f.value)f.value=day[name]||'';}}
+    else if(!plan.days)field.value=String(plan.topics||'').split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';
+    if(field.value)n++;
+  }
+  toast(n?'Prepared '+n+' drafts. Check actual teaching and homework before saving.':'No approved daily plan for these empty bells.');
+}
+
+function parentAcademicChecks(kid){const a=PD.academics||{},pending=(a.pending||[]).filter(t=>t.sid===kid.id),checks=(a.tracking||[]).filter(t=>t.sid===kid.id).sort((x,y)=>y.date.localeCompare(x.date)).slice(0,10);return `<div class="card"><h3 class="h3">Teacher checks & pending homework</h3>${pending.map(t=>`<p class="text-sm mt-2"><b>${esc(t.date)} · ${esc(t.subj)}</b> — ${esc(t.task||'Homework')}: ${esc(t.status.hw)}</p>`).join('')||'<p class="text-sm">No recorded pending homework.</p>'}${checks.map(t=>`<p class="text-sm mt-2">${esc(t.date)} · ${esc(t.subj)}: ${Object.entries(t.status).map(([k,v])=>esc(k)+': '+esc(v)).join(' · ')}</p>`).join('')}${(a.oral||[]).filter(o=>o.sid===kid.id).map(o=>`<p class="text-sm mt-2"><b>Oral · ${esc(o.subj)}</b>: ${Object.entries(o.cells||{}).map(([id,status])=>esc(id)+': '+esc(status)).join(' · ')}</p>`).join('')}<h3 class="h3 mt-3">Absent day catch-up</h3>${(a.catchup||[]).filter(t=>t.sid===kid.id).map(t=>`<p class="text-sm mt-2">${esc(t.date)} · ${esc(t.subj)}: ${esc(t.topic)} · ${esc(t.hw)} · Bring: ${esc(t.books||'—')} · Revision: ${esc(t.revision||'—')} — ${t.done?'Caught up':'Pending teacher check'}</p>`).join('')||'<p class="text-sm">No missed work recorded.</p>'}</div>`;}
+for(const role of ['principal','teacher','chairman']) NAV[role].push(['academics','fa-book-open','Daily Teaching']);
+VIEWS.academics=()=>'<iframe class="edu-iframe" title="Daily Teaching" src="academics.php?embed=1"></iframe>';
+GROUPS.principal.find(g=>g[0]==='Students')[2].push('academics');
+GROUPS.teacher.find(g=>g[0]==='My Classes')[2].push('academics');
 
 for(const role of ['teacher','principal']) NAV[role].push(['profile','fa-id-card','My Profile'],['saathi','fa-feather','Secret Saathi']);
 VIEWS.profile=()=>'<iframe class="edu-iframe" title="Teacher Profile Studio" src="faculty.php?embed=1"></iframe>';
@@ -3833,3 +3855,8 @@ VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feerep
 for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['oldreports','fa-box-archive','Old ERP Reports']);
 VIEWS.oldreports=()=>'<iframe class="edu-iframe" title="Old ERP Reports" src="oldreports.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(P&&P.page?'&page='+encodeURIComponent(P.page):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 VIEWS.progress=()=>'<iframe class="edu-iframe" title="Progress Report" src="progress.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+
+// A quiet on-screen reminder: no messages, jobs or paid gateway are scheduled here.
+const ACREM=new Map();
+function academicReminderCard(date){queueMicrotask(()=>loadAcademicReminder(date));return '<div class="card"><h3 class="h3">Daily Teaching</h3><p id="academicReminder" data-date="'+esc(date)+'" class="text-sm">Checking saved teaching records…</p><button onclick="go(&quot;academics&quot;)" class="btn btn-p mt-2">Child checks & pending report</button></div>';}
+async function loadAcademicReminder(date){const key=U.role+'|'+U.tid+'|'+date;try{let cached=ACREM.get(key);if(!cached||Date.now()-cached.at>120000){const r=await fetch('academics_api.php?a=report&date='+encodeURIComponent(date),{headers:{'X-School-Token':TOKEN}}),d=await r.json();if(!r.ok||!d.ok)throw Error('Open Daily Teaching to check this day.');cached={at:Date.now(),data:d};ACREM.set(key,cached);}const node=document.getElementById('academicReminder');if(!node||node.dataset.date!==date)return;const rows=cached.data.report,count=rows.reduce((n,t)=>n+t.pending.length,0);node.textContent=!cached.data.configured?'Set the timetable before relying on the teaching report.':count?count+' follow-up item(s) in saved records. Open the report for the next action.':'No pending items found in the recorded teaching checks.';}catch(e){const node=document.getElementById('academicReminder');if(node&&node.dataset.date===date)node.textContent='Open Daily Teaching to review saved checks and pending work.';}}

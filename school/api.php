@@ -19,6 +19,7 @@
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
 require_once __DIR__ . '/homework_lib.php';
+require_once __DIR__ . '/academics_lib.php';
 
 $a = (string)($_GET['a'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -367,7 +368,7 @@ case 'pdata': {
     $hwFrom = date('Y-m-d', time() - 10 * 86400);
     foreach ($get('diary', $hwFrom) as $r => $d) {
         $cls = (string)($d['cls'] ?? '');
-        if (in_array($cls, $classes, true)) $hw[] = ['date' => explode('|', $r)[0], 'cls' => $cls, 'subj' => (string)($d['subj'] ?? ''), 'topic' => (string)($d['topic'] ?? ''), 'hw' => (string)($d['hw'] ?? '')];
+        if (in_array($cls, $classes, true)) $hw[] = ['date' => explode('|', $r)[0], 'cls' => $cls, 'subj' => (string)($d['subj'] ?? ''), 'topic' => (string)($d['topic'] ?? ''), 'hw' => (string)($d['hw'] ?? ''), 'classwork'=>(string)($d['classwork']??''),'books'=>(string)($d['books']??''),'revision'=>(string)($d['revision']??'')];
     }
     $marks = [];
     foreach ($get('marks') as $r => $d) {
@@ -392,6 +393,7 @@ case 'pdata': {
     sch_json(['ok' => true, 'me' => ['role' => $u['role'], 'tid' => $u['tid'], 'label' => $u['label']],
         'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? ''),
         'kids' => $kidsOut, 'att' => $att, 'hw' => $hw, 'marks' => $marks, 'behav' => $behav, 'speak' => $speak,
+        'academics' => ac_parent($kids, (string)($set['session']??'')),
         'remarks' => array_values(array_filter($get('toolRemark'), fn($r) => in_array($r['sid']??'', $ids, true) && ($r['session']??'')===(string)($set['session']??''))),
         'notices' => $notices, 'cal' => array_values($get('cal')), 'fees' => sch_rec_get('fees', 'main'),
         // 'sent' = kis bachche ke ghar result gaya — doosre parents ko nahi dikhna chahiye
