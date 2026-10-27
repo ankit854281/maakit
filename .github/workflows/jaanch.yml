@@ -161,13 +161,6 @@ jobs:
 
           node --check school/finance.js
           node --check school/registers.js
-          node --check school/classic.js
-          node --check school/oldlook.js
-          node --check school/feecollect.js
-          node --check school/progress.js
-          node --check school/oldreports.js
-          node --check school/stumaster.js
-          node --check school/feereports.js
           node --check school/faculty.js
           node --check school/faculty-public.js
           node --check school/toolkit.js
@@ -181,10 +174,6 @@ jobs:
           node --check jyotish/app.js
           node --check jyotish/daily.js
           node .github/jaanch/jyotish-engine.cjs
-          node --check jyotish/pandit.js
-          node .github/jaanch/jyotish-calendar.cjs
-          node --check jyotish/book.js
-          node .github/jaanch/jyotish-book.cjs
           node --check assets/auth-gateway.js
           node --check assets/maakit-api.js
           node tests/php-api/browser-auth.cjs

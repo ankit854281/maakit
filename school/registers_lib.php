@@ -21,9 +21,6 @@ const REG_MAX_ROWS = 20000;          // per module
 const REG_MAX_TEXT = 2000;
 
 // Roles: P principal, C chairman, A accountant, R reception, T teacher
-/** Old ERP registers a newer old ERP copy may refresh (cut-over day). Keys never depend on the matched child. */
-const REG_REFRESH = ['oldfeecard', 'oldreceipt', 'oldrcptdet'];
-
 function reg_roles(string $s): array {
     $m = ['P' => 'principal', 'C' => 'chairman', 'A' => 'accountant', 'R' => 'reception', 'T' => 'teacher'];
     return array_values(array_map(fn($c) => $m[$c], array_filter(str_split($s), fn($c) => isset($m[$c]))));
@@ -56,10 +53,6 @@ function reg_modules(): array {
         'list' => ['no','date','name','cls','father','phone','fee'], 'sum' => ['fee'], 'print' => 'admission'],
 
     // ---------------- Student records ----------------
-    'inactivestu' => ['title' => 'Inactive / Left Students', 'group' => 'Students', 'old' => 'Student Master (Deactive / TC / not continuing) — kept so their old records stay linked', 'r' => 'PCAR', 'w' => 'P', 'import' => 'P', 'keyFrom' => ['oldId'],
-        'fields' => [reg_f('oldId','Old ERP student id','text',['req'=>1]), reg_f('name','Name','text',['req'=>1]), reg_f('cls','Class (last)'), reg_f('section','Section'), reg_f('adm','Scholar / Adm No'),
-            reg_f('father','Father\'s name'), reg_f('mother','Mother\'s name'), reg_f('phone','Mobile'), reg_f('dob','Date of birth'), reg_f('status','Status','sel',['opts'=>['Inactive','Deactive','TC issued','Left'],'req'=>1]), reg_f('reason','Why inactive','area')],
-        'list' => ['oldId','name','cls','section','adm','father','status']],
     'studinfo' => ['title' => 'Student Full Record', 'group' => 'Students', 'old' => 'Student Master / Student Edit (all 131 fields)', 'r' => 'PC', 'w' => 'P', 'keyed' => 'student',
         'fields' => [reg_f('student','Student','student',['req'=>1]), reg_f('status','Status','sel',['opts'=>['Active','Inactive (left)','TC issued','Deactive'],'req'=>1]),
             reg_f('admAs','Admission as','sel',['opts'=>['Day Scholar','Day Boarder','Boarder','Provisional']]), reg_f('stuType','Student type','sel',['opts'=>['New Student','Old Student']]),
@@ -90,17 +83,6 @@ function reg_modules(): array {
         'list' => ['student','from','to','reason','status']],
     'tag' => ['title' => 'Student Tags & Follow-up', 'group' => 'Students', 'old' => 'Tag Mgmt', 'r' => 'PCR', 'w' => 'PR', 'fields' => [reg_f('student','Student','student',['req'=>1]), reg_f('tag','Tag','sel',['opts'=>['DEFAULTER','DOC-COLL','DOC NOT REC','EFP','FAIL/REP','PEN WITH AADHAR','One Time Payment','Other'],'req'=>1]), reg_f('nextDate','Follow-up date','date'), reg_f('status','Status','sel',['opts'=>['Pending','Done']]), reg_f('remarks','Remarks','area')],
         'list' => ['student','tag','nextDate','status'], 'due' => 'nextDate'],
-    // Old ERP Employee Master (employee_new.php / employee_nview.php), 27 Oct 2026. Teacher logins, timetable and salary stay in
-    // their own screens (teacher records, salStaff); this is the old ERP's staff file. Bank account kept as last 4 digits only.
-    'employee' => ['title' => 'Employee', 'group' => 'Staff', 'old' => 'HR Management › New Employee / View Employee / Edit Employee', 'r' => 'PC', 'w' => 'P',
-        'fields' => [reg_f('name','Name','text',['req'=>1]), reg_f('code','Employee Code'), reg_f('department','Department'), reg_f('designation','Designation'), reg_f('category','Categories','sel',['opts'=>['Teaching','Non-Teaching','Admin Staff','IVth Class Staff']]),
-            reg_f('gender','Gender','sel',['opts'=>['Male','Female']]), reg_f('marital','Marital Status'), reg_f('dob','Date of Birth'), reg_f('doj','Date of Joining'), reg_f('father','Father\'s Name'), reg_f('spouse','Husband/Wife Name'), reg_f('mother','Mother\'s Name'),
-            reg_f('mobile','Mobile Number','phone'), reg_f('email','Email Address'), reg_f('qualification','Qualification'), reg_f('otherQual','Other Qualification'), reg_f('experience','Total Experience'),
-            reg_f('inTime','IN TIME'), reg_f('outTime','OUT TIME'), reg_f('timeSlot','Time Slot'), reg_f('machineId','Machine ID'), reg_f('category2','Category'), reg_f('caste','Caste'),
-            reg_f('aadhar','Aadhar Card'), reg_f('pan','Pancard No'), reg_f('bankName','Bank Name'), reg_f('bankAc','Bank Account No (last 4)'), reg_f('ifsc','Bank IFSC Code'),
-            reg_f('cl','Casual Leave for an Year'), reg_f('ml','Medical Leave for an Year'), reg_f('basic','Basic+DA'), reg_f('pf','PF Status'), reg_f('uan','PF NUMBER(UAN)'), reg_f('esic','ESIC'),
-            reg_f('address','Address','area'), reg_f('status','Status','sel',['opts'=>['Active','Left']]), reg_f('remarks','Remark','area')],
-        'list' => ['name','department','designation','category','mobile','qualification','doj','status']],
     'alumni' => ['title' => 'Alumni', 'group' => 'Students', 'old' => 'Alumni Report', 'r' => 'PC', 'w' => 'P', 'fields' => [reg_f('name','Name','text',['req'=>1]), reg_f('batch','Pass-out year'), reg_f('lastCls','Last class','cls',$cls), reg_f('phone','Mobile','phone'), reg_f('now','Now doing'), reg_f('city','City')],
         'list' => ['name','batch','lastCls','phone','now']],
 
@@ -165,7 +147,7 @@ function reg_modules(): array {
         'list' => ['kind','title','date']],
 
     // ---------------- Masters ----------------
-    'master' => ['title' => 'Masters (house, caste, religion…)', 'group' => 'Masters', 'old' => 'Master › House / Caste / Religion / Occupation / Blood Group / Documents / Consultant / City', 'r' => 'PC', 'w' => 'P', 'fields' => [reg_f('list','List','sel',['opts'=>['House','Caste','Religion','Occupation','Blood group','Document','Consultant','City / Gram / Post','Discount head','Payment mode','Section','Department','Employee category'],'req'=>1]), reg_f('value','Value','text',['req'=>1]), reg_f('order','Order','num')],
+    'master' => ['title' => 'Masters (house, caste, religion…)', 'group' => 'Masters', 'old' => 'Master › House / Caste / Religion / Occupation / Blood Group / Documents / Consultant / City', 'r' => 'PC', 'w' => 'P', 'fields' => [reg_f('list','List','sel',['opts'=>['House','Caste','Religion','Occupation','Blood group','Document','Consultant','City / Gram / Post','Discount head','Payment mode','Section'],'req'=>1]), reg_f('value','Value','text',['req'=>1]), reg_f('order','Order','num')],
         'list' => ['list','value','order']],
 
     // ---------------- Old ERP archive (filled by import, read-only) ----------------
@@ -173,19 +155,7 @@ function reg_modules(): array {
         'fields' => [reg_f('session','Session','text',['req'=>1]), reg_f('receiptNo','Receipt No','text',['req'=>1]), reg_f('date','Date','date',['req'=>1]), reg_f('student','Student','student'), reg_f('scholarNo','Scholar No'), reg_f('name','Name','text',['req'=>1]),
             reg_f('cls','Class'), reg_f('section','Section'), reg_f('father','Father'), reg_f('months','Months'), reg_f('total','Total (₹)','money'), reg_f('discount','Discount (₹)','money'), reg_f('lateFee','Late fee (₹)','money'), reg_f('received','Received (₹)','money',['req'=>1]),
             reg_f('mode','Mode'), reg_f('bank','Bank'), reg_f('cheque','Cheque no'), reg_f('status','Status'), reg_f('user','Taken by'), reg_f('remark','Remark')],
-        'list' => ['session','receiptNo','date','name','cls','months','total','discount','received','mode','user'], 'sum' => ['total','discount','lateFee','received'], 'print' => 'oldreceipt'],
-    'oldrcptdet' => ['title' => 'Old ERP Receipt Details', 'group' => 'Old ERP Archive', 'old' => 'Fee Receipt print (print.php) — every line exactly as printed', 'r' => 'PCA', 'w' => '', 'import' => 'P', 'keyFrom' => ['session','receiptNo'], 'print' => 'oldreceipt',
-        'fields' => [reg_f('session','Session','text',['req'=>1]), reg_f('receiptNo','Receipt No','text',['req'=>1]), reg_f('title','Heading'), reg_f('date','Date and time'), reg_f('name','Name','text',['req'=>1]), reg_f('cls','Class'), reg_f('adm','Adm No'),
-            reg_f('mother','Mother\'s name'), reg_f('father','Father\'s name'), reg_f('scheme','Schemes / Transport'), reg_f('lines','Particulars','json'), reg_f('totalFee','Total fee (year)'), reg_f('already','Already received'), reg_f('balance','Balance amount'), reg_f('payable','Payable fee'), reg_f('lateFee','Late fee'),
-            reg_f('adjustment','Adjustment'), reg_f('received','Currently received'), reg_f('mode','Payment mode'), reg_f('bank','Bank name'), reg_f('cheque','Cheque no / date'), reg_f('remark','Remark'), reg_f('user','Taken by')],
-        'list' => ['session','receiptNo','date','name','cls','payable','received','mode']],
-    'oldfeecard' => ['title' => 'Fee Receipt (Old ERP card)', 'group' => 'Old ERP Archive', 'old' => 'Fee › Fee Receipt (studentfee.php) — the whole fee card of each student, every session', 'r' => 'PCA', 'w' => '', 'import' => 'P', 'keyFrom' => ['session','oldId'],
-        'fields' => [reg_f('session','Session','text',['req'=>1]), reg_f('oldId','Old ERP student id','text',['req'=>1]), reg_f('liveId','Student in new ERP'), reg_f('name','Name','text',['req'=>1]), reg_f('cls','Class'), reg_f('section','Section'),
-            reg_f('scholar','Scholar No / Roll No'), reg_f('father','Father\'s name'), reg_f('mother','Mother\'s name'), reg_f('mobile','Father\'s mobile'), reg_f('scheme','Schemes'), reg_f('status','Status in old ERP'),
-            reg_f('profile','Student details','json'), reg_f('months','Fee details (month-wise)','json'), reg_f('receipts','Fee receipts','json'), reg_f('tables','Transfer / other fee / discount / adjustment','json'),
-            reg_f('oldFee','Old fee'), reg_f('transferFee','Transfer fee'), reg_f('net','Net amount'), reg_f('received','Currently received'), reg_f('otherFee','Other fee receipt'), reg_f('balance','Balance amount'),
-            reg_f('transportDue','Transport due'), reg_f('feeDue','Fee due'), reg_f('storeDue','Store due'), reg_f('nextReceipt','Next receipt no (old ERP)'), reg_f('asOn','Copied from old ERP on')],
-        'list' => ['session','scholar','name','cls','section','net','received','feeDue']],
+        'list' => ['session','receiptNo','date','name','cls','months','total','discount','received','mode','user'], 'sum' => ['total','discount','lateFee','received'], 'print' => 'receipt'],
     'oldfee' => ['title' => 'Old ERP Fee Statement', 'group' => 'Old ERP Archive', 'old' => 'Fee Statement (per student, per session)', 'r' => 'PCA', 'w' => '', 'import' => 'P', 'keyFrom' => ['session','student'],
         'fields' => [reg_f('session','Session','text',['req'=>1]), reg_f('student','Student','student',['req'=>1]), reg_f('scholarNo','Scholar No'), reg_f('name','Name'), reg_f('cls','Class'), reg_f('scheme','Scheme'), reg_f('route','Route'),
             reg_f('oldDue','Old due (₹)','money'), reg_f('billed','Billed (₹)','money'), reg_f('transport','Transport (₹)','money'), reg_f('discount','Discount (₹)','money'), reg_f('otherDiscount','Other discount (₹)','money'), reg_f('adjust','Adjustment (₹)','money'), reg_f('received','Received (₹)','money'), reg_f('due','Net due (₹)','money'), reg_f('status','Status in old ERP')],
@@ -256,16 +226,7 @@ function reg_students(): array {
     foreach (sch_db()->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
         $s = json_decode((string)$row['d'], true);
         if (is_array($s)) $out[(string)$row['r']] = ['id' => (string)$row['r'], 'name' => (string)($s['name'] ?? ''), 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''),
-            'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)($s['erpId'] ?? ''),
-            'mother' => (string)($s['mother'] ?? ''), 'dob' => (string)($s['dob'] ?? '')];
-    }
-    // Inactive / left children (register inactivestu): linkable from School Office records as 'old-<old ERP id>', never in class lists.
-    $st = sch_db()->prepare("SELECT d FROM sch_records WHERE k='regRow' AND r LIKE 'inactivestu|%' AND deleted=0"); $st->execute();
-    foreach ($st as $row) {
-        $s = json_decode((string)$row['d'], true); if (!is_array($s) || ($s['oldId'] ?? '') === '') continue;
-        $id = 'old-' . $s['oldId']; if (isset($out[$id])) continue;
-        $out[$id] = ['id' => $id, 'name' => (string)$s['name'], 'cls' => (string)($s['cls'] ?? ''), 'section' => (string)($s['section'] ?? ''), 'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''),
-            'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)$s['oldId'], 'mother' => (string)($s['mother'] ?? ''), 'dob' => (string)($s['dob'] ?? ''), 'inactive' => true];
+            'adm' => (string)($s['adm'] ?? ''), 'father' => (string)($s['father'] ?? ''), 'phone' => (string)($s['phone'] ?? ''), 'erpId' => (string)($s['erpId'] ?? '')];
     }
     return $out;
 }

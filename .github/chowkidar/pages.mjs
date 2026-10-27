@@ -39,11 +39,6 @@ export const PAGES = [
   { path: '/email-otp.php', naam: 'Email OTP login', chahiye: ['Maakit'] },
   { path: '/school/finance.php', naam: 'School Fee Department', chahiye: ['Fee Department'] },
   { path: '/school/registers.php', naam: 'School Office registers', chahiye: ['School Office'] },
-  { path: '/school/feecollect.php', naam: 'Fee Receipt', chahiye: ['Fee Receipt'] },
-  { path: '/school/progress.php', naam: 'Progress Report', chahiye: ['Progress Report'] },
-  { path: '/school/feereports.php', naam: 'Fee Reports', chahiye: ['Fee Reports'] },
-  { path: '/school/stumaster.php', naam: 'Student Master', chahiye: ['Student Master'] },
-  { path: '/school/oldreports.php', naam: 'Old ERP Reports', chahiye: ['Old ERP Reports'] },
   { path: '/school/studio.php', naam: 'School Smart Studio', chahiye: ['Teacher Smart Studio'] },
   { path: '/school/learning.php', naam: 'School Learning Lab', chahiye: ['Learning Lab'] },
   { path: '/public/order-tools.php', naam: 'Customer delivery safety and fee login guard', chahiye: ['Maakit'] },
@@ -104,7 +99,6 @@ export const PAGES = [
   { path: '/school/faculty-public.php', naam: 'School Faculty', chahiye: ['Meet our educators'], nahi: [] },
   { path: '/school/faculty-verify.php', naam: 'Staff ID Verification', chahiye: ['Staff ID Verification'], nahi: [] },
   { path: '/school/toolkit.php', naam: 'Teacher Toolkit', chahiye: ['Teacher'], nahi: [] },
-  { path: '/school/academics.php', naam: 'Daily Teaching', chahiye: ['academics.js'], nahi: [] },
 
   // ---------- dukaan panel ----------
   // Dukandar ka login khula rehna chahiye. "मेरा हिसाब" yahan nahi

@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking the page: slow 4G par pehle text dikhe, font baad mein. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Mukta:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="jyotish.css?v=20">
+<link rel="stylesheet" href="jyotish.css?v=17">
 </head>
 <body data-ai="<?= $aiOn ? '1' : '0' ?>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -137,7 +137,6 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="mantra-chips" id="home-jaap-chips" role="radiogroup" aria-labelledby="home-jaap-mantra-label"></div>
       <label class="sr-only" for="home-jaap-mantra" id="home-jaap-mantra-label">Aaj ka mantra</label>
       <select id="home-jaap-mantra" hidden><option value="राधा">राधा</option><option value="राम">राम</option><option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="हरे कृष्ण">हरे कृष्ण</option><option value="जय माता दी">जय माता दी</option></select>
-      <button class="btn book-launch" id="book-launch" type="button" data-i18n="bookLaunch">Naam-jap pustak kholein</button>
       <div class="home-counter-row">
       <div class="mala" id="home-mala">
         <svg class="mala-ring" id="home-ring" viewBox="0 0 300 300" aria-hidden="true"></svg>
@@ -230,7 +229,6 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="jaap-between" id="jaap-final" hidden aria-live="polite"><div class="jaap-result-card"><div class="eyebrow" id="jaap-final-label">Lakshya poora</div><h2 id="jaap-final-title"></h2><div id="jaap-final-scores"></div><p id="jaap-final-copy"></p><div class="row"><a class="btn" id="jaap-share" target="_blank" rel="noopener" data-i18n="shareWA">WhatsApp par share karein</a><button class="btn ghost" id="jaap-done" type="button" data-i18n="done">Ho gaya</button></div><button class="linkbtn" id="jaap-final-undo" type="button" hidden data-i18n="jtUndo">Pichhli ginti wapas</button></div></div>
     </section>
 
-  <section class="card pj-card" id="pandit-calendar" aria-label="Pandit Ji calendar"></section>
   </section>
 
   <!-- AAJ KA MARGDARSHAN: mood check-in + roz ka card -->
@@ -444,21 +442,9 @@ header('Content-Type: text/html; charset=utf-8');
 </div>
 <script src="astronomy.min.js?v=2.1.19"></script>
 <script src="engine.js?v=1"></script>
-<script src="i18n.js?v=13"></script>
+<script src="i18n.js?v=10"></script>
 <script src="daily.js?v=2"></script>
-<script src="app.js?v=18"></script>
-<script src="pandit.js?v=1"></script>
-<dialog id="writing-book" aria-labelledby="book-title">
- <header class="book-toolbar"><h2 id="book-title" data-i18n="bookTitle">Naam-jap pustak</h2><button type="button" id="book-close" data-i18n="bookClose">Wapas</button></header>
- <div class="focus-row"><button id="book-focus" type="button" aria-pressed="false" data-i18n="bookFocus">Focus mode</button></div><div class="book-modes"><button type="button" id="book-tap-mode" data-i18n="bookTap">Tap se likhein</button><button type="button" id="book-write-mode" data-i18n="bookWrite">Khud likhein</button></div>
- <p id="book-count"></p>
- <div class="mala-panel"><div id="mala-beads" aria-hidden="true"></div><p id="mala-progress" role="status"></p></div><div class="book-paper"><div id="book-sheet" role="button" tabindex="0" aria-label="Tap the page to write one name"><div class="page-heading" data-i18n="bookInvocation">Naam smaran</div><div id="book-entries"></div><p class="page-hint" data-i18n="bookPageHint">Tap anywhere on the page</p></div><nav class="book-pages" aria-label="Pages"><button type="button" id="book-prev" data-i18n="bookPrev">Pichhla</button><span id="book-page-label"></span><button type="button" id="book-next" data-i18n="bookNext">Agla</button></nav></div>
- <button type="button" id="book-tap-area" data-i18n="bookTapHint">Yahan kahin bhi tap karein · ek naam likhega</button>
- <section id="book-handwriting" hidden><p data-i18n="bookWriteHint">Ungli se naam likhein, phir Agla naam dabayein.</p><canvas id="book-canvas" width="900" height="270" data-i18n-aria="bookCanvas" aria-label="Write a name"></canvas><div class="book-actions"><button type="button" id="book-clear" data-i18n="bookClear">Mitaayein</button><button type="button" id="book-confirm" data-i18n="bookConfirm">Agla naam · +1</button></div></section>
- <details class="book-tools"><summary data-i18n="bookTools">Writing options</summary><div class="book-actions"><button type="button" id="book-undo" data-i18n="bookUndo">Undo</button><button type="button" id="book-export" data-i18n="bookExport">Backup download</button></div>
- </details><p id="book-status" role="status" aria-live="polite"></p><p class="book-note" data-i18n="bookNote">Pustak ki ginti alag hai. Isi phone par save hoti hai.</p>
-</dialog>
-<script src="book.js?v=2"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
 

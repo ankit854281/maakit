@@ -862,13 +862,12 @@ $("jg-tap").addEventListener("click",function(e){ if(e.detail===0) jaapCountHome
 document.addEventListener("keydown",function(e){ if(gameOpen&&(e.key===" "||e.key==="Enter")&&!e.target.closest("button:not(#jg-tap),select")){ e.preventDefault(); jaapCountHome(false); } if(gameOpen&&e.key==="Escape") gameCloseFn(); });
 /* Phone tircha → game; seedha → wapas (agar ghumane se khula tha) */
 var turnMQ=window.matchMedia?matchMedia("(orientation: landscape) and (max-height: 600px)"):null;
-function onTurn(){ if(!turnMQ) return; var homeOn=!$("t-aaj").hidden, busyUI=document.body.classList.contains("book-open")||!$("menu").hidden||!$("jaap-arena").hidden||document.querySelector(".sheet:not([hidden])")||(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
+function onTurn(){ if(!turnMQ) return; var homeOn=!$("t-aaj").hidden, busyUI=!$("menu").hidden||!$("jaap-arena").hidden||document.querySelector(".sheet:not([hidden])")||(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
   if(turnMQ.matches&&homeOn&&!busyUI&&!gameDocked) gameOpenFn(true); else if(!turnMQ.matches&&openedByTurn) gameCloseFn(); }
 if(turnMQ){ if(turnMQ.addEventListener) turnMQ.addEventListener("change",onTurn); else if(turnMQ.addListener) turnMQ.addListener(onTurn); }
 setInterval(function(){ if(gameOpen) $("jg-speed").textContent=String(jgSpeed()); },1500);
 setTimeout(onTurn,400); /* page tircha phone par hi khula ho to seedha game */
 
-window.addEventListener("jy-book-open",function(){jaapAuto(false);});
 /* ---- boot ---- */
 var saved=store("mj-profile");
 profile = saved || {name:"Example Person",gender:"Male",date:"2001-01-15",time:"08:30",tz:5.5,city:"0",lat:25.3953,lon:82.5683,place:"Bhadohi",example:true};

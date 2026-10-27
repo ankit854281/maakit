@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__.'/inc.php';require __DIR__.'/finance_lib.php';require __DIR__.'/office_lib.php';require_once __DIR__.'/feecollect_lib.php';
+require __DIR__.'/inc.php';require __DIR__.'/finance_lib.php';require __DIR__.'/office_lib.php';
 $db=null;
 try{
  $db=sch_db();$u=sch_auth();$uid=(string)$u['uid'];$role=$u['role'];$admin=$role==='principal';$collector=$admin||$role==='accountant'||($role==='teacher'&&!empty(sch_rec_get('finAccess',$uid)['collect']));$staff=$collector||in_array($role,['chairman','reception'],true);$family=in_array($role,['parent','student'],true);
@@ -71,7 +71,6 @@ try{
  if($a==='generate'&&(($in['confirmed']??false)!==true||($in['previewHash']??'')!==$previewHash))throw new InvalidArgumentException('The bill preview changed. Review a fresh preview before confirming.');foreach($items as $b){$account($b['sid']);$put('finBill',$b['id'],$b+['actor'=>$uid]);}$res+=['generated'=>count($items),'total'=>array_sum(array_column($items,'amount'))];break;
  }
  case 'receive':{
- if(ofc_live($ss))throw new InvalidArgumentException('Fees for '.$ss.' are now taken in Fee › Fee Receipt (old ERP style). Nothing was saved here.');
  $amount=fin_money($in['amount']??'');$discount=fin_money($in['discount']??'0',true);if(!$admin&&$discount)throw new InvalidArgumentException('Only Principal can authorize concessions.');$mode=(string)($in['mode']??'');if(!in_array($mode,FIN_MODES,true))throw new InvalidArgumentException('Choose a valid payment mode.');$reference=fin_text($in['reference']??'',200);if($mode!=='Cash'&&$reference==='')throw new InvalidArgumentException('Enter the transaction or cheque reference.');
  foreach(fin_rows('finEntry') as $e)if($e['kind']==='Receipt'&&$reference!==''&&strcasecmp((string)($e['reference']??''),$reference)===0&&$e['mode']===$mode)throw new InvalidArgumentException('This transaction reference is already recorded. Check the receipt register before collecting again.');
  $ids=$in['charges']??[];if(!is_array($ids))throw new InvalidArgumentException('Select valid fee heads.');$da=fin_allocate($L,$discount,$ids,$date,true);if($da['left'])throw new InvalidArgumentException('Discount exceeds selected available dues.');$after=$L;foreach($after['rows'] as &$b)$b['outstanding']-=$da['allocations'][$b['id']]??0;unset($b);$pa=fin_allocate($after,$amount,$ids,$date,true);if($pa['left']&&($in['advance']??false)!==true)throw new InvalidArgumentException('Payment exceeds selected available dues. Select the fee heads or explicitly keep the excess as advance.');

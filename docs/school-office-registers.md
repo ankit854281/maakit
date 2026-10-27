@@ -46,22 +46,9 @@ Receipts with original numbers, Old ERP Fee Statement, Old ERP Marks).
 | `studinfo` | student | student (`erp-snmishra-<old id>`), status, gender, category, caste, religion, aadhar, mother mobile, PEN, … `extra` = any other old field |
 | `oldreceipt` | session + receiptNo | session `2024-25`, receiptNo exactly as old (`1-708`), date, student, name, months, total, discount, lateFee, received, mode, user |
 | `oldfee` | session + student | billed, transport, discount, otherDiscount, adjust, received, due, status |
-| `oldrcptdet` | session + receiptNo | the whole printed receipt: title, date, name, class, adm, mother, father, scheme, `lines` = [[sno, particular, month, amount]…], balance, payable, lateFee, adjustment, received, mode, bank, cheque, remark, user — text exactly as the old ERP printed it |
-| `oldfeecard` | session + oldId | the old Fee › Fee Receipt card of every student in every session (also students not in the new ERP): profile rows, `months` (Fee Details: month rows + head rows with amount / paid / balance / status), `receipts`, `tables` (Fee Refund, Enquiry Receipt, Cancel Receipt/Cheque, Fees Transfer, Other Fee Receipt, Fee Discount, Fee Adjustment, siblings), summary (old fee … fee due), next receipt number, copied-on date. Text exactly as the old ERP showed it. |
 | `oldmarks` | session + exam + student | exam, marks `{subject: {component (max): mark}}`, total, percent, grade, rank, attendance |
 
 Money is written in rupees in the file and stored in paise. Bank account numbers are reduced to the last 4 digits.
-
-## Session menu and old-style receipt (Oct 2026)
-
-- App header (Principal, Chairman, Accountant, Reception): a session menu like the old ERP's. It lists 2023-24 to next year,
-  stores the choice in `localStorage` `sch_view_session` (removed when the current session is picked), and passes
-  `&session=` to the Fee Department and School Office frames. It never changes `settings.session` — the working session
-  is still changed only in Settings.
-- School Office: registers with a `session` field are filtered to that session; a session select sits next to the filters.
-- Old ERP Receipts → Print uses the old ERP's `print.php` layout (logo `img/snmsis-logo.png`, red school name, address,
-  barcode strip `img/receipt-barcode.gif`, particulars table, totals grid, "Parent Copy … Auth. Sign"), filled from the
-  matching `oldrcptdet` row. If that row is not imported yet it says so instead of printing a half receipt.
 
 ## Why old receipts are an archive, not ledger entries
 
@@ -73,17 +60,3 @@ register (printable as a copy), and only the **net due** moves into the live fee
 
 44 students, 44 full records (35 Active, 9 Deactive), 81 receipts (₹2,79,415, all original numbers), 44 fee statements
 (billed ₹6,76,922, due ₹2,36,189), 105 mark rows (Term-1, Term-2, Final) — 0 differences against the old ERP.
-
-## Old-ERP look (22 Oct 2026)
-
-`school/classic.js` / `classic.css`: office roles see the old ERP's frame (same 47 menu groups, item names and order, colours
-#2D353C / #EDEDED / #F64015 / #F7F7F7, tiles #FC8675 #6BAFBD #F3CE85 #65CEA7). Every old item opens the new screen that does
-the job; items with no new screen yet stay in the menu, dimmed, and open a short note. ADMIN ▸ New look switches back.
-
-## Fee Receipt in the old layout (22 Oct 2026)
-
-Owner: "fee receipt same to same jaise old software me hai". Fee › Fee Receipt (and Fee Statement, Fee Card) in the classic menu
-open the `oldfeecard` register, which School Office draws like the old studentfee.php: Session / School / Class / Section / Name /
-Search For, the student details on the left, Fee Details month by month on the right (green #4AC598 heads), the yellow
-#F0C164 totals box, then Fee Receipt (each with Print in the old receipt layout), Refund, Transfer, Other Fee, Discount and
-Adjustment tables. It is the old ERP's record as on the copy date; new fees are taken in the Fee Department ("New fee").

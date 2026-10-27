@@ -36,7 +36,7 @@ case 'read': {
     $in = json_decode(file_get_contents('php://input', false, null, 0, 14000000) ?: '', true);
     if (!is_array($in)) sch_fail('Bad request.');
     $mode = (string)($in['mode'] ?? ''); $cls = (string)($in['cls'] ?? ''); $subj = (string)($in['subj'] ?? '');
-    if (!in_array($mode, ['chapters', 'lplan', 'page'], true)) sch_fail('Choose what the photo is.');
+    if (!in_array($mode, ['chapters', 'lplan'], true)) sch_fail('Choose what the photo is.');
     if ($u['role'] === 'teacher' && !sch_teaches((string)$u['tid'], $cls, $subj)) sch_fail('You can scan only for your own class and subject.', 403);
     $imgs = $in['images'] ?? null;
     if (!is_array($imgs) || !$imgs || count($imgs) > SC_MAX_IMAGES) sch_fail('Send 1 to ' . SC_MAX_IMAGES . ' photos.');
@@ -54,7 +54,6 @@ case 'read': {
     $db->commit();
 
     $ctx = [];
-    if($mode==='page'){$ctx['days']=max(1,min(6,(int)($in['days']??3)));$ctx['stage']=preg_match('/^(PG|Nursery|LKG|UKG)$/i',$cls)?'foundation':((int)$cls<=5?'primary':'secondary');}
     if ($mode === 'lplan') {
         $syl = sch_rec_get('syl', $cls . '|' . $subj);
         $next = array_values(array_filter($syl['chapters'] ?? [], fn($c) => empty($c['done'])));
@@ -63,7 +62,7 @@ case 'read': {
     try { $res = sc_ai_read($mode, $cls, $subj, $images, $ctx); }
     catch (Throwable $e) { error_log('scan_api: ' . $e->getMessage()); sch_json(['ok' => false, 'noAi' => true, 'error' => 'AI could not read it just now. Your phone will read the photo instead.'], 502); }
     sch_log($u, $mode === 'chapters' ? 'Syllabus' : 'Lesson Plan', 'Photo read for Class ' . $cls . ' ' . $subj . ': '
-        . ($mode === 'chapters' ? count($res['chapters']) . ' chapter(s) found' : ($mode==='page'?count($res['days']).' day drafts':count($res['topics']).' topic(s) found')) . ' (to check and save)');
+        . ($mode === 'chapters' ? count($res['chapters']) . ' chapter(s) found' : count($res['topics']) . ' topic(s) found') . ' (to check and save)');
     sch_json(['ok' => true, 'via' => 'ai'] + $res);
 }
 

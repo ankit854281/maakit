@@ -115,9 +115,6 @@ case 'pay': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $u = sch_auth();
     if (!in_array($u['role'], ['principal', 'accountant'], true)) sch_fail('Only the Accountant or the Principal can take fees.', 403);
-    // Once the Principal starts a session in Fee › Fee Receipt (feecollect_lib.php), fees are taken only there.
-    require_once __DIR__ . '/feecollect_lib.php';
-    if (ofc_live((string)(of_session()['session'] ?? ''))) sch_fail('Fees for this session are now taken in Fee › Fee Receipt. Nothing was saved here.', 409);
     $sid = (string)($in['sid'] ?? ''); $st = of_students();
     if (!isset($st[$sid])) sch_fail('Student not found.');
     $amt = of_rupees($in['amt'] ?? '', 1, 500000, 'Amount');
