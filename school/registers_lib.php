@@ -90,6 +90,17 @@ function reg_modules(): array {
         'list' => ['student','from','to','reason','status']],
     'tag' => ['title' => 'Student Tags & Follow-up', 'group' => 'Students', 'old' => 'Tag Mgmt', 'r' => 'PCR', 'w' => 'PR', 'fields' => [reg_f('student','Student','student',['req'=>1]), reg_f('tag','Tag','sel',['opts'=>['DEFAULTER','DOC-COLL','DOC NOT REC','EFP','FAIL/REP','PEN WITH AADHAR','One Time Payment','Other'],'req'=>1]), reg_f('nextDate','Follow-up date','date'), reg_f('status','Status','sel',['opts'=>['Pending','Done']]), reg_f('remarks','Remarks','area')],
         'list' => ['student','tag','nextDate','status'], 'due' => 'nextDate'],
+    // Old ERP Employee Master (employee_new.php / employee_nview.php), 27 Oct 2026. Teacher logins, timetable and salary stay in
+    // their own screens (teacher records, salStaff); this is the old ERP's staff file. Bank account kept as last 4 digits only.
+    'employee' => ['title' => 'Employee', 'group' => 'Staff', 'old' => 'HR Management › New Employee / View Employee / Edit Employee', 'r' => 'PC', 'w' => 'P',
+        'fields' => [reg_f('name','Name','text',['req'=>1]), reg_f('code','Employee Code'), reg_f('department','Department'), reg_f('designation','Designation'), reg_f('category','Categories','sel',['opts'=>['Teaching','Non-Teaching','Admin Staff','IVth Class Staff']]),
+            reg_f('gender','Gender','sel',['opts'=>['Male','Female']]), reg_f('marital','Marital Status'), reg_f('dob','Date of Birth'), reg_f('doj','Date of Joining'), reg_f('father','Father\'s Name'), reg_f('spouse','Husband/Wife Name'), reg_f('mother','Mother\'s Name'),
+            reg_f('mobile','Mobile Number','phone'), reg_f('email','Email Address'), reg_f('qualification','Qualification'), reg_f('otherQual','Other Qualification'), reg_f('experience','Total Experience'),
+            reg_f('inTime','IN TIME'), reg_f('outTime','OUT TIME'), reg_f('timeSlot','Time Slot'), reg_f('machineId','Machine ID'), reg_f('category2','Category'), reg_f('caste','Caste'),
+            reg_f('aadhar','Aadhar Card'), reg_f('pan','Pancard No'), reg_f('bankName','Bank Name'), reg_f('bankAc','Bank Account No (last 4)'), reg_f('ifsc','Bank IFSC Code'),
+            reg_f('cl','Casual Leave for an Year'), reg_f('ml','Medical Leave for an Year'), reg_f('basic','Basic+DA'), reg_f('pf','PF Status'), reg_f('uan','PF NUMBER(UAN)'), reg_f('esic','ESIC'),
+            reg_f('address','Address','area'), reg_f('status','Status','sel',['opts'=>['Active','Left']]), reg_f('remarks','Remark','area')],
+        'list' => ['name','department','designation','category','mobile','qualification','doj','status']],
     'alumni' => ['title' => 'Alumni', 'group' => 'Students', 'old' => 'Alumni Report', 'r' => 'PC', 'w' => 'P', 'fields' => [reg_f('name','Name','text',['req'=>1]), reg_f('batch','Pass-out year'), reg_f('lastCls','Last class','cls',$cls), reg_f('phone','Mobile','phone'), reg_f('now','Now doing'), reg_f('city','City')],
         'list' => ['name','batch','lastCls','phone','now']],
 
@@ -154,7 +165,7 @@ function reg_modules(): array {
         'list' => ['kind','title','date']],
 
     // ---------------- Masters ----------------
-    'master' => ['title' => 'Masters (house, caste, religion…)', 'group' => 'Masters', 'old' => 'Master › House / Caste / Religion / Occupation / Blood Group / Documents / Consultant / City', 'r' => 'PC', 'w' => 'P', 'fields' => [reg_f('list','List','sel',['opts'=>['House','Caste','Religion','Occupation','Blood group','Document','Consultant','City / Gram / Post','Discount head','Payment mode','Section'],'req'=>1]), reg_f('value','Value','text',['req'=>1]), reg_f('order','Order','num')],
+    'master' => ['title' => 'Masters (house, caste, religion…)', 'group' => 'Masters', 'old' => 'Master › House / Caste / Religion / Occupation / Blood Group / Documents / Consultant / City', 'r' => 'PC', 'w' => 'P', 'fields' => [reg_f('list','List','sel',['opts'=>['House','Caste','Religion','Occupation','Blood group','Document','Consultant','City / Gram / Post','Discount head','Payment mode','Section','Department','Employee category'],'req'=>1]), reg_f('value','Value','text',['req'=>1]), reg_f('order','Order','num')],
         'list' => ['list','value','order']],
 
     // ---------------- Old ERP archive (filled by import, read-only) ----------------
