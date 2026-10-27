@@ -120,7 +120,7 @@ case 'bundle': {
     // run in order inside one transaction. Preview counts first; anything wrong stops everything.
     if ($method !== 'POST') sch_fail('POST only', 405);
     if ($role !== 'principal') sch_fail('Only the Principal can import from the old ERP.', 403);
-    $steps = (array)($in['steps'] ?? []); if (!$steps || count($steps) > 20) sch_fail('The file has no steps.');
+    $steps = (array)($in['steps'] ?? []); if (!$steps || count($steps) > 40) sch_fail('The file has no steps.');
     $apply = ($in['apply'] ?? false) === true; $report = [];
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
@@ -141,6 +141,19 @@ case 'bundle': {
                     sch_rec_put('regRow', $m['id'] . '|' . $key, $c + ['_id' => $key, '_by' => 'Old ERP import', '_at' => $now, '_created' => $now, '_createdBy' => 'Old ERP import (' . $u['label'] . ')'], $uid); $done++;
                 }
                 $report[] = ['step' => $n + 1, 'what' => 'Add to ' . $m['title'], 'new' => $done, 'already' => $same];
+            } elseif ($kind === 'seed') {
+                // Old ERP masters and lists (routes, items, castes, enquiries …) into an ordinary register. The key is the row's own
+                // content, so running the file again adds nothing, and nothing already in the register is changed or removed.
+                $m = $M[(string)($step['m'] ?? '')] ?? null;
+                if (!$m || isset($m['keyFrom']) || isset($m['keyed']) || $m['group'] === 'Old ERP Archive' || !reg_can($m, 'principal', 'w')) throw new InvalidArgumentException('Step ' . ($n + 1) . ': this register cannot take old ERP rows.');
+                $now = sch_now_ms();
+                foreach ($rows as $i => $r) {
+                    try { $c = reg_clean($m, (array)$r, $students, true); } catch (InvalidArgumentException $e) { throw new InvalidArgumentException('Step ' . ($n + 1) . ' (' . $m['title'] . ') row ' . ($i + 1) . ': ' . $e->getMessage()); }
+                    $key = substr(hash('sha256', $m['id'] . '|' . json_encode($c, JSON_UNESCAPED_UNICODE)), 0, 20);
+                    if (sch_rec_get('regRow', $m['id'] . '|' . $key)) { $same++; continue; }
+                    sch_rec_put('regRow', $m['id'] . '|' . $key, $c + ['_id' => $key, '_by' => 'Old ERP import', '_at' => $now, '_created' => $now, '_createdBy' => 'Old ERP import (' . $u['label'] . ')'], $uid); $done++;
+                }
+                $report[] = ['step' => $n + 1, 'what' => 'Old ERP list into ' . $m['title'], 'new' => $done, 'already' => $same];
             } elseif ($kind === 'relink') {
                 foreach ($rows as $i => $op) {
                     $op = (array)$op; $m = $M[(string)($op['m'] ?? '')] ?? null;
