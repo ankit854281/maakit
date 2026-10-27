@@ -35,6 +35,7 @@ function ac_regular(string $date,array $data): array {
 function ac_arrange(string $date,array $data,array $load=[]): array {
     $regular=ac_regular($date,$data);$staff=$data['staff'][$date]??[];$absent=$staff['absent']??[];
     foreach($data['leave'] as $l)if(($l['status']??'')==='Approved'&&($l['from']??'')<=$date&&($l['to']??'')>=$date&&!in_array($l['tid'],$absent,true))$absent[]=$l['tid'];
+    $absent=array_values(array_unique($absent));sort($absent,SORT_STRING);
     $need=[];foreach($absent as $tid)foreach(range(0,6) as $bell)foreach($regular as $b)if($b['bell']===$bell&&($b['tid']===$tid&&($from=ac_absent_from($date,$tid,$data))!==null&&$b['bell']>=$from))$need[]=$b+['absent'=>$tid,'sub'=>null,'manual'=>false];
     $extra=[];
     $busy=function(string $tid,int $bell)use($regular){foreach($regular as $b)if($b['tid']===$tid&&$b['bell']===$bell)return true;return false;};

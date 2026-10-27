@@ -381,7 +381,7 @@ function myAllocs(t) { return S.alloc.filter(a => a.t === t && a.n > 0); }
 function staffAbsent(date) {
   const manual = (S.staffAtt[date] && S.staffAtt[date].absent) || [];
   const onLeave = S.leaves.filter(l => l.status === 'Approved' && l.from <= date && l.to >= date).map(l => l.tid);
-  return [...new Set([...manual, ...onLeave])];
+  return [...new Set([...manual, ...onLeave])].sort();
 }
 // Absence can be the whole day or "from bell N" (late arrival / leaving early = half day).
 function absentFrom(date, t) {           // null = present, 0 = whole day, n = absent from bell n onwards
