@@ -165,6 +165,7 @@ jobs:
           node --check school/feecollect.js
           node --check school/progress.js
           node --check school/oldreports.js
+          node --check school/stumaster.js
           node --check school/faculty.js
           node --check school/faculty-public.js
           node --check school/toolkit.js
