@@ -3,7 +3,8 @@ require_once __DIR__.'/public.php';
 header('Cache-Control: private, no-store');
 if (sr_account($pdo)) redirect('/account.php');
 $config=sr_firebase_config();
-$ready=!in_array('',array_values($config),true);
+$appCheckSiteKey=defined('SR_FIREBASE_APP_CHECK_SITE_KEY') ? (string)SR_FIREBASE_APP_CHECK_SITE_KEY : '';
+$ready=!in_array('',array_values($config),true) && $appCheckSiteKey!=='';
 sr_public_head('login',t('Sign in','लॉगिन'),t('SMART SARATHI','स्मार्ट सारथी'),t('One account.','एक खाता।'),t('Ride or deliver.','सवारी और डिलीवरी।'),t('Sign in with your mobile. Choose Customer or Rider mode after login.','मोबाइल से लॉगिन कीजिए। फिर ग्राहक या राइडर मोड चुनिए।'));
 ?>
 <section class="sx-card sx-form" id="phone-login">
@@ -21,7 +22,7 @@ sr_public_head('login',t('Sign in','लॉगिन'),t('SMART SARATHI','स्�
 </form>
 <div id="recaptcha"></div><p id="auth-status" role="status" aria-live="polite"></p>
 <noscript><?= h(t('Enable JavaScript to use secure phone login.','सुरक्षित मोबाइल लॉगिन के लिए JavaScript चालू कीजिए।')) ?></noscript>
-<script id="firebase-login-config" type="application/json"><?= json_encode(['firebase'=>$config,'endpoint'=>u('/auth.php'),'csrf'=>csrf(),'lang'=>sr_lang()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
-<script type="module" src="<?= h(u('/assets/firebase-login.js')) ?>?v=1"></script>
+<script id="firebase-login-config" type="application/json"><?= json_encode(['firebase'=>$config,'appCheckSiteKey'=>$appCheckSiteKey,'endpoint'=>u('/auth.php'),'csrf'=>csrf(),'lang'=>sr_lang()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
+<script type="module" src="<?= h(u('/assets/firebase-login.js')) ?>?v=2"></script>
 <?php endif; ?></section>
 <?php sr_public_foot(); ?>

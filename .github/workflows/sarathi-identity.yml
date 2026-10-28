@@ -1,9 +1,9 @@
 name: Smart Sarathi identity
 on:
   push:
-    paths: ['smartsarathi/**', 'tests/sarathi-*', '.github/workflows/sarathi-identity.yml']
+    paths: ['smartsarathi/**', 'firebase/sms-guard/**', 'tests/sarathi-*', '.github/workflows/sarathi-identity.yml']
   pull_request:
-    paths: ['smartsarathi/**', 'tests/sarathi-*', '.github/workflows/sarathi-identity.yml']
+    paths: ['smartsarathi/**', 'firebase/sms-guard/**', 'tests/sarathi-*', '.github/workflows/sarathi-identity.yml']
   workflow_dispatch:
 jobs:
   identity:
@@ -34,3 +34,12 @@ jobs:
         run: |
           php tests/sarathi-firebase.php
           php tests/sarathi-identity-flow.php
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: SMS guard dependency and unit checks
+        working-directory: firebase/sms-guard/functions
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          node -e "require('./index.js')"

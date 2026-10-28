@@ -1,3 +1,12 @@
+# SMS protection follow-up — 28 October 2026
+
+Module 1+2 now requires SR_FIREBASE_APP_CHECK_SITE_KEY in test config. See
+`docs/smartsarathi-sms-protection.md`. The Firebase beforeSmsSent hook uses private
+Firestore transactions: phone 5/hour, IP 20/hour, staging project 20/24h. Browser
+5/hour is best effort, NOT a physical-device guarantee. Never claim a GitHub push
+enables App Check enforcement or registers cloud triggers. Both old broad CI
+failures were verified in baseline main logs; do not claim the full suite passed.
+
 # Branch and testing restriction — latest owner instruction, 28 October 2026
 
 For Smart Sarathi modules 1+2, push ONLY to branch `module-1-2`. Do not push or

@@ -65,3 +65,6 @@ define('SR_PHONE_SHOW', '84293 93903');
 // define('SR_FIREBASE_APP_ID', 'copy web appId');
 // define('SR_FIREBASE_ADMIN_MOBILES', ['YOUR_10_DIGIT_MOBILE']); // strings, no +91
 // define('SR_IDENTITY_PRIVATE_DIR', '/home/CPANEL_USER/sarathi-identity-private');
+
+// Required for Firebase login: register this score-based Enterprise site key in App Check.
+// define('SR_FIREBASE_APP_CHECK_SITE_KEY', 'YOUR_RECAPTCHA_ENTERPRISE_SITE_KEY');

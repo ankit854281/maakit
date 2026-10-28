@@ -1,0 +1,4 @@
+{
+  "functions": [{"source": "functions", "codebase": "sarathi-sms-guard", "runtime": "nodejs22"}],
+  "firestore": {"rules": "firestore.rules"}
+}

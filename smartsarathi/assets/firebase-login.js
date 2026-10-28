@@ -8,7 +8,7 @@ const phone = document.getElementById('phone');
 const send = document.getElementById('send-otp');
 const verify = document.getElementById('verify-otp');
 const status = document.getElementById('auth-status');
-let auth, recaptcha, confirmation, sdk, busy = false, nextSend = 0;
+let auth, attestation, recaptcha, confirmation, sdk, busy = false, nextSend = 0;
 const say = message => { status.textContent = message; };
 function errorMessage(error) {
   const messages = {
@@ -26,7 +26,15 @@ function errorMessage(error) {
 async function initialise() {
   const app = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js');
   sdk = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');
-  auth = sdk.getAuth(app.initializeApp(config.firebase));
+  const instance = app.initializeApp(config.firebase);
+  if (!config.appCheckSiteKey) throw new Error('App Check configuration missing');
+  const check = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js');
+  if (!attestation) attestation = check.initializeAppCheck(instance, {
+    provider: new check.ReCaptchaEnterpriseProvider(config.appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true
+  });
+  await check.getToken(attestation);
+  auth = sdk.getAuth(instance);
   auth.languageCode = hi ? 'hi' : 'en';
   // Never silently turn a remembered browser credential into a new PHP login.
   await sdk.setPersistence(auth, sdk.browserSessionPersistence);
@@ -39,6 +47,22 @@ async function sendCode(event) {
   busy = true; send.disabled = true;
   try {
     if (!auth) await initialise();
+    // Browser-profile guard, not a tamper-proof physical device identifier.
+    // Web Locks serializes tabs; Firebase's blocking hook enforces phone limits.
+    const reserve = () => {
+      const now = Date.now();
+      const key = 'sr-otp-attempts-v1';
+      const previous = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!Array.isArray(previous)) throw new Error('Invalid attempt history');
+      const recent = previous.filter(t => Number.isFinite(t) && t > now - 3600000);
+      if (recent.length >= 5 || recent.some(t => t > now - 60000)) {
+        throw {code: 'auth/too-many-requests'};
+      }
+      localStorage.setItem(key, JSON.stringify([...recent, now]));
+    };
+    if (navigator.locks) await navigator.locks.request('sr-otp-send', reserve);
+    else reserve();
+    nextSend = Date.now() + 60000;
     confirmation = null;
     if (recaptcha) recaptcha.clear();
     recaptcha = new sdk.RecaptchaVerifier(auth, 'recaptcha', { size: 'invisible' });

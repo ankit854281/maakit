@@ -209,8 +209,9 @@ explicit emergency rollback to the OLD login system, not a secure Firebase mode.
 It restores legacy functionality including old GPS behavior. Keep the new tables
 and private photos; do not drop data. Never silently turn the flag off on errors.
 
-No Firebase Realtime Database, Storage, Cloud Functions, Google Maps or Razorpay
-service needs setup for this module. Module 4 will use the same Firebase project
+The SMS protection follow-up now requires App Check, Cloud Functions and a private
+Firestore counter database; see [SMS protection](smartsarathi-sms-protection.md).
+Realtime Database, Storage, Google Maps and Razorpay are still deferred. Module 4 will use the same Firebase project
 and UIDs with scoped rules, after your confirmation of the preceding modules.
 PWA background GPS reliability cannot be assumed when the browser is suspended.
 
@@ -255,8 +256,9 @@ permissions require the staging/production checks above.
 - The broader [जाँच workflow](https://github.com/ankit854281/maakit/actions/runs/40613830233)
   failed at the shop categories/prices step. The
   [PHP API workflow](https://github.com/ankit854281/maakit/actions/runs/40613830077)
-  also failed. Their causes remain unverified; no repository-wide pass or
-  production readiness is claimed. Investigate before merging.
+  also failed. Both exact failures also occurred on the baseline main commit, before this module;
+  see the SMS protection guide for baseline/branch logs. They remain unresolved;
+  no repository-wide pass or production readiness is claimed.
 - Real SMS, reCAPTCHA, mobile UI and cPanel photo-upload testing remain pending.
 - Follow the staging guide, record acceptance results, and obtain the owner's
   explicit approval before any main merge or production migration.

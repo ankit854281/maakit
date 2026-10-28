@@ -1,3 +1,5 @@
+> Before real SMS testing, complete [SMS abuse protection](smartsarathi-sms-protection.md). App Check site key is now required.
+
 # Module 1+2 — backups, isolated staging and acceptance tests
 
 Owner instruction: branch `module-1-2` only. No main merge, live deployment or live
@@ -159,6 +161,7 @@ define('SR_PHONE_SHOW', 'YOUR_10_DIGIT_MOBILE');
 define('SR_MAAKIT_URL', 'https://test.smartsarathi.in');
 
 define('SR_FIREBASE_ENABLED', true);
+define('SR_FIREBASE_APP_CHECK_SITE_KEY', 'TEST_RECAPTCHA_ENTERPRISE_SITE_KEY');
 define('SR_FIREBASE_API_KEY', 'TEST_PROJECT_WEB_API_KEY');
 define('SR_FIREBASE_AUTH_DOMAIN', 'TEST_PROJECT_ID.firebaseapp.com');
 define('SR_FIREBASE_PROJECT_ID', 'TEST_PROJECT_ID');
