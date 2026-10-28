@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     if (!csrf_ok()) $err=t('Page expired. Try again.','पेज पुराना हो गया। दोबारा कोशिश कीजिए।');
     elseif (post('do')==='logout') { rider_logout(); redirect('/'); }
     elseif (post('do')==='mode' && in_array(post('mode'),['customer','rider'],true)) {
+        if(post('mode')==='rider') sr_identity_autolink($pdo,$a);
         $p=sr_profile($pdo,(int)$a['id']);
         if(post('mode')==='customer' && !empty($p['rider_id'])) duty_off($pdo,(int)$p['rider_id']);
         $_SESSION['sr_mode']=post('mode');
@@ -29,7 +30,8 @@ sr_public_head('account',t('My account','मेरा खाता'),t('SMART SA
 <p><?= h(t('Your account is ready. In-app ride and parcel booking will be enabled with the next modules. For now, call us to book.','आपका खाता तैयार है। ऐप में सवारी और पार्सल बुकिंग अगले चरणों में शुरू होगी। अभी बुकिंग के लिए फ़ोन कीजिए।')) ?></p>
 <a class="sx-pill" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Call to book','बुकिंग के लिए फ़ोन')) ?></a>
 <?php endif; ?>
-<?php if($p): ?><p><?= h(t('Rider profile: ','राइडर प्रोफ़ाइल: ').sr_profile_status($p['status'])) ?></p><?php endif; ?>
+<?php if($p): ?><p><?= h(t('Rider profile: ','राइडर प्रोफ़ाइल: ').sr_profile_status($p['status'])) ?></p>
+<?php if(sr_profile_docs_missing($p)): ?><p><a class="sx-pill" href="<?= h(u('/apply.php')) ?>"><?= h(t('Complete profile: add photo & licence','प्रोफ़ाइल पूरी कीजिए: फ़ोटो और लाइसेंस लगाइए')) ?></a></p><?php endif; ?><?php endif; ?>
 <?php if(sr_identity_admin($pdo)): ?><p><a class="sx-pill" href="<?= h(u('/admin/')) ?>"><?= h(t('Admin panel','एडमिन पैनल')) ?></a> <a class="sx-pill" href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Review riders','राइडर मंज़ूरी')) ?></a></p><?php endif; ?>
 <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><button name="do" value="logout" class="sx-pill"><?= h(t('Sign out','लॉगआउट')) ?></button></form>
 </section>

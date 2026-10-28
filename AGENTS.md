@@ -1,3 +1,13 @@
+# Simple rider entry — owner instruction, 29 October 2026
+
+"Smart work, not hard work." Customers: plain mobile OTP login. Service people:
+entry first, profile later. If the admin adds a mobile in the Sarathi admin panel
+(riders list), that person's OTP login auto-links and is approved immediately
+(sr_identity_autolink). Self-applicants give only name + vehicle type (vehicle
+number optional); photo and licence are OPTIONAL and can be added later from the
+account page; admin may approve without them. Do not re-add mandatory documents
+without asking the owner.
+
 # Go-live decision — owner instruction, 28 October 2026 (afternoon)
 
 Ankit asked to skip the staging subdomain and take Smart Sarathi modules 1+2

@@ -44,6 +44,44 @@ function sr_identity_rider(PDO $pdo): ?array {
     $q=$pdo->prepare("SELECT r.* FROM sr_rider_profiles p JOIN riders r ON r.id=p.rider_id WHERE p.account_id=? AND p.status='approved' AND r.active=1");
     $q->execute([$a['id']]); return $q->fetch() ?: null;
 }
+/**
+ * Owner rule (29 Oct 2026): service people get entry FIRST, profile later.
+ * If the admin already added this mobile in the admin panel (riders table),
+ * the verified OTP login links to that rider and is approved straight away.
+ * Photos/licence can be added later from the account page.
+ */
+function sr_identity_autolink(PDO $pdo, array $a): void {
+    if (sr_profile($pdo,(int)$a['id'])) return;
+    $q=$pdo->prepare('SELECT * FROM riders WHERE RIGHT(mobile,10)=? AND active=1 LIMIT 1');
+    $q->execute([$a['mobile']]); $r=$q->fetch();
+    if(!$r) return;
+    $type=function_exists('sr_vtype_guess') ? (sr_vtype_guess($r['vehicle'] ?? '') ?: 'bike') : 'bike';
+    if(!isset(sr_profile_vehicles()[$type])) $type='bike';
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('SELECT id FROM sr_accounts WHERE id=? FOR UPDATE')->execute([$a['id']]);
+        if(!sr_profile($pdo,(int)$a['id'])) {
+            $taken=$pdo->prepare('SELECT 1 FROM sr_rider_profiles WHERE rider_id=?'); $taken->execute([(int)$r['id']]);
+            if(!$taken->fetchColumn()) {
+                $pdo->prepare("INSERT INTO sr_rider_profiles (account_id,rider_id,name,vehicle_type,vehicle_number,photo,licence_photo,status,reviewed_by,reviewed_at) VALUES (?,?,?,?,?,'','','approved',?,NOW())")
+                    ->execute([$a['id'],(int)$r['id'],$r['name'],$type,(string)($r['rc_number'] ?? ''),$a['id']]);
+                $pdo->prepare("INSERT INTO sr_identity_audit (account_id,actor_id,action,revision,note) VALUES (?,?,'auto_linked',1,'Pre-added by admin in riders list')")->execute([$a['id'],$a['id']]);
+            }
+        }
+        $pdo->commit();
+    } catch(Throwable $e) { if($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
+}
+function sr_profile_docs_missing(?array $p): bool {
+    return $p && (!preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$p['photo']) || !preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$p['licence_photo']));
+}
+/** Add / replace photo and licence later without changing approval status. */
+function sr_profile_add_docs(PDO $pdo, array $a, ?string $photo, ?string $licence): void {
+    $p=sr_profile($pdo,(int)$a['id']); if(!$p) throw new RuntimeException('No profile');
+    $old=[];
+    if($photo){ $pdo->prepare('UPDATE sr_rider_profiles SET photo=? WHERE account_id=?')->execute([$photo,$a['id']]); $old[]=$p['photo']; }
+    if($licence){ $pdo->prepare('UPDATE sr_rider_profiles SET licence_photo=? WHERE account_id=?')->execute([$licence,$a['id']]); $old[]=$p['licence_photo']; }
+    foreach($old as $file) if(preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$file)) @unlink(sr_identity_dir().'/'.$file);
+}
 function sr_identity_rider_allowed(PDO $pdo, int $rid): bool {
     if (!sr_firebase_enabled()) return true;
     $q=$pdo->prepare("SELECT 1 FROM sr_rider_profiles p JOIN sr_accounts a ON a.id=p.account_id JOIN riders r ON r.id=p.rider_id WHERE p.rider_id=? AND p.status='approved' AND a.active=1 AND r.active=1");
@@ -70,7 +108,7 @@ function sr_profile_photo(string $field): string {
 function sr_profile_submit(PDO $pdo, array $a, array $input, string $photo, string $licence): void {
     $name=trim((string)($input['name'] ?? '')); $type=(string)($input['vehicle_type'] ?? '');
     $number=strtoupper(preg_replace('/\s+/', '', (string)($input['vehicle_number'] ?? '')));
-    if (mb_strlen($name)<2 || mb_strlen($name)>80 || !isset(sr_profile_vehicles()[$type]) || !preg_match('/^[A-Z0-9-]{6,30}$/D',$number)) throw new RuntimeException('Invalid profile');
+    if (mb_strlen($name)<2 || mb_strlen($name)>80 || !isset(sr_profile_vehicles()[$type]) || !preg_match('/^[A-Z0-9-]{0,30}$/D',$number)) throw new RuntimeException('Invalid profile');
     $pdo->beginTransaction();
     try {
         $pdo->prepare('SELECT id FROM sr_accounts WHERE id=? FOR UPDATE')->execute([$a['id']]);
@@ -94,9 +132,7 @@ function sr_profile_review(PDO $pdo, int $id, int $revision, string $decision, s
         if(!$p || !(int)$p['account_active'] || (int)$p['revision']!==$revision || ($decision==='suspended' ? $p['status']!=='approved' : $p['status']!=='pending')) throw new RuntimeException('Review changed');
         $rid=$p['rider_id'];
         if($decision==='approved') {
-            foreach (['photo','licence_photo'] as $field) {
-                if (!preg_match('/^[a-f0-9]{48}\.jpg$/D', $p[$field]) || !is_file(sr_identity_dir().'/'.$p[$field])) throw new RuntimeException('Document missing');
-            }
+            // Owner rule: photos/licence are optional at approval; rider can add them later.
             $q=$pdo->prepare('SELECT * FROM riders WHERE mobile=? FOR UPDATE');$q->execute([$p['mobile']]);$r=$q->fetch();
             if($r && !(int)$r['active']) throw new RuntimeException('Rider disabled: resolve with office first');
             if($r) $rid=(int)$r['id'];

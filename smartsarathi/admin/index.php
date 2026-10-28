@@ -84,6 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         $mob = preg_replace('/\D/', '', (string)post('mobile'));
         $nam = trim((string)post('name'));
         $cod = (string)post('code');
+        // Firebase OTP mode: the old login code is not used, so generate a hidden one.
+        if (sr_firebase_enabled() && $cod === '') $cod = bin2hex(random_bytes(16));
         if (mb_strlen($nam) < 2 || !preg_match('/^[6-9]\d{9}$/D', $mob) || mb_strlen($cod) < 6) {
             $err = 'नाम, 10 अंक का मोबाइल और कम से कम 6 अक्षर का कोड चाहिए।';
         } else {
@@ -95,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
                                (int)post('rate'), (int)post('extra_rate')]);
                 sr_jobs_upgrade($pdo);
                 $pdo->prepare("UPDATE riders SET vtype=? WHERE id=?")->execute([sr_vtype_guess(post('vehicle')), (int)$pdo->lastInsertId()]);
-                flash('सारथी जुड़ गया।'); redirect('/admin/');
+                flash(sr_firebase_enabled() ? 'सारथी जुड़ गया। अब वो इसी नंबर से OTP लॉगिन करके सीधे "राइडर मोड" दबाए — maakit.in/smartsarathi/' : 'सारथी जुड़ गया।'); redirect('/admin/');
             } catch (PDOException $e) { $err = 'यह मोबाइल नंबर पहले से है।'; }
         }
     }
@@ -431,7 +433,7 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="rider_add">
     <input class="md" type="text" name="name" placeholder="नाम" required>
     <input class="md" type="tel" name="mobile" placeholder="मोबाइल" required>
-    <input class="md" type="text" name="code" placeholder="कोड (6+ अक्षर)" required>
+    <?php if (!sr_firebase_enabled()): ?><input class="md" type="text" name="code" placeholder="कोड (6+ अक्षर)" required><?php endif; ?>
     <input class="md" type="text" name="vehicle" placeholder="गाड़ी">
     <input class="sm" type="number" name="rate" placeholder="रेट" min="0">
     <input class="sm" type="number" name="extra_rate" placeholder="अगला" min="0">
