@@ -14,7 +14,9 @@
 // ============================================================
 require_once __DIR__ . '/inc/public.php';
 
-if (!isset($_GET['no']) && !isset($_POST['no']) && empty($_SESSION['sr_track'])) {
+$trackingAccount = sr_firebase_enabled() ? sr_account_require($pdo) : null;
+
+if (!sr_firebase_enabled() && !isset($_GET['no']) && !isset($_POST['no']) && empty($_SESSION['sr_track'])) {
     header('Location: ' . sr_maakit_url('/trip.php'), true, 302);
     exit;
 }
@@ -22,6 +24,7 @@ if (!isset($_GET['no']) && !isset($_POST['no']) && empty($_SESSION['sr_track']))
 $no = strtoupper(trim((string)($_POST['no'] ?? $_GET['no'] ?? ($_SESSION['sr_track']['no'] ?? ''))));
 $m  = preg_replace('/\D/', '', (string)($_POST['m'] ?? $_GET['m'] ?? ($_SESSION['sr_track']['m'] ?? '')));
 $job = null; $err = '';
+if ($trackingAccount) $m = $trackingAccount['mobile'];
 
 if ($no !== '' && $m !== '') {
     $who = 'track:' . $no;
@@ -39,8 +42,8 @@ if ($no !== '' && $m !== '') {
 
 sr_public_head('none', t('Track your parcel', 'पार्सल ट्रैक कीजिए'), t('LIVE STATUS', 'लाइव हालत'),
     t('Where is', 'आपका पार्सल'), t('my parcel?', 'कहाँ पहुँचा?'),
-    t('Enter your booking number and mobile. The status updates by itself while the parcel is on the way.', 'बुकिंग नंबर और मोबाइल डालिए। पार्सल रास्ते में हो तो हालत अपने आप ताज़ा होती है।'),
-    [['route', t('Every step, live', 'हर कदम लाइव')], ['check', t('Code-safe delivery', 'कोड से पक्की डिलीवरी')], ['phone', t('Help one call away', 'मदद बस एक फ़ोन पर')]]);
+    t('Enter your booking number to check the latest status.', 'ताज़ा स्थिति देखने के लिए बुकिंग नंबर भरिए।'),
+    [['route', t('Booking status', 'बुकिंग की स्थिति')], ['check', t('Code-safe delivery', 'कोड से पक्की डिलीवरी')], ['phone', t('Help one call away', 'मदद बस एक फ़ोन पर')]]);
 ?>
   <?php if ($err): ?><div class="sx-alert"><?= sr_icon('alert', 18) ?> <?= h($err) ?></div><?php endif; ?>
 
@@ -67,7 +70,7 @@ sr_public_head('none', t('Track your parcel', 'पार्सल ट्रै�
         <div><small><?= h(t('To', 'कहाँ तक')) ?></small><b><?= h($job['drop_name']) ?> · <?= h($job['drop_address']) ?></b></div>
         <?php if ($job['items']): ?><div><small><?= h(t('Parcel', 'सामान')) ?></small><b><?= h($job['items']) ?></b></div><?php endif; ?>
       </div>
-      <?php if ($live): ?>
+      <?php if ($live && !sr_firebase_enabled()): ?>
         <p class="sx-fine"><span class="sx-live"></span><?= h(t('Updating automatically', 'अपने आप ताज़ा हो रहा है')) ?></p>
         <script>setTimeout(function () { if (!document.querySelector('input:focus')) location.reload(); }, 30000);</script>
       <?php endif; ?>
@@ -77,7 +80,7 @@ sr_public_head('none', t('Track your parcel', 'पार्सल ट्रै�
   <form method="post" class="sx-card sx-form">
     <?php if ($job): ?><div class="sx-pane-h"><span class="sx-pin c"><?= sr_icon('route', 16) ?></span><div><b><?= h(t('Track another', 'दूसरा पार्सल देखिए')) ?></b></div></div><?php endif; ?>
     <label class="sx-field"><span><?= h(t('Booking number', 'बुकिंग नंबर')) ?></span><input name="no" value="<?= h($no) ?>" placeholder="SR…" autocapitalize="characters" required></label>
-    <label class="sx-field"><span><?= h(t('Mobile (sender or receiver)', 'मोबाइल (भेजने या पाने वाला)')) ?></span><input name="m" type="tel" inputmode="numeric" value="<?= h($m) ?>" required></label>
+    <label class="sx-field"><span><?= h(t('Mobile (sender or receiver)', 'मोबाइल (भेजने या पाने वाला)')) ?></span><input name="m" <?= $trackingAccount ? 'readonly' : '' ?> type="tel" inputmode="numeric" value="<?= h($m) ?>" required></label>
     <button class="sx-btn sx-btn-navy" type="submit"><?= sr_icon('route', 18) ?> <?= h(t('Check status', 'हालत देखिए')) ?></button>
   </form>
 <?php sr_public_foot();

@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 
     if ($do === 'bahar')    { rider_location_clear($pdo, $rid); rider_logout(); redirect('/'); }
+    if (sr_firebase_enabled() && in_array($do, ['location','location_off'], true)) { http_response_code(410); header('Content-Type: application/json'); echo json_encode(['ok'=>false]); exit; }
     if ($do === 'location') {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
@@ -115,6 +116,7 @@ $csrf = h(csrf());
   <b><?= h(t('Change', 'बदलिए')) ?> ›</b>
 </a>
 
+<?php if (sr_firebase_enabled()): ?><p class="sx-card"><?= h(t('Refresh this page to check jobs. Live updates and location sharing will be enabled in the Firebase tracking module.', 'काम देखने के लिए पेज दोबारा खोलिए। लाइव अपडेट और लोकेशन Firebase ट्रैकिंग चरण में शुरू होंगे।')) ?></p><?php endif; ?>
 <!-- आज का हिसाब -->
 <div class="sx-stats">
   <a class="sx-stat" href="<?= h(u('/khata.php')) ?>"><small><?= h(t("Today's earnings", 'आज की कमाई')) ?></small><b>₹<?= (int)$k['aaj'] ?></b></a>
@@ -122,7 +124,7 @@ $csrf = h(csrf());
   <div class="sx-stat"><small><?= h(t('Active jobs', 'अभी के काम')) ?></small><b><?= count($jobs) ?></b></div>
 </div>
 
-<?php if ($jobs): ?>
+<?php if ($jobs && !sr_firebase_enabled()): ?>
 <section class="sx-loc-share" data-location-share data-csrf="<?= $csrf ?>">
   <div><b><?= h(t('Share your live location', 'अपनी लाइव जगह साझा करें')) ?></b>
     <small><?= h(t('Customers with your active jobs can see your current position. You can stop sharing any time.', 'आपके चालू काम वाले ग्राहक आपकी अभी की जगह देख सकेंगे। आप इसे कभी भी बंद कर सकते हैं।')) ?></small></div>
@@ -345,7 +347,7 @@ $csrf = h(csrf());
   }
 })();
 </script>
-<?php if ($ready && !$jobs): ?>
+<?php if ($ready && !$jobs && !sr_firebase_enabled()): ?>
 <script>
 // हाज़िर हैं पर काम नहीं — हर मिनट खुद देख लीजिए. Kaam khula ho to refresh NAHI (likha OTP ud jata).
 setTimeout(function () { location.reload(); }, 60000);

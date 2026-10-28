@@ -4,6 +4,7 @@ require_once __DIR__.'/inc/lang.php';
 require_once __DIR__.'/inc/kaam.php';
 require_once __DIR__.'/inc/public.php';
 require_once __DIR__.'/inc/fast2sms.php';
+if (sr_firebase_enabled()) redirect('/');
 $otp_role = get('role') === 'admin' ? 'admin' : 'rider';
 $otp_account = function($mobile) use ($pdo,$otp_role) {
     if ($otp_role === 'admin') {

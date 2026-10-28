@@ -11,6 +11,8 @@ require_once __DIR__ . '/inc/kaam.php';
 require_once __DIR__.'/inc/fast2sms.php';
 require_once __DIR__ . '/inc/public.php';   // tabs: parcel / track / rider banna
 
+if (sr_firebase_enabled()) { require __DIR__.'/inc/identity-login.php'; exit; }
+
 if (rider_me($pdo)) { redirect('/kaam.php'); }
 
 $err = '';

@@ -1,0 +1,77 @@
+// Pinned CDN modules: no npm or Node runtime on shared hosting.
+const config = JSON.parse(document.getElementById('firebase-login-config').textContent);
+const hi = config.lang === 'hi';
+const tr = (en, hindi) => hi ? hindi : en;
+const phoneForm = document.getElementById('phone-form');
+const otpForm = document.getElementById('otp-form');
+const phone = document.getElementById('phone');
+const send = document.getElementById('send-otp');
+const verify = document.getElementById('verify-otp');
+const status = document.getElementById('auth-status');
+let auth, recaptcha, confirmation, sdk, busy = false, nextSend = 0;
+const say = message => { status.textContent = message; };
+function errorMessage(error) {
+  const messages = {
+    'auth/invalid-verification-code': tr('Incorrect code. Try again.', 'कोड सही नहीं है। दोबारा कोशिश कीजिए।'),
+    'auth/code-expired': tr('Code expired. Request another OTP.', 'कोड पुराना हो गया। नया OTP माँगिए।'),
+    'auth/session-expired': tr('Code expired. Request another OTP.', 'कोड पुराना हो गया। नया OTP माँगिए।'),
+    'auth/too-many-requests': tr('Too many attempts. Wait before trying again.', 'बहुत कोशिश हुई। कुछ देर बाद कोशिश कीजिए।'),
+    'auth/quota-exceeded': tr('SMS is unavailable. Please call the office.', 'अभी SMS नहीं भेज सकते। दफ़्तर को फ़ोन कीजिए।'),
+    'auth/network-request-failed': tr('Check your connection and try again.', 'इंटरनेट जाँचकर दोबारा कोशिश कीजिए।'),
+    'auth/invalid-phone-number': tr('Enter a valid 10-digit mobile number.', 'सही 10 अंक का मोबाइल नंबर भरिए।'),
+    'auth/captcha-check-failed': tr('Verification failed. Please try again.', 'सुरक्षा जाँच नहीं हुई। दोबारा कोशिश कीजिए।')
+  };
+  return messages[error.code] || tr('Sign-in could not finish. Try again or call the office.', 'लॉगिन पूरा नहीं हुआ। दोबारा कोशिश या दफ़्तर को फ़ोन कीजिए।');
+}
+async function initialise() {
+  const app = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js');
+  sdk = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');
+  auth = sdk.getAuth(app.initializeApp(config.firebase));
+  auth.languageCode = hi ? 'hi' : 'en';
+  // Never silently turn a remembered browser credential into a new PHP login.
+  await sdk.setPersistence(auth, sdk.browserSessionPersistence);
+  await sdk.signOut(auth);
+}
+async function sendCode(event) {
+  event.preventDefault();
+  if (busy || !phoneForm.reportValidity()) return;
+  if (Date.now() < nextSend) { say(tr('Please wait one minute before resending.', 'नया OTP माँगने से पहले एक मिनट रुकिए।')); return; }
+  busy = true; send.disabled = true;
+  try {
+    if (!auth) await initialise();
+    confirmation = null;
+    if (recaptcha) recaptcha.clear();
+    recaptcha = new sdk.RecaptchaVerifier(auth, 'recaptcha', { size: 'invisible' });
+    say(tr('Sending OTP…', 'OTP भेज रहे हैं…'));
+    confirmation = await sdk.signInWithPhoneNumber(auth, '+91' + phone.value, recaptcha);
+    nextSend = Date.now() + 60000;
+    otpForm.hidden = false;
+    phone.readOnly = true;
+    document.getElementById('sms-code').value = '';
+    document.getElementById('sms-code').focus();
+    say(tr('SMS sent. Enter the code. You can resend after one minute.', 'SMS भेज दिया। कोड भरिए। एक मिनट बाद नया OTP भेज सकते हैं।'));
+  } catch (error) {
+    say(errorMessage(error));
+    if (recaptcha) { recaptcha.clear(); recaptcha = null; }
+  } finally { busy = false; send.disabled = false; }
+}
+phoneForm.addEventListener('submit', sendCode);
+otpForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !confirmation || !otpForm.reportValidity()) return;
+  busy = true; verify.disabled = true; send.disabled = true;
+  try {
+    const result = await confirmation.confirm(document.getElementById('sms-code').value);
+    const token = await result.user.getIdToken(true);
+    const response = await fetch(config.endpoint, {method: 'POST', credentials: 'same-origin',
+      body: new URLSearchParams({csrf: config.csrf, token})});
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error('Session rejected');
+    window.location.assign(data.next);
+  } catch (error) { say(errorMessage(error)); }
+  finally { busy = false; verify.disabled = false; send.disabled = false; }
+});
+document.getElementById('change-phone').addEventListener('click', () => {
+  if (busy) return;
+  confirmation = null; otpForm.hidden = true; phone.readOnly = false; phone.focus(); say('');
+});

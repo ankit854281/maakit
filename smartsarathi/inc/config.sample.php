@@ -55,3 +55,13 @@ define('SR_PHONE_SHOW', '84293 93903');
 // define('FAST2SMS_ADMIN_MOBILE', 'owner verified 10-digit mobile');
 // define('FAST2SMS_DAILY_LIMIT', '300');
 // Handover templates take variables in this order: code | booking reference.
+
+// Module 1+2: read docs/smartsarathi-module-1-2.md before enabling.
+// Add these definitions to the EXISTING private config.php; do not replace its DB settings.
+// define('SR_FIREBASE_ENABLED', true);
+// define('SR_FIREBASE_API_KEY', 'copy web apiKey');
+// define('SR_FIREBASE_AUTH_DOMAIN', 'your-project.firebaseapp.com');
+// define('SR_FIREBASE_PROJECT_ID', 'your-project');
+// define('SR_FIREBASE_APP_ID', 'copy web appId');
+// define('SR_FIREBASE_ADMIN_MOBILES', ['YOUR_10_DIGIT_MOBILE']); // strings, no +91
+// define('SR_IDENTITY_PRIVATE_DIR', '/home/CPANEL_USER/sarathi-identity-private');

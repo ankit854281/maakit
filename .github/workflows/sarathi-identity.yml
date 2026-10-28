@@ -1,0 +1,36 @@
+name: Smart Sarathi identity
+on:
+  push:
+    paths: ['smartsarathi/**', 'tests/sarathi-*', '.github/workflows/sarathi-identity.yml']
+  pull_request:
+    paths: ['smartsarathi/**', 'tests/sarathi-*', '.github/workflows/sarathi-identity.yml']
+  workflow_dispatch:
+jobs:
+  identity:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: identity-ci
+          MARIADB_DATABASE: sarathi_identity_test
+        ports: ['3306:3306']
+        options: --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mbstring, curl, gd, openssl
+          coverage: none
+      - name: PHP and JavaScript syntax
+        run: |
+          find smartsarathi -name '*.php' -print0 | xargs -0 -n1 php -l
+          node --check smartsarathi/assets/firebase-login.js
+      - name: Token security and identity integration
+        env:
+          SR_TEST_DB_HOST: 127.0.0.1
+          SR_TEST_DB_PASSWORD: identity-ci
+        run: |
+          php tests/sarathi-firebase.php
+          php tests/sarathi-identity-flow.php

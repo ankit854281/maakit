@@ -11,6 +11,7 @@
 //  aamne-saamne dekha jata hai.
 // ============================================================
 require_once __DIR__ . '/inc/public.php';
+if (sr_firebase_enabled()) { require __DIR__.'/inc/identity-apply.php'; exit; }
 sr_apply_table($pdo);
 
 $err = ''; $done = false;

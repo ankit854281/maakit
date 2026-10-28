@@ -45,6 +45,7 @@ if (!is_file($sr_cfg)) {
        . '<b>config.php</b>, और उसमें database की जानकारी भर दीजिए।</p></div>');
 }
 require_once $sr_cfg;
+header('Cache-Control: private, no-store, max-age=0');
 
 // ---------- database ----------
 try {

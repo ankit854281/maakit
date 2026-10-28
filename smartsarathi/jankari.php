@@ -18,7 +18,7 @@ if (!$me) { redirect('/'); }
 $rid = (int)$me['id'];
 $err = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'code') {
+if (!sr_firebase_enabled() && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && post('do') === 'code') {
     $purana = (string)post('purana');
     $naya   = (string)post('naya');
     if (!password_verify($purana, $me['pass_hash'])) {
@@ -97,6 +97,7 @@ sr_head($me, 'jankari', t('My profile', 'मेरी जानकारी'), $
   <a class="sx-pill" href="tel:<?= h(SR_PHONE) ?>"><?= sr_icon('phone', 16) ?> <?= h(SR_PHONE_SHOW) ?></a>
 </section>
 
+<?php if (!sr_firebase_enabled()): ?>
 <details class="sx-card sx-codebox">
   <summary><?= sr_icon('user', 18) ?> <span><b><?= h(t('Change your login code', 'अपना लॉगिन कोड बदलिए')) ?></b><small><?= h(t('The code you use to sign in', 'जो लॉगिन करते वक़्त डालते हैं')) ?></small></span></summary>
   <form method="post" class="sx-form">
@@ -106,6 +107,7 @@ sr_head($me, 'jankari', t('My profile', 'मेरी जानकारी'), $
     <button class="sx-btn sx-btn-navy" type="submit"><?= h(t('Change code', 'कोड बदलिए')) ?></button>
   </form>
 </details>
+<?php endif; ?>
 
 <?php sr_foot('jankari', ['kaam' => count($jobs)]); ?>
 

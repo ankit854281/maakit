@@ -21,9 +21,16 @@ require_once __DIR__.'/../inc/fast2sms.php';
 require_once __DIR__ . '/../inc/client.php';
 require_once __DIR__ . '/../inc/public.php';   // arziyan (apply.php) + seedhe grahak
 
+// Firebase mode ignores all legacy admin cookies and secret-key login paths.
+if (sr_firebase_enabled()) {
+    if (!sr_account($pdo)) redirect('/');
+    if (!sr_identity_admin($pdo)) { http_response_code(403); exit; }
+    $_SESSION['sr_admin'] = 1;
+}
+
 // ---------- दरवाज़ा ----------
 $err = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (post('do') === 'login')) {
+if (!sr_firebase_enabled() && $_SERVER['REQUEST_METHOD'] === 'POST' && (post('do') === 'login')) {
     // Chaabi par bhi hadd — warna koi baith kar aazmata rahega
     if (!csrf_ok()) { $err='पन्ना दोबारा खोलकर कोशिश कीजिए।'; }
     elseif (try_blocked($pdo, 'admin')) {
@@ -237,6 +244,7 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
   .ad .mut{color:var(--mut);font-size:14px}
 </style></head>
 <body style="background:var(--cream)">
+<?php if (sr_firebase_enabled()): ?><p><a href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Rider profile approvals', 'राइडर प्रोफ़ाइल मंज़ूरी')) ?></a> · <a href="<?= h(u('/account.php')) ?>"><?= h(t('My account', 'मेरा खाता')) ?></a></p><?php endif; ?>
 
 <header class="sr-top">
   <div class="sr-top-t"><b>सारथी — मालिक</b>

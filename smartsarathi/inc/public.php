@@ -65,7 +65,7 @@ function sr_public_tabs($on) {
     if (!function_exists('sr_icon')) require_once __DIR__ . '/ui.php';
     $tabs = [
         'apply' => [u('/apply.php'), t('Join as rider', 'राइडर बनिए'), 'bike'],
-        'login' => [u('/'),          t('Rider login', 'राइडर लॉगिन'), 'user'],
+        'login' => [u('/'),          (sr_firebase_enabled() ? t('Login / account', 'लॉगिन / खाता') : t('Rider login', 'राइडर लॉगिन')), 'user'],
     ];
     echo '<nav class="sxp-tabs" aria-label="' . h(t('Sarathi', 'सारथी')) . '">';
     foreach ($tabs as $k => [$href, $lbl, $ic]) {

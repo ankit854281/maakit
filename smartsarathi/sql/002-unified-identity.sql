@@ -1,0 +1,39 @@
+SET NAMES utf8mb4;
+-- Run in the independent SMART SARATHI database, never the Maakit database.
+CREATE TABLE IF NOT EXISTS sr_accounts (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ firebase_uid VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ mobile CHAR(10) NOT NULL,
+ active TINYINT NOT NULL DEFAULT 1,
+ session_version INT NOT NULL DEFAULT 1,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY (firebase_uid), UNIQUE KEY (mobile)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS sr_rider_profiles (
+ account_id BIGINT UNSIGNED PRIMARY KEY,
+ rider_id INT DEFAULT NULL,
+ name VARCHAR(80) NOT NULL,
+ vehicle_type VARCHAR(10) NOT NULL,
+ vehicle_number VARCHAR(30) NOT NULL,
+ photo VARCHAR(80) NOT NULL,
+ licence_photo VARCHAR(80) NOT NULL,
+ status ENUM('pending','approved','rejected','suspended') NOT NULL DEFAULT 'pending',
+ revision INT NOT NULL DEFAULT 1,
+ review_note VARCHAR(300) DEFAULT NULL,
+ reviewed_by BIGINT UNSIGNED DEFAULT NULL,
+ reviewed_at DATETIME DEFAULT NULL,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ UNIQUE KEY (rider_id), KEY (status),
+ FOREIGN KEY (account_id) REFERENCES sr_accounts(id),
+ FOREIGN KEY (rider_id) REFERENCES riders(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS sr_identity_audit (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ account_id BIGINT UNSIGNED NOT NULL,
+ actor_id BIGINT UNSIGNED NOT NULL,
+ action VARCHAR(30) NOT NULL,
+ revision INT NOT NULL,
+ note VARCHAR(300) DEFAULT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ KEY (account_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

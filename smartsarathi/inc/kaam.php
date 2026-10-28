@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/fast2sms.php';
+require_once __DIR__.'/identity.php';
 // ============================================================
 //  सारथी — धंधे की सारी logic
 //
@@ -16,6 +17,7 @@ require_once __DIR__.'/fast2sms.php';
 //  सारथी का लॉगिन
 // ------------------------------------------------------------
 function rider_login(PDO $pdo, $mobile, $code) {
+    if (sr_firebase_enabled()) return null;
     $mob = preg_replace('/\D/', '', (string)$mobile);
     if ($mob === '' || $code === '') return null;
     $st = $pdo->prepare("SELECT * FROM riders WHERE mobile=? AND active=1");
@@ -32,6 +34,7 @@ function rider_start_session($r) {
 
 /** abhi kaun andar hai — har panne par database se taaza lete hain */
 function rider_me(PDO $pdo) {
+    if (sr_firebase_enabled()) return sr_identity_rider($pdo);
     $id = (int)($_SESSION['sr_rider'] ?? 0);
     if ($id <= 0) return null;
     $st = $pdo->prepare("SELECT * FROM riders WHERE id=? AND active=1");
@@ -62,6 +65,12 @@ function rider_reset_code(PDO $pdo, $rid, $code, $confirm) {
 }
 
 function rider_logout() {
+    if (sr_firebase_enabled()) {
+        global $pdo;
+        $account = sr_account($pdo);
+        $profile = $account ? sr_profile($pdo, (int)$account['id']) : null;
+        if (!empty($profile['rider_id'])) duty_off($pdo, (int)$profile['rider_id']);
+    }
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {
         $p = session_get_cookie_params();
@@ -78,6 +87,7 @@ function rider_logout() {
 //  हाज़िरी — "मैं अभी तैयार हूँ"
 // ------------------------------------------------------------
 function duty_on(PDO $pdo, $rid, $minutes = 90) {
+    if (!sr_identity_rider_allowed($pdo, (int)$rid)) return;
     $pdo->prepare("UPDATE riders SET ready_until = NOW() + INTERVAL ? MINUTE WHERE id=?")
         ->execute([(int)$minutes, (int)$rid]);
     // Koi hazir na tha tab aaye kaam (sawari/delivery) ab de dijiye — pehle aaye, pehle
@@ -152,6 +162,7 @@ function trip_add(PDO $pdo, $rid, $jid) {
  * Lautata hai [theek hua?, sandesh]
  */
 function job_give(PDO $pdo, $jid, $rid) {
+    if (!sr_identity_rider_allowed($pdo, (int)$rid)) return [false, t("Rider approval required.", "राइडर मंज़ूरी बाकी है।")];
     $st = $pdo->prepare("SELECT id, name FROM riders WHERE id=? AND active=1");
     $st->execute([(int)$rid]);
     if (!$r = $st->fetch()) return [false, 'ये सारथी नहीं मिला।'];
@@ -181,6 +192,7 @@ function job_auto_give(PDO $pdo, $jid) {
     $jq = $pdo->prepare("SELECT kind, vehicle FROM jobs WHERE id=?"); $jq->execute([(int)$jid]);
     $job = $jq->fetch() ?: ['kind' => 'delivery', 'vehicle' => null];
     $args = [];
+    $approval = sr_firebase_enabled() ? " AND EXISTS (SELECT 1 FROM sr_rider_profiles p JOIN sr_accounts a ON a.id=p.account_id WHERE p.rider_id=r.id AND p.status='approved' AND a.active=1)" : "";
     if (($job['kind'] ?? 'delivery') === 'ride') {
         $fit = sr_ride_fits($job['vehicle'] ?? '');
         $cond = "r.do_ride = 1 AND r.ride_ok = 1 AND r.vtype IN (" . implode(',', array_fill(0, count($fit), '?')) . ")";
@@ -193,7 +205,7 @@ function job_auto_give(PDO $pdo, $jid) {
                 (SELECT COUNT(*) FROM jobs j
                   WHERE j.rider_id = r.id AND j.status IN ('assigned','picked')) AS abhi
            FROM riders r
-          WHERE r.active = 1 AND r.ready_until > NOW() AND $cond
+          WHERE r.active = 1 AND r.ready_until > NOW() AND $cond $approval
        ORDER BY abhi ASC, r.id ASC
           LIMIT 1");
     $st->execute($args);
@@ -260,6 +272,7 @@ function rider_past(PDO $pdo, $rid, $limit = 40) {
 // ------------------------------------------------------------
 /** lautata hai [theek hua?, sandesh] */
 function job_pick(PDO $pdo, $rid, $jid, $otp) {
+    if (!sr_identity_rider_allowed($pdo, (int)$rid)) return [false, t("Rider approval required.", "राइडर मंज़ूरी बाकी है।")];
     $st = $pdo->prepare("SELECT * FROM jobs WHERE id=? AND rider_id=?");
     $st->execute([(int)$jid, (int)$rid]);
     $j = $st->fetch();
@@ -292,6 +305,7 @@ function job_pick(PDO $pdo, $rid, $jid, $otp) {
 //  ग्राहक को दे दिया — Drop code + फ़ोटो
 // ------------------------------------------------------------
 function job_deliver(PDO $pdo, $rid, $jid, $code, $photo = null) {
+    if (!sr_identity_rider_allowed($pdo, (int)$rid)) return [false, t("Rider approval required.", "राइडर मंज़ूरी बाकी है।")];
     $st = $pdo->prepare("SELECT * FROM jobs WHERE id=? AND rider_id=?");
     $st->execute([(int)$jid, (int)$rid]);
     $j = $st->fetch();
@@ -520,7 +534,7 @@ function rider_location_clear_if_idle(PDO $pdo, $rid) {
 /** Gaadi ke prakaar (rider ka vtype) */
 function sr_vtypes() {
     return ['cycle' => t('Bicycle', 'साइकिल'), 'bike' => t('Motorcycle', 'बाइक'), 'ev' => t('Electric scooter', 'बिजली स्कूटी'),
-            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
+            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'car' => t('Car', 'कार'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
 }
 /** Arzi ke likhe hue gaadi naam se vtype */
 function sr_vtype_guess($label) {
@@ -532,7 +546,7 @@ function sr_vtype_guess($label) {
 }
 /** Sawari ki gaadi maangi gayi ho to kaun-kaun si rider gaadi chalegi */
 function sr_ride_fits($want) {
-    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
+    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto'], 'car' => ['car']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
 }
 
 /** Abhi kahan jaana hai — uthana baaki ho to pickup, warna drop. GPS ho to seedha wahi. */

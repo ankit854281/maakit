@@ -9,7 +9,7 @@ $q=$pdo->prepare('SELECT rider_id,client_id FROM jobs WHERE pod_photo=? LIMIT 1'
 $allowed=false;
 if($job){
     $rider=rider_me($pdo);
-    $allowed=!empty($_SESSION['sr_admin']) || ($rider && (int)$rider['id']===(int)$job['rider_id']);
+    $allowed=(sr_firebase_enabled() ? sr_identity_admin($pdo) : !empty($_SESSION['sr_admin'])) || ($rider && (int)$rider['id']===(int)$job['rider_id']);
     if(!$allowed){$key=key_from_request();$client=$key!=='' ? key_client($pdo,$key) : null;$allowed=$client && (int)$client['id']===(int)$job['client_id'];}
 }
 $file=$allowed ? order_media_path($name,'sarathi') : null;

@@ -1,3 +1,24 @@
+# Branch and testing restriction — latest owner instruction, 28 October 2026
+
+For Smart Sarathi modules 1+2, push ONLY to branch `module-1-2`. Do not push or
+merge into `main`, deploy live, or migrate either live database. The owner must
+first confirm staging tests pass and approve merging. Do not start module 3
+until explicitly requested. This overrides all older direct-to-main permissions
+below. See docs/smartsarathi-staging-test.md for backup-first isolated testing.
+
+# Smart Sarathi owner update — 28 October 2026
+
+The owner now requests a customer + rider app at smartsarathi.in, one mobile/Firebase
+Phone Auth login and Customer/Rider modes. This supersedes the riders-only and
+no-paid-service rules for Smart Sarathi. Implement in owner-confirmed modules:
+1+2 identity/OTP, then 3 Maps, 4 Firebase realtime, 5 Razorpay, 6 shared trips.
+Do not implement the next module until owner confirmation. Module 1+2 is enabled
+only by private SR_FIREBASE_ENABLED=true after SQL/config preparation; it disables
+legacy rider codes/admin-key login, hosting GPS posts and automatic rider refresh.
+Existing Maakit customer flows are separate and unchanged. New profiles must be
+reviewed; legacy rider IDs/history attach only during explicit admin approval.
+See docs/smartsarathi-module-1-2.md. Never claim a push activates cloud services.
+
 # Owner architecture update — 8 October 2026
 
 The latest owner instruction supersedes the earlier Node.js/PostgreSQL exception: PHP 8.2+ with PDO and MySQL 8.0.16+/MariaDB 10.6+ is the active backend. No Node runtime or build step is required. Historical node-api/ and docs/postgresql/ files are inactive references only; do not deploy or extend them. Direct commits to main without PRs remain explicitly authorized by Ankit. Preserve private config.php, uploads/ and existing live data. New UUID API tables use the additive mk_ namespace. The PHP API is opt-in until its identity/catalog migration and keys are configured; do not claim that a code push automatically switches legacy checkout.

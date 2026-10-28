@@ -99,6 +99,7 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
     <?php if ($tab !== 'kaam'): ?>
       <span class="sx-chip <?= $ready ? 'on' : '' ?>"><i></i><?= $ready ? h(t('Online', 'हाज़िर')) : h(t('Offline', 'बंद')) ?></span>
     <?php endif; ?>
+    <?php if (sr_firebase_enabled()): ?><a class="sx-pill" href="<?= h(u('/account.php')) ?>"><?= h(t('Change mode', 'मोड बदलिए')) ?></a><?php endif; ?>
     <?php sr_language_switch(); ?>
   </div>
 </header>
