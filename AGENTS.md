@@ -1,3 +1,9 @@
+# Launch tracking — owner instruction, 29 October 2026
+
+For launch, the old hosting GPS sharing (kaam.php do=location, 20 s minimum gap)
+and the 60 s idle refresh are re-enabled in Firebase mode. Move tracking to
+Firebase Realtime Database (module 4) before rider count grows past ~30 online.
+
 # Customer home on Smart Sarathi — owner decision, 29 October 2026
 
 Customer app lives on Smart Sarathi: smartsarathi/ghar.php is the 8-tile home

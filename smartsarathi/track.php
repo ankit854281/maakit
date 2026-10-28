@@ -70,7 +70,7 @@ sr_public_head('none', t('Track your parcel', 'पार्सल ट्रै�
         <div><small><?= h(t('To', 'कहाँ तक')) ?></small><b><?= h($job['drop_name']) ?> · <?= h($job['drop_address']) ?></b></div>
         <?php if ($job['items']): ?><div><small><?= h(t('Parcel', 'सामान')) ?></small><b><?= h($job['items']) ?></b></div><?php endif; ?>
       </div>
-      <?php if ($live && !sr_firebase_enabled()): ?>
+      <?php if ($live): ?>
         <p class="sx-fine"><span class="sx-live"></span><?= h(t('Updating automatically', 'अपने आप ताज़ा हो रहा है')) ?></p>
         <script>setTimeout(function () { if (!document.querySelector('input:focus')) location.reload(); }, 30000);</script>
       <?php endif; ?>
