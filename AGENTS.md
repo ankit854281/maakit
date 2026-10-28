@@ -1,3 +1,13 @@
+# Go-live decision — owner instruction, 28 October 2026 (afternoon)
+
+Ankit asked to skip the staging subdomain and take Smart Sarathi modules 1+2
+live directly on smartsarathi.in. module-1-2 is merged into main. Firebase
+project: smartsarathi-8fd8f. App Check and the beforeSmsSent Cloud Function are
+OPTIONAL extras, not required for login; SMS region policy is India-only. The
+module still stays OFF until the private flag SR_FIREBASE_ENABLED=true is added
+to hosting config after the SQL migration. This supersedes the branch-only and
+staging-first restriction below. Module 3 still waits for owner confirmation.
+
 # SMS protection follow-up — 28 October 2026
 
 Module 1+2 now requires SR_FIREBASE_APP_CHECK_SITE_KEY in test config. See
