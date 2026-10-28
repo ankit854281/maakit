@@ -63,6 +63,23 @@ function services() {
         ],
     ],
 
+    'saath' => [
+        'name' => 'साथ सफ़र', 'en' => 'Share a Ride', 'icon' => 'user',
+        'tag'  => t('Same route, shared fare', 'एक रास्ता, बँटा हुआ किराया'),
+        'lead' => t('Going somewhere, or need a seat? Tell us the route and day — we connect you with a verified Sarathi going the same way.',
+                    'कहीं जा रहे हैं या सीट चाहिए? रास्ता और दिन बताइए — उसी रास्ते जा रहे सत्यापित सारथी से जोड़ देंगे।'),
+        'cat'  => 'gaadi',
+        'fields' => [
+            ['k'=>'role','t'=>'select','l'=>['You want to','आप क्या चाहते हैं'],'req'=>1,
+             'o'=>['I need a seat|मुझे सीट चाहिए','I have empty seats|मेरे पास खाली सीट है']],
+            ['k'=>'from','t'=>'text','l'=>['From','कहाँ से'],'req'=>1,'ph'=>t('village / town','गाँव / शहर')],
+            ['k'=>'to','t'=>'text','l'=>['To','कहाँ तक'],'req'=>1,'ph'=>t('e.g. Varanasi, Prayagraj','जैसे: वाराणसी, प्रयागराज')],
+            ['k'=>'on_date','t'=>'date','l'=>['Which day','किस दिन'],'req'=>1,'min'=>$today],
+            ['k'=>'on_time','t'=>'time','l'=>['What time','कितने बजे'],'req'=>0],
+            ['k'=>'qty','t'=>'number','l'=>['How many seats','कितनी सीट'],'req'=>1,'ph'=>'1','min'=>1,'max'=>12],
+        ],
+    ],
+
     'lawn' => [
         'name' => 'लॉन / मैरिज हॉल', 'en' => 'Venue Booking', 'icon' => 'lawn',
         'tag'  => t('Wedding, tilak, birthday, bhandara', 'शादी, तिलक, जन्मदिन, भंडारा'),

@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $mine = trip_mine($pdo, $me['mobile'] ?? null, 3);
 $val = fn($k, $d = '') => h((string)post($k, $d));
 $vehOn = array_filter($V, fn($v) => $v['on'] && $v['key'] !== 'parcel');
-$selV = post('vehicle', array_key_first($vehOn) ?: 'bike');
+// ?v=bike|auto|erick — Smart Sarathi home ke dibbe se wahi gaadi pehle se chuni aaye
+$selV = post('vehicle', isset($vehOn[(string)get('v')]) ? (string)get('v') : (array_key_first($vehOn) ?: 'bike'));
 $csrf = h(csrf());
 
 include __DIR__ . '/inc/head.php';
@@ -171,7 +172,7 @@ include __DIR__ . '/inc/head.php';
   </form>
 
   <?php if ($mine): ?>
-  <section class="rd-card rd-mine">
+  <section class="rd-card rd-mine" id="mine">
     <h2 class="rd-h"><?= t('Your recent bookings', 'आपकी पिछली बुकिंग') ?></h2>
     <?php foreach ($mine as $tr): [$k, $nm] = trip_steps($tr); ?>
       <a href="/trip.php?no=<?= h(urlencode($tr['trip_no'])) ?>&amp;m=<?= h(urlencode($tr['mobile'])) ?>">

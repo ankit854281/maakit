@@ -1,3 +1,12 @@
+# Customer home on Smart Sarathi — owner decision, 29 October 2026
+
+Customer app lives on Smart Sarathi: smartsarathi/ghar.php is the 8-tile home
+(बाइक · ऑटो · ई-रिक्शा first row; सामान · पार्सल · गाड़ी बुकिंग · माल गाड़ी · साथ सफ़र).
+No login needed to browse; login after OTP lands on ghar.php. Tiles reuse the
+working Maakit booking backend (ride.php?v=..., ride.php?t=parcel, sewa.php?s=gaadi|maal|saath,
+bazaar.php) via sr_maakit_url — do not duplicate booking logic in Sarathi.
+Saath Safar is currently a request form (sewa 'saath'); office matches manually.
+
 # Simple rider entry — owner instruction, 29 October 2026
 
 "Smart work, not hard work." Customers: plain mobile OTP login. Service people:

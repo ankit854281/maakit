@@ -11,7 +11,7 @@ try {
     $identity=sr_verify_phone_token((string)post('token'),sr_firebase_config()['projectId'],sr_firebase_certificates(),time());
     sr_identity_signin($pdo,$identity);
     try_ok($pdo,'firebase:'.($_SERVER['REMOTE_ADDR'] ?? ''));
-    echo json_encode(['ok'=>true,'next'=>u('/account.php')]);
+    echo json_encode(['ok'=>true,'next'=>u('/ghar.php')]);
 } catch(Throwable $e) {
     // Do not log tokens, mobile numbers, or provider responses.
     error_log('Smart Sarathi: Firebase login rejected');
