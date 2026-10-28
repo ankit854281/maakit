@@ -116,6 +116,21 @@ $csrf = h(csrf());
   <b><?= h(t('Change', 'बदलिए')) ?> ›</b>
 </a>
 
+<?php
+// Profile poori karne ki yaad + app ka prachar (owner design P1/P3, 29 Oct 2026)
+$myProfile = (sr_firebase_enabled() && function_exists('sr_account') && ($acc0 = sr_account($pdo))) ? sr_profile($pdo, (int)$acc0['id']) : null;
+if ($myProfile && function_exists('sr_profile_docs_missing') && sr_profile_docs_missing($myProfile)): ?>
+<a class="sx-card" href="<?= h(u('/apply.php')) ?>" style="display:block;text-decoration:none">
+  <b><?= h(t('Complete your profile', 'प्रोफ़ाइल पूरी कीजिए')) ?></b>
+  <small style="display:block"><?= h(t('Add your photo and licence — customers trust verified Sarathis more.', 'फ़ोटो और लाइसेंस लगाइए — सत्यापित सारथी पर ग्राहक ज़्यादा भरोसा करते हैं।')) ?></small>
+</a>
+<?php endif;
+$shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with Smart Sarathi. Ask for me: ', 'भदोही में बाइक, ऑटो, ई-रिक्शा, पार्सल और गाड़ी — स्मार्ट सारथी से बुक कीजिए। मेरा नाम लीजिए: ') . $me['name'] . ' — ' . (defined('SR_MAAKIT_URL') ? rtrim(SR_MAAKIT_URL, '/') : 'https://maakit.in') . '/smartsarathi/ghar.php';
+?>
+<a class="sx-card" target="_blank" rel="noopener" href="https://wa.me/?text=<?= h(rawurlencode($shareText)) ?>" style="display:block;text-decoration:none">
+  <b><?= h(t('Share the app on WhatsApp', 'WhatsApp पर ऐप शेयर कीजिए')) ?></b>
+  <small style="display:block"><?= h(t('More customers = more jobs for you.', 'जितने ग्राहक, उतना आपको काम।')) ?></small>
+</a>
 <!-- आज का हिसाब -->
 <div class="sx-stats">
   <a class="sx-stat" href="<?= h(u('/khata.php')) ?>"><small><?= h(t("Today's earnings", 'आज की कमाई')) ?></small><b>₹<?= (int)$k['aaj'] ?></b></a>
