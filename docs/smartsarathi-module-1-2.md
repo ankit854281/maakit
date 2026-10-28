@@ -4,6 +4,11 @@ This module changes Smart Sarathi only. Maps, Firebase live tracking, Razorpay a
 shared trips are deliberately waiting for the owner's module-by-module confirmation.
 A GitHub update does not configure Firebase or activate this module on hosting.
 
+**Current deployment restriction:** work is published only on `module-1-2`.
+Do not follow any production migration/activation steps below yet. Follow
+[the backup-first staging guide](smartsarathi-staging-test.md) now; production
+requires the owner's explicit confirmation after staging tests pass.
+
 ## Stack found in the repository
 
 | Area | Existing implementation |
@@ -243,14 +248,15 @@ permissions require the staging/production checks above.
 
 ## Validation status of this handoff
 
-- All repository PHP files parsed successfully using PHP 8.3 WASM.
-- JavaScript syntax passed Node's syntax check.
-- Signed-token security tests passed in PHP WASM using a newly generated RSA test
-  key supplied by Node (WASM cannot generate the key with its default OpenSSL
-  config). Native CI generates its own ephemeral key.
-- Native PHP/MySQL are unavailable in the workspace. The repository-wide
-  `sab.sh` run could not execute its PHP tests. No full-suite pass is claimed.
-- Database integration tests and the new GitHub workflow are included, but have
-  not run: automatic approval review blocked pushing to main pending explicit
-  user confirmation. Live SMS, reCAPTCHA and photo-upload testing remain pending.
-- Review and run the workflow/staging checklist before production activation.
+- Published to `module-1-2`; main and live hosting were not changed.
+- [Smart Sarathi identity CI](https://github.com/ankit854281/maakit/actions/runs/40613830264)
+  passed: PHP/JavaScript syntax, signed-token tests and native MariaDB identity
+  integration checks, including repeat migrations, review and access gates.
+- The broader [जाँच workflow](https://github.com/ankit854281/maakit/actions/runs/40613830233)
+  failed at the shop categories/prices step. The
+  [PHP API workflow](https://github.com/ankit854281/maakit/actions/runs/40613830077)
+  also failed. Their causes remain unverified; no repository-wide pass or
+  production readiness is claimed. Investigate before merging.
+- Real SMS, reCAPTCHA, mobile UI and cPanel photo-upload testing remain pending.
+- Follow the staging guide, record acceptance results, and obtain the owner's
+  explicit approval before any main merge or production migration.
