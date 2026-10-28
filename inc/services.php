@@ -63,6 +63,44 @@ function services() {
         ],
     ],
 
+    'door' => [
+        'name' => 'दूर से सेवा', 'en' => 'Care from Afar', 'icon' => 'user',
+        'tag'  => t('For your parents at home', 'घर पर माँ-पापा के लिए'),
+        'lead' => t('Living away from home? Book medicine, gas, ration, a hospital visit or bank work for your family. Fill YOUR name and mobile below, and THEIR village and address. They do not need the app — our Sarathi calls them.',
+                    'घर से दूर रहते हैं? माँ-पापा के लिए दवाई, गैस, राशन, अस्पताल या बैंक का काम बुक कीजिए। नीचे नाम-मोबाइल आपका, गाँव और पता उनका भरिए। उन्हें ऐप नहीं चाहिए — सारथी उन्हें फ़ोन करेगा।'),
+        'cat'  => 'gaadi',
+        'fields' => [
+            ['k'=>'kaam','t'=>'select','l'=>['What to do','क्या काम है'],'req'=>1,
+             'o'=>['Medicine|दवाई पहुँचानी है','Gas cylinder|गैस सिलेंडर','Ration / groceries|राशन / किराना','Vegetables & fruit|सब्ज़ी / फल','Take to hospital / doctor|अस्पताल / डॉक्टर ले जाना','Bank / post office work|बैंक / डाकघर का काम','Pay electricity bill|बिजली बिल जमा','Something else|कुछ और']],
+            ['k'=>'for_name','t'=>'text','l'=>['Name of family member','घर वाले का नाम'],'req'=>1,'ph'=>t('e.g. Mother — Shanti Devi','जैसे: माँ — शांति देवी')],
+            ['k'=>'for_mobile','t'=>'text','l'=>['Their mobile','उनका मोबाइल'],'req'=>1,'ph'=>'10 अंक'],
+            ['k'=>'list','t'=>'area','l'=>['Details (medicine names, items, hospital)','पूरी जानकारी (दवाई के नाम, सामान, अस्पताल)'],'req'=>0],
+            ['k'=>'on_date','t'=>'date','l'=>['Which day','किस दिन'],'req'=>1,'min'=>$today],
+            ['k'=>'items','t'=>'multi','l'=>['Please also','यह भी कीजिए'],'req'=>0,
+             'o'=>['Send me a photo on delivery|पहुँचने पर मुझे फ़ोटो भेजिए','Send me the bill photo|बिल की फ़ोटो भेजिए','I will pay online in advance|मैं पहले ऑनलाइन पैसे दूँगा']],
+        ],
+    ],
+
+    'aspatal' => [
+        'name' => 'अस्पताल साथी', 'en' => 'Hospital Companion', 'icon' => 'medicine',
+        'tag'  => t('Vehicle + a helper for the whole visit', 'गाड़ी + पूरे समय साथ रहने वाला साथी'),
+        'lead' => t('From home to the hospital and back. Our companion gets the slip made, stands in queues, collects medicines — and keeps the family updated on WhatsApp.',
+                    'घर से अस्पताल और वापस। हमारा साथी पर्ची कटवाएगा, लाइन में लगेगा, दवाई दिलाएगा — और घर वालों को WhatsApp पर ख़बर देता रहेगा।'),
+        'cat'  => 'gaadi',
+        'fields' => [
+            ['k'=>'patient','t'=>'text','l'=>['Patient name','मरीज़ का नाम'],'req'=>1],
+            ['k'=>'hospital','t'=>'select','l'=>['Which hospital','कौन सा अस्पताल'],'req'=>1,
+             'o'=>['BHU (Sir Sunderlal), Varanasi|BHU (सर सुंदरलाल), वाराणसी','Other hospital in Varanasi|वाराणसी का कोई और अस्पताल','District hospital, Bhadohi / Gyanpur|ज़िला अस्पताल, भदोही / ज्ञानपुर','Prayagraj|प्रयागराज','Private doctor nearby|पास का प्राइवेट डॉक्टर','Tell on call|फ़ोन पर बताएँगे']],
+            ['k'=>'vehicle','t'=>'select','l'=>['Vehicle','गाड़ी'],'req'=>1,
+             'o'=>['Car / Bolero|कार / बोलेरो','Auto|ऑटो','Ambulance|एम्बुलेंस']],
+            ['k'=>'on_date','t'=>'date','l'=>['Which day','किस दिन'],'req'=>1,'min'=>$today],
+            ['k'=>'on_time','t'=>'time','l'=>['Leave home at','घर से कितने बजे'],'req'=>1],
+            ['k'=>'qty','t'=>'number','l'=>['People going with patient','मरीज़ के साथ कितने लोग'],'req'=>0,'ph'=>'1','min'=>0,'max'=>6],
+            ['k'=>'items','t'=>'multi','l'=>['Also needed','और क्या चाहिए'],'req'=>0,
+             'o'=>['Helper to stay all day|पूरे दिन साथी साथ रहे','WhatsApp updates to family|घर वालों को WhatsApp पर ख़बर','Wheelchair needed|व्हीलचेयर चाहिए','Return trip same day|उसी दिन वापसी']],
+        ],
+    ],
+
     'saath' => [
         'name' => 'साथ सफ़र', 'en' => 'Share a Ride', 'icon' => 'user',
         'tag'  => t('Same route, shared fare', 'एक रास्ता, बँटा हुआ किराया'),

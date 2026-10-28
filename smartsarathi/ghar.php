@@ -66,6 +66,10 @@ a{color:inherit;text-decoration:none}
 .gh-more{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .gh-more a{display:flex;flex-direction:column;align-items:center;gap:6px;font:600 12.5px/1.25 'Noto Sans Devanagari',sans-serif;text-align:center}
 .gh-more .ic{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;border:1px solid transparent}
+.gh-care{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gh-care a{background:#fff;border:1px solid var(--line);border-top:4px solid var(--mint);border-radius:16px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;min-height:110px}
+.gh-care b{font:800 16px 'Noto Sans Devanagari',sans-serif}
+.gh-care small{font:500 12.5px/1.4 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .gh-sos{margin:20px 16px 0;background:#fff;border:1px solid #F3C9C9;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;color:var(--red);font:700 14px 'Noto Sans Devanagari',sans-serif;min-height:56px}
 .gh-sos span.c{width:36px;height:36px;border-radius:50%;background:#FBEBEB;display:grid;place-items:center;flex:none}
 .gh-join{margin:12px 16px 0;background:var(--navy);color:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:600 14px/1.4 'Noto Sans Devanagari',sans-serif}
@@ -111,6 +115,14 @@ a{color:inherit;text-decoration:none}
       <?php foreach ($more as [$hi, $en, $href, $bg, $svg]): ?>
       <a href="<?= h($href) ?>"><span class="ic" style="background:<?= h($bg) ?>"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $svg ?></svg></span><?= h(t($en, $hi)) ?></a>
       <?php endforeach; ?>
+    </div>
+  </section>
+
+  <section class="gh-sec" aria-labelledby="h-care">
+    <h2 id="h-care"><?= h(t('Special for families', 'परिवार के लिए ख़ास')) ?></h2>
+    <div class="gh-care">
+      <a href="<?= h($M('/sewa.php?s=door')) ?>"><b><?= h(t('Care from afar', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Book medicine, gas, ration for your parents', 'घर से दूर हैं? माँ-पापा के लिए दवाई, गैस, राशन भेजिए')) ?></small></a>
+      <a href="<?= h($M('/sewa.php?s=aspatal')) ?>"><b><?= h(t('Hospital companion', 'अस्पताल साथी')) ?></b><small><?= h(t('Vehicle + helper for the whole hospital visit', 'गाड़ी + पूरे समय साथ रहने वाला साथी')) ?></small></a>
     </div>
   </section>
 
