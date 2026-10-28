@@ -54,6 +54,16 @@ function sr_assets() {
     ?><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= h(u('/assets/sr2.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/sr2.css') ?>"><?php
+    sr_app_head();
+}
+/** Play Store / install: manifest + offline service worker (only on maakit.in/smartsarathi/) */
+function sr_app_head() {
+    if (!defined('SR_BASE') || SR_BASE !== '/smartsarathi') return;
+    ?>
+<link rel="manifest" href="/smartsarathi/manifest.json">
+<link rel="apple-touch-icon" href="/smartsarathi/assets/icon-192.png">
+<script>if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('/smartsarathi/sw.js',{scope:'/smartsarathi/'}).catch(function(){});});}</script>
+<?php
 }
 
 function sr_head($me, $tab, $title, $ready = null, $count = []) {

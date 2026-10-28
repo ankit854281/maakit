@@ -39,6 +39,7 @@ $more = [
 <meta name="description" content="<?= h(t('Bike, auto, e-rickshaw, parcel, shopping, vehicle booking, goods transport and shared rides in Bhadohi.', 'भदोही में बाइक, ऑटो, ई-रिक्शा, पार्सल, सामान, गाड़ी बुकिंग, माल गाड़ी और साथ सफ़र।')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<?php if (!function_exists('sr_app_head')) require_once __DIR__ . '/inc/ui.php'; sr_app_head(); ?>
 <style>
 :root{--navy:#0B1F3A;--mint:#1FCB97;--bg:#F4F6F9;--line:#E3E8EF;--muted:#4B5A6B;--red:#B42318}
 *{box-sizing:border-box}
@@ -142,5 +143,6 @@ a{color:inherit;text-decoration:none}
   <a href="<?= h($M('/ride.php#mine')) ?>"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><?= h(t('My bookings', 'मेरी बुकिंग')) ?></a>
   <a href="<?= h(u($acc ? '/account.php' : '/')) ?>"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><?= h($acc ? t('Account', 'खाता') : t('Login', 'लॉगिन')) ?></a>
 </div></nav>
+<p style="text-align:center;margin:0 0 90px;font:500 12px sans-serif"><a href="<?= h(u('/privacy.php')) ?>" style="color:#4B5A6B"><?= h(t('Privacy policy', 'प्राइवेसी पॉलिसी')) ?></a></p>
 </body>
 </html>

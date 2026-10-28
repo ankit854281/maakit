@@ -1,0 +1,20 @@
+{
+  "id": "/smartsarathi/ghar.php",
+  "name": "Smart Sarathi — सवारी, पार्सल, गाड़ी",
+  "short_name": "Sarathi",
+  "description": "भदोही में बाइक, ऑटो, ई-रिक्शा, पार्सल, सामान, गाड़ी बुकिंग, माल गाड़ी, साथ सफ़र, दूर से सेवा और अस्पताल साथी।",
+  "lang": "hi",
+  "dir": "ltr",
+  "start_url": "/smartsarathi/ghar.php?src=app",
+  "scope": "/smartsarathi/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1F3A",
+  "theme_color": "#0B1F3A",
+  "categories": ["travel", "lifestyle", "shopping"],
+  "icons": [
+    {"src": "/smartsarathi/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/smartsarathi/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/smartsarathi/assets/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
