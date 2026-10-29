@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
 }
 $p=sr_profile($pdo,(int)$a['id']);
-sr_public_head('account',t('My account','मेरा खाता'),t('SMART SARATHI','स्मार्ट सारथी'),t('Your account.','आपका खाता।'),t('Your choice.','आपकी पसंद।'),t('Use the same mobile number for Customer and Rider mode.','ग्राहक और राइडर मोड के लिए एक ही मोबाइल नंबर।'));
+sr_customer_head(t('My account','मेरा खाता'),t('One mobile number for Customer and Rider mode.','ग्राहक और राइडर मोड के लिए एक ही मोबाइल नंबर।'));
 ?>
 <section class="sx-card sx-form">
 <h2>+91 <?= h($a['mobile']) ?></h2>
@@ -35,4 +35,4 @@ sr_public_head('account',t('My account','मेरा खाता'),t('SMART SA
 <?php if(sr_identity_admin($pdo)): ?><p><a class="sx-pill" href="<?= h(u('/admin/')) ?>"><?= h(t('Admin panel','एडमिन पैनल')) ?></a> <a class="sx-pill" href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Review riders','राइडर मंज़ूरी')) ?></a></p><?php endif; ?>
 <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><button name="do" value="logout" class="sx-pill"><?= h(t('Sign out','लॉगआउट')) ?></button></form>
 </section>
-<?php sr_public_foot(); ?>
+<?php sr_customer_foot(); ?>

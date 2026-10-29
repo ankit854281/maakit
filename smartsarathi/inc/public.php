@@ -140,3 +140,24 @@ function sr_job_steps($status) {
         t('Booked', 'बुक हुआ'), t('Rider assigned', 'राइडर मिला'), t('Picked up', 'उठा लिया'), t('Delivered', 'पहुँच गया'),
     ]];
 }
+
+/** Compact customer shell shared by account, application and profile review. */
+function sr_customer_head(string $title, string $lead): void {
+    require_once __DIR__.'/ui.php';
+    ?><!doctype html><html lang="<?= h(sr_lang()) ?>"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B1F3A"><meta name="robots" content="noindex,nofollow">
+<title><?= h($title) ?> — <?= h(t('Smart Sarathi','स्मार्ट सारथी')) ?></title>
+<?php sr_assets(); ?></head><body class="sx sx-customer">
+<header class="sc-top"><div class="sc-row"><a class="sx-logo light" href="<?= h(u('/ghar.php')) ?>"><span class="sx-mark"><?= sr_icon('bolt',20) ?></span><span>Smart Sarathi</span></a><?php sr_language_switch(true); ?></div>
+<h1><?= h($title) ?></h1><p><?= h($lead) ?></p></header><main class="sc-main">
+<?php
+}
+function sr_customer_foot(): void {
+    ?></main><footer class="sc-help"><a class="sx-pill" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Need help? Call office','मदद चाहिए? दफ़्तर को फ़ोन')) ?></a></footer>
+<nav class="sc-nav" aria-label="<?= h(t('Main navigation','मुख्य मेन्यू')) ?>">
+<a href="<?= h(u('/ghar.php')) ?>"><?= sr_icon('box') ?><span><?= h(t('Home','होम')) ?></span></a>
+<a href="<?= h(sr_maakit_url('/ride.php#mine')) ?>"><?= sr_icon('clock') ?><span><?= h(t('My bookings','मेरी बुकिंग')) ?></span></a>
+<a href="<?= h(u('/account.php')) ?>" aria-current="page"><?= sr_icon('user') ?><span><?= h(t('Account','खाता')) ?></span></a>
+</nav></body></html><?php
+}

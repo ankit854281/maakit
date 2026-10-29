@@ -34,6 +34,7 @@ jobs:
         run: |
           php tests/sarathi-firebase.php
           php tests/sarathi-identity-flow.php
+          php tests/sarathi-rider-flow.php
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -43,3 +44,21 @@ jobs:
           npm ci --ignore-scripts
           npm test
           node -e "require('./index.js')"
+
+      - name: Mobile pages at 360px and 390px
+        env:
+          SR_TEST_DB_HOST: 127.0.0.1
+          SR_TEST_DB_PASSWORD: identity-ci
+        run: |
+          npm install --prefix /tmp/sarathi-browser --no-audit --no-fund playwright@1.51.1
+          /tmp/sarathi-browser/node_modules/.bin/playwright install --with-deps chromium
+          php tests/sarathi-mobile-fixture.php
+          php -S 127.0.0.1:8098 -t "$(cat /tmp/sarathi-mobile-root)" >/tmp/sarathi-mobile-server.log 2>&1 &
+          NODE_PATH=/tmp/sarathi-browser/node_modules node tests/sarathi-mobile.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sarathi-mobile-results
+          path: |
+            /tmp/sarathi-mobile-shots
+            /tmp/sarathi-mobile-server.log

@@ -11,12 +11,12 @@ if($_SERVER['REQUEST_METHOD']==='POST') {
         if(post('decision')==='approved' && post('checked')!=='1')throw new RuntimeException('Check documents');
         sr_profile_review($pdo,(int)post('id'),(int)post('revision'),(string)post('decision'),(string)post('note'));
         redirect('/admin/profiles.php');
-    }catch(Throwable $e){$err=t('Review not saved. Check the documents and reason, then reload. A disabled rider must first be resolved in the admin panel.','मंज़ूरी सेव नहीं हुई। काग़ज़ और कारण जाँचकर पेज दोबारा खोलिए। बंद राइडर खाते को पहले एडमिन पैनल में जाँचिए।');}
+    }catch(Throwable $e){sr_identity_log('profile_review',$e);$err=t('Review not saved. Check the documents and reason, then reload. A disabled rider must first be resolved in the admin panel.','मंज़ूरी सेव नहीं हुई। काग़ज़ और कारण जाँचकर पेज दोबारा खोलिए। बंद राइडर खाते को पहले एडमिन पैनल में जाँचिए।');}
 }
 $filter=in_array(get('status'),['pending','approved','rejected','suspended'],true)?get('status'):'pending';
 $page=max(1,(int)get('page',1));$offset=($page-1)*20;
 $q=$pdo->prepare('SELECT p.*,a.mobile FROM sr_rider_profiles p JOIN sr_accounts a ON a.id=p.account_id WHERE p.status=? ORDER BY p.updated_at DESC,p.account_id DESC LIMIT 21 OFFSET '.(int)$offset);$q->execute([$filter]);$rows=$q->fetchAll();$more=count($rows)>20;$rows=array_slice($rows,0,20);
-sr_public_head('account',t('Review riders','राइडर मंज़ूरी'),t('ADMIN','एडमिन'),t('Check the profile.','प्रोफ़ाइल जाँचिए।'),t('Approve the rider.','राइडर मंज़ूर कीजिए।'),t('Approve people you know. Photo and licence can come later.','जिन्हें जानते हैं उन्हें मंज़ूर कीजिए। फ़ोटो और लाइसेंस बाद में भी आ सकते हैं।'));
+sr_customer_head(t('Review riders','राइडर मंज़ूरी'),t('Approve people you know. Photos can come later.','जिन्हें जानते हैं उन्हें मंज़ूर कीजिए। फ़ोटो बाद में आ सकती हैं।'));
 ?>
 <section class="sx-card sx-form">
 <a href="<?= h(u('/admin/')) ?>"><?= h(t('Admin panel','एडमिन पैनल')) ?></a>
@@ -40,4 +40,4 @@ sr_public_head('account',t('Review riders','राइडर मंज़ूर�
 </article><?php endforeach; ?>
 <?php if($page>1): ?><a class="sx-pill" href="?status=<?= h($filter) ?>&page=<?= $page-1 ?>"><?= h(t('Previous','पिछला')) ?></a><?php endif; ?>
 <?php if($more): ?><a class="sx-pill" href="?status=<?= h($filter) ?>&page=<?= $page+1 ?>"><?= h(t('Next','अगला')) ?></a><?php endif; ?>
-</section><?php sr_public_foot(); ?>
+</section><?php sr_customer_foot(); ?>

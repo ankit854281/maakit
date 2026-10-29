@@ -54,6 +54,7 @@ function sr_assets() {
     ?><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= h(u('/assets/sr2.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/sr2.css') ?>"><?php
+    sr_mobile_assets();
     sr_app_head();
 }
 /** Play Store / install: manifest + offline service worker (only on maakit.in/smartsarathi/) */
@@ -200,4 +201,9 @@ function sr_foot($tab, $count = []) {
 </body>
 </html>
 <?php
+}
+
+/** Shared sizing fixes, also loaded after the legacy admin stylesheet. */
+function sr_mobile_assets(): void {
+    ?><link rel="stylesheet" href="<?= h(u('/assets/mobile.css')) ?>?v=<?= (int)filemtime(__DIR__.'/../assets/mobile.css') ?>"><?php
 }

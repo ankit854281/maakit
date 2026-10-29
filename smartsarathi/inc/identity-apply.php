@@ -14,6 +14,7 @@ function sr_apply_optional_photo(string $field): ?string {
 }
 function sr_apply_error(string $m): string {
     $which=str_starts_with($m,'licence: ') ? t('Driving licence photo','ड्राइविंग लाइसेंस फ़ोटो') : t('Your photo','आपकी फ़ोटो');
+    if($m==='Invalid submission') return t('Page expired. Reload and try again.','पेज पुराना हो गया। दोबारा खोलकर कोशिश कीजिए।');
     if($m==='Invalid name') return t('Enter your full name (at least 2 letters).','पूरा नाम लिखिए (कम से कम 2 अक्षर)।');
     if($m==='Invalid vehicle number') return t('Vehicle number: use only letters and digits, e.g. UP66AB1234.','गाड़ी नंबर में सिर्फ़ अक्षर और अंक लिखिए, जैसे UP66AB1234।');
     if(str_contains($m,'Private directory') || str_contains($m,'outside web root') || str_contains($m,'storage failed')) return t('Photo storage is not set up on the server. Please tell the office.','सर्वर पर फ़ोटो रखने की जगह तैयार नहीं है। दफ़्तर को बताइए।');
@@ -46,11 +47,12 @@ if($_SERVER['REQUEST_METHOD']==='POST') {
         }
         try_ok($pdo,'profile:'.$a['id']); redirect('/apply.php?ok=1');
     } catch(Throwable $e) {
+        sr_identity_log('profile_save',$e);
         try { foreach($saved as $file) @unlink(sr_identity_dir().'/'.$file); } catch(Throwable $ignored) {}
         $err=sr_apply_error($e->getMessage());
     }
 }
-sr_public_head('apply',t('Rider profile','राइडर प्रोफ़ाइल'),t('ONE ACCOUNT','एक खाता'),t('Become a rider.','राइडर बनिए।'),t('Rides and parcels.','सवारी और पार्सल।'),t('Just your name and vehicle. Photo and licence can be added later.','बस नाम और गाड़ी। फ़ोटो और लाइसेंस बाद में भी लगा सकते हैं।'));
+sr_customer_head(t('Rider profile','राइडर प्रोफ़ाइल'),t('Just your name and vehicle. Photos can come later.','बस नाम और गाड़ी। फ़ोटो बाद में भी लगा सकते हैं।'));
 $docsForm=function() { ?>
 <form method="post" enctype="multipart/form-data">
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="docs">
@@ -94,4 +96,4 @@ $docsForm=function() { ?>
 </form>
 <?php endif; ?>
 </section>
-<?php sr_public_foot(); ?>
+<?php sr_customer_foot(); ?>

@@ -20,7 +20,7 @@ foreach (['mbstring' => 'mb_substr', 'pdo_mysql' => 'PDO'] as $naam => $jaanch) 
     if (!function_exists($jaanch) && !class_exists($jaanch)) {
         http_response_code(503);
         header('Content-Type: text/html; charset=utf-8');
-        exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
            . '<div style="font-family:system-ui,sans-serif;max-width:470px;margin:60px auto;padding:0 18px;line-height:1.7">'
            . '<h2 style="color:#7A1F1F">PHP में एक हिस्सा कम है</h2>'
            . '<p>इस server के PHP में <b>' . htmlspecialchars($naam, ENT_QUOTES, 'UTF-8')
@@ -36,7 +36,7 @@ $sr_cfg = __DIR__ . '/config.php';
 if (!is_file($sr_cfg)) {
     http_response_code(503);
     header('Content-Type: text/html; charset=utf-8');
-    exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
        . '<div style="font-family:system-ui,sans-serif;max-width:460px;margin:60px auto;padding:0 18px;line-height:1.7;color:#F3EDE2;background:#1C1A17">'
        . '<h2 style="color:#E0A526">सारथी — तैयारी बाकी है</h2>'
        . '<p>यहाँ <b>inc/config.php</b> अभी नहीं बनी है।</p>'
@@ -65,7 +65,7 @@ try {
     http_response_code(503);
     header('Retry-After: 120');
     header('Content-Type: text/html; charset=utf-8');
-    exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
        . '<div style="font-family:system-ui,sans-serif;max-width:440px;margin:60px auto;padding:0 18px;line-height:1.7">'
        . '<h2 style="color:#7A1F1F">अभी नहीं खुल पा रहा</h2>'
        . '<p>थोड़ी देर में दोबारा कोशिश कीजिए। जल्दी हो तो फ़ोन कर दीजिए — '

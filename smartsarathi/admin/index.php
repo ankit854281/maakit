@@ -57,7 +57,7 @@ if (!sr_firebase_enabled() && $_SERVER['REQUEST_METHOD'] === 'POST' && (post('do
 
 if (empty($_SESSION['sr_admin'])) {
     ?><!doctype html><html lang="hi"><head><meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="robots" content="noindex,nofollow"><title>सारथी — मालिक</title>
     <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>"></head>
     <body class="sr-login"><div class="sr-wrap">
@@ -222,7 +222,7 @@ $aaj = $pdo->query("SELECT
 $from = date('Y-m-01'); $to = date('Y-m-d');
 ?><!doctype html>
 <html lang="hi"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><title>सारथी — मालिक</title>
 <link rel="stylesheet" href="<?= h(u('/assets/app.css')) ?>?v=<?= (int)@filemtime(__DIR__.'/../assets/app.css') ?>">
 <style>
@@ -244,8 +244,8 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
   .ad .t td:last-child{text-align:right;font-weight:700}
   .ad .hd{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
   .ad .mut{color:var(--mut);font-size:14px}
-</style></head>
-<body style="background:var(--cream)">
+</style><?php require_once __DIR__.'/../inc/ui.php'; sr_mobile_assets(); ?></head>
+<body class="sr-admin" style="background:var(--cream)">
 <?php if (sr_firebase_enabled()): ?><p><a href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Rider profile approvals', 'राइडर प्रोफ़ाइल मंज़ूरी')) ?></a> · <a href="<?= h(u('/account.php')) ?>"><?= h(t('My account', 'मेरा खाता')) ?></a></p><?php endif; ?>
 
 <header class="sr-top">

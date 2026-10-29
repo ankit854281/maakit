@@ -539,7 +539,7 @@ function sr_vtypes() {
 /** Arzi ke likhe hue gaadi naam se vtype */
 function sr_vtype_guess($label) {
     $l = mb_strtolower((string)$label);
-    foreach (['ई-रिक्शा' => 'erick', 'e-rick' => 'erick', 'ऑटो' => 'auto', 'auto' => 'auto', 'बिजली' => 'ev', 'electric' => 'ev', 'साइकिल' => 'cycle', 'bicycle' => 'cycle', 'cycle' => 'cycle', 'बाइक' => 'bike', 'bike' => 'bike', 'scoot' => 'bike', 'motor' => 'bike', 'नहीं' => 'none', 'no vehicle' => 'none'] as $k => $v) {
+    foreach (['motorcycle' => 'bike', 'motorbike' => 'bike', 'ई-रिक्शा' => 'erick', 'e-rick' => 'erick', 'ऑटो' => 'auto', 'auto' => 'auto', 'बिजली' => 'ev', 'electric' => 'ev', 'साइकिल' => 'cycle', 'bicycle' => 'cycle', 'cycle' => 'cycle', 'बाइक' => 'bike', 'bike' => 'bike', 'scoot' => 'bike', 'motor' => 'bike', 'नहीं' => 'none', 'no vehicle' => 'none'] as $k => $v) {
         if (mb_strpos($l, mb_strtolower($k)) !== false) return $v;
     }
     return null;
