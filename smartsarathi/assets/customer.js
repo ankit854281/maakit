@@ -111,7 +111,8 @@
   $$('.ca-place input').forEach(function (inp) {
     var f = inp.closest('.ca-place').getAttribute('data-field');
     inp.addEventListener('focus', function () { setField(f, true); });
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search(f); } });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(sTimer); search(f); } });
+    inp.addEventListener('input', function () { delete typed[f]; clearTimeout(sTimer); sTimer = setTimeout(function () { search(f, true); }, 350); });
   });
   $('[data-search]').addEventListener('click', function () { search('drop'); });
   $('[data-gps]').addEventListener('click', function () { gps(false); });
@@ -122,24 +123,58 @@
       setPlace('pick', p.coords.latitude, p.coords.longitude, L_.myLoc);
     }, function () { if (!quiet) $('#hint').textContent = L_.gpsFail; }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
   }
-  function search(f) {
+  // Jagah khoj: apni Bhadohi list + Google/OSM (server se). Likhte-likhte sujhav; kuch na mile
+  // tab bhi "naam rakhkar naqshe par pin" — grahak kabhi atakta nahi.
+  var sTimer = null, sSeq = 0, sTok = newTok(), typed = {};
+  function newTok() { return (Date.now().toString(36) + Math.random().toString(36).slice(2, 12)).replace(/[^a-z0-9]/g, ''); }
+  function near() {
+    var c = (st.pick && st.pick.geo) || (st.drop && st.drop.geo);
+    if (c) return c.split(',');
+    if (map) { var m = map.getCenter(); return [m.lat.toFixed(5), m.lng.toFixed(5)]; }
+    return CENTER;
+  }
+  function search(f, quick) {
     var q = $('#' + f + '-q').value.trim();
-    if (q.length < 2) return;
+    var ul = $('#results');
+    if (q.length < 2) { ul.hidden = true; return; }
     setField(f);
-    var ul = $('#results'); ul.hidden = false; ul.innerHTML = '<li><button type="button" disabled>' + esc(L_.searching) + '</button></li>';
-    var url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=in&accept-language=' + C.lang +
-      '&viewbox=82.2,25.1,83.2,25.6&q=' + encodeURIComponent(q);
-    fetch(url).then(function (r) { return r.json(); }).then(function (rows) {
-      if (!rows || !rows.length) { ul.innerHTML = '<li><button type="button" disabled>' + esc(L_.noResult) + '</button></li>'; return; }
-      ul.innerHTML = rows.map(function (r, i) { return '<li><button type="button" data-i="' + i + '">' + esc(r.display_name) + '</button></li>'; }).join('');
+    var seq = ++sSeq, n = near();
+    if (!quick) { ul.hidden = false; ul.innerHTML = '<li><button type="button" disabled>' + esc(L_.searching) + '</button></li>'; }
+    api('places', null, 'q=' + encodeURIComponent(q) + '&lat=' + n[0] + '&lng=' + n[1] + '&tok=' + sTok).then(function (j) {
+      if (seq !== sSeq) return;                       // purana jawab — naya likha ja chuka
+      var rows = (j && j.ok && j.list) || [];
+      ul.hidden = false;
+      ul.innerHTML = rows.map(function (r, i) {
+        return '<li><button type="button" class="ca-res" data-i="' + i + '"><span class="ic" aria-hidden="true">' + (r.src === 'l' ? '★' : '📍') + '</span>' +
+          '<span><b>' + esc(r.main) + '</b>' + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span></button></li>';
+      }).join('') +
+        '<li><button type="button" class="ca-res pin" data-pin="1"><span class="ic" aria-hidden="true">📌</span><span><b>' +
+        esc((rows.length ? L_.notHere : L_.noResultPin)) + '</b><small>' + esc(L_.pinIt.replace('%s', q)) + '</small></span></button></li>';
       $$('button[data-i]', ul).forEach(function (b) { b.addEventListener('click', function () {
-        var r = rows[+b.getAttribute('data-i')];
-        ul.hidden = true;
-        setPlace(f, +r.lat, +r.lon, r.display_name.split(',').slice(0, 3).join(','));
+        var r = rows[+b.getAttribute('data-i')]; ul.hidden = true;
+        if (r.src === 'g') {
+          $('#hint').textContent = L_.searching;
+          api('place', null, 'id=' + encodeURIComponent(r.id) + '&tok=' + sTok + '&main=' + encodeURIComponent(r.main)).then(function (d) {
+            sTok = newTok();
+            if (d && d.ok) setPlace(f, d.lat, d.lng, r.main); else { $('#hint').textContent = (d && d.error) || L_.noResult; pinFor(f, q); }
+          });
+        } else {
+          if (r.src === 'l') api('place', null, 'lid=' + r.id);
+          setPlace(f, r.lat, r.lng, r.main);
+        }
       }); });
-    }).catch(function () { ul.innerHTML = '<li><button type="button" disabled>' + esc(L_.noResult) + '</button></li>'; });
+      $('button[data-pin]', ul).addEventListener('click', function () { ul.hidden = true; pinFor(f, q); });
+    }).catch(function () { if (seq === sSeq) { ul.hidden = false; ul.innerHTML = '<li><button type="button" class="ca-res pin" data-pin="1"><span class="ic">📌</span><span><b>' + esc(L_.noResultPin) + '</b></span></button></li>'; $('button[data-pin]', ul).addEventListener('click', function () { ul.hidden = true; pinFor(f, q); }); } });
+  }
+  // Naam grahak ka hi rahe, jagah pin se: "राम जानकी मंदिर" likha → naqsha khiskao → wahi naam
+  function pinFor(f, q) {
+    typed[f] = q; setField(f, true);
+    $('#hint').textContent = L_.pinNow;
+    try { $('#' + f + '-q').blur(); } catch (e) {}
   }
   function setPlace(f, lat, lng, label, keepView) {
+    if (!label && typed[f]) { label = typed[f]; }
+    if (label && typed[f] && label !== typed[f]) delete typed[f];
     var geo = lat.toFixed(6) + ',' + lng.toFixed(6);
     st[f] = { geo: geo, addr: label || geo };
     var inp = $('#' + f + '-q'); inp.value = label || '…';

@@ -24,7 +24,10 @@ $cfg = [
     'L' => [
         'where' => t('Where to?', 'कहाँ जाना है?'), 'pickup' => t('Pickup', 'पिकअप'), 'drop' => t('Drop', 'ड्रॉप'),
         'myLoc' => t('My location', 'मेरी जगह'), 'search' => t('Search', 'खोजिए'), 'tapMap' => t('Or tap on the map', 'या नक्शे पर दबाइए'),
-        'searching' => t('Searching…', 'खोज रहे हैं…'), 'noResult' => t('Not found. Tap on the map instead.', 'नहीं मिला। नक्शे पर दबाइए।'),
+        'searching' => t('Searching…', 'खोज रहे हैं…'),
+        'notHere' => t('Not in the list?', 'सूची में नहीं है?'), 'noResultPin' => t('Not found — set it on the map', 'नहीं मिला — नक़्शे पर पिन लगाइए'),
+        'pinIt' => t('Keep the name “%s” and move the map to the exact spot', '“%s” नाम रखिए और नक़्शा खिसकाकर सही जगह पर पिन लगाइए'),
+        'pinNow' => t('Move the map so the pin is on the exact spot', 'नक़्शा खिसकाइए ताकि पिन ठीक जगह पर आ जाए'), 'noResult' => t('Not found. Tap on the map instead.', 'नहीं मिला। नक्शे पर दबाइए।'),
         'gpsFail' => t('Could not get your location. Allow location or tap on the map.', 'आपकी जगह नहीं मिली। लोकेशन चालू कीजिए या नक्शे पर दबाइए।'),
         'choose' => t('Choose a ride', 'गाड़ी चुनिए'), 'min' => t('min', 'मिनट'), 'km' => t('km', 'किमी'),
         'now' => t('Now', 'अभी'), 'later' => t('Later', 'बाद में'), 'name' => t('Your name', 'आपका नाम'),

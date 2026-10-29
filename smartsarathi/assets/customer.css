@@ -214,3 +214,10 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ca-clues small{width:100%;font:600 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-clue{border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 12px;min-height:36px;font:600 13px 'Noto Sans Devanagari',sans-serif}
 .ca-wa{display:inline-flex;align-items:center;min-height:44px;margin-top:6px;padding:0 14px;border-radius:12px;background:#E7F8EF;color:#0A6B45;font:700 14px 'Noto Sans Devanagari',sans-serif}
+/* v3.3 jagah khoj: naam + pata, aur hamesha "नक़्शे पर पिन" */
+.ca-results{max-height:min(52vh,420px);overflow:auto;box-shadow:0 10px 24px rgba(11,31,58,.12);background:#fff}
+.ca-results .ca-res{display:flex;align-items:center;gap:12px}
+.ca-res .ic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#F1F4F8;font-size:15px;color:#B8860B}
+.ca-res b{display:block;font:700 15px/1.3 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:var(--navy)}
+.ca-res small{display:block;margin-top:2px;font:500 12.5px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-res.pin{background:#FFF8E1 !important}.ca-res.pin .ic{background:#FFC83D}

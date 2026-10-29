@@ -1,3 +1,13 @@
+# Place search — owner: "log jagah nahi dhoondh paayenge", 29 October 2026
+
+Search goes through the server (book-api.php a=places / a=place, inc/places.php), never directly
+from the browser: 1) sr_places — Bhadohi places the office adds at admin/places.php (stand there,
+tap "मेरी अभी की जगह", or paste a Google Maps link) plus public places customers picked from Google
+(auto-learned, src=google; NEVER learn raw customer pins/home addresses); 2) Google Places
+Autocomplete (New) if SR_GOOGLE_PLACES_KEY is in config.php (India: 70,000 free/month, session
+tokens, Essentials field mask only); 3) else Photon → Nominatim. Everything cached in sr_geo_cache.
+The list always ends with "📌 keep this name and set the pin on the map", so nobody gets stuck.
+
 # Step 2: offer / accept — 29 October 2026
 
 job_auto_give() no longer assigns. It OFFERS the job (jobs.offer_rider, offer_until = now + 20 s)

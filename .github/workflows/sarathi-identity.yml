@@ -39,6 +39,7 @@ jobs:
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-booking.php
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-docs.php
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-e2e.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-places.php
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

@@ -253,7 +253,7 @@ $from = date('Y-m-01'); $to = date('Y-m-d');
   .ad .mut{color:var(--mut);font-size:14px}
 </style><?php require_once __DIR__.'/../inc/ui.php'; sr_mobile_assets(); ?></head>
 <body class="sr-admin" style="background:var(--cream)">
-<?php if (sr_firebase_enabled()): ?><p><a href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Rider profile approvals', 'राइडर प्रोफ़ाइल मंज़ूरी')) ?></a> · <a href="<?= h(u('/account.php')) ?>"><?= h(t('My account', 'मेरा खाता')) ?></a></p><?php endif; ?>
+<?php if (sr_firebase_enabled()): ?><p><a href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Rider profile approvals', 'राइडर प्रोफ़ाइल मंज़ूरी')) ?></a> · <a href="<?= h(u('/admin/places.php')) ?>"><?= h(t('Bhadohi places (search)', 'भदोही की जगहें (खोज)')) ?></a> · <a href="<?= h(u('/account.php')) ?>"><?= h(t('My account', 'मेरा खाता')) ?></a></p><?php endif; ?>
 
 <header class="sr-top">
   <div class="sr-top-t"><b>सारथी — मालिक</b>

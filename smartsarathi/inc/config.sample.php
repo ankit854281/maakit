@@ -72,3 +72,9 @@ define('SR_PHONE_SHOW', '84293 93903');
 // UPI se paisa lene ka QR (rider ke kaam par dikhega). Apni UPI ID likhiye.
 // define('SR_UPI_ID', 'yourname@upi');
 // define('SR_UPI_NAME', 'Smart Sarathi');
+
+// ---------- जगह खोज (Google Places) — ज़रूरी नहीं ----------
+// बिना key के भी खोज चलती है (OpenStreetMap)। Key लगाने पर दुकानें, मंदिर, स्कूल, मोहल्ले बहुत बेहतर मिलते हैं।
+// Google Cloud (Firebase वाला project) → "Places API (New)" चालू करें → API key बनाएँ →
+// key को सिर्फ़ "Places API (New)" तक सीमित करें। India: 70,000 खोज/महीना मुफ़्त।
+// define('SR_GOOGLE_PLACES_KEY', 'AIza...');
