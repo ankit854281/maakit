@@ -18,7 +18,7 @@ if (!headers_sent() && ($_COOKIE['sr_app'] ?? '') !== '1') {
 $acc = sr_account($pdo);
 $svcs = sr_services();
 $cfg = [
-    'api' => u('/book-api.php'), 'login' => u('/'), 'account' => u('/account.php'), 'csrf' => csrf(),
+    'api' => u('/book-api.php'), 'login' => u('/?intent=customer'), 'account' => u('/account.php'), 'csrf' => csrf(),
     'loggedIn' => (bool)$acc, 'mobile' => $acc['mobile'] ?? null, 'phone' => SR_PHONE, 'lang' => sr_lang(),
     'services' => array_map(fn($s) => ['name' => $s['name'], 'tag' => $s['tag'], 'kind' => $s['kind']], $svcs),
     'L' => [
@@ -90,7 +90,7 @@ $grid = [
   <div class="ob-copy">
     <h1><?= h(t('Drive with Sarathi. Earn every day.', 'सारथी बनिए, रोज़ कमाइए।')) ?></h1>
     <p><?= h(t('Your own bike, auto, e-rickshaw, Bolero or loader. Work when you want.', 'अपनी बाइक, ऑटो, ई-रिक्शा, बोलेरो या लोडर से। जब चाहें तब काम।')) ?></p>
-    <a class="ca-cta" href="<?= h(u('/?intent=partner')) ?>" data-seen><?= h(t('Start earning', 'कमाना शुरू करें')) ?></a>
+    <a class="ca-cta" href="<?= h(u('/sarathi.php')) ?>" data-seen><?= h(t('Start earning', 'कमाना शुरू करें')) ?></a>
     <p class="ob-or"><?= h(t('OR', 'या')) ?></p>
     <button type="button" class="ob-cust" data-seen data-close><span><b><?= h(t('Customer?', 'ग्राहक हैं?')) ?></b><em><?= h(t('Book a ride', 'सवारी बुक कीजिए')) ?> →</em></span>
       <svg width="64" height="48" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/></svg></button>
@@ -165,7 +165,7 @@ $grid = [
     <button type="button" class="ca-care" data-open="seva"><span class="ic" aria-hidden="true">♥</span><span><b><?= h(t('Door se Seva', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Send medicine, gas, ration to your family', 'घर से दूर हैं? घर वालों को दवाई, गैस, राशन भेजिए')) ?></small></span></button>
   </section>
 
-  <a class="ca-join" href="<?= h(u($acc ? '/account.php' : '/')) ?>"><span><?= h(t('Have a bike, auto or vehicle? Earn with Sarathi.', 'बाइक, ऑटो या गाड़ी है? सारथी के साथ कमाइए।')) ?></span><em><?= h(t('Join', 'जुड़िए')) ?></em></a>
+  <a class="ca-join" href="<?= h(u('/sarathi.php')) ?>"><span><?= h(t('Have a bike, auto or vehicle? Earn with Sarathi.', 'बाइक, ऑटो या गाड़ी है? सारथी के साथ कमाइए।')) ?></span><em><?= h(t('Join', 'जुड़िए')) ?></em></a>
   <p class="ca-foot"><a href="<?= h(u('/privacy.php')) ?>"><?= h(t('Privacy policy', 'प्राइवेसी पॉलिसी')) ?></a></p>
 </section>
 

@@ -1,3 +1,15 @@
+# Two apps — owner decision, 29 October 2026
+
+Customers and partners now have SEPARATE installable apps (like Rapido / Rapido Captain):
+- Smart Sarathi (customer): ghar.php, manifest.json, mint icon, scope "/".
+- Sarathi Partner: sarathi.php entry, partner.json, yellow icon (assets/partner-*.png),
+  scope "/smartsarathi/", start_url sarathi.php?src=app → logged-in partner goes straight to
+  kaam.php / apply.php. sr_app_kind() in inc/ui.php picks which manifest a page links.
+Same OTP login. The app a person logs in from decides the role (intent=customer|partner →
+sr_home_path sets it). No intent and no role → partner if they have a rider profile or were
+pre-added by admin, else customer; role.php is no longer the default step.
+Customer app links to partners go to sarathi.php, never straight to login.
+
 # App v3 (Rapido-style onboarding) — owner decision, 29 October 2026
 
 ghar.php first run: language screen (cookie sr_lang, see sr_lang_chosen() in

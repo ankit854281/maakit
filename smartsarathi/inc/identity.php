@@ -40,10 +40,15 @@ function sr_set_role(PDO $pdo, array $a, string $role): void {
 function sr_home_path(PDO $pdo): string {
     $a=sr_account($pdo); if(!$a) return '/';
     $role=sr_account_role($pdo,$a);
-    // Welcome screen se "कमाना शुरू करें" / "सवारी बुक कीजिए" — role pehle hi pata hai
-    if($role===null && in_array($_SESSION['sr_intent'] ?? '',['customer','partner'],true)) { $role=$_SESSION['sr_intent']; sr_set_role($pdo,$a,$role); }
-    unset($_SESSION['sr_intent']);
-    if($role===null) return '/role.php';
+    // Do alag app: jis app se aaye (intent), wahi role. Grahak app → customer, Sarathi Partner app → partner.
+    $intent=$_SESSION['sr_intent'] ?? ''; unset($_SESSION['sr_intent']);
+    if(in_array($intent,['customer','partner'],true) && $intent!==$role) { sr_set_role($pdo,$a,$intent); $role=$intent; }
+    if($role===null) {
+        // Purana link (bina intent): admin ne pehle se joda rider ya bhara hua form → partner, warna grahak
+        $_SESSION['sr_mode']='rider'; sr_identity_autolink($pdo,$a);
+        $q=$pdo->prepare('SELECT 1 FROM sr_rider_profiles WHERE account_id=?'); $q->execute([(int)$a['id']]);
+        $role=$q->fetchColumn() ? 'partner' : 'customer'; sr_set_role($pdo,$a,$role);
+    }
     if($role==='partner') {
         sr_identity_autolink($pdo,$a);
         $_SESSION['sr_mode']='rider';

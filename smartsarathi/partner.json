@@ -1,0 +1,38 @@
+{
+  "id": "/smartsarathi/sarathi.php",
+  "name": "Sarathi Partner — सारथी पार्टनर",
+  "short_name": "Sarathi Partner",
+  "description": "सारथी पार्टनर: अपनी बाइक, ऑटो, ई-रिक्शा, कार या लोडर से काम लीजिए और कमाइए।",
+  "lang": "hi",
+  "dir": "ltr",
+  "start_url": "/smartsarathi/sarathi.php?src=app",
+  "scope": "/smartsarathi/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1F3A",
+  "theme_color": "#0B1F3A",
+  "categories": [
+    "business",
+    "travel"
+  ],
+  "icons": [
+    {
+      "src": "/smartsarathi/assets/partner-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/smartsarathi/assets/partner-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/smartsarathi/assets/partner-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

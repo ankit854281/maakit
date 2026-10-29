@@ -58,11 +58,21 @@ function sr_assets() {
     sr_app_head();
 }
 /** Play Store / install: manifest + offline service worker (only on maakit.in/smartsarathi/) */
-function sr_app_head() {
+/** Do alag app (owner decision, 29 Oct 2026): ग्राहक = Smart Sarathi, सारथी = Sarathi Partner */
+function sr_app_kind(): string {
+    $page = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    if ($page === 'ghar.php') return 'customer';
+    if (in_array($page, ['sarathi.php','kaam.php','apply.php','khata.php','beete.php','madad.php','jankari.php','proof.php','otp.php'], true)) return 'partner';
+    if (($_SESSION['sr_intent'] ?? '') === 'partner' || ($_SESSION['sr_mode'] ?? '') === 'rider') return 'partner';
+    return 'customer';
+}
+function sr_app_head(?string $kind = null) {
     if (!defined('SR_BASE') || SR_BASE !== '/smartsarathi') return;
+    $partner = ($kind ?? sr_app_kind()) === 'partner';
     ?>
-<link rel="manifest" href="/smartsarathi/manifest.json">
-<link rel="apple-touch-icon" href="/smartsarathi/assets/icon-192.png">
+<link rel="manifest" href="/smartsarathi/<?= $partner ? 'partner.json' : 'manifest.json' ?>">
+<link rel="apple-touch-icon" href="/smartsarathi/assets/<?= $partner ? 'partner-192.png' : 'icon-192.png' ?>">
+<?php if ($partner): ?><meta name="apple-mobile-web-app-title" content="Sarathi Partner"><?php endif; ?>
 <script>/* Phone par Chrome "Desktop site" chalu ho to page chhota dikhta hai: use phone ki chaudai par wapas laate hain. */
 (function(){var d=document.documentElement;function fit(){d.style.zoom='';var sw=Math.min(screen.width,screen.availWidth||screen.width),w=innerWidth,z=1;
 if(sw&&sw<=820&&w>sw*1.25)z=w/sw;if(z>1){d.style.zoom=z.toFixed(3);d.classList.add('sr-dz');}else d.classList.remove('sr-dz');
