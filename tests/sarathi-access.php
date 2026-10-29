@@ -7,7 +7,7 @@ require_once __DIR__.'/../smartsarathi/inc/vehicles.php';
 function access_check($ok,$label){if(!$ok)throw new RuntimeException($label);}
 $pdo=new PDO('mysql:host='.getenv('SR_TEST_DB_HOST').';dbname=sarathi_identity_test;charset=utf8mb4','root',getenv('SR_TEST_DB_PASSWORD'),[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]);
 foreach([1,2] as $round)foreach(['001-base.sql','002-unified-identity.sql','004-password-devices.sql'] as $f)$pdo->exec(file_get_contents(__DIR__.'/../smartsarathi/sql/'.$f));
-session_start(); $ids=[];
+session_start(); $ids=[]; sr_vehicles_upgrade($pdo);
 try {
     sr_identity_signin($pdo,['uid'=>'access-customer','mobile'=>'9000000981']); $a=sr_account($pdo); $ids[]=$a['id'];
     access_check(sr_home_path($pdo)==='/ghar.php','Customer routes home');

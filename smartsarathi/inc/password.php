@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/login-limit.php';
 // Passwords and device tokens never enter localStorage or client JavaScript.
 function sr_access_upgrade(PDO $pdo): void {
     static $done=false; if($done) return;
