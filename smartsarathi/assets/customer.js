@@ -62,7 +62,8 @@
     show('book');
     initMap();
     if (st.pick && !mk.pick && map) { var pg = st.pick.geo.split(','); setPlace('pick', +pg[0], +pg[1], st.pick.addr); }
-    setField(st.pick ? 'drop' : 'pick');
+    setField(st.pick ? 'drop' : 'pick', true);
+    if (st.pick && st.drop) pinHide();
     if (!st.pick && !noGps) gps(true);
     render();
   }
@@ -72,16 +73,44 @@
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView(CENTER, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     map.on('click', function (e) { setPlace(st.field, e.latlng.lat, e.latlng.lng, null); });
+    // v3.2 beech ka pin: sirf haath se khiskane par jagah lagti hai (fitBounds/setView par nahi)
+    var dragged = false;
+    map.on('dragstart', function () { dragged = true; if (pinOn) $('#cpin').classList.add('lift'); });
+    map.on('moveend', function () {
+      if (!dragged) return; dragged = false;
+      $('#cpin').classList.remove('lift');
+      if (!pinOn) return;
+      var c = map.getCenter();
+      setPlace(st.field, c.lat, c.lng, null, true);
+    });
     setTimeout(function () { map.invalidateSize(); }, 60);
   }
-  function setField(f) {
+
+  /* ---------- v3.2: beech ka pin (Uber/Rapido jaisa) ---------- */
+  var pinOn = false;
+  function markVis(f, on) { if (mk[f]) mk[f].setStyle(on ? { opacity: 1, fillOpacity: 1 } : { opacity: 0, fillOpacity: 0 }); }
+  function pinShow(f) {
+    var p = $('#cpin'); if (!p || !map) return;
+    pinOn = true; p.hidden = false; p.className = 'ca-cpin ' + (f === 'pick' ? 'p' : 'd');
+    $('#cpin-l').textContent = f === 'pick' ? L_.setPick : L_.setDrop;
+    markVis('pick', f !== 'pick'); markVis('drop', f !== 'drop');
+  }
+  function pinHide() {
+    var p = $('#cpin'); pinOn = false; if (p) p.hidden = true;
+    markVis('pick', true); markVis('drop', true);
+  }
+  function setField(f, pin) {
     st.field = f;
     $$('.ca-place').forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-field') === f); });
-    $('#hint').textContent = L_.tapMap + ' — ' + (f === 'pick' ? L_.pickup : L_.drop);
+    $('#hint').textContent = L_.dragMap + ' / ' + L_.tapMap + ' — ' + (f === 'pick' ? L_.pickup : L_.drop);
+    if (pin && map) {
+      if (st[f]) { var g = st[f].geo.split(','); map.setView([+g[0], +g[1]], Math.max(map.getZoom(), 15)); }
+      pinShow(f);
+    }
   }
   $$('.ca-place input').forEach(function (inp) {
     var f = inp.closest('.ca-place').getAttribute('data-field');
-    inp.addEventListener('focus', function () { setField(f); });
+    inp.addEventListener('focus', function () { setField(f, true); });
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search(f); } });
   });
   $('[data-search]').addEventListener('click', function () { search('drop'); });
@@ -110,12 +139,13 @@
       }); });
     }).catch(function () { ul.innerHTML = '<li><button type="button" disabled>' + esc(L_.noResult) + '</button></li>'; });
   }
-  function setPlace(f, lat, lng, label) {
+  function setPlace(f, lat, lng, label, keepView) {
     var geo = lat.toFixed(6) + ',' + lng.toFixed(6);
     st[f] = { geo: geo, addr: label || geo };
     var inp = $('#' + f + '-q'); inp.value = label || '…';
     if (mk[f]) map.removeLayer(mk[f]);
     mk[f] = L.circleMarker([lat, lng], { radius: 10, color: '#0B1F3A', weight: 3, fillColor: f === 'pick' ? '#10C98F' : '#0B1F3A', fillOpacity: 1 }).addTo(map);
+    if (pinOn && f === st.field) markVis(f, false);
     if (!label || label === L_.myLoc) {
       fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&accept-language=' + C.lang + '&lat=' + lat + '&lon=' + lng)
         .then(function (r) { return r.json(); }).then(function (j) {
@@ -125,12 +155,25 @@
           }
         }).catch(function () {});
     }
+    if (keepView) { if (st.pick && st.drop) getQuote(); return; }
     if (f === 'pick' && !st.drop) setField('drop');
     if (st.pick && st.drop) {
+      pinHide();
       map.fitBounds(L.latLngBounds([mk.pick.getLatLng(), mk.drop.getLatLng()]), { padding: [40, 40] });
       getQuote();
-    } else { map.setView([lat, lng], 15); }
+    } else { map.setView([lat, lng], 15); if (pinOn) pinShow(st.field); }
   }
+
+  /* ---------- v3.2: pickup <-> drop badliye ---------- */
+  $('#swap').addEventListener('click', function () {
+    if (!map) return;
+    var a = st.pick, b = st.drop;
+    ['pick', 'drop'].forEach(function (f) { if (mk[f]) { map.removeLayer(mk[f]); mk[f] = null; } st[f] = null; $('#' + f + '-q').value = ''; });
+    st.quote = null; pinHide();
+    if (b) { var g = b.geo.split(','); setPlace('pick', +g[0], +g[1], b.addr); }
+    if (a) { var h = a.geo.split(','); setPlace('drop', +h[0], +h[1], a.addr); }
+    if (!a || !b) { setField(st.pick ? 'drop' : 'pick', true); render(); }
+  });
   function getQuote() {
     $('#berr').textContent = '';
     api('quote', { pick_geo: st.pick.geo, drop_geo: st.drop.geo }).then(function (j) {
@@ -169,7 +212,14 @@
       h += '<label>' + esc(L_.items) + '<input id="x-items" maxlength="300" value="' + esc(st.items || '') + '"></label>';
     }
     h += '<label>' + esc(L_.note) + '<input id="x-note" maxlength="300" value="' + esc(st.note || '') + '"></label>';
+    h += '<div class="ca-clues"><small>' + esc(L_.clue) + '</small>' + (L_.clues || []).map(function (c, i) { return '<button type="button" class="ca-clue" data-clue="' + i + '">' + esc(c) + '</button>'; }).join('') + '</div>';
     x.innerHTML = h;
+    $$('[data-clue]', x).forEach(function (b) { b.addEventListener('click', function () {
+      keep();
+      var c = L_.clues[+b.getAttribute('data-clue')], n = st.note || '';
+      if (n.indexOf(c) === -1) st.note = (n ? n + ', ' : '') + c;
+      st.note = st.note.slice(0, 300); render();
+    }); });
     $$('[data-when]', x).forEach(function (b) { b.addEventListener('click', function () { keep(); st.when = b.getAttribute('data-when'); render(); }); });
     $$('[data-self]', x).forEach(function (b) { b.addEventListener('click', function () { keep(); st.self = b.getAttribute('data-self') === '1'; render(); }); });
     var se = $('#x-seats', x); if (se) se.addEventListener('change', function () { keep(); st.seats = +se.value; render(); });
@@ -195,7 +245,7 @@
     api('book', data).then(function (j) {
       st.busy = false; btn.disabled = false;
       if (j.login) { C.loggedIn = false; render(); return; }
-      if (!j.ok) { $('#berr').textContent = j.error || L_.err; render(); return; }
+      if (!j.ok) { $('#berr').textContent = j.error || L_.err; render(); waOffer(data); return; }
       try { sessionStorage.removeItem('sr_draft'); } catch (e) {}
       addRecent(st.drop);
       st.pick = st.drop = null; st.quote = null;
@@ -203,6 +253,21 @@
       openTrack(j.job_no);
     });
   });
+
+  // v3.2: booking fail ho to WhatsApp par wahi jaankari (dafter ke number par) — sirf tab, jab app se nahi hui
+  function waOffer(d) {
+    var num = String(C.phone || '').replace(/\D/g, ''); if (!num) return;
+    var q = st.quote && st.quote.fares[d.service];
+    var txt = L_.waHead + '\n' + (q ? q.name : d.service) + (d.when === 'later' && d.at ? ' · ' + d.at : '') +
+      '\n' + L_.pickup + ': ' + d.pick_address + ' (https://maps.google.com/?q=' + d.pick_geo + ')' +
+      '\n' + L_.drop + ': ' + d.drop_address + ' (https://maps.google.com/?q=' + d.drop_geo + ')' +
+      (d.note ? '\n' + d.note : '') + (q ? '\n' + L_.fare + ': ₹' + q.fare : '');
+    var a = document.createElement('a');
+    a.className = 'ca-wa'; a.target = '_blank'; a.rel = 'noopener';
+    a.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
+    a.textContent = L_.waTry;
+    var e = $('#berr'); e.appendChild(document.createElement('br')); e.appendChild(a);
+  }
 
   /* ---------- track ---------- */
   function openTrack(no, push) {

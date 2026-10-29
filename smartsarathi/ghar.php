@@ -41,7 +41,12 @@ $cfg = [
         'none' => t('No bookings yet.', 'अभी कोई बुकिंग नहीं।'), 'officeAssign' => t('Our office will confirm and assign a Sarathi.', 'हमारा दफ़्तर पक्का करके सारथी भेजेगा।'),
         'err' => t('Something went wrong. Please call us.', 'कुछ गड़बड़ हुई। फ़ोन कीजिए।'), 'liveOff' => t('Live location appears when the Sarathi shares it.', 'सारथी जगह साझा करेगा तो यहाँ दिखेगी।'),
         'listen' => t('Listening… say the place', 'सुन रहे हैं… जगह बोलिए'), 'noMic' => t('Voice search does not work in this browser. Please type.', 'इस ब्राउज़र में बोलकर खोज नहीं चलती। लिखकर खोजिए।'),
-        'here' => t('You are here', 'आप यहाँ हैं'), 'fav' => t('Save place', 'जगह सेव करें'), 'loginOnly' => t('Log in to see bookings', 'बुकिंग देखने के लिए लॉगिन कीजिए'), 'when' => t('Date & time', 'तारीख़ और समय'), 'back' => t('Back', 'वापस'), 'setBoth' => t('Set pickup and drop to see fares', 'किराया देखने के लिए दोनों जगह चुनिए'),
+        'here' => t('You are here', 'आप यहाँ हैं'), 'fav' => t('Save place', 'जगह सेव करें'), 'loginOnly' => t('Log in to see bookings', 'बुकिंग देखने के लिए लॉगिन कीजिए'),
+        'dragMap' => t('Move the map to set', 'नक्शा खिसकाकर लगाइए'), 'setPick' => t('Pickup here', 'पिकअप यहाँ'), 'setDrop' => t('Drop here', 'ड्रॉप यहाँ'),
+        'clue' => t('Help the Sarathi find you', 'सारथी को पहचान बताइए'),
+        'clues' => [t('Near the temple', 'मंदिर के पास'), t('Near the school', 'स्कूल के पास'), t('At the crossing', 'चौराहे पर'), t('On the main road', 'मेन रोड पर'), t('Inside the lane — please call', 'गली के अंदर — फ़ोन कर लीजिए')],
+        'waTry' => t('Booking did not go through? Send it on WhatsApp', 'बुकिंग नहीं हुई? WhatsApp पर भेजिए'),
+        'waHead' => t('Smart Sarathi booking', 'स्मार्ट सारथी बुकिंग'), 'when' => t('Date & time', 'तारीख़ और समय'), 'back' => t('Back', 'वापस'), 'setBoth' => t('Set pickup and drop to see fares', 'किराया देखने के लिए दोनों जगह चुनिए'),
     ],
 ];
 $grid = [
@@ -171,7 +176,11 @@ $grid = [
 
 <!-- ================= BOOK ================= -->
 <section class="ca-view" data-view="book" hidden>
-  <div class="ca-map" id="map" aria-label="<?= h(t('Map', 'नक्शा')) ?>"></div>
+  <div class="ca-mapwrap">
+    <div class="ca-map" id="map" aria-label="<?= h(t('Map', 'नक्शा')) ?>"></div>
+    <!-- Uber/Rapido jaisa beech ka pin: naksha khiskao, jagah lag jaye (customer.js pinShow) -->
+    <div class="ca-cpin p" id="cpin" hidden aria-hidden="true"><span class="ca-cpin-l" id="cpin-l"></span><span class="ca-cpin-h"></span><span class="ca-cpin-s"></span></div>
+  </div>
   <button type="button" class="ca-back" data-go="home" aria-label="<?= h(t('Back', 'वापस')) ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
   <div class="ca-sheet" id="sheet">
     <div class="ca-grab" aria-hidden="true"></div>
@@ -185,6 +194,7 @@ $grid = [
         <label for="drop-q" class="sr"><?= h(t('Drop', 'ड्रॉप')) ?></label>
         <input id="drop-q" autocomplete="off" placeholder="<?= h(t('Drop — search or tap map', 'ड्रॉप — खोजिए या नक्शे पर दबाइए')) ?>">
         <button type="button" class="mini" data-search="drop"><?= h(t('Search', 'खोजिए')) ?></button></div>
+      <button type="button" class="ca-swap" id="swap" aria-label="<?= h(t('Swap pickup and drop', 'पिकअप और ड्रॉप बदलिए')) ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg></button>
       <ul class="ca-results" id="results" hidden></ul>
       <p class="ca-hint" id="hint"></p>
     </div>

@@ -82,6 +82,12 @@ async function sendCode(event) {
   } finally { busy = false; send.disabled = false; }
 }
 phoneForm.addEventListener('submit', sendCode);
+// v3.2: 6 अंक पूरे होते ही अपने-आप जाँच (बटन दबाने की ज़रूरत नहीं; बटन फिर भी रहता है)
+document.getElementById('sms-code').addEventListener('input', event => {
+  const box = event.target;
+  box.value = box.value.replace(/\D/g, '').slice(0, 6);
+  if (box.value.length === 6 && !busy && confirmation) otpForm.requestSubmit ? otpForm.requestSubmit() : verify.click();
+});
 otpForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (busy || !confirmation || !otpForm.reportValidity()) return;

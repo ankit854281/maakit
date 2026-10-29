@@ -1,3 +1,16 @@
+# Prototype features adopted — owner request, 29 October 2026 (v3.2)
+
+Owner shared an AI-made HTML prototype ("Smart Sarathi Bhadohi 2.0") and said "jo best lage add karlo".
+Adopted: customer booking map has an Uber-style centre pin (#cpin, customer.js pinShow/pinHide —
+only a USER drag sets a place, never fitBounds/setView), a pickup⇄drop swap button, "पहचान" chips that
+append to the note the rider already sees, and a WhatsApp link (office number) shown ONLY when the
+booking call fails. Rider job card has "सुनिए" (speechSynthesis, data-say) and a new job is spoken
+after the bell. niyam.php can be listened to (per rule / all). OTP boxes auto-submit at 6 digits.
+NOT adopted, on purpose: the prototype's landmark list (coordinates were invented), earnings
+calculator (made-up per-trip figures), "30% return discount" (invented offer), "trusted Sarathi"
+(fake person), offline OSM tile caching (OSM policy), demo OTP fill, insurance-expiry reminder
+(office does not check documents). Do not add these without real data and the owner's say.
+
 # Partner vehicle, area and rules — owner request, 29 October 2026
 
 Joining wizard: vehicle (bike, auto, e-rickshaw, car/Bolero, loader, BUS, care) → vehicle company/

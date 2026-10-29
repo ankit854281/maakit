@@ -492,3 +492,4 @@ a.sx-stat b{color:#047857}
 .sx-worknow em.d{background:#FFF4D6;color:#8A5A00}
 .sx-worknow em.r{background:#E6F0FF;color:#1D4ED8}
 .sx-worknow b{margin-left:auto;color:var(--navy)}
+.sx-say{display:inline-flex;align-items:center;gap:6px;margin:0 0 8px;border:1px solid var(--line,#E3E8EF);background:#FFF8E1;font-weight:800}

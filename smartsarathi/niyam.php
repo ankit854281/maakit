@@ -38,11 +38,37 @@ $rules = [
 ];
 ?>
 <section class="sx-card sx-form" style="display:grid;gap:12px">
+<!-- v3.2: पढ़ने में दिक्कत हो तो नियम सुनिए (फ़ोन की अपनी आवाज़, कोई बाहरी सेवा नहीं) -->
+<button type="button" class="sx-btn sx-btn-mint" id="niyam-all" hidden data-stop="<?= h(t('Stop', 'रोकिए')) ?>"><?= sr_icon('sound', 20) ?> <span><?= h(t('Listen to all rules', 'सारे नियम सुनिए')) ?></span></button>
 <ol style="margin:0;padding-left:22px;display:grid;gap:12px">
-<?php foreach ($rules as [$h, $b]): ?>
-  <li><b style="display:block;color:#0B1F3A"><?= h($h) ?></b><span style="color:#41505F;line-height:1.55"><?= h($b) ?></span></li>
+<?php foreach ($rules as $i => [$h, $b]): ?>
+  <li data-rule="<?= h(t('Rule ', 'नियम ') . ($i + 1) . ': ' . $h . '. ' . $b) ?>"><b style="display:block;color:#0B1F3A"><?= h($h) ?></b><span style="color:#41505F;line-height:1.55"><?= h($b) ?></span>
+    <button type="button" class="sx-pill" data-one hidden style="margin-top:6px;display:inline-flex;align-items:center;gap:6px"><?= sr_icon('sound', 18) ?> <?= h(t('Listen', 'सुनिए')) ?></button></li>
 <?php endforeach; ?>
 </ol>
+<script>
+(function () {
+  if (!('speechSynthesis' in window)) return;
+  var lang = <?= json_encode(sr_lang() === 'en' ? 'en-IN' : 'hi-IN') ?>, all = document.getElementById('niyam-all'), lbl = all.querySelector('span'), orig = lbl.textContent, on = false;
+  var items = Array.prototype.slice.call(document.querySelectorAll('[data-rule]'));
+  function mark(li) { items.forEach(function (x) { x.style.background = x === li ? '#FFF8E1' : ''; }); }
+  function stop() { on = false; speechSynthesis.cancel(); mark(null); lbl.textContent = orig; }
+  function speak(li, next) {
+    var u = new SpeechSynthesisUtterance(li.getAttribute('data-rule')); u.lang = lang; u.rate = 0.95;
+    u.onend = function () { mark(null); if (next) next(); }; mark(li); speechSynthesis.speak(u);
+  }
+  all.hidden = false;
+  items.forEach(function (li, i) {
+    var b = li.querySelector('[data-one]'); b.hidden = false;
+    b.addEventListener('click', function () { stop(); speak(li); });
+  });
+  all.addEventListener('click', function () {
+    if (on) { stop(); return; }
+    speechSynthesis.cancel(); on = true; lbl.textContent = all.getAttribute('data-stop');
+    (function go(i) { if (!on || i >= items.length) { stop(); return; } speak(items[i], function () { go(i + 1); }); })(0);
+  });
+})();
+</script>
 <p style="margin:0"><a class="sx-pill" href="<?= h(u('/privacy.php')) ?>"><?= h(t('Privacy policy', 'प्राइवेसी पॉलिसी')) ?></a></p>
 <p style="margin:0;color:#5A6878"><?= h(t('Questions? Call the office: ', 'सवाल हो तो दफ़्तर को फ़ोन कीजिए: ')) ?><a href="tel:<?= h(SR_PHONE) ?>"><?= h(SR_PHONE_SHOW) ?></a></p>
 </section>

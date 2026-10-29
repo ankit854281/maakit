@@ -211,6 +211,15 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
         <div><small><?= h(t('Job no.', 'काम नं.')) ?></small><b class="sm"><?= h($j['job_no']) ?></b></div>
       </div>
 
+        <?php
+          // v3.2: kaam bolkar sunaiye (dhoop me screen na padh paayein to)
+          $bolo = ($isRide ? t('Ride booking. ', 'सवारी की बुकिंग। ') : t('Delivery job. ', 'डिलीवरी का काम। '))
+              . ($utha ? '' : t('Pick up from ', 'पिकअप: ') . ($j['pick_name'] ?: $j['client_name']) . ($j['pick_address'] ? ', ' . $j['pick_address'] : '') . '। ')
+              . t('Drop at ', 'पहुँचाना: ') . $j['drop_name'] . ($j['drop_address'] ? ', ' . $j['drop_address'] : '') . '। '
+              . ($j['cod_amount'] !== null ? ($isRide ? t('Fare ', 'किराया ') : t('Collect cash ', 'नगद लेना है ')) . (int)$j['cod_amount'] . t(' rupees. ', ' रुपये। ') : '')
+              . ($rate > 0 ? t('You earn ', 'आपकी कमाई ') . (int)$mera . t(' rupees.', ' रुपये।') : '');
+        ?>
+        <button type="button" class="sx-pill sx-say" data-say="<?= h($bolo) ?>"><?= sr_icon('sound', 20) ?><span><?= h(t('Listen', 'सुनिए')) ?></span></button>
       <div class="sx-acts">
         <?php if ($map): ?><a class="sx-act" href="<?= h($map) ?>" target="_blank" rel="noopener"><?= sr_icon('nav', 20) ?><span><?= h(t('Navigate', 'रास्ता')) ?></span></a><?php endif; ?>
         <a class="sx-act" href="tel:<?= h($j['drop_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= $isRide ? h(t('Passenger', 'सवारी')) : h(t('Customer', 'ग्राहक')) ?></span></a>
@@ -362,10 +371,27 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
 (function () {
   var n = <?= count($jobs) ?>, key = 'sx_jobs_' + <?= (int)$rid ?>, old = null;
   try { old = sessionStorage.getItem(key); sessionStorage.setItem(key, n); } catch (e) {}
+  // v3.2: kaam bolkar sunana — "सुनिए" button hamesha chalta hai; naye kaam par khud bolne ki koshish
+  // (kuch phone bina tap ke awaaz rok dete hain, tab ghanti/vibrate hi milega)
+  var lang = <?= json_encode(sr_lang() === 'en' ? 'en-IN' : 'hi-IN') ?>;
+  function say(text) {
+    try {
+      if (!('speechSynthesis' in window) || !text) return;
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = 0.95;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-say]');
+    if (b) { e.preventDefault(); say(b.getAttribute('data-say')); }
+  });
   if (old !== null && n > parseInt(old, 10)) {
     try { navigator.vibrate && navigator.vibrate([120, 80, 120]); } catch (e) {}
     try { var C = window.AudioContext || window.webkitAudioContext, c = new C(), o = c.createOscillator(), g = c.createGain();
       o.frequency.value = 880; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(.2, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .6); o.start(); o.stop(c.currentTime + .6); } catch (e) {}
+    var first = document.querySelector('[data-say]');
+    if (first) setTimeout(function () { say(<?= json_encode(t('New job. ', 'नया काम आया है। '), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> + first.getAttribute('data-say')); }, 700);
   }
 })();
 </script>

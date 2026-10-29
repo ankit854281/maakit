@@ -60,7 +60,7 @@ else { $no_tabbar=true;$page_title=t('OTP login — Maakit','OTP लॉगिन
 <p><?= h((($flow['via'] ?? '')==='whatsapp' ? t('Check WhatsApp on the number ending in ','WhatsApp देखिए — नंबर के अंतिम चार अंक: ') : t('Code sent to number ending in ','नंबर के अंतिम चार अंक: ')).substr($flow['mobile'],-4)) ?></p>
 <form method="post" class="<?= $is_sr?'sx-form':'lg-form' ?>">
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="action" value="verify">
-<label class="<?= $is_sr?'sx-field':'lg-field' ?>"><?= h(t('Six-digit OTP','छह अंकों का OTP')) ?><input name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></label>
+<label class="<?= $is_sr?'sx-field':'lg-field' ?>"><?= h(t('Six-digit OTP','छह अंकों का OTP')) ?><input name="otp" data-auto6 inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus></label>
 <button class="<?= $is_sr?'sx-btn sx-btn-mint':'btn btn-brand' ?>"><?= h(t('Verify and sign in','जाँचकर लॉगिन कीजिए')) ?></button>
 </form>
 <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="action" value="change"><button class="<?= $is_sr?'sx-btn':'btn btn-line' ?>"><?= h(t('Change number / request again','नंबर बदलें / दोबारा मँगाएँ')) ?></button></form>
@@ -74,4 +74,8 @@ else { $no_tabbar=true;$page_title=t('OTP login — Maakit','OTP लॉगिन
 <?php endif; endif ?>
 <p><a href="<?= h($otp_back) ?>"><?= h(t('Back to sign in','लॉगिन पर वापस')) ?></a></p>
 </div></section>
+<script>
+// 6 अंक पूरे होते ही अपने-आप जाँच (एक ही बार)
+(function(){var i=document.querySelector('[data-auto6]');if(!i)return;var sent=false;i.addEventListener('input',function(){i.value=i.value.replace(/\D/g,'').slice(0,6);if(i.value.length===6&&!sent){sent=true;i.form.requestSubmit?i.form.requestSubmit():i.form.submit();}});})();
+</script>
 <?php if($is_sr) sr_public_foot(); else include __DIR__.'/../../inc/foot.php';

@@ -22,6 +22,7 @@ function sr_tabs() {
 function sr_icon($name, $size = 22) {
     $d = [
         'box'   => '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+        'sound' => '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
         'rupee' => '<path d="M6 3h12M6 8h12M16 3c0 5-4 5-10 5l9 13"/>',
         'clock' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
         'user'  => '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
