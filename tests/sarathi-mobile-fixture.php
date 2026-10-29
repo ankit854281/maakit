@@ -35,6 +35,7 @@ $_SESSION=['sr_account'=>$admin['id'],'sr_account_version'=>1,'sr_auth_until'=>t
 $rid=(int)sr_profile($pdo,(int)$a['id'])['rider_id'];duty_on($pdo,$rid);
 $pdo->exec("INSERT INTO clients(name,fee) VALUES ('UI client',25)");$client=$pdo->query('SELECT * FROM clients WHERE id='.(int)$pdo->lastInsertId())->fetch();
 job_create($pdo,$client,['ref'=>'UI-bike','kind'=>'ride','vehicle'=>'bike','drop_name'=>'UI Customer','drop_mobile'=>'9000000024','drop_address'=>str_repeat('लंबा पता ',20),'pick_address'=>'Bhadohi station','pick_otp'=>'1234','drop_code'=>'5678']);
+$uj=(int)$pdo->query("SELECT id FROM jobs WHERE client_ref='UI-bike'")->fetchColumn();job_offer_accept($pdo,$rid,$uj);
 $new=$pdo->query("SELECT * FROM sr_accounts WHERE firebase_uid='ui-new'")->fetch();
 sr_profile_submit($pdo,$new,['name'=>'Pending applicant','vehicle_type'=>'bike'],'','');
 file_put_contents('/tmp/sarathi-mobile-root',$root);

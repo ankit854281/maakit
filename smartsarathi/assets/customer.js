@@ -254,17 +254,12 @@
     });
   });
 
-  // v3.2: booking fail ho to WhatsApp par wahi jaankari (dafter ke number par) — sirf tab, jab app se nahi hui
+  // Booking fail ho to dafter ko seedha phone (owner: WhatsApp dekhne wala koi nahi, 29 Oct 2026)
   function waOffer(d) {
-    var num = String(C.phone || '').replace(/\D/g, ''); if (!num) return;
-    var q = st.quote && st.quote.fares[d.service];
-    var txt = L_.waHead + '\n' + (q ? q.name : d.service) + (d.when === 'later' && d.at ? ' · ' + d.at : '') +
-      '\n' + L_.pickup + ': ' + d.pick_address + ' (https://maps.google.com/?q=' + d.pick_geo + ')' +
-      '\n' + L_.drop + ': ' + d.drop_address + ' (https://maps.google.com/?q=' + d.drop_geo + ')' +
-      (d.note ? '\n' + d.note : '') + (q ? '\n' + L_.fare + ': ₹' + q.fare : '');
+    var num = String(C.phone || '').replace(/[^\d+]/g, ''); if (!num) return;
     var a = document.createElement('a');
-    a.className = 'ca-wa'; a.target = '_blank'; a.rel = 'noopener';
-    a.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
+    a.className = 'ca-wa';
+    a.href = 'tel:' + num;
     a.textContent = L_.waTry;
     var e = $('#berr'); e.appendChild(document.createElement('br')); e.appendChild(a);
   }

@@ -39,20 +39,47 @@ e2e(sr_home_path($pdo) === '/kaam.php', '3. after approval the same login opens 
 $rider = rider_me($pdo); $rid = (int)$rider['id'];
 duty_on($pdo, $rid);
 
-// 3. Customer books a bike in Bhadohi
+// 2b. A second Sarathi in the same area, online
+sr_identity_signin($pdo, ['uid' => 'e2e-rider2', 'mobile' => '9000000504']); $a2 = sr_account($pdo);
+sr_profile_submit($pdo, $a2, ['name' => 'Suresh Yadav', 'vehicle_type' => 'bike', 'vehicle_number' => 'UP66AB5040'], '', '');
+sr_profile_set_details($pdo, $a2, ['vehicle_model' => 'Honda Shine', 'work_area' => 'bhadohi', 'work_km' => 10]);
+$p2 = sr_profile($pdo, (int)$a2['id']); $_SESSION = $admin; sr_profile_review($pdo, (int)$a2['id'], (int)$p2['revision'], 'approved', 'E2E');
+$rid2 = (int)sr_profile($pdo, (int)$a2['id'])['rider_id']; duty_on($pdo, $rid2);
+
+// 3. Customer books — first a booking that both Sarathis pass on
 sr_identity_signin($pdo, ['uid' => 'e2e-cust', 'mobile' => '9000000503']); $cust = sr_account($pdo);
-[$ok, $b] = sr_book($pdo, $cust, ['service' => 'bike', 'name' => 'Sita', 'pick_address' => 'Bhadohi station', 'pick_geo' => '25.405,82.565',
+$bk = fn() => sr_book($pdo, $cust, ['service' => 'bike', 'name' => 'Sita', 'pick_address' => 'Bhadohi station', 'pick_geo' => '25.405,82.565',
     'drop_address' => 'Gyanpur', 'drop_geo' => '25.350,82.470', 'when' => 'now']);
-e2e($ok, '4. customer booking created');
+[$ok, $x] = $bk(); $xj = sr_my_job($pdo, $cust, $x['job_no']);
+$first = (int)$xj['offer_rider'];
+e2e($ok && $xj['status'] === 'new' && in_array($first, [$rid, $rid2], true), '4. booking is OFFERED (not forced) to a nearby Sarathi');
+e2e(sr_job_view($xj, $cust)['mode'] === 'auto', '4b. customer sees "finding a Sarathi"');
+job_offer_reject($pdo, $first, (int)$xj['id']);
+$xj = sr_my_job($pdo, $cust, $x['job_no']); $second = (int)$xj['offer_rider'];
+e2e($second && $second !== $first, '5. after Skip the offer moves to the next Sarathi');
+$pdo->prepare("UPDATE jobs SET offer_until = NOW() - INTERVAL 30 SECOND WHERE id=?")->execute([(int)$xj['id']]);
+sr_offers_sweep($pdo);
+$xj = sr_my_job($pdo, $cust, $x['job_no']);
+e2e($xj['status'] === 'new' && $xj['offer_rider'] === null, '6. after 20 s with no answer it moves on; nobody left → waits for office');
+sr_cancel_mine($pdo, $cust, $x['job_no']);
+
+// Now a booking that our Sarathi accepts
+$pdo->prepare('UPDATE riders SET ready_until=NULL WHERE id=?')->execute([$rid2]);
+[$ok, $b] = $bk();
+e2e($ok, '7. second booking created');
+$j = sr_my_job($pdo, $cust, $b['job_no']);
+e2e((int)$j['offer_rider'] === $rid && rider_offer($pdo, $rid)['job_no'] === $b['job_no'], '8. offer reaches Ramesh with a timer');
+e2e(!job_offer_accept($pdo, $rid2, (int)$j['id'])[0], '9. another Sarathi cannot grab someone else\'s offer');
+e2e(job_offer_accept($pdo, $rid, (int)$j['id'])[0], '10. Ramesh accepts');
 $j = sr_my_job($pdo, $cust, $b['job_no']); $v = sr_job_view($j, $cust);
-e2e($j['status'] === 'assigned' && (int)$j['rider_id'] === $rid, '5. booking goes to the nearby Sarathi');
-e2e($v['rider']['vehicle'] === 'Hero Splendor' && $v['rider']['number'] === 'UP66AB5020', '6. customer sees Sarathi vehicle model and number');
+e2e($j['status'] === 'assigned' && (int)$j['rider_id'] === $rid, '11. booking is now Ramesh\'s');
+e2e($v['rider']['vehicle'] === 'Hero Splendor' && $v['rider']['number'] === 'UP66AB5020', '12. customer sees Sarathi vehicle model and number');
 
 // 4. Rider: wrong OTP refused, right OTP starts, drop code finishes
 [$bad] = job_pick($pdo, $rid, (int)$j['id'], '0000' === $v['start_otp'] ? '1111' : '0000');
-e2e(!$bad, '7. wrong pickup OTP refused');
+e2e(!$bad, '13. wrong pickup OTP refused');
 [$ok] = job_pick($pdo, $rid, (int)$j['id'], $v['start_otp']);
-e2e($ok && sr_my_job($pdo, $cust, $b['job_no'])['status'] === 'picked', '8. pickup with customer OTP');
+e2e($ok && sr_my_job($pdo, $cust, $b['job_no'])['status'] === 'picked', '14. pickup with customer OTP');
 [$ok] = job_deliver($pdo, $rid, (int)$j['id'], $j['drop_code']);
-e2e($ok && sr_my_job($pdo, $cust, $b['job_no'])['status'] === 'delivered', '9. finished with drop code; customer sees completed');
+e2e($ok && sr_my_job($pdo, $cust, $b['job_no'])['status'] === 'delivered', '15. finished with drop code; customer sees completed');
 echo "End-to-end: all steps passed\n";

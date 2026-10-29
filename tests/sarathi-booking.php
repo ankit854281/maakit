@@ -18,7 +18,7 @@ sr_identity_signin($pdo, ['uid' => 'bk-rider', 'mobile' => '9000000302']); $ra =
 sr_profile_submit($pdo, $ra, ['name' => 'Booking Rider', 'vehicle_type' => 'bike'], '', '');
 $_SESSION = $admin; sr_profile_review($pdo, (int)$ra['id'], 1, 'approved', 'CI');
 $_SESSION = $rs; $_SESSION['sr_mode'] = 'rider'; $rider = rider_me($pdo); $rid = (int)$rider['id'];
-duty_on($pdo, $rid);
+duty_on($pdo, $rid); $pdo->prepare('UPDATE riders SET ready_until=NULL WHERE id<>?')->execute([$rid]);
 
 sr_identity_signin($pdo, ['uid' => 'bk-cust', 'mobile' => '9000000303']); $cust = sr_account($pdo);
 sr_identity_signin($pdo, ['uid' => 'bk-other', 'mobile' => '9000000304']); $other = sr_account($pdo);
@@ -34,7 +34,10 @@ bk_check($q['fares']['cab']['fare'] >= $svc['cab']['min'], 'minimum fare applied
     'drop_address' => 'Gopiganj market', 'drop_geo' => $D, 'when' => 'now', 'fee' => 1]);
 bk_check($ok, 'bike booking created');
 $j = sr_my_job($pdo, $cust, $b['job_no']);
-bk_check($j && $j['status'] === 'assigned' && (int)$j['rider_id'] === $rid, 'bike job auto-assigned to approved online rider');
+bk_check($j && $j['status'] === 'new' && (int)$j['offer_rider'] === $rid, 'bike job offered to the approved online rider');
+bk_check(job_offer_accept($pdo, $rid, (int)$j['id'])[0], 'rider accepts');
+$j = sr_my_job($pdo, $cust, $b['job_no']);
+bk_check($j['status'] === 'assigned' && (int)$j['rider_id'] === $rid, 'accepted job is assigned to that rider');
 bk_check((int)$j['fee'] === $q['fares']['bike']['fare'] && (int)$j['fee'] !== 1, 'client-sent fare ignored');
 bk_check($j['kind'] === 'ride' && $j['vehicle'] === 'bike' && $j['pick_mobile'] === '9000000303', 'job fields');
 $v = sr_job_view($j, $cust);
@@ -52,7 +55,9 @@ bk_check($ok && sr_my_job($pdo, $cust, $c['job_no'])['status'] === 'new', 'sched
 [$ok, $p] = sr_book($pdo, $cust, ['service' => 'parcel', 'name' => 'Ram', 'pick_address' => 'Shop', 'pick_geo' => $P,
     'drop_address' => 'Home', 'drop_geo' => $D, 'self' => '0', 'drop_name' => 'Sita', 'drop_mobile' => '9000000305', 'items' => 'Tiffin']);
 $pj = sr_my_job($pdo, $cust, $p['job_no']);
-bk_check($ok && $pj['kind'] === 'delivery' && $pj['drop_mobile'] === '9000000305' && $pj['status'] === 'assigned', 'parcel to another receiver, auto-assigned');
+bk_check($ok && (int)$pj['offer_rider'] === $rid && job_offer_accept($pdo, $rid, (int)$pj['id'])[0], 'parcel offered and accepted');
+$pj = sr_my_job($pdo, $cust, $p['job_no']);
+bk_check($pj['kind'] === 'delivery' && $pj['drop_mobile'] === '9000000305' && $pj['status'] === 'assigned', 'parcel to another receiver, assigned after accept');
 [$ok] = sr_book($pdo, $cust, ['service' => 'parcel', 'name' => 'Ram', 'pick_address' => 'Shop', 'pick_geo' => $P, 'drop_address' => 'Home', 'drop_geo' => $D, 'self' => '0', 'drop_name' => 'S', 'drop_mobile' => '123']);
 bk_check(!$ok, 'bad receiver refused');
 [$ok] = sr_book($pdo, $cust, ['service' => 'bike', 'name' => 'Ram', 'pick_address' => 'X', 'pick_geo' => 'nope', 'drop_address' => 'Y', 'drop_geo' => $D]);

@@ -1,3 +1,14 @@
+# Step 2: offer / accept — 29 October 2026
+
+job_auto_give() no longer assigns. It OFFERS the job (jobs.offer_rider, offer_until = now + 20 s)
+to the best rider: approved, online, right vehicle, inside their area, nearest, with NO active job
+and no other open offer, and not in sr_job_skips for this job. kaam.php polls every 4 s
+(do=offer) and shows a full-screen card (ring, vibrate, Hindi voice, timer, Accept / Skip).
+job_offer_accept() assigns; job_offer_reject() records a skip and offers to the next rider.
+No cron: sr_offers_sweep() runs on rider polls, customer status polls and the admin page — expired
+offers move on, free jobs get offered. If every rider skips, the job waits in admin (job_give
+clears any offer). Customer booking-failure link is now "call the office" (owner: no WhatsApp desk).
+
 # Step-1 fixes after external review — 29 October 2026
 
 - Login keeps sr_intent (partner app → new partner reaches apply.php, not ghar.php).

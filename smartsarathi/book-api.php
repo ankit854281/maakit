@@ -28,6 +28,7 @@ try {
         sr_json(['ok' => false, 'error' => $out], 422);
     }
     if ($a === 'status') {
+        sr_offers_sweep($pdo);   // grahak har 8 sec poochhta hai — isi se purane offer agle rider ko jaate hain
         $j = sr_my_job($pdo, $acc, (string)($_GET['no'] ?? ''));
         if (!$j) sr_json(['ok' => false, 'error' => t('Booking not found.', 'बुकिंग नहीं मिली।')], 404);
         sr_json(['ok' => true, 'job' => sr_job_view($j, $acc)]);

@@ -19,11 +19,14 @@ try {
     $_SESSION=$admin;sr_profile_review($pdo,(int)$a['id'],1,'approved','Known person');
     $_SESSION=$session;$_SESSION['sr_mode']='rider';$r=rider_me($pdo);$rid=(int)$r['id'];$rids[]=$rid;
     flow_check($r && $r['ride_ok'] && $r['do_ride'] && $r['do_delivery'],'Approval enables rides and deliveries');
-    duty_on($pdo,$rid);
+    duty_on($pdo,$rid);$pdo->prepare('UPDATE riders SET ready_until=NULL WHERE id<>?')->execute([$rid]);
     $pdo->exec("INSERT INTO clients(name,fee) VALUES ('CI Maakit bridge',25)");$cid=(int)$pdo->lastInsertId();
     $client=$pdo->query('SELECT * FROM clients WHERE id='.$cid)->fetch();
     [$ok,$job]=job_create($pdo,$client,['ref'=>'CI-bike','kind'=>'ride','vehicle'=>'bike','pick_name'=>'Passenger','pick_address'=>'Bhadohi station','pick_geo'=>'25.395,82.571','drop_geo'=>'25.410,82.580','drop_name'=>'Passenger','drop_mobile'=>'9000000013','drop_address'=>'Bhadohi market','pick_otp'=>'1234','drop_code'=>'5678']);
-    flow_check($ok && $job['status']==='assigned','Bike bridge job automatically assigned');
+    flow_check($ok && $job['status']==='new','Job is offered first, not forced on the rider');
+    $off=rider_offer($pdo,$rid);flow_check($off && $off['job_no']===$job['job_no'] && (int)$off['secs']>0,'Offer with timer shown to the online rider');
+    flow_check(job_offer_accept($pdo,$rid,(int)$off['id'])[0],'Rider accepts the offer');
+    flow_check(!job_offer_accept($pdo,$rid,(int)$off['id'])[0],'Offer cannot be accepted twice');
     $jobs=rider_jobs($pdo,$rid);flow_check(count($jobs)===1,'Job visible to approved rider');$jid=(int)$jobs[0]['id'];
     flow_check(!job_pick($pdo,$rid,$jid,'9999')[0],'Wrong pickup code rejected');
     flow_check(job_pick($pdo,$rid,$jid,'1234')[0],'Pickup code accepted');

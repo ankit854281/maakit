@@ -45,7 +45,7 @@ $cfg = [
         'dragMap' => t('Move the map to set', 'नक्शा खिसकाकर लगाइए'), 'setPick' => t('Pickup here', 'पिकअप यहाँ'), 'setDrop' => t('Drop here', 'ड्रॉप यहाँ'),
         'clue' => t('Help the Sarathi find you', 'सारथी को पहचान बताइए'),
         'clues' => [t('Near the temple', 'मंदिर के पास'), t('Near the school', 'स्कूल के पास'), t('At the crossing', 'चौराहे पर'), t('On the main road', 'मेन रोड पर'), t('Inside the lane — please call', 'गली के अंदर — फ़ोन कर लीजिए')],
-        'waTry' => t('Booking did not go through? Send it on WhatsApp', 'बुकिंग नहीं हुई? WhatsApp पर भेजिए'),
+        'waTry' => t('Booking did not go through? Call the office', 'बुकिंग नहीं हुई? दफ़्तर को फ़ोन कीजिए'),
         'waHead' => t('Smart Sarathi booking', 'स्मार्ट सारथी बुकिंग'), 'when' => t('Date & time', 'तारीख़ और समय'), 'back' => t('Back', 'वापस'), 'setBoth' => t('Set pickup and drop to see fares', 'किराया देखने के लिए दोनों जगह चुनिए'),
     ],
 ];

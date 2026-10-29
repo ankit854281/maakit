@@ -168,7 +168,7 @@ function job_give(PDO $pdo, $jid, $rid) {
     $st->execute([(int)$rid]);
     if (!$r = $st->fetch()) return [false, 'ये सारथी नहीं मिला।'];
 
-    $st = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned'
+    $st = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned', offer_rider=NULL, offer_until=NULL
                           WHERE id=? AND status='new'");
     $st->execute([(int)$rid, (int)$jid]);
     if ($st->rowCount() !== 1) return [false, 'ये काम अब बाकी नहीं रहा — शायद किसी और को दे दिया गया।'];
@@ -209,8 +209,12 @@ function job_auto_give(PDO $pdo, $jid) {
                   WHERE j.rider_id = r.id AND j.status IN ('assigned','picked')) AS abhi
            FROM riders r
           WHERE r.active = 1 AND r.ready_until > NOW() AND $cond $approval
+            AND r.id NOT IN (SELECT s.rider_id FROM sr_job_skips s WHERE s.job_id = ?)
+            AND NOT EXISTS (SELECT 1 FROM jobs a WHERE a.rider_id = r.id AND a.status IN ('assigned','picked'))
+            AND NOT EXISTS (SELECT 1 FROM jobs o WHERE o.offer_rider = r.id AND o.status = 'new' AND o.offer_until > NOW() AND o.id <> ?)
        ORDER BY abhi ASC, r.id ASC
           LIMIT 200");
+    $args[] = (int)$jid; $args[] = (int)$jid;
     $st->execute($args);
     $list = $st->fetchAll();
     if (!$list) return null;
@@ -235,9 +239,61 @@ function job_auto_give(PDO $pdo, $jid) {
     }
     if (!$best) return null;
 
-    $up = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned' WHERE id=? AND status='new'");
+    // Seedha thopna nahi: 20 second ka offer. Accept par hi kaam uska (job_offer_accept).
+    $up = $pdo->prepare("UPDATE jobs SET offer_rider=?, offer_until=NOW() + INTERVAL " . SR_OFFER_SECONDS . " SECOND
+                          WHERE id=? AND status='new' AND (offer_rider IS NULL OR offer_until < NOW())");
     $up->execute([(int)$best['id'], (int)$jid]);
     return $up->rowCount() === 1 ? (int)$best['id'] : null;
+}
+
+const SR_OFFER_SECONDS = 20;
+
+/** Rider ne "स्वीकार" dabaya — tabhi kaam uska (5 sec ki chhoot net ki der ke liye) */
+function job_offer_accept(PDO $pdo, $rid, $jid) {
+    sr_jobs_upgrade($pdo);
+    if (!sr_identity_rider_allowed($pdo, (int)$rid)) return [false, t('Rider approval required.', 'राइडर मंज़ूरी बाकी है।')];
+    $up = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned', offer_rider=NULL, offer_until=NULL
+                          WHERE id=? AND status='new' AND offer_rider=? AND offer_until >= NOW() - INTERVAL 5 SECOND");
+    $up->execute([(int)$rid, (int)$jid, (int)$rid]);
+    if ($up->rowCount() !== 1) return [false, t('This job is no longer available.', 'यह काम अब उपलब्ध नहीं है — समय निकल गया या रद्द हो गया।')];
+    return [true, t('Job accepted. Go to pickup.', 'काम आपका हुआ। पिकअप पर पहुँचिए।')];
+}
+/** Mana kiya / samay nikal gaya — agle paas wale ko offer */
+function job_offer_reject(PDO $pdo, $rid, $jid, $why = 'reject') {
+    sr_jobs_upgrade($pdo);
+    $pdo->prepare("INSERT IGNORE INTO sr_job_skips (job_id, rider_id, why) VALUES (?,?,?)")->execute([(int)$jid, (int)$rid, $why === 'timeout' ? 'timeout' : 'reject']);
+    $up = $pdo->prepare("UPDATE jobs SET offer_rider=NULL, offer_until=NULL WHERE id=? AND offer_rider=? AND status='new'");
+    $up->execute([(int)$jid, (int)$rid]);
+    if ($up->rowCount() === 1) { try { job_auto_give($pdo, (int)$jid); } catch (Throwable $e) { error_log('Sarathi re-offer: ' . $e->getMessage()); } }
+    return [true, t('Skipped.', 'छोड़ दिया।')];
+}
+/** Bina cron: jab bhi koi panna (rider / grahak / admin) poochhe, purane offer aage badhao aur khaali kaam offer karo */
+function sr_offers_sweep(PDO $pdo) {
+    try {
+        sr_jobs_upgrade($pdo);
+        $old = $pdo->query("SELECT id, offer_rider FROM jobs WHERE status='new' AND offer_rider IS NOT NULL AND offer_until < NOW() - INTERVAL 5 SECOND LIMIT 20")->fetchAll();
+        foreach ($old as $o) job_offer_reject($pdo, (int)$o['offer_rider'], (int)$o['id'], 'timeout');
+        $free = $pdo->query("SELECT id FROM jobs WHERE status='new' AND assign_mode='auto' AND offer_rider IS NULL AND created_at > NOW() - INTERVAL 1 DAY ORDER BY id LIMIT 5")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($free as $jid) job_auto_give($pdo, (int)$jid);
+    } catch (Throwable $e) { error_log('Sarathi sweep: ' . $e->getMessage()); }
+}
+/** Is rider ke liye abhi ka offer (ya null) */
+function rider_offer(PDO $pdo, $rid) {
+    sr_offers_sweep($pdo);
+    $st = $pdo->prepare("SELECT j.id, j.job_no, j.kind, j.vehicle, j.pick_address, j.drop_address, j.pick_geo, j.drop_geo, j.fee, j.cod_amount,
+                                TIMESTAMPDIFF(SECOND, NOW(), j.offer_until) AS secs
+                           FROM jobs j WHERE j.offer_rider=? AND j.status='new' AND j.offer_until > NOW() ORDER BY j.offer_until LIMIT 1");
+    $st->execute([(int)$rid]);
+    $o = $st->fetch();
+    if (!$o) return null;
+    $p = sr_geo_parse((string)$o['pick_geo']); $d = sr_geo_parse((string)$o['drop_geo']);
+    $o['trip_km'] = ($p && $d) ? round(sr_geo_km($p, $d) * 1.3, 1) : null;
+    $r = $pdo->prepare("SELECT last_lat, last_lng, work_area, TIMESTAMPDIFF(SECOND, last_location_at, UTC_TIMESTAMP()) age FROM riders WHERE id=?"); $r->execute([(int)$rid]); $r = $r->fetch();
+    $at = null;
+    if ($r && $r['last_lat'] !== null && (int)$r['age'] <= 600) $at = [(float)$r['last_lat'], (float)$r['last_lng']];
+    elseif ($r && function_exists('sr_work_areas') && isset(sr_work_areas()[$r['work_area']])) { $w = sr_work_areas()[$r['work_area']]; $at = [$w[2], $w[3]]; }
+    $o['to_pick_km'] = ($p && $at) ? round(sr_geo_km($at, $p) * 1.3, 1) : null;
+    return $o;
 }
 function sr_geo_parse($g) {
     return preg_match('/^(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/', trim((string)$g), $m) ? [(float)$m[1], (float)$m[2]] : null;
@@ -521,6 +577,9 @@ function sr_jobs_upgrade(PDO $pdo) {
         if (!in_array('vehicle', $have, true))  $pdo->exec("ALTER TABLE jobs ADD COLUMN vehicle VARCHAR(10) DEFAULT NULL");
         // auto = app khud rider ko de; office = baad ka samay / Saath Safar / Hospital Saathi / Door se Seva — sirf admin de
         if (!in_array('assign_mode', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN assign_mode VARCHAR(8) NOT NULL DEFAULT 'auto'");
+        // Offer (Rapido jaisa): kaam pehle ek rider ko 20 sec ke liye "offer" — Accept par hi uska
+        if (!in_array('offer_rider', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN offer_rider INT DEFAULT NULL, ADD COLUMN offer_until DATETIME DEFAULT NULL, ADD INDEX idx_offer (offer_rider, status)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS sr_job_skips (job_id INT NOT NULL, rider_id INT NOT NULL, why VARCHAR(8) NOT NULL DEFAULT 'reject', at DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (job_id, rider_id)) ENGINE=InnoDB");
         // Ek hi rider — delivery bhi, sawari bhi (ek login, ek profile)
         $rh = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='riders'")->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('vtype', $rh, true))       $pdo->exec("ALTER TABLE riders ADD COLUMN vtype VARCHAR(10) DEFAULT NULL");

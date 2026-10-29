@@ -211,6 +211,7 @@ sr_jobs_upgrade($pdo);
 $riders  = $pdo->query("SELECT * FROM riders ORDER BY active DESC, name")->fetchAll();
 $clients = $pdo->query("SELECT * FROM clients ORDER BY active DESC, name")->fetchAll();
 $probs   = problems_open($pdo);
+sr_offers_sweep($pdo);
 $ruke    = jobs_waiting($pdo);            // jo kaam abhi kisi ko nahi diye gaye
 $taiyar  = riders_ready($pdo);
 $newkey  = $_SESSION['sr_newkey'] ?? null; unset($_SESSION['sr_newkey']);

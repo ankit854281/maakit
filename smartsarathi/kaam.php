@@ -18,7 +18,7 @@ $rid = (int)$me['id'];
 
 // Session/page purana ho gaya — chupchap reload nahi, saaf batao
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_ok()) {
-    if (post('do') === 'location') { header('Content-Type: application/json'); echo json_encode(['ok' => false, 'error' => 'reload']); exit; }
+    if (in_array(post('do'), ['location', 'offer', 'accept', 'reject'], true)) { header('Content-Type: application/json'); echo json_encode(['ok' => false, 'error' => 'reload']); exit; }
     flash(t('The page was old. Please tap again.', 'पेज पुराना हो गया था। कृपया दोबारा दबाइए।'));
     redirect('/kaam.php');
 }
@@ -32,6 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
         header('Cache-Control: no-store');
         [$ok, $out] = rider_location_update($pdo, $rid, post('lat'), post('lng'));
         echo json_encode($ok ? ['ok' => true, 'location' => $out] : ['ok' => false, 'error' => $out], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    // Naya kaam offer: har 4 sec poochho; Accept / Reject (Rapido jaisa)
+    if (in_array($do, ['offer', 'accept', 'reject'], true)) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        if ($do === 'accept') { [$ok, $m] = job_offer_accept($pdo, $rid, (int)post('jid')); echo json_encode(['ok' => $ok, 'msg' => $m], JSON_UNESCAPED_UNICODE); exit; }
+        if ($do === 'reject') { job_offer_reject($pdo, $rid, (int)post('jid')); echo json_encode(['ok' => true]); exit; }
+        $o = duty_until($pdo, $rid) ? rider_offer($pdo, $rid) : null;
+        echo json_encode(['ok' => true, 'offer' => $o ? [
+            'id' => (int)$o['id'], 'no' => $o['job_no'], 'kind' => $o['kind'], 'pick' => $o['pick_address'], 'drop' => $o['drop_address'],
+            'fare' => (int)$o['fee'], 'cash' => $o['cod_amount'] !== null ? (int)$o['cod_amount'] : null, 'secs' => max(0, (int)$o['secs']),
+            'trip_km' => $o['trip_km'], 'to_pick_km' => $o['to_pick_km']] : null], JSON_UNESCAPED_UNICODE);
         exit;
     }
     if ($do === 'location_off') {
@@ -401,10 +414,96 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
   }
 })();
 </script>
+<?php if ($ready): ?>
+<!-- ===== Naya kaam: 20 sec offer (Accept / Reject) ===== -->
+<div class="of" id="offer" hidden role="alertdialog" aria-labelledby="of-h">
+  <div class="of-card">
+    <div class="of-top"><b id="of-h"><?= h(t('New job', 'नया काम')) ?></b><span class="of-timer" id="of-t">20</span></div>
+    <div class="of-bar"><i id="of-bar"></i></div>
+    <p class="of-fare" id="of-fare"></p>
+    <p class="of-meta" id="of-meta"></p>
+    <ol class="of-route"><li><small><?= h(t('Pickup', 'पिकअप')) ?></small><b id="of-pick"></b></li><li><small><?= h(t('Drop', 'ड्रॉप')) ?></small><b id="of-drop"></b></li></ol>
+    <button type="button" class="of-say" id="of-say">🔊 <?= h(t('Listen', 'सुनिए')) ?></button>
+    <div class="of-acts"><button type="button" class="of-no" id="of-no"><?= h(t('Skip', 'छोड़ें')) ?></button><button type="button" class="of-yes" id="of-yes"><?= h(t('Accept', 'स्वीकार करें')) ?></button></div>
+  </div>
+</div>
+<style>
+.of{position:fixed;inset:0;z-index:3000;background:rgba(3,7,13,.72);display:flex;align-items:flex-end;justify-content:center}
+.of[hidden]{display:none}
+.of-card{width:100%;max-width:520px;background:#fff;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:grid;gap:10px;animation:ofup .25s ease-out}
+@keyframes ofup{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.of-top{display:flex;align-items:center;justify-content:space-between}.of-top b{font:800 20px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}
+.of-timer{min-width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#FFC83D;color:#0B1F3A;font:800 20px 'Plus Jakarta Sans',sans-serif}
+.of-bar{height:6px;border-radius:9px;background:#E3E8EF;overflow:hidden}.of-bar i{display:block;height:100%;background:#10C98F;width:100%;transition:width 1s linear}
+.of-fare{margin:0;font:800 30px 'Plus Jakarta Sans',sans-serif;color:#0B1F3A}
+.of-meta{margin:0;font:700 14px 'Noto Sans Devanagari',sans-serif;color:#41505F}
+.of-route{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.of-route li{border-left:4px solid #10C98F;padding:4px 10px;background:#F7F9FB;border-radius:8px}.of-route li+li{border-color:#C8261B}
+.of-route small{display:block;font:700 12px 'Noto Sans Devanagari',sans-serif;color:#5A6878}.of-route b{display:block;font:700 15px/1.4 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
+.of-say{min-height:46px;border:1px solid #E3E8EF;border-radius:12px;background:#fff;font:800 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.of-acts{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.of-acts button{min-height:60px;border:0;border-radius:16px;font:800 18px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.of-no{background:#F1F4F8;color:#0B1F3A}.of-yes{background:#10C98F;color:#05241A}
+</style>
+<script>
+(function () {
+  var box = document.getElementById('offer'), cur = null, tick = null, poll = null, busy = false, seen = {};
+  var csrf = <?= json_encode(csrf()) ?>, hi = <?= json_encode(sr_lang() !== 'en') ?>;
+  window.srOfferOpen = function () { return !box.hidden; };
+  function post(d) { var f = new FormData(); f.append('csrf', csrf); Object.keys(d).forEach(function (k) { f.append(k, d[k]); }); return fetch(location.pathname, { method: 'POST', body: f, credentials: 'same-origin' }).then(function (r) { return r.json(); }); }
+  function words(o) {
+    return (hi ? 'नया काम। किराया ' + o.fare + ' रुपये। पिकअप: ' + o.pick + '। ड्रॉप: ' + o.drop + '।' : 'New job. Fare ' + o.fare + ' rupees. Pickup: ' + o.pick + '. Drop: ' + o.drop + '.');
+  }
+  function say(t) { try { if (!('speechSynthesis' in window)) return; speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = hi ? 'hi-IN' : 'en-IN'; u.rate = .95; speechSynthesis.speak(u); } catch (e) {} }
+  function ring() {
+    try { navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {}
+    try { var C = window.AudioContext || window.webkitAudioContext, c = new C();
+      [0, .35, .7].forEach(function (t) { var o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; o.connect(g); g.connect(c.destination);
+        g.gain.setValueAtTime(.25, c.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + t + .3); o.start(c.currentTime + t); o.stop(c.currentTime + t + .3); }); } catch (e) {}
+  }
+  function close() { box.hidden = true; cur = null; clearInterval(tick); }
+  function open(o) {
+    cur = o; var left = o.secs, total = 20;
+    document.getElementById('of-fare').textContent = '₹' + o.fare;
+    var m = []; if (o.to_pick_km !== null) m.push((hi ? 'पिकअप ' : 'Pickup ') + o.to_pick_km + ' km ' + (hi ? 'दूर' : 'away'));
+    if (o.trip_km !== null) m.push((hi ? 'सफ़र ' : 'Trip ') + o.trip_km + ' km'); if (o.cash) m.push((hi ? 'नक़द लेना ₹' : 'Collect cash ₹') + o.cash);
+    document.getElementById('of-meta').textContent = m.join(' · ');
+    document.getElementById('of-pick').textContent = o.pick; document.getElementById('of-drop').textContent = o.drop;
+    box.hidden = false;
+    if (!seen[o.id]) { seen[o.id] = 1; ring(); setTimeout(function () { say(words(o)); }, 900); }
+    clearInterval(tick);
+    var draw = function () { document.getElementById('of-t').textContent = left; document.getElementById('of-bar').style.width = Math.max(0, left * 100 / total) + '%'; };
+    draw(); tick = setInterval(function () { left--; draw(); if (left <= 0) { close(); } }, 1000);
+  }
+  function check() {
+    if (busy) return;
+    post({ do: 'offer' }).then(function (r) {
+      if (r && r.error === 'reload') { location.reload(); return; }
+      if (r && r.offer) { if (!cur || cur.id !== r.offer.id) open(r.offer); } else if (cur) close();
+    }).catch(function () {});
+  }
+  document.getElementById('of-yes').addEventListener('click', function () {
+    if (!cur || busy) return; busy = true; var b = this; b.disabled = true;
+    post({ do: 'accept', jid: cur.id }).then(function (r) {
+        busy = false; b.disabled = false;
+        if (r && r.ok) { close(); location.reload(); return; }
+        clearInterval(tick); document.getElementById('of-meta').textContent = (r && r.msg) || ''; setTimeout(close, 2500);
+      })
+      .catch(function () { busy = false; b.disabled = false; });
+  });
+  document.getElementById('of-no').addEventListener('click', function () {
+    if (!cur || busy) return; var id = cur.id; close(); post({ do: 'reject', jid: id }).catch(function () {});
+  });
+  document.getElementById('of-say').addEventListener('click', function () { if (cur) say(words(cur)); });
+  check(); poll = setInterval(check, 4000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+})();
+</script>
+<?php endif; ?>
 <?php if ($ready && !$jobs): ?>
 <script>
 // हाज़िर हैं पर काम नहीं — हर मिनट खुद देख लीजिए. Kaam khula ho to refresh NAHI (likha OTP ud jata).
-setTimeout(function () { location.reload(); }, 60000);
+setTimeout(function reloadIfIdle() { if (window.srOfferOpen && window.srOfferOpen()) { setTimeout(reloadIfIdle, 15000); return; } location.reload(); }, 60000);
 </script>
 <?php endif; ?>
 

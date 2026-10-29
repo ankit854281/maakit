@@ -62,10 +62,10 @@ dc_check($zr['vehicle'] === 'Hero Splendor' && $zr['rc_number'] === 'UP66AB4040'
 duty_on($pdo, (int)$zr['id']);
 $pdo->exec("INSERT INTO clients(name,fee) VALUES ('Area client',20)"); $cl = $pdo->query('SELECT * FROM clients WHERE id=' . (int)$pdo->lastInsertId())->fetch();
 $far = job_create($pdo, $cl, ['ref' => 'AREA-far', 'drop_name' => 'Far Customer', 'drop_mobile' => '9000000444', 'drop_address' => 'Suriyawan', 'pick_address' => 'Suriyawan', 'pick_geo' => '25.467,82.417', 'drop_geo' => '25.47,82.42']);
-$farJob = $pdo->query("SELECT rider_id FROM jobs WHERE client_ref='AREA-far'")->fetch();
-dc_check((int)$farJob['rider_id'] !== (int)$zr['id'], 'order outside the chosen area is not given to that rider');
+$farJob = $pdo->query("SELECT offer_rider FROM jobs WHERE client_ref='AREA-far'")->fetch();
+dc_check((int)$farJob['offer_rider'] !== (int)$zr['id'], 'order outside the chosen area is not given to that rider');
 job_create($pdo, $cl, ['ref' => 'AREA-near', 'drop_name' => 'Near Customer', 'drop_mobile' => '9000000445', 'drop_address' => 'Gopiganj', 'pick_address' => 'Gopiganj', 'pick_geo' => '25.285,82.435', 'drop_geo' => '25.29,82.44']);
-$nearJob = $pdo->query("SELECT rider_id FROM jobs WHERE client_ref='AREA-near'")->fetch();
-dc_check((int)$nearJob['rider_id'] === (int)$zr['id'], 'order inside the area goes to the nearby rider');
+$nearJob = $pdo->query("SELECT offer_rider FROM jobs WHERE client_ref='AREA-near'")->fetch();
+dc_check((int)$nearJob['offer_rider'] === (int)$zr['id'], 'order inside the area goes to the nearby rider');
 dc_check(abs(sr_geo_km([25.42, 82.57], [25.35, 82.47]) - 12.8) < 1.5, 'distance Bhadohi–Gyanpur about 13 km');
 echo "Documents: all checks passed\n";
