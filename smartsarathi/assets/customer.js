@@ -70,8 +70,8 @@
   function initMap() {
     if (!window.L) { $('#hint').textContent = L_.err; return; }
     if (map) { setTimeout(function () { map.invalidateSize(); }, 60); return; }
-    map = L.map('map', { zoomControl: false, attributionControl: false }).setView(CENTER, 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    map = L.map('map', { zoomControl: false }).setView(CENTER, 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
     map.on('click', function (e) { setPlace(st.field, e.latlng.lat, e.latlng.lng, null); });
     // v3.2 beech ka pin: sirf haath se khiskane par jagah lagti hai (fitBounds/setView par nahi)
     var dragged = false;
@@ -270,8 +270,8 @@
     show('track', push);
     if (!window.L) { $('#tsheet').innerHTML = '<p class="ca-err">' + esc(L_.err) + '</p>'; }
     else if (!tmap) {
-      tmap = L.map('tmap', { zoomControl: false, attributionControl: false }).setView(CENTER, 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(tmap);
+      tmap = L.map('tmap', { zoomControl: false }).setView(CENTER, 13);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(tmap);
     }
     if (tmap) setTimeout(function () { tmap.invalidateSize(); }, 60);
     $('#tsheet').innerHTML = '<div class="ca-grab"></div><p class="ca-sub">' + esc(L_.searching) + '</p>';
@@ -373,8 +373,8 @@
     var box = $('#here'); box.classList.add('on'); $('#here-pill').hidden = false;
     if (window.L) {
       if (!hmap) {
-        hmap = L.map('hmap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, keyboard: false, tap: false });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(hmap);
+        hmap = L.map('hmap', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, keyboard: false, tap: false });
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(hmap);
       }
       hmap.setView([lat, lng], 16);
       L.circleMarker([lat, lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#10C98F', fillOpacity: 1 }).addTo(hmap);

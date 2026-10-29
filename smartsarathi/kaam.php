@@ -314,7 +314,7 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
     var a = point(el.dataset.pick), b = point(el.dataset.drop);
     if (!a && !b) return;
     var map = L.map(el, {zoomControl: false, scrollWheelZoom: false});
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
     var pts = [];
     if (a) { L.marker(a, {icon: makeIcon('pick', 'P')}).addTo(map).bindPopup(<?= json_encode(t('Pickup', 'पिकअप')) ?>); pts.push(a); }
     if (b) { L.marker(b, {icon: makeIcon('drop', 'D')}).addTo(map).bindPopup(<?= json_encode(t('Drop', 'पहुँचने की जगह')) ?>); pts.push(b); }
