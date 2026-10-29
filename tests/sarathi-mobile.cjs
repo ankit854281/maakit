@@ -34,4 +34,4 @@ const fs=require('node:fs');
   }
   console.log(`${count} rendered page/state/width/language checks passed (360px and 390px).`);
  } finally {await browser.close();}
-})().catch(e=>{console.error(e);process.exit(1);});
+})().catch(e=>{console.error(e);console.log('::error::'+String(e.message||e).replace(/\n/g,' ').slice(0,900));process.exit(1);});
