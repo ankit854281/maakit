@@ -1,3 +1,11 @@
+# Separate login screens — owner correction, 29 October 2026
+
+Root is a welcome/role chooser only. customer-login.php and partner-login.php are distinct
+screens with only their own login/register forms, headings and manifest; no mixed customer
+navigation on the partner login. Legacy ?intent links redirect to these entry pages.
+Both reuse verification/password code. OTP submissions carry their page intent to avoid
+another open tab changing the login destination. Keep driver approval and routing checks.
+
 # Driver routing, passwords and communication — owner request, 29 October 2026
 
 Driver profiles now override customer intent/session mode; approved partners go to kaam.php,

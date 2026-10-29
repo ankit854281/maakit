@@ -63,7 +63,8 @@ function sr_assets() {
 /** Do alag app (owner decision, 29 Oct 2026): ग्राहक = Smart Sarathi, सारथी = Sarathi Partner */
 function sr_app_kind(): string {
     $page = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
-    if ($page === 'ghar.php') return 'customer';
+    if (in_array($page,['ghar.php','customer-login.php'],true)) return 'customer';
+    if ($page === 'partner-login.php') return 'partner';
     if (in_array($page, ['sarathi.php','niyam.php','kaam.php','apply.php','khata.php','beete.php','madad.php','jankari.php','proof.php','otp.php'], true)) return 'partner';
     if (($_SESSION['sr_intent'] ?? '') === 'partner' || ($_SESSION['sr_mode'] ?? '') === 'rider') return 'partner';
     return 'customer';

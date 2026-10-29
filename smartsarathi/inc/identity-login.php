@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__.'/public.php';
 header('Cache-Control: private, no-store');
-if (in_array($_GET['intent'] ?? '', ['customer', 'partner'], true)) $_SESSION['sr_intent'] = $_GET['intent'];
+$_SESSION['sr_intent']=$sr_login_kind;
+$isPartner=$sr_login_kind==='partner';
 if (sr_account($pdo)) redirect(sr_home_path($pdo));
 $loginError='';
 if ($_SERVER['REQUEST_METHOD']==='POST' && post('do')==='password') {
@@ -13,16 +14,9 @@ $config=sr_firebase_config();
 $appCheckSiteKey=defined('SR_FIREBASE_APP_CHECK_SITE_KEY') ? (string)SR_FIREBASE_APP_CHECK_SITE_KEY : '';
 // App Check is optional (owner decision 28 Oct 2026): used only when a site key is configured.
 $ready=!in_array('',array_values($config),true);
-sr_customer_head(t('Login','लॉगिन'),t('Just your mobile number and the SMS code.','बस मोबाइल नंबर और SMS कोड।'));
+sr_customer_head($isPartner ? t('Sarathi Partner login / register','सारथी पार्टनर लॉगिन / रजिस्टर') : t('Customer login','ग्राहक लॉगिन'),t('Use your mobile and password, or verify with OTP.','मोबाइल और पासवर्ड से प्रवेश करें, या OTP चुनें।'),$isPartner ? '/sarathi.php' : '/ghar.php');
 ?>
-<section class="sx-card sx-form sr-welcome">
-<span class="sx-mark"><?= sr_icon('route',32) ?></span>
-<h2><?= h(t('Your journey. Your Sarathi.','आपका सफ़र। आपका सारथी।')) ?></h2>
-<p><?= h(t('Book a ride or start your day as a partner.','सवारी बुक कीजिए या पार्टनर बनकर अपना दिन शुरू कीजिए।')) ?></p>
-<a class="sx-btn sx-btn-mint" href="<?= h(u('/?intent=customer#password-login')) ?>"><?= sr_icon('user') ?> <?= h(t('Continue as Customer','ग्राहक के रूप में आगे बढ़ें')) ?></a>
-<a class="sx-btn sx-btn-navy" href="<?= h(u('/?intent=partner#password-login')) ?>"><?= sr_icon('bike') ?> <?= h(t('Sarathi Partner — login / register','सारथी पार्टनर (Driver) लॉगिन/रजिस्टर')) ?></a>
-</section>
-<section class="sx-card sx-form" id="password-login">
+<section class="sx-card sx-form" id="password-login" data-login-kind="<?= h($sr_login_kind) ?>">
 <h2><?= h(($_SESSION['sr_intent'] ?? '')==='partner' ? t('Partner login','पार्टनर लॉगिन') : t('Customer login','ग्राहक लॉगिन')) ?></h2>
 <?php if($loginError): ?><p role="alert"><?= h($loginError) ?></p><?php endif; ?>
 <form method="post" class="sx-form">
@@ -33,7 +27,7 @@ sr_customer_head(t('Login','लॉगिन'),t('Just your mobile number and the
 </form>
 <p><?= h(t('New account or forgot password? Use OTP below. After login, set your password in Settings. This phone stays signed in for up to 30 days; sign out on shared phones.','नया खाता या पासवर्ड भूल गए? नीचे OTP चुनें। लॉगिन के बाद सेटिंग्स में पासवर्ड बनाएँ। इस फ़ोन पर 30 दिन तक लॉगिन रहेगा; साझा फ़ोन पर लॉगआउट करें।')) ?></p>
 </section>
-<style>.sr-welcome{padding:28px!important;overflow:hidden;position:relative}.sr-welcome h2{font-size:clamp(24px,6vw,36px);line-height:1.4}.sr-welcome .sx-btn{justify-content:flex-start;gap:12px;min-height:56px}.sr-welcome .sx-mark{width:64px;height:64px}.sr-welcome p{max-width:35ch}@media(prefers-reduced-motion:no-preference){.sr-welcome{animation:sr-enter .3s ease-out}@keyframes sr-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}</style>
+
 <section class="sx-card sx-form" id="phone-login">
 <h2><?= h(t('Mobile OTP login','मोबाइल OTP लॉगिन')) ?></h2>
 <?php if(!$ready): ?><p role="alert"><?= h(t('Phone login is being configured. Please call the office.','मोबाइल लॉगिन की तैयारी बाकी है। दफ़्तर को फ़ोन कीजिए।')) ?></p><?php else: ?>
@@ -49,7 +43,7 @@ sr_customer_head(t('Login','लॉगिन'),t('Just your mobile number and the
 </form>
 <div id="recaptcha"></div><p id="auth-status" role="status" aria-live="polite"></p>
 <noscript><?= h(t('Enable JavaScript to use secure phone login.','सुरक्षित मोबाइल लॉगिन के लिए JavaScript चालू कीजिए।')) ?></noscript>
-<script id="firebase-login-config" type="application/json"><?= json_encode(['firebase'=>$config,'appCheckSiteKey'=>$appCheckSiteKey,'endpoint'=>u('/auth.php'),'csrf'=>csrf(),'lang'=>sr_lang()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
+<script id="firebase-login-config" type="application/json"><?= json_encode(['firebase'=>$config,'appCheckSiteKey'=>$appCheckSiteKey,'endpoint'=>u('/auth.php'),'intent'=>$sr_login_kind,'csrf'=>csrf(),'lang'=>sr_lang()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
 <script type="module" src="<?= h(u('/assets/firebase-login.js')) ?>?v=5"></script>
 <?php endif; ?></section>
-<?php sr_customer_foot(); ?>
+</main><footer class="sc-help"><a class="sx-pill" href="<?= h(u('/')) ?>"><?= h(t('Back to welcome','स्वागत पेज पर वापस')) ?></a></footer><?php require_once __DIR__.'/companion.php'; sr_companion(); ?></body></html>

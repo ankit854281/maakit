@@ -19,7 +19,7 @@ $acc = sr_account($pdo);
 if ($acc && sr_account_role($pdo,$acc)==='partner') redirect(sr_home_path($pdo));
 $svcs = sr_services();
 $cfg = [
-    'api' => u('/book-api.php'), 'login' => u('/?intent=customer'), 'account' => u('/account.php'), 'csrf' => csrf(),
+    'api' => u('/book-api.php'), 'login' => u('/customer-login.php'), 'account' => u('/account.php'), 'csrf' => csrf(),
     'loggedIn' => (bool)$acc, 'mobile' => $acc['mobile'] ?? null, 'phone' => SR_PHONE, 'lang' => sr_lang(),
     'services' => array_map(fn($s) => ['name' => $s['name'], 'tag' => $s['tag'], 'kind' => $s['kind']], $svcs),
     'L' => [
@@ -99,7 +99,7 @@ $grid = [
   <div class="ob-copy">
     <h1><?= h(t('Your journey. Your Sarathi.', 'आपका सफ़र। आपका सारथी।')) ?></h1>
     <p><?= h(t('Your own bike, auto, e-rickshaw, Bolero or loader. Work when you want.', 'अपनी बाइक, ऑटो, ई-रिक्शा, बोलेरो या लोडर से। जब चाहें तब काम।')) ?></p>
-    <a class="ca-cta" href="<?= h(u('/?intent=partner#password-login')) ?>" data-seen><?= h(t('Sarathi Partner — login / register', 'सारथी पार्टनर (Driver) लॉगिन/रजिस्टर')) ?></a>
+    <a class="ca-cta" href="<?= h(u('/partner-login.php')) ?>" data-seen><?= h(t('Sarathi Partner — login / register', 'सारथी पार्टनर (Driver) लॉगिन/रजिस्टर')) ?></a>
     <p class="ob-or"><?= h(t('OR', 'या')) ?></p>
     <button type="button" class="ob-cust" data-seen data-close><span><b><?= h(t('Continue as Customer', 'ग्राहक के रूप में आगे बढ़ें')) ?></b><em><?= h(t('Book a ride', 'सवारी बुक कीजिए')) ?> →</em></span>
       <svg width="64" height="48" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/></svg></button>

@@ -17,7 +17,7 @@ $acc = sr_account($pdo);
 if ($acc && (get('src') === 'app' || get('go') === '1')) {
     redirect(sr_home_path($pdo));             // installed app se khula → seedha kaam
 }
-$login = u('/?intent=partner');
+$login = u('/partner-login.php');
 $dash  = u('/sarathi.php?go=1');
 ?><!doctype html>
 <html lang="<?= h(sr_lang()) ?>">

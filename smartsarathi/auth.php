@@ -9,6 +9,7 @@ if (!sr_firebase_enabled() || $_SERVER['REQUEST_METHOD']!=='POST' || !csrf_ok())
 try {
     if (try_blocked($pdo,'firebase:'.($_SERVER['REMOTE_ADDR'] ?? ''))) throw new RuntimeException('Rate limit');
     $identity=sr_verify_phone_token((string)post('token'),sr_firebase_config()['projectId'],sr_firebase_certificates(),time());
+    if(in_array(post('intent'),['customer','partner'],true)) $_SESSION['sr_intent']=post('intent');
     sr_identity_signin($pdo,$identity);
     try_ok($pdo,'firebase:'.($_SERVER['REMOTE_ADDR'] ?? ''));
     echo json_encode(['ok'=>true,'next'=>u(sr_home_path($pdo))]);

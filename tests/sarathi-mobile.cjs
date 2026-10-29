@@ -11,10 +11,16 @@ const fs=require('node:fs');
    for(const [file,fixture] of [
     ['account.php','rider'],['apply.php','admin'],['apply.php','new'],['apply.php','rider'],
     ['kaam.php','rider'],['jankari.php','rider'],['khata.php','rider'],['beete.php','rider'],['madad.php','rider'],
-    ['admin/index.php','admin'],['admin/profiles.php','admin'],['index.php','guest'],['ghar.php','guest'],['ghar.php','rider'],['role.php','new'],['sarathi.php','guest'],['admin/places.php','admin']]) {
+    ['admin/index.php','admin'],['admin/profiles.php','admin'],['index.php','guest'],['customer-login.php','guest'],['partner-login.php','guest'],['ghar.php','guest'],['ghar.php','rider'],['role.php','new'],['sarathi.php','guest'],['admin/places.php','admin']]) {
      const url=`http://127.0.0.1:8098/smartsarathi/${file}?fixture=${fixture}&lang=${lang}`;
      const response=await page.goto(url);await page.waitForTimeout(300);if(response.status()!==200)throw Error(`${url}: HTTP ${response.status()}`);
      if(/Fatal error|Warning:|Uncaught/.test(await page.locator('body').innerText()))throw Error(`${url}: PHP error`);
+     if(file==='index.php' && await page.locator('#password-login,#phone-form').count())throw Error('Welcome must not contain login forms');
+     if(file.endsWith('-login.php')) {
+      const kind=file==='partner-login.php'?'partner':'customer';
+      if(await page.locator('#password-login').getAttribute('data-login-kind')!==kind)throw Error('Wrong login screen');
+      if(await page.locator('.sc-nav').count())throw Error('Login must not expose mixed customer navigation');
+     }
      try{await page.locator('details').evaluateAll(xs=>xs.forEach(x=>x.open=true));}catch(e){throw Error(url+': '+e.message);}
      const problems=await page.evaluate(()=>{
       const p=[];

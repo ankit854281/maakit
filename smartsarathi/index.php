@@ -11,7 +11,12 @@ require_once __DIR__ . '/inc/kaam.php';
 require_once __DIR__.'/inc/fast2sms.php';
 require_once __DIR__ . '/inc/public.php';   // tabs: parcel / track / rider banna
 
-if (sr_firebase_enabled()) { require __DIR__.'/inc/identity-login.php'; exit; }
+if (sr_firebase_enabled()) {
+    if (isset($sr_login_kind)) { require __DIR__.'/inc/identity-login.php'; exit; }
+    if(in_array(get('intent'),['customer','partner'],true)) redirect(get('intent')==='partner' ? '/partner-login.php' : '/customer-login.php');
+    if(sr_account($pdo)) redirect(sr_home_path($pdo));
+    require __DIR__.'/inc/welcome.php'; exit;
+}
 
 if (rider_me($pdo)) { redirect('/kaam.php'); }
 

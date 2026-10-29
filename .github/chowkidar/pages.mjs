@@ -36,6 +36,8 @@ export const GALAT_JAGAH = [
 ];
 
 export const PAGES = [
+  { path: '/smartsarathi/customer-login.php', naam: 'Sarathi customer login', chahiye: ['password-login'] },
+  { path: '/smartsarathi/partner-login.php', naam: 'Sarathi partner login', chahiye: ['password-login'] },
   { path: '/smartsarathi/chat-api.php', naam: 'Sarathi private chat guard', chahiye: ['false'] },
   { path: '/smartsarathi/account.php', naam: 'Sarathi account login guard', chahiye: ['Sarathi'] },
   { path: '/smartsarathi/admin/profiles.php', naam: 'Sarathi profile approval guard', chahiye: ['Sarathi'] },

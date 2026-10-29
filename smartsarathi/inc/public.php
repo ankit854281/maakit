@@ -142,14 +142,14 @@ function sr_job_steps($status) {
 }
 
 /** Compact customer shell shared by account, application and profile review. */
-function sr_customer_head(string $title, string $lead): void {
+function sr_customer_head(string $title, string $lead, string $home='/ghar.php'): void {
     require_once __DIR__.'/ui.php';
     ?><!doctype html><html lang="<?= h(sr_lang()) ?>"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1F3A"><meta name="robots" content="noindex,nofollow">
 <title><?= h($title) ?> — <?= h(t('Smart Sarathi','स्मार्ट सारथी')) ?></title>
 <?php sr_assets(); ?></head><body class="sx sx-customer">
-<header class="sc-top"><div class="sc-row"><a class="sx-logo light" href="<?= h(u('/ghar.php')) ?>"><span class="sx-mark"><?= sr_icon('bolt',20) ?></span><span>Smart Sarathi</span></a><?php sr_language_switch(true); ?></div>
+<header class="sc-top"><div class="sc-row"><a class="sx-logo light" href="<?= h(u($home)) ?>"><span class="sx-mark"><?= sr_icon('bolt',20) ?></span><span>Smart Sarathi</span></a><?php sr_language_switch(true); ?></div>
 <h1><?= h($title) ?></h1><p><?= h($lead) ?></p></header><main class="sc-main">
 <?php
 }

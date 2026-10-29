@@ -96,7 +96,7 @@ otpForm.addEventListener('submit', async event => {
     const result = await confirmation.confirm(document.getElementById('sms-code').value);
     const token = await result.user.getIdToken(true);
     const response = await fetch(config.endpoint, {method: 'POST', credentials: 'same-origin',
-      body: new URLSearchParams({csrf: config.csrf, token})});
+      body: new URLSearchParams({csrf: config.csrf, token, intent: config.intent || ''})});
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error('Session rejected');
     try { localStorage.setItem('sr_last_phone', phone.value); } catch (e) {}
