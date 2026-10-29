@@ -127,6 +127,24 @@ $grid = [
   </div>
   <p class="ca-listen" id="listen" role="status" aria-live="polite" hidden></p>
 
+  <button type="button" class="ca-install" id="install" hidden>
+    <span class="ca-install-ic" aria-hidden="true"><img src="<?= h(u('/assets/icon-192.png')) ?>" alt="" width="40" height="40"></span>
+    <span class="ca-install-t"><b><?= h(t('Get the Smart Sarathi app', 'स्मार्ट सारथी ऐप फ़ोन में डालिए')) ?></b><small><?= h(t('One tap · no Play Store · opens like an app', 'एक टैप · Play Store की ज़रूरत नहीं · ऐप जैसा खुलेगा')) ?></small></span>
+    <span class="ca-install-go"><?= h(t('Install', 'इंस्टॉल')) ?></span>
+  </button>
+  <div class="ca-ihelp" id="install-help" hidden>
+    <b><?= h(t('How to install', 'ऐसे इंस्टॉल कीजिए')) ?></b>
+    <ol data-os="android">
+      <li><?= h(t('If this opened inside WhatsApp, tap ⋮ at the top → "Open in Chrome".', 'अगर WhatsApp के अंदर खुला है तो ऊपर ⋮ दबाइए → "Chrome में खोलें"।')) ?></li>
+      <li><?= h(t('In Chrome tap ⋮ (top right) → "Install app" or "Add to Home screen".', 'Chrome में ऊपर दाएँ ⋮ दबाइए → "ऐप इंस्टॉल करें" या "होम स्क्रीन पर जोड़ें"।')) ?></li>
+      <li><?= h(t('The Smart Sarathi icon will appear on your phone.', 'फ़ोन पर स्मार्ट सारथी का आइकन आ जाएगा।')) ?></li>
+    </ol>
+    <ol data-os="ios" hidden>
+      <li><?= h(t('Open this page in Safari.', 'यह पेज Safari में खोलिए।')) ?></li>
+      <li><?= h(t('Tap Share (square with arrow) → "Add to Home Screen".', 'शेयर (तीर वाला डिब्बा) दबाइए → "Add to Home Screen"।')) ?></li>
+    </ol>
+    <button type="button" class="ca-ihelp-x" id="install-x"><?= h(t('Got it', 'समझ गया')) ?></button>
+  </div>
   <section class="ca-sec ca-recent" id="recent" aria-labelledby="h-recent" hidden>
     <h2 id="h-recent"><?= h(t('Recent places', 'पिछली जगहें')) ?></h2>
     <ul id="recentlist"></ul>

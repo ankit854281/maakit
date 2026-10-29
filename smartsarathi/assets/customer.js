@@ -282,6 +282,27 @@
   }
 
 
+  /* ---------- v3.1: install the app (PWA) ---------- */
+  (function () {
+    var btn = $('#install'), help = $('#install-help'); if (!btn) return;
+    var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+    if (standalone) return;
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), deferred = null;
+    btn.hidden = false;
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; btn.hidden = false; });
+    window.addEventListener('appinstalled', function () { btn.hidden = true; help.hidden = true; });
+    btn.addEventListener('click', function () {
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (r) { if (r && r.outcome === 'accepted') btn.hidden = true; deferred = null; });
+        return;
+      }
+      $$('#install-help ol').forEach(function (o) { o.hidden = (o.getAttribute('data-os') === 'ios') !== ios; });
+      help.hidden = false; help.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    $('#install-x').addEventListener('click', function () { help.hidden = true; });
+  })();
+
   /* ---------- v3: welcome, location card, mic, recent places ---------- */
   var welcome = $('#welcome');
   if (welcome && !$('.ob-lang') && !C.loggedIn && !store.get('sr_welcome')) welcome.hidden = false;

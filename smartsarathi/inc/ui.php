@@ -63,6 +63,10 @@ function sr_app_head() {
     ?>
 <link rel="manifest" href="/smartsarathi/manifest.json">
 <link rel="apple-touch-icon" href="/smartsarathi/assets/icon-192.png">
+<script>/* Phone par Chrome "Desktop site" chalu ho to page chhota dikhta hai: use phone ki chaudai par wapas laate hain. */
+(function(){var d=document.documentElement;function fit(){d.style.zoom='';var sw=Math.min(screen.width,screen.availWidth||screen.width),w=innerWidth,z=1;
+if(sw&&sw<=820&&w>sw*1.25)z=w/sw;if(z>1){d.style.zoom=z.toFixed(3);d.classList.add('sr-dz');}else d.classList.remove('sr-dz');
+d.style.setProperty('--vh',(innerHeight/z/100)+'px');}fit();addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,200);});})();</script>
 <script>if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('/smartsarathi/sw.js',{scope:'/smartsarathi/'}).catch(function(){});});}</script>
 <?php
 }
