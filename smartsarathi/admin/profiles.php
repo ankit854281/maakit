@@ -28,7 +28,7 @@ sr_customer_head(t('Review riders','राइडर मंज़ूरी'),t('C
 <article class="sx-card">
 <h2><?= h($p['name']) ?></h2><p>+91 <?= h($p['mobile']) ?> · <?= h(sr_profile_vehicles()[$p['vehicle_type']] ?? $p['vehicle_type']) ?></p>
 <?php [$dd,$dt]=sr_doc_count($p); $link=fn($kind,$label)=>'<a target="_blank" rel="noopener" href="'.h(u('/identity-photo.php?id='.(int)$p['account_id'].'&kind='.$kind)).'">'.h($label).'</a>'; $miss=h(t('missing','नहीं')); ?>
-<p><b><?= h(t('Documents','काग़ज़')) ?> <?= (int)$dd ?>/<?= (int)$dt ?></b></p>
+<p><b><?= h(t('Aadhaar + PAN','आधार + पैन')) ?> <?= (int)$dd ?>/<?= (int)$dt ?></b> · <?= h(t('licence/RC optional','लाइसेंस/RC ज़रूरी नहीं')) ?></p>
 <ul style="margin:0 0 8px;padding-left:18px;line-height:1.9">
 <li><?= h(t('Selfie','सेल्फ़ी')) ?>: <?= sr_doc_file_ok($p['photo']) ? $link('photo',t('view','देखिए')) : $miss ?></li>
 <li><?= h(t('Aadhaar','आधार')) ?> <?= ($p['aadhaar_last4'] ?? '')!=='' ? 'XXXX XXXX '.h($p['aadhaar_last4']) : '' ?>: <?= sr_doc_file_ok($p['aadhaar_front'] ?? '') ? $link('aadhaar_front',t('front','आगे')) : $miss ?> · <?= sr_doc_file_ok($p['aadhaar_back'] ?? '') ? $link('aadhaar_back',t('back','पीछे')) : $miss ?></li>

@@ -210,27 +210,27 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
   ];
   $next=''; foreach($req as $k) if(!sr_doc_done($p,$k)) { $next=$docs[$k][3]; break; }
   $statusSay = $p['status']==='approved' ? t('You are approved. Start work.','आप मंज़ूर हैं। काम शुरू कीजिए।')
-      : ($done<$total ? t('Next document: ','अगला काग़ज़: ').$next : t('All documents submitted. The office is checking.','सब काग़ज़ जमा हो गए। दफ़्तर जाँच कर रहा है।'));
+      : ($done<$total ? t('Next document: ','अगला काग़ज़: ').$next : t('Aadhaar and PAN are submitted. The office is checking.','आधार और पैन जमा हो गए। दफ़्तर जाँच कर रहा है।'));
 ?>
 <div id="docs" class="ap">
   <?php if($p['status']==='approved'): ?>
     <p class="ap-msg ok"><?= h(t('You are approved ✓','आप मंज़ूर हैं ✓')) ?></p>
     <a class="ap-go" href="<?= h(u('/kaam.php')) ?>"><?= h(t('Start work →','काम शुरू कीजिए →')) ?></a>
   <?php elseif($p['status']==='pending'): ?>
-    <p class="ap-msg wait"><?= h($done<$total ? t('Add the remaining documents so the office can approve you quickly.','बाकी काग़ज़ लगाइए ताकि दफ़्तर जल्दी मंज़ूर कर सके।') : t('All documents received ✓ — the office is checking. Call if urgent.','सब काग़ज़ मिल गए ✓ — दफ़्तर जाँच कर रहा है। जल्दी हो तो फ़ोन कीजिए।')) ?></p>
+    <p class="ap-msg wait"><?= h($done<$total ? t('Add Aadhaar and PAN so the office can approve you.','आधार और पैन लगाइए ताकि दफ़्तर मंज़ूर कर सके।') : t('Aadhaar and PAN received ✓ — the office is checking. Call if urgent.','आधार और पैन मिल गए ✓ — दफ़्तर जाँच कर रहा है। जल्दी हो तो फ़ोन कीजिए।')) ?></p>
   <?php endif; ?>
 
-  <div class="ap-prog"><b><?= (int)$done ?>/<?= (int)$total ?></b><span><?= h(t('documents done','काग़ज़ पूरे')) ?> · <?= h($vname($p['vehicle_type'])) ?><div class="ap-bar"><i style="width:<?= $total ? (int)round($done*100/$total) : 0 ?>%"></i></div></span></div>
+  <div class="ap-prog"><b><?= (int)$done ?>/<?= (int)$total ?></b><span><?= h(t('required documents (Aadhaar, PAN)','ज़रूरी काग़ज़ (आधार, पैन)')) ?> · <?= h($vname($p['vehicle_type'])) ?><div class="ap-bar"><i style="width:<?= $total ? (int)round($done*100/$total) : 0 ?>%"></i></div></span></div>
   <button type="button" class="ap-say-all" data-say="<?= h($statusSay) ?>"><span aria-hidden="true">🔊</span> <?= h(t('Listen: what to do next','सुनिए: आगे क्या करना है')) ?></button>
 
-  <?php $opened=false; foreach($req as $k): $d=$docs[$k]; $ok=sr_doc_done($p,$k);
-    $open = ($errKind===$k) || (!$opened && !$ok && !$errKind && $p['status']!=='approved'); if($open) $opened=true;
-    $sub = $ok ? t('Submitted ✓','जमा ✓') : t('Pending · required','बाकी · ज़रूरी');
+  <?php $opened=false; foreach(array_merge($req,sr_doc_optional($p)) as $k): $d=$docs[$k]; $ok=sr_doc_done($p,$k); $must=in_array($k,$req,true);
+    $open = ($errKind===$k) || ($must && !$opened && !$ok && !$errKind && $p['status']!=='approved'); if($open) $opened=true;
+    $sub = $ok ? t('Submitted ✓','जमा ✓') : ($must ? t('Pending · required','बाकी · ज़रूरी') : t('Optional','ज़रूरी नहीं'));
     if($ok && $k==='rc') $sub.=' · '.$p['vehicle_number'];
     if($ok && $k==='aadhaar') $sub.=' · XXXX '.$p['aadhaar_last4'];
     if($ok && $k==='pan') $sub.=' · '.substr($p['pan_number'],0,2).'XXXXXX'.substr($p['pan_number'],-2);
   ?>
-  <details class="dc <?= $ok?'done':'' ?>" id="doc-<?= h($k) ?>" <?= $open?'open':'' ?>>
+  <details class="dc <?= $ok?'done':($must?'':'opt') ?>" id="doc-<?= h($k) ?>" <?= $open?'open':'' ?>>
     <summary><span class="dc-ic" aria-hidden="true"><?= $ok ? '✓' : $d[1] ?></span><span class="dc-t"><b><?= h($d[0]) ?></b><small><?= h($sub) ?></small></span>
       <button type="button" class="dc-say" data-say="<?= h($d[3]) ?>" aria-label="<?= h(t('Listen','सुनिए')) ?>">🔊</button><span class="dc-arrow" aria-hidden="true">›</span></summary>
     <form method="post" enctype="multipart/form-data">

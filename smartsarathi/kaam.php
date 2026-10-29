@@ -123,7 +123,7 @@ if ($myProfile && function_exists('sr_profile_docs_missing') && sr_profile_docs_
 <a class="sx-card" href="<?= h(u('/apply.php')) ?>" style="display:block;text-decoration:none">
   <b><?= h(t('Complete your profile', 'प्रोफ़ाइल पूरी कीजिए')) ?></b>
   <?php [$dd, $dt] = function_exists('sr_doc_count') ? sr_doc_count($myProfile) : [0, 0]; ?>
-  <small style="display:block"><?= h(t('Documents ', 'काग़ज़ ') . $dd . '/' . $dt . ' — ' . t('add Aadhaar, PAN, licence and RC. Customers trust verified Sarathis more.', 'आधार, पैन, लाइसेंस और RC लगाइए। सत्यापित सारथी पर ग्राहक ज़्यादा भरोसा करते हैं।')) ?></small>
+  <small style="display:block"><?= h(t('Documents ', 'काग़ज़ ') . $dd . '/' . $dt . ' — ' . t('add Aadhaar and PAN. Customers trust verified Sarathis more.', 'आधार और पैन लगाइए। सत्यापित सारथी पर ग्राहक ज़्यादा भरोसा करते हैं।')) ?></small>
 </a>
 <?php endif;
 $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with Smart Sarathi. Ask for me: ', 'भदोही में बाइक, ऑटो, ई-रिक्शा, पार्सल और गाड़ी — स्मार्ट सारथी से बुक कीजिए। मेरा नाम लीजिए: ') . $me['name'] . ' — ' . (defined('SR_MAAKIT_URL') ? rtrim(SR_MAAKIT_URL, '/') : 'https://maakit.in') . '/smartsarathi/ghar.php';

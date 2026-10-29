@@ -18,7 +18,7 @@ sr_identity_signin($pdo, ['uid' => 'dc-admin', 'mobile' => '9000000401']); $admi
 sr_identity_signin($pdo, ['uid' => 'dc-rider', 'mobile' => '9000000402']); $a = sr_account($pdo); $rs = $_SESSION;
 sr_profile_submit($pdo, $a, ['name' => 'Docs Rider', 'vehicle_type' => 'auto', 'vehicle_number' => ''], '', '');
 $p = sr_profile($pdo, (int)$a['id']);
-dc_check(sr_doc_count($p) === [0, 5], 'vehicle partner needs 5 documents');
+dc_check(sr_doc_count($p) === [0, 2], 'only Aadhaar and PAN are required');
 dc_check(sr_profile_docs_missing($p), 'missing documents flagged');
 
 sr_profile_set_doc($pdo, $a, 'photo', ['photo' => $f()], []);
@@ -26,7 +26,7 @@ sr_profile_set_doc($pdo, $a, 'aadhaar', ['aadhaar_front' => $f(), 'aadhaar_back'
 sr_profile_set_doc($pdo, $a, 'pan', ['pan_photo' => $f()], ['pan_number' => 'ABCDE1234F']);
 sr_profile_set_doc($pdo, $a, 'licence', ['licence_photo' => $f(), 'dl_back' => null], ['dl_number' => 'UP6620190012345']);
 $p = sr_profile($pdo, (int)$a['id']);
-dc_check(sr_doc_count($p) === [4, 5], 'four documents saved');
+dc_check(sr_doc_count($p) === [2, 2] && !sr_profile_docs_missing($p), 'Aadhaar + PAN complete the profile');
 dc_check($p['aadhaar_last4'] === '4321' && strlen($p['aadhaar_last4']) === 4, 'only last 4 Aadhaar digits stored');
 dc_check($p['status'] === 'pending', 'documents do not change approval status');
 
@@ -37,13 +37,13 @@ $_SESSION = $admin; sr_profile_review($pdo, (int)$a['id'], (int)$p['revision'], 
 $_SESSION = $rs;
 sr_profile_set_doc($pdo, $a, 'rc', ['rc_photo' => $f()], ['vehicle_number' => 'UP66AB1234']);
 $p = sr_profile($pdo, (int)$a['id']);
-dc_check(sr_doc_count($p) === [5, 5] && !sr_profile_docs_missing($p), 'all documents complete');
+dc_check(sr_doc_done($p, 'rc') && sr_doc_done($p, 'licence'), 'optional licence and RC saved');
 dc_check($pdo->query('SELECT rc_number FROM riders WHERE id=' . (int)$p['rider_id'])->fetchColumn() === 'UP66AB1234', 'RC number synced to rider');
 dc_check($p['status'] === 'approved', 'approved rider stays approved after adding RC');
 
 sr_identity_signin($pdo, ['uid' => 'dc-care', 'mobile' => '9000000403']); $c = sr_account($pdo);
 sr_profile_submit($pdo, $c, ['name' => 'Care Saathi', 'vehicle_type' => 'care', 'vehicle_number' => ''], '', '');
-dc_check(sr_doc_count(sr_profile($pdo, (int)$c['id']))[1] === 3, 'Care Saathi needs no licence or RC');
+dc_check(sr_doc_optional(sr_profile($pdo, (int)$c['id'])) === ['photo'], 'Care Saathi is not offered licence or RC');
 
 $pdo->prepare("UPDATE sr_rider_profiles SET status='rejected',review_note='fix' WHERE account_id=?")->execute([$c['id']]);
 sr_profile_set_doc($pdo, $c, 'photo', ['photo' => $keep = $f()], []);

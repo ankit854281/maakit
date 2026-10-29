@@ -133,9 +133,11 @@ function sr_doc_kinds(): array {
         'licence'=>[['licence_photo','dl_back'],['dl_number']], 'rc'=>[['rc_photo'],['vehicle_number']]];
 }
 function sr_doc_file_ok($v): bool { return (bool)preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$v); }
-/** Kaun se kaagaz zaroori: Care Saathi ke paas gaadi nahi — licence/RC nahi */
-function sr_doc_required(array $p): array {
-    return ($p['vehicle_type'] ?? '')==='care' ? ['photo','aadhaar','pan'] : ['photo','aadhaar','pan','licence','rc'];
+/** Owner rule (29 Oct 2026): sirf Aadhaar aur PAN zaroori. Licence/RC daftar nahi jaanchta (gaadi kiraye par bhi ho sakti hai). */
+function sr_doc_required(array $p): array { return ['aadhaar','pan']; }
+/** Ichha ho to: selfie, aur gaadi wale ke liye licence + RC */
+function sr_doc_optional(array $p): array {
+    return ($p['vehicle_type'] ?? '')==='care' ? ['photo'] : ['photo','licence','rc'];
 }
 function sr_doc_done(array $p, string $kind): bool {
     switch($kind) {
