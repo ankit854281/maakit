@@ -40,6 +40,14 @@ function sr_apply_error(string $m): string {
     if(str_contains($m,'Invalid image')) return t('Use a JPG, PNG or WebP photo.','JPG, PNG या WebP फ़ोटो लगाइए।');
     return t('Could not save. Try again or call the office.','सेव नहीं हुआ। दोबारा कोशिश या दफ़्तर को फ़ोन कीजिए।');
 }
+/** Wizard ke sawaal: naya / lautaya profile → gaadi + naam; jo zaroori kaagaz baaki hai → Aadhaar, PAN */
+function sr_wizard_steps(?array $p): array {
+    if($p && $p['status']==='suspended') return [];
+    $s=[]; if(!$p || $p['status']==='rejected') { $s[]='vehicle'; $s[]='name'; }
+    if(!$p || !sr_doc_done($p,'aadhaar')) $s[]='aadhaar';
+    if(!$p || !sr_doc_done($p,'pan')) $s[]='pan';
+    return $s;
+}
 function sr_clean_code(string $v): string { return strtoupper(preg_replace('/[^A-Za-z0-9]/','',$v)); }
 
 if($_SERVER['REQUEST_METHOD']==='POST') {
@@ -76,14 +84,40 @@ if($_SERVER['REQUEST_METHOD']==='POST') {
             sr_profile_set_doc($pdo,$a,$kind,$files,$fields);
             try_ok($pdo,'profile:'.$a['id']); redirect('/apply.php?ok='.$kind.'#docs');
         }
-        // Step 1: gaadi + naam
+        // Ek-ek sawaal wala wizard (owner: "step wise, easy"): gaadi → naam → Aadhaar → PAN, ek baar me bhejo
+        if(post('do')!=='wizard') throw new RuntimeException('Invalid submission');
+        $steps=sr_wizard_steps($p);
+        if(!$steps) throw new RuntimeException('Invalid submission');
+        $errKind='vehicle';
         $nm=trim((string)post('name')); $vt=(string)post('vehicle_type');
-        if(mb_strlen($nm)<2 || mb_strlen($nm)>80) throw new RuntimeException('Invalid name');
-        if(!isset(sr_profile_vehicles()[$vt])) throw new RuntimeException('Invalid vehicle type');
-        if($p && $p['status']==='rejected') sr_profile_resubmit($pdo,$a,$nm,$vt);
-        elseif($p) throw new RuntimeException('Invalid submission');
-        else sr_profile_submit($pdo,$a,['name'=>$nm,'vehicle_type'=>$vt,'vehicle_number'=>''],'','');
-        try_ok($pdo,'profile:'.$a['id']); redirect('/apply.php?ok=1#docs');
+        if(in_array('vehicle',$steps,true) && !isset(sr_profile_vehicles()[$vt])) throw new RuntimeException('Invalid vehicle type');
+        $errKind='name';
+        if(in_array('name',$steps,true) && (mb_strlen($nm)<2 || mb_strlen($nm)>80)) throw new RuntimeException('Invalid name');
+        $docsIn=[];
+        if(in_array('aadhaar',$steps,true)) {
+            $errKind='aadhaar';
+            $d=preg_replace('/\D/','',(string)post('aadhaar'));
+            if(strlen($d)!==4 && strlen($d)!==12) throw new RuntimeException('Invalid aadhaar');
+            $docsIn['aadhaar']=[['aadhaar_front'=>null,'aadhaar_back'=>null],['aadhaar_last4'=>substr($d,-4)]];
+        }
+        if(in_array('pan',$steps,true)) {
+            $errKind='pan';
+            $v=sr_clean_code((string)post('pan')); if(!preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]$/D',$v)) throw new RuntimeException('Invalid pan');
+            $docsIn['pan']=[['pan_photo'=>null],['pan_number'=>$v]];
+        }
+        // Photos — sirf tab zaroori jab pehle se na ho
+        $slot=['aadhaar_front'=>['a1','Need front'],'aadhaar_back'=>['a2','Need back'],'pan_photo'=>['p1','Need photo']];
+        foreach($docsIn as $kind=>&$pair) foreach($pair[0] as $col=>&$file) {
+            $errKind=$kind; $file=sr_apply_optional_photo($slot[$col][0]); if($file) $saved[]=$file;
+            if(!$file && !sr_doc_file_ok($p[$col] ?? '')) throw new RuntimeException($slot[$col][1]);
+        }
+        unset($pair,$file);
+        $errKind='vehicle';
+        if(!$p) sr_profile_submit($pdo,$a,['name'=>$nm,'vehicle_type'=>$vt,'vehicle_number'=>''],'','');
+        elseif(in_array('name',$steps,true)) sr_profile_resubmit($pdo,$a,$nm,$vt);
+        foreach($docsIn as $kind=>[$files,$fields]) { $errKind=$kind; sr_profile_set_doc($pdo,$a,$kind,$files,$fields); }
+        $saved=[];
+        try_ok($pdo,'profile:'.$a['id']); redirect('/apply.php?ok=sent');
     } catch(Throwable $e) {
         sr_identity_log('profile_save',$e);
         try { foreach($saved as $file) @unlink(sr_identity_dir().'/'.$file); } catch(Throwable $ignored) {}
@@ -99,7 +133,7 @@ $vehicles=['bike'=>['बाइक','Bike','<circle cx="5.5" cy="17" r="3.5"/><ci
     'care'=>['अस्पताल साथी','Hospital Saathi','<path d="M12 21s-7-4.6-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 6c-2.2 4.4-9.2 9-9.2 9z"/><path d="M12 10v5M9.5 12.5h5"/>']];
 $vname=fn($k)=>isset($vehicles[$k]) ? t($vehicles[$k][1],$vehicles[$k][0]) : (sr_profile_vehicles()[$k] ?? $k);
 
-$showStep1 = !$p || $p['status']==='rejected';
+$wz = sr_wizard_steps($p);
 sr_customer_head(t('Become a Sarathi','सारथी बनिए'), t('Choose your vehicle, add documents, start earning.','गाड़ी चुनिए, काग़ज़ लगाइए, कमाई शुरू कीजिए।'));
 $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 ?>
@@ -152,16 +186,36 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 .dc-pic.has{border-style:solid;border-color:#10C98F}
 .dc-pic em{font-style:normal;font-size:26px}
 .dc-view{font:700 13px 'Noto Sans Devanagari',sans-serif;color:#1D6FD8;min-height:44px;display:inline-flex;align-items:center}
+.wz{display:grid;gap:14px}
+.wz-top{display:flex;align-items:center;gap:10px}
+.wz-back{width:44px;height:44px;border-radius:12px;border:1px solid #E3E8EF;background:#fff;font:800 24px/1 sans-serif;color:#0B1F3A;cursor:pointer;flex:none}
+.wz-back[disabled]{visibility:hidden}
+.wz-count{font:800 13px 'Noto Sans Devanagari',sans-serif;color:#5A6878;white-space:nowrap}
+.wz-bar{flex:1;height:8px;border-radius:9px;background:#E3E8EF;overflow:hidden}.wz-bar i{display:block;height:100%;width:0;background:#FFC83D;border-radius:9px;transition:width .25s}
+.wz-s{display:grid;gap:14px}
+.wz.js .wz-s{display:none}.wz.js .wz-s.on{display:grid}
+.wz-h{display:flex;align-items:center;gap:10px}.wz-h h2{flex:1;margin:0;font:800 22px/1.3 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}
+.ap-field input.big{min-height:60px;font-size:22px;text-align:center}
+.ap-field input.digits{letter-spacing:10px;font-size:28px}
+.sr-hide{position:absolute;left:-9999px}
+.wz-need{margin:0;color:#A3170E;font:700 14px 'Noto Sans Devanagari',sans-serif}
+.dc-pic.need{border-color:#C8261B;background:#FDECEA}
+.wz-done{display:grid;justify-items:center;text-align:center;gap:6px;padding:18px 10px;background:#E7F8F1;border-radius:20px}
+.wz-done span{width:64px;height:64px;border-radius:50%;background:#10C98F;color:#fff;display:grid;place-items:center;font:900 32px sans-serif}
+.wz-done h2{margin:6px 0 0;font:800 20px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}.wz-done p{margin:0;font:600 14px/1.5 'Noto Sans Devanagari',sans-serif;color:#2F4A3F}
 </style>
 
 <section class="sx-card sx-form ap">
-<ol class="ap-steps" aria-label="<?= h(t('Steps','चरण')) ?>">
+<?php if(!$wz): ?><ol class="ap-steps" aria-label="<?= h(t('Steps','चरण')) ?>">
   <li class="<?= $step>1?'ok':'on' ?>"><?= h(t('1. Vehicle','1. गाड़ी')) ?></li>
   <li class="<?= $step>2?'ok':($step===2?'on':'') ?>"><?= h(t('2. Documents','2. काग़ज़')) ?></li>
   <li class="<?= $step===3?'ok':'' ?>"><?= h(t('3. Approval','3. मंज़ूरी')) ?></li>
-</ol>
+</ol><?php endif; ?>
 <?php if($err): ?><p class="ap-msg err" role="alert"><?= h($err) ?></p><?php endif; ?>
-<?php if(get('ok')): ?><p class="ap-msg ok" role="status"><?= h(t('Saved ✓','सेव हो गया ✓')) ?></p><?php endif; ?>
+<?php if(get('ok')==='sent' && $p && !$wz): ?>
+  <div class="wz-done" role="status"><span aria-hidden="true">✓</span><h2><?= h(t('Done! Your application is sent.','हो गया! आपकी अर्ज़ी भेज दी गई।')) ?></h2>
+  <p><?= h($p['status']==='approved' ? t('You can start work now.','अब आप काम शुरू कर सकते हैं।') : t('The office will check and approve you. You will be able to start work after that.','दफ़्तर जाँचकर मंज़ूर करेगा। उसके बाद आप काम शुरू कर पाएँगे।')) ?></p></div>
+<?php elseif(get('ok')): ?><p class="ap-msg ok" role="status"><?= h(t('Saved ✓','सेव हो गया ✓')) ?></p><?php endif; ?>
 
 <?php if($p && $p['status']==='suspended'): ?>
   <p class="ap-msg err"><?= h(sr_profile_status('suspended')) ?><?= ($p['review_note'] ?? '')!=='' ? ' — '.h($p['review_note']) : '' ?></p>
@@ -172,23 +226,55 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
   <p class="ap-msg err"><?= h(t('Correction needed','सुधार चाहिए')) ?><?= ($p['review_note'] ?? '')!=='' ? ': '.h($p['review_note']) : '' ?></p>
 <?php endif; ?>
 
-<?php if($showStep1): ?>
-<form method="post" class="ap">
-  <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-  <h2><?= h(t('Which vehicle will you drive?','आप कौन-सी गाड़ी चलाएँगे?')) ?></h2>
-  <fieldset class="ap-veh"><legend class="sr-only" style="position:absolute;left:-9999px"><?= h(t('Vehicle','गाड़ी')) ?></legend>
-  <?php $cur=post('vehicle_type',$p['vehicle_type'] ?? ''); foreach($vehicles as $key=>$v): ?>
-    <label class="ap-v"><input type="radio" name="vehicle_type" value="<?= h($key) ?>" required <?= $cur===$key?'checked':'' ?>>
-      <svg viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $v[2] ?></svg><?= h(t($v[1],$v[0])) ?></label>
+<?php if($wz): $wzN=count($wz); $start=in_array($errKind,$wz,true)?$errKind:$wz[0];
+  $q=[
+    'vehicle'=>[t('Which vehicle will you drive?','आप कौन-सी गाड़ी चलाएँगे?'),t('Tap your vehicle.','अपनी गाड़ी पर दबाइए।'),t('Which vehicle will you drive? Tap on it.','आप कौन-सी गाड़ी चलाएँगे? उस पर दबाइए।')],
+    'name'=>[t('What is your name?','आपका नाम क्या है?'),t('Full name, as on Aadhaar.','पूरा नाम, जैसा आधार पर लिखा है।'),t('Write your full name as written on your Aadhaar.','अपना पूरा नाम लिखिए, जैसा आधार पर लिखा है।')],
+    'aadhaar'=>[t('Aadhaar card','आधार कार्ड'),t('Last 4 digits and photos of both sides. We never save the full number.','आख़िरी 4 अंक और दोनों तरफ़ की फ़ोटो। पूरा नंबर हम कभी नहीं रखते।'),t('Write the last four digits of your Aadhaar. Then take a photo of the front and the back.','आधार के आख़िरी चार अंक लिखिए। फिर आधार के आगे और पीछे की फ़ोटो लीजिए।')],
+    'pan'=>[t('PAN card','पैन कार्ड'),t('PAN number and a photo of the card.','पैन नंबर और कार्ड की फ़ोटो।'),t('Write your PAN number and take a photo of the PAN card. Then tap send.','अपना पैन नंबर लिखिए और पैन कार्ड की फ़ोटो लीजिए। फिर भेज दीजिए दबाइए।')],
+  ];
+  $tile=function(string $in,string $col,string $label,string $cap='') use ($p,$a) {
+      $has=$p && sr_doc_file_ok($p[$col] ?? ''); $kind=['aadhaar_front'=>'aadhaar_front','aadhaar_back'=>'aadhaar_back','pan_photo'=>'pan'][$col]; ?>
+      <label class="dc-pic <?= $has?'has':'' ?>" data-need="<?= $has?'0':'1' ?>"><input type="file" name="<?= h($in) ?>" accept="image/*" data-shrink>
+        <?php if($has): ?><img src="<?= h(u('/identity-photo.php?id='.(int)$a['id'].'&kind='.$kind)) ?>" alt=""><?php else: ?><em aria-hidden="true">📷</em><?php endif; ?>
+        <span><?= h($label) ?></span></label>
+  <?php };
+?>
+<form method="post" enctype="multipart/form-data" class="wz" id="wz" data-start="<?= h($start) ?>" novalidate>
+  <input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="wizard">
+  <div class="wz-top"><button type="button" class="wz-back" id="wz-back" aria-label="<?= h(t('Back','वापस')) ?>">‹</button>
+    <span class="wz-count" id="wz-count"></span><div class="wz-bar"><i id="wz-bar"></i></div></div>
+  <?php foreach($wz as $i=>$k): [$title,$hint,$say]=$q[$k]; ?>
+  <section class="wz-s" data-k="<?= h($k) ?>">
+    <div class="wz-h"><h2><?= h($title) ?></h2><button type="button" class="dc-say" data-say="<?= h($say) ?>" aria-label="<?= h(t('Listen','सुनिए')) ?>">🔊</button></div>
+    <p class="dc-hint"><?= h($hint) ?></p>
+    <?php if($k==='vehicle'): $cur=post('vehicle_type',$p['vehicle_type'] ?? ''); ?>
+      <div class="ap-veh"><?php foreach($vehicles as $key=>$v): ?>
+        <label class="ap-v"><input type="radio" name="vehicle_type" value="<?= h($key) ?>" required <?= $cur===$key?'checked':'' ?>>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $v[2] ?></svg><?= h(t($v[1],$v[0])) ?></label>
+      <?php endforeach; ?></div>
+    <?php elseif($k==='name'): ?>
+      <label class="ap-field"><span class="sr-hide"><?= h(t('Full name','पूरा नाम')) ?></span><input class="name big" type="text" name="name" required minlength="2" maxlength="80" autocomplete="name" placeholder="<?= h(t('e.g. Ramesh Kumar','जैसे: रमेश कुमार')) ?>" value="<?= h(post('name',$p['name'] ?? '')) ?>"></label>
+    <?php elseif($k==='aadhaar'): ?>
+      <label class="ap-field"><?= h(t('Last 4 digits of Aadhaar','आधार के आख़िरी 4 अंक')) ?><input class="big digits" type="text" name="aadhaar" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="• • • •" value="<?= h(post('aadhaar',$p['aadhaar_last4'] ?? '')) ?>"></label>
+      <div class="dc-pics"><?php $tile('a1','aadhaar_front',t('Front side','आगे का हिस्सा')); $tile('a2','aadhaar_back',t('Back side','पीछे का हिस्सा')); ?></div>
+    <?php elseif($k==='pan'): ?>
+      <label class="ap-field"><?= h(t('PAN number','पैन नंबर')) ?><input class="big" type="text" name="pan" maxlength="10" required pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]" placeholder="ABCDE1234F" autocapitalize="characters" value="<?= h(post('pan',$p['pan_number'] ?? '')) ?>"></label>
+      <div class="dc-pics"><?php $tile('p1','pan_photo',t('PAN card photo','पैन कार्ड की फ़ोटो')); ?></div>
+    <?php endif; ?>
+    <p class="wz-need" hidden><?= h(t('Please fill this step first.','पहले यह भरिए।')) ?></p>
+    <?php if($i<$wzN-1): ?>
+      <button type="button" class="ap-go wz-next"><?= h(t('Next →','आगे →')) ?></button>
+    <?php else: ?>
+      <button type="submit" class="ap-go wz-next"><?= h(t('Send ✓','भेज दीजिए ✓')) ?></button>
+    <?php endif; ?>
+  </section>
   <?php endforeach; ?>
-  </fieldset>
-  <label class="ap-field"><?= h(t('Your full name (as on Aadhaar)','आपका पूरा नाम (आधार के अनुसार)')) ?>
-    <input class="name" type="text" name="name" required minlength="2" maxlength="80" autocomplete="name" value="<?= h(post('name',$p['name'] ?? '')) ?>"></label>
-  <button class="ap-go" type="submit"><?= h($p ? t('Send again →','दोबारा भेजिए →') : t('Next: add documents →','आगे: काग़ज़ लगाइए →')) ?></button>
+  <?php if($p && $p['status']==='approved'): ?><a class="dc-view" href="<?= h(u('/kaam.php')) ?>"><?= h(t('Later — go to work','बाद में — काम पर जाइए')) ?></a><?php endif; ?>
 </form>
 <?php endif; ?>
 
-<?php if($p):
+<?php if($p && !$wz):
   [$done,$total]=sr_doc_count($p); $req=sr_doc_required($p);
   $care=$p['vehicle_type']==='care';
   $docs=[
@@ -279,6 +365,45 @@ document.addEventListener('click', function (e) {
   var v = speechSynthesis.getVoices().filter(function (x) { return x.lang && x.lang.toLowerCase().indexOf(u.lang.toLowerCase().slice(0, 2)) === 0; })[0]; if (v) u.voice = v;
   speechSynthesis.cancel(); speechSynthesis.speak(u);
 }, true);
+// Ek-ek sawaal wala wizard
+(function () {
+  var f = document.getElementById('wz'); if (!f) return;
+  var steps = Array.prototype.slice.call(f.querySelectorAll('.wz-s')), cur = 0, back = document.getElementById('wz-back');
+  var hi = document.documentElement.lang !== 'en';
+  f.classList.add('js');
+  steps.forEach(function (s, i) { if (s.getAttribute('data-k') === f.getAttribute('data-start')) cur = i; });
+  function show(i) {
+    cur = i; steps.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+    document.getElementById('wz-count').textContent = (hi ? 'चरण ' : 'Step ') + (i + 1) + '/' + steps.length;
+    document.getElementById('wz-bar').style.width = Math.round((i + 1) * 100 / steps.length) + '%';
+    back.disabled = i === 0; window.scrollTo(0, 0);
+    var first = steps[i].querySelector('input[type=text]'); if (first && !first.value) setTimeout(function () { first.focus(); }, 150);
+  }
+  function ok(s) {
+    var good = true, need = s.querySelector('.wz-need');
+    s.querySelectorAll('.dc-pic').forEach(function (p) {
+      var inp = p.querySelector('input'), missing = p.getAttribute('data-need') === '1' && !(inp.files && inp.files.length);
+      p.classList.toggle('need', missing); if (missing) good = false;
+    });
+    var radios = s.querySelectorAll('input[type=radio]');
+    if (radios.length && !s.querySelector('input[type=radio]:checked')) good = false;
+    s.querySelectorAll('input[type=text]').forEach(function (t) { if (good && !t.checkValidity()) { t.reportValidity(); good = false; } });
+    need.hidden = good; return good;
+  }
+  f.addEventListener('click', function (e) {
+    var b = e.target.closest('.wz-next'); if (!b) return;
+    if (!ok(steps[cur])) { e.preventDefault(); return; }
+    if (b.type === 'button') { e.preventDefault(); show(cur + 1); }
+    else { b.disabled = true; b.textContent = hi ? 'भेज रहे हैं…' : 'Sending…'; f.submit(); }
+  });
+  f.addEventListener('change', function (e) {
+    if (e.target.type === 'radio') setTimeout(function () { if (cur < steps.length - 1) show(cur + 1); }, 250);
+    var p = e.target.closest('.dc-pic'); if (p) p.classList.remove('need');
+  });
+  f.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.type === 'text') { e.preventDefault(); var n = steps[cur].querySelector('.wz-next'); if (n) n.click(); } });
+  back.addEventListener('click', function () { if (cur > 0) show(cur - 1); });
+  show(cur);
+})();
 // Photo phone par hi chhoti (1600px JPEG) — bada camera photo bhi aaram se upload ho
 document.querySelectorAll('input[data-shrink]').forEach(function (inp) {
   inp.addEventListener('change', function () {

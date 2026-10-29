@@ -1,5 +1,9 @@
 # Partner documents — owner request, 29 October 2026
 
+Joining is a ONE-QUESTION-PER-SCREEN wizard (sr_wizard_steps): vehicle → name → Aadhaar →
+PAN → "भेज दीजिए". No WhatsApp fallback (owner: nobody to handle it). Optional documents
+(selfie, licence, RC) appear only after the wizard, as "ज़रूरी नहीं".
+
 apply.php (inc/identity-apply.php) is a Rapido-Captain style flow: 1) choose vehicle + name,
 2) documents one by one — selfie, Aadhaar (front+back, ONLY last 4 digits stored, masked Aadhaar
 recommended), PAN (number + photo), driving licence (number + front, back optional), RC + vehicle
