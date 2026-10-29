@@ -38,6 +38,7 @@ jobs:
           php tests/sarathi-rider-flow.php
           php tests/sarathi-booking.php
           php tests/sarathi-docs.php
+          php tests/sarathi-e2e.php
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
