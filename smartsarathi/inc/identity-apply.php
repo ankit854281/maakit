@@ -196,6 +196,9 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 .wz.js .wz-s{display:none}.wz.js .wz-s.on{display:grid}
 .wz-h{display:flex;align-items:center;gap:10px}.wz-h h2{flex:1;margin:0;font:800 22px/1.3 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}
 .ap-field input.big{min-height:60px;font-size:22px;text-align:center}
+.ap-field input[type=text]{width:100%;min-width:0;box-sizing:border-box}
+.dc-pics>.dc-pic:only-child{grid-column:1/-1}
+.dc-pics>*{min-width:0}
 .ap-field input.digits{letter-spacing:10px;font-size:28px}
 .sr-hide{position:absolute;left:-9999px}
 .wz-need{margin:0;color:#A3170E;font:700 14px 'Noto Sans Devanagari',sans-serif}
@@ -302,7 +305,7 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
   <?php if($p['status']==='approved'): ?>
     <p class="ap-msg ok"><?= h(t('You are approved ✓','आप मंज़ूर हैं ✓')) ?></p>
     <a class="ap-go" href="<?= h(u('/kaam.php')) ?>"><?= h(t('Start work →','काम शुरू कीजिए →')) ?></a>
-  <?php elseif($p['status']==='pending'): ?>
+  <?php elseif($p['status']==='pending' && get('ok')!=='sent'): ?>
     <p class="ap-msg wait"><?= h($done<$total ? t('Add Aadhaar and PAN so the office can approve you.','आधार और पैन लगाइए ताकि दफ़्तर मंज़ूर कर सके।') : t('Aadhaar and PAN received ✓ — the office is checking. Call if urgent.','आधार और पैन मिल गए ✓ — दफ़्तर जाँच कर रहा है। जल्दी हो तो फ़ोन कीजिए।')) ?></p>
   <?php endif; ?>
 
