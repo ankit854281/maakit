@@ -648,7 +648,9 @@ function sr_ride_fits($want) {
 function maps_next($j) {
     $picked = ($j['status'] ?? '') === 'picked';
     $geo = $picked ? ($j['drop_geo'] ?? '') : ($j['pick_geo'] ?? '');
-    if (preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/', (string)$geo)) return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($geo);
+    // Phone par seedha awaaz wala navigation (dir_action=navigate); bike ke liye do-pahiya raasta
+    $mode = in_array($j['vehicle'] ?? '', ['bike', 'ev', 'cycle'], true) || (($j['kind'] ?? '') === 'delivery') ? 'two-wheeler' : 'driving';
+    if (preg_match('/^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/', (string)$geo)) return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($geo) . '&travelmode=' . $mode . '&dir_action=navigate';
     if (!$picked && !empty($j['pick_address'])) return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($j['pick_address'] . ', Uttar Pradesh');
     return maps_link($j);
 }
