@@ -1,3 +1,13 @@
+# Partner vehicle, area and rules — owner request, 29 October 2026
+
+Joining wizard: vehicle (bike, auto, e-rickshaw, car/Bolero, loader, BUS, care) → vehicle company/
+model + number (required, not for care) → name → work area (town from sr_work_areas(), with real
+coordinates) + how far (5/10/20/50 km) → Aadhaar → PAN + "I agree" to niyam.php (SR_TERMS_VER).
+job_auto_give() now only gives an order to a rider whose area covers the pickup (fresh GPS ≤10 min,
+else the town centre) and prefers the nearest; riders with no area chosen come last.
+Approval copies model → riders.vehicle, number → rc_number, area/km → riders.work_area/work_km.
+Changing SR_TERMS_VER makes every partner accept the rules again.
+
 # Partner documents — owner request, 29 October 2026
 
 Joining is a ONE-QUESTION-PER-SCREEN wizard (sr_wizard_steps): vehicle → name → Aadhaar →

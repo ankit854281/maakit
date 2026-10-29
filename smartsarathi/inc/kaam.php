@@ -201,20 +201,49 @@ function job_auto_give(PDO $pdo, $jid) {
         $cond = "r.do_delivery = 1";
     }
     $st = $pdo->prepare(
-        "SELECT r.id,
+        "SELECT r.id, r.last_lat, r.last_lng, r.work_area, r.work_km,
+                TIMESTAMPDIFF(SECOND, r.last_location_at, UTC_TIMESTAMP()) AS loc_age,
                 (SELECT COUNT(*) FROM jobs j
                   WHERE j.rider_id = r.id AND j.status IN ('assigned','picked')) AS abhi
            FROM riders r
           WHERE r.active = 1 AND r.ready_until > NOW() AND $cond $approval
        ORDER BY abhi ASC, r.id ASC
-          LIMIT 1");
+          LIMIT 200");
     $st->execute($args);
-    $r = $st->fetch();
-    if (!$r) return null;
+    $list = $st->fetchAll();
+    if (!$list) return null;
+
+    // Ilaka: pickup se rider ki doori (taaza GPS, warna uske kasbe ka centre) uski chuni hui hadd ke andar.
+    // Sabse kam chalu kaam wala, phir sabse paas wala. Jisne ilaka nahi chuna, wo sabse aakhir me.
+    $gq = $pdo->prepare("SELECT pick_geo FROM jobs WHERE id=?"); $gq->execute([(int)$jid]);
+    $pick = sr_geo_parse((string)$gq->fetchColumn());
+    $areas = function_exists('sr_work_areas') ? sr_work_areas() : [];
+    $best = null; $bestKey = null;
+    foreach ($list as $r) {
+        $pt = null;
+        if ($r['last_lat'] !== null && $r['loc_age'] !== null && (int)$r['loc_age'] <= 600) $pt = [(float)$r['last_lat'], (float)$r['last_lng']];
+        elseif (isset($areas[$r['work_area']])) $pt = [$areas[$r['work_area']][2], $areas[$r['work_area']][3]];
+        $d = 9999;
+        if ($pick && $pt) {
+            $d = sr_geo_km($pick, $pt);
+            if ((int)$r['work_km'] > 0 && $d > (int)$r['work_km'] + 1) continue;   // ilake ke bahar
+        }
+        $key = [(int)$r['abhi'], (int)$r['work_km'] > 0 ? 0 : 1, $d, (int)$r['id']];
+        if ($bestKey === null || $key < $bestKey) { $best = $r; $bestKey = $key; }
+    }
+    if (!$best) return null;
 
     $up = $pdo->prepare("UPDATE jobs SET rider_id=?, status='assigned' WHERE id=? AND status='new'");
-    $up->execute([(int)$r['id'], (int)$jid]);
-    return $up->rowCount() === 1 ? (int)$r['id'] : null;
+    $up->execute([(int)$best['id'], (int)$jid]);
+    return $up->rowCount() === 1 ? (int)$best['id'] : null;
+}
+function sr_geo_parse($g) {
+    return preg_match('/^(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/', trim((string)$g), $m) ? [(float)$m[1], (float)$m[2]] : null;
+}
+function sr_geo_km(array $a, array $b) {
+    $r = 6371; $dl = deg2rad($b[0] - $a[0]); $dn = deg2rad($b[1] - $a[1]);
+    $x = sin($dl / 2) ** 2 + cos(deg2rad($a[0])) * cos(deg2rad($b[0])) * sin($dn / 2) ** 2;
+    return 2 * $r * asin(min(1, sqrt($x)));
 }
 
 /** जो काम अभी किसी को नहीं दिया गया */
@@ -497,6 +526,9 @@ function sr_jobs_upgrade(PDO $pdo) {
         if (!in_array('last_lat', $rh, true))    $pdo->exec("ALTER TABLE riders ADD COLUMN last_lat DECIMAL(10,7) DEFAULT NULL");
         if (!in_array('last_lng', $rh, true))    $pdo->exec("ALTER TABLE riders ADD COLUMN last_lng DECIMAL(10,7) DEFAULT NULL");
         if (!in_array('last_location_at', $rh, true)) $pdo->exec("ALTER TABLE riders ADD COLUMN last_location_at DATETIME DEFAULT NULL");
+        // Kaam ka ilaka (owner, 29 Oct 2026): order sirf ilake ke andar wale, sabse paas wale ko
+        if (!in_array('work_area', $rh, true)) $pdo->exec("ALTER TABLE riders ADD COLUMN work_area VARCHAR(20) NOT NULL DEFAULT ''");
+        if (!in_array('work_km', $rh, true))   $pdo->exec("ALTER TABLE riders ADD COLUMN work_km SMALLINT NOT NULL DEFAULT 0");
     } catch (Throwable $e) { error_log('Sarathi jobs upgrade: ' . $e->getMessage()); }
 }
 
@@ -534,7 +566,7 @@ function rider_location_clear_if_idle(PDO $pdo, $rid) {
 /** Gaadi ke prakaar (rider ka vtype) */
 function sr_vtypes() {
     return ['cycle' => t('Bicycle', 'साइकिल'), 'bike' => t('Motorcycle', 'बाइक'), 'ev' => t('Electric scooter', 'बिजली स्कूटी'),
-            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'car' => t('Car / Bolero', 'कार / बोलेरो'), 'loader' => t('Loader / Magic', 'लोडर / मैजिक'), 'care' => t('Care Saathi', 'केयर साथी'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
+            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'car' => t('Car / Bolero', 'कार / बोलेरो'), 'loader' => t('Loader / Magic', 'लोडर / मैजिक'), 'bus' => t('Bus', 'बस'), 'care' => t('Care Saathi', 'केयर साथी'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
 }
 /** Arzi ke likhe hue gaadi naam se vtype */
 function sr_vtype_guess($label) {
@@ -546,7 +578,7 @@ function sr_vtype_guess($label) {
 }
 /** Sawari ki gaadi maangi gayi ho to kaun-kaun si rider gaadi chalegi */
 function sr_ride_fits($want) {
-    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto'], 'car' => ['car'], 'loader' => ['loader']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
+    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto'], 'car' => ['car'], 'loader' => ['loader'], 'bus' => ['bus']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
 }
 
 /** Abhi kahan jaana hai — uthana baaki ho to pickup, warna drop. GPS ho to seedha wahi. */

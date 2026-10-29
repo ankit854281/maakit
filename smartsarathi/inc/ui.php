@@ -62,7 +62,7 @@ function sr_assets() {
 function sr_app_kind(): string {
     $page = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
     if ($page === 'ghar.php') return 'customer';
-    if (in_array($page, ['sarathi.php','kaam.php','apply.php','khata.php','beete.php','madad.php','jankari.php','proof.php','otp.php'], true)) return 'partner';
+    if (in_array($page, ['sarathi.php','niyam.php','kaam.php','apply.php','khata.php','beete.php','madad.php','jankari.php','proof.php','otp.php'], true)) return 'partner';
     if (($_SESSION['sr_intent'] ?? '') === 'partner' || ($_SESSION['sr_mode'] ?? '') === 'rider') return 'partner';
     return 'customer';
 }

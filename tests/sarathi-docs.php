@@ -50,4 +50,22 @@ sr_profile_set_doc($pdo, $c, 'photo', ['photo' => $keep = $f()], []);
 sr_profile_resubmit($pdo, $c, 'Care Saathi Two', 'care');
 $cp = sr_profile($pdo, (int)$c['id']);
 dc_check($cp['status'] === 'pending' && $cp['photo'] === $keep && $cp['name'] === 'Care Saathi Two', 'resubmit keeps documents');
+
+// Vehicle details, area, rules — and area-aware dispatch
+sr_identity_signin($pdo, ['uid' => 'dc-area', 'mobile' => '9000000404']); $z = sr_account($pdo); $zs = $_SESSION;
+sr_profile_submit($pdo, $z, ['name' => 'Area Rider', 'vehicle_type' => 'bike', 'vehicle_number' => 'UP66AB4040'], '', '');
+sr_profile_set_details($pdo, $z, ['vehicle_model' => 'Hero Splendor', 'work_area' => 'gopiganj', 'work_km' => 5, 'terms_at' => date('Y-m-d H:i:s'), 'terms_ver' => SR_TERMS_VER]);
+$zp = sr_profile($pdo, (int)$z['id']);
+$_SESSION = $admin; sr_profile_review($pdo, (int)$z['id'], (int)$zp['revision'], 'approved', 'CI');
+$zp = sr_profile($pdo, (int)$z['id']); $zr = $pdo->query('SELECT * FROM riders WHERE id=' . (int)$zp['rider_id'])->fetch();
+dc_check($zr['vehicle'] === 'Hero Splendor' && $zr['rc_number'] === 'UP66AB4040' && $zr['work_area'] === 'gopiganj' && (int)$zr['work_km'] === 5, 'approval copies model, number and area to the rider');
+duty_on($pdo, (int)$zr['id']);
+$pdo->exec("INSERT INTO clients(name,fee) VALUES ('Area client',20)"); $cl = $pdo->query('SELECT * FROM clients WHERE id=' . (int)$pdo->lastInsertId())->fetch();
+$far = job_create($pdo, $cl, ['ref' => 'AREA-far', 'drop_name' => 'Far Customer', 'drop_mobile' => '9000000444', 'drop_address' => 'Suriyawan', 'pick_address' => 'Suriyawan', 'pick_geo' => '25.467,82.417', 'drop_geo' => '25.47,82.42']);
+$farJob = $pdo->query("SELECT rider_id FROM jobs WHERE client_ref='AREA-far'")->fetch();
+dc_check((int)$farJob['rider_id'] !== (int)$zr['id'], 'order outside the chosen area is not given to that rider');
+job_create($pdo, $cl, ['ref' => 'AREA-near', 'drop_name' => 'Near Customer', 'drop_mobile' => '9000000445', 'drop_address' => 'Gopiganj', 'pick_address' => 'Gopiganj', 'pick_geo' => '25.285,82.435', 'drop_geo' => '25.29,82.44']);
+$nearJob = $pdo->query("SELECT rider_id FROM jobs WHERE client_ref='AREA-near'")->fetch();
+dc_check((int)$nearJob['rider_id'] === (int)$zr['id'], 'order inside the area goes to the nearby rider');
+dc_check(abs(sr_geo_km([25.42, 82.57], [25.35, 82.47]) - 12.8) < 1.5, 'distance Bhadohi–Gyanpur about 13 km');
 echo "Documents: all checks passed\n";

@@ -120,7 +120,9 @@ function sr_docs_upgrade(PDO $pdo): void {
     static $done=false; if($done) return; $done=true;
     $cols=['aadhaar_front'=>"VARCHAR(80) NOT NULL DEFAULT ''",'aadhaar_back'=>"VARCHAR(80) NOT NULL DEFAULT ''",'aadhaar_last4'=>"CHAR(4) NOT NULL DEFAULT ''",
         'pan_photo'=>"VARCHAR(80) NOT NULL DEFAULT ''",'pan_number'=>"VARCHAR(10) NOT NULL DEFAULT ''",'dl_number'=>"VARCHAR(20) NOT NULL DEFAULT ''",
-        'dl_back'=>"VARCHAR(80) NOT NULL DEFAULT ''",'rc_photo'=>"VARCHAR(80) NOT NULL DEFAULT ''"];
+        'dl_back'=>"VARCHAR(80) NOT NULL DEFAULT ''",'rc_photo'=>"VARCHAR(80) NOT NULL DEFAULT ''",
+        'vehicle_model'=>"VARCHAR(60) NOT NULL DEFAULT ''",'work_area'=>"VARCHAR(20) NOT NULL DEFAULT ''",'work_km'=>"SMALLINT NOT NULL DEFAULT 0",
+        'terms_at'=>"DATETIME DEFAULT NULL",'terms_ver'=>"VARCHAR(12) NOT NULL DEFAULT ''"];
     try {
         $have=$pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='sr_rider_profiles'")->fetchAll(PDO::FETCH_COLUMN);
         $add=[]; foreach($cols as $c=>$def) if(!in_array($c,$have,true)) $add[]="ADD COLUMN $c $def";
@@ -131,6 +133,34 @@ function sr_docs_upgrade(PDO $pdo): void {
 function sr_doc_kinds(): array {
     return ['photo'=>[['photo'],[]], 'aadhaar'=>[['aadhaar_front','aadhaar_back'],['aadhaar_last4']], 'pan'=>[['pan_photo'],['pan_number']],
         'licence'=>[['licence_photo','dl_back'],['dl_number']], 'rc'=>[['rc_photo'],['vehicle_number']]];
+}
+/** Partner ke niyam ka version — badlein to naya version likhiye, sab se dobara manwaya jayega */
+const SR_TERMS_VER = '2026-10-29';
+/** Kaam ka ilaka: kasba => [Hindi, English, lat, lng] (Wikipedia coordinates, Oct 2026) */
+function sr_work_areas(): array {
+    return ['bhadohi'=>['भदोही','Bhadohi',25.42,82.57], 'gyanpur'=>['ज्ञानपुर','Gyanpur',25.35,82.47], 'gopiganj'=>['गोपीगंज','Gopiganj',25.283,82.433],
+        'aurai'=>['औराई','Aurai',25.28,82.55], 'suriyawan'=>['सुरियावाँ','Suriyawan',25.467,82.417], 'khamaria'=>['खमरिया','Khamaria',25.2425,82.5083],
+        'chauri'=>['चौरी','Chauri',25.3858,82.5839]];
+}
+/** Kitni door tak: km => label (50 = zile ke bahar bhi) */
+function sr_work_kms(): array {
+    return [5=>t('Up to 5 km','5 किमी तक'), 10=>t('Up to 10 km','10 किमी तक'), 20=>t('Up to 20 km (whole district)','20 किमी तक (पूरा ज़िला)'), 50=>t('Outstation too','ज़िले के बाहर भी')];
+}
+/** Gaadi ki jaankari, ilaka, niyam — ek jagah. Manzoor rider ho to riders table me bhi. */
+function sr_profile_set_details(PDO $pdo, array $a, array $f): void {
+    $ok=['vehicle_model','vehicle_number','work_area','work_km','terms_at','terms_ver'];
+    $set=[]; $vals=[];
+    foreach($f as $c=>$v) { if(!in_array($c,$ok,true)) throw new RuntimeException('Invalid submission'); $set[]="$c=?"; $vals[]=$v; }
+    if(!$set) return;
+    $vals[]=$a['id'];
+    $pdo->prepare('UPDATE sr_rider_profiles SET '.implode(',',$set).' WHERE account_id=?')->execute($vals);
+    $p=sr_profile($pdo,(int)$a['id']);
+    if($p && $p['rider_id']) sr_rider_sync_details($pdo,$p);
+}
+function sr_rider_sync_details(PDO $pdo, array $p): void {
+    $model=trim((string)($p['vehicle_model'] ?? ''));
+    $pdo->prepare('UPDATE riders SET vehicle=?,rc_number=?,work_area=?,work_km=? WHERE id=?')->execute([
+        mb_substr($model!=='' ? $model : (string)$p['vehicle_type'],0,30), (string)$p['vehicle_number'], (string)($p['work_area'] ?? ''), (int)($p['work_km'] ?? 0), (int)$p['rider_id']]);
 }
 function sr_doc_file_ok($v): bool { return (bool)preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$v); }
 /** Owner rule (29 Oct 2026): sirf Aadhaar aur PAN zaroori. Licence/RC daftar nahi jaanchta (gaadi kiraye par bhi ho sakti hai). */
@@ -215,7 +245,7 @@ function sr_identity_rider_allowed(PDO $pdo, int $rid): bool {
 function sr_profile_vehicles(): array {
     return ['bike'=>t('Bike rider (ride & parcel)','बाइक राइडर (सवारी और पार्सल)'), 'ev'=>t('Electric scooter','इलेक्ट्रिक स्कूटी'),
         'auto'=>t('Auto','ऑटो'), 'erick'=>t('E-rickshaw','ई-रिक्शा'), 'car'=>t('Cab / Bolero (local & outstation)','कैब / बोलेरो (शहर और बाहर)'),
-        'loader'=>t('Loader / Magic','लोडर / मैजिक'), 'care'=>t('Care Saathi (hospital & elderly help)','केयर साथी (अस्पताल और बुज़ुर्ग सेवा)')];
+        'loader'=>t('Loader / Magic','लोडर / मैजिक'), 'bus'=>t('Bus','बस'), 'care'=>t('Care Saathi (hospital & elderly help)','केयर साथी (अस्पताल और बुज़ुर्ग सेवा)')];
 }
 function sr_profile_photo(string $field): string {
     $f=$_FILES[$field] ?? [];
@@ -268,6 +298,8 @@ function sr_profile_review(PDO $pdo, int $id, int $revision, string $decision, s
             }
             // Preserve rates, jobs and earnings. Approval grants both work categories.
             $pdo->prepare('UPDATE riders SET name=?,vehicle=?,rc_number=?,vtype=?,ride_ok=1,do_ride=1,do_delivery=1,ready_until=NULL WHERE id=?')->execute([$p['name'],$p['vehicle_type'],$p['vehicle_number'],$p['vehicle_type'],$rid]);
+            $p['rider_id']=$rid; sr_rider_sync_details($pdo,$p);
+            if(($p['dl_number'] ?? '')!=='') $pdo->prepare('UPDATE riders SET dl_number=? WHERE id=?')->execute([$p['dl_number'],$rid]);
         }
         if($decision==='suspended' && $rid) $pdo->prepare('UPDATE riders SET ready_until=NULL WHERE id=?')->execute([$rid]);
         $pdo->prepare('UPDATE sr_rider_profiles SET status=?,rider_id=?,review_note=?,reviewed_by=?,reviewed_at=NOW(),revision=revision+1 WHERE account_id=?')->execute([$decision,$rid,$note?:null,$actor['id'],$id]);

@@ -26,7 +26,8 @@ sr_customer_head(t('Review riders','राइडर मंज़ूरी'),t('C
 <?php if(!$rows): ?><p><?= h(t('No profiles in this list.','इस सूची में कोई प्रोफ़ाइल नहीं है।')) ?></p><?php endif; ?>
 <?php foreach($rows as $p): ?>
 <article class="sx-card">
-<h2><?= h($p['name']) ?></h2><p>+91 <?= h($p['mobile']) ?> · <?= h(sr_profile_vehicles()[$p['vehicle_type']] ?? $p['vehicle_type']) ?></p>
+<h2><?= h($p['name']) ?></h2><p>+91 <?= h($p['mobile']) ?> · <?= h(sr_profile_vehicles()[$p['vehicle_type']] ?? $p['vehicle_type']) ?><?= ($p['vehicle_model'] ?? '')!=='' ? ' · '.h($p['vehicle_model']) : '' ?><?= $p['vehicle_number']!=='' ? ' · <b>'.h($p['vehicle_number']).'</b>' : '' ?></p>
+<?php $ar=sr_work_areas()[$p['work_area'] ?? ''] ?? null; ?><p><?= h(t('Area','इलाका')) ?>: <?= $ar ? h(t($ar[1],$ar[0])).' · '.h(sr_work_kms()[(int)$p['work_km']] ?? '') : h(t('not chosen','नहीं चुना')) ?> · <?= h(t('Rules','नियम')) ?>: <?= !empty($p['terms_at']) ? h(t('accepted','माने').' '.date('d M Y',strtotime($p['terms_at']))) : h(t('not yet','अभी नहीं')) ?></p>
 <?php [$dd,$dt]=sr_doc_count($p); $link=fn($kind,$label)=>'<a target="_blank" rel="noopener" href="'.h(u('/identity-photo.php?id='.(int)$p['account_id'].'&kind='.$kind)).'">'.h($label).'</a>'; $miss=h(t('missing','नहीं')); ?>
 <p><b><?= h(t('Aadhaar + PAN','आधार + पैन')) ?> <?= (int)$dd ?>/<?= (int)$dt ?></b> · <?= h(t('licence/RC optional','लाइसेंस/RC ज़रूरी नहीं')) ?></p>
 <ul style="margin:0 0 8px;padding-left:18px;line-height:1.9">

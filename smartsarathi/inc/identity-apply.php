@@ -32,6 +32,10 @@ function sr_apply_error(string $m): string {
         'Need front'=>t('Add the photo of the front side.','आगे वाले हिस्से की फ़ोटो लगाइए।'),
         'Need back'=>t('Add the photo of the back side too.','पीछे वाले हिस्से की फ़ोटो भी लगाइए।'),
         'Need photo'=>t('Add the photo.','फ़ोटो लगाइए।'),
+        'Invalid model'=>t('Write the company and model of your vehicle, e.g. Hero Splendor.','गाड़ी की कंपनी और मॉडल लिखिए, जैसे: हीरो स्प्लेंडर'),
+        'Invalid area'=>t('Choose the area where you will work.','अपना काम का इलाका चुनिए।'),
+        'Invalid km'=>t('Choose how far you will go.','कितनी दूर तक जाएँगे, चुनिए।'),
+        'Need terms'=>t('Read the rules and tick “I agree”.','नियम और शर्तें पढ़कर “मैं मानता/मानती हूँ” पर ✓ लगाइए।'),
         'Rate limit'=>t('Too many attempts. Try again after some time.','बहुत कोशिश हुई। कुछ देर बाद कोशिश कीजिए।'),
     ];
     if(isset($map[$m])) return $map[$m];
@@ -43,11 +47,17 @@ function sr_apply_error(string $m): string {
 /** Wizard ke sawaal: naya / lautaya profile → gaadi + naam; jo zaroori kaagaz baaki hai → Aadhaar, PAN */
 function sr_wizard_steps(?array $p): array {
     if($p && $p['status']==='suspended') return [];
-    $s=[]; if(!$p || $p['status']==='rejected') { $s[]='vehicle'; $s[]='name'; }
+    $s=[]; $fresh=!$p || $p['status']==='rejected';
+    if($fresh) $s[]='vehicle';
+    if($fresh || (($p['vehicle_type'] ?? '')!=='care' && (($p['vehicle_number'] ?? '')==='' || ($p['vehicle_model'] ?? '')===''))) $s[]='details';
+    if($fresh) $s[]='name';
+    if($fresh || ($p['work_area'] ?? '')==='') $s[]='area';
     if(!$p || !sr_doc_done($p,'aadhaar')) $s[]='aadhaar';
     if(!$p || !sr_doc_done($p,'pan')) $s[]='pan';
+    if(!$s && empty($p['terms_at'])) $s[]='terms';
     return $s;
 }
+function sr_terms_needed(?array $p): bool { return !$p || $p['status']==='rejected' || empty($p['terms_at']) || ($p['terms_ver'] ?? '')!==SR_TERMS_VER; }
 function sr_clean_code(string $v): string { return strtoupper(preg_replace('/[^A-Za-z0-9]/','',$v)); }
 
 if($_SERVER['REQUEST_METHOD']==='POST') {
@@ -91,8 +101,30 @@ if($_SERVER['REQUEST_METHOD']==='POST') {
         $errKind='vehicle';
         $nm=trim((string)post('name')); $vt=(string)post('vehicle_type');
         if(in_array('vehicle',$steps,true) && !isset(sr_profile_vehicles()[$vt])) throw new RuntimeException('Invalid vehicle type');
+        $isCare = in_array('vehicle',$steps,true) ? $vt==='care' : (($p['vehicle_type'] ?? '')==='care');
+        $det=[];
+        if(in_array('details',$steps,true) && !$isCare) {
+            $errKind='details';
+            $model=trim(preg_replace('/\s+/',' ',(string)post('vehicle_model')));
+            if(mb_strlen($model)<2 || mb_strlen($model)>60) throw new RuntimeException('Invalid model');
+            $vn=sr_clean_code((string)post('vehicle_number'));
+            if(!preg_match('/^([A-Z]{2}[0-9]{1,2}[A-Z]{0,3}[0-9]{1,4}|[0-9]{2}BH[0-9]{4}[A-Z]{1,2})$/D',$vn)) throw new RuntimeException('Invalid vehicle number');
+            $det['vehicle_model']=$model; $det['vehicle_number']=$vn;
+        }
         $errKind='name';
         if(in_array('name',$steps,true) && (mb_strlen($nm)<2 || mb_strlen($nm)>80)) throw new RuntimeException('Invalid name');
+        if(in_array('area',$steps,true)) {
+            $errKind='area';
+            $ar=(string)post('work_area'); $km=(int)post('work_km');
+            if(!isset(sr_work_areas()[$ar])) throw new RuntimeException('Invalid area');
+            if(!isset(sr_work_kms()[$km])) throw new RuntimeException('Invalid km');
+            $det['work_area']=$ar; $det['work_km']=$km;
+        }
+        if(sr_terms_needed($p)) {
+            $errKind=end($steps);
+            if(post('terms')!=='1') throw new RuntimeException('Need terms');
+            $det['terms_at']=date('Y-m-d H:i:s'); $det['terms_ver']=SR_TERMS_VER;
+        }
         $docsIn=[];
         if(in_array('aadhaar',$steps,true)) {
             $errKind='aadhaar';
@@ -115,6 +147,7 @@ if($_SERVER['REQUEST_METHOD']==='POST') {
         $errKind='vehicle';
         if(!$p) sr_profile_submit($pdo,$a,['name'=>$nm,'vehicle_type'=>$vt,'vehicle_number'=>''],'','');
         elseif(in_array('name',$steps,true)) sr_profile_resubmit($pdo,$a,$nm,$vt);
+        sr_profile_set_details($pdo,$a,$det);
         foreach($docsIn as $kind=>[$files,$fields]) { $errKind=$kind; sr_profile_set_doc($pdo,$a,$kind,$files,$fields); }
         $saved=[];
         try_ok($pdo,'profile:'.$a['id']); redirect('/apply.php?ok=sent');
@@ -130,6 +163,7 @@ $vehicles=['bike'=>['बाइक','Bike','<circle cx="5.5" cy="17" r="3.5"/><ci
     'erick'=>['ई-रिक्शा','E-rickshaw','<path d="M3 16V8h10l4 4h4v4"/><path d="M3 8l2-3h8M13 8v4h8"/><circle cx="7" cy="17" r="2"/><circle cx="18" cy="17" r="2"/><path d="M15 3l-2 3h3l-2 3"/>'],
     'car'=>['कार / बोलेरो','Car / Bolero','<path d="M3 16v-4l2-5h14l2 5v4z"/><path d="M3 12h18"/><circle cx="7" cy="16.5" r="2"/><circle cx="17" cy="16.5" r="2"/>'],
     'loader'=>['लोडर / मैजिक','Loader / Magic','<path d="M2 6h11v10H2zM13 9h5l3 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/>'],
+    'bus'=>['बस','Bus','<rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 10h16M8 3v7M16 3v7"/><circle cx="8" cy="19" r="1.6"/><circle cx="16" cy="19" r="1.6"/>'],
     'care'=>['अस्पताल साथी','Hospital Saathi','<path d="M12 21s-7-4.6-9.2-9A5 5 0 0 1 12 6a5 5 0 0 1 9.2 6c-2.2 4.4-9.2 9-9.2 9z"/><path d="M12 10v5M9.5 12.5h5"/>']];
 $vname=fn($k)=>isset($vehicles[$k]) ? t($vehicles[$k][1],$vehicles[$k][0]) : (sr_profile_vehicles()[$k] ?? $k);
 
@@ -201,6 +235,15 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 .dc-pics>*{min-width:0}
 .ap-field input.digits{letter-spacing:10px;font-size:28px}
 .sr-hide{position:absolute;left:-9999px}
+.ap-sum{display:grid;gap:2px;background:#F7F9FB;border:1px solid #E3E8EF;border-radius:14px;padding:12px 14px;font:700 14px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}.ap-sum span{font-weight:600;color:#41505F}
+.wz-chips{border:0;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wz-chips legend{font:800 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;margin-bottom:8px;padding:0}
+.wz-chip{position:relative;display:flex;align-items:center;justify-content:center;min-height:52px;border:2px solid #E3E8EF;border-radius:14px;background:#fff;font:800 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;cursor:pointer;text-align:center;padding:6px}
+.wz-chip input{position:absolute;opacity:0;pointer-events:none}
+.wz-chip:has(input:checked){border-color:#0B1F3A;background:#FFF8E1;box-shadow:0 0 0 3px rgba(255,200,61,.45)}
+.wz-terms{display:flex;gap:12px;align-items:flex-start;background:#F7F9FB;border:1px solid #E3E8EF;border-radius:14px;padding:12px;font:600 14px/1.5 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
+.wz-terms input{width:24px;height:24px;flex:none;margin-top:2px;accent-color:#0B1F3A}
+.wz-terms a{color:#1D6FD8;font-weight:800}
 .wz-need{margin:0;color:#A3170E;font:700 14px 'Noto Sans Devanagari',sans-serif}
 .dc-pic.need{border-color:#C8261B;background:#FDECEA}
 .wz-done{display:grid;justify-items:center;text-align:center;gap:6px;padding:18px 10px;background:#E7F8F1;border-radius:20px}
@@ -232,6 +275,9 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 <?php if($wz): $wzN=count($wz); $start=in_array($errKind,$wz,true)?$errKind:$wz[0];
   $q=[
     'vehicle'=>[t('Which vehicle will you drive?','आप कौन-सी गाड़ी चलाएँगे?'),t('Tap your vehicle.','अपनी गाड़ी पर दबाइए।'),t('Which vehicle will you drive? Tap on it.','आप कौन-सी गाड़ी चलाएँगे? उस पर दबाइए।')],
+    'details'=>[t('Your vehicle details','आपकी गाड़ी की जानकारी'),t('Customers will see this, so they can find your vehicle.','यह ग्राहक को दिखेगा ताकि वह आपकी गाड़ी पहचान सके।'),t('Write your vehicle company and model, like Hero Splendor or Bolero. Then write the vehicle number from the number plate.','अपनी गाड़ी की कंपनी और मॉडल लिखिए, जैसे हीरो स्प्लेंडर या बोलेरो। फिर नंबर प्लेट से गाड़ी का नंबर लिखिए।')],
+    'area'=>[t('Where will you work?','आप कहाँ काम करेंगे?'),t('Orders come only from this area — nearest Sarathi gets it first.','इसी इलाके के ऑर्डर आएँगे — सबसे पास वाले सारथी को पहले।'),t('Choose your town, then choose how far you will go for work.','अपना कस्बा चुनिए, फिर चुनिए कि काम के लिए कितनी दूर तक जाएँगे।')],
+    'terms'=>[t('Rules for Sarathi partners','सारथी पार्टनर के नियम'),t('Please read once and agree.','एक बार पढ़कर मंज़ूर कीजिए।'),t('Please read the rules once and tick I agree.','कृपया नियम एक बार पढ़िए और मैं मानता हूँ पर टिक लगाइए।')],
     'name'=>[t('What is your name?','आपका नाम क्या है?'),t('Full name, as on Aadhaar.','पूरा नाम, जैसा आधार पर लिखा है।'),t('Write your full name as written on your Aadhaar.','अपना पूरा नाम लिखिए, जैसा आधार पर लिखा है।')],
     'aadhaar'=>[t('Aadhaar card','आधार कार्ड'),t('Last 4 digits and photos of both sides. We never save the full number.','आख़िरी 4 अंक और दोनों तरफ़ की फ़ोटो। पूरा नंबर हम कभी नहीं रखते।'),t('Write the last four digits of your Aadhaar. Then take a photo of the front and the back.','आधार के आख़िरी चार अंक लिखिए। फिर आधार के आगे और पीछे की फ़ोटो लीजिए।')],
     'pan'=>[t('PAN card','पैन कार्ड'),t('PAN number and a photo of the card.','पैन नंबर और कार्ड की फ़ोटो।'),t('Write your PAN number and take a photo of the PAN card. Then tap send.','अपना पैन नंबर लिखिए और पैन कार्ड की फ़ोटो लीजिए। फिर भेज दीजिए दबाइए।')],
@@ -248,7 +294,7 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
   <div class="wz-top"><button type="button" class="wz-back" id="wz-back" aria-label="<?= h(t('Back','वापस')) ?>">‹</button>
     <span class="wz-count" id="wz-count"></span><div class="wz-bar"><i id="wz-bar"></i></div></div>
   <?php foreach($wz as $i=>$k): [$title,$hint,$say]=$q[$k]; ?>
-  <section class="wz-s" data-k="<?= h($k) ?>">
+  <section class="wz-s" data-k="<?= h($k) ?>"<?= $k==='details' ? ' data-nocare' : '' ?>>
     <div class="wz-h"><h2><?= h($title) ?></h2><button type="button" class="dc-say" data-say="<?= h($say) ?>" aria-label="<?= h(t('Listen','सुनिए')) ?>">🔊</button></div>
     <p class="dc-hint"><?= h($hint) ?></p>
     <?php if($k==='vehicle'): $cur=post('vehicle_type',$p['vehicle_type'] ?? ''); ?>
@@ -256,6 +302,23 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
         <label class="ap-v"><input type="radio" name="vehicle_type" value="<?= h($key) ?>" required <?= $cur===$key?'checked':'' ?>>
         <svg viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $v[2] ?></svg><?= h(t($v[1],$v[0])) ?></label>
       <?php endforeach; ?></div>
+    <?php elseif($k==='details'):
+      $models=['bike'=>['Hero Splendor','Hero HF Deluxe','Honda Shine','Bajaj Platina','Bajaj Pulsar','TVS Apache','Honda Activa','TVS Jupiter'],
+        'auto'=>['Bajaj RE','Piaggio Ape','Mahindra Alfa','TVS King'], 'erick'=>['Mahindra Treo','YC Electric','Mini Metro'],
+        'car'=>['Mahindra Bolero','Mahindra Scorpio','Maruti Ertiga','Maruti Dzire','Maruti Swift','Toyota Innova','Tata Sumo'],
+        'loader'=>['Tata Ace','Mahindra Supro','Maruti Super Carry','Mahindra Bolero Pickup','Ashok Leyland Dost'],
+        'bus'=>['Force Traveller','Tata Bus','Ashok Leyland Bus','Eicher Bus']]; ?>
+      <?php foreach($models as $vk=>$ml): ?><datalist id="ml-<?= h($vk) ?>"><?php foreach($ml as $m): ?><option value="<?= h($m) ?>"><?php endforeach; ?></datalist><?php endforeach; ?>
+      <label class="ap-field"><?= h(t('Company and model','कंपनी और मॉडल')) ?><input class="name big" type="text" name="vehicle_model" required minlength="2" maxlength="60" list="ml-<?= h($p['vehicle_type'] ?? 'bike') ?>" placeholder="<?= h(t('e.g. Hero Splendor / Bolero','जैसे: Hero Splendor / Bolero')) ?>" value="<?= h(post('vehicle_model',$p['vehicle_model'] ?? '')) ?>"></label>
+      <label class="ap-field"><?= h(t('Vehicle number','गाड़ी नंबर')) ?><input class="big" type="text" name="vehicle_number" required maxlength="13" pattern="[A-Za-z0-9 -]{6,13}" placeholder="UP66AB1234" autocapitalize="characters" value="<?= h(post('vehicle_number',$p['vehicle_number'] ?? '')) ?>"><small><?= h(t('As written on the number plate','नंबर प्लेट पर जैसा लिखा है')) ?></small></label>
+    <?php elseif($k==='area'): $ca=post('work_area',$p['work_area'] ?? ''); $ck=(int)post('work_km',$p['work_km'] ?? 10) ?: 10; ?>
+      <fieldset class="wz-chips"><legend><?= h(t('Your town','आपका कस्बा')) ?></legend>
+      <?php foreach(sr_work_areas() as $ak=>$av): ?><label class="wz-chip"><input type="radio" name="work_area" value="<?= h($ak) ?>" required <?= $ca===$ak?'checked':'' ?>><span><?= h(t($av[1],$av[0])) ?></span></label><?php endforeach; ?>
+      </fieldset>
+      <fieldset class="wz-chips km"><legend><?= h(t('How far will you go?','कितनी दूर तक जाएँगे?')) ?></legend>
+      <?php foreach(sr_work_kms() as $kk=>$kl): ?><label class="wz-chip"><input type="radio" name="work_km" value="<?= (int)$kk ?>" <?= $ck===$kk?'checked':'' ?>><span><?= h($kl) ?></span></label><?php endforeach; ?>
+      </fieldset>
+    <?php elseif($k==='terms'): ?>
     <?php elseif($k==='name'): ?>
       <label class="ap-field"><span class="sr-hide"><?= h(t('Full name','पूरा नाम')) ?></span><input class="name big" type="text" name="name" required minlength="2" maxlength="80" autocomplete="name" placeholder="<?= h(t('e.g. Ramesh Kumar','जैसे: रमेश कुमार')) ?>" value="<?= h(post('name',$p['name'] ?? '')) ?>"></label>
     <?php elseif($k==='aadhaar'): ?>
@@ -264,6 +327,10 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
     <?php elseif($k==='pan'): ?>
       <label class="ap-field"><?= h(t('PAN number','पैन नंबर')) ?><input class="big" type="text" name="pan" maxlength="10" required pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]" placeholder="ABCDE1234F" autocapitalize="characters" value="<?= h(post('pan',$p['pan_number'] ?? '')) ?>"></label>
       <div class="dc-pics"><?php $tile('p1','pan_photo',t('PAN card photo','पैन कार्ड की फ़ोटो')); ?></div>
+    <?php endif; ?>
+    <?php if($i===$wzN-1 && sr_terms_needed($p)): ?>
+      <label class="wz-terms"><input type="checkbox" name="terms" value="1" required <?= post('terms')==='1'?'checked':'' ?>>
+        <span><?= h(t('I have read and agree to the','मैंने')) ?> <a href="<?= h(u('/niyam.php')) ?>" target="_blank" rel="noopener"><?= h(t('Sarathi partner rules & terms','सारथी पार्टनर के नियम और शर्तें')) ?></a> <?= h(t('.','पढ़ लिए हैं और मैं इन्हें मानता/मानती हूँ।')) ?></span></label>
     <?php endif; ?>
     <p class="wz-need" hidden><?= h(t('Please fill this step first.','पहले यह भरिए।')) ?></p>
     <?php if($i<$wzN-1): ?>
@@ -310,6 +377,9 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
   <?php endif; ?>
 
   <div class="ap-prog"><b><?= (int)$done ?>/<?= (int)$total ?></b><span><?= h(t('required documents (Aadhaar, PAN)','ज़रूरी काग़ज़ (आधार, पैन)')) ?> · <?= h($vname($p['vehicle_type'])) ?><div class="ap-bar"><i style="width:<?= $total ? (int)round($done*100/$total) : 0 ?>%"></i></div></span></div>
+  <?php $ar=sr_work_areas()[$p['work_area'] ?? ''] ?? null; ?>
+  <div class="ap-sum"><b><?= h($vname($p['vehicle_type'])) ?><?= ($p['vehicle_model'] ?? '')!=='' ? ' · '.h($p['vehicle_model']) : '' ?></b>
+    <span><?= ($p['vehicle_number'] ?? '')!=='' ? h($p['vehicle_number']).' · ' : '' ?><?= $ar ? h(t($ar[1],$ar[0])).', '.h(sr_work_kms()[(int)$p['work_km']] ?? '') : '' ?></span></div>
   <button type="button" class="ap-say-all" data-say="<?= h($statusSay) ?>"><span aria-hidden="true">🔊</span> <?= h(t('Listen: what to do next','सुनिए: आगे क्या करना है')) ?></button>
 
   <?php $opened=false; foreach(array_merge($req,sr_doc_optional($p)) as $k): $d=$docs[$k]; $ok=sr_doc_done($p,$k); $must=in_array($k,$req,true);
@@ -375,11 +445,14 @@ document.addEventListener('click', function (e) {
   var hi = document.documentElement.lang !== 'en';
   f.classList.add('js');
   steps.forEach(function (s, i) { if (s.getAttribute('data-k') === f.getAttribute('data-start')) cur = i; });
+  function careSkip() { var c = f.querySelector('input[name=vehicle_type]:checked'); return c && c.value === 'care'; }
+  function vis() { return steps.filter(function (s) { return !(s.hasAttribute('data-nocare') && careSkip()); }); }
   function show(i) {
-    cur = i; steps.forEach(function (s, j) { s.classList.toggle('on', j === i); });
-    document.getElementById('wz-count').textContent = (hi ? 'चरण ' : 'Step ') + (i + 1) + '/' + steps.length;
-    document.getElementById('wz-bar').style.width = Math.round((i + 1) * 100 / steps.length) + '%';
-    back.disabled = i === 0; window.scrollTo(0, 0);
+    cur = i; var v = vis(), pos = v.indexOf(steps[i]);
+    steps.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+    document.getElementById('wz-count').textContent = (hi ? 'चरण ' : 'Step ') + (pos + 1) + '/' + v.length;
+    document.getElementById('wz-bar').style.width = Math.round((pos + 1) * 100 / v.length) + '%';
+    back.disabled = pos === 0; window.scrollTo(0, 0);
     var first = steps[i].querySelector('input[type=text]'); if (first && !first.value) setTimeout(function () { first.focus(); }, 150);
   }
   function ok(s) {
@@ -388,23 +461,28 @@ document.addEventListener('click', function (e) {
       var inp = p.querySelector('input'), missing = p.getAttribute('data-need') === '1' && !(inp.files && inp.files.length);
       p.classList.toggle('need', missing); if (missing) good = false;
     });
-    var radios = s.querySelectorAll('input[type=radio]');
-    if (radios.length && !s.querySelector('input[type=radio]:checked')) good = false;
+    var groups = {}; s.querySelectorAll('input[type=radio]').forEach(function (r) { groups[r.name] = groups[r.name] || !!s.querySelector('input[name=' + r.name + ']:checked'); });
+    Object.keys(groups).forEach(function (g) { if (!groups[g]) good = false; });
+    var tc = s.querySelector('input[name=terms]'); if (tc && !tc.checked) { good = false; tc.closest('.wz-terms').style.borderColor = '#C8261B'; }
     s.querySelectorAll('input[type=text]').forEach(function (t) { if (good && !t.checkValidity()) { t.reportValidity(); good = false; } });
     need.hidden = good; return good;
   }
   f.addEventListener('click', function (e) {
     var b = e.target.closest('.wz-next'); if (!b) return;
     if (!ok(steps[cur])) { e.preventDefault(); return; }
-    if (b.type === 'button') { e.preventDefault(); show(cur + 1); }
+    if (b.type === 'button') { e.preventDefault(); show(next(cur, 1)); }
     else { b.disabled = true; b.textContent = hi ? 'भेज रहे हैं…' : 'Sending…'; f.submit(); }
   });
   f.addEventListener('change', function (e) {
-    if (e.target.type === 'radio') setTimeout(function () { if (cur < steps.length - 1) show(cur + 1); }, 250);
+    if (e.target.name === 'vehicle_type') {
+      var m = f.querySelector('input[name=vehicle_model]'); if (m) m.setAttribute('list', 'ml-' + e.target.value);
+      setTimeout(function () { if (cur < steps.length - 1) show(next(cur, 1)); }, 250);
+    }
     var p = e.target.closest('.dc-pic'); if (p) p.classList.remove('need');
   });
   f.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.type === 'text') { e.preventDefault(); var n = steps[cur].querySelector('.wz-next'); if (n) n.click(); } });
-  back.addEventListener('click', function () { if (cur > 0) show(cur - 1); });
+  function next(i, d) { var j = i + d; while (j >= 0 && j < steps.length && steps[j].hasAttribute('data-nocare') && careSkip()) j += d; return Math.max(0, Math.min(steps.length - 1, j)); }
+  back.addEventListener('click', function () { if (cur > 0) show(next(cur, -1)); });
   show(cur);
 })();
 // Photo phone par hi chhoti (1600px JPEG) — bada camera photo bhi aaram se upload ho
