@@ -126,4 +126,7 @@ a{color:inherit;text-decoration:none}
 .ca-osm{position:fixed;right:6px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:550;margin:0;font:500 10px sans-serif;color:var(--muted);background:rgba(255,255,255,.8);padding:1px 4px;border-radius:4px}
 .ca-osm a{color:var(--muted)}
 body:not(.mapon) .ca-osm{display:none}
+body.mapon .ca-nav{display:none}
+body.mapon .ca-osm{bottom:calc(8px + env(safe-area-inset-bottom))}
+body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 @media(max-width:350px){.ca-grid{gap:8px}.ca-tile{font-size:13px}}

@@ -66,6 +66,7 @@
     render();
   }
   function initMap() {
+    if (!window.L) { $('#hint').textContent = L_.err; return; }
     if (map) { setTimeout(function () { map.invalidateSize(); }, 60); return; }
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView(CENTER, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -205,11 +206,12 @@
   function openTrack(no, push) {
     st.trackNo = no;
     show('track', push);
-    if (!tmap) {
+    if (!window.L) { $('#tsheet').innerHTML = '<p class="ca-err">' + esc(L_.err) + '</p>'; }
+    else if (!tmap) {
       tmap = L.map('tmap', { zoomControl: false, attributionControl: false }).setView(CENTER, 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(tmap);
     }
-    setTimeout(function () { tmap.invalidateSize(); }, 60);
+    if (tmap) setTimeout(function () { tmap.invalidateSize(); }, 60);
     $('#tsheet').innerHTML = '<div class="ca-grab"></div><p class="ca-sub">' + esc(L_.searching) + '</p>';
     loadTrack(true);
     if (poll) clearInterval(poll);
@@ -223,15 +225,15 @@
       if (!j.ok) { $('#tsheet').innerHTML = '<div class="ca-grab"></div><p class="ca-err">' + esc(j.error || L_.err) + '</p>'; return; }
       var b = j.job, n = { 'new': 1, assigned: 2, picked: 3, delivered: 4, cancelled: 0 }[b.status] || 1;
       var pts = [];
-      [['p', b.pick_geo, '#10C98F'], ['d', b.drop_geo, '#0B1F3A']].forEach(function (x) {
+      if (tmap) [['p', b.pick_geo, '#10C98F'], ['d', b.drop_geo, '#0B1F3A']].forEach(function (x) {
         var ll = geoLL(x[1]); if (!ll) return; pts.push(ll);
         if (tmk[x[0]]) tmk[x[0]].setLatLng(ll); else tmk[x[0]] = L.circleMarker(ll, { radius: 9, color: '#0B1F3A', weight: 3, fillColor: x[2], fillOpacity: 1 }).addTo(tmap);
       });
-      if (b.rider_at) {
+      if (tmap && b.rider_at) {
         if (tmk.r) tmk.r.setLatLng(b.rider_at); else tmk.r = L.circleMarker(b.rider_at, { radius: 12, color: '#fff', weight: 4, fillColor: '#10C98F', fillOpacity: 1 }).addTo(tmap);
         pts.push(b.rider_at);
-      } else if (tmk.r) { tmap.removeLayer(tmk.r); tmk.r = null; }
-      if (fit && pts.length) tmap.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 15 });
+      } else if (tmap && tmk.r) { tmap.removeLayer(tmk.r); tmk.r = null; }
+      if (tmap && fit && pts.length) tmap.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 15 });
       var live = b.status === 'assigned' || b.status === 'picked';
       var h = '<div class="ca-grab"></div><p class="ca-status">' + (live || b.status === 'new' ? '<i></i>' : '') + esc(L_['st_' + b.status] || b.status) + '</p>';
       h += '<p class="ca-sub">' + esc(b.job_no) + ' · ' + esc(b.drop || '') + '</p>';

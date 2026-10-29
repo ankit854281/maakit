@@ -1,3 +1,15 @@
+# App v2 — owner master prompt, 29 October 2026
+
+Customer app = smartsarathi/ghar.php (single page: home, map bottom-sheet booking,
+tracking, my bookings) + assets/customer.js/css. Bookings go through book-api.php →
+inc/booking.php → job_create() on the Sarathi DB (client "सीधे ग्राहक (वेबसाइट)").
+Fare and km are computed on the server only; fares can be tuned in settings
+(fare_<service>_base/_km/_min). Instant services auto-assign; scheduled bookings,
+Saath Safar, Hospital Saathi and Door se Seva stay 'new' for office assignment
+(no_auto). After OTP: role.php (Customer / Partner), stored in sr_accounts.role,
+routed by sr_home_path(); switch in Account. Partner types include loader and care.
+UPI QR on rider job when SR_UPI_ID is defined. tests/sarathi-booking.php runs in CI.
+
 # One-app experience — owner instruction, 29 October 2026
 
 Owner wants ONE professional app, not a website with many links. Maakit booking
