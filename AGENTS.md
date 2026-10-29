@@ -1,3 +1,15 @@
+# App v3 (Rapido-style onboarding) — owner decision, 29 October 2026
+
+ghar.php first run: language screen (cookie sr_lang, see sr_lang_chosen() in
+inc/lang.php) → welcome screen ("सारथी बनिए" → /?intent=partner, or "ग्राहक?").
+intent is kept in $_SESSION['sr_intent'] and used by sr_home_path() when no role
+is set. Home shows the current place (mini map, only after location permission),
+a "बोलें" mic (Web Speech hi-IN) and recent/favourite places (localStorage
+sr_recent: {addr, geo, fav}). Partner apply page shows a documents checklist with
+🔊 Hindi voice guide (speechSynthesis). Login remembers the last verified number
+(localStorage sr_last_phone) and offers one-tap "इसी नंबर से जारी रखें" — it still
+sends a fresh OTP; never skip OTP.
+
 # App v2 — owner master prompt, 29 October 2026
 
 Customer app = smartsarathi/ghar.php (single page: home, map bottom-sheet booking,

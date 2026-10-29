@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/public.php';
 header('Cache-Control: private, no-store');
+if (in_array($_GET['intent'] ?? '', ['customer', 'partner'], true)) $_SESSION['sr_intent'] = $_GET['intent'];
 if (sr_account($pdo)) redirect(sr_home_path($pdo));
 $config=sr_firebase_config();
 $appCheckSiteKey=defined('SR_FIREBASE_APP_CHECK_SITE_KEY') ? (string)SR_FIREBASE_APP_CHECK_SITE_KEY : '';
@@ -24,6 +25,6 @@ sr_customer_head(t('Login','लॉगिन'),t('Just your mobile number and the
 <div id="recaptcha"></div><p id="auth-status" role="status" aria-live="polite"></p>
 <noscript><?= h(t('Enable JavaScript to use secure phone login.','सुरक्षित मोबाइल लॉगिन के लिए JavaScript चालू कीजिए।')) ?></noscript>
 <script id="firebase-login-config" type="application/json"><?= json_encode(['firebase'=>$config,'appCheckSiteKey'=>$appCheckSiteKey,'endpoint'=>u('/auth.php'),'csrf'=>csrf(),'lang'=>sr_lang()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
-<script type="module" src="<?= h(u('/assets/firebase-login.js')) ?>?v=3"></script>
+<script type="module" src="<?= h(u('/assets/firebase-login.js')) ?>?v=4"></script>
 <?php endif; ?></section>
 <?php sr_customer_foot(); ?>

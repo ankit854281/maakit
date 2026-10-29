@@ -61,6 +61,7 @@
     $('#b-title').textContent = S[svc] ? S[svc].name : L_.where;
     show('book');
     initMap();
+    if (st.pick && !mk.pick && map) { var pg = st.pick.geo.split(','); setPlace('pick', +pg[0], +pg[1], st.pick.addr); }
     setField(st.pick ? 'drop' : 'pick');
     if (!st.pick && !noGps) gps(true);
     render();
@@ -196,6 +197,7 @@
       if (j.login) { C.loggedIn = false; render(); return; }
       if (!j.ok) { $('#berr').textContent = j.error || L_.err; render(); return; }
       try { sessionStorage.removeItem('sr_draft'); } catch (e) {}
+      addRecent(st.drop);
       st.pick = st.drop = null; st.quote = null;
       ['pick', 'drop'].forEach(function (f) { if (mk[f]) { map.removeLayer(mk[f]); mk[f] = null; } $('#' + f + '-q').value = ''; });
       openTrack(j.job_no);
@@ -278,6 +280,93 @@
       $$('[data-no]', box).forEach(function (b) { b.addEventListener('click', function () { openTrack(b.getAttribute('data-no')); }); });
     });
   }
+
+
+  /* ---------- v3: welcome, location card, mic, recent places ---------- */
+  var welcome = $('#welcome');
+  if (welcome && !$('.ob-lang') && !C.loggedIn && !store.get('sr_welcome')) welcome.hidden = false;
+  $$('[data-seen]').forEach(function (b) { b.addEventListener('click', function () { store.set('sr_welcome', '1'); if (b.hasAttribute('data-close')) welcome.hidden = true; }); });
+
+  var hmap = null;
+  function hereShow(lat, lng) {
+    var box = $('#here'); box.classList.add('on'); $('#here-pill').hidden = false;
+    if (window.L) {
+      if (!hmap) {
+        hmap = L.map('hmap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, keyboard: false, tap: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(hmap);
+      }
+      hmap.setView([lat, lng], 16);
+      L.circleMarker([lat, lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#10C98F', fillOpacity: 1 }).addTo(hmap);
+      setTimeout(function () { hmap.invalidateSize(); }, 50);
+    }
+    $('#here-addr').textContent = L_.here;
+    var geo = lat.toFixed(6) + ',' + lng.toFixed(6);
+    if (!st.pick) st.pick = { geo: geo, addr: L_.myLoc };
+    fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=17&accept-language=' + C.lang + '&lat=' + lat + '&lon=' + lng)
+      .then(function (r) { return r.json(); }).then(function (j) {
+        if (!j || !j.display_name) return;
+        var a = j.display_name.split(',').slice(0, 3).join(',');
+        $('#here-addr').textContent = a;
+        if (st.pick && st.pick.geo === geo) st.pick.addr = a;
+      }).catch(function () {});
+  }
+  function hereLocate(fromTap) {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (p) { hereShow(p.coords.latitude, p.coords.longitude); },
+      function () { if (fromTap) alert(L_.gpsFail); }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  }
+  var hb = $('#here-on'); if (hb) hb.addEventListener('click', function () { hereLocate(true); });
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' }).then(function (r) { if (r.state === 'granted') hereLocate(false); }).catch(function () {});
+  }
+
+  var mic = $('#mic'), Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (mic) mic.addEventListener('click', function () {
+    var out = $('#listen');
+    if (!Rec) { out.hidden = false; out.textContent = L_.noMic; return; }
+    var r = new Rec(); r.lang = C.lang === 'en' ? 'en-IN' : 'hi-IN'; r.interimResults = false; r.maxAlternatives = 1;
+    mic.classList.add('on'); out.hidden = false; out.textContent = L_.listen;
+    r.onresult = function (e) {
+      var said = (e.results[0][0].transcript || '').trim();
+      out.hidden = true;
+      if (!said) return;
+      openBook('bike');
+      $('#drop-q').value = said;
+      search('drop');
+    };
+    r.onerror = function () { out.textContent = L_.noMic; };
+    r.onend = function () { mic.classList.remove('on'); };
+    try { r.start(); } catch (e) { mic.classList.remove('on'); }
+  });
+
+  function recent() { try { var a = JSON.parse(store.get('sr_recent') || '[]'); return Array.isArray(a) ? a.filter(function (x) { return x && typeof x.addr === 'string' && x.geo; }) : []; } catch (e) { return []; } }
+  function addRecent(pl) {
+    if (!pl || !pl.geo) return;
+    var a = recent().filter(function (x) { return x.addr !== pl.addr; });
+    var old = recent().filter(function (x) { return x.addr === pl.addr; })[0];
+    a.unshift({ addr: pl.addr, geo: pl.geo, fav: !!(old && old.fav) });
+    store.set('sr_recent', JSON.stringify(a.slice(0, 8))); drawRecent();
+  }
+  function drawRecent() {
+    var a = recent().sort(function (x, y) { return (y.fav ? 1 : 0) - (x.fav ? 1 : 0); }).slice(0, 4), box = $('#recent');
+    if (!box) return;
+    box.hidden = !a.length;
+    $('#recentlist').innerHTML = a.map(function (x, i) {
+      var parts = String(x.addr).split(',');
+      return '<li><button type="button" data-r="' + i + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5A6B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span style="min-width:0"><b>' + esc(parts[0]) + '</b><small>' + esc(parts.slice(1).join(',').trim()) + '</small></span></button>' +
+        '<button type="button" class="ca-fav" data-f="' + i + '" aria-pressed="' + !!x.fav + '" aria-label="' + esc(L_.fav) + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4B5A6B" stroke-width="2" aria-hidden="true"><path d="M12 20s-7-4.4-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.6-9 9-9 9z"/></svg></button></li>';
+    }).join('');
+    $$('[data-r]', box).forEach(function (b) { b.addEventListener('click', function () {
+      var x = a[+b.getAttribute('data-r')], g = x.geo.split(',');
+      openBook('bike'); setPlace('drop', +g[0], +g[1], x.addr);
+    }); });
+    $$('[data-f]', box).forEach(function (b) { b.addEventListener('click', function () {
+      var x = a[+b.getAttribute('data-f')], all = recent();
+      all.forEach(function (y) { if (y.addr === x.addr) y.fav = !y.fav; });
+      store.set('sr_recent', JSON.stringify(all)); drawRecent();
+    }); });
+  }
+  drawRecent();
 
   /* ---------- start ---------- */
   history.replaceState({ v: 'home' }, '', location.pathname + location.search);

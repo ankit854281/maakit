@@ -40,7 +40,8 @@ $cfg = [
         'cancelQ' => t('Cancel this booking?', 'यह बुकिंग रद्द करें?'), 'mine' => t('My bookings', 'मेरी बुकिंग'),
         'none' => t('No bookings yet.', 'अभी कोई बुकिंग नहीं।'), 'officeAssign' => t('Our office will confirm and assign a Sarathi.', 'हमारा दफ़्तर पक्का करके सारथी भेजेगा।'),
         'err' => t('Something went wrong. Please call us.', 'कुछ गड़बड़ हुई। फ़ोन कीजिए।'), 'liveOff' => t('Live location appears when the Sarathi shares it.', 'सारथी जगह साझा करेगा तो यहाँ दिखेगी।'),
-        'loginOnly' => t('Log in to see bookings', 'बुकिंग देखने के लिए लॉगिन कीजिए'), 'when' => t('Date & time', 'तारीख़ और समय'), 'back' => t('Back', 'वापस'), 'setBoth' => t('Set pickup and drop to see fares', 'किराया देखने के लिए दोनों जगह चुनिए'),
+        'listen' => t('Listening… say the place', 'सुन रहे हैं… जगह बोलिए'), 'noMic' => t('Voice search does not work in this browser. Please type.', 'इस ब्राउज़र में बोलकर खोज नहीं चलती। लिखकर खोजिए।'),
+        'here' => t('You are here', 'आप यहाँ हैं'), 'fav' => t('Save place', 'जगह सेव करें'), 'loginOnly' => t('Log in to see bookings', 'बुकिंग देखने के लिए लॉगिन कीजिए'), 'when' => t('Date & time', 'तारीख़ और समय'), 'back' => t('Back', 'वापस'), 'setBoth' => t('Set pickup and drop to see fares', 'किराया देखने के लिए दोनों जगह चुनिए'),
     ],
 ];
 $grid = [
@@ -67,6 +68,34 @@ $grid = [
 </head>
 <body>
 <div class="ca" id="app">
+<?php if (!sr_lang_chosen()): ?>
+<!-- ====== पहली बार: भाषा चुनिए ====== -->
+<form class="ob ob-lang" method="get" action="">
+  <div class="ob-hero" aria-hidden="true"><span class="b1">आ</span><span class="b2">A</span><i class="s1">✦</i><i class="s2">✦</i></div>
+  <div class="ob-sheet">
+    <h1>भाषा चुनिए · Select language</h1>
+    <div class="ob-langs">
+      <label><input type="radio" name="lang" value="hi" checked><span><b>हिन्दी</b><small>नमस्ते! सवारी और पार्सल बुक कीजिए</small></span></label>
+      <label><input type="radio" name="lang" value="en"><span><b>English</b><small>Hello! Book rides and parcels</small></span></label>
+    </div>
+    <button type="submit" class="ca-cta">आगे बढ़ें · Continue</button>
+  </div>
+</form>
+<?php endif; ?>
+<!-- ====== पहली बार: स्वागत (ग्राहक / पार्टनर) — JS दिखाता है ====== -->
+<div class="ob ob-welcome" id="welcome" hidden>
+  <div class="ob-photo" aria-hidden="true">
+    <svg viewBox="0 0 360 260" width="100%" height="100%" preserveAspectRatio="xMidYMax meet"><circle cx="290" cy="60" r="34" fill="#FFC83D" opacity=".9"/><path d="M0 230h360" stroke="#10C98F" stroke-width="4" stroke-dasharray="10 12"/><g transform="translate(70 92)"><circle cx="38" cy="122" r="26" fill="none" stroke="#fff" stroke-width="8"/><circle cx="190" cy="122" r="26" fill="none" stroke="#fff" stroke-width="8"/><path d="M38 122l52-58h50l50 58" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M90 64l-14-28h-22M140 64h30" stroke="#fff" stroke-width="8" stroke-linecap="round"/><circle cx="104" cy="12" r="16" fill="#10C98F"/><path d="M104 28l-6 40h30" stroke="#10C98F" stroke-width="12" stroke-linecap="round" fill="none"/></g></svg>
+  </div>
+  <div class="ob-copy">
+    <h1><?= h(t('Drive with Sarathi. Earn every day.', 'सारथी बनिए, रोज़ कमाइए।')) ?></h1>
+    <p><?= h(t('Your own bike, auto, e-rickshaw, Bolero or loader. Work when you want.', 'अपनी बाइक, ऑटो, ई-रिक्शा, बोलेरो या लोडर से। जब चाहें तब काम।')) ?></p>
+    <a class="ca-cta" href="<?= h(u('/?intent=partner')) ?>" data-seen><?= h(t('Start earning', 'कमाना शुरू करें')) ?></a>
+    <p class="ob-or"><?= h(t('OR', 'या')) ?></p>
+    <button type="button" class="ob-cust" data-seen data-close><span><b><?= h(t('Customer?', 'ग्राहक हैं?')) ?></b><em><?= h(t('Book a ride', 'सवारी बुक कीजिए')) ?> →</em></span>
+      <svg width="64" height="48" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/></svg></button>
+  </div>
+</div>
 
 <!-- ================= HOME ================= -->
 <section class="ca-view" data-view="home">
@@ -78,17 +107,30 @@ $grid = [
         <a class="ca-sos" href="tel:<?= h(SR_PHONE) ?>" aria-label="<?= h(t('Emergency call', 'आपातकाल कॉल')) ?>">SOS</a>
       </div>
     </div>
-    <div class="ca-promo">
-      <b><?= h(t('Fare first. Then book.', 'पहले किराया, फिर बुकिंग।')) ?></b>
-      <span><?= h(t('Bike, auto, cab, parcel and loader — verified local Sarathis, live tracking.', 'बाइक, ऑटो, कैब, पार्सल, लोडर — सत्यापित लोकल सारथी, लाइव ट्रैकिंग।')) ?></span>
+    <div class="ca-here" id="here">
+      <div class="ca-here-map" id="hmap" aria-hidden="true"></div>
+      <div class="ca-here-ask" id="here-ask">
+        <svg width="46" height="46" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#10C98F" opacity=".18"/><path d="M24 40s-11-9.6-11-17a11 11 0 0 1 22 0c0 7.4-11 17-11 17z" fill="#10C98F"/><circle cx="24" cy="23" r="4" fill="#0B1F3A"/></svg>
+        <span><b><?= h(t('Turn on your location', 'अपनी जगह चालू कीजिए')) ?></b><small><?= h(t('Pickup will be set automatically. Used only while you book.', 'पिकअप अपने आप लगेगा। सिर्फ़ बुकिंग के समय इस्तेमाल होगी।')) ?></small></span>
+        <button type="button" id="here-on"><?= h(t('Turn on', 'चालू करें')) ?></button>
+      </div>
+      <p class="ca-here-pill" id="here-pill" hidden><span class="dot"></span><span id="here-addr"></span></p>
     </div>
   </header>
 
-  <button class="ca-search" type="button" data-open="bike">
-    <span class="dot" aria-hidden="true"></span>
-    <span><b><?= h(t('Where to?', 'कहाँ जाना है?')) ?></b><small><?= h(t('Select pickup & drop', 'पिकअप और ड्रॉप चुनिए')) ?></small></span>
-    <span class="go" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-  </button>
+  <div class="ca-search">
+    <button type="button" class="ca-search-go" data-open="bike">
+      <span class="dot" aria-hidden="true"></span>
+      <span><b><?= h(t('Where to?', 'कहाँ जाना है?')) ?></b><small><?= h(t('Select pickup & drop', 'पिकअप और ड्रॉप चुनिए')) ?></small></span>
+    </button>
+    <button type="button" class="ca-mic" id="mic" aria-label="<?= h(t('Speak the place', 'जगह बोलकर बताइए')) ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span><?= h(t('Speak', 'बोलें')) ?></span></button>
+  </div>
+  <p class="ca-listen" id="listen" role="status" aria-live="polite" hidden></p>
+
+  <section class="ca-sec ca-recent" id="recent" aria-labelledby="h-recent" hidden>
+    <h2 id="h-recent"><?= h(t('Recent places', 'पिछली जगहें')) ?></h2>
+    <ul id="recentlist"></ul>
+  </section>
 
   <section class="ca-sec" aria-labelledby="h-svc">
     <h2 id="h-svc"><?= h(t('Services', 'सेवाएँ')) ?></h2>

@@ -130,3 +130,58 @@ body.mapon .ca-nav{display:none}
 body.mapon .ca-osm{bottom:calc(8px + env(safe-area-inset-bottom))}
 body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 @media(max-width:350px){.ca-grid{gap:8px}.ca-tile{font-size:13px}}
+
+/* ---- v3: location card, mic, recent, onboarding (29 Oct) ---- */
+.ca-here{margin-top:16px;position:relative;border-radius:18px;overflow:hidden;background:#123056;min-height:96px}
+.ca-here-map{height:130px;display:none}
+.ca-here.on .ca-here-map{display:block}
+.ca-here-ask{display:flex;align-items:center;gap:12px;padding:14px}
+.ca-here.on .ca-here-ask{display:none}
+.ca-here-ask span{flex:1;display:flex;flex-direction:column;gap:2px}
+.ca-here-ask b{font:800 15px 'Noto Sans Devanagari',sans-serif;color:#fff}
+.ca-here-ask small{font:500 12.5px/1.4 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.ca-here-ask button{border:0;border-radius:12px;background:var(--mint);color:var(--navy);font:800 14px 'Noto Sans Devanagari',sans-serif;min-height:44px;padding:0 14px;white-space:nowrap}
+.ca-here-pill{position:absolute;left:10px;right:10px;top:10px;z-index:401;margin:0;display:flex;align-items:center;gap:8px;background:#fff;color:var(--navy);border-radius:999px;padding:8px 14px;font:700 13px 'Noto Sans Devanagari',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ca-here-pill .dot{width:10px;height:10px;border-radius:50%;background:var(--mint);flex:none;box-shadow:0 0 0 3px rgba(16,201,143,.25)}
+.ca-here-pill span:last-child{overflow:hidden;text-overflow:ellipsis}
+.ca-search{padding:8px 8px 8px 20px}
+.ca-search-go{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:transparent;text-align:left;padding:0;min-height:50px}
+.ca-search-go>span:last-child{display:flex;flex-direction:column}
+.ca-mic{flex:none;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;background:#FFC83D;color:var(--navy);min-height:50px;padding:0 16px;font:800 15px 'Noto Sans Devanagari',sans-serif}
+.ca-mic.on{background:var(--mint);animation:pulse 1.2s infinite}
+.ca-listen{margin:10px 16px 0;text-align:center;font:700 14px 'Noto Sans Devanagari',sans-serif;color:var(--mint-d)}
+.ca-recent ul{list-style:none;margin:0;padding:0;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.ca-recent li{display:flex;align-items:center;border-bottom:1px dashed var(--line)}
+.ca-recent li:last-child{border-bottom:0}
+.ca-recent li>button:first-child{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:transparent;text-align:left;padding:12px 14px;min-height:60px}
+.ca-recent li b{display:block;font:700 15px 'Noto Sans Devanagari',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ca-recent li small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ca-fav{width:52px;min-height:52px;border:0;background:transparent;display:grid;place-items:center;flex:none}
+.ca-fav[aria-pressed=true] svg{fill:#E0245E;stroke:#E0245E}
+
+.ob[hidden],.ca-here-pill[hidden],.ca-recent[hidden],.ca-listen[hidden]{display:none}
+.ob{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;background:linear-gradient(180deg,#1E4A85 0%,#0B1F3A 55%,#03070D 100%);max-width:520px;margin:0 auto;overflow:auto}
+.ob-hero{flex:1;min-height:300px;position:relative;display:grid;place-items:center}
+.ob-hero span{position:absolute;display:grid;place-items:center;width:130px;height:115px;border-radius:30px;background:rgba(255,255,255,.14);color:rgba(255,255,255,.85);font:800 76px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif}
+.ob-hero .b1{transform:translate(-50px,40px)}
+.ob-hero .b2{transform:translate(55px,-45px)}
+.ob-hero i{position:absolute;font-style:normal;color:rgba(255,255,255,.7);font-size:22px}
+.ob-hero .s1{transform:translate(-80px,-60px)}.ob-hero .s2{transform:translate(60px,70px)}
+.ob-sheet{background:#fff;border-radius:28px 28px 0 0;padding:22px 16px calc(22px + env(safe-area-inset-bottom))}
+.ob-sheet h1{margin:0 0 16px;text-align:center;font:800 20px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:var(--navy)}
+.ob-langs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ob-langs label{display:flex;align-items:flex-start;gap:10px;border:2px solid var(--line);border-radius:18px;padding:16px 14px;min-height:92px;cursor:pointer}
+.ob-langs label:has(input:checked){border-color:var(--navy);background:#EFFBF6}
+.ob-langs input{order:2;margin-left:auto;width:24px;height:24px;accent-color:var(--mint);flex:none}
+.ob-langs b{display:block;font:800 20px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:var(--navy)}
+.ob-langs small{display:block;margin-top:6px;font:500 12.5px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ob-welcome{background:#0B1F3A}
+.ob-photo{height:46vh;min-height:250px;background:radial-gradient(120% 90% at 70% 10%,#1E4A85,#0B1F3A 70%)}
+.ob-copy{padding:20px 16px calc(24px + env(safe-area-inset-bottom));background:#03070D;color:#fff;flex:1;display:flex;flex-direction:column}
+.ob-copy h1{margin:0;font:800 30px/1.2 'Noto Sans Devanagari',sans-serif}
+.ob-copy p{margin:8px 0 16px;font:500 15px/1.5 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.ob-copy .ca-cta{display:grid;place-items:center;text-decoration:none;margin-top:4px}
+.ob-or{text-align:center;margin:16px 0 !important;font-weight:700}
+.ob-cust{display:flex;align-items:center;justify-content:space-between;width:100%;background:#fff;color:var(--navy);border:0;border-radius:20px;padding:16px 18px;min-height:84px;text-align:left}
+.ob-cust b{display:block;font:800 19px 'Noto Sans Devanagari',sans-serif}
+.ob-cust em{display:block;font-style:normal;font:800 16px 'Noto Sans Devanagari',sans-serif;color:#1D6FD8;margin-top:2px}

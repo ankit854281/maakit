@@ -40,6 +40,9 @@ function sr_set_role(PDO $pdo, array $a, string $role): void {
 function sr_home_path(PDO $pdo): string {
     $a=sr_account($pdo); if(!$a) return '/';
     $role=sr_account_role($pdo,$a);
+    // Welcome screen se "कमाना शुरू करें" / "सवारी बुक कीजिए" — role pehle hi pata hai
+    if($role===null && in_array($_SESSION['sr_intent'] ?? '',['customer','partner'],true)) { $role=$_SESSION['sr_intent']; sr_set_role($pdo,$a,$role); }
+    unset($_SESSION['sr_intent']);
     if($role===null) return '/role.php';
     if($role==='partner') {
         sr_identity_autolink($pdo,$a);

@@ -4,7 +4,13 @@
 $sr_requested_language = $_GET['lang'] ?? null;
 if (is_string($sr_requested_language) && in_array($sr_requested_language, ['hi', 'en'], true)) {
     $_SESSION['sr_lang'] = $sr_requested_language;
+    // Phone par yaad rahe (pehli baar bhasha chunne wali screen dobara na aaye)
+    if (!headers_sent()) setcookie('sr_lang', $sr_requested_language, ['expires' => time() + 31536000, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => false, 'samesite' => 'Lax']);
+} elseif (!isset($_SESSION['sr_lang']) && in_array($_COOKIE['sr_lang'] ?? '', ['hi', 'en'], true)) {
+    $_SESSION['sr_lang'] = $_COOKIE['sr_lang'];
 }
+/** Kya is phone par kabhi bhasha chuni gayi hai? (pehli baar wali screen ke liye) */
+function sr_lang_chosen(): bool { return in_array($_COOKIE['sr_lang'] ?? '', ['hi', 'en'], true) || isset($_GET['lang']); }
 function sr_lang() {
     return ($_SESSION['sr_lang'] ?? 'hi') === 'en' ? 'en' : 'hi';
 }

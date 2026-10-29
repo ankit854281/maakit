@@ -66,6 +66,53 @@ $docsForm=function() { ?>
 <a class="sx-pill" href="<?= h(u('/account.php')) ?>"><?= h(t('Account / change mode','खाता / मोड बदलिए')) ?></a>
 <?php if($err): ?><p role="alert"><?= h($err) ?></p><?php endif; ?>
 <?php if(get('ok')): ?><p role="status"><?= h(t('Saved.','सेव हो गया।')) ?></p><?php endif; ?>
+<?php
+// Documents checklist + Hindi awaaz guide (owner request, 29 Oct 2026 — Rapido jaisa)
+$hasPhoto=$p && preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$p['photo']); $hasLic=$p && preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$p['licence_photo']);
+$rows=[];
+if($p){
+    $rows[]=['ok',t('Work type','काम का प्रकार'),sr_profile_vehicles()[$p['vehicle_type']] ?? $p['vehicle_type'],t('Your work type is selected.','आपका काम का प्रकार चुन लिया गया है।')];
+    $rows[]=['ok',t('Name','नाम'),$p['name'],t('Your name is saved.','आपका नाम सेव है।')];
+    $rows[]=$hasPhoto?['ok',t('Your photo','आपकी फ़ोटो'),t('Added','लग गई'),t('Your photo is added.','आपकी फ़ोटो लग गई है।')]
+        :['todo',t('Your photo (optional)','आपकी फ़ोटो (ज़रूरी नहीं)'),t('Not added yet','अभी नहीं लगी'),t('Tap Choose File below and take a clear photo of your face.','नीचे फ़ाइल चुनिए दबाकर अपने चेहरे की साफ़ फ़ोटो लीजिए।')];
+    $rows[]=$hasLic?['ok',t('Driving licence','ड्राइविंग लाइसेंस'),t('Added','लग गया'),t('Your licence photo is added.','आपके लाइसेंस की फ़ोटो लग गई है।')]
+        :['todo',t('Driving licence (optional)','ड्राइविंग लाइसेंस (ज़रूरी नहीं)'),t('Not added yet','अभी नहीं लगा'),t('Tap Choose File and take a photo of the front side of your driving licence.','फ़ाइल चुनिए दबाकर ड्राइविंग लाइसेंस के आगे वाले हिस्से की फ़ोटो लीजिए।')];
+    $rows[]=match($p['status']){
+        'approved'=>['ok',t('Approval','मंज़ूरी'),t('Approved','मंज़ूर'),t('You are approved. Tap start work and go online to get jobs.','आप मंज़ूर हैं। काम शुरू कीजिए दबाइए और हाज़िर होइए, काम आने लगेंगे।')],
+        'pending'=>['wait',t('Approval','मंज़ूरी'),t('Under verification…','जाँच हो रही है…'),t('Our office is checking your details. Call us if it is urgent.','हमारा दफ़्तर आपकी जानकारी जाँच रहा है। जल्दी हो तो फ़ोन कीजिए।')],
+        'rejected'=>['bad',t('Approval','मंज़ूरी'),t('Correction needed','सुधार चाहिए').(($p['review_note']??'')!==''?': '.$p['review_note']:''),t('Some details need correction. Read the reason and send again.','कुछ जानकारी में सुधार चाहिए। कारण पढ़कर दोबारा भेजिए।')],
+        default=>['bad',t('Approval','मंज़ूरी'),sr_profile_status($p['status']),t('Please talk to the office.','कृपया दफ़्तर से बात कीजिए।')],
+    };
+}
+if($rows): $next=''; foreach($rows as $r) if($r[0]!=='ok'){ $next=$r[3]; break; } if($next==='') $next=end($rows)[3]; ?>
+<div class="sx-chk">
+  <button type="button" class="sx-say-all" data-say="<?= h($next) ?>"><span aria-hidden="true">🔊</span> <?= h(t('Listen: what to do next','सुनिए: आगे क्या करना है')) ?></button>
+  <?php foreach($rows as [$state,$label,$val,$say]): ?>
+  <div class="sx-chk-row <?= h($state) ?>"><span class="sx-chk-ic" aria-hidden="true"><?= $state==='ok'?'✓':($state==='wait'?'…':($state==='todo'?'+':'!')) ?></span>
+    <span class="sx-chk-t"><b><?= h($label) ?></b><small><?= h($val) ?></small></span>
+    <button type="button" class="sx-chk-say" data-say="<?= h($say) ?>" aria-label="<?= h(t('Listen','सुनिए')) ?>">🔊</button></div>
+  <?php endforeach; ?>
+</div>
+<style>
+.sx-chk{display:grid;gap:8px;margin:4px 0 8px}
+.sx-say-all{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border:0;border-radius:14px;background:#5B4BDB;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.sx-chk-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E3E8EF;border-radius:16px;padding:10px 10px 10px 12px;min-height:64px}
+.sx-chk-ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:900;flex:none;color:#fff;background:#0E8A5F}
+.sx-chk-row.wait .sx-chk-ic{background:#E8A33A}.sx-chk-row.todo .sx-chk-ic{background:#4B5A6B}.sx-chk-row.bad .sx-chk-ic{background:#C8261B}
+.sx-chk-t{flex:1;min-width:0}.sx-chk-t b{display:block}.sx-chk-t small{display:block;color:#4B5A6B}
+.sx-chk-row.wait small{color:#A8650D;font-weight:700}.sx-chk-row.bad small{color:#C8261B;font-weight:700}
+.sx-chk-say{width:44px;height:44px;border-radius:12px;border:1px solid #E3E8EF;background:#fff;font-size:18px;cursor:pointer;flex:none}
+</style>
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-say]'); if (!b || !('speechSynthesis' in window)) return;
+  var u = new SpeechSynthesisUtterance(b.getAttribute('data-say'));
+  u.lang = document.documentElement.lang === 'en' ? 'en-IN' : 'hi-IN'; u.rate = 0.95;
+  var v = speechSynthesis.getVoices().filter(function (x) { return x.lang && x.lang.toLowerCase().indexOf(u.lang.toLowerCase().slice(0, 2)) === 0; })[0]; if (v) u.voice = v;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+});
+</script>
+<?php endif; ?>
 
 <?php if($p && $p['status']==='approved'): ?>
 <h2><?= h(t('You are approved ✓','आप मंज़ूर हैं ✓')) ?></h2>

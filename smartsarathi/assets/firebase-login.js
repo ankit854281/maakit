@@ -93,6 +93,7 @@ otpForm.addEventListener('submit', async event => {
       body: new URLSearchParams({csrf: config.csrf, token})});
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error('Session rejected');
+    try { localStorage.setItem('sr_last_phone', phone.value); } catch (e) {}
     window.location.assign(data.next);
   } catch (error) { say(errorMessage(error)); }
   finally { busy = false; verify.disabled = false; send.disabled = false; }
@@ -101,3 +102,28 @@ document.getElementById('change-phone').addEventListener('click', () => {
   if (busy) return;
   confirmation = null; otpForm.hidden = true; phone.readOnly = false; phone.focus(); say('');
 });
+
+// Returning user: one tap on the remembered number sends the OTP straight away.
+(function quickContinue() {
+  let last = '';
+  try { last = localStorage.getItem('sr_last_phone') || ''; } catch (e) { return; }
+  if (!/^[6-9][0-9]{9}$/.test(last) || phone.value) return;
+  const card = document.createElement('div');
+  card.className = 'sr-quick';
+  const go = document.createElement('button');
+  go.type = 'button'; go.className = 'sr-quick-go';
+  go.innerHTML = '<span class="sr-quick-ic" aria-hidden="true">↻</span><span><b></b><small></small></span><span aria-hidden="true">→</span>';
+  go.querySelector('b').textContent = tr('Continue as', 'इसी नंबर से जारी रखें');
+  go.querySelector('small').textContent = '+91 ' + last.slice(0, 5) + ' ' + last.slice(5);
+  const other = document.createElement('button');
+  other.type = 'button'; other.className = 'sr-quick-other';
+  other.textContent = tr('Use another number', 'दूसरा नंबर डालें');
+  card.append(go, other);
+  phoneForm.before(card);
+  phoneForm.hidden = true;
+  go.addEventListener('click', () => { phone.value = last; phoneForm.hidden = false; card.remove(); phoneForm.requestSubmit(); });
+  other.addEventListener('click', () => { phoneForm.hidden = false; card.remove(); phone.focus(); });
+  const css = document.createElement('style');
+  css.textContent = '.sr-quick{display:grid;gap:10px;margin:8px 0 14px}.sr-quick-go{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 16px;border:0;border-radius:16px;background:#0B1F3A;color:#fff;text-align:left;font:inherit;cursor:pointer}.sr-quick-go b{display:block;font-size:15px}.sr-quick-go small{display:block;font-size:17px;font-weight:800;letter-spacing:.5px;color:#10C98F}.sr-quick-go>span:nth-child(2){flex:1}.sr-quick-ic{width:38px;height:38px;border-radius:50%;background:#10C98F;color:#0B1F3A;display:grid;place-items:center;font-weight:900}.sr-quick-other{min-height:48px;border:1px solid #D5DCE5;border-radius:14px;background:#fff;color:#0B1F3A;font:inherit;font-weight:700;cursor:pointer}';
+  document.head.append(css);
+})();
