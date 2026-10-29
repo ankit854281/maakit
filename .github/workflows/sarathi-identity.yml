@@ -33,12 +33,12 @@ jobs:
           SR_TEST_DB_HOST: 127.0.0.1
           SR_TEST_DB_PASSWORD: identity-ci
         run: |
-          php tests/sarathi-firebase.php
-          php tests/sarathi-identity-flow.php
-          php tests/sarathi-rider-flow.php
-          php tests/sarathi-booking.php
-          php tests/sarathi-docs.php
-          php tests/sarathi-e2e.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-firebase.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-identity-flow.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-rider-flow.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-booking.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-docs.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-e2e.php
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
