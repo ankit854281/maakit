@@ -32,7 +32,7 @@ sr_customer_head(t('My account','मेरा खाता'),t('One mobile numbe
 <a class="sx-btn sx-btn-mint" href="<?= h(u('/ghar.php')) ?>"><?= h(t('Open home — book a service','होम खोलिए — सेवा बुक कीजिए')) ?></a>
 <?php endif; ?>
 <?php if($p): ?><p><?= h(t('Rider profile: ','राइडर प्रोफ़ाइल: ').sr_profile_status($p['status'])) ?></p>
-<?php if(sr_profile_docs_missing($p)): ?><p><a class="sx-pill" href="<?= h(u('/apply.php')) ?>"><?= h(t('Complete profile: add photo & licence','प्रोफ़ाइल पूरी कीजिए: फ़ोटो और लाइसेंस लगाइए')) ?></a></p><?php endif; ?><?php endif; ?>
+<?php if(sr_profile_docs_missing($p)): ?><p><a class="sx-pill" href="<?= h(u('/apply.php')) ?>"><?= h(t('Complete profile: add your documents','प्रोफ़ाइल पूरी कीजिए: काग़ज़ लगाइए')) ?></a></p><?php endif; ?><?php endif; ?>
 <?php if(sr_identity_admin($pdo)): ?><p><a class="sx-pill" href="<?= h(u('/admin/')) ?>"><?= h(t('Admin panel','एडमिन पैनल')) ?></a> <a class="sx-pill" href="<?= h(u('/admin/profiles.php')) ?>"><?= h(t('Review riders','राइडर मंज़ूरी')) ?></a></p><?php endif; ?>
 <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><button name="do" value="logout" class="sx-pill"><?= h(t('Sign out','लॉगआउट')) ?></button></form>
 </section>

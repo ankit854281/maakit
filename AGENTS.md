@@ -1,3 +1,13 @@
+# Partner documents — owner request, 29 October 2026
+
+apply.php (inc/identity-apply.php) is a Rapido-Captain style flow: 1) choose vehicle + name,
+2) documents one by one — selfie, Aadhaar (front+back, ONLY last 4 digits stored, masked Aadhaar
+recommended), PAN (number + photo), driving licence (number + front, back optional), RC + vehicle
+number — each with a 🔊 Hindi voice hint, 3) office approval. Care Saathi needs only selfie,
+Aadhaar, PAN. Columns are added by sr_docs_upgrade() (call it OUTSIDE transactions). Adding a
+document never changes approval status. Photos are shrunk on the phone before upload.
+admin/profiles.php shows every document. Never store a full Aadhaar number.
+
 # Two apps — owner decision, 29 October 2026
 
 Customers and partners now have SEPARATE installable apps (like Rapido / Rapido Captain):

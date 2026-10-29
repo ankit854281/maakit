@@ -115,8 +115,70 @@ function sr_identity_autolink(PDO $pdo, array $a): void {
         $pdo->commit();
     } catch(Throwable $e) { if($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
 }
+/** Rapido Captain jaise poore kaagaz (owner request, 29 Oct 2026) — naye column pehli zaroorat par khud judte hain */
+function sr_docs_upgrade(PDO $pdo): void {
+    static $done=false; if($done) return; $done=true;
+    $cols=['aadhaar_front'=>"VARCHAR(80) NOT NULL DEFAULT ''",'aadhaar_back'=>"VARCHAR(80) NOT NULL DEFAULT ''",'aadhaar_last4'=>"CHAR(4) NOT NULL DEFAULT ''",
+        'pan_photo'=>"VARCHAR(80) NOT NULL DEFAULT ''",'pan_number'=>"VARCHAR(10) NOT NULL DEFAULT ''",'dl_number'=>"VARCHAR(20) NOT NULL DEFAULT ''",
+        'dl_back'=>"VARCHAR(80) NOT NULL DEFAULT ''",'rc_photo'=>"VARCHAR(80) NOT NULL DEFAULT ''"];
+    try {
+        $have=$pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='sr_rider_profiles'")->fetchAll(PDO::FETCH_COLUMN);
+        $add=[]; foreach($cols as $c=>$def) if(!in_array($c,$have,true)) $add[]="ADD COLUMN $c $def";
+        if($add) $pdo->exec('ALTER TABLE sr_rider_profiles '.implode(',',$add));
+    } catch(Throwable $e) { error_log('Sarathi docs upgrade: '.get_class($e)); }
+}
+/** kind => [file columns (pehla zaroori), text columns] */
+function sr_doc_kinds(): array {
+    return ['photo'=>[['photo'],[]], 'aadhaar'=>[['aadhaar_front','aadhaar_back'],['aadhaar_last4']], 'pan'=>[['pan_photo'],['pan_number']],
+        'licence'=>[['licence_photo','dl_back'],['dl_number']], 'rc'=>[['rc_photo'],['vehicle_number']]];
+}
+function sr_doc_file_ok($v): bool { return (bool)preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$v); }
+/** Kaun se kaagaz zaroori: Care Saathi ke paas gaadi nahi — licence/RC nahi */
+function sr_doc_required(array $p): array {
+    return ($p['vehicle_type'] ?? '')==='care' ? ['photo','aadhaar','pan'] : ['photo','aadhaar','pan','licence','rc'];
+}
+function sr_doc_done(array $p, string $kind): bool {
+    switch($kind) {
+        case 'photo': return sr_doc_file_ok($p['photo'] ?? '');
+        case 'aadhaar': return sr_doc_file_ok($p['aadhaar_front'] ?? '') && sr_doc_file_ok($p['aadhaar_back'] ?? '') && preg_match('/^\d{4}$/D',(string)($p['aadhaar_last4'] ?? ''));
+        case 'pan': return sr_doc_file_ok($p['pan_photo'] ?? '') && ($p['pan_number'] ?? '')!=='';
+        case 'licence': return sr_doc_file_ok($p['licence_photo'] ?? '') && ($p['dl_number'] ?? '')!=='';
+        case 'rc': return sr_doc_file_ok($p['rc_photo'] ?? '') && ($p['vehicle_number'] ?? '')!=='';
+    }
+    return false;
+}
+function sr_doc_count(array $p): array {
+    $req=sr_doc_required($p); $done=0; foreach($req as $k) if(sr_doc_done($p,$k)) $done++;
+    return [$done,count($req)];
+}
 function sr_profile_docs_missing(?array $p): bool {
-    return $p && (!preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$p['photo']) || !preg_match('/^[a-f0-9]{48}\.jpg$/D',(string)$p['licence_photo']));
+    if(!$p) return false; [$d,$n]=sr_doc_count($p); return $d<$n;
+}
+/** Ek kaagaz jama / badlo — manzoori ki sthiti nahi badalti. $files: column=>naya file ya null; $fields: column=>value */
+function sr_profile_set_doc(PDO $pdo, array $a, string $kind, array $files, array $fields): void {
+    $k=sr_doc_kinds()[$kind] ?? null; if(!$k) throw new RuntimeException('Invalid submission');
+    $set=[]; $vals=[];
+    foreach($files as $c=>$f) if($f!==null) { if(!in_array($c,$k[0],true)) throw new RuntimeException('Invalid submission'); $set[]="$c=?"; $vals[]=$f; }
+    foreach($fields as $c=>$v) { if(!in_array($c,$k[1],true)) throw new RuntimeException('Invalid submission'); $set[]="$c=?"; $vals[]=$v; }
+    if(!$set) return;
+    $pdo->beginTransaction();
+    try {
+        $q=$pdo->prepare('SELECT * FROM sr_rider_profiles WHERE account_id=? FOR UPDATE'); $q->execute([$a['id']]); $p=$q->fetch();
+        if(!$p) throw new RuntimeException('No profile');
+        $vals[]=$a['id'];
+        $pdo->prepare('UPDATE sr_rider_profiles SET '.implode(',',$set).' WHERE account_id=?')->execute($vals);
+        if($kind==='rc' && isset($fields['vehicle_number']) && $p['rider_id']) $pdo->prepare('UPDATE riders SET rc_number=? WHERE id=?')->execute([$fields['vehicle_number'],(int)$p['rider_id']]);
+        $pdo->commit();
+    } catch(Throwable $e) { if($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
+    $old=[]; foreach($files as $c=>$f) if($f!==null && ($p[$c] ?? '')!=='' && $p[$c]!==$f) $old[]=$p[$c];
+    sr_profile_remove_old($old);
+}
+/** Lautaya gaya profile: naam/gaadi sudharkar dobara bhejo — jama kaagaz nahi mitte */
+function sr_profile_resubmit(PDO $pdo, array $a, string $name, string $type): void {
+    if (mb_strlen($name)<2 || mb_strlen($name)>80 || !isset(sr_profile_vehicles()[$type])) throw new RuntimeException('Invalid profile');
+    $q=$pdo->prepare("UPDATE sr_rider_profiles SET name=?,vehicle_type=?,status='pending',revision=revision+1,review_note=NULL,reviewed_by=NULL,reviewed_at=NULL WHERE account_id=? AND status='rejected'");
+    $q->execute([$name,$type,$a['id']]);
+    if(!$q->rowCount()) throw new RuntimeException('Profile already submitted');
 }
 /** Add / replace photo and licence later without changing approval status. */
 function sr_profile_add_docs(PDO $pdo, array $a, ?string $photo, ?string $licence): void {
