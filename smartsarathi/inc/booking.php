@@ -60,8 +60,9 @@ function sr_km($a, $b): ?float {
     return round(max(0.5, 2 * 6371 * asin(min(1, sqrt($h))) * 1.3), 1);
 }
 function sr_fare(array $svc, float $km, int $seats = 1): int {
+    // Saath Safar: kiraya PRATI SEAT (minimum bhi prati seat), phir seat se guna — app bhi yahi dikhata hai
+    if ($svc['key'] === 'saath') return (int)(ceil(max($svc['min'], $svc['km'] * $km) / 5) * 5) * max(1, $seats);
     $f = $svc['base'] + $svc['km'] * $km;
-    if ($svc['key'] === 'saath') $f = $svc['km'] * $km * max(1, $seats);
     return (int)(ceil(max($svc['min'], $f) / 5) * 5);
 }
 /** Pahunchne ka andaza (minute): 22 km/h + 5 min pickup */
@@ -152,7 +153,7 @@ function sr_my_job(PDO $pdo, array $acc, string $no): ?array {
 function sr_job_view(array $j, array $acc): array {
     $mine = $j['pick_mobile'] === $acc['mobile'];
     return [
-        'job_no' => $j['job_no'], 'status' => $j['status'], 'kind' => $j['kind'], 'vehicle' => $j['vehicle'],
+        'job_no' => $j['job_no'], 'status' => $j['status'], 'kind' => $j['kind'], 'vehicle' => $j['vehicle'], 'mode' => $j['assign_mode'] ?? 'auto',
         'fare' => (int)$j['fee'], 'pick' => $j['pick_address'], 'drop' => $j['drop_address'],
         'pick_geo' => $j['pick_geo'], 'drop_geo' => $j['drop_geo'], 'note' => $j['note'],
         // Booker ko pickup ka code; paane wale ko drop ka code (ride me dono booker hi hai)

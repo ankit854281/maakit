@@ -73,8 +73,10 @@ function sr_identity_signin(PDO $pdo, array $identity): void {
         $pdo->commit();
     } catch (Throwable $e) { if($pdo->inTransaction())$pdo->rollBack(); throw $e; }
     // Drop legacy admin/rider sessions; mode never grants authority.
-    $lang=$_SESSION['sr_lang'] ?? 'hi';
+    $lang=$_SESSION['sr_lang'] ?? 'hi'; $intent=$_SESSION['sr_intent'] ?? null;
     $_SESSION=[]; session_regenerate_id(true); $_SESSION['sr_lang']=$lang;
+    // Partner app se aaya ho to login ke baad bhi yaad rahe (warna naya partner grahak ban jaata tha)
+    if(in_array($intent,['customer','partner'],true)) $_SESSION['sr_intent']=$intent;
     $_SESSION['sr_account']=$id; $_SESSION['sr_account_version']=$version;
     $_SESSION['sr_auth_until']=time()+12*3600; $_SESSION['sr_mode']='customer';
 }
@@ -109,7 +111,7 @@ function sr_identity_autolink(PDO $pdo, array $a): void {
                     ->execute([$a['id'],(int)$r['id'],$r['name'],$type,(string)($r['rc_number'] ?? ''),$a['id']]);
                 $pdo->prepare("INSERT INTO sr_identity_audit (account_id,actor_id,action,revision,note) VALUES (?,?,'auto_linked',1,'Pre-added by admin in riders list')")->execute([$a['id'],$a['id']]);
                 // Admin ne khud joda hai — sawari aur delivery dono chalu (ride_ok bhi)
-                $pdo->prepare('UPDATE riders SET vtype=COALESCE(vtype,?),ride_ok=1,do_ride=1,do_delivery=1 WHERE id=?')->execute([$type,(int)$r['id']]);
+                $pdo->prepare('UPDATE riders SET vtype=COALESCE(vtype,?),ride_ok=1,do_ride=?,do_delivery=? WHERE id=?')->execute([$type,sr_vehicle_does_ride($type),sr_vehicle_does_delivery($type),(int)$r['id']]);
             }
         }
         $pdo->commit();
@@ -135,7 +137,11 @@ function sr_doc_kinds(): array {
         'licence'=>[['licence_photo','dl_back'],['dl_number']], 'rc'=>[['rc_photo'],['vehicle_number']]];
 }
 /** Partner ke niyam ka version — badlein to naya version likhiye, sab se dobara manwaya jayega */
-const SR_TERMS_VER = '2026-10-29';
+/** Kaun kya kaam karega: parcel sirf do-pahiya/teen-pahiya/car; bus, loader, care ko parcel nahi */
+function sr_vehicle_does_delivery(string $type): int { return in_array($type,['bike','ev','cycle','auto','erick','car'],true) ? 1 : 0; }
+function sr_vehicle_does_ride(string $type): int { return $type==='care' ? 0 : 1; }
+const SR_TERMS_VER = '2026-10-29.2';
+function sr_terms_needed(?array $p): bool { return !$p || $p['status']==='rejected' || empty($p['terms_at']) || ($p['terms_ver'] ?? '')!==SR_TERMS_VER; }
 /** Kaam ka ilaka: kasba => [Hindi, English, lat, lng] (Wikipedia coordinates, Oct 2026) */
 function sr_work_areas(): array {
     return ['bhadohi'=>['भदोही','Bhadohi',25.42,82.57], 'gyanpur'=>['ज्ञानपुर','Gyanpur',25.35,82.47], 'gopiganj'=>['गोपीगंज','Gopiganj',25.283,82.433],
@@ -289,7 +295,7 @@ function sr_profile_review(PDO $pdo, int $id, int $revision, string $decision, s
         $rid=$p['rider_id'];
         if($decision==='approved') {
             // Owner rule: photos/licence are optional at approval; rider can add them later.
-            $q=$pdo->prepare('SELECT * FROM riders WHERE mobile=? FOR UPDATE');$q->execute([$p['mobile']]);$r=$q->fetch();
+            $q=$pdo->prepare('SELECT * FROM riders WHERE RIGHT(mobile,10)=? ORDER BY active DESC,id LIMIT 1 FOR UPDATE');$q->execute([substr(preg_replace('/\D/','',$p['mobile']),-10)]);$r=$q->fetch();
             if($r && !(int)$r['active']) throw new RuntimeException('Rider disabled: resolve with office first');
             if($r) $rid=(int)$r['id'];
             else {
@@ -297,7 +303,7 @@ function sr_profile_review(PDO $pdo, int $id, int $revision, string $decision, s
                 $rid=(int)$pdo->lastInsertId();
             }
             // Preserve rates, jobs and earnings. Approval grants both work categories.
-            $pdo->prepare('UPDATE riders SET name=?,vehicle=?,rc_number=?,vtype=?,ride_ok=1,do_ride=1,do_delivery=1,ready_until=NULL WHERE id=?')->execute([$p['name'],$p['vehicle_type'],$p['vehicle_number'],$p['vehicle_type'],$rid]);
+            $pdo->prepare('UPDATE riders SET name=?,vehicle=?,rc_number=?,vtype=?,ride_ok=1,do_ride=?,do_delivery=?,ready_until=NULL WHERE id=?')->execute([$p['name'],$p['vehicle_type'],$p['vehicle_number'],$p['vehicle_type'],sr_vehicle_does_ride($p['vehicle_type']),sr_vehicle_does_delivery($p['vehicle_type']),$rid]);
             $p['rider_id']=$rid; sr_rider_sync_details($pdo,$p);
             if(($p['dl_number'] ?? '')!=='') $pdo->prepare('UPDATE riders SET dl_number=? WHERE id=?')->execute([$p['dl_number'],$rid]);
         }

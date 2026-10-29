@@ -1,3 +1,17 @@
+# Step-1 fixes after external review — 29 October 2026
+
+- Login keeps sr_intent (partner app → new partner reaches apply.php, not ghar.php).
+- jobs.assign_mode ('auto'|'office'): scheduled / Saath Safar / Hospital Saathi / Door se Seva are
+  'office'; job_auto_give() and duty_on() never hand them out. Customer sees "finding" vs "office".
+- Saath Safar fare = per-seat (minimum per seat) × seats, same as the app shows.
+- Parcels only for bike/ev/cycle/auto/e-rickshaw/car (sr_vehicle_does_delivery); care does no rides.
+- IST everywhere: date_default_timezone_set + MySQL session time_zone '+05:30' (inc/fn.php).
+- Session 12 h; stored in SR_IDENTITY_PRIVATE_DIR/sessions when configured.
+- Stale-page POST on kaam.php / admin shows a message instead of a silent reload.
+- niyam.php + privacy.php now say truthfully that Aadhaar/PAN PHOTOS are stored privately
+  (SR_TERMS_VER bumped → partners accept again). Approval matches riders by last 10 digits.
+Next (owner-approved order): 2) offer/accept with 20 s timer, 3) FCM push, 4) rating/cancel/cash.
+
 # Prototype features adopted — owner request, 29 October 2026 (v3.2)
 
 Owner shared an AI-made HTML prototype ("Smart Sarathi Bhadohi 2.0") and said "jo best lage add karlo".

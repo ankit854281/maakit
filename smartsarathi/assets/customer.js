@@ -305,7 +305,7 @@
       var h = '<div class="ca-grab"></div><p class="ca-status">' + (live || b.status === 'new' ? '<i></i>' : '') + esc(L_['st_' + b.status] || b.status) + '</p>';
       h += '<p class="ca-sub">' + esc(b.job_no) + ' · ' + esc(b.drop || '') + '</p>';
       if (b.status !== 'cancelled') h += '<div class="ca-steps">' + [1, 2, 3, 4].map(function (i) { return '<span class="' + (i <= n ? 'on' : '') + '"></span>'; }).join('') + '</div>';
-      if (b.status === 'new') h += '<p class="ca-sub">' + esc(L_.officeAssign) + '</p>';
+      if (b.status === 'new') h += '<p class="ca-sub">' + esc(b.mode === 'office' ? L_.officeAssign : L_.finding) + '</p>';
       if (b.rider) {
         h += '<div class="ca-rider"><span class="av">' + esc((b.rider.name || '?').charAt(0)) + '</span><span><b>' + esc(b.rider.name) + '</b><small>' + esc(b.rider.vehicle || '') + '</small></span>' +
           (b.rider.number ? '<span class="ca-plate">' + esc(b.rider.number) + '</span>' : '') + '</div>';

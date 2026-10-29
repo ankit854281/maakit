@@ -92,7 +92,8 @@ function duty_on(PDO $pdo, $rid, $minutes = 90) {
         ->execute([(int)$minutes, (int)$rid]);
     // Koi hazir na tha tab aaye kaam (sawari/delivery) ab de dijiye — pehle aaye, pehle
     try {
-        $ids = $pdo->query("SELECT id FROM jobs WHERE status='new' AND created_at > NOW() - INTERVAL 1 DAY ORDER BY id LIMIT 5")->fetchAll(PDO::FETCH_COLUMN);
+        sr_jobs_upgrade($pdo);
+        $ids = $pdo->query("SELECT id FROM jobs WHERE status='new' AND assign_mode='auto' AND created_at > NOW() - INTERVAL 1 DAY ORDER BY id LIMIT 5")->fetchAll(PDO::FETCH_COLUMN);
         foreach ($ids as $jid) job_auto_give($pdo, (int)$jid);
     } catch (Throwable $e) { error_log('Sarathi catch-up: ' . $e->getMessage()); }
 }
@@ -189,8 +190,9 @@ function job_auto_give(PDO $pdo, $jid) {
     // Ek rider dono kaam karta hai — par sirf wahi jo usne apni profile me chuna hai.
     // Sawari: dafter ki ijaazat (ride_ok) + rider ne "सवारी" chalu ki + gaadi mel khaaye.
     sr_jobs_upgrade($pdo);
-    $jq = $pdo->prepare("SELECT kind, vehicle FROM jobs WHERE id=?"); $jq->execute([(int)$jid]);
-    $job = $jq->fetch() ?: ['kind' => 'delivery', 'vehicle' => null];
+    $jq = $pdo->prepare("SELECT kind, vehicle, assign_mode FROM jobs WHERE id=?"); $jq->execute([(int)$jid]);
+    $job = $jq->fetch() ?: ['kind' => 'delivery', 'vehicle' => null, 'assign_mode' => 'auto'];
+    if (($job['assign_mode'] ?? 'auto') === 'office') return null;   // office wala kaam — sirf admin dega
     $args = [];
     $approval = sr_firebase_enabled() ? " AND EXISTS (SELECT 1 FROM sr_rider_profiles p JOIN sr_accounts a ON a.id=p.account_id WHERE p.rider_id=r.id AND p.status='approved' AND a.active=1)" : "";
     if (($job['kind'] ?? 'delivery') === 'ride') {
@@ -517,6 +519,8 @@ function sr_jobs_upgrade(PDO $pdo) {
         if (!in_array('pick_geo', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN pick_geo VARCHAR(40) DEFAULT NULL");
         if (!in_array('drop_geo', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN drop_geo VARCHAR(40) DEFAULT NULL");
         if (!in_array('vehicle', $have, true))  $pdo->exec("ALTER TABLE jobs ADD COLUMN vehicle VARCHAR(10) DEFAULT NULL");
+        // auto = app khud rider ko de; office = baad ka samay / Saath Safar / Hospital Saathi / Door se Seva — sirf admin de
+        if (!in_array('assign_mode', $have, true)) $pdo->exec("ALTER TABLE jobs ADD COLUMN assign_mode VARCHAR(8) NOT NULL DEFAULT 'auto'");
         // Ek hi rider — delivery bhi, sawari bhi (ek login, ek profile)
         $rh = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='riders'")->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('vtype', $rh, true))       $pdo->exec("ALTER TABLE riders ADD COLUMN vtype VARCHAR(10) DEFAULT NULL");

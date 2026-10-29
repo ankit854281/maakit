@@ -16,6 +16,12 @@ if (!$me) { redirect('/'); }
 sr_jobs_upgrade($pdo);   // kind (ride/delivery) + GPS khaane
 $rid = (int)$me['id'];
 
+// Session/page purana ho gaya — chupchap reload nahi, saaf batao
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_ok()) {
+    if (post('do') === 'location') { header('Content-Type: application/json'); echo json_encode(['ok' => false, 'error' => 'reload']); exit; }
+    flash(t('The page was old. Please tap again.', 'पेज पुराना हो गया था। कृपया दोबारा दबाइए।'));
+    redirect('/kaam.php');
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 
@@ -119,7 +125,7 @@ $csrf = h(csrf());
 <?php
 // Profile poori karne ki yaad + app ka prachar (owner design P1/P3, 29 Oct 2026)
 $myProfile = (sr_firebase_enabled() && function_exists('sr_account') && ($acc0 = sr_account($pdo))) ? sr_profile($pdo, (int)$acc0['id']) : null;
-if ($myProfile && function_exists('sr_profile_docs_missing') && sr_profile_docs_missing($myProfile)): ?>
+if ($myProfile && function_exists('sr_profile_docs_missing') && (sr_profile_docs_missing($myProfile) || sr_terms_needed($myProfile))): ?>
 <a class="sx-card" href="<?= h(u('/apply.php')) ?>" style="display:block;text-decoration:none">
   <b><?= h(t('Complete your profile', 'प्रोफ़ाइल पूरी कीजिए')) ?></b>
   <?php [$dd, $dt] = function_exists('sr_doc_count') ? sr_doc_count($myProfile) : [0, 0]; ?>

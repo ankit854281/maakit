@@ -54,10 +54,9 @@ function sr_wizard_steps(?array $p): array {
     if($fresh || ($p['work_area'] ?? '')==='') $s[]='area';
     if(!$p || !sr_doc_done($p,'aadhaar')) $s[]='aadhaar';
     if(!$p || !sr_doc_done($p,'pan')) $s[]='pan';
-    if(!$s && empty($p['terms_at'])) $s[]='terms';
+    if(!$s && sr_terms_needed($p)) $s[]='terms';
     return $s;
 }
-function sr_terms_needed(?array $p): bool { return !$p || $p['status']==='rejected' || empty($p['terms_at']) || ($p['terms_ver'] ?? '')!==SR_TERMS_VER; }
 function sr_clean_code(string $v): string { return strtoupper(preg_replace('/[^A-Za-z0-9]/','',$v)); }
 
 if($_SERVER['REQUEST_METHOD']==='POST') {
@@ -279,7 +278,7 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
     'area'=>[t('Where will you work?','आप कहाँ काम करेंगे?'),t('Orders come only from this area — nearest Sarathi gets it first.','इसी इलाके के ऑर्डर आएँगे — सबसे पास वाले सारथी को पहले।'),t('Choose your town, then choose how far you will go for work.','अपना कस्बा चुनिए, फिर चुनिए कि काम के लिए कितनी दूर तक जाएँगे।')],
     'terms'=>[t('Rules for Sarathi partners','सारथी पार्टनर के नियम'),t('Please read once and agree.','एक बार पढ़कर मंज़ूर कीजिए।'),t('Please read the rules once and tick I agree.','कृपया नियम एक बार पढ़िए और मैं मानता हूँ पर टिक लगाइए।')],
     'name'=>[t('What is your name?','आपका नाम क्या है?'),t('Full name, as on Aadhaar.','पूरा नाम, जैसा आधार पर लिखा है।'),t('Write your full name as written on your Aadhaar.','अपना पूरा नाम लिखिए, जैसा आधार पर लिखा है।')],
-    'aadhaar'=>[t('Aadhaar card','आधार कार्ड'),t('Last 4 digits and photos of both sides. We never save the full number.','आख़िरी 4 अंक और दोनों तरफ़ की फ़ोटो। पूरा नंबर हम कभी नहीं रखते।'),t('Write the last four digits of your Aadhaar. Then take a photo of the front and the back.','आधार के आख़िरी चार अंक लिखिए। फिर आधार के आगे और पीछे की फ़ोटो लीजिए।')],
+    'aadhaar'=>[t('Aadhaar card','आधार कार्ड'),t('Last 4 digits and photos of both sides. Photos stay private with the office. A masked Aadhaar (UIDAI website) is best.','आख़िरी 4 अंक और दोनों तरफ़ की फ़ोटो। फ़ोटो सिर्फ़ दफ़्तर देखता है। मास्क्ड आधार (UIDAI वेबसाइट से) सबसे अच्छा।'),t('Write the last four digits of your Aadhaar. Then take a photo of the front and the back.','आधार के आख़िरी चार अंक लिखिए। फिर आधार के आगे और पीछे की फ़ोटो लीजिए।')],
     'pan'=>[t('PAN card','पैन कार्ड'),t('PAN number and a photo of the card.','पैन नंबर और कार्ड की फ़ोटो।'),t('Write your PAN number and take a photo of the PAN card. Then tap send.','अपना पैन नंबर लिखिए और पैन कार्ड की फ़ोटो लीजिए। फिर भेज दीजिए दबाइए।')],
   ];
   $tile=function(string $in,string $col,string $label,string $cap='') use ($p,$a) {
@@ -352,7 +351,7 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
         t('Take a clear selfie in good light. No cap or dark glasses.','अच्छी रोशनी में साफ़ सेल्फ़ी लीजिए। टोपी या काला चश्मा नहीं।'),
         t('Tap here and take a clear selfie of your face.','यहाँ दबाकर अपने चेहरे की साफ़ सेल्फ़ी लीजिए।')],
     'aadhaar'=>[t('Aadhaar card','आधार कार्ड'),'🪪',
-        t('Photos of the front and back. Masked Aadhaar from the UIDAI site is best. We save only the last 4 digits of the number.','आगे और पीछे दोनों की फ़ोटो। UIDAI से मिलने वाला मास्क्ड आधार सबसे अच्छा है। हम नंबर के सिर्फ़ आख़िरी 4 अंक रखते हैं।'),
+        t('Photos of the front and back — kept private, seen only by the office. Masked Aadhaar from the UIDAI site is best, so the full number is not visible.','आगे और पीछे दोनों की फ़ोटो — निजी रहती हैं, सिर्फ़ दफ़्तर देखता है। UIDAI से मिलने वाला मास्क्ड आधार सबसे अच्छा है, ताकि पूरा नंबर न दिखे।'),
         t('Write the last 4 digits of your Aadhaar and take photos of the front and back.','आधार के आख़िरी चार अंक लिखिए और आगे-पीछे की फ़ोटो लीजिए।')],
     'pan'=>[t('PAN card','पैन कार्ड'),'💳',
         t('Needed for payments. Write the PAN number and take a photo of the card.','पैसे के लेन-देन के लिए ज़रूरी। PAN नंबर लिखिए और कार्ड की फ़ोटो लीजिए।'),

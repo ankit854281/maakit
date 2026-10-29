@@ -58,4 +58,17 @@ bk_check(!$ok, 'bad receiver refused');
 [$ok] = sr_book($pdo, $cust, ['service' => 'bike', 'name' => 'Ram', 'pick_address' => 'X', 'pick_geo' => 'nope', 'drop_address' => 'Y', 'drop_geo' => $D]);
 bk_check(!$ok, 'booking without pickup GPS refused');
 
+// --- Step-1 fixes (29 Oct 2026) ---
+duty_off($pdo, $rid); duty_on($pdo, $rid);
+$cj = sr_my_job($pdo, $cust, $c['job_no']);
+bk_check($cj['status'] === 'new' && $cj['assign_mode'] === 'office', 'office booking stays with office even when a rider comes online');
+bk_check(sr_job_view($cj, $cust)['mode'] === 'office', 'customer is told the office will assign');
+bk_check(sr_job_view($pj, $cust)['mode'] === 'auto', 'auto booking is not shown as office');
+$sv = $svc['saath'];
+bk_check(sr_fare($sv, 3, 3) === 3 * sr_fare($sv, 3, 1) && sr_fare($sv, 3, 1) >= $sv['min'], 'Saath Safar: per-seat fare (minimum per seat) times seats');
+bk_check(sr_vehicle_does_delivery('care') === 0 && sr_vehicle_does_delivery('bus') === 0 && sr_vehicle_does_delivery('loader') === 0 && sr_vehicle_does_delivery('bike') === 1, 'parcels only for bike/auto/e-rickshaw/car');
+$_SESSION = ['sr_intent' => 'partner', 'sr_lang' => 'hi'];
+sr_identity_signin($pdo, ['uid' => 'bk-newpartner', 'mobile' => '9000000306']);
+bk_check(($_SESSION['sr_intent'] ?? '') === 'partner', 'partner intent survives login');
+bk_check(sr_home_path($pdo) === '/apply.php', 'new partner from partner app goes to joining, not customer home');
 echo "Booking checks passed\n";

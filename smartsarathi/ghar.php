@@ -38,7 +38,7 @@ $cfg = [
         'startOtp' => t('Start OTP — tell the Sarathi', 'शुरू करने का OTP — सारथी को बताइए'), 'endOtp' => t('End OTP', 'पूरा करने का OTP'),
         'call' => t('Call', 'कॉल'), 'share' => t('Share trip', 'सफ़र शेयर'), 'cancel' => t('Cancel booking', 'बुकिंग रद्द करें'),
         'cancelQ' => t('Cancel this booking?', 'यह बुकिंग रद्द करें?'), 'mine' => t('My bookings', 'मेरी बुकिंग'),
-        'none' => t('No bookings yet.', 'अभी कोई बुकिंग नहीं।'), 'officeAssign' => t('Our office will confirm and assign a Sarathi.', 'हमारा दफ़्तर पक्का करके सारथी भेजेगा।'),
+        'none' => t('No bookings yet.', 'अभी कोई बुकिंग नहीं।'), 'officeAssign' => t('Our office will confirm and assign a Sarathi.', 'हमारा दफ़्तर पक्का करके सारथी भेजेगा।'), 'finding' => t('Finding the nearest Sarathi for you…', 'आपके पास का सारथी ढूँढ रहे हैं…'),
         'err' => t('Something went wrong. Please call us.', 'कुछ गड़बड़ हुई। फ़ोन कीजिए।'), 'liveOff' => t('Live location appears when the Sarathi shares it.', 'सारथी जगह साझा करेगा तो यहाँ दिखेगी।'),
         'listen' => t('Listening… say the place', 'सुन रहे हैं… जगह बोलिए'), 'noMic' => t('Voice search does not work in this browser. Please type.', 'इस ब्राउज़र में बोलकर खोज नहीं चलती। लिखकर खोजिए।'),
         'here' => t('You are here', 'आप यहाँ हैं'), 'fav' => t('Save place', 'जगह सेव करें'), 'loginOnly' => t('Log in to see bookings', 'बुकिंग देखने के लिए लॉगिन कीजिए'),

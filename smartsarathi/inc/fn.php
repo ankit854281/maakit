@@ -45,6 +45,8 @@ if (!is_file($sr_cfg)) {
        . '<b>config.php</b>, और उसमें database की जानकारी भर दीजिए।</p></div>');
 }
 require_once $sr_cfg;
+// Bhadohi ka samay (IST) — PHP aur MySQL dono ek hi ghadi par
+date_default_timezone_set('Asia/Kolkata');
 header('Cache-Control: private, no-store, max-age=0');
 
 // ---------- database ----------
@@ -58,6 +60,7 @@ try {
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]
     );
+    $pdo->exec("SET time_zone = '+05:30'");
 } catch (Throwable $e) {
     // Asli galti kabhi graahak ko mat dikhaiye — usme server ka
     // naam aur user ka naam hota hai.
@@ -102,9 +105,17 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
           || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
     ini_set('session.use_strict_mode', '1');
+    // Login 12 ghante tak (sr_auth_until ke barabar). Shared hosting ka /tmp 24 min me
+    // session mita deta hai, isliye private folder ho to session wahin.
+    ini_set('session.gc_maxlifetime', '43200');
+    if (defined('SR_IDENTITY_PRIVATE_DIR') && is_dir(SR_IDENTITY_PRIVATE_DIR)) {
+        $sr_sess = rtrim(SR_IDENTITY_PRIVATE_DIR, '/') . '/sessions';
+        if (!is_dir($sr_sess)) @mkdir($sr_sess, 0700);
+        if (is_dir($sr_sess) && is_writable($sr_sess)) session_save_path($sr_sess);
+    }
     session_name('SRSESS');
     session_set_cookie_params([
-        'lifetime' => 0, 'path' => '/',
+        'lifetime' => 43200, 'path' => '/',
         'httponly' => true, 'samesite' => 'Lax', 'secure' => $https,
     ]);
     session_start();

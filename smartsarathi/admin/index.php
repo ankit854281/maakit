@@ -75,6 +75,12 @@ if (empty($_SESSION['sr_admin'])) {
 }
 
 // ---------- काम ----------
+// Session/page purana ho gaya — chupchap reload nahi, saaf batao
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_ok()) {
+    if (post('do') === 'location') { header('Content-Type: application/json'); echo json_encode(['ok' => false, 'error' => 'reload']); exit; }
+    flash(t('The page was old. Please tap again.', 'पेज पुराना हो गया था। कृपया दोबारा दबाइए।'));
+    redirect('/admin/');
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) {
     $do = post('do');
 

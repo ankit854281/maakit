@@ -32,7 +32,7 @@ $rules = [
   [t('Earnings and payments', 'कमाई और भुगतान'),
    t('Your earnings and any service charge are set by the office and shown in the app. Keep your account of every job in the app.', 'आपकी कमाई और सेवा शुल्क दफ़्तर तय करता है और ऐप में दिखता है। हर काम का हिसाब ऐप में रखिए।')],
   [t('Your data', 'आपकी जानकारी'),
-   t('We keep your photos privately and store only the last 4 digits of Aadhaar. We do not sell your data. See the privacy policy to delete your account.', 'हम आपकी फ़ोटो सुरक्षित रखते हैं और आधार के सिर्फ़ आख़िरी 4 अंक रखते हैं। आपकी जानकारी किसी को बेचते नहीं। खाता हटाने के लिए प्राइवेसी पॉलिसी देखिए।')],
+   t('We keep the photos of your Aadhaar, PAN and other papers in a private folder; only our office sees them, for verification. We do not type or store your full Aadhaar number separately — only the last 4 digits. If you upload a masked Aadhaar (from the UIDAI website), the photo will not show the full number either. We do not sell your data. See the privacy policy to delete your account.', 'आपके आधार, पैन और बाकी काग़ज़ों की फ़ोटो हम निजी फ़ोल्डर में रखते हैं; इन्हें सिर्फ़ हमारा दफ़्तर जाँच के लिए देखता है। आधार का पूरा नंबर हम अलग से नहीं लिखते — सिर्फ़ आख़िरी 4 अंक। मास्क्ड आधार (UIDAI वेबसाइट से) लगाएँ तो फ़ोटो में भी पूरा नंबर नहीं दिखेगा। आपकी जानकारी किसी को बेचते नहीं। खाता हटाने के लिए प्राइवेसी पॉलिसी देखिए।')],
   [t('Changes', 'बदलाव'),
    t('If these rules change, the app will ask you to read and accept them again.', 'नियम बदलने पर ऐप आपसे दोबारा पढ़कर मानने को कहेगा।')],
 ];

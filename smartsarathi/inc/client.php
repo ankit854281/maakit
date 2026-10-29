@@ -151,6 +151,8 @@ function job_create(PDO $pdo, array $client, array $in) {
     // panne par sabse upar dikhta hai. Isliye ye kabhi job banne
     // ko fail nahi karta.
     // no_auto: aage ke samay wali / office wali booking — admin assign karega
+    // Ye DB me likha jata hai, taaki baad me koi rider online aaye tab bhi office wala kaam apne aap na jaye
+    if (!empty($in['no_auto'])) $pdo->prepare("UPDATE jobs SET assign_mode='office' WHERE id=?")->execute([$id]);
     if (empty($in['no_auto'])) try { job_auto_give($pdo, $id); }
     catch (Throwable $e) { error_log('Sarathi auto-give: ' . $e->getMessage()); }
 
