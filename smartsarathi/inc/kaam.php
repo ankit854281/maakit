@@ -65,6 +65,8 @@ function rider_reset_code(PDO $pdo, $rid, $code, $confirm) {
 }
 
 function rider_logout() {
+    global $pdo;
+    sr_forget_login($pdo);
     if (sr_firebase_enabled()) {
         global $pdo;
         $account = sr_account($pdo);

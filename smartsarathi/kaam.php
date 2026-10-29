@@ -242,6 +242,7 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
       <div class="sx-acts">
         <?php if ($map): ?><a class="sx-act" href="<?= h($map) ?>" target="_blank" rel="noopener"><?= sr_icon('nav', 20) ?><span><?= h(t('Navigate', 'रास्ता')) ?></span></a><?php endif; ?>
         <a class="sx-act" href="tel:<?= h($j['drop_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= $isRide ? h(t('Passenger', 'सवारी')) : h(t('Customer', 'ग्राहक')) ?></span></a>
+        <?php if(sr_firebase_enabled() && in_array($j['status'],['assigned','picked'],true)): ?><button type="button" class="sx-act" data-sr-chat="<?= h($j['job_no']) ?>"><?= sr_icon('help',20) ?><span><?= h(t('Chat','चैट')) ?></span></button><?php endif; ?>
         <?php if ($j['pick_mobile'] && $j['pick_mobile'] !== $j['drop_mobile']): ?><a class="sx-act" href="tel:<?= h($j['pick_mobile']) ?>"><?= sr_icon('phone', 20) ?><span><?= h(t('Pickup', 'दुकान')) ?></span></a><?php endif; ?>
         <a class="sx-act" href="https://wa.me/91<?= h(preg_replace('/\D/', '', (string)$j['drop_mobile'])) ?>?text=<?= h($hello) ?>" target="_blank" rel="noopener"><?= sr_icon('wa', 20) ?><span>WhatsApp</span></a>
       </div>

@@ -40,7 +40,7 @@ try {
     $_SESSION=$adminSession;
     denied(fn()=>sr_profile_review($pdo,(int)$a['id'],1,'approved',''),'stale review');
     $p=sr_profile($pdo,(int)$a['id']);sr_profile_review($pdo,(int)$a['id'],(int)$p['revision'],'approved','Verified');
-    $_SESSION=$riderSession;ic(!rider_me($pdo),'Customer mode stays customer');
+    $_SESSION=$riderSession;ic((bool)rider_me($pdo),'Approved driver ignores stale customer mode');
     $_SESSION['sr_mode']='rider';$r=rider_me($pdo);ic($r && (int)$r['id']===$rid && (int)$r['rate']===45,'Existing rider and earnings preserved');
     ic((int)$r['do_delivery']===1&&(int)$r['do_ride']===1&&(int)$r['ride_ok']===1,'Both types enabled');
     denied(fn()=>sr_identity_signin($pdo,['uid'=>'different-uid','mobile'=>$a['mobile']]),'phone merge');
@@ -50,7 +50,7 @@ try {
     ic(!sr_identity_rider_allowed($pdo,$rid),'Suspended rider cannot receive work');
     ic(job_give($pdo,999999,$rid)[0]===false,'Manual dispatch blocked');
     $pdo->prepare('UPDATE sr_accounts SET session_version=session_version+1 WHERE id=?')->execute([$a['id']]);ic(!sr_account($pdo),'Session revocation');
-    $_SESSION=$adminSession;$_SESSION['sr_auth_until']=time()-1;ic(!sr_identity_admin($pdo),'Expired admin denied');
+    unset($_COOKIE['SRDEVICE']); $_SESSION=$adminSession;$_SESSION['sr_auth_until']=time()-1;ic(!sr_identity_admin($pdo),'Expired admin without device token denied');
     echo "Identity migration, linking, approval, modes, suspension and revocation passed\n";
 } finally {
     foreach($ids as $id){$pdo->prepare('DELETE FROM sr_identity_audit WHERE account_id=? OR actor_id=?')->execute([$id,$id]);$pdo->prepare('DELETE FROM sr_rider_profiles WHERE account_id=?')->execute([$id]);}

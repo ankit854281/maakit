@@ -1,3 +1,16 @@
+# Driver routing, passwords and communication — owner request, 29 October 2026
+
+Driver profiles now override customer intent/session mode; approved partners go to kaam.php,
+pending/rejected/suspended profiles stay on apply.php. Do not let customer links downgrade drivers.
+Password login supplements Firebase OTP: initial/recovery verification still uses OTP. Settings
+sets an 8–72 character password. Persistent login is a revocable 30-day HttpOnly device cookie,
+never localStorage authentication. Password change bumps session_version and revokes devices.
+Settings is the fifth driver tab, with owned vehicles (model/RC), language and password.
+Active jobs/offers block vehicle switching. Trip chat is accepted-trip-only, participant scoped,
+polls every 4s when open. Smart Help is a bilingual local topic guide with browser speech.
+See docs/sarathi-access-and-chat.md and tests/sarathi-access.php. This supersedes older OTP-only
+and freely switching driver-to-customer instructions below; preserve approval checks and private files.
+
 # Place search — owner: "log jagah nahi dhoondh paayenge", 29 October 2026
 
 Search goes through the server (book-api.php a=places / a=place, inc/places.php), never directly

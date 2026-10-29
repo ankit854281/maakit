@@ -15,6 +15,7 @@ function sr_tabs() {
         ['khata',   '/khata.php',   t('Earnings', 'कमाई'),       'rupee'],
         ['beete',   '/beete.php',   t('History', 'बीते काम'),    'clock'],
         ['jankari', '/jankari.php', t('Profile', 'प्रोफ़ाइल'),    'user'],
+        ['settings', '/account.php', t('Settings','सेटिंग्स'), 'help'],
     ];
 }
 
@@ -135,6 +136,7 @@ function sr_head($me, $tab, $title, $ready = null, $count = []) {
 }
 
 function sr_foot($tab, $count = []) {
+    require_once __DIR__.'/companion.php'; sr_companion();
     ?>
 </main>
 

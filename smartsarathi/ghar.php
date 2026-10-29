@@ -16,6 +16,7 @@ if (!headers_sent() && ($_COOKIE['sr_app'] ?? '') !== '1') {
     setcookie('sr_app', '1', ['expires' => time() + 31536000, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
 }
 $acc = sr_account($pdo);
+if ($acc && sr_account_role($pdo,$acc)==='partner') redirect(sr_home_path($pdo));
 $svcs = sr_services();
 $cfg = [
     'api' => u('/book-api.php'), 'login' => u('/?intent=customer'), 'account' => u('/account.php'), 'csrf' => csrf(),
@@ -96,11 +97,11 @@ $grid = [
     <svg viewBox="0 0 360 260" width="100%" height="100%" preserveAspectRatio="xMidYMax meet"><circle cx="290" cy="60" r="34" fill="#FFC83D" opacity=".9"/><path d="M0 230h360" stroke="#10C98F" stroke-width="4" stroke-dasharray="10 12"/><g transform="translate(70 92)"><circle cx="38" cy="122" r="26" fill="none" stroke="#fff" stroke-width="8"/><circle cx="190" cy="122" r="26" fill="none" stroke="#fff" stroke-width="8"/><path d="M38 122l52-58h50l50 58" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M90 64l-14-28h-22M140 64h30" stroke="#fff" stroke-width="8" stroke-linecap="round"/><circle cx="104" cy="12" r="16" fill="#10C98F"/><path d="M104 28l-6 40h30" stroke="#10C98F" stroke-width="12" stroke-linecap="round" fill="none"/></g></svg>
   </div>
   <div class="ob-copy">
-    <h1><?= h(t('Drive with Sarathi. Earn every day.', 'सारथी बनिए, रोज़ कमाइए।')) ?></h1>
+    <h1><?= h(t('Your journey. Your Sarathi.', 'आपका सफ़र। आपका सारथी।')) ?></h1>
     <p><?= h(t('Your own bike, auto, e-rickshaw, Bolero or loader. Work when you want.', 'अपनी बाइक, ऑटो, ई-रिक्शा, बोलेरो या लोडर से। जब चाहें तब काम।')) ?></p>
-    <a class="ca-cta" href="<?= h(u('/sarathi.php')) ?>" data-seen><?= h(t('Start earning', 'कमाना शुरू करें')) ?></a>
+    <a class="ca-cta" href="<?= h(u('/?intent=partner#password-login')) ?>" data-seen><?= h(t('Sarathi Partner — login / register', 'सारथी पार्टनर (Driver) लॉगिन/रजिस्टर')) ?></a>
     <p class="ob-or"><?= h(t('OR', 'या')) ?></p>
-    <button type="button" class="ob-cust" data-seen data-close><span><b><?= h(t('Customer?', 'ग्राहक हैं?')) ?></b><em><?= h(t('Book a ride', 'सवारी बुक कीजिए')) ?> →</em></span>
+    <button type="button" class="ob-cust" data-seen data-close><span><b><?= h(t('Continue as Customer', 'ग्राहक के रूप में आगे बढ़ें')) ?></b><em><?= h(t('Book a ride', 'सवारी बुक कीजिए')) ?> →</em></span>
       <svg width="64" height="48" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/></svg></button>
   </div>
 </div>
@@ -233,6 +234,7 @@ $grid = [
 </div>
 <p class="ca-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></p>
 <script id="ca-config" type="application/json"><?= json_encode($cfg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+<?php require_once __DIR__.'/inc/companion.php'; sr_companion(); ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="<?= h(u('/assets/customer.js')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/customer.js') ?>"></script>
 </body>

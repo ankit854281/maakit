@@ -12,6 +12,7 @@ require_once __DIR__.'/public.php';
 require_once __DIR__.'/identity.php';
 header('Cache-Control: private, no-store');
 $a=sr_account_require($pdo);
+sr_set_role($pdo,$a,'partner');
 sr_docs_upgrade($pdo);
 sr_identity_autolink($pdo,$a);
 $p=sr_profile($pdo,(int)$a['id']); $err=''; $errKind='';

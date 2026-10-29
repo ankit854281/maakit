@@ -345,6 +345,7 @@
       if (b.end_otp && b.status === 'picked') h += '<div class="ca-otp"><span>' + esc(L_.endOtp) + '</span><b>' + esc(b.end_otp) + '</b></div>';
       h += '<div class="ca-sum"><span>' + esc(L_.fare) + '</span><b>₹' + b.fare + '</b></div>';
       h += '<div class="ca-acts">' + (b.rider ? '<a class="call" href="tel:+91' + esc(b.rider.mobile) + '">' + esc(L_.call) + '</a>' : '<a class="call" href="tel:' + esc(C.phone) + '">' + esc(L_.call) + '</a>') +
+        (b.rider && live ? '<button type="button" data-sr-chat="'+esc(b.job_no)+'">'+esc(C.lang==='en'?'Chat':'चैट')+'</button>' : '') +
         '<button type="button" id="t-share">' + esc(L_.share) + '</button></div>';
       if (b.status === 'new' || b.status === 'assigned') h += '<button type="button" class="ca-cta ghost" id="t-cancel">' + esc(L_.cancel) + '</button>';
       $('#tsheet').innerHTML = h;

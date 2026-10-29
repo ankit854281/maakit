@@ -1,7 +1,11 @@
 <?php
 require_once __DIR__.'/firebase.php';
+require_once __DIR__.'/password.php';
 function sr_account(PDO $pdo): ?array {
-    if (!sr_firebase_enabled() || empty($_SESSION['sr_account']) || (int)($_SESSION['sr_auth_until'] ?? 0) <= time()) return null;
+    if (!sr_firebase_enabled()) return null;
+    if (empty($_SESSION['sr_account']) || (int)($_SESSION['sr_auth_until'] ?? 0) <= time()) {
+        if (!sr_restore_login($pdo)) return null;
+    }
     $q = $pdo->prepare('SELECT * FROM sr_accounts WHERE id=? AND active=1');
     $q->execute([(int)$_SESSION['sr_account']]); $a = $q->fetch();
     return $a && (int)$a['session_version'] === (int)($_SESSION['sr_account_version'] ?? 0) ? $a : null;
@@ -28,10 +32,17 @@ function sr_role_upgrade(PDO $pdo): void {
 function sr_account_role(PDO $pdo, array $a): ?string {
     sr_role_upgrade($pdo);
     $q=$pdo->prepare('SELECT role FROM sr_accounts WHERE id=?'); $q->execute([(int)$a['id']]);
-    $r=$q->fetchColumn(); return in_array($r,['customer','partner'],true) ? $r : null;
+    $r=$q->fetchColumn();
+    // A registered driver remains a partner even through a customer-app link.
+    if (sr_profile($pdo,(int)$a['id'])) {
+        if($r!=='partner') $pdo->prepare("UPDATE sr_accounts SET role='partner' WHERE id=?")->execute([(int)$a['id']]);
+        return 'partner';
+    }
+    return $r==='driver' ? 'partner' : (in_array($r,['customer','partner'],true) ? $r : null);
 }
 function sr_set_role(PDO $pdo, array $a, string $role): void {
     if(!in_array($role,['customer','partner'],true)) throw new RuntimeException('Invalid role');
+    if ($role==='customer' && sr_profile($pdo,(int)$a['id'])) $role='partner';
     sr_role_upgrade($pdo);
     $pdo->prepare('UPDATE sr_accounts SET role=? WHERE id=?')->execute([$role,(int)$a['id']]);
     $_SESSION['sr_mode']=$role==='partner' ? 'rider' : 'customer';
@@ -39,10 +50,11 @@ function sr_set_role(PDO $pdo, array $a, string $role): void {
 /** Login ke baad kahan jaana hai: role nahi → role.php; partner → kaam/profile; customer → ghar */
 function sr_home_path(PDO $pdo): string {
     $a=sr_account($pdo); if(!$a) return '/';
+    sr_identity_autolink($pdo,$a);
     $role=sr_account_role($pdo,$a);
     // Do alag app: jis app se aaye (intent), wahi role. Grahak app → customer, Sarathi Partner app → partner.
     $intent=$_SESSION['sr_intent'] ?? ''; unset($_SESSION['sr_intent']);
-    if(in_array($intent,['customer','partner'],true) && $intent!==$role) { sr_set_role($pdo,$a,$intent); $role=$intent; }
+    if($intent==='partner' || ($role===null && $intent==='customer')) { sr_set_role($pdo,$a,$intent); $role=$intent; }
     if($role===null) {
         // Purana link (bina intent): admin ne pehle se joda rider ya bhara hua form → partner, warna grahak
         $_SESSION['sr_mode']='rider'; sr_identity_autolink($pdo,$a);
@@ -79,10 +91,12 @@ function sr_identity_signin(PDO $pdo, array $identity): void {
     if(in_array($intent,['customer','partner'],true)) $_SESSION['sr_intent']=$intent;
     $_SESSION['sr_account']=$id; $_SESSION['sr_account_version']=$version;
     $_SESSION['sr_auth_until']=time()+12*3600; $_SESSION['sr_mode']='customer';
+    $_SESSION['sr_verified_at']=time();
+    sr_remember_login($pdo,$id,$version);
 }
 function sr_identity_rider(PDO $pdo): ?array {
     $a=sr_account($pdo);
-    if (!$a || ($_SESSION['sr_mode'] ?? '')!=='rider') return null;
+    if (!$a || sr_account_role($pdo,$a)!=='partner') return null;
     $q=$pdo->prepare("SELECT r.* FROM sr_rider_profiles p JOIN riders r ON r.id=p.rider_id WHERE p.account_id=? AND p.status='approved' AND r.active=1");
     $q->execute([$a['id']]); return $q->fetch() ?: null;
 }

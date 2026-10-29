@@ -154,6 +154,12 @@ function sr_customer_head(string $title, string $lead): void {
 <?php
 }
 function sr_customer_foot(): void {
+    require_once __DIR__.'/companion.php'; sr_companion();
+    global $pdo;
+    $a=sr_account($pdo);
+    if($a && sr_account_role($pdo,$a)==='partner') {
+        ?></main><nav class="sx-tabbar" aria-label="<?= h(t('Partner navigation','पार्टनर मेन्यू')) ?>"><?php foreach(sr_tabs() as [$key,$url,$label,$icon]): ?><a href="<?= h(u($url)) ?>"><?= sr_icon($icon) ?><span><?= h($label) ?></span></a><?php endforeach; ?></nav></body></html><?php return;
+    }
     ?></main><footer class="sc-help"><a class="sx-pill" href="tel:<?= h(SR_PHONE) ?>"><?= h(t('Need help? Call office','मदद चाहिए? दफ़्तर को फ़ोन')) ?></a></footer>
 <nav class="sc-nav" aria-label="<?= h(t('Main navigation','मुख्य मेन्यू')) ?>">
 <a href="<?= h(u('/ghar.php')) ?>"><?= sr_icon('box') ?><span><?= h(t('Home','होम')) ?></span></a>

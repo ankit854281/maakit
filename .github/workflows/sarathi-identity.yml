@@ -28,6 +28,7 @@ jobs:
           find smartsarathi -name '*.php' -print0 | xargs -0 -n1 php -l
           node --check smartsarathi/assets/firebase-login.js
           node --check smartsarathi/assets/customer.js
+          node --check smartsarathi/assets/companion.js
       - name: Token security and identity integration
         env:
           SR_TEST_DB_HOST: 127.0.0.1
@@ -35,6 +36,7 @@ jobs:
         run: |
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-firebase.php
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-identity-flow.php
+          php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-access.php
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-rider-flow.php
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-booking.php
           php -d auto_prepend_file=tests/ci-annotate.php tests/sarathi-docs.php
