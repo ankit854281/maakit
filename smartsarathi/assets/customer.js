@@ -146,7 +146,7 @@
       ul.hidden = false;
       ul.innerHTML = rows.map(function (r, i) {
         return '<li><button type="button" class="ca-res" data-i="' + i + '"><span class="ic" aria-hidden="true">' + (r.src === 'l' ? '★' : '📍') + '</span>' +
-          '<span><b>' + esc(r.main) + '</b>' + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span></button></li>';
+          '<span><b>' + esc(r.main) + '</b>' + (r.sub || r.km != null ? '<small>' + (r.km != null ? esc(r.km + ' km · ') : '') + esc(r.sub || '') + '</small>' : '') + '</span></button></li>';
       }).join('') +
         '<li><button type="button" class="ca-res pin" data-pin="1"><span class="ic" aria-hidden="true">📌</span><span><b>' +
         esc((rows.length ? L_.notHere : L_.noResultPin)) + '</b><small>' + esc(L_.pinIt.replace('%s', q)) + '</small></span></button></li>';

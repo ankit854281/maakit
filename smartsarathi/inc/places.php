@@ -86,21 +86,26 @@ function sr_places_local(PDO $pdo, string $q, int $limit = 5): array {
 function sr_places_google(PDO $pdo, string $q, array $near, string $tok): ?array {
     $key = sr_places_key(); if ($key === '') return null;
     $lang = sr_places_lang();
-    $ck = 'g1|' . $lang . '|' . round($near[0], 2) . ',' . round($near[1], 2) . '|' . mb_strtolower($q);
+    $ck = 'g2|' . $lang . '|' . round($near[0], 2) . ',' . round($near[1], 2) . '|' . mb_strtolower($q);
     if (($c = sr_cache_get($pdo, $ck, 30)) !== null) return $c;
     $j = sr_http_json('POST', 'https://places.googleapis.com/v1/places:autocomplete', ['X-Goog-Api-Key: ' . $key], [
         'input' => $q, 'sessionToken' => $tok, 'languageCode' => $lang, 'regionCode' => 'in', 'includedRegionCodes' => ['in'],
+        'origin' => ['latitude' => $near[0], 'longitude' => $near[1]],
         'locationBias' => ['circle' => ['center' => ['latitude' => $near[0], 'longitude' => $near[1]], 'radius' => 50000.0]],
     ]);
     if ($j === null) return null;
     $out = [];
     foreach (($j['suggestions'] ?? []) as $s) {
         $p = $s['placePrediction'] ?? null; if (!$p || empty($p['placeId'])) continue;
+        $dist = isset($p['distanceMeters']) ? (int)$p['distanceMeters'] : null;
+        if ($dist !== null && $dist > 400000) continue;           // 400 km se door (jaise Bengal ka Gopiganj) — nahi
         $out[] = ['src' => 'g', 'id' => (string)$p['placeId'],
             'main' => (string)($p['structuredFormat']['mainText']['text'] ?? $p['text']['text'] ?? ''),
-            'sub' => (string)($p['structuredFormat']['secondaryText']['text'] ?? '')];
-        if (count($out) >= 6) break;
+            'sub' => (string)($p['structuredFormat']['secondaryText']['text'] ?? ''), 'km' => $dist !== null ? round($dist / 1000, 1) : null];
     }
+    // Paas wali pehle (Google ka kram barabar ho to)
+    usort($out, fn($a, $b) => ($a['km'] ?? 9999) <=> ($b['km'] ?? 9999));
+    $out = array_slice($out, 0, 6);
     sr_cache_put($pdo, $ck, $out);
     return $out;
 }
