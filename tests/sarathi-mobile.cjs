@@ -13,9 +13,9 @@ const fs=require('node:fs');
     ['kaam.php','rider'],['jankari.php','rider'],['khata.php','rider'],['beete.php','rider'],['madad.php','rider'],
     ['admin/index.php','admin'],['admin/profiles.php','admin'],['index.php','guest'],['ghar.php','guest'],['ghar.php','rider'],['role.php','new'],['sarathi.php','guest']]) {
      const url=`http://127.0.0.1:8098/smartsarathi/${file}?fixture=${fixture}&lang=${lang}`;
-     const response=await page.goto(url);if(response.status()!==200)throw Error(`${url}: HTTP ${response.status()}`);
+     const response=await page.goto(url);await page.waitForTimeout(300);if(response.status()!==200)throw Error(`${url}: HTTP ${response.status()}`);
      if(/Fatal error|Warning:|Uncaught/.test(await page.locator('body').innerText()))throw Error(`${url}: PHP error`);
-     await page.locator('details').evaluateAll(xs=>xs.forEach(x=>x.open=true));
+     try{await page.locator('details').evaluateAll(xs=>xs.forEach(x=>x.open=true));}catch(e){throw Error(url+': '+e.message);}
      const problems=await page.evaluate(()=>{
       const p=[];
       if(document.querySelector('meta[name=viewport]')?.content!=='width=device-width,initial-scale=1,viewport-fit=cover')p.push('viewport');

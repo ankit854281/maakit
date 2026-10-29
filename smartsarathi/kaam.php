@@ -478,7 +478,13 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
   function check() {
     if (busy) return;
     post({ do: 'offer' }).then(function (r) {
-      if (r && r.error === 'reload') { location.reload(); return; }
+      if (r && r.error === 'reload') {
+        // Session purana: ek baar reload (minute me ek se zyada nahi), warna poochhna band
+        clearInterval(poll); var k = 'sx_offer_reload', last = 0;
+        try { last = +sessionStorage.getItem(k) || 0; } catch (e) {}
+        if (Date.now() - last > 60000) { try { sessionStorage.setItem(k, Date.now()); } catch (e) {} location.reload(); }
+        return;
+      }
       if (r && r.offer) { if (!cur || cur.id !== r.offer.id) open(r.offer); } else if (cur) close();
     }).catch(function () {});
   }
