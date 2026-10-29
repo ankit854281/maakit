@@ -1,3 +1,4 @@
+<?php if (!empty($sr_app_mode)) { require __DIR__ . '/sr-app-foot.php'; return; } ?>
 <?php if (empty($no_tabbar)): ?>
 <footer class="footer">
   <div class="wrap">

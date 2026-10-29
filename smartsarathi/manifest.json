@@ -6,15 +6,34 @@
   "lang": "hi",
   "dir": "ltr",
   "start_url": "/smartsarathi/ghar.php?src=app",
-  "scope": "/smartsarathi/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0B1F3A",
   "theme_color": "#0B1F3A",
-  "categories": ["travel", "lifestyle", "shopping"],
+  "categories": [
+    "travel",
+    "lifestyle",
+    "shopping"
+  ],
   "icons": [
-    {"src": "/smartsarathi/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "/smartsarathi/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "/smartsarathi/assets/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "/smartsarathi/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/smartsarathi/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/smartsarathi/assets/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

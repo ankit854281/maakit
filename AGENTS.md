@@ -1,3 +1,13 @@
+# One-app experience — owner instruction, 29 October 2026
+
+Owner wants ONE professional app, not a website with many links. Maakit booking
+pages (ride.php, trip.php, sewa.php, bazaar.php, track.php…) render in "Sarathi app
+mode" when cookie sr_app=1 (set by smartsarathi/ghar.php, or ?app=1; ?app=0 clears):
+inc/sr-app-head.php replaces the Maakit header/ticker, inc/sr-app-foot.php replaces
+footer/tabbar with the app bottom nav. Manifest scope is "/" so these pages stay
+inside the installed app. Login is number + OTP only (no consent checkbox; a line
+of text links privacy). Keep every new customer screen in the navy/mint app style.
+
 # Launch tracking — owner instruction, 29 October 2026
 
 For launch, the old hosting GPS sharing (kaam.php do=location, 20 s minimum gap)

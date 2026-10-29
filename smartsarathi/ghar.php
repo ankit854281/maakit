@@ -13,6 +13,10 @@
 require_once __DIR__ . '/inc/public.php';
 require_once __DIR__ . '/inc/identity.php';
 header('Cache-Control: private, no-store');
+// App mode: Maakit ke booking panne (ride.php, sewa.php…) bhi Sarathi app ke design me khulein
+if (!headers_sent() && ($_COOKIE['sr_app'] ?? '') !== '1') {
+    setcookie('sr_app', '1', ['expires' => time() + 31536000, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
+}
 
 $acc = function_exists('sr_account') ? sr_account($pdo) : null;
 $M = fn($p) => sr_maakit_url($p);

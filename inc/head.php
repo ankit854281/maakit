@@ -7,6 +7,12 @@ $page_title = $page_title ?? t('Maakit — shopping, delivery & bookings', 'Maak
 $tab = $tab ?? '';           // ghar | order | mere | kaam
 $no_tabbar = $no_tabbar ?? false;
 $no_ticker = $no_ticker ?? false;
+// Smart Sarathi app mode (cookie sr_app=1 from smartsarathi/ghar.php, or ?app=1)
+if (isset($_GET['app']) && in_array($_GET['app'], ['0', '1'], true) && !headers_sent()) {
+    setcookie('sr_app', $_GET['app'], ['expires' => $_GET['app'] === '1' ? time() + 31536000 : time() - 3600, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
+    $_COOKIE['sr_app'] = $_GET['app'];
+}
+$sr_app_mode = ($_COOKIE['sr_app'] ?? '') === '1' && empty($adm_page) && empty($shop_panel);
 
 // ---------------------------------------------------------------
 // Upar chalne wali patti.
@@ -122,7 +128,8 @@ $og_desc = t('Order from any village shop on Maakit — the shop\'s own price, d
 <?php foreach ((array)($page_css ?? []) as $pcss): ?><link rel="stylesheet" href="<?= h($pcss) ?>">
 <?php endforeach; ?>
 </head>
-<body class="<?= $no_tabbar?'':'has-tabbar' ?><?= !empty($home_page)?' mk-home-page':'' ?><?= !empty($adm_page)?' adm-body':'' ?><?= !empty($shop_panel)?' sp-body':'' ?><?= !empty($request_design)?' request-design':'' ?>">
+<body class="<?= $sr_app_mode ? 'sr-app ' : '' ?><?= ($no_tabbar || $sr_app_mode)?'':'has-tabbar' ?><?= !empty($home_page)?' mk-home-page':'' ?><?= !empty($adm_page)?' adm-body':'' ?><?= !empty($shop_panel)?' sp-body':'' ?><?= !empty($request_design)?' request-design':'' ?>">
+<?php if ($sr_app_mode): require __DIR__ . '/sr-app-head.php'; else: ?>
 
 <?php
 require_once __DIR__ . '/festival.php';
@@ -202,6 +209,7 @@ if ($_c && empty($no_tabbar) && isset($pdo)) {
     </div>
   </div>
 </header>
+<?php endif; ?>
 <?php if ($_live_order):
   $_steps = ['Naya' => 1, 'Confirm' => 2, 'Assign' => 3, 'Pickup' => 3, 'Delivered' => 4];
   $_sn = $_steps[$_live_order['status']] ?? 1; ?>

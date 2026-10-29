@@ -6,14 +6,14 @@ $config=sr_firebase_config();
 $appCheckSiteKey=defined('SR_FIREBASE_APP_CHECK_SITE_KEY') ? (string)SR_FIREBASE_APP_CHECK_SITE_KEY : '';
 // App Check is optional (owner decision 28 Oct 2026): used only when a site key is configured.
 $ready=!in_array('',array_values($config),true);
-sr_public_head('login',t('Sign in','लॉगिन'),t('SMART SARATHI','स्मार्ट सारथी'),t('One account.','एक खाता।'),t('Ride or deliver.','सवारी और डिलीवरी।'),t('Sign in with your mobile. Choose Customer or Rider mode after login.','मोबाइल से लॉगिन कीजिए। फिर ग्राहक या राइडर मोड चुनिए।'));
+sr_customer_head(t('Login','लॉगिन'),t('Just your mobile number and the SMS code.','बस मोबाइल नंबर और SMS कोड।'));
 ?>
 <section class="sx-card sx-form" id="phone-login">
 <h2><?= h(t('Mobile OTP login','मोबाइल OTP लॉगिन')) ?></h2>
 <?php if(!$ready): ?><p role="alert"><?= h(t('Phone login is being configured. Please call the office.','मोबाइल लॉगिन की तैयारी बाकी है। दफ़्तर को फ़ोन कीजिए।')) ?></p><?php else: ?>
 <form id="phone-form">
 <label class="sx-field"><span><?= h(t('Mobile number (+91)','मोबाइल नंबर (+91)')) ?></span><input id="phone" type="tel" inputmode="numeric" autocomplete="tel-national" pattern="[6-9][0-9]{9}" maxlength="10" required></label>
-<label class="sx-check"><input id="consent" type="checkbox" required><span><?= h(t('I agree to receive a login SMS. Google processes and stores my phone number for authentication and abuse prevention.','मैं लॉगिन SMS पाने के लिए सहमत हूँ। Google मेरे नंबर का उपयोग और संग्रह पहचान व दुरुपयोग रोकने के लिए करता है।')) ?></span></label>
+<p class="sx-fine" style="margin:0;font-size:12.5px"><?= h(t('By continuing you agree to get a login SMS. Google handles your number for sign-in and abuse prevention.','आगे बढ़ने पर लॉगिन SMS आएगा। लॉगिन और सुरक्षा के लिए आपका नंबर Google संभालता है।')) ?> <a href="<?= h(u('/privacy.php')) ?>"><?= h(t('Privacy','प्राइवेसी')) ?></a></p>
 <button id="send-otp" class="sx-btn sx-btn-mint" type="submit"><?= h(t('Send OTP','OTP भेजिए')) ?></button>
 </form>
 <form id="otp-form" hidden>
@@ -26,4 +26,4 @@ sr_public_head('login',t('Sign in','लॉगिन'),t('SMART SARATHI','स्�
 <script id="firebase-login-config" type="application/json"><?= json_encode(['firebase'=>$config,'appCheckSiteKey'=>$appCheckSiteKey,'endpoint'=>u('/auth.php'),'csrf'=>csrf(),'lang'=>sr_lang()],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
 <script type="module" src="<?= h(u('/assets/firebase-login.js')) ?>?v=3"></script>
 <?php endif; ?></section>
-<?php sr_public_foot(); ?>
+<?php sr_customer_foot(); ?>
