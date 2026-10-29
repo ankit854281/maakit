@@ -42,7 +42,7 @@ duty_on($pdo, $rid);
 // 3. Customer books a bike in Bhadohi
 sr_identity_signin($pdo, ['uid' => 'e2e-cust', 'mobile' => '9000000503']); $cust = sr_account($pdo);
 [$ok, $b] = sr_book($pdo, $cust, ['service' => 'bike', 'name' => 'Sita', 'pick_address' => 'Bhadohi station', 'pick_geo' => '25.405,82.565',
-    'drop_address' => 'Gyanpur', 'drop_geo' => '25.35,82.47', 'when' => 'now']);
+    'drop_address' => 'Gyanpur', 'drop_geo' => '25.350,82.470', 'when' => 'now']);
 e2e($ok, '4. customer booking created');
 $j = sr_my_job($pdo, $cust, $b['job_no']); $v = sr_job_view($j, $cust);
 e2e($j['status'] === 'assigned' && (int)$j['rider_id'] === $rid, '5. booking goes to the nearby Sarathi');
