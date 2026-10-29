@@ -6,6 +6,7 @@ define('SR_FIREBASE_ENABLED', true);
 define('SR_FIREBASE_ADMIN_MOBILES', ['9000000501']);
 function t($en, $hi) { return $en; }
 require_once __DIR__ . '/../smartsarathi/inc/booking.php';
+set_exception_handler(function ($e) { echo '::error::E2E ' . get_class($e) . ': ' . str_replace(["\n","\r"], ' ', $e->getMessage()) . ' @' . basename($e->getFile()) . ':' . $e->getLine() . "\n"; exit(1); });
 function e2e($ok, $label) { if (!$ok) throw new RuntimeException('FAILED: ' . $label); echo "ok  $label\n"; }
 $pdo = new PDO('mysql:host=' . getenv('SR_TEST_DB_HOST') . ';dbname=sarathi_identity_test;charset=utf8mb4', 'root', getenv('SR_TEST_DB_PASSWORD'),
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]);
