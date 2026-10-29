@@ -1,37 +1,55 @@
 <?php
 // ============================================================
-//  स्मार्ट सारथी — ग्राहक का होम (8 सेवाएँ)
+//  स्मार्ट सारथी — ग्राहक ऐप (single page)
 //
-//  Owner design, 29 Oct 2026: "कहाँ जाना है?" box, pehli line
-//  बाइक · ऑटो · ई-रिक्शा, doosri line सामान · पार्सल · गाड़ी बुकिंग ·
-//  माल गाड़ी · साथ सफ़र. Login zaroori nahi — sirf booking ke waqt.
-//
-//  Booking ke panne abhi maakit.in par chalte hain (ride.php,
-//  sewa.php) — wahi backend jo riders tak kaam pahunchata hai.
-//  Isliye har dibba wahan jaata hai (sr_maakit_url).
+//  Owner master prompt, 29 Oct 2026: Uber/Rapido jaisa dashboard,
+//  booking neeche se khulne wali sheet me (naksha, doori, pakka
+//  kiraya, ETA), tracking aur "मेरी बुकिंग" isi panne par —
+//  bina page reload. Booking seedhe Sarathi ke kaam (jobs) me
+//  banti hai: book-api.php → inc/booking.php → job_create().
 // ============================================================
 require_once __DIR__ . '/inc/public.php';
-require_once __DIR__ . '/inc/identity.php';
+require_once __DIR__ . '/inc/booking.php';
 header('Cache-Control: private, no-store');
-// App mode: Maakit ke booking panne (ride.php, sewa.php…) bhi Sarathi app ke design me khulein
+// Maakit ke purane panne bhi kabhi khulein to app ke design me (inc/sr-app-head.php)
 if (!headers_sent() && ($_COOKIE['sr_app'] ?? '') !== '1') {
     setcookie('sr_app', '1', ['expires' => time() + 31536000, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
 }
-
-$acc = function_exists('sr_account') ? sr_account($pdo) : null;
-$M = fn($p) => sr_maakit_url($p);
-
-$rides = [
-    ['बाइक', 'Bike', $M('/ride.php?v=bike'), '<circle cx="11" cy="32" r="7"/><circle cx="37" cy="32" r="7"/><path d="M11 32l9-12h9l8 12M24 20l-3-6h-5M29 20h6"/>'],
-    ['ऑटो', 'Auto', $M('/ride.php?v=auto'), '<path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/>'],
-    ['ई-रिक्शा', 'E-rickshaw', $M('/ride.php?v=erick'), '<path d="M10 12h26v6H10zM12 18v14h26V22l-4-4"/><circle cx="16" cy="34" r="4"/><circle cx="34" cy="34" r="4"/><path d="M22 10l2-4"/>'],
+$acc = sr_account($pdo);
+$svcs = sr_services();
+$cfg = [
+    'api' => u('/book-api.php'), 'login' => u('/'), 'account' => u('/account.php'), 'csrf' => csrf(),
+    'loggedIn' => (bool)$acc, 'mobile' => $acc['mobile'] ?? null, 'phone' => SR_PHONE, 'lang' => sr_lang(),
+    'services' => array_map(fn($s) => ['name' => $s['name'], 'tag' => $s['tag'], 'kind' => $s['kind']], $svcs),
+    'L' => [
+        'where' => t('Where to?', 'कहाँ जाना है?'), 'pickup' => t('Pickup', 'पिकअप'), 'drop' => t('Drop', 'ड्रॉप'),
+        'myLoc' => t('My location', 'मेरी जगह'), 'search' => t('Search', 'खोजिए'), 'tapMap' => t('Or tap on the map', 'या नक्शे पर दबाइए'),
+        'searching' => t('Searching…', 'खोज रहे हैं…'), 'noResult' => t('Not found. Tap on the map instead.', 'नहीं मिला। नक्शे पर दबाइए।'),
+        'gpsFail' => t('Could not get your location. Allow location or tap on the map.', 'आपकी जगह नहीं मिली। लोकेशन चालू कीजिए या नक्शे पर दबाइए।'),
+        'choose' => t('Choose a ride', 'गाड़ी चुनिए'), 'min' => t('min', 'मिनट'), 'km' => t('km', 'किमी'),
+        'now' => t('Now', 'अभी'), 'later' => t('Later', 'बाद में'), 'name' => t('Your name', 'आपका नाम'),
+        'self' => t('I will receive it', 'मैं ही लूँगा'), 'other' => t('Someone else receives', 'कोई और लेगा'),
+        'rName' => t('Receiver name', 'पाने वाले का नाम'), 'rMob' => t('Receiver mobile', 'पाने वाले का मोबाइल'),
+        'items' => t('What is it? (optional)', 'क्या है? (ज़रूरी नहीं)'), 'note' => t('Note for Sarathi (optional)', 'सारथी के लिए बात (ज़रूरी नहीं)'),
+        'seats' => t('Seats', 'सीट'), 'book' => t('Book', 'बुक करें'), 'loginBook' => t('Log in & book', 'लॉगिन करके बुक करें'),
+        'booking' => t('Booking…', 'बुक हो रहा है…'), 'fare' => t('Fare', 'किराया'), 'pay' => t('Pay the Sarathi by cash or UPI at the end', 'आख़िर में सारथी को नकद या UPI से दीजिए'),
+        'st_new' => t('Finding a Sarathi…', 'सारथी ढूँढ रहे हैं…'), 'st_assigned' => t('Sarathi is coming', 'सारथी आ रहा है'),
+        'st_picked' => t('On the way', 'रास्ते में'), 'st_delivered' => t('Completed', 'पूरा हो गया'), 'st_cancelled' => t('Cancelled', 'रद्द'),
+        'startOtp' => t('Start OTP — tell the Sarathi', 'शुरू करने का OTP — सारथी को बताइए'), 'endOtp' => t('End OTP', 'पूरा करने का OTP'),
+        'call' => t('Call', 'कॉल'), 'share' => t('Share trip', 'सफ़र शेयर'), 'cancel' => t('Cancel booking', 'बुकिंग रद्द करें'),
+        'cancelQ' => t('Cancel this booking?', 'यह बुकिंग रद्द करें?'), 'mine' => t('My bookings', 'मेरी बुकिंग'),
+        'none' => t('No bookings yet.', 'अभी कोई बुकिंग नहीं।'), 'officeAssign' => t('Our office will confirm and assign a Sarathi.', 'हमारा दफ़्तर पक्का करके सारथी भेजेगा।'),
+        'err' => t('Something went wrong. Please call us.', 'कुछ गड़बड़ हुई। फ़ोन कीजिए।'), 'liveOff' => t('Live location appears when the Sarathi shares it.', 'सारथी जगह साझा करेगा तो यहाँ दिखेगी।'),
+        'loginOnly' => t('Log in to see bookings', 'बुकिंग देखने के लिए लॉगिन कीजिए'), 'when' => t('Date & time', 'तारीख़ और समय'), 'back' => t('Back', 'वापस'), 'setBoth' => t('Set pickup and drop to see fares', 'किराया देखने के लिए दोनों जगह चुनिए'),
+    ],
 ];
-$more = [
-    ['सामान', 'Shopping', $M('/bazaar.php'), '#E7F8F2', '<path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/>'],
-    ['पार्सल', 'Parcel', $M('/ride.php?t=parcel'), '#E8F0FB', '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],
-    ['गाड़ी बुकिंग', 'Book a vehicle', $M('/sewa.php?s=gaadi'), '#FDF1E3', '<path d="M3 14l2-6h14l2 6v4H3z"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="16.5" cy="18" r="1.8"/><path d="M3 14h18"/>'],
-    ['माल गाड़ी', 'Goods', $M('/sewa.php?s=maal'), '#EFEDFB', '<path d="M2 6h12v10H2zM14 10h4l4 4v2h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>'],
-    ['साथ सफ़र', 'Share a ride', $M('/sewa.php?s=saath'), '#E7F8F2', '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6M14 15.5c.9-.6 1.9-1 3-1 2.8 0 5 2.2 5 5"/>'],
+$grid = [
+    ['bike',   t('Bike', 'बाइक'),        '<circle cx="11" cy="32" r="7"/><circle cx="37" cy="32" r="7"/><path d="M11 32l9-12h9l8 12M24 20l-3-6h-5M29 20h6"/>'],
+    ['auto',   t('Auto', 'ऑटो'),         '<path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/>'],
+    ['parcel', t('Parcel', 'पार्सल'),    '<path d="M8 15l16-8 16 8v18l-16 8-16-8z"/><path d="M8 15l16 8 16-8M24 23v18"/>'],
+    ['cab',    t('Cab / Bolero', 'कैब / बोलेरो'), '<path d="M6 28l4-10h28l4 10v8H6z"/><circle cx="14" cy="36" r="3.5"/><circle cx="34" cy="36" r="3.5"/><path d="M6 28h36M14 18l2-5h16l2 5"/>'],
+    ['loader', t('Loader', 'लोडर'),      '<path d="M4 12h22v20H4zM26 20h8l8 8v4H26z"/><circle cx="12" cy="35" r="4"/><circle cx="34" cy="35" r="4"/>'],
+    ['saath',  t('Saath Safar', 'साथ सफ़र'), '<circle cx="16" cy="16" r="6"/><circle cx="34" cy="18" r="5"/><path d="M4 40c0-7 5-12 12-12s12 5 12 12M28 31c2-1 4-2 6-2 6 0 10 4 10 10"/>'],
 ];
 ?><!doctype html>
 <html lang="<?= h(sr_lang()) ?>">
@@ -40,113 +58,109 @@ $more = [
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1F3A">
 <title><?= h(t('Smart Sarathi — rides, parcels, vehicles', 'स्मार्ट सारथी — सवारी, पार्सल, गाड़ी')) ?></title>
-<meta name="description" content="<?= h(t('Bike, auto, e-rickshaw, parcel, shopping, vehicle booking, goods transport and shared rides in Bhadohi.', 'भदोही में बाइक, ऑटो, ई-रिक्शा, पार्सल, सामान, गाड़ी बुकिंग, माल गाड़ी और साथ सफ़र।')) ?>">
+<meta name="description" content="<?= h(t('Book bike, auto, e-rickshaw, cab, parcel and loader in Bhadohi. Fare shown before you book.', 'भदोही में बाइक, ऑटो, ई-रिक्शा, कैब, पार्सल और लोडर बुक कीजिए। बुक करने से पहले किराया।')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <?php if (!function_exists('sr_app_head')) require_once __DIR__ . '/inc/ui.php'; sr_app_head(); ?>
-<style>
-:root{--navy:#0B1F3A;--mint:#1FCB97;--bg:#F4F6F9;--line:#E3E8EF;--muted:#4B5A6B;--red:#B42318}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--navy);font-family:'Noto Sans Devanagari','Plus Jakarta Sans',system-ui,sans-serif}
-a{color:inherit;text-decoration:none}
-.gh{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:84px}
-.gh-top{background:var(--navy);color:#fff;padding:18px 18px 64px}
-.gh-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.gh-logo{display:flex;align-items:center;gap:10px;font:800 18px 'Plus Jakarta Sans',sans-serif}
-.gh-mark{width:40px;height:40px;border-radius:12px;background:var(--mint);display:grid;place-items:center}
-.gh-lang{display:flex;gap:4px;background:rgba(255,255,255,.12);border-radius:999px;padding:4px}
-.gh-lang a{padding:6px 11px;border-radius:999px;font:700 12px 'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;color:#fff}
-.gh-lang a[aria-current]{background:#fff;color:var(--navy)}
-.gh-hi{font:700 22px/1.35 'Noto Sans Devanagari',sans-serif;margin:16px 0 0}
-.gh-where{margin:-46px 16px 0;background:#fff;border-radius:18px;box-shadow:0 8px 24px rgba(11,31,58,.12);padding:12px 12px 12px 18px;display:flex;align-items:center;gap:12px;min-height:68px}
-.gh-where .dot{width:10px;height:10px;border-radius:50%;background:var(--mint);flex:none}
-.gh-where b{flex:1;font:700 17px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
-.gh-where .go{width:44px;height:44px;border-radius:12px;background:var(--navy);display:grid;place-items:center}
-.gh-sec{padding:20px 16px 0}
-.gh-sec h2{margin:0 0 10px;font:700 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
-.gh-rides{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.gh-rides a{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;font:700 15px 'Noto Sans Devanagari',sans-serif;transition:border-color .15s,transform .15s}
-.gh-rides a:hover,.gh-more a:hover .ic{border-color:var(--navy)}
-.gh-rides a:active{transform:scale(.97)}
-.gh-more{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-.gh-more a{display:flex;flex-direction:column;align-items:center;gap:6px;font:600 12.5px/1.25 'Noto Sans Devanagari',sans-serif;text-align:center}
-.gh-more .ic{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;border:1px solid transparent}
-.gh-care{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.gh-care a{background:#fff;border:1px solid var(--line);border-top:4px solid var(--mint);border-radius:16px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;min-height:110px}
-.gh-care b{font:800 16px 'Noto Sans Devanagari',sans-serif}
-.gh-care small{font:500 12.5px/1.4 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
-.gh-sos{margin:20px 16px 0;background:#fff;border:1px solid #F3C9C9;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;color:var(--red);font:700 14px 'Noto Sans Devanagari',sans-serif;min-height:56px}
-.gh-sos span.c{width:36px;height:36px;border-radius:50%;background:#FBEBEB;display:grid;place-items:center;flex:none}
-.gh-join{margin:12px 16px 0;background:var(--navy);color:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:600 14px/1.4 'Noto Sans Devanagari',sans-serif}
-.gh-join em{font-style:normal;background:var(--mint);color:var(--navy);border-radius:12px;padding:10px 12px;font-weight:800;white-space:nowrap}
-.gh-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 0 calc(10px + env(safe-area-inset-bottom))}
-.gh-nav div{max-width:520px;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-.gh-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font:600 12px 'Noto Sans Devanagari',sans-serif;color:var(--muted);min-height:44px}
-.gh-nav a[aria-current]{color:var(--navy);font-weight:800}
-@media(max-width:360px){.gh-more{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px}}
-</style>
+<link rel="stylesheet" href="<?= h(u('/assets/customer.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/customer.css') ?>">
 </head>
 <body>
-<main class="gh">
-  <header class="gh-top">
-    <div class="gh-row">
-      <a class="gh-logo" href="<?= h(u('/ghar.php')) ?>"><span class="gh-mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span>Sarathi</a>
-      <nav class="gh-lang" aria-label="<?= h(t('Language', 'भाषा')) ?>">
-        <a href="?lang=hi"<?= sr_lang() === 'hi' ? ' aria-current="true"' : '' ?>>हिन्दी</a>
-        <a href="?lang=en"<?= sr_lang() === 'en' ? ' aria-current="true"' : '' ?>>EN</a>
-      </nav>
+<div class="ca" id="app">
+
+<!-- ================= HOME ================= -->
+<section class="ca-view" data-view="home">
+  <header class="ca-top">
+    <div class="ca-row">
+      <a class="ca-logo" href="<?= h(u('/ghar.php')) ?>"><span class="ca-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span>Smart Sarathi<small><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> <?= h(t('Bhadohi', 'भदोही')) ?></small></span></a>
+      <div class="ca-row" style="gap:8px">
+        <nav class="ca-lang" aria-label="<?= h(t('Language', 'भाषा')) ?>"><a href="?lang=hi"<?= sr_lang() === 'hi' ? ' aria-current="true"' : '' ?>>हिं</a><a href="?lang=en"<?= sr_lang() === 'en' ? ' aria-current="true"' : '' ?>>EN</a></nav>
+        <a class="ca-sos" href="tel:<?= h(SR_PHONE) ?>" aria-label="<?= h(t('Emergency call', 'आपातकाल कॉल')) ?>">SOS</a>
+      </div>
     </div>
-    <p class="gh-hi"><?= h(t('Hello! What do you need today?', 'नमस्ते! आज क्या चाहिए?')) ?></p>
+    <div class="ca-promo">
+      <b><?= h(t('Fare first. Then book.', 'पहले किराया, फिर बुकिंग।')) ?></b>
+      <span><?= h(t('Bike, auto, cab, parcel and loader — verified local Sarathis, live tracking.', 'बाइक, ऑटो, कैब, पार्सल, लोडर — सत्यापित लोकल सारथी, लाइव ट्रैकिंग।')) ?></span>
+    </div>
   </header>
 
-  <a class="gh-where" href="<?= h($M('/ride.php')) ?>">
-    <span class="dot"></span>
-    <b><?= h(t('Where to?', 'कहाँ जाना है?')) ?></b>
+  <button class="ca-search" type="button" data-open="bike">
+    <span class="dot" aria-hidden="true"></span>
+    <span><b><?= h(t('Where to?', 'कहाँ जाना है?')) ?></b><small><?= h(t('Select pickup & drop', 'पिकअप और ड्रॉप चुनिए')) ?></small></span>
     <span class="go" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-  </a>
+  </button>
 
-  <section class="gh-sec" aria-labelledby="h-ride">
-    <h2 id="h-ride"><?= h(t('Ride — fare shown before you book', 'सवारी — बुक करने से पहले किराया')) ?></h2>
-    <div class="gh-rides">
-      <?php foreach ($rides as [$hi, $en, $href, $svg]): ?>
-      <a href="<?= h($href) ?>"><svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $svg ?></svg><?= h(t($en, $hi)) ?></a>
+  <section class="ca-sec" aria-labelledby="h-svc">
+    <h2 id="h-svc"><?= h(t('Services', 'सेवाएँ')) ?></h2>
+    <div class="ca-grid">
+      <?php foreach ($grid as [$k, $label, $svg]): ?>
+      <button type="button" class="ca-tile" data-open="<?= h($k) ?>"><svg width="38" height="38" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $svg ?></svg><span><?= h($label) ?></span></button>
       <?php endforeach; ?>
     </div>
   </section>
 
-  <section class="gh-sec" aria-labelledby="h-more">
-    <h2 id="h-more"><?= h(t('More services', 'और सेवाएँ')) ?></h2>
-    <div class="gh-more">
-      <?php foreach ($more as [$hi, $en, $href, $bg, $svg]): ?>
-      <a href="<?= h($href) ?>"><span class="ic" style="background:<?= h($bg) ?>"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $svg ?></svg></span><?= h(t($en, $hi)) ?></a>
-      <?php endforeach; ?>
-    </div>
+  <section class="ca-sec" aria-labelledby="h-care">
+    <h2 id="h-care"><?= h(t('Care services', 'केयर सेवाएँ')) ?></h2>
+    <button type="button" class="ca-care" data-open="care"><span class="ic" aria-hidden="true">+</span><span><b><?= h(t('Hospital Saathi', 'अस्पताल साथी')) ?></b><small><?= h(t('Vehicle + a companion for the whole hospital visit', 'गाड़ी + अस्पताल में पूरे समय साथ रहने वाला साथी')) ?></small></span></button>
+    <button type="button" class="ca-care" data-open="seva"><span class="ic" aria-hidden="true">♥</span><span><b><?= h(t('Door se Seva', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Send medicine, gas, ration to your family', 'घर से दूर हैं? घर वालों को दवाई, गैस, राशन भेजिए')) ?></small></span></button>
   </section>
 
-  <section class="gh-sec" aria-labelledby="h-care">
-    <h2 id="h-care"><?= h(t('Special for families', 'परिवार के लिए ख़ास')) ?></h2>
-    <div class="gh-care">
-      <a href="<?= h($M('/sewa.php?s=door')) ?>"><b><?= h(t('Care from afar', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Book medicine, gas, ration for your parents', 'घर से दूर हैं? माँ-पापा के लिए दवाई, गैस, राशन भेजिए')) ?></small></a>
-      <a href="<?= h($M('/sewa.php?s=aspatal')) ?>"><b><?= h(t('Hospital companion', 'अस्पताल साथी')) ?></b><small><?= h(t('Vehicle + helper for the whole hospital visit', 'गाड़ी + पूरे समय साथ रहने वाला साथी')) ?></small></a>
+  <a class="ca-join" href="<?= h(u($acc ? '/account.php' : '/')) ?>"><span><?= h(t('Have a bike, auto or vehicle? Earn with Sarathi.', 'बाइक, ऑटो या गाड़ी है? सारथी के साथ कमाइए।')) ?></span><em><?= h(t('Join', 'जुड़िए')) ?></em></a>
+  <p class="ca-foot"><a href="<?= h(u('/privacy.php')) ?>"><?= h(t('Privacy policy', 'प्राइवेसी पॉलिसी')) ?></a></p>
+</section>
+
+<!-- ================= BOOK ================= -->
+<section class="ca-view" data-view="book" hidden>
+  <div class="ca-map" id="map" aria-label="<?= h(t('Map', 'नक्शा')) ?>"></div>
+  <button type="button" class="ca-back" data-go="home" aria-label="<?= h(t('Back', 'वापस')) ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="ca-sheet" id="sheet">
+    <div class="ca-grab" aria-hidden="true"></div>
+    <h2 id="b-title"></h2>
+    <div class="ca-places">
+      <div class="ca-place" data-field="pick"><span class="pin p" aria-hidden="true"></span>
+        <label for="pick-q" class="sr"><?= h(t('Pickup', 'पिकअप')) ?></label>
+        <input id="pick-q" autocomplete="off" placeholder="<?= h(t('Pickup — search or tap map', 'पिकअप — खोजिए या नक्शे पर दबाइए')) ?>">
+        <button type="button" class="mini" data-gps><?= h(t('My location', 'मेरी जगह')) ?></button></div>
+      <div class="ca-place" data-field="drop"><span class="pin d" aria-hidden="true"></span>
+        <label for="drop-q" class="sr"><?= h(t('Drop', 'ड्रॉप')) ?></label>
+        <input id="drop-q" autocomplete="off" placeholder="<?= h(t('Drop — search or tap map', 'ड्रॉप — खोजिए या नक्शे पर दबाइए')) ?>">
+        <button type="button" class="mini" data-search="drop"><?= h(t('Search', 'खोजिए')) ?></button></div>
+      <ul class="ca-results" id="results" hidden></ul>
+      <p class="ca-hint" id="hint"></p>
     </div>
-  </section>
+    <div id="opts" hidden>
+      <p class="ca-route" id="route"></p>
+      <div class="ca-opts" id="optlist" role="radiogroup"></div>
+      <div class="ca-form" id="extra"></div>
+      <p class="ca-err" id="berr" role="alert"></p>
+      <button type="button" class="ca-cta" id="bookbtn"></button>
+      <p class="ca-fine" id="payline"></p>
+    </div>
+  </div>
+</section>
 
-  <a class="gh-sos" href="tel:<?= h(SR_PHONE) ?>">
-    <span class="c" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-    <span><?= h(t('Emergency or hospital? Call now — ', 'आपातकाल या अस्पताल? तुरंत फ़ोन — ')) ?><?= h(SR_PHONE_SHOW) ?></span>
-  </a>
+<!-- ================= TRACK ================= -->
+<section class="ca-view" data-view="track" hidden>
+  <div class="ca-map" id="tmap"></div>
+  <button type="button" class="ca-back" data-go="home" aria-label="<?= h(t('Back', 'वापस')) ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="ca-sheet" id="tsheet"></div>
+</section>
 
-  <a class="gh-join" href="<?= h(u($acc ? '/apply.php' : '/')) ?>">
-    <span><?= h(t('Have a bike, auto or vehicle? Earn with Sarathi.', 'बाइक, ऑटो या गाड़ी है? सारथी के साथ कमाइए।')) ?></span>
-    <em><?= h(t('Join', 'जुड़िए')) ?></em>
-  </a>
-</main>
+<!-- ================= MINE ================= -->
+<section class="ca-view" data-view="mine" hidden>
+  <header class="ca-top ca-top-s"><h1><?= h(t('My bookings', 'मेरी बुकिंग')) ?></h1></header>
+  <div class="ca-list" id="minelist"></div>
+</section>
 
-<nav class="gh-nav" aria-label="<?= h(t('Main', 'मुख्य')) ?>"><div>
-  <a href="<?= h(u('/ghar.php')) ?>" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/></svg><?= h(t('Home', 'होम')) ?></a>
-  <a href="<?= h($M('/ride.php#mine')) ?>"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><?= h(t('My bookings', 'मेरी बुकिंग')) ?></a>
+<nav class="ca-nav" id="nav" aria-label="<?= h(t('Main', 'मुख्य')) ?>"><div>
+  <button type="button" data-go="home" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/></svg><?= h(t('Home', 'होम')) ?></button>
+  <button type="button" data-go="mine"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><?= h(t('My bookings', 'मेरी बुकिंग')) ?></button>
   <a href="<?= h(u($acc ? '/account.php' : '/')) ?>"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><?= h($acc ? t('Account', 'खाता') : t('Login', 'लॉगिन')) ?></a>
 </div></nav>
-<p style="text-align:center;margin:0 0 90px;font:500 12px sans-serif"><a href="<?= h(u('/privacy.php')) ?>" style="color:#4B5A6B"><?= h(t('Privacy policy', 'प्राइवेसी पॉलिसी')) ?></a></p>
+</div>
+<p class="ca-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></p>
+<script id="ca-config" type="application/json"><?= json_encode($cfg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="<?= h(u('/assets/customer.js')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/customer.js') ?>"></script>
 </body>
 </html>

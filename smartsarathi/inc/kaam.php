@@ -534,7 +534,7 @@ function rider_location_clear_if_idle(PDO $pdo, $rid) {
 /** Gaadi ke prakaar (rider ka vtype) */
 function sr_vtypes() {
     return ['cycle' => t('Bicycle', 'साइकिल'), 'bike' => t('Motorcycle', 'बाइक'), 'ev' => t('Electric scooter', 'बिजली स्कूटी'),
-            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'car' => t('Car', 'कार'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
+            'auto' => t('Auto', 'ऑटो'), 'erick' => t('E-rickshaw', 'ई-रिक्शा'), 'car' => t('Car / Bolero', 'कार / बोलेरो'), 'loader' => t('Loader / Magic', 'लोडर / मैजिक'), 'care' => t('Care Saathi', 'केयर साथी'), 'none' => t('No vehicle', 'गाड़ी नहीं')];
 }
 /** Arzi ke likhe hue gaadi naam se vtype */
 function sr_vtype_guess($label) {
@@ -546,7 +546,7 @@ function sr_vtype_guess($label) {
 }
 /** Sawari ki gaadi maangi gayi ho to kaun-kaun si rider gaadi chalegi */
 function sr_ride_fits($want) {
-    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto'], 'car' => ['car']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
+    return ['bike' => ['bike', 'ev'], 'auto' => ['auto'], 'erick' => ['erick', 'auto'], 'car' => ['car'], 'loader' => ['loader']][$want] ?? ['bike', 'ev', 'auto', 'erick'];
 }
 
 /** Abhi kahan jaana hai — uthana baaki ho to pickup, warna drop. GPS ho to seedha wahi. */

@@ -68,3 +68,7 @@ define('SR_PHONE_SHOW', '84293 93903');
 
 // OPTIONAL extra protection: register this score-based Enterprise site key in App Check.
 // define('SR_FIREBASE_APP_CHECK_SITE_KEY', 'YOUR_RECAPTCHA_ENTERPRISE_SITE_KEY');
+
+// UPI se paisa lene ka QR (rider ke kaam par dikhega). Apni UPI ID likhiye.
+// define('SR_UPI_ID', 'yourname@upi');
+// define('SR_UPI_NAME', 'Smart Sarathi');

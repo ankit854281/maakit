@@ -10,21 +10,22 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         if(post('mode')==='rider') sr_identity_autolink($pdo,$a);
         $p=sr_profile($pdo,(int)$a['id']);
         if(post('mode')==='customer' && !empty($p['rider_id'])) duty_off($pdo,(int)$p['rider_id']);
-        $_SESSION['sr_mode']=post('mode');
+        sr_set_role($pdo,$a,post('mode')==='rider'?'partner':'customer'); // pakka role badla
         if(post('mode')==='rider') redirect(sr_identity_rider($pdo)?'/kaam.php':'/apply.php');
         redirect('/ghar.php');
     }
 }
 $p=sr_profile($pdo,(int)$a['id']);
-sr_customer_head(t('My account','मेरा खाता'),t('One mobile number for Customer and Rider mode.','ग्राहक और राइडर मोड के लिए एक ही मोबाइल नंबर।'));
+sr_customer_head(t('My account','मेरा खाता'),t('One mobile number. Switch between Customer and Partner any time.','एक ही मोबाइल नंबर। ग्राहक और पार्टनर के बीच कभी भी बदलिए।'));
 ?>
 <section class="sx-card sx-form">
 <h2>+91 <?= h($a['mobile']) ?></h2>
 <?php if($err): ?><p role="alert"><?= h($err) ?></p><?php endif; ?>
-<p><?= h(($_SESSION['sr_mode'] ?? '')==='rider'?t('Rider mode','राइडर मोड'):t('Customer mode','ग्राहक मोड')) ?></p>
+<p><?= h(t('Current role: ','अभी का रोल: ').(($_SESSION['sr_mode'] ?? '')==='rider'?t('Partner','पार्टनर'):t('Customer','ग्राहक'))) ?></p>
+<h3 style="margin:4px 0 0"><?= h(t('Switch role','रोल बदलिए')) ?></h3>
 <form method="post"><input type="hidden" name="csrf" value="<?= h(csrf()) ?>"><input type="hidden" name="do" value="mode">
-<button class="sx-btn sx-btn-navy" name="mode" value="customer"><?= h(t('Customer mode','ग्राहक मोड')) ?></button>
-<button class="sx-btn sx-btn-mint" name="mode" value="rider"><?= h(t('Rider mode — rides & parcels','राइडर मोड — सवारी और पार्सल')) ?></button>
+<button class="sx-btn sx-btn-navy" name="mode" value="customer"><?= h(t('Customer','ग्राहक')) ?></button>
+<button class="sx-btn sx-btn-mint" name="mode" value="rider"><?= h(t('Partner / Driver','पार्टनर / ड्राइवर')) ?></button>
 </form>
 <?php if(($_SESSION['sr_mode'] ?? '')==='customer'): ?>
 <p><?= h(t('Your account is ready.','आपका खाता तैयार है।')) ?></p>

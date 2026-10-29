@@ -86,7 +86,11 @@ $docsForm=function() { ?>
 <form method="post" enctype="multipart/form-data">
 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
 <label class="sx-field"><span><?= h(t('Full name','पूरा नाम')) ?></span><input name="name" required minlength="2" maxlength="80" value="<?= h(post('name',$p['name'] ?? '')) ?>" autocomplete="name"></label>
-<label class="sx-field"><span><?= h(t('Vehicle type','गाड़ी का प्रकार')) ?></span><select name="vehicle_type" required><?php foreach(sr_profile_vehicles() as $key=>$label): ?><option value="<?= h($key) ?>" <?= post('vehicle_type',$p['vehicle_type'] ?? '')===$key?'selected':'' ?>><?= h($label) ?></option><?php endforeach; ?></select></label>
+<fieldset class="sx-types"><legend><?= h(t('What will you do?','आप क्या काम करेंगे?')) ?></legend>
+<?php $cur=post('vehicle_type',$p['vehicle_type'] ?? 'bike'); foreach(['bike','auto','erick','car','loader','care'] as $key): ?>
+<label class="sx-type"><input type="radio" name="vehicle_type" value="<?= h($key) ?>" required <?= $cur===$key?'checked':'' ?>><span><?= h(sr_profile_vehicles()[$key]) ?></span></label>
+<?php endforeach; ?></fieldset>
+<style>.sx-types{border:0;margin:0;padding:0;display:grid;gap:8px}.sx-types legend{font-weight:800;margin-bottom:6px}.sx-type{display:flex;align-items:center;gap:12px;border:2px solid #E3E8EF;border-radius:16px;padding:12px 14px;min-height:56px;background:#fff;cursor:pointer;font-weight:700}.sx-type:has(input:checked){border-color:#0B1F3A;background:#EFFBF6}.sx-type input{width:22px;height:22px;accent-color:#10C98F}</style>
 <label class="sx-field"><span><?= h(t('Vehicle number (optional)','गाड़ी नंबर (ज़रूरी नहीं)')) ?></span><input name="vehicle_number" maxlength="30" placeholder="UP66AB1234" value="<?= h(post('vehicle_number',$p['vehicle_number'] ?? '')) ?>" autocapitalize="characters"></label>
 <details><summary><?= h(t('Add photo & licence now (optional)','फ़ोटो और लाइसेंस अभी लगाइए (ज़रूरी नहीं)')) ?></summary>
 <label class="sx-field"><span><?= h(t('Your photo (up to 5 MB)','आपकी फ़ोटो (5 MB तक)')) ?></span><input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>

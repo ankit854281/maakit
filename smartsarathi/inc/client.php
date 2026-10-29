@@ -131,7 +131,7 @@ function job_create(PDO $pdo, array $client, array $in) {
             preg_match('/^\d{4}$/D', (string)($in['pick_otp'] ?? '')) ? (string)$in['pick_otp'] : otp4(),
             preg_match('/^\d{4}$/D', (string)($in['drop_code'] ?? '')) ? (string)$in['drop_code'] : otp4(),
             $fee, $cod, $kind, $geoOk($in['pick_geo'] ?? ''), $geoOk($in['drop_geo'] ?? ''),
-            $kind === 'ride' && in_array($in['vehicle'] ?? '', ['bike', 'auto', 'erick'], true) ? $in['vehicle'] : null,
+            $kind === 'ride' && in_array($in['vehicle'] ?? '', ['bike', 'auto', 'erick', 'car', 'loader'], true) ? $in['vehicle'] : null,
         ]);
         $id = (int)$pdo->lastInsertId();
         $pdo->commit();
@@ -150,7 +150,8 @@ function job_create(PDO $pdo, array $client, array $in) {
     // kuch nahi bigadta -- kaam 'new' par rukta hai aur maalik ke
     // panne par sabse upar dikhta hai. Isliye ye kabhi job banne
     // ko fail nahi karta.
-    try { job_auto_give($pdo, $id); }
+    // no_auto: aage ke samay wali / office wali booking — admin assign karega
+    if (empty($in['no_auto'])) try { job_auto_give($pdo, $id); }
     catch (Throwable $e) { error_log('Sarathi auto-give: ' . $e->getMessage()); }
 
     $st = $pdo->prepare("SELECT * FROM jobs WHERE id=?");

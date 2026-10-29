@@ -17,6 +17,38 @@ function sr_identity_admin(PDO $pdo): bool {
 function sr_profile(PDO $pdo, int $id): ?array {
     $q=$pdo->prepare('SELECT * FROM sr_rider_profiles WHERE account_id=?'); $q->execute([$id]); return $q->fetch() ?: null;
 }
+/** Pakka role (customer / partner) — sr_accounts.role, pehli zaroorat par khud judta hai */
+function sr_role_upgrade(PDO $pdo): void {
+    static $done=false; if($done) return; $done=true;
+    try {
+        $have=$pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='sr_accounts'")->fetchAll(PDO::FETCH_COLUMN);
+        if(!in_array('role',$have,true)) $pdo->exec("ALTER TABLE sr_accounts ADD COLUMN role VARCHAR(10) DEFAULT NULL");
+    } catch(Throwable $e) { error_log('Sarathi role upgrade: '.get_class($e)); }
+}
+function sr_account_role(PDO $pdo, array $a): ?string {
+    sr_role_upgrade($pdo);
+    $q=$pdo->prepare('SELECT role FROM sr_accounts WHERE id=?'); $q->execute([(int)$a['id']]);
+    $r=$q->fetchColumn(); return in_array($r,['customer','partner'],true) ? $r : null;
+}
+function sr_set_role(PDO $pdo, array $a, string $role): void {
+    if(!in_array($role,['customer','partner'],true)) throw new RuntimeException('Invalid role');
+    sr_role_upgrade($pdo);
+    $pdo->prepare('UPDATE sr_accounts SET role=? WHERE id=?')->execute([$role,(int)$a['id']]);
+    $_SESSION['sr_mode']=$role==='partner' ? 'rider' : 'customer';
+}
+/** Login ke baad kahan jaana hai: role nahi → role.php; partner → kaam/profile; customer → ghar */
+function sr_home_path(PDO $pdo): string {
+    $a=sr_account($pdo); if(!$a) return '/';
+    $role=sr_account_role($pdo,$a);
+    if($role===null) return '/role.php';
+    if($role==='partner') {
+        sr_identity_autolink($pdo,$a);
+        $_SESSION['sr_mode']='rider';
+        return sr_identity_rider($pdo) ? '/kaam.php' : '/apply.php';
+    }
+    $_SESSION['sr_mode']='customer';
+    return '/ghar.php';
+}
 function sr_identity_signin(PDO $pdo, array $identity): void {
     // UID and phone are BOTH immutable identities. Never merge a recycled phone/changed UID silently.
     $pdo->beginTransaction();
@@ -58,6 +90,7 @@ function sr_identity_autolink(PDO $pdo, array $a): void {
     $type=$r['vtype'] ?? (function_exists('sr_vtype_guess') ? sr_vtype_guess($r['vehicle'] ?? '') : null);
     $type=$type ?: 'bike';
     if(!isset(sr_profile_vehicles()[$type])) $type='bike';
+    if(function_exists('sr_jobs_upgrade')) sr_jobs_upgrade($pdo); // ALTER TABLE transaction ke bahar
     $pdo->beginTransaction();
     try {
         $pdo->prepare('SELECT id FROM sr_accounts WHERE id=? FOR UPDATE')->execute([$a['id']]);
@@ -67,6 +100,8 @@ function sr_identity_autolink(PDO $pdo, array $a): void {
                 $pdo->prepare("INSERT INTO sr_rider_profiles (account_id,rider_id,name,vehicle_type,vehicle_number,photo,licence_photo,status,reviewed_by,reviewed_at) VALUES (?,?,?,?,?,'','','approved',?,NOW())")
                     ->execute([$a['id'],(int)$r['id'],$r['name'],$type,(string)($r['rc_number'] ?? ''),$a['id']]);
                 $pdo->prepare("INSERT INTO sr_identity_audit (account_id,actor_id,action,revision,note) VALUES (?,?,'auto_linked',1,'Pre-added by admin in riders list')")->execute([$a['id'],$a['id']]);
+                // Admin ne khud joda hai — sawari aur delivery dono chalu (ride_ok bhi)
+                $pdo->prepare('UPDATE riders SET vtype=COALESCE(vtype,?),ride_ok=1,do_ride=1,do_delivery=1 WHERE id=?')->execute([$type,(int)$r['id']]);
             }
         }
         $pdo->commit();
@@ -106,8 +141,9 @@ function sr_identity_rider_allowed(PDO $pdo, int $rid): bool {
     $q->execute([$rid]); return (bool)$q->fetchColumn();
 }
 function sr_profile_vehicles(): array {
-    return ['bike'=>t('Motorcycle / scooter','बाइक / स्कूटी'), 'ev'=>t('Electric scooter','इलेक्ट्रिक स्कूटी'),
-        'auto'=>t('Auto','ऑटो'), 'erick'=>t('E-rickshaw','ई-रिक्शा'), 'car'=>t('Car','कार')];
+    return ['bike'=>t('Bike rider (ride & parcel)','बाइक राइडर (सवारी और पार्सल)'), 'ev'=>t('Electric scooter','इलेक्ट्रिक स्कूटी'),
+        'auto'=>t('Auto','ऑटो'), 'erick'=>t('E-rickshaw','ई-रिक्शा'), 'car'=>t('Cab / Bolero (local & outstation)','कैब / बोलेरो (शहर और बाहर)'),
+        'loader'=>t('Loader / Magic','लोडर / मैजिक'), 'care'=>t('Care Saathi (hospital & elderly help)','केयर साथी (अस्पताल और बुज़ुर्ग सेवा)')];
 }
 function sr_profile_photo(string $field): string {
     $f=$_FILES[$field] ?? [];

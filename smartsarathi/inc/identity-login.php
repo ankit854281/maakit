@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__.'/public.php';
 header('Cache-Control: private, no-store');
-if (sr_account($pdo)) redirect('/account.php');
+if (sr_account($pdo)) redirect(sr_home_path($pdo));
 $config=sr_firebase_config();
 $appCheckSiteKey=defined('SR_FIREBASE_APP_CHECK_SITE_KEY') ? (string)SR_FIREBASE_APP_CHECK_SITE_KEY : '';
 // App Check is optional (owner decision 28 Oct 2026): used only when a site key is configured.

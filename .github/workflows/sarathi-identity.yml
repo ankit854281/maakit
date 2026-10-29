@@ -27,6 +27,7 @@ jobs:
         run: |
           find smartsarathi -name '*.php' -print0 | xargs -0 -n1 php -l
           node --check smartsarathi/assets/firebase-login.js
+          node --check smartsarathi/assets/customer.js
       - name: Token security and identity integration
         env:
           SR_TEST_DB_HOST: 127.0.0.1
@@ -35,6 +36,7 @@ jobs:
           php tests/sarathi-firebase.php
           php tests/sarathi-identity-flow.php
           php tests/sarathi-rider-flow.php
+          php tests/sarathi-booking.php
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

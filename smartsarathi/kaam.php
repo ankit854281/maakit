@@ -231,6 +231,13 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
       <?php else: ?>
         <form method="post" class="sx-step" enctype="multipart/form-data">
           <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="do" value="de_diya"><input type="hidden" name="jid" value="<?= (int)$j['id'] ?>">
+          <?php if ($j['cod_amount'] !== null && defined('SR_UPI_ID') && SR_UPI_ID !== ''):
+            $upi = 'upi://pay?pa=' . rawurlencode(SR_UPI_ID) . '&pn=' . rawurlencode(defined('SR_UPI_NAME') ? SR_UPI_NAME : 'Smart Sarathi') . '&am=' . (int)$j['cod_amount'] . '&cu=INR&tn=' . rawurlencode($j['job_no']); ?>
+          <details class="sx-upi"><summary><?= h(t('Take payment by UPI QR', 'UPI QR से पैसे लीजिए')) ?> · ₹<?= (int)$j['cod_amount'] ?></summary>
+            <div class="sx-upi-qr" data-upi="<?= h($upi) ?>" role="img" aria-label="<?= h(t('UPI QR code', 'UPI QR कोड')) ?>"></div>
+            <p class="sx-fine"><?= h(t('Customer scans with any UPI app. Check the payment on your phone before ending.', 'ग्राहक किसी भी UPI ऐप से स्कैन करे। ख़त्म करने से पहले पैसा आया है, देख लीजिए।')) ?></p>
+          </details>
+          <?php endif; ?>
           <label class="sx-step-l"><?= $isRide ? h(t('End code from the passenger', 'सवारी से आख़िरी कोड पूछिए')) : h(t('Delivery code from the customer', 'ग्राहक से 4 अंक का कोड पूछिए')) ?></label>
           <div class="sx-otp" data-otp>
             <input type="hidden" name="otp" value="">
@@ -368,4 +375,15 @@ setTimeout(function () { location.reload(); }, 60000);
 </script>
 <?php endif; ?>
 
+<?php if (defined('SR_UPI_ID') && SR_UPI_ID !== ''): ?>
+<style>.sx-upi{border:1px solid var(--line,#E3E8EF);border-radius:14px;padding:10px 12px;margin:8px 0}.sx-upi summary{min-height:44px;display:flex;align-items:center;font-weight:800;cursor:pointer}.sx-upi-qr{display:grid;place-items:center;padding:10px;background:#fff}.sx-upi-qr svg{width:220px;height:220px}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+<script>
+document.addEventListener('toggle', function (e) {
+  var d = e.target; if (!d.classList || !d.classList.contains('sx-upi') || !d.open) return;
+  var box = d.querySelector('[data-upi]'); if (!box || box.firstChild || !window.qrcode) return;
+  var q = qrcode(0, 'M'); q.addData(box.getAttribute('data-upi')); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2 });
+}, true);
+</script>
+<?php endif; ?>
 <?php sr_foot('kaam', ['kaam' => count($jobs)]); ?>
