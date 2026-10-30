@@ -91,18 +91,27 @@ $grid = [
   </div>
 </form>
 <?php endif; ?>
-<!-- ====== पहली बार: स्वागत (ग्राहक / पार्टनर) — JS दिखाता है ====== -->
+<!-- ====== पहली बार: स्वागत — सिर्फ़ ग्राहक के फ़ायदे (owner, 30 Oct 2026: सारथी ऐप अलग, यहाँ उसका बटन नहीं) ====== -->
+<?php $wslides = [
+  ['₹', t('Fare first, then book', 'पहले किराया, फिर बुकिंग'), t('See the exact fare before you book. No bargaining, no surprise.', 'बुक करने से पहले पक्का किराया दिखता है। न मोल-भाव, न बाद में ज़्यादा।')],
+  ['🛡️', t('Safe with OTP', 'OTP से सुरक्षित सफ़र'), t('You see the Sarathi’s name and vehicle number. The trip starts only with your OTP. Track it live.', 'सारथी का नाम और गाड़ी नंबर दिखता है। आपके OTP से ही सफ़र शुरू होता है। गाड़ी कहाँ है, नक़्शे पर देखिए।')],
+  ['🛵', t('Everything in one app', 'सब एक ऐप में'), t('Bike, auto, e-rickshaw, cab/Bolero, parcel, loader, shared ride, hospital help — all in Bhadohi.', 'बाइक, ऑटो, ई-रिक्शा, कैब/बोलेरो, पार्सल, लोडर, साथ सफ़र, अस्पताल साथी — भदोही में सब एक जगह।')],
+]; ?>
 <div class="ob ob-welcome" id="welcome" hidden>
-  <div class="ob-photo" aria-hidden="true">
-    <svg viewBox="0 0 360 260" width="100%" height="100%" preserveAspectRatio="xMidYMax meet"><circle cx="290" cy="60" r="34" fill="#FFC83D" opacity=".9"/><path d="M0 230h360" stroke="#10C98F" stroke-width="4" stroke-dasharray="10 12"/><g transform="translate(70 92)"><circle cx="38" cy="122" r="26" fill="none" stroke="#fff" stroke-width="8"/><circle cx="190" cy="122" r="26" fill="none" stroke="#fff" stroke-width="8"/><path d="M38 122l52-58h50l50 58" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M90 64l-14-28h-22M140 64h30" stroke="#fff" stroke-width="8" stroke-linecap="round"/><circle cx="104" cy="12" r="16" fill="#10C98F"/><path d="M104 28l-6 40h30" stroke="#10C98F" stroke-width="12" stroke-linecap="round" fill="none"/></g></svg>
+  <button type="button" class="ob-skip" data-seen data-close><?= h(t('Skip', 'छोड़ें')) ?></button>
+  <div class="ob-slides" id="ob-slides">
+  <?php foreach ($wslides as $i => [$ic, $hd, $tx]): ?>
+    <section class="ob-slide<?= $i === 0 ? ' on' : '' ?>" data-i="<?= $i ?>">
+      <div class="ob-art" aria-hidden="true"><span><?= $ic ?></span></div>
+      <h1><?= h($hd) ?></h1><p><?= h($tx) ?></p>
+      <button type="button" class="ob-say" data-sg-say="<?= h($hd . '. ' . $tx) ?>">🔊 <?= h(t('Listen', 'सुनिए')) ?></button>
+    </section>
+  <?php endforeach; ?>
   </div>
-  <div class="ob-copy">
-    <h1><?= h(t('Your journey. Your Sarathi.', 'आपका सफ़र। आपका सारथी।')) ?></h1>
-    <p><?= h(t('Your own bike, auto, e-rickshaw, Bolero or loader. Work when you want.', 'अपनी बाइक, ऑटो, ई-रिक्शा, बोलेरो या लोडर से। जब चाहें तब काम।')) ?></p>
-    <a class="ca-cta" href="<?= h(u('/partner-login.php')) ?>" data-seen><?= h(t('Sarathi Partner — login / register', 'सारथी पार्टनर (Driver) लॉगिन/रजिस्टर')) ?></a>
-    <p class="ob-or"><?= h(t('OR', 'या')) ?></p>
-    <button type="button" class="ob-cust" data-seen data-close><span><b><?= h(t('Continue as Customer', 'ग्राहक के रूप में आगे बढ़ें')) ?></b><em><?= h(t('Book a ride', 'सवारी बुक कीजिए')) ?> →</em></span>
-      <svg width="64" height="48" viewBox="0 0 48 48" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 32V20c0-5 4-9 9-9h12l7 9h4v12H8z"/><path d="M20 11v21M8 24h28"/><circle cx="14" cy="34" r="4"/><circle cx="34" cy="34" r="4"/></svg></button>
+  <div class="ob-foot">
+    <div class="ob-dots" aria-hidden="true"><?php foreach ($wslides as $i => $x): ?><i class="<?= $i === 0 ? 'on' : '' ?>"></i><?php endforeach; ?></div>
+    <button type="button" class="ca-cta" id="ob-next"><?= h(t('Next →', 'आगे →')) ?></button>
+    <button type="button" class="ca-cta" id="ob-start" data-seen data-close hidden><?= h(t('Start — book a ride', 'शुरू करें — सवारी बुक कीजिए')) ?></button>
   </div>
 </div>
 
@@ -174,7 +183,7 @@ $grid = [
     <button type="button" class="ca-care" data-open="seva"><span class="ic" aria-hidden="true">♥</span><span><b><?= h(t('Door se Seva', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Send medicine, gas, ration to your family', 'घर से दूर हैं? घर वालों को दवाई, गैस, राशन भेजिए')) ?></small></span></button>
   </section>
 
-  <a class="ca-join" href="<?= h(u('/sarathi.php')) ?>"><span><?= h(t('Have a bike, auto or vehicle? Earn with Sarathi.', 'बाइक, ऑटो या गाड़ी है? सारथी के साथ कमाइए।')) ?></span><em><?= h(t('Join', 'जुड़िए')) ?></em></a>
+  <button type="button" class="ca-howto" data-guide-open="cust-book"><span aria-hidden="true">❓</span><span><b><?= h(t('First time? How to book', 'पहली बार? ऐसे बुक कीजिए')) ?></b><small><?= h(t('4 easy steps, with voice', '4 आसान कदम, आवाज़ के साथ')) ?></small></span><em>›</em></button>
   <p class="ca-foot"><a href="<?= h(u('/privacy.php')) ?>"><?= h(t('Privacy policy', 'प्राइवेसी पॉलिसी')) ?></a></p>
 </section>
 
@@ -235,6 +244,13 @@ $grid = [
 <p class="ca-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></p>
 <script id="ca-config" type="application/json"><?= json_encode($cfg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <?php require_once __DIR__.'/inc/companion.php'; sr_companion(); ?>
+<?php require_once __DIR__.'/inc/tour.php';
+sr_guide('cust-book', t('How to book — 4 steps', 'ऐसे बुक कीजिए — 4 कदम'), [
+  ['📍', t('Where to?', 'कहाँ जाना है?'), t('Tap “Where to?”, type the place or say it with 🎤. Not in the list? Keep the name and move the map pin to the spot.', '“कहाँ जाना है?” दबाइए, जगह लिखिए या 🎤 से बोलिए। सूची में न हो तो नाम रखिए और नक़्शे का पिन सही जगह लगाइए।')],
+  ['🛵', t('Choose vehicle and fare', 'गाड़ी और किराया चुनिए'), t('Every vehicle shows its fixed fare and time. Choose one and tap Book.', 'हर गाड़ी का पक्का किराया और समय दिखता है। एक चुनिए और “बुक करें” दबाइए।')],
+  ['👤', t('Your Sarathi comes', 'सारथी आपके पास आएगा'), t('You will see the Sarathi’s name, vehicle and number plate. Call or chat from the app.', 'सारथी का नाम, गाड़ी और नंबर प्लेट दिखेगी। ऐप से फ़ोन या चैट कीजिए।')],
+  ['🔑', t('Give OTP, pay the shown fare', 'OTP बताइए, दिखा किराया दीजिए'), t('Tell your 4-digit OTP only when the right Sarathi arrives. Pay only the fare shown in the app.', 'सही सारथी आने पर ही अपना 4 अंक का OTP बताइए। सिर्फ़ ऐप में दिखा किराया दीजिए।')],
+], 'mint', (bool)$acc); ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="<?= h(u('/assets/customer.js')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/customer.js') ?>"></script>
 </body>

@@ -57,6 +57,11 @@ body{background:#03070D}
 .pa .ca-install{width:100%;margin:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);box-shadow:none}
 .pa .ca-install-go{background:var(--amber)}
 .pa .ca-ihelp{margin:0}
+.pa-h2{margin:6px 0 0;font:800 18px 'Noto Sans Devanagari',sans-serif;color:#fff}
+.pa-pts i{font-size:18px}
+.pa-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:none}
+.pa-steps li{display:flex;align-items:center;gap:12px;font:600 15px/1.4 'Noto Sans Devanagari',sans-serif;color:#E6EDF5}
+.pa-steps b{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--amber);color:var(--amber)}
 .pa-cust{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:0 16px;border-radius:16px;background:#fff;color:#0B1F3A;text-decoration:none;font:800 15px 'Noto Sans Devanagari',sans-serif;margin-top:auto}
 .pa-cust em{font-style:normal;color:#1D6FD8}
 .pa-help{text-align:center;font:600 13px 'Noto Sans Devanagari',sans-serif;color:#8FA3B8}
@@ -79,11 +84,21 @@ body{background:#03070D}
 
   <section class="pa-body">
     <h1><?= t('Your vehicle. Your time. <em>Your earning.</em>', 'अपनी गाड़ी, अपना समय, <em>अपनी कमाई।</em>') ?></h1>
+    <h2 class="pa-h2"><?= h(t('What you get', 'आपको क्या फ़ायदा')) ?></h2>
     <ul class="pa-pts">
-      <li><i>1</i><?= h(t('Nearby rides and parcels come straight to your phone', 'पास की सवारी और पार्सल का काम सीधे आपके फ़ोन पर')) ?></li>
-      <li><i>2</i><?= h(t('Go online when you want, take a break when you want', 'जब चाहें हाज़िर, जब चाहें छुट्टी')) ?></li>
-      <li><i>3</i><?= h(t('OTP at pickup and drop — safe for you and the customer', 'पिकअप और ड्रॉप पर OTP — आप और ग्राहक दोनों सुरक्षित')) ?></li>
+      <li><i>⏰</i><?= h(t('Your own time — go online when you want, take a break when you want', 'अपनी मर्ज़ी का समय — जब चाहें हाज़िर, जब चाहें छुट्टी')) ?></li>
+      <li><i>📍</i><?= h(t('Nearby work first — only from the area and distance you choose', 'पास का काम पहले — सिर्फ़ आपके चुने इलाके और दूरी से')) ?></li>
+      <li><i>₹</i><?= h(t('Fare fixed in advance — no bargaining with customers', 'किराया पहले से तय — ग्राहक से मोल-भाव नहीं')) ?></li>
+      <li><i>🔑</i><?= h(t('OTP at pickup and drop — safe for you and the customer', 'पिकअप और ड्रॉप पर OTP — आप और ग्राहक दोनों सुरक्षित')) ?></li>
+      <li><i>📒</i><?= h(t('Every job’s account in the app, with Hindi voice help', 'हर काम का हिसाब ऐप में, हिंदी आवाज़ में मदद')) ?></li>
+      <li><i>✅</i><?= h(t('Joining is free — no fee', 'जुड़ना मुफ़्त — कोई फ़ीस नहीं')) ?></li>
     </ul>
+    <h2 class="pa-h2"><?= h(t('How to start — 3 steps', 'कैसे शुरू करें — 3 कदम')) ?></h2>
+    <ol class="pa-steps">
+      <li><b>1</b><span><?= h(t('Log in with your mobile and OTP', 'मोबाइल नंबर और OTP से लॉगिन')) ?></span></li>
+      <li><b>2</b><span><?= h(t('Vehicle, area, Aadhaar and PAN — about 3 minutes', 'गाड़ी, इलाका, आधार और पैन — लगभग 3 मिनट')) ?></span></li>
+      <li><b>3</b><span><?= h(t('Office approves — then go online and get work', 'दफ़्तर की मंज़ूरी — फिर हाज़िर होइए, काम आने लगेगा')) ?></span></li>
+    </ol>
     <div class="pa-veh" aria-label="<?= h(t('Vehicles', 'गाड़ियाँ')) ?>">
       <span><?= h(t('Bike', 'बाइक')) ?></span><span><?= h(t('Auto', 'ऑटो')) ?></span><span><?= h(t('E-rickshaw', 'ई-रिक्शा')) ?></span><span><?= h(t('Car / Bolero', 'कार / बोलेरो')) ?></span><span><?= h(t('Loader', 'लोडर')) ?></span><span><?= h(t('Hospital Saathi', 'अस्पताल साथी')) ?></span>
     </div>
@@ -113,7 +128,7 @@ body{background:#03070D}
       <button type="button" class="ca-ihelp-x" id="install-x"><?= h(t('Got it', 'समझ गया')) ?></button>
     </div>
 
-    <a class="pa-cust" href="<?= h(u('/ghar.php')) ?>"><span><?= h(t('Want to book a ride?', 'सवारी बुक करनी है?')) ?></span><em><?= h(t('Customer app →', 'ग्राहक ऐप →')) ?></em></a>
+    
     <p class="pa-help"><a href="tel:<?= h(defined('SR_PHONE') ? SR_PHONE : '') ?>"><?= h(t('Need help? Call the office', 'मदद चाहिए? दफ़्तर को फ़ोन')) ?></a></p>
   </section>
 </main>

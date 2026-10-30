@@ -1,3 +1,13 @@
+# Separate apps, benefit-first welcome, guides — owner, 30 October 2026
+
+Owner: customer app must NOT push people to become captains (filtering problem). ghar.php welcome
+is 3 customer-benefit slides only (fare first, OTP safety, all services) — no partner button; the
+home "जुड़िए" banner is replaced by "पहली बार? ऐसे बुक कीजिए". Partner promotion lives only in the
+Sarathi Partner app (sarathi.php: "आपको क्या फ़ायदा" + "कैसे शुरू करें — 3 कदम"; no customer link).
+inc/tour.php sr_guide(): one shared step guide (voice per step, shown once per guide via
+localStorage, reopen with [data-guide-open] or ?guide=1). cust-book auto-shows after customer login;
+partner-work auto-shows on kaam.php. Keep claims truthful (no commission/bonus promises).
+
 # Separate login screens — owner correction, 29 October 2026
 
 Root is a welcome/role chooser only. customer-login.php and partner-login.php are distinct

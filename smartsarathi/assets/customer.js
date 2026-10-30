@@ -403,6 +403,18 @@
   var welcome = $('#welcome');
   if (welcome && !$('.ob-lang') && !C.loggedIn && !store.get('sr_welcome')) welcome.hidden = false;
   $$('[data-seen]').forEach(function (b) { b.addEventListener('click', function () { store.set('sr_welcome', '1'); if (b.hasAttribute('data-close')) welcome.hidden = true; }); });
+  // Welcome ke 3 panne: aage → aage → "शुरू करें"
+  (function () {
+    var sl = $$('.ob-slide'), dots = $$('.ob-dots i'), next = $('#ob-next'), start = $('#ob-start'), i = 0;
+    if (!sl.length || !next) return;
+    function go(n) { i = n; sl.forEach(function (x, k) { x.classList.toggle('on', k === i); }); dots.forEach(function (d, k) { d.classList.toggle('on', k === i); });
+      var last = i === sl.length - 1; next.hidden = last; start.hidden = !last; }
+    next.addEventListener('click', function () { go(Math.min(sl.length - 1, i + 1)); });
+    var x0 = null, box = $('#ob-slides');
+    box.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    box.addEventListener('touchend', function (e) { if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (dx < -40) go(Math.min(sl.length - 1, i + 1)); else if (dx > 40) go(Math.max(0, i - 1)); });
+  })();
 
   var hmap = null;
   function hereShow(lat, lng) {

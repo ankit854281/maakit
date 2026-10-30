@@ -525,4 +525,14 @@ document.addEventListener('toggle', function (e) {
 }, true);
 </script>
 <?php endif; ?>
+<button type="button" class="sx-pill" data-guide-open="partner-work" style="margin:12px 16px">❓ <?= h(t('How the app works', 'ऐप कैसे चलाएँ')) ?></button>
+<?php require_once __DIR__ . '/inc/tour.php';
+sr_guide('partner-work', t('How you get work — 6 steps', 'ऐसे काम मिलेगा — 6 कदम'), [
+  ['🟢', t('Go online', 'हाज़िर होइए'), t('Tap the online button. To take a break, turn it off.', '“हाज़िर” बटन दबाइए। छुट्टी लेनी हो तो बंद कर दीजिए।')],
+  ['🔔', t('A job rings', 'नया काम — घंटी बजेगी'), t('A card shows fare, pickup and drop with voice. Tap Accept within 20 seconds, or Skip.', 'किराया, पिकअप और ड्रॉप वाला कार्ड आवाज़ के साथ आएगा। 20 सेकंड में “स्वीकार करें” या “छोड़ें” दबाइए।')],
+  ['🧭', t('Route', 'रास्ता'), t('Tap Route — Google Maps opens with voice directions to pickup, then to drop.', '“रास्ता” दबाइए — Google Maps आवाज़ के साथ पहले पिकअप, फिर ड्रॉप तक ले जाएगा।')],
+  ['🔑', t('OTP at pickup and drop', 'पिकअप और ड्रॉप पर OTP'), t('Enter the customer’s OTP at pickup and the drop code at the end. Only then the job is complete.', 'पिकअप पर ग्राहक का OTP और आख़िर में ड्रॉप कोड डालिए। तभी काम पूरा होगा।')],
+  ['₹', t('Only the app fare', 'सिर्फ़ ऐप वाला किराया'), t('Take only the fare shown. Every job is recorded in your account (Khata).', 'सिर्फ़ ऐप में दिखा किराया लीजिए। हर काम का हिसाब “खाता” में दर्ज होता है।')],
+  ['📱', t('Keep the app open', 'ऐप खुला रखिए'), t('While online, keep this app open with sound on — so you hear new jobs.', 'हाज़िर रहते समय यह ऐप खुला और आवाज़ चालू रखिए — ताकि नया काम सुनाई दे।')],
+], 'amber', true); ?>
 <?php sr_foot('kaam', ['kaam' => count($jobs)]); ?>

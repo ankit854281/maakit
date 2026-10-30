@@ -222,3 +222,20 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ca-res small{display:block;margin-top:2px;font:500 12.5px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-res.pin{background:#FFF8E1 !important}.ca-res.pin .ic{background:#FFC83D}
 .ca-results li:last-child{position:sticky;bottom:0}.ca-results .ca-res.pin{padding:14px;min-height:64px}
+/* v3.4 grahak welcome (sirf grahak ke fayde) + "ऐसे बुक कीजिए" */
+.ob-skip{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:2;min-height:44px;padding:0 16px;border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font:700 14px 'Noto Sans Devanagari',sans-serif}
+.ob-slides{flex:1;position:relative;display:flex;align-items:center}
+.ob-slide{display:none;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:24px 22px;color:#fff;width:100%}
+.ob-slide.on{display:flex;animation:obin .3s ease-out}
+@keyframes obin{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.ob-art{width:150px;height:150px;border-radius:44px;background:rgba(255,255,255,.1);display:grid;place-items:center;margin-bottom:8px;box-shadow:inset 0 0 0 2px rgba(16,201,143,.5)}
+.ob-art span{font-size:72px;line-height:1}
+.ob-slide h1{margin:0;font:800 28px/1.25 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif}
+.ob-slide p{margin:0;max-width:360px;font:500 16px/1.55 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.ob-say{min-height:44px;padding:0 16px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:transparent;color:#fff;font:700 14px 'Noto Sans Devanagari',sans-serif}
+.ob-foot{padding:12px 16px calc(20px + env(safe-area-inset-bottom));display:grid;gap:14px}
+.ob-dots{display:flex;justify-content:center;gap:8px}.ob-dots i{width:8px;height:8px;border-radius:9px;background:rgba(255,255,255,.3);transition:width .2s}.ob-dots i.on{width:26px;background:var(--mint)}
+.ob-foot .ca-cta{width:100%}
+.ca-howto{display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:16px 16px 0;padding:12px 14px;min-height:64px;border:1px dashed #10C98F;border-radius:18px;background:#EFFBF6;color:var(--navy);text-align:left;font:inherit;cursor:pointer}
+.ca-howto>span:first-child{font-size:24px}.ca-howto>span:nth-child(2){flex:1}.ca-howto b{display:block;font:800 15px 'Noto Sans Devanagari',sans-serif}.ca-howto small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}.ca-howto em{font-style:normal;font-size:22px;color:var(--muted)}
+.ob-art span{color:#10C98F;font-weight:800;font-family:"Plus Jakarta Sans",sans-serif}
