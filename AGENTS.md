@@ -1,5 +1,10 @@
 # Separate apps, benefit-first welcome, guides — owner, 30 October 2026
 
+Update: ghar.php welcome is now a 10-second ad-style intro (4 auto-playing scenes, story bars,
+tap to advance, Skip): Welcome to Smart Sarathi / सारथी = आपका अपना सारथी → गाड़ी आप चुनिए →
+सामान सारथी ले आएगा (all services) → trust points. Auto-closes into the app. First visit only;
+?intro=1 replays. Vehicle art is inline SVG <symbol>s (no photos of people).
+
 Owner: customer app must NOT push people to become captains (filtering problem). ghar.php welcome
 is 3 customer-benefit slides only (fare first, OTP safety, all services) — no partner button; the
 home "जुड़िए" banner is replaced by "पहली बार? ऐसे बुक कीजिए". Partner promotion lives only in the

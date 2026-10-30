@@ -239,3 +239,38 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ca-howto{display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:16px 16px 0;padding:12px 14px;min-height:64px;border:1px dashed #10C98F;border-radius:18px;background:#EFFBF6;color:var(--navy);text-align:left;font:inherit;cursor:pointer}
 .ca-howto>span:first-child{font-size:24px}.ca-howto>span:nth-child(2){flex:1}.ca-howto b{display:block;font:800 15px 'Noto Sans Devanagari',sans-serif}.ca-howto small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}.ca-howto em{font-style:normal;font-size:22px;color:var(--muted)}
 .ob-art span{color:#10C98F;font-weight:800;font-family:"Plus Jakarta Sans",sans-serif}
+/* v3.5 — 10 सेकंड का विज्ञापन जैसा स्वागत */
+.ob.ad{background:#0B1F3A;overflow:hidden}
+.ad-bars{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;right:96px;z-index:3;display:flex;gap:5px}
+.ad-bars i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
+.ad-bars i::after{content:"";position:absolute;inset:0;width:0;background:#fff;border-radius:9px}
+.ad-bars i.done::after{width:100%}
+.ad-bars i.run::after{animation:adbar 2.5s linear forwards}
+@keyframes adbar{to{width:100%}}
+.ad-s{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:64px 20px calc(28px + env(safe-area-inset-bottom));color:#fff}
+.ad-s.on{display:flex;animation:adin .45s ease-out}
+@keyframes adin{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:none}}
+.ad-s.s1{background:radial-gradient(120% 80% at 50% 0%,#1E4A85,#0B1F3A 70%)}
+.ad-s.s2{background:linear-gradient(160deg,#10C98F,#0A8F67)}
+.ad-s.s3{background:linear-gradient(160deg,#FFB020,#F07B1A)}
+.ad-s.s4{background:radial-gradient(120% 80% at 50% 100%,#1E4A85,#0B1F3A 70%)}
+.ad-k{margin:0;font:700 18px 'Noto Sans Devanagari',sans-serif;opacity:.92}
+.ad-h{margin:0;font:800 36px/1.15 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.12)}
+.ad-t{margin:4px 0 0;font:700 20px/1.4 'Noto Sans Devanagari',sans-serif;color:#10C98F}
+.ad-logo{width:104px;height:104px;border-radius:30px;background:#10C98F;display:grid;place-items:center;box-shadow:0 0 0 10px rgba(16,201,143,.18),0 20px 40px rgba(0,0,0,.35);animation:adpop .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes adpop{from{transform:scale(.3)}to{transform:none}}
+.ad-road{position:relative;width:100%;max-width:420px;height:90px;margin-top:22px;border-bottom:4px dashed rgba(255,255,255,.35)}
+.ad-ride{position:absolute;bottom:2px;width:110px;height:74px;color:#fff;animation:adride 2.5s ease-in-out forwards}
+@keyframes adride{from{left:-120px}to{left:calc(100% - 110px)}}
+.ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:420px;margin-top:14px}
+.ad-card{background:rgba(255,255,255,.96);color:#0B1F3A;border-radius:20px;padding:12px 8px 10px;display:grid;justify-items:center;gap:4px;opacity:0;transform:translateY(16px);animation:adcard .4s ease-out forwards;animation-delay:var(--d);box-shadow:0 10px 24px rgba(0,0,0,.15)}
+@keyframes adcard{to{opacity:1;transform:none}}
+.ad-card svg{width:96px;height:64px;color:#0B1F3A}
+.ad-card b{font:800 16px 'Noto Sans Devanagari',sans-serif}
+.ad-grid:has(.sm){grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ad-card.sm svg{width:72px;height:48px}.ad-card.sm b{font-size:13px}
+.ad-ticks{list-style:none;margin:16px 0 8px;padding:0;display:grid;gap:10px;width:100%;max-width:420px}
+.ad-ticks li{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;font:700 17px 'Noto Sans Devanagari',sans-serif;text-align:left;opacity:0;animation:adcard .4s ease-out forwards;animation-delay:var(--d)}
+.ad-go{width:100%;max-width:420px;margin-top:6px}
+.ob.ad .ob-skip{z-index:4}
+.ad-s.s1 .ad-k{margin-top:18px}

@@ -91,28 +91,59 @@ $grid = [
   </div>
 </form>
 <?php endif; ?>
-<!-- ====== पहली बार: स्वागत — सिर्फ़ ग्राहक के फ़ायदे (owner, 30 Oct 2026: सारथी ऐप अलग, यहाँ उसका बटन नहीं) ====== -->
-<?php $wslides = [
-  ['₹', t('Fare first, then book', 'पहले किराया, फिर बुकिंग'), t('See the exact fare before you book. No bargaining, no surprise.', 'बुक करने से पहले पक्का किराया दिखता है। न मोल-भाव, न बाद में ज़्यादा।')],
-  ['🛡️', t('Safe with OTP', 'OTP से सुरक्षित सफ़र'), t('You see the Sarathi’s name and vehicle number. The trip starts only with your OTP. Track it live.', 'सारथी का नाम और गाड़ी नंबर दिखता है। आपके OTP से ही सफ़र शुरू होता है। गाड़ी कहाँ है, नक़्शे पर देखिए।')],
-  ['🛵', t('Everything in one app', 'सब एक ऐप में'), t('Bike, auto, e-rickshaw, cab/Bolero, parcel, loader, shared ride, hospital help — all in Bhadohi.', 'बाइक, ऑटो, ई-रिक्शा, कैब/बोलेरो, पार्सल, लोडर, साथ सफ़र, अस्पताल साथी — भदोही में सब एक जगह।')],
-]; ?>
-<div class="ob ob-welcome" id="welcome" hidden>
+<!-- ====== पहली बार: 10 सेकंड का विज्ञापन जैसा स्वागत (owner, 30 Oct 2026) — सिर्फ़ ग्राहक, फिर ऐप अपने आप ====== -->
+<div class="ob ob-welcome ad" id="welcome" hidden>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="v-bike" viewBox="0 0 120 80"><circle cx="24" cy="58" r="16" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="96" cy="58" r="16" fill="none" stroke="currentColor" stroke-width="7"/><path d="M24 58l22-26h28l22 26M46 32l-8-14H26M74 32h14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="56" cy="10" r="8" fill="#FFC83D"/><path d="M56 18l-4 18h16" fill="none" stroke="#FFC83D" stroke-width="8" stroke-linecap="round"/></symbol>
+    <symbol id="v-auto" viewBox="0 0 120 80"><path d="M14 60V34c0-12 10-22 22-22h34l26 24v24z" fill="#FFC83D" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M14 36h82M50 12v24" stroke="currentColor" stroke-width="5"/><rect x="58" y="18" width="22" height="14" rx="3" fill="#BFE8FF"/><circle cx="30" cy="62" r="11" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/><circle cx="90" cy="62" r="11" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/></symbol>
+    <symbol id="v-erick" viewBox="0 0 120 80"><path d="M10 58V22h70l22 22v14z" fill="#10C98F" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M8 22h76" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M58 30l-8 12h10l-8 12" fill="none" stroke="#FFC83D" stroke-width="5" stroke-linejoin="round"/><circle cx="28" cy="62" r="11" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/><circle cx="92" cy="62" r="11" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/></symbol>
+    <symbol id="v-car" viewBox="0 0 120 80"><path d="M8 56V40l14-20h62l20 20h8v16z" fill="#FFFFFF" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M28 24h22v16H18zM58 24h22l14 16H58z" fill="#BFE8FF"/><circle cx="32" cy="60" r="11" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/><circle cx="90" cy="60" r="11" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/></symbol>
+    <symbol id="v-box" viewBox="0 0 120 80"><path d="M30 26l30-14 30 14v34L60 74 30 60z" fill="#E8A75A" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M30 26l30 14 30-14M60 40v34" stroke="currentColor" stroke-width="5" fill="none"/><path d="M44 19l30 14" stroke="#FFF3D6" stroke-width="6"/></symbol>
+    <symbol id="v-truck" viewBox="0 0 120 80"><rect x="6" y="18" width="66" height="38" rx="4" fill="#FFC83D" stroke="currentColor" stroke-width="5"/><path d="M72 30h24l16 16v10H72z" fill="#FFFFFF" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><rect x="80" y="34" width="14" height="10" rx="2" fill="#BFE8FF"/><circle cx="26" cy="62" r="10" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/><circle cx="92" cy="62" r="10" fill="#0B1F3A" stroke="currentColor" stroke-width="5"/></symbol>
+    <symbol id="v-care" viewBox="0 0 120 80"><path d="M60 72S20 50 14 30A22 22 0 0 1 60 18a22 22 0 0 1 46 12C100 50 60 72 60 72z" fill="#FF6B6B" stroke="currentColor" stroke-width="5"/><path d="M60 30v24M48 42h24" stroke="#fff" stroke-width="8" stroke-linecap="round"/></symbol>
+    <symbol id="v-bag" viewBox="0 0 120 80"><path d="M30 28h60l-6 46H36z" fill="#10C98F" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M46 28v-6a14 14 0 0 1 28 0v6" fill="none" stroke="currentColor" stroke-width="5"/><path d="M50 46h20M60 36v20" stroke="#fff" stroke-width="6" stroke-linecap="round"/></symbol>
+    <symbol id="v-seat" viewBox="0 0 120 80"><circle cx="40" cy="22" r="12" fill="#BFE8FF" stroke="currentColor" stroke-width="5"/><circle cx="80" cy="22" r="12" fill="#FFC83D" stroke="currentColor" stroke-width="5"/><path d="M18 72c0-16 10-28 22-28s22 12 22 28M58 72c0-16 10-28 22-28s22 12 22 28" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></symbol>
+  </defs></svg>
+  <div class="ad-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   <button type="button" class="ob-skip" data-seen data-close><?= h(t('Skip', 'छोड़ें')) ?></button>
-  <div class="ob-slides" id="ob-slides">
-  <?php foreach ($wslides as $i => [$ic, $hd, $tx]): ?>
-    <section class="ob-slide<?= $i === 0 ? ' on' : '' ?>" data-i="<?= $i ?>">
-      <div class="ob-art" aria-hidden="true"><span><?= $ic ?></span></div>
-      <h1><?= h($hd) ?></h1><p><?= h($tx) ?></p>
-      <button type="button" class="ob-say" data-sg-say="<?= h($hd . '. ' . $tx) ?>">🔊 <?= h(t('Listen', 'सुनिए')) ?></button>
-    </section>
-  <?php endforeach; ?>
-  </div>
-  <div class="ob-foot">
-    <div class="ob-dots" aria-hidden="true"><?php foreach ($wslides as $i => $x): ?><i class="<?= $i === 0 ? 'on' : '' ?>"></i><?php endforeach; ?></div>
-    <button type="button" class="ca-cta" id="ob-next"><?= h(t('Next →', 'आगे →')) ?></button>
-    <button type="button" class="ca-cta" id="ob-start" data-seen data-close hidden><?= h(t('Start — book a ride', 'शुरू करें — सवारी बुक कीजिए')) ?></button>
-  </div>
+
+  <section class="ad-s s1 on">
+    <div class="ad-logo"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+    <p class="ad-k"><?= h(t('Welcome to', 'स्वागत है')) ?></p>
+    <h1 class="ad-h">Smart Sarathi</h1>
+    <p class="ad-t"><?= h(t('Sarathi means — your very own Sarathi.', 'सारथी — यानी आपका अपना सारथी।')) ?></p>
+    <div class="ad-road"><svg class="ad-ride" viewBox="0 0 120 80"><use href="#v-bike"/></svg></div>
+  </section>
+
+  <section class="ad-s s2">
+    <p class="ad-k"><?= h(t('Need to go somewhere?', 'कहीं जाना है?')) ?></p>
+    <h1 class="ad-h"><?= h(t('You decide the ride', 'गाड़ी आप चुनिए')) ?></h1>
+    <div class="ad-grid">
+      <?php foreach ([['v-bike', t('Bike', 'बाइक')], ['v-auto', t('Auto', 'ऑटो')], ['v-erick', t('E-rickshaw', 'ई-रिक्शा')], ['v-car', t('Cab / Bolero', 'कैब / बोलेरो')]] as $k => [$v, $n]): ?>
+        <div class="ad-card" style="--d:<?= $k * 0.25 ?>s"><svg viewBox="0 0 120 80"><use href="#<?= $v ?>"/></svg><b><?= h($n) ?></b></div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+
+  <section class="ad-s s3">
+    <p class="ad-k"><?= h(t('Things to send or bring?', 'सामान लाना या भेजना है?')) ?></p>
+    <h1 class="ad-h"><?= h(t('Sarathi will bring it', 'सारथी ले आएगा')) ?></h1>
+    <div class="ad-grid">
+      <?php foreach ([['v-box', t('Parcel', 'पार्सल')], ['v-truck', t('Loader / goods', 'लोडर / सामान')], ['v-bag', t('Medicine, ration', 'दवाई, राशन')], ['v-care', t('Hospital Saathi', 'अस्पताल साथी')], ['v-seat', t('Saath Safar', 'साथ सफ़र')], ['v-car', t('Outstation', 'शहर से बाहर')]] as $k => [$v, $n]): ?>
+        <div class="ad-card sm" style="--d:<?= $k * 0.18 ?>s"><svg viewBox="0 0 120 80"><use href="#<?= $v ?>"/></svg><b><?= h($n) ?></b></div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+
+  <section class="ad-s s4">
+    <h1 class="ad-h"><?= h(t('Book in Bhadohi, worry-free', 'भदोही में बेफ़िक्र बुकिंग')) ?></h1>
+    <ul class="ad-ticks">
+      <li style="--d:0s">₹ <?= h(t('Fare shown before you book', 'बुकिंग से पहले पक्का किराया')) ?></li>
+      <li style="--d:.3s">🔑 <?= h(t('Trip starts only with your OTP', 'आपके OTP से ही सफ़र शुरू')) ?></li>
+      <li style="--d:.6s">📍 <?= h(t('See your Sarathi live on the map', 'सारथी नक़्शे पर लाइव')) ?></li>
+    </ul>
+    <button type="button" class="ca-cta ad-go" data-seen data-close><?= h(t('Start →', 'शुरू करें →')) ?></button>
+  </section>
 </div>
 
 <!-- ================= HOME ================= -->
