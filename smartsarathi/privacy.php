@@ -8,8 +8,9 @@ $wa = 'https://wa.me/918429393903?text=' . rawurlencode('Smart Sarathi — म�
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= h(t('Privacy policy — Smart Sarathi', 'प्राइवेसी पॉलिसी — स्मार्ट सारथी')) ?></title>
+<?php if (!function_exists('sr_fonts')) require_once __DIR__ . '/inc/ui.php'; sr_fonts(); ?>
 <style>
-body{margin:0;background:#F4F6F9;color:#0B1F3A;font:16px/1.6 'Noto Sans Devanagari',system-ui,sans-serif}
+body{margin:0;background:#F4F6F9;color:#0B1F3A;font:16px/1.6 var(--f)}
 main{max-width:760px;margin:0 auto;padding:24px 18px 48px}
 h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:28px 0 6px}
 .muted{color:#4B5A6B;font-size:14px}

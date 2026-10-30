@@ -145,7 +145,7 @@
       var rows = (j && j.ok && j.list) || [];
       ul.hidden = false;
       ul.innerHTML = rows.map(function (r, i) {
-        return '<li><button type="button" class="ca-res" data-i="' + i + '"><span class="ic" aria-hidden="true">' + (r.src === 'l' ? '★' : '📍') + '</span>' +
+        return '<li><button type="button" class="ca-res" data-i="' + i + '"><span class="ic" aria-hidden="true">' + (r.src === 'l' ? '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="#E0A100"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 22s-7-6.3-7-12a7 7 0 0 1 14 0c0 5.7-7 12-7 12z" fill="#C8261B"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>') + '</span>' +
           '<span><b>' + esc(r.main) + '</b>' + (r.sub || r.km != null ? '<small>' + (r.km != null ? esc(r.km + ' km · ') : '') + esc(r.sub || '') + '</small>' : '') + '</span></button></li>';
       }).join('') +
         '<li><button type="button" class="ca-res pin" data-pin="1"><span class="ic" aria-hidden="true">📌</span><span><b>' +
@@ -411,8 +411,9 @@
     function go(n) {
       clearTimeout(t); if (n >= sc.length) { close(); return; }
       i = n; sc.forEach(function (x, k) { x.classList.toggle('on', k === i); });
-      bars.forEach(function (b, k) { b.className = k < i ? 'done' : (k === i ? 'run' : ''); });
-      t = setTimeout(function () { go(i + 1); }, i === sc.length - 1 ? STEP + 1000 : STEP);
+      var ms = +sc[i].getAttribute('data-ms') || STEP;
+      bars.forEach(function (b, k) { b.className = k < i ? 'done' : (k === i ? 'run' : ''); b.style.setProperty('--ms', ms + 'ms'); });
+      t = setTimeout(function () { go(i + 1); }, i === sc.length - 1 ? ms + 1000 : ms);
     }
     function start() { if (!box.hidden) go(0); }
     // overlay khulte hi chalu (welcome JS se dikhta hai)

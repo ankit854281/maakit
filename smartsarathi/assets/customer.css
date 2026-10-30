@@ -1,7 +1,7 @@
 /* Smart Sarathi — customer app (ghar.php). Navy + Electric Emerald, white/light gray. */
 :root{--navy:#0B1F3A;--mint:#10C98F;--mint-d:#0A8F66;--bg:#F4F6F9;--line:#E3E8EF;--muted:#4B5A6B;--red:#C8261B;--card:#fff}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--navy);font-family:'Noto Sans Devanagari','Plus Jakarta Sans',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--navy);font-family:'Noto Sans Devanagari','Plus Jakarta Sans','Mukta','Hind',sans-serif;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 a{color:inherit;text-decoration:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -13,24 +13,24 @@ a{color:inherit;text-decoration:none}
 .ca-top{background:var(--navy);color:#fff;padding:16px 16px 58px;border-radius:0 0 26px 26px}
 .ca-top-s{padding:22px 16px;border-radius:0}
 .ca-top-s h1{margin:0;font:800 22px 'Noto Sans Devanagari',sans-serif}
-.ca-logo{display:flex;align-items:center;gap:10px;font:800 17px 'Plus Jakarta Sans',sans-serif;color:#fff}
-.ca-logo small{display:flex;align-items:center;gap:3px;font:600 12px 'Noto Sans Devanagari',sans-serif;color:#B9C6D6;margin-top:2px}
+.ca-logo{display:flex;align-items:center;gap:10px;font:700 17px 'Plus Jakarta Sans',sans-serif;color:#fff}
+.ca-logo small{display:flex;align-items:center;gap:3px;font:600 14px 'Noto Sans Devanagari',sans-serif;color:#B9C6D6;margin-top:2px}
 .ca-logo>span:last-child{display:flex;flex-direction:column}
 .ca-mark{width:40px;height:40px;border-radius:12px;background:var(--mint);display:grid;place-items:center;flex:none}
 .ca-lang{display:flex;background:rgba(255,255,255,.12);border-radius:999px;padding:3px}
-.ca-lang a{min-width:44px;min-height:44px;display:grid;place-items:center;border-radius:999px;font:700 12px sans-serif;color:#fff}
+.ca-lang a{min-width:44px;min-height:44px;display:grid;place-items:center;border-radius:999px;font:700 14px var(--f);color:#fff}
 .ca-lang a[aria-current]{background:#fff;color:var(--navy)}
-.ca-sos{min-width:52px;min-height:44px;border-radius:12px;background:var(--red);color:#fff;display:grid;place-items:center;font:800 14px 'Plus Jakarta Sans',sans-serif;letter-spacing:.5px;box-shadow:0 0 0 3px rgba(200,38,27,.25)}
+.ca-sos{min-width:52px;min-height:44px;border-radius:12px;background:var(--red);color:#fff;display:grid;place-items:center;font:700 14px 'Plus Jakarta Sans',sans-serif;letter-spacing:.5px;box-shadow:0 0 0 3px rgba(200,38,27,.25)}
 .ca-promo{margin-top:16px;border-radius:18px;padding:16px;background:linear-gradient(120deg,#123056,#0F3C4A);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px}
 .ca-promo b{font:800 19px/1.3 'Noto Sans Devanagari',sans-serif;color:#fff}
-.ca-promo span{font:500 13.5px/1.45 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.ca-promo span{font:500 14px/1.45 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
 
 /* ---- search pill ---- */
 .ca-search{margin:-34px 16px 0;width:calc(100% - 32px);position:relative;z-index:2;display:flex;align-items:center;gap:12px;background:#fff;border:0;border-radius:999px;padding:8px 8px 8px 20px;min-height:66px;box-shadow:0 10px 28px rgba(11,31,58,.16);text-align:left}
 .ca-search .dot{width:11px;height:11px;border-radius:50%;background:var(--mint);flex:none}
 .ca-search>span:nth-child(2){flex:1;display:flex;flex-direction:column}
-.ca-search b{font:800 17px 'Noto Sans Devanagari',sans-serif}
-.ca-search small{font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-search b{font:700 17px 'Noto Sans Devanagari',sans-serif}
+.ca-search small{font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-search .go{width:50px;height:50px;border-radius:50%;background:var(--navy);display:grid;place-items:center;flex:none}
 
 /* ---- grid ---- */
@@ -41,13 +41,13 @@ a{color:inherit;text-decoration:none}
 .ca-tile:hover{border-color:var(--navy);box-shadow:0 6px 16px rgba(11,31,58,.08)}
 .ca-tile:active{transform:scale(.97)}
 .ca-care{width:100%;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-left:5px solid var(--mint);border-radius:18px;padding:14px;margin-bottom:10px;text-align:left;min-height:76px}
-.ca-care .ic{width:44px;height:44px;border-radius:14px;background:#E6FAF3;color:var(--mint-d);display:grid;place-items:center;font:800 20px sans-serif;flex:none}
+.ca-care .ic{width:44px;height:44px;border-radius:14px;background:#E6FAF3;color:var(--mint-d);display:grid;place-items:center;font:800 20px var(--f);flex:none}
 .ca-care>span:last-child{display:flex;flex-direction:column;gap:2px}
-.ca-care b{font:800 16px 'Noto Sans Devanagari',sans-serif}
-.ca-care small{font:500 13px/1.4 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-care b{font:700 16px 'Noto Sans Devanagari',sans-serif}
+.ca-care small{font:500 14px/1.4 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-join{margin:12px 16px 0;background:var(--navy);color:#fff;border-radius:18px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:600 14px/1.4 'Noto Sans Devanagari',sans-serif}
 .ca-join em{font-style:normal;background:var(--mint);color:var(--navy);border-radius:12px;padding:10px 14px;font-weight:800;white-space:nowrap}
-.ca-foot{text-align:center;font:500 12px sans-serif;margin:18px 0 0}
+.ca-foot{text-align:center;font:500 14px var(--f);margin:18px 0 0}
 .ca-foot a{color:var(--muted)}
 
 /* ---- map + sheet ---- */
@@ -64,19 +64,19 @@ a{color:inherit;text-decoration:none}
 .pin{width:12px;height:12px;flex:none}
 .pin.p{border-radius:50%;background:var(--mint)}
 .pin.d{border-radius:3px;background:var(--navy)}
-.mini{border:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:0 10px;min-height:44px;font:700 12.5px 'Noto Sans Devanagari',sans-serif;white-space:nowrap}
+.mini{border:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:0 10px;min-height:44px;font:700 14px 'Noto Sans Devanagari',sans-serif;white-space:nowrap}
 .ca-results{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .ca-results li button{width:100%;text-align:left;border:0;background:#fff;padding:12px 14px;border-bottom:1px solid var(--line);font:500 14px/1.35 'Noto Sans Devanagari',sans-serif;min-height:48px}
-.ca-hint{margin:2px 0 0;font:500 13px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-hint{margin:2px 0 0;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-route{margin:14px 0 10px;font:700 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-opts{display:flex;flex-direction:column;gap:8px}
 .ca-opt{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px 14px;text-align:left;min-height:64px}
 .ca-opt[aria-checked=true]{border:2px solid var(--navy);background:#EFFBF6}
-.ca-opt b{display:block;font:800 16px 'Noto Sans Devanagari',sans-serif}
-.ca-opt small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-opt b{display:block;font:700 16px 'Noto Sans Devanagari',sans-serif}
+.ca-opt small{display:block;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-opt .f{margin-left:auto;font:800 18px 'Plus Jakarta Sans',sans-serif;white-space:nowrap}
 .ca-form{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-.ca-form label{display:flex;flex-direction:column;gap:4px;font:700 13px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-form label{display:flex;flex-direction:column;gap:4px;font:700 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-form input,.ca-form select,.ca-form textarea{border:1px solid var(--line);border-radius:12px;padding:12px;font:600 16px 'Noto Sans Devanagari',sans-serif;color:var(--navy);background:#fff;min-height:48px;width:100%}
 .ca-seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);border-radius:14px;padding:4px}
 .ca-seg button{border:0;background:transparent;border-radius:10px;min-height:44px;font:700 14px 'Noto Sans Devanagari',sans-serif}
@@ -86,21 +86,21 @@ a{color:inherit;text-decoration:none}
 .ca-cta.ghost{background:#fff;border:1px solid var(--line);box-shadow:none;font-size:15px;min-height:50px}
 .ca-err{margin:10px 0 0;color:var(--red);font:700 14px 'Noto Sans Devanagari',sans-serif}
 .ca-err:empty{display:none}
-.ca-fine{margin:8px 0 0;text-align:center;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-fine{margin:8px 0 0;text-align:center;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 
 /* ---- track ---- */
 .ca-status{display:flex;align-items:center;gap:10px;font:800 19px 'Noto Sans Devanagari',sans-serif;margin:0 0 4px}
 .ca-status i{width:12px;height:12px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 0 rgba(16,201,143,.6);animation:pulse 1.6s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 10px rgba(16,201,143,0)}100%{box-shadow:0 0 0 0 rgba(16,201,143,0)}}
-.ca-sub{margin:0 0 12px;font:500 13.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-sub{margin:0 0 12px;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 14px}
 .ca-steps span{height:6px;border-radius:999px;background:var(--line)}
 .ca-steps span.on{background:var(--mint)}
 .ca-rider{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
-.ca-rider .av{width:48px;height:48px;border-radius:50%;background:#E6FAF3;color:var(--mint-d);display:grid;place-items:center;font:800 18px sans-serif;flex:none}
-.ca-rider b{display:block;font:800 16px 'Noto Sans Devanagari',sans-serif}
-.ca-rider small{display:block;font:500 13px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
-.ca-plate{margin-left:auto;background:#FFF8E1;border:2px solid var(--navy);border-radius:8px;padding:4px 8px;font:800 13px 'Plus Jakarta Sans',sans-serif;white-space:nowrap}
+.ca-rider .av{width:48px;height:48px;border-radius:50%;background:#E6FAF3;color:var(--mint-d);display:grid;place-items:center;font:800 18px var(--f);flex:none}
+.ca-rider b{display:block;font:700 16px 'Noto Sans Devanagari',sans-serif}
+.ca-rider small{display:block;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-plate{margin-left:auto;background:#FFF8E1;border:2px solid var(--navy);border-radius:8px;padding:4px 8px;font:700 14px 'Plus Jakarta Sans',sans-serif;white-space:nowrap}
 .ca-otp{display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--muted);border-radius:14px;padding:12px 14px;margin-bottom:10px;font:600 14px 'Noto Sans Devanagari',sans-serif}
 .ca-otp b{font:800 26px 'Plus Jakarta Sans',sans-serif;letter-spacing:6px}
 .ca-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}
@@ -112,24 +112,24 @@ a{color:inherit;text-decoration:none}
 /* ---- mine ---- */
 .ca-list{padding:16px;display:flex;flex-direction:column;gap:10px}
 .ca-item{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;min-height:64px}
-.ca-item b{display:block;font:800 15px 'Noto Sans Devanagari',sans-serif}
-.ca-item small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
-.ca-badge{align-self:center;border-radius:999px;padding:4px 10px;font:700 12px 'Noto Sans Devanagari',sans-serif;background:var(--bg);white-space:nowrap}
+.ca-item b{display:block;font:700 15px 'Noto Sans Devanagari',sans-serif}
+.ca-item small{display:block;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-badge{align-self:center;border-radius:999px;padding:4px 10px;font:700 14px 'Noto Sans Devanagari',sans-serif;background:var(--bg);white-space:nowrap}
 .ca-badge.live{background:#E6FAF3;color:var(--mint-d)}
 .ca-empty{text-align:center;color:var(--muted);font:500 14px 'Noto Sans Devanagari',sans-serif;padding:30px 0}
 
 /* ---- bottom nav ---- */
 .ca-nav{position:fixed;left:0;right:0;bottom:0;z-index:600;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 0 calc(8px + env(safe-area-inset-bottom))}
 .ca-nav div{width:100%;max-width:520px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-.ca-nav a,.ca-nav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px;font:600 12px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-nav a,.ca-nav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px;font:600 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-nav [aria-current]{color:var(--navy);font-weight:800}
-.ca-osm{position:fixed;right:6px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:550;margin:0;font:500 10px sans-serif;color:var(--muted);background:rgba(255,255,255,.8);padding:1px 4px;border-radius:4px}
+.ca-osm{position:fixed;right:6px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:550;margin:0;font:500 14px var(--f);color:var(--muted);background:rgba(255,255,255,.8);padding:1px 4px;border-radius:4px}
 .ca-osm a{color:var(--muted)}
 body:not(.mapon) .ca-osm{display:none}
 body.mapon .ca-nav{display:none}
 body.mapon .ca-osm{bottom:calc(8px + env(safe-area-inset-bottom))}
 body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
-@media(max-width:350px){.ca-grid{gap:8px}.ca-tile{font-size:13px}}
+@media(max-width:350px){.ca-grid{gap:8px}.ca-tile{font-size:14px}}
 
 /* ---- v3: location card, mic, recent, onboarding (29 Oct) ---- */
 .ca-here{margin-top:16px;position:relative;border-radius:18px;overflow:hidden;background:#123056;min-height:96px}
@@ -138,16 +138,16 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ca-here-ask{display:flex;align-items:center;gap:12px;padding:14px}
 .ca-here.on .ca-here-ask{display:none}
 .ca-here-ask span{flex:1;display:flex;flex-direction:column;gap:2px}
-.ca-here-ask b{font:800 15px 'Noto Sans Devanagari',sans-serif;color:#fff}
-.ca-here-ask small{font:500 12.5px/1.4 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
-.ca-here-ask button{border:0;border-radius:12px;background:var(--mint);color:var(--navy);font:800 14px 'Noto Sans Devanagari',sans-serif;min-height:44px;padding:0 14px;white-space:nowrap}
-.ca-here-pill{position:absolute;left:10px;right:10px;top:10px;z-index:401;margin:0;display:flex;align-items:center;gap:8px;background:#fff;color:var(--navy);border-radius:999px;padding:8px 14px;font:700 13px 'Noto Sans Devanagari',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ca-here-ask b{font:700 15px 'Noto Sans Devanagari',sans-serif;color:#fff}
+.ca-here-ask small{font:500 14px/1.4 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.ca-here-ask button{border:0;border-radius:12px;background:var(--mint);color:var(--navy);font:700 14px 'Noto Sans Devanagari',sans-serif;min-height:44px;padding:0 14px;white-space:nowrap}
+.ca-here-pill{position:absolute;left:10px;right:10px;top:10px;z-index:401;margin:0;display:flex;align-items:center;gap:8px;background:#fff;color:var(--navy);border-radius:999px;padding:8px 14px;font:700 14px 'Noto Sans Devanagari',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ca-here-pill .dot{width:10px;height:10px;border-radius:50%;background:var(--mint);flex:none;box-shadow:0 0 0 3px rgba(16,201,143,.25)}
 .ca-here-pill span:last-child{overflow:hidden;text-overflow:ellipsis}
 .ca-search{padding:8px 8px 8px 20px}
 .ca-search-go{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:transparent;text-align:left;padding:0;min-height:50px}
 .ca-search-go>span:last-child{display:flex;flex-direction:column}
-.ca-mic{flex:none;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;background:#FFC83D;color:var(--navy);min-height:50px;padding:0 16px;font:800 15px 'Noto Sans Devanagari',sans-serif}
+.ca-mic{flex:none;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;background:#FFC83D;color:var(--navy);min-height:50px;padding:0 16px;font:700 15px 'Noto Sans Devanagari',sans-serif}
 .ca-mic.on{background:var(--mint);animation:pulse 1.2s infinite}
 .ca-listen{margin:10px 16px 0;text-align:center;font:700 14px 'Noto Sans Devanagari',sans-serif;color:var(--mint-d)}
 .ca-recent ul{list-style:none;margin:0;padding:0;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
@@ -155,7 +155,7 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ca-recent li:last-child{border-bottom:0}
 .ca-recent li>button:first-child{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:transparent;text-align:left;padding:12px 14px;min-height:60px}
 .ca-recent li b{display:block;font:700 15px 'Noto Sans Devanagari',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ca-recent li small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ca-recent li small{display:block;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ca-fav{width:52px;min-height:52px;border:0;background:transparent;display:grid;place-items:center;flex:none}
 .ca-fav[aria-pressed=true] svg{fill:#E0245E;stroke:#E0245E}
 
@@ -174,7 +174,7 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ob-langs label:has(input:checked){border-color:var(--navy);background:#EFFBF6}
 .ob-langs input{order:2;margin-left:auto;width:24px;height:24px;accent-color:var(--mint);flex:none}
 .ob-langs b{display:block;font:800 20px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:var(--navy)}
-.ob-langs small{display:block;margin-top:6px;font:500 12.5px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ob-langs small{display:block;margin-top:6px;font:500 14px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ob-welcome{background:#0B1F3A}
 .ob-photo{height:calc(var(--vh,1vh)*46);min-height:250px;background:radial-gradient(120% 90% at 70% 10%,#1E4A85,#0B1F3A 70%)}
 .ob-copy{padding:20px 16px calc(24px + env(safe-area-inset-bottom));background:#03070D;color:#fff;flex:1;display:flex;flex-direction:column}
@@ -184,25 +184,25 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ob-or{text-align:center;margin:16px 0 !important;font-weight:700}
 .ob-cust{display:flex;align-items:center;justify-content:space-between;width:100%;background:#fff;color:var(--navy);border:0;border-radius:20px;padding:16px 18px;min-height:84px;text-align:left}
 .ob-cust b{display:block;font:800 19px 'Noto Sans Devanagari',sans-serif}
-.ob-cust em{display:block;font-style:normal;font:800 16px 'Noto Sans Devanagari',sans-serif;color:#1D6FD8;margin-top:2px}
+.ob-cust em{display:block;font-style:normal;font:700 16px 'Noto Sans Devanagari',sans-serif;color:#1D6FD8;margin-top:2px}
 
 /* v3.1: install the app */
 .ca-install{display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:16px 16px 0;padding:12px 12px 12px 12px;min-height:68px;border:0;border-radius:18px;background:linear-gradient(135deg,#0B1F3A,#1E4A85);color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:0 8px 20px rgba(11,31,58,.18)}
 .ca-install-ic img{display:block;width:40px;height:40px;border-radius:12px}
 .ca-install-t{flex:1;min-width:0}
-.ca-install-t b{display:block;font:800 15px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif}
-.ca-install-t small{display:block;margin-top:2px;font:500 12px/1.35 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
-.ca-install-go{flex:none;background:var(--mint);color:var(--navy);border-radius:12px;padding:10px 14px;font:800 14px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif}
+.ca-install-t b{display:block;font:700 15px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif}
+.ca-install-t small{display:block;margin-top:2px;font:500 14px/1.35 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.ca-install-go{flex:none;background:var(--mint);color:var(--navy);border-radius:12px;padding:10px 14px;font:700 14px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif}
 .ca-ihelp{margin:10px 16px 0;padding:14px 16px;border-radius:18px;background:#fff;border:1px solid var(--line);color:var(--navy);font:500 14px/1.5 'Noto Sans Devanagari',sans-serif}
 .ca-ihelp ol{margin:8px 0 12px;padding-left:20px}
 .ca-ihelp li{margin:4px 0}
-.ca-ihelp-x{width:100%;min-height:48px;border:0;border-radius:14px;background:var(--navy);color:#fff;font:800 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.ca-ihelp-x{width:100%;min-height:48px;border:0;border-radius:14px;background:var(--navy);color:#fff;font:700 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
 
 /* ---- v3.2: beech ka pin (naksha khiskao), swap, pehchan chips ---- */
 .ca-mapwrap{position:relative}
 .ca-cpin{position:absolute;left:50%;top:50%;z-index:450;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;pointer-events:none;transition:transform .16s ease}
 .ca-cpin.lift{transform:translate(-50%,-118%)}
-.ca-cpin-l{background:var(--navy);color:#fff;font:700 12px 'Noto Sans Devanagari',sans-serif;padding:5px 10px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 12px rgba(11,31,58,.25);margin-bottom:4px}
+.ca-cpin-l{background:var(--navy);color:#fff;font:700 14px 'Noto Sans Devanagari',sans-serif;padding:5px 10px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 12px rgba(11,31,58,.25);margin-bottom:4px}
 .ca-cpin-h{width:22px;height:22px;border-radius:50%;border:4px solid var(--navy);background:var(--mint)}
 .ca-cpin.d .ca-cpin-h{border-radius:5px;background:#fff}
 .ca-cpin-h::after{content:'';display:block}
@@ -211,15 +211,15 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ca-swap{position:absolute;right:-6px;top:43px;z-index:2;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(11,31,58,.12)}
 .ca-place{margin-right:26px}
 .ca-clues{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 4px}
-.ca-clues small{width:100%;font:600 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
-.ca-clue{border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 12px;min-height:36px;font:600 13px 'Noto Sans Devanagari',sans-serif}
+.ca-clues small{width:100%;font:600 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-clue{border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 12px;min-height:36px;font:600 14px 'Noto Sans Devanagari',sans-serif}
 .ca-wa{display:inline-flex;align-items:center;min-height:44px;margin-top:6px;padding:0 14px;border-radius:12px;background:#E7F8EF;color:#0A6B45;font:700 14px 'Noto Sans Devanagari',sans-serif}
 /* v3.3 jagah khoj: naam + pata, aur hamesha "नक़्शे पर पिन" */
 .ca-results{max-height:min(52vh,420px);overflow:auto;box-shadow:0 10px 24px rgba(11,31,58,.12);background:#fff}
 .ca-results .ca-res{display:flex;align-items:center;gap:12px}
 .ca-res .ic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#F1F4F8;font-size:15px;color:#B8860B}
 .ca-res b{display:block;font:700 15px/1.3 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:var(--navy)}
-.ca-res small{display:block;margin-top:2px;font:500 12.5px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
+.ca-res small{display:block;margin-top:2px;font:500 14px/1.35 'Noto Sans Devanagari',sans-serif;color:var(--muted)}
 .ca-res.pin{background:#FFF8E1 !important}.ca-res.pin .ic{background:#FFC83D}
 .ca-results li:last-child{position:sticky;bottom:0}.ca-results .ca-res.pin{padding:14px;min-height:64px}
 /* v3.4 grahak welcome (sirf grahak ke fayde) + "ऐसे बुक कीजिए" */
@@ -237,7 +237,7 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ob-dots{display:flex;justify-content:center;gap:8px}.ob-dots i{width:8px;height:8px;border-radius:9px;background:rgba(255,255,255,.3);transition:width .2s}.ob-dots i.on{width:26px;background:var(--mint)}
 .ob-foot .ca-cta{width:100%}
 .ca-howto{display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:16px 16px 0;padding:12px 14px;min-height:64px;border:1px dashed #10C98F;border-radius:18px;background:#EFFBF6;color:var(--navy);text-align:left;font:inherit;cursor:pointer}
-.ca-howto>span:first-child{font-size:24px}.ca-howto>span:nth-child(2){flex:1}.ca-howto b{display:block;font:800 15px 'Noto Sans Devanagari',sans-serif}.ca-howto small{display:block;font:500 12.5px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}.ca-howto em{font-style:normal;font-size:22px;color:var(--muted)}
+.ca-howto>span:first-child{font-size:24px}.ca-howto>span:nth-child(2){flex:1}.ca-howto b{display:block;font:700 15px 'Noto Sans Devanagari',sans-serif}.ca-howto small{display:block;font:500 14px 'Noto Sans Devanagari',sans-serif;color:var(--muted)}.ca-howto em{font-style:normal;font-size:22px;color:var(--muted)}
 .ob-art span{color:#10C98F;font-weight:800;font-family:"Plus Jakarta Sans",sans-serif}
 /* v3.5 — 10 सेकंड का विज्ञापन जैसा स्वागत */
 .ob.ad{background:#0B1F3A;overflow:hidden}
@@ -245,7 +245,7 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ad-bars i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
 .ad-bars i::after{content:"";position:absolute;inset:0;width:0;background:#fff;border-radius:9px}
 .ad-bars i.done::after{width:100%}
-.ad-bars i.run::after{animation:adbar 2.5s linear forwards}
+.ad-bars i.run::after{animation:adbar var(--ms,2.5s) linear forwards}
 @keyframes adbar{to{width:100%}}
 .ad-s{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:64px 20px calc(28px + env(safe-area-inset-bottom));color:#fff}
 .ad-s.on{display:flex;animation:adin .45s ease-out}
@@ -266,11 +266,21 @@ body.mapon .ca-sheet{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .ad-card{background:rgba(255,255,255,.96);color:#0B1F3A;border-radius:20px;padding:12px 8px 10px;display:grid;justify-items:center;gap:4px;opacity:0;transform:translateY(16px);animation:adcard .4s ease-out forwards;animation-delay:var(--d);box-shadow:0 10px 24px rgba(0,0,0,.15)}
 @keyframes adcard{to{opacity:1;transform:none}}
 .ad-card svg{width:96px;height:64px;color:#0B1F3A}
-.ad-card b{font:800 16px 'Noto Sans Devanagari',sans-serif}
+.ad-card b{font:700 16px 'Noto Sans Devanagari',sans-serif}
 .ad-grid:has(.sm){grid-template-columns:1fr 1fr 1fr;gap:10px}
-.ad-card.sm svg{width:72px;height:48px}.ad-card.sm b{font-size:13px}
+.ad-card.sm svg{width:72px;height:48px}.ad-card.sm b{font-size:14px}
 .ad-ticks{list-style:none;margin:16px 0 8px;padding:0;display:grid;gap:10px;width:100%;max-width:420px}
 .ad-ticks li{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;font:700 17px 'Noto Sans Devanagari',sans-serif;text-align:left;opacity:0;animation:adcard .4s ease-out forwards;animation-delay:var(--d)}
 .ad-go{width:100%;max-width:420px;margin-top:6px}
 .ob.ad .ob-skip{z-index:4}
 .ad-s.s1 .ad-k{margin-top:18px}
+
+/* v3.6 पढ़ने लायक: बड़ा "छोड़ें", headline की line-height, वादा बड़े अक्षर में */
+.ob.ad .ob-skip{min-height:48px;padding:0 22px;font:700 16px var(--f);background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35)}
+.ad-h{line-height:1.35}
+.ad-k{font-size:19px;line-height:1.4}
+.ad-t{font-size:22px}
+.ad-ticks li{font-size:19px;line-height:1.4;padding:16px}
+.ad-card b{font-weight:700}
+.ad-s{text-shadow:0 1px 2px rgba(0,0,0,.18)}
+.ad-card,.ad-ticks li{text-shadow:none}

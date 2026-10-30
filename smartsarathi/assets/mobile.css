@@ -35,7 +35,7 @@ body.sx { --navy:#0B1F3A; --mint:#1FCB97; overflow-wrap:anywhere; }
 .sc-main .sx-btn-mint { background:var(--mint); box-shadow:none; }
 .sc-help { padding:0 16px 16px; }
 .sc-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:520px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); background:white; border-top:1px solid var(--line); padding:8px 4px calc(8px + env(safe-area-inset-bottom)); z-index:30; }
-.sc-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:52px; text-align:center; text-decoration:none; font-size:13px; font-weight:700; }
+.sc-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:52px; text-align:center; text-decoration:none; font-size:14px; font-weight:700; }
 .sc-nav a[aria-current] { color:#087954; }
 .sr-admin { overflow-wrap:anywhere; }
 .sr-admin .ad,.sr-admin .box,.sr-admin .row>* { min-width:0; max-width:100%; }

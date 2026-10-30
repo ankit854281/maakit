@@ -38,13 +38,13 @@ function sr_guide(string $id, string $title, array $steps, string $theme = 'mint
 .sg[hidden]{display:none}
 .sg-card{width:100%;max-width:520px;max-height:92vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;border-top:6px solid var(--sg)}
 .sg-top{display:flex;align-items:center;gap:10px}.sg-top h2{flex:1;margin:0;font:800 20px/1.3 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}
-.sg-say{min-height:44px;border:0;border-radius:12px;background:#5B4BDB;color:#fff;font:800 14px 'Noto Sans Devanagari',sans-serif;padding:0 14px;cursor:pointer}
+.sg-say{min-height:44px;border:0;border-radius:12px;background:#5B4BDB;color:#fff;font:700 14px 'Noto Sans Devanagari',sans-serif;padding:0 14px;cursor:pointer}
 .sg-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .sg-steps li{display:flex;align-items:center;gap:12px;background:#F7F9FB;border:1px solid #E3E8EF;border-radius:16px;padding:10px 10px 10px 12px}
 .sg-ic{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--sg);font-size:22px}
-.sg-tx{flex:1;min-width:0}.sg-tx b{display:block;font:800 15px/1.35 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}.sg-tx small{display:block;margin-top:2px;font:500 13px/1.45 'Noto Sans Devanagari',sans-serif;color:#41505F}
+.sg-tx{flex:1;min-width:0}.sg-tx b{display:block;font:700 15px/1.35 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}.sg-tx small{display:block;margin-top:2px;font:500 14px/1.45 'Noto Sans Devanagari',sans-serif;color:#41505F}
 .sg-one{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid #E3E8EF;background:#fff;font-size:18px;cursor:pointer}
-.sg-ok{min-height:54px;border:0;border-radius:16px;background:#0B1F3A;color:#fff;font:800 17px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.sg-ok{min-height:54px;border:0;border-radius:16px;background:#0B1F3A;color:#fff;font:700 17px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
 </style>
 <script>
 (function () {

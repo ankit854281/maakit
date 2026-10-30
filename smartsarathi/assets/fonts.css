@@ -1,0 +1,22 @@
+/* ============================================================
+   स्मार्ट सारथी — फ़ॉन्ट अपने सर्वर से (owner, 30 Oct 2026)
+   Google Fonts नहीं: भदोही के धीमे नेट पर अक्षर बदलकर न दिखें।
+   Noto Sans Devanagari = हिंदी (और ₹), Plus Jakarta Sans = अंक/English.
+   दोनों OFL-1.1 (मुफ़्त, अपने सर्वर पर रख सकते हैं)।
+   ============================================================ */
+@font-face{font-family:'Noto Sans Devanagari';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/noto-deva-400.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Noto Sans Devanagari';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/noto-deva-500.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Noto Sans Devanagari';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/noto-deva-600.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Noto Sans Devanagari';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/noto-deva-700.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Noto Sans Devanagari';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/noto-deva-800.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/jakarta-400.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/jakarta-500.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/jakarta-600.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/jakarta-700.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/jakarta-800.woff2) format('woff2')}
+/* एक ही font परिवार हर जगह */
+:root{--f:'Noto Sans Devanagari','Plus Jakarta Sans','Mukta','Hind',sans-serif}
+html,body{font-family:var(--f)}
+button,input,select,textarea{font-family:inherit}
+/* हिंदी में अक्षर-दूरी नहीं (मात्रा टूटती है) */
+:lang(hi) h1,:lang(hi) h2,:lang(hi) h3,:lang(hi) p,:lang(hi) li,:lang(hi) b,:lang(hi) small,:lang(hi) button,:lang(hi) a{letter-spacing:0}

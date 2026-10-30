@@ -174,15 +174,15 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 <style>
 .ap{display:grid;gap:14px}
 .ap-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0;padding:0;list-style:none}
-.ap-steps li{display:flex;flex-direction:column;gap:6px;font:700 12px 'Noto Sans Devanagari',sans-serif;color:#7A8899}
+.ap-steps li{display:flex;flex-direction:column;gap:6px;font:700 14px 'Noto Sans Devanagari',sans-serif;color:#7A8899}
 .ap-steps li::before{content:"";height:5px;border-radius:9px;background:#E3E8EF}
 .ap-steps li.on{color:#0B1F3A}.ap-steps li.on::before{background:#FFC83D}.ap-steps li.ok::before{background:#10C98F}
 .ap h2{margin:4px 0 0;font:800 20px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}
 .ap-msg{margin:0;padding:12px 14px;border-radius:14px;font:700 14px/1.45 'Noto Sans Devanagari',sans-serif}
 .ap-msg.err{background:#FDECEA;color:#A3170E}.ap-msg.ok{background:#E7F8F1;color:#0B6B4A}.ap-msg.wait{background:#FFF6DD;color:#7A5200}
 .ap-veh{border:0;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ap-veh legend{font:800 16px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;margin-bottom:8px}
-.ap-v{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:104px;border:2px solid #E3E8EF;border-radius:18px;background:#fff;cursor:pointer;font:800 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;text-align:center;padding:10px}
+.ap-veh legend{font:700 16px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;margin-bottom:8px}
+.ap-v{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:104px;border:2px solid #E3E8EF;border-radius:18px;background:#fff;cursor:pointer;font:700 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;text-align:center;padding:10px}
 .ap-v input{position:absolute;opacity:0;pointer-events:none}
 .ap-v svg{width:40px;height:40px}
 .ap-v:has(input:checked){border-color:#0B1F3A;background:#FFF8E1;box-shadow:0 0 0 3px rgba(255,200,61,.45)}
@@ -191,40 +191,40 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 .ap-field input[type=text]{min-height:52px;border:2px solid #E3E8EF;border-radius:14px;padding:0 14px;font:700 17px 'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;letter-spacing:.5px;text-transform:uppercase;background:#fff;color:#0B1F3A}
 .ap-field input.name{text-transform:none;letter-spacing:0}
 .ap-field small{font-weight:500;color:#5A6878}
-.ap-go{display:grid;place-items:center;width:100%;min-height:54px;border:0;border-radius:16px;background:#FFC83D;color:#0B1F3A;font:800 16px 'Noto Sans Devanagari',sans-serif;cursor:pointer;text-decoration:none}
+.ap-go{display:grid;place-items:center;width:100%;min-height:54px;border:0;border-radius:16px;background:#FFC83D;color:#0B1F3A;font:700 16px 'Noto Sans Devanagari',sans-serif;cursor:pointer;text-decoration:none}
 .ap-go.navy{background:#0B1F3A;color:#fff}
 .ap-prog{display:flex;align-items:center;gap:12px;background:#0B1F3A;color:#fff;border-radius:18px;padding:14px 16px}
 .ap-prog b{font:800 26px 'Plus Jakarta Sans',sans-serif;color:#FFC83D}
 .ap-prog span{flex:1;font:700 14px/1.4 'Noto Sans Devanagari',sans-serif}
 .ap-bar{height:8px;border-radius:9px;background:rgba(255,255,255,.18);margin-top:6px;overflow:hidden}.ap-bar i{display:block;height:100%;background:#FFC83D;border-radius:9px}
-.ap-say-all{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border:0;border-radius:14px;background:#5B4BDB;color:#fff;font:800 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.ap-say-all{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border:0;border-radius:14px;background:#5B4BDB;color:#fff;font:700 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
 .dc{background:#fff;border:1px solid #E3E8EF;border-radius:18px;overflow:hidden}
 .dc[open]{border-color:#0B1F3A;box-shadow:0 6px 18px rgba(11,31,58,.08)}
 .dc summary{display:flex;align-items:center;gap:12px;padding:12px 10px 12px 14px;min-height:68px;cursor:pointer;list-style:none}
 .dc summary::-webkit-details-marker{display:none}
 .dc-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:#F1F4F8;color:#0B1F3A;font-weight:900}
 .dc.done .dc-ic{background:#10C98F;color:#fff}
-.dc-t{flex:1;min-width:0}.dc-t b{display:block;font:800 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
-.dc-t small{display:block;font:600 12.5px 'Noto Sans Devanagari',sans-serif;color:#C8261B}
+.dc-t{flex:1;min-width:0}.dc-t b{display:block;font:700 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
+.dc-t small{display:block;font:600 14px 'Noto Sans Devanagari',sans-serif;color:#C8261B}
 .dc.done .dc-t small{color:#0B6B4A}.dc.opt .dc-t small{color:#5A6878}
 .dc-say{width:44px;height:44px;border-radius:12px;border:1px solid #E3E8EF;background:#fff;font-size:18px;cursor:pointer;flex:none}
 .dc-arrow{color:#7A8899;font-weight:800;flex:none}
 .dc form{display:grid;gap:12px;padding:0 14px 16px;border-top:1px dashed #E3E8EF;padding-top:14px}
-.dc-hint{margin:0;font:500 13px/1.5 'Noto Sans Devanagari',sans-serif;color:#41505F}
+.dc-hint{margin:0;font:500 14px/1.5 'Noto Sans Devanagari',sans-serif;color:#41505F}
 .dc-pics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.dc-pic{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:118px;border:2px dashed #B9C4D0;border-radius:14px;background:#F7F9FB;cursor:pointer;font:700 13px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;text-align:center;padding:8px;overflow:hidden}
+.dc-pic{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:118px;border:2px dashed #B9C4D0;border-radius:14px;background:#F7F9FB;cursor:pointer;font:700 14px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;text-align:center;padding:8px;overflow:hidden}
 .dc-pic.full{grid-column:1/-1}
 .dc-pic input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
 .dc-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dc-pic.has span{position:relative;z-index:1;background:rgba(11,31,58,.78);color:#fff;border-radius:8px;padding:4px 8px;margin-top:auto}
 .dc-pic.has{border-style:solid;border-color:#10C98F}
 .dc-pic em{font-style:normal;font-size:26px}
-.dc-view{font:700 13px 'Noto Sans Devanagari',sans-serif;color:#1D6FD8;min-height:44px;display:inline-flex;align-items:center}
+.dc-view{font:700 14px 'Noto Sans Devanagari',sans-serif;color:#1D6FD8;min-height:44px;display:inline-flex;align-items:center}
 .wz{display:grid;gap:14px}
 .wz-top{display:flex;align-items:center;gap:10px}
 .wz-back{width:44px;height:44px;border-radius:12px;border:1px solid #E3E8EF;background:#fff;font:800 24px/1 sans-serif;color:#0B1F3A;cursor:pointer;flex:none}
 .wz-back[disabled]{visibility:hidden}
-.wz-count{font:800 13px 'Noto Sans Devanagari',sans-serif;color:#5A6878;white-space:nowrap}
+.wz-count{font:700 14px 'Noto Sans Devanagari',sans-serif;color:#5A6878;white-space:nowrap}
 .wz-bar{flex:1;height:8px;border-radius:9px;background:#E3E8EF;overflow:hidden}.wz-bar i{display:block;height:100%;width:0;background:#FFC83D;border-radius:9px;transition:width .25s}
 .wz-s{display:grid;gap:14px}
 .wz.js .wz-s{display:none}.wz.js .wz-s.on{display:grid}
@@ -237,8 +237,8 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 .sr-hide{position:absolute;left:-9999px}
 .ap-sum{display:grid;gap:2px;background:#F7F9FB;border:1px solid #E3E8EF;border-radius:14px;padding:12px 14px;font:700 14px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;color:#0B1F3A}.ap-sum span{font-weight:600;color:#41505F}
 .wz-chips{border:0;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.wz-chips legend{font:800 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;margin-bottom:8px;padding:0}
-.wz-chip{position:relative;display:flex;align-items:center;justify-content:center;min-height:52px;border:2px solid #E3E8EF;border-radius:14px;background:#fff;font:800 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;cursor:pointer;text-align:center;padding:6px}
+.wz-chips legend{font:700 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;margin-bottom:8px;padding:0}
+.wz-chip{position:relative;display:flex;align-items:center;justify-content:center;min-height:52px;border:2px solid #E3E8EF;border-radius:14px;background:#fff;font:700 15px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A;cursor:pointer;text-align:center;padding:6px}
 .wz-chip input{position:absolute;opacity:0;pointer-events:none}
 .wz-chip:has(input:checked){border-color:#0B1F3A;background:#FFF8E1;box-shadow:0 0 0 3px rgba(255,200,61,.45)}
 .wz-terms{display:flex;gap:12px;align-items:flex-start;background:#F7F9FB;border:1px solid #E3E8EF;border-radius:14px;padding:12px;font:600 14px/1.5 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
@@ -247,7 +247,7 @@ $step = !$p ? 1 : ($p['status']==='approved' ? 3 : 2);
 .wz-need{margin:0;color:#A3170E;font:700 14px 'Noto Sans Devanagari',sans-serif}
 .dc-pic.need{border-color:#C8261B;background:#FDECEA}
 .wz-done{display:grid;justify-items:center;text-align:center;gap:6px;padding:18px 10px;background:#E7F8F1;border-radius:20px}
-.wz-done span{width:64px;height:64px;border-radius:50%;background:#10C98F;color:#fff;display:grid;place-items:center;font:900 32px sans-serif}
+.wz-done span{width:64px;height:64px;border-radius:50%;background:#10C98F;color:#fff;display:grid;place-items:center;font:900 32px var(--f)}
 .wz-done h2{margin:6px 0 0;font:800 20px 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}.wz-done p{margin:0;font:600 14px/1.5 'Noto Sans Devanagari',sans-serif;color:#2F4A3F}
 </style>
 

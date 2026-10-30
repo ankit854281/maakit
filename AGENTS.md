@@ -1,3 +1,12 @@
+# Typography rules — owner-approved review, 30 October 2026
+
+Fonts are SELF-HOSTED (smartsarathi/assets/fonts/, fonts.css, sr_fonts() in inc/ui.php): Noto Sans
+Devanagari (Hindi + ₹, unicode-range) and Plus Jakarta Sans (digits/English), OFL-1.1. Never add
+Google Fonts links again. One stack: var(--f) = 'Noto Sans Devanagari','Plus Jakarta Sans','Mukta',
+'Hind',sans-serif; button/input/select/textarea inherit it; no system-ui. Readable text >= 14px;
+weight 800 only for >= 18px headlines/amounts (smaller → 700); no letter-spacing on Hindi.
+Use inline SVG instead of ● ■ ★ ♥ glyphs. Intro scenes carry data-ms (2.0/2.5/3.5/2.5 s).
+
 # Separate apps, benefit-first welcome, guides — owner, 30 October 2026
 
 Update: ghar.php welcome is now a 10-second ad-style intro (4 auto-playing scenes, story bars,

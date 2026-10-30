@@ -69,8 +69,7 @@ $grid = [
 <meta name="theme-color" content="#0B1F3A">
 <title><?= h(t('Smart Sarathi — rides, parcels, vehicles', 'स्मार्ट सारथी — सवारी, पार्सल, गाड़ी')) ?></title>
 <meta name="description" content="<?= h(t('Book bike, auto, e-rickshaw, cab, parcel and loader in Bhadohi. Fare shown before you book.', 'भदोही में बाइक, ऑटो, ई-रिक्शा, कैब, पार्सल और लोडर बुक कीजिए। बुक करने से पहले किराया।')) ?>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<?php if (!function_exists('sr_fonts')) require_once __DIR__ . '/inc/ui.php'; sr_fonts(); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <?php if (!function_exists('sr_app_head')) require_once __DIR__ . '/inc/ui.php'; sr_app_head(); ?>
 <link rel="stylesheet" href="<?= h(u('/assets/customer.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/customer.css') ?>">
@@ -107,7 +106,7 @@ $grid = [
   <div class="ad-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   <button type="button" class="ob-skip" data-seen data-close><?= h(t('Skip', 'छोड़ें')) ?></button>
 
-  <section class="ad-s s1 on">
+  <section class="ad-s s1 on" data-ms="2000">
     <div class="ad-logo"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
     <p class="ad-k"><?= h(t('Hello! I am', 'नमस्ते! मैं हूँ')) ?></p>
     <h1 class="ad-h">Smart Sarathi</h1>
@@ -115,7 +114,7 @@ $grid = [
     <div class="ad-road"><svg class="ad-ride" viewBox="0 0 120 80"><use href="#v-bike"/></svg></div>
   </section>
 
-  <section class="ad-s s2">
+  <section class="ad-s s2" data-ms="2500">
     <p class="ad-k"><?= h(t('Need to go somewhere?', 'कहीं जाना है?')) ?></p>
     <h1 class="ad-h"><?= h(t('You choose, I take you', 'आप चुनिए, मैं ले चलूँगा')) ?></h1>
     <div class="ad-grid">
@@ -125,7 +124,7 @@ $grid = [
     </div>
   </section>
 
-  <section class="ad-s s3">
+  <section class="ad-s s3" data-ms="3500">
     <p class="ad-k"><?= h(t('Things to send or bring?', 'सामान लाना या भेजना है?')) ?></p>
     <h1 class="ad-h"><?= h(t('I will bring it', 'मैं ले आऊँगा')) ?></h1>
     <div class="ad-grid">
@@ -135,7 +134,7 @@ $grid = [
     </div>
   </section>
 
-  <section class="ad-s s4">
+  <section class="ad-s s4" data-ms="2500">
     <p class="ad-k"><?= h(t('Smart Sarathi, Bhadohi', 'स्मार्ट सारथी, भदोही')) ?></p><h1 class="ad-h"><?= h(t('My promise to you', 'आपसे मेरा वादा')) ?></h1>
     <ul class="ad-ticks">
       <li style="--d:0s">₹ <?= h(t('Fixed fare before you book', 'बुकिंग से पहले पक्का किराया')) ?></li>
@@ -211,7 +210,7 @@ $grid = [
   <section class="ca-sec" aria-labelledby="h-care">
     <h2 id="h-care"><?= h(t('Care services', 'केयर सेवाएँ')) ?></h2>
     <button type="button" class="ca-care" data-open="care"><span class="ic" aria-hidden="true">+</span><span><b><?= h(t('Hospital Saathi', 'अस्पताल साथी')) ?></b><small><?= h(t('Vehicle + a companion for the whole hospital visit', 'गाड़ी + अस्पताल में पूरे समय साथ रहने वाला साथी')) ?></small></span></button>
-    <button type="button" class="ca-care" data-open="seva"><span class="ic" aria-hidden="true">♥</span><span><b><?= h(t('Door se Seva', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Send medicine, gas, ration to your family', 'घर से दूर हैं? घर वालों को दवाई, गैस, राशन भेजिए')) ?></small></span></button>
+    <button type="button" class="ca-care" data-open="seva"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2A5.2 5.2 0 0 1 12 6.2a5.2 5.2 0 0 1 9.6 5.6C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg></span><span><b><?= h(t('Door se Seva', 'दूर से सेवा')) ?></b><small><?= h(t('Away from home? Send medicine, gas, ration to your family', 'घर से दूर हैं? घर वालों को दवाई, गैस, राशन भेजिए')) ?></small></span></button>
   </section>
 
   <button type="button" class="ca-howto" data-guide-open="cust-book"><span aria-hidden="true">❓</span><span><b><?= h(t('First time? How to book', 'पहली बार? ऐसे बुक कीजिए')) ?></b><small><?= h(t('4 easy steps, with voice', '4 आसान कदम, आवाज़ के साथ')) ?></small></span><em>›</em></button>

@@ -440,8 +440,8 @@ $shareText = t('Book bike, auto, e-rickshaw, parcel and vehicles in Bhadohi with
 .of-meta{margin:0;font:700 14px 'Noto Sans Devanagari',sans-serif;color:#41505F}
 .of-route{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .of-route li{border-left:4px solid #10C98F;padding:4px 10px;background:#F7F9FB;border-radius:8px}.of-route li+li{border-color:#C8261B}
-.of-route small{display:block;font:700 12px 'Noto Sans Devanagari',sans-serif;color:#5A6878}.of-route b{display:block;font:700 15px/1.4 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
-.of-say{min-height:46px;border:1px solid #E3E8EF;border-radius:12px;background:#fff;font:800 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.of-route small{display:block;font:700 14px 'Noto Sans Devanagari',sans-serif;color:#5A6878}.of-route b{display:block;font:700 15px/1.4 'Noto Sans Devanagari',sans-serif;color:#0B1F3A}
+.of-say{min-height:46px;border:1px solid #E3E8EF;border-radius:12px;background:#fff;font:700 15px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
 .of-acts{display:grid;grid-template-columns:1fr 2fr;gap:10px}
 .of-acts button{min-height:60px;border:0;border-radius:16px;font:800 18px 'Noto Sans Devanagari',sans-serif;cursor:pointer}
 .of-no{background:#F1F4F8;color:#0B1F3A}.of-yes{background:#10C98F;color:#05241A}

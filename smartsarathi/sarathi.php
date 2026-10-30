@@ -27,8 +27,7 @@ $dash  = u('/sarathi.php?go=1');
 <meta name="theme-color" content="#0B1F3A">
 <title><?= h(t('Sarathi Partner — drive and earn', 'सारथी पार्टनर — गाड़ी चलाइए, कमाइए')) ?></title>
 <meta name="description" content="<?= h(t('Join Smart Sarathi as a partner with your bike, auto, e-rickshaw, car or loader in Bhadohi.', 'भदोही में अपनी बाइक, ऑटो, ई-रिक्शा, कार या लोडर से स्मार्ट सारथी के पार्टनर बनिए।')) ?>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<?php if (!function_exists('sr_fonts')) require_once __DIR__ . '/inc/ui.php'; sr_fonts(); ?>
 <?php if (!function_exists('sr_app_head')) require_once __DIR__ . '/inc/ui.php'; sr_app_head('partner'); ?>
 <link rel="stylesheet" href="<?= h(u('/assets/customer.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/assets/customer.css') ?>">
 <style>
@@ -39,7 +38,7 @@ body{background:#03070D}
 .pa-brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
 .pa-brand img{width:44px;height:44px;border-radius:12px;display:block}
 .pa-brand b{display:block;font:800 18px 'Plus Jakarta Sans',sans-serif}
-.pa-brand small{display:block;font:700 12px 'Noto Sans Devanagari',sans-serif;color:var(--amber)}
+.pa-brand small{display:block;font:700 14px 'Noto Sans Devanagari',sans-serif;color:var(--amber)}
 .pa-lang{display:flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
 .pa-lang a{min-width:48px;min-height:44px;display:grid;place-items:center;border-radius:999px;color:#fff;text-decoration:none;font:700 14px 'Noto Sans Devanagari',sans-serif;padding:0 10px}
 .pa-lang a[aria-current=true]{background:#fff;color:#0B1F3A}
@@ -52,8 +51,8 @@ body{background:#03070D}
 .pa-pts li{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 14px;font:600 15px/1.4 'Noto Sans Devanagari',sans-serif;color:#E6EDF5}
 .pa-pts i{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:#0B1F3A;font-style:normal;font-weight:900}
 .pa-veh{display:flex;flex-wrap:wrap;gap:8px}
-.pa-veh span{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font:700 13px 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
-.pa-go{display:grid;place-items:center;min-height:56px;border-radius:16px;background:var(--amber);color:#0B1F3A;text-decoration:none;font:800 17px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;box-shadow:0 10px 24px rgba(255,200,61,.22)}
+.pa-veh span{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font:700 14px 'Noto Sans Devanagari',sans-serif;color:#C9D6E5}
+.pa-go{display:grid;place-items:center;min-height:56px;border-radius:16px;background:var(--amber);color:#0B1F3A;text-decoration:none;font:700 17px 'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif;box-shadow:0 10px 24px rgba(255,200,61,.22)}
 .pa .ca-install{width:100%;margin:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);box-shadow:none}
 .pa .ca-install-go{background:var(--amber)}
 .pa .ca-ihelp{margin:0}
@@ -62,9 +61,9 @@ body{background:#03070D}
 .pa-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:none}
 .pa-steps li{display:flex;align-items:center;gap:12px;font:600 15px/1.4 'Noto Sans Devanagari',sans-serif;color:#E6EDF5}
 .pa-steps b{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--amber);color:var(--amber)}
-.pa-cust{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:0 16px;border-radius:16px;background:#fff;color:#0B1F3A;text-decoration:none;font:800 15px 'Noto Sans Devanagari',sans-serif;margin-top:auto}
+.pa-cust{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:0 16px;border-radius:16px;background:#fff;color:#0B1F3A;text-decoration:none;font:700 15px 'Noto Sans Devanagari',sans-serif;margin-top:auto}
 .pa-cust em{font-style:normal;color:#1D6FD8}
-.pa-help{text-align:center;font:600 13px 'Noto Sans Devanagari',sans-serif;color:#8FA3B8}
+.pa-help{text-align:center;font:600 14px 'Noto Sans Devanagari',sans-serif;color:#8FA3B8}
 .pa-help a{color:#fff;display:inline-flex;align-items:center;min-height:44px}
 </style>
 </head>

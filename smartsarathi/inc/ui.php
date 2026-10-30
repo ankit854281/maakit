@@ -51,10 +51,18 @@ function sr_icon($name, $size = 22) {
          . ' stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 }
 
+/** Font apne server se — Google Fonts nahi (dheema net: akshar badalte na dikhein). Ek hi baar. */
+function sr_fonts(): void {
+    static $done = false; if ($done) return; $done = true;
+    $v = (int)@filemtime(__DIR__ . '/../assets/fonts.css');
+    ?><link rel="preload" href="<?= h(u('/assets/fonts/noto-deva-400.woff2')) ?>" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<?= h(u('/assets/fonts/noto-deva-700.woff2')) ?>" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="<?= h(u('/assets/fonts.css')) ?>?v=<?= $v ?>">
+<?php
+}
 /** Saare panno ke liye font + style (purani app.css ki jagah) */
 function sr_assets() {
-    ?><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    sr_fonts(); ?>
 <link rel="stylesheet" href="<?= h(u('/assets/sr2.css')) ?>?v=<?= (int)@filemtime(__DIR__ . '/../assets/sr2.css') ?>"><?php
     sr_mobile_assets();
     sr_app_head();
