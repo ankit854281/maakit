@@ -109,15 +109,15 @@ $grid = [
 
   <section class="ad-s s1 on">
     <div class="ad-logo"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
-    <p class="ad-k"><?= h(t('Welcome to', 'स्वागत है')) ?></p>
+    <p class="ad-k"><?= h(t('Hello! I am', 'नमस्ते! मैं हूँ')) ?></p>
     <h1 class="ad-h">Smart Sarathi</h1>
-    <p class="ad-t"><?= h(t('Sarathi means — your very own Sarathi.', 'सारथी — यानी आपका अपना सारथी।')) ?></p>
+    <p class="ad-t"><?= h(t('Your very own Sarathi', 'आपका अपना सारथी')) ?></p>
     <div class="ad-road"><svg class="ad-ride" viewBox="0 0 120 80"><use href="#v-bike"/></svg></div>
   </section>
 
   <section class="ad-s s2">
     <p class="ad-k"><?= h(t('Need to go somewhere?', 'कहीं जाना है?')) ?></p>
-    <h1 class="ad-h"><?= h(t('You decide the ride', 'गाड़ी आप चुनिए')) ?></h1>
+    <h1 class="ad-h"><?= h(t('You choose, I take you', 'आप चुनिए, मैं ले चलूँगा')) ?></h1>
     <div class="ad-grid">
       <?php foreach ([['v-bike', t('Bike', 'बाइक')], ['v-auto', t('Auto', 'ऑटो')], ['v-erick', t('E-rickshaw', 'ई-रिक्शा')], ['v-car', t('Cab / Bolero', 'कैब / बोलेरो')]] as $k => [$v, $n]): ?>
         <div class="ad-card" style="--d:<?= $k * 0.25 ?>s"><svg viewBox="0 0 120 80"><use href="#<?= $v ?>"/></svg><b><?= h($n) ?></b></div>
@@ -127,7 +127,7 @@ $grid = [
 
   <section class="ad-s s3">
     <p class="ad-k"><?= h(t('Things to send or bring?', 'सामान लाना या भेजना है?')) ?></p>
-    <h1 class="ad-h"><?= h(t('Sarathi will bring it', 'सारथी ले आएगा')) ?></h1>
+    <h1 class="ad-h"><?= h(t('I will bring it', 'मैं ले आऊँगा')) ?></h1>
     <div class="ad-grid">
       <?php foreach ([['v-box', t('Parcel', 'पार्सल')], ['v-truck', t('Loader / goods', 'लोडर / सामान')], ['v-bag', t('Medicine, ration', 'दवाई, राशन')], ['v-care', t('Hospital Saathi', 'अस्पताल साथी')], ['v-seat', t('Saath Safar', 'साथ सफ़र')], ['v-car', t('Outstation', 'शहर से बाहर')]] as $k => [$v, $n]): ?>
         <div class="ad-card sm" style="--d:<?= $k * 0.18 ?>s"><svg viewBox="0 0 120 80"><use href="#<?= $v ?>"/></svg><b><?= h($n) ?></b></div>
@@ -136,13 +136,13 @@ $grid = [
   </section>
 
   <section class="ad-s s4">
-    <h1 class="ad-h"><?= h(t('Book in Bhadohi, worry-free', 'भदोही में बेफ़िक्र बुकिंग')) ?></h1>
+    <p class="ad-k"><?= h(t('Smart Sarathi, Bhadohi', 'स्मार्ट सारथी, भदोही')) ?></p><h1 class="ad-h"><?= h(t('My promise to you', 'आपसे मेरा वादा')) ?></h1>
     <ul class="ad-ticks">
-      <li style="--d:0s">₹ <?= h(t('Fare shown before you book', 'बुकिंग से पहले पक्का किराया')) ?></li>
+      <li style="--d:0s">₹ <?= h(t('Fixed fare before you book', 'बुकिंग से पहले पक्का किराया')) ?></li>
       <li style="--d:.3s">🔑 <?= h(t('Trip starts only with your OTP', 'आपके OTP से ही सफ़र शुरू')) ?></li>
-      <li style="--d:.6s">📍 <?= h(t('See your Sarathi live on the map', 'सारथी नक़्शे पर लाइव')) ?></li>
+      <li style="--d:.6s">📍 <?= h(t('With you on the map, every moment', 'हर पल नक़्शे पर आपके साथ')) ?></li>
     </ul>
-    <button type="button" class="ca-cta ad-go" data-seen data-close><?= h(t('Start →', 'शुरू करें →')) ?></button>
+    <button type="button" class="ca-cta ad-go" data-seen data-close><?= h(t('Let’s go →', 'चलिए, शुरू करें →')) ?></button>
   </section>
 </div>
 
