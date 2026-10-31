@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  body { @apply bg-paper text-slate-800 antialiased; font-size: 15px; }
+  :focus-visible { outline: 2px solid #F2A93B; outline-offset: 2px; }
+}
+@layer components {
+  .card { @apply bg-white rounded-2xl border border-line p-5; }
+  .tile { @apply p-4; }
+  .h3 { @apply text-lg font-semibold text-ink; }
+  .btn { @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap; }
+  .btn-p { @apply bg-ink text-white hover:bg-ink-2; }
+  .btn-g { @apply bg-leaf text-white hover:brightness-110; }
+  .btn-r { @apply bg-rose text-white hover:brightness-110; }
+  .btn-l { @apply bg-white text-ink border border-line hover:bg-paper; }
+  .btn-wa { @apply bg-[#25D366] text-white hover:brightness-95; }
+  .btn-sm { @apply px-3 py-1.5 text-xs rounded-lg; }
+  .inp { @apply w-full border border-line rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-marigold/60 focus:border-marigold; }
+  .pin { @apply text-center tracking-[0.5em] text-lg; }
+  .lbl { @apply text-sm font-medium text-slate-600 mb-1.5 block; }
+  .pill { @apply inline-block px-2 py-0.5 rounded-full text-xs font-semibold; }
+  .tbl { @apply w-full text-left text-sm; }
+  .tbl th { @apply bg-paper text-slate-600 text-xs font-semibold px-3 py-2 text-left; }
+  .tbl td { @apply px-3 py-2 border-t border-line/70 align-top; }
+  .mark { @apply w-10 h-10 rounded-xl bg-marigold text-ink font-bold grid place-items-center shrink-0; }
+  .mark-sm { @apply w-8 h-8 rounded-lg text-sm; }
+  .mark-lg { @apply w-16 h-16 rounded-2xl text-2xl; }
+  .avatar-sm { @apply w-9 h-9 rounded-full bg-marigold text-ink font-semibold grid place-items-center text-sm shrink-0; }
+  .avatar { @apply w-14 h-14 rounded-2xl bg-marigold text-ink text-xl font-semibold grid place-items-center shrink-0; }
+  .side-link { @apply flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl text-sm text-white/70 hover:bg-white/5 hover:text-white; }
+  .side-link.on { @apply bg-white/10 text-white; box-shadow: inset 3px 0 0 #F2A93B; }
+  .tab { @apply flex flex-col items-center gap-1 pt-2.5 pb-2 text-[11px] text-slate-500 relative; }
+  .tab i { @apply text-lg; }
+  .tab.on { @apply text-ink font-medium; }
+  .tab.on::before { content: ''; @apply absolute top-0 left-1/4 right-1/4 h-[3px] rounded-b bg-marigold; }
+  .more-item { @apply flex flex-col items-center gap-2 p-3 rounded-2xl bg-paper text-xs text-ink text-center leading-tight; }
+  .more-item i { @apply text-lg; }
+  .more-item.on { @apply bg-marigold/25; }
+  .net { @apply inline-flex items-center gap-1.5 text-xs text-white/80; }
+  .dot { @apply inline-block w-2 h-2 rounded-full; }
+  .seg { @apply grid grid-cols-5 gap-0.5 bg-paper p-1 rounded-xl text-[13px]; }
+  .seg button { @apply px-0.5; }
+  .seg button { @apply py-2 rounded-lg text-slate-500; }
+  .seg button.on { @apply bg-white shadow-sm text-ink font-semibold; }
+  .chip { @apply px-3 py-1.5 rounded-full border border-line bg-white text-sm whitespace-nowrap; }
+  .chip-on { @apply bg-ink text-white border-ink; }
+  .kid-hero { @apply bg-ink text-white rounded-3xl p-5 relative overflow-hidden; }
+  .kstat { @apply bg-white/10 rounded-2xl p-3; }
+  .kstat b { @apply block text-xl font-semibold; }
+  .kstat span { @apply block text-[11px] text-white/70 leading-tight mt-0.5; }
+  .subj { @apply inline-block shrink-0 text-xs font-semibold px-2 py-0.5 rounded-md bg-marigold/20 text-ink; }
+  .word-card { @apply bg-[#FFF8EC] border-marigold/40; }
+}
+/* Bhadohi carpet border — the one decorative element */
+.carpet { height: 8px; background:
+  conic-gradient(from 45deg at 50% 50%, #F2A93B 0 25%, #9A3412 0 50%, #F2A93B 0 75%, #9A3412 0) 0 0 / 12px 8px; }
+.carpet-wide { height: 14px; background-size: 20px 14px; }
+.kid-hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 6px;
+  background: conic-gradient(from 45deg at 50% 50%, #F2A93B 0 25%, #9A3412 0 50%, #F2A93B 0 75%, #9A3412 0) 0 0 / 10px 6px; }
+.noscroll::-webkit-scrollbar { display: none; }
+@media print { .noprint { display: none !important; } body { background: #fff; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+@layer components {
+  .edu-bento { @apply grid gap-5 md:grid-cols-2; }
+  .edu-surface { @apply rounded-3xl border border-white bg-white p-6 shadow-lift; }
+  .edu-glass { @apply rounded-3xl border border-white/80 bg-white/90 shadow-lift; backdrop-filter: blur(24px); }
+  .edu-action { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium text-white transition duration-200 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2; }
+  .edu-action-emerald { @apply edu-action bg-gradient-to-br from-emerald-700 to-teal-600; }
+  .edu-action-violet { @apply edu-action bg-gradient-to-br from-indigo-600 to-violet-600; }
+  .edu-action-amber { @apply edu-action bg-gradient-to-br from-amber-500 to-orange-500 text-slate-950; }
+}
+@media (prefers-reduced-motion: reduce) { .edu-action { transform: none !important; transition: none !important; } }
+/* Game Zone */
+.game-card { background: #0B1F3A; color: #fff; border-radius: 1.5rem; padding: 1.25rem; position: relative; overflow: hidden; }
+.game-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 6px;
+  background: conic-gradient(from 45deg at 50% 50%, #F2A93B 0 25%, #9A3412 0 50%, #F2A93B 0 75%, #9A3412 0) 0 0 / 10px 6px; }
+.game-tile { display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; text-align: left; padding: 1rem; border-radius: 1.25rem; background: #fff; border: 2px solid #D9E1E8; color: #0B1F3A; min-height: 8.5rem; }
+.game-tile:not([disabled]):active { transform: scale(.97); }
+.game-tile-main { background: #F2A93B; border-color: #F2A93B; }
+@keyframes pop { 0% { transform: scale(.85); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); } }
+.pop { animation: pop .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }

@@ -1,0 +1,14 @@
+/* Old ERP Reports — old ERP table look: Arial 11px, grey heads, 1px borders. */
+*{box-sizing:border-box}body{margin:0;background:#F7F7F7;color:#555;font:12px Arial,Helvetica,sans-serif}
+.or{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;min-height:100vh;padding:10px}
+.or-side{background:#fff;border:1px solid #E6E9ED;padding:8px;max-height:calc(100vh - 20px);overflow:auto;position:sticky;top:10px}.or-side h4{margin:10px 4px 4px;font-size:11px;text-transform:uppercase;color:#73879C}
+.or-side button{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 6px;font:12px Arial;color:#333;cursor:pointer;border-radius:3px}.or-side button:hover{background:#F2F2F2}.or-side button.on{background:#2D353C;color:#fff}.or-side small{color:#999}
+.or-side label{display:grid;gap:4px;margin-bottom:6px}
+.or-main{background:#fff;border:1px solid #E6E9ED;padding:10px 14px;min-width:0}.or-main h3{margin:2px 0;font-size:17px}
+.or-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
+select,input{font:12px Arial;border:1px solid #ccc;border-radius:4px;padding:5px 7px;background:#fff}button{font:12px Arial;border:1px solid #2e6da4;background:#337ab7;color:#fff;border-radius:3px;padding:5px 12px;cursor:pointer}
+.or-side button{border:0}.or-wrap{overflow:auto;max-height:78vh;border:1px solid #ddd}.or-t{border-collapse:collapse;font-size:11px;width:100%}.or-t th{background:#EDEDED;position:sticky;top:0;border:1px solid #ddd;padding:4px 6px;text-align:left;white-space:nowrap}.or-t td{border:1px solid #ddd;padding:3px 6px;vertical-align:top}.or-t tr:nth-child(even) td{background:#F9F9F9}
+.or-box{border:1px solid #F0C164;background:#FFFBF0;padding:10px;margin:10px 0}
+#orToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2D353C;color:#fff;border-radius:4px;z-index:9}#orToast:not(:empty){padding:10px 18px}
+@media(max-width:860px){.or{grid-template-columns:1fr}.or-side{position:static;max-height:none}.or.open .or-side h4,.or.open .or-side button:not(.back){display:none}}
+@media print{.or{display:block;padding:0}.or-side,.or-head input,.or-head button,#orToast{display:none}.or-wrap{max-height:none;overflow:visible}}
