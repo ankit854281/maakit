@@ -381,7 +381,7 @@ function myAllocs(t) { return S.alloc.filter(a => a.t === t && a.n > 0); }
 function staffAbsent(date) {
   const manual = (S.staffAtt[date] && S.staffAtt[date].absent) || [];
   const onLeave = S.leaves.filter(l => l.status === 'Approved' && l.from <= date && l.to >= date).map(l => l.tid);
-  return [...new Set([...manual, ...onLeave])];
+  return [...new Set([...manual, ...onLeave])].sort();
 }
 // Absence can be the whole day or "from bell N" (late arrival / leaving early = half day).
 function absentFrom(date, t) {           // null = present, 0 = whole day, n = absent from bell n onwards
@@ -414,7 +414,7 @@ function arrangementBase(date, load) {
   need.forEach(n => { const w = ov[n.absent + '|' + n.bell]; n.sub = null; n.manual = false;     // 1st: the Principal's own choices
     if (w === '-') n.manual = true; else if (w && S.teachers[w] && canTake(w, n)) { n.sub = w; n.manual = true; extra[w] = (extra[w] || 0) + 1; } });
   need.forEach(n => { if (n.manual) return;                                                   // 2nd: everyone else, fairly
-    const pool = Object.keys(S.teachers).filter(x => canTake(x, n)).sort((x, y) => score(y, n) - score(x, n));
+    const pool = Object.keys(S.teachers).filter(x => canTake(x, n)).sort((x, y) => score(y, n) - score(x, n) || (x < y ? -1 : x > y ? 1 : 0));
     n.sub = pool[0] || null; if (n.sub) extra[n.sub] = (extra[n.sub] || 0) + 1; });
   need.forEach(n => { n.options = Object.keys(S.teachers).filter(x => x === n.sub || canTake(x, n)); });
   return need.sort((x, y) => x.bell - y.bell);
@@ -584,6 +584,10 @@ function render() {
   const initials = U.role === 'parent' ? 'P' : name.split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
   const roleName = { principal: 'Principal', teacher: 'Teacher', chairman: 'Chairman', parent: 'Parent', student: 'Student', accountant: 'Accountant', reception: 'Reception' }[U.role] || U.role;
   const page = NAV[U.role].find(x => x[0] === view);
+  // Old-ERP look for office roles (school/classic.js): same menu, names and colours as the old ERP.
+  const classic = typeof classicOn === 'function' && classicOn();
+  document.documentElement.classList.toggle('classic', classic);
+  if (classic) { root.innerHTML = classicShell(body, name, roleName) + (PROF && canProfile() ? vProfileWindow() : ''); setNet(netState); return; }
   const menu = g => g.items.length === 1
     ? `<button onclick="go('${g.items[0][0]}')" class="mn ${g === cur ? 'on' : ''}"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}</button>`
     : `<div class="dd"><button onclick="ddToggle(this)" class="mn ${g === cur ? 'on' : ''}" aria-haspopup="true"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}<i class="fa-solid fa-chevron-down mn-cv"></i></button>
@@ -598,10 +602,13 @@ function render() {
         ${canProfile() ? `<div class="srch"><div class="srch-box" onclick="this.parentElement.classList.add('open');this.querySelector('input').focus()"><i class="fa-solid fa-magnifying-glass"></i>
           <input id="g-q" placeholder="Search any teacher or student…" autocomplete="off" oninput="gsearch(this.value)" onkeydown="if(event.key==='Enter')openProfile(null,null,this.value);if(event.key==='Escape'){this.value='';gsearch('');this.blur();this.closest('.srch').classList.remove('open')}" onblur="setTimeout(()=>{if(!this.value){this.closest('.srch').classList.remove('open');}const r=document.getElementById('g-res');if(r)r.classList.remove('show')},200)"></div>
           <div id="g-res" class="srch-res"></div></div>` : ''}
+        ${canViewSession() ? `<div class="dd dd-r"><button onclick="ddToggle(this)" class="mn" title="Session shown in School Office and Fee Department" aria-haspopup="true"><i class="fa-solid fa-calendar"></i>${esc(viewSession())}<i class="fa-solid fa-chevron-down mn-cv"></i></button>
+          <div class="dd-panel">${sessionList().map(x => `<button onclick="ddClose();setViewSession('${x}')" class="dd-item ${x === viewSession() ? 'on' : ''}"><i class="fa-solid fa-calendar-day"></i><span>${x}${x === curSession() ? ' (current)' : ''}</span></button>`).join('')}</div></div>` : ''}
         ${U.role === 'principal' ? `<button onclick="go('settings')" class="erp-ic ${view === 'settings' ? 'on' : ''}" title="Settings"><i class="fa-solid fa-gear"></i></button>` : ''}
         <div class="dd dd-r"><button onclick="ddToggle(this)" class="erp-av-btn" title="${esc(name)} · ${esc(roleName)}"><span class="erp-avatar">${esc(initials)}</span></button>
           <div class="dd-panel"><div class="px-3 py-2"><b class="block text-sm">${esc(name)}</b><small class="text-slate-500">${esc(roleName)}</small></div>
             ${U.role === 'principal' ? `<button onclick="ddClose();go('settings')" class="dd-item"><i class="fa-solid fa-gear"></i><span>Settings & PINs</span></button>` : ''}
+            ${['principal','chairman','accountant','reception'].includes(U.role) ? `<button onclick="ddClose();setLook('old')" class="dd-item"><i class="fa-solid fa-table-columns"></i><span>Old ERP look</span></button>` : ''}
             <button onclick="ddClose();logout()" class="dd-item"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Log out</span></button></div></div>
       </div></div></header>
     <div class="erp-crumb noprint"><div class="erp-wrap">${page && page[2] !== cur.name ? `${esc(cur.name)} <i class="fa-solid fa-chevron-right"></i> <b>${esc(page[2])}</b>` : `<b>${esc(cur.name)}</b>`}</div></div>
@@ -770,7 +777,7 @@ function vDash() {
     .filter(e => (e.to || e.date) >= date).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   const shortD = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   const sum = dailySummary(date);
-  return `<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
+  return `${academicReminderCard(date)}<div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
       <div><h2 class="text-2xl font-bold text-ink">${P.date ? 'Report for this day' : 'Welcome'}, ${esc(ro ? 'Chairman' : (T(U.tid).name || 'Principal').replace(/\s+(Sir|Ma'am)$/, '').split(' ')[0])} ${P.date ? '' : '🎉'}</h2>
         <p class="dash-eyebrow mt-1">${P.date ? '' : isToday ? `${hello}! Here's what's happening in your school today — ` : `${hello}! Today is ${dayIdx(todayISO()) < 0 ? 'Sunday' : 'a holiday'}, so this shows the last school day — `}${new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
       <div class="flex flex-wrap items-end gap-6 noprint"><div class="hero-n"><b>${S.students.length}</b><small>Students</small></div><div class="hero-n"><b>${nT}</b><small>Staff</small></div><div class="hero-n"><b>${CLASS_NAMES.length}</b><small>Classes</small></div></div>
@@ -970,6 +977,7 @@ function vMyToday() {
   const notices = S.notices.filter(n => n.to !== 'Parents').slice(0, 3);
   const myLeaves = S.leaves.filter(l => l.tid === tid).slice(0, 2);
   return head(`Namaste, ${esc(T(tid).name)}`, fmtDate(date) + (dayIdx(date) >= 0 ? '' : ' • Sunday'), dateInput('m-date', date, "go('mytoday',{date:this.value})")) + `
+    ${academicReminderCard(date)}
     ${absent ? `<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">${absentFrom(date, tid) ? 'Half day — you leave before the ' + BELLS[absentFrom(date, tid)].n + ' bell.' : 'You are marked absent / on leave for this day.'}</div>` : ''}
     ${teacherCorner(date)}
     ${ctOf.map(c => { const a = attOf(date, c); return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a ? '' : 'border-amber-300 bg-amber-50'}">
@@ -1048,6 +1056,9 @@ function vDiary() {
         ${e.at ? `<span class="pill bg-emerald-100 text-emerald-800">Saved ${fmtTime(e.at)}</span>` : ''}${S.signed[date] && S.signed[date][tid] ? '<span class="pill bg-indigo-100 text-indigo-800">Signed</span>' : ''}</div>
         <div><label class="lbl">Topic taught</label><input id="${id}-t" class="inp" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
           ${nx && !e.topic ? `<button onclick="document.getElementById('${id}-t').value=${esc(JSON.stringify(nx))}" class="text-xs text-indigo-700 font-bold mt-1">Use: ${esc(nx)}</button>` : ''}</div>
+        <label class="lbl">Class work<input id="${id}-cw" class="inp" maxlength="500" value="${esc(e.classwork||'')}"></label>
+        <label class="lbl">Books / copies to bring<input id="${id}-books" class="inp" maxlength="300" value="${esc(e.books||'')}"></label>
+        <label class="lbl">Revision to revisit<input id="${id}-revision" class="inp" maxlength="400" value="${esc(e.revision||'')}"></label>
         <div><label class="lbl">Homework · class total limited to 45 minutes</label><input id="${id}-h" class="inp" value="${esc(e.hw || '')}" placeholder="e.g. Ex 4.1 Q1–Q4"></div><div class="flex gap-2"><label class="lbl">Estimated minutes<input id="${id}-min" class="inp" type="number" min="1" max="45" value="${e.hwMinutes || ''}"></label><label class="lbl">Homework day<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"></label></div><label class="text-sm"><input id="${id}-verify" type="checkbox"> I confirm this was actually taught and I checked the homework.</label>
         ${nx && !b.arr ? `<label class="flex items-center gap-2 text-sm"><input id="${id}-c" type="checkbox" class="w-4 h-4"> Chapter "<b>${esc(nx)}</b>" finished today</label>` : ''}
         <button onclick="diarySave('${date}',${b.bell})" class="btn btn-p w-full"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>`; }).join('')
@@ -1062,7 +1073,7 @@ function diarySave(date, bell) {
   const hwMinutes=Number(document.getElementById(id+'-min').value), hwDate=document.getElementById(id+'-date').value;
   if(hw && (!Number.isInteger(hwMinutes)||hwMinutes<1||hwMinutes>45||!hwDate)) return toast('Add homework minutes and date.', 'a');
   S.diary[date] = S.diary[date] || {}; S.diary[date][tid] = S.diary[date][tid] || {};
-  S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, hwMinutes:hw?hwMinutes:null, hwDate, arr: b.arr, at: Date.now() };
+  S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, classwork:document.getElementById(id+'-cw').value.trim().slice(0,500),books:document.getElementById(id+'-books').value.trim().slice(0,300),revision:document.getElementById(id+'-revision').value.trim().slice(0,400), hwMinutes:hw?hwMinutes:null, hwDate, arr: b.arr, at: Date.now() };
   log('Diary', `${BELLS[bell].n} bell, Class ${b.cls} ${b.subj}: "${topic}"` + (hw ? ` • HW: ${hw}` : ''));
   const cb = document.getElementById(id + '-c');
   if (cb && cb.checked) { const y = S.syl[sylKey(b.cls, b.subj)], ch = y && y.chapters.find(x => !x.done);
@@ -2243,6 +2254,7 @@ function planCard(p, key, principal) {
   const stc = p.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : p.status === 'Revise' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800';
   return `<div class="card space-y-2"><div class="flex flex-wrap justify-between gap-2"><b>${principal ? esc(T(p.tid).name) + ' • ' : ''}Class ${p.cls} • ${esc(p.subj)}</b><span class="pill ${stc}">${p.status}</span></div>
     ${p.goal ? `<p class="text-sm text-slate-600"><b>Aim / activity:</b> ${esc(p.goal)}</p>` : ''}
+    ${(p.days||[]).map(d=>`<div class="text-sm bg-slate-50 rounded-lg p-2"><b>${esc(d.date)} · ${esc(d.topic)}</b><p>Classwork: ${esc(d.classwork)}</p><p>Homework (${Number(d.hwMinutes)||0} min): ${esc(d.hw)}</p><p>Bring: ${esc(d.books)}</p><p>Revision: ${esc(d.revision)}</p></div>`).join('')}
     <div class="text-sm">${cv.res.map(r => `<div class="flex gap-2"><span class="${r.hit ? 'text-emerald-600' : 'text-slate-300'}"><i class="fa-solid ${r.hit ? 'fa-circle-check' : 'fa-circle'}"></i></span><span>${esc(r.line)}${r.hit ? ` <span class="text-xs text-slate-400">— taught ${fmtDate(r.hit.d)}</span>` : ''}</span></div>`).join('')}</div>
     <p class="text-xs ${cv.covered === cv.res.length ? 'text-emerald-700' : past ? 'text-rose-700' : 'text-slate-500'} font-semibold">Diary check: ${cv.covered} of ${cv.res.length} planned topics found in the diary this week${past && cv.covered < cv.res.length ? ' — some were not taught' : ''}.</p>
     ${p.feedback ? `<p class="text-sm bg-slate-50 rounded-lg p-2"><b>Principal:</b> ${esc(p.feedback)}</p>` : ''}
@@ -2276,16 +2288,19 @@ function vLessonPlan() {
   return head('Weekly Lesson Plan', 'Write the topics you plan to teach this week. The ERP ticks each one automatically when it appears in your diary.',
       `<select class="inp w-auto" onchange="go('lplan',{w:this.value,key:${jsq(key0)}})">${[addDays(thisW, -7), thisW, addDays(thisW, 7)].map(x => `<option value="${x}" ${x === w ? 'selected' : ''}>Week of ${fmtDate(x)}</option>`).join('')}</select>`) + `
     <div class="card space-y-2"><label class="lbl">Class & subject</label><select class="inp" onchange="SCAN=null;go('lplan',{w:'${w}',key:this.value})">${mine.map(a => { const kk = sylKey(a.c, a.s); return `<option value="${esc(kk)}" ${kk === key0 ? 'selected' : ''}>Class ${a.c} — ${esc(a.s)}</option>`; }).join('')}</select>
-      ${p && p.status === 'Approved' ? '<p class="text-sm text-emerald-700 font-semibold">Approved by the Principal — locked.</p>' : `
+      ${p && Object.prototype.hasOwnProperty.call(p, 'days') ? '<p data-daily-plan-lock class="text-sm">This plan has daily teaching details. Open Daily Teaching to view or revise it.</p><button onclick="go(\'academics\')" class="btn btn-p">Open Daily Teaching</button>' : p && p.status === 'Approved' ? '<p class="text-sm text-emerald-700 font-semibold">Approved by the Principal — locked.</p>' : `
       <div class="flex flex-wrap gap-2 pt-1"><button onclick="lpFromSyllabus('${w}',${jsq(key0)})" class="btn btn-sm btn-p"><i class="fa-solid fa-wand-magic-sparkles"></i> Fill from syllabus</button>
         ${dr ? `<button onclick="delete LPDRAFT[${jsq(key0)}];SCAN=null;render()" class="btn btn-sm btn-l">Undo fill</button>` : ''}</div>
       <label class="lbl">Topics, one per line (one line ≈ one period)${nx ? ` — next chapter: <b>${esc(nx)}</b>` : ''}</label><textarea id="lp-top" rows="7" class="inp" placeholder="${nx ? esc(nx) + ' — introduction' : 'Topic 1\nTopic 2'}" oninput="LPDRAFT[${jsq(key0)}]={topics:this.value,goal:document.getElementById('lp-goal').value}">${esc(dr ? dr.topics : p ? p.topics : '')}</textarea>
       <label class="lbl">Aim / activity / teaching aid / homework (optional)</label><input id="lp-goal" class="inp" value="${esc(dr ? dr.goal || '' : p ? p.goal || '' : '')}" oninput="LPDRAFT[${jsq(key0)}]={topics:document.getElementById('lp-top').value,goal:this.value}">
       <button onclick="lpSubmit('${w}',${jsq(key0)})" class="btn btn-p w-full">${p ? 'Update and resubmit' : 'Submit to Principal'}</button>`}</div>
-    ${p && p.status === 'Approved' ? '' : scanCard('lplan', c, s, 'Or make it from a photo')}
+    ${p && (p.status === 'Approved' || Object.prototype.hasOwnProperty.call(p, 'days')) ? '' : scanCard('lplan', c, s, 'Or make it from a photo')}
     ${myPlans.map(([kk, v]) => planCard(v, kk, false)).join('')}`;
 }
 function lpSubmit(w, key) {
+  const old = S.lplan[lpKey(w, U.tid, ...key.split('|'))];
+  if (old && Object.prototype.hasOwnProperty.call(old, 'days')) return toast('Open Daily Teaching to revise this daily plan.', 'a');
+  if (old && old.status === 'Approved') return toast('Approved plan is locked.', 'a');
   const [c, s] = key.split('|'), topics = document.getElementById('lp-top').value.split('\n').map(x => x.trim()).filter(Boolean).join('\n').slice(0, 3000), goal = document.getElementById('lp-goal').value.trim().slice(0, 400);
   if (!topics) return toast('Write at least one topic', 'a');
   S.lplan[lpKey(w, U.tid, c, s)] = { week: w, tid: U.tid, cls: c, subj: s, topics, goal, status: 'Submitted', feedback: '', at: Date.now() };
@@ -2386,9 +2401,9 @@ function vPHw() {
   const kid = pKid(); if (!kid) return vPHome();
   const rows = PD.hw.filter(h => h.cls === kid.cls).sort((a, b) => b.date.localeCompare(a.date));
   const byDate = {}; rows.forEach(h => (byDate[h.date] = byDate[h.date] || []).push(h));
-  return `${kidSwitch()}${head('Homework & class work', `Class ${esc(kid.cls)} · last 10 days, from the teachers' diaries`)}
+  return `${kidSwitch()}${head('Homework & class work', `Class ${esc(kid.cls)} · last 10 days, from the teachers' diaries`)}${parentAcademicChecks(kid)}
     ${Object.keys(byDate).length ? Object.entries(byDate).map(([d, list]) => `<div class="card"><h3 class="h3">${fmtDate(d)}</h3><div class="mt-2 divide-y divide-slate-100">${list.map(h => `<div class="py-2"><span class="subj">${esc(h.subj)}</span>
-      <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}</div>`).join('')}</div></div>`).join('')
+      <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}${h.classwork?`<p class="text-sm">Class work: ${esc(h.classwork)}</p>`:''}${h.books?`<p class="text-sm"><b>Bring: ${esc(h.books)}</b></p>`:''}${h.revision?`<p class="text-sm">Revision: ${esc(h.revision)}</p>`:''}</div>`).join('')}</div></div>`).join('')
       : '<div class="card text-sm text-slate-500">Nothing written in the last 10 days.</div>'}`;
 }
 function vPResults() {
@@ -3465,6 +3480,17 @@ function examResult(s, e) {
   const got = rows.filter(r => r.v !== 'AB').reduce((a, r) => a + (+r.v || 0), 0), max = rows.filter(r => r.v !== 'AB').reduce((a, r) => a + r.max, 0);
   return { rows, got, max, pct: max ? Math.round(got / max * 100) : null };
 }
+// Student photo — one stored copy (progress_api.php, imported from the old ERP), shown wherever the child appears.
+const STU_PH = {};
+function stuPhoto(sid) {
+  if (STU_PH[sid] !== undefined) return STU_PH[sid] || '';
+  STU_PH[sid] = null;
+  fetch('progress_api.php?a=photos&sid=' + encodeURIComponent(sid), { headers: { 'X-School-Token': TOKEN || '' } }).then(r => r.json()).then(d => {
+    const u = (d.photos || {})[sid] || ''; STU_PH[sid] = /^data:image\/(jpeg|png|webp);base64,/.test(u) ? u : '';
+    if (STU_PH[sid]) document.querySelectorAll('[data-stuphoto="' + CSS.escape(sid) + '"]').forEach(el => { el.innerHTML = `<img src="${STU_PH[sid]}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`; });
+  }).catch(() => { STU_PH[sid] = ''; });
+  return '';
+}
 function profStudent(s) {
   const who = 's:' + s.id, months = lastMonths(6), am = months.map(m => ({ m, ...studentMonth(s, m) })), sn = since(s);
   const totM = am.reduce((a, x) => a + x.marked, 0), totA = am.reduce((a, x) => a + x.absent, 0);
@@ -3475,7 +3501,7 @@ function profStudent(s) {
   const ct = (CLASSES.find(k => k.c === s.cls) || {}).ct, fam = familyOf(s, S.students).filter(x => x.id !== s.id);
   const of = OF && !OF.error ? OF.students.find(x => x.id === s.id) : null, rec = OF && OF.payments ? OF.payments.filter(p => p.sid === s.id) : [];
   const last = exams[exams.length - 1];
-  return `<div class="pw-head"><span class="pw-av">${esc(initialsOf(s.name))}</span><div class="min-w-0"><h2 class="text-2xl font-semibold">${esc(s.name)}</h2>
+  return `<div class="pw-head"><span class="pw-av" data-stuphoto="${esc(s.id)}">${stuPhoto(s.id) ? `<img src="${stuPhoto(s.id)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : esc(initialsOf(s.name))}</span><div class="min-w-0"><h2 class="text-2xl font-semibold">${esc(s.name)}</h2>
       <p class="text-slate-500">Class ${esc(s.cls)}${s.section ? '-' + esc(s.section) : ''} · Adm ${esc(s.adm)}${ct ? ' · Class teacher ' + esc(T(ct).name) : ''}</p>
       <div class="flex flex-wrap gap-2 mt-2">${s.phone ? `<a target="_blank" href="${waLink(s.phone, 'Namaste, this is from ' + S.settings.school + '. ')}" class="btn btn-sm btn-wa"><i class="fa-brands fa-whatsapp"></i> Parent</a><a href="tel:+91${String(s.phone).replace(/\D/g, '').slice(-10)}" class="btn btn-sm btn-l"><i class="fa-solid fa-phone"></i> Call</a>` : ''}
         <button onclick="printStudentReport(${jsq(s.id)})" class="btn btn-sm btn-l"><i class="fa-solid fa-print"></i> Report card</button>${U.role === 'principal' ? `<button onclick="profJoin(${jsq(s.id)})" class="btn btn-sm btn-l">Edit joining details</button>` : ''}</div></div></div>
@@ -3775,7 +3801,24 @@ for(const role of ['principal','teacher']) NAV[role].push(['toolkit','fa-wand-ma
 VIEWS.toolkit=()=>'<iframe title="Teacher Smart Toolkit" src="toolkit.php?embed=1" style="width:100%;min-height:90vh;border:0;border-radius:16px"></iframe>';
 function teacherCorner(date){const p=TeacherEnglish.today(date);return `<div class="modern-bento"><section class="modern-welcome"><span class="eyebrow">YOUR TEACHING COMPANION</span><h2>A little less admin.<br>More room to teach.</h2><p>Your lesson tools, classroom moments and professional identity, in one place.</p><div class="modern-links"><button class="btn btn-p" onclick="go('toolkit')">Open Teacher Toolkit</button><button class="btn btn-l" onclick="go('profile')">My Profile Studio →</button></div></section><section class="modern-mini"><small>A phrase for your classroom</small><b>${esc(p[0])}</b><details><summary>Hindi meaning</summary>${esc(p[1])}</details><button class="btn btn-sm btn-l" onclick="TeacherEnglish.say(TeacherEnglish.today('${date}')[0])">Listen & try</button></section></div>`;}
 
-function prepareDiaryDraft(date){if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;for(const b of myBells(U.tid,date)){const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;const plan=Object.values(S.lplan).find(p=>p.tid===U.tid&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');if(plan){field.value=plan.topics.split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';if(field.value)n++;}}toast(n?'Prepared '+n+' topic drafts. Edit and confirm each bell.':'No empty bells with approved plans. Enter the actual topics.');}
+function prepareDiaryDraft(date){
+  if(S.signed[date]?.[U.tid])return toast('Signed diary is locked.','a');let n=0;const used=new Set(myBells(U.tid,date).filter(b=>diaryEntry(date,U.tid,b.bell)?.hw).map(b=>b.cls+'|'+b.subj));
+  for(const b of myBells(U.tid,date)){
+    const field=document.getElementById('b'+b.bell+'-t');if(!field||field.value.trim()||diaryEntry(date,U.tid,b.bell))continue;
+    const plan=Object.values(S.lplan).find(p=>p.tid===(b.for||U.tid)&&p.week===weekStart(date)&&String(p.cls)===String(b.cls)&&p.subj===b.subj&&p.status==='Approved');
+    if(!plan)continue;const day=(plan.days||[]).find(d=>d.date===date),key=b.cls+'|'+b.subj;
+    if(day){field.value=day.topic;const hw=document.getElementById('b'+b.bell+'-h'),mins=document.getElementById('b'+b.bell+'-min');if(!used.has(key)&&hw&&!hw.value){hw.value=day.hw||'';mins.value=day.hwMinutes||'';}used.add(key);for(const [suffix,name] of [['cw','classwork'],['books','books'],['revision','revision']]){const f=document.getElementById('b'+b.bell+'-'+suffix);if(f&&!f.value)f.value=day[name]||'';}}
+    else if(!plan.days)field.value=String(plan.topics||'').split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';
+    if(field.value)n++;
+  }
+  toast(n?'Prepared '+n+' drafts. Check actual teaching and homework before saving.':'No approved daily plan for these empty bells.');
+}
+
+function parentAcademicChecks(kid){const a=PD.academics||{},pending=(a.pending||[]).filter(t=>t.sid===kid.id),checks=(a.tracking||[]).filter(t=>t.sid===kid.id).sort((x,y)=>y.date.localeCompare(x.date)).slice(0,10);return `<div class="card"><h3 class="h3">Teacher checks & pending homework</h3>${pending.map(t=>`<p class="text-sm mt-2"><b>${esc(t.date)} · ${esc(t.subj)}</b> — ${esc(t.task||'Homework')}: ${esc(t.status.hw)}</p>`).join('')||'<p class="text-sm">No recorded pending homework.</p>'}${checks.map(t=>`<p class="text-sm mt-2">${esc(t.date)} · ${esc(t.subj)}: ${Object.entries(t.status).map(([k,v])=>esc(k)+': '+esc(v)).join(' · ')}</p>`).join('')}${(a.oral||[]).filter(o=>o.sid===kid.id).map(o=>`<p class="text-sm mt-2"><b>Oral · ${esc(o.subj)}</b>: ${Object.entries(o.cells||{}).map(([id,status])=>esc(id)+': '+esc(status)).join(' · ')}</p>`).join('')}<h3 class="h3 mt-3">Absent day catch-up</h3>${(a.catchup||[]).filter(t=>t.sid===kid.id).map(t=>`<p class="text-sm mt-2">${esc(t.date)} · ${esc(t.subj)}: ${esc(t.topic)} · ${esc(t.hw)} · Bring: ${esc(t.books||'—')} · Revision: ${esc(t.revision||'—')} — ${t.done?'Caught up':'Pending teacher check'}</p>`).join('')||'<p class="text-sm">No missed work recorded.</p>'}</div>`;}
+for(const role of ['principal','teacher','chairman']) NAV[role].push(['academics','fa-book-open','Daily Teaching']);
+VIEWS.academics=()=>'<iframe class="edu-iframe" title="Daily Teaching" src="academics.php?embed=1"></iframe>';
+GROUPS.principal.find(g=>g[0]==='Students')[2].push('academics');
+GROUPS.teacher.find(g=>g[0]==='My Classes')[2].push('academics');
 
 for(const role of ['teacher','principal']) NAV[role].push(['profile','fa-id-card','My Profile'],['saathi','fa-feather','Secret Saathi']);
 VIEWS.profile=()=>'<iframe class="edu-iframe" title="Teacher Profile Studio" src="faculty.php?embed=1"></iframe>';
@@ -3789,6 +3832,34 @@ for (const role of ['principal','accountant','reception','chairman','teacher']) 
 for (const role of ['parent','student']) NAV[role].push(['finance','fa-wallet','Fee Ledger']);
 for (const role of ['principal','accountant']) { const old=NAV[role].find(n=>n[0]==='fdesk');if(old)old[2]='Legacy Fee Desk'; }
 NAV.accountant.unshift(NAV.accountant.pop());PRIMARY.accountant=['finance','fdues','fcalls','freceipts'];
-VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1"></iframe>';
+// Session switcher (22 Oct 2026, owner: "old ERP had a session button"): like the old ERP's 2023-2024…2026-2027 menu.
+// It only changes which session THIS login looks at in School Office and Fee Department (kept in this browser);
+// the school's current session is still set by the Principal in Settings, so nobody else's screen changes.
+function curSession() { const m = String(S && S.settings && S.settings.session || '').replace(/[–—]/g, '-').match(/^(20\d{2})-(?:20)?(\d{2})$/); return m ? m[1] + '-' + m[2] : ''; }
+function sessionList() { const c = curSession(); const y = c ? +c.slice(0, 4) : new Date().getFullYear(); const out = []; for (let k = 2023; k <= y + 1; k++) out.push(k + '-' + String((k + 1) % 100).padStart(2, '0')); return out.reverse(); }
+function viewSession() { let v = ''; try { v = localStorage.getItem('sch_view_session') || ''; } catch (e) {} return sessionList().includes(v) ? v : curSession(); }
+function setViewSession(x) { try { if (x === curSession()) localStorage.removeItem('sch_view_session'); else localStorage.setItem('sch_view_session', x); } catch (e) {} toast('Showing session ' + x); render(); }
+function canViewSession() { return !!U && ['principal', 'chairman', 'accountant', 'reception'].includes(U.role); }
+VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="finance.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // School Office (18 Oct 2026+): the old ERP's remaining menus as registers — registers.php / registers_api.php / registers_lib.php
-VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1"></iframe>';
+VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.m?'&m='+encodeURIComponent(P.m):'')+(P&&P.t?'&t='+encodeURIComponent(P.t):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Fee Receipt — old-ERP style fee collection (school/feecollect.php), the one place fees are taken once a session is started there.
+for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['feereceipt','fa-receipt','Fee Receipt']);
+VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Progress Report — old ERP Examination-I cards + marks entry in the same components (school/progress.php).
+for (const role of ['principal','chairman','teacher']) NAV[role].push(['progress','fa-file-lines','Progress Report']);
+// Student Master — the old ERP's Add Student / Edit-Update Student / Student Search form, field for field (school/stumaster.php).
+for (const role of ['principal','chairman']) NAV[role].push(['stumaster','fa-user-graduate','Student Master']);
+VIEWS.stumaster=()=>'<iframe class="edu-iframe" title="Student Master" src="stumaster.php?embed=1&m='+encodeURIComponent(P&&P.m?P.m:'list')+(P&&P.id?'&id='+encodeURIComponent(P.id):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Fee Reports — the old ERP's fee reports in its own layout (school/feereports.php), old ERP and new receipts together.
+for (const role of ['principal','chairman','accountant']) NAV[role].push(['feereports','fa-file-invoice','Fee Reports']);
+VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).
+for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['oldreports','fa-box-archive','Old ERP Reports']);
+VIEWS.oldreports=()=>'<iframe class="edu-iframe" title="Old ERP Reports" src="oldreports.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(P&&P.page?'&page='+encodeURIComponent(P.page):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+VIEWS.progress=()=>'<iframe class="edu-iframe" title="Progress Report" src="progress.php?embed=1&session='+encodeURIComponent(typeof viewSession==='function'?viewSession():'')+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(P&&P.exam?'&exam='+encodeURIComponent(P.exam):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+
+// A quiet on-screen reminder: no messages, jobs or paid gateway are scheduled here.
+const ACREM=new Map();
+function academicReminderCard(date){queueMicrotask(()=>loadAcademicReminder(date));return '<div class="card"><h3 class="h3">Daily Teaching</h3><p id="academicReminder" data-date="'+esc(date)+'" class="text-sm">Checking saved teaching records…</p><button onclick="go(&quot;academics&quot;)" class="btn btn-p mt-2">Child checks & pending report</button></div>';}
+async function loadAcademicReminder(date){const key=U.role+'|'+U.tid+'|'+date;try{let cached=ACREM.get(key);if(!cached||Date.now()-cached.at>120000){const r=await fetch('academics_api.php?a=report&date='+encodeURIComponent(date),{headers:{'X-School-Token':TOKEN}}),d=await r.json();if(!r.ok||!d.ok)throw Error('Open Daily Teaching to check this day.');cached={at:Date.now(),data:d};ACREM.set(key,cached);}const node=document.getElementById('academicReminder');if(!node||node.dataset.date!==date)return;const rows=cached.data.report,count=rows.reduce((n,t)=>n+t.pending.length,0);node.textContent=!cached.data.configured?'Set the timetable before relying on the teaching report.':count?count+' follow-up item(s) in saved records. Open the report for the next action.':'No pending items found in the recorded teaching checks.';}catch(e){const node=document.getElementById('academicReminder');if(node&&node.dataset.date===date)node.textContent='Open Daily Teaching to review saved checks and pending work.';}}
