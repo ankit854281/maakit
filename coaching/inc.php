@@ -117,7 +117,7 @@ function cs_me(): array {
     if (!$s || $s['kind'] !== 'staff') cs_go('index.php');
     $u = cs_row('SELECT * FROM cs_user WHERE id=? AND coaching_id=? AND mobile=? AND active=1', [$s['user_id'], $s['coaching_id'], $s['mobile']]);
     $c = $u ? cs_row('SELECT * FROM cs_coaching WHERE id=?', [$u['coaching_id']]) : null;
-    if (!$u || !$c) { cs_logout(); cs_go('index.php?m=band'); }
+    if (!$u || !$c || cs_blocked((int)$c['id'])) { cs_logout(); cs_go('index.php?m=band'); }
     $me = ['cid' => (int)$c['id'], 'uid' => (int)$u['id'], 'role' => $u['role'], 'user' => $u, 'c' => $c];
     return $me;
 }
@@ -323,7 +323,7 @@ function cs_head(string $title, ?array $c = null, string $bodyClass = '', string
     $color = $c && preg_match('/^#[0-9a-fA-F]{6}$/', (string)$c['color']) ? $c['color'] : '#0C831F';
     echo '<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
          '<title>', h($title), '</title>', $meta !== '' ? $meta : '<meta name="robots" content="noindex">',
-         '<link rel="stylesheet" href="/smartsarathi/assets/fonts.css"><link rel="stylesheet" href="/coaching/cs.css?v=1">',
+         '<link rel="stylesheet" href="/smartsarathi/assets/fonts.css"><link rel="stylesheet" href="/coaching/cs.css?v=2">',
          '<style>:root{--c:', h($color), '}</style></head><body class="', h($bodyClass), '">';
 }
 function cs_foot(): void {
@@ -331,15 +331,18 @@ function cs_foot(): void {
 }
 function cs_flash(): string {
     $m = ['ok' => 'Ho gaya ✓', 'added' => 'Bachcha jud gaya ✓ — neeche "Login bhejiye" se parent ko app ka password bhejiye.', 'saved' => 'Save ho gaya ✓', 'paid' => 'Paisa likh diya ✓', 'waived' => 'Maaf kar diya ✓',
+          'sent' => 'Bhej diya ✓', 'deleted' => 'Hata diya ✓', 'big' => 'File 5 MB se badi hai ya sahi type nahi (PDF / JPG / PNG).',
           'csrf' => 'Page purana tha — dobara bhariye.', 'band' => 'Ye login band hai.', 'err' => 'Kuch galat bhara hai — dobara dekhiye.'];
     $k = cs_get('m');
     if (!isset($m[$k])) return '';
-    $bad = in_array($k, ['csrf', 'band', 'err'], true);
+    $bad = in_array($k, ['csrf', 'band', 'err', 'big'], true);
     return '<div class="flash' . ($bad ? ' bad' : '') . '">' . h($m[$k]) . '</div>';
 }
 function cs_icon(string $n): string {
     $p = ['home' => 'M3 11l9-8 9 8v10h-6v-6H9v6H3z', 'users' => 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c0-4 4-6 8-6s8 2 8 6',
           'rupee' => 'M6 4h12M6 9h12M6 4c7 0 7 9 0 9l9 8', 'check' => 'M4 12l5 5L20 6', 'phone' => 'M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2z',
-          'more' => 'M5 12h.01M12 12h.01M19 12h.01'];
+          'more' => 'M5 12h.01M12 12h.01M19 12h.01', 'book' => 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5'];
     return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' . ($p[$n] ?? '') . '"/></svg>';
 }
+
+require_once __DIR__ . '/inc2.php';

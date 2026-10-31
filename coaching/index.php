@@ -10,15 +10,9 @@ $s = cs_session();
 function cs_choices(string $mobile): array {
     $staff = cs_all("SELECT u.id, u.role, c.naam, c.city FROM cs_user u JOIN cs_coaching c ON c.id=u.coaching_id
                      WHERE u.mobile=? AND u.active=1 ORDER BY c.naam", [$mobile]);
+    $staff = array_values(array_filter($staff, fn($r) => !cs_blocked((int)cs_val('SELECT coaching_id FROM cs_user WHERE id=?', [$r['id']]))));
     $kids = (int)cs_val("SELECT COUNT(*) FROM cs_student WHERE mobile=? AND status='active'", [$mobile]);
     return [$staff, $kids];
-}
-function cs_slug(string $naam, string $city): string {
-    $b = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $naam . ' ' . $city), '-'));
-    $b = rtrim(substr($b !== '' ? $b : 'coaching', 0, 30), '-') ?: 'coaching';
-    $slug = $b;
-    for ($i = 2; cs_val('SELECT 1 FROM cs_coaching WHERE slug=?', [$slug]); $i++) $slug = $b . '-' . $i;
-    return $slug;
 }
 function cs_enter(string $mobile, string $pick): void {
     $acc = cs_account($mobile);

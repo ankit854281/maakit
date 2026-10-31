@@ -15,7 +15,7 @@ cs_head('Receipt #' . $r['no'] . ' — ' . $c['naam'], $c);
 echo '<div class="wrap" style="max-width:520px">';
 if ($r['cancelled']) echo '<div class="flash bad">Ye receipt RADD ho chuki hai. Kaaran: ', h($r['cancel_reason']), '</div>';
 else echo '<div class="flash noprint">Asli receipt ✓ — ', h($c['naam']), ' ke record me hai.</div>';
-echo '<div class="card"><div class="row"><span class="logo" style="background:var(--c);color:#fff">', h(mb_strtoupper(mb_substr($c['naam'], 0, 1))), '</span><div class="grow"><b style="font-size:18px">', h($c['naam']), '</b>',
+echo '<div class="card"><div class="row">', cs_meta((int)$c['id'])['logo'] ? cs_logo_html($c) : '<span class="logo" style="background:var(--c);color:#fff">' . h(mb_strtoupper(mb_substr($c['naam'], 0, 1))) . '</span>', '<div class="grow"><b style="font-size:18px">', h($c['naam']), '</b>',
      '<div class="sub">', h(trim($c['address'] . ', ' . $c['city'], ', ')), ' · ', h($c['phone']), '</div>',
      $c['reg_no'] !== '' ? '<div class="sub">Regn. No. ' . h($c['reg_no']) . '</div>' : '', '</div></div>',
      '<table><tr><th>Receipt no.</th><td class="r"><b>#', (int)$r['no'], '</b></td></tr>',

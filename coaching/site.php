@@ -5,6 +5,7 @@ require __DIR__ . '/inc.php';
 
 $slug = strtolower(preg_replace('/[^a-z0-9-]/i', '', cs_get('c')));
 $c = $slug !== '' ? cs_row('SELECT * FROM cs_coaching WHERE slug=?', [$slug]) : null;
+if ($c && cs_blocked((int)$c['id'])) $c = null;
 if (!$c) { http_response_code(404); cs_head('Coaching nahi mili'); echo '<div class="wrap"><div class="card">Ye coaching nahi mili.</div></div>'; cs_foot(); exit; }
 $cid = (int)$c['id'];
 $sent = false; $err = '';
@@ -36,7 +37,8 @@ $meta = '<meta name="description" content="' . h($desc) . '"><meta property="og:
           JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) . '</script>';
 
 cs_head($c['naam'] . ' — ' . $c['city'], $c, '', $meta);
-echo '<div class="hero"><div class="logo" style="margin:auto;width:56px;height:56px;font-size:26px">', h(mb_strtoupper(mb_substr($c['naam'], 0, 1))), '</div>',
+$lg = cs_meta($cid)['logo'];
+echo '<div class="hero">', $lg ? '<img class="logo" src="' . h(cs_path_url('files.php?logo=' . $cid . '&v=' . substr((string)$lg, 0, 8))) . '" alt="" style="margin:auto;width:72px;height:72px">' : '<div class="logo" style="margin:auto;width:56px;height:56px;font-size:26px">' . h(mb_strtoupper(mb_substr($c['naam'], 0, 1))) . '</div>',
      '<h1>', h($c['naam']), '</h1><p>', h($type), ' · ', h($c['city']), '</p>',
      $c['reg_no'] !== '' ? '<p class="note" style="color:#fff">Regn. No. ' . h($c['reg_no']) . '</p>' : '',
      '<div class="btns" style="justify-content:center"><a class="btn" style="background:#fff;color:var(--c)" href="tel:+91', h($c['phone']), '">Call kariye</a>',

@@ -8,6 +8,7 @@ a{color:var(--c)}
 .top{background:var(--c);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
 .top b{font-size:17px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top a{color:#fff;text-decoration:none;font-size:14px}
+img.logo{object-fit:cover;padding:0}
 .logo{width:34px;height:34px;border-radius:10px;background:#fff;color:var(--c);display:grid;place-items:center;font-weight:700;font-size:16px;flex:none}
 .wrap{max-width:860px;margin:0 auto;padding:16px}
 h1{font-size:20px;font-weight:700;margin:4px 0 12px}
@@ -68,3 +69,11 @@ td.r,th.r{text-align:right}
 .hero p{margin:4px 0;opacity:.95}
 .search{margin-bottom:12px}
 @media print{.top,.tabs,.btns,.noprint,.pw{display:none!important}body{background:#fff;padding:0}.card{box-shadow:none}}
+.tt{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px}
+.qopt{display:block;width:100%;text-align:left;padding:13px 14px;margin:8px 0;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:16px;cursor:pointer}
+.qopt.on{border-color:var(--c);background:#F2F7F3}
+.timer{font-weight:700;font-size:18px;color:var(--warn)}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--c)}
+.risk{display:inline-block;min-width:44px;text-align:center;padding:4px 8px;border-radius:10px;font-weight:700;color:#fff;background:var(--warn)}
+.risk.hi{background:var(--bad)}
+.pre{white-space:pre-wrap}

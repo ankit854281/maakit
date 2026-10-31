@@ -1,4 +1,4 @@
-# Coaching Saathi — V1 (maakit.in/coaching)
+# Coaching Saathi — V1 se V5 (maakit.in/coaching)
 
 Ek hi software par bahut saari chhoti coaching. Owner ke liye free, student app ₹54 / 6 mahine.
 
@@ -34,9 +34,34 @@ Sab **mobile + password** se (OTP / SMS nahi). Ek number par kai coaching / kai 
 - Student app plan: ₹54 / ₹99, 7 din trial, Razorpay + webhook, owner gift me bhar sakta hai
 - **Game Zone** (school ke student app wala engine): roz 4 round × 5 sawaal (maths class ke hisaab se + English shabd), 20 second, XP, level, streak, chest, galat sawaal 1/3/7 din baad wapas, coaching ki weekly league, Aaj ka shabd. Teacher ko kuch nahi likhna.
 
+## V2–V5 me kya bana (31 Oct 2026)
+
+| Version | Kya | Kahan |
+| --- | --- | --- |
+| V2 | **Maakit Admin Panel**: saari coaching, nayi coaching + owner ko pehla password, band / chalu, owner ka naya password, kamai | `maakit.in/coaching/admin.php` |
+| V2 | Logo (app, website, receipt par) | Aur › Coaching details |
+| V2 | Suchna (poori coaching ya ek batch) — parent ko hamesha free | Padhai › Suchna |
+| V2 | Homework, Timetable (owner banata hai), Notes (likha, link, PDF/photo 5 MB) | Padhai |
+| V3 | Kagaz wale test ke marks, ausat, topper, parent ko WhatsApp | Padhai › Test aur marks |
+| V3 | Quiz: sawaal Word/WhatsApp se chipkaiye, har sawaal ka samay server ginta hai | Padhai › Quiz |
+| V4 | Mock test: poore test ka samay, galat par minus, section, rank list, kaun sa sawaal kitno ne sahi kiya | Padhai › Quiz |
+| V4 | Doubt box: bachcha poochhe (din me 5), apne batch ka teacher jawab de | Padhai › Doubt box |
+| V5 | Teacher ki haaziri (P / ½ / A) + salary slip (Ravivar chhutti, maaf chhutti, advance, bonus) — slip ke baad mahina jam jaata hai | Padhai › Teacher salary |
+| V5 | Risk score 0–100: 3 din absent +40, fees 15 din+ +30, haaziri 75% se kam +15/25, marks gire +20 | Padhai › Khatre me bachche |
+| V5 | Sabko WhatsApp: fees baaki, aaj absent, poore batch ko message — ek-ek button | Padhai › Sabko WhatsApp |
+
+Student app (paid hissa) me ab: aaj ka timetable, homework, quiz / mock, marks + class ausat, notes, doubt box. Suchna lock me bhi dikhti hai.
+
+**Quiz ke niyam:** sahi jawab kabhi pehle browser me nahi jaata. Quiz me refresh se samay dobara shuru nahi hota, der (samay + 5 sec) se diya jawab khaali ginta hai. Mock me har jawab turant save hota hai; samay khatam = jo save hua wahi gina jaata hai. Ek bachcha ek hi baar. Bachchon ke shuru karne ke baad sawaal nahi badal sakte. Sahi jawab tab dikhte hain jab quiz band ho jaye.
+
+**Files:** notes ki PDF / photo website ke bahar `/home/<user>/cs-files` me rakhi jaati hai (na ho sake to `coaching/files/`, jo `.htaccess` se band hai). Photo dobara bana kar rakhi jaati hai. Sirf us batch ke parent (app chalu ho) aur us batch ka teacher / owner khol sakta hai.
+
+**Abhi nahi (paise / chaabi chahiye):** apne aap WhatsApp (Meta ka paid API + template), phone par push notification (Firebase), AI se sawaal (AI ki chaabi), Play Store app.
+
 ## Live karne ke kadam
 
-1. `maakit.in/update.php?key=...` kholiye — naya code aur `sql/045`, `sql/046`, `sql/047` apne aap chal jayengi.
+1. `maakit.in/update.php?key=...` kholiye — naya code aur `sql/045` se `sql/048` tak apne aap chal jayengi.
+   Admin panel: `maakit.in/coaching/admin.php` — website ki UPDATE_KEY se (ya `config.php` me alag `CS_ADMIN_KEY`).
 2. `maakit.in/coaching` kholkar "Apni coaching free me jodiye" se pehli coaching banaiye.
 3. Payment (jab lock chalu karna ho): `config.php` me `CS_RAZORPAY_KEY_ID`, `CS_RAZORPAY_KEY_SECRET`, `CS_RAZORPAY_WEBHOOK_SECRET`. Razorpay dashboard me webhook `https://maakit.in/coaching/webhook.php`, event `payment.captured`. Jab tak ye nahi bhare, kisi ka app band nahi hota.
 

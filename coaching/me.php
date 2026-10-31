@@ -9,6 +9,7 @@ if (!$s || $s['kind'] !== 'family') cs_go('index.php');
 $mobile = $s['mobile'];
 $kids = cs_all("SELECT st.*, c.naam cnaam, c.color, c.phone cphone, c.slug FROM cs_student st JOIN cs_coaching c ON c.id=st.coaching_id
                 WHERE st.mobile=? AND st.status='active' ORDER BY st.naam", [$mobile]);
+$kids = array_values(array_filter($kids, fn($k) => !cs_blocked((int)$k['coaching_id'])));
 if (!$kids) { cs_logout(); cs_go('index.php?m=band'); }
 $sel = (int)cs_get('s');
 $K = $kids[0];
@@ -17,9 +18,20 @@ $cid = (int)$K['coaching_id']; $sid = (int)$K['id'];
 cs_post_dues($cid, $sid);
 $acc = cs_access($K);
 $C = ['color' => $K['color']];
+$myB = cs_student_batches($cid, $sid);
+
+// Doubt poochhna (app chalu ho, apne batch me, din me 5 tak)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!cs_csrf_ok()) cs_go('me.php?s=' . $sid . '&m=csrf');
+    $bq = (int)cs_post('batch'); $q = mb_substr(cs_post('q'), 0, 2000);
+    $n = (int)cs_val('SELECT COUNT(*) FROM cs_doubt WHERE student_id=? AND coaching_id=? AND created_at>=CURDATE()', [$sid, $cid]);
+    if (cs_post('a') !== 'doubt' || !$acc['open'] || !in_array($bq, $myB, true) || $q === '' || $n >= 5) cs_go('me.php?s=' . $sid . '&m=err#doubt');
+    cs_q('INSERT INTO cs_doubt (coaching_id,batch_id,student_id,q) VALUES (?,?,?,?)', [$cid, $bq, $sid, $q]);
+    cs_go('me.php?s=' . $sid . '&m=sent#doubt');
+}
 
 cs_head($K['naam'] . ' — ' . $K['cnaam'], $C);
-echo '<div class="top"><span class="logo">', h(mb_strtoupper(mb_substr($K['cnaam'], 0, 1))), '</span><b>', h($K['cnaam']), '</b></div><div class="wrap">', cs_flash();
+echo '<div class="top">', cs_logo_html(['id' => $cid, 'naam' => $K['cnaam']]), '<b>', h($K['cnaam']), '</b></div><div class="wrap">', cs_flash();
 if (count($kids) > 1) {
     echo '<div class="btns" style="margin:0 0 12px">';
     foreach ($kids as $k) echo '<a class="btn sm', (int)$k['id'] === $sid ? '' : ' ghost', '" href="?s=', (int)$k['id'], '">', h($k['naam']), '</a>';
@@ -41,6 +53,15 @@ foreach ($rec as $r) echo '<div class="row"><div class="grow"><a href="receipt.p
      $r['cancelled'] ? '<span class="tag red">radd</span>' : '', '</div>';
 echo '</div>';
 
+// ---- suchna: hamesha free ----
+$bin = cs_in($myB);
+$nts = cs_all('SELECT * FROM cs_notice WHERE coaching_id=? AND (batch_id IS NULL' . ($myB ? ' OR batch_id IN (' . $bin . ')' : '') . ') AND created_at>=NOW()-INTERVAL 30 DAY ORDER BY id DESC LIMIT 8', array_merge([$cid], $myB));
+if ($nts) {
+    echo '<div class="card"><b>Suchna</b>';
+    foreach ($nts as $n) echo '<div class="row" style="display:block"><b>', h($n['title']), '</b><div class="pre">', h($n['body']), '</div><div class="sub">', h(date('d M', strtotime($n['created_at']))), '</div></div>';
+    echo '</div>';
+}
+
 if (!$acc['open']) {
     $plans = cs_plans();
     echo '<div class="card lock"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
@@ -58,6 +79,7 @@ if (!$acc['open']) {
     echo '<div class="card"><b>Batch</b>';
     foreach ($en as $e) echo '<div class="row"><div class="grow">', h($e['naam']), '<div class="sub">', h($e['course']), ' · ', h($e['timing']), $e['teacher'] ? ' · ' . h($e['teacher']) : '', '</div></div></div>';
     echo '</div>';
+    if ($myB) require __DIR__ . '/me_padhai.php';
     $att = cs_all("SELECT d, status FROM cs_attendance WHERE student_id=? AND coaching_id=? AND d>=CURDATE()-INTERVAL 60 DAY ORDER BY d DESC", [$sid, $cid]);
     $p = count(array_filter($att, fn($a) => $a['status'] === 'P'));
     echo '<div class="card"><b>Haaziri (60 din)</b><div class="sub">', $p, ' din aaya, ', count($att) - $p, ' din absent', $att ? ' · ' . round($p * 100 / count($att)) . '%' : '', '</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:10px">';

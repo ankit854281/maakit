@@ -11,28 +11,6 @@ $SHOW = null;
 
 cs_post_dues($cid);   // mahine ki fees apne aap (do baar kabhi nahi)
 
-function my_batches(): array {
-    $me = cs_me();
-    $sql = "SELECT b.*, c.naam course, c.fee_type, c.amount, u.naam teacher,
-              (SELECT COUNT(*) FROM cs_enroll e JOIN cs_student s ON s.id=e.student_id AND s.coaching_id=e.coaching_id
-                 WHERE e.batch_id=b.id AND e.coaching_id=b.coaching_id AND e.status='active' AND s.status='active') n
-            FROM cs_batch b JOIN cs_course c ON c.id=b.course_id AND c.coaching_id=b.coaching_id
-            LEFT JOIN cs_user u ON u.id=b.teacher_id AND u.coaching_id=b.coaching_id
-            WHERE b.coaching_id=? AND b.active=1";
-    $p = [$me['cid']];
-    if ($me['role'] !== 'owner') { $sql .= ' AND b.teacher_id=?'; $p[] = $me['uid']; }
-    return cs_all($sql . ' ORDER BY b.naam', $p);
-}
-function batch_ok(int $bid): ?array { foreach (my_batches() as $b) if ((int)$b['id'] === $bid) return $b; return null; }
-/** Student jo ye login dekh sakta hai (teacher: sirf apne batch ka) */
-function student_ok(int $sid): ?array {
-    $me = cs_me();
-    $s = cs_row('SELECT * FROM cs_student WHERE id=? AND coaching_id=?', [$sid, $me['cid']]);
-    if (!$s || $me['role'] === 'owner') return $s;
-    $ok = cs_val("SELECT 1 FROM cs_enroll e JOIN cs_batch b ON b.id=e.batch_id AND b.coaching_id=e.coaching_id
-                  WHERE e.student_id=? AND e.coaching_id=? AND e.status='active' AND b.teacher_id=?", [$sid, $me['cid'], $me['uid']]);
-    return $ok ? $s : null;
-}
 function back(string $to, string $m = 'ok'): void { cs_go('app.php?' . $to . '&m=' . $m); }
 function need_owner(): void { if (!cs_owner()) back('p=home', 'band'); }
 
@@ -190,6 +168,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              mb_substr(cs_post('timing'), 0, 120), substr($slug, 0, 40), $cid]);
         back('p=setup', 'saved');
     }
+    if ($a === 'logo') {
+        $up = cs_save_upload('logo', 'image');
+        if (isset($up['err'])) back('p=setup', $up['err'] === 'none' ? 'err' : 'big');
+        $old = cs_meta($cid)['logo'];
+        cs_q('INSERT INTO cs_coaching_meta (coaching_id,logo) VALUES (?,?) ON DUPLICATE KEY UPDATE logo=VALUES(logo), updated_at=NOW()', [$cid, $up['name']]);
+        if ($old) @unlink(cs_files_dir() . '/' . preg_replace('/[^a-f0-9]/', '', $old) . '.bin');
+        back('p=setup', 'saved');
+    }
     if ($a === 'login_send') {
         // Teacher / parent ko pehla (ya naya) password — page par ek hi baar dikhta hai, kahin likha nahi jaata
         if (cs_post('who') === 'teacher') {
@@ -213,10 +199,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ======================= PAGES =======================
 $tabs = $owner
-    ? ['home' => ['Aaj', 'home'], 'students' => ['Bachche', 'users'], 'dues' => ['Fees', 'rupee'], 'att' => ['Haaziri', 'check'], 'more' => ['Aur', 'more']]
-    : ['home' => ['Aaj', 'home'], 'students' => ['Bachche', 'users'], 'att' => ['Haaziri', 'check'], 'more' => ['Aur', 'more']];
+    ? ['home' => ['Aaj', 'home'], 'students' => ['Bachche', 'users'], 'dues' => ['Fees', 'rupee'], 'padhai' => ['Padhai', 'book'], 'more' => ['Aur', 'more']]
+    : ['home' => ['Aaj', 'home'], 'students' => ['Bachche', 'users'], 'att' => ['Haaziri', 'check'], 'padhai' => ['Padhai', 'book'], 'more' => ['Aur', 'more']];
 cs_head($C['naam'] . ' — Coaching Saathi', $C);
-echo '<div class="top"><span class="logo">', h(mb_strtoupper(mb_substr($C['naam'], 0, 1))), '</span><b>', h($C['naam']), '</b>',
+echo '<div class="top">', cs_logo_html($C), '<b>', h($C['naam']), '</b>',
      $owner ? '' : '<span class="tag">Teacher</span>', '</div><div class="wrap">', cs_flash();
 if (!empty($SHOW)) {
     if ($SHOW['pass'] !== '') {
@@ -240,7 +226,7 @@ switch ($p) {
 case 'home':
     $active = (int)cs_val("SELECT COUNT(*) FROM cs_student WHERE coaching_id=? AND status='active'", [$cid]);
     $absToday = (int)cs_val("SELECT COUNT(*) FROM cs_attendance WHERE coaching_id=? AND d=? AND status='A'", [$cid, $today]);
-    $risk = count(array_unique(array_merge(cs_absent3($cid), $owner ? array_keys(cs_fee_late($cid)) : [])));
+    $risk = count(array_filter(array_keys(cs_risk_scores($cid, $owner)), fn($i) => student_ok((int)$i) !== null));
     echo '<h1>Namaste, ', h($me['user']['naam']), '</h1><div class="grid">';
     echo '<a class="kpi" href="?p=students"><small>Active bachche</small><strong>', $active, '</strong></a>';
     if ($owner) {
@@ -250,7 +236,7 @@ case 'home':
              '<a class="kpi red" href="?p=dues"><small>Kul baaki</small><strong>', rs($due), '</strong></a>';
     }
     echo '<a class="kpi', $absToday ? ' red' : '', '" href="?p=att"><small>Aaj absent</small><strong>', $absToday, '</strong></a>',
-         '<a class="kpi', $risk ? ' red' : '', '" href="?p=risk"><small>Khatre me bachche</small><strong>', $risk, '</strong></a>';
+         '<a class="kpi', $risk ? ' red' : '', '" href="padhai.php?p=risk"><small>Khatre me bachche</small><strong>', $risk, '</strong></a>';
     if ($owner) {
         $fu = (int)cs_val("SELECT COUNT(*) FROM cs_enquiry WHERE coaching_id=? AND status='open' AND follow_up<=?", [$cid, $today]);
         echo '<a class="kpi', $fu ? ' red' : '', '" href="?p=enq"><small>Aaj ki enquiry call</small><strong>', $fu, '</strong></a>';
@@ -627,6 +613,8 @@ case 'setup':
     $link = cs_base() . '/s/' . $C['slug'];
     echo '<h1>Coaching ki details</h1><div class="card"><b>Aapki website</b><p><a href="', h($link), '" target="_blank">', h($link), '</a></p>',
          '<div class="btns"><a class="btn sm wa" target="_blank" href="', h('https://wa.me/?text=' . rawurlencode($C['naam'] . ' — admission ke liye dekhiye: ' . $link)), '">Share kariye</a></div></div>';
+    echo '<form method="post" enctype="multipart/form-data" class="card">', cs_csrf_field(), '<input type="hidden" name="a" value="logo"><div class="row"><div>', cs_logo_html($C), '</div><div class="grow"><b>Logo</b><div class="sub">JPG / PNG — app, website aur receipt par dikhega</div></div></div>',
+         '<input type="file" name="logo" accept="image/jpeg,image/png" required><button class="btn sm" style="margin-top:8px">Logo lagaiye</button></form>';
     if (cs_get('taken')) echo '<div class="flash bad">Ye website naam pehle se kisi ka hai. Doosra likhiye.</div>';
     echo '<form method="post" class="card">', cs_csrf_field(), '<input type="hidden" name="a" value="setup">',
          '<label>Coaching ka naam</label><input name="naam" required value="', h($C['naam']), '" maxlength="120"><label>Kis tarah ki</label><select name="ctype">';
@@ -645,18 +633,20 @@ case 'more':
 default:
     echo '<h1>Aur</h1><div class="card menu">';
     if ($owner) {
-        foreach (['add' => '+ Naya bachcha', 'enq' => 'Enquiry / follow-up', 'risk' => 'Khatre me bachche', 'receipts' => 'Receipts', 'report' => 'Saal ki report (maafi, discount)',
+        foreach (['add' => '+ Naya bachcha', 'att' => 'Haaziri', 'enq' => 'Enquiry / follow-up', 'receipts' => 'Receipts', 'report' => 'Saal ki report (maafi, discount)',
                   'courses' => 'Course aur batch', 'team' => 'Teachers', 'apps' => 'Student app — kaun paid, kaun band', 'setup' => 'Coaching details + website'] as $k => $v)
             echo '<a href="?p=', $k, '">', h($v), '<span>›</span></a>';
-        echo '<a href="site.php?c=', h($C['slug']), '" target="_blank">Meri website dekhiye<span>›</span></a>';
+        echo '<a href="padhai.php">Padhai: notice, homework, timetable, notes, test, quiz, doubt<span>›</span></a><a href="padhai.php?p=salary">Teacher salary + haaziri<span>›</span></a>',
+             '<a href="padhai.php?p=wa">Sabko WhatsApp<span>›</span></a><a href="padhai.php?p=risk">Khatre me bachche (score)<span>›</span></a>',
+             '<a href="site.php?c=', h($C['slug']), '" target="_blank">Meri website dekhiye<span>›</span></a>';
     } else {
-        echo '<a href="?p=risk">3 din se nahi aaye<span>›</span></a>';
+        echo '<a href="padhai.php">Padhai: homework, notes, test, quiz, doubt<span>›</span></a><a href="padhai.php?p=risk">Khatre me bachche<span>›</span></a><a href="padhai.php?p=mysal">Meri salary slip<span>›</span></a>';
     }
     echo '<a href="index.php?choose=1">Doosri coaching / app<span>›</span></a><a href="pw.php">Password badlein<span>›</span></a></div>',
          '<form method="post" action="index.php"><input type="hidden" name="a" value="out"><button class="btn ghost full">Logout</button></form>';
 }
 
 echo '</div><nav class="tabs">';
-foreach ($tabs as $k => [$label, $ic]) echo '<a href="?p=', $k, '"', $p === $k ? ' class="on"' : '', '>', cs_icon($ic), h($label), '</a>';
+foreach ($tabs as $k => [$label, $ic]) echo '<a href="', $k === 'padhai' ? 'padhai.php' : '?p=' . $k, '"', $p === $k ? ' class="on"' : '', '>', cs_icon($ic), h($label), '</a>';
 echo '</nav>';
 cs_foot();
