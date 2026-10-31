@@ -10,7 +10,13 @@ Ek hi software par bahut saari chhoti coaching. Owner ke liye free, student app 
 | Teacher | Apne batch ki haaziri (aaj se 7 din pichhe tak), apne batch ke bachche, "3 din se nahi aaya" | Fees, hisaab, doosre teacher |
 | Parent / student | Apne bachchon ki fees, receipt, aaj absent (hamesha free); batch + haaziri (plan ya trial me) | Doosre bachche, coaching ka hisaab |
 
-Sab mobile + OTP se. Ek number par kai coaching / kai bachche ho to login ke baad chunne ka page aata hai. Session 90 din (baar-baar OTP ka kharcha nahi).
+Sab **mobile + password** se (OTP / SMS nahi). Ek number par kai coaching / kai bachche ho to login ke baad chunne ka page aata hai. Login 90 din tak yaad rehta hai.
+
+- **Owner:** login page par "Apni coaching free me jodiye" — apna number aur password khud rakhta hai.
+- **Teacher / parent:** owner app me "Login bhejiye" dabata hai → pehla password ek baar screen par dikhta hai + WhatsApp button. Pehli login par naya password rakhna zaroori.
+- **Bhool gaye:** teacher/parent ko unka owner naya password de deta hai. Owner bhoole to Maakit `maakit.in/coaching/index.php?reset=1` par website ki UPDATE_KEY se badalta hai.
+- 5 galat password = 15 minute band. Password badalte hi baaki phone se login band.
+- Jo number do coaching me juda hai (ya kahin owner hai), uska password koi ek coaching nahi badal sakti.
 
 ## V1 me kya bana
 
@@ -29,10 +35,9 @@ Sab mobile + OTP se. Ek number par kai coaching / kai bachche ho to login ke baa
 
 ## Live karne ke kadam
 
-1. `maakit.in/update.php?key=...` kholiye — naya code aur `sql/045-coaching-saathi.sql` apne aap chal jayegi.
-2. OTP: Smart Sarathi wala Fast2SMS / WhatsApp setup hi kaam aata hai. Wo chalu hai to kuch nahi karna.
+1. `maakit.in/update.php?key=...` kholiye — naya code aur `sql/045`, `sql/046` apne aap chal jayengi.
+2. `maakit.in/coaching` kholkar "Apni coaching free me jodiye" se pehli coaching banaiye.
 3. Payment (jab lock chalu karna ho): `config.php` me `CS_RAZORPAY_KEY_ID`, `CS_RAZORPAY_KEY_SECRET`, `CS_RAZORPAY_WEBHOOK_SECRET`. Razorpay dashboard me webhook `https://maakit.in/coaching/webhook.php`, event `payment.captured`. Jab tak ye nahi bhare, kisi ka app band nahi hota.
-4. Testing ke liye (live par nahi): `define('CS_DEMO_OTP', true);` — OTP screen par dikhta hai.
 
 ## Abhi khule faisle (owner)
 

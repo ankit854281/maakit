@@ -13,9 +13,9 @@
 
 declare(strict_types=1);
 date_default_timezone_set('Asia/Kolkata');
-if (is_file(__DIR__ . '/../config.php')) require_once __DIR__ . '/../config.php';   // chaabiyan (OTP, Razorpay) pehle se padh lo
+if (is_file(__DIR__ . '/../config.php')) require_once __DIR__ . '/../config.php';   // chaabiyan (UPDATE_KEY, Razorpay) pehle se padh lo
 
-const CS_SESSION_DAYS = 90;          // OTP baar-baar na lage (SMS ka kharcha)
+const CS_SESSION_DAYS = 90;          // baar-baar password na daalna pade
 const CS_TRIAL_DAYS   = 7;
 const CS_SOFT_LIMIT   = 100;         // free owner: isse zyada bachche par suchna
 const CS_TYPES = ['tuition' => 'Tuition / Board', 'computer' => 'Computer + Spoken English',
@@ -81,14 +81,7 @@ function cs_cookie(string $name, string $val, int $days): void {
         'secure' => cs_https(), 'httponly' => true, 'samesite' => 'Lax']);
     $_COOKIE[$name] = $val;
 }
-/** Har browser ka apna binding — OTP usi browser se verify ho */
-function cs_binding(): string {
-    $b = (string)($_COOKIE['cs_b'] ?? '');
-    if (!preg_match('/^[a-f0-9]{32}$/', $b)) { $b = bin2hex(random_bytes(16)); cs_cookie('cs_b', $b, 400); }
-    return $b;
-}
-
-/** kind: 'staff' (owner/teacher, ek coaching) | 'family' (parent mobile, uske saare bachche) | 'verified' (OTP ho gaya, role chunna baaki) */
+/** kind: 'staff' (owner/teacher, ek coaching) | 'family' (parent mobile, uske saare bachche) | 'verified' (password sahi, role chunna baaki) */
 function cs_session_start(string $kind, string $mobile, ?int $cid = null, ?int $uid = null): void {
     $tok = bin2hex(random_bytes(32));
     cs_q('INSERT INTO cs_session (token_hash,kind,mobile,coaching_id,user_id,expires) VALUES (?,?,?,?,?,?)',
@@ -130,31 +123,68 @@ function cs_me(): array {
 }
 function cs_owner(): bool { return cs_me()['role'] === 'owner'; }
 
-// ---------------- OTP ----------------
-function cs_otp_demo(): bool { return cs_cfg('CS_DEMO_OTP') === true || cs_cfg('CS_DEMO_OTP') === '1'; }
-function cs_otp_engine(?callable $transport = null) {
-    require_once __DIR__ . '/../smartsarathi/inc/fast2sms.php';
-    return new Fast2SmsOtp(cs_db(), $transport);
+// ---------------- password ----------------
+const CS_PASS_MIN = 6;
+const CS_MAX_STRIKES = 5;            // itne galat = 15 minute band
+
+function cs_ip(): string { return substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45); }
+/** Ek ghante me ek IP se kitni koshish — atomic, do request saath aayein to bhi */
+function cs_take(string $key, int $limit, int $seconds): bool {
+    $now = time(); $bucket = hash('sha256', 'cs|' . $key . ':' . intdiv($now, $seconds));
+    cs_q('INSERT IGNORE INTO sms_rate_limits (bucket,hits,expires) VALUES (?,0,?)', [$bucket, $now + $seconds]);
+    $st = cs_q('UPDATE sms_rate_limits SET hits=hits+1 WHERE bucket=? AND hits<?', [$bucket, $limit]);
+    if (random_int(1, 50) === 1) cs_q('DELETE FROM sms_rate_limits WHERE expires<?', [$now - 86400]);
+    return $st->rowCount() === 1;
 }
-/** [id, demo_code|null, error|null] */
-function cs_otp_send(string $mobile): array {
-    $ip = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
-    $demo = null;
-    require_once __DIR__ . '/../smartsarathi/inc/fast2sms.php';
-    if (f2s_enabled()) {
-        $id = cs_otp_engine()->send($mobile, 'cs_login', 'cs:' . $mobile, cs_binding(), $ip);
-    } elseif (cs_otp_demo()) {
-        // Sirf testing ke liye: config.php me define('CS_DEMO_OTP', true). Code screen par dikhta hai.
-        $id = cs_otp_engine(function ($b) use (&$demo) { $demo = (string)$b['otp']; return true; })
-            ->send($mobile, 'cs_login', 'cs:' . $mobile, cs_binding(), $ip);
-    } else {
-        return [null, null, 'OTP abhi chalu nahi hai (SMS setup baaki). Maakit se sampark karein.'];
+function cs_hits(string $key, int $seconds): int {
+    return (int)cs_val('SELECT hits FROM sms_rate_limits WHERE bucket=?', [hash('sha256', 'cs|' . $key . ':' . intdiv(time(), $seconds))]);
+}
+function cs_pass_ok(string $p): bool { return mb_strlen($p) >= CS_PASS_MIN && mb_strlen($p) <= 72; }
+function cs_account(string $mobile): ?array { return cs_row('SELECT * FROM cs_account WHERE mobile=?', [$mobile]); }
+/** Naya password rakho. Purane saare login (doosre phone) band. */
+function cs_set_password(string $mobile, string $pass, bool $temp, ?int $by = null): void {
+    cs_q('INSERT INTO cs_account (mobile,pass_hash,temp,strikes,locked_until,set_by,updated_at) VALUES (?,?,?,0,NULL,?,NOW())
+          ON DUPLICATE KEY UPDATE pass_hash=VALUES(pass_hash), temp=VALUES(temp), strikes=0, locked_until=NULL, set_by=VALUES(set_by), updated_at=NOW()',
+        [$mobile, password_hash($pass, PASSWORD_DEFAULT), $temp ? 1 : 0, $by]);
+    cs_q('DELETE FROM cs_session WHERE mobile=?', [$mobile]);
+}
+/** 'ok' | 'wrong' | 'locked' | 'busy' | 'none' */
+function cs_check_login(string $mobile, string $pass): string {
+    // Sirf GALAT koshish ginti hai (mobile network me hazaaron log ek IP share karte hain)
+    $ipKey = 'login-fail-ip:' . cs_ip();
+    if (cs_hits($ipKey, 3600) >= 100) return 'busy';
+    $a = cs_account($mobile);
+    if (!$a) { cs_take($ipKey, 100, 3600); password_verify($pass, '$2y$10$t26TXZSPaGY2nHJz67Mg5eRo9wQB2YhAiXUGHLGyiVKMbK8FViJky'); return 'none'; }
+    if ($a['locked_until'] && strtotime($a['locked_until']) > time()) return 'locked';
+    if (!password_verify($pass, $a['pass_hash'])) {
+        cs_take($ipKey, 100, 3600);
+        cs_q('UPDATE cs_account SET strikes=strikes+1, locked_until=IF(strikes>=?, NOW()+INTERVAL 15 MINUTE, locked_until) WHERE mobile=?', [CS_MAX_STRIKES, $mobile]);
+        cs_q('UPDATE cs_account SET strikes=0 WHERE mobile=? AND strikes>=?', [$mobile, CS_MAX_STRIKES]);
+        return 'wrong';
     }
-    if (!$id) return [null, null, 'OTP nahi gaya. 1 minute baad dobara koshish karein.'];
-    return [$id, $demo, null];
+    cs_q('UPDATE cs_account SET strikes=0, locked_until=NULL WHERE mobile=?', [$mobile]);
+    if (password_needs_rehash($a['pass_hash'], PASSWORD_DEFAULT)) cs_q('UPDATE cs_account SET pass_hash=? WHERE mobile=?', [password_hash($pass, PASSWORD_DEFAULT), $mobile]);
+    return 'ok';
 }
-function cs_otp_check(string $id, string $mobile, string $code): bool {
-    return cs_otp_engine()->verify($id, 'cs_login', 'cs:' . $mobile, cs_binding(), $code);
+/** Kya ye coaching is number ko naya (pehla) password de sakti hai?
+ *  Haan: number ka abhi koi password nahi, ya pehla password abhi tak badla nahi gaya,
+ *  ya ye number SIRF isi coaching me teacher/parent hai. Nahi: kahin owner hai, ya
+ *  doosri coaching me bhi juda hai (warna ek coaching doosri ka login chheen leti). */
+function cs_can_reset(int $cid, string $mobile): bool {
+    $a = cs_account($mobile);
+    $mine = cs_val('SELECT 1 FROM cs_user WHERE coaching_id=? AND mobile=? AND active=1', [$cid, $mobile])
+         || cs_val("SELECT 1 FROM cs_student WHERE coaching_id=? AND mobile=?", [$cid, $mobile]);
+    if (!$mine) return false;
+    if (!$a || (int)$a['temp'] === 1) return true;
+    if (cs_val("SELECT 1 FROM cs_user WHERE mobile=? AND (coaching_id<>? OR role='owner')", [$mobile, $cid])) return false;
+    if (cs_val('SELECT 1 FROM cs_student WHERE mobile=? AND coaching_id<>?', [$mobile, $cid])) return false;
+    return true;
+}
+/** Padhne me aasaan pehla password: 3 akshar + 4 ank (0/O, 1/l jaise uljhane wale nahi) */
+function cs_temp_password(): string {
+    $L = 'abcdefghjkmnpqrstuvwxyz'; $out = '';
+    for ($i = 0; $i < 3; $i++) $out .= $L[random_int(0, strlen($L) - 1)];
+    return $out . random_int(2000, 9999);
 }
 
 // ---------------- khata (fees) ----------------
@@ -300,7 +330,7 @@ function cs_foot(): void {
     echo '<footer class="pw">Coaching Saathi · powered by <a href="https://maakit.in">Maakit</a></footer></body></html>';
 }
 function cs_flash(): string {
-    $m = ['ok' => 'Ho gaya ✓', 'saved' => 'Save ho gaya ✓', 'paid' => 'Paisa likh diya ✓', 'waived' => 'Maaf kar diya ✓',
+    $m = ['ok' => 'Ho gaya ✓', 'added' => 'Bachcha jud gaya ✓ — neeche "Login bhejiye" se parent ko app ka password bhejiye.', 'saved' => 'Save ho gaya ✓', 'paid' => 'Paisa likh diya ✓', 'waived' => 'Maaf kar diya ✓',
           'csrf' => 'Page purana tha — dobara bhariye.', 'band' => 'Ye login band hai.', 'err' => 'Kuch galat bhara hai — dobara dekhiye.'];
     $k = cs_get('m');
     if (!isset($m[$k])) return '';

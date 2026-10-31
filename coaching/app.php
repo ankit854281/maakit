@@ -7,6 +7,7 @@ $me = cs_me();
 $cid = $me['cid']; $uid = $me['uid']; $C = $me['c']; $owner = cs_owner();
 $p = preg_replace('/[^a-z]/', '', cs_get('p', 'home')) ?: 'home';
 $today = date('Y-m-d');
+$SHOW = null;
 
 cs_post_dues($cid);   // mahine ki fees apne aap (do baar kabhi nahi)
 
@@ -104,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         cs_q('INSERT INTO cs_enroll (coaching_id,student_id,batch_id,fee,fee_note,start_date) VALUES (?,?,?,?,?,?)',
             [$cid, $sid, $b['id'], $fee, mb_substr(cs_post('fee_note'), 0, 120), $join]);
         cs_post_dues($cid, $sid);
-        cs_go('app.php?p=student&id=' . $sid . '&m=saved');
+        cs_go('app.php?p=student&id=' . $sid . '&m=added');
     }
     $sid = (int)cs_post('sid');
     $S = $sid ? cs_row('SELECT * FROM cs_student WHERE id=? AND coaching_id=?', [$sid, $cid]) : null;
@@ -189,7 +190,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              mb_substr(cs_post('timing'), 0, 120), substr($slug, 0, 40), $cid]);
         back('p=setup', 'saved');
     }
-    back('p=home', 'err');
+    if ($a === 'login_send') {
+        // Teacher / parent ko pehla (ya naya) password — page par ek hi baar dikhta hai, kahin likha nahi jaata
+        if (cs_post('who') === 'teacher') {
+            $t = cs_row("SELECT * FROM cs_user WHERE id=? AND coaching_id=? AND role='teacher' AND active=1", [(int)cs_post('id'), $cid]);
+            $mob = $t['mobile'] ?? ''; $who = $t['naam'] ?? ''; $p = 'team';
+        } else {
+            $mob = $S['mobile'] ?? ''; $who = $S ? $S['naam'] . ' ke parent' : ''; $p = 'student'; $_GET['id'] = (string)$sid;
+        }
+        if ($mob === '') back('p=' . $p, 'err');
+        if (cs_can_reset($cid, $mob)) {
+            $pass = cs_temp_password();
+            cs_set_password($mob, $pass, true, $uid);
+            $SHOW = ['mobile' => $mob, 'pass' => $pass, 'who' => $who];
+        } else {
+            $SHOW = ['mobile' => $mob, 'pass' => '', 'who' => $who];
+        }
+    } else {
+        back('p=home', 'err');
+    }
 }
 
 // ======================= PAGES =======================
@@ -199,6 +218,17 @@ $tabs = $owner
 cs_head($C['naam'] . ' — Coaching Saathi', $C);
 echo '<div class="top"><span class="logo">', h(mb_strtoupper(mb_substr($C['naam'], 0, 1))), '</span><b>', h($C['naam']), '</b>',
      $owner ? '' : '<span class="tag">Teacher</span>', '</div><div class="wrap">', cs_flash();
+if (!empty($SHOW)) {
+    if ($SHOW['pass'] !== '') {
+        $msg = "Namaste, {$C['naam']} ka Coaching Saathi app:\n" . cs_base() . "/\nMobile: {$SHOW['mobile']}\nPehla password: {$SHOW['pass']}\nLogin karte hi apna naya password rakhiye.";
+        echo '<div class="card" style="border:2px solid var(--c)"><b>', h($SHOW['who']), ' ka login</b><table><tr><th>Mobile</th><td class="r">', h($SHOW['mobile']), '</td></tr>',
+             '<tr><th>Pehla password</th><td class="r" style="font-size:20px;letter-spacing:1px"><b>', h($SHOW['pass']), '</b></td></tr></table>',
+             '<p class="note">Ye password sirf abhi dikh raha hai. Bhejiye — pehli login par wo apna naya rakhenge.</p>',
+             '<div class="btns"><a class="btn wa" target="_blank" href="', h(cs_wa($SHOW['mobile'], $msg)), '">WhatsApp par bhejiye</a></div></div>';
+    } else {
+        echo '<div class="flash bad">', h($SHOW['mobile']), ' ka password pehle se bana hai aur ye number doosri coaching me bhi juda hai (ya owner hai). Wahi password chalega. Bhool gaye ho to Maakit se badalwaiye.</div>';
+    }
+}
 
 $bal = $owner ? cs_balances($cid) : [];
 $wa_due = function (array $s, int $b) use ($C) {
@@ -366,6 +396,12 @@ case 'student':
     echo '</div>';
     if (cs_pay_ready()) echo '<div class="btns"><a class="btn sm ghost" href="pay.php?sid=', $sid, '">Aap khud bhariye (gift)</a></div>';
     echo '</div>';
+    $pacc = cs_account($S['mobile']);
+    echo '<div class="card"><b>Parent ka login</b><div class="sub">', h($S['mobile']), ' · ',
+         !$pacc ? 'Abhi password nahi diya' : ((int)$pacc['temp'] === 1 ? 'Pehla password diya, abhi badla nahi' : 'Login chalu hai'), '</div>',
+         '<form method="post">', cs_csrf_field(), '<input type="hidden" name="a" value="login_send"><input type="hidden" name="who" value="parent"><input type="hidden" name="sid" value="', $sid, '">',
+         '<button class="btn sm" style="margin-top:8px"', $pacc && (int)$pacc['temp'] === 0 ? ' onclick="return confirm(\'Naya password banega, purana band ho jayega. Theek?\')"' : '', '>',
+         $pacc && (int)$pacc['temp'] === 0 ? 'Naya password bhejiye (bhool gaye ho to)' : 'Login bhejiye (WhatsApp)', '</button></form></div>';
 
     echo '<div class="card"><b>Batch</b>';
     foreach ($en as $e) {
@@ -555,7 +591,8 @@ case 'team':
     need_owner();
     $ts = cs_all("SELECT * FROM cs_user WHERE coaching_id=? AND role='teacher' ORDER BY active DESC, naam", [$cid]);
     echo '<h1>Teachers</h1><div class="card">';
-    foreach ($ts as $t) echo '<div class="row"><div class="grow">', h($t['naam']), '<div class="sub">', h($t['mobile']), '</div></div>',
+    foreach ($ts as $t) echo '<div class="row"><div class="grow">', h($t['naam']), '<div class="sub">', h($t['mobile']), ' · ', ($ta = cs_account($t['mobile'])) ? ((int)$ta['temp'] ? 'password diya' : 'login chalu') : 'password nahi diya', '</div></div>',
+         $t['active'] ? '<form method="post">' . cs_csrf_field() . '<input type="hidden" name="a" value="login_send"><input type="hidden" name="who" value="teacher"><input type="hidden" name="id" value="' . (int)$t['id'] . '"><button class="btn sm">Login bhejiye</button></form>' : '',
          '<form method="post">', cs_csrf_field(), '<input type="hidden" name="a" value="teacher_off"><input type="hidden" name="id" value="', (int)$t['id'], '"><button class="btn sm ', $t['active'] ? 'ghost' : '', '">', $t['active'] ? 'Band kariye' : 'Chalu kariye', '</button></form></div>';
     if (!$ts) echo '<p class="note">Abhi koi teacher nahi.</p>';
     echo '</div><form method="post" class="card">', cs_csrf_field(), '<input type="hidden" name="a" value="teacher"><b>+ Teacher jodiye</b>',
@@ -615,7 +652,7 @@ default:
     } else {
         echo '<a href="?p=risk">3 din se nahi aaye<span>›</span></a>';
     }
-    echo '<a href="index.php?choose=1">Doosri coaching / app<span>›</span></a></div>',
+    echo '<a href="index.php?choose=1">Doosri coaching / app<span>›</span></a><a href="pw.php">Password badlein<span>›</span></a></div>',
          '<form method="post" action="index.php"><input type="hidden" name="a" value="out"><button class="btn ghost full">Logout</button></form>';
 }
 

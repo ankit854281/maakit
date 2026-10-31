@@ -69,8 +69,8 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // See docs/fast2sms-setup.md before enabling. Team accounts need correct users.mobile.
 
 // ---- Coaching Saathi (maakit.in/coaching) ----
-// OTP upar wale Fast2SMS / WhatsApp se hi jaata hai. Sirf TESTING ke liye (code screen par dikhta hai):
-// define('CS_DEMO_OTP', true);   // live par kabhi nahi
+// Login mobile + password se hota hai (OTP / SMS ki zaroorat nahi). Owner bhool jaye to
+// maakit.in/coaching/index.php?reset=1 par upar wali UPDATE_KEY se naya password.
 // Student app ka plan (₹54 / ₹99). Ye teeno bharne tak kisi bachche ka app LOCK nahi hota.
 // define('CS_RAZORPAY_KEY_ID', 'rzp_live_...');
 // define('CS_RAZORPAY_KEY_SECRET', 'private');

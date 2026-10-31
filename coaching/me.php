@@ -64,5 +64,5 @@ if (!$acc['open']) {
     if ($acc['why'] === 'paid') echo '<p class="note">App ', h(date('d M Y', strtotime($acc['till']))), ' tak chalu hai.</p>';
 }
 echo '<div class="btns"><a class="btn sm ghost" href="tel:', h($K['cphone']), '">Coaching ko call</a><a class="btn sm ghost" href="s/', h($K['slug']), '">Coaching ki website</a></div>',
-     '<form method="post" action="index.php" style="margin-top:20px"><input type="hidden" name="a" value="out"><button class="btn ghost full">Logout</button></form></div>';
+     '<p><a href="pw.php">Password badlein</a></p><form method="post" action="index.php" style="margin-top:20px"><input type="hidden" name="a" value="out"><button class="btn ghost full">Logout</button></form></div>';
 cs_foot();

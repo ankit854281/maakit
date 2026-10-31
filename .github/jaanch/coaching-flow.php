@@ -2,7 +2,9 @@
 // ============================================================
 //  जाँच — Coaching Saathi (coaching/)
 //
-//  Login → coaching banti hai → course, batch, teacher, bachcha →
+//  Password se signup/login (5 galat = band, pehla password badle bina
+//  andar nahi, doosri coaching kisi ka password nahi badal sakti) →
+//  coaching banti hai → course, batch, teacher, bachcha →
 //  mahine ki fees apne aap (do baar nahi) → paisa mila + receipt
 //  (same button do baar = ek receipt) → maaf → sudhaar → receipt radd →
 //  haaziri → "3 din se nahi aaya" → teacher ko fees nahi dikhti →
@@ -27,7 +29,8 @@ function web(string $path, ?array $post = null, string $tok = ''): array {
     $head = substr($raw, 0, $hs); $body = substr($raw, $hs);
     ck(!preg_match('/Fatal error|Warning:|Uncaught|Deprecated|Notice:/', $body), "PHP error at $path: " . substr(strip_tags($body), 0, 300));
     preg_match('/^Location:\s*(\S+)/mi', $head, $m);
-    return [$code, $body, $m[1] ?? ''];
+    preg_match_all('/^Set-Cookie:\s*cs_t=([a-f0-9]{64})/mi', $head, $t);
+    return [$code, $body, $m[1] ?? '', end($t[1]) ?: ''];
 }
 function sess(string $kind, string $mobile, ?int $cid = null, ?int $uid = null): string {
     $t = bin2hex(random_bytes(32));
@@ -38,24 +41,34 @@ function csrf(string $t): string { return substr(hash('sha256', $t . '|cs-form')
 function app(string $tok, array $post): array { $post['csrf'] = csrf($tok); return web('/coaching/app.php?p=home', $post, $tok); }
 
 // ---- saaf shuruaat ----
-foreach (['cs_attendance','cs_ledger','cs_receipt','cs_enroll','cs_batch','cs_course','cs_student','cs_enquiry','cs_sub','cs_session','cs_user','cs_coaching'] as $t) cs_q("DELETE FROM $t");
-cs_otp_engine()->install(); cs_q("DELETE FROM sms_rate_limits");
+foreach (['cs_account','cs_attendance','cs_ledger','cs_receipt','cs_enroll','cs_batch','cs_course','cs_student','cs_enquiry','cs_sub','cs_session','cs_user','cs_coaching'] as $t) cs_q("DELETE FROM $t");
+cs_q("DELETE FROM sms_rate_limits");
+function login(string $mobile, string $pass): array { return web('/coaching/index.php', ['a' => 'login', 'mobile' => $mobile, 'pass' => $pass]); }
 
 [$code, $html] = web('/coaching/');
-ck($code === 200 && str_contains($html, 'OTP bhejiye'), 'login page');
+ck($code === 200 && str_contains($html, 'Password') && str_contains($html, 'Coaching banaiye'), 'login page');
 
-// ---- 1. owner: login + coaching banana ----
-$OWN = '9876500001';
-$vt = sess('verified', $OWN);
-[$code, $html] = web('/coaching/index.php?choose=1', null, $vt);
-ck(str_contains($html, 'Coaching banaiye'), 'naye number ko coaching banane ka form');
-[$code, , $loc] = web('/coaching/index.php', ['a' => 'create', 'csrf' => csrf($vt), 'naam' => 'Gupta Classes', 'own' => 'Ramesh Gupta', 'city' => 'Lucknow', 'ctype' => 'tuition', 'reg' => 'UP/LKO/123'], $vt);
-ck($code === 302 && str_contains($loc, 'app.php'), 'coaching banne ke baad app');
+// ---- 1. owner: password se coaching banana + login ----
+$OWN = '9876500001'; $OPASS = 'gupta@2026';
+$sign = ['a' => 'signup', 'naam' => 'Gupta Classes', 'own' => 'Ramesh Gupta', 'city' => 'Lucknow', 'ctype' => 'tuition', 'reg' => 'UP/LKO/123', 'mobile' => $OWN];
+[, $html] = web('/coaching/index.php', $sign + ['pass' => '123', 'pass2' => '123']);
+ck(str_contains($html, 'kam se kam') && !cs_val('SELECT 1 FROM cs_coaching'), 'chhota password nahi');
+[, $html] = web('/coaching/index.php', $sign + ['pass' => $OPASS, 'pass2' => 'kuch-aur']);
+ck(str_contains($html, 'ek jaise nahi') && !cs_account($OWN), 'dono password alag');
+[$code, , $loc, $ot] = web('/coaching/index.php', $sign + ['pass' => $OPASS, 'pass2' => $OPASS]);
+ck($code === 302 && str_contains($loc, 'app.php') && $ot !== '', 'coaching banne ke baad app');
+ck(!str_contains((string)cs_val('SELECT pass_hash FROM cs_account WHERE mobile=?', [$OWN]), $OPASS), 'password hash me, seedha nahi');
 $C1 = cs_row("SELECT * FROM cs_coaching WHERE naam='Gupta Classes'");
 ck($C1 && $C1['slug'] === 'gupta-classes-lucknow', 'slug: ' . ($C1['slug'] ?? '-'));
 $O1 = cs_row("SELECT * FROM cs_user WHERE coaching_id=? AND role='owner'", [$C1['id']]);
 $cid = (int)$C1['id'];
-$ot = sess('staff', $OWN, $cid, (int)$O1['id']);
+// koi aur isi number par coaching nahi bana sakta
+[, $html] = web('/coaching/index.php', ['a' => 'signup', 'naam' => 'Fake Classes', 'own' => 'X', 'city' => 'Lucknow', 'mobile' => $OWN, 'pass' => 'hacker123', 'pass2' => 'hacker123']);
+ck(!cs_val("SELECT 1 FROM cs_coaching WHERE naam='Fake Classes'"), 'doosre ke number par coaching nahi');
+[, , $loc, $tok] = login($OWN, $OPASS);
+ck(str_contains($loc, 'app.php') && $tok !== '', 'owner login seedha app me');
+[, $html] = login($OWN, 'galat-password');
+ck(str_contains($html, 'galat'), 'galat password');
 
 // ---- 2. course, teacher, batch, bachcha ----
 app($ot, ['a' => 'course', 'naam' => 'Class 10 Maths', 'fee_type' => 'monthly', 'amount' => '500', 'months' => '']);
@@ -102,7 +115,20 @@ ck((int)cs_val('SELECT COUNT(*) FROM cs_receipt WHERE coaching_id=?', [$cid]) ==
 ck(str_contains($html, 'Hisaab') && str_contains($html, 'radd'), 'khata page');
 
 // ---- 4. haaziri + khatre me ----
-$tt = sess('staff', $T1['mobile'], $cid, (int)$T1['id']);
+// teacher ka login: owner pehla password deta hai, teacher pehli baar me naya rakhta hai
+[, $html] = app($ot, ['a' => 'login_send', 'who' => 'teacher', 'id' => $T1['id']]);
+ck(preg_match('/Pehla password<\/th><td[^>]*><b>([a-z0-9]+)<\/b>/', $html, $m) && str_contains($html, 'wa.me/919876500002'), 'teacher ka pehla password + WhatsApp');
+$tp = $m[1];
+ck((int)cs_val('SELECT temp FROM cs_account WHERE mobile=?', [$T1['mobile']]) === 1, 'pehla password temp');
+[, , $loc, $tv] = login($T1['mobile'], $tp);
+ck(str_contains($loc, 'pw.php?first=1'), 'pehla password badle bina andar nahi');
+[, , $loc] = web('/coaching/index.php', ['a' => 'pick', 'pick' => $T1['id'], 'csrf' => csrf($tv)], $tv);
+ck(str_contains($loc, 'pw.php'), 'chooser se bhi pehla password badle bina andar nahi');
+[, , $loc] = web('/coaching/pw.php', ['csrf' => csrf($tv), 'pass' => 'sita-new-1', 'pass2' => 'sita-new-1'], $tv);
+ck(str_contains($loc, 'after=1'), 'teacher ne naya password rakha');
+[, , $loc, $tt] = login($T1['mobile'], 'sita-new-1');
+ck(str_contains($loc, 'app.php') && $tt !== '', 'teacher naye password se app me');
+ck(login($T1['mobile'], $tp)[2] === '', 'purana pehla password ab nahi chalta');
 for ($i = 3; $i >= 1; $i--) app($ot, ['a' => 'att', 'batch' => $batch, 'd' => date('Y-m-d', strtotime("-$i days")), 's' => [$sid => 'A', $sid2 => 'P']]);
 ck(in_array($sid, cs_absent3($cid), true) && !in_array($sid2, cs_absent3($cid), true), '3 din absent wala khatre me');
 [, , $loc] = app($tt, ['a' => 'att', 'batch' => $batch, 'd' => date('Y-m-d'), 's' => [$sid => 'P', $sid2 => 'A']]);
@@ -122,11 +148,14 @@ ck((int)cs_val('SELECT COUNT(*) FROM cs_ledger WHERE coaching_id=?', [$cid]) ===
 ck(!str_contains($html, 'Fees ka khata') && !str_contains($html, '₹750'), 'teacher ko bachche ki fees nahi dikhti');
 
 // ---- 5. DOOSRI COACHING: pehli ka kuch nahi ----
-$vt2 = sess('verified', '9876500009');
-web('/coaching/index.php', ['a' => 'create', 'csrf' => csrf($vt2), 'naam' => 'Sharma Academy', 'own' => 'Sharma', 'city' => 'Lucknow', 'ctype' => 'sarkari'], $vt2);
+[, , , $o2] = web('/coaching/index.php', ['a' => 'signup', 'naam' => 'Sharma Academy', 'own' => 'Sharma', 'city' => 'Lucknow', 'ctype' => 'sarkari', 'mobile' => '9876500009', 'pass' => 'sharma-99', 'pass2' => 'sharma-99']);
 $C2 = cs_row("SELECT * FROM cs_coaching WHERE naam='Sharma Academy'");
-$O2 = cs_row("SELECT * FROM cs_user WHERE coaching_id=?", [$C2['id']]);
-$o2 = sess('staff', '9876500009', (int)$C2['id'], (int)$O2['id']);
+ck($C2 && $o2 !== '', 'doosri coaching bani');
+// doosri coaching pehli ke teacher / parent ka password nahi badal sakti
+$tHash = cs_val('SELECT pass_hash FROM cs_account WHERE mobile=?', [$T1['mobile']]);
+app($o2, ['a' => 'login_send', 'who' => 'teacher', 'id' => $T1['id']]);
+app($o2, ['a' => 'login_send', 'who' => 'parent', 'sid' => $sid]);
+ck(cs_val('SELECT pass_hash FROM cs_account WHERE mobile=?', [$T1['mobile']]) === $tHash && !cs_account('9876500003'), 'doosri coaching ne password nahi badla');
 [, $html] = web('/coaching/app.php?p=student&id=' . $sid, null, $o2);
 ck(str_contains($html, 'nahi mila') && !str_contains($html, 'Aman'), 'doosri coaching bachcha nahi dekh sakti');
 [, $html] = web('/coaching/app.php?p=students', null, $o2);
@@ -147,7 +176,12 @@ web('/coaching/app.php?p=home', ['a' => 'fix', 'sid' => $sid, 'amount' => '9', '
 ck(cs_balance($cid, $sid) === 750, 'bina csrf ke entry nahi');
 
 // ---- 6. parent app ----
-$pt = sess('family', '9876500003');
+[, $html] = app($ot, ['a' => 'login_send', 'who' => 'parent', 'sid' => $sid]);
+ck(preg_match('/Pehla password<\/th><td[^>]*><b>([a-z0-9]+)<\/b>/', $html, $m), 'parent ka pehla password');
+[, , , $pv] = login('9876500003', $m[1]);
+web('/coaching/pw.php', ['csrf' => csrf($pv), 'pass' => 'aman-papa-1', 'pass2' => 'aman-papa-1'], $pv);
+[, , $loc, $pt] = login('9876500003', 'aman-papa-1');
+ck(str_contains($loc, 'me.php'), 'parent seedha apne app me');
 [$code, $html] = web('/coaching/me.php', null, $pt);
 ck($code === 200 && str_contains($html, 'Aman') && str_contains($html, 'Bina'), 'ek number par do bachche, dono dikhe');
 [, $html] = web('/coaching/me.php?s=' . $sid2, null, $pt);
@@ -194,6 +228,34 @@ ck((int)cs_val("SELECT COUNT(*) FROM cs_enquiry WHERE coaching_id=? AND source='
 ck(str_contains($html, 'Neha') && str_contains($html, 'Aaj call'), 'enquiry owner ko aaj ki call me');
 [, $html] = web('/coaching/app.php?p=enq', null, $o2);
 ck(!str_contains($html, 'Neha'), 'enquiry doosri coaching ko nahi');
+
+// ---- 8b. password: 5 galat = band; owner reset ke niyam ----
+for ($i = 0; $i < 5; $i++) login('9876500003', 'galat-' . $i);
+[, $html] = login('9876500003', 'aman-papa-1');
+ck(str_contains($html, '15 minute'), '5 galat ke baad sahi password bhi 15 minute band');
+cs_q('UPDATE cs_account SET locked_until=NULL WHERE mobile=?', ['9876500003']);
+ck(str_contains(login('9876500003', 'aman-papa-1')[2], 'me.php'), 'band khulne ke baad login');
+// parent doosri coaching me bhi jud gaya: ab pehli coaching bhi uska password nahi badal sakti
+cs_q("INSERT INTO cs_student (coaching_id,naam,mobile,join_date) VALUES (?,?,?,CURDATE())", [$C2['id'], 'Aman', '9876500003']);
+$pHash = cs_val('SELECT pass_hash FROM cs_account WHERE mobile=?', ['9876500003']);
+[, $html] = app($ot, ['a' => 'login_send', 'who' => 'parent', 'sid' => $sid]);
+ck(str_contains($html, 'doosri coaching') && cs_val('SELECT pass_hash FROM cs_account WHERE mobile=?', ['9876500003']) === $pHash, 'do coaching wale number ka password koi ek coaching nahi badal sakti');
+// owner apna password badle → purane phone ka login band
+[, , , $ot2] = login($OWN, $OPASS);
+[, , $loc] = web('/coaching/pw.php', ['csrf' => csrf($ot2), 'old' => 'galat', 'pass' => 'gupta-new-1', 'pass2' => 'gupta-new-1'], $ot2);
+ck($loc === '', 'purana password galat to nahi badla');
+web('/coaching/pw.php', ['csrf' => csrf($ot2), 'old' => $OPASS, 'pass' => 'gupta-new-1', 'pass2' => 'gupta-new-1'], $ot2);
+[, , $loc] = web('/coaching/app.php', null, $ot);
+ck(str_contains($loc, 'index.php'), 'password badalne par purane phone ka login band');
+[, , , $ot] = login($OWN, 'gupta-new-1');
+ck($ot !== '', 'owner naye password se');
+if (defined('UPDATE_KEY') && strlen((string)UPDATE_KEY) >= 12) {
+    web('/coaching/index.php', ['a' => 'reset', 'key' => 'galat-chaabi-123', 'mobile' => $OWN, 'pass' => 'x-reset-1']);
+    ck(login($OWN, 'x-reset-1')[3] === '', 'galat chaabi se reset nahi');
+    web('/coaching/index.php', ['a' => 'reset', 'key' => UPDATE_KEY, 'mobile' => $OWN, 'pass' => 'x-reset-1']);
+    [, , , $ot] = login($OWN, 'x-reset-1');
+    ck($ot !== '', 'Maakit chaabi se owner ka password reset');
+}
 
 // ---- 9. saare pannon me koi PHP galti nahi ----
 foreach (['home','students','add','dues','risk','enq','receipts','report','courses','team','apps','setup','more','att','att&batch=' . $batch . '&done=1'] as $p) {
