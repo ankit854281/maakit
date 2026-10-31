@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    || $vendor==='' || mb_strlen($vendor)>160 || $desc==='' || mb_strlen($desc)>500
    || !in_array($category,['domain','hosting','ai_subscription','development','other'],true)
    || !in_array($allocation,['maakit','smart_sarathi','shared','unallocated'],true)
-   || !in_array($status,['receipt_found','bank_verified','refunded'],true)
+   || $status !== 'receipt_found'
    || !preg_match('/^\\d{1,10}(?:\\.\\d{1,2})?$/',$amount) || (float)$amount<=0 || mb_strlen($ref)>180) $err='Invalid expense details';
   else {
    $paise=(int)round((float)$amount*100);
@@ -48,7 +48,7 @@ include __DIR__ . '/../inc/panel.php';
 <label>Amount (₹) <input name="amount" inputmode="decimal" pattern="[0-9]+(\\.[0-9]{1,2})?" required></label>
 <label>Category <select name="category"><option value="domain">Domain</option><option value="hosting">Hosting</option><option value="ai_subscription">AI subscription</option><option value="development">Development</option><option value="other">Other</option></select></label>
 <label>Allocation <select name="allocation"><option value="unallocated">Pending allocation</option><option value="maakit">MAAKIT</option><option value="smart_sarathi">Smart Sarathi</option><option value="shared">Shared</option></select></label>
-<label>Verification <select name="payment_status"><option value="receipt_found">Receipt found</option><option value="bank_verified">Bank verified</option><option value="refunded">Refunded</option></select></label>
+<label>Verification <select name="payment_status"><option value="receipt_found">Receipt found</option></select></label>
 <label>Receipt reference (NO public URLs or passwords) <input name="source_reference" maxlength="180"></label>
 <button type="submit">Save voucher</button>
 </form>
