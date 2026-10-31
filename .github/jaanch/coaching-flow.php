@@ -10,6 +10,7 @@
 //  haaziri → "3 din se nahi aaya" → teacher ko fees nahi dikhti →
 //  DOOSRI COACHING kisi bhi tarah pehli ka data na dekh paye na badle →
 //  parent app (fees free, lock sirf payment chalu hone par) →
+//  Game Zone (school ka engine: server-timed, jawab pehle nahi) →
 //  plan ka paisa do baar na gine → receipt QR page → website + enquiry.
 // ============================================================
 require_once __DIR__ . '/../../config.php';
@@ -41,7 +42,7 @@ function csrf(string $t): string { return substr(hash('sha256', $t . '|cs-form')
 function app(string $tok, array $post): array { $post['csrf'] = csrf($tok); return web('/coaching/app.php?p=home', $post, $tok); }
 
 // ---- saaf shuruaat ----
-foreach (['cs_account','cs_attendance','cs_ledger','cs_receipt','cs_enroll','cs_batch','cs_course','cs_student','cs_enquiry','cs_sub','cs_session','cs_user','cs_coaching'] as $t) cs_q("DELETE FROM $t");
+foreach (['cs_game_round','cs_account','cs_attendance','cs_ledger','cs_receipt','cs_enroll','cs_batch','cs_course','cs_student','cs_enquiry','cs_sub','cs_session','cs_user','cs_coaching'] as $t) cs_q("DELETE FROM $t");
 cs_q("DELETE FROM sms_rate_limits");
 function login(string $mobile, string $pass): array { return web('/coaching/index.php', ['a' => 'login', 'mobile' => $mobile, 'pass' => $pass]); }
 
@@ -256,6 +257,45 @@ if (defined('UPDATE_KEY') && strlen((string)UPDATE_KEY) >= 12) {
     [, , , $ot] = login($OWN, 'x-reset-1');
     ck($ot !== '', 'Maakit chaabi se owner ka password reset');
 }
+
+// ---- 8c. Game Zone ----
+require_once __DIR__ . '/../../school/game_lib.php';
+[, , , $gp] = login('9876500003', 'aman-papa-1');
+[$code, $html] = web('/coaching/me.php?s=' . $sid, null, $gp);
+ck(str_contains($html, 'game.php?s=' . $sid), 'student app me Game Zone');
+[$code, $html] = web('/coaching/game.php?s=' . $sid, null, $gp);
+ck($code === 200 && str_contains($html, 'Aaj ka shabd') && str_contains($html, 'Aaj ka round khelo'), 'game home');
+$g = fn(array $post) => web('/coaching/game.php?s=' . $sid, $post + ['s' => $sid, 'csrf' => csrf($gp)], $gp);
+$g(['a' => 'start']); $g(['a' => 'start']);
+ck((int)cs_val('SELECT COUNT(*) FROM cs_game_round WHERE student_id=?', [$sid]) === 1, 'do baar start = ek round');
+$Rr = cs_row('SELECT * FROM cs_game_round WHERE student_id=?', [$sid]);
+for ($i = 0; $i < GM_ROUND; $i++) {
+    [, $html] = web('/coaching/game.php?s=' . $sid . '&v=play', null, $gp);
+    $items = json_decode((string)cs_val('SELECT items FROM cs_game_round WHERE id=?', [$Rr['id']]), true);
+    ck(!empty($items[$i]['servedAt']), "sawaal $i ka samay server par shuru");
+    $q = $items[$i]['src'] === 'word' ? gm_word($items[$i]['ref'], gm_band('10')) : gm_math('10', $items[$i]['ref']);
+    ck(str_contains($html, htmlspecialchars($q['q'], ENT_QUOTES)) && !str_contains($html, htmlspecialchars($q['rule'], ENT_QUOTES)), "sawaal $i dikha, niyam/jawab pehle nahi");
+    if ($i === 1) { $items[$i]['servedAt'] = time() - 60; cs_q('UPDATE cs_game_round SET items=? WHERE id=?', [json_encode($items), $Rr['id']]); }   // der se jawab = galat
+    if ($i === 2) $g(['a' => 'ans', 'r' => $Rr['id'], 'i' => 4, 'c' => 0]);      // aage ka sawaal pehle nahi
+    [, , $loc] = $g(['a' => 'ans', 'r' => $Rr['id'], 'i' => $i, 'c' => $q['ans']]);
+    $g(['a' => 'ans', 'r' => $Rr['id'], 'i' => $i, 'c' => ($q['ans'] + 1) % 4]);   // ek sawaal do baar nahi
+    ck(str_contains($loc, 'v=fb'), 'jawab ke baad feedback');
+}
+$items = json_decode((string)cs_val('SELECT items FROM cs_game_round WHERE id=?', [$Rr['id']]), true);
+$res = array_map(fn($it) => gm_item_result($it, time()), $items);
+ck($res === [true, false, true, true, true], 'sahi / der (galat) / sahi: ' . json_encode($res));
+[, $html] = web('/coaching/game.php?s=' . $sid . '&v=fb&r=' . $Rr['id'] . '&i=4', null, $gp);
+ck(str_contains($html, 'Round khatam: 4/5'), 'round ka hisaab');
+$finish = function () use ($sid) { foreach (cs_all('SELECT id FROM cs_game_round WHERE student_id=?', [$sid]) as $r)
+    cs_q("UPDATE cs_game_round SET items=? WHERE id=? AND items NOT LIKE '%correct%'", [json_encode(array_fill(0, 5, ['src' => 'math', 'ref' => 'x', 'servedAt' => 1, 'correct' => false])), $r['id']]); };
+for ($k = 0; $k < 5; $k++) { $g(['a' => 'start']); $finish(); }
+ck((int)cs_val('SELECT COUNT(*) FROM cs_game_round WHERE student_id=? AND d=CURDATE()', [$sid]) === 4, 'din me 4 round');
+[, $html] = web('/coaching/game.php?s=' . $sid, null, $gp);
+ck(str_contains($html, 'saare round ho gaye') && str_contains($html, 'league'), 'limit + league');
+[, , $loc] = web('/coaching/game.php?s=' . $sid, null, $o2);
+ck(str_contains($loc, 'index.php'), 'staff / doosre ko game nahi');
+[, , $loc] = web('/coaching/game.php?s=' . $sid, null, sess('family', '9876500099'));
+ck(str_contains($loc, 'me.php'), 'doosre parent ko bachche ka game nahi');
 
 // ---- 9. saare pannon me koi PHP galti nahi ----
 foreach (['home','students','add','dues','risk','enq','receipts','report','courses','team','apps','setup','more','att','att&batch=' . $batch . '&done=1'] as $p) {

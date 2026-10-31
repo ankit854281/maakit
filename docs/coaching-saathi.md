@@ -32,10 +32,11 @@ Sab **mobile + password** se (OTP / SMS nahi). Ek number par kai coaching / kai 
 - Har coaching ki website: `maakit.in/coaching/s/<naam>` (course, fees, batch, seat, call/WhatsApp, enquiry)
 - Saal ki report: fees judi, mili, maaf ki list, discount
 - Student app plan: ₹54 / ₹99, 7 din trial, Razorpay + webhook, owner gift me bhar sakta hai
+- **Game Zone** (school ke student app wala engine): roz 4 round × 5 sawaal (maths class ke hisaab se + English shabd), 20 second, XP, level, streak, chest, galat sawaal 1/3/7 din baad wapas, coaching ki weekly league, Aaj ka shabd. Teacher ko kuch nahi likhna.
 
 ## Live karne ke kadam
 
-1. `maakit.in/update.php?key=...` kholiye — naya code aur `sql/045`, `sql/046` apne aap chal jayengi.
+1. `maakit.in/update.php?key=...` kholiye — naya code aur `sql/045`, `sql/046`, `sql/047` apne aap chal jayengi.
 2. `maakit.in/coaching` kholkar "Apni coaching free me jodiye" se pehli coaching banaiye.
 3. Payment (jab lock chalu karna ho): `config.php` me `CS_RAZORPAY_KEY_ID`, `CS_RAZORPAY_KEY_SECRET`, `CS_RAZORPAY_WEBHOOK_SECRET`. Razorpay dashboard me webhook `https://maakit.in/coaching/webhook.php`, event `payment.captured`. Jab tak ye nahi bhare, kisi ka app band nahi hota.
 

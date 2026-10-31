@@ -44,11 +44,14 @@ echo '</div>';
 if (!$acc['open']) {
     $plans = cs_plans();
     echo '<div class="card lock"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
-         '<div class="big">App band hai</div><p>Haaziri, batch aur aage notes / result dekhne ke liye app chalu kariye.</p>',
+         '<div class="big">App band hai</div><p>Game Zone (roz ke maths + English sawaal, XP, league), haaziri aur batch ke liye app chalu kariye.</p>',
          '<a class="btn full" href="pay.php?sid=', $sid, '">', rs($plans['6m']['amount']), ' — 6 mahine ke liye chalu kariye</a>',
          '<p class="note">Ya ', rs($plans['12m']['amount']), ' me 12 mahine. Fees ka khata aur receipt hamesha free hain.</p></div>';
 } else {
     if ($acc['why'] === 'trial') echo '<div class="flash">Free trial — ', h(date('d M', strtotime($acc['till']))), ' tak. <a href="pay.php?sid=', $sid, '">Abhi chalu kariye</a></div>';
+    $played = (int)cs_val('SELECT COUNT(*) FROM cs_game_round WHERE student_id=? AND coaching_id=? AND d=CURDATE()', [$sid, $cid]);
+    echo '<a class="card" href="game.php?s=', $sid, '" style="display:block;text-decoration:none;color:inherit;border:2px solid var(--c)"><b style="font-size:18px">Game Zone</b>',
+         '<div class="sub">', $played ? 'Aaj ' . $played . ' round khele — aur kheliye' : 'Aaj ka round baaki hai — 5 sawaal, 20 second', '</div></a>';
     $en = cs_all("SELECT b.naam, b.timing, c.naam course, u.naam teacher FROM cs_enroll e JOIN cs_batch b ON b.id=e.batch_id AND b.coaching_id=e.coaching_id
                   JOIN cs_course c ON c.id=b.course_id AND c.coaching_id=e.coaching_id LEFT JOIN cs_user u ON u.id=b.teacher_id AND u.coaching_id=e.coaching_id
                   WHERE e.student_id=? AND e.coaching_id=? AND e.status='active'", [$sid, $cid]);
