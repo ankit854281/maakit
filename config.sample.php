@@ -67,3 +67,12 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // define('FAST2SMS_DELIVERY_ID', 'Smart OTP ID: delivery code, booking reference');
 // define('FAST2SMS_DAILY_LIMIT', '300'); // per database, includes login and handover SMS
 // See docs/fast2sms-setup.md before enabling. Team accounts need correct users.mobile.
+
+// ---- Coaching Saathi (maakit.in/coaching) ----
+// OTP upar wale Fast2SMS / WhatsApp se hi jaata hai. Sirf TESTING ke liye (code screen par dikhta hai):
+// define('CS_DEMO_OTP', true);   // live par kabhi nahi
+// Student app ka plan (₹54 / ₹99). Ye teeno bharne tak kisi bachche ka app LOCK nahi hota.
+// define('CS_RAZORPAY_KEY_ID', 'rzp_live_...');
+// define('CS_RAZORPAY_KEY_SECRET', 'private');
+// define('CS_RAZORPAY_WEBHOOK_SECRET', 'private');   // Razorpay > Webhooks: /coaching/webhook.php, event payment.captured
+// define('CS_PRICE_6M', 54);  define('CS_PRICE_12M', 99);

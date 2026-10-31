@@ -1,0 +1,3 @@
+# Coaching Saathi — har coaching ki website: /coaching/s/<naam>
+RewriteEngine On
+RewriteRule ^s/([a-z0-9-]+)/?$ site.php?c=$1 [L,QSA]
