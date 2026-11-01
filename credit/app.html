@@ -152,30 +152,45 @@ box-shadow:0 15px 30px rgba(28,52,91,.17);
 .nooffer{padding:14px;background:#fff5e5;border:1px solid #edddb9;color:#755329;border-radius:13px;font-size:12px;line-height:1.7;margin:14px 0}
 @media(max-width:360px){.compare-cards{gap:7px}.compare-cards .card{padding:11px 9px}.compare-cards .control{padding:7px 6px}}
 
+
+/* v5: product/amount-first experience */
+.feature-offer{background:#fff;border:1px solid #dce5fa;border-radius:24px;padding:20px;margin:13px 0 16px;box-shadow:0 11px 25px rgba(33,56,105,.07)}
+.offer-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:19px}
+.offer-tag{display:inline-flex;background:#eaf0ff;color:#445ac5;border-radius:40px;padding:7px 10px;font-size:10px;font-weight:800;letter-spacing:.035em}
+.offer-status{color:#81613c;font-size:10px;font-weight:800}
+.offer-label{font-size:15px;color:#53617b;font-weight:700}
+.offer-amount{font-size:clamp(37px,10vw,49px);font-weight:850;letter-spacing:-.055em;color:#172743;line-height:1.25;margin:5px 0}
+.offer-note{font-size:12px;line-height:1.55;color:#66758b}
+.offer-meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.offer-meta span{font-size:11px;background:#f2f5fb;color:#44546b;border-radius:9px;padding:8px 10px;font-weight:700}
+.feature-offer .primary{margin-top:3px}
+.amount-loan small{color:#304bb4;font-size:13px;font-weight:800}
+.amount-loan em{display:block;font-size:11px;font-style:normal;color:#718198;margin-top:5px}
+.secondary-action{display:block;width:100%;border:0;background:transparent;color:#5061d8;font-size:12px;font-weight:750;margin-top:6px;padding:14px 8px}
+
 </style></head>
 <body><div class="app">
 <header class="top"><span class="logo" aria-hidden="true">M</span><div class="brand"><b>MAAKIT <span>Credit</span></b><small>SMARTER FINANCE · PREVIEW</small></div><button class="round" type="button" onclick="nav('help')" aria-label="Help">?</button><button class="round" type="button" onclick="nav('account')" aria-label="Account">♙</button></header>
 <main>
 <section class="screen active" id="home">
-<div class="hero"><span class="chip">✦ THE SMART MONEY EDITION</span><h1>Borrow smarter.<br>Live better.</h1><p>Know your numbers before your next move. Clear EMIs, transparent costs, and financial confidence — bilkul simple.</p><button class="primary" onclick="nav('calculator')">Explore EMI <span aria-hidden="true">→</span></button></div>
-<div class="notice">ⓘ This is a product demo. No real loan applications, approvals, disbursements, or KYC are available.</div>
-<div class="headline"><h2>Explore your options</h2><small>Information only</small></div>
-<button class="loan" onclick="detail('Personal Loan')"><span class="licon">👤</span><span><b>Personal Loan</b><small>Understand EMI, interest and costs</small></span><span class="arrow">›</span></button>
-<button class="loan" onclick="detail('Business Loan')"><span class="licon">💼</span><span><b>Business Loan</b><small>Plan your business borrowing</small></span><span class="arrow">›</span></button>
-<button class="loan" onclick="detail('Two-Wheeler Finance')"><span class="licon">🛵</span><span><b>Two-Wheeler Finance</b><small>Estimate down payment and repayments</small></span><span class="arrow">›</span></button>
-<button class="loan" onclick="detail('Loan Against Property')"><span class="licon">⌂</span><span><b>Loan Against Property</b><small>Learn about secured loans</small></span><span class="arrow">›</span></button>
-
-<div class="headline"><h2>Financial planning tools</h2><small>All free · No login</small></div>
+<div class="hero"><span class="chip">✦ YOUR FINANCIAL JOURNEY</span><h1>Money goals?<br>Start with clarity.</h1><p>Explore borrowing options with simple, upfront examples. No hidden claims. No pressure.</p><button class="primary" onclick="detail('Personal Loan')">Explore personal loan <span aria-hidden="true">→</span></button></div>
+<div class="notice">ⓘ Preview only. Amounts below are illustrative, not available credit limits or approved offers. No loan applications or KYC are active.</div>
+<div class="headline"><h2>Your loan options</h2><small>Example amounts · Not offers</small></div>
+<div class="feature-offer"><div class="offer-heading"><span class="offer-tag">POPULAR EXAMPLE</span><span class="offer-status">DEMO ONLY</span></div><div class="offer-label">Personal Loan</div><div class="offer-amount">₹25,000</div><div class="offer-note">Illustrative loan amount — not pre-approved or available to borrow.</div><div class="offer-meta"><span>12-month sample</span><span>No lender linked</span></div><button class="primary block" onclick="detail('Personal Loan')">View loan details →</button></div>
+<button class="loan amount-loan" onclick="detail('Business Loan')"><span class="licon">💼</span><span><b>Business Loan</b><small>Illustrative amount · ₹50,000</small><em>Explore product details</em></span><span class="arrow">›</span></button>
+<button class="loan amount-loan" onclick="detail('Two-Wheeler Finance')"><span class="licon">🛵</span><span><b>Two-Wheeler Finance</b><small>Illustrative amount · ₹75,000</small><em>Explore product details</em></span><span class="arrow">›</span></button>
+<button class="loan amount-loan" onclick="detail('Loan Against Property')"><span class="licon">⌂</span><span><b>Loan Against Property</b><small>Illustrative amount · ₹1,00,000</small><em>Explore product details</em></span><span class="arrow">›</span></button>
+<div class="headline"><h2>Planning tools</h2><small>Optional · No login</small></div>
 <button class="loan" onclick="nav('compare')"><span class="licon" style="background:#e9efff">⇄</span><span><b>Compare loan scenarios</b><small>See which example costs less overall</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="nav('schedule')"><span class="licon" style="background:#e5f5f1">▤</span><span><b>Repayment breakdown</b><small>View month-by-month principal and interest</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="nav('eligibility')"><span class="licon" style="background:#fff1dc">✓</span><span><b>Borrowing readiness</b><small>Check what to review before applying anywhere</small></span><span class="arrow">›</span></button>
 <div class="headline"><h2>Money, made simple</h2><button type="button" class="back" style="margin:0" onclick="nav('learn')">View guide →</button></div><div class="card"><div class="two"><div class="tile"><small>01 / Discover</small><strong>Know the basics</strong></div><div class="tile"><small>02 / Calculate</small><strong>Plan your EMI</strong></div><div class="tile"><small>03 / Verify</small><strong>Check the lender</strong></div><div class="tile"><small>04 / Decide</small><strong>Choose wisely</strong></div></div></div>
 </section>
 <section class="screen" id="product"><button class="back" onclick="nav('home')">← Back</button><span class="chip">PRODUCT EXPLAINER · NOT AN OFFER</span><h1 class="page-title" id="productName">Personal Loan</h1><p class="subtitle" id="productDesc">Explore how loan costs work before choosing an actual lender.</p>
-<div class="card"><small class="note">Example loan amount — not a lending limit</small><div class="price">₹25,000</div><div class="two"><div class="tile"><small>Sample tenure</small><strong>12 months</strong></div><div class="tile"><small>Sample nominal rate</small><strong>18% yearly</strong></div></div><p class="note">No rate, loan amount, or processing fee shown here is an offer from MAAKIT or any lender.</p></div>
+<div class="card"><small class="note">Example loan amount — not a lending limit</small><div class="price" id="productAmount">₹25,000</div><div class="two"><div class="tile"><small>Sample tenure</small><strong>12 months</strong></div><div class="tile"><small>Sample nominal rate</small><strong>18% yearly</strong></div></div><p class="note">No rate, loan amount, or processing fee shown here is an offer from MAAKIT or any lender.</p></div>
 <h3>What to compare</h3><ul class="checks"><li>APR and total repayment</li><li>Processing fees, GST and other charges</li><li>Eligibility requirements set by the actual lender</li><li>Prepayment, late fees and grievance details</li></ul>
 <h3>Important documents to read</h3><div class="card"><div class="link-row">Key Facts Statement (KFS) <span>✓</span></div><div class="link-row">Lender identity and contact <span>✓</span></div><div class="link-row">Privacy and consent disclosures <span>✓</span></div></div>
-<div class="fixed-action"><button class="primary block" onclick="nav('calculator')">Try an EMI example →</button></div>
+<div class="fixed-action"><button class="primary block" onclick="nav('eligibility')">View borrowing checklist →</button><button class="secondary-action" onclick="nav('calculator')">See optional EMI calculator</button></div>
 </section>
 <section class="screen" id="calculator"><button class="back" onclick="nav('home')">← Back</button><h1 class="page-title">EMI calculator</h1><p class="subtitle">Change the example values. This calculation happens only on your device.</p>
 <div class="card"><label class="label" for="amount">Loan amount (₹)</label><input class="control" id="amount" type="number" min="3000" max="500000" value="25000" inputmode="numeric"><label class="label" for="annual">Nominal annual interest (%)</label><input class="control" id="annual" type="number" min="0" max="60" step=".5" value="18"><label class="label" for="months">Tenure (months)</label><select class="control" id="months"><option>6</option><option selected>12</option><option>18</option><option>24</option><option>36</option><option>60</option></select><label class="label" for="fee">Example processing fee (%)</label><input class="control" id="fee" type="number" min="0" max="10" step=".5" value="0">
@@ -252,13 +267,13 @@ box-shadow:0 15px 30px rgba(28,52,91,.17);
 <p class="note">These checks are for education only, not a lending decision or application.</p>
 </section>
 </main>
-<nav class="bottom" aria-label="Main app navigation"><button data-nav="home" class="active" onclick="nav('home')"><b>⌂</b>Home</button><button data-nav="calculator" onclick="nav('calculator')"><b>▦</b>EMI</button><button data-nav="help" onclick="nav('help')"><b>?</b>Help</button><button data-nav="account" onclick="nav('account')"><b>♙</b>Account</button></nav>
+<nav class="bottom" aria-label="Main app navigation"><button data-nav="home" class="active" onclick="nav('home')"><b>⌂</b>Home</button><button data-nav="compare" onclick="nav('compare')"><b>⇄</b>Explore</button><button data-nav="help" onclick="nav('help')"><b>?</b>Help</button><button data-nav="account" onclick="nav('account')"><b>♙</b>Account</button></nav>
 </div>
 <script>
 'use strict';
 const names=['home','product','calculator','eligibility','consent','help','account','settings','compare','schedule','learn'];
 function nav(id){if(!names.includes(id))return;document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id));window.scrollTo({top:0,behavior:'instant'});history.replaceState(null,'','#'+id)}
-function detail(name){document.getElementById('productName').textContent=name;document.getElementById('productDesc').textContent='Learn what to compare before choosing an actual regulated lender for '+name.toLowerCase()+'.';nav('product')}
+function detail(name){const amounts={'Personal Loan':25000,'Business Loan':50000,'Two-Wheeler Finance':75000,'Loan Against Property':100000};document.getElementById('productName').textContent=name;document.getElementById('productAmount').textContent=money(amounts[name]||25000);document.getElementById('productDesc').textContent='Explore this borrowing category using an illustrative amount. This is not an available or pre-approved offer.';nav('product')}
 const money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 function calc(){const p=Number(document.getElementById('amount').value),rate=Number(document.getElementById('annual').value),n=Number(document.getElementById('months').value),fee=Number(document.getElementById('fee').value);const e=document.getElementById('emi'),t=document.getElementById('total');if(['amount','annual','fee'].some(id=>document.getElementById(id).value.trim()==='')||![p,rate,n,fee].every(Number.isFinite)||p<3000||p>500000||rate<0||rate>60||fee<0||fee>10){e.textContent='Check your values';t.textContent='';return}const r=rate/1200,emi=r===0?p/n:p*r/(1-Math.pow(1+r,-n));e.textContent=money(emi)+' / month';t.textContent='Total EMI payments: '+money(emi*n)+' · Example fee: '+money(p*fee/100)+' · Total before taxes: '+money(emi*n+p*fee/100)}
 ['amount','annual','months','fee'].forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
