@@ -7,7 +7,11 @@
   Vehicle booking, Local services, Parcel (Soon) — each tab has its own colour
   and the whole header, banner and page tint change with it; glass
   (transparent, blurred) tabs, search and bottom bar. Base page colour is a
-  soft pearl (#F4F1F8), not cream.
+  soft pearl (#F4F1F8), not cream. The chosen folder slides between tabs and
+  the header colour fades (no jump); swipe left/right also changes tab.
+- Owner: no plain line icons where a picture is needed — tabs, categories,
+  items, vehicles, services and empty states use drawn illustrations from
+  `app-trial/web/ill.js` (`MKILL(key, ...)`). Add new drawings there.
 - It uses SAMPLE shops and SAMPLE prices and says so on every screen ("Trial
   version" ribbon). It is not connected to `mk_orders`. Do not present it as
   the live app.
