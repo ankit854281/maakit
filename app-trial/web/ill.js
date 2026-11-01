@@ -198,6 +198,111 @@
         '<rect x="28" y="18" width="8" height="38" fill="#FFB020"/><rect x="28" y="29" width="8" height="2" fill="#E0951A"/>' + shine(16, 32, 3, 18));
     },
 
+
+    /* ---------- food (v2) ---------- */
+    plate: function (inner) {
+      return svg('', '<ellipse cx="32" cy="44" rx="28" ry="11" fill="#D7DEE5"/><ellipse cx="32" cy="42" rx="28" ry="10" fill="#FFFFFF"/><ellipse cx="32" cy="42" rx="21" ry="6.5" fill="#F1F4F7"/>' + (inner || ''));
+    },
+    samosa: function () {
+      var a = id();
+      var one = function (x, y, r) { return '<g transform="translate(' + x + ' ' + y + ') rotate(' + r + ')"><path d="M0 -14L13 9H-13z" fill="url(#' + a + ')"/><path d="M0 -14L13 9H-13z" fill="none" stroke="#B9651F" stroke-width="1.2" stroke-linejoin="round"/><path d="M-6 2l4 2M2 -3l3 3M-2 6l5 0" stroke="#C97A2E" stroke-width="1" stroke-linecap="round"/></g>'; };
+      return D.plate(one(22, 36, -12) + one(42, 35, 14) + one(32, 30, 0) + '<path d="M48 44c3 0 6 1 6 3s-3 3-6 3-6-1-6-3 3-3 6-3z" fill="#2FA35E"/>').replace('<defs></defs>', '<defs>' + lg(a, '#F7C574', '#D98A30') + '</defs>');
+    },
+    chai: function () {
+      var a = id();
+      return svg(lg(a, '#FFFFFF', '#E9EDF1', true),
+        '<path d="M24 8c-3 4 3 6 0 10M32 6c-3 4 3 6 0 10M40 8c-3 4 3 6 0 10" stroke="#C9B6A6" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+        '<ellipse cx="32" cy="52" rx="22" ry="5" fill="#E3E8ED"/>' +
+        '<path d="M14 22h36l-3 26a6 6 0 0 1-6 5H23a6 6 0 0 1-6-5z" fill="url(#' + a + ')"/><ellipse cx="32" cy="22" rx="18" ry="4.5" fill="#C98A52"/><ellipse cx="29" cy="21.5" rx="7" ry="1.3" fill="#E2B07E"/>' +
+        '<path d="M49 28c7 0 8 12 0 13" stroke="#E3E8ED" stroke-width="4" fill="none"/><path d="M20 34h24" stroke="#F36B21" stroke-width="3"/>');
+    },
+    jalebi: function () {
+      var sp = function (cx, cy) { return '<path d="M' + cx + ' ' + cy + 'm-7 0a7 7 0 1 0 7 -7a4.5 4.5 0 1 0 -4.5 4.5a2 2 0 1 0 2 -2" fill="none" stroke="#F28C1E" stroke-width="3.4" stroke-linecap="round"/><path d="M' + cx + ' ' + cy + 'm-7 0a7 7 0 1 0 7 -7" fill="none" stroke="#FFC261" stroke-width="1.2" stroke-linecap="round" opacity=".8"/>'; };
+      return D.plate(sp(22, 38) + sp(40, 38) + sp(31, 30));
+    },
+    mealthali: function () {
+      var k = function (cx, cy, c, top) { return '<ellipse cx="' + cx + '" cy="' + (cy + 2) + '" rx="7.5" ry="3.2" fill="#AEBAC5"/><ellipse cx="' + cx + '" cy="' + cy + '" rx="7.5" ry="3.2" fill="#DDE3E9"/><ellipse cx="' + cx + '" cy="' + cy + '" rx="6" ry="2.4" fill="' + c + '"/>' + (top || ''); };
+      return svg('',
+        '<ellipse cx="32" cy="44" rx="29" ry="13" fill="#9AA7B1"/><ellipse cx="32" cy="42" rx="29" ry="12" fill="#E3E9EE"/><ellipse cx="32" cy="42" rx="24" ry="9" fill="#CBD4DC"/>' +
+        k(18, 37, '#E8B23A') + k(30, 33, '#B5452B') + k(43, 36, '#F7F3EA') +
+        '<ellipse cx="24" cy="46" rx="9" ry="3.6" fill="#F7EBD3"/><ellipse cx="24" cy="45" rx="8" ry="3" fill="#E9C98F"/>' +
+        '<ellipse cx="40" cy="47" rx="7" ry="3" fill="#FFFFFF"/><circle cx="38" cy="46" r="1" fill="#F3EEE4"/><circle cx="42" cy="47" r="1" fill="#F3EEE4"/>' +
+        '<path d="M48 42l6 4" stroke="#2FA35E" stroke-width="2.5" stroke-linecap="round"/>');
+    },
+    paratha: function () {
+      var a = id();
+      return D.plate('<ellipse cx="31" cy="38" rx="19" ry="8" fill="url(#' + a + ')"/><ellipse cx="33" cy="35" rx="17" ry="7" fill="#EDBB6A"/><path d="M22 34c4 2 8 2 12 0M28 38c4 1 8 1 11-1" stroke="#C98A3A" stroke-width="1.3" fill="none" stroke-linecap="round"/><circle cx="26" cy="36" r="1.2" fill="#9A5F22"/><circle cx="38" cy="33" r="1.2" fill="#9A5F22"/><rect x="40" y="38" width="9" height="6" rx="2" fill="#FFF2B8"/>').replace('<defs></defs>', '<defs>' + lg(a, '#F2C27A', '#C98A3A') + '</defs>');
+    },
+    lassi: function () {
+      var a = id();
+      return svg(lg(a, '#FFFFFF', '#F6EBD8', true),
+        '<path d="M18 14h28l-4 40a4 4 0 0 1-4 3H26a4 4 0 0 1-4-3z" fill="url(#' + a + ')"/><path d="M18 14h28l-1 8H19z" fill="#FFF9EE"/>' +
+        '<circle cx="28" cy="13" r="5" fill="#FFFDF7"/><circle cx="35" cy="12" r="6" fill="#FFFFFF"/><circle cx="40" cy="14" r="4" fill="#FFFDF7"/><circle cx="34" cy="10" r="1.6" fill="#F28C1E"/><path d="M30 10l2-2" stroke="#2FA35E" stroke-width="1.5"/>' +
+        '<rect x="38" y="2" width="3" height="18" rx="1.5" transform="rotate(14 39 11)" fill="#F36B21"/>' + shine(22, 20, 3, 28));
+    },
+    chaat: function () {
+      return svg('',
+        '<path d="M8 32h48c-1 13-11 21-24 21S9 45 8 32z" fill="#3E7D5A"/><path d="M8 32h48c0 2-8 4-24 4S8 34 8 32z" fill="#5FA27C"/>' +
+        '<ellipse cx="32" cy="31" rx="22" ry="6" fill="#F3E3C2"/><circle cx="22" cy="29" r="3.5" fill="#E6B05A"/><circle cx="31" cy="27" r="4" fill="#E9BB6A"/><circle cx="41" cy="29" r="3.5" fill="#E6B05A"/>' +
+        '<path d="M18 31c4-3 10-3 14 0s10 3 14 0" stroke="#B5452B" stroke-width="2" fill="none"/><path d="M20 27c3 1 6 1 9 0M34 25c3 1 5 1 8 0" stroke="#FFFFFF" stroke-width="1.6" fill="none"/>' +
+        '<circle cx="26" cy="26" r="1" fill="#C0392B"/><circle cx="37" cy="26" r="1" fill="#C0392B"/><circle cx="30" cy="31" r="1" fill="#2FA35E"/><circle cx="44" cy="27" r="1" fill="#2FA35E"/>');
+    },
+    kachori: function () {
+      var a = id(), one = function (x, y) { return '<ellipse cx="' + x + '" cy="' + y + '" rx="11" ry="7" fill="url(#' + a + ')"/><path d="M' + (x - 6) + ' ' + (y - 2) + 'c3-2 9-2 12 0" stroke="#FCE1A8" stroke-width="1.4" fill="none"/><circle cx="' + (x + 3) + '" cy="' + (y + 2) + '" r="1" fill="#A8641F"/>'; };
+      return D.plate(one(23, 38) + one(41, 38) + one(32, 31)).replace('<defs></defs>', '<defs>' + rg(a, '#F5C77A', '#C97C2A') + '</defs>');
+    },
+    poha: function () {
+      return D.plate('<ellipse cx="32" cy="37" rx="18" ry="7.5" fill="#F2D35A"/><circle cx="24" cy="35" r="1.5" fill="#2FA35E"/><circle cx="36" cy="33" r="1.5" fill="#2FA35E"/><circle cx="30" cy="38" r="1.2" fill="#E0332B"/><circle cx="40" cy="38" r="1.3" fill="#8A5A2B"/><circle cx="27" cy="31" r="1.1" fill="#8A5A2B"/><path d="M42 30l6-3" stroke="#2FA35E" stroke-width="2" stroke-linecap="round"/><circle cx="44" cy="40" r="3" fill="#F7E36A"/>');
+    },
+
+    /* ---------- tab icons (v2, bright) ---------- */
+    t_food: function () {
+      var a = id(), b = id();
+      return svg(lg(a, '#FFFFFF', '#E3E7EE') + lg(b, '#FFE0B0', '#F7B860'),
+        '<path d="M24 10c-3 4 3 6 0 10M32 8c-3 4 3 6 0 10M40 10c-3 4 3 6 0 10" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".85"/>' +
+        '<ellipse cx="32" cy="32" rx="22" ry="7" fill="url(#' + b + ')"/><circle cx="24" cy="30" r="3" fill="#E0332B"/><circle cx="35" cy="28" r="3.2" fill="#2FA35E"/><circle cx="42" cy="31" r="2.5" fill="#F2D35A"/><path d="M27 33c3-2 6-2 9 0" stroke="#fff" stroke-width="1.5" fill="none"/>' +
+        '<path d="M9 32h46c-1 13-10 21-23 21S10 45 9 32z" fill="url(#' + a + ')"/><path d="M11 38h42" stroke="#F36B21" stroke-width="3"/>' + shine(14, 41, 12, 3) + '<rect x="24" y="52" width="16" height="4" rx="2" fill="#C9CFD8"/>');
+    },
+    t_shops: function () {
+      var a = id();
+      return svg(lg(a, '#7FB2FF', '#3D6FE0'),
+        '<path d="M8 22l4-12h40l4 12z" fill="#FF5A7A"/><path d="M8 22h48v4a6 6 0 0 1-8 5 6 6 0 0 1-8 0 6 6 0 0 1-8 0 6 6 0 0 1-8 0 6 6 0 0 1-8 0 6 6 0 0 1-8-5z" fill="#FFFFFF"/><path d="M16 10l-2 12M26 10l-1 12M38 10l1 12M48 10l2 12" stroke="#E63E62" stroke-width="2"/>' +
+        '<rect x="11" y="30" width="42" height="24" rx="3" fill="url(#' + a + ')"/><rect x="16" y="35" width="13" height="19" rx="2" fill="#FFE27A"/><rect x="33" y="35" width="15" height="10" rx="2" fill="#DFF0FF"/>' +
+        '<path d="M40 40l2-6h8l2 6z" fill="#2FA35E"/><rect x="43" y="38" width="12" height="13" rx="2" fill="#FF8A3D"/><path d="M46 38v-3a3 3 0 0 1 6 0v3" stroke="#B9380A" stroke-width="1.5" fill="none"/>');
+    },
+    t_bike: function () {
+      return svg('',
+        '<path d="M20 44l6-12h12l8 12" stroke="#2A1F2D" stroke-width="3" fill="none" stroke-linejoin="round"/>' +
+        '<path d="M12 40c0-6 6-8 12-8h12l6-8h6l-4 10c6 1 9 4 9 8z" fill="#3D7BE8"/><path d="M14 40h40" stroke="#2A5DC4" stroke-width="2"/>' +
+        '<rect x="22" y="14" width="13" height="18" rx="5" fill="#F36B21" transform="rotate(14 28 23)"/><circle cx="26" cy="10" r="6.5" fill="#FFFFFF"/><path d="M19.5 10a6.5 6.5 0 0 1 13 0z" fill="#E0332B"/><rect x="26" y="9" width="6" height="3" rx="1.5" fill="#2A1F2D"/>' +
+        '<path d="M32 22l10 2" stroke="#F36B21" stroke-width="4" stroke-linecap="round"/><path d="M26 32l6 10" stroke="#3A3F58" stroke-width="5" stroke-linecap="round"/>' +
+        '<circle cx="17" cy="47" r="7.5" fill="#2A1F2D"/><circle cx="17" cy="47" r="3" fill="#C9D3DA"/><circle cx="49" cy="47" r="7.5" fill="#2A1F2D"/><circle cx="49" cy="47" r="3" fill="#C9D3DA"/>');
+    },
+    t_parcel: function () {
+      return svg('',
+        '<path d="M4 22h28v26H4z" fill="#FFFFFF"/><path d="M32 28h12l8 10v10H32z" fill="#3D7BE8"/><path d="M36 31h7l5 7H36z" fill="#DFF0FF"/>' +
+        '<rect x="4" y="22" width="28" height="26" rx="2" fill="#F7F9FC"/><path d="M8 18l9-6 9 6v10H8z" fill="#E7A764"/><path d="M8 18l9-6 9 6-9 5z" fill="#F7C98C"/><path d="M15 15l6-3" stroke="#FBE7C6" stroke-width="2"/>' +
+        '<rect x="10" y="30" width="16" height="12" rx="2" fill="#D98A40"/><rect x="10" y="30" width="16" height="4" fill="#F0B068"/>' +
+        '<circle cx="14" cy="50" r="6" fill="#2A1F2D"/><circle cx="14" cy="50" r="2.4" fill="#C9D3DA"/><circle cx="44" cy="50" r="6" fill="#2A1F2D"/><circle cx="44" cy="50" r="2.4" fill="#C9D3DA"/>' +
+        '<path d="M56 30h6M54 36h8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>');
+    },
+
+    auto: function () {
+      return svg('',
+        '<path d="M10 22c0-6 5-10 12-10h14c8 0 14 6 16 14l2 6v12H10z" fill="#2A1F2D"/>' +
+        '<path d="M10 28h44v18H10z" fill="#F2C230"/><path d="M10 28h22v18H10z" fill="#3FA66B"/><rect x="14" y="30" width="14" height="10" rx="2" fill="#DFF0E6"/><path d="M36 30h12l4 10H36z" fill="#FFF6D6"/>' +
+        '<rect x="54" y="38" width="5" height="3" rx="1.5" fill="#FFF1A8"/>' + wheel(18, 49, 6) + wheel(48, 49, 6));
+    },
+    erick: function () {
+      return svg('',
+        '<rect x="8" y="12" width="46" height="5" rx="2.5" fill="#2A5DC4"/><path d="M12 17v15M50 17v15" stroke="#9AA7B1" stroke-width="2"/>' +
+        '<path d="M8 32h48v12a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3z" fill="#3D7BE8"/><rect x="14" y="26" width="20" height="8" rx="3" fill="#8A5A3C"/><rect x="38" y="26" width="12" height="8" rx="3" fill="#8A5A3C"/>' +
+        '<path d="M52 32l6-10" stroke="#2A1F2D" stroke-width="2.5" stroke-linecap="round"/>' + wheel(16, 49, 6) + wheel(46, 49, 6));
+    },
+    pin: function (c) {
+      c = c || '#D6246E';
+      return svg('', '<ellipse cx="32" cy="56" rx="10" ry="3" fill="#2A1530" opacity=".15"/><path d="M32 56C20 42 13 33 13 24a19 19 0 0 1 38 0c0 9-7 18-19 32z" fill="' + c + '"/><circle cx="32" cy="24" r="8" fill="#fff"/>');
+    },
     /* ---------- shop items ---------- */
     packet: function (c, lbl) {
       var a = id();
@@ -382,6 +487,9 @@
         '<path d="M150 70q96 26 192 0" stroke="#6FA287" stroke-width="2" fill="none"/>' + lights +
         '<rect x="160" y="150" width="80" height="38" rx="4" fill="#E9D6DF"/>' + nest('kalash', 168, 104, 54) + nest('kadhai', 250, 128, 64) + nest('diya', 206, 140, 36) + tree(40, 182, .9) + plant(116, 176, .9));
     },
+    ride: function () {
+      return sceneSvg('', tree(300, 182, 1) + tree(340, 186, .8) + speed(90, 140) + scooter(190, 190, false, true) + plant(40, 176, .8));
+    },
     parcel: function () {
       return sceneSvg('',
         tree(326, 182, .9) + nest('parcel', 236, 118, 70) + nest('docs', 288, 136, 50) + speed(70, 140) +
@@ -393,7 +501,7 @@
     var f = D[key];
     if (!f) return '';
     var args = Array.prototype.slice.call(arguments, 1).map(function (a) { return typeof a === 'string' ? calm(a) : a; });
-    return calm(f.apply(null, args));
+    return f.apply(null, Array.prototype.slice.call(arguments, 1));
   };
-  window.MKSCENE = function (key, lang) { var f = SC[key]; return f ? calm(f(lang || 'en')) : ''; };
+  window.MKSCENE = function (key, lang) { var f = SC[key]; return f ? f(lang || 'en') : ''; };
 })();

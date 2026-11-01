@@ -10,8 +10,8 @@ android {
         applicationId 'com.maakit.trial'
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName '0.1-trial'
+        versionCode 2
+        versionName '0.2-trial'
     }
 
     compileOptions {

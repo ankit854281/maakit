@@ -1,28 +1,26 @@
-# Customer app trial (APK) — owner request, 1 November 2026
+# Customer app trial (APK) — owner request, 1 November 2026 (v0.2, latest wins)
 
 - `app-trial/web/index.html` is a clickable prototype of the customer app (one
-  file, no build): language → login/OTP → address → home → shop → item sheet →
-  cart → live tracking → orders → account, English and Hindi.
-- Colours (owner, 1 Nov, latest wins): ONE calm palette everywhere — deep
-  plum-magenta header (#A62A62 → #4A1236), near-white page #F7F5F8, one soft
-  rose tint #F8EEF3 behind every tile. Tabs do NOT get their own colours.
-  `ill.js` maps every drawing to this palette (`PAL`). Each home tab opens
-  with a scene illustration (`MKSCENE`), like the reference app.
-- Look (owner): service tabs on the home header like folder tabs — Shops,
-  Vehicle booking, Local services, Parcel (Soon) — each tab has its own colour
-  (superseded: now one colour, see above); glass
-  (transparent, blurred) tabs, search and bottom bar. Base page colour is a
-  soft pearl (#F4F1F8), not cream. The chosen folder slides between tabs and
-  the header colour fades (no jump); swipe left/right also changes tab.
-- Owner: no plain line icons where a picture is needed — tabs, categories,
-  items, vehicles, services and empty states use drawn illustrations from
-  `app-trial/web/ill.js` (`MKILL(key, ...)`). Add new drawings there.
-- It uses SAMPLE shops and SAMPLE prices and says so on every screen ("Trial
-  version" ribbon). It is not connected to `mk_orders`. Do not present it as
-  the live app.
-- `app-trial/android/` wraps that file in a WebView. `.github/workflows/app-trial.yml`
-  builds a debug APK on every push to `app-trial/**` and replaces the GitHub
-  release `app-trial`; download link:
+  file + `ill.js` drawings + Poppins fonts, no build). Owner: "design it the
+  same way as the screen recording" of the reference app he shared.
+- Service tabs, in THIS order and colour (owner): Food Delivery (orange),
+  Nearby Shops (purple), Bike Taxi (lemon yellow), Parcel Delivery (blue).
+  Folder-style tabs; the chosen folder slides, the header colour cross-fades,
+  the page below stays white with a faint tint of the tab colour. The earlier
+  "one colour for all tabs" rule is withdrawn.
+- Screens: login (brand band + white sheet), OTP, "Where should we deliver?",
+  map pin, address form with "Help the rider" chips, food (categories,
+  restaurants, top orders), restaurant, nearby shops (Chat with Shopkeeper /
+  Book Delivery → "Have you checked with the shop…?" → book delivery), shop
+  page, bike taxi booking, parcel booking, cart with "To pay", payment
+  method, live tracking, order history, profile. English and Hindi.
+- Pictures are drawings in `ill.js` (`MKILL`, `MKSCENE`) — no web photos.
+- SAMPLE restaurants, shops and prices; every screen says "Trial". Not
+  connected to `mk_orders`. Money rule still holds: goods are paid to the
+  shop/restaurant; Maakit takes only the delivery fee.
+- `app-trial/android/` wraps it in a WebView (JS bridge `Android.setBar` colours
+  the status bar per tab). `.github/workflows/app-trial.yml` builds a debug APK
+  on every push to `app-trial/**` and replaces the `app-trial` release:
   https://github.com/ankit854281/maakit/releases/download/app-trial/maakit-trial.apk
 - `app-trial/.htaccess` keeps the folder off maakit.in.
 

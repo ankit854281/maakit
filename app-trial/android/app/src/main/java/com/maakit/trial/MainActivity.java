@@ -2,8 +2,10 @@ package com.maakit.trial;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -38,6 +40,7 @@ public class MainActivity extends Activity {
                 return openOutside(Uri.parse(url));
             }
         });
+        web.addJavascriptInterface(new Bridge(), "Android");
         setContentView(web);
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
@@ -55,6 +58,19 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) {
         }
         return true;
+    }
+
+    /** Lets the page colour the phone's status bar to match the chosen service tab. */
+    private class Bridge {
+        @JavascriptInterface
+        public void setBar(final String hex) {
+            runOnUiThread(() -> {
+                try {
+                    getWindow().setStatusBarColor(Color.parseColor(hex));
+                } catch (Exception ignored) {
+                }
+            });
+        }
     }
 
     @Override
