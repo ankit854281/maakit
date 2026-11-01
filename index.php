@@ -168,18 +168,32 @@ $faq = [
   ['How can my shop join?', 'मेरी दुकान कैसे जुड़ेगी?', 'Choose “Join as a shop”, fill in your details, and our team will call you.', '“दुकान जोड़िए” चुनिए, अपनी जानकारी भरिए — हमारी टीम आपको फ़ोन करेगी।'],
   ['How do I become a Sarathi?', 'सारथी कैसे बनें?', 'Open the Sarathi Partner app, add your Aadhaar and PAN, and choose your vehicle and area.', 'सारथी पार्टनर ऐप खोलिए, आधार और PAN जोड़िए, और अपनी गाड़ी तथा इलाक़ा चुनिए।'],
 ];
-$scripts = ['माकिट', 'মাকিট', 'மாகிட்', 'మాకిట్', 'ಮಾಕಿಟ್', 'മാകിറ്റ്', 'માકિટ', 'ਮਾਕਿਟ', 'ମାକିଟ୍', 'ماکٹ'];
+$scripts = [['माकिट','Hindi'], ['মাকিট','Bangla'], ['மாகிட்','Tamil'], ['మాకిట్','Telugu'], ['ಮಾಕಿಟ್','Kannada'], ['മാകിറ്റ്','Malayalam'], ['માકિટ','Gujarati'], ['ਮਾਕਿਟ','Punjabi'], ['ମାକିଟ୍','Odia'], ['ماکٹ','Urdu'], ['Maakit','English']];
 $words = is_hi() ? ['अब घर तक।', 'एक ऐप में।', 'दुकान के दाम पर।'] : ['delivered.', 'in one app.', 'at shop prices.'];
-// App store buttons. Apps abhi store par nahi hain, isliye "jald" likha hai aur ye
-// link nahi hain. App live hote hi yahan Google/Apple ke official badge aur asli
-// link lagaiye (dono ke apne niyam hain, apna banaya logo nahi chalega).
-$stores = function ($cls = '') {
-  $soon = h(t('Coming soon on', 'जल्द आ रहा है'));
-  return '<div class="stores ' . $cls . '">'
-    . '<span class="store" aria-label="' . h(t('Google Play — coming soon', 'Google Play — जल्द')) . '"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l13 8.5-13 8.5z" fill="currentColor"/></svg><span><small>' . $soon . '</small><b>Google Play</b></span></span>'
-    . '<span class="store" aria-label="' . h(t('App Store — coming soon', 'App Store — जल्द')) . '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg><span><small>' . $soon . '</small><b>App Store</b></span></span>'
-    . '</div>';
+// App store buttons — owner (1 Nov): "coming soon" mat dikhao. Isliye ye
+// button TABHI dikhte hain jab config.php me asli link ho:
+//   define('APP_PLAY_URL', 'https://play.google.com/store/apps/details?id=...');
+//   define('APP_STORE_URL', 'https://apps.apple.com/in/app/...');
+// Link nahi to button nahi — jhootha "available" kabhi nahi.
+$play_url  = defined('APP_PLAY_URL') ? APP_PLAY_URL : '';
+$apple_url = defined('APP_STORE_URL') ? APP_STORE_URL : '';
+$has_app   = ($play_url !== '' || $apple_url !== '');
+$stores = function ($cls = '') use ($play_url, $apple_url) {
+  if ($play_url === '' && $apple_url === '') return '';
+  $out = '<div class="stores ' . $cls . '">';
+  if ($play_url !== '') $out .= '<a class="store" href="' . h($play_url) . '"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l13 8.5-13 8.5z" fill="currentColor"/></svg><span><small>' . h(t('GET IT ON', 'यहाँ से पाइए')) . '</small><b>Google Play</b></span></a>';
+  if ($apple_url !== '') $out .= '<a class="store" href="' . h($apple_url) . '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg><span><small>' . h(t('Download on the', 'यहाँ से डाउनलोड')) . '</small><b>App Store</b></span></a>';
+  return $out . '</div>';
 };
+// Service tasveer: assets/home/<naam>.webp|.jpg|.png ho to wahi (owner AI se
+// banwa kar bhejega), warna inline SVG.
+function mk_pic($key, $alt = '') {
+  foreach (['webp', 'jpg', 'png'] as $ext) {
+    $f = '/assets/home/' . $key . '.' . $ext;
+    if (is_file(__DIR__ . $f)) return '<img src="' . h($f) . '?v=' . filemtime(__DIR__ . $f) . '" alt="' . h($alt) . '" loading="lazy" decoding="async">';
+  }
+  return '<svg viewBox="0 0 320 180" aria-hidden="true">' . mk_art($key === 'town' ? 'ride' : $key) . '</svg>';
+}
 $ico = function ($d, $s = 22) { return '<svg width="'.$s.'" height="'.$s.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'.h($d).'"/></svg>'; };
 ?><!doctype html>
 <html lang="<?= html_lang() ?>">
@@ -228,17 +242,31 @@ a{color:var(--brand-d)}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
 .c-peach{background:var(--peach);color:var(--peach-t)}.c-mint{background:var(--mint);color:var(--mint-t)}.c-butter{background:var(--butter);color:var(--butter-t)}.c-sky{background:var(--sky);color:var(--sky-t)}.c-lilac{background:var(--lilac);color:var(--lilac-t)}.c-pink{background:var(--pink);color:var(--pink-t)}.c-night{background:var(--plum-2);color:#fff}
 /* ---- intro ---- */
-#mk-intro{position:fixed;inset:0;z-index:60;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform .7s cubic-bezier(.7,0,.3,1)}
+#mk-intro{position:fixed;inset:0;z-index:60;background:#24092A;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;transition:transform .8s cubic-bezier(.7,0,.3,1),opacity .8s}
 #mk-intro[hidden]{display:none}
-#mk-intro.out{transform:translateY(-100%)}
-#mk-intro .nm{font-size:clamp(48px,12vw,104px);font-weight:800;line-height:1.2;min-height:1.3em;text-align:center;text-shadow:0 6px 30px rgba(0,0,0,.18)}
-#mk-intro svg{width:min(560px,86vw);height:auto;display:none}
-#mk-intro.final .nm{display:none}#mk-intro.final svg{display:block}
+#mk-intro.out{transform:translateY(-100%);opacity:.6}
+#mk-intro .aur span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.8;animation:aur 7s ease-in-out infinite alternate}
+#mk-intro .aur .b1{width:560px;height:560px;left:-160px;top:-180px;background:#D6246E}
+#mk-intro .aur .b2{width:460px;height:460px;right:-140px;bottom:-160px;background:#FFB020;opacity:.55;animation-duration:9s}
+#mk-intro .aur .b3{width:420px;height:420px;left:52%;top:-120px;background:#7B3FE4;opacity:.6;animation-duration:8s}
+#mk-intro .aur .b4{width:340px;height:340px;left:4%;bottom:-140px;background:#FF7AB6;opacity:.55;animation-duration:10s}
+@keyframes aur{to{transform:translate(60px,40px) scale(1.18)}}
+#mk-intro .mandala{position:absolute;width:min(900px,160vw);height:auto;opacity:.12;animation:spin 60s linear infinite}
+#mk-intro .glass{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:min(580px,88vw);padding:34px 44px 30px;border-radius:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:0 40px 90px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25)}
+#mk-intro .nm{font-size:clamp(46px,11vw,100px);font-weight:800;line-height:1.25;min-height:1.3em;text-align:center;text-shadow:0 8px 40px rgba(214,36,110,.6)}
+#mk-intro .nm.swap{animation:swapIn .22s ease-out}
+@keyframes swapIn{from{opacity:0;filter:blur(10px);transform:translateY(12px) scale(.95)}to{opacity:1;filter:blur(0);transform:none}}
+#mk-intro .ln{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);min-height:1.4em}
+#mk-intro .prog{width:160px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden;margin-top:12px}
+#mk-intro .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FFB020,#FF7AB6);animation:prog 3.2s linear forwards}
+@keyframes prog{to{width:100%}}
+#mk-intro svg.word{width:min(500px,78vw);height:auto;display:none}
+#mk-intro.final .nm,#mk-intro.final .ln,#mk-intro.final .prog{display:none}#mk-intro.final svg.word{display:block}
 #mk-intro .draw{font-family:var(--hand);font-weight:700;font-size:168px;fill:#fff;stroke:#fff;stroke-width:2.5;stroke-dasharray:900;stroke-dashoffset:900;fill-opacity:0}
 #mk-intro.final .draw{animation:mkDraw 1.5s ease-out forwards}
-#mk-intro .tag{opacity:0;margin-top:8px;font-size:clamp(16px,3.6vw,20px);color:#FFE3EE;transition:opacity .5s}
+#mk-intro .tag{opacity:0;font-size:clamp(16px,3.6vw,20px);color:#FFE3EE;transition:opacity .5s;text-align:center}
 #mk-intro.final .tag{opacity:1}
-#mk-intro button{position:absolute;bottom:28px;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;min-height:44px;padding:8px 20px;font:inherit;font-weight:600;cursor:pointer}
+#mk-intro button{position:absolute;bottom:28px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;min-height:44px;padding:8px 22px;font:inherit;font-weight:600;cursor:pointer;backdrop-filter:blur(8px)}
 @keyframes mkDraw{0%{stroke-dashoffset:900;fill-opacity:0}70%{stroke-dashoffset:0;fill-opacity:0}100%{stroke-dashoffset:0;fill-opacity:1}}
 /* ---- header + hero (dark) ---- */
 .dark{background:var(--plum);color:#fff;position:relative;overflow:hidden}
@@ -274,13 +302,12 @@ header.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding
 .store small{display:block;font-size:11px;opacity:.75}
 .store b{display:block;font-size:17px;font-weight:700}
 /* ---- marquee ---- */
-.strip{background:#fff;border-bottom:1px solid var(--line);overflow:hidden;padding:14px 0}
-.track{display:flex;width:max-content;animation:marq 42s linear infinite}
-.strip:hover .track{animation-play-state:paused}
-.track span{display:flex;align-items:center;gap:10px;margin-right:16px;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
-:lang(hi) .track span{letter-spacing:0;text-transform:none;font-size:15px}
-.track em{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.track i{width:7px;height:7px;border-radius:50%;background:var(--brand);margin-left:6px}
+.cats2{padding:40px 0 6px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.cats2 .row{display:flex;width:max-content;gap:14px;margin-bottom:14px;animation:marq 60s linear infinite}
+.cats2 .row.rev{animation-direction:reverse;animation-duration:70s}
+.cats2:hover .row{animation-play-state:paused}
+.cat{display:inline-flex;align-items:center;gap:12px;background:#fff;border-radius:999px;padding:8px 22px 8px 8px;box-shadow:0 8px 24px rgba(34,20,31,.07);border:1px solid #F4E6DF;font-weight:600;font-size:16px;white-space:nowrap;color:var(--ink)}
+.cat em{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 @keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 /* ---- sections ---- */
 section.s{padding:84px 0}
@@ -293,12 +320,12 @@ h2.big em{font-style:normal;color:var(--brand)}
 .intro-row{display:flex;flex-wrap:wrap;align-items:center;gap:30px;margin-bottom:40px}
 .intro-row>div{flex:1 1 440px}
 .intro-art{flex:0 1 360px;margin:0 auto;border-radius:var(--r);overflow:hidden;background:var(--brand-s);aspect-ratio:16/9}
-.intro-art svg{width:100%;height:100%;display:block}
+.intro-art svg,.intro-art img{width:100%;height:100%;display:block;object-fit:cover}
 .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px}
 .svc{border-radius:var(--r);overflow:hidden;background:#fff;border:1px solid var(--line);transition:transform .3s,box-shadow .3s;display:flex;flex-direction:column}
 .svc:hover{transform:translateY(-6px);box-shadow:0 22px 44px rgba(34,20,31,.12)}
 .svc .art{position:relative;aspect-ratio:16/9}
-.svc .art svg{width:100%;height:100%;display:block}
+.svc .art svg,.svc .art img{width:100%;height:100%;display:block;object-fit:cover}
 .svc .badge{position:absolute;left:14px;top:14px;white-space:nowrap;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 6px 16px rgba(0,0,0,.18)}
 :lang(hi) .svc .badge{letter-spacing:0;font-size:13px}
 .b-soon{background:var(--saffron);color:#3A2400}.b-pilot{background:#5B8DEF;color:#fff}
@@ -328,22 +355,33 @@ h2.big em{font-style:normal;color:var(--brand)}
 @keyframes tw{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes flag{0%,100%{transform:skewY(0)}50%{transform:skewY(-8deg)}}
 /* how */
-.how{background:#fff;border-radius:var(--r) var(--r) 0 0}
-.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;counter-reset:s}
-.steps li{position:relative;border-radius:24px;padding:26px;background:var(--cream);border:1px solid var(--line)}
-.steps .ic{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
-.steps small{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);background:var(--brand-s);padding:4px 10px;border-radius:999px}
+
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+.steps li{position:relative;overflow:hidden;border-radius:32px;padding:30px 26px 28px;background:#fff;box-shadow:0 14px 40px rgba(34,20,31,.08);transition:transform .3s,box-shadow .3s}
+.steps li:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(34,20,31,.12)}
+.steps li .big{position:absolute;right:18px;top:6px;font-size:84px;font-weight:800;line-height:1;color:var(--brand);opacity:.07}
+.steps .ic{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 0 0 8px rgba(255,255,255,.9),0 0 0 9px #F4E6DF}
+.steps small{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);background:var(--brand-s);padding:5px 12px;border-radius:999px}
 :lang(hi) .steps small{letter-spacing:0;font-size:13px}
-.steps h3{margin:10px 0 6px;font-size:19px;font-weight:800}
+.steps h3{margin:12px 0 6px;font-size:20px;font-weight:800}
 .steps p{margin:0;color:var(--muted);font-size:15px}
-.promise{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
-.promise .card{border-radius:var(--r);padding:32px;position:relative;overflow:hidden}
-.promise .p1{background:var(--brand);color:#fff}
-.promise .p1 .coin{width:84px;height:84px;border-radius:50%;background:var(--saffron);color:#3A2400;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:800;margin-bottom:16px;animation:bob 2.6s ease-in-out infinite}
-.promise .p1 b{display:block;font-size:clamp(24px,3.4vw,32px);line-height:1.2}
-.promise .p1 p{margin:10px 0 0;color:#FFE3EE}
-.promise .p2{background:var(--peach);display:flex;flex-direction:column;justify-content:center;gap:14px}
-.promise .p2 b{font-size:24px}
+.how{background:var(--cream)}
+.deal{margin-top:40px;position:relative;overflow:hidden;border-radius:40px;background:var(--brand);color:#fff;padding:clamp(28px,5vw,56px);display:flex;flex-wrap:wrap;align-items:center;gap:36px}
+.deal::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.14) 1.5px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:linear-gradient(120deg,#000,transparent 70%);mask-image:linear-gradient(120deg,#000,transparent 70%)}
+.deal>*{position:relative}
+.deal .txt{flex:1 1 380px}
+.deal .eyebrow{color:#FFE3EE}.deal .eyebrow::after{background:#FFE3EE}
+.deal h2{margin:10px 0 0;font-size:clamp(32px,5vw,52px);line-height:1.1;font-weight:800}
+.deal h2 em{font-style:normal;color:var(--saffron)}
+.deal p{margin:16px 0 0;color:#FFE3EE;font-size:17px;max-width:520px}
+.deal .btn{margin-top:24px}
+.bill{flex:0 1 360px;margin:24px auto 0;background:#fff;color:var(--ink);border-radius:26px;padding:26px 26px 22px;transform:rotate(-3deg);box-shadow:0 30px 60px rgba(60,0,30,.35);position:relative}
+.bill h4{margin:0 0 4px;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+:lang(hi) .bill h4{letter-spacing:0}
+.bill .ln2{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1.5px dashed #EADAD2;font-size:15px}
+.bill .ln2 b{white-space:nowrap}
+.bill .ln2 .z{color:var(--green)}
+.bill .stamp{position:absolute;right:-22px;top:-34px;width:108px;height:108px;border-radius:50%;border:3px solid var(--saffron);background:var(--plum);color:var(--saffron);display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;line-height:1.2;transform:rotate(14deg);box-shadow:0 10px 26px rgba(0,0,0,.25)}
 /* apps */
 .apps{background:#fff}
 .app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
@@ -407,9 +445,15 @@ footer .low a{color:var(--saffron);font-weight:700}
 <body>
 
 <div id="mk-intro" hidden>
-  <div class="nm" aria-hidden="true">Maakit</div>
-  <svg viewBox="0 0 640 220" role="img" aria-label="Maakit"><text class="draw" x="320" y="160" text-anchor="middle">Maakit</text></svg>
-  <div class="tag"><?= $T('Your town’s own app', 'आपके शहर का अपना ऐप') ?></div>
+  <div class="aur" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span></div>
+  <svg class="mandala" viewBox="0 0 400 400" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.2"><circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="150"/><circle cx="200" cy="200" r="100"/><circle cx="200" cy="200" r="50"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(0 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(30 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(60 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(90 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(120 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(150 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(180 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(210 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(240 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(270 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(300 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(330 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(0 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(22 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(45 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(67 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(90 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(112 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(135 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(157 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(180 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(202 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(225 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(247 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(270 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(292 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(315 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(337 200 200)"/></svg>
+  <div class="glass">
+    <div class="nm" aria-hidden="true">Maakit</div>
+    <div class="ln" aria-hidden="true"></div>
+    <svg class="word" viewBox="0 0 640 220" role="img" aria-label="Maakit"><text class="draw" x="320" y="160" text-anchor="middle">Maakit</text></svg>
+    <div class="tag"><?= $T('Your town’s own app', 'आपके शहर का अपना ऐप') ?></div>
+    <div class="prog" aria-hidden="true"><i></i></div>
+  </div>
   <button type="button" id="mk-skip"><?= $T('Skip', 'छोड़िए') ?></button>
 </div>
 
@@ -450,10 +494,12 @@ footer .low a{color:var(--saffron);font-weight:700}
   </section>
 </div>
 
-<div class="strip" aria-hidden="true">
-  <div class="track">
-    <?php for ($k = 0; $k < 2; $k++) foreach ($cats as $i => $c): ?><span><em class="<?= $tints[$i % 6] ?>"><?= $ico($ci[$c[0]], 20) ?></em><?= $T($c[1], $c[2]) ?><i></i></span><?php endforeach; ?>
+<div class="cats2" aria-label="<?= $T('Shop categories', 'दुकानों की श्रेणियाँ') ?>">
+  <?php foreach ([0, 1] as $r): $list = $r ? array_reverse($cats, true) : $cats; ?>
+  <div class="row<?= $r ? ' rev' : '' ?>" <?= $r ? 'aria-hidden="true"' : '' ?>>
+    <?php for ($k = 0; $k < 2; $k++) foreach ($list as $i => $c): ?><span class="cat" <?= ($k || $r) ? 'aria-hidden="true"' : '' ?>><em class="<?= $tints[$i % 6] ?>"><?= $ico($ci[$c[0]], 22) ?></em><?= $T($c[1], $c[2]) ?></span><?php endforeach; ?>
   </div>
+  <?php endforeach; ?>
 </div>
 
 <main>
@@ -465,13 +511,13 @@ footer .low a{color:var(--saffron);font-weight:700}
         <h2 class="big" id="svc-h"><?= $T('One app.', 'एक ऐप।') ?><br><em><?= $T('For your whole town.', 'पूरे शहर के लिए।') ?></em></h2>
         <p class="lead"><?= $T('Maakit brings local shops, Sarathis, vehicle owners and service providers onto one platform — so whatever you need from your town, one app brings it home.', 'Maakit स्थानीय दुकानों, सारथियों, गाड़ी वालों और सेवा देने वालों को एक मंच पर लाता है — शहर से जो भी चाहिए, एक ऐप घर ले आता है।') ?></p>
       </div>
-      <div class="intro-art c-pink" aria-hidden="true"><svg viewBox="0 0 320 180"><?= mk_art('ride') ?></svg></div>
+      <div class="intro-art c-pink"><?= mk_pic('town', t('Maakit in your town', 'आपके शहर में Maakit')) ?></div>
     </div>
     <div class="svc-grid">
       <?php foreach ($services as $s): ?>
       <article class="svc rv">
         <div class="art <?= $s[1] ?>">
-          <svg viewBox="0 0 320 180" aria-hidden="true"><?= mk_art($s[0]) ?></svg>
+          <?= mk_pic($s[0], t($s[3], $s[4])) ?>
           <?php if ($s[2] !== 'live'): ?><span class="badge <?= $s[2] === 'pilot' ? 'b-pilot' : 'b-soon' ?>"><?= h($status[$s[2]]) ?></span><?php endif; ?>
         </div>
         <div class="body">
@@ -492,7 +538,7 @@ footer .low a{color:var(--saffron);font-weight:700}
     </div>
     <ol class="steps" style="margin-top:36px">
       <?php foreach ($steps as $i => $st): ?>
-      <li class="rv" style="transition-delay:<?= $i * 0.08 ?>s">
+      <li class="rv" style="transition-delay:<?= $i * 0.08 ?>s"><span class="big" aria-hidden="true">0<?= $i + 1 ?></span>
         <span class="ic <?= $tints[$i] ?>"><?= $ico($si[$st[0]], 26) ?></span>
         <small><?= $T('Step', 'कदम') ?> <?= $i + 1 ?></small>
         <h3><?= $T($st[1], $st[2]) ?></h3>
@@ -500,19 +546,23 @@ footer .low a{color:var(--saffron);font-weight:700}
       </li>
       <?php endforeach; ?>
     </ol>
-    <div class="promise">
-      <div class="card p1 rv">
-        <div class="coin">₹</div>
-        <b><?= $T('Shop price. Not a rupee more.', 'दुकान का दाम। एक रुपया ज़्यादा नहीं।') ?></b>
-        <p><?= $T('The price of the goods belongs to the shop. Maakit charges only a delivery fee — and you pay the shop directly, in cash or UPI.', 'सामान का दाम दुकान का है। Maakit केवल डिलीवरी शुल्क लेता है — और भुगतान आप सीधे दुकान को करते हैं, नकद या UPI से।') ?></p>
+    <div class="deal rv">
+      <div class="txt">
+        <span class="eyebrow"><?= $T('Our promise', 'हमारा वादा') ?></span>
+        <h2><?= $T('Shop price.', 'दुकान का दाम।') ?><br><em><?= $T('Not a rupee more.', 'एक रुपया ज़्यादा नहीं।') ?></em></h2>
+        <p><?= $T('The price of the goods belongs to the shop. Maakit adds nothing to it and charges only a delivery fee, which you see before you order.', 'सामान का दाम दुकान का है। Maakit उसमें कुछ नहीं जोड़ता, सिर्फ़ डिलीवरी शुल्क लेता है — जो ऑर्डर से पहले बता दिया जाता है।') ?></p>
+        <a class="btn btn-white" href="https://wa.me/<?= h($wa) ?>"><?= $ico('M4 20l1.5-4A8 8 0 1 1 8 19z', 20) ?><?= $T('Order on WhatsApp', 'WhatsApp पर ऑर्डर') ?></a>
       </div>
-      <div class="card p2 rv">
-        <b><?= $T('Order today', 'आज ही ऑर्डर कीजिए') ?></b>
-        <span style="color:var(--peach-t)"><?= $T('The app is coming soon. Until then, just call or WhatsApp us.', 'ऐप जल्द आ रहा है। तब तक बस फ़ोन या WhatsApp कीजिए।') ?></span>
-        <a class="btn btn-brand" style="align-self:flex-start" href="https://wa.me/<?= h($wa) ?>"><?= $T('WhatsApp', 'WhatsApp') ?> <?= h($show) ?></a>
-        <?= $stores() ?>
+      <div class="bill" aria-label="<?= $T('How your bill works', 'आपका बिल कैसे बनता है') ?>">
+        <h4><?= $T('Your bill', 'आपका बिल') ?></h4>
+        <div class="ln2"><span><?= $T('Goods', 'सामान') ?></span><b><?= $T('Shop’s own price', 'दुकान का दाम') ?></b></div>
+        <div class="ln2"><span><?= $T('Added by Maakit on goods', 'सामान पर Maakit ने जोड़ा') ?></span><b class="z">₹0</b></div>
+        <div class="ln2"><span><?= $T('Delivery fee', 'डिलीवरी शुल्क') ?></span><b><?= $T('Told before ordering', 'ऑर्डर से पहले') ?></b></div>
+        <div class="ln2" style="border:0"><span><?= $T('Pay', 'भुगतान') ?></span><b><?= $T('Cash / UPI to shop', 'नकद / UPI दुकान को') ?></b></div>
+        <span class="stamp"><?= $T('SAME PRICE AS SHOP', 'दुकान जैसा दाम') ?></span>
       </div>
     </div>
+  </div>
   </div>
 </section>
 
@@ -529,7 +579,7 @@ footer .low a{color:var(--saffron);font-weight:700}
         <h3><?= $T('Maakit app', 'Maakit ऐप') ?></h3>
         <p><?= $T('Shop, ride, send and book from one app.', 'एक ही ऐप से खरीदिए, सवारी लीजिए, भेजिए और बुक कीजिए।') ?></p>
         <ul><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Hindi and English', 'हिंदी और English') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Cash or UPI to the shop', 'नकद या UPI सीधे दुकान को') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Order tracking', 'ऑर्डर ट्रैकिंग') ?></li></ul>
-        <?= $stores() ?>
+        <?php if ($has_app): ?><?= $stores() ?><?php else: ?><a class="btn btn-brand" href="https://wa.me/<?= h($wa) ?>"><?= $T('Order on WhatsApp', 'WhatsApp पर ऑर्डर') ?></a><?php endif; ?>
       </article>
       <article class="app c-butter rv">
         <span class="ic"><?= $ico('M3 10l1.5-5h15L21 10M4 10v10h16V10M9 20v-6h6v6', 30) ?></span>
@@ -628,7 +678,7 @@ footer .low a{color:var(--saffron);font-weight:700}
   var force = /[?&]intro=1/.test(location.search), seen = false;
   try { seen = sessionStorage.getItem('mk_intro') === '1'; } catch (e) {}
   if (box && !reduce && (force || !seen)) {
-    var names = <?= json_encode($scripts, JSON_UNESCAPED_UNICODE) ?>, nm = box.querySelector('.nm'), i = 0, done = false, timer;
+    var names = <?= json_encode($scripts, JSON_UNESCAPED_UNICODE) ?>, nm = box.querySelector('.nm'), ln = box.querySelector('.ln'), i = 0, done = false, timer;
     box.hidden = false; document.body.style.overflow = 'hidden';
     var close = function () {
       if (done) return; done = true; clearInterval(timer);
@@ -637,9 +687,9 @@ footer .low a{color:var(--saffron);font-weight:700}
       setTimeout(function () { box.hidden = true; }, 750);
     };
     timer = setInterval(function () {
-      if (i < names.length) { nm.textContent = names[i++]; return; }
+      if (i < names.length) { nm.textContent = names[i][0]; ln.textContent = names[i][1]; nm.classList.remove('swap'); void nm.offsetWidth; nm.classList.add('swap'); i++; return; }
       clearInterval(timer); box.classList.add('final'); setTimeout(close, 2300);
-    }, 230);
+    }, 290);
     document.getElementById('mk-skip').addEventListener('click', close);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   }

@@ -75,4 +75,7 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // define('CS_RAZORPAY_KEY_ID', 'rzp_live_...');
 // define('CS_RAZORPAY_KEY_SECRET', 'private');
 // define('CS_RAZORPAY_WEBHOOK_SECRET', 'private');   // Razorpay > Webhooks: /coaching/webhook.php, event payment.captured
+// Home page ke Google Play / App Store button sirf tab dikhte hain jab ye link ho:
+// define('APP_PLAY_URL', 'https://play.google.com/store/apps/details?id=...');
+// define('APP_STORE_URL', 'https://apps.apple.com/in/app/...');
 // define('CS_PRICE_6M', 54);  define('CS_PRICE_12M', 99);
