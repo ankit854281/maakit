@@ -22,7 +22,7 @@ function flow_request($path, $post = null, $expected = 200) {
     return $html;
 }
 try {
-    $home = flow_request('/?lang=hi');
+    $home = flow_request('/purana-ghar.php?lang=hi');
     flow_check(strpos($home,'id="shop-category-rail"') !== false && strpos($home,'product-discovery-rail') !== false, 'Home links categories and discovery product rails');
     $html = flow_request('/register-business.php?lang=hi');
     flow_check(strpos($html,'data-category-picker') !== false && strpos($html,'Paint Store') !== false, 'Registration offers searchable shop categories');

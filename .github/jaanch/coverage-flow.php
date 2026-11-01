@@ -35,7 +35,7 @@ try{
  $html=cv_request('/sewa.php?s=gaadi&lang=en',$post);$no=$pdo->query("SELECT booking_no FROM service_bookings WHERE mobile='9000000099' ORDER BY id DESC LIMIT 1")->fetchColumn();cv_check((bool)$no,'Booking saved');
  $html=cv_request('/sewa.php?s=gaadi&lang=en',$post);cv_check(strpos($html,$no)!==false && (int)$pdo->query("SELECT COUNT(*) FROM service_bookings WHERE mobile='9000000099'")->fetchColumn()===1,'Booking replay has one booking');
  $html=cv_request('/location.php?lang=en');cv_check(strpos($html,'CI City')!==false,'Location includes city');cv_request('/location.php',['csrf'=>$m[1],'area'=>'CI Paused Area'],302);
- $html=cv_request('/?lang=en');cv_check(strpos($html,'CI City')!==false,'Chosen location shown');cv_check(strpos($html,'noindex,follow')!==false,'Scoped home is noindex');
+ $html=cv_request('/purana-ghar.php?lang=en');cv_check(strpos($html,'CI City')!==false,'Chosen location shown');cv_check(strpos($html,'noindex,follow')!==false,'Scoped home is noindex');
  $html=cv_request('/support.php?lang=en');cv_check(strpos($html,'Sign in to send')!==false,'Guest sees support contacts, no private tickets');
  cv_request('/admin/coverage.php',null,302);cv_request('/admin/support.php',null,302);
  $html=cv_request('/order.php?catalog_id=1666&qty=2&pack=1+kg&urgent=1&lang=en');

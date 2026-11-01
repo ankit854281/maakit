@@ -1,3 +1,19 @@
+# Home page = group landing page — owner decision, 1 November 2026
+
+Ankit: maakit.in's home page is now the Maakit group landing page (index.php) for customers,
+advertising and investors. Customers will order in the Maakit app; until it is on Google Play,
+the page sends them to phone / WhatsApp. The website no longer offers goods ordering from the home
+page (order.php, bazaar.php etc. still exist by URL). The previous catalogue home is kept unchanged
+as purana-ghar.php (noindex); restoring it = renaming it back to index.php. CI checks for the old
+home (panne, hub-flow, coverage-flow, category-flow) now open /purana-ghar.php.
+Look (owner: "apna sundar rang"): peacock teal #0E5C63, marigold #F9B233, coral #E5533D on cream
+#FFF8EE — as CSS variables inside index.php only; the rest of the site keeps inc/theme.php.
+Intro: "Maakit" drawn in Kalam (self-hosted, assets/fonts/kalam-latin-700.woff2, OFL), then the
+name in 11 Indian scripts; once per session, tap/Esc/8.5 s closes, /?intro=1 replays,
+prefers-reduced-motion respected. Keep it truthful: no traction numbers, no merchant price, no
+Bhojpuri claim until real. Displaced from the old home: search box (search_log), banners,
+festival art, live salon queue, books and reviews — all still on purana-ghar.php.
+
 # Typography rules — owner-approved review, 30 October 2026
 
 Fonts are SELF-HOSTED (smartsarathi/assets/fonts/, fonts.css, sr_fonts() in inc/ui.php): Noto Sans

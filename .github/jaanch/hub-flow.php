@@ -13,7 +13,7 @@ function hub_fixture(PDO $db,string $table,array $data): string {
 function hub_http($path,$data=null,$expected=200,array $headers=[]){global $jar;$c=curl_init('http://127.0.0.1:8099'.$path);curl_setopt_array($c,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_COOKIEFILE=>$jar,CURLOPT_COOKIEJAR=>$jar,CURLOPT_TIMEOUT=>20,CURLOPT_PROXY=>'',CURLOPT_HTTPHEADER=>$headers]);if($data!==null)curl_setopt_array($c,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>http_build_query($data)]);$html=curl_exec($c);$status=curl_getinfo($c,CURLINFO_HTTP_CODE);curl_close($c);hub_check($status===$expected&&is_string($html)&&!preg_match('/Fatal error|Warning:|Uncaught|SQLSTATE/',$html),'HTTP '.$path.' expected '.$expected.' got '.$status);return $html;}
 function hub_csrf($html){preg_match('/name="csrf" value="([^"]+)"/',$html,$m);hub_check(!empty($m[1]),'CSRF rendered');return html_entity_decode($m[1],ENT_QUOTES,'UTF-8');}
 try {
- hub_check(substr_count(hub_http('/?lang=en'),'data-segment=')===3,'live entry homepage links all three segments');
+ hub_check(substr_count(hub_http('/purana-ghar.php?lang=en'),'data-segment=')===3,'live entry homepage links all three segments');
  foreach(['LOCAL_SHOPPING','HOME_SERVICES','B2B'] as $segment){$html=hub_http('/public/index.php?segment='.$segment.'&lang=en');hub_check(str_contains($html,'data-context="'.$segment.'"'),'context preserved');hub_check(substr_count($html,'data-segment=')===3,'exactly three main segments');}
  // A committed supplier fixture must render through the hub's real shared PDO database.
  $owner=hub_fixture($pdo,'mk_users',['display_name'=>'CI Hub Supplier']);
