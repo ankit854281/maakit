@@ -185,6 +185,19 @@ $stores = function ($cls = '') use ($play_url, $apple_url) {
   if ($apple_url !== '') $out .= '<a class="store" href="' . h($apple_url) . '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg><span><small>' . h(t('Download on the', 'यहाँ से डाउनलोड')) . '</small><b>App Store</b></span></a>';
   return $out . '</div>';
 };
+// ---------- Maakit logo (owner, 1 Nov 2026: abhi ke liye ek saaf logo) ----------
+// Magenta thaila (shopping bag) jiske andar safed "M", aur kesariya bindu.
+// Yahi assets/logo/maakit-mark.svg aur maakit-logo.svg me bhi hai.
+function mk_mark($size = 40, $ring = '#FFFFFF') {
+  return '<svg class="mk-mark" width="' . $size . '" height="' . $size . '" viewBox="0 0 64 64" aria-hidden="true">'
+    . '<path d="M23 19v-4a9 9 0 0 1 18 0v4" fill="none" stroke="#D6246E" stroke-width="5" stroke-linecap="round"/>'
+    . '<rect x="6" y="17" width="52" height="43" rx="14" fill="#D6246E"/>'
+    . '<path d="M19 49V31l13 11 13-11v18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
+    . '<circle cx="51" cy="19" r="8" fill="#FFB020" stroke="' . $ring . '" stroke-width="3"/></svg>';
+}
+function mk_logo($size = 44, $ring = '#1C0D1F') {
+  return mk_mark($size, $ring) . '<span class="word">Maakit</span>';
+}
 // Service tasveer: assets/home/<naam>.webp|.jpg|.png ho to wahi (owner AI se
 // banwa kar bhejega), warna inline SVG.
 function mk_pic($key, $alt = '') {
@@ -206,6 +219,7 @@ $ico = function ($d, $s = 22) { return '<svg width="'.$s.'" height="'.$s.'" view
 <meta name="theme-color" content="#D6246E">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="/assets/logo/maakit-mark.svg">
 <meta property="og:title" content="Maakit">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Maakit">
@@ -261,7 +275,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 #mk-intro .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FFB020,#FF7AB6);animation:prog 3.2s linear forwards}
 @keyframes prog{to{width:100%}}
 #mk-intro svg.word{width:min(500px,78vw);height:auto;display:none}
-#mk-intro.final .nm,#mk-intro.final .ln,#mk-intro.final .prog{display:none}#mk-intro.final svg.word{display:block}
+#mk-intro .lg{display:none}#mk-intro.final .lg{display:block;animation:swapIn .5s ease-out}
+#mk-intro.final .nm,#mk-intro.final .ln,#mk-intro.final .prog{display:none}
+#mk-intro.final svg.word{margin-top:-14px}#mk-intro.final svg.word{display:block}
 #mk-intro .draw{font-family:var(--hand);font-weight:700;font-size:168px;fill:#fff;stroke:#fff;stroke-width:2.5;stroke-dasharray:900;stroke-dashoffset:900;fill-opacity:0}
 #mk-intro.final .draw{animation:mkDraw 1.5s ease-out forwards}
 #mk-intro .tag{opacity:0;font-size:clamp(16px,3.6vw,20px);color:#FFE3EE;transition:opacity .5s;text-align:center}
@@ -276,8 +292,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 header.top{position:relative}
 header.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:16px;padding-bottom:16px}
 .logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;margin-right:auto}
-.logo b{width:44px;height:44px;border-radius:14px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--hand);font-size:28px;line-height:1}
-.logo span{font-family:var(--hand);font-size:32px;font-weight:700;line-height:1}
+.logo .word{font-family:'Lexend',sans-serif;font-size:28px;font-weight:800;letter-spacing:-.5px;line-height:1}
+.mk-mark{flex-shrink:0;display:block}
 .chip{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;text-decoration:none;font-size:14px;font-weight:600}
 .lang{display:flex;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);overflow:hidden}
 .lang a{padding:8px 13px;font-size:14px;font-weight:700;color:#fff;text-decoration:none}
@@ -382,53 +398,82 @@ h2.big em{font-style:normal;color:var(--brand)}
 .bill .ln2 b{white-space:nowrap}
 .bill .ln2 .z{color:var(--green)}
 .bill .stamp{position:absolute;right:-22px;top:-34px;width:108px;height:108px;border-radius:50%;border:3px solid var(--saffron);background:var(--plum);color:var(--saffron);display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;line-height:1.2;transform:rotate(14deg);box-shadow:0 10px 26px rgba(0,0,0,.25)}
-/* apps — teen jude phone */
+/* apps — teen jude phone (v2: asli phone jaisa size, saaf screen) */
 .apps{background:#fff;border-radius:44px;margin:0 12px}
-.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;align-items:start;position:relative}
-.flow .link{position:absolute;top:210px;height:3px;background:repeating-linear-gradient(90deg,var(--brand) 0 10px,transparent 10px 20px);background-size:40px 3px;animation:flowmv 1s linear infinite;opacity:.6}
-.flow .l1{left:calc(33.33% - 40px);width:80px}.flow .l2{left:calc(66.66% - 40px);width:80px}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px;align-items:start;position:relative}
+.flow .link{position:absolute;top:300px;height:3px;background:repeating-linear-gradient(90deg,var(--brand) 0 10px,transparent 10px 20px);background-size:40px 3px;animation:flowmv 1s linear infinite;opacity:.7}
+.flow .l1{left:calc(33.33% - 34px);width:68px}.flow .l2{left:calc(66.66% - 34px);width:68px}
+.flow .link::after{content:"";position:absolute;right:-7px;top:-5px;border-left:10px solid var(--brand);border-top:6.5px solid transparent;border-bottom:6.5px solid transparent}
 @keyframes flowmv{to{background-position:40px 0}}
-.flow .link::after{content:"";position:absolute;right:-6px;top:-5px;border-left:10px solid var(--brand);border-top:6.5px solid transparent;border-bottom:6.5px solid transparent}
 .lane{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
-.ph{width:236px;height:430px;border-radius:38px;background:var(--plum);padding:10px;box-shadow:0 30px 60px rgba(34,20,31,.22);position:relative}
-.ph::before{content:"";position:absolute;top:16px;left:50%;width:70px;height:18px;margin-left:-35px;border-radius:10px;background:var(--plum);z-index:2}
-.scr{width:100%;height:100%;border-radius:30px;overflow:hidden;background:#FFF6EF;display:flex;flex-direction:column;text-align:left;font-size:12px;color:var(--ink)}
-.scr .top{padding:34px 14px 12px;color:#fff;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center}
-.scr .card{margin:10px 12px 0;background:#fff;border-radius:16px;padding:12px;box-shadow:0 6px 16px rgba(34,20,31,.06)}
-.scr .card b{display:block;font-size:13px}
-.scr .muted{color:var(--muted);font-size:11px}
-.stg{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
-.stg li{display:flex;align-items:center;gap:8px;font-size:11.5px}
-.stg i{width:14px;height:14px;border-radius:50%;border:2px solid #E5D6DE;flex-shrink:0}
-.stg .d i{background:var(--green);border-color:var(--green)}
-.stg .n i{background:var(--saffron);border-color:var(--saffron);box-shadow:0 0 0 0 rgba(255,176,32,.6);animation:ping 1.4s infinite}
-@keyframes ping{70%{box-shadow:0 0 0 8px rgba(255,176,32,0)}100%{box-shadow:0 0 0 0 rgba(255,176,32,0)}}
-.mini-map{margin:10px 12px 0;height:96px;border-radius:16px;background:#E6F0E6;position:relative;overflow:hidden}
-.mini-map .rd{position:absolute;left:14px;right:14px;top:46px;height:4px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--brand) 0 8px,transparent 8px 14px)}
-.mini-map .rider{position:absolute;top:36px;left:14px;width:24px;height:24px;border-radius:50%;background:var(--saffron);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.2);animation:ride 4s ease-in-out infinite alternate}
-@keyframes ride{to{left:calc(100% - 38px)}}
-.mini-map .pin{position:absolute;right:12px;top:24px;width:16px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand)}
-.bell{display:flex;align-items:center;gap:8px;margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:var(--brand);color:#fff;font-weight:700;font-size:12.5px}
-.bell svg{animation:ring 1.2s ease-in-out infinite;transform-origin:50% 0}
-@keyframes ring{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(14deg)}20%,40%{transform:rotate(-14deg)}}
-.items{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
-.items li{display:flex;justify-content:space-between;font-size:11.5px}
-.btns{display:flex;gap:8px;margin-top:10px}
-.btns span{flex:1;text-align:center;padding:8px 0;border-radius:10px;font-weight:700;font-size:12px}
-.btns .ok{background:var(--green);color:#fff}.btns .no{background:#F4E6DF;color:var(--muted)}
-.offer{display:flex;align-items:center;gap:10px}
-.ring{width:46px;height:46px;flex-shrink:0;position:relative}
-.ring svg{width:46px;height:46px;transform:rotate(-90deg)}
-.ring circle.f{stroke-dasharray:125.6;animation:count 20s linear infinite}
-@keyframes count{from{stroke-dashoffset:0}to{stroke-dashoffset:125.6}}
-.ring b{position:absolute;inset:0;display:flex!important;align-items:center;justify-content:center;font-size:12px!important}
-.lane small{font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin-top:16px}
+.ph{width:min(286px,80vw);aspect-ratio:9/19;border-radius:46px;background:#120A14;padding:10px;box-shadow:0 40px 70px rgba(34,20,31,.22),inset 0 0 0 2px #3A2A3E;position:relative}
+.ph::after{content:"";position:absolute;right:-3px;top:110px;width:3px;height:56px;border-radius:2px;background:#3A2A3E}
+.scr{position:relative;width:100%;height:100%;border-radius:37px;overflow:hidden;background:#F7F1F4;display:flex;flex-direction:column;text-align:left;color:var(--ink);font-size:13px;line-height:1.35}
+.scr .island{position:absolute;top:9px;left:50%;width:84px;height:24px;margin-left:-42px;border-radius:14px;background:#120A14;z-index:3}
+.scr .sb{display:flex;justify-content:space-between;align-items:center;padding:12px 22px 0;height:36px;font-size:12px;font-weight:700;position:relative;z-index:2}
+.scr .sb .ic{display:flex;gap:5px;align-items:center}
+.scr .hd{display:flex;align-items:center;gap:9px;padding:10px 16px 14px}
+.scr .hd .lgt{background:#fff;border-radius:12px;padding:3px;display:flex;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.scr .hd .t{display:flex;flex-direction:column;line-height:1.2}
+.scr .hd .t b{font-size:15px;font-weight:800}
+.scr .hd .t span{font-size:11.5px;opacity:.8}
+.scr .hd .r{margin-left:auto;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.scr .body{flex:1;padding:0 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.scr .cd{background:#fff;border-radius:18px;padding:13px 14px;box-shadow:0 4px 14px rgba(34,20,31,.06)}
+.scr .cd h5{margin:0;font-size:15px;font-weight:800}
+.scr .mut{color:var(--muted);font-size:12px}
+.scr .bar2{height:6px;border-radius:3px;background:#F1E4EA;margin-top:10px;overflow:hidden}
+.scr .bar2 i{display:block;height:100%;width:68%;border-radius:3px;background:var(--brand);animation:grow 3s ease-in-out infinite alternate}
+@keyframes grow{from{width:55%}to{width:78%}}
+.stg{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.stg li{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted)}
+.stg i{width:16px;height:16px;border-radius:50%;border:2px solid #E5D6DE;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.stg .d{color:var(--ink)}.stg .d i{background:var(--green);border-color:var(--green)}
+.stg .d i::after{content:"";width:6px;height:3px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.stg .n{color:var(--ink);font-weight:700}.stg .n i{background:var(--saffron);border-color:var(--saffron);animation:ping 1.4s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,176,32,.6)}100%{box-shadow:0 0 0 9px rgba(255,176,32,0)}}
+.mmap{position:relative;border-radius:18px;overflow:hidden;background:#E3EEDF;min-height:92px}
+.mmap::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 47%,#fff 47%,#fff 53%,transparent 53%),linear-gradient(0deg,transparent 46%,#fff 46%,#fff 54%,transparent 54%);background-size:70px 70px;opacity:.7}
+.mmap .rt{position:absolute;left:22px;right:30px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--brand) 0 8px,transparent 8px 13px)}
+.mmap .home{position:absolute;right:16px;top:50%;margin-top:-17px;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);box-shadow:0 3px 8px rgba(0,0,0,.2)}
+.mmap .shop{position:absolute;left:12px;top:50%;margin-top:-9px;width:18px;height:18px;border-radius:6px;background:var(--plum);border:2px solid #fff}
+.mmap .rider{position:absolute;top:50%;margin-top:-13px;left:24px;width:26px;height:26px;border-radius:50%;background:var(--saffron);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.2);animation:ride 4s ease-in-out infinite alternate}
+@keyframes ride{to{left:calc(100% - 66px)}}
+.who{display:flex;align-items:center;gap:10px}
+.who .av{width:38px;height:38px;border-radius:50%;background:var(--peach);color:var(--peach-t);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+.who .call{margin-left:auto;width:34px;height:34px;border-radius:50%;background:#E6F6EC;color:var(--green);display:flex;align-items:center;justify-content:center}
+.code{display:flex;justify-content:space-between;align-items:center;background:var(--brand-s);border-radius:14px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--brand-d)}
+.code b{font-size:17px;letter-spacing:4px}
+.alert{display:flex;align-items:center;gap:10px;background:var(--brand);color:#fff;border-radius:18px;padding:13px 14px}
+.alert .bl{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.alert .bl svg{animation:ring 1.3s ease-in-out infinite;transform-origin:50% 0}
+@keyframes ring{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(16deg)}20%,40%{transform:rotate(-16deg)}}
+.alert b{display:block;font-size:15px}.alert span{font-size:12px;opacity:.9}
+.items{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column}
+.items li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #EEDFE6;font-size:12.5px}
+.items li:last-child{border:0}
+.items li b{font-weight:700}
+.bigbtn{display:block;text-align:center;border-radius:14px;padding:12px;font-weight:800;font-size:14px}
+.bigbtn.g{background:var(--green);color:#fff}.bigbtn.s{background:var(--saffron);color:#3A2400}.bigbtn.l{color:var(--muted);padding:6px;font-weight:600;font-size:12.5px}
+.tog{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700}
+.tog i{width:40px;height:22px;border-radius:11px;background:var(--green);position:relative}
+.tog i::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+.offer{display:flex;align-items:center;gap:12px}
+.ring{width:50px;height:50px;flex-shrink:0;position:relative}
+.ring svg{width:50px;height:50px;transform:rotate(-90deg)}
+.ring circle.f{stroke-dasharray:138.2;animation:count 20s linear infinite}
+@keyframes count{from{stroke-dashoffset:0}to{stroke-dashoffset:138.2}}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.nav{display:flex;justify-content:space-around;padding:10px 6px 16px;background:#fff;border-top:1px solid #F1E4EA;font-size:10.5px;color:var(--muted)}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav .on{color:var(--brand);font-weight:700}
+.lane small{font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin-top:22px}
 :lang(hi) .lane small{letter-spacing:0;font-size:14px}
 .lane h3{margin:0;font-size:22px;font-weight:800}
 .lane p{margin:0;color:var(--muted);max-width:300px}
 .lane .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0 6px}
 .lane .chips span{font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px}
-@media (max-width:900px){.flow{grid-template-columns:1fr;gap:56px}.flow .link{display:none}}
+@media (max-width:980px){.flow{grid-template-columns:1fr;gap:60px}.flow .link{display:none}}
 /* investors */
 .inv-box{position:relative;overflow:hidden;background:var(--plum);color:#fff;border-radius:40px;padding:clamp(30px,6vw,64px)}
 .inv-box .glow{position:absolute;width:640px;height:640px;right:-200px;top:-260px;background:radial-gradient(closest-side,rgba(214,36,110,.5),rgba(214,36,110,0))}
@@ -504,6 +549,7 @@ footer .low a{color:var(--saffron);font-weight:700}
   <div class="glass">
     <div class="nm" aria-hidden="true">Maakit</div>
     <div class="ln" aria-hidden="true"></div>
+    <span class="lg"><?= mk_mark(76, '#7B2E6B') ?></span>
     <svg class="word" viewBox="0 0 640 220" role="img" aria-label="Maakit"><text class="draw" x="320" y="160" text-anchor="middle">Maakit</text></svg>
     <div class="tag"><?= $T('Your town’s own app', 'आपके शहर का अपना ऐप') ?></div>
     <div class="prog" aria-hidden="true"><i></i></div>
@@ -516,7 +562,7 @@ footer .low a{color:var(--saffron);font-weight:700}
   <div class="bar"><?= $T('Maakit is growing across Bhadohi and the Varanasi region —', 'Maakit भदोही और वाराणसी क्षेत्र में बढ़ रहा है —') ?> <b><?= $T('shops, Sarathis and investors welcome', 'दुकानदार, सारथी और निवेशक जुड़ सकते हैं') ?></b></div>
   <header class="top">
     <div class="wrap">
-      <a class="logo" href="/"><b>M</b><span>Maakit</span></a>
+      <a class="logo" href="/" aria-label="Maakit"><?= mk_logo(46) ?></a>
       <a class="chip" href="/register-business.php"><?= $ico('M3 10l1.5-5h15L21 10M4 10v10h16V10', 16) ?><?= $T('Join as a shop', 'दुकान जोड़िए') ?></a>
       <a class="chip" href="https://smartsarathi.in/sarathi.php"><?= $ico($si['bike'], 16) ?><?= $T('Join as Sarathi', 'सारथी बनिए') ?></a>
       <a class="chip" href="#investors"><?= $ico('M3 17l6-6 4 4 8-8M15 7h6v6', 16) ?><?= $T('Investors', 'निवेशक') ?></a>
@@ -632,17 +678,17 @@ footer .low a{color:var(--saffron);font-weight:700}
 
       <div class="lane rv">
         <div class="ph" aria-hidden="true"><div class="scr">
-          <div class="top" style="background:var(--brand)"><span>Maakit</span><span>9:41</span></div>
-          <div class="card"><b><?= $T('Your order', 'आपका ऑर्डर') ?></b><span class="muted"><?= $T('Atta, oil, haldi · Kirana shop', 'आटा, तेल, हल्दी · किराना दुकान') ?></span>
-            <ul class="stg">
-              <li class="d"><i></i><?= $T('Order placed', 'ऑर्डर दिया') ?></li>
-              <li class="d"><i></i><?= $T('Shop accepted', 'दुकान ने माना') ?></li>
-              <li class="n"><i></i><b style="display:inline;font-size:11.5px"><?= $T('Sarathi on the way', 'सारथी रास्ते में') ?></b></li>
-              <li><i></i><?= $T('Delivered', 'पहुँच गया') ?></li>
-            </ul>
+          <div style="background:var(--brand);color:#fff"><span class="island"></span><div class="sb"><span>9:41</span><span class="ic"><svg width="16" height="11" viewBox="0 0 16 11" aria-hidden="true"><rect x="0" y="7" width="3" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="2.5" height="11" rx="1" fill="currentColor"/></svg><svg width="22" height="11" viewBox="0 0 22 11" aria-hidden="true"><rect x=".5" y=".5" width="18" height="10" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="12" height="7" rx="1.5" fill="currentColor"/><rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="currentColor"/></svg></span></div>
+            <div class="hd"><span class="lgt"><?= mk_mark(30, '#FFFFFF') ?></span><span class="t"><b>Maakit</b><span><?= $T('Jagarnathpur ▾', 'जगरनाथपुर ▾') ?></span></span><span class="r"><?= $ico('M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4', 16) ?></span></div>
           </div>
-          <div class="mini-map"><span class="rd"></span><span class="pin"></span><span class="rider"></span></div>
-          <div class="card" style="display:flex;justify-content:space-between;align-items:center"><span><?= $T('Delivery code', 'डिलीवरी कोड') ?></span><b style="letter-spacing:3px;color:var(--brand)">4821</b></div>
+          <div class="body" style="padding-top:12px">
+            <div class="cd"><span class="mut"><?= $T('Your order', 'आपका ऑर्डर') ?></span><h5><?= $T('Arriving in 12 min', '12 मिनट में पहुँचेगा') ?></h5><div class="bar2"><i></i></div>
+              <ul class="stg"><li class="d"><i></i><?= $T('Shop accepted', 'दुकान ने माना') ?></li><li class="d"><i></i><?= $T('Packed', 'पैक हो गया') ?></li><li class="n"><i></i><?= $T('Sarathi on the way', 'सारथी रास्ते में') ?></li></ul></div>
+            <div class="mmap"><span class="shop"></span><span class="rt"></span><span class="home"></span><span class="rider"></span></div>
+            <div class="cd who"><span class="av">R</span><span><b style="display:block;font-size:13px"><?= $T('Your Sarathi', 'आपका सारथी') ?></b><span class="mut"><?= $T('Bike · on the way', 'बाइक · रास्ते में') ?></span></span><span class="call"><?= $ico('M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2', 16) ?></span></div>
+            <div class="code"><span><?= $T('Delivery code', 'डिलीवरी कोड') ?></span><b>4821</b></div>
+          </div>
+          <div class="nav"><span class="on"><?= $ico('M3 11l9-7 9 7v9H3z', 18) ?><?= $T('Home', 'होम') ?></span><span><?= $ico('M6 3h12v18l-3-2-3 2-3-2-3 2z', 18) ?><?= $T('Orders', 'ऑर्डर') ?></span><span><?= $ico('M12 12a4 4 0 1 0 0-8a4 4 0 1 0 0 8M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6', 18) ?><?= $T('Account', 'खाता') ?></span></div>
         </div></div>
         <small><?= $T('For customers', 'ग्राहकों के लिए') ?></small>
         <h3><?= $T('Maakit app', 'Maakit ऐप') ?></h3>
@@ -653,17 +699,21 @@ footer .low a{color:var(--saffron);font-weight:700}
 
       <div class="lane rv" style="transition-delay:.1s">
         <div class="ph" aria-hidden="true"><div class="scr">
-          <div class="top" style="background:#7A5600"><span><?= $T('Maakit for shops', 'Maakit दुकान') ?></span><span>9:41</span></div>
-          <div class="bell"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></svg><?= $T('New order!', 'नया ऑर्डर!') ?></div>
-          <div class="card"><b><?= $T('Order from Jagarnathpur', 'जगरनाथपुर से ऑर्डर') ?></b>
-            <ul class="items">
-              <li><span><?= $T('Wheat atta 1 kg', 'गेहूँ आटा 1 किग्रा') ?></span><span>× 2</span></li>
-              <li><span><?= $T('Mustard oil 1 L', 'सरसों तेल 1 ली') ?></span><span>× 1</span></li>
-              <li><span><?= $T('Haldi 100 g', 'हल्दी 100 ग्रा') ?></span><span>× 1</span></li>
-            </ul>
-            <div class="btns"><span class="ok"><?= $T('Accept', 'मंज़ूर') ?></span><span class="no"><?= $T('Decline', 'मना') ?></span></div>
+          <div style="background:var(--plum);color:#fff"><span class="island"></span><div class="sb"><span>9:41</span><span class="ic"><svg width="16" height="11" viewBox="0 0 16 11" aria-hidden="true"><rect x="0" y="7" width="3" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="2.5" height="11" rx="1" fill="currentColor"/></svg><svg width="22" height="11" viewBox="0 0 22 11" aria-hidden="true"><rect x=".5" y=".5" width="18" height="10" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="12" height="7" rx="1.5" fill="currentColor"/><rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="currentColor"/></svg></span></div>
+            <div class="hd"><span class="lgt"><?= mk_mark(30, '#FFFFFF') ?></span><span class="t"><b><?= $T('Maakit Shop', 'Maakit दुकान') ?></b><span><?= $T('Kirana shop', 'किराना दुकान') ?></span></span></div>
           </div>
-          <div class="card"><b><?= $T('Today', 'आज') ?></b><span class="muted"><?= $T('Your own price · your own stock · your own account', 'अपना दाम · अपना स्टॉक · अपना हिसाब') ?></span></div>
+          <div class="body" style="padding-top:12px">
+            <div class="cd tog"><span><?= $T('Shop is open', 'दुकान खुली है') ?></span><i></i></div>
+            <div class="alert"><span class="bl"><?= $ico('M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4', 18) ?></span><span><b><?= $T('New order!', 'नया ऑर्डर!') ?></b><span><?= $T('3 items · Jagarnathpur', '3 सामान · जगरनाथपुर') ?></span></span></div>
+            <div class="cd"><ul class="items">
+              <li><span><?= $T('Wheat atta 1 kg', 'गेहूँ आटा 1 किग्रा') ?></span><b>× 2</b></li>
+              <li><span><?= $T('Mustard oil 1 L', 'सरसों तेल 1 ली') ?></span><b>× 1</b></li>
+              <li><span><?= $T('Haldi 100 g', 'हल्दी 100 ग्रा') ?></span><b>× 1</b></li>
+            </ul></div>
+            <span class="bigbtn g"><?= $T('Accept order', 'ऑर्डर मंज़ूर कीजिए') ?></span>
+            <span class="bigbtn l"><?= $T('Not available', 'सामान नहीं है') ?></span>
+          </div>
+          <div class="nav"><span class="on"><?= $ico('M6 3h12v18l-3-2-3 2-3-2-3 2z', 18) ?><?= $T('Orders', 'ऑर्डर') ?></span><span><?= $ico('M3 10l1.5-5h15L21 10M4 10v10h16V10', 18) ?><?= $T('Items', 'सामान') ?></span><span><?= $ico('M4 4h16v16H4zM8 9h8M8 13h8M8 17h5', 18) ?><?= $T('Account', 'हिसाब') ?></span></div>
         </div></div>
         <small><?= $T('For shopkeepers', 'दुकानदारों के लिए') ?></small>
         <h3><?= $T('Maakit for shops', 'Maakit दुकान') ?></h3>
@@ -674,12 +724,17 @@ footer .low a{color:var(--saffron);font-weight:700}
 
       <div class="lane rv" style="transition-delay:.2s">
         <div class="ph" aria-hidden="true"><div class="scr">
-          <div class="top" style="background:var(--plum-2)"><span><?= $T('Sarathi Partner', 'सारथी पार्टनर') ?></span><span>9:41</span></div>
-          <div class="mini-map" style="height:150px"><span class="rd" style="top:72px"></span><span class="pin" style="top:50px"></span><span class="rider" style="top:62px"></span></div>
-          <div class="card"><div class="offer"><span class="ring"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="#F4E6DF" stroke-width="4"/><circle class="f" cx="23" cy="23" r="20" fill="none" stroke="#FFB020" stroke-width="4" stroke-linecap="round"/></svg><b>20s</b></span>
-            <span><b><?= $T('New job · 1.2 km', 'नया काम · 1.2 किमी') ?></b><span class="muted"><?= $T('Pickup: Kirana shop', 'पिकअप: किराना दुकान') ?></span></span></div>
-            <div class="btns"><span class="ok"><?= $T('Accept job', 'काम लीजिए') ?></span></div>
+          <div style="background:var(--plum-2);color:#fff"><span class="island"></span><div class="sb"><span>9:41</span><span class="ic"><svg width="16" height="11" viewBox="0 0 16 11" aria-hidden="true"><rect x="0" y="7" width="3" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="2.5" height="11" rx="1" fill="currentColor"/></svg><svg width="22" height="11" viewBox="0 0 22 11" aria-hidden="true"><rect x=".5" y=".5" width="18" height="10" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="12" height="7" rx="1.5" fill="currentColor"/><rect x="19.5" y="3.5" width="2" height="4" rx="1" fill="currentColor"/></svg></span></div>
+            <div class="hd"><span class="lgt"><?= mk_mark(30, '#FFFFFF') ?></span><span class="t"><b><?= $T('Sarathi Partner', 'सारथी पार्टनर') ?></b><span><?= $T('Bike', 'बाइक') ?></span></span></div>
           </div>
+          <div class="body" style="padding-top:12px">
+            <div class="cd tog"><span><?= $T('You are online', 'आप ऑनलाइन हैं') ?></span><i></i></div>
+            <div class="mmap" style="min-height:150px"><span class="shop"></span><span class="rt"></span><span class="home"></span><span class="rider"></span></div>
+            <div class="cd"><div class="offer"><span class="ring"><svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="22" fill="none" stroke="#F4E6DF" stroke-width="5"/><circle class="f" cx="25" cy="25" r="22" fill="none" stroke="#FFB020" stroke-width="5" stroke-linecap="round"/></svg><b>20s</b></span>
+              <span><h5><?= $T('New delivery job', 'नया डिलीवरी काम') ?></h5><span class="mut"><?= $T('Pickup 1.2 km · Kirana shop', 'पिकअप 1.2 किमी · किराना दुकान') ?></span></span></div>
+              <span class="bigbtn s" style="margin-top:12px"><?= $T('Accept job', 'काम लीजिए') ?></span></div>
+          </div>
+          <div class="nav"><span class="on"><?= $ico('M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M15 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M6 17l4-8h5l3 8', 18) ?><?= $T('Jobs', 'काम') ?></span><span><?= $ico('M4 4h16v16H4zM8 9h8M8 13h8', 18) ?><?= $T('Earnings', 'कमाई') ?></span><span><?= $ico('M12 12a4 4 0 1 0 0-8a4 4 0 1 0 0 8M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6', 18) ?><?= $T('Profile', 'प्रोफ़ाइल') ?></span></div>
         </div></div>
         <small><?= $T('For riders & vehicle owners', 'सारथी और गाड़ी वालों के लिए') ?></small>
         <h3><?= $T('Sarathi Partner', 'सारथी पार्टनर') ?></h3>
@@ -754,7 +809,7 @@ footer .low a{color:var(--saffron);font-weight:700}
   <div class="wrap">
     <div class="cols">
       <div class="brand">
-        <a class="logo" href="/"><b>M</b><span>Maakit</span></a>
+        <a class="logo" href="/" aria-label="Maakit"><?= mk_logo(46) ?></a>
         <span><?= $T('Local shopping, vehicle and service bookings for the towns and villages of Uttar Pradesh.', 'उत्तर प्रदेश के कस्बों और गाँवों के लिए स्थानीय खरीदारी, गाड़ी और सेवा बुकिंग।') ?></span>
         <span>Jagarnathpur, Bhadohi, Uttar Pradesh 221403</span>
         <?= $stores() ?>

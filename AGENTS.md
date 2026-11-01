@@ -15,6 +15,8 @@ the owner's request; the site-wide "no gradients" rule is unchanged elsewhere. C
 inside index.php only; the rest of the site keeps inc/theme.php.
 Intro v2: full-screen magenta, the name flashes through 10 Indian scripts, then "Maakit" is drawn in
 Kalam; once per session, Skip/Esc, /?intro=1 replays, skipped under prefers-reduced-motion.
+Logo (owner, 1 Nov, placeholder until a final design): magenta shopping bag with a white "M" and a saffron
+dot — mk_mark()/mk_logo() in index.php, files assets/logo/maakit-mark.svg and maakit-logo.svg.
 Keep it truthful: no traction numbers, no merchant price, no
 Bhojpuri claim until real. Displaced from the old home: search box (search_log), banners,
 festival art, live salon queue, books and reviews — all still on purana-ghar.php.
