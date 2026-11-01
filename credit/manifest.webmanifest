@@ -1,0 +1,17 @@
+{
+  "name": "MAAKIT Credit — Smart Borrowing",
+  "short_name": "MAAKIT Credit",
+  "start_url": "./app.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff7f1",
+  "theme_color": "#1c0d1f",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
