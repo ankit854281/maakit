@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1c0d1f"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="./manifest.webmanifest"><title>MAAKIT Credit — App Demo</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#14233e"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="./manifest.webmanifest"><title>MAAKIT Credit — App Demo</title>
 <style>
 :root{--p:#1c0d1f;--pink:#d6246e;--gold:#ffb020;--bg:#fff7f1;--line:#eee0e8;--txt:#29192d;--muted:#736873;--card:#fff; font-family:'Noto Sans Devanagari','Plus Jakarta Sans',Arial,sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#eee9ee;color:var(--txt)}button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}
@@ -41,19 +41,90 @@ h3{font-size:17px}.checks{padding-left:20px;font-size:13px;line-height:1.9;color
 .fixed-action{position:sticky;bottom:calc(74px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 22%);padding:15px 0 8px;margin-top:25px}
 .hidden{display:none!important}
 @media(max-width:360px){.screen{padding:14px}.top{padding:10px}.hero h1{font-size:25px}.loan{padding:12px}.price{font-size:34px}}
+
+
+/* MAAKIT Credit visual system v3: polished English-first finance design. */
+:root{
+--p:#162743;--pink:#5265e8;--gold:#f7b955;--bg:#f5f7fc;--line:#e6eaf3;
+--txt:#17243e;--muted:#65728a;--card:#fff;
+font-family:'Plus Jakarta Sans','Lexend','Segoe UI',Arial,sans-serif;
+font-synthesis:none;
+}
+body{background:#e9edf5;letter-spacing:-.015em}
+.app{background:var(--bg);box-shadow:0 0 65px rgba(22,39,67,.09)}
+.top{height:84px;background:rgba(255,255,255,.98);border-color:var(--line);padding-inline:21px}
+.logo{background:#162743;border-radius:15px;font-family:'Lexend','Segoe UI',sans-serif;box-shadow:0 5px 16px rgba(22,39,67,.17)}
+.logo:after{background:#60dfcb}
+.brand b{font-weight:800;letter-spacing:-.045em;font-size:21px}
+.brand b span{color:#5364e7}
+.brand small{letter-spacing:1.5px;font-size:9px;font-weight:800;color:#6b7890;margin-top:3px}
+.round{border-radius:50%;border-color:#e3e9f2;color:#162743;font-weight:800;box-shadow:0 3px 12px rgba(22,39,67,.045)}
+.screen{padding:21px 20px 36px}
+.chip{background:#e9efff;color:#4258bc;font-weight:800;letter-spacing:.035em;padding:8px 12px}
+.hero{
+background:linear-gradient(130deg,#162743 0%,#233b63 55%,#4855a5 100%);
+padding:28px 25px 29px;border-radius:28px;
+box-shadow:0 15px 30px rgba(28,52,91,.17);
+}
+.hero:after{color:#ffffff13;right:13px;bottom:1px;font-size:134px;transform:rotate(-12deg)}
+.hero:before{content:"";position:absolute;width:170px;height:170px;border:1px solid #ffffff24;border-radius:50%;right:-38px;top:-48px;pointer-events:none}
+.hero .chip{background:#ffffff1a;color:#b5ffee;border:1px solid #ffffff25}
+.hero h1{font-size:clamp(29px,7.4vw,38px);line-height:1.16;letter-spacing:-.065em;margin:24px 0 12px;font-weight:850;max-width:345px;position:relative;z-index:1}
+.hero p{font-size:14px;color:#dce8fb;line-height:1.7;max-width:310px;position:relative;z-index:1}
+.primary{background:#5265e8;border-radius:15px;font-size:14px;font-weight:800;letter-spacing:-.012em;min-height:49px;box-shadow:0 6px 17px rgba(82,101,232,.19)}
+.hero .primary{background:#c0f3e9;color:#153c48;box-shadow:0 5px 17px rgba(10,40,50,.16);position:relative;z-index:1}
+.primary.dark{background:#162743}.primary.gold{background:#f7b955}
+.headline{margin-top:29px;margin-bottom:15px}
+.headline h2{font-size:20px;letter-spacing:-.045em;font-weight:800}
+.headline small{font-size:11px;color:#72819a;font-weight:650}
+.notice{background:#fff8e9;border:1px solid #f2dfb5;color:#805a20;border-radius:14px;font-size:12px}
+.loan{border:1px solid #e6eaf3;border-radius:20px;padding:18px 16px;min-height:92px;box-shadow:0 7px 19px rgba(19,39,73,.035);transition:transform .16s,box-shadow .16s}
+.loan:active{transform:scale(.985)}
+.licon{border-radius:17px;background:#e9eeff;color:#5364e7}
+.loan:nth-child(2) .licon{background:#e6f7f3}
+.loan:nth-child(3) .licon{background:#fff0df}
+.loan:nth-child(4) .licon{background:#eceafd}
+.loan b{font-size:15px;letter-spacing:-.025em;font-weight:800}
+.loan small{font-size:12px;color:#6c7890}
+.loan .arrow{font-size:24px;color:#5566dc}
+.card{border:1px solid #e7eaf3;border-radius:22px;box-shadow:0 7px 18px rgba(19,39,73,.03)}
+.back{color:#5265e8;font-weight:800}
+.page-title{font-size:30px;line-height:1.2;letter-spacing:-.06em;font-weight:850}
+.subtitle{font-size:14px;color:#67768c}
+.price{letter-spacing:-.065em}
+.tile{background:#f5f7fc;border-color:#e8edf7;border-radius:15px}
+.tile small{font-size:11px;color:#68768d}
+.tile strong{font-size:14px;font-weight:800;letter-spacing:-.025em}
+.label{font-size:13px;color:#31415b}
+.control,.search{border-color:#e1e6ef;background:#fff;border-radius:14px;min-height:49px}
+.control:focus,.search:focus{border-color:#5365e7;outline:3px solid #5365e724}
+.steps span{background:#e6eafa}.steps span.done{background:#5365e7}
+.checks{font-size:14px;color:#495a73}.checks li::marker{color:#5265e8}
+.result{background:#e8f8f1;border-color:#cce8dd;color:#285e4a}
+.result.warn,.banner{background:#fff8e7;border-color:#f4e2b7;color:#765522}
+.link-row{border-color:#e8ecf4;font-size:14px;font-weight:650}
+.link-row span{color:#5365e7}
+.q{border-color:#e5eaf4}.q summary{font-size:14px;font-weight:750}.q p{font-size:13px}
+.avatar{background:#e8ecff;color:#5265e8}
+.bottom{border-top:1px solid #e6ebf5;box-shadow:0 -9px 25px #112b480c}
+.bottom button{font-size:11px;font-weight:750;color:#7a8598}.bottom button.active{background:#ebefff;color:#4255d5}
+.bottom button b{font-weight:650}
+@media(max-width:360px){.top{padding-inline:12px}.screen{padding:16px}.hero{padding:22px}.hero h1{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.loan{transition:none}}
+
 </style></head>
 <body><div class="app">
-<header class="top"><span class="logo" aria-hidden="true">M</span><div class="brand"><b>MAAKIT <span>Credit</span></b><small>SMART BORROWING · DEMO</small></div><button class="round" type="button" onclick="nav('help')" aria-label="Help">?</button><button class="round" type="button" onclick="nav('account')" aria-label="Account">♙</button></header>
+<header class="top"><span class="logo" aria-hidden="true">M</span><div class="brand"><b>MAAKIT <span>Credit</span></b><small>SMARTER FINANCE · PREVIEW</small></div><button class="round" type="button" onclick="nav('help')" aria-label="Help">?</button><button class="round" type="button" onclick="nav('account')" aria-label="Account">♙</button></header>
 <main>
 <section class="screen active" id="home">
-<div class="hero"><span class="chip">✦ SMART BORROWING</span><h1>Loan samjho.<br>Decision khud lo.</h1><p>Compare example EMI, understand charges, and explore safer borrowing — no account needed.</p><button class="primary" onclick="nav('calculator')">Calculate EMI →</button></div>
+<div class="hero"><span class="chip">✦ THE SMART MONEY EDITION</span><h1>Borrow smarter.<br>Live better.</h1><p>Know your numbers before your next move. Clear EMIs, transparent costs, and financial confidence — bilkul simple.</p><button class="primary" onclick="nav('calculator')">Explore EMI <span aria-hidden="true">→</span></button></div>
 <div class="notice">ⓘ This is a product demo. No real loan applications, approvals, disbursements, or KYC are available.</div>
-<div class="headline"><h2>Explore loan types</h2><small>Information only</small></div>
+<div class="headline"><h2>Explore your options</h2><small>Information only</small></div>
 <button class="loan" onclick="detail('Personal Loan')"><span class="licon">👤</span><span><b>Personal Loan</b><small>Understand EMI, interest and costs</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="detail('Business Loan')"><span class="licon">💼</span><span><b>Business Loan</b><small>Plan your business borrowing</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="detail('Two-Wheeler Finance')"><span class="licon">🛵</span><span><b>Two-Wheeler Finance</b><small>Estimate down payment and repayments</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="detail('Loan Against Property')"><span class="licon">⌂</span><span><b>Loan Against Property</b><small>Learn about secured loans</small></span><span class="arrow">›</span></button>
-<div class="headline"><h2>How it works</h2></div><div class="card"><div class="two"><div class="tile"><small>01 / Learn</small><strong>Explore terms</strong></div><div class="tile"><small>02 / Calculate</small><strong>Estimate EMI</strong></div><div class="tile"><small>03 / Verify</small><strong>Check real lender</strong></div><div class="tile"><small>04 / Decide</small><strong>Read the KFS</strong></div></div></div>
+<div class="headline"><h2>Money, made simple</h2></div><div class="card"><div class="two"><div class="tile"><small>01 / Discover</small><strong>Know the basics</strong></div><div class="tile"><small>02 / Calculate</small><strong>Plan your EMI</strong></div><div class="tile"><small>03 / Verify</small><strong>Check the lender</strong></div><div class="tile"><small>04 / Decide</small><strong>Choose wisely</strong></div></div></div>
 </section>
 <section class="screen" id="product"><button class="back" onclick="nav('home')">← Back</button><span class="chip">PRODUCT EXPLAINER · NOT AN OFFER</span><h1 class="page-title" id="productName">Personal Loan</h1><p class="subtitle" id="productDesc">Explore how loan costs work before choosing an actual lender.</p>
 <div class="card"><small class="note">Example loan amount — not a lending limit</small><div class="price">₹25,000</div><div class="two"><div class="tile"><small>Sample tenure</small><strong>12 months</strong></div><div class="tile"><small>Sample nominal rate</small><strong>18% yearly</strong></div></div><p class="note">No rate, loan amount, or processing fee shown here is an offer from MAAKIT or any lender.</p></div>
@@ -65,7 +136,7 @@ h3{font-size:17px}.checks{padding-left:20px;font-size:13px;line-height:1.9;color
 <div class="card"><label class="label" for="amount">Loan amount (₹)</label><input class="control" id="amount" type="number" min="3000" max="500000" value="25000" inputmode="numeric"><label class="label" for="annual">Nominal annual interest (%)</label><input class="control" id="annual" type="number" min="0" max="60" step=".5" value="18"><label class="label" for="months">Tenure (months)</label><select class="control" id="months"><option>6</option><option selected>12</option><option>18</option><option>24</option><option>36</option><option>60</option></select><label class="label" for="fee">Example processing fee (%)</label><input class="control" id="fee" type="number" min="0" max="10" step=".5" value="0">
 <div class="result" id="calcResult"><b id="emi">₹— / month</b><span id="total"></span></div><p class="note">Illustrative nominal interest, not all-inclusive APR. Taxes and any additional charges are excluded. No loan application is submitted.</p></div>
 </section>
-<section class="screen" id="eligibility"><button class="back" onclick="nav('home')">← Back</button><span class="chip">EDUCATIONAL SELF-CHECK</span><h1 class="page-title">Borrowing readiness</h1><p class="subtitle">A private checklist, not a real credit or eligibility check. Your answers are not saved.</p><div class="steps"><span class="done"></span><span class="done"></span><span></span></div>
+<section class="screen" id="eligibility"><button class="back" onclick="nav('home')">← Back</button><span class="chip">EDUCATIONAL SELF-CHECK</span><h1 class="page-title">Your borrowing checklist</h1><p class="subtitle">A private checklist, not a real credit or eligibility check. Your answers are not saved.</p><div class="steps"><span class="done"></span><span class="done"></span><span></span></div>
 <label class="label" for="income">Can your monthly budget cover another EMI?</label><select class="control" id="income"><option value="">Choose</option><option value="yes">Yes, comfortably</option><option value="uncertain">Not sure</option><option value="no">No</option></select>
 <label class="label" for="lender">Have you identified a regulated bank/NBFC?</label><select class="control" id="lender"><option value="">Choose</option><option value="yes">Yes</option><option value="no">Not yet</option></select>
 <label class="label" for="terms">Do you understand APR, KFS and total charges?</label><select class="control" id="terms"><option value="">Choose</option><option value="yes">Yes</option><option value="no">Not yet</option></select>
@@ -75,13 +146,13 @@ h3{font-size:17px}.checks{padding-left:20px;font-size:13px;line-height:1.9;color
 <section class="screen" id="consent"><button class="back" onclick="nav('account')">← Back</button><h1 class="page-title">Data & consent</h1><p class="subtitle">A transparent preview of what a genuine lender-linked application would need.</p><div class="card"><h3>Nothing is collected today</h3><p class="note">This demo does not verify PAN, access credit bureaus, query CKYC, collect GST records, or share personal data with any lender.</p></div>
 <div class="card"><h3>Before a real application launches</h3><ul class="checks"><li>Show the licensed lending partner's identity.</li><li>Explain every data category and purpose.</li><li>Provide separate, affirmative consent for each necessary purpose.</li><li>Explain sharing, retention, withdrawal and grievance options.</li></ul></div><div class="banner">The sample interface deliberately has no “I agree” application consent, because no actual authorised processing exists.</div>
 </section>
-<section class="screen" id="help"><h1 class="page-title">How can we help?</h1><p class="subtitle">Answers about loans and this prototype.</p><input class="search" type="search" id="search" placeholder="Search help questions…" aria-label="Search help questions" oninput="filterHelp()">
+<section class="screen" id="help"><h1 class="page-title">How can we help you?</h1><p class="subtitle">Answers about loans and this prototype.</p><input class="search" type="search" id="search" placeholder="Search help questions…" aria-label="Search help questions" oninput="filterHelp()">
 <div class="headline"><h2>Quick help</h2></div>
 <div class="two"><button class="loan" onclick="nav('calculator')"><span class="licon">₹</span><span><b>EMI</b><small>Calculation</small></span></button><button class="loan" onclick="nav('eligibility')"><span class="licon">✓</span><span><b>Checklist</b><small>Readiness</small></span></button></div>
 <div id="faqs"><details class="q"><summary>Can I apply for a loan now?</summary><p>No. MAAKIT Credit is an informational prototype; no lender partner is integrated and no applications are accepted.</p></details><details class="q"><summary>Is MAAKIT an RBI-registered lender?</summary><p>MAAKIT does not claim to be an RBI-registered lender. Before any actual offer is presented, verify the regulated lending partner.</p></details><details class="q"><summary>Does this demo need my PAN?</summary><p>No. Never share PAN or bank details to try this prototype.</p></details><details class="q"><summary>How can I estimate EMI?</summary><p>Use the calculator and change amount, example annual rate, months and fee. It is not an actual APR or offer.</p></details><details class="q"><summary>What is KFS?</summary><p>The Key Facts Statement describes important loan terms, APR and relevant charges provided by a regulated lender.</p></details></div>
 </section>
-<section class="screen" id="account"><div class="profile"><div class="avatar">♙</div><h1 class="page-title">My account</h1><p class="subtitle">Demo visitor · No login or profile exists</p><span class="chip">NO PERSONAL DATA STORED</span></div><div class="card"><button class="link-row" onclick="nav('eligibility')">✓ Borrowing readiness <span>›</span></button><button class="link-row" onclick="nav('calculator')">▦ EMI calculator <span>›</span></button><button class="link-row" onclick="nav('help')">? Help center <span>›</span></button><button class="link-row" onclick="nav('settings')">⚙ Settings & legal <span>›</span></button></div></section>
-<section class="screen" id="settings"><button class="back" onclick="nav('account')">← Back</button><h1 class="page-title">Settings</h1><div class="card"><button class="link-row" onclick="nav('consent')">Privacy & consent <span>›</span></button><button class="link-row" onclick="nav('help')">Help & FAQs <span>›</span></button><button class="link-row" onclick="nav('consent')">Lending partners <span>›</span></button><button class="link-row" onclick="nav('consent')">Legal & disclosures <span>›</span></button></div><p class="note">MAAKIT Credit demo version 1. No financial product or lending partner is currently active.</p></section>
+<section class="screen" id="account"><div class="profile"><div class="avatar">♙</div><h1 class="page-title">Your space</h1><p class="subtitle">Welcome aboard! This preview does not create an account or collect your personal details.</p><span class="chip">NO PERSONAL DATA STORED</span></div><div class="card"><button class="link-row" onclick="nav('eligibility')">✓ Borrowing readiness <span>›</span></button><button class="link-row" onclick="nav('calculator')">▦ EMI calculator <span>›</span></button><button class="link-row" onclick="nav('help')">? Help center <span>›</span></button><button class="link-row" onclick="nav('settings')">⚙ Settings & legal <span>›</span></button></div></section>
+<section class="screen" id="settings"><button class="back" onclick="nav('account')">← Back</button><h1 class="page-title">Settings & trust</h1><div class="card"><button class="link-row" onclick="nav('consent')">Privacy & consent <span>›</span></button><button class="link-row" onclick="nav('help')">Help & FAQs <span>›</span></button><button class="link-row" onclick="nav('consent')">Lending partners <span>›</span></button><button class="link-row" onclick="nav('consent')">Legal & disclosures <span>›</span></button></div><p class="note">MAAKIT Credit demo version 1. No financial product or lending partner is currently active.</p></section>
 </main>
 <nav class="bottom" aria-label="Main app navigation"><button data-nav="home" class="active" onclick="nav('home')"><b>⌂</b>Home</button><button data-nav="calculator" onclick="nav('calculator')"><b>▦</b>EMI</button><button data-nav="help" onclick="nav('help')"><b>?</b>Help</button><button data-nav="account" onclick="nav('account')"><b>♙</b>Account</button></nav>
 </div>
