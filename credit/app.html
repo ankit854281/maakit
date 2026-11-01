@@ -112,6 +112,46 @@ box-shadow:0 15px 30px rgba(28,52,91,.17);
 @media(max-width:360px){.top{padding-inline:12px}.screen{padding:16px}.hero{padding:22px}.hero h1{font-size:29px}}
 @media(prefers-reduced-motion:reduce){.loan{transition:none}}
 
+
+/* Product lead v4: financial planning tools */
+.tool-intro{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#eaf0ff,#e9fbf8);border:1px solid #dbe6fb;padding:16px;border-radius:18px;margin-top:15px}
+.tool-icon{display:grid;place-items:center;background:white;color:#3446a5;border-radius:15px;width:45px;height:45px;flex-shrink:0;font-size:21px;font-weight:850}
+.tool-intro b{font-size:14px;display:block}.tool-intro small{font-size:12px;color:#5f7089;line-height:1.55;display:block;margin-top:3px}
+.segment-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;background:#e9edf6;padding:5px;border-radius:14px;margin-top:15px}
+.segment-tabs button{border:0;background:transparent;border-radius:11px;min-height:39px;color:#5b6880;font-size:12px;font-weight:800}
+.segment-tabs button.selected{background:#fff;color:#283b72;box-shadow:0 3px 9px #233b6215}
+.metric{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #edf0f5;font-size:13px}
+.metric:last-child{border:0}
+.metric span{color:#68768d}.metric strong{font-size:14px;font-variant-numeric:tabular-nums;text-align:right}
+.compare-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compare-cards .card{padding:14px 12px;margin:4px 0}
+.compare-cards h3{font-size:14px;margin:1px 0 9px}
+.compare-cards .control{font-size:14px;padding:8px;min-height:44px}
+.compare-cards .label{margin:12px 0 6px;font-size:12px}
+.compare-cards .result{padding:11px;font-size:12px;margin:12px 0 0}
+.compare-cards .result b{font-size:17px}
+.compare-cards .card:first-child{border-color:#b4c1ff}
+.compare-cards .card:last-child{border-color:#c9dfd7}
+.compare-outcome{padding:16px;border-radius:18px;background:#eef6ff;border:1px solid #d9e5fc;margin-top:12px;color:#304363;font-size:13px;line-height:1.65}
+.compare-outcome b{display:block;font-size:15px;margin-bottom:4px}
+.table-clip{width:100%;overflow-x:auto;border:1px solid #e5eaf2;border-radius:16px;background:#fff}
+.schedule{border-collapse:collapse;width:100%;min-width:390px;font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.schedule th{background:#edf2fc;color:#405574;font-size:11px;padding:12px 8px}
+.schedule td{padding:10px 8px;border-top:1px solid #e9edf4;color:#42516a}
+.schedule th:first-child,.schedule td:first-child{text-align:left;padding-left:13px}
+.bar-track{height:9px;background:#dbe2f3;overflow:hidden;border-radius:99px;margin-top:15px;display:flex}
+.bar-track span{display:block;height:100%;background:#5365e8}
+.bar-track i{height:100%;background:#66ceb8;flex:1}
+.glossary-item{padding:15px 0;border-bottom:1px solid #e8edf4}
+.glossary-item:last-child{border:0}
+.glossary-item b{font-size:14px}.glossary-item p{font-size:12px;color:#62718a;line-height:1.7;margin:6px 0 0}
+.checklist{display:grid;gap:10px;margin-top:16px}
+.checklist label{display:flex;align-items:flex-start;gap:11px;background:white;border:1px solid #e6ebf3;border-radius:14px;padding:13px;color:#34435b;font-size:13px;line-height:1.5}
+.checklist input{accent-color:#5365e8;width:18px;height:18px;flex-shrink:0;margin-top:1px}
+.progress-text{color:#4f6180;font-weight:750;font-size:13px;margin-top:13px}
+.nooffer{padding:14px;background:#fff5e5;border:1px solid #edddb9;color:#755329;border-radius:13px;font-size:12px;line-height:1.7;margin:14px 0}
+@media(max-width:360px){.compare-cards{gap:7px}.compare-cards .card{padding:11px 9px}.compare-cards .control{padding:7px 6px}}
+
 </style></head>
 <body><div class="app">
 <header class="top"><span class="logo" aria-hidden="true">M</span><div class="brand"><b>MAAKIT <span>Credit</span></b><small>SMARTER FINANCE · PREVIEW</small></div><button class="round" type="button" onclick="nav('help')" aria-label="Help">?</button><button class="round" type="button" onclick="nav('account')" aria-label="Account">♙</button></header>
@@ -124,6 +164,11 @@ box-shadow:0 15px 30px rgba(28,52,91,.17);
 <button class="loan" onclick="detail('Business Loan')"><span class="licon">💼</span><span><b>Business Loan</b><small>Plan your business borrowing</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="detail('Two-Wheeler Finance')"><span class="licon">🛵</span><span><b>Two-Wheeler Finance</b><small>Estimate down payment and repayments</small></span><span class="arrow">›</span></button>
 <button class="loan" onclick="detail('Loan Against Property')"><span class="licon">⌂</span><span><b>Loan Against Property</b><small>Learn about secured loans</small></span><span class="arrow">›</span></button>
+
+<div class="headline"><h2>Financial planning tools</h2><small>All free · No login</small></div>
+<button class="loan" onclick="nav('compare')"><span class="licon" style="background:#e9efff">⇄</span><span><b>Compare loan scenarios</b><small>See which example costs less overall</small></span><span class="arrow">›</span></button>
+<button class="loan" onclick="nav('schedule')"><span class="licon" style="background:#e5f5f1">▤</span><span><b>Repayment breakdown</b><small>View month-by-month principal and interest</small></span><span class="arrow">›</span></button>
+<button class="loan" onclick="nav('eligibility')"><span class="licon" style="background:#fff1dc">✓</span><span><b>Borrowing readiness</b><small>Check what to review before applying anywhere</small></span><span class="arrow">›</span></button>
 <div class="headline"><h2>Money, made simple</h2></div><div class="card"><div class="two"><div class="tile"><small>01 / Discover</small><strong>Know the basics</strong></div><div class="tile"><small>02 / Calculate</small><strong>Plan your EMI</strong></div><div class="tile"><small>03 / Verify</small><strong>Check the lender</strong></div><div class="tile"><small>04 / Decide</small><strong>Choose wisely</strong></div></div></div>
 </section>
 <section class="screen" id="product"><button class="back" onclick="nav('home')">← Back</button><span class="chip">PRODUCT EXPLAINER · NOT AN OFFER</span><h1 class="page-title" id="productName">Personal Loan</h1><p class="subtitle" id="productDesc">Explore how loan costs work before choosing an actual lender.</p>
@@ -153,12 +198,65 @@ box-shadow:0 15px 30px rgba(28,52,91,.17);
 </section>
 <section class="screen" id="account"><div class="profile"><div class="avatar">♙</div><h1 class="page-title">Your space</h1><p class="subtitle">Welcome aboard! This preview does not create an account or collect your personal details.</p><span class="chip">NO PERSONAL DATA STORED</span></div><div class="card"><button class="link-row" onclick="nav('eligibility')">✓ Borrowing readiness <span>›</span></button><button class="link-row" onclick="nav('calculator')">▦ EMI calculator <span>›</span></button><button class="link-row" onclick="nav('help')">? Help center <span>›</span></button><button class="link-row" onclick="nav('settings')">⚙ Settings & legal <span>›</span></button></div></section>
 <section class="screen" id="settings"><button class="back" onclick="nav('account')">← Back</button><h1 class="page-title">Settings & trust</h1><div class="card"><button class="link-row" onclick="nav('consent')">Privacy & consent <span>›</span></button><button class="link-row" onclick="nav('help')">Help & FAQs <span>›</span></button><button class="link-row" onclick="nav('consent')">Lending partners <span>›</span></button><button class="link-row" onclick="nav('consent')">Legal & disclosures <span>›</span></button></div><p class="note">MAAKIT Credit demo version 1. No financial product or lending partner is currently active.</p></section>
+
+<section class="screen" id="compare">
+<button class="back" onclick="nav('home')">← Home</button><span class="chip">DECISION TOOL · ILLUSTRATIVE</span>
+<h1 class="page-title">Compare borrowing costs</h1>
+<p class="subtitle">Not all EMIs tell the full story. Compare two hypothetical scenarios and understand the total amount payable.</p>
+<div class="tool-intro"><span class="tool-icon">⇄</span><div><b>Compare two scenarios</b><small>Same principal, different interest, fees or tenure. No lender or approval involved.</small></div></div>
+<div class="card">
+<label class="label" for="compareAmount">Example principal (₹)</label><input id="compareAmount" class="control" type="number" min="3000" max="500000" value="50000" inputmode="numeric">
+<div class="compare-cards">
+<div class="card"><h3>Scenario A</h3><label class="label" for="compareRateA">Annual rate (%)</label><input class="control" id="compareRateA" type="number" min="0" max="60" step=".5" value="16"><label class="label" for="compareTermA">Months</label><select class="control" id="compareTermA"><option>6</option><option selected>12</option><option>18</option><option>24</option><option>36</option><option>60</option></select><label class="label" for="compareFeeA">Fee (%)</label><input class="control" id="compareFeeA" type="number" min="0" max="10" step=".5" value="2"><div class="result"><small>Monthly EMI</small><b id="compareEmiA">—</b><small id="compareTotalA"></small></div></div>
+<div class="card"><h3>Scenario B</h3><label class="label" for="compareRateB">Annual rate (%)</label><input class="control" id="compareRateB" type="number" min="0" max="60" step=".5" value="22"><label class="label" for="compareTermB">Months</label><select class="control" id="compareTermB"><option>6</option><option>12</option><option selected>18</option><option>24</option><option>36</option><option>60</option></select><label class="label" for="compareFeeB">Fee (%)</label><input class="control" id="compareFeeB" type="number" min="0" max="10" step=".5" value="3"><div class="result"><small>Monthly EMI</small><b id="compareEmiB">—</b><small id="compareTotalB"></small></div></div>
+</div>
+<div id="compareOutcome" class="compare-outcome" role="status">Calculating comparison…</div>
+<div class="nooffer">These values are user-editable examples, NOT real lender rates, offers, or all-inclusive APR. Taxes, insurance and other charges are excluded.</div>
+</div>
+</section>
+<section class="screen" id="schedule">
+<button class="back" onclick="nav('calculator')">← EMI Calculator</button><span class="chip">REPAYMENT EDUCATION</span>
+<h1 class="page-title">Your repayment roadmap</h1><p class="subtitle">See how interest and principal change each month on an example reducing-balance EMI.</p>
+<div class="tool-intro"><span class="tool-icon">▤</span><div><b>Linked to EMI calculator</b><small>Change the amount or rate in EMI; this breakdown refreshes automatically.</small></div></div>
+<div class="card">
+<div class="metric"><span>Monthly EMI</span><strong id="scheduleEmi">—</strong></div>
+<div class="metric"><span>Total interest</span><strong id="scheduleInterest">—</strong></div>
+<div class="metric"><span>Principal</span><strong id="schedulePrincipal">—</strong></div>
+<div class="bar-track" aria-label="Principal and interest portions"><span id="principalPercent" style="width:80%"></span><i></i></div>
+<p class="note">Indigo = principal · Mint = interest. Displayed amounts are rounded for readability.</p>
+</div>
+<div class="headline"><h2>Month by month</h2></div>
+<div class="table-clip"><table class="schedule"><thead><tr><th>Month</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Balance</th></tr></thead><tbody id="scheduleRows"></tbody></table></div>
+<div class="nooffer">Hypothetical repayment illustration only. It does not represent an active loan account or repayment instruction. The actual lender's KFS and schedule control real terms.</div>
+</section>
+<section class="screen" id="learn">
+<button class="back" onclick="nav('home')">← Home</button><span class="chip">MONEY KNOW-HOW</span>
+<h1 class="page-title">The smarter borrowing guide</h1><p class="subtitle">Understand the language behind every loan decision — simple and practical.</p>
+<div class="card">
+<div class="glossary-item"><b>EMI</b><p>Equated Monthly Instalment. Your scheduled monthly repayment, typically covering principal plus interest.</p></div>
+<div class="glossary-item"><b>APR</b><p>Annual Percentage Rate represents the all-inclusive annualised borrowing cost and is not the same as the nominal interest rate displayed in our calculator.</p></div>
+<div class="glossary-item"><b>KFS</b><p>Key Facts Statement. Your actual regulated lender must provide key loan terms and charges.</p></div>
+<div class="glossary-item"><b>Cooling-off period</b><p>Applicable digital loans have a defined exit option during the cooling-off period, subject to RBI rules and the lender's terms.</p></div>
+<div class="glossary-item"><b>Processing fee</b><p>A potential charge. Compare its impact alongside interest, taxes, total outflow and the disclosed APR.</p></div>
+<div class="glossary-item"><b>Late payment</b><p>Check any disclosed penal charges and the consequences of missed payments before accepting an actual offer.</p></div>
+</div>
+<div class="headline"><h2>Pre-loan checklist</h2><small>Stored only on this page</small></div>
+<div class="checklist" id="kfsChecklist">
+<label><input type="checkbox">I have verified the bank / NBFC's identity.</label>
+<label><input type="checkbox">I have reviewed the lender's KFS and APR.</label>
+<label><input type="checkbox">I understand processing fees, taxes and late charges.</label>
+<label><input type="checkbox">My monthly budget can comfortably cover repayments.</label>
+<label><input type="checkbox">I know the lender's official grievance contact.</label>
+</div><p class="progress-text" id="checkProgress" role="status">0 of 5 reviewed</p>
+<button class="primary block" style="margin-top:12px" onclick="nav('compare')">Compare example costs →</button>
+<p class="note">These checks are for education only, not a lending decision or application.</p>
+</section>
 </main>
 <nav class="bottom" aria-label="Main app navigation"><button data-nav="home" class="active" onclick="nav('home')"><b>⌂</b>Home</button><button data-nav="calculator" onclick="nav('calculator')"><b>▦</b>EMI</button><button data-nav="help" onclick="nav('help')"><b>?</b>Help</button><button data-nav="account" onclick="nav('account')"><b>♙</b>Account</button></nav>
 </div>
 <script>
 'use strict';
-const names=['home','product','calculator','eligibility','consent','help','account','settings'];
+const names=['home','product','calculator','eligibility','consent','help','account','settings','compare','schedule','learn'];
 function nav(id){if(!names.includes(id))return;document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id));window.scrollTo({top:0,behavior:'instant'});history.replaceState(null,'','#'+id)}
 function detail(name){document.getElementById('productName').textContent=name;document.getElementById('productDesc').textContent='Learn what to compare before choosing an actual regulated lender for '+name.toLowerCase()+'.';nav('product')}
 const money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
@@ -166,5 +264,62 @@ function calc(){const p=Number(document.getElementById('amount').value),rate=Num
 ['amount','annual','months','fee'].forEach(id=>document.getElementById(id).addEventListener('input',calc));calc();
 function readiness(){const a=document.getElementById('income').value,b=document.getElementById('lender').value,c=document.getElementById('terms').value,e=document.getElementById('readinessResult');if(!a||!b||!c){e.className='result warn';e.textContent='Please answer all three questions.';return}e.className='result '+(a==='yes'&&b==='yes'&&c==='yes'?'':'warn');e.innerHTML=(a==='yes'&&b==='yes'&&c==='yes'?'<b>Good preparation</b>You have reviewed key topics. This does NOT mean you are eligible for a loan.':'<b>Review before borrowing</b>Revisit your budget, lender identity and key terms before making any decision.')+'<br>No credit bureau check or application was performed.'}
 function filterHelp(){const q=document.getElementById('search').value.toLowerCase();document.querySelectorAll('#faqs details').forEach(el=>el.hidden=!el.textContent.toLowerCase().includes(q))}
+
+function exampleEmi(principal,annual,months){
+ const r=annual/1200;
+ return r===0?principal/months:principal*r/(1-Math.pow(1+r,-months));
+}
+function validScenario(p,r,n,f){
+ return Number.isFinite(p)&&p>=3000&&p<=500000&&Number.isFinite(r)&&r>=0&&r<=60&&Number.isFinite(n)&&n>=6&&n<=60&&Number.isFinite(f)&&f>=0&&f<=10;
+}
+function compareScenarios(){
+ const p=Number(document.getElementById('compareAmount').value);
+ const value=side=>({rate:Number(document.getElementById('compareRate'+side).value),months:Number(document.getElementById('compareTerm'+side).value),fee:Number(document.getElementById('compareFee'+side).value)});
+ const a=value('A'),b=value('B'),out=document.getElementById('compareOutcome');
+ if(!validScenario(p,a.rate,a.months,a.fee)||!validScenario(p,b.rate,b.months,b.fee)){
+  out.textContent='Please enter a valid principal (₹3,000–₹5,00,000), rate (0–60%), processing fee (0–10%) and tenure.';
+  for(const side of ['A','B']){document.getElementById('compareEmi'+side).textContent='—';document.getElementById('compareTotal'+side).textContent=''}
+  return;
+ }
+ const emiA=exampleEmi(p,a.rate,a.months),emiB=exampleEmi(p,b.rate,b.months);
+ const totalA=emiA*a.months+p*a.fee/100,totalB=emiB*b.months+p*b.fee/100;
+ document.getElementById('compareEmiA').textContent=money(emiA);
+ document.getElementById('compareEmiB').textContent=money(emiB);
+ document.getElementById('compareTotalA').textContent='Total: '+money(totalA);
+ document.getElementById('compareTotalB').textContent='Total: '+money(totalB);
+ const diff=Math.abs(totalA-totalB);
+ if(diff<.5){out.textContent='Both scenarios have approximately the same total example outflow.'}
+ else{const cheaper=totalA<totalB?'A':'B';out.textContent='Scenario '+cheaper+' costs approximately '+money(diff)+' less overall in this illustration. Compare total cost, not just monthly EMI.'}
+}
+for(const el of document.querySelectorAll('#compare input,#compare select'))el.addEventListener('input',compareScenarios);
+function repaymentSchedule(){
+ const p=Number(document.getElementById('amount').value),r=Number(document.getElementById('annual').value),n=Number(document.getElementById('months').value),f=Number(document.getElementById('fee').value);
+ const rows=document.getElementById('scheduleRows');
+ if(!validScenario(p,r,n,f)){rows.replaceChildren();for(const id of ['scheduleEmi','scheduleInterest','schedulePrincipal'])document.getElementById(id).textContent='—';return}
+ const interestRate=r/1200,emi=exampleEmi(p,r,n),totalInterest=Math.max(0,emi*n-p);
+ document.getElementById('scheduleEmi').textContent=money(emi);
+ document.getElementById('scheduleInterest').textContent=money(totalInterest);
+ document.getElementById('schedulePrincipal').textContent=money(p);
+ document.getElementById('principalPercent').style.width=(100*p/(p+totalInterest))+'%';
+ let balance=p;const frag=document.createDocumentFragment();
+ for(let month=1;month<=n;month++){
+  const interest=balance*interestRate;
+  const principalPart=month===n?balance:Math.min(balance,emi-interest);
+  balance=Math.max(0,balance-principalPart);
+  const tr=document.createElement('tr');
+  for(const cell of [String(month),money(month===n?principalPart+interest:emi),money(interest),money(principalPart),money(balance)]){
+   const td=document.createElement('td');td.textContent=cell;tr.appendChild(td)
+  }frag.appendChild(tr);
+ }
+ rows.replaceChildren(frag);
+}
+for(const id of ['amount','annual','months','fee'])document.getElementById(id).addEventListener('input',repaymentSchedule);
+function updateKfsChecklist(){
+ const items=[...document.querySelectorAll('#kfsChecklist input')];
+ document.getElementById('checkProgress').textContent=items.filter(x=>x.checked).length+' of '+items.length+' reviewed — '+(items.every(x=>x.checked)?'Nice preparation!':'keep going');
+}
+document.querySelectorAll('#kfsChecklist input').forEach(x=>x.addEventListener('change',updateKfsChecklist));
+compareScenarios();repaymentSchedule();updateKfsChecklist();
+
 if(location.hash&&names.includes(location.hash.slice(1)))nav(location.hash.slice(1));if('serviceWorker' in navigator&&isSecureContext)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script></body></html>
