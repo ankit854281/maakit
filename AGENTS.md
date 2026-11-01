@@ -3,9 +3,14 @@
 - `app-trial/web/index.html` is a clickable prototype of the customer app (one
   file, no build): language → login/OTP → address → home → shop → item sheet →
   cart → live tracking → orders → account, English and Hindi.
+- Colours (owner, 1 Nov, latest wins): ONE calm palette everywhere — deep
+  plum-magenta header (#A62A62 → #4A1236), near-white page #F7F5F8, one soft
+  rose tint #F8EEF3 behind every tile. Tabs do NOT get their own colours.
+  `ill.js` maps every drawing to this palette (`PAL`). Each home tab opens
+  with a scene illustration (`MKSCENE`), like the reference app.
 - Look (owner): service tabs on the home header like folder tabs — Shops,
   Vehicle booking, Local services, Parcel (Soon) — each tab has its own colour
-  and the whole header, banner and page tint change with it; glass
+  (superseded: now one colour, see above); glass
   (transparent, blurred) tabs, search and bottom bar. Base page colour is a
   soft pearl (#F4F1F8), not cream. The chosen folder slides between tabs and
   the header colour fades (no jump); swipe left/right also changes tab.

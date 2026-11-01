@@ -2,6 +2,18 @@
  * Every drawing is a 64×64 SVG. MKILL(key, ...args) returns the markup. */
 (function () {
   'use strict';
+  /* One calm palette for every drawing (owner: subtle, professional, not every icon a different colour). */
+  var PAL = {
+    '#E8458A':'#D6246E','#F25C98':'#DE5A92','#25A55F':'#6FA287','#2FA35E':'#6FA287','#1E6B40':'#4E7F66','#3DBB6B':'#86B79A','#1F9A57':'#6FA287',
+    '#1D7BD8':'#8A5C84','#5B8DEF':'#B9A3B8','#BFE6FF':'#F1E7EE','#DFF7FB':'#F3EBF1','#E9F3FF':'#F7EFF4','#DCEBFF':'#F3E8EF','#E1E7EC':'#ECE6EB',
+    '#FFB020':'#E5A447','#FFC34D':'#EDB862','#F29A12':'#D28D36','#FFD27A':'#F1CD94','#F7922B':'#E19A55','#F08A1C':'#D48A3E','#FF8A3D':'#DE9A6E',
+    '#D9530C':'#B9683F','#A3440B':'#8A4A2E','#7A3A0B':'#6B3A26','#E0332B':'#C94A42','#FF8A7A':'#E58C83','#D92B22':'#B63E36','#FF6B6B':'#E39090',
+    '#A47AFF':'#B78FB0','#7B4FEA':'#8E5A86','#C4A8FF':'#DCC3D6','#8F63F5':'#9D6C94','#5A33C8':'#6E3F68','#6A3FD8':'#7E4A76','#FF6B2B':'#E07A4A',
+    '#FFE27A':'#F3D9A2','#F2B705':'#DDAE52','#FFB547':'#E7A862','#E8700F':'#C77A40','#FFF1A8':'#F6E8C0','#F6DFA9':'#F3E3C2',
+    '#9DB7D6':'#C2B4C6','#3FA66B':'#6FA287','#7EC8F2':'#BBA7C3','#E9A21B':'#D49E4E','#F5C842':'#E6C46A','#F2C230':'#DDB459','#F2B544':'#DDB06A',
+    '#1A9BB8':'#B23A6E','#F7A93B':'#E2A458','#FFF4B0':'#FBEFC9','#FF9A1F':'#E59A45'
+  };
+  function calm(x) { return String(x).replace(/#[0-9A-Fa-f]{6}/g, function (h) { return PAL[h.toUpperCase()] || PAL[h] || h; }); }
   var n = 0;
   function id() { return 'mk' + (++n); }
   function lg(i, a, b, horiz) {
@@ -44,7 +56,7 @@
         '<rect x="14" y="48" width="13" height="3" rx="1" fill="#25A55F"/><rect x="16" y="45" width="3" height="3" fill="#FFB020"/><rect x="21" y="44.5" width="3" height="3.5" fill="#D6246E"/>');
     },
     suv: function (col) {
-      col = col || '#1A9BB8';
+      col = col || '#B23A6E';
       var a = id();
       return svg(lg(a, lighten(col, .25), darken(col, .2)),
         '<rect x="20" y="13" width="22" height="3" rx="1.5" fill="#2A1530" opacity=".7"/><rect x="22" y="16" width="2" height="4" fill="#2A1530" opacity=".7"/><rect x="38" y="16" width="2" height="4" fill="#2A1530" opacity=".7"/>' +
@@ -280,9 +292,108 @@
     }
   };
 
+
+  /* ---------- banner scenes, 360 × 220 ---------- */
+  function nest(key, x, y, w) { return D[key]().replace('<svg class="ill" viewBox="0 0 64 64"', '<svg x="' + x + '" y="' + y + '" width="' + w + '" height="' + w + '" viewBox="0 0 64 64"'); }
+  function sceneSvg(defs, body) {
+    var sky = id();
+    return '<svg class="scene" viewBox="0 0 360 264" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs>' + lg(sky, '#FFF8FA', '#F6E4EC') + defs + '</defs>' +
+      '<rect width="360" height="264" fill="url(#' + sky + ')"/>' +
+      '<circle cx="324" cy="34" r="20" fill="#F6D9A8" opacity=".6"/><g transform="translate(0 44)">' +
+      '<path d="M0 150h40v-30h26v18h22v-40h30v52h24v-26h20v26h18v-60h34v60h22v-34h28v34h26v-22h24v22h46v70H0z" fill="#EFDCE5"/>' +
+      '<path d="M134 108h4v8h-4zM248 106h5v8h-5zM40 128h4v6h-4zM96 116h4v8h-4z" fill="#F9EEF3"/>' +
+      '<rect y="186" width="360" height="34" fill="#E9D6DF"/><path d="M0 200h360" stroke="#F7EBF0" stroke-width="3" stroke-dasharray="18 14"/>' + body + '</g></svg>';
+  }
+  function plant(x, y, s) {
+    s = s || 1;
+    return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')"><path d="M-8 0h16l-2 12H-6z" fill="#B9683F"/><path d="M0 0c-10-6-12-18-4-22 2 8 4 14 4 22zM0 0c10-6 12-18 4-22-2 8-4 14-4 22zM0 0c0-12-2-22 0-28 2 6 0 16 0 28z" fill="#6FA287"/></g>';
+  }
+  function tree(x, y, s) {
+    return '<g transform="translate(' + x + ' ' + y + ') scale(' + (s || 1) + ')"><rect x="-3" y="-10" width="6" height="22" rx="2" fill="#8A5A3C"/><circle cx="0" cy="-22" r="18" fill="#86B79A"/><circle cx="-10" cy="-14" r="11" fill="#6FA287"/><circle cx="11" cy="-16" r="12" fill="#7AAB8F"/></g>';
+  }
+  /* standing person, feet at (x,y) */
+  function man(x, y, o) {
+    o = o || {};
+    var shirt = o.shirt || '#4A1236', pant = o.pant || '#5E5462', skin = o.skin || '#E2AE86';
+    return '<g transform="translate(' + x + ' ' + y + ')">' +
+      '<rect x="-9" y="-34" width="8" height="33" rx="3.5" fill="' + pant + '"/><rect x="1" y="-34" width="8" height="33" rx="3.5" fill="' + pant + '"/>' +
+      '<ellipse cx="-5" cy="-1" rx="6" ry="2.6" fill="#2A1F2D"/><ellipse cx="5" cy="-1" rx="6" ry="2.6" fill="#2A1F2D"/>' +
+      '<rect x="-12" y="-66" width="24" height="36" rx="10" fill="' + shirt + '"/>' +
+      (o.badge ? '<rect x="2" y="-58" width="7" height="7" rx="2" fill="#D6246E"/><path d="M3.6 -52.6v-3.4l1.9 1.6 1.9-1.6v3.4" stroke="#fff" stroke-width=".9" fill="none"/>' : '') +
+      '<rect x="-4" y="-72" width="8" height="8" rx="3" fill="' + skin + '"/><circle cx="0" cy="-80" r="10" fill="' + skin + '"/>' +
+      (o.helmet ? '<path d="M-11 -80a11 11 0 0 1 22 0v2h-22z" fill="#D6246E"/><path d="M-11 -80h14v4h-14z" fill="#A3164F"/><rect x="3" y="-81" width="9" height="5" rx="2" fill="#F3EBF1" opacity=".9"/>'
+                : '<path d="M-10 -82c0-8 6-11 10-11s10 3 10 11c-3-3-6-4-10-4s-7 1-10 4z" fill="#2A1F2D"/>') +
+      (o.arms || '<path d="M-11 -60l-6 22M11 -60l6 22" stroke="' + shirt + '" stroke-width="7" stroke-linecap="round"/>') +
+      '</g>';
+  }
+  function woman(x, y, o) {
+    o = o || {};
+    var saree = o.saree || '#E7A9C3', skin = o.skin || '#D99E78';
+    return '<g transform="translate(' + x + ' ' + y + ')">' +
+      '<path d="M-12 -62h24l6 60h-36z" fill="' + saree + '"/><path d="M-12 -62h24l-4 22h-20z" fill="#E5A447"/>' +
+      '<path d="M8 -62c6 10 6 30 10 60h-8c-2-24-4-44-2-60z" fill="#D6246E" opacity=".75"/>' +
+      '<ellipse cx="-6" cy="-1" rx="5" ry="2.2" fill="#2A1F2D"/><ellipse cx="6" cy="-1" rx="5" ry="2.2" fill="#2A1F2D"/>' +
+      '<rect x="-4" y="-68" width="8" height="8" rx="3" fill="' + skin + '"/><circle cx="0" cy="-76" r="9.5" fill="' + skin + '"/>' +
+      '<path d="M-10 -77c0-9 5-12 10-12s10 3 10 12c-2-4-6-6-10-6s-8 2-10 6z" fill="#2A1F2D"/><circle cx="9" cy="-80" r="5" fill="#2A1F2D"/>' +
+      '<circle cx="0" cy="-82" r="1.4" fill="#D6246E"/>' +
+      (o.arms || '<path d="M-11 -58l-5 22M11 -58l5 22" stroke="' + skin + '" stroke-width="5.5" stroke-linecap="round"/>') +
+      '</g>';
+  }
+  function scooter(x, y, flip, rider) {
+    var g = '<g transform="translate(' + x + ' ' + y + ')' + (flip ? ' scale(-1 1)' : '') + '">' +
+      '<rect x="-40" y="-60" width="34" height="30" rx="5" fill="#D6246E"/><rect x="-40" y="-60" width="34" height="7" rx="3" fill="#A3164F"/>' +
+      '<rect x="-30" y="-47" width="14" height="11" rx="2" fill="#fff"/><path d="M-27 -38.5v-5.5l4 3.5 4-3.5v5.5" stroke="#D6246E" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M-44 -18c0-10 8-14 18-14h26l10-20h8l-6 22c8 2 12 6 12 12z" fill="#B23A6E"/><path d="M-6 -30h16" stroke="#8E1D52" stroke-width="3"/>' +
+      '<path d="M10 -52l6-4" stroke="#2A1F2D" stroke-width="3" stroke-linecap="round"/><circle cx="18" cy="-40" r="3" fill="#F6E8C0"/>' +
+      '<circle cx="-30" cy="-8" r="10" fill="#2A1F2D"/><circle cx="-30" cy="-8" r="4" fill="#C9C2CC"/><circle cx="16" cy="-8" r="10" fill="#2A1F2D"/><circle cx="16" cy="-8" r="4" fill="#C9C2CC"/>';
+    if (rider) g +=
+      '<path d="M-14 -34l8 0 6 16" stroke="#5E5462" stroke-width="8" stroke-linecap="round" fill="none"/>' +
+      '<rect x="-24" y="-66" width="22" height="34" rx="9" fill="#4A1236" transform="rotate(12 -13 -49)"/>' +
+      '<path d="M-6 -58l18 4" stroke="#4A1236" stroke-width="6.5" stroke-linecap="round"/>' +
+      '<circle cx="-8" cy="-76" r="10" fill="#E2AE86"/><path d="M-19 -76a11 11 0 0 1 22 0v2h-22z" fill="#D6246E"/><rect x="-6" y="-77" width="9" height="5" rx="2" fill="#F3EBF1"/>';
+    return g + '</g>';
+  }
+  function speed(x, y) { return '<path d="M' + x + ' ' + y + 'h-26M' + (x - 6) + ' ' + (y + 10) + 'h-34M' + x + ' ' + (y + 20) + 'h-22" stroke="#E2C6D3" stroke-width="3" stroke-linecap="round"/>'; }
+
+  var SC = {
+    shops: function () {
+      return sceneSvg('',
+        '<rect x="246" y="96" width="114" height="92" fill="#FFF8F3"/><path d="M238 96h130v-12H238z" fill="#8E1D52"/>' +
+        '<rect x="282" y="116" width="40" height="72" rx="3" fill="#6B2A48"/><rect x="286" y="120" width="32" height="68" rx="2" fill="#F3E2EA"/><circle cx="314" cy="156" r="2" fill="#E5A447"/>' +
+        '<rect x="330" y="116" width="22" height="22" rx="3" fill="#F3EBF1"/><path d="M341 116v22M330 127h22" stroke="#E2C6D3" stroke-width="2"/>' +
+        '<path d="M276 104c8 6 44 6 52 0" stroke="#E5A447" stroke-width="3" fill="none" stroke-dasharray="1 5" stroke-linecap="round"/>' +
+        plant(262, 176, .9) + scooter(118, 190, false, false) + tree(30, 176, .9) +
+        man(214, 190, { helmet: true, badge: true, arms: '<path d="M-11 -60l14 20M11 -60l22 14" stroke="#4A1236" stroke-width="7" stroke-linecap="round"/>' }) +
+        nest('bag', 222, 122, 34) +
+        woman(272, 190, { arms: '<path d="M-11 -58l-16 20M11 -58l-2 22" stroke="#D99E78" stroke-width="5.5" stroke-linecap="round"/>' }));
+    },
+    vehicle: function () {
+      return sceneSvg('',
+        tree(36, 182, 1) + tree(84, 186, .8) + '<path d="M120 186l40-70h40l40 70z" fill="#E3CDD8" opacity=".6"/>' +
+        nest('suv', 150, 78, 150) + speed(150, 140) +
+        '<g transform="translate(320 186)"><rect x="-10" y="-34" width="20" height="34" rx="9" fill="#F7F1F4"/><rect x="-10" y="-34" width="20" height="10" rx="5" fill="#D6246E"/></g>' + plant(110, 176, .8));
+    },
+    services: function () {
+      var lights = '';
+      for (var i = 0; i < 9; i++) lights += '<circle cx="' + (150 + i * 24) + '" cy="' + (70 + Math.sin(i / 8 * Math.PI) * 14) + '" r="5" fill="' + (i % 2 ? '#E5A447' : '#EDB862') + '"/>';
+      return sceneSvg('',
+        '<path d="M140 92l70-36 70 36 70-36v6l-70 36-70-36-70 36z" fill="#B23A6E"/>' +
+        '<path d="M140 92h210v96H140z" fill="#FFF8F3" opacity=".9"/><path d="M140 92l35 22 35-22 35 22 35-22 35 22 35-22" fill="none" stroke="#E7A9C3" stroke-width="5"/>' +
+        '<path d="M150 70q96 26 192 0" stroke="#6FA287" stroke-width="2" fill="none"/>' + lights +
+        '<rect x="160" y="150" width="80" height="38" rx="4" fill="#E9D6DF"/>' + nest('kalash', 168, 104, 54) + nest('kadhai', 250, 128, 64) + nest('diya', 206, 140, 36) + tree(40, 182, .9) + plant(116, 176, .9));
+    },
+    parcel: function () {
+      return sceneSvg('',
+        tree(326, 182, .9) + nest('parcel', 236, 118, 70) + nest('docs', 288, 136, 50) + speed(70, 140) +
+        scooter(150, 190, false, true) + plant(40, 176, .8));
+    }
+  };
+
   window.MKILL = function (key) {
     var f = D[key];
     if (!f) return '';
-    return f.apply(null, Array.prototype.slice.call(arguments, 1));
+    var args = Array.prototype.slice.call(arguments, 1).map(function (a) { return typeof a === 'string' ? calm(a) : a; });
+    return calm(f.apply(null, args));
   };
+  window.MKSCENE = function (key, lang) { var f = SC[key]; return f ? calm(f(lang || 'en')) : ''; };
 })();
