@@ -26,11 +26,11 @@ $PANNE = [
     // 1 Nov 2026: home page ab group ka landing page hai; purana
     // catalogue wala home purana-ghar.php me hai aur wahin jaancha jaata hai.
     ['/?lang=hi', 'होम (हिन्दी)',
-        'chahiye' => ['Maakit', 'निवेशकों के लिए', 'दुकान जोड़िए', 'दाम वही, जो दुकान पर', 'सारथी बनिए'],
+        'chahiye' => ['Maakit', 'निवेशकों के लिए', 'दुकान जोड़िए', 'WhatsApp पर ऑर्डर', 'सारथी बनिए'],
         'nahi'    => ['Fatal error', 'Warning:', 'Notice:', 'Undefined']],
 
     ['/?lang=en', 'होम (English)',
-        'chahiye' => ['Maakit', 'For investors', 'Join as a shop', 'Same price as the shop', 'Join as Sarathi'],
+        'chahiye' => ['Maakit', 'For investors', 'Join as a shop', 'Order on WhatsApp', 'Join as Sarathi'],
         'nahi'    => ['Fatal error', 'Undefined']],
 
     ['/purana-ghar.php?lang=hi', 'पुराना होम (हिन्दी)',

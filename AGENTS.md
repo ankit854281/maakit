@@ -6,11 +6,16 @@ the page sends them to phone / WhatsApp. The website no longer offers goods orde
 page (order.php, bazaar.php etc. still exist by URL). The previous catalogue home is kept unchanged
 as purana-ghar.php (noindex); restoring it = renaming it back to index.php. CI checks for the old
 home (panne, hub-flow, coverage-flow, category-flow) now open /purana-ghar.php.
-Look (owner: "apna sundar rang"): peacock teal #0E5C63, marigold #F9B233, coral #E5533D on cream
-#FFF8EE — as CSS variables inside index.php only; the rest of the site keeps inc/theme.php.
-Intro: "Maakit" drawn in Kalam (self-hosted, assets/fonts/kalam-latin-700.woff2, OFL), then the
-name in 11 Indian scripts; once per session, tap/Esc/8.5 s closes, /?intro=1 replays,
-prefers-reduced-motion respected. Keep it truthful: no traction numbers, no merchant price, no
+Look v2 (owner, same day, after comparing with furtilo.com): Rani magenta #D6246E, saffron #FFB020,
+dark plum #1C0D1F hero/footer, cream #FFF6EF page, pastel service cards with Maakit's own inline-SVG
+illustrations (mk_art(), gently animated), scroll-reveal, typed rotating hero word, big rounded corners
+(cards 28px, investor box 40px, footer 44px top), floating WhatsApp button. Fonts self-hosted: Lexend
+(assets/fonts/lexend-latin-*.woff2) + Kalam + Noto Sans Devanagari. Hero/intro use a soft radial glow at
+the owner's request; the site-wide "no gradients" rule is unchanged elsewhere. Colours are variables
+inside index.php only; the rest of the site keeps inc/theme.php.
+Intro v2: full-screen magenta, the name flashes through 10 Indian scripts, then "Maakit" is drawn in
+Kalam; once per session, Skip/Esc, /?intro=1 replays, skipped under prefers-reduced-motion.
+Keep it truthful: no traction numbers, no merchant price, no
 Bhojpuri claim until real. Displaced from the old home: search box (search_log), banners,
 festival art, live salon queue, books and reviews — all still on purana-ghar.php.
 
