@@ -265,18 +265,23 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 #mk-intro .aur .b3{width:420px;height:420px;left:52%;top:-120px;background:#7B3FE4;opacity:.6;animation-duration:8s}
 #mk-intro .aur .b4{width:340px;height:340px;left:4%;bottom:-140px;background:#FF7AB6;opacity:.55;animation-duration:10s}
 @keyframes aur{to{transform:translate(60px,40px) scale(1.18)}}
-#mk-intro .mandala{position:absolute;width:min(900px,160vw);height:auto;opacity:.12;animation:spin 60s linear infinite}
+#mk-intro .net{position:absolute;inset:0;width:100%;height:100%;opacity:.9}
+#mk-intro .flowr{animation:route 2.6s linear infinite}
+#mk-intro .r1{animation-duration:3.2s}#mk-intro .r2{animation-duration:2.2s}#mk-intro .r3{animation-duration:3.8s}
+@keyframes route{to{stroke-dashoffset:-80}}
+#mk-intro .nd{transform-box:fill-box;transform-origin:center;animation:node 2.4s ease-out infinite}
+#mk-intro .n1{animation-delay:.8s}#mk-intro .n2{animation-delay:1.6s}
+@keyframes node{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.4);opacity:0}}
 #mk-intro .glass{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:min(580px,88vw);padding:34px 44px 30px;border-radius:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:0 40px 90px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25)}
 #mk-intro .nm{font-size:clamp(46px,11vw,100px);font-weight:800;line-height:1.25;min-height:1.3em;text-align:center;text-shadow:0 8px 40px rgba(214,36,110,.6)}
 #mk-intro .nm.swap{animation:swapIn .22s ease-out}
 @keyframes swapIn{from{opacity:0;filter:blur(10px);transform:translateY(12px) scale(.95)}to{opacity:1;filter:blur(0);transform:none}}
-#mk-intro .ln{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);min-height:1.4em}
 #mk-intro .prog{width:160px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden;margin-top:12px}
 #mk-intro .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FFB020,#FF7AB6);animation:prog 3.2s linear forwards}
 @keyframes prog{to{width:100%}}
 #mk-intro svg.word{width:min(500px,78vw);height:auto;display:none}
 #mk-intro .lg{display:none}#mk-intro.final .lg{display:block;animation:swapIn .5s ease-out}
-#mk-intro.final .nm,#mk-intro.final .ln,#mk-intro.final .prog{display:none}
+#mk-intro.final .nm,#mk-intro.final .prog{display:none}
 #mk-intro.final svg.word{margin-top:-14px}#mk-intro.final svg.word{display:block}
 #mk-intro .draw{font-family:var(--hand);font-weight:700;font-size:168px;fill:#fff;stroke:#fff;stroke-width:2.5;stroke-dasharray:900;stroke-dashoffset:900;fill-opacity:0}
 #mk-intro.final .draw{animation:mkDraw 1.5s ease-out forwards}
@@ -545,10 +550,9 @@ footer .low a{color:var(--saffron);font-weight:700}
 
 <div id="mk-intro" hidden>
   <div class="aur" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span></div>
-  <svg class="mandala" viewBox="0 0 400 400" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.2"><circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="150"/><circle cx="200" cy="200" r="100"/><circle cx="200" cy="200" r="50"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(0 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(30 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(60 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(90 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(120 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(150 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(180 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(210 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(240 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(270 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(300 200 200)"/><ellipse cx="200" cy="110" rx="22" ry="62" transform="rotate(330 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(0 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(22 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(45 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(67 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(90 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(112 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(135 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(157 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(180 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(202 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(225 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(247 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(270 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(292 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(315 200 200)"/><circle cx="200" cy="30" r="10" transform="rotate(337 200 200)"/></svg>
+  <svg class="net" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g stroke="rgba(255,255,255,.06)" stroke-width="1"><path d="M0 0V800"/><path d="M80 0V800"/><path d="M160 0V800"/><path d="M240 0V800"/><path d="M320 0V800"/><path d="M400 0V800"/><path d="M480 0V800"/><path d="M560 0V800"/><path d="M640 0V800"/><path d="M720 0V800"/><path d="M800 0V800"/><path d="M880 0V800"/><path d="M960 0V800"/><path d="M1040 0V800"/><path d="M1120 0V800"/><path d="M1200 0V800"/><path d="M0 0H1200"/><path d="M0 80H1200"/><path d="M0 160H1200"/><path d="M0 240H1200"/><path d="M0 320H1200"/><path d="M0 400H1200"/><path d="M0 480H1200"/><path d="M0 560H1200"/><path d="M0 640H1200"/><path d="M0 720H1200"/><path d="M0 800H1200"/></g><g fill="none" stroke-linecap="round"><path d="M-20 620 C200 560 260 380 420 360 S640 420 760 300 S1000 140 1220 180" stroke="rgba(255,255,255,.14)" stroke-width="2"/><path class="flowr r0" d="M-20 620 C200 560 260 380 420 360 S640 420 760 300 S1000 140 1220 180" stroke="#FF7AB6" stroke-width="3" stroke-dasharray="14 26"/><path d="M-20 180 C160 220 300 120 460 200 S700 520 880 500 S1080 420 1220 520" stroke="rgba(255,255,255,.14)" stroke-width="2"/><path class="flowr r1" d="M-20 180 C160 220 300 120 460 200 S700 520 880 500 S1080 420 1220 520" stroke="#FFB020" stroke-width="3" stroke-dasharray="14 26"/><path d="M120 820 C180 640 360 600 520 640 S760 760 900 640 S1060 380 1220 360" stroke="rgba(255,255,255,.14)" stroke-width="2"/><path class="flowr r2" d="M120 820 C180 640 360 600 520 640 S760 760 900 640 S1060 380 1220 360" stroke="#FF7AB6" stroke-width="3" stroke-dasharray="14 26"/><path d="M300 -20 C320 120 420 220 600 240 S860 160 980 60 S1120 -20 1220 20" stroke="rgba(255,255,255,.14)" stroke-width="2"/><path class="flowr r3" d="M300 -20 C320 120 420 220 600 240 S860 160 980 60 S1120 -20 1220 20" stroke="#FFB020" stroke-width="3" stroke-dasharray="14 26"/></g><circle class="nd n0" cx="420" cy="360" r="16" fill="rgba(255,255,255,.08)"/><circle cx="420" cy="360" r="5" fill="#fff" opacity=".75"/><circle class="nd n1" cx="760" cy="300" r="16" fill="rgba(255,255,255,.08)"/><circle cx="760" cy="300" r="5" fill="#fff" opacity=".75"/><circle class="nd n2" cx="460" cy="200" r="16" fill="rgba(255,255,255,.08)"/><circle cx="460" cy="200" r="5" fill="#fff" opacity=".75"/><circle class="nd n0" cx="880" cy="500" r="16" fill="rgba(255,255,255,.08)"/><circle cx="880" cy="500" r="5" fill="#fff" opacity=".75"/><circle class="nd n1" cx="520" cy="640" r="16" fill="rgba(255,255,255,.08)"/><circle cx="520" cy="640" r="5" fill="#fff" opacity=".75"/><circle class="nd n2" cx="900" cy="640" r="16" fill="rgba(255,255,255,.08)"/><circle cx="900" cy="640" r="5" fill="#fff" opacity=".75"/><circle class="nd n0" cx="600" cy="240" r="16" fill="rgba(255,255,255,.08)"/><circle cx="600" cy="240" r="5" fill="#fff" opacity=".75"/><circle class="nd n1" cx="980" cy="60" r="16" fill="rgba(255,255,255,.08)"/><circle cx="980" cy="60" r="5" fill="#fff" opacity=".75"/><circle class="nd n2" cx="260" cy="420" r="16" fill="rgba(255,255,255,.08)"/><circle cx="260" cy="420" r="5" fill="#fff" opacity=".75"/><circle class="nd n0" cx="1080" cy="420" r="16" fill="rgba(255,255,255,.08)"/><circle cx="1080" cy="420" r="5" fill="#fff" opacity=".75"/></svg>
   <div class="glass">
     <div class="nm" aria-hidden="true">Maakit</div>
-    <div class="ln" aria-hidden="true"></div>
     <span class="lg"><?= mk_mark(76, '#7B2E6B') ?></span>
     <svg class="word" viewBox="0 0 640 220" role="img" aria-label="Maakit"><text class="draw" x="320" y="160" text-anchor="middle">Maakit</text></svg>
     <div class="tag"><?= $T('Your town’s own app', 'आपके शहर का अपना ऐप') ?></div>
@@ -836,7 +840,7 @@ footer .low a{color:var(--saffron);font-weight:700}
   var force = /[?&]intro=1/.test(location.search), seen = false;
   try { seen = sessionStorage.getItem('mk_intro') === '1'; } catch (e) {}
   if (box && !reduce && (force || !seen)) {
-    var names = <?= json_encode($scripts, JSON_UNESCAPED_UNICODE) ?>, nm = box.querySelector('.nm'), ln = box.querySelector('.ln'), i = 0, done = false, timer;
+    var names = <?= json_encode($scripts, JSON_UNESCAPED_UNICODE) ?>, nm = box.querySelector('.nm'), i = 0, done = false, timer;
     box.hidden = false; document.body.style.overflow = 'hidden';
     var close = function () {
       if (done) return; done = true; clearInterval(timer);
@@ -845,7 +849,7 @@ footer .low a{color:var(--saffron);font-weight:700}
       setTimeout(function () { box.hidden = true; }, 750);
     };
     timer = setInterval(function () {
-      if (i < names.length) { nm.textContent = names[i][0]; ln.textContent = names[i][1]; nm.classList.remove('swap'); void nm.offsetWidth; nm.classList.add('swap'); i++; return; }
+      if (i < names.length) { nm.textContent = names[i][0]; nm.classList.remove('swap'); void nm.offsetWidth; nm.classList.add('swap'); i++; return; }
       clearInterval(timer); box.classList.add('final'); setTimeout(close, 2300);
     }, 290);
     document.getElementById('mk-skip').addEventListener('click', close);
