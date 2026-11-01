@@ -168,23 +168,116 @@ box-shadow:0 15px 30px rgba(28,52,91,.17);
 .amount-loan em{display:block;font-size:11px;font-style:normal;color:#718198;margin-top:5px}
 .secondary-action{display:block;width:100%;border:0;background:transparent;color:#5061d8;font-size:12px;font-weight:750;margin-top:6px;padding:14px 8px}
 
+
+/* v6: compact loan-first layout inspired by the supplied screenshot, but original MAAKIT branding */
+.credit-top{height:75px;gap:9px;padding:12px 16px}
+.credit-top .logo{width:39px;height:39px;border-radius:13px;font-size:22px;flex-shrink:0}
+.credit-top .brand{min-width:0}.credit-top .brand b{font-size:clamp(17px,4.5vw,21px);white-space:nowrap}
+.credit-top .brand small{font-size:8px}
+.top-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.top-actions .round{width:34px;height:34px;border-radius:50%;font-size:17px;border:1.5px solid #d1dafa;color:#314579;background:#f8faff;box-shadow:none}
+#home.screen{padding:15px 15px 130px;background:#f4f6fa;min-height:calc(100svh - 75px)}
+.compact-promo{display:flex;align-items:center;text-align:left;width:100%;gap:13px;padding:17px 15px;background:linear-gradient(110deg,#fceef3 0%,#edf6ff 100%);border:1px solid #eadfe7;border-radius:17px;color:#14243f;min-height:103px}
+.promo-emblem{background:#fff;color:#5060c4;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:30px;flex-shrink:0}
+.compact-promo strong{display:block;font-size:16px;letter-spacing:-.035em;line-height:1.3}
+.compact-promo small{display:block;font-size:12px;color:#596a81;margin-top:7px}
+.promo-arrow{margin-left:auto;font-size:26px;color:#5265e8;font-weight:700}
+.compact-progress{display:flex;align-items:center;justify-content:space-between;gap:6px;background:#fff;border:1px solid #e6e9f0;border-radius:17px;margin:12px 0 10px;padding:15px 12px;min-height:98px}
+.progress-ring{border:1px solid #dce4f1;border-radius:50%;width:60px;height:60px;display:grid;place-items:center;flex-shrink:0;font-size:19px;font-weight:700}
+.progress-item{display:flex;align-items:center;flex-direction:column;gap:8px;flex:1;position:relative;font-size:11px;color:#9aa5b7;white-space:nowrap}
+.progress-item:before{content:"";position:absolute;height:1px;background:#e0e5ef;top:10px;left:-50%;width:100%;z-index:0}
+.progress-item:nth-child(2):before{display:none}
+.progress-dot{display:block;width:21px;height:21px;border-radius:50%;background:#e8ebf3;border:5px solid #e8ebf3;position:relative;z-index:1}
+.progress-item.active{color:#233856;font-weight:750}
+.progress-item.active .progress-dot{background:#fff;border:7px solid #f8c64e}
+.home-disclaimer{color:#69788c;font-size:10.5px;line-height:1.5;margin:8px 4px 11px}
+.home-disclaimer strong{color:#8b5d20}
+.credit-loans{display:grid;gap:11px}
+.credit-product{background:white;border:1px solid #dfe4ee;border-radius:15px;overflow:hidden}
+.credit-product-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 13px;min-height:39px;background:#e7f3fe}
+.credit-product-head strong{font-size:15px;font-weight:800;line-height:1.25;letter-spacing:-.025em}
+.credit-product-head span{font-size:10px;color:#53677b;white-space:nowrap}
+.business-card .credit-product-head{background:#eef4dd}
+.vehicle-card .credit-product-head{background:#eaeafe}
+.property-card .credit-product-head{background:#e1f5ee}
+.credit-product-body{display:flex;align-items:center;gap:11px;padding:15px 12px;min-height:114px}
+.credit-product-icon{width:56px;height:65px;border-radius:10px;background:#f1f3f8;display:grid;place-items:center;color:#5265e8;font-size:29px;flex-shrink:0;font-weight:700}
+.business-card .credit-product-icon{background:#f2f7e9;color:#657e3e}
+.vehicle-card .credit-product-icon{background:#f0efff;color:#6868a5}
+.property-card .credit-product-icon{background:#eaf7f2;color:#478b72}
+.credit-product-info{min-width:0;flex:1}
+.credit-product-info small{font-size:9px;letter-spacing:.04em;color:#69778b;display:block;margin-bottom:3px}
+.credit-product-info strong{font-size:clamp(20px,5vw,27px);line-height:1.22;font-weight:800;letter-spacing:-.045em;display:block;white-space:nowrap;color:#15243e}
+.credit-product-info span{display:block;font-size:10.5px;color:#67768d;margin-top:5px}
+.loan-action{background:white;border:1.5px solid #5265e8;color:#3146bc;border-radius:32px;min-height:39px;padding:8px 12px;font-size:11px;font-weight:800;white-space:nowrap;flex-shrink:0}
+.loan-action.filled{background:#f8c84e;border-color:#f8c84e;color:#202c42}
+.home-fixed-action{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,100%);padding:11px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,#f4f6faeb,#fff 28%);z-index:12}
+.home-fixed-action button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:0;background:#f9cb4f;color:#17243c;border-radius:40px;font-size:16px;font-weight:850;min-height:57px;box-shadow:0 7px 18px #d5a52826}
+.home-fixed-action button span{font-size:22px}
+.home-fixed-action small{display:block;text-align:center;color:#7b8597;font-size:9px;margin-top:6px}
+.app:has(#home.active)>.bottom{display:none}
+@media(max-width:390px){#home.screen{padding:11px 11px 128px}.credit-product-body{gap:8px;padding:12px 9px}.credit-product-icon{width:43px;height:54px;font-size:24px}.loan-action{padding:8px 9px;font-size:10px}.credit-product-head strong{font-size:13px}.credit-product-head span{font-size:9px}.compact-progress{padding:12px 8px}.progress-ring{width:51px;height:51px}}
+
 </style></head>
 <body><div class="app">
-<header class="top"><span class="logo" aria-hidden="true">M</span><div class="brand"><b>MAAKIT <span>Credit</span></b><small>SMARTER FINANCE · PREVIEW</small></div><button class="round" type="button" onclick="nav('help')" aria-label="Help">?</button><button class="round" type="button" onclick="nav('account')" aria-label="Account">♙</button></header>
+<header class="top credit-top">
+  <span class="logo" aria-hidden="true">M</span>
+  <div class="brand"><b>MAAKIT <span>Credit</span></b><small>SMARTER FINANCE</small></div>
+  <div class="top-actions">
+    <button class="round" type="button" onclick="nav('calculator')" aria-label="Financial tools" title="Financial tools">▦</button>
+    <button class="round" type="button" onclick="nav('account')" aria-label="Account" title="Account">♙</button>
+    <button class="round" type="button" onclick="nav('help')" aria-label="Help" title="Help">?</button>
+  </div>
+</header>
 <main>
 <section class="screen active" id="home">
-<div class="hero"><span class="chip">✦ YOUR FINANCIAL JOURNEY</span><h1>Money goals?<br>Start with clarity.</h1><p>Explore borrowing options with simple, upfront examples. No hidden claims. No pressure.</p><button class="primary" onclick="detail('Personal Loan')">Explore personal loan <span aria-hidden="true">→</span></button></div>
-<div class="notice">ⓘ Preview only. Amounts below are illustrative, not available credit limits or approved offers. No loan applications or KYC are active.</div>
-<div class="headline"><h2>Your loan options</h2><small>Example amounts · Not offers</small></div>
-<div class="feature-offer"><div class="offer-heading"><span class="offer-tag">POPULAR EXAMPLE</span><span class="offer-status">DEMO ONLY</span></div><div class="offer-label">Personal Loan</div><div class="offer-amount">₹25,000</div><div class="offer-note">Illustrative loan amount — not pre-approved or available to borrow.</div><div class="offer-meta"><span>12-month sample</span><span>No lender linked</span></div><button class="primary block" onclick="detail('Personal Loan')">View loan details →</button></div>
-<button class="loan amount-loan" onclick="detail('Business Loan')"><span class="licon">💼</span><span><b>Business Loan</b><small>Illustrative amount · ₹50,000</small><em>Explore product details</em></span><span class="arrow">›</span></button>
-<button class="loan amount-loan" onclick="detail('Two-Wheeler Finance')"><span class="licon">🛵</span><span><b>Two-Wheeler Finance</b><small>Illustrative amount · ₹75,000</small><em>Explore product details</em></span><span class="arrow">›</span></button>
-<button class="loan amount-loan" onclick="detail('Loan Against Property')"><span class="licon">⌂</span><span><b>Loan Against Property</b><small>Illustrative amount · ₹1,00,000</small><em>Explore product details</em></span><span class="arrow">›</span></button>
-<div class="headline"><h2>Planning tools</h2><small>Optional · No login</small></div>
-<button class="loan" onclick="nav('compare')"><span class="licon" style="background:#e9efff">⇄</span><span><b>Compare loan scenarios</b><small>See which example costs less overall</small></span><span class="arrow">›</span></button>
-<button class="loan" onclick="nav('schedule')"><span class="licon" style="background:#e5f5f1">▤</span><span><b>Repayment breakdown</b><small>View month-by-month principal and interest</small></span><span class="arrow">›</span></button>
-<button class="loan" onclick="nav('eligibility')"><span class="licon" style="background:#fff1dc">✓</span><span><b>Borrowing readiness</b><small>Check what to review before applying anywhere</small></span><span class="arrow">›</span></button>
-<div class="headline"><h2>Money, made simple</h2><button type="button" class="back" style="margin:0" onclick="nav('learn')">View guide →</button></div><div class="card"><div class="two"><div class="tile"><small>01 / Discover</small><strong>Know the basics</strong></div><div class="tile"><small>02 / Calculate</small><strong>Plan your EMI</strong></div><div class="tile"><small>03 / Verify</small><strong>Check the lender</strong></div><div class="tile"><small>04 / Decide</small><strong>Choose wisely</strong></div></div></div>
+  <button class="compact-promo" type="button" onclick="nav('learn')">
+    <span class="promo-emblem" aria-hidden="true">✧</span>
+    <span><strong>Know before you borrow</strong><small>Clear terms. Smarter decisions.</small></span>
+    <span class="promo-arrow" aria-hidden="true">›</span>
+  </button>
+  <div class="compact-progress" aria-label="Demo application journey preview, not a live application">
+    <div class="progress-ring">0%</div>
+    <div class="progress-item active"><span class="progress-dot"></span><span>Eligibility</span></div>
+    <div class="progress-item"><span class="progress-dot"></span><span>KYC</span></div>
+    <div class="progress-item"><span class="progress-dot"></span><span>Profile</span></div>
+  </div>
+  <div class="home-disclaimer"><strong>DEMO ·</strong> Amounts shown are examples, not live lending limits or offers.</div>
+  <div class="credit-loans">
+    <article class="credit-product personal-card">
+      <div class="credit-product-head"><strong>Personal Loan</strong><span>↗ Fast transfer*</span></div>
+      <div class="credit-product-body">
+        <div class="credit-product-icon" aria-hidden="true">₹</div>
+        <div class="credit-product-info"><small>EXAMPLE AMOUNT</small><strong>₹25,000</strong><span>12-month illustration</span></div>
+        <button type="button" class="loan-action filled" onclick="detail('Personal Loan')">Continue</button>
+      </div>
+    </article>
+    <article class="credit-product business-card">
+      <div class="credit-product-head"><strong>Business Loan</strong><span>↗ For business owners</span></div>
+      <div class="credit-product-body">
+        <div class="credit-product-icon" aria-hidden="true">▣</div>
+        <div class="credit-product-info"><small>EXAMPLE AMOUNT</small><strong>₹50,000</strong><span>Illustrative only</span></div>
+        <button type="button" class="loan-action" onclick="detail('Business Loan')">View Details</button>
+      </div>
+    </article>
+    <article class="credit-product vehicle-card">
+      <div class="credit-product-head"><strong>Two-Wheeler Loan</strong><span>≋ Vehicle financing</span></div>
+      <div class="credit-product-body">
+        <div class="credit-product-icon" aria-hidden="true">♧</div>
+        <div class="credit-product-info"><small>EXAMPLE AMOUNT</small><strong>₹75,000</strong><span>Illustrative only</span></div>
+        <button type="button" class="loan-action" onclick="detail('Two-Wheeler Finance')">View Details</button>
+      </div>
+    </article>
+    <article class="credit-product property-card">
+      <div class="credit-product-head"><strong>Loan Against Property</strong><span>⌂ Secured finance</span></div>
+      <div class="credit-product-body">
+        <div class="credit-product-icon" aria-hidden="true">⌂</div>
+        <div class="credit-product-info"><small>EXAMPLE AMOUNT</small><strong>₹1,00,000</strong><span>Terms depend on lender</span></div>
+        <button type="button" class="loan-action" onclick="detail('Loan Against Property')">View Details</button>
+      </div>
+    </article>
+  </div>
+  <div class="home-fixed-action"><button type="button" onclick="nav('eligibility')">Check Eligibility <span aria-hidden="true">›</span></button><small>Educational checklist only · No credit check</small></div>
 </section>
 <section class="screen" id="product"><button class="back" onclick="nav('home')">← Back</button><span class="chip">PRODUCT EXPLAINER · NOT AN OFFER</span><h1 class="page-title" id="productName">Personal Loan</h1><p class="subtitle" id="productDesc">Explore how loan costs work before choosing an actual lender.</p>
 <div class="card"><small class="note">Example loan amount — not a lending limit</small><div class="price" id="productAmount">₹25,000</div><div class="two"><div class="tile"><small>Sample tenure</small><strong>12 months</strong></div><div class="tile"><small>Sample nominal rate</small><strong>18% yearly</strong></div></div><p class="note">No rate, loan amount, or processing fee shown here is an offer from MAAKIT or any lender.</p></div>
