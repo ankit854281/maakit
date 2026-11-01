@@ -35,24 +35,65 @@ $T    = function ($en, $hi) { return h(t($en, $hi)); };
 function mk_art($k) {
   $B = '#D6246E'; $S = '#FFB020'; $P = '#2A1530'; $W = '#FFFFFF'; $K = '#F2C29B';
   switch ($k) {
-  case 'shop': return '<circle class="sun" cx="44" cy="40" r="16" fill="'.$S.'"/><rect x="0" y="152" width="320" height="28" fill="#F6C9B0"/>'
-    .'<rect x="92" y="62" width="140" height="92" rx="6" fill="'.$W.'"/><rect x="124" y="30" width="76" height="22" rx="7" fill="'.$P.'"/><rect x="138" y="38" width="48" height="6" rx="3" fill="'.$S.'"/>'
-    .'<g><rect x="82" y="50" width="20" height="26" fill="'.$B.'"/><rect x="102" y="50" width="20" height="26" fill="'.$W.'"/><rect x="122" y="50" width="20" height="26" fill="'.$B.'"/><rect x="142" y="50" width="20" height="26" fill="'.$W.'"/><rect x="162" y="50" width="20" height="26" fill="'.$B.'"/><rect x="182" y="50" width="20" height="26" fill="'.$W.'"/><rect x="202" y="50" width="20" height="26" fill="'.$B.'"/><rect x="222" y="50" width="20" height="26" fill="'.$W.'"/></g>'
-    .'<path d="M82 76q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0" fill="'.$B.'"/>'
-    .'<rect x="106" y="94" width="52" height="34" rx="4" fill="#DCEBFF"/><rect x="176" y="98" width="38" height="56" rx="4" fill="#8A3B12"/><circle cx="206" cy="128" r="2.5" fill="'.$S.'"/>'
-    .'<g class="bob"><rect x="248" y="116" width="36" height="38" rx="5" fill="'.$S.'"/><path d="M256 118v-6a10 10 0 0 1 20 0v6" fill="none" stroke="'.$P.'" stroke-width="3"/></g>';
-  case 'ride': return '<rect x="0" y="140" width="320" height="40" fill="#BFD6F5"/><path d="M0 160h320" stroke="'.$W.'" stroke-width="4" stroke-dasharray="18 14"/>'
-    .'<path d="M36 100h40M24 114h44M40 128h34" stroke="#8DB3E8" stroke-width="4" stroke-linecap="round"/>'
-    .'<g class="drive"><circle class="spin" cx="112" cy="136" r="17" fill="'.$P.'"/><circle cx="112" cy="136" r="6" fill="'.$W.'"/><circle class="spin" cx="204" cy="136" r="17" fill="'.$P.'"/><circle cx="204" cy="136" r="6" fill="'.$W.'"/>'
-    .'<path d="M96 132h58l22-26h30l12 26h-12" fill="'.$B.'"/><rect x="128" y="112" width="30" height="8" rx="4" fill="'.$P.'"/>'
-    .'<rect x="136" y="76" width="28" height="40" rx="11" fill="'.$S.'"/><circle cx="150" cy="62" r="13" fill="'.$K.'"/><path d="M136 60a14 14 0 0 1 28 0z" fill="'.$P.'"/><path d="M160 92l24 14" stroke="'.$S.'" stroke-width="8" stroke-linecap="round"/></g>';
-  case 'parcel': return '<rect x="0" y="150" width="320" height="30" fill="#F3DFA0"/>'
-    .'<path d="M70 150 C110 120 190 170 250 92" fill="none" stroke="'.$B.'" stroke-width="3" stroke-dasharray="7 7"/>'
-    .'<g class="bob"><rect x="96" y="96" width="70" height="56" rx="4" fill="#E9A85A"/><rect x="126" y="96" width="10" height="56" fill="#F7D79F"/><rect x="160" y="110" width="58" height="42" rx="4" fill="#D98E3F"/><rect x="184" y="110" width="9" height="42" fill="#F7D79F"/><rect x="112" y="60" width="50" height="38" rx="4" fill="#F0BE7A"/><rect x="132" y="60" width="9" height="38" fill="#FBE3B8"/></g>'
-    .'<g class="pin"><path d="M252 92c-14-16-22-26-22-38a22 22 0 0 1 44 0c0 12-8 22-22 38z" fill="'.$B.'"/><circle cx="252" cy="54" r="8" fill="'.$W.'"/></g>';
-  case 'car': return '<rect x="0" y="146" width="320" height="34" fill="#B9E3C9"/><path d="M0 164h320" stroke="'.$W.'" stroke-width="4" stroke-dasharray="18 14"/>'
-    .'<g class="drive"><path d="M64 138v-28l20-30h120l30 30h22v28z" fill="'.$W.'"/><path d="M92 86h50v28H74zM150 86h50l24 28h-74z" fill="#DCEBFF"/><rect x="64" y="120" width="192" height="8" fill="'.$B.'"/>'
-    .'<circle class="spin" cx="102" cy="140" r="17" fill="'.$P.'"/><circle cx="102" cy="140" r="6" fill="'.$W.'"/><circle class="spin" cx="222" cy="140" r="17" fill="'.$P.'"/><circle cx="222" cy="140" r="6" fill="'.$W.'"/><rect x="248" y="112" width="10" height="6" rx="3" fill="'.$S.'"/></g>';
+  // ---- v3 tasveerein (owner: "shop, ride, gaadi, parcel up to the mark nahi") ----
+  // Ek hi style: plum outline (2.5px), halki parchhai, peeche ki jagah.
+  case 'shop': $o = 'stroke="'.$P.'" stroke-width="2.5" stroke-linejoin="round"';
+    return '<circle class="sun" cx="290" cy="30" r="14" fill="'.$S.'"/><rect x="0" y="148" width="320" height="32" fill="#F2C1A4"/><path d="M0 152h320" stroke="#E7A985" stroke-width="2"/>'
+    .'<ellipse cx="160" cy="152" rx="112" ry="6" fill="#000" opacity=".08"/>'
+    .'<rect x="70" y="46" width="180" height="104" fill="#FFF7EE" '.$o.'/>'
+    .'<g><rect x="62" y="50" width="28" height="20" fill="'.$B.'"/><rect x="90" y="50" width="28" height="20" fill="'.$W.'"/><rect x="118" y="50" width="28" height="20" fill="'.$B.'"/><rect x="146" y="50" width="28" height="20" fill="'.$W.'"/><rect x="174" y="50" width="28" height="20" fill="'.$B.'"/><rect x="202" y="50" width="28" height="20" fill="'.$W.'"/><rect x="230" y="50" width="28" height="20" fill="'.$B.'"/></g>'
+    .'<path d="M62 70q7 9 14 0t14 0q7 9 14 0t14 0q7 9 14 0t14 0q7 9 14 0t14 0q7 9 14 0t14 0q7 9 14 0t14 0q7 9 14 0t14 0" fill="'.$B.'" '.$o.'/><rect x="62" y="50" width="196" height="20" fill="none" '.$o.'/>'
+    .'<rect x="98" y="22" width="124" height="26" rx="9" fill="'.$P.'"/><text x="160" y="40" text-anchor="middle" font-family="Lexend,sans-serif" font-size="14" font-weight="800" letter-spacing="3" fill="'.$S.'">KIRANA</text>'
+    .'<rect x="84" y="82" width="152" height="3" fill="#8A3B12"/><rect x="88" y="72" width="10" height="10" rx="2" fill="#5B8DEF"/><rect x="102" y="70" width="10" height="12" rx="2" fill="#25A55F"/><rect x="116" y="73" width="12" height="9" rx="2" fill="'.$S.'"/><rect x="132" y="70" width="9" height="12" rx="2" fill="'.$B.'"/><rect x="200" y="71" width="12" height="11" rx="2" fill="#25A55F"/><rect x="216" y="73" width="14" height="9" rx="2" fill="#5B8DEF"/>'
+    .'<rect x="84" y="98" width="152" height="3" fill="#8A3B12"/><rect x="88" y="87" width="14" height="11" rx="2" fill="'.$S.'"/><rect x="106" y="86" width="10" height="12" rx="2" fill="'.$B.'"/><rect x="120" y="88" width="12" height="10" rx="2" fill="#5B8DEF"/><rect x="214" y="86" width="16" height="12" rx="2" fill="'.$B.'"/>'
+    .'<g class="swing"><path d="M150 72v8M160 72v12M170 72v8" stroke="'.$P.'" stroke-width="1.5"/><rect x="146" y="80" width="8" height="12" rx="1.5" fill="'.$B.'"/><rect x="156" y="84" width="8" height="12" rx="1.5" fill="'.$S.'"/><rect x="166" y="80" width="8" height="12" rx="1.5" fill="#25A55F"/></g>'
+    .'<circle cx="196" cy="99" r="10" fill="'.$K.'"/><path d="M186 97a10 10 0 0 1 20 0z" fill="'.$P.'"/><rect x="186" y="106" width="20" height="10" rx="4" fill="#5B8DEF"/>'
+    .'<rect x="78" y="108" width="164" height="8" rx="2" fill="#8A3B12" '.$o.'/><rect x="82" y="116" width="156" height="34" fill="'.$S.'" '.$o.'/><path d="M120 116v34M160 116v34M200 116v34" stroke="'.$P.'" stroke-width="1.5" opacity=".35"/>'
+    .'<path d="M34 150l4-22h20l4 22z" fill="#C2552B" '.$o.'/><path d="M48 128c-8-10-14-20-6-30 6 8 8 18 6 30zM48 128c4-12 12-20 22-18-4 10-12 16-22 18z" fill="#25A55F"/>'
+    .'<g class="bob"><rect x="262" y="116" width="30" height="32" rx="4" fill="'.$B.'" '.$o.'/><path d="M269 118v-6a8 8 0 0 1 16 0v6" fill="none" stroke="'.$P.'" stroke-width="2.5"/><path d="M270 132h14" stroke="'.$W.'" stroke-width="2.5" stroke-linecap="round"/></g>';
+  case 'ride': $o = 'stroke="'.$P.'" stroke-width="2.5" stroke-linejoin="round"';
+    return '<path d="M0 140V92h22V70h18v24h16V60h24v80zM230 140V80h20V64h22v30h18v-14h30v60z" fill="#C9DBF3"/><rect x="0" y="138" width="320" height="42" fill="#9FB9DE"/><path d="M0 162h320" stroke="'.$W.'" stroke-width="4" stroke-dasharray="20 14"/>'
+    .'<ellipse cx="180" cy="156" rx="100" ry="6" fill="#000" opacity=".12"/>'
+    .'<path d="M34 96h36M22 110h40M38 124h28" stroke="'.$W.'" stroke-width="4" stroke-linecap="round" opacity=".9"/>'
+    .'<g class="drive">'
+    .'<path d="M96 80q2-26 30-28h86q22 2 26 26l2 8H94z" fill="'.$P.'" '.$o.'/><path d="M104 60h120" stroke="'.$S.'" stroke-width="3"/>'
+    .'<path d="M90 84h150v48a8 8 0 0 1-8 8H98a8 8 0 0 1-8-8z" fill="'.$S.'" '.$o.'/>'
+    .'<path d="M240 86l24 10q10 6 8 22l-4 22h-28z" fill="'.$S.'" '.$o.'/><path d="M244 92l16 7v14h-16z" fill="#DCEBFF" '.$o.'/><circle cx="268" cy="106" r="4" fill="'.$W.'" '.$o.'/>'
+    .'<rect x="100" y="88" width="62" height="36" rx="7" fill="#FFF1D0" '.$o.'/><circle cx="130" cy="104" r="9" fill="#C98E62"/><path d="M118 124c2-8 6-12 12-12s10 4 12 12z" fill="'.$B.'"/>'
+    .'<rect x="172" y="88" width="56" height="36" rx="7" fill="#FFF1D0" '.$o.'/><circle cx="202" cy="102" r="9" fill="'.$K.'"/><path d="M192 99a10 9 0 0 1 20 0z" fill="'.$P.'"/><path d="M190 124c2-8 6-12 12-12s10 4 12 12z" fill="#5B8DEF"/>'
+    .'<rect x="90" y="126" width="150" height="6" fill="'.$B.'"/><rect x="250" y="126" width="18" height="8" rx="2" fill="'.$W.'" '.$o.'/>'
+    .'<g><circle cx="122" cy="142" r="15" fill="'.$P.'"/><circle cx="122" cy="142" r="7" fill="#D9D2DC"/><g class="spin"><path d="M122 135v14M115 142h14" stroke="'.$P.'" stroke-width="2"/></g></g>'
+    .'<g><circle cx="258" cy="142" r="13" fill="'.$P.'"/><circle cx="258" cy="142" r="6" fill="#D9D2DC"/><g class="spin"><path d="M258 136v12M252 142h12" stroke="'.$P.'" stroke-width="2"/></g></g>'
+    .'</g>';
+  case 'parcel': $o = 'stroke="'.$P.'" stroke-width="2.5" stroke-linejoin="round"';
+    return '<rect x="0" y="152" width="320" height="28" fill="#F3DFA0"/>'
+    .'<g class="bob"><rect x="36" y="20" width="90" height="148" rx="16" fill="'.$P.'"/><rect x="43" y="32" width="76" height="124" rx="9" fill="'.$W.'"/>'
+    .'<path d="M50 60h62M50 84h62M50 108h62M66 36v116M96 36v116" stroke="#EDE6E9" stroke-width="2"/>'
+    .'<path d="M58 132C70 112 96 120 88 96S102 66 104 54" fill="none" stroke="'.$B.'" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="6 6" class="dash"/>'
+    .'<circle cx="58" cy="132" r="5" fill="'.$P.'"/><path d="M104 56c-8-9-12-14-12-20a12 12 0 0 1 24 0c0 6-4 11-12 20z" fill="'.$B.'"/><circle cx="104" cy="36" r="4.5" fill="'.$W.'"/>'
+    .'<rect x="50" y="138" width="62" height="14" rx="7" fill="#FFE0EC"/><text x="81" y="148.5" text-anchor="middle" font-family="Lexend,sans-serif" font-size="8.5" font-weight="800" fill="'.$B.'">CODE 4821</text></g>'
+    .'<ellipse cx="218" cy="156" rx="78" ry="6" fill="#000" opacity=".1"/>'
+    .'<path d="M162 98l20-20h86l-20 20z" fill="#F0BE7A" '.$o.'/><path d="M248 98l20-20v60l-20 20z" fill="#C98640" '.$o.'/><rect x="162" y="98" width="86" height="58" fill="#E2A35B" '.$o.'/>'
+    .'<path d="M198 98l20-20h14l-20 20z" fill="#F7D79F"/><rect x="198" y="98" width="14" height="58" fill="#F7D79F"/>'
+    .'<rect x="170" y="126" width="22" height="20" rx="2" fill="'.$W.'" stroke="'.$P.'" stroke-width="1.5"/><path d="M174 132h14M174 137h10M174 142h12" stroke="#BBAEB6" stroke-width="1.5"/>'
+    .'<path d="M226 108v12M222 112l4-4 4 4M236 108v12M232 112l4-4 4 4" stroke="'.$P.'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+    .'<g class="pop"><circle cx="276" cy="56" r="15" fill="#25A55F"/><path d="M269 56l5 5 9-10" stroke="'.$W.'" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>';
+  case 'car': $o = 'stroke="'.$P.'" stroke-width="2.5" stroke-linejoin="round"';
+    return '<circle class="sun" cx="56" cy="38" r="15" fill="'.$S.'"/><path d="M0 120q60-40 130-14t110-16 80 10v40H0z" fill="#B9E3C9"/>'
+    .'<rect x="26" y="96" width="6" height="30" fill="#8A5A2B"/><circle cx="29" cy="92" r="16" fill="#25A55F"/><rect x="286" y="92" width="6" height="34" fill="#8A5A2B"/><circle cx="289" cy="86" r="18" fill="#2F8F5B"/>'
+    .'<rect x="0" y="140" width="320" height="40" fill="#8FCBA6"/><path d="M0 164h320" stroke="'.$W.'" stroke-width="4" stroke-dasharray="20 14"/>'
+    .'<ellipse cx="166" cy="156" rx="118" ry="6" fill="#000" opacity=".12"/>'
+    .'<g class="drive">'
+    .'<rect x="112" y="46" width="104" height="6" rx="3" fill="'.$P.'"/><path d="M124 52v6M204 52v6" stroke="'.$P.'" stroke-width="3"/>'
+    .'<path d="M52 136v-32q0-8 8-10l26-4 20-28q4-6 12-6h104q8 0 12 6l18 28 18 4q8 2 8 10v32z" fill="'.$W.'" '.$o.'/>'
+    .'<path d="M108 66h44v24H92z" fill="#BFD8F5" '.$o.'/><rect x="158" y="66" width="44" height="24" fill="#BFD8F5" '.$o.'/><path d="M208 66h14l18 24h-32z" fill="#BFD8F5" '.$o.'/>'
+    .'<path d="M114 70l-8 14M166 70l-6 12M214 70l-4 8" stroke="'.$W.'" stroke-width="3" stroke-linecap="round"/>'
+    .'<rect x="52" y="110" width="226" height="8" fill="'.$B.'"/><path d="M155 92v42M205 92v42" stroke="'.$P.'" stroke-width="1.5"/><path d="M190 100h8M242 100h8" stroke="'.$P.'" stroke-width="2.5" stroke-linecap="round"/>'
+    .'<rect x="266" y="98" width="12" height="9" rx="3" fill="'.$S.'" '.$o.'/><rect x="52" y="98" width="7" height="11" rx="2" fill="'.$B.'"/>'
+    .'<rect x="268" y="120" width="16" height="14" rx="4" fill="'.$P.'"/><rect x="44" y="120" width="12" height="14" rx="4" fill="'.$P.'"/>'
+    .'<g><circle cx="98" cy="138" r="18" fill="'.$P.'"/><circle cx="98" cy="138" r="8.5" fill="#D9D2DC"/><g class="spin"><path d="M98 130v16M90 138h16" stroke="'.$P.'" stroke-width="2.2"/></g></g>'
+    .'<g><circle cx="232" cy="138" r="18" fill="'.$P.'"/><circle cx="232" cy="138" r="8.5" fill="#D9D2DC"/><g class="spin"><path d="M232 130v16M224 138h16" stroke="'.$P.'" stroke-width="2.2"/></g></g>'
+    .'</g>';
   case 'truck': return '<rect x="0" y="146" width="320" height="34" fill="#D7C8F5"/>'
     .'<g class="drive"><rect x="52" y="70" width="140" height="70" rx="6" fill="'.$W.'"/><rect x="66" y="84" width="34" height="30" rx="3" fill="#E9A85A"/><rect x="106" y="90" width="34" height="24" rx="3" fill="#D98E3F"/><rect x="146" y="80" width="34" height="34" rx="3" fill="#F0BE7A"/>'
     .'<path d="M192 92h44l26 26v22h-70z" fill="'.$B.'"/><path d="M202 100h30l16 16h-46z" fill="#DCEBFF"/>'
@@ -129,6 +170,16 @@ $faq = [
 ];
 $scripts = ['माकिट', 'মাকিট', 'மாகிட்', 'మాకిట్', 'ಮಾಕಿಟ್', 'മാകിറ്റ്', 'માકિટ', 'ਮਾਕਿਟ', 'ମାକିଟ୍', 'ماکٹ'];
 $words = is_hi() ? ['अब घर तक।', 'एक ऐप में।', 'दुकान के दाम पर।'] : ['delivered.', 'in one app.', 'at shop prices.'];
+// App store buttons. Apps abhi store par nahi hain, isliye "jald" likha hai aur ye
+// link nahi hain. App live hote hi yahan Google/Apple ke official badge aur asli
+// link lagaiye (dono ke apne niyam hain, apna banaya logo nahi chalega).
+$stores = function ($cls = '') {
+  $soon = h(t('Coming soon on', 'जल्द आ रहा है'));
+  return '<div class="stores ' . $cls . '">'
+    . '<span class="store" aria-label="' . h(t('Google Play — coming soon', 'Google Play — जल्द')) . '"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l13 8.5-13 8.5z" fill="currentColor"/></svg><span><small>' . $soon . '</small><b>Google Play</b></span></span>'
+    . '<span class="store" aria-label="' . h(t('App Store — coming soon', 'App Store — जल्द')) . '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg><span><small>' . $soon . '</small><b>App Store</b></span></span>'
+    . '</div>';
+};
 $ico = function ($d, $s = 22) { return '<svg width="'.$s.'" height="'.$s.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'.h($d).'"/></svg>'; };
 ?><!doctype html>
 <html lang="<?= html_lang() ?>">
@@ -178,6 +229,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .c-peach{background:var(--peach);color:var(--peach-t)}.c-mint{background:var(--mint);color:var(--mint-t)}.c-butter{background:var(--butter);color:var(--butter-t)}.c-sky{background:var(--sky);color:var(--sky-t)}.c-lilac{background:var(--lilac);color:var(--lilac-t)}.c-pink{background:var(--pink);color:var(--pink-t)}.c-night{background:var(--plum-2);color:#fff}
 /* ---- intro ---- */
 #mk-intro{position:fixed;inset:0;z-index:60;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform .7s cubic-bezier(.7,0,.3,1)}
+#mk-intro[hidden]{display:none}
 #mk-intro.out{transform:translateY(-100%)}
 #mk-intro .nm{font-size:clamp(48px,12vw,104px);font-weight:800;line-height:1.2;min-height:1.3em;text-align:center;text-shadow:0 6px 30px rgba(0,0,0,.18)}
 #mk-intro svg{width:min(560px,86vw);height:auto;display:none}
@@ -216,6 +268,11 @@ header.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding
 .hero .pills span{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-size:14px;font-weight:600}
 .hero .pills svg{color:var(--saffron)}
 .scroll{display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-top:26px;color:var(--on-dark);font-size:13px;text-decoration:none;animation:bob 2.2s ease-in-out infinite}
+.stores{display:flex;flex-wrap:wrap;gap:10px}
+.hero .stores{justify-content:center;margin-top:16px}
+.store{display:inline-flex;align-items:center;gap:10px;min-height:54px;padding:8px 18px 8px 14px;border-radius:14px;background:#0B0710;color:#fff;border:1px solid rgba(255,255,255,.22);text-align:left;line-height:1.15}
+.store small{display:block;font-size:11px;opacity:.75}
+.store b{display:block;font-size:17px;font-weight:700}
 /* ---- marquee ---- */
 .strip{background:#fff;border-bottom:1px solid var(--line);overflow:hidden;padding:14px 0}
 .track{display:flex;width:max-content;animation:marq 42s linear infinite}
@@ -247,8 +304,8 @@ h2.big em{font-style:normal;color:var(--brand)}
 .b-soon{background:var(--saffron);color:#3A2400}.b-pilot{background:#5B8DEF;color:#fff}
 .svc .body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:8px;flex:1}
 .svc .body.c-peach,.svc .body.c-mint,.svc .body.c-butter,.svc .body.c-sky,.svc .body.c-lilac,.svc .body.c-pink{color:inherit}
-.svc h3{margin:0;font-size:21px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:10px}
-.svc h3 .dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0}
+.svc h3{margin:0;font-size:21px;font-weight:800;color:var(--ink);display:flex;align-items:flex-start;gap:10px;line-height:1.35}
+.svc h3 .dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:.5em}
 .svc p{margin:0;color:var(--muted);font-size:15px}
 /* svg motion */
 .spin{transform-box:fill-box;transform-origin:center;animation:spin 1.2s linear infinite}
@@ -259,6 +316,12 @@ h2.big em{font-style:normal;color:var(--brand)}
 .flag{transform-box:fill-box;transform-origin:left center;animation:flag 1.4s ease-in-out infinite}
 .slow{transform-box:fill-box;transform-origin:center;animation:spin 30s linear infinite}
 .sun{animation:tw 3s ease-in-out infinite}
+.swing{transform-box:fill-box;transform-origin:top center;animation:swing 2.4s ease-in-out infinite}
+.pop{transform-box:fill-box;transform-origin:center;animation:pop 2.4s ease-in-out infinite}
+.dash{animation:dash 1.2s linear infinite}
+@keyframes swing{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes dash{to{stroke-dashoffset:-24}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes drive{0%,100%{transform:translateX(-6px)}50%{transform:translateX(8px)}}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -376,10 +439,11 @@ footer .low a{color:var(--saffron);font-weight:700}
         <a class="btn btn-brand" href="https://wa.me/<?= h($wa) ?>"><?= $ico('M4 20l1.5-4A8 8 0 1 1 8 19z', 20) ?><?= $T('Order on WhatsApp', 'WhatsApp पर ऑर्डर') ?></a>
         <a class="btn btn-ghost" href="tel:<?= h($tel) ?>"><?= $ico('M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2', 20) ?><?= $T('Call', 'फ़ोन') ?> <?= h($show) ?></a>
       </div>
+      <?= $stores() ?>
       <div class="pills">
         <span><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Shop’s own price', 'दुकान का ही दाम') ?></span>
         <span><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Cash or UPI to the shop', 'नकद या UPI सीधे दुकान को') ?></span>
-        <span><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('App coming soon on Google Play', 'ऐप जल्द Google Play पर') ?></span>
+        <span><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Live order tracking', 'ऑर्डर की पूरी जानकारी') ?></span>
       </div>
       <a class="scroll" href="#services"><?= $T('Scroll down', 'नीचे देखिए') ?><?= $ico('M6 9l6 6 6-6', 18) ?></a>
     </div>
@@ -446,6 +510,7 @@ footer .low a{color:var(--saffron);font-weight:700}
         <b><?= $T('Order today', 'आज ही ऑर्डर कीजिए') ?></b>
         <span style="color:var(--peach-t)"><?= $T('The app is coming soon. Until then, just call or WhatsApp us.', 'ऐप जल्द आ रहा है। तब तक बस फ़ोन या WhatsApp कीजिए।') ?></span>
         <a class="btn btn-brand" style="align-self:flex-start" href="https://wa.me/<?= h($wa) ?>"><?= $T('WhatsApp', 'WhatsApp') ?> <?= h($show) ?></a>
+        <?= $stores() ?>
       </div>
     </div>
   </div>
@@ -464,7 +529,7 @@ footer .low a{color:var(--saffron);font-weight:700}
         <h3><?= $T('Maakit app', 'Maakit ऐप') ?></h3>
         <p><?= $T('Shop, ride, send and book from one app.', 'एक ही ऐप से खरीदिए, सवारी लीजिए, भेजिए और बुक कीजिए।') ?></p>
         <ul><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Hindi and English', 'हिंदी और English') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Cash or UPI to the shop', 'नकद या UPI सीधे दुकान को') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Order tracking', 'ऑर्डर ट्रैकिंग') ?></li></ul>
-        <span class="btn btn-white" style="cursor:default"><?= $T('Coming soon on Google Play', 'जल्द ही Google Play पर') ?></span>
+        <?= $stores() ?>
       </article>
       <article class="app c-butter rv">
         <span class="ic"><?= $ico('M3 10l1.5-5h15L21 10M4 10v10h16V10M9 20v-6h6v6', 30) ?></span>
@@ -539,6 +604,7 @@ footer .low a{color:var(--saffron);font-weight:700}
         <a class="logo" href="/"><b>M</b><span>Maakit</span></a>
         <span><?= $T('Local shopping, vehicle and service bookings for the towns and villages of Uttar Pradesh.', 'उत्तर प्रदेश के कस्बों और गाँवों के लिए स्थानीय खरीदारी, गाड़ी और सेवा बुकिंग।') ?></span>
         <span>Jagarnathpur, Bhadohi, Uttar Pradesh 221403</span>
+        <?= $stores() ?>
         <div class="contact"><a class="chip" href="tel:<?= h($tel) ?>"><?= h($show) ?></a><a class="chip" href="https://wa.me/<?= h($wa) ?>">WhatsApp</a></div>
       </div>
       <div class="col"><b><?= $T('For partners', 'साझेदारों के लिए') ?></b><a href="/register-business.php"><?= $T('Join as a shop', 'दुकान जोड़िए') ?></a><a href="https://smartsarathi.in/sarathi.php"><?= $T('Join as Sarathi', 'सारथी बनिए') ?></a><a href="#investors"><?= $T('For investors', 'निवेशकों के लिए') ?></a></div>
