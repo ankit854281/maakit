@@ -13,8 +13,10 @@ illustrations (mk_art(), gently animated), scroll-reveal, typed rotating hero wo
 (assets/fonts/lexend-latin-*.woff2) + Kalam + Noto Sans Devanagari. Hero/intro use a soft radial glow at
 the owner's request; the site-wide "no gradients" rule is unchanged elsewhere. Colours are variables
 inside index.php only; the rest of the site keeps inc/theme.php.
-Intro v2: full-screen magenta, the name flashes through 10 Indian scripts, then "Maakit" is drawn in
-Kalam; once per session, Skip/Esc, /?intro=1 replays, skipped under prefers-reduced-motion.
+Intro (latest, owner 1 Nov): drifting colour shades + frosted-glass card only (no mandala, no route
+lines, no progress bar, no language labels); the name flashes through 11 scripts (260 ms each), then
+the logo + "Maakit" drawn in Kalam; ~4.5 s total. Plays on EVERY visit/reload (owner), except the reload
+caused by the page's own EN/हिंदी switch; Skip/Esc; skipped under prefers-reduced-motion.
 Logo (owner, 1 Nov, placeholder until a final design): magenta shopping bag with a white "M" and a saffron
 dot — mk_mark()/mk_logo() in index.php, files assets/logo/maakit-mark.svg and maakit-logo.svg.
 Keep it truthful: no traction numbers, no merchant price, no

@@ -825,15 +825,20 @@ footer .low a{color:var(--saffron);font-weight:700}
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   // ---- intro ----
   var box = document.getElementById('mk-intro');
-  var force = /[?&]intro=1/.test(location.search), seen = false;
-  try { seen = sessionStorage.getItem('mk_intro') === '1'; } catch (e) {}
-  if (box && !reduce && (force || !seen)) {
+  // Owner (1 Nov): intro HAR baar chale — har visit, har reload.
+  // Sirf ek chhoot: isi page par EN/हिंदी dabane se jo reload hota hai,
+  // us par dobara intro nahi (warna bhasha badalna bhaari lagta hai).
+  var force = /[?&]intro=1/.test(location.search), langSwitch = false;
+  try {
+    var ref = document.referrer ? new URL(document.referrer) : null;
+    langSwitch = !!ref && ref.host === location.host && ref.pathname === location.pathname && /[?&]lang=/.test(location.search);
+  } catch (e) {}
+  if (box && !reduce && (force || !langSwitch)) {
     var names = <?= json_encode($scripts, JSON_UNESCAPED_UNICODE) ?>, nm = box.querySelector('.nm'), i = 0, done = false, timer;
     box.hidden = false; document.body.style.overflow = 'hidden';
     var close = function () {
       if (done) return; done = true; clearInterval(timer);
       box.classList.add('out'); document.body.style.overflow = '';
-      try { sessionStorage.setItem('mk_intro', '1'); } catch (e) {}
       setTimeout(function () { box.hidden = true; }, 750);
     };
     timer = setInterval(function () {
