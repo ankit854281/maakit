@@ -1,0 +1,63 @@
+# Maakit Trial App — Android APK
+#
+# app-trial/ me kuch bhi badalne par ye apne aap trial APK banata hai aur
+# GitHub par "Maakit Trial App" naam ki release me rakh deta hai.
+# Download link (Android phone par kholiye):
+#   https://github.com/ankit854281/maakit/releases/download/app-trial/maakit-trial.apk
+#
+# Ye sirf TRIAL hai: sample dukaanein aur sample daam, asli database se nahi juda.
+
+name: Trial app (APK)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app-trial/**'
+      - '.github/workflows/app-trial.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-trial
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Copy app screens into the APK
+        run: |
+          mkdir -p app-trial/android/app/src/main/assets
+          rm -rf app-trial/android/app/src/main/assets/www
+          cp -r app-trial/web app-trial/android/app/src/main/assets/www
+
+      - name: Build APK
+        working-directory: app-trial/android
+        run: gradle --no-daemon assembleDebug
+
+      - name: Put APK on the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app-trial/android/app/build/outputs/apk/debug/app-debug.apk maakit-trial.apk
+          gh release delete app-trial --yes --cleanup-tag || true
+          gh release create app-trial maakit-trial.apk \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Maakit Trial App" \
+            --notes "Trial version for testing on Android. Sample shops and prices only — not connected to live orders. Built from ${GITHUB_SHA::7}."

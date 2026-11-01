@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Maakit bag mark: magenta bag, white M, saffron dot -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:fillColor="#FFFFFF" android:pathData="M14,0h36a14,14 0 0 1 14,14v36a14,14 0 0 1 -14,14h-36a14,14 0 0 1 -14,-14v-36a14,14 0 0 1 14,-14z"/>
+    <path android:strokeColor="#D6246E" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="#00000000" android:pathData="M25,20v-3a7,7 0 0 1 14,0v3"/>
+    <path android:fillColor="#D6246E" android:pathData="M19,19h26a10,10 0 0 1 10,10v17a10,10 0 0 1 -10,10h-26a10,10 0 0 1 -10,-10v-17a10,10 0 0 1 10,-10z"/>
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" android:pathData="M21,47V32l11,9 11,-9v15"/>
+    <path android:fillColor="#FFB020" android:strokeColor="#FFFFFF" android:strokeWidth="2.5" android:pathData="M49,20m-6,0a6,6 0 1 0 12,0a6,6 0 1 0 -12,0"/>
+</vector>

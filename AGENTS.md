@@ -1,3 +1,22 @@
+# Customer app trial (APK) — owner request, 1 November 2026
+
+- `app-trial/web/index.html` is a clickable prototype of the customer app (one
+  file, no build): language → login/OTP → address → home → shop → item sheet →
+  cart → live tracking → orders → account, English and Hindi.
+- Look (owner): service tabs on the home header like folder tabs — Shops,
+  Vehicle booking, Local services, Parcel (Soon) — each tab has its own colour
+  and the whole header, banner and page tint change with it; glass
+  (transparent, blurred) tabs, search and bottom bar. Base page colour is a
+  soft pearl (#F4F1F8), not cream.
+- It uses SAMPLE shops and SAMPLE prices and says so on every screen ("Trial
+  version" ribbon). It is not connected to `mk_orders`. Do not present it as
+  the live app.
+- `app-trial/android/` wraps that file in a WebView. `.github/workflows/app-trial.yml`
+  builds a debug APK on every push to `app-trial/**` and replaces the GitHub
+  release `app-trial`; download link:
+  https://github.com/ankit854281/maakit/releases/download/app-trial/maakit-trial.apk
+- `app-trial/.htaccess` keeps the folder off maakit.in.
+
 # Home page = group landing page — owner decision, 1 November 2026
 
 Ankit: maakit.in's home page is now the Maakit group landing page (index.php) for customers,
