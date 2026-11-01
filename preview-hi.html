@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maakit — दुकान, सवारी, पार्सल और सेवाएँ, एक ऐप में</title>
+<meta name="description" content="Maakit उत्तर प्रदेश के कस्बों और गाँवों के लिए स्थानीय दुकानें, सवारी, पार्सल, गाड़ी और सेवा बुकिंग एक मंच पर लाता है। दाम दुकान का, सिर्फ़ डिलीवरी शुल्क।">
+<link rel="canonical" href="https://maakit.in/">
+<meta name="theme-color" content="#D6246E">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<meta property="og:title" content="Maakit">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Maakit">
+<meta property="og:url" content="https://maakit.in/">
+<meta property="og:description" content="दुकान, सवारी, पार्सल और सेवाएँ — सब कुछ Maakit में। फ़ोन या WhatsApp — 84293 93903।">
+<meta property="og:image" content="https://maakit.in/assets/icon-512.png">
+<meta property="og:locale" content="hi_IN">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://maakit.in/#website","name":"Maakit","alternateName":"maakit.in","url":"https://maakit.in/"}</script>
+<link rel="preload" href="/assets/fonts/lexend-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.className+=' js';</script>
+<style>
+@font-face{font-family:'Lexend';font-weight:400;font-display:swap;src:url(/assets/fonts/lexend-latin-400.woff2) format('woff2')}
+@font-face{font-family:'Lexend';font-weight:600;font-display:swap;src:url(/assets/fonts/lexend-latin-600.woff2) format('woff2')}
+@font-face{font-family:'Lexend';font-weight:700;font-display:swap;src:url(/assets/fonts/lexend-latin-700.woff2) format('woff2')}
+@font-face{font-family:'Lexend';font-weight:800;font-display:swap;src:url(/assets/fonts/lexend-latin-800.woff2) format('woff2')}
+@font-face{font-family:'Noto Sans Devanagari';font-weight:400;font-display:swap;src:url(/smartsarathi/assets/fonts/noto-deva-400.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Noto Sans Devanagari';font-weight:600;font-display:swap;src:url(/smartsarathi/assets/fonts/noto-deva-600.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Noto Sans Devanagari';font-weight:700;font-display:swap;src:url(/smartsarathi/assets/fonts/noto-deva-700.woff2) format('woff2');unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Kalam';font-weight:700;font-display:swap;src:url(/assets/fonts/kalam-latin-700.woff2) format('woff2');unicode-range:U+0000-00FF}
+:root{--brand:#D6246E;--brand-d:#A3164F;--brand-s:#FFE0EC;--saffron:#FFB020;--plum:#1C0D1F;--plum-2:#2A1530;--cream:#FFF6EF;--line:#F1DFD6;--ink:#22141F;--muted:#5B4A55;--on-dark:#E9D9E4;--green:#25A55F;
+--peach:#FFE3D3;--peach-t:#8A3B12;--mint:#DDF3E6;--mint-t:#1E6B40;--butter:#FFF0C2;--butter-t:#7A5600;--sky:#DCEBFF;--sky-t:#1D4E89;--lilac:#EDE2FF;--lilac-t:#4B2D8A;--pink:#FFE0EC;--pink-t:#9A1B4E;
+--f:'Lexend','Noto Sans Devanagari','Mukta','Hind',sans-serif;--hand:'Kalam',cursive;--r:28px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--f);line-height:1.6;font-size:16px}
+a{color:var(--brand-d)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:12px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:16px;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-brand{background:var(--brand);color:#fff;box-shadow:0 8px 22px rgba(214,36,110,.35)}
+.btn-saffron{background:var(--saffron);color:#3A2400}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.35)}
+.btn-white{background:#fff;color:var(--brand-d)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
+.c-peach{background:var(--peach);color:var(--peach-t)}.c-mint{background:var(--mint);color:var(--mint-t)}.c-butter{background:var(--butter);color:var(--butter-t)}.c-sky{background:var(--sky);color:var(--sky-t)}.c-lilac{background:var(--lilac);color:var(--lilac-t)}.c-pink{background:var(--pink);color:var(--pink-t)}.c-night{background:var(--plum-2);color:#fff}
+/* ---- intro ---- */
+#mk-intro{position:fixed;inset:0;z-index:60;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform .7s cubic-bezier(.7,0,.3,1)}
+#mk-intro.out{transform:translateY(-100%)}
+#mk-intro .nm{font-size:clamp(48px,12vw,104px);font-weight:800;line-height:1.2;min-height:1.3em;text-align:center;text-shadow:0 6px 30px rgba(0,0,0,.18)}
+#mk-intro svg{width:min(560px,86vw);height:auto;display:none}
+#mk-intro.final .nm{display:none}#mk-intro.final svg{display:block}
+#mk-intro .draw{font-family:var(--hand);font-weight:700;font-size:168px;fill:#fff;stroke:#fff;stroke-width:2.5;stroke-dasharray:900;stroke-dashoffset:900;fill-opacity:0}
+#mk-intro.final .draw{animation:mkDraw 1.5s ease-out forwards}
+#mk-intro .tag{opacity:0;margin-top:8px;font-size:clamp(16px,3.6vw,20px);color:#FFE3EE;transition:opacity .5s}
+#mk-intro.final .tag{opacity:1}
+#mk-intro button{position:absolute;bottom:28px;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;min-height:44px;padding:8px 20px;font:inherit;font-weight:600;cursor:pointer}
+@keyframes mkDraw{0%{stroke-dashoffset:900;fill-opacity:0}70%{stroke-dashoffset:0;fill-opacity:0}100%{stroke-dashoffset:0;fill-opacity:1}}
+/* ---- header + hero (dark) ---- */
+.dark{background:var(--plum);color:#fff;position:relative;overflow:hidden}
+.dark .glow{position:absolute;width:900px;height:900px;left:50%;top:-380px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(214,36,110,.55),rgba(214,36,110,0));pointer-events:none}
+.bar{position:relative;background:var(--brand-d);color:#fff;text-align:center;font-size:14px;padding:9px 16px}
+.bar b{color:var(--saffron)}
+header.top{position:relative}
+header.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:16px;padding-bottom:16px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;margin-right:auto}
+.logo b{width:44px;height:44px;border-radius:14px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--hand);font-size:28px;line-height:1}
+.logo span{font-family:var(--hand);font-size:32px;font-weight:700;line-height:1}
+.chip{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;text-decoration:none;font-size:14px;font-weight:600}
+.lang{display:flex;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);overflow:hidden}
+.lang a{padding:8px 13px;font-size:14px;font-weight:700;color:#fff;text-decoration:none}
+.lang a.on{background:#fff;color:var(--plum)}
+.hero{position:relative;text-align:center;padding:48px 0 64px}
+.hero .bar-line{width:3px;height:44px;margin:0 auto 18px;background:var(--brand);border-radius:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.hero h1{margin:0 auto;max-width:900px;font-size:clamp(30px,5.4vw,58px);line-height:1.18;font-weight:800}
+.hero .rot{display:block;color:#FF5C9D;font-size:clamp(46px,9vw,96px);line-height:1.15;position:relative;min-height:1.2em}
+.hero .rot u{text-decoration:none;position:relative;display:inline-block}
+.hero .rot u::after{content:"";position:absolute;left:4%;right:4%;bottom:-6px;height:10px;border-bottom:4px solid #FF5C9D;border-radius:0 0 50% 50%}
+.hero .caret{display:inline-block;width:4px;height:.85em;background:#FF5C9D;margin-left:6px;vertical-align:-0.08em;animation:blink 1s steps(1) infinite}
+.hero p.sub{margin:22px auto 0;max-width:640px;font-size:clamp(16px,2.2vw,19px);color:var(--on-dark)}
+.hero .ctas{margin-top:28px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.hero .pills{margin-top:18px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.hero .pills span{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-size:14px;font-weight:600}
+.hero .pills svg{color:var(--saffron)}
+.scroll{display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-top:26px;color:var(--on-dark);font-size:13px;text-decoration:none;animation:bob 2.2s ease-in-out infinite}
+/* ---- marquee ---- */
+.strip{background:#fff;border-bottom:1px solid var(--line);overflow:hidden;padding:14px 0}
+.track{display:flex;width:max-content;animation:marq 42s linear infinite}
+.strip:hover .track{animation-play-state:paused}
+.track span{display:flex;align-items:center;gap:10px;margin-right:16px;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+:lang(hi) .track span{letter-spacing:0;text-transform:none;font-size:15px}
+.track em{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.track i{width:7px;height:7px;border-radius:50%;background:var(--brand);margin-left:6px}
+@keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* ---- sections ---- */
+section.s{padding:84px 0}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand)}
+:lang(hi) .eyebrow{letter-spacing:0;font-size:15px}
+.eyebrow::after{content:"";width:34px;height:2px;background:var(--brand)}
+h2.big{margin:10px 0 0;font-size:clamp(30px,5vw,50px);line-height:1.15;font-weight:800;color:var(--ink)}
+h2.big em{font-style:normal;color:var(--brand)}
+.lead{margin:14px 0 0;font-size:18px;color:var(--muted);max-width:640px}
+.intro-row{display:flex;flex-wrap:wrap;align-items:center;gap:30px;margin-bottom:40px}
+.intro-row>div{flex:1 1 440px}
+.intro-art{flex:0 1 360px;margin:0 auto;border-radius:var(--r);overflow:hidden;background:var(--brand-s);aspect-ratio:16/9}
+.intro-art svg{width:100%;height:100%;display:block}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px}
+.svc{border-radius:var(--r);overflow:hidden;background:#fff;border:1px solid var(--line);transition:transform .3s,box-shadow .3s;display:flex;flex-direction:column}
+.svc:hover{transform:translateY(-6px);box-shadow:0 22px 44px rgba(34,20,31,.12)}
+.svc .art{position:relative;aspect-ratio:16/9}
+.svc .art svg{width:100%;height:100%;display:block}
+.svc .badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:7px 16px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+:lang(hi) .svc .badge{letter-spacing:0;font-size:13px}
+.b-soon{background:var(--saffron);color:#3A2400}.b-pilot{background:#5B8DEF;color:#fff}
+.svc .body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:8px;flex:1}
+.svc .body.c-peach,.svc .body.c-mint,.svc .body.c-butter,.svc .body.c-sky,.svc .body.c-lilac,.svc .body.c-pink{color:inherit}
+.svc h3{margin:0;font-size:21px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:10px}
+.svc h3 .dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0}
+.svc p{margin:0;color:var(--muted);font-size:15px}
+/* svg motion */
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 1.2s linear infinite}
+.drive{animation:drive 3s ease-in-out infinite}
+.bob{animation:bob 2.6s ease-in-out infinite}
+.pin{animation:bob 1.8s ease-in-out infinite}
+.twinkle circle{animation:tw 1.8s ease-in-out infinite}.twinkle circle:nth-child(2n){animation-delay:.6s}.twinkle circle:nth-child(3n){animation-delay:1.1s}
+.flag{transform-box:fill-box;transform-origin:left center;animation:flag 1.4s ease-in-out infinite}
+.slow{transform-box:fill-box;transform-origin:center;animation:spin 30s linear infinite}
+.sun{animation:tw 3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes drive{0%,100%{transform:translateX(-6px)}50%{transform:translateX(8px)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes tw{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes flag{0%,100%{transform:skewY(0)}50%{transform:skewY(-8deg)}}
+/* how */
+.how{background:#fff;border-radius:var(--r) var(--r) 0 0}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;counter-reset:s}
+.steps li{position:relative;border-radius:24px;padding:26px;background:var(--cream);border:1px solid var(--line)}
+.steps .ic{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.steps small{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);background:var(--brand-s);padding:4px 10px;border-radius:999px}
+:lang(hi) .steps small{letter-spacing:0;font-size:13px}
+.steps h3{margin:10px 0 6px;font-size:19px;font-weight:800}
+.steps p{margin:0;color:var(--muted);font-size:15px}
+.promise{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.promise .card{border-radius:var(--r);padding:32px;position:relative;overflow:hidden}
+.promise .p1{background:var(--brand);color:#fff}
+.promise .p1 .coin{width:84px;height:84px;border-radius:50%;background:var(--saffron);color:#3A2400;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:800;margin-bottom:16px;animation:bob 2.6s ease-in-out infinite}
+.promise .p1 b{display:block;font-size:clamp(24px,3.4vw,32px);line-height:1.2}
+.promise .p1 p{margin:10px 0 0;color:#FFE3EE}
+.promise .p2{background:var(--peach);display:flex;flex-direction:column;justify-content:center;gap:14px}
+.promise .p2 b{font-size:24px}
+/* apps */
+.apps{background:#fff}
+.app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
+.app{border-radius:var(--r);padding:30px;display:flex;flex-direction:column;gap:10px}
+.app .ic{width:62px;height:62px;border-radius:20px;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.app small{font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+:lang(hi) .app small{letter-spacing:0;font-size:14px}
+.app h3{margin:0;font-size:24px;font-weight:800;color:var(--ink)}
+.app p{margin:0;color:var(--muted)}
+.app ul{margin:4px 0 8px;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;color:var(--ink);font-size:15px}
+.app li{display:flex;gap:8px;align-items:flex-start}
+.app li svg{flex-shrink:0;margin-top:3px;color:var(--green)}
+.app .btn{margin-top:auto;align-self:flex-start}
+.app.dk{background:var(--plum-2);color:#fff}.app.dk h3,.app.dk ul{color:#fff}.app.dk p{color:var(--on-dark)}.app.dk small{color:var(--saffron)}
+/* investors */
+.inv-box{position:relative;overflow:hidden;background:var(--plum);color:#fff;border-radius:40px;padding:clamp(30px,6vw,64px)}
+.inv-box .glow{position:absolute;width:640px;height:640px;right:-200px;top:-260px;background:radial-gradient(closest-side,rgba(214,36,110,.5),rgba(214,36,110,0))}
+.inv-box>*{position:relative}
+.inv-box h2.big{color:#fff}.inv-box .lead{color:var(--on-dark)}
+.inv-box .eyebrow{color:var(--saffron)}.inv-box .eyebrow::after{background:var(--saffron)}
+.why-grid{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.why{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:24px}
+.why .n{font-family:var(--hand);font-size:34px;color:var(--saffron);line-height:1}
+.why h3{margin:8px 0 6px;font-size:19px;font-weight:800}
+.why p{margin:0;color:var(--on-dark);font-size:15px}
+.inv-box .ctas{margin-top:30px;display:flex;flex-wrap:wrap;gap:12px}
+/* where */
+.where{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:stretch}
+.where .box{border-radius:var(--r);padding:30px}
+.where .box b{display:block;font-size:24px;font-weight:800;margin:6px 0;color:var(--ink)}
+.where .box small{font-weight:800;font-size:13px}
+/* faq */
+.faq{max-width:860px;margin:0 auto}
+.faq details{background:#fff;border:1px solid var(--line);border-radius:22px;padding:4px 24px;margin-bottom:12px;transition:box-shadow .2s}
+.faq details[open]{box-shadow:0 12px 30px rgba(34,20,31,.08)}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:62px;font-size:17px;font-weight:700}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary span{width:34px;height:34px;border-radius:50%;background:var(--brand-s);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:transform .3s}
+.faq details[open] summary span{transform:rotate(45deg)}
+.faq p{margin:0 0 18px;color:var(--muted)}
+/* footer */
+footer{background:var(--plum);color:#D9C9D4;border-radius:44px 44px 0 0;margin-top:40px;padding:56px 0 30px;font-size:14px}
+footer .cols{display:flex;flex-wrap:wrap;gap:34px;justify-content:space-between}
+footer .brand{flex:1 1 280px;display:flex;flex-direction:column;gap:10px}
+footer .brand .logo{margin:0}
+footer .col{flex:0 1 170px;display:flex;flex-direction:column;gap:10px}
+footer .col b{color:#fff;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+:lang(hi) footer .col b{letter-spacing:0;font-size:14px}
+footer a{color:#D9C9D4;text-decoration:none}footer a:hover{color:#fff}
+footer .contact{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+footer .low{border-top:1px solid rgba(255,255,255,.1);margin-top:30px;padding-top:18px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:13px}
+footer .low a{color:var(--saffron);font-weight:700}
+.wa-fab{position:fixed;right:18px;bottom:18px;z-index:40;display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:12px 18px;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+/* scroll reveal */
+.js .rv{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.js .rv.in{opacity:1;transform:none}
+@media (max-width:640px){section.s{padding:60px 0}.hero{padding:30px 0 48px}header.top .chip{display:none}.wa-fab span{display:none}.wa-fab{padding:14px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}#mk-intro{display:none}}
+</style>
+</head>
+<body>
+
+<div id="mk-intro" hidden>
+  <div class="nm" aria-hidden="true">Maakit</div>
+  <svg viewBox="0 0 640 220" role="img" aria-label="Maakit"><text class="draw" x="320" y="160" text-anchor="middle">Maakit</text></svg>
+  <div class="tag">आपके शहर का अपना ऐप</div>
+  <button type="button" id="mk-skip">छोड़िए</button>
+</div>
+
+<div class="dark">
+  <span class="glow" aria-hidden="true"></span>
+  <div class="bar">Maakit भदोही और वाराणसी क्षेत्र में बढ़ रहा है — <b>दुकानदार, सारथी और निवेशक जुड़ सकते हैं</b></div>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/"><b>M</b><span>Maakit</span></a>
+      <a class="chip" href="/register-business.php"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v10h16V10"/></svg>दुकान जोड़िए</a>
+      <a class="chip" href="https://smartsarathi.in/sarathi.php"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M15 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M6 17l4-8h5l3 8"/></svg>सारथी बनिए</a>
+      <a class="chip" href="#investors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>निवेशक</a>
+      <div class="lang" role="group" aria-label="Language">
+        <a href="/?lang=en" class="" lang="en">EN</a>
+        <a href="/?lang=hi" class="on" lang="hi">हिंदी</a>
+      </div>
+    </div>
+  </header>
+  <section class="hero" id="top">
+    <div class="wrap">
+      <span class="bar-line" aria-hidden="true"></span>
+      <h1>शहर की दुकानें और सेवाएँ,        <span class="rot"><u id="mk-rot">अब घर तक।</u><span class="caret" aria-hidden="true"></span></span>
+      </h1>
+      <p class="sub">किराना, दवा और पास की दुकानों से कुछ भी — साथ में गाड़ी और सेवा बुकिंग। Maakit का सारथी दुकान के ही दाम पर सामान आपके दरवाज़े तक लाता है।</p>
+      <div class="ctas">
+        <a class="btn btn-brand" href="https://wa.me/918429393903"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.5-4A8 8 0 1 1 8 19z"/></svg>WhatsApp पर ऑर्डर</a>
+        <a class="btn btn-ghost" href="tel:+918429393903"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>फ़ोन 84293 93903</a>
+      </div>
+      <div class="pills">
+        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>दुकान का ही दाम</span>
+        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>नकद या UPI सीधे दुकान को</span>
+        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>ऐप जल्द Google Play पर</span>
+      </div>
+      <a class="scroll" href="#services">नीचे देखिए<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+    </div>
+  </section>
+</div>
+
+<div class="strip" aria-hidden="true">
+  <div class="track">
+    <span><em class="c-peach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v10h16V10M9 20v-6h6v6"/></svg></em>खाद्य एवं किराना<i></i></span><span><em class="c-mint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></em>दवा एवं स्वास्थ्य<i></i></span><span><em class="c-butter"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/></svg></em>घरेलू सामान<i></i></span><span><em class="c-sky"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c0 2-2 3-4 3s-4-1-4-3z"/></svg></em>कपड़े एवं फ़ैशन<i></i></span><span><em class="c-lilac"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h10v20H7zM11 18h2"/></svg></em>इलेक्ट्रॉनिक्स<i></i></span><span><em class="c-pink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg></em>सौंदर्य<i></i></span><span><em class="c-peach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5"/></svg></em>किताबें एवं शिक्षा<i></i></span><span><em class="c-mint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8"/></svg></em>खेती एवं पशुपालन<i></i></span><span><em class="c-butter"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 12h18M9 6v6M15 12v6"/></svg></em>निर्माण सामग्री<i></i></span><span><em class="c-sky"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-6h14l2 6v5H3zM3 13h18"/></svg></em>वाहन<i></i></span><span><em class="c-lilac"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18v4H3zM5 13h14v8H5zM12 9v12M12 9c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></svg></em>शादी एवं आयोजन<i></i></span><span><em class="c-pink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0 5 5l-9 9a2 2 0 0 1-3-3l9-9a4 4 0 0 0-2-2z"/></svg></em>सेवाएँ<i></i></span><span><em class="c-peach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v10h16V10M9 20v-6h6v6"/></svg></em>खाद्य एवं किराना<i></i></span><span><em class="c-mint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></em>दवा एवं स्वास्थ्य<i></i></span><span><em class="c-butter"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/></svg></em>घरेलू सामान<i></i></span><span><em class="c-sky"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c0 2-2 3-4 3s-4-1-4-3z"/></svg></em>कपड़े एवं फ़ैशन<i></i></span><span><em class="c-lilac"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h10v20H7zM11 18h2"/></svg></em>इलेक्ट्रॉनिक्स<i></i></span><span><em class="c-pink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg></em>सौंदर्य<i></i></span><span><em class="c-peach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5"/></svg></em>किताबें एवं शिक्षा<i></i></span><span><em class="c-mint"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8"/></svg></em>खेती एवं पशुपालन<i></i></span><span><em class="c-butter"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 12h18M9 6v6M15 12v6"/></svg></em>निर्माण सामग्री<i></i></span><span><em class="c-sky"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-6h14l2 6v5H3zM3 13h18"/></svg></em>वाहन<i></i></span><span><em class="c-lilac"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18v4H3zM5 13h14v8H5zM12 9v12M12 9c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></svg></em>शादी एवं आयोजन<i></i></span><span><em class="c-pink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0 5 5l-9 9a2 2 0 0 1-3-3l9-9a4 4 0 0 0-2-2z"/></svg></em>सेवाएँ<i></i></span>  </div>
+</div>
+
+<main>
+<section class="s" id="services" aria-labelledby="svc-h">
+  <div class="wrap">
+    <div class="intro-row rv">
+      <div>
+        <span class="eyebrow">छोटे शहरों के लिए बना</span>
+        <h2 class="big" id="svc-h">एक ऐप।<br><em>पूरे शहर के लिए।</em></h2>
+        <p class="lead">Maakit स्थानीय दुकानों, सारथियों, गाड़ी वालों और सेवा देने वालों को एक मंच पर लाता है — शहर से जो भी चाहिए, एक ऐप घर ले आता है।</p>
+      </div>
+      <div class="intro-art c-pink" aria-hidden="true"><svg viewBox="0 0 320 180"><rect x="0" y="140" width="320" height="40" fill="#BFD6F5"/><path d="M0 160h320" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="18 14"/><path d="M36 100h40M24 114h44M40 128h34" stroke="#8DB3E8" stroke-width="4" stroke-linecap="round"/><g class="drive"><circle class="spin" cx="112" cy="136" r="17" fill="#2A1530"/><circle cx="112" cy="136" r="6" fill="#FFFFFF"/><circle class="spin" cx="204" cy="136" r="17" fill="#2A1530"/><circle cx="204" cy="136" r="6" fill="#FFFFFF"/><path d="M96 132h58l22-26h30l12 26h-12" fill="#D6246E"/><rect x="128" y="112" width="30" height="8" rx="4" fill="#2A1530"/><rect x="136" y="76" width="28" height="40" rx="11" fill="#FFB020"/><circle cx="150" cy="62" r="13" fill="#F2C29B"/><path d="M136 60a14 14 0 0 1 28 0z" fill="#2A1530"/><path d="M160 92l24 14" stroke="#FFB020" stroke-width="8" stroke-linecap="round"/></g></svg></div>
+    </div>
+    <div class="svc-grid">
+            <article class="svc rv">
+        <div class="art c-peach">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><circle class="sun" cx="44" cy="40" r="16" fill="#FFB020"/><rect x="0" y="152" width="320" height="28" fill="#F6C9B0"/><rect x="92" y="62" width="140" height="92" rx="6" fill="#FFFFFF"/><rect x="124" y="30" width="76" height="22" rx="7" fill="#2A1530"/><rect x="138" y="38" width="48" height="6" rx="3" fill="#FFB020"/><g><rect x="82" y="50" width="20" height="26" fill="#D6246E"/><rect x="102" y="50" width="20" height="26" fill="#FFFFFF"/><rect x="122" y="50" width="20" height="26" fill="#D6246E"/><rect x="142" y="50" width="20" height="26" fill="#FFFFFF"/><rect x="162" y="50" width="20" height="26" fill="#D6246E"/><rect x="182" y="50" width="20" height="26" fill="#FFFFFF"/><rect x="202" y="50" width="20" height="26" fill="#D6246E"/><rect x="222" y="50" width="20" height="26" fill="#FFFFFF"/></g><path d="M82 76q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0q10 10 20 0" fill="#D6246E"/><rect x="106" y="94" width="52" height="34" rx="4" fill="#DCEBFF"/><rect x="176" y="98" width="38" height="56" rx="4" fill="#8A3B12"/><circle cx="206" cy="128" r="2.5" fill="#FFB020"/><g class="bob"><rect x="248" y="116" width="36" height="38" rx="5" fill="#FFB020"/><path d="M256 118v-6a10 10 0 0 1 20 0v6" fill="none" stroke="#2A1530" stroke-width="3"/></g></svg>
+                  </div>
+        <div class="body">
+          <h3><span class="dot" title="उपलब्ध"></span>स्थानीय दुकानों से खरीदारी</h3>
+          <p>किराना, दवा, मिठाई और बहुत कुछ — पास की दुकानों से, दुकान के ही दाम पर।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-sky">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="140" width="320" height="40" fill="#BFD6F5"/><path d="M0 160h320" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="18 14"/><path d="M36 100h40M24 114h44M40 128h34" stroke="#8DB3E8" stroke-width="4" stroke-linecap="round"/><g class="drive"><circle class="spin" cx="112" cy="136" r="17" fill="#2A1530"/><circle cx="112" cy="136" r="6" fill="#FFFFFF"/><circle class="spin" cx="204" cy="136" r="17" fill="#2A1530"/><circle cx="204" cy="136" r="6" fill="#FFFFFF"/><path d="M96 132h58l22-26h30l12 26h-12" fill="#D6246E"/><rect x="128" y="112" width="30" height="8" rx="4" fill="#2A1530"/><rect x="136" y="76" width="28" height="40" rx="11" fill="#FFB020"/><circle cx="150" cy="62" r="13" fill="#F2C29B"/><path d="M136 60a14 14 0 0 1 28 0z" fill="#2A1530"/><path d="M160 92l24 14" stroke="#FFB020" stroke-width="8" stroke-linecap="round"/></g></svg>
+          <span class="badge b-soon">जल्द आ रहा है</span>        </div>
+        <div class="body">
+          <h3>सवारी</h3>
+          <p>बाइक, ऑटो और ई-रिक्शा — बुकिंग से पहले किराया दिखता है।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-butter">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="150" width="320" height="30" fill="#F3DFA0"/><path d="M70 150 C110 120 190 170 250 92" fill="none" stroke="#D6246E" stroke-width="3" stroke-dasharray="7 7"/><g class="bob"><rect x="96" y="96" width="70" height="56" rx="4" fill="#E9A85A"/><rect x="126" y="96" width="10" height="56" fill="#F7D79F"/><rect x="160" y="110" width="58" height="42" rx="4" fill="#D98E3F"/><rect x="184" y="110" width="9" height="42" fill="#F7D79F"/><rect x="112" y="60" width="50" height="38" rx="4" fill="#F0BE7A"/><rect x="132" y="60" width="9" height="38" fill="#FBE3B8"/></g><g class="pin"><path d="M252 92c-14-16-22-26-22-38a22 22 0 0 1 44 0c0 12-8 22-22 38z" fill="#D6246E"/><circle cx="252" cy="54" r="8" fill="#FFFFFF"/></g></svg>
+          <span class="badge b-soon">जल्द आ रहा है</span>        </div>
+        <div class="body">
+          <h3>पार्सल डिलीवरी</h3>
+          <p>शहर में कहीं भी सामान उठवाइए और पहुँचवाइए — दोनों ओर कोड से पुष्टि।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-mint">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="146" width="320" height="34" fill="#B9E3C9"/><path d="M0 164h320" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="18 14"/><g class="drive"><path d="M64 138v-28l20-30h120l30 30h22v28z" fill="#FFFFFF"/><path d="M92 86h50v28H74zM150 86h50l24 28h-74z" fill="#DCEBFF"/><rect x="64" y="120" width="192" height="8" fill="#D6246E"/><circle class="spin" cx="102" cy="140" r="17" fill="#2A1530"/><circle cx="102" cy="140" r="6" fill="#FFFFFF"/><circle class="spin" cx="222" cy="140" r="17" fill="#2A1530"/><circle cx="222" cy="140" r="6" fill="#FFFFFF"/><rect x="248" y="112" width="10" height="6" rx="3" fill="#FFB020"/></g></svg>
+                  </div>
+        <div class="body">
+          <h3><span class="dot" title="उपलब्ध"></span>गाड़ी बुकिंग</h3>
+          <p>यात्रा, शादी और कार्यक्रम के लिए बोलेरो, बस या टूर गाड़ी बुक कीजिए।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-lilac">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="146" width="320" height="34" fill="#D7C8F5"/><g class="drive"><rect x="52" y="70" width="140" height="70" rx="6" fill="#FFFFFF"/><rect x="66" y="84" width="34" height="30" rx="3" fill="#E9A85A"/><rect x="106" y="90" width="34" height="24" rx="3" fill="#D98E3F"/><rect x="146" y="80" width="34" height="34" rx="3" fill="#F0BE7A"/><path d="M192 92h44l26 26v22h-70z" fill="#D6246E"/><path d="M202 100h30l16 16h-46z" fill="#DCEBFF"/><circle class="spin" cx="92" cy="142" r="16" fill="#2A1530"/><circle cx="92" cy="142" r="6" fill="#FFFFFF"/><circle class="spin" cx="228" cy="142" r="16" fill="#2A1530"/><circle cx="228" cy="142" r="6" fill="#FFFFFF"/></g></svg>
+          <span class="badge b-soon">जल्द आ रहा है</span>        </div>
+        <div class="body">
+          <h3>माल ढुलाई</h3>
+          <p>लोडर से सामान भेजिए, और खाली लौटने वाली गाड़ियाँ भरिए।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-pink">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><path d="M40 140 C100 40 220 160 282 52" fill="none" stroke="#F3A9C6" stroke-width="10" stroke-linecap="round"/><path d="M40 140 C100 40 220 160 282 52" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="8 9"/><circle cx="40" cy="140" r="12" fill="#2A1530"/><circle cx="40" cy="140" r="5" fill="#FFFFFF"/><g class="pin"><path d="M282 62c-12-14-18-22-18-32a18 18 0 0 1 36 0c0 10-6 18-18 32z" fill="#D6246E"/><circle cx="282" cy="30" r="7" fill="#FFFFFF"/></g><g class="bob"><rect x="128" y="84" width="74" height="36" rx="12" fill="#D6246E"/><rect x="138" y="70" width="54" height="22" rx="9" fill="#DCEBFF"/><circle cx="154" cy="80" r="7" fill="#F2C29B"/><circle cx="176" cy="80" r="7" fill="#C98E62"/><circle cx="146" cy="122" r="8" fill="#2A1530"/><circle cx="186" cy="122" r="8" fill="#2A1530"/></g></svg>
+          <span class="badge b-soon">जल्द आ रहा है</span>        </div>
+        <div class="body">
+          <h3>साथ सफ़र</h3>
+          <p>उसी रास्ते जा रहे व्यक्ति के साथ सफ़र कीजिए और प्रति सीट भुगतान कीजिए।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-peach">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="152" width="320" height="28" fill="#F6C9B0"/><path d="M30 34 Q160 70 290 34" fill="none" stroke="#8A3B12" stroke-width="2"/><g class="twinkle"><circle cx="66" cy="44" r="6" fill="#FFB020"/><circle cx="112" cy="54" r="6" fill="#D6246E"/><circle cx="160" cy="57" r="6" fill="#FFB020"/><circle cx="208" cy="54" r="6" fill="#D6246E"/><circle cx="254" cy="44" r="6" fill="#FFB020"/></g><path d="M90 152 L160 74 L230 152 Z" fill="#D6246E"/><path d="M160 74 L134 152 H186 Z" fill="#FFB020"/><path d="M160 74 L148 152 H172 Z" fill="#D6246E"/><rect x="152" y="120" width="16" height="32" fill="#2A1530"/><g class="bob"><rect x="248" y="104" width="12" height="48" rx="4" fill="#8A3B12"/><rect x="236" y="92" width="36" height="16" rx="5" fill="#2A1530"/></g></svg>
+                  </div>
+        <div class="body">
+          <h3><span class="dot" title="उपलब्ध"></span>स्थानीय सेवाएँ</h3>
+          <p>पंडित जी, टेंट, हलवाई, मिस्त्री या सैलून की सीट बुक कीजिए।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-sky">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="152" width="320" height="28" fill="#BFD6F5"/><rect x="58" y="36" width="160" height="96" rx="8" fill="#1E5B45"/><rect x="58" y="36" width="160" height="96" rx="8" fill="none" stroke="#8A5A2B" stroke-width="6"/><path d="M80 62h70M80 80h100M80 98h56" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" class="chalk"/><path d="M168 98l10 10 20-24" stroke="#FFB020" stroke-width="4" fill="none" stroke-linecap="round"/><g class="bob"><rect x="226" y="124" width="66" height="14" rx="3" fill="#D6246E"/><rect x="232" y="110" width="58" height="14" rx="3" fill="#FFB020"/><rect x="228" y="96" width="62" height="14" rx="3" fill="#5B8DEF"/><rect x="246" y="62" width="8" height="32" rx="2" fill="#FFB020" transform="rotate(20 250 78)"/></g></svg>
+          <span class="badge b-pilot">पायलट</span>        </div>
+        <div class="body">
+          <h3>कोचिंग साथी</h3>
+          <p>कोचिंग संस्थानों के लिए मुफ़्त सॉफ़्टवेयर; छात्र ऐप ₹54 में 6 महीने।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-mint">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect x="0" y="152" width="320" height="28" fill="#B9E3C9"/><rect x="76" y="76" width="168" height="78" fill="#FFFFFF"/><path d="M66 80 L160 36 L254 80 Z" fill="#D6246E"/><circle cx="160" cy="62" r="10" fill="#FFB020"/><rect x="96" y="94" width="26" height="22" rx="3" fill="#DCEBFF"/><rect x="198" y="94" width="26" height="22" rx="3" fill="#DCEBFF"/><rect x="144" y="108" width="32" height="46" rx="4" fill="#2A1530"/><rect x="250" y="40" width="4" height="114" fill="#2A1530"/><path class="flag" d="M254 42h34l-8 10 8 10h-34z" fill="#FFB020"/></svg>
+          <span class="badge b-pilot">पायलट</span>        </div>
+        <div class="body">
+          <h3>स्कूल ERP</h3>
+          <p>स्कूलों के लिए फ़ीस, हाज़िरी, परिणाम और अभिभावक ऐप।</p>
+        </div>
+      </article>
+            <article class="svc rv">
+        <div class="art c-night">
+          <svg viewBox="0 0 320 180" aria-hidden="true"><rect width="320" height="180" fill="#2A1530"/><g class="twinkle"><circle cx="40" cy="30" r="2.5" fill="#FFFFFF"/><circle cx="96" cy="58" r="2" fill="#FFFFFF"/><circle cx="280" cy="40" r="2.5" fill="#FFFFFF"/><circle cx="250" cy="150" r="2" fill="#FFFFFF"/><circle cx="60" cy="140" r="2" fill="#FFFFFF"/><circle cx="292" cy="104" r="2" fill="#FFFFFF"/></g><path d="M226 34a26 26 0 1 0 22 40a22 22 0 1 1 -22 -40z" fill="#FFB020"/><g class="slow"><rect x="110" y="40" width="100" height="100" fill="none" stroke="#FFB020" stroke-width="3"/><path d="M110 40L210 140M210 40L110 140M160 40L110 90L160 140L210 90Z" fill="none" stroke="#FFB020" stroke-width="3"/></g></svg>
+          <span class="badge b-soon">जल्द आ रहा है</span>        </div>
+        <div class="body">
+          <h3>Maakit ज्योतिष</h3>
+          <p>कुंडली, गुण मिलान और दैनिक राशिफल, AI ज्योतिषी के साथ।</p>
+        </div>
+      </article>
+          </div>
+  </div>
+</section>
+
+<section class="s how" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">कैसे काम करता है</span>
+      <h2 class="big" id="how-h">दुकान से, <em>आपके दरवाज़े तक।</em></h2>
+    </div>
+    <ol class="steps" style="margin-top:36px">
+            <li class="rv" style="transition-delay:0s">
+        <span class="ic c-peach"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg></span>
+        <small>कदम 1</small>
+        <h3>ऑर्डर कीजिए</h3>
+        <p>दुकान और सामान बताइए — ऐप से, या ऐप आने तक फ़ोन और WhatsApp से।</p>
+      </li>
+            <li class="rv" style="transition-delay:0.08s">
+        <span class="ic c-mint"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+        <small>कदम 2</small>
+        <h3>दुकान मानती है, पैक करती है</h3>
+        <p>दुकान सामान और अपना दाम पक्का करती है, फिर ऑर्डर पैक करती है।</p>
+      </li>
+            <li class="rv" style="transition-delay:0.16s">
+        <span class="ic c-butter"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M15 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M6 17l4-8h5l3 8"/></svg></span>
+        <small>कदम 3</small>
+        <h3>सारथी सामान उठाता है</h3>
+        <p>पास का सारथी पिकअप कोड से पुष्टि करके सामान उठाता है।</p>
+      </li>
+            <li class="rv" style="transition-delay:0.24s">
+        <span class="ic c-sky"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18H6zM14 12h1"/></svg></span>
+        <small>कदम 4</small>
+        <h3>आपके दरवाज़े तक</h3>
+        <p>ऑर्डर देखते रहिए, पहुँचने पर डिलीवरी कोड बताइए।</p>
+      </li>
+          </ol>
+    <div class="promise">
+      <div class="card p1 rv">
+        <div class="coin">₹</div>
+        <b>दुकान का दाम। एक रुपया ज़्यादा नहीं।</b>
+        <p>सामान का दाम दुकान का है। Maakit केवल डिलीवरी शुल्क लेता है — और भुगतान आप सीधे दुकान को करते हैं, नकद या UPI से।</p>
+      </div>
+      <div class="card p2 rv">
+        <b>आज ही ऑर्डर कीजिए</b>
+        <span style="color:var(--peach-t)">ऐप जल्द आ रहा है। तब तक बस फ़ोन या WhatsApp कीजिए।</span>
+        <a class="btn btn-brand" style="align-self:flex-start" href="https://wa.me/918429393903">WhatsApp 84293 93903</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s apps" id="apps" aria-labelledby="apps-h">
+  <div class="wrap">
+    <div class="rv" style="margin-bottom:36px">
+      <span class="eyebrow">तीन ऐप। एक मंच।</span>
+      <h2 class="big" id="apps-h">सब एक ही <em>ऑर्डर पर।</em></h2>
+    </div>
+    <div class="app-grid">
+      <article class="app c-pink rv">
+        <span class="ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h10v20H7zM11 18h2"/></svg></span>
+        <small>ग्राहकों के लिए</small>
+        <h3>Maakit ऐप</h3>
+        <p>एक ही ऐप से खरीदिए, सवारी लीजिए, भेजिए और बुक कीजिए।</p>
+        <ul><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>हिंदी और English</li><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>नकद या UPI सीधे दुकान को</li><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>ऑर्डर ट्रैकिंग</li></ul>
+        <span class="btn btn-white" style="cursor:default">जल्द ही Google Play पर</span>
+      </article>
+      <article class="app c-butter rv">
+        <span class="ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v10h16V10M9 20v-6h6v6"/></svg></span>
+        <small>दुकानदारों के लिए</small>
+        <h3>Maakit दुकान</h3>
+        <p>फ़ोन पर ऑर्डर पाइए और दुकान ऑनलाइन चलाइए।</p>
+        <ul><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>हर नए ऑर्डर की सूचना</li><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>अपना दाम और स्टॉक ख़ुद तय कीजिए</li><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>अपना रोज़ का हिसाब</li></ul>
+        <a class="btn btn-brand" href="/register-business.php">दुकान जोड़िए</a>
+      </article>
+      <article class="app dk rv">
+        <span class="ic" style="background:rgba(255,255,255,.1);color:var(--saffron)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M15 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M6 17l4-8h5l3 8"/></svg></span>
+        <small>सारथी और गाड़ी वालों के लिए</small>
+        <h3>सारथी पार्टनर</h3>
+        <p>अपने इलाक़े में बाइक, ऑटो, कार या बस से कमाइए।</p>
+        <ul><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>आधार और PAN से जुड़िए</li><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>अपना इलाक़ा और दूरी चुनिए</li><li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>काम सबसे पास के सारथी को</li></ul>
+        <a class="btn btn-saffron" href="https://smartsarathi.in/sarathi.php">सारथी बनिए</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="investors" aria-labelledby="inv-h" style="padding-top:20px">
+  <div class="wrap">
+    <div class="inv-box rv">
+      <span class="glow" aria-hidden="true"></span>
+      <span class="eyebrow">निवेशकों के लिए</span>
+      <h2 class="big" id="inv-h">Maakit क्यों</h2>
+      <p class="lead">छोटे शहरों में दुकानें, गाड़ियाँ और हुनरमंद लोग हैं, पर उन्हें जोड़ने वाला कोई एक ऐप नहीं। Maakit यही मंच बना रहा है, शुरुआत पूर्वी उत्तर प्रदेश से।</p>
+      <div class="why-grid">
+        <div class="why"><span class="n">01</span><h3>अनछुआ बाज़ार</h3><p>बड़े डिलीवरी ऐप बड़े शहरों पर ध्यान देते हैं। कस्बे और गाँव अब भी फ़ोन कॉल और मुँह-ज़बानी पर चलते हैं।</p></div><div class="why"><span class="n">02</span><h3>एक मंच, कई सेवाएँ</h3><p>खरीदारी, सवारी, पार्सल, गाड़ी और सेवा बुकिंग, कोचिंग और स्कूल सॉफ़्टवेयर — सब एक ही आधार पर।</p></div><div class="why"><span class="n">03</span><h3>अपनी तकनीक</h3><p>ग्राहक, दुकान, सारथी और एडमिन सॉफ़्टवेयर — Maakit ने स्वयं बनाए और चलाता है।</p></div><div class="why"><span class="n">04</span><h3>साफ़ पैसे का नियम</h3><p>ग्राहक नकद या UPI से सीधे दुकान को देते हैं। Maakit डिलीवरी शुल्क और सेवाओं से कमाता है, ग्राहक का पैसा कभी नहीं रखता।</p></div>      </div>
+      <div class="ctas">
+        <a class="btn btn-saffron" href="tel:+918429393903">फ़ोन कीजिए · 84293 93903</a>
+        <a class="btn btn-ghost" href="https://wa.me/918429393903">WhatsApp पर संदेश</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="padding-top:20px" aria-labelledby="where-h">
+  <div class="wrap">
+    <div class="rv" style="margin-bottom:30px">
+      <span class="eyebrow">गाँव-दर-गाँव बढ़ते हुए</span>
+      <h2 class="big" id="where-h">हम कहाँ <em>सेवा देते हैं</em></h2>
+    </div>
+    <div class="where">
+      <div class="box c-mint rv"><small>अभी सेवा</small><b>कपसेठी, चौरी, कछवा</b><span>और आस-पास के गाँव</span></div>
+      <div class="box c-peach rv"><small>आगे</small><b>भदोही और वाराणसी के और इलाक़े</b><span>नया इलाक़ा तभी खुलता है जब वहाँ पर्याप्त दुकानें और सारथी हों।</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" style="padding-top:10px" aria-labelledby="faq-h">
+  <div class="wrap">
+    <div class="rv" style="text-align:center;margin-bottom:30px">
+      <span class="eyebrow">सवाल</span>
+      <h2 class="big" id="faq-h">जान लीजिए <em></em></h2>
+    </div>
+    <div class="faq">
+            <details class="rv"><summary>क्या मैं इस वेबसाइट पर ऑर्डर कर सकता हूँ?<span aria-hidden="true">+</span></summary><p>नहीं। ऑर्डर Maakit ऐप से होंगे। जब तक ऐप Google Play पर नहीं आता, 84293 93903 पर फ़ोन या WhatsApp से ऑर्डर कीजिए।</p></details>
+            <details class="rv"><summary>क्या दाम दुकान से ज़्यादा हैं?<span aria-hidden="true">+</span></summary><p>नहीं। सामान का दाम दुकान का है। Maakit केवल डिलीवरी शुल्क लेता है।</p></details>
+            <details class="rv"><summary>भुगतान कैसे करें?<span aria-hidden="true">+</span></summary><p>सामान मिलने पर नकद, या UPI से सीधे दुकान की अपनी UPI ID पर।</p></details>
+            <details class="rv"><summary>मेरी दुकान कैसे जुड़ेगी?<span aria-hidden="true">+</span></summary><p>“दुकान जोड़िए” चुनिए, अपनी जानकारी भरिए — हमारी टीम आपको फ़ोन करेगी।</p></details>
+            <details class="rv"><summary>सारथी कैसे बनें?<span aria-hidden="true">+</span></summary><p>सारथी पार्टनर ऐप खोलिए, आधार और PAN जोड़िए, और अपनी गाड़ी तथा इलाक़ा चुनिए।</p></details>
+          </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand">
+        <a class="logo" href="/"><b>M</b><span>Maakit</span></a>
+        <span>उत्तर प्रदेश के कस्बों और गाँवों के लिए स्थानीय खरीदारी, गाड़ी और सेवा बुकिंग।</span>
+        <span>Jagarnathpur, Bhadohi, Uttar Pradesh 221403</span>
+        <div class="contact"><a class="chip" href="tel:+918429393903">84293 93903</a><a class="chip" href="https://wa.me/918429393903">WhatsApp</a></div>
+      </div>
+      <div class="col"><b>साझेदारों के लिए</b><a href="/register-business.php">दुकान जोड़िए</a><a href="https://smartsarathi.in/sarathi.php">सारथी बनिए</a><a href="#investors">निवेशकों के लिए</a></div>
+      <div class="col"><b>मदद</b><a href="/track.php">ऑर्डर ट्रैक कीजिए</a><a href="/support.php">मदद और शिकायत</a><a href="/login.php">दुकान और टीम लॉगिन</a></div>
+      <div class="col"><b>नियम</b><a href="/niyam.php">नियम और शर्तें</a><a href="/photo-credits.php">फ़ोटो श्रेय</a></div>
+    </div>
+    <div class="low">
+      <span>© 2026 Maakit · उद्यम-पंजीकृत सूक्ष्म उद्यम (MSME)</span>
+      <a href="/?intro=1">इंट्रो फिर से देखिए</a>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-fab" href="https://wa.me/918429393903" aria-label="WhatsApp पर बात कीजिए"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.5-4A8 8 0 1 1 8 19z"/></svg><span>बात कीजिए</span></a>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // ---- intro ----
+  var box = document.getElementById('mk-intro');
+  var force = /[?&]intro=1/.test(location.search), seen = false;
+  try { seen = sessionStorage.getItem('mk_intro') === '1'; } catch (e) {}
+  if (box && !reduce && (force || !seen)) {
+    var names = ["माकिट","মাকিট","மாகிட்","మాకిట్","ಮಾಕಿಟ್","മാകിറ്റ്","માકિટ","ਮਾਕਿਟ","ମାକିଟ୍","ماکٹ"], nm = box.querySelector('.nm'), i = 0, done = false, timer;
+    box.hidden = false; document.body.style.overflow = 'hidden';
+    var close = function () {
+      if (done) return; done = true; clearInterval(timer);
+      box.classList.add('out'); document.body.style.overflow = '';
+      try { sessionStorage.setItem('mk_intro', '1'); } catch (e) {}
+      setTimeout(function () { box.hidden = true; }, 750);
+    };
+    timer = setInterval(function () {
+      if (i < names.length) { nm.textContent = names[i++]; return; }
+      clearInterval(timer); box.classList.add('final'); setTimeout(close, 2300);
+    }, 230);
+    document.getElementById('mk-skip').addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+  // ---- hero: likhte hue badalta shabd ----
+  var rot = document.getElementById('mk-rot'), words = ["अब घर तक।","एक ऐप में।","दुकान के दाम पर।"];
+  if (rot && !reduce && words.length > 1) {
+    var w = 0, c = words[0].length, del = false;
+    setTimeout(function tick() {
+      var full = words[w];
+      if (!del) { c++; if (c > full.length) { del = true; return setTimeout(tick, 1600); } }
+      else { c--; if (c < 0) { del = false; c = 0; w = (w + 1) % words.length; full = words[w]; } }
+      rot.textContent = Array.from(full).slice(0, Math.max(c, 0)).join('') || ' ';
+      setTimeout(tick, del ? 45 : 90);
+    }, 2600);
+  }
+  // ---- scroll par cheezein aati hain ----
+  var els = document.querySelectorAll('.rv');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: .12 });
+    els.forEach(function (el) { io.observe(el); });
+  } else { els.forEach(function (el) { el.classList.add('in'); }); }
+})();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
