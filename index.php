@@ -382,20 +382,53 @@ h2.big em{font-style:normal;color:var(--brand)}
 .bill .ln2 b{white-space:nowrap}
 .bill .ln2 .z{color:var(--green)}
 .bill .stamp{position:absolute;right:-22px;top:-34px;width:108px;height:108px;border-radius:50%;border:3px solid var(--saffron);background:var(--plum);color:var(--saffron);display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;line-height:1.2;transform:rotate(14deg);box-shadow:0 10px 26px rgba(0,0,0,.25)}
-/* apps */
-.apps{background:#fff}
-.app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
-.app{border-radius:var(--r);padding:30px;display:flex;flex-direction:column;gap:10px}
-.app .ic{width:62px;height:62px;border-radius:20px;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
-.app small{font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
-:lang(hi) .app small{letter-spacing:0;font-size:14px}
-.app h3{margin:0;font-size:24px;font-weight:800;color:var(--ink)}
-.app p{margin:0;color:var(--muted)}
-.app ul{margin:4px 0 8px;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;color:var(--ink);font-size:15px}
-.app li{display:flex;gap:8px;align-items:flex-start}
-.app li svg{flex-shrink:0;margin-top:3px;color:var(--green)}
-.app .btn{margin-top:auto;align-self:flex-start}
-.app.dk{background:var(--plum-2);color:#fff}.app.dk h3,.app.dk ul{color:#fff}.app.dk p{color:var(--on-dark)}.app.dk small{color:var(--saffron)}
+/* apps — teen jude phone */
+.apps{background:#fff;border-radius:44px;margin:0 12px}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;align-items:start;position:relative}
+.flow .link{position:absolute;top:210px;height:3px;background:repeating-linear-gradient(90deg,var(--brand) 0 10px,transparent 10px 20px);background-size:40px 3px;animation:flowmv 1s linear infinite;opacity:.6}
+.flow .l1{left:calc(33.33% - 40px);width:80px}.flow .l2{left:calc(66.66% - 40px);width:80px}
+@keyframes flowmv{to{background-position:40px 0}}
+.flow .link::after{content:"";position:absolute;right:-6px;top:-5px;border-left:10px solid var(--brand);border-top:6.5px solid transparent;border-bottom:6.5px solid transparent}
+.lane{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.ph{width:236px;height:430px;border-radius:38px;background:var(--plum);padding:10px;box-shadow:0 30px 60px rgba(34,20,31,.22);position:relative}
+.ph::before{content:"";position:absolute;top:16px;left:50%;width:70px;height:18px;margin-left:-35px;border-radius:10px;background:var(--plum);z-index:2}
+.scr{width:100%;height:100%;border-radius:30px;overflow:hidden;background:#FFF6EF;display:flex;flex-direction:column;text-align:left;font-size:12px;color:var(--ink)}
+.scr .top{padding:34px 14px 12px;color:#fff;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.scr .card{margin:10px 12px 0;background:#fff;border-radius:16px;padding:12px;box-shadow:0 6px 16px rgba(34,20,31,.06)}
+.scr .card b{display:block;font-size:13px}
+.scr .muted{color:var(--muted);font-size:11px}
+.stg{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.stg li{display:flex;align-items:center;gap:8px;font-size:11.5px}
+.stg i{width:14px;height:14px;border-radius:50%;border:2px solid #E5D6DE;flex-shrink:0}
+.stg .d i{background:var(--green);border-color:var(--green)}
+.stg .n i{background:var(--saffron);border-color:var(--saffron);box-shadow:0 0 0 0 rgba(255,176,32,.6);animation:ping 1.4s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 8px rgba(255,176,32,0)}100%{box-shadow:0 0 0 0 rgba(255,176,32,0)}}
+.mini-map{margin:10px 12px 0;height:96px;border-radius:16px;background:#E6F0E6;position:relative;overflow:hidden}
+.mini-map .rd{position:absolute;left:14px;right:14px;top:46px;height:4px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--brand) 0 8px,transparent 8px 14px)}
+.mini-map .rider{position:absolute;top:36px;left:14px;width:24px;height:24px;border-radius:50%;background:var(--saffron);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.2);animation:ride 4s ease-in-out infinite alternate}
+@keyframes ride{to{left:calc(100% - 38px)}}
+.mini-map .pin{position:absolute;right:12px;top:24px;width:16px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand)}
+.bell{display:flex;align-items:center;gap:8px;margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:var(--brand);color:#fff;font-weight:700;font-size:12.5px}
+.bell svg{animation:ring 1.2s ease-in-out infinite;transform-origin:50% 0}
+@keyframes ring{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(14deg)}20%,40%{transform:rotate(-14deg)}}
+.items{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.items li{display:flex;justify-content:space-between;font-size:11.5px}
+.btns{display:flex;gap:8px;margin-top:10px}
+.btns span{flex:1;text-align:center;padding:8px 0;border-radius:10px;font-weight:700;font-size:12px}
+.btns .ok{background:var(--green);color:#fff}.btns .no{background:#F4E6DF;color:var(--muted)}
+.offer{display:flex;align-items:center;gap:10px}
+.ring{width:46px;height:46px;flex-shrink:0;position:relative}
+.ring svg{width:46px;height:46px;transform:rotate(-90deg)}
+.ring circle.f{stroke-dasharray:125.6;animation:count 20s linear infinite}
+@keyframes count{from{stroke-dashoffset:0}to{stroke-dashoffset:125.6}}
+.ring b{position:absolute;inset:0;display:flex!important;align-items:center;justify-content:center;font-size:12px!important}
+.lane small{font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin-top:16px}
+:lang(hi) .lane small{letter-spacing:0;font-size:14px}
+.lane h3{margin:0;font-size:22px;font-weight:800}
+.lane p{margin:0;color:var(--muted);max-width:300px}
+.lane .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0 6px}
+.lane .chips span{font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px}
+@media (max-width:900px){.flow{grid-template-columns:1fr;gap:56px}.flow .link{display:none}}
 /* investors */
 .inv-box{position:relative;overflow:hidden;background:var(--plum);color:#fff;border-radius:40px;padding:clamp(30px,6vw,64px)}
 .inv-box .glow{position:absolute;width:640px;height:640px;right:-200px;top:-260px;background:radial-gradient(closest-side,rgba(214,36,110,.5),rgba(214,36,110,0))}
@@ -408,11 +441,32 @@ h2.big em{font-style:normal;color:var(--brand)}
 .why h3{margin:8px 0 6px;font-size:19px;font-weight:800}
 .why p{margin:0;color:var(--on-dark);font-size:15px}
 .inv-box .ctas{margin-top:30px;display:flex;flex-wrap:wrap;gap:12px}
-/* where */
-.where{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:stretch}
-.where .box{border-radius:var(--r);padding:30px}
-.where .box b{display:block;font-size:24px;font-weight:800;margin:6px 0;color:var(--ink)}
-.where .box small{font-weight:800;font-size:13px}
+/* where — naksha */
+.where2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:stretch}
+.mapbox{position:relative;border-radius:36px;overflow:hidden;background:var(--plum);min-height:360px}
+.mapbox svg{width:100%;height:100%;display:block}
+.mapbox .note{position:absolute;left:18px;bottom:14px;font-size:12px;color:rgba(255,255,255,.55)}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 2s ease-out infinite}
+.pulse.p2{animation-delay:.7s}.pulse.p3{animation-delay:1.4s}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+.areas{display:flex;flex-direction:column;gap:18px}
+.area{border-radius:30px;padding:26px 26px 24px;position:relative;overflow:hidden}
+.area.now{background:var(--brand);color:#fff;box-shadow:0 24px 50px rgba(214,36,110,.3)}
+.area.next{background:#fff;border:2px dashed #E9B9CC}
+.area .live{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.18)}
+:lang(hi) .area .live{letter-spacing:0;font-size:13px}
+.area .live i{width:9px;height:9px;border-radius:50%;background:#7CFFB2;animation:ping2 1.4s infinite}
+@keyframes ping2{0%{box-shadow:0 0 0 0 rgba(124,255,178,.7)}100%{box-shadow:0 0 0 10px rgba(124,255,178,0)}}
+.area.next .live{background:var(--butter);color:var(--butter-t)}.area.next .live i{background:var(--saffron);animation:none}
+.area h3{margin:14px 0 4px;font-size:clamp(24px,3.2vw,32px);font-weight:800;line-height:1.15}
+.area.next h3{color:var(--ink)}
+.area p{margin:0;font-size:15px}.area.now p{color:#FFE3EE}.area.next p{color:var(--muted)}
+.area .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.area .tags span{padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px}
+.area.now .tags span{background:#fff;color:var(--brand-d)}
+.area.next .tags span{background:var(--cream);color:var(--ink);border:1px solid var(--line)}
+.area .btn{margin-top:16px}
+@media (max-width:860px){.where2{grid-template-columns:1fr}.mapbox{min-height:300px}}
 /* faq */
 .faq{max-width:860px;margin:0 auto}
 .faq details{background:#fff;border:1px solid var(--line);border-radius:22px;padding:4px 24px;margin-bottom:12px;transition:box-shadow .2s}
@@ -568,35 +622,71 @@ footer .low a{color:var(--saffron);font-weight:700}
 
 <section class="s apps" id="apps" aria-labelledby="apps-h">
   <div class="wrap">
-    <div class="rv" style="margin-bottom:36px">
+    <div class="rv" style="text-align:center;margin-bottom:46px">
       <span class="eyebrow"><?= $T('Three apps. One platform.', 'तीन ऐप। एक मंच।') ?></span>
       <h2 class="big" id="apps-h"><?= $T('Everyone on the same', 'सब एक ही') ?> <em><?= $T('order.', 'ऑर्डर पर।') ?></em></h2>
+      <p class="lead" style="margin-left:auto;margin-right:auto"><?= $T('The moment a customer orders, the shop’s phone rings. When the shop packs it, the nearest Sarathi gets the job. Everyone sees every step.', 'ग्राहक ऑर्डर करते ही दुकान का फ़ोन बजता है। दुकान पैक करती है तो सबसे पास के सारथी को काम मिलता है। हर कदम सबको दिखता है।') ?></p>
     </div>
-    <div class="app-grid">
-      <article class="app c-pink rv">
-        <span class="ic"><?= $ico('M7 2h10v20H7zM11 18h2', 30) ?></span>
+    <div class="flow">
+      <span class="link l1" aria-hidden="true"></span><span class="link l2" aria-hidden="true"></span>
+
+      <div class="lane rv">
+        <div class="ph" aria-hidden="true"><div class="scr">
+          <div class="top" style="background:var(--brand)"><span>Maakit</span><span>9:41</span></div>
+          <div class="card"><b><?= $T('Your order', 'आपका ऑर्डर') ?></b><span class="muted"><?= $T('Atta, oil, haldi · Kirana shop', 'आटा, तेल, हल्दी · किराना दुकान') ?></span>
+            <ul class="stg">
+              <li class="d"><i></i><?= $T('Order placed', 'ऑर्डर दिया') ?></li>
+              <li class="d"><i></i><?= $T('Shop accepted', 'दुकान ने माना') ?></li>
+              <li class="n"><i></i><b style="display:inline;font-size:11.5px"><?= $T('Sarathi on the way', 'सारथी रास्ते में') ?></b></li>
+              <li><i></i><?= $T('Delivered', 'पहुँच गया') ?></li>
+            </ul>
+          </div>
+          <div class="mini-map"><span class="rd"></span><span class="pin"></span><span class="rider"></span></div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center"><span><?= $T('Delivery code', 'डिलीवरी कोड') ?></span><b style="letter-spacing:3px;color:var(--brand)">4821</b></div>
+        </div></div>
         <small><?= $T('For customers', 'ग्राहकों के लिए') ?></small>
         <h3><?= $T('Maakit app', 'Maakit ऐप') ?></h3>
-        <p><?= $T('Shop, ride, send and book from one app.', 'एक ही ऐप से खरीदिए, सवारी लीजिए, भेजिए और बुक कीजिए।') ?></p>
-        <ul><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Hindi and English', 'हिंदी और English') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Cash or UPI to the shop', 'नकद या UPI सीधे दुकान को') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Order tracking', 'ऑर्डर ट्रैकिंग') ?></li></ul>
+        <p><?= $T('Order from any shop, book a ride or a vehicle, and follow every step.', 'किसी भी दुकान से मँगाइए, सवारी या गाड़ी बुक कीजिए, हर कदम देखिए।') ?></p>
+        <div class="chips"><span class="c-pink"><?= $T('Hindi & English', 'हिंदी और English') ?></span><span class="c-mint"><?= $T('Cash / UPI', 'नकद / UPI') ?></span><span class="c-sky"><?= $T('Live status', 'लाइव जानकारी') ?></span></div>
         <?php if ($has_app): ?><?= $stores() ?><?php else: ?><a class="btn btn-brand" href="https://wa.me/<?= h($wa) ?>"><?= $T('Order on WhatsApp', 'WhatsApp पर ऑर्डर') ?></a><?php endif; ?>
-      </article>
-      <article class="app c-butter rv">
-        <span class="ic"><?= $ico('M3 10l1.5-5h15L21 10M4 10v10h16V10M9 20v-6h6v6', 30) ?></span>
+      </div>
+
+      <div class="lane rv" style="transition-delay:.1s">
+        <div class="ph" aria-hidden="true"><div class="scr">
+          <div class="top" style="background:#7A5600"><span><?= $T('Maakit for shops', 'Maakit दुकान') ?></span><span>9:41</span></div>
+          <div class="bell"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></svg><?= $T('New order!', 'नया ऑर्डर!') ?></div>
+          <div class="card"><b><?= $T('Order from Jagarnathpur', 'जगरनाथपुर से ऑर्डर') ?></b>
+            <ul class="items">
+              <li><span><?= $T('Wheat atta 1 kg', 'गेहूँ आटा 1 किग्रा') ?></span><span>× 2</span></li>
+              <li><span><?= $T('Mustard oil 1 L', 'सरसों तेल 1 ली') ?></span><span>× 1</span></li>
+              <li><span><?= $T('Haldi 100 g', 'हल्दी 100 ग्रा') ?></span><span>× 1</span></li>
+            </ul>
+            <div class="btns"><span class="ok"><?= $T('Accept', 'मंज़ूर') ?></span><span class="no"><?= $T('Decline', 'मना') ?></span></div>
+          </div>
+          <div class="card"><b><?= $T('Today', 'आज') ?></b><span class="muted"><?= $T('Your own price · your own stock · your own account', 'अपना दाम · अपना स्टॉक · अपना हिसाब') ?></span></div>
+        </div></div>
         <small><?= $T('For shopkeepers', 'दुकानदारों के लिए') ?></small>
         <h3><?= $T('Maakit for shops', 'Maakit दुकान') ?></h3>
-        <p><?= $T('Get orders on your phone and run your shop online.', 'फ़ोन पर ऑर्डर पाइए और दुकान ऑनलाइन चलाइए।') ?></p>
-        <ul><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Alert for every new order', 'हर नए ऑर्डर की सूचना') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Set your own prices and stock', 'अपना दाम और स्टॉक ख़ुद तय कीजिए') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Your own daily account', 'अपना रोज़ का हिसाब') ?></li></ul>
-        <a class="btn btn-brand" href="/register-business.php"><?= $T('Join as a shop', 'दुकान जोड़िए') ?></a>
-      </article>
-      <article class="app dk rv">
-        <span class="ic" style="background:rgba(255,255,255,.1);color:var(--saffron)"><?= $ico($si['bike'], 30) ?></span>
-        <small><?= $T('For riders and vehicle owners', 'सारथी और गाड़ी वालों के लिए') ?></small>
+        <p><?= $T('Every order rings on your phone. Accept, pack, and Maakit sends a Sarathi.', 'हर ऑर्डर पर आपका फ़ोन बजता है। मंज़ूर कीजिए, पैक कीजिए — Maakit सारथी भेजता है।') ?></p>
+        <div class="chips"><span class="c-butter"><?= $T('Your price', 'आपका दाम') ?></span><span class="c-peach"><?= $T('Your stock', 'आपका स्टॉक') ?></span><span class="c-mint"><?= $T('Daily account', 'रोज़ का हिसाब') ?></span></div>
+        <a class="btn btn-saffron" href="/register-business.php"><?= $T('Join as a shop', 'दुकान जोड़िए') ?></a>
+      </div>
+
+      <div class="lane rv" style="transition-delay:.2s">
+        <div class="ph" aria-hidden="true"><div class="scr">
+          <div class="top" style="background:var(--plum-2)"><span><?= $T('Sarathi Partner', 'सारथी पार्टनर') ?></span><span>9:41</span></div>
+          <div class="mini-map" style="height:150px"><span class="rd" style="top:72px"></span><span class="pin" style="top:50px"></span><span class="rider" style="top:62px"></span></div>
+          <div class="card"><div class="offer"><span class="ring"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="none" stroke="#F4E6DF" stroke-width="4"/><circle class="f" cx="23" cy="23" r="20" fill="none" stroke="#FFB020" stroke-width="4" stroke-linecap="round"/></svg><b>20s</b></span>
+            <span><b><?= $T('New job · 1.2 km', 'नया काम · 1.2 किमी') ?></b><span class="muted"><?= $T('Pickup: Kirana shop', 'पिकअप: किराना दुकान') ?></span></span></div>
+            <div class="btns"><span class="ok"><?= $T('Accept job', 'काम लीजिए') ?></span></div>
+          </div>
+        </div></div>
+        <small><?= $T('For riders & vehicle owners', 'सारथी और गाड़ी वालों के लिए') ?></small>
         <h3><?= $T('Sarathi Partner', 'सारथी पार्टनर') ?></h3>
-        <p><?= $T('Earn with your bike, auto, car or bus in your own area.', 'अपने इलाक़े में बाइक, ऑटो, कार या बस से कमाइए।') ?></p>
-        <ul><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Join with Aadhaar and PAN', 'आधार और PAN से जुड़िए') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Choose your area and distance', 'अपना इलाक़ा और दूरी चुनिए') ?></li><li><?= $ico('M5 12l5 5L20 7', 16) ?><?= $T('Work goes to the nearest Sarathi', 'काम सबसे पास के सारथी को') ?></li></ul>
-        <a class="btn btn-saffron" href="https://smartsarathi.in/sarathi.php"><?= $T('Join as Sarathi', 'सारथी बनिए') ?></a>
-      </article>
+        <p><?= $T('Jobs near you ring on your phone. Pick up with a code, drop with a code, earn per trip.', 'पास का काम आपके फ़ोन पर बजता है। कोड से उठाइए, कोड से पहुँचाइए, हर सफ़र पर कमाइए।') ?></p>
+        <div class="chips"><span class="c-lilac"><?= $T('Aadhaar + PAN', 'आधार + PAN') ?></span><span class="c-sky"><?= $T('Your area', 'आपका इलाक़ा') ?></span><span class="c-butter"><?= $T('Bike to bus', 'बाइक से बस तक') ?></span></div>
+        <a class="btn btn-brand" style="background:var(--plum-2);box-shadow:none" href="https://smartsarathi.in/sarathi.php"><?= $T('Join as Sarathi', 'सारथी बनिए') ?></a>
+      </div>
     </div>
   </div>
 </section>
@@ -619,15 +709,28 @@ footer .low a{color:var(--saffron);font-weight:700}
   </div>
 </section>
 
-<section class="s" style="padding-top:20px" aria-labelledby="where-h">
+<section class="s" style="padding-top:30px" aria-labelledby="where-h">
   <div class="wrap">
     <div class="rv" style="margin-bottom:30px">
       <span class="eyebrow"><?= $T('Growing village by village', 'गाँव-दर-गाँव बढ़ते हुए') ?></span>
       <h2 class="big" id="where-h"><?= $T('Where we', 'हम कहाँ') ?> <em><?= $T('serve', 'सेवा देते हैं') ?></em></h2>
     </div>
-    <div class="where">
-      <div class="box c-mint rv"><small><?= $T('Serving now', 'अभी सेवा') ?></small><b><?= $T('Kapsethi, Chauri, Kachhwa', 'कपसेठी, चौरी, कछवा') ?></b><span><?= $T('and nearby villages', 'और आस-पास के गाँव') ?></span></div>
-      <div class="box c-peach rv"><small><?= $T('Coming next', 'आगे') ?></small><b><?= $T('More of Bhadohi and Varanasi', 'भदोही और वाराणसी के और इलाक़े') ?></b><span><?= $T('A new area opens only when it has enough shops and Sarathis.', 'नया इलाक़ा तभी खुलता है जब वहाँ पर्याप्त दुकानें और सारथी हों।') ?></span></div>
+    <div class="where2">
+      <div class="mapbox rv"><svg viewBox="0 0 480 380" role="img" aria-label="<?= $T('Schematic map of the Maakit service area', 'Maakit सेवा क्षेत्र का नक्शा') ?>"><defs><pattern id="mkgrid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="rgba(255,255,255,.05)"/></pattern></defs><rect width="480" height="380" fill="url(#mkgrid)"/><path d="M30 80 L150 44 L250 70 L292 128 L262 214 L180 254 L84 232 L40 166 Z" fill="rgba(214,36,110,.14)" stroke="rgba(255,255,255,.22)" stroke-dasharray="6 6"/><path d="M292 128 L250 70 L370 44 L456 112 L446 232 L366 262 L262 214 Z" fill="rgba(255,176,32,.07)" stroke="rgba(255,255,255,.16)" stroke-dasharray="6 6"/><path d="M0 334 C90 304 150 344 232 304 S362 254 480 294" fill="none" stroke="#4FA3E3" stroke-width="10" stroke-linecap="round" opacity=".5"/><text x="392" y="334" font-family="Lexend,sans-serif" font-size="12" fill="#8FC6F0"><?= $T('Ganga', 'गंगा') ?></text><path d="M160 168 L222 142 L204 214 Z" fill="rgba(124,255,178,.08)" stroke="rgba(124,255,178,.5)" stroke-width="2" stroke-dasharray="5 6" class="dash"/><g><circle cx="104" cy="112" r="11" fill="none" stroke="#FFB020" stroke-width="2.5" stroke-dasharray="4 3"/><circle cx="104" cy="112" r="4.5" fill="#FFB020"/><text x="104" y="144" text-anchor="middle" font-family="Lexend,'Noto Sans Devanagari',sans-serif" font-size="15" font-weight="700" fill="#FFD27A"><?= $T('Bhadohi', 'भदोही') ?></text></g><g><circle cx="396" cy="150" r="11" fill="none" stroke="#FFB020" stroke-width="2.5" stroke-dasharray="4 3"/><circle cx="396" cy="150" r="4.5" fill="#FFB020"/><text x="396" y="182" text-anchor="middle" font-family="Lexend,'Noto Sans Devanagari',sans-serif" font-size="15" font-weight="700" fill="#FFD27A"><?= $T('Varanasi', 'वाराणसी') ?></text></g><g><circle class="pulse " cx="160" cy="168" r="9" fill="#7CFFB2"/><circle cx="160" cy="168" r="9" fill="#25A55F" stroke="#fff" stroke-width="3"/><rect x="174" y="155" width="88" height="26" rx="13" fill="#fff"/><text x="184" y="173" font-family="Lexend,'Noto Sans Devanagari',sans-serif" font-size="13" font-weight="700" fill="#22141F"><?= $T('Kapsethi', 'कपसेठी') ?></text></g><g><circle class="pulse p2" cx="222" cy="142" r="9" fill="#7CFFB2"/><circle cx="222" cy="142" r="9" fill="#25A55F" stroke="#fff" stroke-width="3"/><rect x="236" y="129" width="70" height="26" rx="13" fill="#fff"/><text x="246" y="147" font-family="Lexend,'Noto Sans Devanagari',sans-serif" font-size="13" font-weight="700" fill="#22141F"><?= $T('Chauri', 'चौरी') ?></text></g><g><circle class="pulse p3" cx="204" cy="214" r="9" fill="#7CFFB2"/><circle cx="204" cy="214" r="9" fill="#25A55F" stroke="#fff" stroke-width="3"/><rect x="218" y="201" width="82" height="26" rx="13" fill="#fff"/><text x="228" y="219" font-family="Lexend,'Noto Sans Devanagari',sans-serif" font-size="13" font-weight="700" fill="#22141F"><?= $T('Kachhwa', 'कछवा') ?></text></g></svg><span class="note"><?= $T('Schematic map, not to scale', 'सांकेतिक नक्शा, पैमाने पर नहीं') ?></span></div>
+      <div class="areas">
+        <div class="area now rv">
+          <span class="live"><i></i><?= $T('Serving now', 'अभी सेवा चालू') ?></span>
+          <h3><?= $T('Kapsethi, Chauri & Kachhwa', 'कपसेठी, चौरी और कछवा') ?></h3>
+          <p><?= $T('and the villages around them.', 'और आस-पास के गाँव।') ?></p>
+          <div class="tags"><span><?= $T('Kapsethi', 'कपसेठी') ?></span><span><?= $T('Chauri', 'चौरी') ?></span><span><?= $T('Kachhwa', 'कछवा') ?></span><span>+ <?= $T('nearby villages', 'आस-पास के गाँव') ?></span></div>
+        </div>
+        <div class="area next rv">
+          <span class="live"><i></i><?= $T('Coming next', 'आगे') ?></span>
+          <h3><?= $T('More of Bhadohi & Varanasi', 'भदोही और वाराणसी के और इलाक़े') ?></h3>
+          <p><?= $T('A new area opens only when it has enough shops and Sarathis.', 'नया इलाक़ा तभी खुलता है जब वहाँ पर्याप्त दुकानें और सारथी हों।') ?></p>
+          <a class="btn btn-brand" href="https://wa.me/<?= h($wa) ?>"><?= $ico('M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z', 20) ?><?= $T('Want Maakit in your village?', 'अपने गाँव में Maakit चाहिए?') ?></a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
