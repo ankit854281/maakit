@@ -256,7 +256,7 @@ a{color:var(--brand-d)}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
 .c-peach{background:var(--peach);color:var(--peach-t)}.c-mint{background:var(--mint);color:var(--mint-t)}.c-butter{background:var(--butter);color:var(--butter-t)}.c-sky{background:var(--sky);color:var(--sky-t)}.c-lilac{background:var(--lilac);color:var(--lilac-t)}.c-pink{background:var(--pink);color:var(--pink-t)}.c-night{background:var(--plum-2);color:#fff}
 /* ---- intro ---- */
-#mk-intro{position:fixed;inset:0;z-index:60;background:#24092A;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;transition:transform .55s cubic-bezier(.7,0,.3,1),opacity .55s}
+#mk-intro{position:fixed;inset:0;z-index:60;background:#24092A;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;transition:transform .7s cubic-bezier(.7,0,.3,1),opacity .7s}
 #mk-intro[hidden]{display:none}
 #mk-intro.out{transform:translateY(-100%);opacity:.6}
 #mk-intro .aur span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.8;animation:aur 7s ease-in-out infinite alternate}
@@ -267,14 +267,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 @keyframes aur{to{transform:translate(60px,40px) scale(1.18)}}
 #mk-intro .glass{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:min(580px,88vw);padding:34px 44px 30px;border-radius:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:0 40px 90px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25)}
 #mk-intro .nm{font-size:clamp(46px,11vw,100px);font-weight:800;line-height:1.25;min-height:1.3em;text-align:center;text-shadow:0 8px 40px rgba(214,36,110,.6)}
-#mk-intro .nm.swap{animation:swapIn .13s ease-out}
+#mk-intro .nm.swap{animation:swapIn .2s ease-out}
 @keyframes swapIn{from{opacity:0;filter:blur(10px);transform:translateY(12px) scale(.95)}to{opacity:1;filter:blur(0);transform:none}}
 #mk-intro svg.word{width:min(500px,78vw);height:auto;display:none}
 #mk-intro .lg{display:none}#mk-intro.final .lg{display:block;animation:swapIn .5s ease-out}
 #mk-intro.final .nm{display:none}
 #mk-intro.final svg.word{margin-top:-14px}#mk-intro.final svg.word{display:block}
 #mk-intro .draw{font-family:var(--hand);font-weight:700;font-size:168px;fill:#fff;stroke:#fff;stroke-width:2.5;stroke-dasharray:900;stroke-dashoffset:900;fill-opacity:0}
-#mk-intro.final .draw{animation:mkDraw .95s ease-out forwards}
+#mk-intro.final .draw{animation:mkDraw 1.25s ease-out forwards}
 #mk-intro .tag{opacity:0;font-size:clamp(16px,3.6vw,20px);color:#FFE3EE;transition:opacity .5s;text-align:center}
 #mk-intro.final .tag{opacity:1}
 #mk-intro button{position:absolute;bottom:28px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;min-height:44px;padding:8px 22px;font:inherit;font-weight:600;cursor:pointer;backdrop-filter:blur(8px)}
@@ -834,12 +834,12 @@ footer .low a{color:var(--saffron);font-weight:700}
       if (done) return; done = true; clearInterval(timer);
       box.classList.add('out'); document.body.style.overflow = '';
       try { sessionStorage.setItem('mk_intro', '1'); } catch (e) {}
-      setTimeout(function () { box.hidden = true; }, 600);
+      setTimeout(function () { box.hidden = true; }, 750);
     };
     timer = setInterval(function () {
       if (i < names.length) { nm.textContent = names[i][0]; nm.classList.remove('swap'); void nm.offsetWidth; nm.classList.add('swap'); i++; return; }
-      clearInterval(timer); box.classList.add('final'); setTimeout(close, 1150);
-    }, 140);
+      clearInterval(timer); box.classList.add('final'); setTimeout(close, 1500);
+    }, 260);
     document.getElementById('mk-skip').addEventListener('click', close);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   }
