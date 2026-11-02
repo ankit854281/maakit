@@ -6,8 +6,8 @@
   "scope": "./",
   "id": "snmsis-chairman",
   "display": "standalone",
-  "background_color": "#14213D",
-  "theme_color": "#14213D",
+  "background_color": "#120E3A",
+  "theme_color": "#4338CA",
   "icons": [
     {
       "src": "img/chairman-192.png",
