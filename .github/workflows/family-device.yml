@@ -1,5 +1,8 @@
 name: SNMSIS Family device check
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/family-device.yml']
   workflow_run:
     workflows: ["SNMSIS Family APK"]
     types: [completed]
@@ -9,14 +12,14 @@ permissions:
   actions: read
 jobs:
   device:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: snmsis-family-apk
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id || 41470267311 }}
           github-token: ${{ github.token }}
           path: apk
       - name: Enable emulator acceleration
