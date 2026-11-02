@@ -42,6 +42,9 @@ jobs:
             adb shell screencap -p /sdcard/family-welcome.png
             adb pull /sdcard/family-welcome.png family-welcome.png
             sleep 12
+            adb shell input tap 350 1380
+            sleep 2
+            adb shell input keyevent 4
             for attempt in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/family-login.xml; adb pull /sdcard/family-login.xml family-login.xml; if grep -q "Mobile number given to the school" family-login.xml; then break; fi; sleep 3; done
             adb shell screencap -p /sdcard/family-login.png
             adb pull /sdcard/family-login.png family-login.png
