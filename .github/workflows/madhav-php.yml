@@ -1,0 +1,34 @@
+name: MADHAV PHP checks
+on:
+  push:
+    branches: [madhav-redesign-v1]
+    paths:
+      - 'jyotish/madhav/**'
+      - '.github/workflows/madhav-php.yml'
+  pull_request:
+    paths:
+      - 'jyotish/madhav/**'
+      - '.github/workflows/madhav-php.yml'
+permissions:
+  contents: read
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, curl
+          coverage: none
+      - name: Check syntax
+        run: |
+          php -l jyotish/madhav/madhav_core.php
+          php -l jyotish/madhav/ai_provider.php
+          php -l jyotish/madhav/api.php
+          php -l jyotish/madhav/tests.php
+      - name: Run deterministic backend tests
+        run: php jyotish/madhav/tests.php
+      - name: Validate knowledge JSON
+        run: php -r '$v=json_decode(file_get_contents("jyotish/madhav/knowledge.json"),true,512,JSON_THROW_ON_ERROR); if(count($v["verses"])<4) exit(1);'
