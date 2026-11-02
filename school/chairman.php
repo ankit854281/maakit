@@ -6,7 +6,7 @@ header('Cache-Control: no-store');
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'none'; object-src 'none'");
 $v = (string)@filemtime(__DIR__ . '/chairman.js') . (string)@filemtime(__DIR__ . '/chairman.css');
 ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
-<title>SNMSIS Chairman · SN Mishra SIS</title><meta name="theme-color" content="#14213D"><link rel="manifest" href="chairman-manifest.json">
+<title>SNMSIS Chairman · SN Mishra SIS</title><meta name="theme-color" content="#4338CA"><link rel="manifest" href="chairman-manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SNMSIS"><link rel="apple-touch-icon" href="img/chairman-192.png"><link rel="icon" href="img/chairman-192.png">
-<link rel="stylesheet" href="chairman.css?v=<?= htmlspecialchars($v) ?>"></head><body><div class="ch-app"><header id="chTop"></header><main id="chMain"><div class="ch-load"><i></i>Opening…</div></main></div><nav id="chNav"></nav><div id="chToast" role="status" aria-live="polite"></div>
+<link rel="stylesheet" href="chairman.css?v=<?= htmlspecialchars($v) ?>"></head><body><div id="phone"><div id="app"></div></div><div id="toast" role="status" aria-live="polite"></div>
 <script src="vendor/chart.umd.min.js"></script><script src="chairman.js?v=<?= htmlspecialchars($v) ?>"></script></body></html>

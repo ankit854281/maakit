@@ -27,6 +27,18 @@ $u = sch_auth(); $role = (string)$u['role'];
 if (!in_array($role, ['principal', 'chairman', 'accountant', 'reception'], true)) sch_fail('Fee Control Room is open for the Principal, Chairman, Accountant and Reception.', 403);
 $money = $role !== 'reception';
 
+/** "Generated()Company()" -> ['Company', 'Generated']. Fee tags win by how specific they are. */
+function fd_split_tag(string $raw): array {
+    preg_match_all('/([^()]+)\(\s*\)/', $raw, $m); $parts = array_values(array_filter(array_map('trim', $m[1] ?: [trim($raw)])));
+    $isPen = fn($t) => (bool)preg_match('/\bPEN\b|^Generated$/i', $t);
+    $fee = array_values(array_filter($parts, fn($t) => !$isPen($t))); $pen = array_values(array_filter($parts, $isPen));
+    $norm = fn($t) => preg_match('/^one\s*time\s*payment$/i', $t) ? 'One Time Payment' : (preg_match('/^transport\s*\+\s*fee$/i', $t) ? 'Transport + Fee' : $t);
+    $fee = array_map($norm, $fee);
+    $order = ['Company', 'FD', 'Plan', 'One Time Payment', 'Transport + Fee', 'Fee'];
+    usort($fee, fn($x, $y) => (array_search($x, $order, true) === false ? 99 : array_search($x, $order, true)) <=> (array_search($y, $order, true) === false ? 99 : array_search($y, $order, true)));
+    return [$fee[0] ?? '', implode(', ', $pen)];
+}
+
 try {
 switch ($a) {
 case 'data': {
@@ -42,7 +54,10 @@ case 'data': {
     foreach ($dues['rows'] as &$r) {
         unset($r['receipts']);   // the dashboard needs totals, not every line
         $t = $tagSet[$r['sid']] ?? null;
-        $r['oldTag'] = $r['tag']; $r['tag'] = $t ? (string)$t['tag'] : trim((string)$r['tag']);
+        // Old ERP Tag Mgmt joins several tags as "Generated()Company()": PEN tags (UDISE PEN status) and fee tags.
+        // The fee tag is the one that matters here; PEN tags are kept apart.
+        [$feeTag, $pen] = fd_split_tag((string)$r['tag']);
+        $r['oldTag'] = $feeTag; $r['penTag'] = $pen; $r['tag'] = $t ? (string)$t['tag'] : $feeTag;
         $r['fixed'] = $t ? ((int)($t['fixed'] ?? 0)) / 100 : 0; $r['tagNote'] = $t ? (string)($t['note'] ?? '') : '';
     } unset($r);
     $rc = [];
