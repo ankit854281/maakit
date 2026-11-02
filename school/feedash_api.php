@@ -151,7 +151,13 @@ case 'school': {
     $rows = function (string $k) use ($db): array { $q = $db->prepare('SELECT r, d FROM sch_records WHERE k=? AND deleted=0'); $q->execute([$k]); $o = [];
         foreach ($q as $x) { $d = json_decode((string)$x['d'], true); if (is_array($d)) $o[(string)$x['r']] = $d; } return $o; };
     $teachers = []; foreach ($rows('teacher') as $t => $d) $teachers[$t] = ['name' => (string)($d['name'] ?? $t), 'role' => (string)($d['role'] ?? ''), 'phone' => (string)($d['phone'] ?? '')];
-    $students = []; foreach ($rows('student') as $id => $d) $students[] = ['id' => $id, 'name' => (string)($d['name'] ?? ''), 'cls' => (string)($d['cls'] ?? ''), 'section' => (string)($d['section'] ?? ''), 'father' => (string)($d['father'] ?? ''), 'phone' => (string)($d['phone'] ?? '')];
+    $info = []; foreach (reg_rows('studinfo') as $r) if (($r['student'] ?? '') !== '') $info[(string)$r['student']] = $r;
+    $pho = []; foreach ($db->query("SELECT r FROM sch_records WHERE k='phoStu' AND deleted=0") as $x) $pho[(string)$x['r']] = true;
+    $students = []; foreach ($rows('student') as $id => $d) { if (!empty($d['sample'])) continue; $i = $info[$id] ?? [];
+        $students[] = ['id' => $id, 'name' => (string)($d['name'] ?? ''), 'cls' => (string)($d['cls'] ?? ''), 'section' => (string)($d['section'] ?? ''), 'father' => (string)($d['father'] ?? ''), 'mother' => (string)($d['mother'] ?? ''),
+            'phone' => (string)($d['phone'] ?? ''), 'adm' => (string)($d['adm'] ?? ''), 'dob' => (string)($d['dob'] ?? ''), 'gender' => (string)($i['gender'] ?? ''), 'route' => (string)($i['route'] ?? ''),
+            'doa' => (string)($i['doa'] ?? ''), 'stuType' => (string)($i['stuType'] ?? ''), 'photo' => isset($pho[$id])]; }
+    $cal = []; foreach ($rows('cal') as $d) $cal[] = ['date' => (string)($d['date'] ?? ''), 'to' => (string)($d['to'] ?? ''), 'title' => mb_substr((string)($d['title'] ?? ''), 0, 120), 'type' => (string)($d['type'] ?? '')];
     $att = []; foreach ($rows('studAtt') as $r => $d) { [$dt, $c] = array_pad(explode('|', $r, 2), 2, ''); if ($dt >= $start) $att[$dt][$c] = array_values(array_map('strval', (array)($d['absent'] ?? []))); }
     $staff = []; foreach ($rows('staffAtt') as $dt => $d) if ($dt >= $start) $staff[$dt] = array_values(array_map('strval', (array)($d['absent'] ?? [])));
     $syl = []; foreach ($rows('syl') as $k => $d) $syl[$k] = ['chapters' => array_values(array_map(fn($ch) => ['n' => (string)($ch['n'] ?? ''), 'done' => $ch['done'] ?? null], (array)($d['chapters'] ?? []))), 'targetDate' => (string)($d['targetDate'] ?? '')];
@@ -170,7 +176,7 @@ case 'school': {
     sch_json(['ok' => true, 'today' => date('Y-m-d'), 'start' => $start, 'session' => (string)($set['session'] ?? ''), 'cutoff' => (string)($set['attendanceCutoff'] ?? '09:30'),
         'classes' => array_values((array)(sch_rec_get('classes', 'main') ?? [])), 'teachers' => (object)$teachers, 'alloc' => array_values((array)(sch_rec_get('alloc', 'main') ?? [])),
         'exams' => array_values((array)(sch_rec_get('exams', 'main') ?? [])), 'students' => $students, 'att' => (object)$att, 'staffAtt' => (object)$staff, 'syl' => (object)$syl,
-        'marks' => (object)$marks, 'leaves' => $leaves, 'old' => $old, 'employees' => $emp]);
+        'marks' => (object)$marks, 'leaves' => $leaves, 'old' => $old, 'employees' => $emp, 'cal' => $cal]);
 }
 default: sch_fail('Unknown action.', 404);
 }
