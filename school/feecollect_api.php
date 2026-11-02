@@ -12,6 +12,8 @@
 //   POST ?a=dropFee {ses,sid,i,reason}                    remove an added head nothing was paid on            Principal
 //   POST ?a=discount {ses,sid,i,amt,reason}               Fee Discount (Head Wise)                            Principal
 //   POST ?a=undoDisc {ses,sid,i,reason}                   take a head-wise discount back                      Principal
+//   POST ?a=discMany {ses,sid,items[{i,amt}],remark,nonce} Fee Discount (Head Wise) page: many heads at once   Principal
+//   POST ?a=editDisc {ses,sid,i,amt,reason}               Fee Discount › Edit: set a discount to a new amount  Principal
 // ============================================================
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
@@ -217,6 +219,61 @@ case 'addFee': {
     sch_rec_put('ofcReq', $nonce, ['res' => $res], $uid);
     sch_log($u, 'ofcLed', 'Add Other Fee ' . $type . ' (' . OFC_MONTHS[$m] . ') ' . ($amt ? '₹' . number_format($amt / 100, 2) : 'all old due') . ' to ' . $added . ' fee card(s), ' . $ses);
     $db->commit(); sch_json(['ok' => true] + $res);
+}
+case 'discMany': {
+    // Old ERP Fee › Fee Discount (Head Wise) (studentfee_dischead.php): a Disc box on every head of the fee card, the
+    // Discount box adds them up, one Remark, one Submit. All heads are saved together or none.
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if (!$isP) sch_fail('Only the Principal can give a discount.', 403);
+    if (!ofc_live($ses)) throw new InvalidArgumentException('Fees for ' . $ses . ' are not taken here yet.');
+    $sid = (string)($in['sid'] ?? '');
+    $remark = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['remark'] ?? ''))), 0, 200);
+    if ($remark === '') $remark = 'Fee Discount (Head Wise)';
+    $items = array_slice((array)($in['items'] ?? []), 0, 200); $want = [];
+    foreach ($items as $it) { $i = (int)($it['i'] ?? 0); $amt = ofc_amount($it['amt'] ?? '0', 'Disc'); if ($i && $amt > 0) $want[$i] = ($want[$i] ?? 0) + $amt; }
+    if (!$want) throw new InvalidArgumentException('Enter the discount in the Disc box of a fee.');
+    $nonce = (string)($in['nonce'] ?? ''); if (!preg_match('/^[a-f0-9]{16,64}$/', $nonce)) sch_fail('Bad request.');
+    $lock();
+    if ($prior = sch_rec_get('ofcReq', $nonce)) { $db->commit(); sch_json(['ok' => true, 'repeat' => true] + $prior['res']); }
+    $L = sch_rec_get('ofcLed', $ses . '|' . $sid); if (!$L) throw new InvalidArgumentException('This child has no fee card for ' . $ses . '.');
+    $idx = array_flip(array_column($L['heads'], 'i')); $log = []; $sum = 0;
+    foreach ($want as $i => $amt) {
+        if (!isset($idx[$i])) throw new InvalidArgumentException('A fee head was not found. Open the child again.');
+        $k = $idx[$i]; $h = $L['heads'][$k]; $label = $h['name'] . ' (' . OFC_MONTHS[$h['m']] . ')';
+        if (!empty($h['na'])) throw new InvalidArgumentException($label . ' is not active for this child.');
+        if ($amt > $h['amt'] - $h['paid']) throw new InvalidArgumentException('Disc of ' . $label . ' is more than its balance (' . number_format(($h['amt'] - $h['paid']) / 100, 2) . ').');
+        $L['heads'][$k]['paid'] += $amt; $L['heads'][$k]['disc'] = (int)($h['disc'] ?? 0) + $amt; $sum += $amt;
+        $log[] = ['act' => 'disc', 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $amt, 'remark' => $remark, 'by' => $u['label'] ?? $uid];
+    }
+    sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
+    foreach ($log as $e) ofc_adj_log($ses, $sid, $e, $uid);
+    $res = ['heads' => count($log), 'total' => $sum];
+    sch_rec_put('ofcReq', $nonce, ['res' => $res], $uid);
+    sch_log($u, 'ofcLed', 'Fee discount (head wise) ₹' . number_format($sum / 100, 2) . ' on ' . count($log) . ' head(s) · ' . $L['name'] . ' · ' . $remark);
+    $db->commit(); sch_json(['ok' => true] + $res);
+}
+case 'editDisc': {
+    // Old ERP Fee Discount table › Edit: change a discount given here to a new amount (0 = take it back).
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if (!$isP) sch_fail('Only the Principal can change a discount.', 403);
+    if (!ofc_live($ses)) throw new InvalidArgumentException('Fees for ' . $ses . ' are not taken here yet.');
+    $sid = (string)($in['sid'] ?? ''); $i = (int)($in['i'] ?? 0);
+    $new = ofc_amount($in['amt'] ?? '', 'Discount Amount');
+    $reason = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['reason'] ?? ''))), 0, 200);
+    if (mb_strlen($reason) < 3) throw new InvalidArgumentException('Write the reason.');
+    $lock();
+    $L = sch_rec_get('ofcLed', $ses . '|' . $sid); if (!$L) throw new InvalidArgumentException('This child has no fee card for ' . $ses . '.');
+    $k = array_search($i, array_column($L['heads'], 'i'), true); if ($k === false) throw new InvalidArgumentException('Select the fee head.');
+    $h = $L['heads'][$k]; $disc = (int)($h['disc'] ?? 0); $label = $h['name'] . ' (' . OFC_MONTHS[$h['m']] . ')';
+    if ($disc <= 0) throw new InvalidArgumentException($label . ' has no discount given here.');
+    $room = $h['amt'] - ($h['paid'] - $disc);
+    if ($new > $room) throw new InvalidArgumentException('Discount is more than the balance of ' . $label . ' (' . number_format($room / 100, 2) . ').');
+    $L['heads'][$k]['paid'] = $h['paid'] - $disc + $new; $L['heads'][$k]['disc'] = $new;
+    sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
+    ofc_adj_log($ses, $sid, ['act' => 'undisc', 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $disc, 'remark' => 'Edit: ' . $reason, 'by' => $u['label'] ?? $uid], $uid);
+    if ($new > 0) ofc_adj_log($ses, $sid, ['act' => 'disc', 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $new, 'remark' => 'Edit: ' . $reason, 'by' => $u['label'] ?? $uid], $uid);
+    sch_log($u, 'ofcLed', 'Fee discount edited ' . $label . ' ₹' . number_format($disc / 100, 2) . ' → ₹' . number_format($new / 100, 2) . ' · ' . $L['name'] . ' · ' . $reason);
+    $db->commit(); sch_json(['ok' => true, 'ledger' => $L]);
 }
 case 'dropFee':
 case 'discount':

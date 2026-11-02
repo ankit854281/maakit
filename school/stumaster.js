@@ -101,6 +101,7 @@ function optsFor(type, v) {
   return out;
 }
 const longSes = s => String(s || '').replace(/^(20\d\d)-(\d\d)$/, '$1-20$2');
+const SIB = ['fname', 'mname', 'hfname', 'hmname', 'fdob', 'mdob', 'fqualif', 'mqualif', 'fathoccu', 'mothoccu', 'foffice_name', 'moffice_name', 'fdesignation', 'mdesignation', 'foffice_add', 'moffice_add', 'fmobno', 'mothmobno', 'fdoa', 'fam_incom', 'femail', 'memail', 'telphno', 'email', 'longitude', 'laptitude', 'paddr', 'mcgram', 'croad', 'ctygram', 'cpincode', 'cstate', 'religion', 'stucast', 'cast'];
 function blank() {
   // A new student starts like the old form: first item of each list, Date of Admission today.
   const f = {}; ALL.forEach(([, n, t]) => { f[n] = t.startsWith('s:') ? ((META.opts[t.slice(2)] || [])[0] || '') : ''; });
@@ -244,6 +245,30 @@ function searchHtml() {
     ${pick ? table([pick], '') : ''}</div>`;
   if (pick && pick._photo && !(pick.id in PHOTOS)) setTimeout(() => loadPhotos([pick]));
 }
+// ---------- top-left Student Search result (old student_search_det.php) ----------
+// The old box matches name, scholar no, father's name, mobile or child id and lists every hit with
+// Search (full details), Edit/Update, Add Sibling, Fee Receipt, Call and Whatsapp.
+function findRows(q) {
+  q = String(q || '').trim().toLowerCase(); const dig = q.replace(/\D/g, '');
+  if (!q || !ROWS) return [];
+  return ROWS.filter(r => String(r.name || '').toLowerCase().includes(q) || String(r.rollno || '').toLowerCase() === q || String(r.childid || '') === q
+    || String(r.fname || '').toLowerCase().includes(q) || (dig.length >= 4 && (String(r.fmobno || '') + ' ' + String(r.telphno || '')).replace(/[^\d ]/g, '').includes(dig)))
+    .sort((a, b) => META.classes.indexOf(a.clsid) - META.classes.indexOf(b.clsid) || String(a.name).localeCompare(String(b.name)));
+}
+function feeOpen(id) { try { if (window.parent !== window && typeof window.parent.go === 'function') return window.parent.go('feereceipt', { sid: id }); } catch (e) {} location.href = 'feecollect.php?sid=' + encodeURIComponent(id); }
+function findHtml() {
+  const q = QS.get('q') || '', rows = findRows(q);
+  if (rows.some(r => r._photo && !(r.id in PHOTOS))) setTimeout(() => loadPhotos(rows));
+  const cols = ['Sr No', 'Search', 'Edit/Update', 'Add Sibling', 'Fee', 'Call', 'whatsapp', 'Photo', 'Student Name', 'Class', 'Sec', 'Adm No', 'Roll No', 'Child Id', 'Gender', "Father's Name", "Father's Mobile No", 'Status'];
+  return `<div class="sm"><h3>Search Student</h3><p>Search: <b>${esc(q)}</b></p>${!ROWS ? '<p>Loading…</p>' : !rows.length ? '<p>No student matches.</p>' : `<div class="lw"><table class="lst"><tr>${cols.map(h => `<th>${esc(h)}</th>`).join('')}</tr>
+    ${rows.map((r, i) => `<tr><td>${i + 1}</td><td><a class="btn" style="background:#26B99A" href="?m=print&id=${encodeURIComponent(r.id)}" target="_blank">Search</a></td>
+      <td><a class="btn" style="background:#d9534f" href="?m=edit&id=${encodeURIComponent(r.id)}">Edit/Update</a></td>
+      <td>${META.canEdit ? `<a class="btn" style="background:#d9534f" href="?m=add&sib=${encodeURIComponent(r.id)}">Add Sibling</a>` : ''}</td>
+      <td><a class="btn" style="background:#26B99A;cursor:pointer" onclick="feeOpen('${esc(r.id)}')">Fee Receipt</a></td>
+      <td>${r.fmobno ? `<a class="call" href="tel:${esc(r.fmobno)}">&#9990; Call</a>` : ''}</td><td>${r.telphno ? `<a class="wa" target="_blank" rel="noopener" href="https://wa.me/91${esc(r.telphno)}">Whatsapp</a>` : ''}</td>
+      <td>${PHOTOS[r.id] ? `<img class="thumb" alt="" src="${esc(PHOTOS[r.id])}">` : ''}</td><td class="t">${esc(r.name)}</td><td>${esc(r.clsid)}</td><td>${esc(r.secid)}</td><td>${esc(r.rollno)}</td><td>${esc(r.crollno)}</td><td>${esc(r.childid)}</td>
+      <td>${esc(r.gender)}</td><td class="t">${esc(r.fname)}</td><td>${esc(r.fmobno)}</td><td>${esc(r.cstatus)}</td></tr>`).join('')}</table></div><p>Showing 1 to ${rows.length} of ${rows.length} entries</p>`}</div>`;
+}
 // ---------- Admission Form print (admission_form_value.php) ----------
 function printHtml() {
   const v = n => n === '_school' ? META.school : n === '_session' ? longSes(META.session) : Array.isArray(F[n]) ? F[n].map(m => (MONTHS.find(x => x[0] === m) || [, m])[1]).join(', ') : (F[n] || '');
@@ -261,7 +286,7 @@ function printHtml() {
 }
 function render() {
   if (!META) return;
-  const html = MODE === 'list' ? listHtml() : MODE === 'search' ? searchHtml() : MODE === 'print' ? printHtml() : formHtml();
+  const html = MODE === 'list' ? listHtml() : MODE === 'search' ? searchHtml() : MODE === 'find' ? findHtml() : MODE === 'print' ? printHtml() : formHtml();
   const q = document.activeElement && document.activeElement.id === 'smQ';
   $('smRoot').innerHTML = html;
   if (q) { const s = $('smQ'); s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
@@ -273,6 +298,10 @@ async function boot() {
     else if (MODE === 'edit' || MODE === 'print') MODE = 'list';
     else F = blank();
     if (MODE === 'add' && !META.canEdit) MODE = 'list';
+    // Add Sibling (old ERP): a new admission that starts with the brother's/sister's family and address details.
+    if (MODE === 'add' && QS.get('sib')) {
+      try { const sb = (await api('get', null, { id: QS.get('sib') })).f; SIB.forEach(k => { if (sb[k] != null && sb[k] !== '') F[k] = sb[k]; }); toast('Family details copied from ' + sb.name + '. Fill the new child\'s own details.'); } catch (e) { toast(e.message); }
+    }
     render();
     ROWS = (await api('list')).rows; render();
   } catch (e) { $('smRoot').innerHTML = `<div class="sm"><h3>Student Master</h3><p>${esc(e.message)}</p></div>`; }

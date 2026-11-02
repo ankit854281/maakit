@@ -99,8 +99,19 @@ try {
     [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); $bk2 = end($d['ledger']['heads']); fc($bk2['paid'] === 5000 && $bk2['disc'] === 5000 && $d['totals']['balance'] === 39000 + 40000, 'discount lowers the balance ' . json_encode($bk2));
     [$c] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'reason' => 'x y']); fc($c === 400, 'a discounted head cannot be removed');
     [$c, $d] = freq('undoDisc', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'reason' => 'by mistake']); fc($c === 200 && end($d['ledger']['heads'])['paid'] === 0, 'discount taken back');
+    // Fee Discount (Head Wise) page: many Disc boxes saved together, Edit sets a new amount, 0 takes it back
+    [$c] = freq('discMany', $A, ['ses' => '2026-27', 'sid' => 'fc-s1', 'items' => [['i' => $bk['i'], 'amt' => '60']], 'nonce' => $n()]); fc($c === 403, 'only Principal uses the head-wise discount page');
+    [$c] = freq('discMany', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'items' => [['i' => $bk['i'], 'amt' => '60'], ['i' => 3, 'amt' => '1']], 'nonce' => $n()]); fc($c === 400, 'one head over its balance refuses the whole page');
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); fc(end($d['ledger']['heads'])['paid'] === 0, 'nothing saved when one head is refused');
+    $dn = $n();
+    [$c, $d] = freq('discMany', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'items' => [['i' => $bk['i'], 'amt' => '60'], ['i' => $bk['i'], 'amt' => '0']], 'remark' => '', 'nonce' => $dn]); fc($c === 200 && $d['total'] === 6000 && $d['heads'] === 1, 'head-wise discount saved ' . json_encode($d));
+    [$c, $d] = freq('discMany', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'items' => [['i' => $bk['i'], 'amt' => '60']], 'nonce' => $dn]); fc($c === 200 && !empty($d['repeat']), 'same discount sent twice saves once');
+    [$c] = freq('editDisc', $A, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '20', 'reason' => 'less']); fc($c === 403, 'only Principal edits a discount');
+    [$c] = freq('editDisc', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '451', 'reason' => 'more']); fc($c === 400, 'edit above the head amount refused');
+    [$c, $d] = freq('editDisc', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '20', 'reason' => 'less']); $h = end($d['ledger']['heads']); fc($c === 200 && $h['paid'] === 2000 && $h['disc'] === 2000, 'discount edited ' . json_encode($h));
+    [$c, $d] = freq('editDisc', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'amt' => '0', 'reason' => 'none']); $h = end($d['ledger']['heads']); fc($c === 200 && $h['paid'] === 0 && $h['disc'] === 0, 'edit to 0 takes it back');
     [$c, $d] = freq('dropFee', $P, ['ses' => '2026-27', 'sid' => 'fc-s1', 'i' => $bk['i'], 'reason' => 'not needed']); fc($c === 200, 'added head removed');
-    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); fc($d['totals']['balance'] === 39000 && count($d['adj']) === 4, 'history kept after removal ' . json_encode($d['adj']));
+    [$c, $d] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); fc($d['totals']['balance'] === 39000 && count($d['adj']) === 8, 'history kept after removal ' . json_encode($d['adj']));
 
     // Cancel: Principal only, reason, heads go back to Not Paid
     [$c] = freq('cancel', $A, ['ses' => '2026-27', 'no' => '1-383', 'reason' => 'Wrong child', 'nonce' => $n()]); fc($c === 403, 'only Principal cancels');

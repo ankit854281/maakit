@@ -55,3 +55,4 @@ body{margin:0;background:#F7F7F7;color:#555;font:12px Arial,Helvetica,sans-serif
 #smToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2D353C;color:#fff;border-radius:4px;z-index:9;max-width:90vw}#smToast:not(:empty){padding:10px 18px}
 @media(max-width:860px){.sm{padding:6px}.sm table.f,.sm table.f tbody,.sm table.f tr,.sm table.f td{display:block;width:100%!important;text-align:left}.sm table.f td.l{padding:6px 0 0}.sm input[type=text],.sm select,.sm textarea{width:100%}}
 @media print{body{background:#fff}.np,#smToast{display:none!important}.sm{padding:0}.ad{padding:0}}
+.sm .lst .btn,.sm .lst a.btn{margin:0;padding:3px 8px;font-size:11px;white-space:nowrap;color:#fff!important}
