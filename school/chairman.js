@@ -54,7 +54,8 @@ const TH = [
   { name: 'Overview', head: 'linear-gradient(180deg,#6366F1 0%,#4338CA 100%)', a: '#4338CA', a2: '#6366F1', soft: '#E0E2FF', tint: '#F1F2FF', sh: 'rgba(67,56,202,.28)', page: 'linear-gradient(180deg,#E6E7FF 0%,rgba(247,247,249,0) 100%)', icon: 't_over' },
   { name: 'Month', head: 'linear-gradient(180deg,#FF7D32 0%,#F2600F 100%)', a: '#E8590C', a2: '#FF7D32', soft: '#FFE6D6', tint: '#FFF4EC', sh: 'rgba(242,96,15,.28)', page: 'linear-gradient(180deg,#FFEBDD 0%,rgba(247,247,249,0) 100%)', icon: 't_month' },
   { name: 'Dues', head: 'linear-gradient(180deg,#E3417F 0%,#C81F64 100%)', a: '#C81F64', a2: '#E3417F', soft: '#FADBE7', tint: '#FDF0F5', sh: 'rgba(200,31,100,.26)', page: 'linear-gradient(180deg,#FBE1EB 0%,rgba(247,247,249,0) 100%)', icon: 't_dues' },
-  { name: 'Calling', head: 'linear-gradient(180deg,#22B573 0%,#14915A 100%)', a: '#14915A', a2: '#22B573', soft: '#D5F2E3', tint: '#EEFAF3', sh: 'rgba(20,145,90,.26)', page: 'linear-gradient(180deg,#DDF4E8 0%,rgba(247,247,249,0) 100%)', icon: 't_call' }
+  { name: 'Calling', head: 'linear-gradient(180deg,#22B573 0%,#14915A 100%)', a: '#14915A', a2: '#22B573', soft: '#D5F2E3', tint: '#EEFAF3', sh: 'rgba(20,145,90,.26)', page: 'linear-gradient(180deg,#DDF4E8 0%,rgba(247,247,249,0) 100%)', icon: 't_call' },
+  { name: 'Reports', head: 'linear-gradient(180deg,#14B8C4 0%,#0B8A99 100%)', a: '#0B8A99', a2: '#14B8C4', soft: '#CFF3F6', tint: '#ECFAFB', sh: 'rgba(11,138,153,.26)', page: 'linear-gradient(180deg,#D9F5F7 0%,rgba(247,247,249,0) 100%)', icon: 't_rep' }
 ];
 // Small drawings in the Trial App's flat style
 const ILL = {
@@ -62,6 +63,7 @@ const ILL = {
   t_month: '<rect x="7" y="11" width="34" height="30" rx="5" fill="#fff"/><rect x="7" y="11" width="34" height="9" rx="4" fill="#FFB347"/><rect x="14" y="7" width="3" height="8" rx="1.5" fill="#1F1F24"/><rect x="31" y="7" width="3" height="8" rx="1.5" fill="#1F1F24"/><circle cx="24" cy="30" r="7.5" fill="#F5C842"/><text x="24" y="33.6" text-anchor="middle" font-size="10" font-weight="700" fill="#7A4B00" font-family="Poppins,sans-serif">₹</text>',
   t_dues: '<circle cx="24" cy="25" r="16" fill="#fff"/><circle cx="24" cy="25" r="12" fill="none" stroke="#E3417F" stroke-width="3" stroke-dasharray="52 80" transform="rotate(-90 24 25)"/><path d="M24 17v8l5 4" stroke="#1F1F24" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="37" cy="12" r="6" fill="#F5C842"/><text x="37" y="15" text-anchor="middle" font-size="8" font-weight="700" fill="#7A4B00" font-family="Poppins,sans-serif">₹</text>',
   t_call: '<rect x="14" y="6" width="20" height="36" rx="5" fill="#fff"/><rect x="17" y="11" width="14" height="22" rx="2" fill="#BFF0D6"/><circle cx="24" cy="37.5" r="2" fill="#1F1F24"/><path d="M36 14c3 2 3 8 0 10M39 11c5 4 5 12 0 16" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 19c0 4 4 8 8 8l1.5-2-2.5-2-1.5 1c-1-.5-2.5-2-3-3l1-1.5-2-2.5z" fill="#14915A"/>',
+  t_rep: '<rect x="9" y="6" width="28" height="36" rx="4" fill="#fff"/><rect x="14" y="12" width="14" height="3" rx="1.5" fill="#14B8C4"/><rect x="14" y="19" width="18" height="2.5" rx="1.25" fill="#D9D9E1"/><rect x="14" y="24" width="18" height="2.5" rx="1.25" fill="#D9D9E1"/><rect x="14" y="29" width="12" height="2.5" rx="1.25" fill="#D9D9E1"/><circle cx="35" cy="34" r="7" fill="#F5C842"/><path d="M38 37l4 4" stroke="#1F1F24" stroke-width="2.4" stroke-linecap="round"/><circle cx="35" cy="34" r="4" fill="#fff"/>',
   bulb: '<circle cx="24" cy="20" r="12" fill="#F5C842"/><path d="M19 31h10v5a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" fill="#7A7A85"/><path d="M24 26v-6l-3-3M24 20l3-3" stroke="#7A4B00" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M6 20h3M39 20h3M11 7l2 2M37 7l-2 2" stroke="#F5C842" stroke-width="2.2" stroke-linecap="round"/>',
   school: '<path d="M6 22L24 10l18 12" fill="#E3417F"/><rect x="10" y="22" width="28" height="18" fill="#fff"/><rect x="21" y="30" width="6" height="10" fill="#6366F1"/><rect x="13" y="26" width="5" height="5" fill="#BFD7FF"/><rect x="30" y="26" width="5" height="5" fill="#BFD7FF"/><rect x="23" y="4" width="2" height="8" fill="#1F1F24"/><path d="M25 4h7l-2 2.5 2 2.5h-7z" fill="#F2600F"/>',
   phone: '<rect x="14" y="6" width="20" height="36" rx="5" fill="#fff" stroke="#14915A" stroke-width="2"/><path d="M20 19c0 4 4 8 8 8l1.5-2-2.5-2-1.5 1c-1-.5-2.5-2-3-3l1-1.5-2-2.5z" fill="#14915A"/>'
@@ -159,7 +161,7 @@ function render() {
   const hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const layers = TH.map((th, i) => `<div class="hb" style="background:${th.head};opacity:${i === S.tab ? 1 : 0}"></div>`).join('');
   const tabs = TH.map((th, i) => `<button class="tab${i === S.tab ? ' on' : ''}" role="tab" aria-selected="${i === S.tab}" onclick="setTab(${i})">${ill(th.icon)}<span>${th.name}</span></button>`).join('');
-  const body = S.q.trim() ? searchBody() : [overview, monthBody, duesBody, callBody][S.tab]();
+  const body = S.q.trim() ? searchBody() : [overview, monthBody, duesBody, callBody, repBody][S.tab]();
   $('app').innerHTML = `<div class="head">${layers}
       <div class="loc"><div class="w"><small>${greet}</small><b>Welcome, Chairman Sir</b></div><button class="sesb" onclick="sheet('ses')">${esc(longSes(D.ses))} ${ic('down', 12)}</button><button class="av" aria-label="Menu" onclick="sheet('me')"><img src="${LOGO}" alt=""></button></div>
       <div class="tabs" role="tablist"><span class="fold" style="transform:translateX(${S.tab * 100}%)"></span>${tabs}</div>
@@ -207,11 +209,12 @@ function remind(x) {
 
 // ---------------------------------------------------------------- Overview
 function overview() {
-  const t = D.t, mon = cashIn(inMonth(D.rc, D.today.slice(0, 7))), today = cashIn(D.rc.filter(r => r.date === D.today)), ses = cashIn(D.rc.filter(r => r.session === D.ses));
+  const t = D.t, mon = cashIn(inMonth(D.rc, D.today.slice(0, 7))), today = cashIn(D.rc.filter(r => r.date === D.today)), y0 = +D.ses.slice(0, 4), ses = cashIn(D.rc.filter(r => r.date >= y0 + '-04-01' && r.date <= (y0 + 1) + '-03-31'));
   const thought = THOUGHTS[Math.floor(new Date(D.today + 'T00:00:00').getTime() / 864e5) % THOUGHTS.length];
   const target = t.paid + t.dueNow, coll = pct(t.paid, target);
-  const months = MORDER.map(m => cashIn(inMonth(D.rc.filter(r => r.session === D.ses), ymOf(m))));
-  const prev = MORDER.map(m => cashIn(inMonth(D.rc.filter(r => r.session === prevSes(D.ses)), ymOf(m, prevSes(D.ses)))).total), hasPrev = prev.some(v => v > 0);
+  // money that came in each month = every receipt dated in it (this session's fee, old dues, advance), as in the cash book
+  const months = MORDER.map(m => cashIn(inMonth(D.rc, ymOf(m))));
+  const prev = MORDER.map(m => cashIn(inMonth(D.rc, ymOf(m, prevSes(D.ses)))).total), hasPrev = prev.some(v => v > 0);
   let ce = 0, cc = 0; const cumE = [], cumC = [];
   MORDER.forEach((m, i) => { ce += sum(D.kids, x => x.mon[i].fd + x.mon[i].td); cumE.push(ce); cc += months[i].total; cumC.push(i <= Math.max(D.idx, 0) ? cc : null); });
   const cls = CLASSES.filter(c => D.all.some(x => x.cls === c)).map(c => { const K = D.all.filter(x => x.cls === c && (S.tag === null || x.tagName === S.tag)); return { c, paid: sum(K, x => x.paid), due: sum(K, x => x.dueNow) }; });
@@ -235,7 +238,7 @@ function overview() {
   return `<div class="promo">${ill('bulb')}<div><b>THOUGHT OF THE DAY</b><span>${esc(thought)}</span></div></div>
     ${installBox()}
     <div class="kp">
-      <div class="k big"><span>Collected this session${S.tag !== null || S.cls ? ' (filtered)' : ''}</span><b>${rs(t.paid)}</b><div class="meter"><i style="width:${Math.min(100, coll)}%"></i></div><small>${coll}% of the fee due till now · Total fee ${rsS(t.annual)}</small></div>
+      <div class="k big"><span>Fee cleared this session (paid + discount)${S.tag !== null || S.cls ? ' · filtered' : ''}</span><b>${rs(t.paid)}</b><div class="meter"><i style="width:${Math.min(100, coll)}%"></i></div><small>${coll}% of the fee due till now · Total fee ${rsS(t.annual)} · Money received on receipts this session ${rsS(ses.total)}</small></div>
       ${k('Today', rsS(today.total), `${today.n} receipt(s)`, 'ok')}
       ${k('This month', rsS(mon.total), `Fee ${rsS(mon.fee + mon.mixed)} · Transport ${rsS(mon.tr)}`, 'ac', 'setTab(1)')}
       ${k('Due till now', rsS(t.dueNow), `${t.def.length} students · old ${rsS(t.old)}`, 'bad', 'setTab(2)')}
@@ -246,7 +249,9 @@ function overview() {
     ${card('Fee Calling today', `<div class="stat"><button class="st" onclick="S.list='today';setTab(3)"><b>${callsToday}</b><span>Calls made today</span></button><button class="st" onclick="S.list='today';setTab(3)"><b>${L.today.length}</b><span>Follow-ups due</span></button>
       <button class="st bad" onclick="S.list='broken';setTab(3)"><b>${L.broken.length}</b><span>Promises broken · ${rsS(sum(L.broken, x => x.dueNow))}</span></button><button class="st" onclick="S.list='fresh';setTab(3)"><b>${L.fresh.length}</b><span>Not called in 7 days</span></button></div>`)}
     ${card('Collection progress', `<div class="donut">${canvas('cDonut', 220)}<div class="c"><b>${coll}%</b><span>collected</span></div></div>`)}
-    ${card('Month-wise collection', canvas('cMonths', 230), `<small>${rsS(ses.total)} this session</small>`)}
+    ${card('Money received month by month', canvas('cMonths', 230), `<small>${rsS(ses.total)} this session</small>`)}
+    ${card('Monthly collection report', (() => { const R = MORDER.map(m => { const X = inMonth(D.rc, ymOf(m)); return [M3(m), sum(X, r => r.total != null ? r.total : r.received + r.discount), sum(X, r => r.discount), sum(X, r => r.received)]; }), tt = i => sum(R, r => r[i]);
+      return `<div class="tw"><table class="tbl"><tr><th>Month</th><th>Total Fee</th><th>Discount</th><th>Recv Amount</th></tr>${R.map(r => `<tr><td>${r[0]}</td><td>${rs(r[1])}</td><td>${rs(r[2])}</td><td class="grn">${rs(r[3])}</td></tr>`).join('')}<tr class="tot"><td>Total</td><td>${rs(tt(1))}</td><td>${rs(tt(2))}</td><td>${rs(tt(3))}</td></tr></table></div><p class="note">Same as the old ERP's Monthly Collection Report: every receipt dated in the month.</p>`; })(), '<small>as in the old ERP</small>')}
     ${card('Expected vs collected', canvas('cCum', 210), '<small>cumulative</small>')}
     ${hasPrev ? card('This year vs last year', canvas('cYoY', 220), yoyNow ? `<small class="${thisNow >= yoyNow ? 'up' : 'down'}">${thisNow >= yoyNow ? '▲' : '▼'} ${Math.abs(pct(thisNow - yoyNow, yoyNow))}%</small>` : '') : ''}
     ${card('Class-wise position', canvas('cCls', Math.max(220, cls.length * 30)), '<small>tap a bar</small>')}
@@ -330,6 +335,138 @@ function callBody() {
     ${card(`${lists.find(x => x[0] === S.list)[1]} · ${rows.length} · ${rsS(sum(rows, x => x.dueNow))}`, people(rows.slice(0, 200), { calls: true }))}
     ${D.calls.length ? card('Recent calls', `<div class="tw"><table class="tbl"><tr><th>Date</th><th>Student</th><th>Result</th><th>Date given</th><th>By</th></tr>${D.calls.slice(0, 15).map(c => { const x = D.all.find(z => (c.sids || []).includes(z.sid)); return `<tr><td>${dmy(c.date)}</td><td>${esc(x ? x.name : '')}</td><td>${esc(c.outcome)}</td><td>${dmy(c.promise)}</td><td>${esc(c.by || '')}</td></tr>`; }).join('')}</table></div>`) : ''}`;
 }
+// ---------------------------------------------------------------- Reports: many report types, many filters
+const RT = [['mcoll', '💰', 'Monthly collection'], ['students', '👨‍🎓', 'Student-wise dues'], ['class', '🏫', 'Class-wise'], ['tag', '🏷️', 'Tag-wise'], ['head', '📚', 'Fee head-wise'], ['month', '📅', 'Month-wise'],
+  ['receipts', '🧾', 'Receipt register'], ['ageing', '⏳', 'Dues by months'], ['old', '📜', 'Old dues'], ['discount', '✂️', 'Discounts & cancels']];
+const RF = { type: 'mcoll', sec: '', fac: '', scheme: '', dmin: '', dmax: '', months: '', old: '', paid: '', upto: '', from: '', to: '', mode: '', user: '', sort: 'due' };
+const hasTr = x => x.heads.some(h => isTr(h.name));
+function repKids() {
+  const upto = RF.upto ? MORDER.indexOf(+RF.upto) : D.idx, min = parseFloat(RF.dmin) || 0, max = parseFloat(RF.dmax) || Infinity, mo = parseInt(RF.months, 10) || 0;
+  return D.kids.map(x => {
+    const owe = (y) => Math.max(0, y.fd - y.fp) + Math.max(0, y.td - y.tp), M = x.mon.filter((y, i) => i <= upto);
+    return { ...x, rDue: sum(M, owe) + x.old, rTr: sum(M, y => Math.max(0, y.td - y.tp)), rFee: sum(M, y => Math.max(0, y.fd - y.fp)), rMonths: M.filter(y => owe(y) > 0).length };
+  }).filter(x => (!RF.sec || x.section === RF.sec) && (!RF.fac || (RF.fac === 'tr' ? hasTr(x) : !hasTr(x))) && (!RF.scheme || x.scheme === RF.scheme)
+    && x.rDue >= min && x.rDue <= max && x.rMonths >= mo && (!RF.old || (RF.old === 'yes' ? x.old > 0 : x.old === 0)) && (!RF.paid || (RF.paid === 'none' ? x.paid === 0 : RF.paid === 'full' ? x.yearBal === 0 : x.paid > 0 && x.yearBal > 0)));
+}
+function repRcpts(cancelled) {
+  return (cancelled ? D.cx : D.rc).filter(r => (!RF.from || r.date >= RF.from) && (!RF.to || r.date <= RF.to) && (!RF.mode || (r.mode || 'Cash') === RF.mode) && (!RF.user || r.user === RF.user) && (!RF.sec || r.section === RF.sec));
+}
+function fchips() {
+  const L = [];
+  if (S.tag !== null) L.push(['tag', 'Tag: ' + S.tag]); if (S.cls) L.push(['cls', 'Class ' + S.cls]); if (RF.sec) L.push(['sec', 'Section ' + RF.sec]);
+  if (RF.fac) L.push(['fac', RF.fac === 'tr' ? 'With transport' : 'Without transport']); if (RF.scheme) L.push(['scheme', RF.scheme]);
+  if (RF.dmin) L.push(['dmin', 'Due ≥ ' + rs(RF.dmin)]); if (RF.dmax) L.push(['dmax', 'Due ≤ ' + rs(RF.dmax)]); if (RF.months) L.push(['months', RF.months + '+ months unpaid']);
+  if (RF.old) L.push(['old', RF.old === 'yes' ? 'Has old dues' : 'No old dues']); if (RF.paid) L.push(['paid', { none: 'Paid nothing', part: 'Paid part', full: 'Fully paid' }[RF.paid]]);
+  if (RF.upto) L.push(['upto', 'Up to ' + MN[+RF.upto]]); if (RF.from) L.push(['from', 'From ' + dmy(RF.from)]); if (RF.to) L.push(['to', 'To ' + dmy(RF.to)]);
+  if (RF.mode) L.push(['mode', RF.mode]); if (RF.user) L.push(['user', 'By ' + RF.user]);
+  return `<div class="fbar"><button class="fchip add" onclick="sheet('rfilter')">＋ Filters${L.length ? ' (' + L.length + ')' : ''}</button>${L.map(([k, l]) => `<button class="fchip" onclick="clearRF('${k}')">${esc(l)} ✕</button>`).join('')}${L.length ? `<button class="fchip add" onclick="clearRF('*')">Clear all</button>` : ''}</div>`;
+}
+function clearRF(k) { if (k === '*') { Object.keys(RF).forEach(x => { if (x !== 'type' && x !== 'sort') RF[x] = ''; }); S.tag = null; S.cls = ''; calc(); } else if (k === 'tag') { S.tag = null; calc(); } else if (k === 'cls') { S.cls = ''; calc(); } else RF[k] = ''; render(); }
+function setRF(k, v) { RF[k] = v; render(); }
+let REP = null;   // the table now on screen, for Copy / Download
+function repTable(head, rows, foot, cls) {
+  REP = { head, rows: rows.map(r => r.map(c => typeof c === 'object' && c ? c.t : c)), foot };
+  return `<div class="tw"><table class="tbl"><tr>${head.map((h, i) => `<th class="${cls && cls[i] || ''}">${esc(h)}</th>`).join('')}</tr>${rows.slice(0, 400).map(r => `<tr>${r.map((c, i) => `<td class="${(cls && cls[i]) || ''} ${typeof c === 'object' && c ? c.c || '' : ''}">${esc(typeof c === 'object' && c ? c.v : c)}</td>`).join('')}</tr>`).join('')}${foot ? `<tr class="tot">${foot.map(c => `<td>${esc(c)}</td>`).join('')}</tr>` : ''}</table></div>${rows.length > 400 ? `<p class="note">Showing 400 of ${rows.length} rows. Download for all of them.</p>` : ''}`;
+}
+const money2 = v => ({ v: rs(v), t: Math.round(v) });
+const red = v => ({ v: rs(v), t: Math.round(v), c: 'red' });
+function repBody() {
+  const T = RF.type, K = repKids();
+  let sumv = '', body = '';
+  if (T === 'mcoll') {
+    // The old ERP's Monthly Collection Report: every receipt dated in the month, whatever session it paid.
+    // Total Fee = what the receipts settled, Discount on them, Recv Amount = money received.
+    const R0 = repRcpts().filter(r => !S.cls || r.cls === S.cls);
+    const R = MORDER.map(m => { const X = inMonth(R0, ymOf(m)), c = cashIn(X); return [MN[m], sum(X, r => r.total != null ? r.total : r.received + r.discount), sum(X, r => r.discount), sum(X, r => r.received), X.length, c.fee + c.mixed, c.tr]; });
+    const tot = i => sum(R, r => r[i]);
+    sumv = [['Total fee', rsS(tot(1))], ['Discount', rsS(tot(2))], ['Received', rsS(tot(3))], ['Receipts', tot(4)]];
+    body = repTable(['Month', 'Total Fee', 'Discount', 'Recv Amount', 'Receipts', 'of which fee', 'of which transport'],
+      R.map(r => [r[0], money2(r[1]), money2(r[2]), { v: rs(r[3]), t: Math.round(r[3]), c: 'grn' }, r[4], money2(r[5]), money2(r[6])]),
+      ['Total', rs(tot(1)), rs(tot(2)), rs(tot(3)), tot(4), rs(tot(5)), rs(tot(6))]);
+  } else if (T === 'students') {
+    const L = K.filter(x => RF.dmin || RF.months || RF.old || RF.paid ? true : x.rDue > 0).sort(RF.sort === 'name' ? (a, b) => a.name.localeCompare(b.name) : RF.sort === 'class' ? (a, b) => CLASSES.indexOf(a.cls) - CLASSES.indexOf(b.cls) || a.name.localeCompare(b.name) : (a, b) => b.rDue - a.rDue);
+    sumv = [['Students', L.length], ['Session fee', rsS(sum(L, x => x.annual))], ['Paid + disc', rsS(sum(L, x => x.paid))], ['Due (to month)', rsS(sum(L, x => x.rDue))], ['Overall due', rsS(sum(L, x => x.yearBal))], ['Transport due', rsS(sum(L, x => x.rTr))]];
+    body = repTable(['#', 'Student', 'Class', 'Tag', 'Father', 'Mobile', 'Session fee', 'Paid', 'Fee due', 'Transport due', 'Old due', 'Due (to month)', 'Overall due', 'Unpaid months', 'Last paid'],
+      L.map((x, i) => [i + 1, x.name, x.cls + (x.section ? '-' + x.section : ''), x.tag, x.father, x.phoneNo, money2(x.annual), money2(x.paid), money2(x.rFee), money2(x.rTr), money2(x.old), red(x.rDue), money2(x.yearBal), x.unpaid.join(' '), x.lastPaid ? dmy(x.lastPaid.date) : '']),
+      ['', 'Total ' + L.length, '', '', '', '', rs(sum(L, x => x.annual)), rs(sum(L, x => x.paid)), rs(sum(L, x => x.rFee)), rs(sum(L, x => x.rTr)), rs(sum(L, x => x.old)), rs(sum(L, x => x.rDue)), rs(sum(L, x => x.yearBal)), '', ''], ['', 'l']);
+  } else if (T === 'class' || T === 'tag') {
+    const keys = T === 'class' ? CLASSES.filter(c => K.some(x => x.cls === c)) : [...new Set(K.map(x => x.tagName))];
+    const R = keys.map(key => { const G = K.filter(x => (T === 'class' ? x.cls : x.tagName) === key); return [key, G.length, G.filter(x => x.rDue > 0).length, sum(G, x => x.annual), sum(G, x => x.paid), sum(G, x => x.rFee), sum(G, x => x.rTr), sum(G, x => x.old), sum(G, x => x.rDue), sum(G, x => x.yearBal)]; });
+    const tot = i => sum(R, r => r[i]);
+    sumv = [['Groups', R.length], ['Students', tot(1)], ['With dues', tot(2)], ['Paid + disc', rsS(tot(4))], ['Due (to month)', rsS(tot(8))], ['Overall due', rsS(tot(9))]];
+    body = repTable([T === 'class' ? 'Class' : 'Tag', 'Students', 'With dues', 'Session fee', 'Paid', 'Fee due', 'Transport due', 'Old due', 'Due (to month)', 'Overall due', 'Collected %'],
+      R.map(r => [r[0], r[1], r[2], money2(r[3]), money2(r[4]), money2(r[5]), money2(r[6]), money2(r[7]), red(r[8]), money2(r[9]), pct(r[4], r[4] + r[8]) + '%']),
+      ['Total', tot(1), tot(2), rs(tot(3)), rs(tot(4)), rs(tot(5)), rs(tot(6)), rs(tot(7)), rs(tot(8)), rs(tot(9)), pct(tot(4), tot(4) + tot(8)) + '%']);
+  } else if (T === 'head') {
+    const upto = RF.upto ? MORDER.indexOf(+RF.upto) : D.idx, H = {};
+    K.forEach(x => x.heads.forEach(h => { const o = H[h.name] = H[h.name] || { n: 0, amt: 0, paid: 0, now: 0 }; o.amt += h.amt; o.paid += h.paid; if (MORDER.indexOf(h.m) <= upto) o.now += Math.max(0, h.amt - h.paid); }));
+    const R = Object.entries(H).sort((a, b) => b[1].amt - a[1].amt);
+    sumv = [['Fee heads', R.length], ['Expected', rsS(sum(R, r => r[1].amt))], ['Paid + disc', rsS(sum(R, r => r[1].paid))], ['Due (to month)', rsS(sum(R, r => r[1].now))]];
+    body = repTable(['Fee head', 'Expected (session)', 'Paid + disc', 'Due (to month)', 'Overall due', 'Collected %'],
+      R.map(([n, o]) => [n, money2(o.amt), money2(o.paid), red(o.now), money2(o.amt - o.paid), pct(o.paid, o.amt) + '%']),
+      ['Total', rs(sum(R, r => r[1].amt)), rs(sum(R, r => r[1].paid)), rs(sum(R, r => r[1].now)), rs(sum(R, r => r[1].amt - r[1].paid)), pct(sum(R, r => r[1].paid), sum(R, r => r[1].amt)) + '%']);
+  } else if (T === 'month') {
+    const R = MORDER.map(m => { const p = monthPos(K, m), c = cashIn(inMonth(repRcpts(), ymOf(m))); return [MN[m], p.fd, p.td, p.got, p.due, p.pend.length, c.fee + c.mixed, c.tr, c.total]; });
+    const tot = i => sum(R, r => r[i]);
+    sumv = [['Expected', rsS(tot(1) + tot(2))], ['Received against', rsS(tot(3))], ['Pending', rsS(tot(4))], ['Money in', rsS(tot(8))]];
+    body = repTable(['Month', 'Fee expected', 'Transport expected', 'Received against', 'Pending', 'Students pending', 'Fee came in', 'Transport came in', 'Total came in'],
+      R.map(r => [r[0], money2(r[1]), money2(r[2]), money2(r[3]), red(r[4]), r[5], money2(r[6]), money2(r[7]), money2(r[8])]), ['Total', rs(tot(1)), rs(tot(2)), rs(tot(3)), rs(tot(4)), '', rs(tot(6)), rs(tot(7)), rs(tot(8))]);
+  } else if (T === 'receipts') {
+    const R = repRcpts().filter(r => !RF.from && !RF.to ? r.session === D.ses : true).filter(r => !S.cls || r.cls === S.cls).sort((a, b) => b.date.localeCompare(a.date) || b.no.localeCompare(a.no));
+    const byMode = {}; R.forEach(r => { byMode[r.mode || 'Cash'] = (byMode[r.mode || 'Cash'] || 0) + r.received; });
+    sumv = [['Receipts', R.length], ['Total', rsS(sum(R, r => r.received))], ['Fee', rsS(sum(R.filter(r => r.split), r => r.received - r.tr) + sum(R.filter(r => !r.split), r => r.received))], ['Transport', rsS(sum(R, r => r.tr))], ...Object.entries(byMode).slice(0, 2).map(([m, v]) => [m, rsS(v)])];
+    body = repTable(['Date', 'Receipt', 'Student', 'Class', 'Amount', 'Transport part', 'Discount', 'Late fee', 'Mode', 'By'],
+      R.map(r => [dmy(r.date), r.no, r.name, r.cls + (r.section ? '-' + r.section : ''), money2(r.received), r.split ? money2(r.tr) : '—', money2(r.discount), money2(r.late), r.mode, r.user]),
+      ['Total ' + R.length, '', '', '', rs(sum(R, r => r.received)), rs(sum(R, r => r.tr)), rs(sum(R, r => r.discount)), rs(sum(R, r => r.late)), '', ''], [, , 'l']);
+  } else if (T === 'ageing') {
+    const B = [['1 month', x => x.rMonths === 1], ['2 months', x => x.rMonths === 2], ['3 months', x => x.rMonths === 3], ['4–5 months', x => x.rMonths >= 4 && x.rMonths <= 5], ['6+ months', x => x.rMonths >= 6], ['Old dues only', x => x.rMonths === 0 && x.old > 0]];
+    const R = B.map(([l, f]) => { const G = K.filter(x => x.rDue > 0 && f(x)); return [l, G.length, sum(G, x => x.rDue), sum(G, x => x.old)]; });
+    sumv = [['Students with dues', sum(R, r => r[1])], ['Due (to month)', rsS(sum(R, r => r[2]))], ['6+ months', R[4][1] + ' students']];
+    body = repTable(['Unpaid for', 'Students', 'Due (to month)', 'of which old dues'], R.map(r => [r[0], r[1], red(r[2]), money2(r[3])]), ['Total', sum(R, r => r[1]), rs(sum(R, r => r[2])), rs(sum(R, r => r[3]))]);
+  } else if (T === 'old') {
+    const L = K.filter(x => x.old > 0).sort((a, b) => b.old - a.old);
+    sumv = [['Students', L.length], ['Old dues', rsS(sum(L, x => x.old))]];
+    body = repTable(['#', 'Student', 'Class', 'Tag', 'Father', 'Old due', 'This session due'], L.map((x, i) => [i + 1, x.name, x.cls, x.tag, x.father, red(x.old), money2(x.rDue - x.old)]), ['', 'Total ' + L.length, '', '', '', rs(sum(L, x => x.old)), rs(sum(L, x => x.rDue - x.old))], ['', 'l']);
+  } else if (T === 'discount') {
+    const Dd = repRcpts().filter(r => r.discount > 0 && (RF.from || RF.to || r.session === D.ses)), Cx = repRcpts(true).filter(r => RF.from || RF.to || r.session === D.ses);
+    sumv = [['Discount receipts', Dd.length], ['Discount given', rsS(sum(Dd, r => r.discount))], ['Cancelled', Cx.length], ['Cancelled amount', rsS(sum(Cx, r => r.received))]];
+    body = repTable(['Date', 'Receipt', 'Student', 'Class', 'Type', 'Amount', 'By'], [...Dd.map(r => [dmy(r.date), r.no, r.name, r.cls, 'Discount', money2(r.discount), r.user]), ...Cx.map(r => [dmy(r.date), r.no, r.name, r.cls, { v: 'Cancelled', t: 'Cancelled', c: 'red' }, red(r.received), r.user])], null, [, , 'l']);
+  }
+  const sortSel = T === 'students' ? `<select onchange="setRF('sort',this.value)" style="border:1px solid #E7E7EE;border-radius:10px;height:34px;background:#fff;font-size:12px"><option value="due" ${RF.sort === 'due' ? 'selected' : ''}>Highest due</option><option value="class" ${RF.sort === 'class' ? 'selected' : ''}>Class</option><option value="name" ${RF.sort === 'name' ? 'selected' : ''}>Name</option></select>` : '';
+  return `<div class="rtypes">${RT.map(([key, icon, l]) => `<button class="rt${T === key ? ' on' : ''}" onclick="setRF('type','${key}')"><i>${icon}</i>${esc(l)}</button>`).join('')}</div>
+    ${fchips()}
+    <div class="kp">${sumv.map(([l, v]) => k(l, String(v), '', '')).join('')}</div>
+    <section class="card"><h3>${esc(RT.find(x => x[0] === T)[2])}${sortSel}</h3>${body}
+      <div class="rbtns" style="margin-top:12px"><button class="cta" onclick="downloadRep()">Download (Excel)</button><button class="cta lt" onclick="copyRep()">Copy</button></div>
+      <p class="note">Session ${esc(longSes(D.ses))}. "Due (to month)" counts fee months up to ${MN[RF.upto ? +RF.upto : (D.idx < 0 ? 4 : MORDER[Math.min(D.idx, 11)])]} plus old dues.</p></section>`;
+}
+function repText(sep) { if (!REP) return ''; const q = v => { v = String(v ?? ''); return sep === ',' && /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [REP.head, ...REP.rows, ...(REP.foot ? [REP.foot] : [])].map(r => r.map(q).join(sep)).join('\n'); }
+function downloadRep() {
+  try { const blob = new Blob(['﻿' + repText(',')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'SNMSIS-' + RF.type + '-' + D.today + '.csv'; document.body.appendChild(a); a.click(); a.remove(); toast('Downloaded. Open it in Excel.'); }
+  catch (e) { copyRep(); }
+}
+function copyRep() { (navigator.clipboard ? navigator.clipboard.writeText(repText('\t')) : Promise.reject()).then(() => toast('Copied. Paste it in Excel or WhatsApp.')).catch(() => toast('Copy did not work on this phone.')); }
+function rfilterSheet() {
+  const sel = (key, opts, label, full) => `<div class="${full ? 'full' : ''}"><label class="lbl">${label}</label><div class="inp"><select onchange="RF['${key}']=this.value;render()">${opts.map(([v, t]) => `<option value="${esc(v)}" ${String(RF[key]) === String(v) ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div></div>`;
+  const inp = (key, label, type, ph) => `<div><label class="lbl">${label}</label><div class="inp"><input type="${type}" value="${esc(RF[key])}" placeholder="${ph || ''}" onchange="RF['${key}']=this.value;render()" ${type === 'number' ? 'inputmode="numeric"' : ''}></div></div>`;
+  const secs = [...new Set(D.all.filter(x => !S.cls || x.cls === S.cls).map(x => x.section).filter(Boolean))].sort();
+  const schemes = [...new Set(D.all.map(x => x.scheme).filter(Boolean))].sort(), users = [...new Set(D.receipts.map(r => r.user).filter(Boolean))].sort(), modes = [...new Set(D.receipts.map(r => r.mode || 'Cash'))].sort();
+  return `<h2>Filters</h2><div class="fgrid">
+    <div><label class="lbl">TAG</label><div class="inp"><select onchange="setF('tag',this.value==='*'?null:this.value);S.sheet='rfilter';render()"><option value="*">All tags</option>${D.tags.map(t => `<option ${S.tag === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div></div>
+    <div><label class="lbl">CLASS</label><div class="inp"><select onchange="setF('cls',this.value);S.sheet='rfilter';render()"><option value="">All classes</option>${CLASSES.filter(c => D.all.some(x => x.cls === c)).map(c => `<option ${S.cls === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
+    ${sel('sec', [['', 'All sections'], ...secs.map(x => [x, x])], 'SECTION')}
+    ${sel('fac', [['', 'All'], ['tr', 'With transport'], ['no', 'Without transport']], 'TRANSPORT')}
+    ${sel('scheme', [['', 'All schemes'], ...schemes.map(x => [x, x])], 'SCHEME')}
+    ${sel('upto', [['', 'This month'], ...MORDER.map(m => [m, MN[m]])], 'DUE COUNTED UP TO')}
+    ${inp('dmin', 'DUE AT LEAST ₹', 'number', '0')}${inp('dmax', 'DUE AT MOST ₹', 'number', 'any')}
+    ${sel('months', [['', 'Any'], ['1', '1+ months'], ['2', '2+ months'], ['3', '3+ months'], ['4', '4+ months'], ['6', '6+ months']], 'UNPAID MONTHS')}
+    ${sel('old', [['', 'All'], ['yes', 'Has old dues'], ['no', 'No old dues']], 'OLD DUES')}
+    ${sel('paid', [['', 'All'], ['none', 'Paid nothing'], ['part', 'Paid part'], ['full', 'Fully paid']], 'PAYMENT STATUS', true)}
+    ${inp('from', 'RECEIPTS FROM', 'date')}${inp('to', 'RECEIPTS TO', 'date')}
+    ${sel('mode', [['', 'All modes'], ...modes.map(x => [x, x])], 'PAYMENT MODE')}
+    ${sel('user', [['', 'Everyone'], ...users.map(x => [x, x])], 'COLLECTED BY')}
+    </div><div class="rbtns"><button class="cta lt" onclick="clearRF('*');S.sheet='rfilter';render()">Clear all</button><button class="cta" onclick="sheet(null)">Show report</button></div>`;
+}
 function searchBody() {
   const q = S.q.trim().toLowerCase(), d = q.replace(/\D/g, '');
   const rows = D.all.filter(x => [x.name, x.father, x.adm, x.tagName].some(v => String(v || '').toLowerCase().includes(q)) || (d.length >= 4 && x.phoneNo.includes(d))).slice(0, 60);
@@ -352,6 +489,7 @@ function sheetBody() {
   }
   if (S.sheet === 'share') return `<h2>Today's summary</h2><div class="share" id="shareT">${esc(S.share)}</div><a class="cta" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(S.share)}">${ic('wa', 18)} Send on WhatsApp</a><div style="height:8px"></div><button class="cta lt" onclick="copyShare()">Copy text</button>`;
   if (S.sheet === 'tags') return tagSheet();
+  if (S.sheet === 'rfilter') return rfilterSheet();
   if (S.sheet === 'me') return `<h2>SNMSIS · ${esc(D.role === 'principal' ? 'Principal' : 'Chairman')}</h2>
     ${D.role === 'principal' ? `<button class="opt" onclick="sheet('tags')">Set tags and fixed plans <small>Company, FD, Plan…</small></button>` : `<button class="opt" onclick="sheet('tags')">Tags <small>see each tag</small></button>`}
     <button class="opt" onclick="S.sheet=null;share()">Share today's summary <small>WhatsApp</small></button>
@@ -428,12 +566,12 @@ async function logout() { try { await api('api.php?a=logout', {}); } catch (e) {
 
 // ---------------------------------------------------------------- the 20-second welcome (story style, like the Smart Sarathi customer welcome)
 // 1 logo · 2 SNMSIS in many languages · 3 Welcome, Chairman Sir + thought · 4 the school today, counting up · 5 the promise.
-const SCENES = [3000, 5600, 4200, 4200, 3000];
+const SCENES = [7000, 2600, 4200, 4200, 2600];
 function introHtml() {
   const thought = THOUGHTS[Math.floor(Date.now() / 864e5) % THOUGHTS.length];
   return `<div class="ad" id="ad"><div class="ad-bars">${SCENES.map(() => '<i></i>').join('')}</div><button class="ad-skip" onclick="endIntro()">Skip</button>
-    <section class="ad-s s1"><img class="ad-logo" src="${LOGO}" alt=""><p class="ad-k">SN Mishra Singapore</p><h1 class="ad-h xl">SNMSIS</h1><p class="ad-t">International School · Bhadohi</p></section>
-    <section class="ad-s s2"><p class="ad-k">One school · every language</p><div class="lang" id="lang"></div><p class="ad-t">A name the whole world can read.</p></section>
+    <section class="ad-s s1"><img class="ad-logo" src="${LOGO}" alt=""><div class="lang" id="lang"></div><p class="ad-t">SN Mishra Singapore International School · Bhadohi</p></section>
+    <section class="ad-s s2"><p class="ad-k">One school · every language</p><h1 class="ad-h xl">SNMSIS</h1><p class="ad-t">A name the whole world can read — and a school the whole town trusts.</p></section>
     <section class="ad-s s3"><p class="ad-k">Welcome</p><h1 class="ad-h">Welcome,<br><span class="ad-gold">Chairman Sir</span></h1><p class="ad-t">“${esc(thought)}”</p></section>
     <section class="ad-s s4"><p class="ad-k">Your school today</p><h1 class="ad-h">Built by your vision</h1><div class="ad-grid" id="adNums"></div></section>
     <section class="ad-s s5"><p class="ad-k">Every rupee · every child</p><h1 class="ad-h">Clear, honest,<br>under your control</h1>
@@ -453,7 +591,7 @@ function nextScene() {
   bars.forEach((b, j) => { b.className = j < INTRO.i ? 'done' : ''; b.style.removeProperty('--ms'); });
   bars[INTRO.i].style.setProperty('--ms', SCENES[INTRO.i] + 'ms'); void bars[INTRO.i].offsetWidth; bars[INTRO.i].className = 'run';
   sc.forEach((s, j) => s.classList.toggle('on', j === INTRO.i));
-  if (INTRO.i === 1) { let n = 0; const el = $('lang'); const step = () => { if (!INTRO || INTRO.i !== 1) return; const [w, l] = LANGS[n % LANGS.length]; el.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < LANGS.length) INTRO.timers.push(setTimeout(step, SCENES[1] / LANGS.length)); }; step(); }
+  if (INTRO.i === 0) { let n = 0; const el = $('lang'); const step = () => { if (!INTRO || INTRO.i !== 0) return; const [w, l] = LANGS[n % LANGS.length]; el.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < LANGS.length) INTRO.timers.push(setTimeout(step, (SCENES[0] - 600) / LANGS.length)); }; INTRO.timers.push(setTimeout(step, 600)); }
   if (INTRO.i === 3) countUp();
   INTRO.timers.push(setTimeout(nextScene, SCENES[INTRO.i]));
 }
@@ -461,7 +599,7 @@ function fillIntro() {
   const g = $('adNums'); if (!g) return;
   if (!D) { g.innerHTML = `<div class="ad-card" style="--d:.1s;grid-column:1/-1"><b>${esc(LOGIN && LOGIN.msg ? LOGIN.msg : 'Sign in after this')}</b><span>to see today's figures</span></div>`; return; }
   const t = D.t, m = +D.today.slice(5, 7), mon = cashIn(inMonth(D.rc, D.today.slice(0, 7)));
-  g.innerHTML = [[D.all.length, 'students', 0], [t.paid, 'collected this session', 1], [mon.total, MN[m] + ' so far', 1], [pct(t.paid, t.paid + t.dueNow), '% collected of fee due', 2]]
+  g.innerHTML = [[D.all.length, 'students', 0], [t.paid, 'fee cleared this session', 1], [mon.total, MN[m] + ' so far', 1], [pct(t.paid, t.paid + t.dueNow), '% collected of fee due', 2]]
     .map(([v, l, kind], i) => `<div class="ad-card" style="--d:${.15 + i * .2}s"><b data-v="${v}" data-k="${kind}">0</b><span>${esc(l)}</span></div>`).join('');
   if (INTRO && INTRO.i === 3) countUp();
 }
