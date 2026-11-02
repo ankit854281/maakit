@@ -1,0 +1,49 @@
+/* Fee Control Room — the old ERP dashboard colours (#FC8675 #6BAFBD #F3CE85 #65CEA7, menu #2D353C) on a plain page */
+*{box-sizing:border-box}body{margin:0;background:#F7F7F7;font:13px/1.45 Arial,Helvetica,sans-serif;color:#444}
+.fd{max-width:1280px;margin:0 auto;padding:14px 16px 40px}
+.fd h2{margin:0;font-size:20px;color:#2D353C}.fd h3{margin:0 0 8px;font-size:14px;color:#2D353C}
+.fd-sub{margin:2px 0 0;color:#777}.fd-top{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.fd button,.fd select,.fd input{font:inherit}.fd button{background:#2D353C;color:#fff;border:0;border-radius:3px;padding:6px 12px;cursor:pointer}
+.fd-act{display:flex;flex-wrap:wrap;gap:6px}.fd-act select,.fd-filt select,.fd-filt input,.fd-save select,.fd-save input{border:1px solid #ccc;border-radius:3px;padding:5px 7px;background:#fff}
+.fd-note{background:#FFF8E1;border:1px solid #F3CE85;padding:8px 10px;border-radius:3px}
+.fd-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 12px}.fd-tabs button{background:#e4e6e8;color:#2D353C}.fd-tabs button.on{background:#F64015;color:#fff}.fd-tabs.sm{margin:0 0 8px}
+.fd-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.fd-tile{color:#fff;border-radius:4px;padding:14px;min-height:96px;display:flex;flex-direction:column}.fd-tile b{font-size:24px}.fd-tile span{font-weight:bold;margin-top:2px}.fd-tile small{opacity:.9;margin-top:auto}
+.t1{background:#65CEA7}.t2{background:#6BAFBD}.t3{background:#F3CE85;color:#5a4300}.t4{background:#FC8675}
+.fd-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fd-card{background:#fff;border:1px solid #e3e3e3;border-radius:4px;padding:12px;margin-bottom:12px}
+.fd-big{font-size:34px;font-weight:bold;color:#26B99A}.fd-meter{height:10px;background:#eee;border-radius:5px;overflow:hidden;margin:4px 0 10px}.fd-meter i{display:block;height:100%;background:#26B99A}
+.fd-meter.sm{height:6px;margin:0 0 2px;min-width:70px}
+.fd-kv{width:100%;border-collapse:collapse}.fd-kv td{padding:5px 2px;border-bottom:1px solid #f0f0f0}.fd-kv td:last-child{text-align:right;font-weight:bold}
+.red{color:#d9534f}
+
+.fd-xl{display:flex;font-size:10px;color:#777;text-align:center;overflow:hidden}.fd-xl span{white-space:nowrap;overflow:hidden}
+.fd-tw{overflow-x:auto}.fd-t{width:100%;border-collapse:collapse;font-size:12px}.fd-t th{background:#2D353C;color:#fff;padding:6px;text-align:left;white-space:nowrap}
+.fd-t td{border-bottom:1px solid #eee;padding:6px;vertical-align:top}.fd-t tr.tot td{font-weight:bold;background:#f3f3f3}.fd-t tr.brk td{background:#fff3f2}.fd-t small{color:#888}
+.fd-btns{white-space:nowrap}.fd-btns a,.fd-btns button{display:inline-block;margin:0 3px 3px 0;padding:4px 9px;border-radius:3px;color:#fff;text-decoration:none;font-size:12px}
+.b-call{background:#26B99A}.b-wa{background:#25D366}
+.fd-filt{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.fd-filt label{display:flex;gap:5px;align-items:center}
+.fd-save{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:#f6f8f9;padding:10px;border-radius:4px}.fd-save label{display:flex;flex-direction:column;gap:3px;font-weight:bold}
+.fd-hist{font-size:11px;color:#666;margin-top:6px}
+#fdToast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#2D353C;color:#fff;padding:0 14px;border-radius:4px;line-height:36px}#fdToast:empty{display:none}
+@media (max-width:860px){.fd-tiles{grid-template-columns:1fr 1fr}.fd-row{grid-template-columns:1fr}.fd-tile b{font-size:20px}}
+@media print{.np{display:none!important}body{background:#fff}.fd{padding:0}.fd-card{break-inside:avoid;border-color:#ccc}.fd-tile{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.fd-bars{display:flex;align-items:flex-end;gap:4px;height:170px;padding-top:4px}
+.fd-bar{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.fd-bar i{display:block;width:72%;background:#6BAFBD;border-radius:3px 3px 0 0;min-height:1px}.fd-bar i.red{background:#FC8675}
+.fd-bar em{font-style:normal;font-size:10px;color:#555;white-space:nowrap}.fd-bar span{font-size:10px;color:#777;margin-top:3px;white-space:nowrap;overflow:hidden;max-width:100%}
+.fd-t{min-width:760px}.fd-kv,.fd-card .fd-t.k{min-width:0}
+@media print{.fd-bar i{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+/* Month Collection, Tags, app */
+.fd-h{margin:4px 0 8px}.fd-small{font-size:11px;color:#888;margin:8px 0 0}
+.fd-months{display:flex;flex-wrap:wrap;gap:4px}.fd-months button{background:#e4e6e8;color:#2D353C;min-width:52px}.fd-months button.on{background:#26B99A;color:#fff}
+.fd-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:-4px 0 12px}.fd-chips span{font-weight:bold;margin-right:2px}
+.fd .fd-chips button{background:#fff;color:#2D353C;border:1px solid #ccc;border-radius:14px;padding:4px 10px}.fd .fd-chips button.on{background:#6BAFBD;border-color:#6BAFBD;color:#fff}
+.fd-tag{display:inline-block;background:#EAF4F6;color:#2b6f7c;border:1px solid #bcdbe1;border-radius:9px;padding:0 6px;font-size:10px;font-weight:bold}
+.fd .fd-link{background:none;color:#2b6f7c;padding:0;text-decoration:underline;font-weight:bold}
+.fd-t.k{min-width:0}
+.fd-login{max-width:340px;margin:8vh auto;text-align:center;background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:24px}
+.fd-login label{display:block;text-align:left;font-weight:bold;margin:12px 0 0}.fd-login input,.fd-login select{display:block;width:100%;margin-top:4px;padding:9px;border:1px solid #ccc;border-radius:4px;font-size:16px}
+.fd-login button{width:100%;margin-top:16px;padding:10px;font-size:15px}
+body.fd-app .fd{padding-top:calc(10px + env(safe-area-inset-top))}
+@media (max-width:860px){.fd-act button{padding:6px 9px}.fd-tabs button{padding:6px 9px}}
