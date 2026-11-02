@@ -1,0 +1,51 @@
+name: School follow-up checks
+on:
+  push:
+    paths: ['school/**', '.github/jaanch/followup-*', '.github/workflows/school-followups.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  followups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      db:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: school_test
+          MARIADB_DATABASE: maakit_jaanch
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mbstring, curl
+          coverage: none
+      - name: Check changed app scripts and PHP
+        run: |
+          for f in school/followup*.php school/chairman.php school/feedash.php school/index.php .github/jaanch/followup-flow.php; do php -l "$f"; done
+          for f in school/followup.js school/language.js school/chairman.js school/feedash.js school/app.js; do node --check "$f"; done
+      - name: Prepare isolated school test database
+        run: |
+          for f in sql/036-school-erp.sql sql/037-school-pin-strikes.sql sql/038-school-default-pin.sql; do
+            mysql -h127.0.0.1 -uroot -pschool_test maakit_jaanch < "$f"
+          done
+          php -r 'file_put_contents("config.php", "<?php\n". "define(\"DB_HOST\",\"127.0.0.1\");\n". "define(\"DB_NAME\",\"maakit_jaanch\");\n". "define(\"DB_USER\",\"root\");\n". "define(\"DB_PASS\",\"school_test\");\n");'
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8099 > /tmp/school-php.log 2>&1 &
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:8099/school/chairman.php >/dev/null && break; sleep 1; done
+      - name: Existing fee dashboard and new parent/calling flows
+        run: |
+          php .github/jaanch/feedash-flow.php
+          php .github/jaanch/followup-flow.php
+      - name: DOM interaction and language checks
+        run: |
+          npm install --prefix /tmp/school-dom --no-audit --no-fund jsdom@26.1.0
+          NODE_PATH=/tmp/school-dom/node_modules node .github/jaanch/followup-ui.cjs
+      - name: Show server log on failure
+        if: failure()
+        run: tail -100 /tmp/school-php.log || true

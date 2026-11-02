@@ -1,0 +1,13 @@
+# Parent payment dates and calling follow-ups
+
+Parents and students use the existing /school/ login. Fees shows the current-session fee card and receipts. Only a parent can submit a payment date and amount for their own child. Today through seven calendar days ahead is allowed (Asia/Kolkata); the server validates the amount against the current due. A request never posts a payment, discount or receipt. Every revision remains in private history.
+
+Chairman App > Calling and School ERP > Calls / Fee Control Room > Calling use the same follow-up list, tags, class/search filters and parent dates. Office roles and the Chairman may log a call attempt and its result through the scoped followup API. This is the requested exception to the Chairman read-only rule: it does not allow changing fees, tags, receipts or school records. Opening the dialer is recorded as an attempt, never as a connected call. An operator may save the result only for their own attempt. Automatic remarks are bilingual; typed remarks are kept verbatim.
+
+Data: followup_api.php / followup_lib.php; private acctPromise, acctPromiseHist and acctFollowNonce records, existing acctCall log. No schema migration. All acct* kinds remain excluded from legacy load/sync. Each submission has an operator-scoped retry key and uses the school financial row lock. Parents receive only their own child projections; students receive only themselves and cannot submit promises.
+
+The due calculation follows the Chairman fee-card/head and fixed-tag rules. Copied old ERP cards show their source date; this is not a claim of a live ledger. Detailed active accounts use their ledger. Promise progress uses newly recorded cleared receipts from the submission date, subtracting the same-day receipt baseline. Partial and cancelled receipts are accounted for. Before claiming a promise fulfilled, the recorded amount must cover it; choosing Already paid as a call result never marks a balance paid.
+
+English / Hinglish is remembered on the device. Shared language controls cover the Chairman app and school app; user names, tags and typed notes are not translated. Parent and call-result drafts survive a language change and list re-render. The follow-up widgets refresh every minute while visible and idle, and provide Refresh for immediate updates.
+
+Checks: .github/jaanch/followup-flow.php (isolated maakit_jaanch database only), followup-ui.cjs (synthetic DOM data), and the existing feedash-flow.php. The school-followups workflow runs these separately from the repository-wide suite, which has pre-existing configuration failures. Android APK loads live school pages, so this web upgrade does not require reinstalling it.

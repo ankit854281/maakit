@@ -27,15 +27,16 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <link rel="stylesheet" href="design-2026.css?v=<?= $v('design-2026.css') ?>">
 <link rel="stylesheet" href="erp-pro.css?v=<?= $v('erp-pro.css') ?>">
 <link rel="stylesheet" href="classic.css?v=<?= $v('classic.css') ?>">
-</head>
+<link rel="stylesheet" href="followup.css?v=<?php echo (string)filemtime(__DIR__.'/followup.js'); ?>"></head>
 <body class="bg-paper text-slate-800 min-h-screen">
 <div id="toasts" class="fixed top-3 right-3 z-50 flex flex-col gap-2 pointer-events-none max-w-xs"></div>
+<div class="school-language-bar"><button type="button" class="school-language" data-school-language>English / Hinglish</button></div>
 <div id="root"><div class="min-h-screen flex items-center justify-center p-6 text-slate-500">Loading School ERP…</div></div>
 
 <noscript><p style="padding:16px">Please turn on JavaScript to use the School ERP.</p></noscript>
-<script src="toolkit_english.js?v=<?= $v('toolkit_english.js') ?>"></script>
+<script src="language.js?v=<?php echo (string)filemtime(__DIR__.'/followup.js'); ?>"></script><script src="followup.js?v=<?php echo (string)filemtime(__DIR__.'/followup.js'); ?>"></script><script src="toolkit_english.js?v=<?= $v('toolkit_english.js') ?>"></script>
 <script src="app.js?v=<?= $v('app.js') ?>"></script>
 <script src="classic.js?v=<?= $v('classic.js') ?>"></script>
 <script src="oldlook.js?v=<?= $v('oldlook.js') ?>"></script>
-</body>
+<script src="followup-app.js?v=<?php echo (string)filemtime(__DIR__.'/followup-app.js'); ?>"></script></body>
 </html>
