@@ -4,3 +4,5 @@ local.properties
 
 /app/src/main/assets/language.js
 /app/src/main/res/drawable/app_icon.png
+
+app/src/main/assets/family-style.js

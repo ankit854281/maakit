@@ -7,6 +7,7 @@ on:
       - 'school/img/chairman-512.png'
       - 'school/language.js'
       - '.github/jaanch/family-entry.cjs'
+      - '.github/jaanch/family-design.cjs'
       - '.github/workflows/family-apk.yml'
   workflow_dispatch:
 permissions:
@@ -37,6 +38,11 @@ jobs:
         run: |
           npm install --prefix /tmp/family-dom --no-audit --no-fund jsdom@26.1.0
           NODE_PATH=/tmp/family-dom/node_modules node .github/jaanch/family-entry.cjs
+          NODE_PATH=/tmp/family-dom/node_modules node .github/jaanch/family-design.cjs
+      - uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: snmsis-family-debug-key-v2
       - name: Build and check Android app
         working-directory: school/family-android
         run: gradle --no-daemon assembleDebug lintDebug
@@ -59,8 +65,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="family-android-v1"
+          TAG="family-android-v2"
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "SNMSIS Student & Parents Android" --notes "Direct-install Android app for the live SNMSIS school app for students and parents. Internet and the existing school PIN are required. First installable build with Android debug signing; not a Play Store release."
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "SNMSIS Student & Parents Android" --notes "Direct-install Android app for the live SNMSIS school app for students and parents. Internet and the existing school PIN are required. Version 2 with animated welcome, coloured folder tabs and redesigned family screens. Uses Android debug signing; not a Play Store release. An older differently signed Family APK may require reinstalling."
           fi
           gh release upload "$TAG" snmsis-family.apk snmsis-family.apk.sha256 --clobber
