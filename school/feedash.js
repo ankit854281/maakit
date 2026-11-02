@@ -10,7 +10,6 @@ if (QS.get('look') === 'classic') document.documentElement.classList.add('classi
 const MORDER = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
 const MN = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const CLASSES = ['PG', 'LKG', 'UKG', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
-const APP = !!window.FD_APP;   // chairman.php: the Chairman's own app (login screen, phone first)
 let D = null, TAB = QS.get('tab') || '', F = { cls: '', list: 'today', q: '', min: '', tag: null, tq: '', tcls: '' }, OPEN = '', TEDIT = '', BUSY = false, MSEL = 0;
 const isTr = name => /transport/i.test(name);
 const NOTAG = '(No tag)';
@@ -34,7 +33,6 @@ async function load(ses) {
     if (!TAB) TAB = D.role === 'reception' ? 'call' : 'mon';
     calc(); render();
   } catch (e) {
-    if (APP && (e.code === 401 || e.code === 428 || e.code === 403)) return loginHtml(e.code === 428 ? 'new' : '', e.code === 403 ? e.message : '');
     $('fdRoot').innerHTML = `<div class="fd"><h2>Fee Control Room</h2><p class="fd-note">${esc(e.message)}</p></div>`;
   }
 }
@@ -115,9 +113,9 @@ function render() {
   const chips = D.tags.length > 1 || (D.tags[0] && D.tags[0] !== NOTAG) ? `<div class="fd-chips np"><span>Tag:</span><button class="${F.tag === null ? 'on' : ''}" onclick="setTagF(null)">All (${D.all.length})</button>${D.tags.map(t => `<button class="${F.tag === t ? 'on' : ''}" onclick='setTagF(${JSON.stringify(t)})'>${esc(t)} (${D.all.filter(k => k.tagName === t).length})</button>`).join('')}</div>` : '';
   const keep = document.activeElement && document.activeElement.id === 'fdQ';
   $('fdRoot').innerHTML = `<div class="fd">
-    <div class="fd-top"><div><h2>${APP ? 'Chairman Fee Report' : 'Fee Control Room'}</h2><p class="fd-sub">${esc(D.school)} · Session ${esc(longSes(D.ses))} · as on ${dmy(D.today)}${F.tag !== null ? ' · Tag: <b>' + esc(F.tag) + '</b>' : ''}</p></div>
+    <div class="fd-top"><div><h2>Fee Control Room</h2><p class="fd-sub">${esc(D.school)} · Session ${esc(longSes(D.ses))} · as on ${dmy(D.today)}${F.tag !== null ? ' · Tag: <b>' + esc(F.tag) + '</b>' : ''}</p></div>
       <div class="fd-act np"><select onchange="load(this.value)">${D.sessions.map(s => `<option value="${esc(s)}" ${s === D.ses ? 'selected' : ''}>${esc(longSes(s))}</option>`).join('')}</select>
-      ${D.money ? `<button onclick="shareSummary()">WhatsApp Summary</button>` : ''}<button onclick="window.print()">Print</button><button onclick="load(D.ses)">Refresh</button>${APP ? '<button onclick="logout()">Logout</button>' : ''}</div></div>
+      ${D.money ? `<button onclick="shareSummary()">WhatsApp Summary</button>` : ''}<button onclick="window.print()">Print</button><button onclick="load(D.ses)">Refresh</button></div></div>
     ${D.live ? '' : `<p class="fd-note">Fees for ${esc(longSes(D.ses))} are still taken in the old ERP. Fee cards here are as copied from the old ERP${D.asOn ? ' on <b>' + esc(D.asOn) + '</b>' : ''}; receipts copied after that are counted in collection.</p>`}
     <div class="fd-tabs np">${tabs.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="TAB='${k}';render();scrollTo(0,0)">${esc(l)}</button>`).join('')}</div>
     ${chips}${body}</div>`;
@@ -296,24 +294,4 @@ function shareSummary() {
     (F.tag === null && D.tags.some(t => t !== NOTAG) ? `\n\nTag-wise baaki: ` + D.tags.map(t => `${t} ${rs(sum(D.all.filter(k => k.tagName === t), k => k.dueNow))}`).join(', ') : '');
   window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank', 'noopener');
 }
-// ---- Chairman app login (chairman.php): the school's own login and PIN, kept on this phone for 30 days
-function loginHtml(step, msg) {
-  const who = (() => { try { return localStorage.getItem('fd_role') || 'chairman'; } catch (e) { return 'chairman'; } })();
-  $('fdRoot').innerHTML = `<div class="fd fd-login"><img src="img/snmsis-logo.png" alt="" width="72" height="72"><h2>Chairman Fee Report</h2><p class="fd-sub">SN Mishra Singapore International School</p>
-    ${step === 'new' ? `<p>Pehli baar login: apna naya PIN chuniye (4–8 ank, 1234 nahi).</p><label>Purana PIN<input id="lgOld" type="password" inputmode="numeric" autocomplete="current-password"></label><label>Naya PIN<input id="lgNew" type="password" inputmode="numeric" autocomplete="new-password"></label><button onclick="setPin()">PIN save karein</button>`
-    : `<label>Login<select id="lgRole"><option value="chairman" ${who === 'chairman' ? 'selected' : ''}>Chairman</option><option value="principal" ${who === 'principal' ? 'selected' : ''}>Principal</option></select></label>
-      <label>PIN<input id="lgPin" type="password" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></label><button onclick="login()">Login</button>`}
-    <p class="red">${esc(msg || '')}</p></div>`;
-}
-async function login() {
-  const role = $('lgRole').value, pin = $('lgPin').value;
-  try { const d = await api('api.php?a=login', { role, pin }); localStorage.setItem('sch_token', d.token); try { localStorage.setItem('fd_role', role); } catch (e) {}
-    if (d.mustChange) return loginHtml('new'); load(''); }
-  catch (e) { loginHtml('', e.message); }
-}
-async function setPin() {
-  try { await api('api.php?a=setpin', { old: $('lgOld').value, pin: $('lgNew').value }); toast('PIN saved.'); load(''); } catch (e) { loginHtml('new', e.message); }
-}
-async function logout() { try { await api('api.php?a=logout', {}); } catch (e) {} try { localStorage.removeItem('sch_token'); } catch (e) {} D = null; loginHtml(''); }
-if (APP && 'serviceWorker' in navigator) navigator.serviceWorker.register('chairman-sw.js').catch(() => {});
 load(QS.get('session') ? QS.get('session').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2') : '');
