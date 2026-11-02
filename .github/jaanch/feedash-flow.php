@@ -25,7 +25,7 @@ function fdreq($path, $token, $body = null) {
 $db = sch_db();
 $oldSettings = sch_rec_get('settings', 'main');
 $C = fdtok('chairman', 'chairman'); $P = fdtok('principal', 'principal'); $R = fdtok('reception', 'reception'); $T = fdtok('fd-teacher', 'teacher');
-$clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND (r LIKE 'oldfeecard|%' OR r LIKE 'oldreceipt|fd%')) OR (k='student' AND r IN ('fd-s1','fd-s2')) OR (k='acctCall' AND d LIKE '%fd-s1%') OR (k='regRow' AND r LIKE 'oldrcptdet|fd%') OR (k='fdTag' AND r IN ('fd-s1','fd-s2'))"); };
+$clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND (r LIKE 'oldfeecard|%' OR r LIKE 'oldreceipt|fd%')) OR (k='student' AND r IN ('fd-s1','fd-s2')) OR (k='acctCall' AND d LIKE '%fd-s1%') OR (k='regRow' AND r LIKE 'oldrcptdet|fd%') OR (k='fdTag' AND r IN ('fd-s1','fd-s2')) OR (k='fdMsg' AND d LIKE '%fd-s%')"); };
 try {
     $clean();
     sch_rec_put('settings', 'main', ['session' => '2026-27', 'sessionStart' => '2026-04-01', 'school' => 'Synthetic Dash School', 'place' => 'Test'], 'principal');
@@ -58,7 +58,12 @@ try {
     fd($c === 200, 'reception saves a call ' . json_encode($x));
     [$c, $d] = fdreq('feedash_api.php?a=data&ses=2026-27', $C); fd((bool)array_filter($d['calls'], fn($k) => in_array('fd-s1', $k['sids'], true) && $k['outcome'] === 'Promised to pay'), 'call shows in the log');
     [$c] = fdreq('office_api.php?a=call', $C, ['sid' => 'fd-s1', 'outcome' => 'Not answered']); fd($c === 403, 'chairman does not save calls');
-    echo "Fee Control Room: roles, Reception without money, dues from the fee card, today's receipt with transport split, tags with fixed plan and the call log passed\n";
+    // Fee messages: the app logs what was sent to whom
+    [$c] = fdreq('feedash_api.php?a=msgLog', $T, ['sids' => ['fd-s1'], 'kind' => 'Fee reminder']); fd($c === 403, 'teacher cannot log messages');
+    [$c] = fdreq('feedash_api.php?a=msgLog', $C, ['sids' => [], 'kind' => 'x']); fd($c === 400, 'a message needs students');
+    [$c, $x] = fdreq('feedash_api.php?a=msgLog', $C, ['sids' => ['fd-s1', 'fd-s2', 'fd-s1'], 'kind' => 'Nothing paid yet', 'text' => 'synthetic']); fd($c === 200 && $x['msg']['sids'] === ['fd-s1', 'fd-s2'], 'message logged once per child ' . json_encode($x));
+    [$c, $d] = fdreq('feedash_api.php?a=data&ses=2026-27', $C); fd((bool)array_filter($d['msgs'], fn($m) => $m['kind'] === 'Nothing paid yet' && in_array('fd-s2', $m['sids'], true)), 'message shows in the log');
+    echo "Fee Control Room: roles, Reception without money, dues from the fee card, today's receipt with transport split, tags with fixed plan, the call log and the message log passed\n";
 } finally {
     $clean();
     if ($oldSettings !== null) sch_rec_put('settings', 'main', $oldSettings, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='settings' AND r='main'");

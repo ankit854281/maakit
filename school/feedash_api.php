@@ -12,6 +12,8 @@
 //     tags     — each child's tag: the old ERP Tag, or the one set here (fdTag), with an optional fixed
 //                monthly amount ("FD" / fixed plan: the child pays only this much a month)
 //   POST ?a=setTag {sid, tag, fixed, note}   Principal
+//   POST ?a=msgLog {sids[], kind, text}      a fee message was sent to these parents (WhatsApp, from the app) — kept as a log
+//     msgs     — that log, newest first (in ?a=data)
 //
 //  Reception sees dues and calls (it makes the calls) but not the money taken.
 // ============================================================================
@@ -62,15 +64,18 @@ case 'data': {
     } unset($r);
     $rc = [];
     if ($money) foreach ($all as $r) $rc[] = ['session' => ofc_ses($r['session']), 'no' => $r['no'], 'date' => $r['date'], 'sid' => $r['sid'], 'name' => $r['name'], 'cls' => $r['cls'], 'section' => $r['section'],
-        'total' => $r['total'], 'received' => $r['received'], 'discount' => $r['discount'], 'late' => $r['late'], 'mode' => $r['mode'], 'status' => $r['status'], 'user' => $r['user'], 'src' => $r['src'],
+        'months' => $r['months'], 'total' => $r['total'], 'received' => $r['received'], 'discount' => $r['discount'], 'late' => $r['late'], 'mode' => $r['mode'], 'status' => $r['status'], 'user' => $r['user'], 'src' => $r['src'],
         // Transport part of the money, from the printed head lines; 'split' false = the old receipt's lines were not copied
         'tr' => round(array_sum(array_map(fn($l) => preg_match('/transport/i', $l['head']) ? $l['amt'] : 0, $r['lines'])), 2), 'split' => (bool)$r['lines']];
     $calls = [];
     foreach ($db->query("SELECT d FROM sch_records WHERE k='acctCall' AND deleted=0") as $row) { $c = json_decode((string)$row['d'], true); if (is_array($c)) $calls[] = $c; }
     usort($calls, fn($x, $y) => ($y['at'] ?? 0) <=> ($x['at'] ?? 0));
+    $msgs = [];
+    foreach ($db->query("SELECT d FROM sch_records WHERE k='fdMsg' AND deleted=0") as $row) { $m = json_decode((string)$row['d'], true); if (is_array($m)) $msgs[] = $m; }
+    usort($msgs, fn($x, $y) => ($y['at'] ?? 0) <=> ($x['at'] ?? 0));
     sch_json(['ok' => true, 'ses' => $ses, 'sessions' => $sessions, 'today' => date('Y-m-d'), 'role' => $role, 'money' => $money,
         'canCall' => in_array($role, ['principal', 'accountant', 'reception'], true), 'outcomes' => ['Promised to pay', 'Not answered', 'Switched off', 'Call back later', 'Will visit school', 'Already paid', 'Wrong number'],
-        'school' => (string)($set['school'] ?? ''), 'live' => $dues['live'], 'asOn' => $dues['asOn'], 'dues' => $dues['rows'], 'receipts' => $rc, 'calls' => array_slice($calls, 0, 4000)]);
+        'school' => (string)($set['school'] ?? ''), 'live' => $dues['live'], 'asOn' => $dues['asOn'], 'dues' => $dues['rows'], 'receipts' => $rc, 'calls' => array_slice($calls, 0, 4000), 'msgs' => array_slice($msgs, 0, 3000)]);
 }
 case 'setTag': {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
@@ -85,6 +90,20 @@ case 'setTag': {
     sch_rec_put('fdTag', $sid, $rec, sch_uid_of($u));
     sch_log($u, 'Fee Tag', 'Tag of ' . ($s['name'] ?? $sid) . ': ' . ($tag !== '' ? $tag : '(none)') . ($rec['fixed'] ? ' · fixed ₹' . number_format($rec['fixed'] / 100, 2) . '/month' : ''));
     sch_json(['ok' => true, 'tag' => $rec]);
+}
+case 'msgLog': {
+    // The app opens WhatsApp with the message for each parent; this keeps a record of who was sent what, and when.
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
+    $in = json_decode((string)file_get_contents('php://input', false, null, 0, 200000), true); if (!is_array($in)) sch_fail('Bad request.');
+    $sids = array_values(array_unique(array_filter(array_map('strval', (array)($in['sids'] ?? [])), fn($x) => $x !== '' && strlen($x) <= 60)));
+    if (!$sids || count($sids) > 600) sch_fail('Choose the students.');
+    $kind = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['kind'] ?? 'Fee reminder'))), 0, 40);
+    $text = mb_substr(trim((string)($in['text'] ?? '')), 0, 1000);
+    $id = bin2hex(random_bytes(8));
+    $rec = ['id' => $id, 'sids' => $sids, 'kind' => $kind, 'text' => $text, 'by' => $u['label'] ?? $role, 'at' => sch_now_ms(), 'date' => date('Y-m-d')];
+    sch_rec_put('fdMsg', $id, $rec, sch_uid_of($u));
+    sch_log($u, 'Fee Message', $kind . ' sent to ' . count($sids) . ' parent(s)');
+    sch_json(['ok' => true, 'msg' => $rec]);
 }
 default: sch_fail('Unknown action.', 404);
 }
