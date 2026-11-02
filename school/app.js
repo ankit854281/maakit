@@ -3858,6 +3858,9 @@ VIEWS.stumaster=()=>'<iframe class="edu-iframe" title="Student Master" src="stum
 for (const role of ['principal','chairman','accountant']) NAV[role].push(['feereports','fa-file-invoice','Fee Reports']);
 // Fee Control Room: collection, dues, class-wise position and the fee-calling list in one place (feedash.php).
 for (const role of ['principal','chairman','accountant','reception']) NAV[role].unshift(['feedash','fa-chart-line','Fee Control Room']);
+// The Chairman's phone app (Add to Home screen): the same report with its own login — school/chairman.php.
+NAV.chairman.push(['chairapp','fa-mobile-screen','Chairman App']); NAV.principal.push(['chairapp','fa-mobile-screen','Chairman App']);
+VIEWS.chairapp=()=>'<div class="card"><h3 class="h3">Chairman App</h3><p class="text-sm">Phone par ye link kholiye, Chairman PIN se login kariye, phir browser menu me <b>Add to Home screen</b> dabaiye. App icon ban jayega.</p><p class="mt-2"><a class="btn btn-p" href="chairman.php" target="_blank" rel="noopener">Open Chairman App</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'chairman.php</p></div>';
 VIEWS.feedash=()=>'<iframe class="edu-iframe" title="Fee Control Room" src="feedash.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).

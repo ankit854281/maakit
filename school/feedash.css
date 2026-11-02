@@ -34,3 +34,16 @@
 .fd-bar em{font-style:normal;font-size:10px;color:#555;white-space:nowrap}.fd-bar span{font-size:10px;color:#777;margin-top:3px;white-space:nowrap;overflow:hidden;max-width:100%}
 .fd-t{min-width:760px}.fd-kv,.fd-card .fd-t.k{min-width:0}
 @media print{.fd-bar i{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+/* Month Collection, Tags, app */
+.fd-h{margin:4px 0 8px}.fd-small{font-size:11px;color:#888;margin:8px 0 0}
+.fd-months{display:flex;flex-wrap:wrap;gap:4px}.fd-months button{background:#e4e6e8;color:#2D353C;min-width:52px}.fd-months button.on{background:#26B99A;color:#fff}
+.fd-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:-4px 0 12px}.fd-chips span{font-weight:bold;margin-right:2px}
+.fd .fd-chips button{background:#fff;color:#2D353C;border:1px solid #ccc;border-radius:14px;padding:4px 10px}.fd .fd-chips button.on{background:#6BAFBD;border-color:#6BAFBD;color:#fff}
+.fd-tag{display:inline-block;background:#EAF4F6;color:#2b6f7c;border:1px solid #bcdbe1;border-radius:9px;padding:0 6px;font-size:10px;font-weight:bold}
+.fd .fd-link{background:none;color:#2b6f7c;padding:0;text-decoration:underline;font-weight:bold}
+.fd-t.k{min-width:0}
+.fd-login{max-width:340px;margin:8vh auto;text-align:center;background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:24px}
+.fd-login label{display:block;text-align:left;font-weight:bold;margin:12px 0 0}.fd-login input,.fd-login select{display:block;width:100%;margin-top:4px;padding:9px;border:1px solid #ccc;border-radius:4px;font-size:16px}
+.fd-login button{width:100%;margin-top:16px;padding:10px;font-size:15px}
+body.fd-app .fd{padding-top:calc(10px + env(safe-area-inset-top))}
+@media (max-width:860px){.fd-act button{padding:6px 9px}.fd-tabs button{padding:6px 9px}}
