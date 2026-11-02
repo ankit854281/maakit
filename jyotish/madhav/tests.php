@@ -28,4 +28,17 @@ $r6 = madhav_reply(['question' => 'work', 'language' => 'en', 'history' => []], 
 check($r6['mode'] === 'curated', 'AI provider failure safely falls back');
 try { madhav_reply(['question' => str_repeat('a', 501)]); check(false, 'input validation'); }
 catch (InvalidArgumentException $e) { check(true, 'input length validation'); }
+
+// V6: contract and safety regressions.
+$en = madhav_reply(['question' => 'How can I handle anger?', 'language' => 'en', 'history' => []]);
+check($en['citation']['id'] === '12.13' && count($en['suggestions']) === 3, 'English response has related suggestions');
+check(count(array_unique($en['suggestions'])) === 3, 'suggestions are unique');
+$hi = madhav_reply(['question' => 'मुझे डर लगता है', 'language' => 'hi', 'history' => []]);
+check($hi['citation']['id'] === '2.14', 'fear topic uses relevant citation');
+try { madhav_reply(['question' => 'work', 'language' => 'fr', 'history' => []]); check(false, 'invalid language'); }
+catch (InvalidArgumentException $e) { check(true, 'unsupported language rejected'); }
+try { madhav_reply(['question' => 'work', 'history' => [['q' => 7]]]); check(false, 'malformed history'); }
+catch (InvalidArgumentException $e) { check(true, 'malformed history rejected'); }
+try { madhav_reply(['question' => 'work', 'history' => array_fill(0, 9, ['q' => 'work'])]); check(false, 'oversized history'); }
+catch (InvalidArgumentException $e) { check(true, 'oversized history rejected'); }
 echo "All MADHAV unit checks passed.\n";
