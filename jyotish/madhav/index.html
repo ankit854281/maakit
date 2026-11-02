@@ -19,7 +19,32 @@ links.forEach(function(b){b.addEventListener("click",function(){go(b.dataset.go)
 var topics=[{re:/मन|चिंता|परेशान|ध्यान|डर|stress|fear|worry/i,a:"पार्थ, जब मन भटकता है, उसे धैर्य से वापस स्थिर करने का अभ्यास करो। गीता 6.26 में यही शिक्षा मिलती है। 🌿",s:["ध्यान कैसे शुरू करूँ?","चिंता कम कैसे करूँ?","मन को शांत कैसे करूँ?"]},{re:/कर्म|काम|सफल|लक्ष्य|मेहनत|failure|work/i,a:"पार्थ, गीता 2.47 हमें कर्म पर ध्यान देने और फल से अत्यधिक आसक्ति कम करने को कहती है। अपने प्रयास से सीखते रहो। 🌼",s:["असफलता से कैसे सीखूँ?","सही लक्ष्य कैसे चुनूँ?","कर्मयोग क्या है?"]},{re:/क्रोध|गुस्सा|क्षमा|करुणा|anger|kind/i,a:"पार्थ, गीता 12.13 में मैत्री और करुणा की शिक्षा मिलती है। प्रतिक्रिया से पहले ठहरना एक अच्छा अभ्यास हो सकता है। 🪷",s:["गुस्सा कैसे कम करूँ?","क्षमा कैसे सीखूँ?","रिश्ते कैसे सुधारूँ?"]}];
 function setChips(arr){chips.replaceChildren();arr.forEach(function(q){var b=document.createElement("button");b.className="chip";b.type="button";b.textContent=q;b.addEventListener("click",function(){send(q)});chips.appendChild(b)})}
 function bubble(kind,msg){var el=document.createElement("div");el.className="bubble "+kind;el.textContent=msg;list.appendChild(el);list.scrollTop=list.scrollHeight}
-function send(q){var t=String(q||"").trim();if(!t)return;bubble("user",t);var found=topics.find(function(x){return x.re.test(t)});bubble("ai",found?found.a:"पार्थ, यह विषय अभी हमारे सीमित ज्ञान-संग्रह में नहीं है। मैं गीता का गलत संदर्भ नहीं दूँगा। 🙏");setChips(found?found.s:["मन परेशान है","सफलता कैसे मिले?","क्रोध कैसे कम करूँ?"]);input.value=""}
+var questionHistory=[], sending=false;
+async function send(q){
+ var t=String(q||"").trim();if(!t||sending)return;
+ bubble("user",t);input.value="";sending=true;
+ var submit=document.querySelector('#form button[type=submit],#form button');
+ if(submit)submit.disabled=true;
+ var previous=questionHistory.slice(-8).map(function(x){return {q:x}});
+ questionHistory.push(t);
+ try{
+   var controller=new AbortController(),timer=setTimeout(function(){controller.abort()},12000);
+   var response;
+   try{response=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},
+     credentials:'same-origin',body:JSON.stringify({question:t,language:'hi',history:previous}),signal:controller.signal});}
+   finally{clearTimeout(timer)}
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   var data=await response.json();
+   if(!data||typeof data.answer!=='string'||!Array.isArray(data.suggestions))throw new Error('Invalid response');
+   var citation=data.citation&&data.citation.id?'\n\n📖 गीता '+data.citation.id+' · भावार्थ (समीक्षा बाकी)':'';
+   bubble('ai',data.answer+citation);
+   setChips(data.suggestions.slice(0,3).filter(function(x){return typeof x==='string'}));
+ }catch(e){
+   var found=topics.find(function(x){return x.re.test(t)});
+   bubble('ai',(found?found.a:'पार्थ, अभी इस प्रश्न पर सत्यापित संदर्भ नहीं है।')+'\n\n(Offline demo reply — AI backend connected नहीं है)');
+   setChips(found?found.s:['मन परेशान है','सफलता कैसे मिले?','क्रोध कैसे कम करूँ?']);
+ }finally{sending=false;if(submit)submit.disabled=false}
+}
 document.getElementById("form").addEventListener("submit",function(e){e.preventDefault();send(input.value)});setChips(["मन परेशान है","सफलता कैसे मिले?","क्रोध कैसे कम करूँ?"]);
 var verses=[["2.47","कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।","कर्तव्य निभाने में मन लगाओ, फल के प्रति आसक्ति कम रखो।"],["6.26","यतो यतो निश्चरति मनश्चञ्चलमस्थिरम्।","भटकते मन को बार-बार एकाग्रता की ओर लौटाओ।"],["12.13","अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च।","सबके प्रति मैत्री और करुणा का अभ्यास करो।"]];
 var v=document.getElementById("verses");verses.forEach(function(x){var d=document.createElement("div");d.className="verse";var h=document.createElement("small"),p=document.createElement("p"),m=document.createElement("div");h.textContent="भगवद्गीता "+x[0];p.className="scripture";p.textContent=x[1];m.className="note";m.textContent=x[2];d.append(h,p,m);v.append(d)});
