@@ -31,8 +31,8 @@
       d.children.map(c=>{
         const p=prom.get(c.sid),copied=c.source==='copied';
         return '<article class="ff-child"><h3 class="ff-identity">'+esc(c.name)+' · '+esc(c.cls)+'</h3><div class="ff-row"><span>'+label('Current due')+'</span><strong class="ff-amount">'+money(c.due)+'</strong></div>'+
-          (c.due==null?'<p>'+label('No fee card available. Please contact the school office.')+'</p>':'<small>'+label('Whole session balance')+': '+money(c.overallDue)+'</small>')+
-          (copied?'<p class="ff-warning">'+label('Fee card copied on')+' '+esc(c.asOn||'—')+'. '+label('Figures are from the copied fee card; contact the office for newer payments.')+'</p>':c.source==='unavailable'?'':'<p class="ff-source">'+label(c.source==='detailed'?'Detailed fee ledger':'Live fee ledger')+'</p>')+
+          (c.due==null?'<p>'+label('No fee card available. Please contact the school office.')+'</p>':c.overallDue==null?'':'<small>'+label('Whole session balance')+': '+money(c.overallDue)+'</small>')+
+          (copied?'<p class="ff-warning">'+label('Fee card copied on')+' '+esc(c.asOn||'—')+'. '+label('Figures are from the copied fee card; contact the office for newer payments.')+'</p>':c.source==='unavailable'?'':'<p class="ff-source">'+label(c.source==='detailed'?'Detailed fee ledger':c.source==='legacy'?'Fee desk account':'Live fee ledger')+'</p>')+
           (p?promiseCard(p,c):'')+
           (d.canPromise&&c.due>0?'<form data-ff-promise="'+esc(c.sid)+'" data-nonce="'+nonce()+'"><h4>'+label(p?'Update payment date':'Promise a payment date')+'</h4>'+
             '<div class="ff-grid"><label>'+label('Payment date')+'<input type="date" name="promise" min="'+d.today+'" max="'+d.maxDate+'" value="" required></label>'+

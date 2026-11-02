@@ -55,7 +55,7 @@ try {
         $old=sch_rec_get('acctPromise',$key);
         $p=['id'=>$id,'sid'=>$sid,'session'=>$session,'promise'=>$date,'amount'=>$amount,'note'=>ff_text($in['note']??''),
             'date'=>$today,'at'=>$now,'uid'=>$uid,'by'=>$u['label'],'baseline'=>ff_receipt_total($child,$today),
-            'revision'=>(int)($old['revision']??0)+1,'previousDate'=>$old['promise']??'','source'=>'parent','ledgerFamily'=>$child['source']==='detailed'?'detailed':'fee-card'];
+            'revision'=>(int)($old['revision']??0)+1,'previousDate'=>$old['promise']??'','source'=>'parent','ledgerFamily'=>$child['source']==='detailed'?'detailed':($child['source']==='legacy'?'legacy':'fee-card')];
         sch_rec_put('acctPromiseHist',$id,$p,$uid);sch_rec_put('acctPromise',$key,$p,$uid);
         sch_log($u,'Fee Promise','Parent payment date for '.$child['name'].': '.$date.', amount '.number_format($amount/100,2));
         $response=['promise'=>ff_promise($p,$child)];

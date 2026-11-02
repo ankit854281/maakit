@@ -16,8 +16,8 @@ function ffhttp($a,$tok,$body=null){
  ffcheck(!preg_match('/Fatal error|Warning:|Notice:|Uncaught|Deprecated:/',$raw),'clean response: '.$raw);
  return [$code,json_decode($raw,true)];
 }
-$db=sch_db();$old=sch_rec_get('settings','main');$today=date('Y-m-d');$session=fin_current();$y=(int)substr($session,0,4);
-$clean=function()use($db){$db->exec("DELETE FROM sch_records WHERE (k='student' AND r IN ('ff-a','ff-b','ff-c')) OR (k='regRow' AND r LIKE '%|ff-test-%') OR (k IN ('fdTag') AND r LIKE 'ff-%') OR (k LIKE 'acct%' AND d LIKE '%ff-%') OR (k LIKE 'ofc%' AND d LIKE '%ff-%') OR (k LIKE 'fin%' AND d LIKE '%ff-%')");};
+$db=sch_db();$old=sch_rec_get('settings','main');$oldFees=sch_rec_get('fees','main');$today=date('Y-m-d');$session=fin_current();$y=(int)substr($session,0,4);
+$clean=function()use($db){$db->exec("DELETE FROM sch_records WHERE (k='student' AND r IN ('ff-a','ff-b','ff-c','ff-new','ff-d')) OR (k='regRow' AND r LIKE '%|ff-test-%') OR (k IN ('fdTag') AND r LIKE 'ff-%') OR (k LIKE 'acct%' AND d LIKE '%ff-%') OR (k LIKE 'ofc%' AND d LIKE '%ff-%') OR (k LIKE 'fin%' AND d LIKE '%ff-%')");};
 try{
  $clean();sch_rec_put('settings','main',['session'=>$session,'sessionStart'=>$y.'-04-01','school'=>'Synthetic follow-up school'],'principal');
  $P=fftoken('principal','principal');$CH=fftoken('chairman','chairman');$AC=fftoken('accountant','accountant');$RE=fftoken('reception','reception');
@@ -69,8 +69,20 @@ try{
  sch_rec_put('fdTag','ff-c',['tag'=>'FD','fixed'=>30000],'principal');
  $snapshot=ff_snapshot($db,$session);$monthsElapsed=date('n')>=4?(int)date('n')-3:(int)date('n')+9;
  ffcheck($snapshot['ff-c']['due']===30000*$monthsElapsed,'fixed plan matches chairman');
+ // Keep pre-existing Fee Desk accounts usable when there is no imported card.
+ sch_rec_put('student','ff-new',['id'=>'ff-new','name'=>'Synthetic New','cls'=>'2nd','phone'=>'9811100022','km'=>5],'principal');
+ sch_rec_put('fees','main',['monthly'=>['2nd'=>1000],'yearly'=>[],'transport'=>[['upto'=>10,'amt'=>100]],'thirdChildPct'=>50],'principal');
+ sch_rec_put('acctPay','ff-legacy-payment',['sid'=>'ff-new','no'=>1,'date'=>$today,'amt'=>200],'principal');
+ $snapshot=ff_snapshot($db,$session);ffcheck($snapshot['ff-new']['source']==='legacy' && $snapshot['ff-new']['due']===($monthsElapsed*1100-200)*100,'legacy fee desk includes bus and existing receipt');
+ // An active detailed account without an imported old card is still visible.
+ sch_rec_put('student','ff-d',['id'=>'ff-d','name'=>'Synthetic Detailed','cls'=>'2nd','phone'=>'9811100022'],'principal');
+ sch_rec_put('finAccount',$session.'|ff-d',['sid'=>'ff-d','session'=>$session,'active'=>true],'principal');
+ sch_rec_put('finBill','ff-detail-bill',['id'=>'ff-detail-bill','sid'=>'ff-d','session'=>$session,'date'=>$today,'dueDate'=>$today,'period'=>substr($today,0,7),'amount'=>50000],'principal');
+ sch_rec_put('finEntry','ff-detail-receipt',['id'=>'ff-detail-receipt','sid'=>'ff-d','session'=>$session,'date'=>$today,'kind'=>'Receipt','status'=>'Cleared','amount'=>10000,'number'=>'SYNTHETIC','allocations'=>['ff-detail-bill'=>10000],'discounts'=>[]],'principal');
+ $snapshot=ff_snapshot($db,$session);ffcheck($snapshot['ff-d']['source']==='detailed' && $snapshot['ff-d']['due']===40000 && count($snapshot['ff-d']['receipts'])===1,'detailed account without card and cleared receipt');
  echo "Follow-ups: own-family access, parent-only writes, 7-day bounds, amount checks, retries, history, partial/cancelled payments, calling permissions and private sync passed\n";
 }finally{
  $clean();$db->exec("DELETE FROM sch_sessions WHERE uid IN ('ff-teacher','p:9811100011','p:9811100022','p:9811100033','s:ff-a')");
  if($old)sch_rec_put('settings','main',$old,'principal');
+ if($oldFees)sch_rec_put('fees','main',$oldFees,'principal');else $db->exec("DELETE FROM sch_records WHERE k='fees' AND r='main'");
 }

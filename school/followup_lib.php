@@ -73,6 +73,14 @@ function ff_snapshot(PDO $db, string $session): array {
         $due=max(0,(int)$ledger['outstanding']-(int)$ledger['advance']);
         $out[$sid]=['sid'=>(string)$sid,'name'=>$s['name'],'cls'=>$s['cls'],'section'=>$s['section']??'','father'=>$s['father']??'','phone'=>sch_phone10((string)($s['phone']??'')),'tag'=>(string)($tags[$sid]['tag']??''),'due'=>$due,'overallDue'=>$due,'oldDue'=>0,'source'=>'detailed','asOn'=>'','receipts'=>$receipts];
     }
+    // Preserve the existing Fee Desk projection for children without a card.
+    $students=reg_students();foreach($students as $sid=>&$s)$s['km']=sch_rec_get('student',(string)$sid)['km']??null;unset($s);$families=[];foreach($students as $s)if(empty($s['inactive']))$families[of_phone_key($s)][]=$s;
+    $fees=sch_rec_get('fees','main');$sets=ff_rows('acctStu');$pays=array_values(ff_rows('acctPay'));$ss=of_session();
+    foreach($students as $sid=>$s)if(empty($s['inactive'])&&!isset($out[$sid])){
+        $s['id']=(string)$sid;$balance=of_dues($s,$families[of_phone_key($s)]??[$s],$fees,$sets[$sid]??[],$pays,$ss['start'],$today);
+        if($balance['missing'])continue;$receipts=[];foreach($pays as $p)if(($p['sid']??'')===$sid&&empty($p['cancelled'])&&(string)$p['date']>=$ss['start'])$receipts[]=['no'=>(string)$p['no'],'date'=>$p['date'],'received'=>$p['amt']];
+        $out[$sid]=['sid'=>(string)$sid,'name'=>$s['name'],'cls'=>$s['cls'],'section'=>$s['section']??'','father'=>$s['father']??'','phone'=>sch_phone10((string)($s['phone']??'')),'tag'=>(string)($tags[$sid]['tag']??''),'due'=>max(0,(int)round($balance['due']*100)),'overallDue'=>null,'oldDue'=>max(0,(int)$balance['opening']*100),'source'=>'legacy','asOn'=>'','receipts'=>$receipts];
+    }
     return $out;
 }
 function ff_receipt_total(array $child,string $from): int {
@@ -83,7 +91,7 @@ function ff_receipt_total(array $child,string $from): int {
 }
 function ff_public_child(array $r): array { unset($r['receipts']);return $r; }
 function ff_promise(array $p,?array $child): array {
-    $sameLedger=!$child || !isset($p['ledgerFamily']) || $p['ledgerFamily']===($child['source']==='detailed'?'detailed':'fee-card');
+    $sameLedger=!$child || !isset($p['ledgerFamily']) || $p['ledgerFamily']===($child['source']==='detailed'?'detailed':($child['source']==='legacy'?'legacy':'fee-card'));
     $received=$child && $sameLedger ? max(0,ff_receipt_total($child,(string)$p['date'])-(int)$p['baseline']) : 0;
     $p['received']=min((int)$p['amount'],$received);
     $p['remaining']=max(0,(int)$p['amount']-$received);
