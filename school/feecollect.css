@@ -20,3 +20,6 @@ button{font:12px Arial,sans-serif;border:1px solid #2e6da4;background:#337ab7;co
 .or-title{text-align:center;font-size:14px;font-weight:700;border-top:1px solid #000;padding:2px}.or-k{width:100%;border-collapse:collapse;margin-top:2px}.or-k td,.or-k th{border:1px solid #000;padding:2px 3px;font-size:10px;text-align:left}
 .or-p th,.or-p td{text-align:center}.or-rem{border-top:1px solid #000;padding:3px}.or-foot{display:flex;justify-content:space-between;align-items:flex-end;min-height:60px;border-top:1px solid #000;padding:3px}.or-copy{color:#c00;font-weight:700}.or-sign{text-align:center;font-weight:700;font-size:11px}
 @media print{body{background:#fff}#ofcRoot,#ofcToast{display:none!important}#ofcPrint{display:block}.pr-page{padding:18px}}
+/* Fee Discount (Head Wise) — old studentfee_dischead.php colours: red head, purple month rows, green fee rows */
+.fr-dh td{border:1px solid #000;padding:3px 4px}.fr-dhr td{background:#E00;color:#fff;font-weight:700;text-align:center}.fr-dhm td{background:#C55CE6;color:#fff}.fr-dhl td{background:#99FF33}
+.fr-disc{width:64px;padding:2px 4px;border:1px solid #888;background:#fff}.fr-del{background:#d9534f;border-color:#d43f3a;color:#fff}

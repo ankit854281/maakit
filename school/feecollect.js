@@ -9,8 +9,11 @@ const R = p => (Math.round(Number(p) || 0) / 100).toFixed(2).replace(/\.00$/, ''
 const P = v => Math.round((parseFloat(String(v).replace(/,/g, '')) || 0) * 100);           // rupee text -> paise
 const CLS = ['PG', 'LKG', 'UKG', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
 const MORDER = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
-let ST = null, SEL = { cls: '', sec: '', sid: '', by: 'name' }, LD = null, F = null, START = null, BUSY = false;
-const SES0 = (new URLSearchParams(location.search).get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
+const QS = new URLSearchParams(location.search);
+let ST = null, SEL = { cls: '', sec: '', sid: QS.get('sid') || '', by: 'name' }, LD = null, F = null, START = null, BUSY = false;
+// MODE 'disc' = old ERP Fee › Fee Discount (Head Wise) (studentfee_dischead.php): a Disc box on every fee head.
+let MODE = QS.get('mode') === 'disc' ? 'disc' : 'fee', DISC = {}, DREM = '';
+const SES0 = (QS.get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
 
 function toast(t) { const el = $('ofcToast'); el.textContent = t; clearTimeout(toast.t); toast.t = setTimeout(() => { el.textContent = ''; }, 7000); }
 async function api(a, body, q) {
@@ -22,11 +25,15 @@ async function api(a, body, q) {
 const nonce = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
 
 async function boot(ses) {
-  try { ST = await api('state', null, { ses: ses || SES0 || '' }); START = null; if (SEL.sid) await openStudent(SEL.sid, true); else render(); }
+  try {
+    ST = await api('state', null, { ses: ses || SES0 || '' }); START = null;
+    const s0 = SEL.sid && ST.students.find(x => x.id === SEL.sid); if (s0) { SEL.cls = s0.cls; SEL.sec = s0.section; }
+    if (SEL.sid) await openStudent(SEL.sid, true); else render();
+  }
   catch (e) { $('ofcRoot').innerHTML = `<div class="fr-box"><h3>Fee Receipt</h3><p>${esc(e.message)}</p></div>`; }
 }
 async function openStudent(sid, keep) {
-  SEL.sid = sid; LD = null; F = null;
+  SEL.sid = sid; LD = null; F = null; DISC = {}; DREM = '';
   if (!sid) return render();
   render();
   try { LD = await api('ledger', null, { ses: ST.ses, sid }); F = newForm(); } catch (e) { toast(e.message); }
@@ -123,11 +130,31 @@ async function headAct(a, i, amt) {
   const reason = prompt({ discount: 'Reason for the discount', undoDisc: 'Why is this discount taken back?', dropFee: 'Why is this fee removed?' }[a]); if (!reason) return;
   try { await api(a, { ses: ST.ses, sid: SEL.sid, i, amt, reason }); toast('Saved.'); await openStudent(SEL.sid, true); } catch (e) { toast(e.message); }
 }
-function giveDisc() { const i = +(($('dhHead') || {}).value || 0), amt = (($('dhAmt') || {}).value || '').trim(); if (!i) return toast('Select Fee'); if (!(parseFloat(amt) > 0)) return toast('Enter Discount Amount'); headAct('discount', i, amt); }
+// ---- old Fee Discount (Head Wise) Submit: every head's Disc box saved together
+function discSum() { return heads().reduce((a, h) => a + (open(h) ? P(DISC[h.i] || 0) : 0), 0); }
+function setDisc(i, v) { DISC[i] = v; const el = $('dsSum'); if (el) el.value = R(discSum()); }
+async function submitDisc() {
+  if (BUSY) return;
+  const items = heads().filter(h => open(h) && P(DISC[h.i] || 0) > 0).map(h => ({ i: h.i, amt: String(DISC[h.i]).trim() }));
+  if (!items.length) return toast('Enter the discount in the Disc box of a fee.');
+  for (const h of heads()) if (open(h) && P(DISC[h.i] || 0) > bal(h)) return toast('Disc of ' + h.name + ' (' + ST.months[h.m] + ') is more than its balance ' + R(bal(h)) + '.');
+  if (!confirm('Give discount of ' + R(discSum()) + ' on ' + items.length + ' fee head(s)?')) return;
+  BUSY = true; render();
+  try { await api('discMany', { ses: ST.ses, sid: SEL.sid, items, remark: DREM, nonce: nonce() }); BUSY = false; toast('Discount saved.'); await openStudent(SEL.sid, true); }
+  catch (e) { BUSY = false; toast(e.message); render(); }
+}
+// ---- old Fee Discount table › Edit
+async function editDisc(i, cur) {
+  const amt = prompt('New discount amount (0 = take it back)', cur); if (amt === null) return;
+  const reason = prompt('Reason for the change'); if (!reason) return;
+  try { await api('editDisc', { ses: ST.ses, sid: SEL.sid, i, amt: amt.trim(), reason }); toast('Saved.'); await openStudent(SEL.sid, true); } catch (e) { toast(e.message); }
+}
+function setMode2(m) { MODE = m; DISC = {}; DREM = ''; render(); window.scrollTo(0, 0); }
 async function copyLedger() { const from = $('nlFrom').value; if (!from) return toast('Choose a classmate.'); try { await api('newLedger', { ses: ST.ses, sid: SEL.sid, from }); await openStudent(SEL.sid, true); } catch (e) { toast(e.message); } }
 
 // ---------------------------------------------------------------- drawing
 function opt(v, t, on) { return `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(t)}</option>`; }
+function findLabel(s) { return [s.adm, (s.name || '').toUpperCase(), (s.father || '').toUpperCase(), s.cls + '-' + (s.section || 'NA')].join(' - ') + (s.inactive ? ' (Inactive)' : ''); }
 function stuLabel(s) { return s.name + '-' + (s.father || '') + (s.inactive ? ' (Inactive)' : ''); }
 function render() {
   if (!ST) return;
@@ -136,7 +163,7 @@ function render() {
   const byField = { name: s => s.name, mobile: s => s.phone, father: s => s.father, scholar: s => s.adm }[SEL.by];
   const live = ST.live;
   $('ofcRoot').innerHTML = `<div class="fr">
-  <h3 class="fr-title">Fee Receipt <span class="fr-red">${live ? '' : 'NR - Not Received'}</span></h3>
+  <h3 class="fr-title">${MODE === 'disc' ? 'Fee Discount (Head Wise)' : 'Fee Receipt'} <span class="fr-red">${live ? '' : 'NR - Not Received'}</span>${ST.isPrincipal ? ` <button class="fr-sm" onclick="setMode2('${MODE === 'disc' ? 'fee' : 'disc'}')">${MODE === 'disc' ? 'Open Fee Receipt' : 'Fee Discount (Head Wise)'}</button>` : ''}</h3>
   <div class="fr-sel">
     <label>Session<select onchange="SEL.sid='';LD=null;boot(this.value)">${ST.sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === ST.ses)).join('')}</select></label>
     <label>School<select><option>${esc(ST.school)}</option></select></label>
@@ -145,11 +172,11 @@ function render() {
     <label>Name<select onchange="openStudent(this.value)">${opt('', 'Select Name', !SEL.sid)}${list.map(s => opt(s.id, stuLabel(s), s.id === SEL.sid)).join('')}</select></label>
     <span></span>
     <label>Search By<select onchange="SEL.by=this.value;render()">${[['name', 'Student Name'], ['mobile', 'Mobile No'], ['father', "Father's Name"], ['scholar', 'Scholar No']].map(([v, t]) => opt(v, t, v === SEL.by)).join('')}</select></label>
-    <label>Search For<input list="frList" placeholder="(Enter Student Name &amp; Select From List)" onchange="const s=ST.students.find(x=>(x.name+' · '+x.cls+(x.section?' '+x.section:'')+' · '+(x.father||'')+' · '+(x.phone||'')+' · '+(x.adm||''))===this.value);if(s){SEL.cls=s.cls;SEL.sec=s.section;openStudent(s.id)}">
-      <datalist id="frList">${ST.students.filter(s => byField(s)).map(s => `<option value="${esc(s.name + ' · ' + s.cls + (s.section ? ' ' + s.section : '') + ' · ' + (s.father || '') + ' · ' + (s.phone || '') + ' · ' + (s.adm || ''))}">${esc(byField(s))}</option>`).join('')}</datalist></label>
+    <label>Search For<input list="frList" placeholder="(Enter Student Name &amp; Select From List)" onchange="const s=ST.students.find(x=>findLabel(x)===this.value);if(s){SEL.cls=s.cls;SEL.sec=s.section;setTimeout(()=>openStudent(s.id))}">
+      <datalist id="frList">${ST.students.filter(s => byField(s)).map(s => `<option value="${esc(findLabel(s))}">${SEL.by === 'name' ? '' : esc(byField(s))}</option>`).join('')}</datalist></label>
   </div>
   ${live ? `<p class="fr-note">Fees for ${esc(ST.ses)} are taken here from ${esc(live.from)} (started by ${esc(live.by)}). Next receipt number: <b>${esc(ST.next)}</b>.</p>` : startBox()}
-  ${SEL.sid ? (LD ? cardHtml() : '<p class="fr-note">Opening…</p>') : live && ST.canCollect && SEL.cls ? bulkHtml() : ''}
+  ${SEL.sid ? (LD ? (MODE === 'disc' ? discCardHtml() : cardHtml()) : '<p class="fr-note">Opening…</p>') : live && ST.canCollect && SEL.cls && MODE !== 'disc' ? bulkHtml() : ''}
   </div>`;
 }
 function startBox() {
@@ -212,16 +239,34 @@ function detailsHtml() {
 }
 function adjHtml() {
   const H = heads(), mo = (id, on) => `<select id="${id}">${MORDER.map(m => opt(String(m), ST.months[m], m === on)).join('')}</select>`;
-  const A = LD.adj || [], act = { add: 'Added', drop: 'Removed', disc: 'Discount', undisc: 'Discount taken back' };
   return `${LD.oldDue > 0 ? `<div class="fr-box"><b class="fr-red">Old Fee ${R(LD.oldDue)} is not on the fee card.</b> Like the old ERP, no receipt can be made until it is paid ("Firstly Paid Old Due Amount"). Add it to the card as the head "Old Due" (April), then collect it like any other fee. <button onclick="moveOldDue()">Add Old Due to the card</button></div>` : ''}
   <h4 class="fr-red">Add Other Fee</h4><table class="fr-form"><tr><td>Fee Type</td><td><select id="afType">${ST.feeTypes.map(t => opt(t, t)).join('')}</select></td><td>Month</td><td>${mo('afMonth', 4)}</td></tr>
     <tr><td>Amount</td><td><input id="afAmt" autocomplete="off" placeholder="Old Due: blank = all"></td><td>Remark</td><td><input id="afRemark" autocomplete="off"></td></tr>
     <tr><td colspan="4" style="text-align:center"><button onclick="addFee([SEL.sid])">Add Fee</button></td></tr></table>
-  ${ST.isPrincipal ? `<h4 class="fr-red">Fee Discount (Head Wise)</h4><table class="fr-form"><tr><td>Fee</td><td><select id="dhHead">${opt('', 'Select')}${H.filter(open).map(h => opt(h.i, ST.months[h.m] + ' - ' + h.name + ' (' + R(bal(h)) + ')')).join('')}</select></td><td>Discount</td><td><input id="dhAmt" autocomplete="off"></td></tr>
-    <tr><td colspan="4" style="text-align:center"><button onclick="giveDisc()">Give Discount</button></td></tr></table>` : ''}
-  ${A.length ? `<h4 class="fr-red">Other Fee / Fee Discount (added here)</h4><table class="fr-t"><tr class="fr-g"><td><b>Sno</b></td><td><b>Date</b></td><td><b>Type</b></td><td><b>Month</b></td><td><b>Fee</b></td><td><b>Amount</b></td><td><b>Remark</b></td><td><b>UName</b></td>${ST.isPrincipal ? '<td></td>' : ''}</tr>
-    ${A.map((x, n) => { const h = H.find(y => y.i === x.i); const can = ST.isPrincipal && h && (x.act === 'add' ? h.add && h.paid === 0 && !A.slice(n + 1).some(z => z.i === x.i) : x.act === 'disc' && (h.disc || 0) > 0 && !A.slice(n + 1).some(z => z.i === x.i && z.act !== 'disc'));
-      return `<tr><td>${n + 1}</td><td>${esc(new Date(x.at).toLocaleDateString('en-GB'))}</td><td>${esc(act[x.act] || x.act)}</td><td>${esc(ST.months[x.m] || '')}</td><td>${esc(x.name)}</td><td>${R(x.amt)}</td><td>${esc(x.remark || '')}</td><td>${esc(x.by || '')}</td>${ST.isPrincipal ? `<td>${can ? `<button class="fr-sm" onclick="headAct('${x.act === 'add' ? 'dropFee' : 'undoDisc'}',${x.i})">${x.act === 'add' ? 'Remove' : 'Undo'}</button>` : ''}</td>` : ''}</tr>`; }).join('')}</table>` : ''}`;
+  ${adjListHtml()}`;
+}
+function adjListHtml() {
+  const H = heads(), A = LD.adj || [], act = { add: 'Added', drop: 'Removed', disc: 'Discount', undisc: 'Discount taken back' };
+  if (!A.length) return '';
+  return `<h4 class="fr-red">Other Fee / Fee Discount (added here)</h4><table class="fr-t"><tr class="fr-g"><td><b>Sno</b></td><td><b>Date</b></td><td><b>Type</b></td><td><b>Month</b></td><td><b>Fee</b></td><td><b>Amount</b></td><td><b>Remark</b></td><td><b>UName</b></td>${ST.isPrincipal ? '<td></td>' : ''}</tr>
+    ${A.map((x, n) => { const h = H.find(y => y.i === x.i), later = A.slice(n + 1).some(z => z.i === x.i);
+      const canDrop = ST.isPrincipal && h && x.act === 'add' && h.add && h.paid === 0 && !later, canDisc = ST.isPrincipal && h && x.act === 'disc' && (h.disc || 0) > 0 && !later;
+      return `<tr><td>${n + 1}</td><td>${esc(new Date(x.at).toLocaleDateString('en-GB'))}</td><td>${esc(act[x.act] || x.act)}</td><td>${esc(ST.months[x.m] || '')}</td><td>${esc(x.name)}</td><td>${R(x.amt)}</td><td>${esc(x.remark || '')}</td><td>${esc(x.by || '')}</td>${ST.isPrincipal ? `<td>${canDrop ? `<button class="fr-sm" onclick="headAct('dropFee',${x.i})">Remove</button>` : ''}${canDisc ? `<button class="fr-sm" onclick="editDisc(${x.i},'${R(h.disc)}')">Edit</button> <button class="fr-sm fr-del" onclick="headAct('undoDisc',${x.i})">Delete</button>` : ''}</td>` : ''}</tr>`; }).join('')}</table>`;
+}
+// ---- the Fee Discount (Head Wise) page, laid out like studentfee_dischead.php
+function discCardHtml() {
+  const L = LD.ledger, H = heads(), live = ST.live, on = live && L && ST.isPrincipal;
+  const left = `<table class="fr-prof"><tr><td colspan="3" class="fr-red fr-b">${esc(ST.school)}</td><td rowspan="3" style="text-align:right">${/^data:image\/(jpeg|png|webp);base64,/.test(LD.photo || '') ? `<img src="${LD.photo}" height="60" width="60" alt="" style="object-fit:cover">` : ''}</td></tr>${profRows()}</table>
+    ${on ? `<table class="fr-form"><tr><td>Discount</td><td><input id="dsSum" value="${R(discSum())}" readonly></td><td>Date</td><td><input value="${esc(ST.today.split('-').join('/'))}" readonly></td></tr>
+      <tr><td>Remark</td><td><textarea oninput="DREM=this.value">${esc(DREM)}</textarea></td><td></td><td></td></tr>
+      <tr><td colspan="4" style="text-align:center"><button class="fr-submit" onclick="submitDisc()" ${BUSY ? 'disabled' : ''}>${BUSY ? 'Saving…' : 'Submit'}</button></td></tr></table>`
+      : `<p class="fr-note">${!live ? 'Fees for ' + esc(ST.ses) + ' are still taken in the old ERP — give the discount there till the Principal starts this session here.' : !L ? 'This child has no fee card for this session yet.' : 'Only the Principal can give a discount.'}</p>`}`;
+  const right = L ? `<table class="fr-t fr-fee fr-dh"><tr class="fr-dhr"><td colspan="6" style="text-align:center"><b>Fee Details</b></td></tr>
+    <tr class="fr-dhr"><td>Fee Name</td><td>Amount</td><td>Paid/Disc Amount</td><td>Balance</td><td>Disc</td><td>Status</td></tr>
+    ${MORDER.filter(m => H.some(h => h.m === m)).map(m => `<tr class="fr-dhm"><td colspan="6"><b>${esc(ST.months[m])}</b></td></tr>` +
+      H.filter(h => h.m === m).map(h => `<tr class="fr-dhl"><td>${esc(h.name)}</td><td>${R(h.amt)}</td><td>${R(h.paid)}</td><td>${R(bal(h))}</td>
+        <td>${on && open(h) ? `<input class="fr-disc" value="${esc(DISC[h.i] ?? '0')}" oninput="setDisc(${h.i},this.value)" onfocus="this.select()" autocomplete="off" inputmode="decimal">` : ''}</td><td>${h.na ? 'Not-Active' : bal(h) <= 0 ? 'Paid' : 'Not Paid'}</td></tr>`).join('')).join('')}</table>` : oldDetails();
+  return `<div class="fr-grid"><div>${left}<h4 class="fr-red">Fee Receipt</h4>${receiptsHtml()}</div><div>${right}</div></div>${L ? adjListHtml() : ''}`;
 }
 function bulkHtml() {
   const kids = ST.students.filter(s => s.ledger && s.cls === SEL.cls && (!SEL.sec || s.section === SEL.sec));

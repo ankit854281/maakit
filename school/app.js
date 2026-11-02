@@ -3845,12 +3845,15 @@ VIEWS.finance=()=>'<iframe class="edu-iframe" title="Fee Department" src="financ
 VIEWS.office=()=>'<iframe class="edu-iframe" title="School Office" src="registers.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.m?'&m='+encodeURIComponent(P.m):'')+(P&&P.t?'&t='+encodeURIComponent(P.t):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Fee Receipt — old-ERP style fee collection (school/feecollect.php), the one place fees are taken once a session is started there.
 for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['feereceipt','fa-receipt','Fee Receipt']);
-VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+VIEWS.feereceipt=()=>'<iframe class="edu-iframe" title="Fee Receipt" src="feecollect.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.sid?'&sid='+encodeURIComponent(P.sid):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+// Old ERP Fee › Fee Discount (Head Wise): same Fee Receipt page with a Disc box on every head (Principal only; the server checks too).
+NAV.principal.push(['feedisc','fa-percent','Fee Discount (Head Wise)']);
+VIEWS.feedisc=()=>'<iframe class="edu-iframe" title="Fee Discount (Head Wise)" src="feecollect.php?embed=1&mode=disc&session='+encodeURIComponent(viewSession())+(P&&P.sid?'&sid='+encodeURIComponent(P.sid):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Progress Report — old ERP Examination-I cards + marks entry in the same components (school/progress.php).
 for (const role of ['principal','chairman','teacher']) NAV[role].push(['progress','fa-file-lines','Progress Report']);
 // Student Master — the old ERP's Add Student / Edit-Update Student / Student Search form, field for field (school/stumaster.php).
 for (const role of ['principal','chairman']) NAV[role].push(['stumaster','fa-user-graduate','Student Master']);
-VIEWS.stumaster=()=>'<iframe class="edu-iframe" title="Student Master" src="stumaster.php?embed=1&m='+encodeURIComponent(P&&P.m?P.m:'list')+(P&&P.id?'&id='+encodeURIComponent(P.id):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
+VIEWS.stumaster=()=>'<iframe class="edu-iframe" title="Student Master" src="stumaster.php?embed=1&m='+encodeURIComponent(P&&P.m?P.m:'list')+(P&&P.id?'&id='+encodeURIComponent(P.id):'')+(P&&P.q?'&q='+encodeURIComponent(P.q):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Fee Reports — the old ERP's fee reports in its own layout (school/feereports.php), old ERP and new receipts together.
 for (const role of ['principal','chairman','accountant']) NAV[role].push(['feereports','fa-file-invoice','Fee Reports']);
 VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
