@@ -24,8 +24,8 @@ svg.i{width:18px;height:18px;flex-shrink:0}.ill{display:block}
 .loc .w{flex:1;min-width:0}.loc .w small{display:block;font-size:11.5px;opacity:.85}.loc .w b{display:block;font-size:17px;font-weight:600;line-height:1.25}
 .sesb{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:5px 10px}
 .av{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.8);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;overflow:hidden}.av img{width:100%;height:100%;object-fit:cover}
-.tabs{position:relative;display:grid;grid-template-columns:repeat(5,1fr);margin:6px 8px 0}
-.fold{position:absolute;left:0;top:0;bottom:0;width:20%;background:rgba(255,255,255,.2);border-radius:16px 16px 0 0;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.tabs{position:relative;display:grid;grid-template-columns:repeat(6,1fr);margin:6px 6px 0}
+.fold{position:absolute;left:0;top:0;bottom:0;width:calc(100% / 6);background:rgba(255,255,255,.2);border-radius:16px 16px 0 0;transition:transform .5s cubic-bezier(.22,1,.36,1)}
 .fold::before,.fold::after{content:"";position:absolute;bottom:0;width:14px;height:14px}
 .fold::before{left:-14px;background:radial-gradient(circle at 0 0,transparent 13.5px,rgba(255,255,255,.2) 14px)}
 .fold::after{right:-14px;background:radial-gradient(circle at 100% 0,transparent 13.5px,rgba(255,255,255,.2) 14px)}
@@ -167,3 +167,26 @@ h2{margin:0;font-size:15px;font-weight:600}.row{display:flex;align-items:center;
 .tbl td.l,.tbl th.l{white-space:normal;min-width:120px}
 .tbl tr.hl td{background:var(--tint)}
 .rbtns{display:flex;gap:8px}.rbtns .cta{height:42px;font-size:13px}
+
+/* School tab, call diary (Nov 2026) */
+.tab{font-size:10px}.tab .ill{width:32px;height:32px}
+.inp textarea{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:13.5px;background:transparent;min-height:84px;padding:10px 0;resize:vertical}
+.cgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.cc{position:relative;border:0;text-align:left;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(20,20,30,.05);padding:12px;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.cc b{font-size:17px;font-weight:600;color:var(--a)}.cc small{font-size:10.5px;color:var(--muted);line-height:1.35}.cc em{font-style:normal;font-weight:600;color:var(--ink)}
+.cc i{position:absolute;right:-12px;top:-12px;width:46px;height:46px;border-radius:50%;background:var(--tint)}
+.bar{height:7px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--a2),var(--a))}
+.bar.bad i{background:linear-gradient(90deg,#F59AB8,#C81F64)}.bar.ok i{background:linear-gradient(90deg,#6EE7A8,#14915A)}
+.sl{display:flex;flex-direction:column;gap:12px}.sl>div{font-size:12px}.sl .row b{font-weight:600}.sl .row span{color:var(--muted);font-size:11px}
+.dl{display:flex;flex-direction:column;gap:10px}
+.de{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.de .h{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}.de .h b{color:var(--ink);font-weight:600}
+.de .s{font-size:13px;font-weight:600;margin:3px 0 2px;cursor:pointer}.de .s small{font-weight:400;color:var(--muted);font-size:11px}
+.de .o{display:inline-block;font-size:10.5px;font-weight:600;border-radius:6px;padding:2px 7px;background:var(--tint);color:var(--a);margin:2px 4px 2px 0}
+.de .o.bad{background:var(--badbg);color:var(--bad)}.de .o.ok{background:var(--okbg);color:var(--ok)}
+.de q{display:block;quotes:none;margin-top:6px;padding:8px 10px;border-left:3px solid var(--a);background:var(--bg);border-radius:0 8px 8px 0;font-size:12.5px;line-height:1.45;white-space:pre-wrap}
+.de q.auto{border-left-color:var(--faint);color:var(--muted);font-size:11.5px}
+.phr{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 12px}.phr button{border:1px solid #E7E7EE;background:#fff;border-radius:999px;padding:5px 10px;font-size:11.5px}
+.wch{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+details.rc{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:8px;background:#fff}details.rc summary{font-size:12.5px;font-weight:600;cursor:pointer}details.rc summary small{font-weight:400;color:var(--muted)}
+.selx{border:1px solid #E7E7EE;border-radius:10px;height:38px;background:#fff;font:inherit;font-size:12.5px;padding:0 8px;width:100%;margin-bottom:12px}

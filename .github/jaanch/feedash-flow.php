@@ -25,7 +25,7 @@ function fdreq($path, $token, $body = null) {
 $db = sch_db();
 $oldSettings = sch_rec_get('settings', 'main');
 $C = fdtok('chairman', 'chairman'); $P = fdtok('principal', 'principal'); $R = fdtok('reception', 'reception'); $T = fdtok('fd-teacher', 'teacher');
-$clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND (r LIKE 'oldfeecard|%' OR r LIKE 'oldreceipt|fd%')) OR (k='student' AND r IN ('fd-s1','fd-s2')) OR (k='acctCall' AND d LIKE '%fd-s1%') OR (k='regRow' AND r LIKE 'oldrcptdet|fd%') OR (k='fdTag' AND r IN ('fd-s1','fd-s2')) OR (k='fdMsg' AND d LIKE '%fd-s%')"); };
+$clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND (r LIKE 'oldfeecard|%' OR r LIKE 'oldreceipt|fd%')) OR (k='student' AND r IN ('fd-s1','fd-s2')) OR (k='acctCall' AND d LIKE '%fd-s1%') OR (k='regRow' AND r LIKE 'oldrcptdet|fd%') OR (k='fdTag' AND r IN ('fd-s1','fd-s2')) OR (k='fdMsg' AND d LIKE '%fd-s%') OR (k='regRow' AND (r LIKE 'oldmarks|fd%' OR r LIKE 'employee|fd%')) OR (k='studAtt' AND r='2026-04-02|2nd')"); };
 try {
     $clean();
     sch_rec_put('settings', 'main', ['session' => '2026-27', 'sessionStart' => '2026-04-01', 'school' => 'Synthetic Dash School', 'place' => 'Test'], 'principal');
@@ -63,7 +63,26 @@ try {
     [$c] = fdreq('feedash_api.php?a=msgLog', $C, ['sids' => [], 'kind' => 'x']); fd($c === 400, 'a message needs students');
     [$c, $x] = fdreq('feedash_api.php?a=msgLog', $C, ['sids' => ['fd-s1', 'fd-s2', 'fd-s1'], 'kind' => 'Nothing paid yet', 'text' => 'synthetic']); fd($c === 200 && $x['msg']['sids'] === ['fd-s1', 'fd-s2'], 'message logged once per child ' . json_encode($x));
     [$c, $d] = fdreq('feedash_api.php?a=data&ses=2026-27', $C); fd((bool)array_filter($d['msgs'], fn($m) => $m['kind'] === 'Nothing paid yet' && in_array('fd-s2', $m['sids'], true)), 'message shows in the log');
-    echo "Fee Control Room: roles, Reception without money, dues from the fee card, today's receipt with transport split, tags with fixed plan, the call log and the message log passed\n";
+    // Chairman / Principal write down a call themselves: when, with whom, what was discussed
+    [$c] = fdreq('feedash_api.php?a=callNote', $T, ['sid' => 'fd-s1', 'outcome' => 'Talked to parent', 'note' => 'x']); fd($c === 403, 'teacher cannot write a fee call');
+    [$c] = fdreq('feedash_api.php?a=callNote', $C, ['sid' => 'fd-s1', 'outcome' => 'Talked to parent', 'note' => '  ']); fd($c === 400, 'a call where we spoke needs what was discussed');
+    [$c] = fdreq('feedash_api.php?a=callNote', $C, ['sid' => 'fd-s1', 'outcome' => 'Promised to pay', 'note' => 'x']); fd($c === 400, 'a promise needs its date');
+    [$c] = fdreq('feedash_api.php?a=callNote', $C, ['sid' => 'fd-s1', 'outcome' => 'Made up', 'note' => 'x']); fd($c === 400, 'unknown call result refused');
+    [$c] = fdreq('feedash_api.php?a=callNote', $C, ['sid' => 'fd-s1', 'outcome' => 'Not answered']); fd($c === 200, 'not answered needs no note');
+    $st = (int)round(microtime(true) * 1000) - 600000;
+    [$c, $x] = fdreq('feedash_api.php?a=callNote', $C, ['sid' => 'fd-s1', 'outcome' => 'Promised to pay', 'with' => 'Mother', 'note' => 'Synthetic: salary on the 10th', 'promise' => date('Y-m-d', time() + 5 * 86400), 'amount' => '1,580', 'startedAt' => $st]);
+    fd($c === 200 && $x['call']['amount'] === 158000 && $x['call']['with'] === 'Mother' && $x['call']['startedAt'] === $st && $x['call']['session'] === '2026-27' && $x['call']['by'] !== '', 'call with discussion saved ' . json_encode($x));
+    [$c, $d] = fdreq('feedash_api.php?a=data&ses=2026-27', $C); fd((bool)array_filter($d['calls'], fn($k) => ($k['note'] ?? '') === 'Synthetic: salary on the 10th'), 'the call shows in the call log');
+    // School tab data: Principal and Chairman only; staff register without ID / bank fields
+    sch_rec_put('regRow', 'oldmarks|fd1', ['session' => '2025-26', 'exam' => 'Final (Term-1 + Term-2)', 'student' => 'fd-s1', 'name' => 'Synthetic Dash One', 'cls' => '1st', 'marks' => ['English' => ['Term-1 PAT (10)' => '9', 'Term-1 Total (100)' => '88']], 'total' => '88/100', 'percent' => '88', 'grade' => 'A2', 'rank' => '1', 'attendance' => '170/180'], 'principal');
+    sch_rec_put('regRow', 'employee|fd1', ['name' => 'Synthetic Staff', 'designation' => 'PRT', 'category' => 'Teaching', 'status' => 'Active', 'aadhar' => 'SYN-AADHAR-999', 'pan' => 'SYNPAN', 'bankAc' => '4321'], 'principal');
+    sch_rec_put('studAtt', '2026-04-02|2nd', ['absent' => ['fd-s2']], 'principal');
+    [$c] = fdreq('feedash_api.php?a=school', $R); fd($c === 403, 'reception cannot open the School tab');
+    [$c, $d] = fdreq('feedash_api.php?a=school', $C); fd($c === 200 && $d['att']['2026-04-02']['2nd'] === ['fd-s2'], 'attendance for the chairman');
+    $o = array_values(array_filter($d['old'], fn($r) => $r['sid'] === 'fd-s1'));
+    fd(count($o) === 1 && (float)$o[0]['pct'] === 88.0 && $o[0]['att'] === '170/180' && array_keys($o[0]['subs']['English']) === ['Term-1 Total (100)'], 'old report card, subject totals only ' . json_encode($o));
+    $raw = json_encode($d['employees']); fd(str_contains($raw, 'Synthetic Staff') && !str_contains($raw, 'SYN-AADHAR') && !str_contains($raw, 'SYNPAN') && !str_contains($raw, '4321'), 'staff register without ID / bank');
+    echo "Fee Control Room: roles, Reception without money, dues from the fee card, today's receipt with transport split, tags with fixed plan, the call log, the message log, calls written with what was discussed and the School tab data passed\n";
 } finally {
     $clean();
     if ($oldSettings !== null) sch_rec_put('settings', 'main', $oldSettings, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='settings' AND r='main'");

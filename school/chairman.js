@@ -55,7 +55,8 @@ const TH = [
   { name: 'Month', head: 'linear-gradient(180deg,#FF7D32 0%,#F2600F 100%)', a: '#E8590C', a2: '#FF7D32', soft: '#FFE6D6', tint: '#FFF4EC', sh: 'rgba(242,96,15,.28)', page: 'linear-gradient(180deg,#FFEBDD 0%,rgba(247,247,249,0) 100%)', icon: 't_month' },
   { name: 'Dues', head: 'linear-gradient(180deg,#E3417F 0%,#C81F64 100%)', a: '#C81F64', a2: '#E3417F', soft: '#FADBE7', tint: '#FDF0F5', sh: 'rgba(200,31,100,.26)', page: 'linear-gradient(180deg,#FBE1EB 0%,rgba(247,247,249,0) 100%)', icon: 't_dues' },
   { name: 'Calling', head: 'linear-gradient(180deg,#22B573 0%,#14915A 100%)', a: '#14915A', a2: '#22B573', soft: '#D5F2E3', tint: '#EEFAF3', sh: 'rgba(20,145,90,.26)', page: 'linear-gradient(180deg,#DDF4E8 0%,rgba(247,247,249,0) 100%)', icon: 't_call' },
-  { name: 'Reports', head: 'linear-gradient(180deg,#14B8C4 0%,#0B8A99 100%)', a: '#0B8A99', a2: '#14B8C4', soft: '#CFF3F6', tint: '#ECFAFB', sh: 'rgba(11,138,153,.26)', page: 'linear-gradient(180deg,#D9F5F7 0%,rgba(247,247,249,0) 100%)', icon: 't_rep' }
+  { name: 'Reports', head: 'linear-gradient(180deg,#14B8C4 0%,#0B8A99 100%)', a: '#0B8A99', a2: '#14B8C4', soft: '#CFF3F6', tint: '#ECFAFB', sh: 'rgba(11,138,153,.26)', page: 'linear-gradient(180deg,#D9F5F7 0%,rgba(247,247,249,0) 100%)', icon: 't_rep' },
+  { name: 'School', head: 'linear-gradient(180deg,#A66CF0 0%,#7C3AED 100%)', a: '#6D28D9', a2: '#A66CF0', soft: '#EADCFD', tint: '#F6F0FE', sh: 'rgba(109,40,217,.26)', page: 'linear-gradient(180deg,#EFE4FE 0%,rgba(247,247,249,0) 100%)', icon: 'school' }
 ];
 // Small drawings in the Trial App's flat style
 const ILL = {
@@ -167,7 +168,7 @@ function render() {
   const hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const layers = TH.map((th, i) => `<div class="hb" style="background:${th.head};opacity:${i === S.tab ? 1 : 0}"></div>`).join('');
   const tabs = TH.map((th, i) => `<button class="tab${i === S.tab ? ' on' : ''}" role="tab" aria-selected="${i === S.tab}" onclick="setTab(${i})">${ill(th.icon)}<span>${th.name}</span></button>`).join('');
-  const body = S.q.trim() ? searchBody() : [overview, monthBody, duesBody, callBody, repBody][S.tab]();
+  const body = S.q.trim() ? searchBody() : [overview, monthBody, duesBody, callBody, repBody, schoolBody][S.tab]();
   $('app').innerHTML = `<div class="head">${layers}
       <div class="loc"><div class="w"><small>${greet}</small><b>Welcome, Chairman Sir</b></div><button class="sesb" onclick="sheet('ses')">${esc(longSes(D.ses))} ${ic('down', 12)}</button><button class="av" aria-label="Menu" onclick="sheet('me')"><img src="${LOGO}" alt=""></button></div>
       <div class="tabs" role="tablist"><span class="fold" style="transform:translateX(${S.tab * 100}%)"></span>${tabs}</div>
@@ -208,7 +209,7 @@ function people(rows, opt) {
       <small>${x.since ? 'Due since ' + esc(x.since) + ' · ' : ''}${x.unpaid.length ? 'Unpaid: ' + esc(x.unpaid.join(', ')) : x.old ? 'Old dues only' : 'No dues'}${x.old && x.unpaid.length ? ' · old ' + rs(x.old) : ''}</small>
       ${x.lastMsg ? `<small>Message sent ${dmy(x.lastMsg.date)} · ${esc(x.lastMsg.kind)}</small>` : ''}
       ${x.last ? `<small>Last call ${dmy(x.last.date)}: ${esc(x.last.outcome)}${x.promise ? ' · date ' + dmy(x.promise) : ''}</small>` : opt.calls ? '<small>Not called yet</small>' : ''}</div>
-    <div class="r"><b>${rs(opt.month ? x.monDue : x.dueNow)}</b><div class="acts">${x.phoneNo ? `<a class="c" href="tel:+91${x.phoneNo}" aria-label="Call">${ic('phone', 15)}</a><a class="w" target="_blank" rel="noopener" href="https://wa.me/91${x.phoneNo}?text=${encodeURIComponent(fillMsg(TPL.reminder[S.lang], x))}" onclick="logMsg(['${esc(x.sid)}'],'Fee reminder',fillMsg(TPL.reminder[S.lang], D.all.find(z=>z.sid==='${esc(x.sid)}')))" aria-label="WhatsApp reminder">${ic('wa', 15)}</a>` : ''}${opt.calls && D.canCall ? `<button class="s" onclick="S.open='${esc(x.sid)}';sheet('call')" aria-label="Save call result">${ic('note', 15)}</button>` : ''}</div></div></div>`).join('')}</div>`;
+    <div class="r"><b>${rs(opt.month ? x.monDue : x.dueNow)}</b><div class="acts">${x.phoneNo ? `<a class="c" href="tel:+91${x.phoneNo}" onclick="callNow('${esc(x.sid)}')" aria-label="Call">${ic('phone', 15)}</a><a class="w" target="_blank" rel="noopener" href="https://wa.me/91${x.phoneNo}?text=${encodeURIComponent(fillMsg(TPL.reminder[S.lang], x))}" onclick="logMsg(['${esc(x.sid)}'],'Fee reminder',fillMsg(TPL.reminder[S.lang], D.all.find(z=>z.sid==='${esc(x.sid)}')))" aria-label="WhatsApp reminder">${ic('wa', 15)}</a>` : ''}${opt.calls ? `<button class="s" onclick="noteCall('${esc(x.sid)}')" aria-label="Write what was discussed">${ic('note', 15)}</button>` : ''}</div></div></div>`).join('')}</div>`;
 }
 // ---- fee messages to parents (WhatsApp). {name} {class} {due} {months} {since} {old} {month} {monthdue} {paid} {school}
 const TPL = {
@@ -278,7 +279,8 @@ function overview() {
     </div>
     <div class="row"><h2>Classes</h2><span class="mut">tap to filter</span></div>
     <div class="hscroll"><button class="cat${!S.cls ? ' on' : ''}" onclick="setF('cls','')"><span>All</span>Classes</button>${cls.map(x => `<button class="cat${S.cls === x.c ? ' on' : ''}" onclick="setF('cls','${x.c}')"><span>${esc(x.c)}<em>${pct(x.paid, x.paid + x.due)}%</em></span>${rsS(x.due)} due</button>`).join('')}</div>
-    ${card('Fee Calling today', `<div class="stat"><button class="st" onclick="S.list='today';setTab(3)"><b>${callsToday}</b><span>Calls made today</span></button><button class="st" onclick="S.list='today';setTab(3)"><b>${L.today.length}</b><span>Follow-ups due</span></button>
+    ${schoolToday()}
+    ${card('Fee Calling today', `<div class="stat"><button class="st" onclick="S.cmode='diary';S.df='today';setTab(3)"><b>${callsToday}</b><span>Calls made today · see what was discussed</span></button><button class="st" onclick="S.list='today';setTab(3)"><b>${L.today.length}</b><span>Follow-ups due</span></button>
       <button class="st bad" onclick="S.list='broken';setTab(3)"><b>${L.broken.length}</b><span>Promises broken · ${rsS(sum(L.broken, x => x.dueNow))}</span></button><button class="st" onclick="S.list='fresh';setTab(3)"><b>${L.fresh.length}</b><span>Not called in 7 days</span></button>
       <button class="st bad" onclick="setTab(2)"><b>${D.kids.filter(x => x.zero && x.dueNow > 0).length}</b><span>Paid ₹0 this session</span></button><button class="st ok" onclick="S.cmode='log';setTab(3)"><b>${sum(D.msgs.filter(m => m.date === D.today), m => (m.sids || []).length)}</b><span>Messages sent today</span></button></div>
       <div style="height:10px"></div><button class="cta" onclick="msgTo('zero')">${ic('wa', 18)} Message parents who paid ₹0</button>`)}
@@ -367,9 +369,10 @@ function zeroCard() {
 function msgTo(aud, tag) { S.aud = aud; S.tpl = AUD_TPL[aud]; S.mtext = null; MQ = null; S.cmode = 'msg'; if (tag !== undefined) S.tag = tag; calc(); setTab(3); }
 // ---------------------------------------------------------------- Calling
 function callBody() {
-  const seg = `<div class="seg">${[['calls', 'Calls'], ['msg', 'Send messages'], ['log', 'Sent messages']].map(([k2, l]) => `<button class="${S.cmode === k2 ? 'on' : ''}" onclick="S.cmode='${k2}';MQ=null;render()">${l}</button>`).join('')}</div>`;
+  const seg = `<div class="seg">${[['calls', 'Calls'], ['diary', 'Call diary'], ['msg', 'Messages'], ['log', 'Sent']].map(([k2, l]) => `<button class="${S.cmode === k2 ? 'on' : ''}" onclick="S.cmode='${k2}';MQ=null;render()">${l}</button>`).join('')}</div>`;
   if (S.cmode === 'msg') return seg + msgBody();
   if (S.cmode === 'log') return seg + msgLogBody();
+  if (S.cmode === 'diary') return seg + diaryBody();
   return seg + callBodyCalls();
 }
 function msgAudience() { const f = (AUD.find(a => a[0] === S.aud) || AUD[0])[2]; let L = D.kids.filter(f); if (S.skipSent) L = L.filter(x => !(x.lastMsg && x.lastMsg.date === D.today)); return L.sort((a, b) => CLASSES.indexOf(a.cls) - CLASSES.indexOf(b.cls) || a.name.localeCompare(b.name)); }
@@ -426,7 +429,8 @@ function callBodyCalls() {
 }
 // ---------------------------------------------------------------- Reports: many report types, many filters
 const RT = [['mcoll', '💰', 'Monthly collection'], ['students', '👨‍🎓', 'Student-wise dues'], ['zero', '🚫', 'Paid ₹0'], ['ledger', '📒', 'Full record (all students)'], ['class', '🏫', 'Class-wise'], ['tag', '🏷️', 'Tag-wise'], ['head', '📚', 'Fee head-wise'], ['month', '📅', 'Month-wise'],
-  ['receipts', '🧾', 'Receipt register'], ['ageing', '⏳', 'Dues by months'], ['old', '📜', 'Old dues'], ['discount', '✂️', 'Discounts & cancels']];
+  ['receipts', '🧾', 'Receipt register'], ['ageing', '⏳', 'Dues by months'], ['old', '📜', 'Old dues'], ['discount', '✂️', 'Discounts & cancels'],
+  ['calls', '📞', 'Call diary'], ['attend', '🗓️', 'Attendance'], ['result', '🎓', 'Results / report cards']];
 const RF = { type: 'mcoll', sec: '', fac: '', scheme: '', dmin: '', dmax: '', months: '', old: '', paid: '', upto: '', from: '', to: '', mode: '', user: '', sort: 'due' };
 const hasTr = x => x.heads.some(h => isTr(h.name));
 function repKids() {
@@ -535,13 +539,14 @@ function repBody() {
     sumv = [['Discount receipts', Dd.length], ['Discount given', rsS(sum(Dd, r => r.discount))], ['Cancelled', Cx.length], ['Cancelled amount', rsS(sum(Cx, r => r.received))]];
     body = repTable(['Date', 'Receipt', 'Student', 'Class', 'Type', 'Amount', 'By'], [...Dd.map(r => [dmy(r.date), r.no, r.name, r.cls, 'Discount', money2(r.discount), r.user]), ...Cx.map(r => [dmy(r.date), r.no, r.name, r.cls, { v: 'Cancelled', t: 'Cancelled', c: 'red' }, red(r.received), r.user])], null, [, , 'l']);
   }
+  else if (T === 'calls' || T === 'attend' || T === 'result') { const o = repSchool(T, K); sumv = o.sumv; body = o.body; }
   const sortSel = T === 'students' ? `<select onchange="setRF('sort',this.value)" style="border:1px solid #E7E7EE;border-radius:10px;height:34px;background:#fff;font-size:12px"><option value="due" ${RF.sort === 'due' ? 'selected' : ''}>Highest due</option><option value="class" ${RF.sort === 'class' ? 'selected' : ''}>Class</option><option value="name" ${RF.sort === 'name' ? 'selected' : ''}>Name</option></select>` : '';
   return `<div class="rtypes">${RT.map(([key, icon, l]) => `<button class="rt${T === key ? ' on' : ''}" onclick="setRF('type','${key}')"><i>${icon}</i>${esc(l)}</button>`).join('')}</div>
     ${fchips()}
     <div class="kp">${sumv.map(([l, v]) => k(l, String(v), '', '')).join('')}</div>
     <section class="card"><h3>${esc(RT.find(x => x[0] === T)[2])}${sortSel}</h3>${body}
       <div class="rbtns" style="margin-top:12px"><button class="cta" onclick="downloadRep()">Download (Excel)</button><button class="cta lt" onclick="copyRep()">Copy</button></div>
-      <p class="note">Session ${esc(longSes(D.ses))}. "Due (to month)" counts fee months up to ${MN[RF.upto ? +RF.upto : (D.idx < 0 ? 4 : MORDER[Math.min(D.idx, 11)])]} plus old dues.</p></section>`;
+      ${['calls', 'attend', 'result'].includes(T) ? '' : `<p class="note">Session ${esc(longSes(D.ses))}. "Due (to month)" counts fee months up to ${MN[RF.upto ? +RF.upto : (D.idx < 0 ? 4 : MORDER[Math.min(D.idx, 11)])]} plus old dues.</p>`}</section>`;
 }
 function repText(sep) { if (!REP) return ''; const q = v => { v = String(v ?? ''); return sep === ',' && /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [REP.head, ...REP.rows, ...(REP.foot ? [REP.foot] : [])].map(r => r.map(q).join(sep)).join('\n'); }
 function downloadRep() {
@@ -580,33 +585,29 @@ function searchBody() {
 // ---- one student's full record: since when what is due, what was paid, every receipt, calls and messages
 function openStu(sid) { S.open = sid; sheet('stu'); }
 function stuSheet() {
-  const x = D.all.find(z => z.sid === S.open); if (!x) return '';
+  const x = D.all.find(z => z.sid === S.open); if (!x) return stuSheetLite(S.open);
   const rows = x.mon.map((y, i) => { const due = Math.max(0, y.fd - y.fp) + Math.max(0, y.td - y.tp), st = y.fd + y.td === 0 ? '—' : due === 0 ? 'Paid' : i > D.idx ? 'Not due yet' : y.fp + y.tp > 0 ? 'Part paid' : 'Unpaid';
     return `<tr class="${st === 'Unpaid' || st === 'Part paid' ? 'hl' : ''}"><td>${MN[y.m].slice(0, 3)} ${ymOf(y.m).slice(2, 4)}</td><td>${rs(y.fd)}</td><td>${rs(y.td)}</td><td>${rs(y.fp + y.tp)}</td><td class="${due && i <= D.idx ? 'red' : ''}">${rs(due)}</td><td>${st}</td></tr>`; }).join('');
   return `<h2>${esc(x.name)}</h2><p class="mut" style="margin:-6px 0 10px">${esc(x.cls)}${x.section ? '-' + esc(x.section) : ''} · ${esc(x.father || '')}${x.adm ? ' · Adm ' + esc(x.adm) : ''}${x.tag ? ` · <span class="tag">${esc(x.tag)}</span>` : ''}</p>
     <div class="kp">${k('Due till now', rs(x.dueNow), x.since ? 'since ' + esc(x.since) : 'nothing due', x.dueNow ? 'bad' : 'ok')}${k('Paid + discount', rs(x.paid), 'this session on the fee card', 'ok')}
       ${k('Session fee', rs(x.annual), `Overall due ${rs(x.yearBal)}`)}${k('Old dues', rs(x.old), 'earlier sessions', x.old ? 'warn' : '')}</div>
-    <div class="acts" style="margin:12px 0;gap:10px">${x.phoneNo ? `<a class="cta" style="flex:1;height:42px" href="tel:+91${x.phoneNo}">${ic('phone', 16)} Call</a><a class="cta" style="flex:1;height:42px;background:#25D366" target="_blank" rel="noopener" href="https://wa.me/91${x.phoneNo}?text=${encodeURIComponent(remind(x))}" onclick="logMsg(['${esc(x.sid)}'],'Fee reminder',remind(D.all.find(z=>z.sid==='${esc(x.sid)}')))">${ic('wa', 16)} Reminder</a>` : '<p class="note">No mobile number on record.</p>'}</div>
+    <div class="acts" style="margin:12px 0;gap:10px">${x.phoneNo ? `<a class="cta" style="flex:1;height:42px" href="tel:+91${x.phoneNo}" onclick="callNow('${esc(x.sid)}')">${ic('phone', 16)} Call</a><a class="cta" style="flex:1;height:42px;background:#25D366" target="_blank" rel="noopener" href="https://wa.me/91${x.phoneNo}?text=${encodeURIComponent(remind(x))}" onclick="logMsg(['${esc(x.sid)}'],'Fee reminder',remind(D.all.find(z=>z.sid==='${esc(x.sid)}')))">${ic('wa', 16)} Reminder</a>` : '<p class="note">No mobile number on record.</p>'}</div>
     <label class="lbl">MONTH BY MONTH · ${esc(longSes(D.ses))}</label><div class="tw"><table class="tbl"><tr><th>Month</th><th>Fee</th><th>Transport</th><th>Paid</th><th>Due</th><th>Status</th></tr>${rows}
       <tr class="tot"><td>Total</td><td>${rs(sum(x.mon, y => y.fd))}</td><td>${rs(sum(x.mon, y => y.td))}</td><td>${rs(x.paid)}</td><td>${rs(x.yearBal - x.old)}</td><td></td></tr></table></div>
     <label class="lbl" style="margin-top:14px">RECEIPTS · ${x.rcs.length}</label>${x.rcs.length ? `<div class="tw"><table class="tbl"><tr><th>Date</th><th>Receipt</th><th>Session</th><th>Months</th><th>Amount</th><th>Discount</th><th>Mode</th></tr>${x.rcs.map(r => `<tr><td>${dmy(r.date)}</td><td>${esc(r.no)}</td><td>${esc(longSes(r.session))}</td><td>${esc(r.months || '')}</td><td>${rs(r.received)}</td><td>${rs(r.discount)}</td><td>${esc(r.mode)}</td></tr>`).join('')}
       <tr class="tot"><td>Total</td><td></td><td></td><td></td><td>${rs(sum(x.rcs, r => r.received))}</td><td>${rs(sum(x.rcs, r => r.discount))}</td><td></td></tr></table></div>` : '<p class="note">No receipt on record.</p>'}
-    <label class="lbl" style="margin-top:14px">CALLS AND MESSAGES</label>${x.calls.length || x.msgs.length ? `<p class="note">${[...x.calls.map(c => ({ d: c.date, t: 'Call: ' + c.outcome + (c.promise ? ' · date ' + dmy(c.promise) : '') + ' · ' + (c.by || '') })), ...x.msgs.map(m => ({ d: m.date, t: 'Message: ' + m.kind + ' · ' + (m.by || '') }))].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 12).map(e => dmy(e.d) + ' · ' + esc(e.t)).join('<br>')}</p>` : '<p class="note">No call or message yet.</p>'}`;
+    <label class="lbl" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between">CALLS — WHEN AND WHAT WAS DISCUSSED <button class="fchip add" onclick="noteCall('${esc(x.sid)}')">＋ Write a call</button></label>
+    ${x.calls.length ? diaryList(x.calls.slice(0, 20)) : '<p class="note">No call yet. After talking to the parent, tap “Write a call” and note what was discussed.</p>'}
+    <label class="lbl" style="margin-top:14px">MESSAGES · ${x.msgs.length}</label>${x.msgs.length ? `<p class="note">${x.msgs.slice(0, 12).map(m => dmy(m.date) + ' · ' + esc(m.kind) + ' · ' + esc(m.by || '')).join('<br>')}</p>` : '<p class="note">No message sent yet.</p>'}
+    ${stuSchool(x.sid)}`;
 }
 function sheetBody() {
   if (S.sheet === 'stu') return stuSheet();
   if (S.sheet === 'ses') return `<h2>Session</h2>${D.sessions.map(s => `<button class="opt${s === D.ses ? ' on' : ''}" onclick="S.sheet=null;S.m=0;load('${esc(s)}')">${esc(longSes(s))}</button>`).join('')}`;
   if (S.sheet === 'filter') return `<h2>Filter</h2><label class="lbl">TAG</label>${[null, ...D.tags].map(t => `<button class="opt${S.tag === t ? ' on' : ''}" onclick="S.sheet=null;setF('tag',${esc(JSON.stringify(t))})">${esc(t === null ? 'All tags' : t)} <small>${(t === null ? D.all : D.all.filter(x => x.tagName === t)).length} students</small></button>`).join('')}
     <label class="lbl" style="margin-top:14px">CLASS</label><div class="inp"><select onchange="S.sheet=null;setF('cls',this.value)"><option value="">All classes</option>${CLASSES.filter(c => D.all.some(x => x.cls === c)).map(c => `<option ${S.cls === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
-  if (S.sheet === 'call') {
-    const x = D.all.find(z => z.sid === S.open); if (!x) return '';
-    return `<h2>Call result · ${esc(x.name)}</h2><p class="mut" style="margin:-4px 0 12px">${esc(x.cls)} · ${esc(x.father || '')} · due ${rs(x.dueNow)}</p>
-      <label class="lbl">WHAT HAPPENED</label><div class="inp"><select id="cO">${D.outcomes.map(o => `<option>${esc(o)}</option>`).join('')}</select></div>
-      <label class="lbl">DATE THEY GAVE</label><div class="inp"><input id="cD" type="date" min="${D.today}" value="${addDays(D.today, 3)}"></div>
-      <label class="lbl">NOTE</label><div class="inp"><input id="cN" maxlength="200" placeholder="Optional"></div>
-      <button class="cta" onclick="saveCall()" ${BUSY ? 'disabled' : ''}>Save call result</button>
-      ${x.calls.length ? `<p class="note">${x.calls.slice(0, 5).map(c => `${dmy(c.date)} · ${esc(c.outcome)}${c.promise ? ' · ' + dmy(c.promise) : ''} · ${esc(c.by || '')}`).join('<br>')}</p>` : ''}`;
-  }
+  if (S.sheet === 'call') return callSheet();
+  if (S.sheet === 'scls') return clsSheet();
   if (S.sheet === 'share') return `<h2>Today's summary</h2><div class="share" id="shareT">${esc(S.share)}</div><a class="cta" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(S.share)}">${ic('wa', 18)} Send on WhatsApp</a><div style="height:8px"></div><button class="cta lt" onclick="copyShare()">Copy text</button>`;
   if (S.sheet === 'tags') return tagSheet();
   if (S.sheet === 'rfilter') return rfilterSheet();
@@ -631,13 +632,6 @@ function tagSheet() {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%"><div class="inp" style="margin:0"><input id="tT" list="tagl" value="${esc(x.tag)}" placeholder="Tag"></div><div class="inp" style="margin:0"><input id="tF" inputmode="decimal" value="${x.fixed || ''}" placeholder="Fixed ₹/month"></div></div>
           <div style="display:flex;gap:8px;width:100%"><button class="cta" style="height:40px" onclick="saveTag('${esc(x.sid)}')">Save</button><button class="cta lt" style="height:40px" onclick="S.tedit='';render()">Cancel</button></div></div>`
         : `<div class="p"><div class="t"><b>${esc(x.name)}${x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}</b><small>${esc(x.cls)} · ${esc(x.father || '')}${x.fixed ? ' · fixed ' + rs(x.fixed) + '/month' : ''}</small></div><div class="r"><button class="chip" onclick="S.tedit='${esc(x.sid)}';render()">Edit</button></div></div>`).join('')}</div>` : ''}`;
-}
-async function saveCall() {
-  if (BUSY) return; BUSY = true;
-  const body = { sid: S.open, outcome: $('cO').value, promise: $('cD').value, note: $('cN').value };
-  if (!['Promised to pay', 'Call back later', 'Will visit school'].includes(body.outcome)) body.promise = '';
-  try { const d = await api('office_api.php?a=call', body); D.calls.unshift(d.call); S.sheet = null; calc(); toast('Call saved.'); } catch (e) { toast(e.message); }
-  BUSY = false; render();
 }
 async function saveTag(sid) {
   try { const d = await api('feedash_api.php?a=setTag', { sid, tag: $('tT').value, fixed: $('tF').value, note: '' }); const r = D.dues.find(x => x.sid === sid); if (r) { r.tag = d.tag.tag; r.fixed = d.tag.fixed / 100; } S.tedit = ''; calc(); toast('Tag saved.'); render(); }
@@ -729,6 +723,307 @@ function countUp() {
     requestAnimationFrame(f); });
 }
 function endIntro() { if (!INTRO) return; INTRO.timers.forEach(clearTimeout); INTRO = null; const ad = $('ad'); if (ad) ad.remove(); if (D || LOGIN) render(); else $('app').innerHTML = '<div class="load"><i></i>Opening…</div>'; }
+
+// ================================================================ Call diary: when each parent was called, who spoke, what was discussed
+const OUTS = ['Talked to parent', 'Promised to pay', 'Will visit school', 'Call back later', 'Already paid', 'Not answered', 'Switched off', 'Wrong number'];
+const NEED_DATE = ['Promised to pay', 'Call back later', 'Will visit school'];
+const NOT_REACHED = ['Not answered', 'Switched off', 'Wrong number'];
+const PHRASES = ['Will pay this week', 'Will pay next month', 'Salary not received yet', 'Asked for a discount', 'Will come to school', 'Transport problem', 'Happy with the school', 'Complaint about studies', 'Will pay in parts'];
+const hm = ms => ms ? new Date(ms).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
+const stuName = sid => { const x = D.all.find(z => z.sid === sid); if (x) return { name: x.name, cls: x.cls }; const s = SC && SC.stu && SC.stu[sid]; return s ? { name: s.name, cls: s.cls } : { name: '', cls: '' }; };
+function callNow(sid) { S.callAt = { sid, at: Date.now() }; setTimeout(() => noteCall(sid), 700); }
+function noteCall(sid) {
+  if (S.open !== sid || S.sheet !== 'call') { S.cw = 'Father'; S.cO = 'Talked to parent'; S.cn = ''; S.cD = addDays(D.today, 3); S.cA = ''; }
+  S.open = sid; sheet('call');
+}
+function addPhrase(i) { const p = PHRASES[i]; S.cn = (S.cn ? S.cn.replace(/[\s.]*$/, '') + '. ' : '') + p; render(); refocus('cN'); }
+function callSheet() {
+  const x = D.all.find(z => z.sid === S.open), s = x || (SC && SC.stu && SC.stu[S.open]); if (!s) return '';
+  const at = S.callAt && S.callAt.sid === S.open ? S.callAt.at : 0, calls = x ? x.calls : D.calls.filter(c => (c.sids || []).includes(S.open));
+  return `<h2>Call · ${esc(s.name)}</h2><p class="mut" style="margin:-4px 0 12px">${esc(s.cls)} · ${esc(s.father || '')}${x ? ' · due ' + rs(x.dueNow) : ''}${at ? ' · call started ' + hm(at) : ' · time is saved automatically'}</p>
+    <label class="lbl">SPOKE WITH</label><div class="wch">${['Father', 'Mother', 'Guardian', 'Student', 'Other'].map(w => `<button class="chip${S.cw === w ? ' on' : ''}" onclick="S.cw='${w}';render()">${w}</button>`).join('')}</div>
+    <label class="lbl">WHAT HAPPENED</label><div class="inp"><select id="cO" onchange="S.cO=this.value;render()">${OUTS.map(o => `<option ${S.cO === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>
+    ${NEED_DATE.includes(S.cO) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="lbl">DATE THEY GAVE</label><div class="inp"><input id="cD" type="date" min="${D.today}" value="${esc(S.cD)}" onchange="S.cD=this.value"></div></div>
+      <div><label class="lbl">AMOUNT (₹)</label><div class="inp"><input id="cA" inputmode="decimal" value="${esc(S.cA)}" placeholder="${S.cO === 'Promised to pay' && x ? Math.round(x.dueNow) : 'optional'}" oninput="S.cA=this.value"></div></div></div>` : ''}
+    <label class="lbl">WHAT WAS DISCUSSED${NOT_REACHED.includes(S.cO) ? ' (optional)' : ''}</label><div class="inp"><textarea id="cN" maxlength="500" placeholder="e.g. Father said salary comes on the 10th, will pay October and November together." oninput="S.cn=this.value">${esc(S.cn)}</textarea></div>
+    <div class="phr">${PHRASES.map((p, i) => `<button onclick="addPhrase(${i})">＋ ${esc(p)}</button>`).join('')}</div>
+    <button class="cta" onclick="saveCall()" ${BUSY ? 'disabled' : ''}>Save call</button>
+    ${calls.length ? `<label class="lbl" style="margin-top:14px">EARLIER CALLS</label>${diaryList(calls.slice(0, 5))}` : ''}`;
+}
+async function saveCall() {
+  if (BUSY) return;
+  const body = { sid: S.open, outcome: S.cO, with: S.cw, note: S.cn || '', promise: NEED_DATE.includes(S.cO) ? S.cD : '', amount: NEED_DATE.includes(S.cO) ? S.cA : '', startedAt: S.callAt && S.callAt.sid === S.open ? S.callAt.at : 0 };
+  BUSY = true;
+  try { const d = await api('feedash_api.php?a=callNote', body); D.calls.unshift(d.call); S.sheet = null; S.callAt = null; S.cn = ''; calc(); toast('Call saved with what was discussed.'); } catch (e) { toast(e.message); }
+  BUSY = false; render();
+}
+function diaryList(calls) {
+  return `<div class="dl">${calls.map(c => {
+    const kids = (c.sids || [c.sid]).filter(Boolean), first = kids.includes(c.sid) ? c.sid : kids[0], nm = stuName(first), more = kids.length - 1;
+    const tone = NOT_REACHED.includes(c.outcome) ? 'bad' : ['Promised to pay', 'Already paid', 'Talked to parent'].includes(c.outcome) ? 'ok' : '';
+    const auto = c.initiated || (!c.note && c.autoRemark);
+    return `<div class="de"><div class="h"><span><b>${dmy(c.date)}</b> · ${hm(c.startedAt || c.at)}</span><span>by ${esc(c.by || '')}</span></div>
+      <div class="s" onclick="openStu('${esc(first)}')">${esc(nm.name || 'Student')} <small>${esc(nm.cls)}${more > 0 ? ' · +' + more + ' sibling' + (more > 1 ? 's' : '') : ''}${c.with ? ' · spoke with ' + esc(c.with) : ''}</small></div>
+      <span class="o ${tone}">${esc(c.initiated ? 'Call tried — result not saved' : c.outcome)}</span>${c.promise ? `<span class="o">Date given ${dmy(c.promise)}</span>` : ''}${c.amount ? `<span class="o">${rs(c.amount / 100)}</span>` : ''}
+      ${c.note && c.note !== c.autoRemark ? `<q>${esc(c.note)}</q>` : auto ? `<q class="auto">${esc(c.autoRemark || c.note || '')}</q>` : '<q class="auto">Nothing written about this call.</q>'}</div>`; }).join('')}</div>`;
+}
+function diaryCalls() {
+  const R = S.df || '7', from = R === 'today' ? D.today : R === 'all' ? '' : addDays(D.today, -(+R - 1));
+  const set = (S.tag !== null || S.cls) ? new Set(D.kids.map(x => x.sid)) : null;
+  return D.calls.filter(c => (!from || c.date >= from) && (!S.do || (S.do === 'none' ? !c.note || c.note === c.autoRemark : S.do === 'reached' ? !NOT_REACHED.includes(c.outcome) && !c.initiated : c.outcome === S.do)) && (!set || (c.sids || [c.sid]).some(z => set.has(z))));
+}
+function diaryBody() {
+  const L = diaryCalls(), by = {}; L.forEach(c => { by[c.by || '—'] = (by[c.by || '—'] || 0) + 1; });
+  const talked = L.filter(c => !NOT_REACHED.includes(c.outcome) && !c.initiated).length, prom = L.filter(c => c.outcome === 'Promised to pay');
+  const rng = [['today', 'Today'], ['7', '7 days'], ['30', '30 days'], ['all', 'All']];
+  return `<div class="chips" style="margin:12px -14px">${rng.map(([v, l]) => `<button class="chip${(S.df || '7') === v ? ' on' : ''}" onclick="S.df='${v}';render()">${l}</button>`).join('')}</div>
+    <div class="kp">${k('Calls', String(L.length), Object.entries(by).map(([a, b]) => esc(a.replace(/\s*\(.*\)/, '')) + ' ' + b).slice(0, 3).join(' · ') || 'none in this time')}${k('Spoke to parents', String(talked), pct(talked, L.length) + '% of calls', 'ok')}
+      ${k('Promised to pay', String(prom.length), rsS(sum(prom, c => (c.amount || 0) / 100)) + ' promised', 'ac')}${k('Not reached', String(L.filter(c => NOT_REACHED.includes(c.outcome)).length), 'not answered / switched off / wrong number', 'bad')}</div>
+    <select class="selx" style="margin-top:12px" onchange="S.do=this.value;render()"><option value="">Every result</option><option value="reached" ${S.do === 'reached' ? 'selected' : ''}>Only where we spoke</option><option value="none" ${S.do === 'none' ? 'selected' : ''}>Nothing written yet</option>${OUTS.map(o => `<option ${S.do === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>
+    ${card(`Call diary · ${L.length}`, L.length ? diaryList(L.slice(0, 150)) + (L.length > 150 ? `<p class="note">Showing 150 of ${L.length}. Reports → Call diary has all of them.</p>` : '') : '<p class="empty">No call in this time. Tap a student → Call; when you come back the note form is open.</p>')}`;
+}
+
+// ================================================================ School tab: classes, attendance, results, syllabus, teachers, exams
+let SC = null, SCL = false;
+async function loadSchool() {
+  if (SC || SCL) return; SCL = true;
+  try { SC = await api('feedash_api.php?a=school'); prepSchool(); } catch (e) { SC = { err: e.message }; }
+  SCL = false; render();
+}
+function needSchool() {
+  if (!SC) { loadSchool(); return card('School', '<p class="empty">Loading attendance, results and teachers…</p>'); }
+  if (SC.err) return card('School', `<p class="empty">${esc(SC.err)}</p><button class="cta" onclick="SC=null;render()">Try again</button>`);
+  return '';
+}
+const grade = p => p >= 91 ? 'A1' : p >= 81 ? 'A2' : p >= 71 ? 'B1' : p >= 61 ? 'B2' : p >= 51 ? 'C1' : p >= 41 ? 'C2' : p >= 33 ? 'D' : 'E';
+const exOrder = e => /final|annual/i.test(e) ? 9 : /term-2|half|ut2|unit test 2/i.test(e) ? 5 : /pre-board 2/i.test(e) ? 7 : /pre-board/i.test(e) ? 6 : 1;
+const exSort = (a, b) => b.ses.localeCompare(a.ses) || exOrder(b.exam) - exOrder(a.exam) || b.exam.localeCompare(a.exam);
+const tone = p => p == null ? '' : p >= 90 ? 'ok' : p >= 75 ? '' : 'bad';
+const pc = p => p == null ? '—' : p + '%';
+const ratio = (a, b) => b ? Math.round(a * 1000 / b) / 10 : null;
+function prepSchool() {
+  const X = SC; X.byCls = {}; X.stu = {}; X.ct = {};
+  X.students.forEach(s => { (X.byCls[s.cls] = X.byCls[s.cls] || []).push(s); X.stu[s.id] = s; });
+  Object.values(X.byCls).forEach(L => L.sort((a, b) => a.name.localeCompare(b.name)));
+  X.classes.forEach(c => { X.ct[c.c] = c.ct; });
+  X.cls = CLASSES.filter(c => X.byCls[c] || X.classes.some(z => z.c === c));
+  X.dates = Object.keys(X.att).sort(); X.sdates = Object.keys(X.staffAtt).sort();
+  const R = X.old.map(r => ({ ...r, src: 'old' }));
+  Object.entries(X.marks).forEach(([ex, byK]) => {
+    const e = X.exams.find(z => z.id === ex), per = {};
+    Object.entries(byK).forEach(([key, rec]) => { const i = key.indexOf('|'), c = key.slice(0, i), sb = key.slice(i + 1);
+      Object.entries(rec.m || {}).forEach(([sid, v]) => { const o = per[sid] = per[sid] || { sid, cls: c, got: 0, max: 0, subs: {} };
+        o.subs[sb] = { Marks: v === 'AB' ? 'Absent' : v + '/' + rec.max }; if (v !== 'AB' && v !== '' && v != null) { o.got += +v; o.max += +rec.max; } }); });
+    const L = Object.values(per).map(o => { const p = o.max ? Math.round(o.got / o.max * 10000) / 100 : null;
+      return { sid: o.sid, name: (X.stu[o.sid] || {}).name || '', ses: D.ses, exam: e ? e.name : ex, cls: o.cls, total: o.max ? o.got + '/' + o.max : '', pct: p, grade: p == null ? '' : grade(p), rank: '', att: '', subs: o.subs, src: 'new' }; });
+    const byC = {}; L.forEach(r => (byC[r.cls] = byC[r.cls] || []).push(r));
+    Object.values(byC).forEach(G => G.filter(r => r.pct != null).sort((a, b) => b.pct - a.pct).forEach((r, i) => { r.rank = String(i + 1); }));
+    R.push(...L);
+  });
+  R.forEach(r => { if (!r.name && X.stu[r.sid]) r.name = X.stu[r.sid].name; });
+  X.res = R; X.resBy = {}; R.forEach(r => (X.resBy[r.sid] = X.resBy[r.sid] || []).push(r));
+  Object.values(X.resBy).forEach(L => L.sort(exSort));
+  const ex = {}; R.forEach(r => { ex[r.ses + '|' + r.exam] = { ses: r.ses, exam: r.exam }; });
+  X.exs = Object.values(ex).sort(exSort).map(o => o.ses + '|' + o.exam);
+}
+const monthEnd = ym => ym + '-31';
+function clsAtt(c, from, to) {
+  let days = 0, pres = 0, tot = 0; const n = (SC.byCls[c] || []).length;
+  SC.dates.forEach(d => { if (d < from || d > to) return; const a = SC.att[d][c]; if (!a) return; days++; tot += n; pres += n - a.length; });
+  return { days, pres, tot, pct: ratio(pres, tot) };
+}
+function stuAtt(s, from, to) {
+  let days = 0, ab = 0; const absent = [];
+  SC.dates.forEach(d => { if (d < from || d > to) return; const a = SC.att[d][s.cls]; if (!a) return; days++; if (a.includes(s.id)) { ab++; absent.push(d); } });
+  return { days, ab, pres: days - ab, pct: ratio(days - ab, days), absent };
+}
+const lastRes = sid => (SC.resBy[sid] || []).find(r => r.pct != null) || null;
+const oldAtt = r => { const m = /^(\d+)\s*\/\s*(\d+)$/.exec(r && r.att || ''); return m && +m[2] > 0 ? { p: +m[1], t: +m[2], pct: ratio(+m[1], +m[2]) } : null; };
+const tName = t => (SC.teachers[t] || {}).name || t || '';
+const sesMonths = () => { const out = []; let d = SC.start.slice(0, 7); const end = SC.today.slice(0, 7); while (d <= end && out.length < 13) { out.push(d); const y = +d.slice(0, 4), m = +d.slice(5, 7); d = m === 12 ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0'); } return out; };
+const SV = [['classes', 'Classes'], ['att', 'Attendance'], ['res', 'Results'], ['syl', 'Syllabus'], ['teach', 'Teachers & staff'], ['exams', 'Exams']];
+function schoolBody() {
+  const nav = `<div class="chips" style="margin:0 -14px 12px">${SV.map(([v, l]) => `<button class="chip${(S.sv || 'classes') === v ? ' on' : ''}" onclick="S.sv='${v}';render()">${l}</button>`).join('')}</div>`;
+  const w = needSchool(); if (w) return nav + w;
+  return nav + ({ classes: schClasses, att: schAtt, res: schRes, syl: schSyl, teach: schTeach, exams: schExams }[S.sv || 'classes'])();
+}
+function clsRow(c) {
+  const L = SC.byCls[c] || [], n = L.length, t = SC.att[SC.today] && SC.att[SC.today][c], ym = SC.today.slice(0, 7), m = clsAtt(c, ym + '-01', monthEnd(ym));
+  const kids = D.all.filter(x => x.cls === c), lr = L.map(s => lastRes(s.id)).filter(Boolean);
+  return { c, n, ct: tName(SC.ct[c]), today: t ? ratio(n - t.length, n) : null, todayAb: t ? t.length : null, mon: m.pct, days: m.days,
+    avg: lr.length ? Math.round(sum(lr, r => r.pct) * 10 / lr.length) / 10 : null, due: sum(kids, x => x.dueNow), zero: kids.filter(x => x.zero && x.dueNow > 0).length };
+}
+function schClasses() {
+  const R = SC.cls.map(clsRow), marked = R.filter(r => r.today != null), n = sum(R, r => r.n);
+  const tp = sum(marked, r => r.n - r.todayAb), tt = sum(marked, r => r.n), sa = SC.staffAtt[SC.today] || [];
+  return `<div class="kp">${k('Students', String(n), R.length + ' classes')}${k('Today present', marked.length ? pc(ratio(tp, tt)) : '—', marked.length ? `${tp} of ${tt} · ${marked.length}/${R.filter(r => r.n).length} classes marked` : 'attendance not marked yet today', marked.length ? tone(ratio(tp, tt)) : 'warn', `S.sv='att';render()`)}
+      ${k('Teachers', String(Object.keys(SC.teachers).length), SC.staffAtt[SC.today] ? sa.length + ' absent today' : 'staff attendance not marked today', sa.length ? 'warn' : '', `S.sv='teach';render()`)}${k('Fee due now', rsS(sum(R, r => r.due)), sum(R, r => r.zero) + ' paid ₹0 this session', 'bad', 'setTab(2)')}</div>
+    <div class="cgrid" style="margin-top:12px">${R.map(r => `<button class="cc" onclick="S.scls='${esc(r.c)}';sheet('scls')"><i></i><b>${esc(r.c)}</b><small><em>${r.n}</em> students · ${esc(r.ct || 'no class teacher')}</small>
+      <small>Today: ${r.today == null ? 'not marked' : `<em class="${r.today < 75 ? 'red' : ''}">${pc(r.today)}</em> (${r.todayAb} absent)`}</small><small>This month: <em>${pc(r.mon)}</em>${r.days ? ' · ' + r.days + ' days' : ''}</small>
+      <small>Last result avg: <em>${pc(r.avg)}</em></small><small>Fee due: <em class="red">${rsS(r.due)}</em></small></button>`).join('')}</div>
+    <p class="note">Tap a class for every student in it: attendance, last result and fee — in one place.</p>`;
+}
+function clsSheet() {
+  const c = S.scls, r = clsRow(c), L = SC.byCls[c] || [], ym = SC.today.slice(0, 7);
+  const subs = SC.alloc.filter(a => a.c === c && a.n > 0);
+  const rows = L.map(s => { const m = stuAtt(s, ym + '-01', monthEnd(ym)), a = stuAtt(s, SC.start, SC.today), lr = lastRes(s.id), f = D.all.find(x => x.sid === s.id); return { s, m, a, lr, f }; })
+    .sort((x, y) => S.cs === 'att' ? (x.a.pct ?? 101) - (y.a.pct ?? 101) : S.cs === 'res' ? (y.lr ? y.lr.pct : -1) - (x.lr ? x.lr.pct : -1) : S.cs === 'due' ? (y.f ? y.f.dueNow : 0) - (x.f ? x.f.dueNow : 0) : x.s.name.localeCompare(y.s.name));
+  return `<h2>Class ${esc(c)}</h2><p class="mut" style="margin:-4px 0 10px">Class teacher: ${esc(r.ct || '—')} · ${r.n} students</p>
+    <div class="kp">${k('Today', pc(r.today), r.today == null ? 'not marked' : r.todayAb + ' absent', tone(r.today))}${k('This month', pc(r.mon), r.days + ' days marked', tone(r.mon))}${k('Last result avg', pc(r.avg), 'latest exam of each child')}${k('Fee due now', rsS(r.due), r.zero + ' paid ₹0', 'bad')}</div>
+    ${subs.length ? `<label class="lbl" style="margin-top:14px">SUBJECTS AND TEACHERS</label><p class="note" style="margin-top:0">${subs.map(a => `${esc(a.s)} — ${esc(tName(a.t))}${a.n ? ' (' + a.n + '/week)' : ''}`).join('<br>')}</p>` : ''}
+    <label class="lbl" style="margin-top:14px">STUDENTS</label><select class="selx" onchange="S.cs=this.value;render()">${[['name', 'Sort by name'], ['att', 'Lowest attendance first'], ['res', 'Best result first'], ['due', 'Highest fee due first']].map(([v, l]) => `<option value="${v}" ${(S.cs || 'name') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <div class="tw"><table class="tbl"><tr><th>Student</th><th>Att. month</th><th>Att. session</th><th>Last result</th><th>Fee due</th></tr>${rows.map(o => `<tr onclick="openStu('${esc(o.s.id)}')" style="cursor:pointer"><td>${esc(o.s.name)}</td><td class="${o.m.pct != null && o.m.pct < 75 ? 'red' : ''}">${pc(o.m.pct)}</td><td class="${o.a.pct != null && o.a.pct < 75 ? 'red' : ''}">${pc(o.a.pct)}</td><td>${o.lr ? pc(o.lr.pct) + ' ' + esc(o.lr.grade) : '—'}</td><td class="red">${o.f ? rs(o.f.dueNow) : '—'}</td></tr>`).join('')}</table></div>`;
+}
+function schAtt() {
+  const months = sesMonths(), ym = S.am && months.includes(S.am) ? S.am : months[months.length - 1] || SC.today.slice(0, 7), from = ym + '-01', to = monthEnd(ym);
+  const R = SC.cls.filter(c => (SC.byCls[c] || []).length).map(c => ({ c, n: SC.byCls[c].length, ...clsAtt(c, from, to), ct: tName(SC.ct[c]) }));
+  const days = SC.dates.filter(d => d >= from && d <= to), tot = sum(R, r => r.tot), pres = sum(R, r => r.pres);
+  const tdy = SC.att[SC.today] || {}, tR = R.filter(r => tdy[r.c]), tP = sum(tR, r => r.n - tdy[r.c].length), tT = sum(tR, r => r.n);
+  const low = SC.students.map(s => ({ s, a: stuAtt(s, from, to) })).filter(o => o.a.days >= 3 && o.a.pct < 75).sort((a, b) => a.a.pct - b.a.pct);
+  const three = []; SC.cls.forEach(c => { const dd = SC.dates.filter(d => d <= SC.today && SC.att[d][c]).slice(-3); if (dd.length < 3) return; (SC.byCls[c] || []).forEach(s => { if (dd.every(d => SC.att[d][c].includes(s.id))) three.push(s); }); });
+  if (days.length) chart('attDay', { type: 'line', data: { labels: days.map(d => d.slice(8, 10)), datasets: [{ label: 'Present %', data: days.map(d => { let p = 0, t = 0; Object.entries(SC.att[d]).forEach(([c, a]) => { const n = (SC.byCls[c] || []).length; t += n; p += n - a.length; }); return ratio(p, t); }), borderColor: P.plum, backgroundColor: 'rgba(155,93,229,.12)', fill: true, tension: .35, pointRadius: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } } } });
+  const RR = R.filter(r => r.days);
+  if (RR.length) chart('attCls', { type: 'bar', data: { labels: RR.map(r => r.c), datasets: [{ label: 'Present %', data: RR.map(r => r.pct), backgroundColor: RR.map(r => r.pct < 75 ? P.pink : r.pct < 90 ? P.amber : P.green), borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } } } });
+  // last session from the old ERP report cards (Final): days present / working days
+  const os = [...new Set(SC.old.filter(r => /final/i.test(r.exam) && oldAtt(r)).map(r => r.ses))].sort().pop();
+  const O = os ? SC.old.filter(r => r.ses === os && /final/i.test(r.exam)).map(r => ({ r, a: oldAtt(r) })).filter(o => o.a) : [];
+  const oc = {}; O.forEach(o => { const z = oc[o.r.cls] = oc[o.r.cls] || { p: 0, t: 0, n: 0 }; z.p += o.a.p; z.t += o.a.t; z.n++; });
+  const ocR = CLASSES.filter(c => oc[c]).map(c => [c, oc[c].n, ratio(oc[c].p, oc[c].t)]), oLow = O.filter(o => o.a.pct < 75).sort((a, b) => a.a.pct - b.a.pct);
+  return `<div class="chips months" style="margin:0 -14px 12px">${months.map(m => `<button class="chip${m === ym ? ' on' : ''}" onclick="S.am='${m}';render()">${M3(+m.slice(5, 7))}<small>${m.slice(0, 4)}</small></button>`).join('')}</div>
+    <div class="kp"><div class="k big"><span>Present today</span><b>${tR.length ? pc(ratio(tP, tT)) : '—'}</b><small>${tR.length ? `${tP} of ${tT} students · ${tR.length} of ${R.length} classes marked` : 'No class has marked attendance today yet'}</small></div>
+      ${k(MN[+ym.slice(5, 7)] + ' average', pc(ratio(pres, tot)), days.length + ' school days marked', tone(ratio(pres, tot)))}${k('Below 75%', String(low.length), 'students this month', low.length ? 'bad' : 'ok')}</div>
+    ${days.length ? card('Daily attendance · ' + MN[+ym.slice(5, 7)], canvas('attDay', 190)) + card('Class average · ' + MN[+ym.slice(5, 7)], canvas('attCls', 210)) : card('Attendance · ' + MN[+ym.slice(5, 7)], `<p class="empty">No attendance marked in ${MN[+ym.slice(5, 7)]} yet.</p><p class="note">Class teachers mark it in the school app → Attendance (one tap per absent child). It shows here the same minute. So far ${SC.dates.length} day${SC.dates.length === 1 ? '' : 's'} marked this session.</p>`)}
+    ${card('Class-wise · ' + MN[+ym.slice(5, 7)], `<div class="tw"><table class="tbl"><tr><th>Class</th><th>Students</th><th>Days marked</th><th>Average</th><th>Today</th><th>Class teacher</th></tr>${R.map(r => `<tr onclick="S.scls='${esc(r.c)}';sheet('scls')" style="cursor:pointer"><td>${esc(r.c)}</td><td>${r.n}</td><td>${r.days}</td><td class="${r.pct != null && r.pct < 75 ? 'red' : ''}">${pc(r.pct)}</td><td>${tdy[r.c] ? pc(ratio(r.n - tdy[r.c].length, r.n)) : '—'}</td><td>${esc(r.ct)}</td></tr>`).join('')}
+      <tr class="tot"><td>School</td><td>${sum(R, r => r.n)}</td><td>${days.length}</td><td>${pc(ratio(pres, tot))}</td><td>${tR.length ? pc(ratio(tP, tT)) : '—'}</td><td></td></tr></table></div>`)}
+    ${three.length ? card('Absent 3 days in a row · ' + three.length, `<div class="tw"><table class="tbl"><tr><th>Student</th><th>Class</th><th>Father</th><th>Mobile</th></tr>${three.map(s => `<tr onclick="openStu('${esc(s.id)}')" style="cursor:pointer"><td>${esc(s.name)}</td><td>${esc(s.cls)}</td><td>${esc(s.father)}</td><td>${esc(s.phone)}</td></tr>`).join('')}</table></div>`) : ''}
+    ${low.length ? card('Below 75% in ' + MN[+ym.slice(5, 7)] + ' · ' + low.length, `<div class="tw"><table class="tbl"><tr><th>Student</th><th>Class</th><th>Present</th><th>Absent</th><th>%</th></tr>${low.map(o => `<tr onclick="openStu('${esc(o.s.id)}')" style="cursor:pointer"><td>${esc(o.s.name)}</td><td>${esc(o.s.cls)}</td><td>${o.a.pres}</td><td>${o.a.ab}</td><td class="red">${pc(o.a.pct)}</td></tr>`).join('')}</table></div>`) : ''}
+    ${ocR.length ? card('Last session ' + longSes(os) + ' · from old ERP report cards', `<div class="tw"><table class="tbl"><tr><th>Class (then)</th><th>Students</th><th>Attendance</th></tr>${ocR.map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td class="${r[2] < 75 ? 'red' : ''}">${pc(r[2])}</td></tr>`).join('')}<tr class="tot"><td>School</td><td>${O.length}</td><td>${pc(ratio(sum(O, o => o.a.p), sum(O, o => o.a.t)))}</td></tr></table></div>
+      ${oLow.length ? `<p class="note">${oLow.length} children were below 75% last session${oLow.length ? ': ' + oLow.slice(0, 12).map(o => esc(o.r.name) + ' ' + o.a.pct + '%').join(', ') + (oLow.length > 12 ? '…' : '') : ''}.</p>` : ''}`) : ''}`;
+}
+function resPick() {
+  const key = S.rx && SC.exs.includes(S.rx) ? S.rx : (SC.exs.find(x => /final|annual/i.test(x)) || SC.exs[0] || '');
+  const [ses, exam] = key.split('|'); return { key, ses, exam, rows: SC.res.filter(r => r.ses === ses && r.exam === exam && r.pct != null) };
+}
+function schRes() {
+  if (!SC.exs.length) return card('Results', '<p class="empty">No marks yet.</p><p class="note">Teachers enter marks in the school app → Marks Entry; the old ERP result sheets can be copied in Office → Old ERP Archive.</p>');
+  const { key, ses, exam, rows } = resPick(), byC = {}; rows.forEach(r => (byC[r.cls] = byC[r.cls] || []).push(r));
+  const C = CLASSES.filter(c => byC[c]).concat(Object.keys(byC).filter(c => !CLASSES.includes(c))).map(c => { const G = byC[c].slice().sort((a, b) => b.pct - a.pct); return { c, n: G.length, avg: Math.round(sum(G, r => r.pct) * 10 / G.length) / 10, hi: G[0], pass: ratio(G.filter(r => r.pct >= 33).length, G.length), top: G.slice(0, 3) }; });
+  const avg = rows.length ? Math.round(sum(rows, r => r.pct) * 10 / rows.length) / 10 : null, G = {}; rows.forEach(r => { const g = r.grade || grade(r.pct); G[g] = (G[g] || 0) + 1; });
+  const gk = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D', 'E'].filter(g => G[g]).concat(Object.keys(G).filter(g => !['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D', 'E'].includes(g)));
+  const weak = rows.filter(r => r.pct < 40).sort((a, b) => a.pct - b.pct);
+  // school average of the Final exam, session by session
+  const fin = [...new Set(SC.res.filter(r => /final|annual/i.test(r.exam) && r.pct != null).map(r => r.ses))].sort().map(s2 => { const X = SC.res.filter(r => r.ses === s2 && /final|annual/i.test(r.exam) && r.pct != null); return [s2, X.length, Math.round(sum(X, r => r.pct) * 10 / X.length) / 10, ratio(X.filter(r => r.pct >= 33).length, X.length)]; });
+  if (C.length) chart('resCls', { type: 'bar', data: { labels: C.map(r => r.c), datasets: [{ label: 'Class average %', data: C.map(r => r.avg), backgroundColor: P.plum, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } } } });
+  if (gk.length) chart('resGr', { type: 'doughnut', data: { labels: gk, datasets: [{ data: gk.map(g => G[g]), backgroundColor: [P.green, '#14B8A6', P.blue, P.indigo, P.plum, P.amber, P.orange, P.pink], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right' } } } });
+  return `<select class="selx" onchange="S.rx=this.value;render()">${SC.exs.map(x => `<option value="${esc(x)}" ${x === key ? 'selected' : ''}>${esc(longSes(x.split('|')[0]))} · ${esc(x.split('|')[1])}</option>`).join('')}</select>
+    <div class="kp"><div class="k big"><span>School average · ${esc(exam)}</span><b>${pc(avg)}</b><small>${rows.length} students · ${esc(longSes(ses))}</small></div>
+      ${k('Passed (33%+)', pc(ratio(rows.filter(r => r.pct >= 33).length, rows.length)), rows.filter(r => r.pct < 33).length + ' below 33%', 'ok')}${k('A1 / A2', String((G.A1 || 0) + (G.A2 || 0)), '81% and above', 'ac')}</div>
+    ${card('Class average', canvas('resCls', 210))}${card('Grades', canvas('resGr', 190))}
+    ${card('Class-wise result', `<div class="tw"><table class="tbl"><tr><th>Class</th><th>Students</th><th>Average</th><th>Pass %</th><th>Topper</th></tr>${C.map(r => `<tr><td>${esc(r.c)}</td><td>${r.n}</td><td>${pc(r.avg)}</td><td>${pc(r.pass)}</td><td onclick="openStu('${esc(r.hi.sid)}')" style="cursor:pointer">${esc(r.hi.name)} · ${pc(r.hi.pct)}</td></tr>`).join('')}</table></div>`)}
+    ${card('Toppers · top 3 of each class', `<div class="tw"><table class="tbl"><tr><th>Class</th><th>Rank</th><th>Student</th><th>%</th><th>Grade</th></tr>${C.map(r => r.top.map((t, i) => `<tr onclick="openStu('${esc(t.sid)}')" style="cursor:pointer"><td>${i ? '' : esc(r.c)}</td><td>${['🥇', '🥈', '🥉'][i]}</td><td>${esc(t.name)}</td><td>${pc(t.pct)}</td><td>${esc(t.grade)}</td></tr>`).join('')).join('')}</table></div>`)}
+    ${weak.length ? card('Need attention · below 40% · ' + weak.length, `<div class="tw"><table class="tbl"><tr><th>Student</th><th>Class</th><th>%</th><th>Attendance</th></tr>${weak.map(r => `<tr onclick="openStu('${esc(r.sid)}')" style="cursor:pointer"><td>${esc(r.name)}</td><td>${esc(r.cls)}</td><td class="red">${pc(r.pct)}</td><td>${esc(r.att || '')}</td></tr>`).join('')}</table></div>`) : ''}
+    ${fin.length > 1 ? card('Year by year · Final exam', `<div class="tw"><table class="tbl"><tr><th>Session</th><th>Students</th><th>Average</th><th>Pass %</th></tr>${fin.map(f => `<tr><td>${esc(longSes(f[0]))}</td><td>${f[1]}</td><td>${pc(f[2])}</td><td>${pc(f[3])}</td></tr>`).join('')}</table></div>`) : ''}
+    <p class="note">Old sessions come from the old ERP result sheets; this session from the marks teachers enter. Tap any student for the full report card.</p>`;
+}
+function schSyl() {
+  const keys = Object.keys(SC.syl), R = keys.map(key => { const i = key.indexOf('|'), c = key.slice(0, i), sb = key.slice(i + 1), y = SC.syl[key], done = y.chapters.filter(ch => ch.done), a = SC.alloc.find(z => z.c === c && z.s === sb);
+    return { c, sb, done: done.length, total: y.chapters.length, last: done.map(ch => String(ch.done)).sort().pop() || '', lastN: (done.slice().sort((p, q) => String(q.done).localeCompare(String(p.done)))[0] || {}).n || '', t: a ? tName(a.t) : '', target: y.targetDate }; })
+    .filter(r => r.total).sort((a, b) => CLASSES.indexOf(a.c) - CLASSES.indexOf(b.c) || a.sb.localeCompare(b.sb));
+  const td = sum(R, r => r.done), tt = sum(R, r => r.total), ym = SC.today.slice(0, 7), mon = sum(keys, key => SC.syl[key].chapters.filter(ch => String(ch.done || '').slice(0, 7) === ym).length);
+  const missing = SC.alloc.filter(a => a.n > 0 && !/Games|Library|Moral|Rhymes|Play|Craft|Activity|PT\b/.test(a.s) && !(SC.syl[a.c + '|' + a.s] || { chapters: [] }).chapters.length).length;
+  return `<div class="kp"><div class="k big"><span>Syllabus completed</span><b>${pc(ratio(td, tt))}</b><small>${td} of ${tt} chapters · ${R.length} class-subjects</small></div>${k('This month', String(mon), 'chapters finished', 'ok')}${k('No chapter list yet', String(missing), 'class-subjects', missing ? 'warn' : '')}</div>
+    ${card('Class and subject', R.length ? `<div class="sl">${R.map(r => { const p = ratio(r.done, r.total); return `<div><div class="row"><b>${esc(r.c)} · ${esc(r.sb)}</b><b>${p}%</b></div><div class="bar ${p < 30 ? 'bad' : p >= 80 ? 'ok' : ''}"><i style="width:${p}%"></i></div><div class="row"><span>${r.done}/${r.total} chapters${r.t ? ' · ' + esc(r.t) : ''}</span><span>${r.last ? 'last: ' + esc(r.lastN) + ' ' + dmy(r.last) : 'not started'}</span></div></div>`; }).join('')}</div>` : '<p class="empty">No chapter list yet.</p>')}
+    <p class="note">Teachers add the chapter list and tick each chapter in the school app → Syllabus (or from the daily diary). ${missing ? missing + ' class-subjects still need their chapter list.' : ''}</p>`;
+}
+function schTeach() {
+  const T = Object.entries(SC.teachers), ab = SC.staffAtt[SC.today], ym = SC.today.slice(0, 7), md = SC.sdates.filter(d => d.slice(0, 7) === ym);
+  const R = T.map(([t, v]) => ({ t, ...v, ct: SC.classes.filter(c => c.ct === t).map(c => c.c), subs: SC.alloc.filter(a => a.t === t && a.n > 0), per: sum(SC.alloc.filter(a => a.t === t), a => a.n || 0), abM: md.filter(d => (SC.staffAtt[d] || []).includes(t)).length, abT: ab ? ab.includes(t) : null }))
+    .sort((a, b) => (b.ct.length - a.ct.length) || a.name.localeCompare(b.name));
+  const pend = SC.leaves.filter(l => l.status === 'Pending'), E = SC.employees, act = E.filter(e => !/left/i.test(e.status)), cat = {}; act.forEach(e => { cat[e.category || 'Other'] = (cat[e.category || 'Other'] || 0) + 1; });
+  return `<div class="kp">${k('Teachers', String(T.length), SC.classes.filter(c => c.ct).length + ' class teachers')}${k('Absent today', ab ? String(ab.length) : '—', ab ? esc(ab.map(tName).join(', ')) || 'everyone present' : 'not marked today', ab && ab.length ? 'warn' : 'ok')}
+      ${k('Leave requests', String(pend.length), 'waiting for the Principal', pend.length ? 'warn' : '')}${k('Staff (register)', String(act.length), esc(Object.entries(cat).map(([a, b]) => a + ' ' + b).slice(0, 3).join(' · ')))}</div>
+    ${card('Teachers', `<div class="ppl">${R.map(r => { const ph = String(r.phone || '').replace(/\D/g, '').slice(-10);
+      return `<div class="p"><div class="ava">${esc(r.name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s+/i, '').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div><div class="t"><b>${esc(r.name)}${r.abT ? '<span class="tag brk">Absent today</span>' : ''}</b><small>${esc(r.role)}</small>
+        <small>${r.ct.length ? 'Class teacher ' + esc(r.ct.join(', ')) + ' · ' : ''}${r.per} periods a week</small><small>${esc(r.subs.slice(0, 5).map(a => a.c + ' ' + a.s).join(', '))}${r.subs.length > 5 ? '…' : ''}</small>
+        <small>Absent this month: ${r.abM} day${r.abM === 1 ? '' : 's'}</small></div><div class="r">${ph ? `<div class="acts"><a class="c" href="tel:+91${ph}" aria-label="Call">${ic('phone', 15)}</a></div>` : ''}</div></div>`; }).join('')}</div>`)}
+    ${md.length ? card('Staff attendance · ' + MN[+ym.slice(5, 7)], `<div class="tw"><table class="tbl"><tr><th>Date</th><th>Absent</th></tr>${md.slice().reverse().map(d => `<tr><td>${dmy(d)}</td><td style="white-space:normal">${esc((SC.staffAtt[d] || []).map(tName).join(', ') || 'All present')}</td></tr>`).join('')}</table></div>`) : ''}
+    ${SC.leaves.length ? card('Leave · ' + SC.leaves.length, `<div class="tw"><table class="tbl"><tr><th>Teacher</th><th>From</th><th>To</th><th>Status</th><th>Reason</th></tr>${SC.leaves.slice().sort((a, b) => b.from.localeCompare(a.from)).slice(0, 40).map(l => `<tr><td>${esc(tName(l.tid))}</td><td>${dmy(l.from)}</td><td>${dmy(l.to)}</td><td class="${l.status === 'Pending' ? 'red' : ''}">${esc(l.status)}</td><td>${esc(l.reason)}</td></tr>`).join('')}</table></div>`) : ''}
+    ${E.length ? card('Staff register · ' + E.length, `<div class="tw"><table class="tbl"><tr><th>Name</th><th>Designation</th><th>Category</th><th>Mobile</th><th>Joined</th><th>Qualification</th><th>Status</th></tr>${E.slice().sort((a, b) => (/left/i.test(a.status) - /left/i.test(b.status)) || a.name.localeCompare(b.name)).map(e => `<tr><td>${esc(e.name)}</td><td>${esc(e.designation)}</td><td>${esc(e.category)}</td><td>${esc(e.mobile)}</td><td>${esc(e.doj)}</td><td>${esc(e.qualification)}</td><td class="${/left/i.test(e.status) ? 'red' : ''}">${esc(e.status)}</td></tr>`).join('')}</table></div>`) : ''}`;
+}
+function schExams() {
+  const E = SC.exams.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))), t = SC.today;
+  const st = e => { const to = e.to || e.date; return t < e.date ? 'upcoming' : t <= to ? 'running' : 'done'; };
+  const next = E.find(e => st(e) !== 'done');
+  const entry = e => { const cls = e.classes && e.classes.length ? e.classes : SC.cls.filter(c => (SC.byCls[c] || []).length), M = SC.marks[e.id] || {};
+    if (e.sheet && e.sheet.length) { let need = 0, have = 0; cls.forEach(c => e.sheet.forEach(p => p.subjects.forEach(sb => { need++; if (M[c + '|' + sb]) have++; }))); return { need, have }; }
+    return { need: 0, have: Object.keys(M).length }; };
+  return `<div class="kp">${next ? `<div class="k big"><span>${st(next) === 'running' ? 'Exam running' : 'Next exam'}</span><b>${esc(next.name)}</b><small>${dmy(next.date)}${next.to ? ' to ' + dmy(next.to) : ''}${st(next) === 'upcoming' ? ' · in ' + Math.round((new Date(next.date) - new Date(t)) / 864e5) + ' days' : ''}</small></div>` : ''}
+      ${k('Exams this session', String(E.length), E.filter(e => st(e) === 'done').length + ' done')}${k('Results entered', String(Object.keys(SC.marks).length), 'exams with marks')}</div>
+    ${card('Exam calendar', `<div class="tw"><table class="tbl"><tr><th>Exam</th><th>Dates</th><th>Classes</th><th>Status</th><th>Marks entered</th></tr>${E.map(e => { const m = entry(e), s2 = st(e); return `<tr><td>${esc(e.name)}</td><td>${dmy(e.date)}${e.to ? ' – ' + dmy(e.to) : ''}</td><td style="white-space:normal">${esc(e.classes && e.classes.length ? e.classes.join(', ') : 'All')}</td><td class="${s2 === 'running' ? 'grn' : ''}">${s2 === 'upcoming' ? 'Upcoming' : s2 === 'running' ? 'Running' : 'Done'}</td><td class="${s2 === 'done' && m.need && m.have < m.need ? 'red' : ''}">${m.need ? m.have + ' of ' + m.need : m.have ? m.have + ' papers' : '—'}</td></tr>`; }).join('')}</table></div>`)}
+    ${next && next.sheet && next.sheet.length ? card('Date sheet · ' + next.name, `<div class="tw"><table class="tbl"><tr><th>Date</th><th>Paper</th><th>Max marks</th></tr>${next.sheet.map(p => `<tr><td>${dmy(p.date)}</td><td>${esc(p.title)}</td><td>${esc(p.max)}</td></tr>`).join('')}</table></div>${next.time ? `<p class="note">Time: ${esc(next.time)}${next.reportDate ? ' · report cards on ' + dmy(next.reportDate) : ''}</p>` : ''}`) : ''}
+`;
+}
+function schoolToday() {
+  if (!SC) { loadSchool(); return ''; } if (SC.err) return '';
+  const R = SC.cls.filter(c => (SC.byCls[c] || []).length), tdy = SC.att[SC.today] || {}, M = R.filter(c => tdy[c]), n = sum(M, c => SC.byCls[c].length), p = n - sum(M, c => tdy[c].length);
+  const ab = SC.staffAtt[SC.today], nx = SC.exams.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).find(e => (e.to || e.date) >= SC.today), { exam, rows } = resPick();
+  const go = v => `S.sv='${v}';setTab(5)`;
+  return card('School today', `<div class="stat"><button class="st ${M.length && ratio(p, n) < 75 ? 'bad' : ''}" onclick="${go('att')}"><b>${M.length ? pc(ratio(p, n)) : '—'}</b><span>${M.length ? `Students present · ${M.length}/${R.length} classes marked` : 'Attendance not marked yet'}</span></button>
+    <button class="st ${ab && ab.length ? 'bad' : ''}" onclick="${go('teach')}"><b>${ab ? ab.length : '—'}</b><span>${ab ? 'Teachers absent' : 'Staff attendance not marked'}</span></button>
+    <button class="st" onclick="${go('exams')}"><b style="font-size:13px">${nx ? esc(nx.name) : '—'}</b><span>${nx ? 'Next exam · ' + dmy(nx.date) : 'No exam coming'}</span></button>
+    <button class="st ok" onclick="${go('res')}"><b>${rows.length ? pc(Math.round(sum(rows, r => r.pct) * 10 / rows.length) / 10) : '—'}</b><span>${rows.length ? 'School average · ' + esc(exam) : 'No result yet'}</span></button></div>`, `<small onclick="setTab(5)" style="cursor:pointer">open School ›</small>`);
+}
+// ---- the School part of a student's full record: attendance and every report card
+function stuSchool(sid) {
+  if (!SC) { loadSchool(); return '<p class="note" style="margin-top:14px">Loading attendance and results…</p>'; }
+  if (SC.err) return '';
+  const s = SC.stu[sid]; let h = '';
+  if (s) {
+    const ym = SC.today.slice(0, 7), m = stuAtt(s, ym + '-01', monthEnd(ym)), a = stuAtt(s, SC.start, SC.today);
+    h += `<label class="lbl" style="margin-top:14px">ATTENDANCE · ${esc(longSes(D.ses))}</label><div class="kp">${k('This month', pc(m.pct), m.days ? `${m.pres} of ${m.days} days` : 'not marked yet', tone(m.pct))}${k('This session', pc(a.pct), a.days ? `${a.pres} of ${a.days} days · absent ${a.ab}` : 'not marked yet', tone(a.pct))}</div>
+      ${a.absent.length ? `<p class="note">Absent on: ${a.absent.slice(-15).reverse().map(dmy).join(', ')}${a.absent.length > 15 ? '…' : ''}</p>` : ''}`;
+  }
+  const R = SC.resBy[sid] || [];
+  h += `<label class="lbl" style="margin-top:14px">REPORT CARDS · ${R.length}</label>`;
+  if (!R.length) return h + '<p class="note">No marks on record yet.</p>';
+  h += `<div class="tw"><table class="tbl"><tr><th>Session</th><th>Exam</th><th>Class</th><th>Total</th><th>%</th><th>Grade</th><th>Rank</th><th>Attendance</th></tr>${R.map(r => `<tr><td>${esc(longSes(r.ses))}</td><td>${esc(r.exam)}</td><td>${esc(r.cls)}</td><td>${esc(r.total)}</td><td>${pc(r.pct)}</td><td>${esc(r.grade)}</td><td>${esc(r.rank)}</td><td>${esc(r.att)}</td></tr>`).join('')}</table></div>`;
+  h += R.slice(0, 6).map((r, i) => `<details class="rc" ${i ? '' : 'open'}><summary>${esc(longSes(r.ses))} · ${esc(r.exam)} <small>${pc(r.pct)} ${esc(r.grade)}</small></summary><div class="tw"><table class="tbl"><tr><th>Subject</th><th>Marks</th></tr>${Object.entries(r.subs || {}).map(([sb, cols]) => `<tr><td>${esc(sb)}</td><td style="white-space:normal">${Object.entries(cols).map(([c, v]) => `${esc(c.replace(/\s*Total/i, '').trim() || 'Total')}: <b>${esc(v)}</b>`).join(' · ')}</td></tr>`).join('')}</table></div></details>`).join('');
+  return h;
+}
+function stuSheetLite(sid) {
+  const s = SC && SC.stu && SC.stu[sid], r = SC && SC.resBy && (SC.resBy[sid] || [])[0], calls = D.calls.filter(c => (c.sids || []).includes(sid));
+  return `<h2>${esc(s ? s.name : r ? r.name : 'Student')}</h2><p class="mut" style="margin:-6px 0 10px">${esc(s ? s.cls + (s.section ? '-' + s.section : '') : r ? 'Class ' + r.cls + ' in ' + longSes(r.ses) : '')}${s && s.father ? ' · ' + esc(s.father) : ''}</p>
+    <p class="note">No fee card for ${esc(longSes(D.ses))}.</p>
+    ${s ? `<label class="lbl" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between">CALLS <button class="fchip add" onclick="noteCall('${esc(sid)}')">＋ Write a call</button></label>${calls.length ? diaryList(calls) : '<p class="note">No call yet.</p>'}` : ''}
+    ${stuSchool(sid)}`;
+}
+// ---- Reports: Call diary, Attendance, Results
+function repSchool(T, K) {
+  const set = new Set(K.map(x => x.sid)), f = S.tag !== null || S.cls;
+  if (T === 'calls') {
+    const L = D.calls.filter(c => (!RF.from || c.date >= RF.from) && (!RF.to || c.date <= RF.to) && (!f || (c.sids || [c.sid]).some(z => set.has(z))));
+    return { sumv: [['Calls', L.length], ['Spoke', L.filter(c => !NOT_REACHED.includes(c.outcome) && !c.initiated).length], ['Promised', L.filter(c => c.outcome === 'Promised to pay').length], ['Not reached', L.filter(c => NOT_REACHED.includes(c.outcome)).length]],
+      body: repTable(['Date', 'Time', 'Student', 'Class', 'Spoke with', 'Result', 'Date given', 'Amount', 'What was discussed', 'By'],
+        L.map(c => { const sid = c.sid || (c.sids || [])[0], n = stuName(sid); return [dmy(c.date), hm(c.startedAt || c.at), n.name, n.cls, c.with || '', c.initiated ? 'Call tried' : c.outcome, dmy(c.promise), c.amount ? money2(c.amount / 100) : '', c.note || c.autoRemark || '', c.by || '']; }), null, [, , 'l', , , , , , 'l']) + '<p class="note">Use ＋ Filters → From / To for dates. Tap a student anywhere to write a new call.</p>' };
+  }
+  const w = needSchool(); if (w) return { sumv: [], body: w };
+  const tagOf = {}; D.all.forEach(x => { tagOf[x.sid] = x.tagName; });
+  const Ss = SC.students.filter(s => (!S.cls || s.cls === S.cls) && (S.tag === null || tagOf[s.id] === S.tag));
+  if (T === 'attend') {
+    const months = sesMonths(), ym = S.am && months.includes(S.am) ? S.am : months[months.length - 1];
+    const L = Ss.map(s => ({ s, m: stuAtt(s, ym + '-01', monthEnd(ym)), a: stuAtt(s, SC.start, SC.today), o: oldAtt((SC.resBy[s.id] || []).find(r => /final/i.test(r.exam) && oldAtt(r))) })).sort((a, b) => CLASSES.indexOf(a.s.cls) - CLASSES.indexOf(b.s.cls) || a.s.name.localeCompare(b.s.name));
+    return { sumv: [['Students', L.length], [MN[+ym.slice(5, 7)] + ' avg', pc(ratio(sum(L, o => o.m.pres), sum(L, o => o.m.days)))], ['Session avg', pc(ratio(sum(L, o => o.a.pres), sum(L, o => o.a.days)))], ['Below 75%', L.filter(o => o.a.days && o.a.pct < 75).length]],
+      body: `<select class="selx" onchange="S.am=this.value;render()">${months.map(m => `<option value="${m}" ${m === ym ? 'selected' : ''}>${MN[+m.slice(5, 7)]} ${m.slice(0, 4)}</option>`).join('')}</select>` +
+        repTable(['Student', 'Class', 'Days (month)', 'Present', 'Absent', 'Month %', 'Session %', 'Absent (session)', 'Last session %'],
+          L.map(o => [o.s.name, o.s.cls, o.m.days, o.m.pres, o.m.ab, o.m.pct == null ? '' : { v: o.m.pct + '%', t: o.m.pct, c: o.m.pct < 75 ? 'red' : '' }, o.a.pct == null ? '' : { v: o.a.pct + '%', t: o.a.pct, c: o.a.pct < 75 ? 'red' : '' }, o.a.ab, o.o ? o.o.pct + '%' : '']), null, ['l']) };
+  }
+  const { key, rows } = resPick(), sid = new Set(Ss.map(s => s.id)), L = rows.filter(r => (!S.cls && S.tag === null) || sid.has(r.sid)).sort((a, b) => CLASSES.indexOf(a.cls) - CLASSES.indexOf(b.cls) || (+a.rank || 999) - (+b.rank || 999));
+  return { sumv: [['Students', L.length], ['Average', pc(L.length ? Math.round(sum(L, r => r.pct) * 10 / L.length) / 10 : null)], ['Passed', L.filter(r => r.pct >= 33).length], ['Below 40%', L.filter(r => r.pct < 40).length]],
+    body: `<select class="selx" onchange="S.rx=this.value;render()">${SC.exs.map(x => `<option value="${esc(x)}" ${x === key ? 'selected' : ''}>${esc(longSes(x.split('|')[0]))} · ${esc(x.split('|')[1])}</option>`).join('')}</select>` +
+      repTable(['Class', 'Rank', 'Student', 'Total', '%', 'Grade', 'Attendance', 'Subjects'], L.map(r => [r.cls, r.rank, r.name, r.total, { v: pc(r.pct), t: r.pct, c: r.pct < 40 ? 'red' : '' }, r.grade, r.att, Object.entries(r.subs || {}).map(([sb, cols]) => sb + ' ' + Object.values(cols).join('/')).join(', ')]), null, [, , 'l']) };
+}
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('chairman-sw.js').catch(() => {});
 $('app').innerHTML = '<div class="load"><i></i>Opening…</div>';
