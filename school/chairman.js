@@ -47,6 +47,18 @@ const THOUGHTS = [
   'The goal is not only to run a school, but to raise a standard.',
   'Progress, not perfection — every single month.'
 ];
+// ---- Install: Chrome/Edge on Android and laptops offer it through beforeinstallprompt; iPhone needs Share → Add to Home Screen.
+let INST = null;
+const STANDALONE = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); INST = e; if (D) render(); else if ($('chInstall')) $('chInstall').innerHTML = installBox(); });
+addEventListener('appinstalled', () => { INST = null; toast('App installed. Open it from your home screen.'); if (D) render(); });
+function installBox() {
+  if (STANDALONE()) return '';
+  if (INST) return `<button class="ch-btn gold ch-inst" onclick="doInstall()">Install SNMSIS app</button>`;
+  return `<div class="ch-instx"><b>Install this app</b>${IOS ? 'In Safari tap <b>Share</b> (square with arrow) → <b>Add to Home Screen</b> → <b>Add</b>.' : 'Open this page in <b>Chrome</b>, tap the <b>⋮</b> menu → <b>Install app</b> (or <b>Add to Home screen</b>) → <b>Install</b>.'}</div>`;
+}
+async function doInstall() { if (!INST) return; INST.prompt(); const r = await INST.userChoice; INST = null; if (r.outcome !== 'accepted') toast('Install cancelled. You can install any time from here.'); render(); }
 let D = null, V = 'home', F = { tag: null, cls: '', m: 0, q: '', sort: 'due' }, CH = [], BUSY = false;
 
 const rs = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
@@ -190,6 +202,7 @@ function homeView() {
 
   const yoyNow = sum(prev.slice(0, Math.max(D.idx, 0) + 1), v => v), thisNow = sum(months.slice(0, Math.max(D.idx, 0) + 1), x => x.total);
   return `<section class="ch-hero"><p>${greet}</p><h1>Welcome, Chairman Sir</h1><blockquote>${esc(thought)}</blockquote></section>
+    <div id="chInstall">${installBox()}</div>
     ${D.live ? '' : `<p class="ch-note">Fees for this session are still taken in the old ERP. Figures are as copied from it${D.asOn ? ' on ' + esc(D.asOn) : ''}.</p>`}
     ${filters()}
     <div class="ch-kpis">
@@ -312,7 +325,7 @@ function loginView(step, msg) {
     ${step === 'new' ? `<p class="ch-small">First login: please choose your own PIN (4–8 digits, not 1234).</p><input id="lgOld" type="password" inputmode="numeric" placeholder="Current PIN" autocomplete="current-password"><input id="lgNew" type="password" inputmode="numeric" placeholder="New PIN" autocomplete="new-password"><button class="ch-btn gold" onclick="setPin()">Save PIN</button>`
     : `<div class="ch-seg"><button class="${who === 'chairman' ? 'on' : ''}" onclick="try{localStorage.setItem('ch_role','chairman')}catch(e){};loginView()">Chairman</button><button class="${who === 'principal' ? 'on' : ''}" onclick="try{localStorage.setItem('ch_role','principal')}catch(e){};loginView()">Principal</button></div>
       <input id="lgPin" type="password" inputmode="numeric" placeholder="Enter PIN" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"><button class="ch-btn gold" onclick="login()">Open</button>`}
-    <p class="ch-err">${esc(msg || '')}</p></div>`;
+    <p class="ch-err">${esc(msg || '')}</p><div id="chInstall">${installBox()}</div></div>`;
   const f = $('lgPin') || $('lgOld'); if (f) f.focus();
 }
 async function login() {

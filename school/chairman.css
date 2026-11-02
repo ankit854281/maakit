@@ -54,3 +54,5 @@ button,select,input{font:inherit}
 #chToast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:0 16px;border-radius:20px;line-height:38px;z-index:9}#chToast:empty{display:none}
 @media (min-width:900px){.ch-app{max-width:980px}.ch-kpis{grid-template-columns:repeat(3,1fr)}#chMain{display:block}}
 @media print{#chTop,#chNav,.ch-actions,.ch-filters select,.ch-mscroll{display:none!important}body{background:#fff}.ch-card,.ch-kpi{box-shadow:none;border:1px solid #ddd;break-inside:avoid}.ch-hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.ch-inst{width:100%;margin:0 0 12px}
+.ch-instx{background:#fff;border:1px dashed var(--gold);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:12px;color:var(--mute);text-align:left}.ch-instx b:first-child{display:block;color:var(--navy);font-size:13px;margin-bottom:2px}
