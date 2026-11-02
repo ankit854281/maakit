@@ -6,7 +6,7 @@ function fixture(role='parent'){
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open')};
  const app=w.document.createElement('script');app.textContent=fs.readFileSync('school/app.js','utf8');w.document.head.appendChild(app);
  w.eval("STATUS={school:'QA School',teachers:[]};U={role:"+JSON.stringify(role)+"};S=emptyState();S.settings={school:'QA School',session:'2026-27'};PD={kids:[{id:'qa1',name:'QA Child One',cls:'5th'},{id:'qa2',name:'QA Child Two',cls:'3rd'}],att:[{sid:'qa1',date:todayISO(),present:true},{sid:'qa2',date:todayISO(),present:false}],hw:[{cls:'5th',date:todayISO(),subj:'Maths',hw:'QA homework ONE',topic:'Fractions'},{cls:'3rd',date:todayISO(),subj:'English',hw:'QA homework TWO',topic:'Nouns'}],marks:[{sid:'qa1',exam:'e1',subj:'Maths',mark:42,max:50}],behav:[],speak:[],remarks:[],notices:[],fees:null};S.exams=[{id:'e1',name:'QA Exam',date:todayISO()}];PKID='qa1';view='phome';");
- w.eval(fs.readFileSync(prefix+'language.js','utf8'));w.eval(fs.readFileSync(prefix+'family-style.js','utf8'));w.eval(fs.readFileSync(prefix+'family-start.js','utf8'));w.SNFamily.closeIntro();
+ w.eval(fs.readFileSync(prefix+'language.js','utf8'));w.eval(fs.readFileSync(prefix+'family-style.js','utf8'));w.eval(fs.readFileSync(prefix+'family-ui.js','utf8'));w.SNFamily.closeIntro();
  return {dom,w};
 }
 let {dom,w}=fixture();

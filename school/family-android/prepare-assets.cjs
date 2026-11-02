@@ -8,3 +8,6 @@ fs.writeFileSync(target,source.replace('const words={','const words={'+JSON.stri
 
 const css=fs.readFileSync(path.join(__dirname,'family.css'),'utf8');
 fs.writeFileSync(path.join(__dirname,'app/src/main/assets/family-style.js'),'(()=>{if(document.getElementById(\"fam-style\"))return;const s=document.createElement(\"style\");s.id=\"fam-style\";s.textContent='+JSON.stringify(css)+';document.head.appendChild(s)})();');
+
+const logo='data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'../img/chairman-512.png')).toString('base64');
+fs.writeFileSync(path.join(__dirname,'app/src/main/assets/family-ui.js'),fs.readFileSync(path.join(__dirname,'app/src/main/assets/family-start.js'),'utf8').replaceAll('img/chairman-512.png',logo));

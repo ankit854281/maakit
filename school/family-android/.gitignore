@@ -6,3 +6,5 @@ local.properties
 /app/src/main/res/drawable/app_icon.png
 
 app/src/main/assets/family-style.js
+
+app/src/main/assets/family-ui.js

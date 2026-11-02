@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
-const boot=fs.readFileSync('school/family-android/app/src/main/assets/family-start.js','utf8');
+const boot=fs.readFileSync('school/family-android/app/src/main/assets/family-ui.js','utf8');
 function fixture(role=''){
  const dom=new JSDOM('<!doctype html><html><head></head><body><main id="root"></main></body></html>',{url:'https://maakit.in/school/',runScripts:'dangerously',pretendToBeVisual:true});
  const w=dom.window;if(role)w.localStorage.setItem('sn_family_role',role);

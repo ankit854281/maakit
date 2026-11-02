@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
 
 
     private void installFamilyInterface(WebView view) {
-        for (String file : new String[]{"language.js", "family-style.js", "family-start.js"}) {
+        for (String file : new String[]{"language.js", "family-style.js", "family-ui.js"}) {
             try (java.io.InputStream in = getAssets().open(file); java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
                 byte[] buffer = new byte[4096]; int n;
                 while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
