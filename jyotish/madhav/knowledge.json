@@ -1,0 +1,148 @@
+{
+  "status": "illustrative paraphrases; scholar review required",
+  "license_note": "Sanskrit is traditional; English and Hindi are original short paraphrases, not copied from a modern translation.",
+  "verses": [
+    {
+      "id": "2.47",
+      "chapter": 2,
+      "verse": 47,
+      "sanskrit": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन। मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥",
+      "hi": "अपने कर्तव्य और प्रयास पर ध्यान दो; परिणाम के प्रति अत्यधिक आसक्ति से बचो।",
+      "en": "Focus on responsible action rather than attachment to the result.",
+      "keywords": [
+        "कर्म",
+        "काम",
+        "मेहनत",
+        "सफल",
+        "असफल",
+        "लक्ष्य",
+        "नौकरी",
+        "work",
+        "career",
+        "failure",
+        "success",
+        "goal",
+        "job",
+        "effort",
+        "karma"
+      ],
+      "suggest_hi": [
+        "कर्मयोग क्या है?",
+        "असफलता से कैसे सीखूँ?",
+        "सही लक्ष्य कैसे चुनूँ?",
+        "आत्मविश्वास कैसे बढ़ाऊँ?"
+      ],
+      "suggest_en": [
+        "What is karma yoga?",
+        "How do I learn from failure?",
+        "How should I choose a goal?",
+        "How can I build confidence?"
+      ]
+    },
+    {
+      "id": "6.26",
+      "chapter": 6,
+      "verse": 26,
+      "sanskrit": "यतो यतो निश्चरति मनश्चञ्चलमस्थिरम्। ततस्ततो नियम्यैतदात्मन्येव वशं नयेत्॥",
+      "hi": "मन बार-बार भटके तो उसे धैर्य से वापस एकाग्र करने का अभ्यास करो।",
+      "en": "When the mind wanders, gently and repeatedly bring it back to focus.",
+      "keywords": [
+        "मन",
+        "चिंता",
+        "ध्यान",
+        "परेशान",
+        "तनाव",
+        "सोच",
+        "शांत",
+        "stress",
+        "anxiety",
+        "worry",
+        "meditation",
+        "mind",
+        "overthinking",
+        "peace"
+      ],
+      "suggest_hi": [
+        "ध्यान कैसे शुरू करूँ?",
+        "चिंता कम कैसे करूँ?",
+        "मन को शांत कैसे करूँ?",
+        "रोज कितना अभ्यास करूँ?"
+      ],
+      "suggest_en": [
+        "How do I begin meditation?",
+        "How can I reduce worry?",
+        "How do I calm my mind?",
+        "How long should I practice?"
+      ]
+    },
+    {
+      "id": "12.13",
+      "chapter": 12,
+      "verse": 13,
+      "sanskrit": "अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च। निर्ममो निरहङ्कारः समदुःखसुखः क्षमी॥",
+      "hi": "सबके प्रति मैत्री, करुणा और क्षमा का भाव विकसित करो।",
+      "en": "Cultivate friendship, compassion and forgiveness toward others.",
+      "keywords": [
+        "क्रोध",
+        "गुस्सा",
+        "रिश्त",
+        "क्षमा",
+        "करुणा",
+        "प्रेम",
+        "anger",
+        "forgive",
+        "kind",
+        "compassion",
+        "relationship",
+        "hate"
+      ],
+      "suggest_hi": [
+        "गुस्सा कैसे कम करूँ?",
+        "क्षमा कैसे सीखूँ?",
+        "रिश्ते कैसे सुधारूँ?",
+        "करुणा का अभ्यास कैसे करूँ?"
+      ],
+      "suggest_en": [
+        "How do I handle anger?",
+        "How can I forgive?",
+        "How can I repair relationships?",
+        "How can I practice compassion?"
+      ]
+    },
+    {
+      "id": "2.14",
+      "chapter": 2,
+      "verse": 14,
+      "sanskrit": "मात्रास्पर्शास्तु कौन्तेय शीतोष्णसुखदुःखदाः। आगमापायिनोऽनित्यास्तांस्तितिक्षस्व भारत॥",
+      "hi": "सुख और दुख बदलते रहते हैं; कठिन समय में धैर्य और उचित सहायता उपयोगी है।",
+      "en": "Pleasure and pain are temporary; meet difficulty with patience and appropriate support.",
+      "keywords": [
+        "दुख",
+        "दर्द",
+        "डर",
+        "भय",
+        "हिम्मत",
+        "मुश्किल",
+        "fear",
+        "afraid",
+        "sad",
+        "pain",
+        "difficult",
+        "grief",
+        "courage"
+      ],
+      "suggest_hi": [
+        "डर का सामना कैसे करूँ?",
+        "धैर्य कैसे बढ़ाऊँ?",
+        "मुश्किल समय में क्या करूँ?",
+        "मन शांत कैसे करूँ?"
+      ],
+      "suggest_en": [
+        "How do I face fear?",
+        "How do I develop patience?",
+        "What helps in difficult times?",
+        "How can I calm down?"
+      ]
+    }
+  ]
+}
