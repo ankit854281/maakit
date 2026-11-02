@@ -250,6 +250,8 @@ function overview() {
       <button class="st bad" onclick="S.list='broken';setTab(3)"><b>${L.broken.length}</b><span>Promises broken · ${rsS(sum(L.broken, x => x.dueNow))}</span></button><button class="st" onclick="S.list='fresh';setTab(3)"><b>${L.fresh.length}</b><span>Not called in 7 days</span></button></div>`)}
     ${card('Collection progress', `<div class="donut">${canvas('cDonut', 220)}<div class="c"><b>${coll}%</b><span>collected</span></div></div>`)}
     ${card('Money received month by month', canvas('cMonths', 230), `<small>${rsS(ses.total)} this session</small>`)}
+    ${card('Monthly collection report', (() => { const R = MORDER.map(m => { const X = inMonth(D.rc, ymOf(m)); return [M3(m), sum(X, r => r.total != null ? r.total : r.received + r.discount), sum(X, r => r.discount), sum(X, r => r.received)]; }), tt = i => sum(R, r => r[i]);
+      return `<div class="tw"><table class="tbl"><tr><th>Month</th><th>Total Fee</th><th>Discount</th><th>Recv Amount</th></tr>${R.map(r => `<tr><td>${r[0]}</td><td>${rs(r[1])}</td><td>${rs(r[2])}</td><td class="grn">${rs(r[3])}</td></tr>`).join('')}<tr class="tot"><td>Total</td><td>${rs(tt(1))}</td><td>${rs(tt(2))}</td><td>${rs(tt(3))}</td></tr></table></div><p class="note">Same as the old ERP's Monthly Collection Report: every receipt dated in the month.</p>`; })(), '<small>as in the old ERP</small>')}
     ${card('Expected vs collected', canvas('cCum', 210), '<small>cumulative</small>')}
     ${hasPrev ? card('This year vs last year', canvas('cYoY', 220), yoyNow ? `<small class="${thisNow >= yoyNow ? 'up' : 'down'}">${thisNow >= yoyNow ? '▲' : '▼'} ${Math.abs(pct(thisNow - yoyNow, yoyNow))}%</small>` : '') : ''}
     ${card('Class-wise position', canvas('cCls', Math.max(220, cls.length * 30)), '<small>tap a bar</small>')}
@@ -334,9 +336,9 @@ function callBody() {
     ${D.calls.length ? card('Recent calls', `<div class="tw"><table class="tbl"><tr><th>Date</th><th>Student</th><th>Result</th><th>Date given</th><th>By</th></tr>${D.calls.slice(0, 15).map(c => { const x = D.all.find(z => (c.sids || []).includes(z.sid)); return `<tr><td>${dmy(c.date)}</td><td>${esc(x ? x.name : '')}</td><td>${esc(c.outcome)}</td><td>${dmy(c.promise)}</td><td>${esc(c.by || '')}</td></tr>`; }).join('')}</table></div>`) : ''}`;
 }
 // ---------------------------------------------------------------- Reports: many report types, many filters
-const RT = [['students', '👨‍🎓', 'Student-wise dues'], ['class', '🏫', 'Class-wise'], ['tag', '🏷️', 'Tag-wise'], ['head', '📚', 'Fee head-wise'], ['month', '📅', 'Month-wise'],
+const RT = [['mcoll', '💰', 'Monthly collection'], ['students', '👨‍🎓', 'Student-wise dues'], ['class', '🏫', 'Class-wise'], ['tag', '🏷️', 'Tag-wise'], ['head', '📚', 'Fee head-wise'], ['month', '📅', 'Month-wise'],
   ['receipts', '🧾', 'Receipt register'], ['ageing', '⏳', 'Dues by months'], ['old', '📜', 'Old dues'], ['discount', '✂️', 'Discounts & cancels']];
-const RF = { type: 'students', sec: '', fac: '', scheme: '', dmin: '', dmax: '', months: '', old: '', paid: '', upto: '', from: '', to: '', mode: '', user: '', sort: 'due' };
+const RF = { type: 'mcoll', sec: '', fac: '', scheme: '', dmin: '', dmax: '', months: '', old: '', paid: '', upto: '', from: '', to: '', mode: '', user: '', sort: 'due' };
 const hasTr = x => x.heads.some(h => isTr(h.name));
 function repKids() {
   const upto = RF.upto ? MORDER.indexOf(+RF.upto) : D.idx, min = parseFloat(RF.dmin) || 0, max = parseFloat(RF.dmax) || Infinity, mo = parseInt(RF.months, 10) || 0;
@@ -371,7 +373,17 @@ const red = v => ({ v: rs(v), t: Math.round(v), c: 'red' });
 function repBody() {
   const T = RF.type, K = repKids();
   let sumv = '', body = '';
-  if (T === 'students') {
+  if (T === 'mcoll') {
+    // The old ERP's Monthly Collection Report: every receipt dated in the month, whatever session it paid.
+    // Total Fee = what the receipts settled, Discount on them, Recv Amount = money received.
+    const R0 = repRcpts().filter(r => !S.cls || r.cls === S.cls);
+    const R = MORDER.map(m => { const X = inMonth(R0, ymOf(m)), c = cashIn(X); return [MN[m], sum(X, r => r.total != null ? r.total : r.received + r.discount), sum(X, r => r.discount), sum(X, r => r.received), X.length, c.fee + c.mixed, c.tr]; });
+    const tot = i => sum(R, r => r[i]);
+    sumv = [['Total fee', rsS(tot(1))], ['Discount', rsS(tot(2))], ['Received', rsS(tot(3))], ['Receipts', tot(4)]];
+    body = repTable(['Month', 'Total Fee', 'Discount', 'Recv Amount', 'Receipts', 'of which fee', 'of which transport'],
+      R.map(r => [r[0], money2(r[1]), money2(r[2]), { v: rs(r[3]), t: Math.round(r[3]), c: 'grn' }, r[4], money2(r[5]), money2(r[6])]),
+      ['Total', rs(tot(1)), rs(tot(2)), rs(tot(3)), tot(4), rs(tot(5)), rs(tot(6))]);
+  } else if (T === 'students') {
     const L = K.filter(x => RF.dmin || RF.months || RF.old || RF.paid ? true : x.rDue > 0).sort(RF.sort === 'name' ? (a, b) => a.name.localeCompare(b.name) : RF.sort === 'class' ? (a, b) => CLASSES.indexOf(a.cls) - CLASSES.indexOf(b.cls) || a.name.localeCompare(b.name) : (a, b) => b.rDue - a.rDue);
     sumv = [['Students', L.length], ['Session fee', rsS(sum(L, x => x.annual))], ['Paid + disc', rsS(sum(L, x => x.paid))], ['Due (to month)', rsS(sum(L, x => x.rDue))], ['Overall due', rsS(sum(L, x => x.yearBal))], ['Transport due', rsS(sum(L, x => x.rTr))]];
     body = repTable(['#', 'Student', 'Class', 'Tag', 'Father', 'Mobile', 'Session fee', 'Paid', 'Fee due', 'Transport due', 'Old due', 'Due (to month)', 'Overall due', 'Unpaid months', 'Last paid'],

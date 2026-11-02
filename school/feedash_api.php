@@ -62,7 +62,7 @@ case 'data': {
     } unset($r);
     $rc = [];
     if ($money) foreach ($all as $r) $rc[] = ['session' => ofc_ses($r['session']), 'no' => $r['no'], 'date' => $r['date'], 'sid' => $r['sid'], 'name' => $r['name'], 'cls' => $r['cls'], 'section' => $r['section'],
-        'received' => $r['received'], 'discount' => $r['discount'], 'late' => $r['late'], 'mode' => $r['mode'], 'status' => $r['status'], 'user' => $r['user'], 'src' => $r['src'],
+        'total' => $r['total'], 'received' => $r['received'], 'discount' => $r['discount'], 'late' => $r['late'], 'mode' => $r['mode'], 'status' => $r['status'], 'user' => $r['user'], 'src' => $r['src'],
         // Transport part of the money, from the printed head lines; 'split' false = the old receipt's lines were not copied
         'tr' => round(array_sum(array_map(fn($l) => preg_match('/transport/i', $l['head']) ? $l['amt'] : 0, $r['lines'])), 2), 'split' => (bool)$r['lines']];
     $calls = [];
