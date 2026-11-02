@@ -42,8 +42,4 @@
 .fd-tag{display:inline-block;background:#EAF4F6;color:#2b6f7c;border:1px solid #bcdbe1;border-radius:9px;padding:0 6px;font-size:10px;font-weight:bold}
 .fd .fd-link{background:none;color:#2b6f7c;padding:0;text-decoration:underline;font-weight:bold}
 .fd-t.k{min-width:0}
-.fd-login{max-width:340px;margin:8vh auto;text-align:center;background:#fff;border:1px solid #e3e3e3;border-radius:6px;padding:24px}
-.fd-login label{display:block;text-align:left;font-weight:bold;margin:12px 0 0}.fd-login input,.fd-login select{display:block;width:100%;margin-top:4px;padding:9px;border:1px solid #ccc;border-radius:4px;font-size:16px}
-.fd-login button{width:100%;margin-top:16px;padding:10px;font-size:15px}
-body.fd-app .fd{padding-top:calc(10px + env(safe-area-inset-top))}
 @media (max-width:860px){.fd-act button{padding:6px 9px}.fd-tabs button{padding:6px 9px}}
