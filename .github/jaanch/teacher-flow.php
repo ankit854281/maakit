@@ -87,6 +87,14 @@ $note = ['cls' => '9th', 'subj' => 'Social Science', 'chapter' => 'The French Re
 [$c] = $ta('note', $note, $tok['MA']); tf_check($c === 403, 'notes only for own subject');
 [$c, $j] = $ta('note', $note, $tok['K']); tf_check($c === 200 && $j['note']['points'] === ['1789 storming of the Bastille'] && $j['note']['share'] === true, 'teacher saves notes');
 $id = $j['note']['id'];
+// ---- Principal and Chairman: read-only, redacted overview; no note body in bulk ----
+[$c] = $ta('overview', null, $tok['K']); tf_check($c === 403, 'teacher cannot open the school-wide overview');
+[$c, $ov] = $ta('overview', null, $tok['P']);
+tf_check($c === 200 && $ov['ok'] && isset($ov['notes']['9th']['Social Science'][0]['pointsCount']), 'Principal sees note metadata');
+tf_check(!isset($ov['notes']['9th']['Social Science'][0]['body']) && !isset($ov['notes']['9th']['Social Science'][0]['qa']), 'overview keeps private note text out');
+[$c, $ov] = $ta('overview', null, $tok['CH']);
+tf_check($c === 200 && $ov['ok'] && isset($ov['notes']['9th']['Social Science'][0]['id']), 'Chairman can read overview');
+
 [$c] = $ta('note', array_merge($note, ['id' => $id, 'body' => 'changed']), $tok['MA']); tf_check($c === 403, 'another teacher cannot change them');
 [$c] = $ta('note', ['id' => $id, 'cls' => '9th', 'subj' => 'Hindi', 'chapter' => 'x', 'body' => 'y'], $tok['MA']); tf_check($c === 403 || $c === 400, 'cannot move a note to another subject');
 [$c, $j] = $ta('note', array_merge($note, ['id' => $id, 'body' => 'changed']), $tok['K']); tf_check($c === 200 && $j['note']['body'] === 'changed', 'author updates');

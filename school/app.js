@@ -533,7 +533,7 @@ async function go(v, params) { view = v; P = params || {}; if (P.date) await ens
 
 const NAV = {
   principal: [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['staff','fa-user-check','Staff & Arrangement'],['salary','fa-money-check-dollar','Salary'],['timetable','fa-calendar-week','Timetable'],
-              ['attendance','fa-clipboard-user','Student Attendance'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
+              ['attendance','fa-clipboard-user','Student Attendance'],['tnotes','fa-book-bookmark','Notes & Class Holidays'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
               ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Report Cards & Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
               ['students','fa-children','Students'],['notices','fa-bullhorn','Notices'],
@@ -545,7 +545,7 @@ const NAV = {
   parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   accountant:[['salary','fa-money-check-dollar','Staff Salary'],['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
   reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
-  chairman:  [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Report Cards & Results'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log'],['office','fa-folder-tree','School Office']]
+  chairman:  [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Report Cards & Results'],['tnotes','fa-book-bookmark','Notes & Class Holidays'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log'],['office','fa-folder-tree','School Office']]
 };
 
 const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash','staff','timetable','lplans'], teacher: ['mytoday','attendance','diary','speaking'],
@@ -557,9 +557,9 @@ const PRIMARY = { student: ['phome','game','phw','presults'], principal: ['dash'
 const GROUPS = {
   principal: [['Dashboard', 'fa-gauge', ['dash']],
               ['Staff', 'fa-user-tie', ['staff', 'salary', 'timetable', 'lplans', 'diaries', 'mytoday', 'diary', 'lplan', 'toolkit', 'profile', 'saathi']],
-              ['Students', 'fa-children', ['students', 'attendance', 'syllabus', 'exams', 'behaviour', 'speaking', 'fame', 'quizt', 'studio', 'learning']],
+              ['Students', 'fa-children', ['students', 'attendance', 'tnotes', 'syllabus', 'exams', 'behaviour', 'speaking', 'fame', 'quizt', 'studio', 'learning']],
               ['Admin', 'fa-building-columns', ['admin', 'office', 'fdesk', 'finance', 'fdues', 'fcalls', 'freceipts', 'fees', 'marks', 'results', 'notices', 'calendar', 'rules', 'log']]],
-  chairman:  [['Dashboard', 'fa-gauge', ['dash']], ['Students', 'fa-children', ['exams', 'results', 'fame', 'syllabus']],
+  chairman:  [['Dashboard', 'fa-gauge', ['dash']], ['Students', 'fa-children', ['exams', 'results', 'tnotes', 'fame', 'syllabus']],
               ['Admin', 'fa-building-columns', ['admin', 'office', 'finance', 'fdues', 'fees', 'calendar', 'rules', 'log']]],
   teacher:   [['Today', 'fa-sun', ['mytoday', 'myweek', 'calendar']], ['My Classes', 'fa-chalkboard', ['attendance', 'diary', 'marks', 'behaviour', 'speaking', 'quizt', 'studio', 'learning']],
               ['Planning', 'fa-clipboard-check', ['lplan', 'syllabus', 'toolkit', 'fame', 'office']], ['Me', 'fa-user', ['leave', 'salary', 'rules', 'profile', 'saathi', 'finance']]],
@@ -3782,7 +3782,79 @@ async function gMakePacks() { toast('Making packs… this can take a minute', 'b
 async function gFix(pid, i, action) { try { await gapi('packfix', { pid, i, action }); toast(action === 'restore' ? 'Shown again' : 'Removed'); GT = null; render(); } catch (e) { toast(e.message, 'r'); } }
 
 // ---------------------------------------------------------------- routes
-const VIEWS = { dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
+
+// Principal/Chairman: chapter notes and class-only holidays, read directly from the
+// scoped Teacher API. Private tchNote records never enter the legacy load/sync.
+let TN_OVERVIEW = null, TN_ACTIVE = '', TN_DETAIL = null, TN_DETAIL_ERROR = '';
+async function tnRequest(action, query = {}) {
+  const url = 'teacher_api.php?a=' + encodeURIComponent(action) + '&' + new URLSearchParams(query);
+  const res = await fetch(url, { headers: { 'X-School-Token': TOKEN || '' } });
+  let data = null; try { data = await res.json(); } catch (e) {}
+  if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || 'Could not load Teacher notes. Try again.');
+  return data;
+}
+async function tnReload() {
+  TN_OVERVIEW = { busy: true }; TN_ACTIVE = ''; TN_DETAIL = null;
+  try { TN_OVERVIEW = await tnRequest('overview'); }
+  catch (e) { TN_OVERVIEW = { error: e.message }; }
+  if (view === 'tnotes') render();
+}
+async function tnOpen(cls, subj, id) {
+  TN_ACTIVE = id; TN_DETAIL = null; TN_DETAIL_ERROR = '';
+  if (view === 'tnotes') render();
+  try {
+    const result = await tnRequest('notes', { cls, subj });
+    if (TN_ACTIVE === id) {
+      TN_DETAIL = (result.notes || []).find(n => n.id === id) || null;
+      if (!TN_DETAIL) TN_DETAIL_ERROR = 'Note not found.';
+    }
+  } catch (e) { if (TN_ACTIVE === id) TN_DETAIL_ERROR = e.message; }
+  if (view === 'tnotes') render();
+}
+function vTNotes() {
+  if (U.role !== 'principal' && U.role !== 'chairman') return '<div class="card">Only the Principal or Chairman can open this page.</div>';
+  const title = head('Notes & Class Holidays', 'Class holidays and the chapter notes written by teachers.',
+    '<button class="btn btn-l btn-sm" onclick="tnReload()">Refresh</button>');
+  if (!TN_OVERVIEW) { Promise.resolve().then(tnReload); return title + '<div class="card">Loading…</div>'; }
+  if (TN_OVERVIEW.busy) return title + '<div class="card">Loading…</div>';
+  if (TN_OVERVIEW.error) return title + '<div class="card text-rose-700">' + esc(TN_OVERVIEW.error) + '</div>';
+  const holidays = TN_OVERVIEW.holidays || [], groups = TN_OVERVIEW.notes || {};
+  const hol = holidays.length ? '<div class="overflow-x-auto"><table class="tbl w-full"><thead><tr><th>Date</th><th>Class</th><th>Reason</th><th>Marked by</th></tr></thead><tbody>' +
+    holidays.map(h => '<tr><td>' + esc(fmtDate(h.date)) + '</td><td>' + esc(h.cls) +
+      '</td><td>' + esc(h.title) + '</td><td>' + esc(h.by) + '</td></tr>').join('') + '</tbody></table></div>' :
+      '<p class="text-sm text-slate-500">No class-only holidays in this school session.</p>';
+  const collections = Object.entries(groups).map(([cls, subjects]) =>
+    '<details class="border-b border-slate-100 py-2"><summary class="font-semibold cursor-pointer">' + esc(cls) + '</summary>' +
+      Object.entries(subjects).map(([subj, notes]) =>
+        '<div class="ml-2 mt-3"><h4 class="font-semibold text-sm">' + esc(subj) + ' (' + notes.length + ')</h4>' +
+        notes.map(n => '<div class="py-2 border-b border-slate-100 text-sm flex flex-wrap gap-2 items-center justify-between"><div>' +
+          '<b>' + esc(n.chapter || n.title) + '</b><div class="text-xs text-slate-500">' + esc(n.by) +
+          ' · ' + esc(fmtTime(n.at)) + ' · ' + esc(n.pointsCount) + ' points · ' +
+          (n.share ? 'Shared with parents' : 'Private draft') + '</div></div>' +
+          '<button class="btn btn-sm btn-l" onclick="tnOpen(' + jsq(cls) + ',' + jsq(subj) + ',' + jsq(n.id) + ')">View note</button></div>'
+        ).join('') + '</div>').join('') + '</details>'
+  ).join('') || '<p class="text-sm text-slate-500">No teacher chapter notes yet.</p>';
+  let details = '';
+  if (TN_ACTIVE) {
+    if (TN_DETAIL) {
+      const n = TN_DETAIL;
+      details = '<div class="card"><h3 class="h3">' + esc(n.title || n.chapter) + '</h3>' +
+        '<p class="text-sm text-slate-500">' + esc(n.cls) + ' · ' + esc(n.subj) + ' · ' + esc(n.by) + '</p>' +
+        (n.body ? '<p class="mt-3 whitespace-pre-wrap text-sm">' + esc(n.body) + '</p>' : '') +
+        ((n.points || []).length ? '<h4 class="font-semibold mt-3">Key points</h4><ul class="list-disc pl-5 text-sm">' +
+          n.points.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul>' : '') +
+        ((n.words || []).length ? '<h4 class="font-semibold mt-3">Vocabulary</h4><ul class="text-sm">' +
+          n.words.map(w => '<li>' + esc(w.w) + ': ' + esc(w.m) + '</li>').join('') + '</ul>' : '') +
+        ((n.qa || []).length ? '<h4 class="font-semibold mt-3">Questions & Answers</h4><div class="text-sm">' +
+          n.qa.map(q => '<p class="my-2"><b>' + esc(q.q) + '</b><span class="block whitespace-pre-wrap">' + esc(q.a) + '</span></p>').join('') + '</div>' : '') +
+        '<button class="btn btn-l btn-sm mt-3" onclick="TN_ACTIVE=\'\';TN_DETAIL=null;render()">Close note</button></div>';
+    } else details = '<div class="card text-sm">' + (TN_DETAIL_ERROR ? esc(TN_DETAIL_ERROR) : 'Opening note…') + '</div>';
+  }
+  return title + '<div class="card"><h3 class="h3">Class holidays · ' + esc(TN_OVERVIEW.session || '') + '</h3>' + hol + '</div>' +
+    '<div class="card"><h3 class="h3">Teacher chapter notes</h3>' + collections + '</div>' + details;
+}
+
+const VIEWS = { tnotes: vTNotes, dash: vDash, staff: vStaff, timetable: vTimetable, attendance: vAttendance, diaries: vDiaries, syllabus: vSyllabus,
   results: vResults, students: vStudents, notices: vNotices, mytoday: vMyToday, myweek: vMyWeek, diary: vDiary, marks: vMarks,
   leave: vLeave, log: vLog, settings: vSettings, calendar: vCalendar, behaviour: vBehaviour, speaking: vSpeaking,
   lplan: vLessonPlan, lplans: vLessonPlans, fame: vFame, exams: vExams, quiz: vQuiz, quizt: vQuizT, game: vGame, fees: vFees, pfees: vPFees, fdesk: vFDesk, salary: vSalary, admin: vAdmin, rules: vRules, fdues: vFDues, fcalls: vFCalls, freceipts: vFReceipts, phome: vPHome, phw: vPHw, presults: vPResults, pnotices: vPNotices };
@@ -3881,7 +3953,7 @@ NAV.chairman.push(['chairapp','fa-mobile-screen','Chairman App']); NAV.principal
 VIEWS.chairapp=()=>'<div class="card"><h3 class="h3">Chairman App</h3><p class="text-sm">Phone par ye link kholiye, Chairman PIN se login kariye, phir browser menu me <b>Add to Home screen</b> dabaiye. App icon ban jayega.</p><p class="mt-2"><a class="btn btn-p" href="chairman.php" target="_blank" rel="noopener">Open Chairman App</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'chairman.php</p></div>';
 // The Teacher App (phone, Add to Home screen): homework/class work, attendance + register, lesson plan, chapter notes from photos, marks → result — school/teacher.php.
 NAV.teacher.push(['tapp','fa-mobile-screen','Teacher App']); NAV.principal.push(['tapp','fa-mobile-screen','Teacher App']);
-VIEWS.tapp=()=>'<div class="card"><h3 class="h3">Teacher App</h3><p class="text-sm">Phone par ye link kholiye, apna naam chuniye aur PIN daaliye, phir browser menu me <b>Add to Home screen</b> dabaiye. App icon ban jayega.</p><p class="mt-2"><a class="btn btn-p" href="teacher.php" target="_blank" rel="noopener">Open Teacher App</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'teacher.php</p></div>';
+VIEWS.tapp=()=>'<div class="card"><h3 class="h3">Teacher App</h3><p class="text-sm">Phone par ye link kholiye, apna naam chuniye aur PIN daaliye. Browser se Add to Home screen bhi kar sakte hain.</p><p class="mt-2 flex flex-wrap gap-2"><a class="btn btn-p" href="teacher.php" target="_blank" rel="noopener">Open Teacher App</a><a class="btn btn-l" href="https://github.com/ankit854281/maakit/releases/download/teacher-android-v1/snmsis-teacher.apk" target="_blank" rel="noopener">Download Android APK</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'teacher.php</p></div>';
 VIEWS.feedash=()=>'<iframe class="edu-iframe" title="Fee Control Room" src="feedash.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).

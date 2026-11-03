@@ -15,6 +15,7 @@
 //                                          (kind clsHol 'date|cls'; any attendance of that day is removed —
 //                                          a holiday is not counted as present or absent anywhere)
 //   GET  ?a=notes&cls=&subj=               chapter notes of a class (and subject)
+//   GET  ?a=overview                      Principal/Chairman: class holidays and note metadata
 //   POST ?a=note {id?,cls,subj,chapter,title,body,points[],words[],qa[]}   subject teacher / Principal
 //   POST ?a=delnote {id}                   the teacher who wrote it / Principal
 //
@@ -80,6 +81,44 @@ $canClass = fn(string $cls): bool => $role === 'principal' || ($role === 'teache
 $canSee = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cls);
 
 switch ($a) {
+
+
+case 'overview': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    if (!in_array($role, ['principal', 'chairman'], true)) sch_fail('Only the Principal or Chairman can see this overview.', 403);
+    $settings = sch_rec_get('settings', 'main') ?: [];
+    $start = (string)($settings['sessionStart'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start) || !strtotime($start)) $start = '';
+    $end = $start ? date('Y-m-d', strtotime($start . ' +1 year -1 day')) : '';
+    $holidays = []; $notes = [];
+    foreach ($db->query("SELECT k, r, d FROM sch_records WHERE k IN ('clsHol','tchNote') AND deleted=0") as $row) {
+        $d = json_decode((string)$row['d'], true);
+        if (!is_array($d)) continue;
+        if ($row['k'] === 'clsHol') {
+            $date = (string)($d['date'] ?? '');
+            if ($start && ($date < $start || $date > $end)) continue;
+            $holidays[] = ['cls' => (string)($d['cls'] ?? ''), 'date' => $date,
+                           'title' => (string)($d['title'] ?? ''), 'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
+        } else {
+            $cls = (string)($d['cls'] ?? ''); $subj = (string)($d['subj'] ?? '');
+            if ($cls === '' || $subj === '') continue;
+            $notes[$cls][$subj][] = ['id' => (string)($d['id'] ?? $row['r']), 'cls' => $cls,
+                'subj' => $subj, 'chapter' => (string)($d['chapter'] ?? ''), 'title' => (string)($d['title'] ?? ''),
+                'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0),
+                'share' => (bool)($d['share'] ?? false), 'pointsCount' => count((array)($d['points'] ?? []))];
+        }
+    }
+    usort($holidays, fn($x, $y) => strcmp($y['date'], $x['date']));
+    ksort($notes);
+    foreach ($notes as &$subjects) {
+        ksort($subjects);
+        foreach ($subjects as &$list) usort($list, fn($x, $y) => ($y['at'] <=> $x['at']));
+        unset($list);
+    }
+    unset($subjects);
+    sch_json(['ok' => true, 'holidays' => $holidays, 'notes' => (object)$notes,
+              'session' => (string)($settings['session'] ?? '')]);
+}
 
 case 'state': {
     $added = tch_seed_holidays();

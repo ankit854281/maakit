@@ -1,0 +1,58 @@
+name: SNMSIS Teacher APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'school/teacher-android/**'
+      - 'school/img/teacher-512.png'
+      - '.github/workflows/teacher-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: teacher-apk
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Use the school's existing icon
+        run: |
+          mkdir -p school/teacher-android/app/src/main/res/drawable
+          cp school/img/teacher-512.png school/teacher-android/app/src/main/res/drawable/app_icon.png
+      - name: Build and check Android app
+        working-directory: school/teacher-android
+        run: gradle --no-daemon assembleDebug lintDebug
+      - name: Verify APK and signature
+        run: |
+          cp school/teacher-android/app/build/outputs/apk/debug/app-debug.apk snmsis-teacher.apk
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose snmsis-teacher.apk
+          "$BUILD_TOOLS/aapt" dump badging snmsis-teacher.apk > apk-info.txt
+          head -20 apk-info.txt
+          sha256sum snmsis-teacher.apk > snmsis-teacher.apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snmsis-teacher-apk
+          path: |
+            snmsis-teacher.apk
+            snmsis-teacher.apk.sha256
+          retention-days: 30
+      - name: Publish direct download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="teacher-android-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "SNMSIS Teacher Android" --notes "Direct-install Android app for the live SNMSIS Teacher dashboard. Internet and the existing school PIN are required. First installable build with Android debug signing; not a Play Store release."
+          fi
+          gh release upload "$TAG" snmsis-teacher.apk snmsis-teacher.apk.sha256 --clobber
