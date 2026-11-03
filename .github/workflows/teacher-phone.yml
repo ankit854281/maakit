@@ -75,6 +75,24 @@ jobs:
         run: |
           export MYSQL="mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch"
           bash .github/jaanch/sab.sh
+      # Run the same checks against the untouched commit preceding Teacher changes.
+      # These legacy non-school failures may be caused by missing CI-only config/config.php.
+      # Keep the actual sab.sh step red; the baseline only explains its unrelated errors.
+      - name: Compare full-suite failures against clean pre-Teacher commit
+        if: always()
+        run: |
+          git fetch --depth=20 origin 3cbbeac610ce3683fe4254be767c868483edd2b4
+          git worktree add --detach /tmp/teacher-clean-baseline 3cbbeac610ce3683fe4254be767c868483edd2b4
+          cp config.php /tmp/teacher-clean-baseline/config.php
+          mkdir -p /tmp/teacher-clean-baseline/uploads
+          (
+            cd /tmp/teacher-clean-baseline
+            export MYSQL="mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch"
+            bash .github/jaanch/sab.sh
+          ) > /tmp/teacher-clean-baseline-check.log 2>&1 || true
+          echo "=== Clean pre-Teacher baseline failures (same CI database and HTTP server) ==="
+          grep -E '  टूटी  |ठीक: .*टूटी:' /tmp/teacher-clean-baseline-check.log || true
+          echo "=== The clean base is on commit 3cbbeac, before the Teacher changes ==="
       - uses: actions/upload-artifact@v4
         if: always()
         with:
