@@ -20,3 +20,9 @@ Built by Claude and pushed: see AGENTS.md › "Teacher App". All school checks p
 ## Same-domain Teacher APK download
 - The `teacher-apk-domain.yml` action mirrors the already-built release APK, checks its SHA-256 and commits `school/downloads/snmsis-teacher.apk` into `main`. No APK is rebuilt or re-signed by the mirror.
 - After owner runs the private updater, download at `https://maakit.in/school/downloads/snmsis-teacher.apk` (not GitHub). The web ERP's Teacher App button links to that file. Verify the mirror workflow succeeds before publishing the new website link.
+
+## Welcome, motivation, and profile enhancement
+- Added a brief personalized welcome opening with skip and reduced-motion support, shown only on initial app load (not while marking attendance).
+- Added a rotating teacher encouragement card to the Aaj tab.
+- Expanded the account sheet into a real read-only school profile with class/subject/period summary and an optional photo stored on that phone only. Existing leave, holiday, PIN, logout and offline attendance queue stay unchanged.
+- A school-wide synced profile-photo backend is NOT included; official staff details remain managed by the school office.

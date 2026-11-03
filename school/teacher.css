@@ -110,3 +110,41 @@ textarea.inp{resize:vertical;line-height:1.45}
 .prt{display:none}
 @media print{body{background:#fff;display:block}#phone,#toast{display:none!important}.prt{display:block!important;font:12px Arial,sans-serif;color:#000}
   .prt table{border-collapse:collapse;width:100%}.prt th,.prt td{border:1px solid #444;padding:3px 5px;font-size:11px}.prt h1{font-size:16px;margin:0 0 4px}.prt h2{font-size:13px;margin:0 0 8px;font-weight:normal}}
+
+/* Teacher welcome, daily encouragement, and personal profile — no changes to school records. */
+.teacher-avatar-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.teacher-motivation{border-radius:17px;padding:17px 18px;background:linear-gradient(120deg,#E6FAF3,#F8FFFC);border:1px solid #BEEADD;box-shadow:0 4px 15px rgba(15,118,110,.07)}
+.motivation-eyebrow{font-size:10px;font-weight:700;color:#0F766E;letter-spacing:1px}
+.motivation-quote{font-size:15px;line-height:1.45;font-weight:600;margin:9px 0 7px;color:#164E48}
+.teacher-motivation small{display:block;color:#477069;font-size:12px}
+.teacher-welcome{position:absolute;inset:0;z-index:60;overflow:hidden;background:linear-gradient(156deg,#0A514B 0%,#0F766E 45%,#083C38 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:calc(30px + env(safe-area-inset-top,0px)) 24px 30px;text-align:center;animation:twFade .3s ease both}
+.teacher-welcome.leaving{animation:twOut .22s ease forwards;pointer-events:none}
+.welcome-inner{position:relative;z-index:2;width:100%;max-width:340px;display:flex;align-items:center;flex-direction:column;animation:twRise .7s cubic-bezier(.2,.9,.2,1) both}
+.welcome-logo{width:60px;height:60px;object-fit:contain;border-radius:50%;padding:4px;background:#fff;margin-bottom:18px;box-shadow:0 8px 24px #073F3A80}
+.welcome-tag{font-size:10px;letter-spacing:2.5px;font-weight:700;color:#B4EEE3}
+.welcome-photo{width:92px;height:92px;border-radius:50%;margin:27px 0 15px;display:flex;align-items:center;justify-content:center;border:3px solid #BCEAE0;background:#E0F7F0;color:#0F766E;font-size:28px;font-weight:700;box-shadow:0 0 0 11px #FFFFFF15}
+.welcome-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.welcome-kicker{font-size:13px;color:#D5F5EB}
+.teacher-welcome h2{font-size:clamp(21px,6vw,27px);line-height:1.22;font-weight:700;margin:6px 0 17px;overflow-wrap:anywhere}
+.welcome-quote{font-size:16px;line-height:1.5;margin:0 0 8px;max-width:310px;font-weight:600}
+.welcome-inner small{font-size:12px;color:#BEEAE1;line-height:1.5}
+.welcome-start{margin-top:29px;border:0;border-radius:999px;background:#FFCF71;color:#143C36;font-size:14px;font-weight:700;padding:14px 27px;box-shadow:0 8px 24px #001B1833;min-height:48px}
+.welcome-skip{margin-top:16px;border:0;background:transparent;color:#F1FFFC;font-size:12px;padding:12px;min-height:40px}
+.welcome-halo{position:absolute;border:1px solid #FFFFFF24;border-radius:50%;pointer-events:none;animation:twPulse 4s ease-in-out infinite}
+.welcome-halo.h1{width:340px;height:340px;top:-185px;right:-160px}
+.welcome-halo.h2{width:270px;height:270px;bottom:-180px;left:-120px;animation-delay:-2s}
+.teacher-profile-card{border-radius:20px;background:#fff;border:1px solid #D5EEE7;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 3px 18px #0C554412}
+.profile-top{display:flex;align-items:center;gap:13px;min-width:0}
+.profile-photo{width:68px;height:68px;flex-shrink:0;border-radius:50%;background:#D5F9EE;border:3px solid #B5E7D8;color:#0F766E;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.profile-photo img{width:100%;height:100%;object-fit:cover}
+.profile-identity{min-width:0}.profile-caption{font-size:10px;font-weight:700;letter-spacing:1px;color:#0F766E}.profile-identity h2{font-size:17px;margin:4px 0;overflow-wrap:anywhere}.profile-identity p{font-size:11px;color:#63736E;margin:0}
+.profile-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-radius:13px;background:#ECFDF7;padding:12px 2px;text-align:center}
+.profile-stats div{display:flex;flex-direction:column;gap:3px;padding:0 3px;border-right:1px solid #C6E7DF}.profile-stats div:last-child{border-right:0}
+.profile-stats strong{font-size:20px;color:#0F766E}.profile-stats span{font-size:10px;line-height:1.3;color:#536C66}
+.profile-section{padding-bottom:9px;border-bottom:1px solid #EEF1F0}.profile-section b{font-size:11px;color:#526861}.profile-section p{font-size:13px;margin:4px 0 0;line-height:1.5;overflow-wrap:anywhere}
+.profile-photo-actions{display:flex;flex-wrap:wrap;gap:7px}.profile-photo-actions .btn{position:relative;min-height:38px;display:flex;align-items:center;justify-content:center;padding:8px 11px}
+.profile-photo-actions input[type=file]{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
+.profile-local{font-size:10.5px;color:#687A75;line-height:1.5}
+@keyframes twFade{from{opacity:0}to{opacity:1}}@keyframes twOut{from{opacity:1}to{opacity:0}}@keyframes twRise{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}@keyframes twPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.12);opacity:1}}
+@media (prefers-reduced-motion:reduce){.teacher-welcome,.teacher-welcome.leaving,.welcome-inner,.welcome-halo{animation:none!important}}
+@media (max-height:650px){.welcome-logo{width:44px;height:44px;margin-bottom:8px}.welcome-photo{width:64px;height:64px;margin:13px 0}.welcome-start{margin-top:14px}}

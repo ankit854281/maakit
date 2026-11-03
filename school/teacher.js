@@ -137,7 +137,7 @@ async function load() {
     if (!['teacher', 'principal'].includes(res.me.role)) { LOGIN = { msg: 'This app is for teachers. Please log in with a teacher PIN.' }; store.set('sch_token', null); S = null; return render(); }
     ME = res.me; S = emptyState(); applyRecs(res.records); lastV = res.now; loadedFrom = res.from;
     loadQueue(); QUEUE.forEach(x => setRec(x.k, x.r, x.d));
-    render(); flush();
+    render(); flush(); showTeacherWelcome();
   } catch (e) {
     if (e.code === 428) { LOGIN = { step: 'new' }; S = null; return render(); }
     if (e.code === 401) return;
@@ -290,7 +290,7 @@ function render() {
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
   const dot = { att: dueAtt, diary: dueDiary }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b></div>
-      <button id="net" class="net" onclick="flush();refresh()"></button><button class="av" onclick="openMe()" aria-label="My account">${esc(initials)}</button></div>
+      <button id="net" class="net" onclick="flush();refresh()"></button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
     <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
@@ -304,6 +304,91 @@ function seg(items, cur, fn) { return `<div class="seg">${items.map(([k, l]) => 
 function sel(id, items, cur, onch) { return `<select id="${id}" class="inp" onchange="${onch}">${items.map(([v, l]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`; }
 const DRAFT = {};
 
+
+// One gentle welcome per app opening. It never interrupts an attendance edit or the offline queue.
+const TEACHER_QUOTES = [
+  ['Every child can learn. Your patience helps them believe it.', 'Har bachche ke andar ek nayi shuruaat hai.'],
+  ['A small lesson today can become a big dream tomorrow.', 'Aaj ka chhota kadam, kal ka bada sapna.'],
+  ['Teach with care. Progress comes one step at a time.', 'Har din ek bachche ka hausla badhaiye.'],
+  ['Your kindness is part of what students remember.', 'Padhai ke saath apnapan bhi sikhaiye.'],
+  ['One encouraging word can change a student’s day.', 'Aaj kisi bachche ki mehnat ko sarahiye.'],
+  ['Great teaching makes room for questions and curiosity.', 'Sawal puchhne ki himmat badhaiye.'],
+  ['Each new day is another chance to make learning joyful.', 'Aaj ki class ko yaadgaar banaiye.']
+];
+function teacherQuote() {
+  const date = todayISO().split('-').map(Number);
+  const n = Math.floor(Date.UTC(date[0], date[1] - 1, date[2]) / 86400000);
+  return TEACHER_QUOTES[n % TEACHER_QUOTES.length];
+}
+function teacherMotivation() {
+  const q = teacherQuote();
+  return '<section class="teacher-motivation" aria-label="Daily teacher motivation"><div class="motivation-eyebrow">✦ TODAY’S TEACHER SPARK</div>' +
+    '<p class="motivation-quote">' + esc(q[0]) + '</p><small>' + esc(q[1]) + '</small></section>';
+}
+function teacherPhotoKey() { return 'ta_photo_' + (ME ? ME.role + ME.tid : ''); }
+function teacherPhoto() {
+  const data = store.get(teacherPhotoKey()) || '';
+  return data.length < 175000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data) ? data : '';
+}
+function teacherInitials() { return myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T'; }
+let WELCOME_SHOWN = false, WELCOME_TIMER = null;
+function closeTeacherWelcome() {
+  clearTimeout(WELCOME_TIMER);
+  const el = $('ta-welcome');
+  if (!el) return;
+  el.classList.add('leaving');
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 240);
+}
+function showTeacherWelcome(force) {
+  if (!S || (!force && WELCOME_SHOWN)) return;
+  WELCOME_SHOWN = true;
+  const old = $('ta-welcome');
+  if (old) old.remove();
+  clearTimeout(WELCOME_TIMER);
+  const quote = teacherQuote(), photo = teacherPhoto();
+  const el = document.createElement('div');
+  el.id = 'ta-welcome';
+  el.className = 'teacher-welcome';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Welcome to SNMSIS Teacher');
+  el.innerHTML = '<div class="welcome-halo h1"></div><div class="welcome-halo h2"></div>' +
+    '<div class="welcome-inner"><img class="welcome-logo" src="' + LOGO + '" alt="School logo">' +
+    '<span class="welcome-tag">SNMSIS · TEACHER</span>' +
+    '<div class="welcome-photo">' + (photo ? '<img src="' + esc(photo) + '" alt="My profile photo">' : esc(teacherInitials())) + '</div>' +
+    '<span class="welcome-kicker">' + esc(greet()) + '</span><h2>Welcome, ' + esc(myName()) + '</h2>' +
+    '<p class="welcome-quote">' + esc(quote[0]) + '</p><small>' + esc(quote[1]) + '</small>' +
+    '<button class="welcome-start" type="button" onclick="closeTeacherWelcome()">Start my day →</button>' +
+    '<button class="welcome-skip" type="button" onclick="closeTeacherWelcome()">Skip animation</button></div>';
+  $('phone').appendChild(el);
+  WELCOME_TIMER = setTimeout(closeTeacherWelcome, 4500);
+}
+async function profilePhotoPick(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  if (!f.type.startsWith('image/') || f.size > 8 * 1024 * 1024) return toast('Choose an image below 8 MB.');
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 240; canvas.height = 240;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Photo cannot be read on this phone.');
+      const edge = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width-edge)/2, (img.height-edge)/2, edge, edge, 0, 0, 240, 240);
+      const data = canvas.toDataURL('image/jpeg', .72);
+      if (data.length >= 175000) throw new Error('This photo is too large.');
+      store.set(teacherPhotoKey(), data);
+      toast('Profile photo saved on this device.');
+      openMe();
+    } catch (e) { toast(e.message || 'Could not save photo.'); }
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('Could not open this photo.'); };
+  img.src = url;
+}
+function profilePhotoRemove() { store.set(teacherPhotoKey(), null); openMe(); }
+
 // ---------------------------------------------------------------- AAJ (today)
 function vHome() {
   const d = todayISO(), bells = myBells(d), hol = holidayOn(d), ct = myCT();
@@ -316,6 +401,7 @@ function vHome() {
   const mine = S.leaves.filter(l => l.tid === me()).slice(0, 2);
   const notices = S.notices.filter(n => n.to !== 'Parents').slice(0, 3);
   return `<div class="row"><h2>${fmtLong(d)}</h2></div>
+    ${teacherMotivation()}
     ${dayIdx(d) < 0 ? '<div class="ban hol">Sunday — no school today.</div>' : hol ? `<div class="ban hol"><b>Holiday:</b> ${esc(hol.title)}</div>` : ''}
     ${absentFrom(d, me()) !== null ? `<div class="ban warn">${absentFrom(d, me()) ? 'Half day today — you leave before the ' + BELLS[absentFrom(d, me())].n + ' bell.' : 'You are on leave / marked absent today.'}</div>` : ''}
     <div class="kp">
@@ -843,7 +929,30 @@ async function attCard(ses, exam, c) {
 function openMe() {
   const mine = S.leaves.filter(l => l.tid === me()), t = todayISO();
   const hol = S.cal.filter(e => e.type === 'Holiday' && (e.to || e.date) >= t).slice(0, 12);
-  SHEET = () => `<div class="row"><h2>${esc(myName())}</h2><span class="pill">${isP() ? 'Principal' : 'Teacher'}</span></div>
+  const staff = T(me()), allocation = myAllocs(), subjects = [...new Set(allocation.map(a => a.s))];
+  const myClasses = myCT(), photo = teacherPhoto();
+  const initials = teacherInitials();
+  const periods = allocation.reduce((sum, a) => sum + (Number(a.n) || 0), 0);
+  const schoolSession = (S.settings || {}).session || '';
+  const profileCard = '<section class="teacher-profile-card"><div class="profile-top"><div class="profile-photo">' +
+    (photo ? '<img src="' + esc(photo) + '" alt="My profile photo">' : esc(initials)) + '</div>' +
+    '<div class="profile-identity"><span class="profile-caption">MY TEACHER PROFILE</span><h2>' + esc(myName()) + '</h2>' +
+    '<p>' + (isP() ? 'Principal' : 'Teacher') + ' · Session ' + esc(schoolSession) + '</p></div></div>' +
+    '<div class="profile-stats"><div><strong>' + esc(myClasses.length) + '</strong><span>Class teacher</span></div><div><strong>' +
+    esc(subjects.length) + '</strong><span>Subjects</span></div><div><strong>' + esc(periods) +
+    '</strong><span>Weekly periods</span></div></div>' +
+    '<div class="profile-section"><b>My class' + (myClasses.length === 1 ? '' : 'es') + '</b><p>' +
+    (myClasses.length ? myClasses.map(c => 'Class ' + esc(c)).join(' · ') : 'No class-teacher assignment') + '</p></div>' +
+    '<div class="profile-section"><b>My subjects</b><p>' +
+    (subjects.length ? subjects.map(esc).join(' · ') : 'No subject assignment yet') + '</p></div>' +
+    (staff.phone ? '<div class="profile-section"><b>School-record contact</b><p>' + esc(staff.phone) + '</p></div>' : '') +
+    '<div class="profile-photo-actions"><label class="btn l">Change photo<input type="file" accept="image/*" capture="user" onchange="profilePhotoPick(this)"></label>' +
+    (photo ? '<button class="btn l" onclick="profilePhotoRemove()">Remove photo</button>' : '') +
+    '<button class="btn l" onclick="showTeacherWelcome(true)">Replay welcome</button></div>' +
+    '<small class="profile-local">Your profile photo stays on this phone. Official staff information is managed by the school office.</small></section>';
+
+  SHEET = () => `<div class="row"><h2>My account</h2><button class="btn s l" onclick="closeSheet()" aria-label="Close profile">Close</button></div>
+    ${profileCard}
     <p class="mut" style="margin:0">${myCT().length && !isP() ? 'Class teacher of ' + myCT().map(esc).join(', ') + ' · ' : ''}${[...new Set(myAllocs().map(a => a.s))].slice(0, 5).map(esc).join(', ')}</p>
     <div class="card"><h3>Apply for leave</h3><div class="two"><div class="fld">From<input id="lvF" type="date" class="inp" value="${t}"></div><div class="fld">To<input id="lvT" type="date" class="inp" value="${t}"></div></div>
       <div class="fld" style="margin-top:8px">Reason<input id="lvR" class="inp" maxlength="200" placeholder="e.g. Family function"></div>
@@ -869,6 +978,7 @@ async function pinChange() { const o = $('pO').value.trim(), n = $('pN').value.t
 async function logout() {
   if (QUEUE.length && !confirm(QUEUE.length + ' change(s) are not sent yet (no internet). Log out anyway? They will be lost.')) return;
   try { await api('api.php?a=logout', {}); } catch (e) {}
+  closeTeacherWelcome(); WELCOME_SHOWN = false;
   store.set(qKey(), null); store.set('sch_token', null); S = null; ME = null; SHEET = null; LOGIN = {}; QUEUE = []; LOGQ = []; render();
 }
 
