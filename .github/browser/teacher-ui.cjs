@@ -169,7 +169,7 @@ const path = require('node:path');
     await office.getByText('CI Chapter Note').first().waitFor();
     await office.locator('button').filter({ hasText: 'View note' }).first().click();
     await office.getByText('This note is created only in a CI test database.').waitFor();
-    await office.screenshot({ path: path.join(dir, '13-Principal-Notes-Page.png'), fullPage: true });
+    await office.screenshot({ path: path.join(dir, '13-Principal-ERP-Detail.png'), fullPage: true });
     assert.deepEqual(officeErrors, [], 'Principal page errors');
     await ctx.close();
   });
