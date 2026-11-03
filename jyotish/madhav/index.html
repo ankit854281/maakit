@@ -4,15 +4,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12102a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MADHAV">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./madhav-icon.svg" type="image/svg+xml">
 <meta name="description" content="MADHAV — Bhagavad Gita inspired reflection, bilingual guidance and mindful japa.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>MADHAV | बोलो पार्थ</title>
 <link rel="stylesheet" href="./app.css">
 <script src="./app.js" defer></script>
 </head>
-<body>
+<body class="splash-active">
+<div id="splash" class="splash" role="region" aria-label="MADHAV welcome animation" aria-live="off">
+  <div class="splash-backdrop" aria-hidden="true">
+    <span class="splash-light splash-light-a"></span><span class="splash-light splash-light-b"></span>
+    <span class="splash-mandala splash-mandala-outer"></span><span class="splash-mandala splash-mandala-inner"></span>
+    <span class="splash-flute"><span class="splash-flute-holes"></span></span>
+    <span class="splash-lotus">🪷</span>
+    <span class="splash-spark splash-spark-one">✧</span><span class="splash-spark splash-spark-two">✦</span>
+    <span class="splash-spark splash-spark-three">✧</span>
+  </div>
+  <div class="splash-content">
+    <p class="splash-kicker" data-i18n="splashKicker">श्रीकृष्ण के ज्ञान से प्रेरित</p>
+    <h1 class="splash-brand">MADHAV</h1>
+    <p class="splash-tagline" data-i18n="splashTagline">बोलो पार्थ…</p>
+    <p class="splash-subtext" data-i18n="splashSubtext">हर प्रश्न से शुरू होती है एक नई राह।</p>
+    <div class="splash-loading" role="progressbar" aria-label="Opening Madhav" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+    <button type="button" id="skip-intro" class="splash-skip" data-i18n="skipIntro">आगे बढ़ें ›</button>
+  </div>
+</div>
 <a class="skip-link" href="#main" data-i18n="skip">मुख्य सामग्री पर जाएँ</a>
-<div class="shell">
+<div class="shell" id="app-shell">
 <header class="topbar">
  <div class="brandlock"><div class="brandmark" aria-hidden="true">🪷</div><div><div class="wordmark">MADHAV</div><div class="brand-sub" data-i18n="brandSub">गीता से प्रेरित संवाद</div></div></div>
  <button id="language" class="lang-btn" type="button" aria-label="Switch between Hindi and English" title="Change language">EN <span aria-hidden="true">↗</span></button>
