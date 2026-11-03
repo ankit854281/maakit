@@ -288,12 +288,12 @@ function render() {
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) ? 0 : 1), 0);
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
-  const dot = { att: dueAtt, diary: dueDiary }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
+  const dot = { att: dueAtt, diary: dueDiary }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b></div>
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="av" onclick="openMe()" aria-label="My account">${esc(initials)}</button></div>
     <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
-  if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; }
+  if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
   setNet();
 }
 let LASTTAB = null;
