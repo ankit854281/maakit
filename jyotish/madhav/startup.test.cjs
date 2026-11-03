@@ -19,7 +19,7 @@ assert(js.includes('document.body.classList.remove("splash-active")'),"Intro mus
 assert(js.includes('splash.hidden=true'),"Intro must hide after finishing");
 assert(css.includes('prefers-reduced-motion:reduce'),"Respect reduced-motion preference");
 assert(css.includes('.shell{width:100%;max-width:none;min-height:100dvh'),"Full width app layout expected");
-assert(!css.includes('.bottom-nav{width:100%;max-width:none;border-radius:0;min-height:70px}')===false,"Bottom nav should use app width");
+assert(css.includes('.bottom-nav{width:100%;max-width:none;border-radius:0;min-height:70px}'),"Bottom nav should use app width");
 assert.equal(manifest.display,"standalone","Web-app display mode");
 assert.equal(manifest.start_url,"./index.html","Web-app start URL");
 assert(fs.existsSync(path.join(root,"madhav-icon.svg")),"Icon must exist");
