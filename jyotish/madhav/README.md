@@ -2,6 +2,12 @@
 
 **Status:** responsive bilingual web preview + standalone PHP API. **Not production-ready, not deployed, not an Android/iOS build.** Code lives in `jyotish/madhav/` and does not replace Maakit Jyotish.
 
+## V6.1 mobile-app feedback update
+- **Full-screen app shape:** removes the 520px phone mockup constraint in browser; 100dvh native-style layout, sticky toolbar, adaptive cards and full-width bottom navigation.
+- **Opening animation:** Krishna-inspired flute, lotus, soft particles and mandala animation plays for approximately 4.4 seconds (not minutes). It is skippable, honors reduced motion, and leads automatically to **बोलो पार्थ** chat without forcing the mobile keyboard.
+- **Installable web-app metadata:** standalone display manifest and SVG icon. This alone does **not** make a native Android/iOS binary; offline service worker and store packaging are not yet present.
+- **Regression coverage:** `node jyotish/madhav/startup.test.cjs` checks the intro, skip control, viewport, chat transition and manifest basics. Browser/mobile real-device motion tests remain outstanding.
+
 ## What's new in V6
 - Semantic mobile-first UI in `index.html`; premium plum/gold styles and reduced-motion support in `app.css`.
 - Working Hindi/English interface toggle, saved locally; `app.js` handles the UI (no inline scripts).
@@ -24,6 +30,7 @@ php -l jyotish/madhav/madhav_core.php
 php -l jyotish/madhav/ai_provider.php
 php jyotish/madhav/tests.php
 node --check jyotish/madhav/app.js
+node jyotish/madhav/startup.test.cjs
 cd jyotish/madhav && php -S 127.0.0.1:8080
 ```
 Open `http://127.0.0.1:8080/index.html`.
