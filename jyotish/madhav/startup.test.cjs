@@ -1,0 +1,27 @@
+/* MADHAV app-startup regression checks. Run with: node jyotish/madhav/startup.test.cjs */
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const root=__dirname;
+const html=fs.readFileSync(path.join(root,"index.html"),"utf8");
+const js=fs.readFileSync(path.join(root,"app.js"),"utf8");
+const css=fs.readFileSync(path.join(root,"app.css"),"utf8");
+const manifest=JSON.parse(fs.readFileSync(path.join(root,"manifest.webmanifest"),"utf8"));
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
+assert.equal(new Set(ids).size,ids.length,"HTML IDs must be unique");
+for(const id of ["splash","skip-intro","chat","chatstream","question","language","chat-form","chips"])assert(ids.includes(id),"Missing element: "+id);
+assert(html.indexOf('id="splash"')<html.indexOf('id="app-shell"'),"Splash should precede shell");
+assert(js.includes('go("chat")'),"Intro must navigate to chat");
+assert(js.includes('skip.addEventListener("click",finish)'),"Intro must support skip");
+assert(/setTimeout\(finish,reduced\?100:4400\)/.test(js),"Intro should complete within approximately 4.4 seconds");
+assert(js.includes('document.body.classList.remove("splash-active")'),"Intro must unlock app");
+assert(js.includes('splash.hidden=true'),"Intro must hide after finishing");
+assert(css.includes('prefers-reduced-motion:reduce'),"Respect reduced-motion preference");
+assert(css.includes('.shell{width:100%;max-width:none;min-height:100dvh'),"Full width app layout expected");
+assert(!css.includes('.bottom-nav{width:100%;max-width:none;border-radius:0;min-height:70px}')===false,"Bottom nav should use app width");
+assert.equal(manifest.display,"standalone","Web-app display mode");
+assert.equal(manifest.start_url,"./index.html","Web-app start URL");
+assert(fs.existsSync(path.join(root,"madhav-icon.svg")),"Icon must exist");
+assert(!js.includes('if(target==="chat")$("question").focus('),"Do not force mobile keyboard on arrival");
+console.log("PASS: MADHAV splash, fullscreen shell, chat navigation, accessibility and manifest checks");
