@@ -32,6 +32,8 @@ jobs:
         run: php jyotish/madhav/tests.php
       - name: Frontend syntax
         run: node --check jyotish/madhav/app.js
+      - name: Intro and app-shell regression tests
+        run: node jyotish/madhav/startup.test.cjs
       - name: Verify sample corpus JSON
         run: |
           node -e 'const k=require("./jyotish/madhav/knowledge.json");if(!Array.isArray(k.verses)||k.verses.length<4||new Set(k.verses.map(v=>v.id)).size!==k.verses.length)process.exit(1)'
