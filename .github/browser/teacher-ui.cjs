@@ -13,7 +13,7 @@ const path = require('node:path');
   const page = await context.newPage();
   const errors = [], failures = [];
   page.on('pageerror', e => errors.push('Page: ' + e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push('Console: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !/net::ERR_INTERNET_DISCONNECTED/.test(m.text())) errors.push('Console: ' + m.text()); });
   page.on('dialog', async d => { await d.accept(); });
   const shot = async (n) => page.screenshot({ path: path.join(dir, n + '.png'), fullPage: true });
   const pause = async (ms = 400) => page.waitForTimeout(ms);
