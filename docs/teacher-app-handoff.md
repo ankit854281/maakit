@@ -16,3 +16,7 @@ Built by Claude and pushed: see AGENTS.md › "Teacher App". All school checks p
 - Web: `https://maakit.in/school/teacher.php`
 - Android: `https://github.com/ankit854281/maakit/releases/download/teacher-android-v1/snmsis-teacher.apk`
 - Website deployments are not automatic: Ankit must use his private `update.php?key=…` URL. Do not place the key in code or docs.
+
+## Same-domain Teacher APK download
+- The `teacher-apk-domain.yml` action mirrors the already-built release APK, checks its SHA-256 and commits `school/downloads/snmsis-teacher.apk` into `main`. No APK is rebuilt or re-signed by the mirror.
+- After owner runs the private updater, download at `https://maakit.in/school/downloads/snmsis-teacher.apk` (not GitHub). The web ERP's Teacher App button links to that file. Verify the mirror workflow succeeds before publishing the new website link.

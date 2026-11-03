@@ -1,0 +1,7 @@
+AddType application/vnd.android.package-archive .apk
+<IfModule mod_headers.c>
+  <FilesMatch "\.apk$">
+    Header always set Content-Disposition "attachment; filename=snmsis-teacher.apk"
+    Header always set X-Content-Type-Options "nosniff"
+  </FilesMatch>
+</IfModule>
