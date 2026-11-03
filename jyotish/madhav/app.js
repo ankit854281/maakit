@@ -25,7 +25,8 @@ function translate(){
 function go(target){if(!["home","chat","gita","stories","japa"].includes(target))return;
  screen=target;document.querySelectorAll(".screen").forEach(s=>{const on=s.id===target;s.hidden=!on;s.classList.toggle("active",on)});
  document.querySelectorAll(".bottom-nav button").forEach(b=>{const on=b.dataset.go===target;b.classList.toggle("selected",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- if(target==="chat")$("question").focus({preventScroll:true});window.scrollTo(0,0);
+ // Do not force a mobile keyboard on first launch; let the user tap the composer.
+ window.scrollTo(0,0);
 }
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 $("language").addEventListener("click",()=>{lang=lang==="hi"?"en":"hi";try{localStorage.setItem("madhav-lang-v6",lang)}catch(_){};translate()});
