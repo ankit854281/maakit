@@ -1,0 +1,16 @@
+{
+  "name": "SNMSIS Teacher",
+  "short_name": "Teacher",
+  "description": "Homework, class work, attendance, lesson plans, chapter notes and results for the teachers of SN Mishra Singapore International School",
+  "start_url": "teacher.php",
+  "scope": "./",
+  "id": "snmsis-teacher",
+  "display": "standalone",
+  "background_color": "#0B3B37",
+  "theme_color": "#0F766E",
+  "icons": [
+    { "src": "img/teacher-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/teacher-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/teacher-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

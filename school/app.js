@@ -77,12 +77,12 @@ function freshState() {
     staffAtt: {}, studAtt: {}, diary: {}, signed: {}, syl: seedSyllabus(),
     exams: [ { id:'ut1', name:'Unit Test 1', date:'2026-07-20' }, { id:'hy', name:'Half-Yearly', date:'2026-09-25' },
              { id:'ut2', name:'Unit Test 2', date:'2026-11-20' }, { id:'ann', name:'Annual Exam', date:'2027-03-10' } ],
-    marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: []
+    marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: [], clsHol: {}
   };
 }
 function emptyState() {
   return { settings: {}, classes: [], teachers: {}, alloc: [], grid: null, students: [], staffAtt: {}, studAtt: {}, diary: {},
-           signed: {}, syl: {}, exams: [], marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: [], fees: null, log: [] };
+           signed: {}, syl: {}, exams: [], marks: {}, leaves: [], notices: [], behav: {}, speak: [], lplan: {}, cal: [], clsHol: {}, fees: null, log: [] };
 }
 
 // ---------------------------------------------------------------- server sync
@@ -141,6 +141,8 @@ function toRecords() {
   S.speak.forEach(x => put('speak', x.id, x));
   Object.entries(S.lplan).forEach(([k, v]) => put('lplan', k, v));
   S.cal.forEach(e => put('cal', e.id, e));
+  // Class holidays are written only by teacher_api.php (Teacher App); kept here so a removal from another phone is seen.
+  Object.entries(S.clsHol || {}).forEach(([d, byC]) => Object.entries(byC).forEach(([c, v]) => put('clsHol', d + '|' + c, v)));
   if (S.fees) put('fees', 'main', S.fees);
   return R;
 }
@@ -166,6 +168,7 @@ function setRec(k, r, d) {
     case 'speak': { const i = S.speak.findIndex(x => x.id === r); if (i >= 0) S.speak[i] = d; else S.speak.push(d); break; }
     case 'lplan': S.lplan[r] = d; break;
     case 'fees': S.fees = d; break;
+    case 'clsHol': ((S.clsHol = S.clsHol || {})[p[0]] = S.clsHol[p[0]] || {})[p[1]] = d; break;
     case 'cal': { const i = S.cal.findIndex(x => x.id === r); if (i >= 0) S.cal[i] = d; else S.cal.push(d); S.cal.sort((a, b) => a.date.localeCompare(b.date)); break; }
   }
 }
@@ -176,6 +179,7 @@ function removeRec(k, r) {
   else if (k === 'behav') { const p = r.split('|'); if (S.behav[p[0]]) delete S.behav[p[0]][p[1]]; }
   else if (k === 'speak') S.speak = S.speak.filter(x => x.id !== r);
   else if (k === 'cal') S.cal = S.cal.filter(x => x.id !== r);
+  else if (k === 'clsHol') { const p = r.split('|'); if (S.clsHol && S.clsHol[p[0]]) delete S.clsHol[p[0]][p[1]]; }
 }
 function applyRemote(recs) {
   let changed = false; const local = toRecords();
@@ -452,6 +456,8 @@ function diaryStats(date) {
 }
 function studentsOf(c) { return S.students.filter(s => s.cls === c).sort((a, b) => a.name.localeCompare(b.name)); }
 function attOf(date, c) { return S.studAtt[date] ? S.studAtt[date][c] : null; }
+// One class has no school this day (marked by its class teacher in the Teacher App — teacher_api.php?a=holiday).
+function clsHolOn(date, c) { return (S.clsHol && S.clsHol[date] || {})[c] || null; }
 function attStats(date) {
   let marked = 0, total = 0, present = 0;
   CLASS_NAMES.forEach(c => { const a = attOf(date, c); const n = studentsOf(c).length;
@@ -485,7 +491,7 @@ function alerts(date) {
   if (dayIdx(date) < 0) return [{ lv:'b', x:'Sunday — no classes.' }];
   const hol = holidayOn(date); if (hol) return [{ lv:'b', x:'Holiday: ' + hol.title + ' — no classes.' }, ...boardAlerts(date)];
   if (!isToday || nowMin() >= toMin(S.settings.attendanceCutoff)) {
-    const missing = CLASS_NAMES.filter(c => studentsOf(c).length && !attOf(date, c));
+    const missing = CLASS_NAMES.filter(c => studentsOf(c).length && !attOf(date, c) && !clsHolOn(date, c));
     if (missing.length) A.push({ lv:'r', x:`Student attendance not marked: Class ${missing.join(', ')}`, go:'attendance' });
   }
   const ds = diaryStats(date); const pend = Object.entries(ds.pendingBy);
@@ -757,7 +763,7 @@ function vDash() {
   const date = P.date || lastSchoolDay(todayISO()), ro = U.role === 'chairman', isToday = date === todayISO();
   const ab = staffAbsent(date), as = attStats(date), ds = diaryStats(date), arr = arrangement(date), al = alerts(date);
   const nT = Object.keys(S.teachers).length, onLeave = ab.filter(t => S.leaves.some(l => l.status === 'Approved' && l.tid === t && l.from <= date && l.to >= date)).length;
-  const withKids = CLASS_NAMES.filter(c => studentsOf(c).length), pending = dayIdx(date) >= 0 && !holidayOn(date) ? withKids.filter(c => !attOf(date, c)) : [];
+  const withKids = CLASS_NAMES.filter(c => studentsOf(c).length), pending = dayIdx(date) >= 0 && !holidayOn(date) ? withKids.filter(c => !attOf(date, c) && !clsHolOn(date, c)) : [];
   const hw = {}; Object.values(S.diary[date] || {}).forEach(byB => Object.values(byB).forEach(e => { if (e && e.hw && String(e.hw).trim()) hw[e.cls] = (hw[e.cls] || 0) + 1; }));
   const hwN = Object.values(hw).reduce((a, b) => a + b, 0), pct = as.total ? Math.round(as.present / as.total * 100) : null;
   const h = new Date().getHours(), hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
@@ -765,6 +771,7 @@ function vDash() {
   const tile = c => { const n = studentsOf(c).length, a = attOf(date, c);
     if (!n) return `<div class="att att-empty"><b>${esc(c)}</b><span>No students</span></div>`;
     if (dayIdx(date) < 0 || holidayOn(date)) return `<div class="att att-empty"><b>${esc(c)}</b><span>No school</span><em>${n} students</em></div>`;
+    if (!a && clsHolOn(date, c)) return `<div class="att att-empty" title="${esc(clsHolOn(date, c).title)}"><b>${esc(c)}</b><span>Holiday</span><em>${esc(clsHolOn(date, c).title)}</em></div>`;
     if (!a) return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att att-none"><b>${esc(c)}</b><span>Not marked</span><em>${n} students</em></button>`;
     const p = Math.round((n - a.absent.length) / n * 100);
     return `<button onclick="go('attendance',{date:'${date}',c:'${c}'})" class="att ${p >= 95 ? 'att-hi' : p >= 90 ? 'att-mid' : 'att-lo'}" title="Class ${esc(c)}: ${n - a.absent.length} present, ${a.absent.length} absent, ${n} on roll"><b>${esc(c)}</b><span>${p}%</span><em>${n - a.absent.length}/${n} present</em><em class="${a.absent.length ? 'ab' : ''}">${a.absent.length ? a.absent.length + ' absent' : 'none absent'}</em></button>`; };
@@ -981,7 +988,7 @@ function vMyToday() {
     ${absent ? `<div class="card bg-rose-50 border-rose-200 text-rose-800 font-semibold">${absentFrom(date, tid) ? 'Half day — you leave before the ' + BELLS[absentFrom(date, tid)].n + ' bell.' : 'You are marked absent / on leave for this day.'}</div>` : ''}
     ${teacherCorner(date)}
     ${ctOf.map(c => { const a = attOf(date, c); return `<div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${a ? '' : 'border-amber-300 bg-amber-50'}">
-      <span><b>Class ${c} attendance</b> (you are Class Teacher): ${a ? `<span class="text-emerald-700 font-semibold">Done — ${studentsOf(c).length - a.absent.length}/${studentsOf(c).length} present</span>` : '<span class="text-amber-700 font-semibold">Not marked yet</span>'}</span>
+      <span><b>Class ${c} attendance</b> (you are Class Teacher): ${a ? `<span class="text-emerald-700 font-semibold">Done — ${studentsOf(c).length - a.absent.length}/${studentsOf(c).length} present</span>` : clsHolOn(date, c) ? `<span class="text-slate-600 font-semibold">Holiday — ${esc(clsHolOn(date, c).title)}</span>` : '<span class="text-amber-700 font-semibold">Not marked yet</span>'}</span>
       <button onclick="go('attendance',{c:'${c}',date:'${date}'})" class="btn btn-sm ${a ? 'btn-l' : 'btn-p'}">${a ? 'View' : 'Mark now'}</button></div>`; }).join('')}
     <div class="card"><h3 class="font-bold mb-3">My Bells</h3>
       ${bells.length ? `<div class="space-y-2">${bells.map(b => { const e = diaryEntry(date, tid, b.bell);
@@ -1013,7 +1020,7 @@ function vAttendance() {
   const ab3 = threeDayAbsentees(date).filter(s => s.cls === c);
   const classBtns = allowed.length > 1 ? `<select class="inp w-auto" onchange="go('attendance',{c:this.value,date:'${date}'})">${allowed.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select>` : '';
   const overview = U.role === 'principal' ? `<div class="card"><h3 class="font-bold mb-2">All classes — ${fmtDate(date)}</h3><div class="flex flex-wrap gap-2">${CLASS_NAMES.map(x => { const a = attOf(date, x), n = studentsOf(x).length;
-      return `<button onclick="go('attendance',{c:'${x}',date:'${date}'})" class="pill ${a ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${x}: ${a ? (n - a.absent.length) + '/' + n : 'not marked'}</button>`; }).join('')}</div></div>` : '';
+      return `<button onclick="go('attendance',{c:'${x}',date:'${date}'})" class="pill ${a ? 'bg-emerald-100 text-emerald-800' : clsHolOn(date, x) ? 'bg-slate-100 text-slate-600' : 'bg-rose-100 text-rose-800'}">${x}: ${a ? (n - a.absent.length) + '/' + n : clsHolOn(date, x) ? 'holiday' : 'not marked'}</button>`; }).join('')}</div></div>` : '';
   return head(`Attendance — Class ${c}`, 'Everyone is Present by default. Tap only the absent students, then Save.', classBtns + dateInput('a-date', date, `go('attendance',{c:'${c}',date:this.value})`)) + overview + `
     <div class="card">
       <div class="flex justify-between items-center mb-3"><span class="text-sm">${saved ? `<span class="pill bg-emerald-100 text-emerald-800">Saved ${fmtTime(saved.at)} by ${esc(saved.by)}</span>` : '<span class="pill bg-amber-100 text-amber-800">Not saved yet</span>'}</span>
@@ -2404,7 +2411,18 @@ function vPHw() {
   return `${kidSwitch()}${head('Homework & class work', `Class ${esc(kid.cls)} · last 10 days, from the teachers' diaries`)}${parentAcademicChecks(kid)}
     ${Object.keys(byDate).length ? Object.entries(byDate).map(([d, list]) => `<div class="card"><h3 class="h3">${fmtDate(d)}</h3><div class="mt-2 divide-y divide-slate-100">${list.map(h => `<div class="py-2"><span class="subj">${esc(h.subj)}</span>
       <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}${h.classwork?`<p class="text-sm">Class work: ${esc(h.classwork)}</p>`:''}${h.books?`<p class="text-sm"><b>Bring: ${esc(h.books)}</b></p>`:''}${h.revision?`<p class="text-sm">Revision: ${esc(h.revision)}</p>`:''}</div>`).join('')}</div></div>`).join('')
-      : '<div class="card text-sm text-slate-500">Nothing written in the last 10 days.</div>'}`;
+      : '<div class="card text-sm text-slate-500">Nothing written in the last 10 days.</div>'}
+    ${pNotes(kid)}`;
+}
+// Chapter notes the teachers made in the Teacher App (pdata.notes, only this child's class, only shared notes).
+function pNotes(kid) {
+  const list = (PD.notes || []).filter(n => n.cls === kid.cls).sort((a, b) => String(a.subj).localeCompare(String(b.subj)) || (b.at || 0) - (a.at || 0));
+  if (!list.length) return '';
+  return `<div class="card"><h3 class="h3">Chapter notes</h3><div class="mt-2 divide-y divide-slate-100">${list.map(n => `<details class="py-2"><summary class="cursor-pointer"><span class="subj">${esc(n.subj)}</span> <b>${esc(n.chapter || n.title)}</b></summary>
+    ${n.body ? `<p class="text-sm mt-2 whitespace-pre-wrap">${esc(n.body)}</p>` : ''}${(n.points || []).length ? `<ul class="text-sm mt-2 list-disc pl-5">${n.points.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    ${(n.words || []).length ? `<p class="text-sm mt-2"><b>Words:</b> ${n.words.map(w => `${esc(w.w)} — ${esc(w.m)}`).join(' · ')}</p>` : ''}
+    ${(n.qa || []).length ? `<div class="text-sm mt-2">${n.qa.map((x, i) => `<p class="mt-1"><b>Q${i + 1}. ${esc(x.q)}</b><br>${esc(x.a)}</p>`).join('')}</div>` : ''}
+    <p class="text-xs text-slate-400 mt-1">${esc(n.by || '')}</p></details>`).join('')}</div></div>`;
 }
 function vPResults() {
   const kid = pKid(); if (!kid) return vPHome();
@@ -3861,6 +3879,9 @@ for (const role of ['principal','chairman','accountant','reception']) NAV[role].
 // The Chairman's phone app (Add to Home screen): the same report with its own login — school/chairman.php.
 NAV.chairman.push(['chairapp','fa-mobile-screen','Chairman App']); NAV.principal.push(['chairapp','fa-mobile-screen','Chairman App']);
 VIEWS.chairapp=()=>'<div class="card"><h3 class="h3">Chairman App</h3><p class="text-sm">Phone par ye link kholiye, Chairman PIN se login kariye, phir browser menu me <b>Add to Home screen</b> dabaiye. App icon ban jayega.</p><p class="mt-2"><a class="btn btn-p" href="chairman.php" target="_blank" rel="noopener">Open Chairman App</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'chairman.php</p></div>';
+// The Teacher App (phone, Add to Home screen): homework/class work, attendance + register, lesson plan, chapter notes from photos, marks → result — school/teacher.php.
+NAV.teacher.push(['tapp','fa-mobile-screen','Teacher App']); NAV.principal.push(['tapp','fa-mobile-screen','Teacher App']);
+VIEWS.tapp=()=>'<div class="card"><h3 class="h3">Teacher App</h3><p class="text-sm">Phone par ye link kholiye, apna naam chuniye aur PIN daaliye, phir browser menu me <b>Add to Home screen</b> dabaiye. App icon ban jayega.</p><p class="mt-2"><a class="btn btn-p" href="teacher.php" target="_blank" rel="noopener">Open Teacher App</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'teacher.php</p></div>';
 VIEWS.feedash=()=>'<iframe class="edu-iframe" title="Fee Control Room" src="feedash.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 // Old ERP Reports — every list/report page copied from the old ERP, read-only (school/oldreports.php).

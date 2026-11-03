@@ -5,6 +5,7 @@
 //   GET  ?a=status                     {ai: true/false} — AI na ho to phone khud padhega
 //   POST ?a=read {mode, cls, subj, images:[dataURL]}
 //        mode = chapters (kitaab ka Contents panna) | lplan (lesson plan / kitaab ka panna)
+//               | notes (chapter ke panne → bachchon ke notes, Teacher App)
 //
 // Sirf teacher (apne class-subject ke liye) aur Principal. Photo save nahi
 // hoti; nateeja teacher ko dikhaya jaata hai, wahi badal kar save karta hai
@@ -36,7 +37,7 @@ case 'read': {
     $in = json_decode(file_get_contents('php://input', false, null, 0, 14000000) ?: '', true);
     if (!is_array($in)) sch_fail('Bad request.');
     $mode = (string)($in['mode'] ?? ''); $cls = (string)($in['cls'] ?? ''); $subj = (string)($in['subj'] ?? '');
-    if (!in_array($mode, ['chapters', 'lplan', 'page'], true)) sch_fail('Choose what the photo is.');
+    if (!in_array($mode, ['chapters', 'lplan', 'page', 'notes'], true)) sch_fail('Choose what the photo is.');
     if ($u['role'] === 'teacher' && !sch_teaches((string)$u['tid'], $cls, $subj)) sch_fail('You can scan only for your own class and subject.', 403);
     $imgs = $in['images'] ?? null;
     if (!is_array($imgs) || !$imgs || count($imgs) > SC_MAX_IMAGES) sch_fail('Send 1 to ' . SC_MAX_IMAGES . ' photos.');
@@ -62,8 +63,8 @@ case 'read': {
     }
     try { $res = sc_ai_read($mode, $cls, $subj, $images, $ctx); }
     catch (Throwable $e) { error_log('scan_api: ' . $e->getMessage()); sch_json(['ok' => false, 'noAi' => true, 'error' => 'AI could not read it just now. Your phone will read the photo instead.'], 502); }
-    sch_log($u, $mode === 'chapters' ? 'Syllabus' : 'Lesson Plan', 'Photo read for Class ' . $cls . ' ' . $subj . ': '
-        . ($mode === 'chapters' ? count($res['chapters']) . ' chapter(s) found' : ($mode==='page'?count($res['days']).' day drafts':count($res['topics']).' topic(s) found')) . ' (to check and save)');
+    sch_log($u, $mode === 'chapters' ? 'Syllabus' : ($mode === 'notes' ? 'Notes' : 'Lesson Plan'), 'Photo read for Class ' . $cls . ' ' . $subj . ': '
+        . ($mode === 'chapters' ? count($res['chapters']) . ' chapter(s) found' : ($mode === 'notes' ? count($res['points']) . ' note point(s) drafted' : ($mode==='page'?count($res['days']).' day drafts':count($res['topics']).' topic(s) found'))) . ' (to check and save)');
     sch_json(['ok' => true, 'via' => 'ai'] + $res);
 }
 

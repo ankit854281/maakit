@@ -12,7 +12,7 @@ date_default_timezone_set('Asia/Kolkata');
 
 const SCH_KINDS = ['settings','classes','teacher','alloc','grid','exams','student','staffAtt','studAtt',
                    'diary','signed','syl','marks','leave','notice','behav','speak','lplan','cal','fees'];
-const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav'];
+const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav','clsHol'];   // clsHol = class holiday (teacher_api.php)
 const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal'];
 const SCH_SESSION_DAYS = 30;
 const SCH_NO_LOAD = ['parent', 'student', 'accountant', 'reception'];   // inhe poore school ka data nahi milta
@@ -83,7 +83,7 @@ function sch_rows_to_records(array $rows): array {
     foreach ($rows as $row) {
         if (str_starts_with($row['k'], 'ac')) continue; // Daily teaching uses its own child/subject-scoped API.
         // Learning content has its own subject/child-scoped API; keys never use legacy sync.
-        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct') || str_starts_with($row['k'], 'scan') || str_starts_with($row['k'], 'sal') || str_starts_with($row['k'], 'prof') || str_starts_with($row['k'], 'fin') || str_starts_with($row['k'], 'reg') || str_starts_with($row['k'], 'ofc') || str_starts_with($row['k'], 'prc') || str_starts_with($row['k'], 'pho')) continue;   // reg* = School Office registers (registers_api.php), ofc* = Fee Receipt (feecollect_api.php), prc*/pho* = Progress Report + photos (progress_api.php)
+        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct') || str_starts_with($row['k'], 'scan') || str_starts_with($row['k'], 'sal') || str_starts_with($row['k'], 'prof') || str_starts_with($row['k'], 'fin') || str_starts_with($row['k'], 'reg') || str_starts_with($row['k'], 'ofc') || str_starts_with($row['k'], 'prc') || str_starts_with($row['k'], 'pho') || str_starts_with($row['k'], 'tch')) continue;   // reg* = School Office registers (registers_api.php), ofc* = Fee Receipt (feecollect_api.php), prc*/pho* = Progress Report + photos (progress_api.php), tch* = Teacher App notes (teacher_api.php)
         if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck'], true)) continue;
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}

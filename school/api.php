@@ -401,6 +401,10 @@ case 'pdata': {
         'kids' => $kidsOut, 'att' => $att, 'hw' => $hw, 'marks' => $marks, 'behav' => $behav, 'speak' => $speak,
         'academics' => ac_parent($kids, (string)($set['session']??'')),
         'remarks' => array_values(array_filter($get('toolRemark'), fn($r) => in_array($r['sid']??'', $ids, true) && ($r['session']??'')===(string)($set['session']??''))),
+        // Chapter notes from the Teacher App (teacher_api.php) — only the children's own classes, only notes the teacher shared
+        'notes' => array_values(array_map(fn($n) => array_intersect_key($n, array_flip(['id','cls','subj','chapter','title','body','points','words','qa','by','at'])),
+                   array_filter($get('tchNote'), fn($n) => in_array($n['cls'] ?? '', $classes, true) && ($n['share'] ?? true) !== false))),
+        'clsHol' => array_values(array_filter($get('clsHol', $from), fn($h) => in_array($h['cls'] ?? '', $classes, true))),
         'notices' => $notices, 'cal' => array_values($get('cal')), 'fees' => sch_rec_get('fees', 'main'),
         // 'sent' = kis bachche ke ghar result gaya — doosre parents ko nahi dikhna chahiye
         'exams' => array_map(fn($e) => is_array($e) ? array_diff_key($e, ['sent' => 1]) : $e, (array)(sch_rec_get('exams', 'main') ?? []))]);
