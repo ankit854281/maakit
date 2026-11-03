@@ -1,0 +1,84 @@
+name: SNMSIS Teacher phone checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'school/teacher*'
+      - 'school/app.js'
+      - 'school/classic.js'
+      - '.github/jaanch/teacher-flow.php'
+      - '.github/browser/teacher-ui*'
+      - '.github/workflows/teacher-phone.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  teacher:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: jaanch
+          MARIADB_DATABASE: maakit_jaanch
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mysqli, gd, zip, mbstring
+          coverage: none
+      - name: Prepare synthetic CI database and local PHP server
+        run: |
+          for i in $(seq 1 30); do
+            mysql -h 127.0.0.1 -uroot -pjaanch -e 'SELECT 1' >/dev/null 2>&1 && break
+            sleep 2
+          done
+          for n in 1 2; do
+            for f in sql/*.sql; do mysql -h 127.0.0.1 -uroot -pjaanch maakit_jaanch < "$f"; done
+          done
+          cp config.sample.php config.php
+          php -r '
+            $p = "config.php"; $s = file_get_contents($p);
+            foreach (["DB_HOST" => "127.0.0.1:3306", "DB_NAME" => "maakit_jaanch", "DB_USER" => "root", "DB_PASS" => "jaanch"] as $k => $v) {
+              $s = preg_replace("/define\(\x27" . $k . "\x27,\s*\x27[^\x27]*\x27\);/", "define(\x27".$k."\x27, \x27".$v."\x27);", $s);
+            }
+            $s .= "\ndefine(\x27MUNEEM_KEY\x27, \x27ci-teacher-only\x27);\ndefine(\x27UPDATE_KEY\x27, \x27ci-teacher-only-update-key\x27);\n";
+            file_put_contents($p, $s);
+          '
+          php -l config.php
+          mkdir -p uploads ../maakit-backups/db
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8099 >/tmp/teacher-php.log 2>&1 &
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8099/school/teacher.php && break; sleep 1; done
+      - name: Teacher API and permission checks
+        run: |
+          php .github/jaanch/teacher-flow.php
+          php .github/browser/teacher-ui-seed.php
+      - name: Check the JavaScript files
+        run: |
+          node --check school/teacher.js
+          node --check school/app.js
+          node --check school/classic.js
+      - name: Install Playwright only in CI
+        run: |
+          npm install --prefix /tmp/teacher-playwright --no-audit --no-fund playwright@1.56.1
+          /tmp/teacher-playwright/node_modules/.bin/playwright install --with-deps chromium
+      - name: Mobile 390px browser checks and screenshots
+        run: node .github/browser/teacher-ui.cjs
+      - name: Full school test suite
+        if: always()
+        run: |
+          export MYSQL="mysql -h 127.0.0.1 -P 3306 -uroot -pjaanch"
+          bash .github/jaanch/sab.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snmsis-teacher-phone-screenshots
+          path: /tmp/teacher-ui-screens/*.png
+          retention-days: 7
+          if-no-files-found: ignore
