@@ -142,6 +142,45 @@ const path = require('node:path');
     await page.waitForFunction(() => document.querySelector('#net') && /Saved/i.test(document.querySelector('#net').textContent), { timeout: 12000 });
   });
   await run('12-Console', async () => { assert.deepEqual(errors, [], 'browser console/page errors'); });
+  // A separate browser session checks the real Principal ERP screen, not only its PHP API.
+  await run('13-Principal-Notes-Page', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+    const office = await ctx.newPage();
+    const officeErrors = [];
+    office.on('pageerror', e => officeErrors.push(e.message));
+    await office.goto('http://127.0.0.1:8099/school/', { waitUntil: 'domcontentloaded' });
+    const login = await office.evaluate(async () => {
+      const r = await fetch('api.php?a=login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'principal', pin: '2468' }) });
+      return r.json();
+    });
+    assert.ok(login.ok && login.token, 'Principal login token');
+    await office.evaluate(token => localStorage.setItem('sch_token', token), login.token);
+    await office.reload({ waitUntil: 'domcontentloaded' });
+    await office.waitForFunction(() => typeof U !== 'undefined' && U && U.role === 'principal', null, { timeout: 15000 });
+    await office.evaluate(() => go('tnotes'));
+    await office.getByText('Teacher chapter notes').waitFor({ timeout: 15000 });
+    await office.locator('summary').filter({ hasText: '9th' }).click();
+    await office.getByText('CI Chapter Note').first().waitFor();
+    await office.locator('button').filter({ hasText: 'View note' }).first().click();
+    await office.getByText('This note is created only in a CI test database.').waitFor();
+    await office.screenshot({ path: path.join(dir, '13-Principal-Notes-Page.png'), fullPage: true });
+    assert.deepEqual(officeErrors, [], 'Principal page errors');
+    await ctx.close();
+  });
+  await run('14-Parent-Shared-Notes', async () => {
+    const result = await page.evaluate(async () => {
+      const response = await fetch('api.php?a=login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'parent', phone: '9876500001', pin: '4455' }) });
+      const auth = await response.json();
+      if (!auth.ok || !auth.token) return { error: 'Parent login failed' };
+      const data = await fetch('api.php?a=pdata', { headers: { 'X-School-Token': auth.token } });
+      return data.json();
+    });
+    assert.ok(result.ok && Array.isArray(result.notes), 'Parent homework notes');
+    assert.ok(result.notes.some(n => n.chapter === 'CI Chapter Note'), 'Parent must receive shared teacher note');
+    assert.ok(result.notes.every(n => !Object.hasOwn(n, 'tid')), 'No teacher internal IDs in parent note response');
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));
