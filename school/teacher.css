@@ -310,3 +310,44 @@ html[lang=hi] body{line-height:1.5}
 .hwb button.done.on{background:var(--ok);border-color:var(--ok);color:#fff}.hwb button.half.on{background:#E59A1C;border-color:#E59A1C;color:#fff}.hwb button.not.on{background:var(--bad);border-color:var(--bad);color:#fff}
 .hwb button.cp{margin-left:4px;display:flex;align-items:center;justify-content:center}.hwb button.cp svg.i{width:18px;height:18px}.hwb button.cp.on{background:#2F5D8A;border-color:#2F5D8A;color:#fff}
 .lowp{color:var(--bad);font-weight:600}
+/* Opening story — same style as the Chairman app (owner, 5 Nov 2026). Each scene has its own colour. */
+.tw{position:absolute;inset:0;z-index:70;overflow:hidden;color:#fff;background:#120E3A;animation:twFade .3s ease both}
+.tw.leaving{animation:twOut .25s ease forwards;pointer-events:none}
+.tw-bars{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;right:86px;z-index:4;display:flex;gap:5px}
+.tw-bars i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
+.tw-bars i::after{content:"";position:absolute;inset:0;width:0;background:#fff;border-radius:9px}.tw-bars i.done::after{width:100%}.tw-bars i.run::after{animation:twbar var(--ms) linear forwards}
+@keyframes twbar{to{width:100%}}
+.tw-skip{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:12px;z-index:5;min-height:36px;padding:0 16px;border:0;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:600}
+.tw-tap{position:absolute;top:60px;bottom:120px;z-index:3}.tw-tap.l{left:0;width:30%}.tw-tap.r{right:0;width:70%}
+.tw-s{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:70px 24px 40px}
+.tw-s.on{display:flex;animation:twin .55s ease-out}@keyframes twin{from{opacity:0;transform:scale(.96)}}
+.tw-s.s1{background:radial-gradient(120% 80% at 50% 0%,#4F46E5,#14114A 70%)}
+.tw-s.s2{background:linear-gradient(120deg,#EC4899,#8B5CF6,#F59E0B,#14B8A6,#EC4899);background-size:400% 400%;animation:twin .55s ease-out,twhue 2.6s ease-in-out infinite}
+@keyframes twhue{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.tw-s.s3{background:radial-gradient(120% 90% at 50% 100%,#7C3AED,#1A0F3D 70%)}
+.tw-s.s4{background:linear-gradient(160deg,#0E9F8E,#0B3B4A)}
+.tw-s.s5{background:radial-gradient(120% 80% at 50% 100%,#EA7A0C,#2A1405 75%)}
+.tw-glow{position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),transparent 60%);animation:twglow 2.6s ease-in-out infinite;pointer-events:none}
+@keyframes twglow{0%,100%{transform:scale(.8);opacity:.5}50%{transform:scale(1.15);opacity:1}}
+.tw-logo{width:120px;height:120px;border-radius:50%;background:#fff;padding:4px;box-shadow:0 0 0 12px rgba(255,255,255,.12),0 0 0 26px rgba(255,255,255,.06),0 24px 50px rgba(0,0,0,.45);animation:twpop .8s cubic-bezier(.2,1.6,.4,1)}
+@keyframes twpop{from{transform:scale(.3);opacity:0}}
+.tw-lang{height:100px;margin-top:8px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tw-lang b{font-size:30px;font-weight:700;line-height:1.3;animation:twlw .42s ease-out}.tw-lang small{font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-top:6px}
+@keyframes twlw{from{opacity:0;transform:translateY(14px) scale(.96);filter:blur(4px)}}
+.tw-k{margin:0;font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;opacity:.85;position:relative}
+.tw-h{margin:0;font-size:32px;font-weight:700;line-height:1.18;position:relative}.tw-h.xl{font-size:52px;letter-spacing:.12em;text-shadow:0 8px 30px rgba(0,0,0,.25)}
+.tw-s.s4 .tw-h{font-size:22px}
+.tw-t{margin:0;font-size:15px;line-height:1.55;opacity:.94;max-width:310px;position:relative}.tw-sm{font-size:12px;opacity:.75}
+.tw-gold{color:#FFD166}
+.tw-photo{width:104px;height:104px;border-radius:50%;border:3px solid rgba(255,255,255,.75);background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;overflow:hidden;box-shadow:0 0 0 12px rgba(255,255,255,.08);animation:twpop .7s cubic-bezier(.2,1.6,.4,1)}
+.tw-photo img{width:100%;height:100%;object-fit:cover}
+.tw-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:330px;margin-top:10px}
+.tw-card{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:12px;text-align:left;opacity:0;transform:translateY(14px);animation:twc .45s ease-out forwards;animation-delay:var(--d)}
+.tw-card b{display:block;font-size:26px;font-weight:700}.tw-card span{font-size:11.5px;opacity:.85}
+@keyframes twc{to{opacity:1;transform:none}}
+.tw-ticks{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px;width:100%;max-width:330px}
+.tw-ticks li{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 14px;font-size:14px;font-weight:500;text-align:left;opacity:0;animation:twc .45s ease-out forwards;animation-delay:var(--d)}
+.tw-ticks li::before{content:"✓";color:#FFD166;font-weight:700;margin-right:10px}
+.tw-go{margin-top:16px;width:100%;max-width:330px;height:52px;border-radius:999px;border:0;background:#FFD166;color:#2A1A00;font-size:15px;font-weight:700;box-shadow:0 10px 24px rgba(255,209,102,.35);position:relative;z-index:4}
+@media (prefers-reduced-motion:reduce){.tw,.tw-s.on,.tw-logo,.tw-lang b,.tw-card,.tw-ticks li,.tw-glow,.tw-photo{animation:none!important;opacity:1;transform:none}.tw-bars i.run::after{animation:none;width:100%}}
+@media (max-height:650px){.tw-logo{width:84px;height:84px}.tw-h{font-size:26px}.tw-h.xl{font-size:40px}.tw-photo{width:80px;height:80px}}

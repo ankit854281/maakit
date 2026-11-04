@@ -402,36 +402,62 @@ function teacherPhoto() {
   return data.length < 175000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data) ? data : '';
 }
 function teacherInitials() { return myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T'; }
-let WELCOME_SHOWN = false, WELCOME_TIMER = null;
+// ---------------------------------------------------------------- opening story (owner, 5 Nov 2026: "jaise Chairman Sir ka app")
+// Same story style as chairman.js: 5 scenes with progress bars. 1 logo + SNMSIS changing through many languages ·
+// 2 colour sweep with SNMSIS · 3 Welcome + the teacher's photo + today's thought · 4 "your day" counting up ·
+// 5 the promise + Start. Plays once a day by itself (teachers open the app many times), any time from
+// My account → Replay welcome. Tap the right side = next scene, left side = back, Skip ends it.
+const TW_LANGS = [['SNMSIS', 'English'], ['एस एन एम एस आई एस', 'हिन्दी'], ['এস এন এম এস আই এস', 'বাংলা'], ['எஸ் என் எம் எஸ் ஐ எஸ்', 'தமிழ்'], ['ఎస్ ఎన్ ఎమ్ ఎస్ ఐ ఎస్', 'తెలుగు'],
+  ['એસ એન એમ એસ આઈ એસ', 'ગુજરાતી'], ['ਐਸ ਐਨ ਐਮ ਐਸ ਆਈ ਐਸ', 'ਪੰਜਾਬੀ'], ['ಎಸ್ ಎನ್ ಎಂ ಎಸ್ ಐ ಎಸ್', 'ಕನ್ನಡ'], ['എസ് എൻ എം എസ് ഐ എസ്', 'മലയാളം'], ['ایس این ایم ایس آئی ایس', 'اردو'],
+  ['エス・エヌ・エム・エス・アイ・エス', '日本語'], ['ЭС ЭН ЭМ ЭС АЙ ЭС', 'Русский'], ['إس إن إم إس آي إس', 'العربية'], ['SNMSIS', 'English']];
+const TW_SCENES = [6200, 2600, 4400, 4200, 3200];
+let WELCOME_SHOWN = false, TW = null;
+function twDayKey() { return 'ta_intro_day'; }
 function closeTeacherWelcome() {
-  clearTimeout(WELCOME_TIMER);
-  const el = $('ta-welcome');
-  if (!el) return;
-  el.classList.add('leaving');
-  setTimeout(() => { if (el.parentNode) el.remove(); }, 240);
+  if (TW) { TW.timers.forEach(clearTimeout); TW = null; }
+  const el = $('ta-welcome'); if (!el) return;
+  el.classList.add('leaving'); setTimeout(() => { if (el.parentNode) el.remove(); }, 260);
+}
+function twNumbers() {
+  const d = todayISO(), bells = myBells(d), ct = myCT(), kids = ct.reduce((n, c) => n + studentsOf(c).length, 0);
+  const toMark = ct.filter(c => isWorkDay(d, c) && !attOf(d, c)).length, dp = diaryPending(6).reduce((n, x) => n + x.n, 0);
+  return [[bells.length, 'bells today'], [kids, ct.length ? 'children in my class' : 'classes I teach'], [toMark, 'attendance to mark'], [dp, 'diaries pending']]
+    .map(([v, l], i) => [i === 1 && !ct.length ? new Set(allocList().map(a => a.c)).size : v, l]);
 }
 function showTeacherWelcome(force) {
   if (!S || (!force && WELCOME_SHOWN)) return;
   WELCOME_SHOWN = true;
-  const old = $('ta-welcome');
-  if (old) old.remove();
-  clearTimeout(WELCOME_TIMER);
-  const quote = teacherQuote(), photo = teacherPhoto();
+  if (!force && store.get(twDayKey()) === todayISO()) return;                 // once a day by itself
+  store.set(twDayKey(), todayISO());
+  closeTeacherWelcome(); const old = $('ta-welcome'); if (old) old.remove();
+  const q = teacherQuote(), photo = teacherPhoto(), name = myName();
   const el = document.createElement('div');
-  el.id = 'ta-welcome';
-  el.className = 'teacher-welcome';
-  el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-label', 'Welcome to SNMSIS Teacher');
-  el.innerHTML = '<div class="welcome-halo h1"></div><div class="welcome-halo h2"></div>' +
-    '<div class="welcome-inner"><img class="welcome-logo" src="' + LOGO + '" alt="School logo">' +
-    '<span class="welcome-tag">SNMSIS · TEACHER</span>' +
-    '<div class="welcome-photo">' + (photo ? '<img src="' + esc(photo) + '" alt="My profile photo">' : esc(teacherInitials())) + '</div>' +
-    '<span class="welcome-kicker">' + esc(greet()) + '</span><h2>Welcome, ' + esc(myName()) + '</h2>' +
-    '<p class="welcome-quote">' + esc(quote[0]) + '</p><small>' + esc(quote[1]) + '</small>' +
-    '<button class="welcome-start" type="button" onclick="closeTeacherWelcome()">Start my day →</button>' +
-    '<button class="welcome-skip" type="button" onclick="closeTeacherWelcome()">Skip animation</button></div>';
+  el.id = 'ta-welcome'; el.className = 'tw'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Welcome to SNMSIS Teacher');
+  el.innerHTML = `<div class="tw-bars">${TW_SCENES.map(() => '<i></i>').join('')}</div><button class="tw-skip" type="button" onclick="closeTeacherWelcome()">Skip</button>
+    <div class="tw-tap l" onclick="twStep(-1)"></div><div class="tw-tap r" onclick="twStep(1)"></div>
+    <section class="tw-s s1"><img class="tw-logo" src="${LOGO}" alt="School logo"><div class="tw-lang" id="twLang" data-notr></div><p class="tw-t" data-notr>SN Mishra Singapore International School · Bhadohi</p></section>
+    <section class="tw-s s2"><div class="tw-glow"></div><p class="tw-k">One school · every language</p><h1 class="tw-h xl" data-notr>SNMSIS</h1><p class="tw-t">Where every child is known by name.</p></section>
+    <section class="tw-s s3"><div class="tw-photo">${photo ? `<img src="${esc(photo)}" alt="">` : esc(teacherInitials())}</div><p class="tw-k">${esc(greet())}</p><h1 class="tw-h">Welcome,<br><span class="tw-gold" data-notr>${esc(name)}</span></h1><p class="tw-t">“${esc(q[0])}”</p><small class="tw-sm">${esc(q[1])}</small></section>
+    <section class="tw-s s4"><p class="tw-k">Your day today</p><h1 class="tw-h">${esc(fmtLong(todayISO()))}</h1><div class="tw-grid">${twNumbers().map(([v, l], i) => `<div class="tw-card" style="--d:${.15 + i * .18}s"><b data-v="${v}">0</b><span>${esc(l)}</span></div>`).join('')}</div></section>
+    <section class="tw-s s5"><p class="tw-k">Every child · every day</p><h1 class="tw-h">Teach. Track.<br><span class="tw-gold">Inspire.</span></h1>
+      <ul class="tw-ticks"><li style="--d:.1s">Attendance in seconds</li><li style="--d:.35s">Diary and homework in one tap</li><li style="--d:.6s">Every child's progress in one place</li></ul>
+      <button class="tw-go" type="button" onclick="closeTeacherWelcome()">Start my day →</button></section>`;
   $('phone').appendChild(el);
-  WELCOME_TIMER = setTimeout(closeTeacherWelcome, 4500);
+  TW = { i: -1, timers: [] }; twStep(1);
+}
+function twStep(dir) {
+  if (!TW) return; const el = $('ta-welcome'); if (!el) return;
+  TW.timers.forEach(clearTimeout); TW.timers = [];
+  TW.i = Math.max(0, TW.i + dir); if (TW.i >= TW_SCENES.length) return closeTeacherWelcome();
+  const bars = el.querySelectorAll('.tw-bars i'), sc = el.querySelectorAll('.tw-s'), ms = TW_SCENES[TW.i];
+  bars.forEach((b, j) => { b.className = j < TW.i ? 'done' : ''; b.style.removeProperty('--ms'); });
+  bars[TW.i].style.setProperty('--ms', ms + 'ms'); void bars[TW.i].offsetWidth; bars[TW.i].className = 'run';
+  sc.forEach((x, j) => x.classList.toggle('on', j === TW.i));
+  if (TW.i === 0) { let n = 0; const box = $('twLang'); const step = () => { if (!TW || TW.i !== 0) return; const [w, l] = TW_LANGS[n % TW_LANGS.length];
+      box.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < TW_LANGS.length) TW.timers.push(setTimeout(step, (ms - 500) / TW_LANGS.length)); }; TW.timers.push(setTimeout(step, 400)); }
+  if (TW.i === 3) el.querySelectorAll('.tw-card b[data-v]').forEach(b => { const v = +b.dataset.v, t0 = performance.now();
+    const f = now => { const p = Math.min(1, (now - t0) / 1300); b.textContent = Math.round(v * (1 - Math.pow(1 - p, 3))); if (p < 1 && TW) requestAnimationFrame(f); }; requestAnimationFrame(f); });
+  TW.timers.push(setTimeout(() => twStep(1), ms));
 }
 async function profilePhotoPick(input) {
   const f = input.files && input.files[0];

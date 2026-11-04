@@ -24,6 +24,7 @@ const path = require('node:path');
   };
   await page.goto('http://127.0.0.1:8099/school/teacher.php', { waitUntil: 'domcontentloaded' });
   await page.locator('#lgT').waitFor();
+  await page.evaluate(() => localStorage.setItem('ta_intro_day', todayISO()));   // the opening story is checked in step 20
   await page.locator('#lgT').selectOption('K');
   await page.locator('#lgPin').fill('7777');
   await page.locator('.lg button').filter({ hasText: 'Open' }).click();
@@ -277,6 +278,21 @@ const path = require('node:path');
     await page.locator('.chk-card .sticky .btn.go').click();
     await page.getByText(/Checking saved|Saved/).first().waitFor();
     assert.ok(await page.locator('a.wa').count() >= 1, 'parents of a child who did not do homework can be told on WhatsApp');
+  });
+  await run('20-Opening-story', async () => {
+    await page.evaluate(() => { SHEET = null; showTeacherWelcome(true); });
+    await page.locator('#ta-welcome .tw-s.s1.on').waitFor();
+    const first = await page.locator('#twLang').innerText();
+    await pause(900);
+    assert.notEqual(await page.locator('#twLang').innerText(), first, 'SNMSIS changes language');
+    assert.equal(await page.locator('.tw-bars i').count(), 5);
+    await page.locator('.tw-tap.r').click(); await page.locator('.tw-tap.r').click();
+    await page.locator('#ta-welcome .tw-s.s3.on').waitFor();
+    assert.match(await page.locator('.tw-s.s3').innerText(), /Kartikey/);
+    await page.locator('.tw-tap.r').click();
+    await page.locator('#ta-welcome .tw-s.s4.on').waitFor();
+    await page.locator('.tw-skip').click();
+    await page.waitForFunction(() => !document.getElementById('ta-welcome'));
   });
   await browser.close();
   if (failures.length) {

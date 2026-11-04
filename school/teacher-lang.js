@@ -34,6 +34,10 @@
     'Powered by Maakit': ['Powered by Maakit', 'Powered by Maakit'], 'Choose your name.': ['Apna naam chunein.', 'अपना नाम चुनें।'], 'Please log in again.': ['Kripya dobara login karein.', 'कृपया फिर से लॉगिन करें।'],
     'This app is for teachers. Please log in with a teacher PIN.': ['Ye app teachers ke liye hai. Teacher PIN se login karein.', 'यह ऐप शिक्षकों के लिए है। शिक्षक PIN से लॉगिन करें।'],
     // welcome / home
+    'Skip': ['Chhodein', 'छोड़ें'], 'One school · every language': ['Ek school · har bhasha', 'एक विद्यालय · हर भाषा'], 'Where every child is known by name.': ['Jahan har bachcha naam se jaana jaata hai.', 'जहाँ हर बच्चा नाम से जाना जाता है।'],
+    'Welcome,': ['Swagat hai,', 'स्वागत है,'], 'Your day today': ['Aapka aaj ka din', 'आपका आज का दिन'], 'bells today': ['aaj ki bells', 'आज के पीरियड'], 'children in my class': ['meri class ke bachche', 'मेरी कक्षा के बच्चे'], 'classes I teach': ['meri classes', 'मेरी कक्षाएँ'],
+    'attendance to mark': ['haziri baaki', 'हाज़िरी बाकी'], 'diaries pending': ['diary baaki', 'डायरी बाकी'], 'Every child · every day': ['Har bachcha · har din', 'हर बच्चा · हर दिन'], 'Teach. Track.': ['Padhaiye. Dekhiye.', 'पढ़ाइए। परखिए।'], 'Inspire.': ['Prerit kariye.', 'प्रेरित कीजिए।'],
+    'Attendance in seconds': ['Haziri kuch second mein', 'हाज़िरी कुछ सेकंड में'], 'Diary and homework in one tap': ['Diary aur homework ek tap mein', 'डायरी और गृहकार्य एक टैप में'], "Every child's progress in one place": ['Har bachche ki pragati ek jagah', 'हर बच्चे की प्रगति एक जगह'],
     'SNMSIS · TEACHER': ['SNMSIS · TEACHER', 'SNMSIS · शिक्षक'], 'Good morning': ['Suprabhat', 'सुप्रभात'], 'Good afternoon': ['Namaskar', 'नमस्कार'], 'Good evening': ['Shubh sandhya', 'शुभ संध्या'],
     'Start my day →': ['Din shuru karein →', 'दिन शुरू करें →'], 'Skip animation': ['Animation chhodein', 'एनिमेशन छोड़ें'], 'Welcome to SNMSIS Teacher': ['SNMSIS Teacher mein swagat hai', 'SNMSIS शिक्षक में स्वागत है'],
     'Daily teacher motivation': ['Aaj ki prerna', 'आज की प्रेरणा'], '✦ TODAY’S TEACHER SPARK': ['✦ AAJ KI PRERNA', '✦ आज की प्रेरणा'],
