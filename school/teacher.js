@@ -24,7 +24,8 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: '10:10' }, { n: '3rd', s: '10:10', e: '10:45' },
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
 const PARTS = [['pt', 'Pre-Test', 10], ['nb', 'Notebook', 5], ['sea', 'SEA', 5], ['te', 'Term', 80]];
-const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['notes', 'Notes', 'note'], ['res', 'Results', 'chart']];
+// Notes live inside Planner (Planner · Lesson plan / Syllabus / Notes) so the phone keeps six tabs (owner, 5 Nov 2026: Connect added).
+const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['res', 'Results', 'chart'], ['conn', 'Connect', 'chat']];
 // Each tab has its own colour, like the Chairman app (owner, 5 Nov 2026): header, buttons and the page's soft wash change
 // together when the tab changes. Colours are picked to stay readable with white text and to differ clearly from each other.
 const TH = {
@@ -33,10 +34,11 @@ const TH = {
   diary: { a: '#C2410C', a2: '#F97316', soft: '#FFE2CF', tint: '#FFF4EC', sh: 'rgba(194,65,12,.28)', head: 'linear-gradient(150deg,#FB923C 0%,#EA580C 55%,#B4400B 100%)', page: '#FFEBDD' },
   plan:  { a: '#6D28D9', a2: '#A66CF0', soft: '#EADCFD', tint: '#F6F0FE', sh: 'rgba(109,40,217,.28)', head: 'linear-gradient(150deg,#A78BFA 0%,#7C3AED 55%,#5B21B6 100%)', page: '#EFE4FE' },
   notes: { a: '#0E7490', a2: '#22B3C9', soft: '#CFF1F6', tint: '#ECFAFB', sh: 'rgba(14,116,144,.28)', head: 'linear-gradient(150deg,#22D3EE 0%,#0891B2 55%,#0E6178 100%)', page: '#DDF5F8' },
+  conn:  { a: '#1D4ED8', a2: '#3B82F6', soft: '#DBE6FE', tint: '#EFF4FF', sh: 'rgba(29,78,216,.28)', head: 'linear-gradient(150deg,#60A5FA 0%,#2563EB 55%,#1E3A8A 100%)', page: '#E3ECFE' },
   res:   { a: '#047857', a2: '#22B573', soft: '#D1F2E2', tint: '#EEFAF3', sh: 'rgba(4,120,87,.28)', head: 'linear-gradient(150deg,#34D399 0%,#059669 55%,#065F46 100%)', page: '#DDF4E8' }
 };
 function theme() {
-  const th = TH[TAB] || TH.home, r = document.documentElement.style;
+  const th = TH[TAB === 'notes' ? 'plan' : TAB] || TH.home, r = document.documentElement.style;
   r.setProperty('--a', th.a); r.setProperty('--a2', th.a2); r.setProperty('--soft', th.soft); r.setProperty('--tint', th.tint);
   r.setProperty('--hshadow', th.sh); r.setProperty('--head', th.head); r.setProperty('--page', th.page);
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', th.a);
@@ -48,6 +50,9 @@ const ICONS = {
   list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
   note: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.7 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4.5"/>',
+  phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  bill: '<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
   cam: '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
   wa: '<path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c.5 2 2 3.6 4 4.5l1.2-1.2 2 .8v1.6c-4 .5-8.5-3.9-8-8h1.6l.8 2z"/>',
   print: '<path d="M7 9V3h10v6M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/>',
@@ -327,7 +332,7 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn };
   if (!views[TAB]) TAB = 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
@@ -336,7 +341,7 @@ function render() {
   const dot = { att: dueAtt, diary: dueDiary }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b></div>
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
-    <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
+    <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
   keepRestore();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
@@ -959,8 +964,9 @@ function weekStart(iso) { const d = new Date(iso + 'T00:00:00'); return addDays(
 function vPlan() {
   const m = P.m || 'lp', list = allocList();
   if (!list.length) return '<div class="card empty">No subjects are given to you yet. The Principal sets them in the timetable.</div>';
-  return seg([['lp', 'Lesson plan'], ['syl', 'Syllabus']], m, `(k=>go('plan',{m:k,key:${jsq(P.key || '')}}))`) + (m === 'syl' ? vSyl(list) : vLp(list));
+  return planSeg(m) + (m === 'syl' ? vSyl(list) : vLp(list));
 }
+function planSeg(m) { return seg([['lp', 'Lesson plan'], ['syl', 'Syllabus'], ['notes', 'Notes']], m, `(k=>k==='notes'?go('notes',{key:${jsq(P.key || '')}}):go('plan',{m:k,key:${jsq(P.key || '')}}))`); }
 function keyPick(list, key, onch) { return `<div class="fld">Class & subject${sel('kp', list.map(a => [sylKey(a.c, a.s), 'Class ' + a.c + ' — ' + a.s]), key, onch)}</div>`; }
 function vLp(list) {
   const thisW = weekStart(todayISO()), w = P.w || thisW, key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s), [c, s] = key.split('|');
@@ -1067,6 +1073,10 @@ function vNotes() {
   const list = allocList(); if (!list.length) return '<div class="card empty">No subjects are given to you yet.</div>';
   const key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s), [c, s] = key.split('|');
   if (P.edit) return noteEditor(c, s);
+  if (!P.id) { const body = vNotesList(list, key, c, s); return planSeg('notes') + body; }
+  return vNotesList(list, key, c, s);
+}
+function vNotesList(list, key, c, s) {
   if (!NOTES[key]) { api('teacher_api.php?a=notes&cls=' + encodeURIComponent(c) + '&subj=' + encodeURIComponent(s)).then(r => { NOTES[key] = r.notes; render(); }).catch(e => { NOTES[key] = []; toast(e.message); }); return keyPick(list, key, "go('notes',{key:this.value})") + '<div class="load"><i></i></div>'; }
   const notes = NOTES[key], open = notes.find(n => n.id === P.id);
   if (open) return noteView(open, key);
@@ -1246,6 +1256,150 @@ async function attCard(ses, exam, c) {
     kids.forEach(s => { const o = old[s.id] || {}; rows[s.id] = { art: o.art || '', work: o.work || '', health: o.health || '', disc: o.disc || '', remark: o.remark || '', result: o.result || '', promoted: o.promoted || '', days: String(days), present: String(pres[s.id] || 0) }; });
     await api('progress_api.php?a=extra', { ses, exam, cls: c, rows }); delete MK[ses + '|' + exam + '|' + c]; toast('Attendance filled on the report cards.'); render();
   } catch (e) { toast(e.message); }
+}
+
+// ---------------------------------------------------------------- CONNECT (owner, 5 Nov 2026)
+// Fee calls (class teacher only, own class, with amounts — same calling records as the Chairman app),
+// fee demand bill, 5 ready messages to parents / students, and the private teacher–parent chat (Smart Studio records).
+const FEE = {};
+let CHAT = null;
+const rs = p => '₹' + (Math.round((p || 0) / 100)).toLocaleString('en-IN');
+function uuid4() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); const h = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); }
+function myClasses() { return [...new Set([...myCT(), ...allocList().map(a => a.c)])].filter(c => className().includes(c)); }
+function vConn() {
+  const ct = myCT(), m = P.m || (ct.length ? 'fee' : 'msg');
+  const items = [...(ct.length ? [['fee', 'Fee calls']] : []), ['msg', 'Messages'], ['chat', 'Chat']];
+  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'chat' ? vChat() : vMsg());
+}
+// ---- fee calls ----
+function vFee(ct) {
+  const c = ct.includes(P.c) ? P.c : ct[0];
+  if (!FEE[c]) { FEE[c] = { loading: true }; api('teacher_api.php?a=fees&cls=' + encodeURIComponent(c)).then(r => { FEE[c] = r; render(); }).catch(e => { FEE[c] = { err: e.message }; render(); }); }
+  const F = FEE[c], pick = ct.length > 1 ? `<div class="fld">Class${sel('feeC', ct.map(x => [x, 'Class ' + x]), c, "go('conn',{m:'fee',c:this.value})")}</div>` : '';
+  if (F.loading) return pick + '<div class="load"><i></i></div>';
+  if (F.err) return pick + `<div class="card">${esc(F.err)} <button class="btn s l" onclick="delete FEE['${esc(c)}'];render()">Try again</button></div>`;
+  const kids = F.children, today = F.today, f = P.f || 'due', ph = needPhotos(c);
+  const last = sid => F.calls.find(x => x.sid === sid);
+  // a payment date = the parent's own date, or the latest call where the parent promised a date that is not past
+  const pr = sid => { if (F.promises[sid] && F.promises[sid].date >= today) return F.promises[sid]; const l = last(sid); return l && l.outcome === 'Promised to pay' && l.promise >= today ? { date: l.promise, amount: l.amount } : null; };
+  const week = addDays(today, -7);
+  const due = kids.filter(k => k.due > 0), total = due.reduce((n, k) => n + k.due, 0);
+  const promised = kids.filter(k => pr(k.sid) && k.due > 0), calledToday = F.calls.filter(x => x.date === today).length;
+  const notCalled = due.filter(k => { const l = last(k.sid); return !l || l.date < week; });
+  const list = (f === 'due' ? due : f === 'prom' ? promised : f === 'new' ? notCalled : kids).slice().sort((a, b) => b.due - a.due);
+  return pick + `<div class="card fee-sum"><div class="row"><div><small>Class ${esc(c)} · fee due till today</small><b>${rs(total)}</b></div><span class="pill bad">${due.length} with dues</span></div>
+      <div class="kp3"><div><b>${promised.length}</b><span>payment dates</span></div><div><b>${notCalled.length}</b><span>not called this week</span></div><div><b>${calledToday}</b><span>calls today</span></div></div>
+      ${kids.some(k => k.asOn) ? `<p class="mut" style="margin:6px 0 0">Fee figures copied from the old ERP on ${esc(kids.find(k => k.asOn).asOn)}.</p>` : ''}</div>
+    <div class="chips">${[['due', 'With dues', due.length], ['new', 'Not called', notCalled.length], ['prom', 'Payment date', promised.length], ['all', 'All', kids.length]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="go('conn',{m:'fee',c:${jsq(c)},f:'${k}'})">${l} <b>${n}</b></button>`).join('')}</div>
+    <div class="fee-list">${list.map(k => { const l = last(k.sid), p = pr(k.sid), pic = ph[k.sid];
+      return `<div class="fee-row"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}</span>
+        <div class="n"><b>${esc(k.name)}</b><small>${k.father ? esc(k.father) + ' · ' : ''}${k.tag ? `<span class="pill">${esc(k.tag)}</span> ` : ''}${p ? `Will pay ${esc(fmtDate(p.date))}${p.amount ? ' · ' + rs(p.amount) : ''}` : l ? `${esc(l.outcome)} · ${esc(fmtDate(l.date))}` : 'Not called yet'}</small></div>
+        <div class="amt ${k.due > 0 ? 'bad' : 'ok'}">${k.due > 0 ? rs(k.due) : 'Paid'}</div>
+        <div class="acts">${k.phone ? `<a class="ib" href="tel:+91${esc(k.phone)}" aria-label="Call ${esc(k.name)}" onclick="feeDialed(${jsq(c)},${jsq(k.sid)})">${ic('phone')}</a>` : ''}<button class="ib" aria-label="Call result for ${esc(k.name)}" onclick="feeResult(${jsq(c)},${jsq(k.sid)})">${ic('check')}</button><button class="ib" aria-label="Demand bill for ${esc(k.name)}" onclick="feeBill(${jsq(c)},${jsq(k.sid)})">${ic('bill')}</button></div></div>`; }).join('') || '<div class="empty">Nobody in this list.</div>'}</div>
+    <p class="mut">Calls you save here are seen by the Principal, Chairman Sir and the office in the same calling list.</p>`;
+}
+function feeDialed(c, sid) { setTimeout(() => feeResult(c, sid), 1200); }
+function feeResult(c, sid) {
+  const k = FEE[c].children.find(x => x.sid === sid), outs = FEE[c].outcomes, max = addDays(todayISO(), 7);
+  DRAFT.fee = { c, sid, out: DRAFT.fee && DRAFT.fee.sid === sid ? DRAFT.fee.out : '' };
+  SHEET = () => { const o = DRAFT.fee.out, need = ['Promised to pay', 'Call back later', 'Will visit school'].includes(o);
+    return `<h2>Call result · ${esc(k.name)}</h2><p class="mut" style="margin:0">Fee due till today: <b>${rs(k.due)}</b>${k.phone ? ' · ' + esc(k.phone) : ''}</p>
+    <div class="chips">${outs.map(x => `<button type="button" class="chip ${o === x ? 'on' : ''}" onclick="DRAFT.fee.out=${jsq(x)};render()">${esc(x)}</button>`).join('')}</div>
+    ${need ? `<div class="fld">${o === 'Promised to pay' ? 'Will pay on' : o === 'Will visit school' ? 'Will visit on' : 'Call again on'}<input id="fcD" type="date" class="inp" min="${todayISO()}" max="${max}" value="${addDays(todayISO(), 2)}"></div>` : ''}
+    ${o === 'Promised to pay' ? `<div class="fld">Amount (₹)<input id="fcA" class="inp" inputmode="numeric" value="${Math.round(k.due / 100)}"></div>` : ''}
+    <div class="fld">What was discussed<input id="fcN" class="inp" maxlength="300" placeholder="e.g. Father will come on Saturday"></div>
+    <button class="btn go full" onclick="feeSave()">Save call result</button>`; };
+  render();
+}
+async function feeSave() {
+  const { c, sid, out } = DRAFT.fee; if (!out) return toast('Choose the call result.');
+  const body = { sid, outcome: out, note: ($('fcN') || {}).value || '' };
+  if ($('fcD')) body.promise = $('fcD').value; if ($('fcA')) body.amount = $('fcA').value;
+  try { const r = await api('teacher_api.php?a=feecall', body); FEE[c].calls.unshift(r.call); DRAFT.fee = null; SHEET = null; toast('Call saved. The office and Chairman Sir can see it.'); render(); }
+  catch (e) { toast(e.message); }
+}
+function billText(c, k) {
+  const sch = FEE[c].school || S.settings.school || '', mon = ymName(ymOf(todayISO()));
+  return `*FEE DEMAND BILL*\n${sch}\n\nStudent: *${k.name}*\nClass: ${c}${k.father ? '\nFather: ' + k.father : ''}\nDate: ${fmtLong(todayISO())}\n\n` +
+    `Fee due till ${mon}: *${rs(k.due)}*` + (k.oldDue ? `\n(includes old dues ${rs(k.oldDue)})` : '') + (k.overallDue !== null && k.overallDue > k.due ? `\nWhole session balance: ${rs(k.overallDue)}` : '') +
+    (k.last ? `\nLast payment: ${rs(k.last.amount)} on ${k.last.date} (receipt ${k.last.no})` : '') +
+    `\n\nKindly deposit the fee at the school office at the earliest. Please ignore if already paid.\nकृपया ${mon} तक की बकाया फ़ीस ${rs(k.due)} जल्द से जल्द विद्यालय कार्यालय में जमा करें। यदि जमा कर दी है तो कृपया ध्यान न दें।\n\n— ${myName()}, Class Teacher`;
+}
+function feeBill(c, sid) {
+  const k = FEE[c].children.find(x => x.sid === sid), t = billText(c, k);
+  SHEET = () => `<h2>Fee demand bill · ${esc(k.name)}</h2><pre class="bill" data-notr>${esc(t.replace(/\*/g, ''))}</pre>
+    <div class="btns">${k.phone ? `<a class="btn wa" target="_blank" rel="noopener" href="${wa(k.phone, t)}">${ic('wa')} Send on WhatsApp</a>` : '<span class="mut">No phone saved.</span>'}<button class="btn w" onclick="feeBillPrint(${jsq(c)},${jsq(sid)})">${ic('print')} Print</button></div>
+    <p class="mut" style="margin:0">Amounts are from the school fee records. This is a reminder, not a receipt.</p>`;
+  render();
+}
+function feeBillPrint(c, sid) { const k = FEE[c].children.find(x => x.sid === sid); let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
+  p.innerHTML = `<pre style="font:13px/1.6 Arial,sans-serif;white-space:pre-wrap">${esc(billText(c, k).replace(/\*/g, ''))}</pre>`; window.print(); }
+// ---- ready messages ----
+const MSGS = [['absent', 'Absent'], ['hw', 'Homework not done'], ['fee', 'Fee reminder'], ['ptm', 'PTM invitation'], ['praise', 'Appreciation'], ['custom', 'Own message']];
+const PRAISE = ['did very well in the test', 'kept a neat and complete notebook', 'helped classmates', 'showed very good behaviour', 'answered well in class'];
+function msgText(t, s, c, o) {
+  const sch = S.settings.school || '', me2 = myName(), d = fmtLong(o.date || todayISO());
+  switch (t) {
+    case 'absent': return `Dear Parent,\n${s.name} (Class ${c}) was absent from school on ${d}. Kindly tell us the reason.\n${s.name} ${d} को विद्यालय में अनुपस्थित था/थी। कृपया कारण बताएँ।\n— ${me2}, ${sch}`;
+    case 'hw': return `Dear Parent,\n${s.name} (Class ${c}) did not complete the ${o.subj || ''} homework.${o.note ? '\n“' + o.note + '”' : ''}\nKindly help ${s.name} finish it today.\n${s.name} ने ${o.subj || ''} का गृहकार्य पूरा नहीं किया। कृपया आज पूरा करवाएँ।\n— ${me2}, ${sch}`;
+    case 'fee': return `Dear Parent,\nThis is a gentle reminder that the school fee of ${s.name} (Class ${c})${o.amt ? ' — ' + o.amt + ' —' : ''} is due. Kindly deposit it at the school office at the earliest.\n${s.name} की विद्यालय फ़ीस${o.amt ? ' (' + o.amt + ')' : ''} बकाया है। कृपया जल्द जमा करें।\n— ${me2}, Class Teacher, ${sch}`;
+    case 'ptm': return `Dear Parent,\nYou are invited to the Parent–Teacher Meeting of Class ${c} on ${d}${o.time ? ' at ' + o.time : ''} to discuss ${s ? s.name + '’s' : 'your child’s'} progress.\nकक्षा ${c} की अभिभावक-शिक्षक बैठक ${d}${o.time ? ', ' + o.time : ''} को है। कृपया अवश्य पधारें।\n— ${me2}, ${sch}`;
+    case 'praise': return `Dear Parent,\nWe are happy to share that ${s.name} (Class ${c}) ${o.why || PRAISE[0]} today. Well done! 👏\nहमें ख़ुशी है कि ${s.name} ने आज बहुत अच्छा काम किया। शाबाश!\n— ${me2}, ${sch}`;
+    default: return `Dear Parent,\n${o.note || ''}\n— ${me2}, ${sch}`;
+  }
+}
+function vMsg() {
+  const cls = myClasses(); if (!cls.length) return '<div class="card empty">No classes are given to you yet.</div>';
+  const c = cls.includes(P.c) ? P.c : cls[0], t = MSGS.some(x => x[0] === P.t) ? P.t : 'absent', isCT = myCT().includes(c);
+  if (!DRAFT.msg || DRAFT.msg.c !== c) DRAFT.msg = { c, sel: {}, o: { date: todayISO(), why: PRAISE[0] } };
+  const D = DRAFT.msg, kids = studentsOf(c), ph = needPhotos(c), picked = kids.filter(s => D.sel[s.id]);
+  const att = attOf(todayISO(), c), absentToday = new Set((att && att.absent) || []);
+  const subs = [...new Set(allocList().filter(a => a.c === c).map(a => a.s))];
+  if (t === 'hw' && !D.o.subj) D.o.subj = subs[0] || '';
+  const extra = t === 'ptm' ? `<div class="two"><div class="fld">Meeting date<input type="date" class="inp" value="${esc(D.o.date)}" min="${todayISO()}" onchange="DRAFT.msg.o.date=this.value;render()"></div><div class="fld">Time<input class="inp" value="${esc(D.o.time || '')}" placeholder="e.g. 10:00 AM" oninput="DRAFT.msg.o.time=this.value"></div></div>`
+    : t === 'absent' ? `<div class="fld">Absent on<input type="date" class="inp" value="${esc(D.o.date)}" max="${todayISO()}" onchange="DRAFT.msg.o.date=this.value;render()"></div>${absentToday.size && D.o.date === todayISO() ? `<button class="chip" onclick="${[...absentToday].map(id => `DRAFT.msg.sel['${esc(id)}']=true`).join(';')};render()">Pick today's ${absentToday.size} absent</button>` : ''}`
+    : t === 'hw' ? `<div class="two"><div class="fld">Subject${sel('msgS', (subs.length ? subs : ['']).map(x => [x, x || '—']), D.o.subj, 'DRAFT.msg.o.subj=this.value')}</div><div class="fld">Homework<input class="inp" value="${esc(D.o.note || '')}" placeholder="e.g. Ex 4.1" oninput="DRAFT.msg.o.note=this.value"></div></div>`
+    : t === 'praise' ? `<div class="chips">${PRAISE.map(x => `<button type="button" class="chip ${D.o.why === x ? 'on' : ''}" onclick="DRAFT.msg.o.why=${jsq(x)};render()">${esc(x)}</button>`).join('')}</div>`
+    : t === 'fee' ? (isCT ? '<p class="mut" style="margin:0">The due amount is added for each child from the fee records when you are the class teacher.</p>' : '<p class="mut" style="margin:0">Only the class teacher can send fee reminders.</p>')
+    : `<div class="fld">Message<textarea class="inp" rows="3" maxlength="600" oninput="DRAFT.msg.o.note=this.value" placeholder="Write your message">${esc(D.o.note || '')}</textarea></div>`;
+  if (t === 'fee' && isCT && !FEE[c]) { FEE[c] = { loading: true }; api('teacher_api.php?a=fees&cls=' + encodeURIComponent(c)).then(r => { FEE[c] = r; render(); }).catch(e => { FEE[c] = { err: e.message }; }); }
+  const feeOf = id => { const k = FEE[c] && FEE[c].children && FEE[c].children.find(x => x.sid === id); return k && k.due > 0 ? rs(k.due) : ''; };
+  const canSend = !(t === 'fee' && !isCT);
+  return `${cls.length > 1 ? `<div class="fld">Class${sel('msgC', cls.map(x => [x, 'Class ' + x]), c, "DRAFT.msg=null;go('conn',{m:'msg',c:this.value,t:" + jsq(t) + "})")}</div>` : ''}
+    <div class="card"><h3>1 · Choose the message</h3><div class="chips">${MSGS.map(([k, l]) => `<button type="button" class="chip ${t === k ? 'on' : ''}" onclick="go('conn',{m:'msg',c:${jsq(c)},t:'${k}'})">${l}</button>`).join('')}</div>${extra}</div>
+    ${t === 'ptm' ? `<a class="btn wa full" target="_blank" rel="noopener" href="${wa('', msgText('ptm', null, c, D.o))}">${ic('wa')} Send one invitation to the class parents' group</a>` : ''}
+    <div class="card"><h3>2 · Choose the children <small>${picked.length} chosen</small></h3>
+      <div class="btns" style="margin-bottom:8px"><button class="btn s l" onclick="${kids.map(s => `DRAFT.msg.sel['${esc(s.id)}']=true`).join(';')};render()">Select all</button><button class="btn s w" onclick="DRAFT.msg.sel={};render()">Clear</button></div>
+      <div class="pick">${kids.map(s => `<button type="button" class="pk ${D.sel[s.id] ? 'on' : ''}" onclick="DRAFT.msg.sel['${esc(s.id)}']=!DRAFT.msg.sel['${esc(s.id)}'];render()"><span class="ph sm">${ph[s.id] ? `<img src="${esc(ph[s.id].src)}" alt="">` : `<i>${esc(initials(s.name))}</i>`}</span><b>${esc(s.name)}</b>${absentToday.has(s.id) ? '<em>absent</em>' : ''}</button>`).join('')}</div></div>
+    ${picked.length && canSend ? `<div class="card"><h3>3 · Send <small>one tap each</small></h3><pre class="bill preview" data-notr>${esc(msgText(t, picked[0], c, Object.assign({}, D.o, { amt: feeOf(picked[0].id) })))}</pre>
+      ${picked.map(s => `<div class="li"><div class="t"><b>${esc(s.name)}</b><span>${s.phone ? esc(s.phone) : 'no phone saved'}${t === 'fee' && feeOf(s.id) ? ' · ' + feeOf(s.id) : ''}</span></div>${s.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(s.phone, msgText(t, s, c, Object.assign({}, D.o, { amt: feeOf(s.id) })))}" onclick="this.classList.add('sent')">${ic('wa')} Send</a>` : ''}</div>`).join('')}</div>` : ''}`;
+}
+// ---- chat (Smart Studio's private teacher–parent conversations) ----
+function vChat() {
+  if (isP()) return '<div class="card"><h3>Chat</h3><p class="mut">The Principal reads every teacher–parent conversation in the web ERP → Smart Studio.</p></div>';
+  if (!CHAT) { CHAT = { loading: true }; api('studio_api.php?a=state').then(r => { CHAT = r; render(); }).catch(e => { CHAT = { err: e.message }; render(); }); }
+  if (CHAT.loading) return '<div class="load"><i></i></div>';
+  if (CHAT.err) return `<div class="card">${esc(CHAT.err)} <button class="btn s l" onclick="CHAT=null;render()">Try again</button></div>`;
+  const mine = CHAT.messages.filter(m => m.tid === me()), kids = myClasses().flatMap(c => studentsOf(c));
+  const sid = P.sid && kids.some(k => k.id === P.sid) ? P.sid : null;
+  const quiet = `<div class="ban inf"><div>Parents' messages after 4:30 PM reach you at 8:00 AM, so your evenings stay free. Your personal number is never shown.</div></div>`;
+  if (!sid) {
+    const last = {}; mine.forEach(m => { if (!last[m.sid] || m.at > last[m.sid].at) last[m.sid] = m; });
+    const withMsg = kids.filter(k => last[k.id]).sort((a, b) => last[b.id].at - last[a.id].at), rest = kids.filter(k => !last[k.id]);
+    return quiet + `<div class="card"><h3>Conversations <small>${withMsg.length}</small></h3>${withMsg.map(k => { const m = last[k.id];
+        return `<div class="li" onclick="go('conn',{m:'chat',sid:${jsq(k.id)}})"><span class="ph sm"><i>${esc(initials(k.name))}</i></span><div class="t"><b>${esc(k.name)} <small class="mut">· Class ${esc(k.cls)}</small></b><span>${m.sender.startsWith('p:') ? '' : 'You: '}${esc(m.text.slice(0, 60))}</span></div><small class="mut">${esc(fmtTime(m.at))}</small></div>`; }).join('') || '<div class="empty">No conversations yet.</div>'}</div>
+      <div class="card"><h3>Start a conversation</h3><div class="fld">Child${sel('chK', [['', '— choose a child —'], ...rest.map(k => [k.id, k.name + ' · Class ' + k.cls])], '', "if(this.value)go('conn',{m:'chat',sid:this.value})")}</div></div>`;
+  }
+  const k = kids.find(x => x.id === sid), th = mine.filter(m => m.sid === sid).sort((a, b) => a.at - b.at);
+  return `<button class="btn s w" style="align-self:flex-start" onclick="go('conn',{m:'chat'})">${ic('back')} All conversations</button>${quiet}
+    <div class="card"><h3>${esc(k.name)} <small>Class ${esc(k.cls)}</small></h3><div class="thread">${th.map(m => `<div class="bub ${m.sender.startsWith('p:') ? 'in' : 'out'}"><p>${esc(m.text)}</p><small>${esc(m.from)} · ${esc(fmtTime(m.at))}</small></div>`).join('') || '<div class="empty">No messages yet. Say hello to the parent.</div>'}</div>
+      <div class="chips" style="margin-top:8px">${['Your child did well today. 👏', 'Please check the homework diary today.', 'Kindly meet me in school tomorrow.'].map(x => `<button type="button" class="chip" onclick="$('chT').value=${jsq(x)};keepNote($('chT'))">${esc(x)}</button>`).join('')}</div>
+      <div class="send"><textarea id="chT" data-keep class="inp" rows="2" maxlength="2000" placeholder="Write to the parent"></textarea><button class="btn go" onclick="chatSend(${jsq(sid)})">Send</button></div></div>`;
+}
+async function chatSend(sid) {
+  const text = ($('chT').value || '').trim(); if (!text) return toast('Write a message.');
+  try { await api('studio_api.php?a=message', { id: uuid4(), sid, tid: me(), text }); keepClear('chT'); CHAT = null; toast('Message sent.'); render(); }
+  catch (e) { toast(e.message); }
 }
 
 // ---------------------------------------------------------------- ME (leave, holidays, PIN)

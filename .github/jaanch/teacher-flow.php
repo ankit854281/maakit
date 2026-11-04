@@ -114,6 +114,16 @@ $png = 'data:image/png;base64,' . base64_encode(str_repeat("\x89PNG", 1) . str_r
 tf_check(($c === 409 && !empty($j['noAi'])) || $c === 200 || $c === 502, 'notes mode accepted (' . $c . ')');
 [$c] = tf_http('/school/scan_api.php?a=read', ['mode' => 'notes', 'cls' => '10th', 'subj' => 'Hindi', 'images' => [$png]], $tok['K']); tf_check($c === 403, 'notes photo only for own subject');
 
+// ---- fee calling (5 Nov 2026): class teacher of that class / Principal only; same acctCall records as the Chairman app ----
+[$c] = $ta('fees', null, $tok['MA'], '&cls=9th'); tf_check($c === 403, 'a subject teacher who is not class teacher never sees fees');
+[$c] = $ta('fees', null, $tok['CH'], '&cls=9th'); tf_check($c === 403, 'Chairman uses the Chairman app, not this list');
+[$c, $j] = $ta('fees', null, $tok['K'], '&cls=9th'); tf_check($c === 200 && $j['ok'] && is_array($j['children']) && in_array('Promised to pay', $j['outcomes'], true), 'class teacher reads own class fees (' . $c . ')');
+[$c, $j] = $ta('fees', null, $tok['P'], '&cls=10th'); tf_check($c === 200, 'Principal reads any class');
+[$c] = $ta('feecall', ['sid' => 's3', 'outcome' => 'Not answered'], $tok['K']); tf_check($c === 403, 'not a child of another class');
+[$c] = $ta('feecall', ['sid' => 's1', 'outcome' => 'Bad'], $tok['K']); tf_check($c === 400, 'unknown result refused');
+[$c, $j] = $ta('feecall', ['sid' => 's1', 'outcome' => 'Not answered'], $tok['K']);
+tf_check($c === 422 || ($c === 200 && $j['call']['outcome'] === 'Not answered'), 'call saved, or refused clearly when there is no fee card (' . $c . ')');
+
 // ---- homework + copy checking (5 Nov 2026): only the subject's teacher writes; teachers of the class read; never in legacy load ----
 $chk = ['date' => '2026-11-04', 'cls' => '9th', 'subj' => 'Social Science', 'hw' => 'Learn Q&A', 'rows' => ['s1' => ['hw' => 'not', 'cp' => 'ok'], 's2' => ['hw' => 'done', 'cp' => ''], 's3' => ['hw' => 'done'], 'zz' => ['hw' => 'done']]];
 [$c] = $ta('check', $chk, $tok['MA']); tf_check($c === 403, 'a teacher of another subject cannot check Social Science');

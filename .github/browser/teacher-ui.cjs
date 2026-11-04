@@ -109,7 +109,7 @@ const path = require('node:path');
     await page.getByText('The French Revolution').first().waitFor();
   });
   await run('08-Notes', async () => {
-    await page.locator('.tabs button.tab').filter({ hasText: 'Notes' }).click();
+    await page.locator('.tabs button.tab').filter({ hasText: 'Planner' }).click(); await page.locator('.seg button').filter({ hasText: 'Notes' }).click();   // Notes live inside Planner
     await page.getByRole('button', { name: /New notes from book photos/ }).click();
     await page.locator('#nC').fill('CI Chapter Note');
     await page.locator('#nB').fill('This note is created only in a CI test database.');
@@ -293,6 +293,35 @@ const path = require('node:path');
     await page.locator('#ta-welcome .tw-s.s4.on').waitFor();
     await page.locator('.tw-skip').click();
     await page.waitForFunction(() => !document.getElementById('ta-welcome'));
+  });
+  await run('21-Connect-fee-bill-messages-chat', async () => {
+    await page.evaluate(() => { SHEET = null; setLang('en'); });
+    await page.locator('.tabs button.tab').filter({ hasText: 'Connect' }).click();
+    await page.locator('.fee-row').first().waitFor();
+    const aman = page.locator('.fee-row').filter({ hasText: 'Aman' });
+    assert.match(await aman.innerText(), /₹2,500/, 'fee due from the fee card');
+    assert.match(await page.locator('.fee-sum').innerText(), /with dues/);
+    await aman.locator('button[aria-label^="Call result"]').click();
+    await page.locator('.sheet .chip').filter({ hasText: 'Promised to pay' }).click();
+    await page.locator('#fcA').fill('1000'); await page.locator('#fcN').fill('Father will pay Saturday');
+    await page.locator('.sheet .btn.go').click();
+    await page.getByText(/Call saved/).first().waitFor();
+    await page.evaluate(() => go('conn', { m: 'fee', f: 'all' }));
+    assert.match(await page.locator('.fee-row').filter({ hasText: 'Aman' }).innerText(), /Promised to pay|Will pay/);
+    await page.locator('.fee-row').filter({ hasText: 'Aman' }).locator('button[aria-label^="Demand bill"]').click();
+    assert.match(await page.locator('.sheet pre.bill').innerText(), /FEE DEMAND BILL[\s\S]*₹2,500/);
+    assert.ok(await page.locator('.sheet a.wa').count() === 1);
+    await page.evaluate(() => { SHEET = null; go('conn', { m: 'msg', t: 'praise' }); });
+    await page.locator('.pk').first().click(); await page.locator('.pk').nth(1).click();
+    assert.equal(await page.locator('a.wa').count(), 2, 'one WhatsApp per chosen child');
+    assert.match(await page.locator('pre.preview').innerText(), /Well done/);
+    await page.evaluate(() => go('conn', { m: 'chat' }));
+    await page.locator('#chK').waitFor();
+    await page.locator('#chK').selectOption('s1');
+    await page.locator('#chT').fill('CI hello parent');
+    await page.locator('.send .btn.go').click();
+    await page.locator('.bub.out').filter({ hasText: 'CI hello parent' }).waitFor({ timeout: 10000 });
+    // A subject teacher who is not class teacher never sees fee calls (server refuses; tab hides it).
   });
   await browser.close();
   if (failures.length) {

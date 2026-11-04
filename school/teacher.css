@@ -353,3 +353,22 @@ html[lang=hi] body{line-height:1.5}
 .tw-go{margin-top:16px;width:100%;max-width:330px;height:52px;border-radius:999px;border:0;background:#FFD166;color:#2A1A00;font-size:15px;font-weight:700;box-shadow:0 10px 24px rgba(255,209,102,.35);position:relative;z-index:4}
 @media (prefers-reduced-motion:reduce){.tw,.tw-s.on,.tw-logo,.tw-lang b,.tw-card,.tw-ticks li,.tw-glow,.tw-photo{animation:none!important;opacity:1;transform:none}.tw-bars i.run::after{animation:none;width:100%}}
 @media (max-height:650px){.tw-logo{width:84px;height:84px}.tw-h{font-size:26px}.tw-h.xl{font-size:40px}.tw-photo{width:80px;height:80px}}
+/* Connect tab: fee calls, demand bill, ready messages, chat (owner, 5 Nov 2026) */
+.fee-sum small{font-size:11px;color:var(--muted)}.fee-sum b{display:block;font-size:24px;font-weight:700;color:var(--bad)}
+.kp3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.kp3 div{background:var(--tint);border-radius:12px;padding:8px;text-align:center}.kp3 b{display:block;font-size:17px;color:var(--a)}.kp3 span{font-size:10px;color:var(--muted)}
+.fee-list{display:flex;flex-direction:column;gap:6px}
+.fee-row{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E6EBF3;border-radius:14px;padding:8px 9px}
+.fee-row .n{flex:1;min-width:0}.fee-row .n b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fee-row .n small{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fee-row .amt{font-weight:700;font-size:13px;white-space:nowrap}.fee-row .amt.bad{color:var(--bad)}.fee-row .amt.ok{color:var(--ok)}
+.acts{display:flex;gap:4px}.ib{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--soft);background:var(--tint);color:var(--a);display:flex;align-items:center;justify-content:center;padding:0}.ib svg.i{width:17px;height:17px}
+pre.bill{white-space:pre-wrap;font:12.5px/1.55 Poppins,'Noto Sans Devanagari',sans-serif;background:#FBFCFE;border:1px dashed #CBD5E1;border-radius:12px;padding:12px;margin:0;color:var(--ink)}
+pre.bill.preview{max-height:180px;overflow:auto;margin-bottom:6px}
+.pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pk{display:flex;flex-direction:column;align-items:center;gap:4px;border:1.5px solid #E6EBF3;background:#fff;border-radius:12px;padding:8px 4px;font-size:11px;position:relative;min-height:84px}
+.pk b{font-weight:600;font-size:11px;text-align:center;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pk em{font-style:normal;font-size:9.5px;color:var(--bad);font-weight:600}.pk.on{border-color:var(--a);background:var(--tint)}.pk.on::after{content:"✓";position:absolute;top:4px;right:6px;color:var(--a);font-weight:700}
+a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
+.thread{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto;padding:4px 0}
+.bub{max-width:82%;border-radius:14px;padding:8px 11px;font-size:13px}.bub p{margin:0 0 3px;white-space:pre-wrap}.bub small{font-size:10px;opacity:.7}
+.bub.in{background:#F1F4F9;align-self:flex-start;border-bottom-left-radius:4px}.bub.out{background:var(--a);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.send{display:flex;gap:8px;align-items:flex-end;margin-top:8px}.send .inp{flex:1}

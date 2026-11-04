@@ -22,6 +22,10 @@
 //   POST ?a=photo {sid,data}               class teacher / Principal: add or change a child's photo (same records as Student Master)
 //   GET  ?a=attstats&cls=                 session attendance per child (present % on the attendance cards and report)
 //   GET  ?a=checks&cls=&subj=&date=        homework + copy checking of one class/subject/day (+ last 30 days' counts per child)
+//   GET  ?a=fees&cls=                     CLASS TEACHER / Principal only: each child's fee due (same numbers as the Chairman app's
+//                                          calling list, ff_snapshot), parent payment dates and the last calls
+//   POST ?a=feecall {sid,outcome,promise,amount,note}  class teacher / Principal: one call result into the SAME acctCall
+//                                          records the Chairman app and office read (via 'Teacher App')
 //   POST ?a=check {date,cls,subj,hw,rows}  subject teacher / Principal: per child hw done|half|not, copy checked|not (kind tchChk 'date|cls|subj')
 //
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
@@ -32,6 +36,7 @@ declare(strict_types=1);
 require __DIR__ . '/inc.php';
 require_once __DIR__ . '/learning_lib.php';
 require_once __DIR__ . '/scan_lib.php';
+require_once __DIR__ . '/followup_lib.php';
 
 $a = (string)($_GET['a'] ?? 'state');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -244,6 +249,54 @@ case 'attstats': {
         }
     }
     sch_json(['ok' => true, 'from' => $start, 'days' => $days, 'monthDays' => $month, 'per' => (object)$per]);
+}
+
+case 'fees': {
+    // Owner, 5 Nov 2026: the CLASS TEACHER calls the parents of their own class about fees, with amounts.
+    // Other teachers never see fees. Amounts are paise, exactly as the Chairman app's calling list.
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $cls = (string)($_GET['cls'] ?? '');
+    if ($cls === '' || !$canClass($cls)) sch_fail('Only the class teacher sees the fees of this class.', 403);
+    $session = ff_session(); $snap = ff_snapshot($db, $session); $kids = []; $ids = [];
+    foreach ($snap as $sid => $x) if (($x['cls'] ?? '') === $cls) {
+        $last = end($x['receipts']) ?: null;
+        $kids[] = ['sid' => $sid, 'name' => $x['name'], 'father' => $x['father'], 'phone' => $x['phone'], 'tag' => $x['tag'], 'due' => (int)$x['due'],
+                   'overallDue' => $x['overallDue'] === null ? null : (int)$x['overallDue'], 'oldDue' => (int)$x['oldDue'], 'asOn' => $x['asOn'],
+                   'last' => $last ? ['no' => (string)$last['no'], 'date' => (string)$last['date'], 'amount' => (int)round($last['received'] * 100)] : null];
+        $ids[$sid] = true;
+    }
+    $promises = []; foreach (ff_rows('acctPromise') as $pr) if (($pr['session'] ?? '') === $session && isset($ids[$pr['sid'] ?? ''])) $promises[$pr['sid']] = ['date' => $pr['promise'], 'amount' => (int)$pr['amount']];
+    $calls = []; foreach (ff_rows('acctCall') as $c) if (($c['session'] ?? $session) === $session && isset($ids[$c['sid'] ?? '']) && empty($c['initiated']))
+        $calls[] = array_intersect_key($c, array_flip(['id', 'sid', 'outcome', 'promise', 'amount', 'note', 'by', 'at', 'date']));
+    usort($calls, fn($x, $y) => ($y['at'] ?? 0) <=> ($x['at'] ?? 0));
+    sch_json(['ok' => true, 'session' => $session, 'today' => date('Y-m-d'), 'school' => (string)(sch_rec_get('settings', 'main')['school'] ?? ''), 'children' => $kids,
+              'promises' => (object)$promises, 'calls' => array_slice($calls, 0, 400), 'outcomes' => OF_OUTCOMES]);
+}
+
+case 'feecall': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;
+    if (!$s || !$canClass((string)($s['cls'] ?? ''))) sch_fail('Only the class teacher can call about this child\'s fee.', 403);
+    $out = (string)($in['outcome'] ?? ''); if (!in_array($out, OF_OUTCOMES, true)) sch_fail('Choose the call result.');
+    $session = ff_session();
+    $db->beginTransaction(); $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
+    try {
+        $snap = ff_snapshot($db, $session); $child = $snap[$sid] ?? null;
+        if (!$child) throw new DomainException('A fee card is not available for this child. Please ask the office.');
+        $need = in_array($out, ['Promised to pay', 'Call back later', 'Will visit school'], true);
+        $date = $need ? ff_date($in['promise'] ?? '') : '';
+        $amount = $out === 'Promised to pay' ? ff_amount($in['amount'] ?? '', (int)$child['due']) : 0;
+        $now = sch_now_ms(); $today = date('Y-m-d'); $id = bin2hex(random_bytes(12));
+        $family = sch_phone10((string)($s['phone'] ?? '')); $sids = [$sid];
+        if ($family !== '') foreach ($snap as $x) if ($x['sid'] !== $sid && sch_phone10((string)(sch_rec_get('student', $x['sid'])['phone'] ?? '')) === $family) $sids[] = $x['sid'];
+        $c = ['id' => $id, 'sid' => $sid, 'sids' => $sids, 'fam' => $family ?: 'sid:' . $sid, 'session' => $session, 'outcome' => $out, 'promise' => $date, 'amount' => $amount,
+              'note' => ff_text($in['note'] ?? ''), 'by' => $u['label'] . ' (Teacher App)', 'uid' => $uid, 'at' => $now, 'date' => $today, 'startedAt' => $now, 'startedDate' => $today,
+              'completedAt' => $now, 'completedDate' => $today, 'initiated' => false, 'tag' => $child['tag'], 'via' => 'teacher'];
+        sch_rec_put('acctCall', $id, $c, $uid);
+        sch_log($u, 'Fee Call', 'Class teacher call for ' . $child['name'] . ': ' . $out . ($date ? ' — ' . $date : '') . ' (Teacher App)');
+        $db->commit();
+    } catch (DomainException $e) { $db->rollBack(); sch_fail($e->getMessage(), 422); }
+    sch_json(['ok' => true, 'call' => array_intersect_key($c, array_flip(['id', 'sid', 'outcome', 'promise', 'amount', 'note', 'by', 'at', 'date']))]);
 }
 
 case 'checks': {

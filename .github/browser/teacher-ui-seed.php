@@ -29,4 +29,11 @@ $put('syl', '9th|Social Science', ['chapters' => [
     ['n' => 'Nazism and the Rise of Hitler', 'done' => null, 'plan' => '2027-01', 'topics' => []]
 ], 'targetCount' => 3, 'targetDate' => '2027-02-28']);
 $put('notice', 'ui-demo', ['id' => 'ui-demo', 'title' => 'CI classroom notice', 'body' => 'Class teacher sample notice', 'date' => '2026-11-03', 'to' => 'All']);
+// Fee cards for the class teacher's fee calling (Connect tab) — same synthetic shape as followup-flow.php.
+require_once __DIR__ . '/../../school/followup_lib.php';
+$ses = ff_session(); $mon = date('F');
+foreach ([['s1', 'Aman', 2500], ['s2', 'Bina', 0], ['ui9-03', 'Demo Student 03', 1200]] as [$sid, $nm, $amt]) {
+    $months = [['', 'D/A', 'Fee Name', 'Amount', 'Paid/Disc Amount', 'Balance', 'N Paid', 'Status'], [$mon], ['', '', 'Tution Fee', (string)max($amt, 1000), (string)($amt ? max($amt, 1000) - $amt : 1000), (string)$amt, '', $amt ? 'Not Paid' : 'Paid']];
+    $put('regRow', 'oldfeecard|ui-fee-' . $sid, ['session' => $ses, 'liveId' => $sid, 'oldId' => $sid, 'name' => $nm, 'cls' => '9th', 'section' => 'A', 'months' => $months, 'oldFee' => '0', 'transferFee' => '0', 'asOn' => date('d-m-Y'), 'nextReceipt' => '1-901']);
+}
 echo "CI Teacher UI seed: 12 students in 9th, 6 in 10th\n";
