@@ -368,7 +368,7 @@ function keepClear(prefix) { const c = keepCtx(), box = KEEP[c]; if (!box) retur
 function keepHas(prefix) { const box = KEEP[keepCtx()] || {}; return Object.keys(box).some(id => id.startsWith(prefix)); }
 document.addEventListener('input', e => keepNote(e.target));
 document.addEventListener('change', e => keepNote(e.target));
-function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.att && DRAFT.att.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
+function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.chk && DRAFT.chk.changed) || (DRAFT.att && DRAFT.att.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
 function greet() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
 function closeSheet() { SHEET = null; render(); }
 function seg(items, cur, fn) { return `<div class="seg">${items.map(([k, l]) => `<button class="${k === cur ? 'on' : ''}" onclick="${fn}(${jsq(k)})">${l}</button>`).join('')}</div>`; }
@@ -778,6 +778,10 @@ async function pendHolSave(c, title) {
 
 // ---------------------------------------------------------------- DIARY (homework + class work)
 function vDiary() {
+  const seg2 = seg([['write', 'Diary'], ['check', 'Check work']], P.m === 'check' ? 'check' : 'write', `(k=>go('diary',{date:${jsq(P.date || todayISO())},m:k}))`);
+  return seg2 + (P.m === 'check' ? vCheck() : vDiaryWrite());
+}
+function vDiaryWrite() {
   const t = todayISO(), date = P.date || t, bells = myBells(date), signed = (S.signed[date] || {})[me()];
   if (date < (loadedFrom || '') && !DAYS_LOADED[date]) { ensureDate(date).then(render); return '<div class="load"><i></i></div>'; }
   const ct = myCT().filter(c => isWorkDay(date, c));
@@ -799,8 +803,8 @@ function diaryCard(date, b, signed) {
       <div class="fld">Topic taught *<input id="${id}-t" data-keep class="inp" maxlength="200" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
         ${suggestionBox(id + '-t', sylKey(b.cls, b.subj), 'topic')}
         ${nx && !e.topic ? `<button class="chip" style="align-self:flex-start" onclick="$('${id}-t').value=${jsq(nx)};keepNote($('${id}-t'))">Use: ${esc(nx.slice(0, 40))}</button>` : ''}</div>
-      <div class="fld">Class work<textarea id="${id}-cw" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
-      <div class="fld">Homework<textarea id="${id}-h" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
+      <div class="fld">Class work <span class="tapnote">tap to add · you can still edit</span>${phraseChips(id, 'cw', nx)}<textarea id="${id}-cw" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
+      <div class="fld">Homework <span class="tapnote">tap to add · you can still edit</span>${phraseChips(id, 'h', nx)}<textarea id="${id}-h" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
       <div class="fld">Homework time (minutes, whole class ≤ 45)<div class="chips">${[10, 15, 20, 30, 45].map(m => `<button type="button" class="chip" onclick="diaryMin('${id}',${m})">${m}</button>`).join('')}<input id="${id}-min" data-keep class="inp mini" type="number" inputmode="numeric" min="1" max="45" value="${e.hwMinutes || ''}" placeholder="min"></div></div>
       <div class="fld">Homework for<div class="chips"><input id="${id}-date" data-keep class="inp mini date" type="date" value="${esc(e.hwDate || nextSchoolDay(date, b.cls) || date)}"><button type="button" class="chip" onclick="homeworkNextDay('${id}','${date}',${jsq(b.cls)})">Next school day</button><button type="button" class="chip" onclick="$('${id}-date').value='${date}';keepNote($('${id}-date'))">Same day</button></div></div>
       <details class="more" ${e.books || e.revision ? 'open' : ''}><summary>More · books to bring, revision</summary>
@@ -810,6 +814,86 @@ function diaryCard(date, b, signed) {
       <label class="chk"><input id="${id}-v" data-keep type="checkbox" ${e.at ? 'checked' : ''}> I really taught this and checked the homework.</label>
       <button class="btn go full" ${signed ? 'disabled' : ''} onclick="diarySave('${date}',${b.bell})">Save diary</button>
     </div></div>`;
+}
+// Ready class-work / homework sentences (owner, 5 Nov 2026: "CW/HW bina suggestion ke mushkil hai").
+// The chip shows a short label; tapping adds the full sentence with the chapter (topic box, else the next chapter).
+const PHRASES = {
+  cw: [['Explained with examples', 'Explained {ch} with examples.'], ['Read in class', 'Read {ch} in class.'], ['Q&A in class copy', 'Questions-answers of {ch} written in the class copy.'],
+    ['Exercise on board', 'Exercise questions of {ch} solved on the board.'], ['Oral questions', 'Oral questions on {ch}.'], ['Diagram / map', 'Diagram / map work of {ch}.'], ['Class test', 'Short class test on {ch}.']],
+  h: [['Learn Q&A', 'Learn the questions-answers of {ch}.'], ['Write answers', 'Write the answers of {ch} in the homework copy.'], ['Complete exercise', 'Complete the exercise of {ch}.'],
+    ['Read again', 'Read {ch} again and underline the key words.'], ['Learn words', 'Learn the new words and spellings of {ch}.'], ['Practise diagram', 'Practise the diagram of {ch}.'], ['Revise for test', 'Revise {ch} for a test.']]
+};
+function phraseChips(id, kind, nx) {
+  return `<div class="chips phr">${PHRASES[kind].map(([l], i) => `<button type="button" class="chip" onclick="phraseAdd('${id}','${kind}',${i},${jsq(nx || '')})">+ ${l}</button>`).join('')}${kind === 'h' ? `<button type="button" class="chip ghost" onclick="phraseNoHw('${id}')">No homework</button>` : ''}</div>`;
+}
+function phraseAdd(id, kind, i, nx) {
+  const el = $(id + '-' + kind); if (!el) return;
+  const ch = (($(id + '-t') || {}).value || '').trim() || nx || 'the chapter';
+  const text = PHRASES[kind][i][1].replace('{ch}', ch);
+  if (el.value.includes(text)) return;
+  el.value = (el.value.trim() ? el.value.trim() + ' ' : '') + text; el.classList.remove('auto-filled'); void el.offsetWidth; el.classList.add('auto-filled'); keepNote(el);
+  if (kind === 'h' && !$(id + '-min').value) { $(id + '-min').value = 15; keepNote($(id + '-min')); toast('Homework time set to 15 minutes. Change it if needed.'); }
+}
+function phraseNoHw(id) { ['h', 'min'].forEach(k => { const el = $(id + '-' + k); if (el) { el.value = ''; keepNote(el); } }); toast('No homework for this bell.'); }
+
+// ---------------------------------------------------------------- CHECK WORK (homework + copy checking)
+const CHK = {};
+const HWS = { done: 'Done', half: 'Half', not: 'Not done' };
+function chkKey(date, c, s) { return date + '|' + c + '|' + s; }
+function dueHomework(date, c, s) {           // homework of this class+subject that was due on this day (any teacher's diary)
+  const out = [];
+  Object.entries(S.diary).forEach(([d, byT]) => { if (d >= date) return; Object.values(byT || {}).forEach(byB => Object.values(byB || {}).forEach(e => { if (e && e.cls === c && e.subj === s && e.hw && (e.hwDate || d) === date) out.push({ d, hw: e.hw }); })); });
+  return out;
+}
+function vCheck() {
+  const list = allocList(); if (!list.length) return '<div class="card empty">No subjects are given to you yet. The Principal sets them in the timetable.</div>';
+  const t = todayISO(), date = P.date && P.date <= t ? P.date : t;
+  const key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s), [c, sb] = key.split('|');
+  const k = chkKey(date, c, sb);
+  const head = `${keyPick(list, key, `DRAFT.chk=null;go('diary',{m:'check',date:'${date}',key:this.value})`)}
+    <div class="row"><button class="btn s w" onclick="DRAFT.chk=null;go('diary',{m:'check',key:${jsq(key)},date:'${addDays(date, -1)}'})">${ic('back')}</button>
+      <input type="date" class="inp" style="flex:1" max="${t}" value="${date}" onchange="DRAFT.chk=null;go('diary',{m:'check',key:${jsq(key)},date:this.value})">
+      <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="DRAFT.chk=null;go('diary',{m:'check',key:${jsq(key)},date:'${addDays(date, 1)}'})">${ic('next')}</button></div>`;
+  if (!CHK[k]) { CHK[k] = { loading: true }; api(`teacher_api.php?a=checks&cls=${encodeURIComponent(c)}&subj=${encodeURIComponent(sb)}&date=${date}`).then(r => { CHK[k] = r; render(); }).catch(e => { CHK[k] = { err: e.message }; render(); }); }
+  if (date < (loadedFrom || '') && !DAYS_LOADED[date]) ensureDate(date).then(render);
+  const R = CHK[k];
+  if (R.loading) return head + '<div class="load"><i></i></div>';
+  if (R.err) return head + `<div class="card">${esc(R.err)} <button class="btn s l" onclick="delete CHK['${k}'];render()">Try again</button></div>`;
+  const kids = studentsOf(c), ph = needPhotos(c), due = dueHomework(date, c, sb), att = attOf(date, c), absent = new Set((att && att.absent) || []);
+  if (!DRAFT.chk || DRAFT.chk.k !== k) { const rows = {}; kids.forEach(x => { const o = ((R.rec || {}).rows || {})[x.id] || {}; rows[x.id] = { hw: o.hw || '', cp: o.cp || '' }; }); DRAFT.chk = { k, rows, changed: false }; }
+  const rows = DRAFT.chk.rows, present = kids.filter(x => !absent.has(x.id));
+  const n = h => present.filter(x => rows[x.id].hw === h).length, ncp = present.filter(x => rows[x.id].cp === 'ok').length;
+  const saved = R.rec;
+  return head + `<div class="card chk-card">
+      <div class="due">${due.length ? `<b>Homework due today</b>${due.map(x => `<p>${esc(x.hw)} <small>given ${esc(fmtDate(x.d))}</small></p>`).join('')}` : `<b>No homework was due on this day</b><p class="mut">You can still check copies and class work.</p>`}</div>
+      <div class="roll-head" style="margin-top:10px">${saved ? `<span class="pill ok">Saved ${esc(fmtTime(saved.at))}</span>` : '<span class="pill warn">Not saved yet</span>'}
+        <div class="cnt"><span class="pill ok">${n('done')} done</span><span class="pill warn">${n('half')} half</span><span class="pill bad">${n('not')} not</span><span class="pill">${ncp} copies</span></div></div>
+      <div class="btns" style="margin:8px 0"><button class="btn s l" onclick="chkAll('hw','done')">All homework done</button><button class="btn s l" onclick="chkAll('cp','ok')">All copies checked</button></div>
+      <p class="mut hint">Homework: tap Done / Half / Not done. Copy: tap the book to mark it checked.</p>
+      <div class="chk-list">${kids.map((x, i) => { const r = rows[x.id], ab = absent.has(x.id), pic = ph[x.id], m = (R.miss || {})[x.id] || 0;
+        return `<div class="chk-row ${ab ? 'ab' : 'h-' + (r.hw || 'none')}"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(x.name))}</i>`}</span>
+          <div class="n"><b>${esc(x.name)}</b><small>Roll ${esc(x.rollno || i + 1)}${m ? ` · <span class="lowp">${m} not done in 30 days</span>` : ''}</small></div>
+          ${ab ? '<span class="pill bad">Absent</span>' : `<div class="hwb">${['done', 'half', 'not'].map(h => `<button type="button" class="${h} ${r.hw === h ? 'on' : ''}" aria-label="${esc(x.name)}: ${HWS[h]}" onclick="chkSet('${esc(x.id)}','hw','${h}')">${h === 'done' ? '✓' : h === 'half' ? '½' : '✗'}</button>`).join('')}
+            <button type="button" class="cp ${r.cp === 'ok' ? 'on' : ''}" aria-label="${esc(x.name)}: copy checked" onclick="chkSet('${esc(x.id)}','cp','${r.cp === 'ok' ? 'not' : 'ok'}')">${ic('book')}</button></div>`}</div>`; }).join('')}</div>
+      <div class="sticky"><button class="btn go full" onclick="chkSave(${jsq(c)},${jsq(sb)},'${date}')">Save checking · ${n('done')} done · ${n('not')} not done</button></div></div>
+    ${chkNotify(c, sb, date, present.filter(x => rows[x.id].hw === 'not' || rows[x.id].hw === 'half'), due)}`;
+}
+function chkSet(id, f, v) { const r = DRAFT.chk.rows[id]; r[f] = r[f] === v && f === 'hw' ? '' : v; DRAFT.chk.changed = true; render(); }
+function chkAll(f, v) { const k = DRAFT.chk.k, [date, c] = k.split('|'), att = attOf(date, c), ab = new Set((att && att.absent) || []); Object.keys(DRAFT.chk.rows).forEach(id => { if (!ab.has(id)) DRAFT.chk.rows[id][f] = v; }); DRAFT.chk.changed = true; render(); }
+async function chkSave(c, sb, date) {
+  const k = DRAFT.chk.k, rows = {}, due = dueHomework(date, c, sb);
+  Object.entries(DRAFT.chk.rows).forEach(([id, r]) => { if (r.hw || r.cp) rows[id] = r; });
+  if (!Object.keys(rows).length) return toast('Mark at least one child.');
+  try { const r = await api('teacher_api.php?a=check', { date, cls: c, subj: sb, hw: due.map(x => x.hw).join(' | '), rows });
+    CHK[k] = Object.assign({}, CHK[k], { rec: r.rec }); DRAFT.chk = null; toast('Checking saved.'); render(); }
+  catch (e) { toast(e.message); }
+}
+function chkNotify(c, sb, date, kids, due) {
+  if (!kids.length) return '';
+  const hw = due.map(x => x.hw).join(' / ');
+  return `<div class="card"><h3>Tell the parents <small>${kids.length} not done</small></h3>${kids.map(x => {
+    const msg = `Dear Parent,\n${x.name} (Class ${c}) did not complete the ${sb} homework due on ${fmtLong(date)}${hw ? ':\n“' + hw + '”' : '.'}\nKindly help ${x.name} finish it today.\n${x.name} ने ${sb} का गृहकार्य पूरा नहीं किया। कृपया आज पूरा करवाएँ।\n— ${S.settings.school || ''}`;
+    return `<div class="li"><div class="t"><b>${esc(x.name)}</b><span>${DRAFT.chk && DRAFT.chk.rows[x.id] && DRAFT.chk.rows[x.id].hw === 'half' ? 'Half done' : 'Not done'}${x.phone ? '' : ' · no phone saved'}</span></div>${x.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(x.phone, msg)}">${ic('wa')} Send</a>` : ''}</div>`; }).join('')}</div>`;
 }
 function diaryMin(id, m) { const el = $(id + '-min'); el.value = m; keepNote(el); }
 function diarySave(date, bell) {

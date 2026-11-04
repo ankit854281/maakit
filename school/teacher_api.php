@@ -21,6 +21,8 @@
 //   GET  ?a=photos&cls=                   small photos of a class's children (attendance cards)
 //   POST ?a=photo {sid,data}               class teacher / Principal: add or change a child's photo (same records as Student Master)
 //   GET  ?a=attstats&cls=                 session attendance per child (present % on the attendance cards and report)
+//   GET  ?a=checks&cls=&subj=&date=        homework + copy checking of one class/subject/day (+ last 30 days' counts per child)
+//   POST ?a=check {date,cls,subj,hw,rows}  subject teacher / Principal: per child hw done|half|not, copy checked|not (kind tchChk 'date|cls|subj')
 //
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
 //         tchNote (kept OUT of legacy load/sync — prefix "tch" in inc.php; parents get
@@ -242,6 +244,46 @@ case 'attstats': {
         }
     }
     sch_json(['ok' => true, 'from' => $start, 'days' => $days, 'monthDays' => $month, 'per' => (object)$per]);
+}
+
+case 'checks': {
+    // Homework + copy checking (owner, 5 Nov 2026). Teachers of that class (any subject) and the Principal/Chairman read.
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $cls = (string)($_GET['cls'] ?? ''); $subj = (string)($_GET['subj'] ?? ''); $date = (string)($_GET['date'] ?? '');
+    if ($cls === '' || $subj === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Choose the class, subject and date.');
+    if (!$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+    $rec = sch_rec_get('tchChk', "$date|$cls|$subj");
+    // last 30 days: how often each child did not do homework in this subject (shown next to the name)
+    $from = date('Y-m-d', strtotime($date . ' -30 days')); $miss = []; $n = 0;
+    $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchChk' AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$from, $date]);
+    foreach ($q as $row) { [$d0, $c0, $s0] = array_pad(explode('|', (string)$row['r'], 3), 3, '');
+        if ($c0 !== $cls || $s0 !== $subj) continue; $n++;
+        foreach ((array)((json_decode((string)$row['d'], true) ?: [])['rows'] ?? []) as $sid => $x) if (($x['hw'] ?? '') === 'not') $miss[$sid] = ($miss[$sid] ?? 0) + 1; }
+    sch_json(['ok' => true, 'rec' => $rec, 'miss' => (object)$miss, 'checked' => $n]);
+}
+
+case 'check': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $cls = tch_txt($in['cls'] ?? '', 20); $subj = tch_txt($in['subj'] ?? '', 60); $date = (string)($in['date'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d', time() + 86400)) sch_fail('Check the date.');
+    if (!learn_allowed($u, $cls, $subj)) sch_fail('Only the teacher of this subject can check its homework.', 403);
+    $ids = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (($d['cls'] ?? '') === $cls) $ids[(string)$row['r']] = true; }
+    $rows = [];
+    foreach ((array)($in['rows'] ?? []) as $sid => $x) {
+        $sid = (string)$sid; if (!isset($ids[$sid]) || !is_array($x)) continue;
+        $hw = in_array($x['hw'] ?? '', ['done', 'half', 'not'], true) ? $x['hw'] : '';
+        $cp = in_array($x['cp'] ?? '', ['ok', 'not'], true) ? $x['cp'] : '';
+        if ($hw !== '' || $cp !== '') $rows[$sid] = ['hw' => $hw, 'cp' => $cp];
+    }
+    if (!$rows) sch_fail('Mark at least one child.');
+    $key = "$date|$cls|$subj"; $old = sch_rec_get('tchChk', $key);
+    $d = ['date' => $date, 'cls' => $cls, 'subj' => $subj, 'hw' => tch_txt($in['hw'] ?? '', 500), 'rows' => $rows,
+          'tid' => $role === 'teacher' ? $tid : 'P', 'by' => $u['label'], 'at' => sch_now_ms(), 'created' => $old['created'] ?? sch_now_ms()];
+    sch_rec_put('tchChk', $key, $d, $uid);
+    $not = count(array_filter($rows, fn($x) => $x['hw'] === 'not')); $done = count(array_filter($rows, fn($x) => $x['hw'] === 'done'));
+    sch_log($u, 'Homework check', "Class $cls $subj ($date): $done done, $not not done, " . count(array_filter($rows, fn($x) => $x['cp'] === 'ok')) . ' copies checked');
+    sch_json(['ok' => true, 'rec' => $d]);
 }
 
 case 'notes': {

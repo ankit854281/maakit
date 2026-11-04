@@ -156,6 +156,17 @@
     'Change my PIN': ['Mera PIN badlein', 'मेरा PIN बदलें'], 'Change PIN': ['PIN badlein', 'PIN बदलें'], 'Old': ['Purana', 'पुराना'], 'New': ['Naya', 'नया'], 'Log out': ['Log out', 'लॉग आउट'],
     'SNMSIS Teacher · Powered by Maakit': ['SNMSIS Teacher · Powered by Maakit', 'SNMSIS शिक्षक · Powered by Maakit'], 'Teacher · Session': ['Teacher · Session', 'शिक्षक · सत्र'],
     'You can mark attendance and write the diary. Everything is sent when the internet is back.': ['Aap haziri aur diary bhar sakte hain. Internet aate hi sab chala jayega.', 'आप हाज़िरी और डायरी भर सकते हैं। इंटरनेट आते ही सब भेज दिया जाएगा।'],
+    // classroom: ready sentences + checking (5 Nov 2026)
+    'Check work': ['Kaam jaanchein', 'कार्य जाँच'], 'tap to add · you can still edit': ['tap karke jodein · baad mein badal sakte hain', 'टैप करके जोड़ें · बाद में बदल सकते हैं'],
+    '+ Explained with examples': ['+ Udaharan se samjhaya', '+ उदाहरण से समझाया'], '+ Read in class': ['+ Class mein padha', '+ कक्षा में पढ़ा'], '+ Q&A in class copy': ['+ Class copy mein Q&A', '+ कक्षा कॉपी में प्रश्नोत्तर'],
+    '+ Exercise on board': ['+ Board par exercise', '+ बोर्ड पर अभ्यास'], '+ Oral questions': ['+ Maukhik prashn', '+ मौखिक प्रश्न'], '+ Diagram / map': ['+ Chitra / naksha', '+ चित्र / नक्शा'], '+ Class test': ['+ Class test', '+ कक्षा परीक्षा'],
+    '+ Learn Q&A': ['+ Q&A yaad karo', '+ प्रश्नोत्तर याद करो'], '+ Write answers': ['+ Uttar likho', '+ उत्तर लिखो'], '+ Complete exercise': ['+ Exercise poori karo', '+ अभ्यास पूरा करो'], '+ Read again': ['+ Dobara padho', '+ दोबारा पढ़ो'],
+    '+ Learn words': ['+ Shabd yaad karo', '+ शब्द याद करो'], '+ Practise diagram': ['+ Chitra abhyaas', '+ चित्र अभ्यास'], '+ Revise for test': ['+ Test ki taiyaari', '+ परीक्षा की तैयारी'], 'No homework': ['Homework nahi', 'गृहकार्य नहीं'],
+    'Homework time set to 15 minutes. Change it if needed.': ['Homework ka samay 15 minute rakha. Zaroorat ho to badlein.', 'गृहकार्य का समय 15 मिनट रखा। ज़रूरत हो तो बदलें।'], 'No homework for this bell.': ['Is bell ka koi homework nahi.', 'इस पीरियड का कोई गृहकार्य नहीं।'],
+    'Homework due today': ['Aaj jaanchne wala homework', 'आज जाँचने वाला गृहकार्य'], 'No homework was due on this day': ['Is din koi homework jaanchna nahi tha', 'इस दिन कोई गृहकार्य जाँचना नहीं था'], 'You can still check copies and class work.': ['Copy aur class work fir bhi jaanch sakte hain.', 'कॉपी और कक्षा कार्य फिर भी जाँच सकते हैं।'],
+    'All homework done': ['Sabka homework poora', 'सबका गृहकार्य पूरा'], 'All copies checked': ['Sabki copy jaanchi', 'सबकी कॉपी जाँची'], 'Homework: tap Done / Half / Not done. Copy: tap the book to mark it checked.': ['Homework: ✓ poora / ½ aadha / ✗ nahi kiya. Copy: kitaab par tap = copy jaanchi.', 'गृहकार्य: ✓ पूरा / ½ आधा / ✗ नहीं किया। कॉपी: किताब पर टैप = कॉपी जाँची।'],
+    'Half done': ['Aadha kiya', 'आधा किया'], 'Not done': ['Nahi kiya', 'नहीं किया'], 'Done': ['Ho gaya', 'हो गया'], 'Half': ['Aadha', 'आधा'], 'Checking saved.': ['Jaanch save ho gayi.', 'जाँच सेव हो गई।'], 'Mark at least one child.': ['Kam se kam ek bachcha chunein.', 'कम से कम एक बच्चा चुनें।'],
+    'Only the teacher of this subject can check its homework.': ['Is vishay ka homework sirf iske teacher jaanch sakte hain.', 'इस विषय का गृहकार्य केवल इसके शिक्षक जाँच सकते हैं।'],
     // toasts and questions
     'Attendance saved.': ['Haziri save ho gayi.', 'हाज़िरी सेव हो गई।'], 'Diary saved.': ['Diary save ho gayi.', 'डायरी सेव हो गई।'], 'Chapters saved.': ['Chapters save ho gaye.', 'पाठ सेव हो गए।'], 'Notes saved.': ['Notes save ho gaye.', 'नोट्स सेव हो गए।'],
     'Deleted.': ['Hata diya.', 'हटा दिया।'], 'Sent to the Principal.': ['Principal ko bhej diya.', 'प्रधानाचार्य को भेज दिया।'], 'Leave request sent to the Principal.': ['Chhutti ki arzi Principal ko bhej di.', 'अवकाश आवेदन प्रधानाचार्य को भेज दिया।'],
@@ -274,6 +285,13 @@
     [/^Class (.+) · Attendance not marked yet$/, m => 'Class ' + m[1] + ' · Haziri abhi nahi lagi', m => 'कक्षा ' + m[1] + ' · हाज़िरी अभी नहीं लगी'],
     [/^Photo saved for (.+)\.$/, m => m[1] + ' ki photo save ho gayi.', m => m[1] + ' की फ़ोटो सेव हो गई।'],
     [/^Loading (.+)…$/, m => m[1] + ' khul raha hai…', m => m[1] + ' खुल रहा है…'],
+    [/^given (.+)$/, m => m[1] + ' ko diya', m => m[1] + ' को दिया'],
+    [/^(\d+) done$/, m => m[1] + ' poora', m => m[1] + ' पूरा'], [/^(\d+) half$/, m => m[1] + ' aadha', m => m[1] + ' आधा'], [/^(\d+) not$/, m => m[1] + ' nahi', m => m[1] + ' नहीं'],
+    [/^(\d+) copies$/, m => m[1] + ' copy', m => m[1] + ' कॉपी'], [/^(\d+) not done in 30 days$/, m => '30 din mein ' + m[1] + ' baar nahi kiya', m => '30 दिन में ' + m[1] + ' बार नहीं किया'],
+    [/^(\d+) not done$/, m => m[1] + ' ne nahi kiya', m => m[1] + ' ने नहीं किया'],
+    [/^Save checking · (\d+) done · (\d+) not done$/, m => 'Jaanch save karein · ' + m[1] + ' poora · ' + m[2] + ' nahi', m => 'जाँच सेव करें · ' + m[1] + ' पूरा · ' + m[2] + ' नहीं'],
+    [/^(.+): (Done|Half|Not done)$/, m => m[1] + ': ' + W[m[2]][0], m => m[1] + ': ' + W[m[2]][1]],
+    [/^(.+): copy checked$/, m => m[1] + ': copy jaanchi', m => m[1] + ': कॉपी जाँची'],
     [/^Pending$/, () => 'Baaki', () => 'बाकी']
   ];
   const hgIdx = { hg: 0, hi: 1 };

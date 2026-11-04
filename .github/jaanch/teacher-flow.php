@@ -114,4 +114,17 @@ $png = 'data:image/png;base64,' . base64_encode(str_repeat("\x89PNG", 1) . str_r
 tf_check(($c === 409 && !empty($j['noAi'])) || $c === 200 || $c === 502, 'notes mode accepted (' . $c . ')');
 [$c] = tf_http('/school/scan_api.php?a=read', ['mode' => 'notes', 'cls' => '10th', 'subj' => 'Hindi', 'images' => [$png]], $tok['K']); tf_check($c === 403, 'notes photo only for own subject');
 
+// ---- homework + copy checking (5 Nov 2026): only the subject's teacher writes; teachers of the class read; never in legacy load ----
+$chk = ['date' => '2026-11-04', 'cls' => '9th', 'subj' => 'Social Science', 'hw' => 'Learn Q&A', 'rows' => ['s1' => ['hw' => 'not', 'cp' => 'ok'], 's2' => ['hw' => 'done', 'cp' => ''], 's3' => ['hw' => 'done'], 'zz' => ['hw' => 'done']]];
+[$c] = $ta('check', $chk, $tok['MA']); tf_check($c === 403, 'a teacher of another subject cannot check Social Science');
+[$c] = $ta('check', $chk, $tok['CH']); tf_check($c === 403, 'Chairman only views');
+[$c, $j] = $ta('check', $chk, $tok['K']); tf_check($c === 200 && array_keys($j['rec']['rows']) === ['s1', 's2'], 'subject teacher saves; other-class and unknown children dropped');
+[$c] = $ta('check', ['rows' => ['s1' => ['hw' => 'bad']]] + $chk, $tok['K']); tf_check($c === 400, 'nothing valid → refused');
+[$c, $j] = $ta('checks', null, $tok['MA'], '&cls=9th&subj=Social+Science&date=2026-11-04'); tf_check($c === 200 && $j['rec']['rows']['s1']['hw'] === 'not', 'another teacher of the class reads it');
+[$c] = $ta('checks', null, $tok['MA'], '&cls=10th&subj=Hindi&date=2026-11-04'); tf_check($c === 200, 'own class');
+[$c] = $ta('checks', null, $tok['K'], '&cls=10th&subj=Hindi&date=2026-11-04'); tf_check($c === 403, 'not another class');
+$ta('check', ['date' => '2026-11-05'] + $chk, $tok['K']);
+[, $j] = $ta('checks', null, $tok['K'], '&cls=9th&subj=Social+Science&date=2026-11-06'); tf_check(($j['miss']['s1'] ?? 0) === 2 && $j['checked'] === 2, 'not-done count over the last 30 days');
+[, $j] = $api('load', null, $tok['K']); tf_check(!in_array('tchChk', array_column($j['records'], 'k'), true), 'checking never in legacy load');
+
 echo "Teacher app flow: all checks passed\n";

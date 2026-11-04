@@ -261,6 +261,23 @@ const path = require('node:path');
     const stats = await page.evaluate(() => api('teacher_api.php?a=attstats&cls=9th'));
     assert.ok(stats.ok && stats.days >= 1, 'attendance statistics');
   });
+  await run('19-Classroom-phrases-and-check-work', async () => {
+    await page.evaluate(() => { setLang('en'); SHEET = null; const d = addDays(todayISO(), -3); go('diary', { date: d, bell: 6, add: { date: d, bell: 6, cls: '9th', subj: 'Social Science', extra: true } }); });
+    await page.locator('#b6-h').waitFor();
+    await page.locator('.dform:has(#b6-h) .chips.phr').nth(1).locator('button').first().click();
+    assert.match(await page.locator('#b6-h').inputValue(), /Learn the questions-answers of/);
+    assert.equal(await page.locator('#b6-min').inputValue(), '15', 'homework chip fills 15 minutes when empty');
+    await page.evaluate(() => go('diary', { m: 'check' }));
+    await page.locator('.chk-row').first().waitFor();
+    assert.equal(await page.locator('.chk-row').count(), 12);
+    await page.getByRole('button', { name: 'All homework done' }).click();
+    await page.locator('.chk-row').nth(2).locator('button.not').click();
+    await page.locator('.chk-row').nth(2).locator('button.cp').click();
+    assert.match(await page.locator('.chk-card .cnt').innerText(), /1 not/);
+    await page.locator('.chk-card .sticky .btn.go').click();
+    await page.getByText(/Checking saved|Saved/).first().waitFor();
+    assert.ok(await page.locator('a.wa').count() >= 1, 'parents of a child who did not do homework can be told on WhatsApp');
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

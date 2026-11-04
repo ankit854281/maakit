@@ -295,3 +295,18 @@ html[lang=hi] body{line-height:1.5}
 .cal-big .calendar-day.picked{background:var(--a);color:#fff;border-color:var(--a)}
 .cal-sum{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 @media (prefers-reduced-motion:reduce){.submitted,.submitted .tick{animation:none}}
+/* Classroom: ready CW/HW sentences and homework / copy checking (owner, 5 Nov 2026) */
+.tapnote{font-weight:400;font-size:10.5px;color:var(--faint);margin-left:4px}
+.chips.phr{margin:2px 0 4px}.chips.phr .chip{min-height:30px;padding:4px 10px;font-size:11.5px;background:var(--tint);border-color:var(--soft);color:var(--a)}
+.chips.phr .chip.ghost{background:#fff;color:var(--muted);border-style:dashed}
+.chk-card .due{background:var(--tint);border-radius:12px;padding:10px 12px}.chk-card .due b{font-size:12.5px;color:var(--a)}.chk-card .due p{margin:4px 0 0;font-size:13px}.chk-card .due small{color:var(--muted);font-size:10.5px;margin-left:4px}
+.chk-list{display:flex;flex-direction:column;gap:6px}
+.chk-row{display:flex;align-items:center;gap:10px;border:1px solid #E6EBF3;border-radius:14px;padding:8px 10px;background:#fff}
+.chk-row.h-done{background:#F3FBF6;border-color:#BFE7CD}.chk-row.h-not{background:#FFF5F7;border-color:#F4BFCB}.chk-row.h-half{background:#FFF8EC;border-color:#F6D9A8}.chk-row.ab{opacity:.55}
+.chk-row .n{flex:1;min-width:0}.chk-row .n b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chk-row .n small{font-size:10.5px;color:var(--faint)}
+.ph.sm{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--tint);color:var(--a);font-weight:700;font-size:12px}
+.ph.sm img{width:100%;height:100%;object-fit:cover}.ph.sm i{font-style:normal}
+.hwb{display:flex;gap:4px;flex-shrink:0}.hwb button{width:34px;height:34px;border-radius:10px;border:1.5px solid #DCE3EE;background:#fff;font-weight:700;font-size:14px;color:var(--faint);padding:0}
+.hwb button.done.on{background:var(--ok);border-color:var(--ok);color:#fff}.hwb button.half.on{background:#E59A1C;border-color:#E59A1C;color:#fff}.hwb button.not.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.hwb button.cp{margin-left:4px;display:flex;align-items:center;justify-content:center}.hwb button.cp svg.i{width:18px;height:18px}.hwb button.cp.on{background:#2F5D8A;border-color:#2F5D8A;color:#fff}
+.lowp{color:var(--bad);font-weight:600}
