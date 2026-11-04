@@ -29,18 +29,18 @@ const path = require('node:path');
   await page.locator('.lg button').filter({ hasText: 'Open' }).click();
   await page.locator('.tabs').waitFor({ timeout: 15000 });
   await run('01-Aaj', async () => {
-    assert.match(await page.locator('.tabs button.tab.on').innerText(), /Aaj/);
+    assert.match(await page.locator('.tabs button.tab.on').innerText(), /Today/);
     assert.ok((await page.locator('.scroll').innerText()).length > 50);
   });
   await run('02-Haziri-Day', async () => {
-    await page.locator('.tabs button.tab').filter({ hasText: 'Haziri' }).click();
+    await page.locator('.tabs button.tab').filter({ hasText: 'Attendance' }).click();
     await page.locator('.stu').first().waitFor();
     assert.equal(await page.locator('.stu').count(), 12);
-    await page.locator('.stu').nth(0).locator('button.A').click();
-    await page.locator('.stu').nth(1).locator('button.L').click();
+    await page.locator('.stu').nth(0).click();                       // tap once: Present → Absent
+    await page.locator('.stu').nth(1).click(); await page.locator('.stu').nth(1).click();   // twice: Leave
     await page.locator('.scroll').evaluate(el => { el.scrollTop = 450; });
     const before = await page.locator('.scroll').evaluate(el => el.scrollTop);
-    await page.locator('.stu').nth(9).locator('button.A').click();
+    await page.locator('.stu').nth(9).click();
     const after = await page.locator('.scroll').evaluate(el => el.scrollTop);
     assert.ok(before > 0 && Math.abs(after - before) < 40, 'tapping student ten must keep scroll position');
     assert.match(await page.locator('.cnt').innerText(), /2 A/);
@@ -138,7 +138,7 @@ const path = require('node:path');
     await page.evaluate(() => { SHEET = null; go('att', { c: '9th' }); });
     await page.locator('.stu').first().waitFor();
     await context.setOffline(true);
-    await page.locator('.stu').first().locator('button.A').click();
+    await page.locator('.stu').first().click();
     await page.getByRole('button', { name: /Save attendance|Update attendance/ }).click();
     await pause(600);
     assert.match(await page.locator('#net').innerText(), /waiting.*offline/i);
@@ -204,6 +204,45 @@ const path = require('node:path');
     assert.ok(result.ok && Array.isArray(result.notes), 'Parent homework notes');
     assert.ok(result.notes.some(n => n.chapter === 'CI Chapter Note'), 'Parent must receive shared teacher note');
     assert.ok(result.notes.every(n => !Object.hasOwn(n, 'tid')), 'No teacher internal IDs in parent note response');
+  });
+  await run('15-Unsaved-typing-survives-refresh', async () => {
+    // Owner, 5 Nov 2026: marks and diary typed but not saved must survive the 45-second refresh and other saves.
+    await page.evaluate(() => { SHEET = null; go('res', { c: '9th', m: 'marks', exam: 'Term-2' }); });
+    await page.locator('.mk input').first().waitFor();
+    await page.locator('.mk input').nth(4).fill('7');
+    await page.evaluate(() => { document.activeElement.blur(); softRender(); });
+    assert.equal(await page.locator('.mk input').nth(4).inputValue(), '7', 'typed mark must survive a background refresh');
+    await page.evaluate(() => go('diary'));
+    await page.evaluate(() => go('res', { c: '9th', m: 'marks', exam: 'Term-2' }));
+    await page.locator('.mk input').first().waitFor();
+    assert.equal(await page.locator('.mk input').nth(4).inputValue(), '7', 'typed mark must survive switching tabs');
+    const d = await page.evaluate(() => addDays(todayISO(), -2));
+    await page.evaluate(d => go('diary', { date: d, bell: 5, add: { date: d, bell: 5, cls: '9th', subj: 'Social Science', extra: true } }), d);
+    await page.locator('#b5-t').waitFor();
+    await page.locator('#b5-t').fill('Typed, not saved');
+    await page.evaluate(() => { document.activeElement.blur(); softRender(); });
+    assert.equal(await page.locator('#b5-t').inputValue(), 'Typed, not saved', 'diary typing must survive a background refresh');
+    const hwDay = await page.locator('#b5-date').inputValue();
+    assert.ok(hwDay > d, 'homework must default to the next school day, not the same day');
+  });
+  await run('16-Incomplete-result-not-graded', async () => {
+    await page.evaluate(() => go('res', { c: '9th', m: 'sheet', exam: 'Term-1' }));
+    await page.locator('.res').waitFor();
+    const txt = await page.locator('.res').innerText();
+    assert.match(txt, /Pending/, 'a student with a missing subject shows Pending, not a grade');
+    assert.equal(await page.locator('.res a.wa').count(), 0, 'no WhatsApp result while a subject is missing');
+  });
+  await run('17-Hindi-and-Hinglish', async () => {
+    await page.evaluate(() => { setLang('hi'); go('att', { c: '9th' }); });
+    await page.locator('.stu').first().waitFor();
+    assert.match(await page.locator('.tabs').innerText(), /हाज़िरी/);
+    assert.match(await page.locator('.scroll').innerText(), /उपस्थित|अनुपस्थित/);
+    await page.evaluate(() => setLang('hg'));
+    await pause(200);
+    assert.match(await page.locator('.tabs').innerText(), /Haziri/);
+    await page.evaluate(() => setLang('en'));
+    await pause(200);
+    assert.match(await page.locator('.tabs').innerText(), /Attendance/);
   });
   await browser.close();
   if (failures.length) {

@@ -26,3 +26,10 @@ Built by Claude and pushed: see AGENTS.md › "Teacher App". All school checks p
 - Added a rotating teacher encouragement card to the Aaj tab.
 - Expanded the account sheet into a real read-only school profile with class/subject/period summary and an optional photo stored on that phone only. Existing leave, holiday, PIN, logout and offline attendance queue stay unchanged.
 - A school-wide synced profile-photo backend is NOT included; official staff details remain managed by the school office.
+
+## Teacher App v2 — 5 Nov 2026 (Claude)
+- [x] Professional school-colour design; English / Hinglish / हिंदी switch (`teacher-lang.js`).
+- [x] Roll-call attendance (tap name, quick absent roll numbers), marks cards with progress, diary minute chips.
+- [x] Fixed: typed marks/diary lost on 45-s refresh or another save; incomplete results graded and sendable on WhatsApp; app could not open offline; homework date defaulted to same day; back-date absent WhatsApp said "today".
+- [x] Teacher UI checks 01–17 pass locally at 390px; school PHP checks pass.
+- [ ] Owner must run the private updater for it to go live. Teachers just reopen the app — nothing to reinstall (the APK opens the live site).

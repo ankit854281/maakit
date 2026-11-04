@@ -64,6 +64,7 @@ function diaryAutoFill(date, bell, cls, subject) {
       input.classList.remove('auto-filled');
       void input.offsetWidth;
       input.classList.add('auto-filled');
+      if (typeof keepNote === 'function') keepNote(input);
       changed++;
     }
   });
@@ -73,6 +74,7 @@ function homeworkNextDay(id, date, cls) {
   const next = nextSchoolDay(date, cls);
   if (!next) return toast('No school day found. Check the holiday calendar.');
   $(id + '-date').value = next;
+  if (typeof keepNote === 'function') keepNote($(id + '-date'));
   toast('Homework date: ' + fmtDate(next) + '. Sundays and saved holidays skipped.');
 }
 

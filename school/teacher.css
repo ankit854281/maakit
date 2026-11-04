@@ -161,3 +161,80 @@ textarea.inp{resize:vertical;line-height:1.45}
 .calendar-day:disabled{opacity:.45}.auto-filled{animation:teacherFill .6s ease-out}
 @keyframes teacherFill{from{box-shadow:0 0 0 4px var(--okbg)}to{box-shadow:none}}
 @media(prefers-reduced-motion:reduce){.auto-filled{animation:none}}
+
+/* =====================================================================
+   Professional look v2 — owner, 5 Nov 2026: "make it professional, the old data-entry pattern is boring".
+   School colours (ink blue + marigold, as the web ERP), calmer cards, roll-call attendance, marks as cards,
+   language switch. This block only overrides what is above; nothing above was removed.
+   ===================================================================== */
+:root{--ink:#14213D;--muted:#5B6782;--faint:#98A2B8;--line:#E3E8F1;--bg:#F3F5FA;--card:#fff;
+  --a:#17324D;--a2:#2F5D8A;--soft:#D6E2F0;--tint:#EAF1F8;--hshadow:rgba(23,50,77,.30);
+  --go:#F2A93B;--ok:#15803D;--okbg:#E6F6EC;--bad:#C0264B;--badbg:#FDEBEF;--lv:#6D3FD9;--lvbg:#F0EAFE;--hol:#5B6782;--holbg:#EDF0F6}
+html,body{background:#0E1A2B}
+@media (min-width:520px){body{background:radial-gradient(60% 60% at 20% 10%,#24476B 0%,transparent 70%),#0E1A2B}}
+body{font-size:14px}
+.head{background:linear-gradient(140deg,#17324D 0%,#1D4166 55%,#16304A 100%);border-radius:0 0 24px 24px}
+.head::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,#F2A93B,transparent);opacity:.65}
+.tab.on{background:rgba(255,255,255,.14);box-shadow:inset 0 -2px 0 #F2A93B}
+.tab .dot{background:#F2A93B}
+.av{color:#17324D}
+.lang{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:4px 8px;min-width:36px}
+.card{border-radius:18px;box-shadow:0 1px 2px rgba(20,33,61,.05),0 6px 20px rgba(20,33,61,.05);border:1px solid #EDF1F7}
+.k{border:1px solid #EDF1F7;box-shadow:0 6px 20px rgba(20,33,61,.05)}
+.k.go{background:#FFF6E6}.k.go b{color:#A15C00}
+.btn{border-radius:13px;letter-spacing:.1px}.btn.go{background:linear-gradient(180deg,#F6B958,#F2A93B);color:#2A1A00;box-shadow:0 6px 16px rgba(242,169,59,.35)}
+.btn.l{background:var(--tint);color:var(--a)}.btn.w{border-color:var(--soft)}
+.inp{border-radius:12px;border-color:#DCE3EE;background:#FBFCFE}.inp:focus{border-color:var(--a2);background:#fff;box-shadow:0 0 0 3px rgba(47,93,138,.12)}
+.inp.kept{border-color:#F2A93B}
+.seg{background:#E6EBF3}.seg button.on{color:var(--a)}
+.ban.inf{background:#EAF1F8;color:#17324D}.ban.warn{background:#FFF5E6;color:#8A4B00}
+.teacher-motivation{background:linear-gradient(120deg,#EEF3FA,#FFFFFF);border-color:#D9E4F1;box-shadow:none}
+.motivation-eyebrow{color:#A15C00}.motivation-quote{color:#17324D}.teacher-motivation small{color:#5B6782}
+.band{background:linear-gradient(150deg,#2F5D8A,#17324D 55%,#0F2338)}
+.teacher-welcome{background:linear-gradient(156deg,#1D4166 0%,#17324D 50%,#0E2135 100%)}
+.welcome-photo{background:#EAF1F8;color:#17324D;border-color:#D6E2F0}.welcome-tag{color:#F6C978}.welcome-kicker,.welcome-inner small{color:#D6E2F0}
+.welcome-start{background:#F2A93B;color:#2A1A00}
+.teacher-profile-card{border-color:#E3E8F1}.profile-caption,.profile-stats strong{color:#17324D}.profile-stats{background:#EEF3FA}.profile-photo{background:#EAF1F8;border-color:#D6E2F0;color:#17324D}
+.bell{background:#EAF1F8;color:#17324D}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1px solid #DCE3EE;background:#fff;color:var(--a);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;min-height:34px}
+.chip b{font-weight:700;margin-left:3px;color:var(--muted)}.chip.on{background:var(--a);border-color:var(--a);color:#fff}.chip.on b{color:#F6C978}
+.inp.mini{width:auto;flex:1;min-width:84px;min-height:36px;padding:6px 10px}.inp.mini.date{min-width:150px}
+/* attendance roll call */
+.roll-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.quick{display:flex;gap:8px;margin-bottom:10px}.quick .inp{min-height:40px}
+.roll-card .hint{margin:8px 0 6px}
+.roll{display:flex;flex-direction:column;gap:6px}
+.stu{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid #E6EBF3;border-radius:14px;background:#fff;padding:9px 11px;min-height:56px;transition:background .15s,border-color .15s;border-top:1px solid #E6EBF3}
+.stu:first-child{border-top:1px solid #E6EBF3}
+.stu .rn{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;background:#EEF3FA;color:#17324D;flex-shrink:0}
+.stu .n{flex:1;min-width:0}.stu .n b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stu .n small{display:block;font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stu .mk-st{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;flex-shrink:0}
+.stu.sP .mk-st{background:var(--okbg);color:var(--ok)}
+.stu.sA{background:#FFF5F7;border-color:#F4BFCB}.stu.sA .rn{background:var(--bad);color:#fff}.stu.sA .mk-st{background:var(--bad);color:#fff}
+.stu.sL{background:#F8F5FF;border-color:#D9CBFA}.stu.sL .rn{background:var(--lv);color:#fff}.stu.sL .mk-st{background:var(--lv);color:#fff}
+.stu:active{transform:scale(.99)}
+/* diary */
+.dform{display:flex;flex-direction:column;gap:11px}
+details.more{border:1px dashed #DCE3EE;border-radius:12px;padding:8px 11px}details.more summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--a2)}
+details.more[open]{display:flex;flex-direction:column;gap:9px}
+/* marks as cards */
+.mk{display:flex;flex-direction:column;gap:8px;width:100%}
+.mkc{border:1px solid #E6EBF3;border-radius:14px;padding:10px 11px;background:#fff}
+.mkh{display:flex;align-items:center;gap:9px;margin-bottom:8px}.mkh b{flex:1;min-width:0;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mkh .rn{width:28px;height:28px;border-radius:9px;background:#EEF3FA;color:#17324D;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.mkh .tot{font-weight:700;font-size:13px;white-space:nowrap}
+.mkg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.mkg label{display:flex;flex-direction:column;gap:3px}.mkg small{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mkg small i{font-style:normal;color:var(--faint)}
+.mk input{width:100%;height:42px;border:1.5px solid #DCE3EE;border-radius:11px;text-align:center;font-size:15px;font-weight:600;padding:0;background:#FBFCFE}
+.mk input:focus{outline:0;border-color:var(--a2);background:#fff;box-shadow:0 0 0 3px rgba(47,93,138,.12)}
+.mk input.kept{border-color:#F2A93B}.mk input.bad{border-color:var(--bad);background:var(--badbg)}
+.mk-prog{display:flex;align-items:center;gap:10px;margin:0 0 6px}.mk-prog .bar{flex:1;height:7px;border-radius:7px;background:#EEF3FA;overflow:hidden}.mk-prog .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2F5D8A,#F2A93B);transition:width .3s}
+.mk-prog span{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.reg thead th,.reg thead .nm,.res th,.res th.l{background:#F5F8FC}
+/* Hindi text needs a little more line height */
+html[lang=hi] body{line-height:1.5}
+.quick .btn{white-space:nowrap}
+.langpick{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid #E3E8F1;border-radius:14px;padding:10px 12px}
+.langpick>span{font-size:11px;font-weight:600;color:var(--muted)}

@@ -19,6 +19,7 @@
 const $ = id => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} } };
 const LOGO = 'img/snmsis-logo.png';
+const LOC = () => (window.taLocale ? window.taLocale() : 'en-IN');   // dates follow the chosen language (teacher-lang.js)
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: '10:10' }, { n: '3rd', s: '10:10', e: '10:45' },
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
@@ -43,9 +44,9 @@ const pad = n => String(n).padStart(2, '0');
 function todayISO() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function addDays(iso, n) { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function dayIdx(iso) { const w = new Date(iso + 'T00:00:00').getDay(); return w === 0 ? -1 : w - 1; }
-function fmtDate(iso) { if (!iso) return ''; return new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }); }
-function fmtLong(iso) { if (!iso) return ''; return new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
-function fmtTime(ts) { return new Date(ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+function fmtDate(iso) { if (!iso) return ''; return new Date(iso + 'T00:00:00').toLocaleDateString(LOC(), { weekday: 'short', day: '2-digit', month: 'short' }); }
+function fmtLong(iso) { if (!iso) return ''; return new Date(iso + 'T00:00:00').toLocaleDateString(LOC(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+function fmtTime(ts) { return new Date(ts).toLocaleString(LOC(), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); }
 function t12(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + pad(m) + ' ' + ap; }
 function nowMin() { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
 function toMin(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
@@ -54,7 +55,7 @@ function jsq(s) { return esc(JSON.stringify(String(s ?? ''))); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function ymOf(iso) { return iso.slice(0, 7); }
 function ymAdd(ym, n) { const [y, m] = ym.split('-').map(Number), d = new Date(y, m - 1 + n, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
-function ymName(ym) { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' }); }
+function ymName(ym) { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleString(LOC(), { month: 'long', year: 'numeric' }); }
 function daysIn(ym) { const [y, m] = ym.split('-').map(Number); return new Date(y, m, 0).getDate(); }
 function phone91(p) { const d = String(p || '').replace(/\D/g, ''); return d.length >= 10 ? '91' + d.slice(-10) : ''; }
 function wa(phone, text) { return 'https://wa.me/' + phone91(phone) + '?text=' + encodeURIComponent(text); }
@@ -128,22 +129,43 @@ async function boot() {
   if (!store.get('sch_token')) return render();
   await load();
 }
+// Offline copy (owner, 5 Nov 2026: the app must open without internet). The last data the server sent is kept in this
+// phone's IndexedDB for the logged-in teacher only. With no internet the app opens from that copy, says so in a banner,
+// and keeps every change in the queue; the moment the internet is back it loads fresh from the server. Log out deletes it.
+const IDB = {
+  db: null,
+  open() { return this.db || (this.db = new Promise((ok, bad) => { try { const r = indexedDB.open('snmsis-teacher', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); } catch (e) { bad(e); } })); },
+  async run(mode, fn) { const db = await this.open(); return new Promise((ok, bad) => { const tx = db.transaction('kv', mode), q = fn(tx.objectStore('kv')); tx.oncomplete = () => ok(q && q.result); tx.onerror = () => bad(tx.error); }); },
+  get(k) { return this.run('readonly', s => s.get(k)).catch(() => null); },
+  set(k, v) { return this.run('readwrite', s => s.put(v, k)).catch(() => null); },
+  del(k) { return this.run('readwrite', s => s.delete(k)).catch(() => null); }
+};
+let OFFLINE_COPY = null;
+function cacheKey() { return 'state'; }
+function cacheTok() { return (store.get('sch_token') || '').slice(0, 16); }
 async function load() {
   $('app').innerHTML = '<div class="load"><i></i>Opening your classes…</div>';
+  let st, res;
   try {
-    const st = await api('teacher_api.php?a=state');
-    AI = st.ai;
-    const res = await api('api.php?a=load&days=70');
-    if (!['teacher', 'principal'].includes(res.me.role)) { LOGIN = { msg: 'This app is for teachers. Please log in with a teacher PIN.' }; store.set('sch_token', null); S = null; return render(); }
-    ME = res.me; S = emptyState(); applyRecs(res.records); lastV = res.now; loadedFrom = res.from;
-    loadQueue(); QUEUE.forEach(x => setRec(x.k, x.r, x.d));
-    render(); flush(); showTeacherWelcome();
+    st = await api('teacher_api.php?a=state');
+    res = await api('api.php?a=load&days=70');
+    OFFLINE_COPY = null;
+    IDB.set(cacheKey(), { tok: cacheTok(), at: Date.now(), ai: st.ai, res });
   } catch (e) {
     if (e.code === 428) { LOGIN = { step: 'new' }; S = null; return render(); }
     if (e.code === 401) return;
-    $('app').innerHTML = `<div class="load">${esc(e.message)}<button class="btn" onclick="load()">Try again</button></div>`;
+    let copy = (e.net || e.code >= 500) ? await IDB.get(cacheKey()) : null;
+    if (copy && copy.tok !== cacheTok()) copy = null;                 // only the same login's own copy
+    if (!copy) { $('app').innerHTML = `<div class="load">${esc(e.message)}<button class="btn" onclick="load()">Try again</button></div>`; return; }
+    st = { ai: copy.ai }; res = copy.res; OFFLINE_COPY = copy.at; NET = 'off';
   }
+  AI = st.ai;
+  if (!['teacher', 'principal'].includes(res.me.role)) { LOGIN = { msg: 'This app is for teachers. Please log in with a teacher PIN.' }; store.set('sch_token', null); S = null; return render(); }
+  ME = res.me; S = emptyState(); applyRecs(res.records); lastV = res.now; loadedFrom = res.from;
+  loadQueue(); QUEUE.forEach(x => setRec(x.k, x.r, x.d)); keepLoad();
+  render(); if (!OFFLINE_COPY) flush(); showTeacherWelcome();
 }
+addEventListener('online', () => { if (OFFLINE_COPY && store.get('sch_token')) load(); });
 // Every change: shown at once on this phone, queued, sent. If the internet is off it waits (also across a restart).
 function put(k, r, d, logK, logX) {
   setRec(k, r, d);
@@ -172,6 +194,7 @@ async function flush() {
 }
 async function refresh() {
   if (!S || !store.get('sch_token')) return;
+  if (OFFLINE_COPY) { try { await api('api.php?a=status'); const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) load(); } catch (e) {} return; }
   try { const res = await api('api.php?a=since&v=' + lastV + '&l=999999999999'); lastV = res.now; if (res.records.length) { applyRecs(res.records); softRender(); } if (NET === 'off') flush(); }
   catch (e) { if (e.net) { NET = 'off'; setNet(); } }
 }
@@ -290,13 +313,39 @@ function render() {
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
   const dot = { att: dueAtt, diary: dueDiary }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b></div>
-      <button id="net" class="net" onclick="flush();refresh()"></button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
+      <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
     <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
-    <div class="scroll"><div class="body${anim ? ' anim' : ''}">${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
+    <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
+  keepRestore();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
   setNet();
 }
 let LASTTAB = null;
+// Unsaved typing must survive every re-draw: the 45-second refresh, saving another bell, opening a sheet, switching
+// tabs and even closing the app. Fields marked data-keep are remembered per screen (KEEP[ctx][id]) on this phone and
+// put back after each render. A successful save clears only the fields it saved. (Owner: teachers lost typed marks.)
+let KEEP = {};
+function keepKey() { return 'ta_keep_' + (ME ? ME.role + ME.tid : ''); }
+function keepCtx() { return [TAB, P.date || '', P.c || '', P.exam || '', P.s || '', P.m || '', P.key || '', P.w || ''].join('|'); }
+function keepLoad() { try { KEEP = JSON.parse(store.get(keepKey()) || '{}') || {}; } catch (e) { KEEP = {}; } }
+function keepSave() { const ks = Object.keys(KEEP); ks.slice(0, Math.max(0, ks.length - 25)).forEach(k => delete KEEP[k]); store.set(keepKey(), JSON.stringify(KEEP)); }
+function keepNote(el) {
+  if (!S || !el || !el.id || !el.hasAttribute || !el.hasAttribute('data-keep')) return;
+  const c = keepCtx(), box = KEEP[c] = KEEP[c] || {};
+  delete KEEP[c]; KEEP[c] = box;                                  // most recent screen last (oldest are trimmed)
+  box[el.id] = el.type === 'checkbox' ? !!el.checked : el.value; keepSave();
+}
+function keepRestore() {
+  const box = KEEP[keepCtx()]; if (!box) { if (document.querySelector('.mk')) mkProgress(); return; }
+  Object.entries(box).forEach(([id, v]) => { const el = $(id); if (!el) return;
+    if (el.type === 'checkbox') el.checked = !!v; else if (el.value !== v) { el.value = v; el.classList.add('kept'); }
+    if (el.dataset.p) mkTot(el); });
+  if (document.querySelector('.mk')) mkProgress();
+}
+function keepClear(prefix) { const c = keepCtx(), box = KEEP[c]; if (!box) return; Object.keys(box).forEach(id => { if (id.startsWith(prefix)) delete box[id]; }); if (!Object.keys(box).length) delete KEEP[c]; keepSave(); }
+function keepHas(prefix) { const box = KEEP[keepCtx()] || {}; return Object.keys(box).some(id => id.startsWith(prefix)); }
+document.addEventListener('input', e => keepNote(e.target));
+document.addEventListener('change', e => keepNote(e.target));
 function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.att && DRAFT.att.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
 function greet() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
 function closeSheet() { SHEET = null; render(); }
@@ -445,22 +494,38 @@ function vAttDay(c) {
   if (!DRAFT.att || DRAFT.att.key !== date + c) DRAFT.att = { key: date + c, st: stOf(saved, list), changed: false };
   const st = DRAFT.att.st, nA = list.filter(s => st[s.id] === 'A').length, nL = list.filter(s => st[s.id] === 'L').length;
   const absent = saved ? (saved.absent || []).filter(id => studentById(id)) : [];
-  return nav + `<div class="card">
-      <div class="row" style="margin-bottom:6px"><div>${saved ? `<span class="pill ok">Saved ${esc(fmtTime(saved.at || Date.now()))}</span>` : '<span class="pill warn">Not saved yet</span>'}</div>
-        <div class="cnt"><span class="pill ok">${list.length - nA - nL} P</span><span class="pill bad">${nA} A</span><span class="pill lv">${nL} L</span></div></div>
-      <p class="mut" style="margin:0 0 6px">Everyone is Present. Tap A for absent, L for leave.</p>
-      ${list.length ? list.map((s, i) => `<div class="stu"><div class="n"><b>${i + 1}. ${esc(s.name)}</b><span>Adm ${esc(s.adm || '')}${s.father ? ' · ' + esc(s.father) : ''}</span></div>
-        <div class="pal">${['P', 'A', 'L'].map(k => `<button class="${k} ${st[s.id] === k ? 'on' : ''}" onclick="attSet('${esc(s.id)}','${k}')">${k}</button>`).join('')}</div></div>`).join('')
+  const nP = list.length - nA - nL, f = DRAFT.att.f || 'all';
+  const shown = list.map((s, i) => [s, i]).filter(([s]) => f === 'all' || st[s.id] === f);
+  const STL = { P: 'Present', A: 'Absent', L: 'Leave' };
+  return nav + `<div class="card roll-card">
+      <div class="roll-head"><div>${saved ? `<span class="pill ok">Saved ${esc(fmtTime(saved.at || Date.now()))}</span>` : '<span class="pill warn">Not saved yet</span>'}</div>
+        <div class="cnt"><span class="pill ok">${nP} P</span><span class="pill bad">${nA} A</span><span class="pill lv">${nL} L</span></div></div>
+      ${list.length ? `<div class="quick"><input id="rollQ" class="inp" inputmode="numeric" enterkeyhint="done" placeholder="Absent roll no. e.g. 3, 7, 12" onkeydown="if(event.key==='Enter')rollQuick()"><button class="btn s" onclick="rollQuick()">Mark absent</button></div>
+      <div class="chips">${[['all', 'All', list.length], ['A', 'Absent', nA], ['L', 'Leave', nL], ['P', 'Present', nP]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="DRAFT.att.f='${k}';render()">${l} <b>${n}</b></button>`).join('')}</div>
+      <p class="mut hint">Tap a name: Present → Absent → Leave.</p>
+      <div class="roll">${shown.map(([s, i]) => { const k = st[s.id], rn = s.rollno || (i + 1);
+        return `<button type="button" class="stu s${k}" data-st="${k}" aria-label="${esc(s.name)}: ${STL[k]}" onclick="attTap('${esc(s.id)}')"><span class="rn">${esc(rn)}</span><span class="n"><b>${esc(s.name)}</b><small>Adm ${esc(s.adm || '')}${s.father ? ' · ' + esc(s.father) : ''}</small></span><span class="mk-st">${STL[k]}</span></button>`; }).join('') || '<div class="empty">Nobody here.</div>'}</div>`
         : '<div class="empty">No students in this class yet.</div>'}
       ${list.length ? `<div class="sticky"><div class="btns"><button class="btn w s" onclick="attAll('P')">All present</button><button class="btn w s" onclick="askHoliday(${jsq(c)},'${date}')">Mark holiday</button></div>
         <button class="btn go full" style="margin-top:8px" onclick="attSave(${jsq(c)},'${date}')">${saved ? 'Update attendance' : 'Save attendance'}</button></div>` : ''}
     </div>
     ${absent.length ? `<div class="card"><h3>Tell the parents <small>${absent.length} absent</small></h3>${absent.map(id => { const s = studentById(id), lv = (saved.st || {})[id] === 'L';
-      const msg = `Dear Parent,\n${s.name} (Class ${c}) is ${lv ? 'on leave' : 'absent from school'} today, ${fmtLong(date)}.\nआज ${s.name} ${lv ? 'छुट्टी पर है' : 'विद्यालय में अनुपस्थित है। कृपया कारण बताएं'}।\n— ${S.settings.school || ''}`;
+      const today = date === todayISO(), msg = today
+        ? `Dear Parent,\n${s.name} (Class ${c}) is ${lv ? 'on leave' : 'absent from school'} today, ${fmtLong(date)}.\nआज ${s.name} ${lv ? 'छुट्टी पर है' : 'विद्यालय में अनुपस्थित है। कृपया कारण बताएं'}।\n— ${S.settings.school || ''}`
+        : `Dear Parent,\n${s.name} (Class ${c}) was ${lv ? 'on leave' : 'absent from school'} on ${fmtLong(date)}.\n${fmtLong(date)} को ${s.name} ${lv ? 'छुट्टी पर था/थी' : 'विद्यालय में अनुपस्थित था/थी। कृपया कारण बताएं'}।\n— ${S.settings.school || ''}`;
       return `<div class="li"><div class="t"><b>${esc(s.name)}</b><span>${lv ? 'Leave' : 'Absent'}${s.phone ? '' : ' · no phone saved'}</span></div>${s.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(s.phone, msg)}">${ic('wa')} Send</a>` : ''}</div>`; }).join('')}</div>` : ''}
     ${threeDays(c, date)}`;
 }
 function stOf(saved, list) { const st = {}; list.forEach(s => st[s.id] = 'P'); if (saved) (saved.absent || []).forEach(id => st[id] = ((saved.st || {})[id] === 'L') ? 'L' : 'A'); return st; }
+function attTap(id) { const o = DRAFT.att.st[id]; attSet(id, o === 'P' ? 'A' : o === 'A' ? 'L' : 'P'); }
+function rollQuick() {
+  const c = DRAFT.att.key.slice(10), list = studentsOf(c), want = String(($('rollQ') || {}).value || '').split(/[^0-9]+/).filter(Boolean);
+  if (!want.length) return toast('Type the roll numbers of the absent children, e.g. 3, 7, 12.');
+  let n = 0; const miss = [];
+  want.forEach(w => { const i = list.findIndex((s, j) => String(s.rollno || (j + 1)) === String(+w)); if (i < 0) miss.push(w); else { DRAFT.att.st[list[i].id] = 'A'; n++; } });
+  DRAFT.att.changed = true; render();
+  toast(n + ' marked absent.' + (miss.length ? ' Not found: ' + miss.join(', ') + '.' : '') + ' Check, then Save.');
+}
 function attSet(id, k) { DRAFT.att.st[id] = k; DRAFT.att.changed = true; render(); }
 function attAll(k) { Object.keys(DRAFT.att.st).forEach(id => DRAFT.att.st[id] = k); DRAFT.att.changed = true; render(); }
 function attRecord(st) {
@@ -599,22 +664,24 @@ function diaryCard(date, b, signed) {
     <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>Topic: ${esc(e.topic)}${e.hw ? ' · HW: ' + esc(e.hw) : ''}</span></div><span class="pill ok">Saved</span></div></div>`;
   return `<div class="card"><div class="li" style="padding:0 0 10px"><div class="bell ${b.arr ? 'arr' : ''}"><b>${BELLS[b.bell].n.replace(/\D/g, '')}</b>${t12(BELLS[b.bell].s).replace(' ', '')}</div>
       <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>${b.arr ? 'Arrangement' + (b.for ? ' for ' + esc(T(b.for).name) : '') : b.extra ? 'Added period' : BELLS[b.bell].n + ' bell'}</span></div>${e.at ? `<span class="pill ok">Saved ${fmtTime(e.at).split(', ').pop()}</span>` : ''}</div>
-    <div style="display:flex;flex-direction:column;gap:9px">
-      <button type="button" class="btn l full auto-fill" ${signed ? 'disabled' : ''} onclick="diaryAutoFill('${date}',${b.bell},${jsq(b.cls)},${jsq(b.subj)})">Auto fill from syllabus</button>
-      <div class="fld">Topic taught *<input id="${id}-t" class="inp" maxlength="200" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
+    <div class="dform">
+      <button type="button" class="btn l full auto-fill" ${signed ? 'disabled' : ''} onclick="diaryAutoFill('${date}',${b.bell},${jsq(b.cls)},${jsq(b.subj)})">✨ Auto fill from syllabus</button>
+      <div class="fld">Topic taught *<input id="${id}-t" data-keep class="inp" maxlength="200" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
         ${suggestionBox(id + '-t', sylKey(b.cls, b.subj), 'topic')}
-        ${nx && !e.topic ? `<button class="btn s l" style="align-self:flex-start" onclick="$('${id}-t').value=${jsq(nx)}">Use: ${esc(nx.slice(0, 40))}</button>` : ''}</div>
-      <div class="fld">Class work<textarea id="${id}-cw" class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
-      <div class="fld">Homework<textarea id="${id}-h" class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
-      <div class="two"><div class="fld">Minutes (whole class ≤ 45)<input id="${id}-min" class="inp" type="number" inputmode="numeric" min="1" max="45" value="${e.hwMinutes || ''}" placeholder="15"></div>
-        <div class="fld">Homework for<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"><button type="button" class="btn s l" onclick="homeworkNextDay('${id}','${date}',${jsq(b.cls)})">Next school day</button></div></div>
-      <div class="fld">Books / copies to bring<input id="${id}-books" class="inp" maxlength="300" value="${esc(e.books || '')}"></div>
-      <div class="fld">Revision<input id="${id}-rev" class="inp" maxlength="400" value="${esc(e.revision || '')}"></div>
-      ${nx && !b.arr ? `<label class="chk"><input id="${id}-c" type="checkbox"> Chapter “${esc(nx)}” finished today (ticks it in the syllabus)</label>` : ''}
-      <label class="chk"><input id="${id}-v" type="checkbox" ${e.at ? 'checked' : ''}> I really taught this and checked the homework.</label>
-      <button class="btn go full" ${signed ? 'disabled' : ''} onclick="diarySave('${date}',${b.bell})">Save</button>
+        ${nx && !e.topic ? `<button class="chip" style="align-self:flex-start" onclick="$('${id}-t').value=${jsq(nx)};keepNote($('${id}-t'))">Use: ${esc(nx.slice(0, 40))}</button>` : ''}</div>
+      <div class="fld">Class work<textarea id="${id}-cw" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
+      <div class="fld">Homework<textarea id="${id}-h" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
+      <div class="fld">Homework time (minutes, whole class ≤ 45)<div class="chips">${[10, 15, 20, 30, 45].map(m => `<button type="button" class="chip" onclick="diaryMin('${id}',${m})">${m}</button>`).join('')}<input id="${id}-min" data-keep class="inp mini" type="number" inputmode="numeric" min="1" max="45" value="${e.hwMinutes || ''}" placeholder="min"></div></div>
+      <div class="fld">Homework for<div class="chips"><input id="${id}-date" data-keep class="inp mini date" type="date" value="${esc(e.hwDate || nextSchoolDay(date, b.cls) || date)}"><button type="button" class="chip" onclick="homeworkNextDay('${id}','${date}',${jsq(b.cls)})">Next school day</button><button type="button" class="chip" onclick="$('${id}-date').value='${date}';keepNote($('${id}-date'))">Same day</button></div></div>
+      <details class="more" ${e.books || e.revision ? 'open' : ''}><summary>More · books to bring, revision</summary>
+        <div class="fld">Books / copies to bring<input id="${id}-books" data-keep class="inp" maxlength="300" value="${esc(e.books || '')}"></div>
+        <div class="fld">Revision<input id="${id}-rev" data-keep class="inp" maxlength="400" value="${esc(e.revision || '')}"></div></details>
+      ${nx && !b.arr ? `<label class="chk"><input id="${id}-c" data-keep type="checkbox"> Chapter “${esc(nx)}” finished today (ticks it in the syllabus)</label>` : ''}
+      <label class="chk"><input id="${id}-v" data-keep type="checkbox" ${e.at ? 'checked' : ''}> I really taught this and checked the homework.</label>
+      <button class="btn go full" ${signed ? 'disabled' : ''} onclick="diarySave('${date}',${b.bell})">Save diary</button>
     </div></div>`;
 }
+function diaryMin(id, m) { const el = $(id + '-min'); el.value = m; keepNote(el); }
 function diarySave(date, bell) {
   const b = myBells(date).find(x => x.bell === bell) || (P.add && P.add.bell === bell ? P.add : null); if (!b) return;
   const id = 'b' + bell, v = k => ($(id + '-' + k) || {}).value || '', topic = v('t').trim(), hw = v('h').trim(), min = Number(v('min')), hwDate = v('date');
@@ -627,7 +694,7 @@ function diarySave(date, bell) {
   const cb = $(id + '-c');
   if (cb && cb.checked) { const key = sylKey(b.cls, b.subj), y = JSON.parse(JSON.stringify(S.syl[key] || { chapters: [] })), ch = y.chapters.find(x => !x.done && x.n === nextChapter(b.cls, b.subj));
     if (ch) { ch.done = date; put('syl', key, y, 'Syllabus', `Class ${b.cls} ${b.subj}: chapter "${ch.n}" completed (from diary)`); } }
-  P = { date }; toast('Diary saved.'); render();
+  keepClear(id + '-'); P = { date }; toast('Diary saved.'); render();
 }
 function addPeriod(date) {
   const used = new Set(myBells(date).map(b => b.bell)), list = allocList();
@@ -855,27 +922,35 @@ function marksEntry(d, ses, exam, c, k) {
   const subj = subs.includes(P.s) ? P.s : subs[0], rows = ((d.marks[`${ses}|${exam}|${c}|${subj}`] || {}).rows) || {}, saved = d.marks[`${ses}|${exam}|${c}|${subj}`];
   return `${subs.length > 1 ? `<div class="fld">Subject${sel('rS', subs.map(x => [x, x]), subj, `go('res',{exam:'${exam}',c:${jsq(c)},m:'marks',s:this.value})`)}</div>` : `<p class="mut" style="margin:0">Subject: <b>${esc(subj)}</b></p>`}
     <div class="card"><h3>${esc(subj)} · ${esc(exam)} <small>${saved ? 'Saved ' + fmtTime(saved.at) : 'Not saved yet'}</small></h3>
-      <p class="mut" style="margin:0 0 6px">Write AB for absent. Total and grade come by themselves.</p>
-      <div style="overflow-x:auto"><table class="mk"><tr><th>Student</th>${PARTS.map(([p, l, mx]) => `<th>${l}<br>${mx}</th>`).join('')}<th>Total</th></tr>
-        ${d.students.map(s => { const r = rows[s.id] || {}; return `<tr><td>${esc(s.name)}</td>${PARTS.map(([p, , mx]) => `<td><input inputmode="decimal" data-s="${esc(s.id)}" data-p="${p}" data-max="${mx}" value="${esc(r[p] ?? '')}" oninput="mkTot(this)"></td>`).join('')}<td class="gd" id="tot-${esc(s.id)}">${mkSum(r)}</td></tr>`; }).join('')}</table></div>
+      <div class="mk-prog"><div class="bar"><i id="mkBar"></i></div><span id="mkProg"></span></div>
+      <p class="mut" style="margin:0 0 8px">Write AB for absent. Total and grade come by themselves. What you type stays on this phone until you save.</p>
+      <div class="mk">${d.students.map((s, i) => { const r = rows[s.id] || {}; return `<div class="mkc"><div class="mkh"><span class="rn">${esc(s.rollno || i + 1)}</span><b>${esc(s.name)}</b><span class="tot" id="tot-${esc(s.id)}">${mkSum(r)}</span></div>
+        <div class="mkg">${PARTS.map(([p, l, mx]) => `<label><small>${l} <i>/${mx}</i></small><input id="mk-${esc(s.id)}-${p}" data-keep inputmode="decimal" enterkeyhint="next" autocomplete="off" data-s="${esc(s.id)}" data-p="${p}" data-max="${mx}" value="${esc(r[p] ?? '')}" oninput="mkTot(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();mkNext(this)}"></label>`).join('')}</div></div>`; }).join('')}</div>
       <div class="sticky"><button class="btn go full" onclick="mkSave('${ses}','${exam}',${jsq(c)},${jsq(subj)},'${k}')">Save ${esc(subj)} marks</button></div></div>
     <a class="btn w full" target="_blank" rel="noopener" href="progress.php?tab=card&exam=${encodeURIComponent(exam)}">${ic('print')} Printed report cards (web ERP)</a>`;
+}
+function mkNext(inp) { const all = [...document.querySelectorAll('.mk input')], i = all.indexOf(inp); if (all[i + 1]) { all[i + 1].focus(); all[i + 1].select(); } }
+function mkProgress() {
+  const by = {}; document.querySelectorAll('.mk input').forEach(x => { (by[x.dataset.s] = by[x.dataset.s] || []).push(x.value.trim() !== ''); });
+  const all = Object.keys(by).length, done = Object.values(by).filter(a => a.every(Boolean)).length;
+  if ($('mkProg')) $('mkProg').textContent = done + ' of ' + all + ' students filled';
+  if ($('mkBar')) $('mkBar').style.width = (all ? Math.round(done / all * 100) : 0) + '%';
 }
 function num(v) { return v === '' || v == null || String(v).toUpperCase() === 'AB' ? 0 : Number(v); }
 function mkSum(r) { const any = PARTS.some(([p]) => String(r[p] ?? '') !== ''); if (!any) return ''; const t = PARTS.reduce((a, [p]) => a + num(r[p]), 0); return `${Math.round(t * 100) / 100} <span class="g${grade(t)}">${grade(t)}</span>`; }
 function mkTot(inp) { const v = inp.value.trim().toUpperCase(); inp.classList.toggle('bad', v !== '' && v !== 'AB' && !(/^\d{1,3}(\.\d{1,2})?$/.test(v) && +v <= +inp.dataset.max));
-  const r = {}; document.querySelectorAll(`.mk input[data-s="${CSS.escape(inp.dataset.s)}"]`).forEach(x => r[x.dataset.p] = x.value.trim()); $('tot-' + inp.dataset.s).innerHTML = mkSum(r); }
+  const r = {}; document.querySelectorAll(`.mk input[data-s="${CSS.escape(inp.dataset.s)}"]`).forEach(x => r[x.dataset.p] = x.value.trim()); const t = $('tot-' + inp.dataset.s); if (t) t.innerHTML = mkSum(r); mkProgress(); }
 async function mkSave(ses, exam, c, subj, k) {
   const rows = {}; let bad = 0;
   document.querySelectorAll('.mk input').forEach(x => { const v = x.value.trim().toUpperCase(); (rows[x.dataset.s] = rows[x.dataset.s] || {})[x.dataset.p] = v; if (x.classList.contains('bad')) bad++; });
   if (bad) return toast('Some marks are more than the maximum. Check the red boxes.');
-  try { await api('progress_api.php?a=marks', { ses, exam, cls: c, subject: subj, rows }); delete MK[k]; toast(subj + ' marks saved. The result is updated.'); render(); } catch (e) { toast(e.message); }
+  try { await api('progress_api.php?a=marks', { ses, exam, cls: c, subject: subj, rows }); keepClear('mk-'); delete MK[k]; toast(subj + ' marks saved. The result is updated.'); render(); } catch (e) { toast(e.message); }
 }
 function termOf(marks, sid, subjects) {
   const by = Object.fromEntries(Object.values(marks || {}).map(x => [x.subject, x]));
   const rows = subjects.map(s => { const m = ((by[s] || {}).rows || {})[sid] || {}; const t = PARTS.reduce((a, [p]) => a + num(m[p]), 0); const has = PARTS.some(([p]) => String(m[p] ?? '') !== ''); return { s, t, has }; });
   const sum = rows.reduce((a, r) => a + r.t, 0), max = rows.length * 100, p = max ? Math.round(sum / max * 10000) / 100 : 0;
-  return { rows, sum, max, p, g: grade(p), any: rows.some(r => r.has) };
+  return { rows, sum, max, p, g: grade(p), any: rows.some(r => r.has), full: rows.every(r => r.has), miss: rows.filter(r => !r.has).map(r => r.s) };
 }
 function resSheet(d, ses, exam, c, final) {
   const subs = d.subjects; if (!subs.length) return '<div class="card empty">No subjects are set for this class.</div>';
@@ -883,16 +958,20 @@ function resSheet(d, ses, exam, c, final) {
   const entered = subs.filter(s => d.marks[`${ses}|${exam}|${c}|${s}`]);
   const R = d.students.map(s => { const a = termOf(final ? d.other.marks : d.marks, s.id, subs), b = final ? termOf(d.marks, s.id, subs) : null;
     const sum = a.sum + (b ? b.sum : 0), max = a.max + (b ? b.max : 0), p = max ? Math.round(sum / max * 10000) / 100 : 0;
-    return { s, a, b, sum, max, p, g: grade(p), any: a.any || (b && b.any) }; });
-  const ranked = R.filter(r => r.any).sort((x, y) => y.sum - x.sum); ranked.forEach((r, i) => r.rank = i + 1);
+    // A result is only a result when every subject has marks (AB counts as entered). Until then: no %, grade, rank or WhatsApp.
+    const full = a.full && (!b || b.full), miss = [...new Set([...a.miss.map(x => x + (final ? ' (T1)' : '')), ...(b ? b.miss.map(x => x + ' (T2)') : [])])];
+    return { s, a, b, sum, max, p, g: grade(p), any: a.any || (b && b.any), full, miss }; });
+  const ranked = R.filter(r => r.full).sort((x, y) => y.sum - x.sum); ranked.forEach((r, i) => r.rank = i + 1);
+  const pendingN = R.filter(r => !r.full && r.any).length;
   const pass = ranked.filter(r => r.p >= 33).length;
   RESULT = { R, subs, ses, exam, c, final };
   return `${!final && entered.length < subs.length ? `<div class="ban warn">Marks entered for ${entered.length} of ${subs.length} subjects. Waiting: ${subs.filter(s => !entered.includes(s)).map(esc).join(', ')}.</div>` : ''}
-    <div class="kp"><div class="k ac"><span>Class average</span><b>${ranked.length ? Math.round(ranked.reduce((a, r) => a + r.p, 0) / ranked.length * 10) / 10 + '%' : '—'}</b><small>${ranked.length} student(s) with marks</small></div>
+    ${pendingN ? `<div class="ban inf">${pendingN} student(s) have marks missing in some subject. Their %, grade and rank show only when every subject is filled.</div>` : ''}
+    <div class="kp"><div class="k ac"><span>Class average</span><b>${ranked.length ? Math.round(ranked.reduce((a, r) => a + r.p, 0) / ranked.length * 10) / 10 + '%' : '—'}</b><small>${ranked.length} complete result(s)</small></div>
       <div class="k ${pass === ranked.length ? 'ok' : 'bad'}"><span>Passed (33%+)</span><b>${pass}/${ranked.length}</b><small>${ranked[0] ? 'Topper: ' + esc(ranked[0].s.name) : ''}</small></div></div>
     <div class="res"><table><tr><th class="l">#</th><th class="l">Student</th>${subs.map(s => `<th>${esc(s.slice(0, 10))}</th>`).join('')}<th>Total</th><th>%</th><th>Grade</th><th></th></tr>
-      ${(ranked.length ? ranked.concat(R.filter(r => !r.any)) : R).map(r => `<tr><td class="l">${r.rank || '—'}</td><td class="l">${esc(r.s.name)}</td>${subs.map((s, i) => { const t = r.a.rows[i].t + (r.b ? r.b.rows[i].t : 0), has = r.a.rows[i].has || (r.b && r.b.rows[i].has); return `<td>${has ? Math.round(t * 100) / 100 : '–'}</td>`; }).join('')}
-        <td><b>${Math.round(r.sum * 100) / 100}</b>/${r.max}</td><td>${r.any ? r.p : '–'}</td><td class="gd g${r.g}">${r.any ? r.g : ''}</td><td>${r.any && r.s.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(r.s.phone, resultText(r))}">${ic('wa')}</a>` : ''}</td></tr>`).join('')}</table></div>
+      ${ranked.concat(R.filter(r => !r.full && r.any), R.filter(r => !r.any)).map(r => `<tr><td class="l">${r.rank || '—'}</td><td class="l">${esc(r.s.name)}</td>${subs.map((s, i) => { const t = r.a.rows[i].t + (r.b ? r.b.rows[i].t : 0), has = r.a.rows[i].has || (r.b && r.b.rows[i].has); return `<td>${has ? Math.round(t * 100) / 100 : '–'}</td>`; }).join('')}
+        <td><b>${Math.round(r.sum * 100) / 100}</b>/${r.max}</td><td>${r.full ? r.p : '–'}</td><td class="gd ${r.full ? 'g' + r.g : ''}">${r.full ? r.g : r.any ? `<span class="pill warn" title="Missing: ${esc(r.miss.join(', '))}">Pending</span>` : ''}</td><td>${r.full && r.s.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(r.s.phone, resultText(r))}">${ic('wa')}</a>` : ''}</td></tr>`).join('')}</table></div>
     <div class="btns"><button class="btn w" onclick="resPrint()">${ic('print')} Print result sheet</button><a class="btn w" target="_blank" rel="noopener" href="progress.php?tab=${final ? 'card&exam=Final' : 'card&exam=' + encodeURIComponent(exam)}">Report cards</a></div>
     ${!final && myCT().includes(c) ? attToCard(d, ses, exam, c) : ''}`;
 }
@@ -904,9 +983,10 @@ function resultText(r) {
 }
 function resPrint() {
   const { R, subs, exam, c, final } = RESULT; let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
-  const rows = R.filter(r => r.any).sort((a, b) => (a.rank || 999) - (b.rank || 999));
+  const rows = R.filter(r => r.full).sort((a, b) => (a.rank || 999) - (b.rank || 999));
   p.innerHTML = `<h1>${esc(S.settings.school || '')}</h1><h2>Result Sheet — Class ${esc(c)} — ${final ? 'Final (Term-1 + Term-2)' : esc(exam)} — Session ${esc(S.settings.session || '')}</h2>
     <table><tr><th>Rank</th><th>Name</th><th>Adm</th>${subs.map(s => `<th>${esc(s)}</th>`).join('')}<th>Total</th><th>%</th><th>Grade</th></tr>${rows.map(r => `<tr><td>${r.rank}</td><td>${esc(r.s.name)}</td><td>${esc(r.s.adm || '')}</td>${subs.map((s, i) => `<td>${Math.round((r.a.rows[i].t + (r.b ? r.b.rows[i].t : 0)) * 100) / 100}</td>`).join('')}<td>${Math.round(r.sum * 100) / 100}/${r.max}</td><td>${r.p}</td><td>${r.g}</td></tr>`).join('')}</table>
+    ${R.some(r => !r.full && r.any) ? `<p>Not in this sheet (marks missing): ${R.filter(r => !r.full && r.any).map(r => esc(r.s.name) + ' — ' + esc(r.miss.join(', '))).join('; ')}</p>` : ''}
     <p style="margin-top:30px">Class Teacher ____________________ &nbsp;&nbsp;&nbsp; Principal ____________________</p>`;
   window.print();
 }
@@ -960,6 +1040,7 @@ function openMe() {
 
   SHEET = () => `<div class="row"><h2>My account</h2><button class="btn s l" onclick="closeSheet()" aria-label="Close profile">Close</button></div>
     ${profileCard}
+    ${window.langPicker ? langPicker() : ''}
     <p class="mut" style="margin:0">${myCT().length && !isP() ? 'Class teacher of ' + myCT().map(esc).join(', ') + ' · ' : ''}${[...new Set(myAllocs().map(a => a.s))].slice(0, 5).map(esc).join(', ')}</p>
     <div class="card"><h3>Apply for leave</h3><div class="two"><div class="fld">From<input id="lvF" type="date" class="inp" value="${t}"></div><div class="fld">To<input id="lvT" type="date" class="inp" value="${t}"></div></div>
       <div class="fld" style="margin-top:8px">Reason<input id="lvR" class="inp" maxlength="200" placeholder="e.g. Family function"></div>
@@ -986,6 +1067,7 @@ async function logout() {
   if (QUEUE.length && !confirm(QUEUE.length + ' change(s) are not sent yet (no internet). Log out anyway? They will be lost.')) return;
   try { await api('api.php?a=logout', {}); } catch (e) {}
   closeTeacherWelcome(); WELCOME_SHOWN = false;
+  IDB.del(cacheKey()); store.set(keepKey(), null); KEEP = {};
   store.set(qKey(), null); store.set('sch_token', null); S = null; ME = null; SHEET = null; LOGIN = {}; QUEUE = []; LOGQ = []; render();
 }
 
@@ -1014,7 +1096,7 @@ async function loginView() {
         ${who === 'teacher' ? `<select id="lgT" class="inp"><option value="">— Your name —</option>${((STATUS && STATUS.teachers) || []).filter(t => t.tid !== 'P').map(t => `<option value="${esc(t.tid)}" ${t.tid === tid ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>` : ''}
         <input id="lgPin" class="inp pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
         <button class="btn go full" onclick="login()">Open</button>`}
-      <p class="err">${esc(L.msg || (STATUS && STATUS.err) || '')}</p>${installBox()}<p class="mut" style="text-align:center">Powered by Maakit</p></div>`;
+      <p class="err">${esc(L.msg || (STATUS && STATUS.err) || '')}</p>${window.langPicker ? langPicker() : ''}${installBox()}<p class="mut" style="text-align:center">Powered by Maakit</p></div>`;
 }
 async function login() {
   const who = store.get('ta_who') || 'teacher', tid = who === 'teacher' ? ($('lgT') || {}).value : '';
