@@ -34,18 +34,18 @@ const path = require('node:path');
   });
   await run('02-Haziri-Day', async () => {
     await page.locator('.tabs button.tab').filter({ hasText: 'Attendance' }).click();
-    await page.locator('.stu').first().waitFor();
-    assert.equal(await page.locator('.stu').count(), 12);
-    await page.locator('.stu').nth(0).click();                       // tap once: Present → Absent
-    await page.locator('.stu').nth(1).click(); await page.locator('.stu').nth(1).click();   // twice: Leave
-    await page.locator('.scroll').evaluate(el => { el.scrollTop = 450; });
+    await page.locator('.tile').first().waitFor();
+    assert.equal(await page.locator('.tile').count(), 12);
+    await page.locator('.tile').nth(0).click();                       // tap once: Present → Absent
+    await page.locator('.tile').nth(1).click(); await page.locator('.tile').nth(1).click();   // twice: Leave
+    await page.locator('.tile').nth(9).evaluate(el => el.scrollIntoView({ block: 'center' }));
     const before = await page.locator('.scroll').evaluate(el => el.scrollTop);
-    await page.locator('.stu').nth(9).click();
+    await page.locator('.tile').nth(9).click();
     const after = await page.locator('.scroll').evaluate(el => el.scrollTop);
     assert.ok(before > 0 && Math.abs(after - before) < 40, 'tapping student ten must keep scroll position');
     assert.match(await page.locator('.cnt').innerText(), /2 A/);
     assert.match(await page.locator('.cnt').innerText(), /1 L/);
-    await page.getByRole('button', { name: /Save attendance|Update attendance/ }).click();
+    await page.getByRole('button', { name: /Submit attendance|Update attendance/ }).click();
     await page.locator('a.wa').first().waitFor();
   });
   await run('03-Haziri-Class-Holiday', async () => {
@@ -54,7 +54,7 @@ const path = require('node:path');
     await page.locator('.sheet button').filter({ hasText: 'Mark holiday' }).click();
     await page.getByText('CI class-only holiday').first().waitFor();
     await page.getByRole('button', { name: /Remove holiday/ }).click();
-    await page.locator('.stu').first().waitFor();
+    await page.locator('.tile').first().waitFor();
   });
   await run('04-Haziri-Register', async () => {
     await page.evaluate(() => go('att', { c: '9th', m: 'reg', ym: '2026-10' }));
@@ -88,7 +88,7 @@ const path = require('node:path');
     assert.match(await page.locator('.scroll').innerText(), /Every school day is marked|Not marked/);
   });
   await run('06-Diary', async () => {
-    await page.locator('.tabs button.tab').filter({ hasText: 'Diary' }).click();
+    await page.locator('.tabs button.tab').filter({ hasText: 'Classroom' }).click();
     await page.locator('#b0-t').waitFor();
     await page.locator('#b0-t').fill('CI French Revolution');
     await page.locator('#b0-cw').fill('Class questions 1 to 5');
@@ -136,10 +136,10 @@ const path = require('node:path');
   });
   await run('11-Offline-Attendance', async () => {
     await page.evaluate(() => { SHEET = null; go('att', { c: '9th' }); });
-    await page.locator('.stu').first().waitFor();
+    await page.locator('.tile').first().waitFor();
     await context.setOffline(true);
-    await page.locator('.stu').first().click();
-    await page.getByRole('button', { name: /Save attendance|Update attendance/ }).click();
+    await page.locator('.tile').first().click();
+    await page.getByRole('button', { name: /Submit attendance|Update attendance/ }).click();
     await pause(600);
     assert.match(await page.locator('#net').innerText(), /waiting.*offline/i);
     await context.setOffline(false);
@@ -160,8 +160,8 @@ const path = require('node:path');
       try { S.cal = [{type:'Holiday', date:'2026-11-09', title:'Test closure'}]; return nextSchoolDay('2026-11-07', '9th'); }
       finally { S.cal = original; }
     }), '2026-11-10');
-    await page.evaluate(() => go('att', {c:'9th'}));
-    await page.locator('.attendance-calendar summary').click();
+    await page.evaluate(() => go('att', {c:'9th', m:'cal'}));
+    await page.locator('.cal-big .calendar-day').first().waitFor();
     assert.ok(await page.locator('.calendar-day.holiday').count());
     assert.ok(await page.locator('.calendar-day[aria-pressed=true]').count());
   });
@@ -234,7 +234,7 @@ const path = require('node:path');
   });
   await run('17-Hindi-and-Hinglish', async () => {
     await page.evaluate(() => { setLang('hi'); go('att', { c: '9th' }); });
-    await page.locator('.stu').first().waitFor();
+    await page.locator('.tile').first().waitFor();
     assert.match(await page.locator('.tabs').innerText(), /हाज़िरी/);
     assert.match(await page.locator('.scroll').innerText(), /उपस्थित|अनुपस्थित/);
     await page.evaluate(() => setLang('hg'));
@@ -243,6 +243,23 @@ const path = require('node:path');
     await page.evaluate(() => setLang('en'));
     await pause(200);
     assert.match(await page.locator('.tabs').innerText(), /Attendance/);
+  });
+  await run('18-Attendance-undo-calendar-report', async () => {
+    await page.evaluate(() => { setLang('en'); SHEET = null; DRAFT.att = null; go('att', { c: '9th', m: 'day', date: addDays(todayISO(), -1) }); });
+    if (await page.locator('.tile').count()) {
+      const before = await page.evaluate(() => JSON.stringify(attOf(addDays(todayISO(), -1), '9th')));
+      await page.locator('.tile').nth(2).click();
+      await page.locator('.btn.submit').click();
+      await page.locator('.submitted').waitFor();
+      await page.getByRole('button', { name: 'Undo' }).click();
+      await pause(300);
+      assert.equal(await page.evaluate(() => JSON.stringify(attOf(addDays(todayISO(), -1), '9th'))), before, 'Undo must bring back the earlier attendance (or none)');
+    }
+    await page.evaluate(() => go('att', { c: '9th', m: 'cal' }));
+    await page.locator('.cal-big').waitFor();
+    assert.match(await page.locator('.att-report').innerText(), /Attendance report/);
+    const stats = await page.evaluate(() => api('teacher_api.php?a=attstats&cls=9th'));
+    assert.ok(stats.ok && stats.days >= 1, 'attendance statistics');
   });
   await browser.close();
   if (failures.length) {

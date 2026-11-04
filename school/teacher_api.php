@@ -18,6 +18,9 @@
 //   GET  ?a=overview                      Principal/Chairman: class holidays and note metadata
 //   POST ?a=note {id?,cls,subj,chapter,title,body,points[],words[],qa[]}   subject teacher / Principal
 //   POST ?a=delnote {id}                   the teacher who wrote it / Principal
+//   GET  ?a=photos&cls=                   small photos of a class's children (attendance cards)
+//   POST ?a=photo {sid,data}               class teacher / Principal: add or change a child's photo (same records as Student Master)
+//   GET  ?a=attstats&cls=                 session attendance per child (present % on the attendance cards and report)
 //
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
 //         tchNote (kept OUT of legacy load/sync — prefix "tch" in inc.php; parents get
@@ -163,6 +166,82 @@ case 'holiday': {
     sch_log($u, 'Student Attendance', "Class $cls: $date marked as holiday ($title)" . ($had ? '; the attendance saved for that day was removed' : ''));
     $db->commit();
     sch_json(['ok' => true, 'removedAttendance' => (bool)$had]);
+}
+
+// ---- Attendance v3 (owner, 5 Nov 2026: photo, name and percentage on every child's card) ----
+case 'photos': {
+    // Small photos of one class for the attendance cards. Thumbnails (112 px JPEG) are made once with GD and kept
+    // as kind phoThumb keyed by the image hash ('pho' prefix: never in legacy load/sync). No GD: the original is sent.
+    $cls = (string)($_GET['cls'] ?? '');
+    if ($cls === '' || !$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+    $out = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
+        $s = json_decode((string)$row['d'], true); if (!is_array($s) || ($s['cls'] ?? '') !== $cls) continue;
+        $p = sch_rec_get('phoStu', (string)$row['r']); if (!$p || empty($p['img'])) continue;
+        $h = (string)$p['img'];
+        $th = sch_rec_get('phoThumb', $h);
+        if (!$th) {
+            $img = sch_rec_get('phoImg', $h); $data = (string)($img['data'] ?? ''); if ($data === '') continue;
+            $small = $data;
+            if (function_exists('imagecreatefromstring')) {
+                $bin = base64_decode(substr($data, strpos($data, ',') + 1), true);
+                $src = $bin ? @imagecreatefromstring($bin) : false;
+                if ($src) {
+                    $w = imagesx($src); $hh = imagesy($src); $e = min($w, $hh); $dst = imagecreatetruecolor(112, 112);
+                    imagecopyresampled($dst, $src, (int)(($w - $e) / 2), (int)(($hh - $e) / 3), 0, 0, 112, 112, $e, $e);
+                    ob_start(); imagejpeg($dst, null, 78); $small = 'data:image/jpeg;base64,' . base64_encode((string)ob_get_clean());
+                }
+            }
+            $th = ['data' => $small];
+            if (strlen($small) < 60000) sch_rec_put('phoThumb', $h, $th, 'system');
+        }
+        $out[(string)$row['r']] = ['h' => $h, 'src' => (string)$th['data']];
+    }
+    sch_json(['ok' => true, 'photos' => (object)$out]);
+}
+
+case 'photo': {
+    // Class teacher (of the child's class) or Principal adds / changes a child's photo from the phone camera.
+    // Same records as Student Master (phoImg + phoStu with 'prev'), so the web ERP and report cards show it too.
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $sid = (string)($in['sid'] ?? ''); $data = (string)($in['data'] ?? '');
+    $stu = sch_rec_get('student', $sid); if (!$stu) sch_fail('Student not found.', 404);
+    if (!$canClass((string)($stu['cls'] ?? ''))) sch_fail('Only the class teacher or the Principal can change this photo.', 403);
+    if (!preg_match('#^data:image/jpeg;base64,#', $data) || strlen($data) > 400000) sch_fail('Choose a clear photo (JPG).');
+    $bin = base64_decode(substr($data, strpos($data, ',') + 1), true);
+    if ($bin === false || !@getimagesizefromstring($bin)) sch_fail('This file is not a picture.');
+    $h = sha1($bin);
+    $db->beginTransaction();
+    if (!sch_rec_get('phoImg', $h)) sch_rec_put('phoImg', $h, ['data' => $data], $uid);
+    $prev = sch_rec_get('phoStu', $sid);
+    sch_rec_put('phoStu', $sid, ['img' => $h, 'from' => 'Teacher App', 'prev' => $prev['img'] ?? '', 'by' => $u['label'] ?? $uid], $uid);
+    sch_log($u, 'Students', 'Photo ' . ($prev ? 'changed' : 'added') . ' for ' . ($stu['name'] ?? $sid) . ' — Teacher App');
+    $db->commit();
+    sch_json(['ok' => true, 'h' => $h]);
+}
+
+case 'attstats': {
+    // Session attendance of one class: school days with attendance saved, and each child's present / absent / leave.
+    // Counted only from saved attendance (studAtt). Holidays have no studAtt, so they are never counted.
+    $cls = (string)($_GET['cls'] ?? '');
+    if ($cls === '' || !$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+    $set = sch_rec_get('settings', 'main') ?: [];
+    $start = (string)($set['sessionStart'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = (date('n') < 4 ? date('Y') - 1 : date('Y')) . '-04-01';
+    $st = $db->prepare("SELECT r, d FROM sch_records WHERE k='studAtt' AND deleted=0 AND dkey >= ? AND r LIKE ?");
+    $st->execute([$start, '%|' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $cls)]);
+    $days = 0; $month = 0; $ym = (new DateTime('now', new DateTimeZone('Asia/Kolkata')))->format('Y-m'); $per = [];   // school month, India time
+    foreach ($st as $row) {
+        [$date, $c] = array_pad(explode('|', (string)$row['r'], 2), 2, '');
+        if ($c !== $cls) continue;
+        $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        $days++; $inMonth = str_starts_with($date, $ym); if ($inMonth) $month++;
+        $lv = (array)($d['st'] ?? []);
+        foreach ((array)($d['absent'] ?? []) as $sid) {
+            $sid = (string)$sid; $k = (($lv[$sid] ?? '') === 'L') ? 'l' : 'a';
+            $per[$sid] ??= ['a' => 0, 'l' => 0, 'ma' => 0]; $per[$sid][$k]++; if ($inMonth) $per[$sid]['ma']++;
+        }
+    }
+    sch_json(['ok' => true, 'from' => $start, 'days' => $days, 'monthDays' => $month, 'per' => (object)$per]);
 }
 
 case 'notes': {

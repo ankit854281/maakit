@@ -24,7 +24,23 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: '10:10' }, { n: '3rd', s: '10:10', e: '10:45' },
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
 const PARTS = [['pt', 'Pre-Test', 10], ['nb', 'Notebook', 5], ['sea', 'SEA', 5], ['te', 'Term', 80]];
-const TABS = [['home', 'Aaj', 'sun'], ['att', 'Haziri', 'check'], ['diary', 'Diary', 'book'], ['plan', 'Plan', 'list'], ['notes', 'Notes', 'note'], ['res', 'Result', 'chart']];
+const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['notes', 'Notes', 'note'], ['res', 'Results', 'chart']];
+// Each tab has its own colour, like the Chairman app (owner, 5 Nov 2026): header, buttons and the page's soft wash change
+// together when the tab changes. Colours are picked to stay readable with white text and to differ clearly from each other.
+const TH = {
+  home:  { a: '#3730A3', a2: '#6366F1', soft: '#E0E2FF', tint: '#F1F2FF', sh: 'rgba(55,48,163,.30)', head: 'linear-gradient(150deg,#6366F1 0%,#4338CA 55%,#312E81 100%)', page: '#E9EAFF' },
+  att:   { a: '#BE185D', a2: '#E3417F', soft: '#FAD6E5', tint: '#FDF0F5', sh: 'rgba(190,24,93,.28)', head: 'linear-gradient(150deg,#EC4899 0%,#C81F64 55%,#9D174D 100%)', page: '#FCE4EE' },
+  diary: { a: '#C2410C', a2: '#F97316', soft: '#FFE2CF', tint: '#FFF4EC', sh: 'rgba(194,65,12,.28)', head: 'linear-gradient(150deg,#FB923C 0%,#EA580C 55%,#B4400B 100%)', page: '#FFEBDD' },
+  plan:  { a: '#6D28D9', a2: '#A66CF0', soft: '#EADCFD', tint: '#F6F0FE', sh: 'rgba(109,40,217,.28)', head: 'linear-gradient(150deg,#A78BFA 0%,#7C3AED 55%,#5B21B6 100%)', page: '#EFE4FE' },
+  notes: { a: '#0E7490', a2: '#22B3C9', soft: '#CFF1F6', tint: '#ECFAFB', sh: 'rgba(14,116,144,.28)', head: 'linear-gradient(150deg,#22D3EE 0%,#0891B2 55%,#0E6178 100%)', page: '#DDF5F8' },
+  res:   { a: '#047857', a2: '#22B573', soft: '#D1F2E2', tint: '#EEFAF3', sh: 'rgba(4,120,87,.28)', head: 'linear-gradient(150deg,#34D399 0%,#059669 55%,#065F46 100%)', page: '#DDF4E8' }
+};
+function theme() {
+  const th = TH[TAB] || TH.home, r = document.documentElement.style;
+  r.setProperty('--a', th.a); r.setProperty('--a2', th.a2); r.setProperty('--soft', th.soft); r.setProperty('--tint', th.tint);
+  r.setProperty('--hshadow', th.sh); r.setProperty('--head', th.head); r.setProperty('--page', th.page);
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', th.a);
+}
 const ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   check: '<rect x="4" y="4" width="16" height="17" rx="3"/><path d="M9 2v4M15 2v4M8.5 13.5l2.5 2.5 4.5-5"/>',
@@ -162,11 +178,17 @@ async function load() {
   AI = st.ai;
   if (!['teacher', 'principal'].includes(res.me.role)) { LOGIN = { msg: 'This app is for teachers. Please log in with a teacher PIN.' }; store.set('sch_token', null); S = null; return render(); }
   ME = res.me; S = emptyState(); applyRecs(res.records); lastV = res.now; loadedFrom = res.from;
-  loadQueue(); QUEUE.forEach(x => setRec(x.k, x.r, x.d)); keepLoad();
+  loadQueue(); QUEUE.forEach(x => x.del ? delRec(x.k, x.r) : setRec(x.k, x.r, x.d)); keepLoad();
   render(); if (!OFFLINE_COPY) flush(); showTeacherWelcome();
 }
 addEventListener('online', () => { if (OFFLINE_COPY && store.get('sch_token')) load(); });
 // Every change: shown at once on this phone, queued, sent. If the internet is off it waits (also across a restart).
+function putDel(k, r, logK, logX) {
+  delRec(k, r);
+  QUEUE = QUEUE.filter(x => !(x.k === k && x.r === r)); QUEUE.push({ k, r, del: true });
+  if (logK) LOGQ.push({ k: logK, x: logX });
+  saveQueue(); flush();
+}
 function put(k, r, d, logK, logX) {
   setRec(k, r, d);
   QUEUE = QUEUE.filter(x => !(x.k === k && x.r === r)); QUEUE.push({ k, r, d });
@@ -178,9 +200,9 @@ async function flush() {
   flushing = true; NET = 'saving'; setNet();
   const batch = QUEUE.slice(0, 300), logs = LOGQ.slice(0, 60);
   try {
-    const res = await api('api.php?a=sync', { put: batch, del: [], log: logs });
-    const sent = new Set(batch.map(x => x.k + '|' + x.r + '|' + JSON.stringify(x.d)));
-    QUEUE = QUEUE.filter(x => !sent.has(x.k + '|' + x.r + '|' + JSON.stringify(x.d))); LOGQ = LOGQ.slice(logs.length); saveQueue();
+    const res = await api('api.php?a=sync', { put: batch.filter(x => !x.del).map(x => ({ k: x.k, r: x.r, d: x.d })), del: batch.filter(x => x.del).map(x => ({ k: x.k, r: x.r })), log: logs });
+    const sig = x => x.k + '|' + x.r + '|' + (x.del ? '-' : JSON.stringify(x.d)), sent = new Set(batch.map(sig));
+    QUEUE = QUEUE.filter(x => !sent.has(sig(x))); LOGQ = LOGQ.slice(logs.length); saveQueue();
     NET = 'ok';
     if (res.rejected && res.rejected.length) {
       toast(res.rejected.map(x => x.error || 'Not allowed for your login: ' + x.k).filter((v, i, a) => a.indexOf(v) === i).join(' '));
@@ -306,7 +328,7 @@ function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = 
 function render() {
   if (!S) return loginView();
   const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult };
-  if (!views[TAB]) TAB = 'home';
+  if (!views[TAB]) TAB = 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) ? 0 : 1), 0);
@@ -473,48 +495,148 @@ function vHome() {
 }
 
 // ---------------------------------------------------------------- HAZIRI (attendance)
+// ---------------------------------------------------------------- ATTENDANCE v3 (owner, 5 Nov 2026)
+// Report at the top; Mark = photo cards (photo, name, roll, session %), one tap Present → Absent → Leave; a calendar
+// for every day of the month (tap a day: take/edit attendance or mark a class holiday, or select many days for a
+// holiday); Undo / Edit right after Submit. Same records as before (studAtt, clsHol) — nothing in the data changed.
+const STATS = {}, PHOTOS = {};
+let LAST_SUB = null, PHOTO_SID = null;
+function needStats(c, force) {
+  if (STATS[c] && !force && !STATS[c].loading) return STATS[c];
+  if (STATS[c] && STATS[c].loading) return STATS[c];
+  const old = STATS[c]; STATS[c] = Object.assign({}, old || {}, { loading: true });
+  api('teacher_api.php?a=attstats&cls=' + encodeURIComponent(c)).then(r => { STATS[c] = r; softRender(); }).catch(() => { STATS[c] = Object.assign({}, old || { days: 0, per: {} }, { loading: false, err: true }); });
+  return STATS[c];
+}
+function needPhotos(c) {
+  if (PHOTOS[c]) return PHOTOS[c];
+  PHOTOS[c] = {};
+  IDB.get('photos:' + c).then(x => { if (x && !Object.keys(PHOTOS[c]).length) { PHOTOS[c] = x; softRender(); } });
+  api('teacher_api.php?a=photos&cls=' + encodeURIComponent(c)).then(r => { PHOTOS[c] = r.photos || {}; IDB.set('photos:' + c, PHOTOS[c]); softRender(); }).catch(() => {});
+  return PHOTOS[c];
+}
+function pctOf(c, sid) { const t = STATS[c]; if (!t || !t.days) return null; const x = (t.per || {})[sid] || { a: 0, l: 0 }; return Math.round((t.days - x.a - x.l) / t.days * 100); }
+function initials(n) { return String(n || '').split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase(); }
 function vAtt() {
   const allowed = myCT();
   if (!allowed.length) return `<div class="card"><h3>Attendance</h3><p class="mut">Only the class teacher marks attendance. You are not the class teacher of any class.</p></div>`;
   const c = allowed.includes(P.c) ? P.c : allowed[0], m = P.m || 'day';
+  needStats(c);
   return `${allowed.length > 1 ? `<div class="fld">Class${sel('attC', allowed.map(x => [x, 'Class ' + x]), c, "DRAFT.att=null;DRAFT.reg=null;go('att',{c:this.value,m:'" + m + "'})")}</div>` : ''}
-    ${seg([['day', 'Day'], ['reg', 'Register'], ['pending', 'Not marked']], m, `(k=>{DRAFT.att=null;DRAFT.reg=null;go('att',{c:${jsq(c)},m:k})})`)}
-    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : vAttDay(c)}`;
+    ${attReport(c)}
+    ${seg([['day', 'Mark'], ['cal', 'Calendar'], ['reg', 'Register'], ['pending', 'Not marked']], m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;go('att',{c:${jsq(c)},m:k})})`)}
+    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : vAttDay(c)}`;
+}
+function attReport(c) {
+  const t = todayISO(), list = studentsOf(c), a = attOf(t, c), st = STATS[c] || {}, days = st.days || 0;
+  const pcts = list.map(s => [s, pctOf(c, s.id)]).filter(x => x[1] !== null);
+  const avg = pcts.length ? Math.round(pcts.reduce((n, x) => n + x[1], 0) / pcts.length) : null;
+  const md = st.monthDays || 0, mAvg = md && list.length ? Math.round(list.reduce((n, s) => n + (md - (((st.per || {})[s.id] || {}).ma || 0)) / md, 0) / list.length * 100) : null;
+  const low = pcts.filter(x => x[1] < 75).sort((x, y) => x[1] - y[1]);
+  const todayTxt = a ? (list.length - (a.absent || []).length) + '/' + list.length : clsHolOn(t, c) || !isWorkDay(t, c) ? '—' : 'Not marked';
+  return `<div class="card att-report"><div class="ar-top"><div><small>Class ${esc(c)} · ${list.length} students</small><b>Attendance report</b></div>${avg !== null ? `<div class="ring" style="--p:${avg}"><span>${avg}%</span></div>` : ''}</div>
+    <div class="ar-grid"><div><span>Today</span><b>${esc(todayTxt)}</b></div><div><span>This month</span><b>${mAvg !== null ? mAvg + '%' : '—'}</b></div><div><span>Session</span><b>${avg !== null ? avg + '%' : '—'}</b><small>${days} school day(s)</small></div></div>
+    ${low.length ? `<div class="ar-low"><span>Below 75%:</span>${low.slice(0, 6).map(([s, p]) => `<button class="chip warnc" onclick="go('att',{c:${jsq(c)},m:'day'})">${esc(s.name.split(' ')[0])} <b>${p}%</b></button>`).join('')}${low.length > 6 ? `<span class="mut">+${low.length - 6}</span>` : ''}</div>` : ''}</div>`;
 }
 function vAttDay(c) {
   const t = todayISO(), date = P.date && P.date <= t ? P.date : t;
   if (date < (loadedFrom || '') && !DAYS_LOADED[date]) { ensureDate(date).then(() => render()); return '<div class="load"><i></i></div>'; }
-  const saved = attOf(date, c), list = studentsOf(c), hol = holidayOn(date), ch = clsHolOn(date, c);
-  const nav = attendanceCalendar(c, date) + `<div class="row"><button class="btn s w" onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, -1)}'})">${ic('back')}</button>
-    <input type="date" class="inp" style="flex:1" max="${t}" value="${date}" onchange="DRAFT.att=null;go('att',{c:${jsq(c)},date:this.value})">
-    <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, 1)}'})">${ic('next')}</button></div>`;
+  const saved = attOf(date, c), list = studentsOf(c), hol = holidayOn(date), ch = clsHolOn(date, c), ph = needPhotos(c);
+  const nav = `<div class="datebar"><button class="btn s w" onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, -1)}'})" aria-label="Previous day">${ic('back')}</button>
+    <label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="DRAFT.att=null;go('att',{c:${jsq(c)},date:this.value})"></label>
+    <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, 1)}'})" aria-label="Next day">${ic('next')}</button></div>`;
   if (dayIdx(date) < 0) return nav + '<div class="ban hol">Sunday — no attendance.</div>';
   if (hol) return nav + `<div class="ban hol"><div><b>School holiday:</b> ${esc(hol.title)}<br><span class="sm">No attendance is taken on a holiday.</span></div></div>`;
   if (ch) return nav + `<div class="ban hol"><div><b>Class ${esc(c)} holiday:</b> ${esc(ch.title)}<br><span class="sm">Marked by ${esc(ch.by || '')}. This day is not counted as present or absent.</span><br><button class="btn s w" style="margin-top:8px" onclick="setClsHol(${jsq(c)},'${date}',false)">Remove holiday — take attendance</button></div></div>`;
   if (!DRAFT.att || DRAFT.att.key !== date + c) DRAFT.att = { key: date + c, st: stOf(saved, list), changed: false };
   const st = DRAFT.att.st, nA = list.filter(s => st[s.id] === 'A').length, nL = list.filter(s => st[s.id] === 'L').length;
   const absent = saved ? (saved.absent || []).filter(id => studentById(id)) : [];
-  const nP = list.length - nA - nL, f = DRAFT.att.f || 'all';
+  const nP = list.length - nA - nL, f = DRAFT.att.f || 'all', photoMode = !!DRAFT.att.photo;
   const shown = list.map((s, i) => [s, i]).filter(([s]) => f === 'all' || st[s.id] === f);
   const STL = { P: 'Present', A: 'Absent', L: 'Leave' };
-  return nav + `<div class="card roll-card">
+  const just = LAST_SUB && LAST_SUB.key === date + '|' + c && !DRAFT.att.changed ? LAST_SUB : null;
+  return nav + `${just ? `<div class="submitted"><div class="tick">✓</div><div class="t"><b>Attendance submitted</b><span>${nP} present · ${nA} absent · ${nL} leave · ${esc(fmtTime(just.at))}</span></div>
+      <div class="sb-btns">${Date.now() - just.at < 10 * 60000 ? `<button class="btn s w" onclick="attUndo()">Undo</button>` : ''}<button class="btn s l" onclick="LAST_SUB=null;render()">Edit</button></div></div>` : ''}
+    <div class="card roll-card">
       <div class="roll-head"><div>${saved ? `<span class="pill ok">Saved ${esc(fmtTime(saved.at || Date.now()))}</span>` : '<span class="pill warn">Not saved yet</span>'}</div>
         <div class="cnt"><span class="pill ok">${nP} P</span><span class="pill bad">${nA} A</span><span class="pill lv">${nL} L</span></div></div>
       ${list.length ? `<div class="quick"><input id="rollQ" class="inp" inputmode="numeric" enterkeyhint="done" placeholder="Absent roll no. e.g. 3, 7, 12" onkeydown="if(event.key==='Enter')rollQuick()"><button class="btn s" onclick="rollQuick()">Mark absent</button></div>
-      <div class="chips">${[['all', 'All', list.length], ['A', 'Absent', nA], ['L', 'Leave', nL], ['P', 'Present', nP]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="DRAFT.att.f='${k}';render()">${l} <b>${n}</b></button>`).join('')}</div>
-      <p class="mut hint">Tap a name: Present → Absent → Leave.</p>
-      <div class="roll">${shown.map(([s, i]) => { const k = st[s.id], rn = s.rollno || (i + 1);
-        return `<button type="button" class="stu s${k}" data-st="${k}" aria-label="${esc(s.name)}: ${STL[k]}" onclick="attTap('${esc(s.id)}')"><span class="rn">${esc(rn)}</span><span class="n"><b>${esc(s.name)}</b><small>Adm ${esc(s.adm || '')}${s.father ? ' · ' + esc(s.father) : ''}</small></span><span class="mk-st">${STL[k]}</span></button>`; }).join('') || '<div class="empty">Nobody here.</div>'}</div>`
+      <div class="chips">${[['all', 'All', list.length], ['A', 'Absent', nA], ['L', 'Leave', nL], ['P', 'Present', nP]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="DRAFT.att.f='${k}';render()">${l} <b>${n}</b></button>`).join('')}
+        <button class="chip ${photoMode ? 'on' : ''}" onclick="DRAFT.att.photo=!DRAFT.att.photo;render()">${ic('cam')} Photos</button></div>
+      <p class="mut hint">${photoMode ? 'Photo mode: tap a child to take or choose the photo. Tap “Photos” again when done.' : 'Tap a child: Present → Absent → Leave.'}</p>
+      <div class="tiles">${shown.map(([s, i]) => { const k = st[s.id], rn = s.rollno || (i + 1), p = pctOf(c, s.id), pic = ph[s.id];
+        return `<button type="button" class="tile s${k}${photoMode ? ' pm' : ''}" data-st="${k}" aria-label="${esc(s.name)}: ${STL[k]}" onclick="${photoMode ? `photoPick('${esc(s.id)}')` : `attTap('${esc(s.id)}')`}">
+          <span class="ph">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(s.name))}</i>`}<em class="badge">${photoMode ? ic('cam') : k}</em></span>
+          <b>${esc(s.name)}</b><small>Roll ${esc(rn)}${p !== null ? ` · <span class="${p < 75 ? 'lowp' : ''}">${p}%</span>` : ''}</small></button>`; }).join('') || '<div class="empty">Nobody here.</div>'}</div>`
         : '<div class="empty">No students in this class yet.</div>'}
       ${list.length ? `<div class="sticky"><div class="btns"><button class="btn w s" onclick="attAll('P')">All present</button><button class="btn w s" onclick="askHoliday(${jsq(c)},'${date}')">Mark holiday</button></div>
-        <button class="btn go full" style="margin-top:8px" onclick="attSave(${jsq(c)},'${date}')">${saved ? 'Update attendance' : 'Save attendance'}</button></div>` : ''}
+        <button class="btn go full submit" style="margin-top:8px" onclick="attSave(${jsq(c)},'${date}')">${saved ? 'Update attendance' : 'Submit attendance'} · ${nP} P · ${nA} A${nL ? ' · ' + nL + ' L' : ''}</button></div>` : ''}
     </div>
+    <input type="file" id="phIn" accept="image/*" capture="environment" hidden onchange="photoGot(this)">
     ${absent.length ? `<div class="card"><h3>Tell the parents <small>${absent.length} absent</small></h3>${absent.map(id => { const s = studentById(id), lv = (saved.st || {})[id] === 'L';
       const today = date === todayISO(), msg = today
         ? `Dear Parent,\n${s.name} (Class ${c}) is ${lv ? 'on leave' : 'absent from school'} today, ${fmtLong(date)}.\nआज ${s.name} ${lv ? 'छुट्टी पर है' : 'विद्यालय में अनुपस्थित है। कृपया कारण बताएं'}।\n— ${S.settings.school || ''}`
         : `Dear Parent,\n${s.name} (Class ${c}) was ${lv ? 'on leave' : 'absent from school'} on ${fmtLong(date)}.\n${fmtLong(date)} को ${s.name} ${lv ? 'छुट्टी पर था/थी' : 'विद्यालय में अनुपस्थित था/थी। कृपया कारण बताएं'}।\n— ${S.settings.school || ''}`;
       return `<div class="li"><div class="t"><b>${esc(s.name)}</b><span>${lv ? 'Leave' : 'Absent'}${s.phone ? '' : ' · no phone saved'}</span></div>${s.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(s.phone, msg)}">${ic('wa')} Send</a>` : ''}</div>`; }).join('')}</div>` : ''}
     ${threeDays(c, date)}`;
+}
+// Photos: class teacher takes / chooses a photo; it is cropped square, made small and saved for the whole school.
+function photoPick(sid) { PHOTO_SID = sid; const el = $('phIn'); if (el) { el.value = ''; el.click(); } }
+async function photoGot(input) {
+  const f = input.files && input.files[0], sid = PHOTO_SID; if (!f || !sid) return;
+  try {
+    const url = URL.createObjectURL(f), img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => bad(new Error('This photo could not be opened. Please take it again.')); i.src = url; });
+    const e = Math.min(img.width, img.height), cv = document.createElement('canvas'); cv.width = cv.height = 480;
+    cv.getContext('2d').drawImage(img, (img.width - e) / 2, (img.height - e) / 3, e, e, 0, 0, 480, 480); URL.revokeObjectURL(url);
+    const data = cv.toDataURL('image/jpeg', .8), s = studentById(sid);
+    toast('Saving the photo…');
+    const r = await api('teacher_api.php?a=photo', { sid, data });
+    const small = document.createElement('canvas'); small.width = small.height = 112; small.getContext('2d').drawImage(cv, 0, 0, 112, 112);
+    (PHOTOS[s.cls] = PHOTOS[s.cls] || {})[sid] = { h: r.h, src: small.toDataURL('image/jpeg', .78) }; IDB.set('photos:' + s.cls, PHOTOS[s.cls]);
+    toast('Photo saved for ' + s.name + '.'); render();
+  } catch (e) { toast(e.message); }
+}
+// Calendar: the whole month, every day coloured; tap a day for its choices; "Select days" marks many holidays at once.
+function vAttCal(c) {
+  const t = todayISO(), ym = P.ym || ymOf(t), list = studentsOf(c);
+  if (!MONTHS[c + '|' + ym]) { ensureMonth(c, ym).then(render).catch(e => { MONTHS[c + '|' + ym] = true; toast(e.message); render(); }); return '<div class="load"><i></i>Loading ' + esc(ymName(ym)) + '…</div>'; }
+  const sel = DRAFT.calSel, first = ym + '-01', off = new Date(first + 'T00:00:00').getDay();
+  const cells = Array.from({ length: off }, () => '<span></span>');
+  let saved = 0, pend = 0, hols = 0;
+  for (let n = 1; n <= daysIn(ym); n++) {
+    const d = ym + '-' + pad(n), sun = dayIdx(d) < 0, h = holidayOn(d) || clsHolOn(d, c), a = attOf(d, c), fut = d > t;
+    let cls = 'calendar-day', txt = '';
+    if (sun) { cls += ' sun'; txt = 'Sun'; } else if (h) { cls += ' holiday'; txt = 'Holiday'; hols++; } else if (a) { cls += ' saved'; txt = Math.round((list.length - (a.absent || []).length) / Math.max(1, list.length) * 100) + '%'; saved++; } else if (fut) { cls += ' upcoming'; txt = ''; } else { cls += ' pending'; txt = 'Mark'; pend++; }
+    if (d === t) cls += ' today'; if (sel && sel[d]) cls += ' picked';
+    const can = !sun && (sel ? !holidayOn(d) && d <= addDays(t, 90) : !fut || !h);
+    cells.push(`<button type="button" class="${cls}" ${can ? '' : 'disabled'} aria-pressed="${d === (P.date || t)}" aria-label="${esc(fmtDate(d) + ' · ' + (h ? h.title : txt || 'Upcoming'))}" onclick="calTap(${jsq(c)},'${d}')"><b>${n}</b><small>${esc(txt)}</small></button>`);
+  }
+  const nSel = sel ? Object.keys(sel).filter(d => sel[d]).length : 0;
+  return `<div class="card attendance-calendar cal-big"><div class="row"><button class="btn s w" onclick="go('att',{c:${jsq(c)},m:'cal',ym:'${ymAdd(ym, -1)}'})" aria-label="Previous month">${ic('back')}</button><b>${ymName(ym)}</b><button class="btn s w" ${ym >= ymOf(addDays(t, 60)) ? 'disabled' : ''} onclick="go('att',{c:${jsq(c)},m:'cal',ym:'${ymAdd(ym, 1)}'})" aria-label="Next month">${ic('next')}</button></div>
+      <div class="cal-sum"><span class="pill ok">${saved} saved</span><span class="pill warn">${pend} to mark</span><span class="pill hol">${hols} holiday</span></div>
+      <div class="calendar-grid">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<span class="calendar-label">${d}</span>`).join('')}${cells.join('')}</div>
+      <p class="mut" style="margin:8px 0 0">${sel ? 'Tap the days to close for this class, then choose the reason.' : 'Tap a day to take attendance or mark a holiday. Sundays and school holidays are automatic.'}</p>
+      <div class="btns" style="margin-top:8px">${sel ? `<button class="btn w s" onclick="DRAFT.calSel=null;render()">Cancel</button>` : `<button class="btn l s" onclick="DRAFT.calSel={};render()">Select days for a holiday</button>`}</div></div>
+    ${sel && nSel ? `<div class="card"><h3>Holiday for ${nSel} day(s) <small>Class ${esc(c)}</small></h3>${holReasons()}<button class="btn go full" style="margin-top:8px" onclick="calHolSave(${jsq(c)})">Mark ${nSel} day(s) as holiday</button></div>` : ''}`;
+}
+function holReasons() {
+  return `<div class="fld">Reason<input id="hT" class="inp" maxlength="120" placeholder="e.g. Class picnic, local holiday, exam day off"></div>
+    <div class="chips" style="margin-top:6px">${['Local holiday', 'Exam day off', 'Class trip', 'Rain / weather', 'Festival', 'Function in school'].map(x => `<button class="chip" onclick="$('hT').value=${jsq(x)}">${x}</button>`).join('')}</div>`;
+}
+function calTap(c, d) {
+  if (DRAFT.calSel) { DRAFT.calSel[d] = !DRAFT.calSel[d]; return render(); }
+  const a = attOf(d, c), h = clsHolOn(d, c), sh = holidayOn(d), fut = d > todayISO(), list = studentsOf(c);
+  SHEET = () => `<h2>${esc(fmtLong(d))}</h2><p class="mut" style="margin:0">Class ${esc(c)} · ${sh ? 'School holiday: ' + esc(sh.title) : h ? 'Class holiday: ' + esc(h.title) : a ? 'Attendance saved — ' + (list.length - (a.absent || []).length) + '/' + list.length + ' present' : fut ? 'Upcoming day' : 'Attendance not marked yet'}</p>
+    ${!sh && !h && !fut ? `<button class="btn go full" onclick="SHEET=null;DRAFT.att=null;go('att',{c:${jsq(c)},m:'day',date:'${d}'})">${a ? 'Edit attendance' : 'Take attendance'}</button>` : ''}
+    ${h ? `<button class="btn w full" onclick="setClsHol(${jsq(c)},'${d}',false)">Remove class holiday</button>` : !sh ? `<div class="card" style="box-shadow:none">${holReasons()}<button class="btn l full" style="margin-top:8px" onclick="setClsHol(${jsq(c)},'${d}',true,$('hT').value)">Mark holiday for this class</button>${a ? '<p class="mut">The attendance saved for this day will be removed.</p>' : ''}</div>` : ''}`;
+  render();
+}
+async function calHolSave(c) {
+  const days = Object.keys(DRAFT.calSel || {}).filter(d => DRAFT.calSel[d]).sort(), title = ($('hT') || {}).value || '';
+  if (days.some(d => attOf(d, c)) && !confirm('Some of these days already have attendance. It will be removed. Continue?')) return;
+  let n = 0;
+  for (const d of days) { try { await api('teacher_api.php?a=holiday', { cls: c, date: d, on: true, title }); setRec('clsHol', d + '|' + c, { cls: c, date: d, title: title.trim() || 'Holiday', by: myName(), at: Date.now() }); if (S.studAtt[d]) delete S.studAtt[d][c]; n++; } catch (e) { toast(e.message); break; } }
+  DRAFT.calSel = null; needStats(c, true); toast(n + ' day(s) marked as holiday.'); render();
 }
 function stOf(saved, list) { const st = {}; list.forEach(s => st[s.id] = 'P'); if (saved) (saved.absent || []).forEach(id => st[id] = ((saved.st || {})[id] === 'L') ? 'L' : 'A'); return st; }
 function attTap(id) { const o = DRAFT.att.st[id]; attSet(id, o === 'P' ? 'A' : o === 'A' ? 'L' : 'P'); }
@@ -534,10 +656,19 @@ function attRecord(st) {
   return { absent, ...(Object.keys(L).length ? { st: L } : {}), by: myName(), at: Date.now() };
 }
 function attSave(c, date) {
-  const rec = attRecord(DRAFT.att.st), list = studentsOf(c);
+  const rec = attRecord(DRAFT.att.st), list = studentsOf(c), prev = attOf(date, c);
   const names = rec.absent.map(id => (studentById(id) || {}).name).filter(Boolean);
   put('studAtt', date + '|' + c, rec, 'Student Attendance', `Class ${c} (${date}): ${list.length - names.length}/${list.length} present` + (names.length ? '. Absent/leave: ' + names.join(', ') : '') + ' — Teacher App');
-  DRAFT.att = null; toast('Attendance saved.'); render();
+  LAST_SUB = { key: date + '|' + c, c, date, prev: prev ? JSON.parse(JSON.stringify(prev)) : null, at: Date.now() };
+  DRAFT.att = null; needStats(c, true); toast('Attendance saved.'); render();
+  const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0;
+}
+// Undo a Submit made by mistake (10 minutes): the earlier copy comes back, or the day becomes "not marked" again.
+function attUndo() {
+  const L = LAST_SUB; if (!L) return;
+  if (L.prev) put('studAtt', L.key, L.prev, 'Student Attendance', `Class ${L.c} (${L.date}): last change undone — Teacher App`);
+  else putDel('studAtt', L.key, 'Student Attendance', `Class ${L.c} (${L.date}): attendance undone (submitted by mistake) — Teacher App`);
+  LAST_SUB = null; DRAFT.att = null; needStats(L.c, true); toast('Undone.'); render();
 }
 function threeDays(c, date) {
   const days = Object.keys(S.studAtt).filter(d => d <= date && S.studAtt[d][c]).sort().slice(-3); if (days.length < 3) return '';
@@ -546,8 +677,7 @@ function threeDays(c, date) {
 }
 function askHoliday(c, date) {
   SHEET = () => `<h2>Holiday for Class ${esc(c)}</h2><p class="mut" style="margin:0">${fmtLong(date)} — only this class. The day will not count as present or absent.${attOf(date, c) ? ' <b>The attendance saved for this day will be removed.</b>' : ''}</p>
-    <div class="fld">Reason<input id="hT" class="inp" maxlength="120" placeholder="e.g. Class picnic, local holiday, exam day off"></div>
-    <div class="btns">${['Local holiday', 'Exam day off', 'Class trip', 'Rain / weather'].map(x => `<button class="btn s l" onclick="$('hT').value=${jsq(x)}">${x}</button>`).join('')}</div>
+    ${holReasons()}
     <button class="btn go full" onclick="setClsHol(${jsq(c)},'${date}',true,$('hT').value)">Mark holiday</button>`;
   render();
 }
@@ -556,7 +686,7 @@ async function setClsHol(c, date, on, title) {
     await api('teacher_api.php?a=holiday', { cls: c, date, on, title: title || '' });
     if (on) { setRec('clsHol', date + '|' + c, { cls: c, date, title: (title || '').trim() || 'Holiday', by: myName(), at: Date.now() }); if (S.studAtt[date]) delete S.studAtt[date][c]; }
     else if (S.clsHol[date]) delete S.clsHol[date][c];
-    DRAFT.att = null; SHEET = null; toast(on ? 'Holiday marked for Class ' + c + '.' : 'Holiday removed.'); render();
+    DRAFT.att = null; SHEET = null; needStats(c, true); toast(on ? 'Holiday marked for Class ' + c + '.' : 'Holiday removed.'); render();
   } catch (e) { toast(e.message); }
 }
 
