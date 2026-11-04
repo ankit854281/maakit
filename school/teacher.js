@@ -403,14 +403,13 @@ function teacherPhoto() {
 }
 function teacherInitials() { return myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T'; }
 // ---------------------------------------------------------------- opening story (owner, 5 Nov 2026: "jaise Chairman Sir ka app")
-// Same story style as chairman.js: 5 scenes with progress bars. 1 logo + SNMSIS changing through many languages ·
-// 2 colour sweep with SNMSIS · 3 Welcome + the teacher's photo + today's thought · 4 "your day" counting up ·
-// 5 the promise + Start. Plays once a day by itself (teachers open the app many times), any time from
+// Same story style as chairman.js, in 3 layers: 1 logo + SNMSIS changing through many languages on a moving colour
+// sweep · 2 Welcome + the teacher's photo + today's thought · 3 "your day" counting up + Start. Plays once a day by itself (teachers open the app many times), any time from
 // My account → Replay welcome. Tap the right side = next scene, left side = back, Skip ends it.
 const TW_LANGS = [['SNMSIS', 'English'], ['एस एन एम एस आई एस', 'हिन्दी'], ['এস এন এম এস আই এস', 'বাংলা'], ['எஸ் என் எம் எஸ் ஐ எஸ்', 'தமிழ்'], ['ఎస్ ఎన్ ఎమ్ ఎస్ ఐ ఎస్', 'తెలుగు'],
   ['એસ એન એમ એસ આઈ એસ', 'ગુજરાતી'], ['ਐਸ ਐਨ ਐਮ ਐਸ ਆਈ ਐਸ', 'ਪੰਜਾਬੀ'], ['ಎಸ್ ಎನ್ ಎಂ ಎಸ್ ಐ ಎಸ್', 'ಕನ್ನಡ'], ['എസ് എൻ എം എസ് ഐ എസ്', 'മലയാളം'], ['ایس این ایم ایس آئی ایس', 'اردو'],
   ['エス・エヌ・エム・エス・アイ・エス', '日本語'], ['ЭС ЭН ЭМ ЭС АЙ ЭС', 'Русский'], ['إس إن إم إس آي إس', 'العربية'], ['SNMSIS', 'English']];
-const TW_SCENES = [6200, 2600, 4400, 4200, 3200];
+const TW_SCENES = [4200, 3400, 3800];          // owner: "bahut lamba — 3 layer" (5 Nov 2026), about 11 seconds
 let WELCOME_SHOWN = false, TW = null;
 function twDayKey() { return 'ta_intro_day'; }
 function closeTeacherWelcome() {
@@ -435,12 +434,9 @@ function showTeacherWelcome(force) {
   el.id = 'ta-welcome'; el.className = 'tw'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Welcome to SNMSIS Teacher');
   el.innerHTML = `<div class="tw-bars">${TW_SCENES.map(() => '<i></i>').join('')}</div><button class="tw-skip" type="button" onclick="closeTeacherWelcome()">Skip</button>
     <div class="tw-tap l" onclick="twStep(-1)"></div><div class="tw-tap r" onclick="twStep(1)"></div>
-    <section class="tw-s s1"><img class="tw-logo" src="${LOGO}" alt="School logo"><div class="tw-lang" id="twLang" data-notr></div><p class="tw-t" data-notr>SN Mishra Singapore International School · Bhadohi</p></section>
-    <section class="tw-s s2"><div class="tw-glow"></div><p class="tw-k">One school · every language</p><h1 class="tw-h xl" data-notr>SNMSIS</h1><p class="tw-t">Where every child is known by name.</p></section>
+    <section class="tw-s s1"><div class="tw-glow"></div><img class="tw-logo" src="${LOGO}" alt="School logo"><div class="tw-lang" id="twLang" data-notr></div><p class="tw-t" data-notr>SN Mishra Singapore International School · Bhadohi</p></section>
     <section class="tw-s s3"><div class="tw-photo">${photo ? `<img src="${esc(photo)}" alt="">` : esc(teacherInitials())}</div><p class="tw-k">${esc(greet())}</p><h1 class="tw-h">Welcome,<br><span class="tw-gold" data-notr>${esc(name)}</span></h1><p class="tw-t">“${esc(q[0])}”</p><small class="tw-sm">${esc(q[1])}</small></section>
-    <section class="tw-s s4"><p class="tw-k">Your day today</p><h1 class="tw-h">${esc(fmtLong(todayISO()))}</h1><div class="tw-grid">${twNumbers().map(([v, l], i) => `<div class="tw-card" style="--d:${.15 + i * .18}s"><b data-v="${v}">0</b><span>${esc(l)}</span></div>`).join('')}</div></section>
-    <section class="tw-s s5"><p class="tw-k">Every child · every day</p><h1 class="tw-h">Teach. Track.<br><span class="tw-gold">Inspire.</span></h1>
-      <ul class="tw-ticks"><li style="--d:.1s">Attendance in seconds</li><li style="--d:.35s">Diary and homework in one tap</li><li style="--d:.6s">Every child's progress in one place</li></ul>
+    <section class="tw-s s4"><p class="tw-k">Your day today</p><h1 class="tw-h">${esc(fmtLong(todayISO()))}</h1><div class="tw-grid">${twNumbers().map(([v, l], i) => `<div class="tw-card" style="--d:${.1 + i * .12}s"><b data-v="${v}">0</b><span>${esc(l)}</span></div>`).join('')}</div>
       <button class="tw-go" type="button" onclick="closeTeacherWelcome()">Start my day →</button></section>`;
   $('phone').appendChild(el);
   TW = { i: -1, timers: [] }; twStep(1);
@@ -455,8 +451,8 @@ function twStep(dir) {
   sc.forEach((x, j) => x.classList.toggle('on', j === TW.i));
   if (TW.i === 0) { let n = 0; const box = $('twLang'); const step = () => { if (!TW || TW.i !== 0) return; const [w, l] = TW_LANGS[n % TW_LANGS.length];
       box.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < TW_LANGS.length) TW.timers.push(setTimeout(step, (ms - 500) / TW_LANGS.length)); }; TW.timers.push(setTimeout(step, 400)); }
-  if (TW.i === 3) el.querySelectorAll('.tw-card b[data-v]').forEach(b => { const v = +b.dataset.v, t0 = performance.now();
-    const f = now => { const p = Math.min(1, (now - t0) / 1300); b.textContent = Math.round(v * (1 - Math.pow(1 - p, 3))); if (p < 1 && TW) requestAnimationFrame(f); }; requestAnimationFrame(f); });
+  if (TW.i === 2) el.querySelectorAll('.tw-card b[data-v]').forEach(b => { const v = +b.dataset.v, t0 = performance.now();
+    const f = now => { const p = Math.min(1, (now - t0) / 1000); b.textContent = Math.round(v * (1 - Math.pow(1 - p, 3))); if (p < 1 && TW) requestAnimationFrame(f); }; requestAnimationFrame(f); });
   TW.timers.push(setTimeout(() => twStep(1), ms));
 }
 async function profilePhotoPick(input) {

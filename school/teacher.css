@@ -321,7 +321,9 @@ html[lang=hi] body{line-height:1.5}
 .tw-tap{position:absolute;top:60px;bottom:120px;z-index:3}.tw-tap.l{left:0;width:30%}.tw-tap.r{right:0;width:70%}
 .tw-s{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:70px 24px 40px}
 .tw-s.on{display:flex;animation:twin .55s ease-out}@keyframes twin{from{opacity:0;transform:scale(.96)}}
-.tw-s.s1{background:radial-gradient(120% 80% at 50% 0%,#4F46E5,#14114A 70%)}
+.tw-s.s1{background:linear-gradient(120deg,#4F46E5,#EC4899,#8B5CF6,#F59E0B,#14B8A6,#4F46E5);background-size:400% 400%;animation:twin .55s ease-out,twhue 4.2s ease-in-out infinite}
+.tw-s.s1::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 60% at 50% 40%,rgba(20,17,74,.15),rgba(20,17,74,.55))}
+.tw-s.s1>*:not(.tw-glow){position:relative}
 .tw-s.s2{background:linear-gradient(120deg,#EC4899,#8B5CF6,#F59E0B,#14B8A6,#EC4899);background-size:400% 400%;animation:twin .55s ease-out,twhue 2.6s ease-in-out infinite}
 @keyframes twhue{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .tw-s.s3{background:radial-gradient(120% 90% at 50% 100%,#7C3AED,#1A0F3D 70%)}
