@@ -161,6 +161,12 @@ function sch_auth(bool $allowMustChange = false): array {
     $st->execute([hash('sha256', $tok)]);
     $u = $st->fetch();
     if (!$u) sch_fail('Please log in again.', 401);
+    if ($u['role'] === 'teacher') {
+        require_once __DIR__ . '/login_otp.php';
+        if (sch_teacher_otp_enabled() && !sch_teacher_otp_session($u, hash('sha256', $tok))) {
+            sch_fail('Please log in again and verify your mobile OTP.', 401);
+        }
+    }
     if ((int)$u['must_change'] === 1 && !$allowMustChange) sch_fail('Please choose your own PIN first.', 428);
     sch_db()->prepare('UPDATE sch_sessions SET last_seen = NOW() WHERE token_hash = ?')->execute([hash('sha256', $tok)]);
     $u['label'] = sch_user_label($u);

@@ -1012,7 +1012,9 @@ async function loginView() {
 async function login() {
   const who = store.get('ta_who') || 'teacher', tid = who === 'teacher' ? ($('lgT') || {}).value : '';
   if (who === 'teacher' && !tid) { LOGIN = { msg: 'Choose your name.' }; return loginView(); }
-  try { const d = await api('api.php?a=login', { role: who, tid, pin: $('lgPin').value }); store.set('sch_token', d.token); if (tid) store.set('ta_tid', tid);
+  try { const credentials = { role: who, tid, pin: $('lgPin').value };
+    const start = () => api('api.php?a=login', credentials);
+    const d = await schoolCompleteOtp(await start(), data => api('api.php?a=verify_teacher_otp', data), start); store.set('sch_token', d.token); if (tid) store.set('ta_tid', tid);
     if (d.mustChange) { LOGIN = { step: 'new' }; return loginView(); } LOGIN = {}; load(); }
   catch (e) { LOGIN = { msg: e.message }; loginView(); }
 }

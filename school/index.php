@@ -35,7 +35,7 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 
 <noscript><p style="padding:16px">Please turn on JavaScript to use the School ERP.</p></noscript>
 <script src="language.js?v=<?php echo (string)filemtime(__DIR__.'/followup.js'); ?>"></script><script src="followup.js?v=<?php echo (string)filemtime(__DIR__.'/followup.js'); ?>"></script><script src="toolkit_english.js?v=<?= $v('toolkit_english.js') ?>"></script>
-<script src="app.js?v=<?= $v('app.js') ?>"></script>
+<script src="login-otp.js?v=<?= $v('login-otp.js') ?>"></script><script src="app.js?v=<?= $v('app.js') ?>"></script>
 <script src="classic.js?v=<?= $v('classic.js') ?>"></script>
 <script src="oldlook.js?v=<?= $v('oldlook.js') ?>"></script>
 <script src="followup-app.js?v=<?php echo (string)filemtime(__DIR__.'/followup-app.js'); ?>"></script></body>

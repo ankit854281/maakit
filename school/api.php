@@ -144,6 +144,10 @@ case 'login': {
         sch_fail($f >= 5 ? 'Too many wrong PINs. Please wait 15 minutes.' : ($role === 'parent' ? 'Wrong mobile number or PIN.' : ($role === 'student' ? 'Wrong admission number or PIN.' : 'Wrong PIN.')), 403);
     }
     $db->prepare('UPDATE sch_users SET fails=0, strikes=0, locked_until=NULL WHERE uid=?')->execute([$uid]);
+    if ($role === 'teacher') {
+        require_once __DIR__ . '/login_otp.php';
+        if (sch_teacher_otp_enabled()) sch_json(sch_teacher_otp_start($u));
+    }
     $tok = bin2hex(random_bytes(32));
     $db->prepare('INSERT INTO sch_sessions (token_hash, uid, expires_at, last_seen) VALUES (?,?,?,NOW())')
        ->execute([hash('sha256', $tok), $uid, date('Y-m-d H:i:s', time() + SCH_SESSION_DAYS * 86400)]);
@@ -156,6 +160,12 @@ case 'login': {
 }
 
 // ------------------------------------------------------------
+case 'verify_teacher_otp': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    require_once __DIR__ . '/login_otp.php';
+    sch_json(sch_teacher_otp_verify($in));
+}
+
 case 'logout': {
     $tok = (string)($_SERVER['HTTP_X_SCHOOL_TOKEN'] ?? '');
     if (preg_match('/^[a-f0-9]{64}$/', $tok)) {

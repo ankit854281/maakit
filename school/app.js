@@ -702,7 +702,8 @@ async function login() {
 }
 let MUST = null;   // { role, old } while a 1234 user chooses their own PIN
 async function doLogin(role, tid, pin, phone, adm) {
-  const res = await api('login', { role, tid, pin, phone, adm });
+  const start = () => api('login', { role, tid, pin, phone, adm });
+  const res = await schoolCompleteOtp(await start(), data => api('verify_teacher_otp', data), start);
   TOKEN = res.token; tokenSet(TOKEN); try { localStorage.setItem('sch_role', res.me ? res.me.role : ''); } catch (e) {}
   if (res.mustChange) { MUST = { role: res.me.role, old: pin }; render(); return; }
   await finishLogin(res.me.role);

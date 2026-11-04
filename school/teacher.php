@@ -11,4 +11,4 @@ $v = (string)@filemtime(__DIR__ . '/teacher.js') . (string)@filemtime(__DIR__ . 
 <title>SNMSIS Teacher · SN Mishra SIS</title><meta name="theme-color" content="#0F766E"><link rel="manifest" href="teacher-manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SNMSIS Teacher"><link rel="apple-touch-icon" href="img/teacher-192.png"><link rel="icon" href="img/teacher-192.png">
 <link rel="stylesheet" href="teacher.css?v=<?= htmlspecialchars($v) ?>"></head><body><div id="phone"><div id="app"><div class="load"><i></i>Opening…</div></div></div><div id="toast" role="status" aria-live="polite"></div>
-<script src="teacher.js?v=<?= htmlspecialchars($v) ?>"></script></body></html>
+<script src="login-otp.js?v=<?= (string)filemtime(__DIR__ . '/login-otp.js') ?>"></script><script src="teacher.js?v=<?= htmlspecialchars($v) ?>"></script></body></html>
