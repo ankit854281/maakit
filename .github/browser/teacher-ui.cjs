@@ -100,7 +100,7 @@ const path = require('node:path');
   });
   await run('07-Plan-And-Syllabus', async () => {
     await page.locator('.tabs button.tab').filter({ hasText: 'Plan' }).click();
-    await page.getByRole('button', { name: 'Fill from syllabus' }).click();
+    await page.getByRole('button', { name: 'Auto fill from syllabus' }).click();
     assert.ok((await page.locator('#lpT').inputValue()).length);
     await page.getByRole('button', { name: /Send to Principal/ }).click();
     await page.getByText(/Submitted|Sent to the Principal/).first().waitFor();
@@ -145,6 +145,25 @@ const path = require('node:path');
     await context.setOffline(false);
     await page.evaluate(() => flush());
     await page.waitForFunction(() => document.querySelector('#net') && /Saved/i.test(document.querySelector('#net').textContent), { timeout: 12000 });
+  });
+  await run('12a-Syllabus-assistance-and-calendar', async () => {
+    await page.evaluate(() => { SHEET = null; go('diary', {date: todayISO(), bell: 0}); });
+    await page.locator('#b0-h').fill('French');
+    await page.locator('#b0-h-suggest button').first().click();
+    assert.match(await page.locator('#b0-h').inputValue(), /French Revolution/);
+    await page.locator('#b0-t').fill('Teacher written topic');
+    await page.getByRole('button', {name:'Auto fill from syllabus'}).first().click();
+    assert.equal(await page.locator('#b0-t').inputValue(), 'Teacher written topic');
+    assert.equal(await page.evaluate(() => syllabusSuggestions('unassigned|subject', 'homework', '').length), 0);
+    assert.equal(await page.evaluate(() => {
+      const original = S.cal;
+      try { S.cal = [{type:'Holiday', date:'2026-11-09', title:'Test closure'}]; return nextSchoolDay('2026-11-07', '9th'); }
+      finally { S.cal = original; }
+    }), '2026-11-10');
+    await page.evaluate(() => go('att', {c:'9th'}));
+    await page.locator('.attendance-calendar summary').click();
+    assert.ok(await page.locator('.calendar-day.holiday').count());
+    assert.ok(await page.locator('.calendar-day[aria-pressed=true]').count());
   });
   await run('12-Console', async () => { assert.deepEqual(errors, [], 'browser console/page errors'); });
   // A separate browser session checks the real Principal ERP screen, not only its PHP API.

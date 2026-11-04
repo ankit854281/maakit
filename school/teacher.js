@@ -436,7 +436,7 @@ function vAttDay(c) {
   const t = todayISO(), date = P.date && P.date <= t ? P.date : t;
   if (date < (loadedFrom || '') && !DAYS_LOADED[date]) { ensureDate(date).then(() => render()); return '<div class="load"><i></i></div>'; }
   const saved = attOf(date, c), list = studentsOf(c), hol = holidayOn(date), ch = clsHolOn(date, c);
-  const nav = `<div class="row"><button class="btn s w" onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, -1)}'})">${ic('back')}</button>
+  const nav = attendanceCalendar(c, date) + `<div class="row"><button class="btn s w" onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, -1)}'})">${ic('back')}</button>
     <input type="date" class="inp" style="flex:1" max="${t}" value="${date}" onchange="DRAFT.att=null;go('att',{c:${jsq(c)},date:this.value})">
     <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="DRAFT.att=null;go('att',{c:${jsq(c)},date:'${addDays(date, 1)}'})">${ic('next')}</button></div>`;
   if (dayIdx(date) < 0) return nav + '<div class="ban hol">Sunday — no attendance.</div>';
@@ -600,12 +600,14 @@ function diaryCard(date, b, signed) {
   return `<div class="card"><div class="li" style="padding:0 0 10px"><div class="bell ${b.arr ? 'arr' : ''}"><b>${BELLS[b.bell].n.replace(/\D/g, '')}</b>${t12(BELLS[b.bell].s).replace(' ', '')}</div>
       <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>${b.arr ? 'Arrangement' + (b.for ? ' for ' + esc(T(b.for).name) : '') : b.extra ? 'Added period' : BELLS[b.bell].n + ' bell'}</span></div>${e.at ? `<span class="pill ok">Saved ${fmtTime(e.at).split(', ').pop()}</span>` : ''}</div>
     <div style="display:flex;flex-direction:column;gap:9px">
+      <button type="button" class="btn l full auto-fill" ${signed ? 'disabled' : ''} onclick="diaryAutoFill('${date}',${b.bell},${jsq(b.cls)},${jsq(b.subj)})">Auto fill from syllabus</button>
       <div class="fld">Topic taught *<input id="${id}-t" class="inp" maxlength="200" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
+        ${suggestionBox(id + '-t', sylKey(b.cls, b.subj), 'topic')}
         ${nx && !e.topic ? `<button class="btn s l" style="align-self:flex-start" onclick="$('${id}-t').value=${jsq(nx)}">Use: ${esc(nx.slice(0, 40))}</button>` : ''}</div>
       <div class="fld">Class work<textarea id="${id}-cw" class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
-      <div class="fld">Homework<textarea id="${id}-h" class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea></div>
+      <div class="fld">Homework<textarea id="${id}-h" class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
       <div class="two"><div class="fld">Minutes (whole class ≤ 45)<input id="${id}-min" class="inp" type="number" inputmode="numeric" min="1" max="45" value="${e.hwMinutes || ''}" placeholder="15"></div>
-        <div class="fld">Homework for<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"></div></div>
+        <div class="fld">Homework for<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"><button type="button" class="btn s l" onclick="homeworkNextDay('${id}','${date}',${jsq(b.cls)})">Next school day</button></div></div>
       <div class="fld">Books / copies to bring<input id="${id}-books" class="inp" maxlength="300" value="${esc(e.books || '')}"></div>
       <div class="fld">Revision<input id="${id}-rev" class="inp" maxlength="400" value="${esc(e.revision || '')}"></div>
       ${nx && !b.arr ? `<label class="chk"><input id="${id}-c" type="checkbox"> Chapter “${esc(nx)}” finished today (ticks it in the syllabus)</label>` : ''}
@@ -666,11 +668,11 @@ function vLp(list) {
   return `<div class="fld">Week${sel('lpW', weeks.map(x => [x, 'Week of ' + fmtDate(x)]), w, `go('plan',{m:'lp',w:this.value,key:${jsq(key)}})`)}</div>
     ${keyPick(list, key, `DRAFT.lp=null;go('plan',{m:'lp',w:'${w}',key:this.value})`)}
     <div class="card">${daily ? '<div class="ban inf">This week has a daily teaching plan. Open the web ERP → Daily Teaching to change it.</div>' : p && p.status === 'Approved' ? '<div class="ban ok">Approved by the Principal — locked.</div>' : `
-      <div class="btns" style="margin-bottom:8px"><button class="btn s l" onclick="lpFill('${w}',${jsq(key)})">Fill from syllabus</button>
+      <div class="btns" style="margin-bottom:8px"><button class="btn s l" onclick="lpFill('${w}',${jsq(key)})">Auto fill from syllabus</button>
         <label class="btn s l filebtn">${ic('cam')} From a photo<input type="file" accept="image/*" capture="environment" multiple onchange="lpPhoto(this.files,${jsq(key)},'${k}')"></label></div>
       ${DRAFT.busy ? `<div class="ban inf"><span class="load" style="padding:0;flex-direction:row;gap:8px"><i style="width:18px;height:18px"></i></span>${esc(DRAFT.busy)}</div>` : ''}
-      <div class="fld">Topics — one line = one period${nx ? ` · next chapter: <b>${esc(nx)}</b>` : ''}<textarea id="lpT" class="inp" rows="7" oninput="DRAFT.lp={k:'${k}',topics:this.value,goal:$('lpG').value}">${esc(dr ? dr.topics : p ? p.topics : '')}</textarea></div>
-      <div class="fld">Aim / activity / teaching aid / homework<input id="lpG" class="inp" maxlength="400" value="${esc(dr ? dr.goal : p ? p.goal || '' : '')}" oninput="DRAFT.lp={k:'${k}',topics:$('lpT').value,goal:this.value}"></div>
+      <div class="fld">Topics — one line = one period${nx ? ` · next chapter: <b>${esc(nx)}</b>` : ''}<textarea id="lpT" class="inp" rows="7" oninput="DRAFT.lp={k:'${k}',topics:this.value,goal:$('lpG').value}">${esc(dr ? dr.topics : p ? p.topics : '')}</textarea>${suggestionBox('lpT', key, 'topic')}</div>
+      <div class="fld">Aim / activity / teaching aid / homework<input id="lpG" class="inp" maxlength="400" value="${esc(dr ? dr.goal : p ? p.goal || '' : '')}" oninput="DRAFT.lp={k:'${k}',topics:$('lpT').value,goal:this.value}">${suggestionBox('lpG', key, 'goal')}</div>
       <button class="btn go full" style="margin-top:10px" onclick="lpSubmit('${w}',${jsq(key)})">${p ? 'Update and send again' : 'Send to Principal'}</button>`}
       ${p ? `<p class="mut" style="margin:8px 0 0">Status: <span class="pill ${p.status === 'Approved' ? 'ok' : p.status === 'Revise' ? 'bad' : 'warn'}">${esc(p.status)}</span>${p.feedback ? ' · Principal: ' + esc(p.feedback) : ''}</p>` : ''}</div>
     ${mine.length ? `<div class="card"><h3>My plans this week</h3>${mine.map(([kk, v]) => `<div class="li" onclick="DRAFT.lp=null;go('plan',{m:'lp',w:'${w}',key:${jsq(sylKey(v.cls, v.subj))}})"><div class="t"><b>Class ${esc(v.cls)} · ${esc(v.subj)}</b><span>${String(v.topics || '').split('\n').filter(Boolean).length} topic(s)${(v.days || []).length ? ' · ' + v.days.length + ' day(s)' : ''}</span></div><span class="pill ${v.status === 'Approved' ? 'ok' : v.status === 'Revise' ? 'bad' : 'warn'}">${esc(v.status)}</span></div>`).join('')}</div>` : ''}`;
@@ -678,13 +680,18 @@ function vLp(list) {
 function lpFill(w, key) {
   const [c, s] = key.split('|'), y = S.syl[key], a = S.alloc.find(x => x.c === c && x.s === s && x.t === me()) || S.alloc.find(x => x.c === c && x.s === s);
   if (!y || !(y.chapters || []).length) return toast('Add the chapters first: Plan → Syllabus (a photo of the contents page works).');
-  const n = Math.max(1, Math.min(12, (a && +a.n) || 5));
+  const schoolDays = Array.from({length: 6}, (_, i) => addDays(w, i)).filter(d => isWorkDay(d, c));
+  const scheduled = schoolDays.flatMap(d => myBells(d).filter(b => b.cls === c && b.subj === s));
+  const n = S.grid ? scheduled.length : Math.min(schoolDays.length, Math.max(1, (a && +a.n) || 5));
+  if (!n) return toast('No teaching periods this week. Sundays and saved holidays are skipped.');
+  if ($('lpT').value.trim() && !confirm('Replace these topics with a syllabus draft?')) return;
   const earlier = new Set(Object.values(S.lplan).filter(p => p.tid === me() && p.cls === c && p.subj === s && p.week < w).flatMap(p => String(p.topics || '').split('\n').map(x => x.trim().toLowerCase())));
   const open = y.chapters.filter(ch => !ch.done).sort((x, z) => String(x.plan || '9999').localeCompare(String(z.plan || '9999'))), lines = [];
   for (const ch of open) { const parts = (ch.topics || []).length ? ch.topics.map(t => `${ch.n} — ${t}`) : [`${ch.n} — introduction`, `${ch.n} — explanation`, `${ch.n} — examples and practice`, `${ch.n} — exercise / question-answer`, `${ch.n} — revision and test`];
     for (const l of parts) { if (!earlier.has(l.toLowerCase())) lines.push(l); if (lines.length >= n) break; } if (lines.length >= n) break; }
   if (!lines.length) return toast('Nothing left to plan — all chapters are done.');
-  DRAFT.lp = { k: [w, me(), c, s].join('|'), topics: lines.join('\n'), goal: ($('lpG') || {}).value || '' }; toast(lines.length + ' period(s) filled. Change anything, then send.'); render();
+  DRAFT.lp = { k: [w, me(), c, s].join('|'), topics: lines.join('\n'), goal: ($('lpG') || {}).value || '' }; toast(lines.length + ' period(s) filled. Sundays and saved holidays skipped. Review, then send.'); render();
+  $('lpT').classList.add('auto-filled');
 }
 function lpSubmit(w, key) {
   const [c, s] = key.split('|'), k = [w, me(), c, s].join('|'), old = S.lplan[k];
