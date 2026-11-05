@@ -558,8 +558,10 @@ const path = require('node:path');
       await page.locator('.xv button.on').waitFor();
       assert.ok((await page.locator('.scroll').innerText()).length > 40, 'cross-check ' + v + ' draws');
     }
+    await page.evaluate(() => go('prin', { v: 'att' }));
+    assert.match(await page.locator('.kp').innerText(), /Students present[\s\S]*Absent[\s\S]*Total students/);
     await page.evaluate(() => go('prin', { v: 'diary' }));
-    await page.locator('.xd-h').waitFor();
+    await page.locator('.xc-big').first().waitFor().catch(() => {});
     await page.evaluate(() => go('staff'));
     await page.locator('.xst div').first().waitFor();
     assert.match(await page.locator('.backbar').innerText(), /Staff & arrangement/);

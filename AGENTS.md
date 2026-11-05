@@ -952,3 +952,4 @@ Teacher App v3 — Part 3: Connect tab (5 November 2026, owner: fee calling for 
 - Help: `HELP_WHY` adds "Ye kyun hai?" to every screen's help; own help for arrangement / timetable. Suggestion chips appear under leave reason (`#lvR`) and plan send-back feedback (`#pdFb`).
 - Principal Home quick actions: Arrangement · Timetable first; "On leave today" alert links to Arrangement.
 - Test teacher-ui.cjs 29.
+- (5 Nov, owner: "attendance cross-check achha hai, baaki samajh nahi aa raha — sab usi jaisa"): every Cross-check segment now uses ONE layout `xPage()` — number boxes on top, "Remind all" (each teacher gets their own message, `XR[view]`), then green / yellow / red tiles (`.xc-cls.xc-big`) per class or teacher; tap = details (`xDiaryT` read + ✍ Sign, `xLpT` approve, class screens). Attendance shows classes marked, students present (%), absent / leave, total students; the Teachers segment also has a "Students present" box.

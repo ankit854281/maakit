@@ -37,77 +37,101 @@ vPrin = function () {
 };
 
 // ---------------------------------------------------------------- 1. per-feature grids
+// Every cross-check page looks like the attendance one (owner, 5 Nov 2026: "attendance cross-check achha hai, baaki samajh
+// nahi aa raha — sab usi jaisa"): number boxes on top, then one green / red box per class (or teacher), tap = details.
+function xPage(view, date, o) {
+  const kp = o.kpis.map(([l, a, b, sub, cls]) => `<div class="k ${cls || (b === null || b === undefined ? '' : b && a === b ? 'ok' : a < b ? 'go' : '')}"><span>${l}</span><b>${b === null || b === undefined ? a : b === 0 ? '—' : a + '/' + b}</b><small>${sub || (b ? (a === b ? 'all done' : (b - a) + ' not done') : 'nothing due')}</small></div>`).join('');
+  const pend = o.tiles.filter(t => t.st === 'no');
+  return (o.nav === false ? '' : xDatebar(view, date)) + (o.top || '') + `<div class="kp">${kp}</div>
+    ${o.remind && pend.length ? `<button class="btn go full" onclick="xRemindAll(${jsq(view)},'${date}')">${ic('chat')} Remind all ${o.remind(pend)} in the app</button>` : ''}
+    <div class="card"><h3>${o.title} <small>${o.tiles.filter(t => t.st === 'ok').length}/${o.tiles.filter(t => t.st !== 'hol').length} done</small></h3>
+      ${o.tiles.length ? `<div class="xc-cls xc-big">${o.tiles.map(t => `<div class="${t.st}" ${t.tap ? `onclick="${t.tap}"` : ''}><b>${esc(t.b)}</b><small>${esc(t.small || '')}</small><span>${t.line}</span></div>`).join('')}</div>` : `<div class="empty">${o.empty || 'Nothing to check on this day.'}</div>`}
+      <p class="mut" style="margin:8px 0 0">${o.note}</p></div>${o.bottom || ''}`;
+}
+const XR = {};      // view → { teacher: message } for "Remind all"
+async function xRemindAll(view, date) {
+  const L = Object.entries(XR[view] || {}); if (!L.length || !confirm('Send each of these ' + L.length + ' teacher(s) their own reminder in the app?')) return;
+  let n = 0; for (const [t, text] of L) { try { await api('teacher_api.php?a=staffchat', { room: scDm('P', t), text }); n++; } catch (e) { toast(e.message); break; } }
+  toast(n + ' reminder(s) sent in the app.'); SC = null;
+}
 function xAtt(date) {
-  const cls = (S.classes || []).filter(k => studentsOf(k.c).length);
-  const done = cls.filter(k => attOf(date, k.c)).length;
-  return xDatebar('att', date) + `<div class="card"><h3>Attendance <small>${done}/${cls.length} classes</small></h3><div class="xg">${cls.map(k => {
-    const a = attOf(date, k.c), n = studentsOf(k.c).length, h = holidayOn(date) || clsHolOn(date, k.c), off = !isWorkDay(date, k.c);
-    return `<button type="button" class="${a ? 'ok' : h || off ? 'hol' : 'no'}" onclick="go('att',{c:${jsq(k.c)},date:'${date}'})"><b>${esc(k.c)}</b><span>${a ? (n - (a.absent || []).length) + '/' + n : h ? 'Holiday' : off ? '—' : 'Not marked'}</span><small>${esc(T(k.ct).name || '')}</small></button>`; }).join('')}</div>
-    <p class="mut" style="margin:8px 0 0">Green = marked, red = not marked. Tap a class to open its attendance.</p></div>`;
+  const cls = (S.classes || []).filter(k => studentsOf(k.c).length && isWorkDay(date, k.c)), work = isWorkDay(date);
+  let tot = 0, pres = 0, abs = 0, lv = 0, mk = 0; XR.att = {};
+  const tiles = cls.map(k => { const a = attOf(date, k.c), n = studentsOf(k.c).length; tot += n;
+    if (!a) { if (date < todayISO() || nowMin() >= toMin(S.settings.attendanceCutoff || '09:30')) if (k.ct) XR.att[k.ct] = `Namaste ${T(k.ct).name}, Class ${k.c} ki haziri ${date === todayISO() ? 'aaj' : fmtLong(date) + ' ko'} app mein nahi lagi. Kripya laga dein. — Principal`;
+      return { st: 'no', b: k.c, small: T(k.ct).name || '', line: `Not marked · ${n} students`, tap: `go('att',{c:${jsq(k.c)},date:'${date}'})` }; }
+    const L = Object.values(a.st || {}).filter(x => x === 'L').length, A = (a.absent || []).length - L; mk += n; pres += n - A - L; abs += A; lv += L;
+    return { st: 'ok', b: k.c, small: T(k.ct).name || '', line: `✓ ${n - A - L}/${n} present · ${A} A${L ? ' · ' + L + ' L' : ''}`, tap: `go('att',{c:${jsq(k.c)},date:'${date}'})` }; });
+  const pct = mk ? Math.round(pres / mk * 100) : null;
+  if (!work) return xDatebar('att', date) + `<div class="ban hol">${dayIdx(date) < 0 ? 'Sunday' : 'Holiday — ' + esc(holTitle(holidayOn(date)))}. No attendance.</div>`;
+  return xPage('att', date, { title: 'Classes', tiles, kpis: [['Classes marked', tiles.filter(t => t.st === 'ok').length, tiles.length], ['Students present', mk ? pres + '/' + mk : '—', null, pct !== null ? pct + '% present' : 'no class marked yet', 'ok'],
+      ['Absent', abs, null, lv ? lv + ' on leave' : 'children', abs ? 'bad' : ''], ['Total students', tot, null, cls.length + ' classes']],
+    remind: p => p.length + ' class teacher(s)', note: 'Green = marked (present / absent / leave), red = not marked. Tap a class to open its attendance.' });
 }
 function xDiary(date) {
-  const ts = Object.keys(S.teachers).map(t => ({ t, b: bellsOf(t, date) })).filter(x => x.b.length).sort((a, b) => T(a.t).name.localeCompare(T(b.t).name));
-  let all = 0, done = 0;
-  const rows = ts.map(({ t, b }) => { const sg = (S.signed[date] || {})[t];
-    const cells = BELLS.map((_, i) => { const x = b.find(y => y.bell === i); if (!x) return '<i class="e"></i>'; const e = ((S.diary[date] || {})[t] || {})[i], over = bellOver(date, i);
-      if (over || e) { all++; if (e) done++; }
-      return `<button type="button" class="${e ? 'ok' : over ? 'no' : 'up'}${x.arr ? ' arr' : ''}" onclick="xDiaryOpen(${jsq(t)},'${date}',${i})" aria-label="${esc(BELLS[i].n)} bell">${i + 1}</button>`; }).join('');
-    const miss = b.filter(x => bellOver(date, x.bell) && !((S.diary[date] || {})[t] || {})[x.bell]).length;
-    return `<div class="xd"><div class="n"><b>${esc(T(t).name)}</b><small>${miss ? miss + ' not filled' : 'all filled so far'}${sg ? ' · ✍ signed' : ''}</small></div><div class="cells">${cells}</div>
-      ${miss ? xRemindBtn(t, `Namaste ${T(t).name}, ${date === todayISO() ? 'aaj' : fmtLong(date) + ' ko'} ki ${miss} bell ki diary app mein baaki hai. Kripya bhar dein. — Principal`) : sg ? '' : `<button class="btn s l" onclick="xSign(${jsq(t)},'${date}')">✍ Sign</button>`}</div>`; }).join('');
-  return xDatebar('diary', date) + `<div class="card"><h3>Diary <small>${done}/${all} bells over</small></h3>
-    <div class="xd-h"><span></span><div class="cells">${BELLS.map((b, i) => `<i>${i + 1}</i>`).join('')}</div></div>${rows || '<div class="empty">No bells on this day.</div>'}
-    <p class="mut" style="margin:8px 0 0"><span class="lvk" style="background:var(--ok)"></span>filled <span class="lvk" style="background:var(--bad)"></span>bell over, not filled <span class="lvk" style="background:var(--line)"></span>coming · dotted = arrangement. Tap a box to read it.</p></div>`;
+  XR.diary = {}; let all = 0, done = 0;
+  const tiles = Object.keys(S.teachers).map(t => ({ t, b: bellsOf(t, date).filter(x => bellOver(date, x.bell)) })).filter(x => x.b.length).sort((a, b) => T(a.t).name.localeCompare(T(b.t).name)).map(({ t, b }) => {
+    const f = b.filter(x => ((S.diary[date] || {})[t] || {})[x.bell]).length; all += b.length; done += f; const miss = b.filter(x => !((S.diary[date] || {})[t] || {})[x.bell]);
+    if (miss.length) XR.diary[t] = `Namaste ${T(t).name}, ${date === todayISO() ? 'aaj' : fmtLong(date) + ' ko'} ki diary app mein baaki hai: ${miss.map(x => BELLS[x.bell].n + ' bell (Class ' + x.cls + ')').join(', ')}. — Principal`;
+    return { st: f === b.length ? 'ok' : 'no', b: T(t).name, small: b.map(x => x.cls).filter((v, i, a) => a.indexOf(v) === i).join(', '), line: f === b.length ? `✓ ${f}/${b.length} bells${(S.signed[date] || {})[t] ? ' · ✍' : ''}` : `✕ ${b.length - f} of ${b.length} not filled`, tap: `xDiaryT(${jsq(t)},'${date}')` }; });
+  return xPage('diary', date, { title: 'Teachers', tiles, kpis: [['Diary filled', done, all, 'bells that are over'], ['Teachers', tiles.filter(x => x.st === 'ok').length, tiles.length, 'all bells filled']],
+    remind: p => p.length + ' teacher(s)', note: 'Only bells that are over are counted. Tap a teacher to read each bell and sign.', empty: 'No bell is over yet.' });
 }
-function xDiaryOpen(t, date, bell) {
-  const e = ((S.diary[date] || {})[t] || {})[bell], x = bellsOf(t, date).find(y => y.bell === bell) || {};
-  SHEET = () => `<h2>${esc(T(t).name)} · ${esc(BELLS[bell].n)} bell</h2><p class="mut" style="margin:0">${esc(fmtLong(date))} · Class ${esc(x.cls || (e || {}).cls || '')} ${esc(x.subj || (e || {}).subj || '')}${x.arr ? ' · arrangement' : ''}</p>
-    ${e ? `<div class="help-i"><b>Topic</b><p>${esc(e.topic)}</p></div>${e.classwork ? `<div class="help-i"><b>Class work</b><p>${esc(e.classwork)}</p></div>` : ''}${e.hw ? `<div class="help-i"><b>Homework${e.hwMinutes ? ' · ' + e.hwMinutes + ' min' : ''}</b><p>${esc(e.hw)}${e.hwDate ? ' (for ' + esc(fmtDate(e.hwDate)) + ')' : ''}</p></div>` : '<p class="mut">No homework.</p>'}
-      <p class="mut">Saved ${esc(fmtTime(e.at || 0))}</p>`
-      : `<div class="ban warn">${bellOver(date, bell) ? 'Diary not filled for this bell.' : 'This bell is not over yet.'}</div>${bellOver(date, bell) ? `<button class="btn go full" onclick="xRemind(${jsq(t)},${jsq('Namaste ' + T(t).name + ', ' + BELLS[bell].n + ' bell (Class ' + (x.cls || '') + ' ' + (x.subj || '') + ') ki diary app mein baaki hai. — Principal')});closeSheet()">${ic('chat')} Remind in Staff chat</button>` : ''}`}`;
+function xDiaryT(t, date) {
+  const b = bellsOf(t, date), sg = (S.signed[date] || {})[t];
+  SHEET = () => `<h2>${esc(T(t).name)} — diary</h2><p class="mut" style="margin:0">${esc(fmtLong(date))}${sg ? ' · ✍ signed' : ''}</p>
+    ${b.map(x => { const e = ((S.diary[date] || {})[t] || {})[x.bell], over = bellOver(date, x.bell);
+      return `<div class="help-i ${e ? '' : over ? 'miss' : ''}"><b>${esc(BELLS[x.bell].n)} bell · Class ${esc(x.cls)} · ${esc(String(x.subj).replace(/\s*\(optional\)/i, ''))}${x.arr ? ' · arrangement' : ''}</b>
+        <p>${e ? `<b>Topic:</b> ${esc(e.topic)}${e.classwork ? '<br><b>CW:</b> ' + esc(e.classwork) : ''}${e.hw ? '<br><b>HW:</b> ' + esc(e.hw) + (e.hwMinutes ? ' (' + e.hwMinutes + ' min)' : '') : '<br>No homework'}` : over ? '✕ Not filled' : 'Bell not over yet'}</p></div>`; }).join('')}
+    <div class="btns">${!sg ? `<button class="btn go" onclick="xSign(${jsq(t)},'${date}');closeSheet()">✍ Sign diary</button>` : ''}${XR.diary && XR.diary[t] ? `<button class="btn w" onclick="xRemind(${jsq(t)},${jsq(XR.diary[t])})">${ic('chat')} Remind</button>` : ''}</div>`;
   render();
 }
-function xSign(t, date) { put('signed', date + '|' + t, { at: Date.now(), by: myName() }, 'Diary', `Signed the diary of ${T(t).name} for ${date} — Teacher App`); toast('Diary signed.'); render(); }
 function xHw(date) {
-  const X = needXC(date), rows = [];
-  Object.keys(S.teachers).forEach(t => Object.entries(hwDueFor(t, date)).forEach(([k, hw]) => { const [c, s] = k.split('|');
-    if (!isWorkDay(date, c)) return; const chk = X && X.chk ? X.chk.find(x => x.cls === c && x.subj === s) : null; rows.push({ t, c, s, hw, chk }); }));
-  rows.sort((a, b) => (!!a.chk - !!b.chk) || a.c.localeCompare(b.c));
-  const done = rows.filter(r => r.chk).length;
-  return xDatebar('hw', date) + `<div class="card"><h3>Homework check <small>${X && X.loading ? 'loading…' : done + '/' + rows.length + ' checked'}</small></h3>
-    ${rows.map(r => `<div class="xh ${r.chk ? 'ok' : 'no'}"><i>${r.chk ? '✓' : '✕'}</i><div class="t"><b>Class ${esc(r.c)} · ${esc(r.s)}</b><span>${esc(T(r.t).name)} · HW: ${esc(r.hw.join(' / '))}</span>${r.chk ? `<small>checked by ${esc(r.chk.by || '')}</small>` : ''}</div>
-      ${r.chk ? '' : xRemindBtn(r.t, `Namaste ${T(r.t).name}, Class ${r.c} ${r.s} ka homework (${r.hw.join(' / ')}) ${date === todayISO() ? 'aaj' : fmtLong(date) + ' ko'} check hona tha — app mein Classroom → Check work bhar dein. — Principal`)}</div>`).join('') || '<div class="empty">No homework was due on this day.</div>'}
-    <p class="mut" style="margin:8px 0 0">Homework that was due on this day (from the diaries) and whether the subject teacher saved Check work.</p></div>`;
+  const X = needXC(date); XR.hw = {}; const tiles = [];
+  Object.keys(S.teachers).forEach(t => Object.entries(hwDueFor(t, date)).forEach(([k, hw]) => { const [c, s] = k.split('|'); if (!isWorkDay(date, c)) return;
+    const chk = X && X.chk ? X.chk.find(x => x.cls === c && x.subj === s) : null;
+    if (!chk && X && !X.loading) XR.hw[t] = (XR.hw[t] ? XR.hw[t].replace(/ — Principal$/, ', ') : `Namaste ${T(t).name}, ${date === todayISO() ? 'aaj' : fmtLong(date) + ' ko'} ye homework check hona tha (Classroom → Check work): `) + `Class ${c} ${s}` + ' — Principal';
+    tiles.push({ st: chk ? 'ok' : X && X.loading ? 'hol' : 'no', b: c + ' · ' + s, small: T(t).name, line: chk ? '✓ checked' : X && X.loading ? '…' : '✕ not checked', tap: `toast(${jsq('HW: ' + hw.join(' / '))})` }); }));
+  tiles.sort((a, b) => (a.st === 'ok') - (b.st === 'ok'));
+  return xPage('hw', date, { title: 'Homework due today', tiles, kpis: [['Homework checked', tiles.filter(t => t.st === 'ok').length, tiles.length, 'class + subject'], ['Teachers', Object.keys(XR.hw).length, null, 'still to check', Object.keys(XR.hw).length ? 'bad' : 'ok']],
+    remind: p => Object.keys(XR.hw).length + ' teacher(s)', note: 'Homework that was due on this day (from the diaries). Green = the subject teacher saved Check work. Tap a box to see the homework.', empty: 'No homework was due on this day.' });
 }
 function xKit(date) {
-  const X = needXC(date), cls = (S.classes || []).filter(k => studentsOf(k.c).length && isWorkDay(date, k.c));
-  const done = X && X.kit ? cls.filter(k => X.kit[k.c]).length : 0;
-  return xDatebar('kit', date) + `<div class="card"><h3>Daily check <small>${X && X.loading ? 'loading…' : done + '/' + cls.length + ' classes'}</small></h3><div class="xg">${cls.map(k => { const kt = X && X.kit && X.kit[k.c];
-    return `<button type="button" class="${kt ? 'ok' : 'no'}" onclick="go('att',{c:${jsq(k.c)},m:'kit',date:'${date}'})"><b>${esc(k.c)}</b><span>${kt ? '✓ done' : 'Not filled'}</span><small>${esc(T(k.ct).name || '')}</small></button>`; }).join('')}</div>
-    <p class="mut" style="margin:8px 0 0">Diary · ID card · book · dress — filled by the class teacher.</p></div>`;
+  const X = needXC(date), cls = (S.classes || []).filter(k => studentsOf(k.c).length && isWorkDay(date, k.c)); XR.kit = {};
+  const tiles = cls.map(k => { const kt = X && X.kit && X.kit[k.c];
+    if (!kt && X && !X.loading && k.ct) XR.kit[k.ct] = `Namaste ${T(k.ct).name}, Class ${k.c} ka daily check (diary · ID · kitaab · dress) ${date === todayISO() ? 'aaj' : fmtLong(date) + ' ko'} app mein nahi bhara. — Principal`;
+    return { st: kt ? 'ok' : X && X.loading ? 'hol' : 'no', b: k.c, small: T(k.ct).name || '', line: kt ? '✓ done' : X && X.loading ? '…' : '✕ not filled', tap: `go('att',{c:${jsq(k.c)},m:'kit',date:'${date}'})` }; });
+  return xPage('kit', date, { title: 'Classes', tiles, kpis: [['Daily check done', tiles.filter(t => t.st === 'ok').length, tiles.length, 'classes']], remind: p => p.length + ' class teacher(s)', note: 'Diary · ID card · book · dress — filled by the class teacher. Tap a class to open it.' });
 }
 function xLp(date) {
-  const w = weekStart(date), A = S.alloc.filter(a => (+a.n || 0) > 0 && !/\(optional\)/i.test(a.s) && S.teachers[a.t]);
-  const st = a => { const p = S.lplan[[w, a.t, a.c, a.s].join('|')]; return p ? (Object.prototype.hasOwnProperty.call(p, 'days') ? 'Daily' : p.status) : 'None'; };
-  const cnt = s => A.filter(a => st(a) === s).length, byT = {};
-  A.forEach(a => (byT[a.t] = byT[a.t] || []).push(a));
-  return `<div class="datebar"><button class="btn s w" onclick="go('prin',{v:'lp',date:'${addDays(w, -7)}'})">${ic('back')}</button><label class="dpick"><b>Week of ${esc(fmtDate(w))}</b><small>lesson plans</small></label><button class="btn s w" onclick="go('prin',{v:'lp',date:'${addDays(w, 7)}'})">${ic('next')}</button></div>
-    <div class="cal-sum"><span class="pill ok">${cnt('Approved') + cnt('Daily')} approved</span><span class="pill warn">${cnt('Submitted')} to check</span><span class="pill bad">${cnt('Revise')} sent back</span><span class="pill">${cnt('None')} not sent</span></div>
-    ${Object.entries(byT).sort((a, b) => T(a[0]).name.localeCompare(T(b[0]).name)).map(([t, L]) => { const none = L.filter(a => st(a) === 'None');
-      return `<div class="card xl"><div class="row"><b>${esc(T(t).name)}</b>${none.length ? xRemindBtn(t, `Namaste ${T(t).name}, is hafte (${fmtDate(w)}) ka lesson plan app mein nahi bheja: ${none.map(a => 'Class ' + a.c + ' ' + a.s).join(', ')}. Planner → Lesson plan → Auto fill → Send. — Principal`) : ''}</div>
-        <div class="xl-t">${L.map(a => { const s = st(a), k = [w, a.t, a.c, a.s].join('|');
-          return `<button type="button" class="${s === 'Approved' || s === 'Daily' ? 'ok' : s === 'Submitted' ? 'warn' : s === 'Revise' ? 'bad' : 'no'}" ${S.lplan[k] && s !== 'Daily' ? `onclick="pdPlan(${jsq(k)})"` : ''}><b>${esc(a.c)}</b><span>${esc(a.s)}</span><small>${s === 'None' ? 'not sent' : s === 'Submitted' ? 'check' : s.toLowerCase()}</small></button>`; }).join('')}</div></div>`; }).join('') || '<div class="card empty">No subjects in the timetable.</div>'}`;
+  const w = weekStart(date), A = S.alloc.filter(a => (+a.n || 0) > 0 && !/\(optional\)/i.test(a.s) && S.teachers[a.t]); XR.lp = {};
+  const st = a => { const p = S.lplan[[w, a.t, a.c, a.s].join('|')]; return p ? (Object.prototype.hasOwnProperty.call(p, 'days') ? 'Approved' : p.status) : 'None'; };
+  const byT = {}; A.forEach(a => (byT[a.t] = byT[a.t] || []).push(a));
+  const tiles = Object.entries(byT).sort((a, b) => T(a[0]).name.localeCompare(T(b[0]).name)).map(([t, L]) => { const none = L.filter(a => st(a) === 'None'), sub = L.filter(a => st(a) === 'Submitted'), ok = L.filter(a => st(a) === 'Approved');
+    if (none.length) XR.lp[t] = `Namaste ${T(t).name}, is hafte (${fmtDate(w)}) ka lesson plan app mein nahi bheja: ${none.map(a => 'Class ' + a.c + ' ' + a.s).join(', ')}. Planner → Lesson plan → Auto fill → Send. — Principal`;
+    return { st: none.length ? 'no' : sub.length ? 'warn' : 'ok', b: T(t).name, small: L.map(a => a.c + ' ' + a.s.slice(0, 5)).join(', '), line: none.length ? `✕ ${none.length} of ${L.length} not sent` : sub.length ? `${sub.length} to approve` : `✓ ${ok.length}/${L.length} approved`, tap: `xLpT(${jsq(t)},'${w}')` }; });
+  const nav = `<div class="datebar"><button class="btn s w" onclick="go('prin',{v:'lp',date:'${addDays(w, -7)}'})">${ic('back')}</button><label class="dpick"><b>Week of ${esc(fmtDate(w))}</b><small>lesson plans</small></label><button class="btn s w" onclick="go('prin',{v:'lp',date:'${addDays(w, 7)}'})">${ic('next')}</button></div>`;
+  const cnt = s => A.filter(a => st(a) === s).length;
+  return xPage('lp', date, { nav: false, top: nav, title: 'Teachers', tiles, kpis: [['Plans sent', A.length - cnt('None'), A.length, 'class + subject'], ['To approve', cnt('Submitted'), null, 'waiting for you', cnt('Submitted') ? 'go' : 'ok']],
+    remind: p => Object.keys(XR.lp).length + ' teacher(s)', note: 'Green = all approved, yellow = waiting for your approval, red = not sent. Tap a teacher to approve.', empty: 'No subjects in the timetable.' });
 }
-function xSyl() {
-  const A = S.alloc.filter(a => (+a.n || 0) > 0 && !/\(optional\)/i.test(a.s) && S.teachers[a.t]), up = upcomingTags()[0];
-  const rows = A.map(a => { const y = S.syl[sylKey(a.c, a.s)] || { chapters: [] }, n = y.chapters.length, d = y.chapters.filter(c => c.done).length, ex = up ? y.chapters.filter(c => (c.ex || []).includes(up.id)).length : 0;
-    return { a, n, d, ex, p: n ? Math.round(d / n * 100) : null }; }).sort((x, y) => (x.p ?? -1) - (y.p ?? -1));
-  const none = rows.filter(r => !r.n);
-  return `<div class="card"><h3>Syllabus <small>${rows.length - none.length}/${rows.length} set up${up ? ' · next exam ' + esc(up.l) : ''}</small></h3>
-    ${rows.map(r => `<div class="xs"><div class="t"><b>Class ${esc(r.a.c)} · ${esc(r.a.s)}</b><span>${esc(T(r.a.t).name)} · ${r.n ? r.d + '/' + r.n + ' chapters done' + (up ? ' · ' + r.ex + ' marked for ' + esc(up.l) : '') : 'chapters not added'}</span>
-      <i class="bar"><em style="--w:${r.p || 0}%"></em></i></div>${!r.n || (up && !r.ex) ? xRemindBtn(r.a.t, `Namaste ${T(r.a.t).name}, Class ${r.a.c} ${r.a.s}: ${!r.n ? 'syllabus ke chapter app mein nahi jude (Planner → Syllabus → kitaab ka naam + kul chapter → Make rows)' : (up ? up.l : 'exam') + ' ke chapter tick nahi hue (Planner → Syllabus)'}. — Principal`) : `<span class="pill ${r.p >= 50 ? 'ok' : 'warn'}">${r.p}%</span>`}</div>`).join('') || '<div class="empty">No subjects in the timetable.</div>'}</div>`;
+function xLpT(t, w) {
+  const L = S.alloc.filter(a => a.t === t && (+a.n || 0) > 0 && !/\(optional\)/i.test(a.s));
+  SHEET = () => `<h2>${esc(T(t).name)} — lesson plans</h2><p class="mut" style="margin:0">Week of ${esc(fmtDate(w))}</p>
+    ${L.map(a => { const k = [w, t, a.c, a.s].join('|'), p = S.lplan[k];
+      return `<div class="pd-ap"><div class="t"><b>Class ${esc(a.c)} · ${esc(a.s)}</b><span>${p ? esc(p.status === 'Submitted' ? 'Waiting for approval' : p.status) + ' · ' + String(p.topics || '').split('\n').filter(Boolean).length + ' topic(s)' : 'Not sent'}</span></div>${p && !Object.prototype.hasOwnProperty.call(p, 'days') ? `<button class="btn s l" onclick="pdPlan(${jsq(k)})">Open</button>` : ''}</div>`; }).join('')}
+    ${XR.lp && XR.lp[t] ? `<button class="btn w full" onclick="xRemind(${jsq(t)},${jsq(XR.lp[t])})">${ic('chat')} Remind</button>` : ''}`;
+  render();
 }
-
+function xSyl(date) {
+  const A = S.alloc.filter(a => (+a.n || 0) > 0 && !/\(optional\)/i.test(a.s) && S.teachers[a.t]), up = upcomingTags()[0]; XR.syl = {};
+  const tiles = A.map(a => { const y = S.syl[sylKey(a.c, a.s)] || { chapters: [] }, n = y.chapters.length, d = y.chapters.filter(c => c.done).length, ex = up ? y.chapters.filter(c => (c.ex || []).includes(up.id)).length : 1;
+    if (!n || !ex) XR.syl[a.t] = (XR.syl[a.t] ? XR.syl[a.t].replace(/ — Principal$/, ', ') : `Namaste ${T(a.t).name}, Planner → Syllabus mein ye baaki hai: `) + `Class ${a.c} ${a.s} (${!n ? 'chapters' : (up ? up.l : 'exam') + ' ke chapter tick'})` + ' — Principal';
+    return { st: !n ? 'no' : !ex ? 'warn' : 'ok', b: a.c + ' · ' + a.s, small: T(a.t).name, line: !n ? '✕ chapters not added' : `${d}/${n} done${up ? ' · ' + (ex ? ex + ' for ' + up.l : up.l + ' not ticked') : ''}` }; })
+    .sort((x, y) => ({ no: 0, warn: 1, ok: 2 })[x.st] - ({ no: 0, warn: 1, ok: 2 })[y.st]);
+  return xPage('syl', date, { nav: false, title: 'Class + subject', tiles, kpis: [['Syllabus set up', tiles.filter(t => t.st !== 'no').length, tiles.length, 'chapters added'], [up ? up.l + ' chapters' : 'Exam chapters', tiles.filter(t => t.st === 'ok').length, tiles.length, 'ticked']],
+    remind: p => Object.keys(XR.syl).length + ' teacher(s)', note: 'Red = chapters not added, yellow = chapters added but the next exam is not ticked, green = ready.', empty: 'No subjects in the timetable.' });
+}
 // ---------------------------------------------------------------- 2. Staff & arrangement
 function freeAtX(date, i) { const ar = arrangementBase(date, monthLoad(date)); return Object.keys(S.teachers).filter(x => !absentAt(date, x, i) && !busyAt(date, x, i) && !ar.some(s => s.bell === i && s.sub === x)); }
 function staffSave(date, a) { Object.keys(LOADC).forEach(k => { if (k.slice(0, 7) === date.slice(0, 7)) delete LOADC[k]; }); put('staffAtt', date, a, 'Staff Attendance', a._log || 'Staff attendance changed — Teacher App'); delete a._log; }
@@ -212,3 +236,4 @@ document.addEventListener('focusin', e => {
   el.insertAdjacentHTML('afterend', `<div class="chips sug-c">${list.map(x => `<button type="button" class="chip">${esc(x)}</button>`).join('')}</div>`);
   el.nextElementSibling.querySelectorAll('button').forEach(b => { b.onmousedown = ev => ev.preventDefault(); b.onclick = () => { el.value = b.textContent; el.dispatchEvent(new Event('input', { bubbles: true })); }; });
 });
+function xSign(t, date) { put('signed', date + '|' + t, { at: Date.now(), by: myName() }, 'Diary', `Signed the diary of ${T(t).name} for ${date} — Teacher App`); toast('Diary signed.'); render(); }

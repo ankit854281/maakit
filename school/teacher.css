@@ -582,3 +582,6 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .tt-o{display:flex;flex-direction:column;gap:6px}.tt-o button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;text-align:left;display:flex;flex-direction:column}
 .tt-o b{font-size:13px}.tt-o span{font-size:11px;color:var(--muted)}.tt-o em{font-style:normal;font-size:10.5px;color:var(--bad);font-weight:700}.tt-o .on{border-color:var(--a);background:var(--tint)}.tt-o .cl{border-color:#F5B5B5}
 .sug-c{margin-top:6px}
+.xc-big div{cursor:pointer;padding:9px 9px;min-height:62px}.xc-big b{font-size:13.5px;overflow-wrap:anywhere}.xc-big span{display:block;font-size:10.5px;margin-top:2px}
+.xc-cls .warn{background:#FFF4E5}.xc-cls .warn span{color:#92400E}.xc-cls .hol{background:#EEF0F6}.xc-cls .hol span{color:#5B6782}
+.help-i.miss{background:var(--badbg)}.help-i.miss b{color:var(--bad)}
