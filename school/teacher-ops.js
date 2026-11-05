@@ -25,14 +25,13 @@ function xDatebar(view, date) {
     <label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="go('prin',{v:'${view}',date:this.value})"></label>
     <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="go('prin',{v:'${view}',date:'${addDays(date, 1)}'})" aria-label="Next day">${ic('next')}</button></div>`;
 }
-const XV = [['tch', 'Teachers'], ['att', 'Attendance'], ['diary', 'Diary'], ['hw', 'HW check'], ['kit', 'Daily check'], ['lp', 'Lesson plan'], ['syl', 'Syllabus']];
+const XV = [['att', 'Attendance'], ['diary', 'Diary'], ['tch', 'Teachers'], ['hw', 'HW check'], ['kit', 'Daily check'], ['lp', 'Lesson plan'], ['syl', 'Syllabus']];
 const _vPrinOld = vPrin;
 vPrin = function () {
-  const v = XV.some(x => x[0] === P.v) ? P.v : 'tch', t = todayISO(), date = P.date && P.date <= t ? P.date : t;
+  const v = XV.some(x => x[0] === P.v) ? P.v : 'att', t = todayISO(), date = P.date && P.date <= t ? P.date : t;
   const tabs = `<div class="xv">${XV.map(([k, l]) => `<button class="${k === v ? 'on' : ''}" onclick="go('prin',{v:'${k}',date:'${date}'})">${l}</button>`).join('')}</div>`;
-  if (v === 'tch') return tabs + _vPrinOld();
   if (date < (loadedFrom || '') && !DAYS_LOADED[date]) { ensureDate(date).then(render); return tabs + '<div class="load"><i></i></div>'; }
-  const body = { att: xAtt, diary: xDiary, hw: xHw, kit: xKit, lp: xLp, syl: xSyl }[v](date);
+  const body = { tch: xTch, att: xAtt, diary: xDiary, hw: xHw, kit: xKit, lp: xLp, syl: xSyl }[v](date);
   return tabs + body;
 };
 
@@ -237,3 +236,26 @@ document.addEventListener('focusin', e => {
   el.nextElementSibling.querySelectorAll('button').forEach(b => { b.onmousedown = ev => ev.preventDefault(); b.onclick = () => { el.value = b.textContent; el.dispatchEvent(new Event('input', { bubbles: true })); }; });
 });
 function xSign(t, date) { put('signed', date + '|' + t, { at: Date.now(), by: myName() }, 'Diary', `Signed the diary of ${T(t).name} for ${date} — Teacher App`); toast('Diary signed.'); render(); }
+
+// Teachers — one tile per teacher (owner, 5 Nov 2026: the long list was hard to read). Today's work only; weekly / one-time
+// work is inside the teacher's sheet. Tap = list + Message (Staff chat) / WhatsApp.
+function xTch(date) {
+  needXC(date); const D = prinData(date); XR.tch = {};
+  const all = Object.keys(S.teachers).filter(x => x !== me()).sort((a, b) => T(a).name.localeCompare(T(b).name));
+  const tiles = all.map(t => { const o = D.per[t] || { pend: [], done: 0 }, on = D.away.has(t);
+    if (o.pend.length) XR.tch[t] = prinMsg(o, date);
+    return { st: on ? 'hol' : o.pend.length ? 'no' : 'ok', b: T(t).name, small: on ? 'On leave / absent' : o.pend.length + o.done ? (o.done + ' of ' + (o.pend.length + o.done) + ' done') : 'nothing due yet',
+      line: on ? '—' : o.pend.length ? `✕ ${o.pend.length} pending` : o.done ? '✓ all done' : '✓', tap: `xTchT(${jsq(t)},'${date}')` }; })
+    .sort((a, b) => ({ no: 0, ok: 1, hol: 2 })[a.st] - ({ no: 0, ok: 1, hol: 2 })[b.st]);
+  if (!D.work) return xDatebar('tch', date) + `<div class="ban hol">${dayIdx(date) < 0 ? 'Sunday' : 'Holiday — ' + esc(holTitle(holidayOn(date)))}. Nothing to check.</div>`;
+  return xPage('tch', date, { title: 'Teachers', tiles, kpis: [['Teachers — all done', tiles.filter(t => t.st === 'ok').length, tiles.filter(t => t.st !== 'hol').length, D.away.size ? D.away.size + ' on leave / absent' : 'nobody on leave'], ['Pending work', tiles.filter(t => t.st === 'no').reduce((n, t) => n + (+(t.line.match(/\d+/) || [0])[0]), 0), null, 'things not done today', 'bad']],
+    remind: p => p.length + ' teacher(s)', note: 'Today\'s work of each teacher: attendance, daily check, diary of every bell that is over, homework check. Tap a teacher to see the list.' });
+}
+function xTchT(t, date) {
+  const D = prinData(date), o = D.per[t] || { pend: [], done: 0, items: [] }, su = o.setup || [], tt = T(t);
+  SHEET = () => `<h2>${esc(tt.name)}</h2><p class="mut" style="margin:0">${esc(fmtLong(date))} · ${o.pend.length ? o.pend.length + ' pending · ' : ''}${o.done} done</p>
+    ${o.pend.length ? `<ul class="xc-l">${o.pend.map(p => `<li class="${p.kind}">✕ ${esc(p.txt)}</li>`).join('')}</ul>` : '<div class="ban ok">✓ Today\'s work is done so far.</div>'}
+    ${su.length ? `<details class="xc-su"><summary>Weekly / one-time work not done: ${su.length}</summary><ul class="xc-l">${su.map(p => `<li class="${p.kind}">${esc(p.txt)}</li>`).join('')}</ul></details>` : ''}
+    ${o.pend.length || su.length ? `<div class="btns"><button class="btn go" onclick="SHEET=null;prinMsgOpen(${jsq(t)},'${date}')">${ic('chat')} Message</button>${tt.phone ? `<a class="btn wa" target="_blank" rel="noopener" href="${wa(tt.phone, prinMsg(o, date))}">${ic('wa')} WhatsApp</a>` : ''}</div>` : ''}`;
+  render();
+}

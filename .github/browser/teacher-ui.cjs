@@ -553,12 +553,17 @@ const path = require('node:path');
     await page.waitForFunction(() => TAB === 'att');
   });
   await run('29-Cross-check-every-feature-arrangement-timetable', async () => {
-    for (const v of ['att', 'diary', 'hw', 'kit', 'lp', 'syl']) {
+    for (const v of ['att', 'diary', 'tch', 'hw', 'kit', 'lp', 'syl']) {
       await page.evaluate(v => { SHEET = null; go('prin', { v }); }, v);
       await page.locator('.xv button.on').waitFor();
       assert.ok((await page.locator('.scroll').innerText()).length > 40, 'cross-check ' + v + ' draws');
     }
-    await page.evaluate(() => go('prin', { v: 'att' }));
+    await page.evaluate(() => { SHEET = null; go('prin'); });
+    assert.equal(await page.locator('.xv button.on').innerText(), 'Attendance', 'Cross-check opens on Attendance');
+    await page.evaluate(() => go('prin', { v: 'tch' }));
+    await page.locator('.xc-big div').first().click();
+    await page.locator('.sheet h2').waitFor();
+    await page.evaluate(() => { SHEET = null; go('prin', { v: 'att' }); });
     assert.match(await page.locator('.kp').innerText(), /Students present[\s\S]*Absent[\s\S]*Total students/);
     await page.evaluate(() => go('prin', { v: 'diary' }));
     await page.locator('.xc-big').first().waitFor().catch(() => {});
