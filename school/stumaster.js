@@ -136,7 +136,7 @@ function formHtml() {
     if (r[0] === 'ACAD') return `<tr><td colspan="4"><table class="acad" style="width:100%"><tr><th>Qualification</th><th>Board/University</th><th>Roll No</th><th>Institute</th><th>Year</th><th>Obt Marks</th><th>Max. Marks</th></tr><tr><td>10th</td>${['ac_name', 'ac_rollno', 'ac_inst', 'ac_year', 'ac_obtmarks', 'ac_maxmarks'].map(n => `<td><input type="text" id="f_${n}" name="${n}" value="${esc(F[n] || '')}"${META.canEdit ? '' : ' disabled'}></td>`).join('')}</tr></table></td></tr>`;
     return `<tr>${cell(r[0])}${cell(r[1])}</tr>`;
   }).join('');
-  return `<div class="sm"><h3>${MODE === 'add' ? 'Add Student' : 'Student Edit/Update'}</h3>
+  return `<div class="sm"><h3>${MODE === 'add' ? 'Add Student' : 'Student Edit/Update'}</h3>${F._inactive ? '<p class="np" style="padding:8px 10px;border:1px solid #F0C164;background:#FFFBF0">This child is <b>Inactive / Left</b>. The record is shown as it came from the old ERP and cannot be changed here.</p>' : ''}
     <form id="smForm" onsubmit="event.preventDefault();save()"><table class="f">${rows}</table>
     <div style="text-align:center" class="np">${META.canEdit ? `<button class="btn" type="submit" ${BUSY ? 'disabled' : ''}>Submit</button>` : ''}
     ${ID ? `<a class="btn alt" href="?m=print&id=${encodeURIComponent(ID)}" target="_blank">English Print</a>` : ''} <a class="btn alt" href="?m=list">Edit/Update Student</a></div></form></div>`;
@@ -294,7 +294,7 @@ function render() {
 async function boot() {
   try {
     META = await api('meta');
-    if ((MODE === 'edit' || MODE === 'print') && ID) { const d = await api('get', null, { id: ID }); F = d.f; PHOTO = d.photo; }
+    if ((MODE === 'edit' || MODE === 'print') && ID) { const d = await api('get', null, { id: ID }); F = d.f; PHOTO = d.photo; if (F._inactive) META.canEdit = false; }   // inactive / left child: view only
     else if (MODE === 'edit' || MODE === 'print') MODE = 'list';
     else F = blank();
     if (MODE === 'add' && !META.canEdit) MODE = 'list';

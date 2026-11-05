@@ -93,6 +93,25 @@ function sm_clean(string $name, $v) {
     return $v;
 }
 function sm_date_ok(string $v): bool { return $v === '' || (bool)preg_match('#^(0[1-9]|[12]\d|3[01])/(0[1-9]|1[0-2])/(19|20)\d\d$#', $v); }
+/** Inactive / left children (School Office register 'inactivestu', id 'old-<old ERP id>'), shaped like a
+ *  student record so Edit/Update Student, Student Search and the top search find them (owner, 5 Nov 2026:
+ *  "inactive Student ka Record nahi mil"). Read-only here — they are never in class lists or the Fee Desk. */
+function sm_inactive(): array {
+    $out = []; $word = ['Inactive' => 'IActive', 'Deactive' => 'Deactive', 'TC issued' => 'TC', 'Left' => 'IActive'];
+    foreach (reg_students() as $id => $s) {
+        if (empty($s['inactive'])) continue;
+        $out[$id] = ['adm' => $s['adm'], 'name' => $s['name'], 'cls' => $s['cls'], 'section' => $s['section'], 'father' => $s['father'], 'mother' => $s['mother'], 'phone' => $s['phone'], 'dob' => $s['dob'], '_status' => 'Deactive'];
+    }
+    if ($out) foreach (reg_rows('inactivestu') as $r) { $id = 'old-' . ($r['oldId'] ?? ''); if (isset($out[$id])) $out[$id]['_status'] = $word[(string)($r['status'] ?? '')] ?? 'Deactive'; }
+    return $out;
+}
+/** Old fields of an inactive child: the Full Record if one is linked, the register row for the rest, status always inactive. */
+function sm_inactive_fields(array $s, ?array $i): array {
+    $f = sm_fields($s, $i);
+    $f['cstatus'] = $s['_status']; if (!in_array($f['scount_status'], ['Deactive', 'TC', 'IActive'], true)) $f['scount_status'] = $s['_status'] === 'TC' ? 'TC' : 'Deactive';
+    $f['_inactive'] = true;
+    return $f;
+}
 
 try {
 switch ($a) {
@@ -114,6 +133,7 @@ case 'list': {
         $f = sm_fields($s, $infos[(string)$row['r']] ?? null); $f['id'] = (string)$row['r'];
         $out[] = $f;
     }
+    foreach (sm_inactive() as $id => $s) { $f = sm_inactive_fields($s, $infos[$id] ?? null); $f['id'] = $id; $out[] = $f; }
     $have = []; foreach ($db->query("SELECT r FROM sch_records WHERE k='phoStu' AND deleted=0") as $row) $have[(string)$row['r']] = true;
     foreach ($out as &$f) $f['_photo'] = isset($have[$f['id']]); unset($f);
     sch_json(['ok' => true, 'rows' => $out]);
@@ -124,10 +144,11 @@ case 'photos': {
     sch_json(['ok' => true, 'photos' => $out]);
 }
 case 'get': {
-    $sid = (string)($_GET['id'] ?? ''); $s = sch_rec_get('student', $sid);
+    $sid = (string)($_GET['id'] ?? ''); $s = sch_rec_get('student', $sid); $ina = null;
+    if (!$s && str_starts_with($sid, 'old-')) $s = $ina = sm_inactive()[$sid] ?? null;
     if (!$s) sch_fail('This student is not in the ERP.', 404);
     [, $i] = sm_info($sid);
-    $f = sm_fields($s, $i); $f['id'] = $sid;
+    $f = $ina ? sm_inactive_fields($ina, $i) : sm_fields($s, $i); $f['id'] = $sid;
     $p = sch_rec_get('phoStu', $sid); $img = $p ? sch_rec_get('phoImg', (string)$p['img']) : null;
     sch_json(['ok' => true, 'f' => $f, 'photo' => $img['data'] ?? '', 'hasInfo' => $i !== null]);
 }
@@ -135,6 +156,7 @@ case 'save': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     if ($role !== 'principal') sch_fail('Only the Principal can add or change a student.', 403);
     $sid = (string)($in['id'] ?? ''); $raw = (array)($in['f'] ?? []);
+    if (str_starts_with($sid, 'old-')) sch_fail('This child is Inactive / Left. The record is kept as it came from the old ERP and cannot be changed here.');
     $f = []; foreach (SM_MAP as $name => $_) $f[$name] = sm_clean($name, $raw[$name] ?? (in_array($name, ['fee_month', 'transport_month'], true) ? [] : ''));
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();

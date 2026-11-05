@@ -1133,7 +1133,9 @@ function stuCards(list, limit) {
 }
 function searchBody() {
   const q = S.q.trim().toLowerCase(), d = q.replace(/\D/g, '');
-  const rows = allStudents().filter(o => [o.name, o.father, o.adm, o.cls, o.f && o.f.tagName].some(v => String(v || '').toLowerCase().includes(q)) || (d.length >= 4 && String(o.phone || '').includes(d)) || (o.f && d.length >= 4 && o.f.phoneNo.includes(d)));
+  // Inactive / left children are found by search too (owner, 5 Nov 2026), marked "Inactive"; they stay out of every count.
+  const ina = SC && !SC.err ? (SC.inactive || []).map(s2 => ({ sid: s2.id, name: s2.name + ' (Inactive)', cls: s2.cls, section: s2.section, father: s2.father, phone: s2.phone, adm: s2.adm, gender: '', f: null })) : [];
+  const rows = allStudents().concat(ina).filter(o => [o.name, o.father, o.adm, o.cls, o.f && o.f.tagName].some(v => String(v || '').toLowerCase().includes(q)) || (d.length >= 4 && String(o.phone || '').includes(d)) || (o.f && d.length >= 4 && o.f.phoneNo.includes(d)));
   return card(`Search · ${rows.length} found`, stuCards(rows, 60));
 }
 const SF = [['all', 'All'], ['due', 'Fee due'], ['zero', 'Paid ₹0'], ['lowatt', 'Attendance < 75%'], ['weak', 'Result < 40%'], ['new', 'New admissions'], ['girls', 'Girls'], ['boys', 'Boys']];

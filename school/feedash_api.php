@@ -157,6 +157,8 @@ case 'school': {
         $students[] = ['id' => $id, 'name' => (string)($d['name'] ?? ''), 'cls' => (string)($d['cls'] ?? ''), 'section' => (string)($d['section'] ?? ''), 'father' => (string)($d['father'] ?? ''), 'mother' => (string)($d['mother'] ?? ''),
             'phone' => (string)($d['phone'] ?? ''), 'adm' => (string)($d['adm'] ?? ''), 'dob' => (string)($d['dob'] ?? ''), 'gender' => (string)($i['gender'] ?? ''), 'route' => (string)($i['route'] ?? ''),
             'doa' => (string)($i['doa'] ?? ''), 'stuType' => (string)($i['stuType'] ?? ''), 'photo' => isset($pho[$id])]; }
+    // Inactive / left children: only for the Chairman's search, never counted in classes, attendance or fees.
+    $inactive = []; foreach (reg_students() as $id => $d) if (!empty($d['inactive'])) $inactive[] = ['id' => $id, 'name' => $d['name'], 'cls' => $d['cls'], 'section' => $d['section'], 'father' => $d['father'], 'phone' => $d['phone'], 'adm' => $d['adm'], 'photo' => isset($pho[$id])];
     $cal = []; foreach ($rows('cal') as $d) $cal[] = ['date' => (string)($d['date'] ?? ''), 'to' => (string)($d['to'] ?? ''), 'title' => mb_substr((string)($d['title'] ?? ''), 0, 120), 'type' => (string)($d['type'] ?? '')];
     $att = []; foreach ($rows('studAtt') as $r => $d) { [$dt, $c] = array_pad(explode('|', $r, 2), 2, ''); if ($dt >= $start) $att[$dt][$c] = array_values(array_map('strval', (array)($d['absent'] ?? []))); }
     $staff = []; foreach ($rows('staffAtt') as $dt => $d) if ($dt >= $start) $staff[$dt] = array_values(array_map('strval', (array)($d['absent'] ?? [])));
@@ -175,7 +177,7 @@ case 'school': {
         'mobile' => (string)($r['mobile'] ?? ''), 'doj' => (string)($r['doj'] ?? ''), 'qualification' => (string)($r['qualification'] ?? ''), 'experience' => (string)($r['experience'] ?? ''), 'status' => (string)($r['status'] ?? 'Active')];
     sch_json(['ok' => true, 'today' => date('Y-m-d'), 'start' => $start, 'session' => (string)($set['session'] ?? ''), 'cutoff' => (string)($set['attendanceCutoff'] ?? '09:30'),
         'classes' => array_values((array)(sch_rec_get('classes', 'main') ?? [])), 'teachers' => (object)$teachers, 'alloc' => array_values((array)(sch_rec_get('alloc', 'main') ?? [])),
-        'exams' => array_values((array)(sch_rec_get('exams', 'main') ?? [])), 'students' => $students, 'att' => (object)$att, 'staffAtt' => (object)$staff, 'syl' => (object)$syl,
+        'exams' => array_values((array)(sch_rec_get('exams', 'main') ?? [])), 'students' => $students, 'inactive' => $inactive, 'att' => (object)$att, 'staffAtt' => (object)$staff, 'syl' => (object)$syl,
         'marks' => (object)$marks, 'leaves' => $leaves, 'old' => $old, 'employees' => $emp, 'cal' => $cal]);
 }
 default: sch_fail('Unknown action.', 404);

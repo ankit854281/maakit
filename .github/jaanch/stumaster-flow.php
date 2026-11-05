@@ -27,6 +27,7 @@ $clean = function () use ($db, $mine) {
     foreach ($mine() as $sid) { $db->prepare("DELETE FROM sch_records WHERE (k IN ('student','phoStu') AND r=?) OR (k='regRow' AND r LIKE 'studinfo|%' AND d LIKE ?) OR (k='regHist' AND d LIKE ?)")->execute([$sid, '%"' . $sid . '"%', '%"' . $sid . '"%']); }
     $db->exec("DELETE FROM sch_records WHERE k='student' AND r='sm-old'");
     $db->exec("DELETE FROM sch_records WHERE k='regRow' AND r='studinfo|smoldinfo'");
+    $db->exec("DELETE FROM sch_records WHERE k='regRow' AND r='inactivestu|smina'");
 };
 try {
     $clean();
@@ -73,6 +74,12 @@ try {
     [$c] = smq('photo', $P, ['id' => $sid, 'data' => $png]); smc($c === 200, 'photo saved');
     [$c, $d] = smq('photos', $C, null, '&ids=' . urlencode($sid)); smc($d['photos'][$sid] === $png, 'photo comes back');
     [$c, $d] = smq('list', $C); $row = array_values(array_filter($d['rows'], fn($r) => $r['id'] === $sid))[0] ?? null; smc($row && $row['_photo'] && $row['rollno'] === 'SMX1', 'list row');
+    // Inactive / left children (School Office register) are found in the list and search, and open view-only (owner, 5 Nov 2026)
+    sch_rec_put('regRow', 'inactivestu|smina', ['oldId' => 'smx9', 'name' => 'Synthetic Master Left', 'cls' => '4th', 'section' => 'A', 'adm' => 'SMX9', 'father' => 'Synthetic Left Father', 'phone' => '9811155599', 'status' => 'Deactive'], 'principal');
+    [$c, $d] = smq('list', $C); $row = array_values(array_filter($d['rows'], fn($r) => $r['id'] === 'old-smx9'))[0] ?? null;
+    smc($row && $row['name'] === 'Synthetic Master Left' && $row['rollno'] === 'SMX9' && $row['cstatus'] === 'Deactive' && $row['fname'] === 'Synthetic Left Father' && !empty($row['_inactive']), 'inactive child in the list ' . json_encode($row));
+    [$c, $d] = smq('get', $P, null, '&id=old-smx9'); smc($c === 200 && $d['f']['clsid'] === '4th' && !empty($d['f']['_inactive']), 'inactive child opens ' . json_encode($d));
+    [$c, $d] = smq('save', $P, ['id' => 'old-smx9', 'f' => $d['f']]); smc($c === 400 && str_contains($d['error'], 'Inactive'), 'inactive child is view-only');
     [$c, , $raw] = smq('load', $P, null, '', 'api.php'); smc($c === 200 && !str_contains($raw, 'Synthetic custom') && !str_contains($raw, 'Synthetic left'), 'Full Record stays out of legacy sync');
     echo "Student Master: old ERP form fields kept in one place each, old required fields and checks, untouched old values never refused, history, photo, roles and sync privacy passed\n";
 } finally {
