@@ -33,3 +33,13 @@ Built by Claude and pushed: see AGENTS.md › "Teacher App". All school checks p
 - [x] Fixed: typed marks/diary lost on 45-s refresh or another save; incomplete results graded and sendable on WhatsApp; app could not open offline; homework date defaulted to same day; back-date absent WhatsApp said "today".
 - [x] Teacher UI checks 01–17 pass locally at 390px; school PHP checks pass.
 - [ ] Owner must run the private updater for it to go live. Teachers just reopen the app — nothing to reinstall (the APK opens the live site).
+
+## Teacher App — 5 Nov 2026 (Claude), owner list (4)
+- [x] Diary card: class attendance line; question-number chips; homework ideas from class work.
+- [x] Messages: Attendance (from the register) instead of Absent.
+- [x] Syllabus: books, chapter rows with pages, exam ticks (UT-3/UT-4/Annual…), WhatsApp exam syllabus; parents see it.
+- [x] Chapter text (paste / phone OCR) → homework ideas, lesson-plan topics, question paper (Planner → Paper).
+- [x] My work check for teachers; Principal cross-check covers homework checks + weekly/one-time work.
+- [x] Students report for subject teachers (read-only) + profile card.
+- [x] teacher-flow.php and teacher-ui.cjs 01–26 pass locally at 390px.
+- [ ] Owner must run the private updater for it to go live (teachers just reopen the app).

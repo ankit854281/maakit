@@ -346,7 +346,7 @@ function render() {
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
     <div class="tabs${pm ? ' t3' : ''}">${tabs.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
-  keepRestore(); scScroll();
+  keepRestore(); scScroll(); if (typeof afterRender === 'function') afterRender();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
   setNet();
 }
@@ -495,7 +495,6 @@ function vHome() {
   const d = todayISO(), bells = myBells(d), hol = holidayOn(d), ct = myCT();
   const filled = bells.filter(b => diaryEntry(d, b.bell)).length;
   const back = ct.flatMap(c => pendingDays(c, addDays(d, -30)).filter(x => x < d).map(x => ({ c, x })));
-  const dp = diaryPending(6);
   const upcoming = [...S.cal.filter(e => e.type === 'Holiday' && (e.to || e.date) >= d).map(e => ({ date: e.date, to: e.to, t: e.title })),
     ...Object.entries(S.clsHol).flatMap(([dt, byC]) => ct.filter(c => byC[c] && dt >= d).map(c => ({ date: dt, t: 'Class ' + c + ': ' + byC[c].title })))]
     .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
@@ -508,7 +507,7 @@ function vHome() {
   const wN = week.reduce((n, x) => n + x.n, 0), wF = week.reduce((n, x) => n + x.f, 0);
   const sc = ct[0] || (allocList()[0] || {}).c, st = sc ? needStars(sc) : null, ph = sc ? needPhotos(sc) : {};
   const quick = [['att', 'Attendance', 'check', ct.length ? { c: ct[0] } : {}], ['att', 'Daily check', 'bill', ct.length ? { c: ct[0], m: 'kit' } : {}], ['diary', 'Diary', 'book', {}], ['diary', 'Check work', 'list', { m: 'check' }],
-    ['plan', 'Lesson plan', 'note', {}], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att');
+    ['plan', 'Syllabus', 'note', { m: 'syl' }], ['att', 'Students', 'list', { m: 'stu', c: ct[0] || (myClasses()[0] || '') }], ['plan', 'Paper', 'print', { m: 'paper' }], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att' || q[1] === 'Students');
   const kidCard = (k, why, cls) => `<div class="star ${cls}"><span class="ph">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}${cls === 'top' ? '<em>★</em>' : ''}</span><b>${esc(k.name.split(' ')[0])}</b><small>${esc(why)}</small></div>`;
   const starsHtml = !st || st.loading ? '' : st.err ? '' : `
     <div class="card stars-card"><h3>⭐ Star children <small>Class ${esc(sc)} · last 30 days</small></h3>
@@ -527,9 +526,10 @@ function vHome() {
         : `<button class="k" onclick="go('notes')"><span>Chapter notes</span><b>${ic('cam')}</b><small>Make notes from a book photo</small></button>`}
     </div>
     <div class="card quick-card"><div class="quick-grid">${quick.map(([t, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(t)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}${t === 'conn' && p.m === 'staff' && scUnread() ? `<em>${scUnread()}</em>` : ''}</button>`).join('')}</div></div>
+    ${myWorkCard()}
     ${starsHtml}
     ${back.length ? `<div class="ban warn"><div><b>${back.length} school day(s) without attendance</b> in the last 30 days (${[...new Set(back.map(x => 'Class ' + x.c))].join(', ')}).<br><button class="btn s go" style="margin-top:8px" onclick="go('att',{c:'${esc(back[0].c)}',m:'pending'})">Update them together</button></div></div>` : ''}
-    ${dp.length ? `<div class="ban warn"><div><b>Diary not filled:</b> ${dp.map(x => `<a href="#" onclick="go('diary',{date:'${x.d}'});return false" style="text-decoration:underline">${fmtDate(x.d)} (${x.n})</a>`).join(', ')}</div></div>` : ''}
+    ${''/* 'Diary not filled' days are now listed in the My work card (myWorkCard, teacher-work.js) */}
     <div class="card"><h3>My bells <small>${bells.length ? filled + ' of ' + bells.length + ' filled' : 'none'}</small></h3>
       ${bells.length ? bells.map(b => { const e = diaryEntry(d, b.bell);
         return `<div class="li" onclick="go('diary',{date:'${d}',bell:${b.bell}})"><div class="bell ${b.arr ? 'arr' : ''}"><b>${BELLS[b.bell].n.replace(/\D/g, '')}</b>${t12(BELLS[b.bell].s).replace(' ', '')}</div>
@@ -576,14 +576,16 @@ function needStars(c) {
 }
 function pctOf(c, sid) { const t = STATS[c]; if (!t || !t.days) return null; const x = (t.per || {})[sid] || { a: 0, l: 0 }; return Math.round((t.days - x.a - x.l) / t.days * 100); }
 function initials(n) { return String(n || '').split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase(); }
+// Owner, 5 Nov 2026 ("student record teachers ke app me nahi hai"): every teacher of a class can open its Students report
+// (attendance, homework, record, good things / complaints, profile). Only the class teacher marks attendance or changes the record.
 function vAtt() {
-  const allowed = myCT();
-  if (!allowed.length) return `<div class="card"><h3>Attendance</h3><p class="mut">Only the class teacher marks attendance. You are not the class teacher of any class.</p></div>`;
-  const c = allowed.includes(P.c) ? P.c : allowed[0], m = P.m || 'day';
-  needStats(c);
-  return `${allowed.length > 1 ? `<div class="fld">Class${sel('attC', allowed.map(x => [x, 'Class ' + x]), c, "DRAFT.att=null;DRAFT.reg=null;go('att',{c:this.value,m:'" + m + "'})")}</div>` : ''}
-    ${m === 'stu' && P.sid ? '' : attReport(c)}
-    ${seg([['day', 'Mark'], ['kit', 'Daily check'], ['stu', 'Students'], ['cal', 'Calendar'], ['reg', 'Register']], m === 'pending' ? 'cal' : m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`)}
+  const allowed = myCT(), all = [...new Set([...allowed, ...myClasses()])].filter(x => className().includes(x));
+  if (!all.length) return `<div class="card"><h3>Attendance</h3><p class="mut">No class is given to you yet. The Principal sets it in the timetable.</p></div>`;
+  const c = all.includes(P.c) ? P.c : (allowed[0] || all[0]), isCT = allowed.includes(c), m = isCT ? (P.m || 'day') : 'stu';
+  if (isCT) needStats(c);
+  return `${all.length > 1 ? `<div class="fld">Class${sel('attC', all.map(x => [x, 'Class ' + x + (allowed.includes(x) ? ' · class teacher' : '')]), c, "DRAFT.att=null;DRAFT.reg=null;DRAFT.rec=null;go('att',{c:this.value,m:'" + m + "'})")}</div>` : ''}
+    ${!isCT ? `<div class="ban inf"><div><b>Class ${esc(c)} — students</b><br><span class="sm">You teach this class. You can see every child's report and add good things or complaints. Attendance and the student record are kept by the class teacher${(S.classes.find(k => k.c === c) || {}).ct ? ' (' + esc(T(S.classes.find(k => k.c === c).ct).name) + ')' : ''}.</span></div></div>` : m === 'stu' && P.sid ? '' : attReport(c)}
+    ${isCT ? seg([['day', 'Mark'], ['kit', 'Daily check'], ['stu', 'Students'], ['cal', 'Calendar'], ['reg', 'Register']], m === 'pending' ? 'cal' : m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`) : ''}
     ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : m === 'stu' ? (P.sid ? vStuReport(c, P.sid) : vStudents(c)) : vAttDay(c)}`;
 }
 function attReport(c) {
@@ -772,7 +774,7 @@ function kitAll() { Object.values(DRAFT.kit.rows).forEach(r => KIT_F.forEach(([f
 async function kitSave(c, date) {
   const away = new Set(((attOf(date, c) || {}).absent) || []), rows = {};
   Object.entries(DRAFT.kit.rows).forEach(([sid, r]) => { if (!away.has(sid)) rows[sid] = r; });
-  try { const r = await api('teacher_api.php?a=kit', { cls: c, date, rows }); const key = date + '|' + c; KIT[key] = Object.assign({}, KIT[key], { rec: r.rec }); DRAFT.kit.changed = false; delete STARS[c]; toast('Daily check saved.'); render(); }
+  try { const r = await api('teacher_api.php?a=kit', { cls: c, date, rows }); const key = date + '|' + c; KIT[key] = Object.assign({}, KIT[key], { rec: r.rec }); DRAFT.kit.changed = false; delete STARS[c]; MYX = null; toast('Daily check saved.'); render(); }
   catch (e) { toast(e.message); }
 }
 
@@ -851,6 +853,7 @@ function vStuReport(c, sid) {
     <div class="card sr-head"><span class="ph big">${ph[sid] ? `<img src="${esc(ph[sid].src)}" alt="">` : `<i>${esc(initials(s.name))}</i>`}</span>
       <div><b>${esc(s.name)}</b><small>Class ${esc(c)} · Roll ${esc(s.rollno || '—')}${s.father ? ' · ' + esc(s.father) : ''}</small>
       <div class="chips" style="margin-top:6px">${rank ? `<span class="pill">Rank ${rank} of ${ranked.length}</span>` : ''}${n.score !== null ? `<span class="pill ok">Overall ${n.score}%</span>` : ''}<span class="pill bad">⚠ ${n.bad}</span><span class="pill ok">👍 ${n.good}</span></div></div></div>
+    ${stuProfile(s)}
     <div class="card"><h3>Compared with the class <small>since ${esc(fmtDate(R.from))}</small></h3>
       ${cmp('Attendance', n.att, A.att, R.attDays ? (R.attDays - x.a - x.l) + ' of ' + R.attDays + ' days' : '')}
       ${cmp('Homework', n.hw, A.hw, x.hwOf ? x.hw + ' done · ' + (x.not || 0) + ' not done' : 'no check yet')}
@@ -1025,13 +1028,14 @@ function diaryCard(date, b, signed) {
   return `<div class="card"><div class="li" style="padding:0 0 10px"><div class="bell ${b.arr ? 'arr' : ''}"><b>${BELLS[b.bell].n.replace(/\D/g, '')}</b>${t12(BELLS[b.bell].s).replace(' ', '')}</div>
       <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>${b.arr ? 'Arrangement' + (b.for ? ' for ' + esc(T(b.for).name) : '') : b.extra ? 'Added period' : BELLS[b.bell].n + ' bell'}</span></div>${e.at ? `<span class="pill ok">Saved ${fmtTime(e.at).split(', ').pop()}</span>` : ''}</div>
     ${optPick(date, b, e, id)}
+    ${attLine(date, b.cls)}
     <div class="dform">
       <button type="button" class="btn l full auto-fill" ${signed ? 'disabled' : ''} onclick="diaryAutoFill('${date}',${b.bell},${jsq(b.cls)},${jsq(b.subj)})">✨ Auto fill from syllabus</button>
       <div class="fld">Topic taught *<input id="${id}-t" data-keep class="inp" maxlength="200" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
         ${suggestionBox(id + '-t', sylKey(b.cls, b.subj), 'topic')}
         ${nx && !e.topic ? `<button class="chip" style="align-self:flex-start" onclick="$('${id}-t').value=${jsq(nx)};keepNote($('${id}-t'))">Use: ${esc(nx.slice(0, 40))}</button>` : ''}</div>
-      <div class="fld">Class work <span class="tapnote">tap to add · you can still edit</span>${phraseChips(id, 'cw', nx)}<textarea id="${id}-cw" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
-      <div class="fld">Homework <span class="tapnote">tap to add · you can still edit</span>${phraseChips(id, 'h', nx)}<textarea id="${id}-h" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
+      <div class="fld">Class work <span class="tapnote">tap to add · you can still edit</span>${phraseChips(id, 'cw', nx)}${qPick(id, 'cw')}<textarea id="${id}-cw" data-keep data-cwfor="${id}" class="inp" rows="2" maxlength="500" placeholder="e.g. Q1–Q5 done in class copy">${esc(e.classwork || '')}</textarea></div>
+      <div class="fld">Homework <span class="tapnote">tap to add · you can still edit</span>${phraseChips(id, 'h', nx)}${qPick(id, 'h')}<div id="${id}-idea" class="cw-ideas" data-key="${esc(sylKey(b.cls, b.subj))}" data-nx="${esc(nx || '')}"></div><textarea id="${id}-h" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
       <div class="fld">Homework time (minutes, whole class ≤ 45)<div class="chips">${[10, 15, 20, 30, 45].map(m => `<button type="button" class="chip" onclick="diaryMin('${id}',${m})">${m}</button>`).join('')}<input id="${id}-min" data-keep class="inp mini" type="number" inputmode="numeric" min="1" max="45" value="${e.hwMinutes || ''}" placeholder="min"></div></div>
       <div class="fld">Homework for<div class="chips"><input id="${id}-date" data-keep class="inp mini date" type="date" value="${esc(e.hwDate || nextSchoolDay(date, b.cls) || date)}"><button type="button" class="chip" onclick="homeworkNextDay('${id}','${date}',${jsq(b.cls)})">Next school day</button><button type="button" class="chip" onclick="$('${id}-date').value='${date}';keepNote($('${id}-date'))">Same day</button></div></div>
       <details class="more" ${e.books || e.revision ? 'open' : ''}><summary>More · books to bring, revision</summary>
@@ -1112,7 +1116,7 @@ async function chkSave(c, sb, date) {
   Object.entries(DRAFT.chk.rows).forEach(([id, r]) => { if (r.hw || r.cp) rows[id] = r; });
   if (!Object.keys(rows).length) return toast('Mark at least one child.');
   try { const r = await api('teacher_api.php?a=check', { date, cls: c, subj: sb, hw: due.map(x => x.hw).join(' | '), rows });
-    CHK[k] = Object.assign({}, CHK[k], { rec: r.rec }); DRAFT.chk = null; toast('Checking saved.'); render(); }
+    CHK[k] = Object.assign({}, CHK[k], { rec: r.rec }); DRAFT.chk = null; MYX = null; toast('Checking saved.'); render(); }
   catch (e) { toast(e.message); }
 }
 function chkNotify(c, sb, date, kids, due) {
@@ -1183,14 +1187,15 @@ function weekStart(iso) { const d = new Date(iso + 'T00:00:00'); return addDays(
 function vPlan() {
   const m = P.m || 'lp', list = allocList();
   if (!list.length) return '<div class="card empty">No subjects are given to you yet. The Principal sets them in the timetable.</div>';
-  return planSeg(m) + (m === 'syl' ? vSyl(list) : vLp(list));
+  return planSeg(m) + (m === 'syl' ? vSyl(list) : m === 'paper' ? vPaper(list) : vLp(list));
 }
-function planSeg(m) { return seg([['lp', 'Lesson plan'], ['syl', 'Syllabus'], ['notes', 'Notes']], m, `(k=>k==='notes'?go('notes',{key:${jsq(P.key || '')}}):go('plan',{m:k,key:${jsq(P.key || '')}}))`); }
+function planSeg(m) { return seg([['lp', 'Lesson plan'], ['syl', 'Syllabus'], ['notes', 'Notes'], ['paper', 'Paper']], m, `(k=>k==='notes'?go('notes',{key:${jsq(P.key || '')}}):go('plan',{m:k,key:${jsq(P.key || '')}}))`); }
 function keyPick(list, key, onch) { return `<div class="fld">Class & subject${sel('kp', list.map(a => [sylKey(a.c, a.s), 'Class ' + a.c + ' — ' + a.s]), key, onch)}</div>`; }
 function vLp(list) {
   const thisW = weekStart(todayISO()), w = P.w || thisW, key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s), [c, s] = key.split('|');
   const k = [w, me(), c, s].join('|'), p = S.lplan[k], dr = DRAFT.lp && DRAFT.lp.k === k ? DRAFT.lp : null, nx = nextChapter(c, s);
   const weeks = [addDays(thisW, -7), thisW, addDays(thisW, 7), addDays(thisW, 14)];
+  needChapTexts(key);
   const mine = Object.entries(S.lplan).filter(([kk, v]) => v.tid === me() && v.week === w);
   const daily = p && Object.prototype.hasOwnProperty.call(p, 'days');
   return `<div class="fld">Week${sel('lpW', weeks.map(x => [x, 'Week of ' + fmtDate(x)]), w, `go('plan',{m:'lp',w:this.value,key:${jsq(key)}})`)}</div>
@@ -1199,6 +1204,7 @@ function vLp(list) {
       <div class="btns" style="margin-bottom:8px"><button class="btn s l" onclick="lpFill('${w}',${jsq(key)})">Auto fill from syllabus</button>
         <label class="btn s l filebtn">${ic('cam')} From a photo<input type="file" accept="image/*" capture="environment" multiple onchange="lpPhoto(this.files,${jsq(key)},'${k}')"></label></div>
       ${DRAFT.busy ? `<div class="ban inf"><span class="load" style="padding:0;flex-direction:row;gap:8px"><i style="width:18px;height:18px"></i></span>${esc(DRAFT.busy)}</div>` : ''}
+      ${chapHint(key, nx, 'lesson plan')}
       <div class="fld">Topics — one line = one period${nx ? ` · next chapter: <b>${esc(nx)}</b>` : ''}<textarea id="lpT" class="inp" rows="7" oninput="DRAFT.lp={k:'${k}',topics:this.value,goal:$('lpG').value}">${esc(dr ? dr.topics : p ? p.topics : '')}</textarea>${suggestionBox('lpT', key, 'topic')}</div>
       <div class="fld">Aim / activity / teaching aid / homework<input id="lpG" class="inp" maxlength="400" value="${esc(dr ? dr.goal : p ? p.goal || '' : '')}" oninput="DRAFT.lp={k:'${k}',topics:$('lpT').value,goal:this.value}">${suggestionBox('lpG', key, 'goal')}</div>
       <button class="btn go full" style="margin-top:10px" onclick="lpSubmit('${w}',${jsq(key)})">${p ? 'Update and send again' : 'Send to Principal'}</button>`}
@@ -1215,7 +1221,7 @@ function lpFill(w, key) {
   if ($('lpT').value.trim() && !confirm('Replace these topics with a syllabus draft?')) return;
   const earlier = new Set(Object.values(S.lplan).filter(p => p.tid === me() && p.cls === c && p.subj === s && p.week < w).flatMap(p => String(p.topics || '').split('\n').map(x => x.trim().toLowerCase())));
   const open = y.chapters.filter(ch => !ch.done).sort((x, z) => String(x.plan || '9999').localeCompare(String(z.plan || '9999'))), lines = [];
-  for (const ch of open) { const parts = (ch.topics || []).length ? ch.topics.map(t => `${ch.n} — ${t}`) : [`${ch.n} — introduction`, `${ch.n} — explanation`, `${ch.n} — examples and practice`, `${ch.n} — exercise / question-answer`, `${ch.n} — revision and test`];
+  for (const ch of open) { const tx = chapTopics(key, ch.n); const parts = (ch.topics || []).length ? ch.topics.map(t => `${ch.n} — ${t}`) : tx.length ? tx.map(t => `${ch.n} — ${t}`) : [`${ch.n} — introduction`, `${ch.n} — explanation`, `${ch.n} — examples and practice`, `${ch.n} — exercise / question-answer`, `${ch.n} — revision and test`];
     for (const l of parts) { if (!earlier.has(l.toLowerCase())) lines.push(l); if (lines.length >= n) break; } if (lines.length >= n) break; }
   if (!lines.length) return toast('Nothing left to plan — all chapters are done.');
   DRAFT.lp = { k: [w, me(), c, s].join('|'), topics: lines.join('\n'), goal: ($('lpG') || {}).value || '' }; toast(lines.length + ' period(s) filled. Sundays and saved holidays skipped. Review, then send.'); render();
@@ -1229,29 +1235,14 @@ function lpSubmit(w, key) {
   put('lplan', k, { week: w, tid: me(), cls: c, subj: s, topics, goal, status: 'Submitted', feedback: '', at: Date.now() }, 'Lesson Plan', `Submitted: Class ${c} ${s}, week of ${w} (${topics.split('\n').length} topics) — Teacher App`);
   DRAFT.lp = null; toast('Sent to the Principal.'); render();
 }
-function vSyl(list) {
-  const key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s), [c, s] = key.split('|'), y = S.syl[key] || { chapters: [] };
-  const done = y.chapters.filter(x => x.done).length, sc = DRAFT.sc && DRAFT.sc.key === key ? DRAFT.sc : null;
-  return `${keyPick(list, key, "DRAFT.sc=null;go('plan',{m:'syl',key:this.value})")}
-    <div class="card"><h3>Chapters <small>${done}/${y.chapters.length} done</small></h3>
-      ${y.chapters.length ? y.chapters.map((ch, i) => `<label class="li chk"><input type="checkbox" ${ch.done ? 'checked' : ''} onchange="sylTick(${jsq(key)},${i},this.checked)"><div class="t"><b>${i + 1}. ${esc(ch.n)}</b><span>${ch.done ? 'Finished ' + fmtDate(ch.done) : ch.plan ? 'Planned for ' + ymName(ch.plan) : ''}${(ch.topics || []).length ? ' · ' + ch.topics.length + ' topics' : ''}</span></div></label>`).join('')
-        : '<div class="empty">No chapters yet. Take a photo of the book’s contents page.</div>'}
-      <div class="row" style="margin-top:10px;gap:6px"><input id="sylN" class="inp" maxlength="120" placeholder="Add a chapter by name"><button class="btn s" onclick="sylAdd(${jsq(key)})">Add</button></div></div>
-    <div class="card"><h3>From the contents page</h3><p class="mut" style="margin:0 0 8px">Photo of the book’s Contents / विषय-सूची page — the chapters are read for you. Check them, then save.</p>
-      <label class="btn l full filebtn">${ic('cam')} Take / choose photo<input type="file" accept="image/*" capture="environment" multiple onchange="sylPhoto(this.files,${jsq(key)})"></label>
-      ${DRAFT.busy && DRAFT.busyK === key ? `<p class="mut">${esc(DRAFT.busy)}</p>` : ''}
-      ${sc ? `<div class="fld" style="margin-top:10px">Chapters found (${sc.via === 'ai' ? 'read by AI' : 'read by the phone — check carefully'}) — one per line<textarea id="scL" class="inp" rows="8">${esc(sc.list.join('\n'))}</textarea></div>
-        <label class="chk" style="margin-top:6px"><input id="scR" type="checkbox" ${y.chapters.length ? '' : 'checked'}> Replace my chapter list (ticks of chapters with the same name are kept)</label>
-        <button class="btn go full" style="margin-top:8px" onclick="sylSave(${jsq(key)})">Save chapters</button>` : ''}</div>`;
-}
+// vSyl (Syllabus: books, chapter rows with pages, exam ticks, chapter text) lives in teacher-work.js (owner, 5 Nov 2026).
 function sylCopy(key) { return JSON.parse(JSON.stringify(S.syl[key] || { chapters: [], targetCount: '', targetDate: '' })); }
 function sylTick(key, i, on) { const y = sylCopy(key); y.chapters[i].done = on ? todayISO() : null; put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: "${y.chapters[i].n}" ${on ? 'completed' : 'un-ticked'} — Teacher App`); render(); }
-function sylAdd(key) { const n = $('sylN').value.trim().slice(0, 120); if (n.length < 2) return toast('Write the chapter name.'); const y = sylCopy(key); y.chapters.push({ n, done: null, topics: [] }); put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: chapter "${n}" added`); render(); }
 function sylSave(key) {
   const list = $('scL').value.split('\n').map(x => x.trim().slice(0, 120)).filter(x => x.length >= 2); if (!list.length) return toast('No chapter to save.');
   const y = sylCopy(key), topics = Object.fromEntries((DRAFT.sc.chapters || []).map(ch => [String(ch.name).toLowerCase(), ch.topics || []]));
-  if ($('scR').checked || !y.chapters.length) { const old = Object.fromEntries(y.chapters.map(ch => [ch.n.toLowerCase(), ch])); y.chapters = list.map(n => { const o = old[n.toLowerCase()]; return { n, done: o ? o.done : null, plan: o ? o.plan || null : null, topics: topics[n.toLowerCase()] || (o ? o.topics || [] : []) }; }); }
-  else { const have = new Set(y.chapters.map(ch => ch.n.toLowerCase())); list.filter(n => !have.has(n.toLowerCase())).forEach(n => y.chapters.push({ n, done: null, topics: topics[n.toLowerCase()] || [] })); }
+  if ($('scR').checked || !y.chapters.length) { const old = Object.fromEntries(y.chapters.map(ch => [ch.n.toLowerCase(), ch])); y.chapters = list.map(n => { const o = old[n.toLowerCase()]; return Object.assign({}, o || {}, { n, done: o ? o.done : null, plan: o ? o.plan || null : null, topics: topics[n.toLowerCase()] || (o ? o.topics || [] : []) }, DRAFT.sc.book ? { book: DRAFT.sc.book } : {}); }); }
+  else { const have = new Set(y.chapters.map(ch => ch.n.toLowerCase())); list.filter(n => !have.has(n.toLowerCase())).forEach(n => y.chapters.push(Object.assign({ n, done: null, topics: topics[n.toLowerCase()] || [] }, DRAFT.sc.book ? { book: DRAFT.sc.book } : {}))); }
   put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: ${list.length} chapter(s) saved from a photo of the contents page (checked by ${myName()})`);
   DRAFT.sc = null; toast('Chapters saved.'); render();
 }
@@ -1281,7 +1272,7 @@ async function readPhotos(mode, c, s, files, busyK) {
 function lines(text) { return [...new Set(String(text || '').split('\n').map(l => l.replace(/\s+/g, ' ').replace(/^(?:(?:chapter|ch\.?|lesson|unit|पाठ|अध्याय)\s*)?[(\[]?(?:\d{1,3}|[ivxlc]{1,6})[)\].:\-–—]*\s+/i, '').replace(/[\s.·…_\-–—]*\d{1,4}\s*$/, '').trim()).filter(l => l.length >= 3 && /[A-Za-zऀ-ॿ]{2}/.test(l) && !/^(contents?|index|page|विषय[ -]?सूची|अनुक्रमणिका|पृष्ठ)\b/i.test(l)))]; }
 async function sylPhoto(files, key) { const [c, s] = key.split('|'); const res = await readPhotos('chapters', c, s, files, key); if (!res) return;
   const list = res.via === 'ai' ? res.chapters.map(x => x.name) : lines(res.text).slice(0, 60); if (!list.length) return toast('Nothing readable was found. Try a clearer, straighter photo in good light.');
-  DRAFT.sc = { key, via: res.via, list, chapters: res.chapters || [] }; render(); }
+  DRAFT.sc = { key, via: res.via, list, chapters: res.chapters || [], book: (($('sylBk') || {}).value || '').trim().slice(0, 80) }; render(); }
 async function lpPhoto(files, key, k) { const [c, s] = key.split('|'); const res = await readPhotos('lplan', c, s, files, k); if (!res) return;
   const topics = res.via === 'ai' ? res.topics : lines(res.text).slice(0, 12); if (!topics.length) return toast('Nothing readable was found. Try a clearer photo.');
   DRAFT.lp = { k, topics: topics.join('\n'), goal: res.via === 'ai' ? [res.goal, res.homework ? 'Homework: ' + res.homework : ''].filter(Boolean).join(' • ') : '' }; toast('Read from the photo. Check it, then send.'); render(); }
@@ -1554,12 +1545,14 @@ function feeBill(c, sid) {
 function feeBillPrint(c, sid) { const k = FEE[c].children.find(x => x.sid === sid); let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
   p.innerHTML = `<pre style="font:13px/1.6 Arial,sans-serif;white-space:pre-wrap">${esc(billText(c, k).replace(/\*/g, ''))}</pre>`; window.print(); }
 // ---- ready messages ----
-const MSGS = [['absent', 'Absent'], ['hw', 'Homework not done'], ['fee', 'Fee reminder'], ['ptm', 'PTM invitation'], ['praise', 'Appreciation'], ['custom', 'Own message']];
+const MSGS = [['absent', 'Attendance'], ['hw', 'Homework not done'], ['fee', 'Fee reminder'], ['ptm', 'PTM invitation'], ['praise', 'Appreciation'], ['custom', 'Own message']];
 const PRAISE = ['did very well in the test', 'kept a neat and complete notebook', 'helped classmates', 'showed very good behaviour', 'answered well in class'];
 function msgText(t, s, c, o) {
   const sch = S.settings.school || '', me2 = myName(), d = fmtLong(o.date || todayISO());
   switch (t) {
-    case 'absent': return `Dear Parent,\n${s.name} (Class ${c}) was absent from school on ${d}. Kindly tell us the reason.\n${s.name} ${d} को विद्यालय में अनुपस्थित था/थी। कृपया कारण बताएँ।\n— ${me2}, ${sch}`;
+    case 'absent': { const lv = (((attOf(o.date || todayISO(), c) || {}).st) || {})[s.id] === 'L', today = (o.date || todayISO()) === todayISO();
+      return lv ? `Dear Parent,\n${s.name} (Class ${c}) ${today ? 'is on leave today' : 'was on leave on ' + d}.\n${s.name} ${today ? 'आज छुट्टी पर है' : d + ' को छुट्टी पर था/थी'}।\n— ${me2}, ${sch}`
+        : `Dear Parent,\n${s.name} (Class ${c}) ${today ? 'is absent from school today' : 'was absent from school on ' + d}. Kindly tell us the reason.\n${s.name} ${today ? 'आज' : d + ' को'} विद्यालय में अनुपस्थित ${today ? 'है' : 'था/थी'}। कृपया कारण बताएँ।\n— ${me2}, ${sch}`; }
     case 'hw': return `Dear Parent,\n${s.name} (Class ${c}) did not complete the ${o.subj || ''} homework.${o.note ? '\n“' + o.note + '”' : ''}\nKindly help ${s.name} finish it today.\n${s.name} ने ${o.subj || ''} का गृहकार्य पूरा नहीं किया। कृपया आज पूरा करवाएँ।\n— ${me2}, ${sch}`;
     case 'fee': return `Dear Parent,\nThis is a gentle reminder that the school fee of ${s.name} (Class ${c})${o.amt ? ' — ' + o.amt + ' —' : ''} is due. Kindly deposit it at the school office at the earliest.\n${s.name} की विद्यालय फ़ीस${o.amt ? ' (' + o.amt + ')' : ''} बकाया है। कृपया जल्द जमा करें।\n— ${me2}, Class Teacher, ${sch}`;
     case 'ptm': return `Dear Parent,\nYou are invited to the Parent–Teacher Meeting of Class ${c} on ${d}${o.time ? ' at ' + o.time : ''} to discuss ${s ? s.name + '’s' : 'your child’s'} progress.\nकक्षा ${c} की अभिभावक-शिक्षक बैठक ${d}${o.time ? ', ' + o.time : ''} को है। कृपया अवश्य पधारें।\n— ${me2}, ${sch}`;
@@ -1571,12 +1564,13 @@ function vMsg() {
   const cls = myClasses(); if (!cls.length) return '<div class="card empty">No classes are given to you yet.</div>';
   const c = cls.includes(P.c) ? P.c : cls[0], t = MSGS.some(x => x[0] === P.t) ? P.t : 'absent', isCT = myCT().includes(c);
   if (!DRAFT.msg || DRAFT.msg.c !== c) DRAFT.msg = { c, sel: {}, o: { date: todayISO(), why: PRAISE[0] } };
-  const D = DRAFT.msg, kids = studentsOf(c), ph = needPhotos(c), picked = kids.filter(s => D.sel[s.id]);
+  if (t === 'absent') msgAttPick(c, DRAFT.msg);
+  const D = DRAFT.msg, kids = t === 'absent' ? msgAttKids(c, D.o.date) : studentsOf(c), ph = needPhotos(c), picked = kids.filter(s => D.sel[s.id]);
   const att = attOf(todayISO(), c), absentToday = new Set((att && att.absent) || []);
   const subs = [...new Set(allocList().filter(a => a.c === c).map(a => a.s))];
   if (t === 'hw' && !D.o.subj) D.o.subj = subs[0] || '';
   const extra = t === 'ptm' ? `<div class="two"><div class="fld">Meeting date<input type="date" class="inp" value="${esc(D.o.date)}" min="${todayISO()}" onchange="DRAFT.msg.o.date=this.value;render()"></div><div class="fld">Time<input class="inp" value="${esc(D.o.time || '')}" placeholder="e.g. 10:00 AM" oninput="DRAFT.msg.o.time=this.value"></div></div>`
-    : t === 'absent' ? `<div class="fld">Absent on<input type="date" class="inp" value="${esc(D.o.date)}" max="${todayISO()}" onchange="DRAFT.msg.o.date=this.value;render()"></div>${absentToday.size && D.o.date === todayISO() ? `<button class="chip" onclick="${[...absentToday].map(id => `DRAFT.msg.sel['${esc(id)}']=true`).join(';')};render()">Pick today's ${absentToday.size} absent</button>` : ''}`
+    : t === 'absent' ? msgAttBox(c, D)
     : t === 'hw' ? `<div class="two"><div class="fld">Subject${sel('msgS', (subs.length ? subs : ['']).map(x => [x, x || '—']), D.o.subj, 'DRAFT.msg.o.subj=this.value')}</div><div class="fld">Homework<input class="inp" value="${esc(D.o.note || '')}" placeholder="e.g. Ex 4.1" oninput="DRAFT.msg.o.note=this.value"></div></div>`
     : t === 'praise' ? `<div class="chips">${PRAISE.map(x => `<button type="button" class="chip ${D.o.why === x ? 'on' : ''}" onclick="DRAFT.msg.o.why=${jsq(x)};render()">${esc(x)}</button>`).join('')}</div>`
     : t === 'fee' ? (isCT ? '<p class="mut" style="margin:0">The due amount is added for each child from the fee records when you are the class teacher.</p>' : '<p class="mut" style="margin:0">Only the class teacher can send fee reminders.</p>')
@@ -1698,22 +1692,19 @@ function needXC(date) {
 function prinData(date) {
   const work = isWorkDay(date), X = XC[date] && !XC[date].loading && !XC[date].err ? XC[date] : null, cutoff = date < todayISO() || nowMin() >= toMin(S.settings.attendanceCutoff || '09:30');
   const away = new Set(staffAbsent(date)), per = {};
-  const add = (t, kind, txt, done) => { const o = per[t] = per[t] || { t, pend: [], done: 0 }; if (done) o.done++; else o.pend.push({ kind, txt }); };
-  if (work) (S.classes || []).forEach(k => {
-    if (!k.ct || !S.teachers[k.ct] || !isWorkDay(date, k.c) || !studentsOf(k.c).length) return;
-    if (away.has(k.ct)) return;
-    if (cutoff) add(k.ct, 'att', 'Class ' + k.c + ' attendance', !!attOf(date, k.c));
-    if (X) add(k.ct, 'kit', 'Class ' + k.c + ' daily check (diary · ID · book · dress)', !!X.kit[k.c]);
-  });
+  const add = (t, kind, txt, done) => { const o = per[t] = per[t] || { t, pend: [], done: 0, items: [] }; (o.items = o.items || []).push({ kind, done }); if (done) o.done++; else o.pend.push({ kind, txt }); };
+  // Same list the teacher sees in "My work" (workOf / setupOf in teacher-work.js): attendance, daily check, diary per bell,
+  // homework checks; plus once-a-week / one-time work (lesson plan, syllabus chapters, exam chapters) kept apart in `setup`.
   if (work) Object.keys(S.teachers).forEach(t => { if (away.has(t)) return;
-    bellsOf(t, date).forEach(b => { if (!bellOver(date, b.bell)) return; const e = ((S.diary[date] || {})[t] || {})[b.bell];
-      add(t, 'diary', 'Diary · ' + BELLS[b.bell].n + ' bell · Class ' + b.cls + ' ' + b.subj.replace(/\s*\(optional\)/i, ''), !!e); }); });
+    workOf(t, date, X).forEach(w => add(t, w.kind, w.txt, w.done));
+    const su = setupOf(t, date).filter(w => !w.done); if (su.length) { const o = per[t] = per[t] || { t, pend: [], done: 0 }; o.setup = su; } });
+  void cutoff;
   return { per, away, X, work };
 }
 function prinPendingCount() { try { const d = prinData(todayISO()); return Object.values(d.per).filter(o => o.pend.length).length; } catch (e) { return 0; } }
 function prinMsg(o, date) {
   const n = T(o.t).name;
-  return `Namaste ${n},\n${date === todayISO() ? 'Aaj' : fmtLong(date) + ' ko'} ke yeh kaam app mein baaki hain:\n${o.pend.map(p => '• ' + p.txt).join('\n')}\nKripya jaldi poora kar dein. Dhanyavaad.\n— ${myName()}, Principal`;
+  return `Namaste ${n},\n${o.pend.length ? `${date === todayISO() ? 'Aaj' : fmtLong(date) + ' ko'} ke yeh kaam app mein baaki hain:\n${o.pend.map(p => '• ' + p.txt).join('\n')}\n` : ''}${(o.setup || []).length ? `${o.pend.length ? '\n' : ''}Yeh bhi app mein bharna hai:\n${o.setup.map(p => '• ' + p.txt).join('\n')}\n` : ''}Kripya jaldi poora kar dein. Dhanyavaad.\n— ${myName()}, Principal`;
 }
 function vPrin() {
   const t = todayISO(), date = P.date && P.date <= t ? P.date : t, f = P.f || 'pend';
@@ -1722,14 +1713,15 @@ function vPrin() {
   const pendT = all.filter(o => o.pend.length).sort((a, b) => b.pend.length - a.pend.length);
   const cls = (S.classes || []).filter(k => studentsOf(k.c).length && isWorkDay(date, k.c));
   const attDone = cls.filter(k => attOf(date, k.c)).length, kitDone = D.X ? cls.filter(k => D.X.kit[k.c]).length : null;
+  let hcAll = 0, hcDone = 0; Object.values(D.per).forEach(o => (o.items || []).forEach(w => { if (w.kind === 'hwchk') { hcAll++; if (w.done) hcDone++; } }));
   let bellsAll = 0, bellsDone = 0; Object.keys(S.teachers).forEach(x => { if (D.away.has(x)) return; bellsOf(x, date).forEach(b => { if (!bellOver(date, b.bell)) return; bellsAll++; if (((S.diary[date] || {})[x] || {})[b.bell]) bellsDone++; }); });
   const shown = f === 'pend' ? pendT : all.slice().sort((a, b) => b.pend.length - a.pend.length || T(a.t).name.localeCompare(T(b.t).name));
   const nav = `<div class="datebar"><button class="btn s w" onclick="go('prin',{date:'${addDays(date, -1)}',f:'${f}'})" aria-label="Previous day">${ic('back')}</button>
     <label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="go('prin',{date:this.value,f:'${f}'})"></label>
     <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="go('prin',{date:'${addDays(date, 1)}',f:'${f}'})" aria-label="Next day">${ic('next')}</button></div>`;
   if (!D.work) return nav + `<div class="ban hol">${dayIdx(date) < 0 ? 'Sunday' : 'Holiday — ' + esc((holidayOn(date) || {}).title || '')}. Nothing to check.</div>`;
-  const kpi = (l, a, b, go2) => `<button class="k ${b && a === b ? 'ok' : a < b ? 'go' : ''}" ${go2 ? `onclick="${go2}"` : ''}><span>${l}</span><b>${b === null ? '…' : a + '/' + b}</b><small>${b === null ? 'loading' : a === b ? 'all done' : (b - a) + ' not done'}</small></button>`;
-  return nav + `<div class="kp">${kpi('Attendance', attDone, cls.length)}${kpi('Diary (bells over)', bellsDone, bellsAll)}${kpi('Daily check', kitDone ?? 0, D.X ? cls.length : null)}
+  const kpi = (l, a, b, go2) => `<button class="k ${b && a === b ? 'ok' : a < b ? 'go' : ''}" ${go2 ? `onclick="${go2}"` : ''}><span>${l}</span><b>${b === null ? '…' : b === 0 ? '—' : a + '/' + b}</b><small>${b === null ? 'loading' : b === 0 ? 'nothing due' : a === b ? 'all done' : (b - a) + ' not done'}</small></button>`;
+  return nav + `<div class="kp">${kpi('Attendance', attDone, cls.length)}${kpi('Diary (bells over)', bellsDone, bellsAll)}${kpi('Daily check', kitDone ?? 0, D.X ? cls.length : null)}${D.X ? kpi('Homework checks', hcDone, hcAll) : ''}
       <button class="k ${pendT.length ? 'bad' : 'ok'}"><span>Teachers with pending work</span><b>${pendT.length}</b><small>${D.away.size ? D.away.size + ' on leave / absent' : 'nobody on leave'}</small></button></div>
     ${D.X && D.X.chk.length ? `<div class="ban ok"><div><b>${D.X.chk.length} homework check(s)</b> saved: ${[...new Set(D.X.chk.map(c => c.cls + ' ' + c.subj))].slice(0, 6).map(esc).join(', ')}${D.X.chk.length > 6 ? '…' : ''}</div></div>` : ''}
     <div class="card"><h3>Classes <small>${attDone}/${cls.length} attendance</small></h3><div class="xc-cls">${cls.map(k => { const a = attOf(date, k.c), kt = D.X && D.X.kit[k.c];
@@ -1738,9 +1730,10 @@ function vPrin() {
     ${pendT.length ? `<button class="btn go full" onclick="prinRemindAll('${date}')">${ic('chat')} Remind all ${pendT.length} teacher(s) in the app</button>` : `<div class="ban ok"><div><b>Sab kaam poora hai.</b> Every teacher has done today's work so far.</div></div>`}
     ${shown.map(o => { const tt = T(o.t), on = D.away.has(o.t);
       return `<div class="card xc-t ${o.pend.length ? 'pend' : 'done'}"><div class="row"><span class="ph sm"><i>${esc(initials(tt.name))}</i></span><div style="flex:1;min-width:0"><b>${esc(tt.name)}</b><small class="mut" style="display:block">${on ? 'On leave / absent today' : o.pend.length ? o.pend.length + ' pending · ' + o.done + ' done' : o.done ? 'All ' + o.done + ' done ✓' : 'Nothing due yet'}</small></div>
-        ${o.pend.length ? `<button class="btn s go" onclick="prinMsgOpen(${jsq(o.t)},'${date}')">Message</button>` : ''}</div>
-        ${o.pend.length ? `<ul class="xc-l">${o.pend.map(p => `<li class="${p.kind}">${esc(p.txt)}</li>`).join('')}</ul>` : ''}</div>`; }).join('')}
-    <p class="mut">Attendance is checked after ${esc(S.settings.attendanceCutoff || '09:30')}; a diary only after its bell is over. Teachers on approved leave or marked absent are left out.</p>`;
+        ${o.pend.length || (o.setup || []).length ? `<button class="btn s go" onclick="prinMsgOpen(${jsq(o.t)},'${date}')">Message</button>` : ''}</div>
+        ${o.pend.length ? `<ul class="xc-l">${o.pend.map(p => `<li class="${p.kind}">${esc(p.txt)}</li>`).join('')}</ul>` : ''}
+        ${(o.setup || []).length ? `<details class="xc-su"><summary>Weekly / one-time work not done: ${o.setup.length}</summary><ul class="xc-l">${o.setup.map(p => `<li class="${p.kind}">${esc(p.txt)}</li>`).join('')}</ul></details>` : ''}</div>`; }).join('')}
+    <p class="mut">Attendance is checked after ${esc(S.settings.attendanceCutoff || '09:30')}; a diary only after its bell is over; a homework check when homework was due that day and the teacher's bell in that class is over. Teachers on approved leave or marked absent are left out.</p>`;
 }
 function prinMsgOpen(t, date) {
   const D = prinData(date), o = D.per[t]; if (!o) return; const tt = T(t), msg = prinMsg(o, date);

@@ -323,6 +323,89 @@ const path = require('node:path');
     await page.locator('.bub.out').filter({ hasText: 'CI hello parent' }).waitFor({ timeout: 10000 });
     // A subject teacher who is not class teacher never sees fee calls (server refuses; tab hides it).
   });
+  // ---- owner, 5 Nov 2026 (4): attendance on the diary card, Q-number chips, CW → HW ideas, Attendance message,
+  // syllabus books/pages/exams + chapter text, question paper, My work check, students for subject teachers.
+  await run('22-Classroom-qno-and-ideas', async () => {
+    await page.evaluate(() => { SHEET = null; setLang('en'); go('diary', { date: todayISO(), bell: 0 }); });
+    await page.locator('#b0-t').waitFor();
+    assert.match(await page.locator('.attl').first().innerText(), /present|not marked/, 'class attendance shown small on the diary card');
+    const qn = page.locator('#b0-h').locator('xpath=..').locator('.qn button');
+    for (const n of ['6', '7', '8', '9']) await qn.filter({ hasText: new RegExp('^' + n + '$') }).click();
+    assert.match(await page.locator('#b0-h').inputValue(), /Q\. 6–9/);
+    await qn.filter({ hasText: /^9$/ }).click();
+    assert.match(await page.locator('#b0-h').inputValue(), /Q\. 6–8/, 'tapping again updates the same text');
+    await page.locator('#b0-cw').fill('Ex 2.1 Q1-5 done. Read the chapter in class.');
+    await page.locator('#b0-idea button').first().waitFor();
+    const ideas = await page.locator('#b0-idea').innerText();
+    assert.match(ideas, /Q\. 6–9 of Ex 2\.1/, 'next questions follow the class work');
+    assert.match(ideas, /difficult words/);
+    await page.locator('#b0-idea button').filter({ hasText: /next questions/ }).click();
+    assert.match(await page.locator('#b0-h').inputValue(), /Do the next questions/);
+    await page.evaluate(() => go('conn', { m: 'msg', t: 'absent' }));
+    assert.match(await page.locator('.card').filter({ hasText: '1 · Choose the message' }).innerText(), /Attendance[\s\S]*(attendance register|not marked)/);
+  });
+  await run('23-Syllabus-books-pages-exams-text', async () => {
+    await page.evaluate(() => go('plan', { m: 'syl' }));
+    await page.locator('#sylBk').fill('CI Reader');
+    await page.locator('#sylNc').fill('3');
+    await page.getByRole('button', { name: 'Make rows' }).click();
+    const rows = page.locator('.syi');
+    assert.equal(await rows.count(), 3);
+    const data = [['CI Water Cycle', '1', '9'], ['CI Rivers of India', '10', '18'], ['CI Soil', '19', '25']];
+    for (let i = 0; i < 3; i++) { const f = rows.nth(i).locator('input'); await f.nth(0).fill(data[i][0]); await f.nth(1).fill(data[i][1]); await f.nth(2).fill(data[i][2]); }
+    await page.getByRole('button', { name: /Save chapters of CI Reader/ }).click();
+    await page.getByText('Chapters saved.').first().waitFor();
+    const water = page.locator('.syr').filter({ hasText: 'CI Water Cycle' });
+    assert.match(await water.innerText(), /Page 1–9/);
+    await water.locator('.exb').filter({ hasText: 'UT-3' }).click();
+    await page.locator('.syr').filter({ hasText: 'CI Rivers of India' }).locator('.exb').filter({ hasText: 'UT-3' }).click();
+    await page.getByRole('button', { name: /Save exam chapters/ }).click();
+    const ex = await page.evaluate(() => { const y = Object.values(S.syl).find(v => (v.chapters || []).some(c => c.n === 'CI Water Cycle')); return y.chapters.filter(c => (c.ex || []).includes('ut3')).map(c => c.n + '|' + c.book + '|' + c.pf + '-' + c.pt); });
+    assert.deepEqual(ex, ['CI Water Cycle|CI Reader|1-9', 'CI Rivers of India|CI Reader|10-18']);
+    await page.locator('.chip').filter({ hasText: /^UT-3 2$/ }).click();
+    assert.ok(await page.locator('a.wa').filter({ hasText: 'UT-3 syllabus' }).count() === 1, 'exam syllabus can be sent to the class group');
+    await water.locator('.txb').click();
+    await page.locator('#chT').fill('The Water Cycle\nWater evaporates from the oceans because of the heat of the sun. The water vapour rises and cools to form clouds in the sky. Clouds bring rain when the droplets become heavy. Rain water flows back to the oceans through rivers.\nEvaporation\nThe sun heats the water of the oceans and rivers every day. Evaporation is faster on a hot and windy day.\nCondensation\nWhen water vapour cools it changes into tiny droplets of water.\nExercise\n1. What is evaporation?\n2. How are clouds formed?\n3. Why does it rain?');
+    await page.locator('.sheet .btn.go').filter({ hasText: 'Save text' }).click();
+    await page.getByText(/Chapter text saved/).first().waitFor();
+    await page.locator('.syr').filter({ hasText: 'CI Water Cycle' }).locator('.txb.on').waitFor();
+  });
+  await run('24-Question-paper', async () => {
+    await page.evaluate(() => go('plan', { m: 'paper', ex: 'ut3' }));
+    await page.getByRole('button', { name: 'Make the paper' }).click();
+    const out = await page.locator('#ppOut').inputValue();
+    assert.match(out, /UT-3 · Class 9th/);
+    assert.match(out, /Section A — Fill in the blanks/);
+    assert.match(out, /What is evaporation\?|How are clouds formed\?|Why does it rain\?/, 'questions come from the chapter text');
+    assert.match(out, /Chapters: CI Water Cycle, CI Rivers of India/);
+  });
+  await run('25-My-work-check', async () => {
+    await page.evaluate(() => { MYX = null; go('home'); });
+    await page.locator('.mywork').waitFor();
+    assert.match(await page.locator('.mywork').innerText(), /My work check/);
+    assert.ok(await page.locator('.mywork .mw').count() >= 1);
+    await page.locator('.quick-grid button').filter({ hasText: 'Students' }).click();
+    await page.locator('.stu-r').first().waitFor();
+    await page.locator('.stu-r').first().click();
+    await page.locator('.prof').waitFor();
+    assert.match(await page.locator('.prof').innerText(), /Admission no\./);
+  });
+  await run('26-Subject-teacher-sees-students', async () => {
+    await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+    await page.goto('http://127.0.0.1:8099/school/teacher.php', { waitUntil: 'domcontentloaded' });
+    await page.locator('#lgT').waitFor();
+    await page.evaluate(() => localStorage.setItem('ta_intro_day', todayISO()));
+    await page.locator('#lgT').selectOption('MA');
+    await page.locator('#lgPin').fill('8888');
+    await page.locator('.lg button').filter({ hasText: 'Open' }).click();
+    await page.locator('.tabs').waitFor({ timeout: 15000 });
+    await page.evaluate(() => { const w = document.getElementById('ta-welcome'); if (w) closeTeacherWelcome(); go('att', { c: '9th' }); });
+    await page.locator('.stu-r').first().waitFor();
+    assert.match(await page.locator('.ban.inf').first().innerText(), /You teach this class/);
+    assert.equal(await page.locator('.seg button').filter({ hasText: 'Mark' }).count(), 0, 'a subject teacher cannot mark attendance');
+    await page.locator('.stu-r').first().click();
+    assert.ok(await page.locator('.yn button[disabled]').count() > 0, 'record is read-only for a subject teacher');
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

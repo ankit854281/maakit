@@ -35,7 +35,10 @@
 //   POST ?a=rec {sid,rec}                  class teacher: student record (diary/ID/book/dress/WhatsApp given?) + reading/learning levels
 //   POST ?a=remark {sid,type,cat,text}     any teacher of the class: complaint or good thing (kept as a record)
 //   POST ?a=delremark {id}                 the writer / Principal
-//   GET  ?a=crosscheck&date=              Principal: which classes filled the daily check, which homework checks were saved
+//   GET  ?a=crosscheck&date=[&days=]      Principal: which classes filled the daily check, which homework checks were saved;
+//                                          a teacher gets only his own (class-teacher daily check + his homework checks)
+//   GET  ?a=chaptext&cls=&subj=[&full=1]   chapter texts of a subject (teachers of the class); POST {cls,subj,chapter,book,text}
+//                                          subject teacher / Principal (kind tchChap; empty text removes it)
 //
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
 //         tchNote (kept OUT of legacy load/sync — prefix "tch" in inc.php; parents get
@@ -560,14 +563,50 @@ case 'delremark': {
 // this adds the daily check (tchKit) and homework checks (tchChk) of one day.
 case 'crosscheck': {
     if ($method !== 'GET') sch_fail('GET only', 405);
-    if (!in_array($role, ['principal', 'chairman'], true)) sch_fail('Only the Principal can see the cross-check.', 403);
+    // (owner, 5 Nov 2026: "jaise attendance cross-check banaya, vaise teacher ke baaki kaam ka bhi") — a teacher may ask
+    // for his OWN cross-check: only the daily check of classes where he is the class teacher and his own homework checks.
     $date = (string)($_GET['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Choose the date.');
+    $own = $role === 'teacher';
+    if (!$own && !in_array($role, ['principal', 'chairman'], true)) sch_fail('Only the Principal can see the cross-check.', 403);
+    $days = max(1, min(7, (int)($_GET['days'] ?? 1)));                       // a teacher's "My work" looks back up to 7 days
+    $from = $days > 1 ? date('Y-m-d', strtotime($date . ' -' . ($days - 1) . ' day')) : $date;
     $kit = []; $chk = [];
-    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('tchKit','tchChk') AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$date, date('Y-m-d', strtotime($date . ' +1 day'))]);
-    foreach ($q as $row) { $pp = explode('|', (string)$row['r']); if (($pp[0] ?? '') !== $date) continue; $d = json_decode((string)$row['d'], true) ?: [];
-        if ($row['k'] === 'tchKit') $kit[$pp[1]] = ['by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
-        else $chk[] = ['cls' => $pp[1] ?? '', 'subj' => $pp[2] ?? '', 'tid' => (string)($d['tid'] ?? ''), 'by' => (string)($d['by'] ?? '')]; }
-    sch_json(['ok' => true, 'date' => $date, 'kit' => (object)$kit, 'chk' => $chk]);
+    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('tchKit','tchChk') AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$from, date('Y-m-d', strtotime($date . ' +1 day'))]);
+    foreach ($q as $row) { $pp = explode('|', (string)$row['r']); $dd = $pp[0] ?? ''; if ($dd < $from || $dd > $date) continue; $d = json_decode((string)$row['d'], true) ?: [];
+        if ($row['k'] === 'tchKit') { if ($own && !tch_is_ct($tid, (string)($pp[1] ?? ''))) continue;
+            if ($days > 1) $kit[$dd . '|' . $pp[1]] = ['by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)]; else $kit[$pp[1]] = ['by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)]; }
+        else { if ($own && ($d['tid'] ?? '') !== $tid) continue; $chk[] = ['date' => $dd, 'cls' => $pp[1] ?? '', 'subj' => $pp[2] ?? '', 'tid' => (string)($d['tid'] ?? ''), 'by' => (string)($d['by'] ?? '')]; } }
+    sch_json(['ok' => true, 'date' => $date, 'from' => $from, 'kit' => (object)$kit, 'chk' => $chk]);
+}
+
+// ---- Chapter text (owner, 5 Nov 2026: "chapter name aur page add kare to hint do — pure chapter ko text me convert karke
+// paste kar do, usse homework, lesson plan aur paper banane me help hogi"). The teacher pastes the whole chapter as text.
+// Kind tchChap 'cls|subj|<16 hex of the chapter name>' = {cls, subj, chapter, book, text, words, by, tid, at}. Teachers of the
+// class can read it; only the subject's teacher / Principal can write. Never in legacy load (prefix tch), never to parents.
+case 'chaptext': {
+    if ($method === 'GET') {
+        $cls = (string)($_GET['cls'] ?? ''); $subj = (string)($_GET['subj'] ?? '');
+        if ($cls === '' || $subj === '') sch_fail('Choose the class and subject.');
+        if (!$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+        $full = ($_GET['full'] ?? '') === '1'; $out = [];
+        $st = $db->prepare("SELECT d FROM sch_records WHERE k='tchChap' AND deleted=0 AND r LIKE ?"); $st->execute([str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], "$cls|$subj|") . '%']);
+        foreach ($st as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d) || ($d['cls'] ?? '') !== $cls || ($d['subj'] ?? '') !== $subj) continue;
+            if (!$full) unset($d['text']); $out[] = $d; }
+        sch_json(['ok' => true, 'chapters' => $out]);
+    }
+    $cls = tch_txt($in['cls'] ?? '', 20); $subj = tch_txt($in['subj'] ?? '', 60); $chapter = tch_txt($in['chapter'] ?? '', 120);
+    if (!learn_allowed($u, $cls, $subj)) sch_fail('You can add chapter text only for your own class and subject.', 403);
+    if (mb_strlen($chapter) < 2) sch_fail('Write the chapter name.');
+    $r = "$cls|$subj|" . substr(md5(mb_strtolower($chapter)), 0, 16);
+    $text = mb_substr(trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', str_replace("\r", '', (string)($in['text'] ?? '')))), 0, 60000);
+    if ($text === '') { if (sch_rec_get('tchChap', $r)) { sch_rec_del('tchChap', $r, $uid); sch_log($u, 'Syllabus', "Chapter text removed: Class $cls $subj — $chapter"); } sch_json(['ok' => true, 'removed' => true]); }
+    $words = count(preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY));
+    $d = ['cls' => $cls, 'subj' => $subj, 'chapter' => $chapter, 'book' => tch_txt($in['book'] ?? '', 80), 'text' => $text, 'words' => $words,
+          'tid' => $role === 'teacher' ? $tid : 'P', 'by' => $u['label'], 'at' => sch_now_ms()];
+    sch_rec_put('tchChap', $r, $d, $uid);
+    sch_log($u, 'Syllabus', "Chapter text added: Class $cls $subj — $chapter ($words words)");
+    unset($d['text']);
+    sch_json(['ok' => true, 'chapter' => $d]);
 }
 
 case 'notes': {

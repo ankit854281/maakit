@@ -137,4 +137,23 @@ $ta('check', ['date' => '2026-11-05'] + $chk, $tok['K']);
 [, $j] = $ta('checks', null, $tok['K'], '&cls=9th&subj=Social+Science&date=2026-11-06'); tf_check(($j['miss']['s1'] ?? 0) === 2 && $j['checked'] === 2, 'not-done count over the last 30 days');
 [, $j] = $api('load', null, $tok['K']); tf_check(!in_array('tchChk', array_column($j['records'], 'k'), true), 'checking never in legacy load');
 
+// ---- chapter text + exam syllabus + own cross-check (owner, 5 Nov 2026) ----
+$ct = ['cls' => '9th', 'subj' => 'Social Science', 'chapter' => 'The French Revolution', 'book' => 'India and the Contemporary World', 'text' => "The French Revolution began in 1789.\nWhat was the Bastille?"];
+[$c] = $ta('chaptext', $ct, $tok['MA']); tf_check($c === 403, 'another subject\'s teacher cannot write chapter text');
+[$c] = $ta('chaptext', $ct, $tok['CH']); tf_check($c === 403, 'Chairman only views');
+[$c, $j] = $ta('chaptext', $ct, $tok['K']); tf_check($c === 200 && $j['chapter']['words'] === 10 && !isset($j['chapter']['text']), 'subject teacher saves chapter text (' . $c . ')');
+[$c, $j] = $ta('chaptext', null, $tok['MA'], '&cls=9th&subj=Social+Science'); tf_check($c === 200 && count($j['chapters']) === 1 && !isset($j['chapters'][0]['text']), 'another teacher of the class sees the list without text');
+[, $j] = $ta('chaptext', null, $tok['K'], '&cls=9th&subj=Social+Science&full=1'); tf_check(str_contains($j['chapters'][0]['text'] ?? '', 'Bastille'), 'full text on request');
+[$c] = $ta('chaptext', null, $tok['K'], '&cls=10th&subj=Hindi'); tf_check($c === 403, 'not another class');
+[$c] = $ta('chaptext', null, $par, '&cls=9th&subj=Social+Science'); tf_check($c === 403, 'parents never get chapter text');
+[, $j] = $api('load', null, $tok['K']); tf_check(!in_array('tchChap', array_column($j['records'], 'k'), true), 'chapter text never in legacy load');
+[$c, $j] = $ta('chaptext', ['text' => ''] + $ct, $tok['K']); tf_check($c === 200 && !empty($j['removed']), 'empty text removes it');
+[, $j] = $ta('chaptext', null, $tok['K'], '&cls=9th&subj=Social+Science'); tf_check(count($j['chapters']) === 0, 'removed');
+$put('syl', '9th|Social Science', ['chapters' => [['n' => 'The French Revolution', 'done' => null, 'book' => 'History', 'pf' => '1', 'pt' => '24', 'ex' => ['ut3']], ['n' => 'Socialism', 'done' => null]]]);
+$put('syl', '10th|Hindi', ['chapters' => [['n' => 'Surdas', 'done' => null, 'ex' => ['ut3']]]]);
+[, $j] = $api('pdata', null, $par); tf_check(count($j['examSyl']) === 1 && $j['examSyl'][0]['n'] === 'The French Revolution' && $j['examSyl'][0]['ex'] === ['ut3'] && $j['examSyl'][0]['pt'] === '24', 'parent sees exam chapters of the child\'s class only');
+[$c, $j] = $ta('crosscheck', null, $tok['K'], '&date=2026-11-05&days=7'); tf_check($c === 200 && count($j['chk']) === 2 && $j['chk'][0]['tid'] === 'K' && $j['from'] === '2026-10-30', 'teacher gets his own cross-check (' . $c . ')');
+[, $j] = $ta('crosscheck', null, $tok['MA'], '&date=2026-11-05&days=7'); tf_check(count($j['chk']) === 0, 'not another teacher\'s checks');
+[$c] = $ta('crosscheck', null, $par, '&date=2026-11-05'); tf_check($c === 403, 'parents never');
+
 echo "Teacher app flow: all checks passed\n";

@@ -2487,6 +2487,7 @@ function vPHome() {
     <div class="card"><h3 class="h3">Homework today</h3>${hwToday.length ? `<ul class="space-y-2 mt-2">${hwToday.map(h => `<li class="flex gap-3"><span class="subj">${esc(h.subj)}</span><span>${esc(h.hw)}</span></li>`).join('')}</ul>` : '<p class="text-sm text-slate-500 mt-1">No homework written yet today.</p>'}
       <button onclick="go('phw')" class="btn btn-l btn-sm mt-3">All homework</button></div>
     ${parentDateSheets(kid)}
+    ${pExamSyl(kid)}
     ${wordCard(date)}
     ${next.length ? `<div class="card"><h3 class="h3">Coming up</h3>${next.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type)}</span></span><span class="text-slate-500">${fmtDate(e.date)}</span></div>`).join('')}</div>` : ''}`;
 }
@@ -2499,6 +2500,18 @@ function vPHw() {
       <p class="text-sm mt-1"><span class="text-slate-500">Taught:</span> ${esc(h.topic)}</p>${h.hw ? `<p class="text-sm"><span class="text-slate-500">Homework:</span> <b>${esc(h.hw)}</b></p>` : ''}${h.classwork?`<p class="text-sm">Class work: ${esc(h.classwork)}</p>`:''}${h.books?`<p class="text-sm"><b>Bring: ${esc(h.books)}</b></p>`:''}${h.revision?`<p class="text-sm">Revision: ${esc(h.revision)}</p>`:''}</div>`).join('')}</div></div>`).join('')
       : '<div class="card text-sm text-slate-500">Nothing written in the last 10 days.</div>'}
     ${pNotes(kid)}`;
+}
+// Exam syllabus from the Teacher App (owner, 5 Nov 2026: "bachchon ko pata chale kaun kaun sa chapter aane wala hai").
+// pdata.examSyl = chapters a teacher ticked for an exam (UT-3, UT-4, Annual …), only this child's class.
+const P_EXAM = { ut1: 'UT-1', ut2: 'UT-2', hy: 'Half-Yearly', ut3: 'UT-3', ut4: 'UT-4', ann: 'Annual' };
+function pExamSyl(kid) {
+  const rows = (PD.examSyl || []).filter(r => r.cls === kid.cls); if (!rows.length) return '';
+  const order = Object.keys(P_EXAM), ids = [...new Set(rows.flatMap(r => r.ex))].sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
+  const label = id => P_EXAM[id] || ((S.exams || []).find(e => e.id === id) || {}).name || id;
+  return `<div class="card"><h3 class="h3">Exam syllabus</h3><p class="text-xs text-slate-500">Chapters the teachers have marked for each exam</p>${ids.map((id, n) => { const bySub = {};
+    rows.filter(r => r.ex.includes(id)).forEach(r => (bySub[r.subj] = bySub[r.subj] || []).push(r));
+    return `<details class="py-2 border-b border-slate-100 last:border-0" ${n === 0 ? 'open' : ''}><summary class="cursor-pointer font-semibold">${esc(label(id))}</summary>${Object.entries(bySub).map(([sb, l]) => `<div class="mt-2"><span class="subj">${esc(sb)}</span>
+      <ol class="list-decimal pl-5 text-sm mt-1">${l.map(r => `<li>${esc(r.n)}${r.book ? ` <span class="text-slate-500">· ${esc(r.book)}</span>` : ''}${r.pf || r.pt ? ` <span class="text-slate-500">(page ${esc(r.pf || '?')}${r.pt ? '–' + esc(r.pt) : ''})</span>` : ''}${r.done ? ' <span class="text-leaf">✓ taught</span>' : ''}</li>`).join('')}</ol></div>`).join('')}</details>`; }).join('')}</div>`;
 }
 // Chapter notes the teachers made in the Teacher App (pdata.notes, only this child's class, only shared notes).
 function pNotes(kid) {

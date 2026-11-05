@@ -414,6 +414,13 @@ case 'pdata': {
         // Chapter notes from the Teacher App (teacher_api.php) — only the children's own classes, only notes the teacher shared
         'notes' => array_values(array_map(fn($n) => array_intersect_key($n, array_flip(['id','cls','subj','chapter','title','body','points','words','qa','by','at'])),
                    array_filter($get('tchNote'), fn($n) => in_array($n['cls'] ?? '', $classes, true) && ($n['share'] ?? true) !== false))),
+        // Which chapters come in which exam (Teacher App → Planner → Syllabus, owner 5 Nov 2026: "bachchon ko pata chale
+        // kaun kaun sa chapter aane wala hai"). Only chapters a teacher has ticked for an exam; only the children's classes.
+        'examSyl' => (function () use ($get, $classes) { $o = [];
+            foreach ($get('syl') as $r => $y) { [$c, $sb] = array_pad(explode('|', (string)$r, 2), 2, ''); if (!in_array($c, $classes, true)) continue;
+                foreach ((array)($y['chapters'] ?? []) as $i => $ch) { $ex = array_values(array_filter((array)($ch['ex'] ?? []), 'is_string')); if (!$ex) continue;
+                    $o[] = ['cls' => $c, 'subj' => $sb, 'sr' => $i + 1, 'n' => (string)($ch['n'] ?? ''), 'book' => (string)($ch['book'] ?? ''), 'pf' => (string)($ch['pf'] ?? ''), 'pt' => (string)($ch['pt'] ?? ''), 'ex' => $ex, 'done' => $ch['done'] ?? null]; } }
+            return $o; })(),
         'clsHol' => array_values(array_filter($get('clsHol', $from), fn($h) => in_array($h['cls'] ?? '', $classes, true))),
         'notices' => $notices, 'cal' => array_values($get('cal')), 'fees' => sch_rec_get('fees', 'main'),
         // 'sent' = kis bachche ke ghar result gaya — doosre parents ko nahi dikhna chahiye
