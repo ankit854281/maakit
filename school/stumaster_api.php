@@ -156,13 +156,20 @@ case 'save': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     if ($role !== 'principal') sch_fail('Only the Principal can add or change a student.', 403);
     $sid = (string)($in['id'] ?? ''); $raw = (array)($in['f'] ?? []);
-    if (str_starts_with($sid, 'old-')) sch_fail('This child is Inactive / Left. The record is kept as it came from the old ERP and cannot be changed here.');
+    // Inactive / left child made Active again (owner, 5 Nov 2026: "kaise active honge inactive student"): the student
+    // record gets the same id 'old-<old id>', so every old receipt, fee card, mark, Full Record and photo stays linked.
+    $act = false;
+    if (str_starts_with($sid, 'old-') && !sch_rec_get('student', $sid)) {
+        if (($in['activate'] ?? false) !== true || !isset(sm_inactive()[$sid])) sch_fail('This child is Inactive / Left. Press "Make Active" first to bring the child back.');
+        $act = true;
+    }
     $f = []; foreach (SM_MAP as $name => $_) $f[$name] = sm_clean($name, $raw[$name] ?? (in_array($name, ['fee_month', 'transport_month'], true) ? [] : ''));
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
-    $old = $sid !== '' ? sch_rec_get('student', $sid) : null;
-    if ($sid !== '' && !$old) throw new InvalidArgumentException('This student is not in the ERP.');
-    [$ikey, $info] = $old ? sm_info($sid) : ['', null];
+    $old = $sid !== '' && !$act ? sch_rec_get('student', $sid) : null;
+    if ($sid !== '' && !$old && !$act) throw new InvalidArgumentException('This student is not in the ERP.');
+    if ($act && sch_rec_get('student', $sid)) throw new InvalidArgumentException('This child is already Active.');
+    [$ikey, $info] = $old || $act ? sm_info($sid) : ['', null];
     $prev = $old ? sm_fields($old, $info) : [];
     // A field is checked when it is new or changed — a value copied from the old ERP is never refused.
     $chk = fn(string $k): bool => $old === null || $f[$k] !== ($prev[$k] ?? '');
@@ -186,7 +193,7 @@ case 'save': {
             throw new InvalidArgumentException('Scholar No ' . $f['rollno'] . ' is already given to ' . ($o['name'] ?? '') . '.');
     }
     $isNew = $old === null;
-    if ($isNew) { $sid = 's' . bin2hex(random_bytes(6)); [$ikey, $info] = sm_info($sid); }
+    if ($isNew && !$act) { $sid = 's' . bin2hex(random_bytes(6)); [$ikey, $info] = sm_info($sid); }
     $s = $old ?? ['id' => $sid, 'sample' => false];
     $i = $info ?? ['student' => $sid, '_id' => substr($ikey, 9), '_created' => sch_now_ms(), '_createdBy' => 'Student Master (' . ($u['label'] ?? $uid) . ')'];
     $x = (array)($i['extra'] ?? []);
@@ -205,10 +212,15 @@ case 'save': {
         if ($info) sch_rec_put('regHist', 'studinfo|' . substr($ikey, 9) . '|' . sch_now_ms(), ['row' => $info, 'reason' => 'Edited in Student Master', 'by' => $u['label'] ?? $uid], $uid);
         sch_rec_put('student', $sid, $s, $uid);
         sch_rec_put('regRow', $ikey, $i, $uid);
-        sch_log($u, 'Students', ($isNew ? 'Added ' : 'Updated ') . $s['name'] . ' (Class ' . $s['cls'] . '-' . $s['section'] . ', Scholar No ' . $s['adm'] . ')');
+        if ($act) foreach ($db->query("SELECT r, d FROM sch_records WHERE k='regRow' AND r LIKE 'inactivestu|%' AND deleted=0")->fetchAll() as $x) {
+            $rk = (string)$x['r']; $row = json_decode((string)$x['d'], true);
+            if (is_array($row) && 'old-' . ($row['oldId'] ?? '') === $sid) { sch_rec_put('regHist', $rk . '|' . sch_now_ms(), ['row' => $row, 'reason' => 'Made Active again in Student Master', 'by' => $u['label'] ?? $uid], $uid);
+                $row['reason'] = trim((string)($row['reason'] ?? '') . ' — Made Active again on ' . date('d/m/Y') . ' by ' . ($u['label'] ?? $uid) . '.'); sch_rec_put('regRow', $rk, $row, $uid); }
+        }
+        sch_log($u, 'Students', ($act ? 'Made Active again ' : ($isNew ? 'Added ' : 'Updated ')) . $s['name'] . ' (Class ' . $s['cls'] . '-' . $s['section'] . ', Scholar No ' . $s['adm'] . ')');
     }
     $db->commit();
-    sch_json(['ok' => true, 'id' => $sid, 'added' => $isNew, 'changed' => $changed]);
+    sch_json(['ok' => true, 'id' => $sid, 'added' => $isNew && !$act, 'activated' => $act, 'changed' => $changed]);
 }
 case 'fill': {
     // The first student import carried name, class, father and phone only. The old ERP's other columns are

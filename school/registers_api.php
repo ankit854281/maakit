@@ -304,7 +304,7 @@ case 'carry': {
     $plan = []; $skipped = [];
     foreach ($rows as $r) {
         $sid = $r['student']; $due = (int)($r['due'] ?? 0);
-        if (str_starts_with((string)$sid, 'old-')) { $skipped[] = ($r['name'] ?? $sid) . ' (inactive)'; continue; }   // inactive children have no Fee Desk account
+        if (str_starts_with((string)$sid, 'old-') && !sch_rec_get('student', (string)$sid)) { $skipped[] = ($r['name'] ?? $sid) . ' (inactive)'; continue; }   // inactive children have no Fee Desk account
         $st = sch_rec_get('acctStu', $sid) ?? [];
         if ((float)($st['opening'] ?? 0) != 0) { $skipped[] = $r['name'] ?? $sid; continue; }
         if ($due === 0) continue;

@@ -28,6 +28,7 @@ $clean = function () use ($db, $mine) {
     $db->exec("DELETE FROM sch_records WHERE k='student' AND r='sm-old'");
     $db->exec("DELETE FROM sch_records WHERE k='regRow' AND r='studinfo|smoldinfo'");
     $db->exec("DELETE FROM sch_records WHERE k='regRow' AND r='inactivestu|smina'");
+    $db->exec("DELETE FROM sch_records WHERE (k='student' AND r='old-smx9') OR (k='regRow' AND r LIKE 'studinfo|%' AND d LIKE '%\"old-smx9\"%') OR (k='regHist' AND (d LIKE '%old-smx9%' OR r LIKE 'inactivestu|smina|%'))");
 };
 try {
     $clean();
@@ -79,7 +80,19 @@ try {
     [$c, $d] = smq('list', $C); $row = array_values(array_filter($d['rows'], fn($r) => $r['id'] === 'old-smx9'))[0] ?? null;
     smc($row && $row['name'] === 'Synthetic Master Left' && $row['rollno'] === 'SMX9' && $row['cstatus'] === 'Deactive' && $row['fname'] === 'Synthetic Left Father' && !empty($row['_inactive']), 'inactive child in the list ' . json_encode($row));
     [$c, $d] = smq('get', $P, null, '&id=old-smx9'); smc($c === 200 && $d['f']['clsid'] === '4th' && !empty($d['f']['_inactive']), 'inactive child opens ' . json_encode($d));
-    [$c, $d] = smq('save', $P, ['id' => 'old-smx9', 'f' => $d['f']]); smc($c === 400 && str_contains($d['error'], 'Inactive'), 'inactive child is view-only');
+    $g = $d['f'];
+    [$c, $d] = smq('save', $P, ['id' => 'old-smx9', 'f' => $g]); smc($c === 400 && str_contains($d['error'], 'Make Active'), 'inactive child is view-only until Make Active');
+    // Make Active: same id, so old records stay linked; Chairman cannot; required fields still checked
+    $g = array_merge($g, ['cstatus' => 'Active', 'scount_status' => 'Active', 'clsid' => '5th', 'secid' => 'A', 'gender' => 'Male', 'mname' => 'Synthetic Left Mother', 'fmobno' => '9811155599', 'telphno' => '9811155599']);
+    [$c] = smq('save', $C, ['id' => 'old-smx9', 'f' => $g, 'activate' => true]); smc($c === 403, 'only the Principal makes a child active');
+    [$c, $d] = smq('save', $P, ['id' => 'old-smx9', 'f' => array_merge($g, ['mname' => '']), 'activate' => true]); smc($c === 400 && str_contains($d['error'], "Mother's Name"), 'red fields checked on Make Active');
+    smc(!sch_rec_get('student', 'old-smx9'), 'refused Make Active saved nothing');
+    [$c, $d] = smq('save', $P, ['id' => 'old-smx9', 'f' => $g, 'activate' => true]); smc($c === 200 && $d['activated'] && !$d['added'] && $d['id'] === 'old-smx9', 'made active ' . json_encode($d));
+    require_once __DIR__ . '/../../school/registers_lib.php';
+    $rs = reg_students()['old-smx9'] ?? null; smc($rs && empty($rs['inactive']) && $rs['cls'] === '5th', 'now a normal student with the same id ' . json_encode($rs));
+    smc(str_contains((string)sch_rec_get('regRow', 'inactivestu|smina')['reason'], 'Made Active again'), 'register row notes it, kept');
+    [$c, $d] = smq('get', $P, null, '&id=old-smx9'); smc(empty($d['f']['_inactive']) && $d['f']['cstatus'] === 'Active', 'opens as an active student');
+    [$c, $d] = smq('save', $P, ['id' => 'old-smx9', 'f' => $g, 'activate' => true]); smc($c === 200 && !$d['activated'] && !$d['changed'], 'pressing again changes nothing ' . json_encode($d));
     [$c, , $raw] = smq('load', $P, null, '', 'api.php'); smc($c === 200 && !str_contains($raw, 'Synthetic custom') && !str_contains($raw, 'Synthetic left'), 'Full Record stays out of legacy sync');
     echo "Student Master: old ERP form fields kept in one place each, old required fields and checks, untouched old values never refused, history, photo, roles and sync privacy passed\n";
 } finally {

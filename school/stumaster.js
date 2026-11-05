@@ -136,7 +136,8 @@ function formHtml() {
     if (r[0] === 'ACAD') return `<tr><td colspan="4"><table class="acad" style="width:100%"><tr><th>Qualification</th><th>Board/University</th><th>Roll No</th><th>Institute</th><th>Year</th><th>Obt Marks</th><th>Max. Marks</th></tr><tr><td>10th</td>${['ac_name', 'ac_rollno', 'ac_inst', 'ac_year', 'ac_obtmarks', 'ac_maxmarks'].map(n => `<td><input type="text" id="f_${n}" name="${n}" value="${esc(F[n] || '')}"${META.canEdit ? '' : ' disabled'}></td>`).join('')}</tr></table></td></tr>`;
     return `<tr>${cell(r[0])}${cell(r[1])}</tr>`;
   }).join('');
-  return `<div class="sm"><h3>${MODE === 'add' ? 'Add Student' : 'Student Edit/Update'}</h3>${F._inactive ? '<p class="np" style="padding:8px 10px;border:1px solid #F0C164;background:#FFFBF0">This child is <b>Inactive / Left</b>. The record is shown as it came from the old ERP and cannot be changed here.</p>' : ''}
+  return `<div class="sm"><h3>${MODE === 'add' ? 'Add Student' : 'Student Edit/Update'}</h3>${F._inactive ? `<p class="np" style="padding:8px 10px;border:1px solid #F0C164;background:#FFFBF0">${ACT ? 'Making this child <b>Active</b> again. Check <b>Current Class</b> and <b>Section</b> for this session, fill any red field that is empty, then press <b>Submit</b>. All old receipts, fee cards, marks and the photo stay with the child.'
+      : `This child is <b>Inactive / Left</b>. The record is shown as it came from the old ERP.${CAN_ACT ? ' <button type="button" class="btn" onclick="makeActive()">Make Active</button>' : ''}`}</p>` : ''}
     <form id="smForm" onsubmit="event.preventDefault();save()"><table class="f">${rows}</table>
     <div style="text-align:center" class="np">${META.canEdit ? `<button class="btn" type="submit" ${BUSY ? 'disabled' : ''}>Submit</button>` : ''}
     ${ID ? `<a class="btn alt" href="?m=print&id=${encodeURIComponent(ID)}" target="_blank">English Print</a>` : ''} <a class="btn alt" href="?m=list">Edit/Update Student</a></div></form></div>`;
@@ -153,12 +154,16 @@ function check(f) {
   for (const n of ['fmobno', 'telphno', 'mothmobno']) if (f[n] && f[n] !== F[n] && !/^[6-9]\d{9}$/.test(f[n])) { $('f_' + n).focus(); return 'Mobile number must be 10 digits.'; }
   return '';
 }
+// Inactive / left child back in school (owner, 5 Nov 2026): the form opens for editing with Status Active.
+let ACT = false, CAN_ACT = false;
+function makeActive() { if (!CAN_ACT) return; ACT = true; META.canEdit = true; F.cstatus = 'Active'; F.scount_status = 'Active'; render(); toast('Check Class and Section, then press Submit.'); }
 async function save() {
   if (BUSY) return; const f = collect(), e = check(f); if (e) return toast(e);
   BUSY = true;
   try {
-    const d = await api('save', { id: ID, f });
-    if (d.added) { toast('Student added. Scholar No ' + f.rollno + '.'); ID = d.id; MODE = 'edit'; history.replaceState(null, '', '?m=edit&id=' + encodeURIComponent(ID)); }
+    const d = await api('save', ACT ? { id: ID, f, activate: true } : { id: ID, f });
+    if (d.activated) { toast(f.name + ' is Active again.'); ACT = false; }
+    else if (d.added) { toast('Student added. Scholar No ' + f.rollno + '.'); ID = d.id; MODE = 'edit'; history.replaceState(null, '', '?m=edit&id=' + encodeURIComponent(ID)); }
     else toast(d.changed ? 'Saved.' : 'Nothing was changed.');
     F = (await api('get', null, { id: ID })).f;
   } catch (er) { toast(er.message); }
@@ -294,7 +299,7 @@ function render() {
 async function boot() {
   try {
     META = await api('meta');
-    if ((MODE === 'edit' || MODE === 'print') && ID) { const d = await api('get', null, { id: ID }); F = d.f; PHOTO = d.photo; if (F._inactive) META.canEdit = false; }   // inactive / left child: view only
+    if ((MODE === 'edit' || MODE === 'print') && ID) { const d = await api('get', null, { id: ID }); F = d.f; PHOTO = d.photo; if (F._inactive) { CAN_ACT = META.canEdit; META.canEdit = false; } }   // inactive / left child: view only until the Principal presses Make Active
     else if (MODE === 'edit' || MODE === 'print') MODE = 'list';
     else F = blank();
     if (MODE === 'add' && !META.canEdit) MODE = 'list';
