@@ -25,7 +25,7 @@ const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: 
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
 const PARTS = [['pt', 'Pre-Test', 10], ['nb', 'Notebook', 5], ['sea', 'SEA', 5], ['te', 'Term', 80]];
 // Notes live inside Planner (Planner · Lesson plan / Syllabus / Notes) so the phone keeps six tabs (owner, 5 Nov 2026: Connect added).
-const PTABS = [['prin', 'Cross-check', 'check'], ['att', 'Classes', 'list'], ['board', 'Board', 'chart'], ['conn', 'Connect', 'chat']];   // Principal mode (owner, 5 Nov 2026)
+const PTABS = [['pdash', 'Home', 'sun'], ['prin', 'Cross-check', 'check'], ['att', 'Classes', 'list'], ['board', 'Board', 'chart'], ['conn', 'Connect', 'chat']];   // Principal mode (owner, 5 Nov 2026)
 const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['res', 'Results', 'chart'], ['conn', 'Connect', 'chat']];
 // Each tab has its own colour, like the Chairman app (owner, 5 Nov 2026): header, buttons and the page's soft wash change
 // together when the tab changes. Colours are picked to stay readable with white text and to differ clearly from each other.
@@ -39,7 +39,7 @@ const TH = {
   res:   { a: '#047857', a2: '#22B573', soft: '#D1F2E2', tint: '#EEFAF3', sh: 'rgba(4,120,87,.28)', head: 'linear-gradient(150deg,#34D399 0%,#059669 55%,#065F46 100%)', page: '#DDF4E8' }
 };
 function theme() {
-  const th = TH[TAB === 'notes' ? 'plan' : TAB === 'prin' ? 'home' : TAB] || TH.home, r = document.documentElement.style;
+  const th = TH[TAB === 'notes' ? 'plan' : TAB === 'prin' || TAB === 'pdash' ? 'home' : TAB] || TH.home, r = document.documentElement.style;
   r.setProperty('--a', th.a); r.setProperty('--a2', th.a2); r.setProperty('--soft', th.soft); r.setProperty('--tint', th.tint);
   r.setProperty('--hshadow', th.sh); r.setProperty('--head', th.head); r.setProperty('--page', th.page);
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', th.a);
@@ -334,9 +334,9 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB)) || (!pm && TAB === 'prin')) TAB = pm ? 'prin' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB)) || (!pm && (TAB === 'prin' || TAB === 'pdash'))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
@@ -515,9 +515,10 @@ function vHome() {
       ${st.stars.length ? `<button class="btn s l" style="margin-top:8px" onclick="go('conn',{m:'msg',c:${jsq(sc)},t:'praise'})">${ic('wa')} Send appreciation to parents</button>` : ''}</div>
     ${st.needs.length ? `<div class="card"><h3>Needs attention <small>${st.needs.length}</small></h3>${st.needs.map(k => `<div class="li"><span class="ph sm">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="">` : `<i>${esc(initials(k.name))}</i>`}</span><div class="t"><b>${esc(k.name)}</b><span>${esc(k.need.join(' · '))}</span></div></div>`).join('')}</div>` : ''}`;
   return `<div class="row"><h2>${fmtLong(d)}</h2></div>
-    ${teacherMotivation()}
     ${dayIdx(d) < 0 ? '<div class="ban hol">Sunday — no school today.</div>' : hol ? `<div class="ban hol"><b>Holiday:</b> ${esc(hol.title)}</div>` : ''}
     ${absentFrom(d, me()) !== null ? `<div class="ban warn">${absentFrom(d, me()) ? 'Half day today — you leave before the ' + BELLS[absentFrom(d, me())].n + ' bell.' : 'You are on leave / marked absent today.'}</div>` : ''}
+    ${myWorkCard()}
+    <div class="card quick-card"><div class="quick-grid">${quick.map(([t, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(t)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}${t === 'conn' && p.m === 'staff' && scUnread() ? `<em>${scUnread()}</em>` : ''}</button>`).join('')}</div></div>
     <div class="kp">
       <button class="k ac" onclick="go('diary')"><span>My bells today</span><b>${bells.length}</b><small>${filled} diary filled</small></button>
       <button class="k ${hwToday.length ? 'ok' : ''}" onclick="go('diary')"><span>Homework given today</span><b>${hwToday.length}</b><small>${hwDue.length ? hwDue.length + ' due today to check' : 'in my bells'}</small></button>
@@ -525,8 +526,6 @@ function vHome() {
         return `<button class="k ${a ? 'ok' : h || !isWorkDay(d) ? '' : 'go'}" onclick="go('att',{c:'${esc(c)}'})"><span>Class ${esc(c)} attendance</span><b>${a ? (n - (a.absent || []).length) + '/' + n : h ? 'Holiday' : !isWorkDay(d) ? '—' : 'Mark'}</b><small>${a ? 'Saved ' + fmtTime(a.at || Date.now()) : h ? esc(h.title) : !isWorkDay(d) ? 'No school' : 'Not marked yet'}</small></button>`; }).join('')
         : `<button class="k" onclick="go('notes')"><span>Chapter notes</span><b>${ic('cam')}</b><small>Make notes from a book photo</small></button>`}
     </div>
-    <div class="card quick-card"><div class="quick-grid">${quick.map(([t, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(t)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}${t === 'conn' && p.m === 'staff' && scUnread() ? `<em>${scUnread()}</em>` : ''}</button>`).join('')}</div></div>
-    ${myWorkCard()}
     ${boardCard()}
     ${starsHtml}
     ${back.length ? `<div class="ban warn"><div><b>${back.length} school day(s) without attendance</b> in the last 30 days (${[...new Set(back.map(x => 'Class ' + x.c))].join(', ')}).<br><button class="btn s go" style="margin-top:8px" onclick="go('att',{c:'${esc(back[0].c)}',m:'pending'})">Update them together</button></div></div>` : ''}
@@ -543,6 +542,7 @@ function vHome() {
       ${!hwToday.length && !hwDue.length ? `<div class="empty">${bells.length ? 'No homework written yet today. Fill it in Classroom after each bell.' : 'No bells today.'}</div>` : ''}</div>
     ${week.length ? `<div class="card"><h3>My week <small>${wF} of ${wN} diaries filled</small></h3><div class="weekbar">${week.map(x => `<div onclick="go('diary',{date:'${x.dd}'})"><i style="--h:${Math.round(x.f / x.n * 100)}%" class="${x.f === x.n ? 'full' : x.f ? '' : 'none'}"></i><small>${esc(new Date(x.dd + 'T00:00:00').toLocaleDateString(LOC(), { weekday: 'short' }))}</small></div>`).join('')}</div></div>` : ''}
     ${notices.length ? `<div class="card"><h3>Notices</h3>${notices.map(n => `<div class="li"><div class="t"><b>${esc(n.title)}</b><span>${fmtDate(n.date)}</span><p class="sm" style="margin:4px 0 0;white-space:pre-wrap">${esc(n.body)}</p></div></div>`).join('')}</div>` : ''}
+    ${teacherMotivation()}
     ${upcoming.length ? `<div class="card"><h3>Coming holidays</h3>${upcoming.map(h => `<div class="li"><div class="t"><b>${esc(h.t)}</b><span>${fmtDate(h.date)}${h.to && h.to !== h.date ? ' – ' + fmtDate(h.to) : ''}</span></div><span class="pill hol">Holiday</span></div>`).join('')}</div>` : ''}
     ${mine.length ? `<div class="card"><h3>My leave <small onclick="openMe()">Apply</small></h3>${mine.map(l => `<div class="li"><div class="t"><b>${fmtDate(l.from)}${l.to !== l.from ? ' – ' + fmtDate(l.to) : ''}</b><span>${esc(l.reason)}</span></div><span class="pill ${l.status === 'Approved' ? 'ok' : l.status === 'Rejected' ? 'bad' : 'warn'}">${esc(l.status)}</span></div>`).join('')}</div>` : ''}`;
 }
@@ -1765,7 +1765,7 @@ setInterval(() => { if (S && store.get('sch_token') && !document.hidden && !(TAB
 // homework checks. Each teacher with something pending gets a ready message: send it in the app (Staff chat, kept as a
 // record) or on WhatsApp. "Remind everyone" sends each pending teacher their own list in the app.
 function pMode() { return isP() && store.get('ta_mode') === 'principal'; }
-function setMode(m) { store.set('ta_mode', m); go(m === 'principal' ? 'prin' : 'home'); }
+function setMode(m) { store.set('ta_mode', m); go(m === 'principal' ? 'pdash' : 'home'); }
 const XC = {};
 function needXC(date) {
   if (XC[date]) return XC[date];

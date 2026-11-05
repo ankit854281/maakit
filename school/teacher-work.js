@@ -537,8 +537,8 @@ function myWorkCard() {
   const setup = setupOf(mine, t).filter(w => !w.done), done = today.filter(w => w.done).length;
   if (!today.length && !earlier.length && !setup.length) return '';
   const pct = today.length ? Math.round(done / today.length * 100) : 100;
-  return `<div class="card mywork"><h3>My work check <small>today ${done}/${today.length}</small></h3>
-    ${today.length ? `<div class="mw-bar"><i style="--w:${pct}%"></i></div>${today.slice().sort((a, b) => a.done - b.done).map(w => mwBtn(w)).join('')}` : `<p class="mut" style="margin:0">Nothing is due yet today.</p>`}
+  return `<div class="card mywork"><div class="mw-head"><div class="ring" style="--p:${pct}"><span>${today.length ? done + '/' + today.length : '✓'}</span></div><div><h3 style="margin:0">My work check</h3><small>${today.length ? (done === today.length ? 'All done for now' : (today.length - done) + ' thing(s) left today — tap to do it') : 'Nothing is due yet today.'}</small></div></div>
+    ${today.length ? today.slice().sort((a, b) => a.done - b.done).map(w => mwBtn(w)).join('') : ''}
     ${today.length && done === today.length && !earlier.length ? '<p class="mw-all">✓ Sab kaam poora — all of today\'s work is done.</p>' : ''}
     ${earlier.length ? `<details class="mw-su mw-old" ${earlier.length <= 3 ? 'open' : ''}><summary>Earlier this week — not done <small>${earlier.length}</small></summary>${earlier.slice(0, 20).map(([w, d]) => mwBtn(w, d)).join('')}${earlier.length > 20 ? `<p class="mut">+${earlier.length - 20} more</p>` : ''}</details>` : ''}
     ${setup.length ? `<details class="mw-su"><summary>Weekly / one-time work <small>${setup.length}</small></summary>${setup.map(w => mwBtn(w)).join('')}</details>` : ''}
