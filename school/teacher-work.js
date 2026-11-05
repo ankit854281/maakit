@@ -324,8 +324,8 @@ function chapOpen(key, i) {
 async function chapPhotos(files) {
   files = [...(files || [])].slice(0, 4); if (!files.length || !DRAFT.cht) return;
   const busy = m => { DRAFT.busy = m; DRAFT.busyK = 'cht'; render(); };
-  try { busy('Getting the phone reader ready… (the first time takes about a minute)'); await tessLoad(); let out = '';
-    for (let i = 0; i < files.length; i++) { busy(`Reading page ${i + 1} of ${files.length}…`); const img = await shrink(files[i]); const r = await window.Tesseract.recognize(img, 'eng+hin'); out += '\n' + ((r && r.data && r.data.text) || '').trim(); }
+  try { busy('Getting the phone reader ready… (the first time takes about a minute)'); const tess = await tessLoad(); let out = '';
+    for (let i = 0; i < files.length; i++) { busy(`Reading page ${i + 1} of ${files.length}…`); const img = await shrink(files[i]); const r = await tess.recognize(img, 'eng+hin', TESS_OPTIONS); out += '\n' + ((r && r.data && r.data.text) || '').trim(); }
     DRAFT.cht.text = ((DRAFT.cht.text || '').trim() + '\n' + out.trim()).trim(); toast('Pages read. Please check the text, then Save.');
   } catch (e) { toast(e.message || 'The photo could not be read.'); } finally { DRAFT.busy = null; render(); }
 }

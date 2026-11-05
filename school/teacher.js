@@ -1254,8 +1254,33 @@ function shrink(file) {
       cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url); let q = 0.82, out = cv.toDataURL('image/jpeg', q); while (out.length > 1900000 && q > 0.4) { q -= 0.12; out = cv.toDataURL('image/jpeg', q); } ok(out); };
     img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('This photo could not be opened. Please take it again.')); }; img.src = url; });
 }
+const TESS_ROOT = new URL('vendor/tesseract/', document.baseURI).href;
+const TESS_OPTIONS = {
+  workerPath: TESS_ROOT + 'worker.min.js',
+  corePath: TESS_ROOT,
+  langPath: TESS_ROOT.slice(0, -1),
+  workerBlobURL: false,
+  gzip: false, // Apache denies direct requests for .gz files.
+};
+const TESS_ERROR = 'Phone photo nahi padh paaya — text type karein ya school AI chalu karwayein';
 let TESS = null;
-function tessLoad() { if (window.Tesseract) return Promise.resolve(); return TESS = TESS || new Promise((ok, bad) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; sc.onload = ok; sc.onerror = () => { TESS = null; bad(new Error('The phone reader could not load. Check the internet, or type it.')); }; document.head.appendChild(sc); }); }
+function tessLoad() {
+  if (typeof window.Tesseract?.recognize === 'function') return Promise.resolve(window.Tesseract);
+  if (!TESS) {
+    TESS = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      const fail = () => { script.remove(); reject(new Error(TESS_ERROR)); };
+      script.src = TESS_ROOT + 'tesseract.min.js';
+      script.onerror = fail;
+      script.onload = () => {
+        if (typeof window.Tesseract?.recognize !== 'function') return fail();
+        resolve(window.Tesseract);
+      };
+      document.head.appendChild(script);
+    }).catch(error => { TESS = null; throw error; });
+  }
+  return TESS;
+}
 async function readPhotos(mode, c, s, files, busyK) {
   files = [...(files || [])].slice(0, 4); if (!files.length) return null;
   const busy = m => { DRAFT.busy = m; DRAFT.busyK = busyK; render(); };
@@ -1263,8 +1288,8 @@ async function readPhotos(mode, c, s, files, busyK) {
     busy('Preparing the photo…'); const images = []; for (const f of files) images.push(await shrink(f));
     let res = null;
     if (AI !== false) { busy('Reading the photo with AI… (10–40 seconds)'); try { res = await api('scan_api.php?a=read', { mode, cls: c, subj: s, images }); res.via = 'ai'; } catch (e) { if (!e.noAi) throw e; AI = false; } }
-    if (!res) { busy('Your phone is reading the photo… (the first time takes about a minute)'); await tessLoad(); let text = '';
-      for (let i = 0; i < images.length; i++) { busy(`Your phone is reading photo ${i + 1} of ${images.length}…`); const r = await window.Tesseract.recognize(images[i], 'eng+hin'); text += '\n' + ((r && r.data && r.data.text) || ''); }
+    if (!res) { busy('Your phone is reading the photo… (the first time takes about a minute)'); const tess = await tessLoad(); let text = '';
+      for (let i = 0; i < images.length; i++) { busy(`Your phone is reading photo ${i + 1} of ${images.length}…`); const r = await tess.recognize(images[i], 'eng+hin', TESS_OPTIONS); text += '\n' + ((r && r.data && r.data.text) || ''); }
       res = { via: 'phone', text }; }
     return res;
   } catch (e) { toast(e.message); return null; } finally { DRAFT.busy = null; render(); }
@@ -1339,8 +1364,8 @@ async function noteRead(c, s) {
     let res = null;
     if (AI !== false) { busy('AI is reading the pages and writing notes… (20–60 seconds)'); try { res = await api('scan_api.php?a=read', { mode: 'notes', cls: c, subj: s, images: imgs }); } catch (e) { if (!e.noAi) throw e; AI = false; } }
     if (res) { if (res.chapter && !n.chapter) n.chapter = res.chapter; n.body = res.summary || ''; n.points = res.points || []; n.words = res.words || []; n.qa = res.qa || []; n.via = 'ai'; }
-    else { busy('The school AI is off — your phone is reading the text (about a minute)…'); await tessLoad(); let text = '';
-      for (let i = 0; i < imgs.length; i++) { busy(`Your phone is reading page ${i + 1} of ${imgs.length}…`); const r = await window.Tesseract.recognize(imgs[i], 'eng+hin'); text += ((r && r.data && r.data.text) || '') + '\n'; }
+    else { busy('The school AI is off — your phone is reading the text (about a minute)…'); const tess = await tessLoad(); let text = '';
+      for (let i = 0; i < imgs.length; i++) { busy(`Your phone is reading page ${i + 1} of ${imgs.length}…`); const r = await tess.recognize(imgs[i], 'eng+hin', TESS_OPTIONS); text += ((r && r.data && r.data.text) || '') + '\n'; }
       n.body = text.replace(/\n{3,}/g, '\n\n').trim().slice(0, 18000); n.via = 'phone'; }
     DRAFT.note.photos = []; toast('Draft ready. Read it once, correct it, then Save.');
   } catch (e) { toast(e.message); } finally { DRAFT.busy = null; render(); }

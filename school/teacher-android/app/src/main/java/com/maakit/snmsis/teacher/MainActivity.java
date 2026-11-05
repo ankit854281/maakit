@@ -123,7 +123,7 @@ public class MainActivity extends Activity {
                 if (trusted(uri)) return false;
                 if (!request.isForMainFrame()) return true;
                 String scheme = uri.getScheme();
-                if ("https".equals(scheme) || "tel".equals(scheme) || "mailto".equals(scheme)) {
+                if ("tel".equals(scheme) || "mailto".equals(scheme)) {
                     try { startActivity(new Intent("tel".equals(scheme) ? Intent.ACTION_DIAL : Intent.ACTION_VIEW, uri)); }
                     catch (android.content.ActivityNotFoundException e) { toast("No app is available to open this link."); }
                 }
@@ -134,6 +134,11 @@ public class MainActivity extends Activity {
                 return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));
             }
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap icon) {
+                if (!trusted(Uri.parse(url))) {
+                    view.stopLoading();
+                    showError();
+                    return;
+                }
                 failed = false;
                 error.setVisibility(View.GONE);
                 web.setVisibility(View.VISIBLE);

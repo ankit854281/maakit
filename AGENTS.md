@@ -839,6 +839,7 @@ Teacher App follow-up (3 November 2026):
 - `teacher_api.php?a=overview` is Principal/Chairman read-only, returns class holiday and chapter note metadata only; never put `tchNote` in legacy load.
 - Web ERP `tnotes` fetches the full note only on explicit click, with Principal/Chairman authentication checked on the server.
 - `school/teacher-android/` wraps the Teacher PWA; WebChromeClient returns selected or captured photos via FileProvider.
+- Teacher photo OCR (syllabus/plan, notes and chapter text) uses same-origin Tesseract.js 5.1.1 with English and Hindi data under `school/vendor/tesseract/`; the APK blocks external websites.
 - GitHub Action `teacher-apk.yml` publishes `snmsis-teacher.apk` to release tag `teacher-android-v1`; the owner still must trigger website deployment himself.
 
 Teacher APK website download (3 November 2026): GitHub Action `.github/workflows/teacher-apk-domain.yml` downloads the *released* verified APK and commits it as `school/downloads/snmsis-teacher.apk` (do not rebuild/re-sign). Web ERP Teacher App links to this same-domain file; it becomes live only after Ankit runs the private `update.php` deploy himself. No passwords or private keys are committed.
