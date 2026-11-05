@@ -35,6 +35,7 @@
 //   POST ?a=rec {sid,rec}                  class teacher: student record (diary/ID/book/dress/WhatsApp given?) + reading/learning levels
 //   POST ?a=remark {sid,type,cat,text}     any teacher of the class: complaint or good thing (kept as a record)
 //   POST ?a=delremark {id}                 the writer / Principal
+//   GET  ?a=crosscheck&date=              Principal: which classes filled the daily check, which homework checks were saved
 //
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
 //         tchNote (kept OUT of legacy load/sync — prefix "tch" in inc.php; parents get
@@ -552,6 +553,21 @@ case 'delremark': {
     sch_rec_del('tchRemark', $id, $uid);
     sch_log($u, 'Student remark', 'Deleted a remark about ' . ((sch_rec_get('student', (string)$old['sid']) ?? [])['name'] ?? $old['sid']) . ': ' . $old['text']);
     sch_json(['ok' => true]);
+}
+
+// ---- Principal cross-check (owner, 5 Nov 2026: "Principal Sir login karen to upar Teacher / Principal switch — jo nahi
+// kiye hain unka cross-check aur message bhejne ka option"). Attendance and diary are already in the app's data;
+// this adds the daily check (tchKit) and homework checks (tchChk) of one day.
+case 'crosscheck': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    if (!in_array($role, ['principal', 'chairman'], true)) sch_fail('Only the Principal can see the cross-check.', 403);
+    $date = (string)($_GET['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Choose the date.');
+    $kit = []; $chk = [];
+    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('tchKit','tchChk') AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$date, date('Y-m-d', strtotime($date . ' +1 day'))]);
+    foreach ($q as $row) { $pp = explode('|', (string)$row['r']); if (($pp[0] ?? '') !== $date) continue; $d = json_decode((string)$row['d'], true) ?: [];
+        if ($row['k'] === 'tchKit') $kit[$pp[1]] = ['by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
+        else $chk[] = ['cls' => $pp[1] ?? '', 'subj' => $pp[2] ?? '', 'tid' => (string)($d['tid'] ?? ''), 'by' => (string)($d['by'] ?? '')]; }
+    sch_json(['ok' => true, 'date' => $date, 'kit' => (object)$kit, 'chk' => $chk]);
 }
 
 case 'notes': {

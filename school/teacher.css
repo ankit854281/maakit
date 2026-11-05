@@ -462,3 +462,11 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .tli{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:12px;animation:rise .3s both}.tli.good{background:var(--okbg)}.tli.bad{background:#FFF4E5}
 .tli i{font-style:normal;font-size:16px}.tli>div{flex:1;min-width:0}.tli b{display:block;font-size:12.5px;font-weight:600}.tli small{font-size:10px;color:var(--muted)}
 .tli .x{border:0;background:none;color:var(--muted);font-size:13px;padding:2px 4px}
+/* ---- 5 Nov 2026 (3): Principal mode switch + cross-check ---- */
+.mode-sw{display:inline-flex;margin-top:5px;background:rgba(255,255,255,.18);border-radius:999px;padding:2px}.mode-sw button{border:0;background:none;color:#fff;font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:999px;opacity:.8}
+.mode-sw button.on{background:#fff;color:var(--a);opacity:1;animation:popIn .25s}
+.tabs.t3{grid-template-columns:repeat(3,1fr)}
+.xc-cls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.xc-cls div{border-radius:11px;padding:7px 8px;animation:popIn .35s both}.xc-cls b{display:block;font-size:13px}.xc-cls small{display:block;font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xc-cls span{font-size:9.5px;font-weight:700}
+.xc-cls .ok{background:var(--okbg)}.xc-cls .ok span{color:var(--ok)}.xc-cls .no{background:var(--badbg)}.xc-cls .no span{color:var(--bad)}
+.xc-t b{font-size:13px}.xc-t.pend{border-left:4px solid var(--bad)}.xc-t.done{border-left:4px solid var(--ok)}
+.xc-l{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}.xc-l li{font-size:11.5px;padding:5px 8px;border-radius:8px;background:#FFF4E5;color:#92400E}.xc-l li.att{background:var(--badbg);color:#831843}.xc-l li.kit{background:#F6F0FE;color:#5B21B6}

@@ -25,6 +25,7 @@ const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: 
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
 const PARTS = [['pt', 'Pre-Test', 10], ['nb', 'Notebook', 5], ['sea', 'SEA', 5], ['te', 'Term', 80]];
 // Notes live inside Planner (Planner · Lesson plan / Syllabus / Notes) so the phone keeps six tabs (owner, 5 Nov 2026: Connect added).
+const PTABS = [['prin', 'Cross-check', 'check'], ['att', 'Classes', 'list'], ['conn', 'Connect', 'chat']];   // Principal mode (owner, 5 Nov 2026)
 const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['res', 'Results', 'chart'], ['conn', 'Connect', 'chat']];
 // Each tab has its own colour, like the Chairman app (owner, 5 Nov 2026): header, buttons and the page's soft wash change
 // together when the tab changes. Colours are picked to stay readable with white text and to differ clearly from each other.
@@ -38,7 +39,7 @@ const TH = {
   res:   { a: '#047857', a2: '#22B573', soft: '#D1F2E2', tint: '#EEFAF3', sh: 'rgba(4,120,87,.28)', head: 'linear-gradient(150deg,#34D399 0%,#059669 55%,#065F46 100%)', page: '#DDF4E8' }
 };
 function theme() {
-  const th = TH[TAB === 'notes' ? 'plan' : TAB] || TH.home, r = document.documentElement.style;
+  const th = TH[TAB === 'notes' ? 'plan' : TAB === 'prin' ? 'home' : TAB] || TH.home, r = document.documentElement.style;
   r.setProperty('--a', th.a); r.setProperty('--a2', th.a2); r.setProperty('--soft', th.soft); r.setProperty('--tint', th.tint);
   r.setProperty('--hshadow', th.sh); r.setProperty('--head', th.head); r.setProperty('--page', th.page);
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', th.a);
@@ -302,8 +303,9 @@ function monthLoad(date) {
   while (d < date) { if (staffAbsent(d).length) arrangementBase(d, {}).forEach(s => { if (s.sub) out[s.sub] = (out[s.sub] || 0) + 1; }); d = addDays(d, 1); }
   return LOADC[date] = out;
 }
-function myBells(date) {
-  const tid = me(), d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
+function myBells(date) { return bellsOf(me(), date); }
+function bellsOf(tid, date) {
+  const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const from = absentFrom(date, tid), out = [];
   BELLS.forEach((b, i) => { if (from !== null && i >= from) return; const a = teacherAt(tid, d, i); if (a && !examBlocks(date, a.c) && !clsHolOn(date, a.c)) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
   if (staffAbsent(date).length) arrangementBase(date, monthLoad(date)).filter(s => s.sub === tid && !clsHolOn(date, s.cls)).forEach(s => out.push({ bell: s.bell, cls: s.cls, subj: s.subj, arr: true, for: s.absent }));
@@ -332,16 +334,17 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn };
-  if (!views[TAB]) TAB = 'home'; theme();
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin };
+  const pm = pMode(), tabs = pm ? PTABS : TABS;
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB)) || (!pm && TAB === 'prin')) TAB = pm ? 'prin' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
-  const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) ? 0 : 1), 0);
+  const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
-  const dot = { att: dueAtt, diary: dueDiary, conn: scUnread() }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
-  $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b></div>
+  const dot = { att: dueAtt, diary: dueDiary, conn: scUnread(), prin: pm ? prinPendingCount() : 0 }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
+  $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b>${isP() ? `<div class="mode-sw" role="group" aria-label="Mode"><button class="${pm ? '' : 'on'}" onclick="setMode('teacher')">Teacher</button><button class="${pm ? 'on' : ''}" onclick="setMode('principal')">Principal</button></div>` : ''}</div>
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
-    <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
+    <div class="tabs${pm ? ' t3' : ''}">${tabs.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
   keepRestore(); scScroll();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
@@ -1677,6 +1680,88 @@ setInterval(async () => {
   if (TAB === 'conn' && P.m === 'staff' && P.room && SCR[P.room]) { const n = SCR[P.room].length; await scLoad(P.room); if (SCR[P.room].length !== n) { softRender(); scScroll(); } }
 }, 15000);
 setInterval(() => { if (S && store.get('sch_token') && !document.hidden && !(TAB === 'conn' && P.m === 'staff')) scLoad(null).then(() => softRender()); }, 60000);
+
+// ---------------------------------------------------------------- PRINCIPAL MODE (owner, 5 Nov 2026)
+// "Principal Sir login karen to upar Teacher / Principal switch, aur jo nahi kiye hain unka cross-check + message".
+// Cross-check of one day: attendance of every class, diary of every bell that is over, daily check of every class,
+// homework checks. Each teacher with something pending gets a ready message: send it in the app (Staff chat, kept as a
+// record) or on WhatsApp. "Remind everyone" sends each pending teacher their own list in the app.
+function pMode() { return isP() && store.get('ta_mode') === 'principal'; }
+function setMode(m) { store.set('ta_mode', m); go(m === 'principal' ? 'prin' : 'home'); }
+const XC = {};
+function needXC(date) {
+  if (XC[date]) return XC[date];
+  XC[date] = { loading: true };
+  api('teacher_api.php?a=crosscheck&date=' + date).then(r => { XC[date] = r; softRender(); }).catch(e => { XC[date] = { err: e.message }; softRender(); });
+  return XC[date];
+}
+function prinData(date) {
+  const work = isWorkDay(date), X = XC[date] && !XC[date].loading && !XC[date].err ? XC[date] : null, cutoff = date < todayISO() || nowMin() >= toMin(S.settings.attendanceCutoff || '09:30');
+  const away = new Set(staffAbsent(date)), per = {};
+  const add = (t, kind, txt, done) => { const o = per[t] = per[t] || { t, pend: [], done: 0 }; if (done) o.done++; else o.pend.push({ kind, txt }); };
+  if (work) (S.classes || []).forEach(k => {
+    if (!k.ct || !S.teachers[k.ct] || !isWorkDay(date, k.c) || !studentsOf(k.c).length) return;
+    if (away.has(k.ct)) return;
+    if (cutoff) add(k.ct, 'att', 'Class ' + k.c + ' attendance', !!attOf(date, k.c));
+    if (X) add(k.ct, 'kit', 'Class ' + k.c + ' daily check (diary · ID · book · dress)', !!X.kit[k.c]);
+  });
+  if (work) Object.keys(S.teachers).forEach(t => { if (away.has(t)) return;
+    bellsOf(t, date).forEach(b => { if (!bellOver(date, b.bell)) return; const e = ((S.diary[date] || {})[t] || {})[b.bell];
+      add(t, 'diary', 'Diary · ' + BELLS[b.bell].n + ' bell · Class ' + b.cls + ' ' + b.subj.replace(/\s*\(optional\)/i, ''), !!e); }); });
+  return { per, away, X, work };
+}
+function prinPendingCount() { try { const d = prinData(todayISO()); return Object.values(d.per).filter(o => o.pend.length).length; } catch (e) { return 0; } }
+function prinMsg(o, date) {
+  const n = T(o.t).name;
+  return `Namaste ${n},\n${date === todayISO() ? 'Aaj' : fmtLong(date) + ' ko'} ke yeh kaam app mein baaki hain:\n${o.pend.map(p => '• ' + p.txt).join('\n')}\nKripya jaldi poora kar dein. Dhanyavaad.\n— ${myName()}, Principal`;
+}
+function vPrin() {
+  const t = todayISO(), date = P.date && P.date <= t ? P.date : t, f = P.f || 'pend';
+  needXC(date);
+  const D = prinData(date), all = Object.keys(S.teachers).filter(x => x !== me()).map(x => D.per[x] || { t: x, pend: [], done: 0 });
+  const pendT = all.filter(o => o.pend.length).sort((a, b) => b.pend.length - a.pend.length);
+  const cls = (S.classes || []).filter(k => studentsOf(k.c).length && isWorkDay(date, k.c));
+  const attDone = cls.filter(k => attOf(date, k.c)).length, kitDone = D.X ? cls.filter(k => D.X.kit[k.c]).length : null;
+  let bellsAll = 0, bellsDone = 0; Object.keys(S.teachers).forEach(x => { if (D.away.has(x)) return; bellsOf(x, date).forEach(b => { if (!bellOver(date, b.bell)) return; bellsAll++; if (((S.diary[date] || {})[x] || {})[b.bell]) bellsDone++; }); });
+  const shown = f === 'pend' ? pendT : all.slice().sort((a, b) => b.pend.length - a.pend.length || T(a.t).name.localeCompare(T(b.t).name));
+  const nav = `<div class="datebar"><button class="btn s w" onclick="go('prin',{date:'${addDays(date, -1)}',f:'${f}'})" aria-label="Previous day">${ic('back')}</button>
+    <label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="go('prin',{date:this.value,f:'${f}'})"></label>
+    <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="go('prin',{date:'${addDays(date, 1)}',f:'${f}'})" aria-label="Next day">${ic('next')}</button></div>`;
+  if (!D.work) return nav + `<div class="ban hol">${dayIdx(date) < 0 ? 'Sunday' : 'Holiday — ' + esc((holidayOn(date) || {}).title || '')}. Nothing to check.</div>`;
+  const kpi = (l, a, b, go2) => `<button class="k ${b && a === b ? 'ok' : a < b ? 'go' : ''}" ${go2 ? `onclick="${go2}"` : ''}><span>${l}</span><b>${b === null ? '…' : a + '/' + b}</b><small>${b === null ? 'loading' : a === b ? 'all done' : (b - a) + ' not done'}</small></button>`;
+  return nav + `<div class="kp">${kpi('Attendance', attDone, cls.length)}${kpi('Diary (bells over)', bellsDone, bellsAll)}${kpi('Daily check', kitDone ?? 0, D.X ? cls.length : null)}
+      <button class="k ${pendT.length ? 'bad' : 'ok'}"><span>Teachers with pending work</span><b>${pendT.length}</b><small>${D.away.size ? D.away.size + ' on leave / absent' : 'nobody on leave'}</small></button></div>
+    ${D.X && D.X.chk.length ? `<div class="ban ok"><div><b>${D.X.chk.length} homework check(s)</b> saved: ${[...new Set(D.X.chk.map(c => c.cls + ' ' + c.subj))].slice(0, 6).map(esc).join(', ')}${D.X.chk.length > 6 ? '…' : ''}</div></div>` : ''}
+    <div class="card"><h3>Classes <small>${attDone}/${cls.length} attendance</small></h3><div class="xc-cls">${cls.map(k => { const a = attOf(date, k.c), kt = D.X && D.X.kit[k.c];
+      return `<div class="${a ? 'ok' : 'no'}"><b>${esc(k.c)}</b><small>${esc((T(k.ct).name || '').replace(/\s*(Sir|Ma'am)$/, ''))}</small><span>${a ? '✓ Att.' : '✕ Att.'} ${D.X ? (kt ? '· ✓ Check' : '· ✕ Check') : ''}</span></div>`; }).join('')}</div></div>
+    ${seg([['pend', 'Not done (' + pendT.length + ')'], ['all', 'All teachers']], f, `(k=>go('prin',{date:'${date}',f:k}))`)}
+    ${pendT.length ? `<button class="btn go full" onclick="prinRemindAll('${date}')">${ic('chat')} Remind all ${pendT.length} teacher(s) in the app</button>` : `<div class="ban ok"><div><b>Sab kaam poora hai.</b> Every teacher has done today's work so far.</div></div>`}
+    ${shown.map(o => { const tt = T(o.t), on = D.away.has(o.t);
+      return `<div class="card xc-t ${o.pend.length ? 'pend' : 'done'}"><div class="row"><span class="ph sm"><i>${esc(initials(tt.name))}</i></span><div style="flex:1;min-width:0"><b>${esc(tt.name)}</b><small class="mut" style="display:block">${on ? 'On leave / absent today' : o.pend.length ? o.pend.length + ' pending · ' + o.done + ' done' : o.done ? 'All ' + o.done + ' done ✓' : 'Nothing due yet'}</small></div>
+        ${o.pend.length ? `<button class="btn s go" onclick="prinMsgOpen(${jsq(o.t)},'${date}')">Message</button>` : ''}</div>
+        ${o.pend.length ? `<ul class="xc-l">${o.pend.map(p => `<li class="${p.kind}">${esc(p.txt)}</li>`).join('')}</ul>` : ''}</div>`; }).join('')}
+    <p class="mut">Attendance is checked after ${esc(S.settings.attendanceCutoff || '09:30')}; a diary only after its bell is over. Teachers on approved leave or marked absent are left out.</p>`;
+}
+function prinMsgOpen(t, date) {
+  const D = prinData(date), o = D.per[t]; if (!o) return; const tt = T(t), msg = prinMsg(o, date);
+  SHEET = () => `<h2>Message · ${esc(tt.name)}</h2><p class="mut" style="margin:0">${o.pend.length} thing(s) pending</p>
+    <textarea id="pmT" class="inp" rows="8" maxlength="1500">${esc(msg)}</textarea>
+    <div class="btns"><button class="btn go" onclick="prinSend(${jsq(t)})">${ic('chat')} Send in app</button>${tt.phone ? `<a class="btn wa" target="_blank" rel="noopener" href="${wa(tt.phone, msg)}" onclick="this.href=wa(${jsq(tt.phone)},$('pmT').value)">${ic('wa')} WhatsApp</a>` : '<span class="mut">No WhatsApp number saved for this teacher (web ERP → Settings).</span>'}</div>
+    <p class="mut" style="margin:0">“Send in app” goes to the teacher's Staff chat and stays as a record.</p>`;
+  render();
+}
+async function prinSend(t) {
+  const text = (($('pmT') || {}).value || '').trim(); if (!text) return toast('Write the message.');
+  try { const room = scDm('P', t), r = await api('teacher_api.php?a=staffchat', { room, text }); (SCR[room] = SCR[room] || []).push(r.msg); SHEET = null; toast('Message sent to ' + T(t).name + '.'); render(); }
+  catch (e) { toast(e.message); }
+}
+async function prinRemindAll(date) {
+  const D = prinData(date), list = Object.values(D.per).filter(o => o.pend.length && o.t !== me());
+  if (!list.length || !confirm('Send each of these ' + list.length + ' teachers their own pending list in the app?')) return;
+  let n = 0;
+  for (const o of list) { try { await api('teacher_api.php?a=staffchat', { room: scDm('P', o.t), text: prinMsg(o, date) }); n++; } catch (e) { toast(e.message); break; } }
+  toast(n + ' reminder(s) sent in the app.'); SC = null; render();
+}
 
 // ---------------------------------------------------------------- ME (leave, holidays, PIN)
 function openMe() {
