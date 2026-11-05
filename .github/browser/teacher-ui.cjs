@@ -14,7 +14,8 @@ const path = require('node:path');
   const errors = [], failures = [];
   page.on('pageerror', e => errors.push('Page: ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/net::ERR_INTERNET_DISCONNECTED/.test(m.text())) errors.push('Console: ' + m.text()); });
-  page.on('dialog', async d => { await d.accept(); });
+  let answerDialog = d => d.accept();
+  page.on('dialog', d => answerDialog(d));
   const shot = async (n) => page.screenshot({ path: path.join(dir, n + '.png'), fullPage: true });
   const pause = async (ms = 400) => page.waitForTimeout(ms);
   const run = async (name, fn) => {
@@ -378,6 +379,94 @@ const path = require('node:path');
     assert.match(out, /Section A — Fill in the blanks/);
     assert.match(out, /What is evaporation\?|How are clouds formed\?|Why does it rain\?/, 'questions come from the chapter text');
     assert.match(out, /Chapters: CI Water Cycle, CI Rivers of India/);
+  });
+  await run('27-Syllabus-contents-photo-rows', async () => {
+    const route = '**/scan_api.php?a=read';
+    let response = { ok: false, noAi: true };
+    await page.route(route, r => r.fulfill({ json: response }));
+    try {
+      await page.evaluate(() => {
+        DRAFT.sb = null;
+        go('plan', { m: 'syl' });
+        AI = true;
+        window.Tesseract = { recognize: async () => ({ data: { text: [
+          'Foreword ii', 'About this Book v', 'Preface iii', 'Contents', 'Chapter', '§ Chapter', 'Unit',
+          'Answer Key 81', 'Glossary 90', 'Appendix 92', 'Introduction', 'प्रस्तावना ii', 'आमुख iii',
+          'विषय-सूची', 'उत्तरमाला 98', '& f 3 The River .... 2', 'st A New Day ........ 9',
+          'Chapter 3: Water & Soil 14', 'hj A Walk', 'Lesson 5: Birds … २२', 'पहला पाठ vi'
+        ].join('\n') } }) };
+      });
+      await page.locator('#sylBk').fill('CI Photo Book');
+      const upload = () => page.locator('input[type=file]').setInputFiles({
+        name: 'contents.png', mimeType: 'image/png',
+        buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aXcAAAAASUVORK5CYII=', 'base64')
+      });
+      await upload();
+      await page.getByText('Phone read the photo. Please check the rows before saving.').waitFor();
+      assert.equal(await page.locator('#scL').count(), 0);
+      const draft = () => page.evaluate(() => DRAFT.sb.rows.map(r => [r.n, r.pf, r.pt, r.uncertain]));
+      assert.deepEqual(await draft(), [
+        ['The River', '2', '8', true], ['A New Day', '9', '13', true], ['Water & Soil', '14', '', true],
+        ['A Walk', '', '21', true], ['Birds', '22', '', false], ['पहला पाठ', 'vi', '', false]
+      ]);
+      assert.equal(await page.locator('.syi.review').count(), 4);
+      await page.getByRole('button', { name: 'Remove row 4', exact: true }).click();
+      assert.deepEqual((await draft())[2].slice(0, 3), ['Water & Soil', '14', '21']);
+      await page.locator('.syi').nth(0).getByRole('textbox', { name: 'Chapter name' }).fill('The Big River');
+      await page.locator('.syi').nth(1).getByRole('textbox', { name: 'From page' }).fill('10');
+      assert.equal(await page.locator('.syi').first().getByRole('textbox', { name: 'To page' }).inputValue(), '9');
+      assert.ok(await page.locator('.syi').first().evaluate(el => {
+        const row = el.getBoundingClientRect();
+        return innerWidth === 390 && row.right <= innerWidth &&
+          [...el.children].every(c => c.getBoundingClientRect().right <= row.right + 1);
+      }));
+      await page.getByRole('button', { name: 'Save chapters of CI Photo Book' }).click();
+      await page.locator('.syr').filter({ hasText: 'The Big River' }).waitFor();
+
+      response = { ok: true, uncertain: false, chapters: [
+        { name: 'Foreword', page: 'i' }, { name: 'CI Roman Start', page: 'ii', topics: ['A topic'] },
+        { name: 'CI Roman Next', page: 'v', topics: [] }, { name: 'CI Page Missing', page: '', topics: [] }
+      ] };
+      await page.evaluate(() => { AI = true; });
+      await page.locator('#sylBk').fill('CI AI Book');
+      await upload();
+      await page.getByText('AI read the photo. Please check the rows before saving.').waitFor();
+      assert.deepEqual(await draft(), [
+        ['CI Roman Start', 'ii', 'iv', false], ['CI Roman Next', 'v', '', false], ['CI Page Missing', '', '', true]
+      ]);
+      await page.getByRole('button', { name: 'Save chapters of CI AI Book' }).click();
+      const saved = await page.evaluate(() => S.syl[DRAFT.sylHint].chapters.find(ch => ch.n === 'CI Roman Start'));
+      assert.deepEqual([saved.book, saved.pf, saved.pt, saved.topics], ['CI AI Book', 'ii', 'iv', ['A topic']]);
+    } finally {
+      await page.unroute(route);
+      await page.evaluate(() => { delete window.Tesseract; AI = null; });
+    }
+  });
+  await run('28-Syllabus-remove-per-book', async () => {
+    const reader = page.locator('.sybk').filter({ hasText: 'CI Reader' });
+    const ai = page.locator('.sybk').filter({ hasText: 'CI AI Book' });
+    const prompts = [];
+    try {
+      await reader.getByRole('button', { name: 'Select', exact: true }).click();
+      await reader.getByRole('checkbox', { name: 'CI Water Cycle' }).check();
+      answerDialog = d => { prompts.push(d.message()); return d.dismiss(); };
+      await reader.getByRole('button', { name: 'Remove selected' }).click();
+      assert.match(prompts[0], /saved chapter text/);
+      assert.equal(await reader.getByRole('checkbox', { name: 'CI Water Cycle' }).count(), 1);
+      answerDialog = d => { prompts.push(d.message()); return d.accept(); };
+      await reader.getByRole('button', { name: 'Remove selected' }).click();
+      assert.equal(await reader.getByText('CI Water Cycle').count(), 0);
+      assert.match(await reader.locator('.syr').filter({ hasText: 'CI Rivers of India' }).innerText(), /Page 10–18/);
+      assert.equal(await reader.locator('.syr').filter({ hasText: 'CI Rivers of India' }).locator('.exb.on').filter({ hasText: 'UT-3' }).count(), 1);
+      assert.ok(await page.evaluate(() => !!chapRec(DRAFT.sylHint, 'CI Water Cycle')), 'saved text stays available');
+      await ai.getByRole('button', { name: 'Select', exact: true }).click();
+      await ai.getByRole('button', { name: 'Remove all chapters of this book' }).click();
+      assert.match(prompts[2], /Remove all chapters of this book/);
+      assert.equal(await ai.count(), 0);
+      assert.equal(await reader.locator('.syr').count(), 2);
+    } finally {
+      answerDialog = d => d.accept();
+    }
   });
   await run('25-My-work-check', async () => {
     await page.evaluate(() => { MYX = null; go('home'); });

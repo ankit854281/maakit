@@ -203,10 +203,11 @@ function chapTopics(key, name) {
 function sylBooks(y) { const b = []; (y.chapters || []).forEach(ch => { const k = ch.book || ''; if (!b.includes(k)) b.push(k); }); return b; }
 function vSyl(list) {
   const key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s), [c, s] = key.split('|'), y = S.syl[key] || { chapters: [] };
-  const C = needChapTexts(key), done = y.chapters.filter(x => x.done).length, sc = DRAFT.sc && DRAFT.sc.key === key ? DRAFT.sc : null;
+  const C = needChapTexts(key), done = y.chapters.filter(x => x.done).length;
   const showPast = !!P.past, tags = examTags(c).filter(t => showPast || !examPast(t) || y.chapters.some(ch => (ch.ex || []).includes(t.id)));
   if (!DRAFT.sx || DRAFT.sx.key !== key) DRAFT.sx = { key, ex: y.chapters.map(ch => (ch.ex || []).slice()), changed: 0 };
   const X = DRAFT.sx, f = P.f || '', books = sylBooks(y), withText = y.chapters.filter(ch => chapRec(key, ch.n)).length;
+  const select = DRAFT.sylSelect?.key === key ? DRAFT.sylSelect : null;
   const cnt = id => X.ex.filter(e => (e || []).includes(id)).length;
   const row = (ch, i, sr) => { if (f && !(X.ex[i] || []).includes(f)) return ''; const tx = chapRec(key, ch.n);
     return `<div class="syr ${ch.done ? 'dn' : ''}"><label class="syd" aria-label="Finished"><input type="checkbox" ${ch.done ? 'checked' : ''} onchange="sylTick(${jsq(key)},${i},this.checked)"></label>
@@ -214,9 +215,14 @@ function vSyl(list) {
       <button type="button" class="txb ${tx ? 'on' : ''}" onclick="chapOpen(${jsq(key)},${i})" aria-label="Chapter text">${tx ? '📄 ' + (tx.words > 999 ? Math.round(tx.words / 100) / 10 + 'k' : tx.words) : '📄 +'}</button>
       <div class="syx">${tags.map(t => `<button type="button" class="exb ${(X.ex[i] || []).includes(t.id) ? 'on' : ''}" onclick="sylExTap(${i},'${esc(t.id)}')">${esc(t.l)}</button>`).join('')}</div></div>`; };
   const groups = books.map(b => { const idx = y.chapters.map((ch, i) => [ch, i]).filter(([ch]) => (ch.book || '') === b); let sr = 0;
-    const rows = idx.map(([ch, i]) => row(ch, i, ++sr)).join(''); return rows ? `<div class="sybk"><h4>📘 ${b ? esc(b) : 'Book name not written'} <small>${idx.length} chapter(s)</small></h4>${rows}</div>` : ''; }).join('');
+    const active = select && select.book === b;
+    const rows = active ? idx.map(([ch, i]) => `<label class="chk syl-choice"><input type="checkbox" ${select.ids.has(i) ? 'checked' : ''} onchange="sylSelectRow(${i},this)"><span data-notr>${esc(ch.n)}</span></label>`).join('') : idx.map(([ch, i]) => row(ch, i, ++sr)).join('');
+    return rows ? `<div class="sybk"><div class="syl-book-head"><h4>📘 ${b ? esc(b) : 'Book name not written'} <small>${idx.length} chapter(s)</small></h4>
+      <button type="button" class="btn s" onclick="sylSelectBook(${jsq(key)},${jsq(b)})">${active ? 'Cancel' : 'Select'}</button></div>${rows}
+      ${active ? `<div class="btns"><button type="button" class="btn s bad syl-remove-selected" ${select.ids.size ? '' : 'disabled'} onclick="sylRemoveBook(${jsq(key)},false)">Remove selected</button>
+        <button type="button" class="btn s bad" onclick="sylRemoveBook(${jsq(key)},true)">Remove all chapters of this book</button></div>` : ''}</div>` : ''; }).join('');
   const share = f ? sylShareText(key, f, X) : '';
-  return `${keyPick(list, key, "DRAFT.sc=null;DRAFT.sb=null;DRAFT.sx=null;go('plan',{m:'syl',key:this.value})")}
+  return `${keyPick(list, key, "DRAFT.sylSelect=null;DRAFT.sb=null;DRAFT.sx=null;go('plan',{m:'syl',key:this.value})")}
     ${DRAFT.sylHint === key ? `<div class="ban ok"><div><b>Chapters saved.</b> Next step: tap <b>📄 +</b> on a chapter and paste its full text (copy it with Google Lens from the book page, or from the e-book / PDF). Homework ideas, the lesson plan and the question paper are then made from the chapter itself.<br><button class="btn s w" style="margin-top:6px" onclick="DRAFT.sylHint=null;render()">OK</button></div></div>` : ''}
     <div class="card"><h3>Chapters <small>${done}/${y.chapters.length} finished · ${withText} with text</small></h3>
       ${y.chapters.length ? `<div class="chips exf"><button class="chip ${!f ? 'on' : ''}" onclick="go('plan',{m:'syl',key:${jsq(key)},past:${showPast ? 1 : 0}})">All <b>${y.chapters.length}</b></button>${tags.map(t => `<button class="chip ${f === t.id ? 'on' : ''}" onclick="go('plan',{m:'syl',key:${jsq(key)},f:'${esc(t.id)}',past:${showPast ? 1 : 0}})">${esc(t.l)} <b>${cnt(t.id)}</b></button>`).join('')}
@@ -225,13 +231,11 @@ function vSyl(list) {
       ${groups || (y.chapters.length ? '<div class="empty">No chapter is ticked for this exam yet.</div>' : '<div class="empty">No chapters yet. Add the book below.</div>')}
       ${X.changed ? `<div class="sticky"><button class="btn go full" onclick="sylExSave(${jsq(key)})">Save exam chapters · ${X.changed} change(s)</button></div>` : ''}
       ${share && !X.changed ? `<a class="btn wa full" style="margin-top:8px" target="_blank" rel="noopener" href="${wa('', share)}">${ic('wa')} Send ${esc(examLabel(f))} syllabus to the class parents' group</a>` : ''}</div>
-    ${sylAddCard(key, y)}
-    <div class="card"><h3>Or: photo of the contents page</h3><p class="mut" style="margin:0 0 8px">Photo of the book’s Contents / विषय-सूची page — the chapters are read for you (for the book written above). Check them, then save.</p>
+    <div class="card"><h3>Photo of the contents page</h3><p class="mut" style="margin:0 0 8px">Photo of the book’s Contents / विषय-सूची page — the chapters are read for the book in the rows below. Check them, then save.</p>
       <label class="btn l full filebtn">${ic('cam')} Take / choose photo<input type="file" accept="image/*" capture="environment" multiple onchange="sylPhoto(this.files,${jsq(key)})"></label>
       ${DRAFT.busy && DRAFT.busyK === key ? `<p class="mut">${esc(DRAFT.busy)}</p>` : ''}
-      ${sc ? `<div class="fld" style="margin-top:10px">Chapters found${sc.book ? ' · ' + esc(sc.book) : ''} (${sc.via === 'ai' ? 'read by AI' : 'read by the phone — check carefully'}) — one per line<textarea id="scL" class="inp" rows="8">${esc(sc.list.join('\n'))}</textarea></div>
-        <label class="chk" style="margin-top:6px"><input id="scR" type="checkbox" ${y.chapters.length ? '' : 'checked'}> Replace my chapter list (ticks of chapters with the same name are kept)</label>
-        <button class="btn go full" style="margin-top:8px" onclick="sylSave(${jsq(key)})">Save chapters</button>` : ''}</div>
+      </div>
+    ${sylAddCard(key, y)}
     ${C.err ? `<p class="mut">Chapter texts could not load: ${esc(C.err)}</p>` : ''}`;
 }
 function sylAddCard(key, y) {
@@ -241,10 +245,14 @@ function sylAddCard(key, y) {
     <div class="two"><div class="fld">Book name<input id="sylBk" class="inp" maxlength="80" list="sylBkL" value="${esc(B.book)}" placeholder="e.g. Beehive / Grammar" oninput="DRAFT.sb.book=this.value.trim()"><datalist id="sylBkL">${books.map(b => `<option value="${esc(b)}">`).join('')}</datalist></div>
       <div class="fld">Total chapters<div class="row" style="gap:6px"><input id="sylNc" class="inp" type="number" inputmode="numeric" min="1" max="40" value="${B.rows.length || ''}" placeholder="e.g. 12"><button class="btn s" style="white-space:nowrap" onclick="sylMake()">Make rows</button></div></div></div>
     ${books.length > 1 || (books.length && !B.book) ? `<div class="chips" style="margin-top:4px">${books.map(b => `<button type="button" class="chip ${B.book === b ? 'on' : ''}" onclick="DRAFT.sb.book=${jsq(b)};render()">${esc(b)}</button>`).join('')}</div>` : ''}
-    ${B.rows.length ? `<div class="syin"><div class="syh"><span>Sr</span><span>Chapter name</span><span>From</span><span>To</span></div>${B.rows.map((r, i) => `<div class="syi"><span>${have + i + 1}</span>
-        <input class="inp" maxlength="120" value="${esc(r.n)}" placeholder="Chapter ${have + i + 1} name" oninput="DRAFT.sb.rows[${i}].n=this.value">
-        <input class="inp" inputmode="numeric" maxlength="5" value="${esc(r.pf)}" placeholder="pg" oninput="DRAFT.sb.rows[${i}].pf=this.value;sylNextPage(${i},this.value)">
-        <input class="inp" inputmode="numeric" maxlength="5" value="${esc(r.pt)}" placeholder="pg" oninput="DRAFT.sb.rows[${i}].pt=this.value"></div>`).join('')}</div>
+    ${B.rows.some(r => r.via === 'phone') ? '<p class="ban inf">Phone read the photo. Please check the rows before saving.</p>' : ''}
+    ${B.rows.some(r => r.via === 'ai') ? '<p class="ban inf">AI read the photo. Please check the rows before saving.</p>' : ''}
+    ${B.rows.some(r => r.uncertain) ? '<p class="mut hint">Check the yellow rows.</p>' : ''}
+    ${B.rows.length ? `<div class="syin"><div class="syh"><span>Sr</span><span>Chapter name</span><span>From</span><span>To</span><span></span></div>${B.rows.map((r, i) => `<div class="syi${r.via ? ' scan' : ''}${r.uncertain ? ' review' : ''}"><span>${have + i + 1}</span>
+        <input class="inp" maxlength="120" aria-label="Chapter name" value="${esc(r.n)}" placeholder="Chapter ${have + i + 1} name" oninput="DRAFT.sb.rows[${i}].n=this.value">
+        <input class="inp" maxlength="5" aria-label="From page" value="${esc(r.pf)}" placeholder="pg" oninput="DRAFT.sb.rows[${i}].pf=this.value;sylNextPage(${i})">
+        <input class="inp" maxlength="5" aria-label="To page" value="${esc(r.pt)}" placeholder="pg" oninput="DRAFT.sb.rows[${i}].pt=this.value;delete DRAFT.sb.rows[${i}].inferred">
+        <button type="button" class="btn s w" aria-label="Remove row ${i + 1}" onclick="sylRowRemove(${i})">✕</button></div>`).join('')}</div>
       <p class="mut hint">Write each chapter's name and its pages, like the book's contents. Empty rows are left out.</p>
       <button class="btn go full" onclick="sylRowsSave(${jsq(key)})">Save chapters${B.book ? ' of ' + esc(B.book) : ''}</button>`
     : `<p class="mut" style="margin:6px 0 0">A subject can have two or more books (e.g. English: Reader + Grammar) — add each book one by one.</p>`}</div>`;
@@ -252,23 +260,47 @@ function sylAddCard(key, y) {
 function sylMake() {
   const n = Math.max(1, Math.min(40, parseInt(($('sylNc') || {}).value, 10) || 0)); if (!n) return toast('Write how many chapters the book has.');
   const B = DRAFT.sb; B.book = (($('sylBk') || {}).value || B.book || '').trim().slice(0, 80);
-  while (B.rows.length < n) B.rows.push({ n: '', pf: '', pt: '' }); B.rows.length = n; render();
+  while (B.rows.length < n) B.rows.push({ n: '', pf: '', pt: '' });
+  B.rows.length = n;
+  sylInferPages(B.rows);
+  render();
   const f = document.querySelector('.syi input'); if (f) f.focus();
 }
-function sylNextPage(i, v) {          // "to" page of the previous row = this row's "from" − 1 (only if still empty)
-  const B = DRAFT.sb, p = parseInt(v, 10); if (!p || i < 1) return; const prev = B.rows[i - 1];
-  if (prev && !prev.pt) { prev.pt = String(p - 1); const el = document.querySelectorAll('.syi')[i - 1]; if (el) el.querySelectorAll('input')[2].value = prev.pt; }
+function sylInferPages(rows) {
+  rows.forEach((r, i) => {
+    if (r.pt && !r.inferred) return;
+    r.pt = sylEndPage(sylPageLabel(r.pf), sylPageLabel(rows[i + 1]?.pf));
+    r.inferred = !!r.pt;
+  });
+}
+function sylRowRemove(i) {
+  const rows = DRAFT.sb.rows;
+  rows.splice(i, 1);
+  sylInferPages(rows);
+  render();
+}
+function sylNextPage(i) {
+  const rows = DRAFT.sb.rows;
+  sylInferPages(rows);
+  for (const j of [i - 1, i]) {
+    const row = document.querySelectorAll('.syi')[j];
+    if (row) row.querySelectorAll('input')[2].value = rows[j].pt;
+  }
 }
 function sylRowsSave(key) {
   const B = DRAFT.sb, book = (($('sylBk') || {}).value || B.book || '').trim().slice(0, 80);
-  const rows = B.rows.map(r => ({ n: String(r.n || '').trim().slice(0, 120), pf: String(r.pf || '').replace(/[^\dA-Za-z]/g, '').slice(0, 5), pt: String(r.pt || '').replace(/[^\dA-Za-z]/g, '').slice(0, 5) })).filter(r => r.n.length >= 2);
+  const rows = B.rows.map(r => ({ n: String(r.n || '').trim().slice(0, 120), pf: String(r.pf || '').replace(/[^\dA-Za-z]/g, '').slice(0, 5), pt: String(r.pt || '').replace(/[^\dA-Za-z]/g, '').slice(0, 5), topics: r.topics })).filter(r => r.n.length >= 2);
   if (!rows.length) return toast('Write at least one chapter name.');
   const y = sylCopy(key); let added = 0, upd = 0;
   rows.forEach(r => { const o = y.chapters.find(ch => ch.n.toLowerCase() === r.n.toLowerCase() && (ch.book || '') === book);
-    if (o) { Object.assign(o, { pf: r.pf || o.pf || '', pt: r.pt || o.pt || '' }); upd++; }
-    else { y.chapters.push(Object.assign({ n: r.n, done: null, topics: [] }, book ? { book } : {}, r.pf ? { pf: r.pf } : {}, r.pt ? { pt: r.pt } : {})); added++; } });
+    if (o) {
+      Object.assign(o, { pf: r.pf || o.pf || '', pt: r.pt || o.pt || '' });
+      if (r.topics?.length) o.topics = r.topics;
+      upd++;
+    }
+    else { y.chapters.push(Object.assign({ n: r.n, done: null, topics: r.topics || [] }, book ? { book } : {}, r.pf ? { pf: r.pf } : {}, r.pt ? { pt: r.pt } : {})); added++; } });
   put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: ${added} chapter(s) added${upd ? ', ' + upd + ' updated' : ''}${book ? ' — book "' + book + '"' : ''} (with pages) — Teacher App`);
-  DRAFT.sb = null; DRAFT.sx = null; DRAFT.sylHint = key; toast(added + ' chapter(s) saved.'); render();
+  DRAFT.sb = null; DRAFT.sylSelect = null; DRAFT.sx = null; DRAFT.sylHint = key; toast(added + ' chapter(s) saved.'); render();
 }
 function sylExTap(i, id) { const X = DRAFT.sx, e = X.ex[i] = X.ex[i] || []; const j = e.indexOf(id); if (j >= 0) e.splice(j, 1); else e.push(id); X.changed++; render(); }
 function sylExSave(key) {
@@ -303,10 +335,48 @@ async function chapEditSave(key, i) {
   if (tx && tx.text && old.toLowerCase() !== n.toLowerCase()) {        // the text is kept under the new name
     try { await api('teacher_api.php?a=chaptext', { cls: c, subj: s, chapter: n, book: b, text: tx.text }); await api('teacher_api.php?a=chaptext', { cls: c, subj: s, chapter: old, text: '' }); delete CHT[key]; } catch (e) { toast(e.message); }
   }
-  DRAFT.sx = null; SHEET = null; toast('Chapter saved.'); render();
+  DRAFT.sx = null; DRAFT.sylSelect = null; SHEET = null; toast('Chapter saved.'); render();
 }
-function chapMove(key, i, d) { const y = sylCopy(key), j = i + d; if (j < 0 || j >= y.chapters.length) return; [y.chapters[i], y.chapters[j]] = [y.chapters[j], y.chapters[i]]; put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: chapter "${y.chapters[j].n}" moved`); DRAFT.sx = null; SHEET = null; render(); }
-function chapDel(key, i) { const y = sylCopy(key), ch = y.chapters[i]; if (!ch || !confirm('Remove chapter "' + ch.n + '" from the syllabus?')) return; y.chapters.splice(i, 1); put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: removed chapter "${ch.n}" — Teacher App`); DRAFT.sx = null; SHEET = null; render(); }
+function chapMove(key, i, d) { const y = sylCopy(key), j = i + d; if (j < 0 || j >= y.chapters.length) return; [y.chapters[i], y.chapters[j]] = [y.chapters[j], y.chapters[i]]; put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: chapter "${y.chapters[j].n}" moved`); DRAFT.sx = null; DRAFT.sylSelect = null; SHEET = null; render(); }
+function sylSelectBook(key, book) {
+  const sel = DRAFT.sylSelect;
+  DRAFT.sylSelect = sel?.key === key && sel.book === book ? null : { key, book, ids: new Set() };
+  render();
+}
+function sylSelectRow(i, input) {
+  const ids = DRAFT.sylSelect.ids;
+  if (input.checked) ids.add(i); else ids.delete(i);
+  input.closest('.sybk').querySelector('.syl-remove-selected').disabled = !ids.size;
+}
+function sylRemoveBook(key, all) {
+  const sel = DRAFT.sylSelect;
+  if (sel?.key !== key) return;
+  const chapters = S.syl[key]?.chapters || [];
+  const ids = chapters.flatMap((ch, i) => (ch.book || '') === sel.book && (all || sel.ids.has(i)) ? [i] : []);
+  sylRemoveChapters(key, ids, all ? 'Remove all chapters of this book?' : 'Remove selected chapters?');
+}
+function sylRemoveChapters(key, ids, question) {
+  if (!ids.length) return;
+  const y = sylCopy(key);
+  const C = needChapTexts(key);
+  const hasText = ids.some(i => chapRec(key, y.chapters[i].n));
+  const warning = hasText ? 'Some of these chapters have saved chapter text. Their text will stay saved.'
+    : C.loading || C.err ? 'Chapter text could not be checked. Any saved chapter text will stay saved.' : '';
+  const tr = window.taTr || (s => s);
+  if (!confirm(warning ? tr(question) + '\n\n' + tr(warning) : tr(question))) return;
+  const removed = new Set(ids);
+  y.chapters = y.chapters.filter((_, i) => !removed.has(i));
+  put('syl', key, y, 'Syllabus', key.replace('|', ' ') + ' — removed ' + ids.length + ' chapter(s) — Teacher App');
+  if (DRAFT.sx?.key === key) DRAFT.sx.ex = DRAFT.sx.ex.filter((_, i) => !removed.has(i));
+  DRAFT.sylSelect = null;
+  DRAFT.pp = null;
+  SHEET = null;
+  render();
+}
+function chapDel(key, i) {
+  const ch = S.syl[key]?.chapters[i];
+  if (ch) sylRemoveChapters(key, [i], 'Remove chapter "' + ch.n + '" from the syllabus?');
+}
 // Chapter text sheet
 function chapOpen(key, i) {
   const y = S.syl[key], ch = y && y.chapters[i]; if (!ch) return; const C = needChapTexts(key);

@@ -1238,15 +1238,6 @@ function lpSubmit(w, key) {
 // vSyl (Syllabus: books, chapter rows with pages, exam ticks, chapter text) lives in teacher-work.js (owner, 5 Nov 2026).
 function sylCopy(key) { return JSON.parse(JSON.stringify(S.syl[key] || { chapters: [], targetCount: '', targetDate: '' })); }
 function sylTick(key, i, on) { const y = sylCopy(key); y.chapters[i].done = on ? todayISO() : null; put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: "${y.chapters[i].n}" ${on ? 'completed' : 'un-ticked'} — Teacher App`); render(); }
-function sylSave(key) {
-  const list = $('scL').value.split('\n').map(x => x.trim().slice(0, 120)).filter(x => x.length >= 2); if (!list.length) return toast('No chapter to save.');
-  const y = sylCopy(key), topics = Object.fromEntries((DRAFT.sc.chapters || []).map(ch => [String(ch.name).toLowerCase(), ch.topics || []]));
-  if ($('scR').checked || !y.chapters.length) { const old = Object.fromEntries(y.chapters.map(ch => [ch.n.toLowerCase(), ch])); y.chapters = list.map(n => { const o = old[n.toLowerCase()]; return Object.assign({}, o || {}, { n, done: o ? o.done : null, plan: o ? o.plan || null : null, topics: topics[n.toLowerCase()] || (o ? o.topics || [] : []) }, DRAFT.sc.book ? { book: DRAFT.sc.book } : {}); }); }
-  else { const have = new Set(y.chapters.map(ch => ch.n.toLowerCase())); list.filter(n => !have.has(n.toLowerCase())).forEach(n => y.chapters.push(Object.assign({ n, done: null, topics: topics[n.toLowerCase()] || [] }, DRAFT.sc.book ? { book: DRAFT.sc.book } : {}))); }
-  put('syl', key, y, 'Syllabus', `${key.replace('|', ' ')}: ${list.length} chapter(s) saved from a photo of the contents page (checked by ${myName()})`);
-  DRAFT.sc = null; toast('Chapters saved.'); render();
-}
-
 // ---------------------------------------------------------------- photos (AI first; the phone reads it if the school AI is off)
 function shrink(file) {
   return new Promise((ok, bad) => { const img = new Image(), url = URL.createObjectURL(file);
@@ -1294,12 +1285,78 @@ async function readPhotos(mode, c, s, files, busyK) {
     return res;
   } catch (e) { toast(e.message); return null; } finally { DRAFT.busy = null; render(); }
 }
-function lines(text) { return [...new Set(String(text || '').split('\n').map(l => l.replace(/\s+/g, ' ').replace(/^(?:(?:chapter|ch\.?|lesson|unit|पाठ|अध्याय)\s*)?[(\[]?(?:\d{1,3}|[ivxlc]{1,6})[)\].:\-–—]*\s+/i, '').replace(/[\s.·…_\-–—]*\d{1,4}\s*$/, '').trim()).filter(l => l.length >= 3 && /[A-Za-zऀ-ॿ]{2}/.test(l) && !/^(contents?|index|page|विषय[ -]?सूची|अनुक्रमणिका|पृष्ठ)\b/i.test(l)))]; }
-async function sylPhoto(files, key) { const [c, s] = key.split('|'); const res = await readPhotos('chapters', c, s, files, key); if (!res) return;
-  const list = res.via === 'ai' ? res.chapters.map(x => x.name) : lines(res.text).slice(0, 60); if (!list.length) return toast('Nothing readable was found. Try a clearer, straighter photo in good light.');
-  DRAFT.sc = { key, via: res.via, list, chapters: res.chapters || [], book: (($('sylBk') || {}).value || '').trim().slice(0, 80) }; render(); }
+function planLines(text) { return [...new Set(String(text || '').split('\n').map(l => l.replace(/\s+/g, ' ').replace(/^(?:(?:chapter|ch\.?|lesson|unit|पाठ|अध्याय)\s*)?[(\[]?(?:\d{1,3}|[ivxlc]{1,6})[)\].:\-–—]*\s+/i, '').replace(/[\s.·…_\-–—]*\d{1,4}\s*$/, '').trim()).filter(l => l.length >= 3 && /[A-Za-zऀ-ॿ]{2}/.test(l) && !/^(contents?|index|page|विषय[ -]?सूची|अनुक्रमणिका|पृष्ठ)\b/i.test(l)))]; }
+// Keep the printed label in the draft, including Roman pages and Hindi digits.
+function sylPageLabel(v) {
+  const p = String(v ?? '').trim().replace(/[०-९]/g, d => d.charCodeAt(0) - 0x966).toLowerCase();
+  return /^(?:\d{1,5}|[ivxlcdm]{1,5})$/.test(p) ? p : '';
+}
+function sylHeading(n) {
+  return /^(?:foreword|preface|about this book|contents?|table of contents|index|answer\s*keys?|glossary|appendix|acknowledg(?:e)?ments?|page(?: no\.?)?)(?=$|[\s:.\-–—])|^(?:introduction|chapter|ch\.?|unit|lesson|प्रस्तावना|आमुख|विषय[\s-]*सूची|उत्तरमाला|अनुक्रमणिका|पृष्ठ|अध्याय|पाठ|इकाई)$/iu.test(n);
+}
+function lines(text) {
+  const rows = [];
+  for (const raw of String(text || '').split('\n')) {
+    const line = raw.trim().replace(/\s+/g, ' ');
+    let n = line.replace(/^[\s&§#*”“¥|~•]+/u, '');
+    let uncertain = n !== line;
+    n = n.replace(/^(?:chapter|ch\.?|lesson|unit|पाठ|अध्याय|इकाई)\s*[(\[]?(?:[0-9०-९]{1,3}|[ivxlc]{1,5})(?:[\s)\].:\-–—]+|$)/iu, '')
+      .replace(/^[(\[]?[0-9०-९]{1,3}[\s)\].:\-–—]+(?=.*\p{L})/u, '')
+      .replace(/^[ivxlc]{1,5}[).:\-–—]+\s*(?=.*\p{L})/iu, '');
+    const page = n.match(/(?:\s+|[.·…_\-–—]+)\s*([0-9०-९]{1,5}|[ivxlcdm]{1,5})(?:\s*[-–]\s*[0-9०-९]{1,5})?\s*$/iu);
+    const pf = page ? sylPageLabel(page[1]) : '';
+    if (page) n = n.slice(0, page.index);
+    uncertain ||= /^[\s]*[&§#*”“¥|~•]/u.test(n);
+    n = n.replace(/^[\s&§#*”“¥|~•]+|[\s.·…_:\-–—]+$/gu, '');
+    // Short lowercase OCR fragments often precede a capitalized title (e.g. "f 3", "st", "hj").
+    // Keep common opening words and flag every removal for review.
+    const clean = n.replace(/^(?:(?!(?:a|an|i|the|in|on|of|to|at|by|for|how|why|my|our|we|you|let|is|are|can|do|as|and|all|one|two|who|he|she|it)\b)[a-z]{1,3}(?:\s+[0-9०-९]{1,3})?\s+)+(?=[\p{Lu}\p{Script=Devanagari}])/u, '');
+    uncertain ||= clean !== n;
+    n = clean;
+    if (!/\p{L}/u.test(n) || sylHeading(n)) continue;
+    rows.push({ n, pf, uncertain });
+  }
+  return rows;
+}
+function sylEndPage(from, next) {
+  if (/^\d+$/.test(next)) {
+    const end = Number(next) - 1;
+    return end > 0 && (!from || (/^\d+$/.test(from) && end >= Number(from))) ? String(end) : '';
+  }
+  if (!next || (from && /^\d+$/.test(from))) return '';
+  const roman = ['', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix'];
+  const label = (n, one, five, ten) => roman[n].replace(/[ivx]/g, c => ({ i: one, v: five, x: ten })[c]);
+  const pages = Array.from({ length: 100 }, (_, n) => label(Math.floor(n / 10), 'x', 'l', 'c') + roman[n % 10]);
+  const end = pages.indexOf(next) - 1;
+  return end > 0 && (!from || (pages.indexOf(from) > 0 && end >= pages.indexOf(from))) ? pages[end] : '';
+}
+async function sylPhoto(files, key) {
+  const B = DRAFT.sb;
+  if (!B || B.key !== key || DRAFT.busy) return;
+  const [c, s] = key.split('|');
+  const res = await readPhotos('chapters', c, s, files, key);
+  if (!res || DRAFT.sb !== B) return;
+  const found = res.via === 'ai' ? (res.chapters || []).map(ch => ({
+    n: String(ch.name || '').trim(), pf: sylPageLabel(ch.page), topics: ch.topics, uncertain: res.uncertain
+  })).filter(ch => ch.n && !sylHeading(ch.n)) : lines(res.text);
+  const seen = new Set(B.rows.map(r => r.n.trim().toLowerCase()).filter(Boolean));
+  const rows = [];
+  for (const r of found.slice(0, 60)) {
+    const n = r.n.slice(0, 120), id = n.toLowerCase();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const short = (n.match(/\p{L}/gu) || []).length <= 3 && !/\p{Script=Devanagari}/u.test(n);
+    rows.push({ ...r, n, pt: '', via: res.via, uncertain: r.uncertain || !r.pf || short || /[&§#*¥|~�]|(?:^|\s)[a-z](?=\s|$)/u.test(n) });
+  }
+  if (!rows.length) return toast('No new chapters found. Try a clearer photo or edit the rows.');
+  const named = B.rows.filter(r => r.n.trim() || r.pf || r.pt);
+  B.rows = named.concat(rows);
+  sylInferPages(B.rows);
+  render();
+  document.querySelector('.syi.scan input')?.focus();
+}
 async function lpPhoto(files, key, k) { const [c, s] = key.split('|'); const res = await readPhotos('lplan', c, s, files, k); if (!res) return;
-  const topics = res.via === 'ai' ? res.topics : lines(res.text).slice(0, 12); if (!topics.length) return toast('Nothing readable was found. Try a clearer photo.');
+  const topics = res.via === 'ai' ? res.topics : planLines(res.text).slice(0, 12); if (!topics.length) return toast('Nothing readable was found. Try a clearer photo.');
   DRAFT.lp = { k, topics: topics.join('\n'), goal: res.via === 'ai' ? [res.goal, res.homework ? 'Homework: ' + res.homework : ''].filter(Boolean).join(' • ') : '' }; toast('Read from the photo. Check it, then send.'); render(); }
 
 // ---------------------------------------------------------------- NOTES (chapter-wise, from photos of the book)

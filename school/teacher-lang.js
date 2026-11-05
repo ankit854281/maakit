@@ -14,6 +14,19 @@
   const get = () => { try { return localStorage.getItem('ta_lang') || 'en'; } catch (e) { return 'en'; } };
   const LANGS = [['en', 'English'], ['hg', 'Hinglish'], ['hi', 'हिंदी']];
   const W = {
+    'Photo of the contents page': ['Contents page ki photo', 'विषय-सूची की फ़ोटो'],
+    'Photo of the book’s Contents / विषय-सूची page — the chapters are read for the book in the rows below. Check them, then save.': ['Kitaab ki Contents / विषय-सूची ki photo lein. Neeche chapters check karke Save karein.', 'किताब की विषय-सूची की फ़ोटो लें। नीचे अध्याय जाँचकर सेव करें।'],
+    'Phone read the photo. Please check the rows before saving.': ['Phone ne padha hai — ek baar check karke Save karein', 'फ़ोन ने पढ़ा है। एक बार जाँचकर सेव करें।'],
+    'AI read the photo. Please check the rows before saving.': ['AI ne padha hai — ek baar check karke Save karein', 'AI ने पढ़ा है। एक बार जाँचकर सेव करें।'],
+    'Check the yellow rows.': ['Peeli rows check karein.', 'पीली पंक्तियाँ जाँचें।'],
+    'Select': ['Chunein', 'चुनें'],
+    'Remove selected': ['Chune hue chapters hataayein', 'चुने हुए अध्याय हटाएँ'],
+    'Remove selected chapters?': ['Chune hue chapters hata dein?', 'चुने हुए अध्याय हटाएँ?'],
+    'Remove all chapters of this book': ['Is kitaab ke saare chapters hataayein', 'इस किताब के सभी अध्याय हटाएँ'],
+    'Remove all chapters of this book?': ['Is kitaab ke saare chapters hata dein?', 'इस किताब के सभी अध्याय हटाएँ?'],
+    'Some of these chapters have saved chapter text. Their text will stay saved.': ['Kuch chapters ka text saved hai. Unka text saved rahega.', 'कुछ अध्यायों का टेक्स्ट सेव है। उनका टेक्स्ट सेव रहेगा।'],
+    'Chapter text could not be checked. Any saved chapter text will stay saved.': ['Chapter text check nahi ho paaya. Jo text saved hai, woh saved rahega.', 'अध्याय का टेक्स्ट जाँचा नहीं जा सका। सेव किया गया टेक्स्ट सुरक्षित रहेगा।'],
+    'No new chapters found. Try a clearer photo or edit the rows.': ['Naye chapters nahi mile. Saaf photo lein ya rows badlein.', 'नए अध्याय नहीं मिले। साफ़ फ़ोटो लें या पंक्तियाँ बदलें।'],
     // tabs and shell
     'Aaj': ['Aaj', 'आज', 'Today'], 'Haziri': ['Haziri', 'हाज़िरी', 'Attendance'], 'Diary': ['Diary', 'डायरी'], 'Plan': ['Plan', 'योजना'],
     'Notes': ['Notes', 'नोट्स'], 'Result': ['Result', 'परिणाम'], 'Saved': ['Save ho gaya', 'सेव हो गया'], 'Saving…': ['Save ho raha hai…', 'सेव हो रहा है…'],
@@ -361,6 +374,8 @@
     [/^Fee figures copied from the old ERP on (.+)\.$/, m => 'Fee ke aankde purane ERP se ' + m[1] + ' ko liye gaye.', m => 'फ़ीस के आँकड़े पुराने ERP से ' + m[1] + ' को लिए गए।'],
     [/^Pick today's (\d+) absent$/, m => 'Aaj ke ' + m[1] + ' absent chunein', m => 'आज के ' + m[1] + ' अनुपस्थित चुनें'],
     [/^(Call|Call result for|Demand bill for) (.+)$/, m => ({ 'Call': 'Call karein: ', 'Call result for': 'Call nateeja: ', 'Demand bill for': 'Demand bill: ' })[m[1]] + m[2], m => ({ 'Call': 'कॉल करें: ', 'Call result for': 'कॉल परिणाम: ', 'Demand bill for': 'माँग पत्र: ' })[m[1]] + m[2]],
+    [/^Remove row (\d+)$/, m => 'Row ' + m[1] + ' hataayein', m => 'पंक्ति ' + m[1] + ' हटाएँ'],
+    [/^Remove chapter "(.+)" from the syllabus\?$/, m => 'Syllabus se "' + m[1] + '" hata dein?', m => 'पाठ्यक्रम से "' + m[1] + '" हटाएँ?'],
     [/^Pending$/, () => 'Baaki', () => 'बाकी']
   ];
   const hgIdx = { hg: 0, hi: 1 };
