@@ -373,7 +373,7 @@ function keepClear(prefix) { const c = keepCtx(), box = KEEP[c]; if (!box) retur
 function keepHas(prefix) { const box = KEEP[keepCtx()] || {}; return Object.keys(box).some(id => id.startsWith(prefix)); }
 document.addEventListener('input', e => keepNote(e.target));
 document.addEventListener('change', e => keepNote(e.target));
-function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.chk && DRAFT.chk.changed) || (DRAFT.att && DRAFT.att.changed) || (DRAFT.kit && DRAFT.kit.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
+function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.chk && DRAFT.chk.changed) || (DRAFT.att && DRAFT.att.changed) || (DRAFT.kit && DRAFT.kit.changed) || (DRAFT.rec && DRAFT.rec.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
 function greet() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
 function closeSheet() { SHEET = null; render(); }
 function seg(items, cur, fn) { return `<div class="seg">${items.map(([k, l]) => `<button class="${k === cur ? 'on' : ''}" onclick="${fn}(${jsq(k)})">${l}</button>`).join('')}</div>`; }
@@ -431,7 +431,7 @@ function twNumbers() {
 function showTeacherWelcome(force) {
   if (!S || (!force && WELCOME_SHOWN)) return;
   WELCOME_SHOWN = true;
-  if (!force && store.get(twDayKey()) === todayISO()) return;                 // once a day by itself
+  if (!force && store.get('ta_intro') === 'day' && store.get(twDayKey()) === todayISO()) return;   // owner, 5 Nov 2026: every opening, like Chairman Sir's app; "once a day" is a choice
   store.set(twDayKey(), todayISO());
   closeTeacherWelcome(); const old = $('ta-welcome'); if (old) old.remove();
   const q = teacherQuote(), photo = teacherPhoto(), name = myName();
@@ -579,9 +579,9 @@ function vAtt() {
   const c = allowed.includes(P.c) ? P.c : allowed[0], m = P.m || 'day';
   needStats(c);
   return `${allowed.length > 1 ? `<div class="fld">Class${sel('attC', allowed.map(x => [x, 'Class ' + x]), c, "DRAFT.att=null;DRAFT.reg=null;go('att',{c:this.value,m:'" + m + "'})")}</div>` : ''}
-    ${attReport(c)}
-    ${seg([['day', 'Mark'], ['kit', 'Daily check'], ['cal', 'Calendar'], ['reg', 'Register'], ['pending', 'Not marked']], m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`)}
-    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : vAttDay(c)}`;
+    ${m === 'stu' && P.sid ? '' : attReport(c)}
+    ${seg([['day', 'Mark'], ['kit', 'Daily check'], ['stu', 'Students'], ['cal', 'Calendar'], ['reg', 'Register']], m === 'pending' ? 'cal' : m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`)}
+    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : m === 'stu' ? (P.sid ? vStuReport(c, P.sid) : vStudents(c)) : vAttDay(c)}`;
 }
 function attReport(c) {
   const t = todayISO(), list = studentsOf(c), a = attOf(t, c), st = STATS[c] || {}, days = st.days || 0;
@@ -672,7 +672,7 @@ function vAttCal(c) {
       <div class="cal-sum"><span class="pill ok">${saved} saved</span><span class="pill warn">${pend} to mark</span><span class="pill hol">${hols} holiday</span></div>
       <div class="calendar-grid">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<span class="calendar-label">${d}</span>`).join('')}${cells.join('')}</div>
       <p class="mut" style="margin:8px 0 0">${sel ? 'Tap the days to close for this class, then choose the reason.' : 'Tap a day to take attendance or mark a holiday. Sundays and school holidays are automatic.'}</p>
-      <div class="btns" style="margin-top:8px">${sel ? `<button class="btn w s" onclick="DRAFT.calSel=null;render()">Cancel</button>` : `<button class="btn l s" onclick="DRAFT.calSel={};render()">Select days for a holiday</button>`}</div></div>
+      <div class="btns" style="margin-top:8px">${sel ? `<button class="btn w s" onclick="DRAFT.calSel=null;render()">Cancel</button>` : `<button class="btn l s" onclick="DRAFT.calSel={};render()">Select days for a holiday</button><button class="btn w s" onclick="go('att',{c:${jsq(c)},m:'pending'})">Days not marked</button>`}</div></div>
     ${sel && nSel ? `<div class="card"><h3>Holiday for ${nSel} day(s) <small>Class ${esc(c)}</small></h3>${holReasons()}<button class="btn go full" style="margin-top:8px" onclick="calHolSave(${jsq(c)})">Mark ${nSel} day(s) as holiday</button></div>` : ''}`;
 }
 function holReasons() {
@@ -771,6 +771,132 @@ async function kitSave(c, date) {
   Object.entries(DRAFT.kit.rows).forEach(([sid, r]) => { if (!away.has(sid)) rows[sid] = r; });
   try { const r = await api('teacher_api.php?a=kit', { cls: c, date, rows }); const key = date + '|' + c; KIT[key] = Object.assign({}, KIT[key], { rec: r.rec }); DRAFT.kit.changed = false; delete STARS[c]; toast('Daily check saved.'); render(); }
   catch (e) { toast(e.message); }
+}
+
+// ---------------------------------------------------------------- STUDENTS: record + full report (owner, 5 Nov 2026)
+// "record mention karne ka format — diary nahi hai, ID card nahi liya, WhatsApp student record add nahi kiya" and
+// "class teacher ko total student report — complaint se lekar achhi baatein, comparison mein bachcha kya hai, learning, reading".
+// One list of the class with each child's numbers next to the class average; tap a child for the full report:
+// comparison bars, reading/learning levels, record checklist, complaints & good things (any teacher of the class can add).
+const REP = {};
+const REC_F = [['diary', 'Diary given'], ['id', 'ID card given'], ['book', 'Books complete'], ['dress', 'Dress / uniform'], ['wa', 'WhatsApp no. in record'], ['waGroup', 'In class WhatsApp group']];
+const REC_NO = { diary: 'Diary nahi', id: 'ID card nahi', book: 'Books incomplete', dress: 'No dress', wa: 'WhatsApp missing', waGroup: 'Not in WA group' };
+const LV_F = [['read', 'Reading'], ['write', 'Writing'], ['learn', 'Understanding'], ['speak', 'Speaking'], ['beh', 'Behaviour']];
+const LV_N = ['', 'Needs help', 'Average', 'Good', 'Excellent'];
+const RM_CAT = { bad: ['Homework', 'Diary / ID card', 'Behaviour', 'Discipline', 'Late coming', 'Uniform', 'Reading', 'Class work'], good: ['Class work', 'Reading', 'Writing', 'Helping others', 'Behaviour', 'Sports', 'Test', 'Neat copy'] };
+const RM_TXT = { bad: ['Did not bring the diary.', 'ID card not taken yet.', 'Homework not done.', 'Talks in class.', 'Came late.', 'Not in proper uniform.', 'Copy incomplete.', 'Fought with a classmate.'],
+  good: ['Read aloud very well.', 'Answered every question.', 'Very neat copy.', 'Helped a classmate.', 'Full marks in the class test.', 'Good behaviour today.', 'Did extra work.', 'Won in sports.'] };
+function needRep(c, force) {
+  if (REP[c] && !force) return REP[c];
+  REP[c] = Object.assign({}, REP[c] || {}, { loading: !REP[c] || !REP[c].per });
+  api('teacher_api.php?a=report&cls=' + encodeURIComponent(c)).then(r => { REP[c] = r; render(); }).catch(e => { REP[c] = { err: e.message }; render(); });
+  return REP[c];
+}
+const pc = (a, b) => b ? Math.round(a / b * 100) : null;
+function stuNums(R, s) {
+  const x = (R.per || {})[s.id] || { a: 0, l: 0, hw: 0, half: 0, hwOf: 0, kit: 0, kitOf: 0, miss: {} };
+  const att = R.attDays ? pc(R.attDays - x.a - x.l, R.attDays) : null, hw = x.hwOf ? Math.round((x.hw + x.half / 2) / x.hwOf * 100) : null, kit = pc(x.kit, x.kitOf);
+  const mk = (R.marks || {})[s.id] ?? null, rec = (R.recs || {})[s.id] || {}, rm = (R.remarks || []).filter(r => r.sid === s.id);
+  const parts = [att, hw, kit, mk].filter(v => v !== null), score = parts.length ? Math.round(parts.reduce((n, v) => n + v, 0) / parts.length) : null;
+  return { x, att, hw, kit, mk, rec, rm, good: rm.filter(r => r.type === 'good').length, bad: rm.filter(r => r.type === 'bad').length, score };
+}
+function avgOf(list, k) { const v = list.map(n => n[k]).filter(x => x !== null && x !== undefined); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; }
+function vStudents(c) {
+  const R = needRep(c), list = studentsOf(c), ph = needPhotos(c);
+  if (R.loading) return '<div class="load"><i></i>Making the class report…</div>';
+  if (R.err) return `<div class="card">${esc(R.err)} <button class="btn s l" onclick="delete REP['${esc(c)}'];render()">Try again</button></div>`;
+  const N = list.map(s => Object.assign({ s }, stuNums(R, s))), f = P.f || 'all', sort = P.sort || 'roll';
+  const A = { att: avgOf(N, 'att'), hw: avgOf(N, 'hw'), kit: avgOf(N, 'kit'), mk: avgOf(N, 'mk') };
+  const ranked = N.filter(n => n.score !== null).slice().sort((a, b) => b.score - a.score); ranked.forEach((n, i) => n.rank = i + 1);
+  const gap = k => N.filter(n => n.rec[k] === 0).length, weak = N.filter(n => LV_F.some(([k]) => ((n.rec.levels || {})[k] || 9) === 1));
+  const flt = { all: N, bad: N.filter(n => n.bad), good: N.filter(n => n.good), diary: N.filter(n => n.rec.diary === 0), id: N.filter(n => n.rec.id === 0), wa: N.filter(n => n.rec.wa === 0 || n.rec.waGroup === 0), weak, low: N.filter(n => n.att !== null && n.att < 75) };
+  const shown = (flt[f] || N).slice().sort(sort === 'score' ? (a, b) => (b.score ?? -1) - (a.score ?? -1) : sort === 'bad' ? (a, b) => b.bad - a.bad : (a, b) => (+a.s.rollno || 999) - (+b.s.rollno || 999) || a.s.name.localeCompare(b.s.name));
+  const bars = (v, a) => v === null ? '<i class="nb">—</i>' : `<i class="mb ${a !== null && v < a - 5 ? 'lo' : a !== null && v > a + 5 ? 'hi' : ''}" style="--w:${v}%"><b>${v}</b></i>`;
+  const lvCount = k => [1, 2, 3, 4].map(v => N.filter(n => (n.rec.levels || {})[k] === v).length);
+  const totalGood = (R.remarks || []).filter(r => r.type === 'good').length, totalBad = (R.remarks || []).filter(r => r.type === 'bad').length;
+  return `<div class="card cls-rep"><h3>Class ${esc(c)} report <small>${list.length} children · since ${esc(fmtDate(R.from))}</small></h3>
+      <div class="avg4">${[['Attendance', A.att], ['Homework', A.hw], ['Daily check', A.kit], ['Marks' + (R.exam ? ' · ' + R.exam : ''), A.mk]].map(([l, v]) => `<div><div class="ring sm" style="--p:${v ?? 0}"><span>${v === null ? '—' : v + '%'}</span></div><small>${esc(l)}</small></div>`).join('')}</div>
+      <div class="rm-sum"><span class="pill bad">⚠ ${totalBad} complaint(s)</span><span class="pill ok">👍 ${totalGood} good thing(s)</span></div>
+      <div class="gaps">${[['diary', 'Diary nahi'], ['id', 'ID card nahi'], ['book', 'Books incomplete'], ['dress', 'No dress'], ['wa', 'WhatsApp missing'], ['waGroup', 'Not in WA group']].map(([k, l]) => `<div class="${gap(k) ? 'm' : ''}"><b>${gap(k)}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="lvdist">${LV_F.slice(0, 3).map(([k, l]) => { const ct = lvCount(k), t = ct.reduce((a, b) => a + b, 0); return `<div><small>${l}</small><div class="lvbar">${t ? ct.map((n, i) => n ? `<i class="l${i + 1}" style="flex:${n}" title="${LV_N[i + 1]}: ${n}">${n}</i>` : '').join('') : '<i class="none">not filled yet</i>'}</div></div>`; }).join('')}
+        <p class="mut" style="margin:2px 0 0"><span class="lvk l1"></span>Needs help <span class="lvk l2"></span>Average <span class="lvk l3"></span>Good <span class="lvk l4"></span>Excellent</p></div></div>
+    <div class="chips">${[['all', 'All', N.length], ['bad', '⚠ Complaints', flt.bad.length], ['good', '👍 Good', flt.good.length], ['diary', 'Diary nahi', flt.diary.length], ['id', 'ID card nahi', flt.id.length], ['wa', 'WhatsApp', flt.wa.length], ['weak', 'Needs help', weak.length], ['low', 'Below 75%', flt.low.length]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="go('att',{c:${jsq(c)},m:'stu',f:'${k}',sort:'${sort}'})">${l} <b>${n}</b></button>`).join('')}</div>
+    <div class="row"><span class="mut">Sort</span>${seg([['roll', 'Roll no.'], ['score', 'Best first'], ['bad', 'Complaints']], sort, `(k=>go('att',{c:${jsq(c)},m:'stu',f:'${f}',sort:k}))`)}</div>
+    <div class="card stu-list"><div class="stu-hd"><span></span><span>Att.</span><span>HW</span><span>Check</span><span>Marks</span></div>
+      <div class="stu-hd avg"><span>Class average</span>${[A.att, A.hw, A.kit, A.mk].map(v => `<span>${v === null ? '—' : v}</span>`).join('')}</div>
+      ${shown.map((n, i) => { const s = n.s, pic = ph[s.id], tags = [...REC_F.filter(([k]) => n.rec[k] === 0).map(([k]) => `<span class="pill bad">${REC_NO[k]}</span>`), n.bad ? `<span class="pill warn">⚠ ${n.bad}</span>` : '', n.good ? `<span class="pill ok">👍 ${n.good}</span>` : ''].join('');
+        return `<button type="button" class="stu-r" style="--d:${Math.min(i, 14) * 30}ms" onclick="go('att',{c:${jsq(c)},m:'stu',sid:${jsq(s.id)}})"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(s.name))}</i>`}${n.rank && n.rank <= 3 ? `<em class="rk">${n.rank}</em>` : ''}</span>
+          <span class="nm"><b>${esc(s.name)}</b><small>Roll ${esc(s.rollno || '—')}${n.rank ? ' · Rank ' + n.rank : ''}</small>${tags ? `<span class="tg">${tags}</span>` : ''}</span>
+          ${bars(n.att, A.att)}${bars(n.hw, A.hw)}${bars(n.kit, A.kit)}${bars(n.mk, A.mk)}</button>`; }).join('') || '<div class="empty">Nobody in this list.</div>'}</div>
+    <p class="mut">Green = above the class average, red = below. Numbers come from attendance, Check work, Daily check and the marks entered. Tap a child for the full report.</p>`;
+}
+function vStuReport(c, sid) {
+  const R = needRep(c), s = studentById(sid), ph = needPhotos(c);
+  if (!s) return '<div class="card">Student not found.</div>';
+  if (R.loading) return '<div class="load"><i></i></div>';
+  if (R.err) return `<div class="card">${esc(R.err)}</div>`;
+  const list = studentsOf(c), N = list.map(x => Object.assign({ s: x }, stuNums(R, x))), n = N.find(x => x.s.id === sid);
+  const ranked = N.filter(x => x.score !== null).sort((a, b) => b.score - a.score), rank = ranked.findIndex(x => x.s.id === sid) + 1;
+  const A = { att: avgOf(N, 'att'), hw: avgOf(N, 'hw'), kit: avgOf(N, 'kit'), mk: avgOf(N, 'mk') };
+  if (!DRAFT.rec || DRAFT.rec.sid !== sid) DRAFT.rec = { sid, r: JSON.parse(JSON.stringify(Object.assign({ levels: {} }, n.rec, { waNo: n.rec.waNo || String(s.phone || '').replace(/\D/g, '').slice(-10) }))), changed: false };
+  if (!DRAFT.rm || DRAFT.rm.sid !== sid) DRAFT.rm = { sid, type: 'bad', cat: '' };
+  const D = DRAFT.rec.r, can = R.canEdit, x = n.x, rm = n.rm, RMv = DRAFT.rm;
+  const cmp = (l, v, a, sub) => `<div class="cmp"><div class="cl"><b>${l}</b><small>${sub || ''}</small></div><div class="cb"><div class="cme" style="--w:${v ?? 0}%"><span>${v === null ? 'not yet' : v + '%'}</span></div><div class="cav" style="--w:${a ?? 0}%"><span>Class ${a === null ? '—' : a + '%'}</span></div></div>
+    <em class="${v === null || a === null ? '' : v >= a + 3 ? 'up' : v <= a - 3 ? 'dn' : 'eq'}">${v === null || a === null ? '' : v >= a + 3 ? '▲ above' : v <= a - 3 ? '▼ below' : '= same'}</em></div>`;
+  const yn = (k, l) => `<div class="yn"><span>${l}</span><div><button type="button" class="${D[k] === 1 ? 'y' : ''}" ${can ? '' : 'disabled'} onclick="recSet('${k}',1)">Yes</button><button type="button" class="${D[k] === 0 ? 'x' : ''}" ${can ? '' : 'disabled'} onclick="recSet('${k}',0)">No</button></div></div>`;
+  return `<button class="btn s w" style="align-self:flex-start" onclick="DRAFT.rec=null;go('att',{c:${jsq(c)},m:'stu'})">${ic('back')} All students</button>
+    <div class="card sr-head"><span class="ph big">${ph[sid] ? `<img src="${esc(ph[sid].src)}" alt="">` : `<i>${esc(initials(s.name))}</i>`}</span>
+      <div><b>${esc(s.name)}</b><small>Class ${esc(c)} · Roll ${esc(s.rollno || '—')}${s.father ? ' · ' + esc(s.father) : ''}</small>
+      <div class="chips" style="margin-top:6px">${rank ? `<span class="pill">Rank ${rank} of ${ranked.length}</span>` : ''}${n.score !== null ? `<span class="pill ok">Overall ${n.score}%</span>` : ''}<span class="pill bad">⚠ ${n.bad}</span><span class="pill ok">👍 ${n.good}</span></div></div></div>
+    <div class="card"><h3>Compared with the class <small>since ${esc(fmtDate(R.from))}</small></h3>
+      ${cmp('Attendance', n.att, A.att, R.attDays ? (R.attDays - x.a - x.l) + ' of ' + R.attDays + ' days' : '')}
+      ${cmp('Homework', n.hw, A.hw, x.hwOf ? x.hw + ' done · ' + (x.not || 0) + ' not done' : 'no check yet')}
+      ${cmp('Daily check', n.kit, A.kit, x.kitOf ? ([['d', 'diary'], ['i', 'ID'], ['b', 'book'], ['u', 'dress']].filter(([k]) => x.miss[k]).map(([k, l]) => l + ' ' + x.miss[k]).join(', ').replace(/^(?=.)/, 'missed: ') || 'never missed') : 'not filled yet')}
+      ${cmp('Marks', n.mk, A.mk, R.exam || 'no marks yet')}</div>
+    <div class="card"><h3>Learning & reading <small>${can ? 'tap to set' : 'class teacher sets'}</small></h3>
+      ${LV_F.map(([k, l]) => `<div class="lv"><span>${l}</span><div class="lvb">${[1, 2, 3, 4].map(v => `<button type="button" class="l${v} ${(D.levels || {})[k] === v ? 'on' : ''}" ${can ? '' : 'disabled'} onclick="lvSet('${k}',${v})">${LV_N[v]}</button>`).join('')}</div></div>`).join('')}</div>
+    <div class="card"><h3>Student record <small>${REC_F.filter(([k]) => D[k] === 0).length} not done</small></h3>
+      ${REC_F.map(([k, l]) => yn(k, l)).join('')}
+      <div class="fld" style="margin-top:8px">WhatsApp number<input id="recWa" class="inp" inputmode="numeric" maxlength="14" value="${esc(D.waNo || '')}" ${can ? '' : 'disabled'} oninput="DRAFT.rec.r.waNo=this.value;DRAFT.rec.changed=true" placeholder="10-digit number"></div>
+      <div class="fld" style="margin-top:8px">Note<input id="recNote" class="inp" maxlength="500" value="${esc(D.note || '')}" ${can ? '' : 'disabled'} oninput="DRAFT.rec.r.note=this.value;DRAFT.rec.changed=true" placeholder="e.g. ID card photo given on 3 Nov, card pending"></div>
+      ${n.rec.at ? `<p class="mut" style="margin:6px 0 0">Last saved by ${esc(n.rec.by || '')} · ${esc(fmtTime(n.rec.at))}</p>` : ''}
+      ${can ? `<button class="btn go full" style="margin-top:8px" onclick="recSave(${jsq(c)},${jsq(sid)})">Save record & levels</button>` : ''}</div>
+    <div class="card"><h3>Complaints & good things <small>${rm.length}</small></h3>
+      <div class="seg rmt"><button class="${RMv.type === 'bad' ? 'on bad' : ''}" onclick="DRAFT.rm.type='bad';DRAFT.rm.cat='';render()">⚠ Complaint</button><button class="${RMv.type === 'good' ? 'on good' : ''}" onclick="DRAFT.rm.type='good';DRAFT.rm.cat='';render()">👍 Good thing</button></div>
+      <div class="chips" style="margin-top:8px">${RM_CAT[RMv.type].map(x => `<button type="button" class="chip ${RMv.cat === x ? 'on' : ''}" onclick="DRAFT.rm.cat=${jsq(x)};render()">${esc(x)}</button>`).join('')}</div>
+      <div class="chips phr" style="margin-top:6px">${RM_TXT[RMv.type].map(x => `<button type="button" class="chip" onclick="$('rmT').value=${jsq(x)};keepNote($('rmT'))">${esc(x)}</button>`).join('')}</div>
+      <div class="send"><textarea id="rmT" data-keep class="inp" rows="2" maxlength="500" placeholder="${RMv.type === 'bad' ? 'What was the problem?' : 'What did the child do well?'}"></textarea><button class="btn ${RMv.type === 'bad' ? 'bad' : 'go'}" onclick="rmSave(${jsq(c)},${jsq(sid)})">Add</button></div>
+      <div class="tl">${rm.map(r => `<div class="tli ${r.type}"><i>${r.type === 'good' ? '👍' : '⚠'}</i><div><b>${esc(r.text)}</b><small>${r.cat ? esc(r.cat) + ' · ' : ''}${esc(fmtDate(r.date))} · ${esc(r.by || '')}</small></div>${r.tid === R.me || isP() ? `<button class="x" aria-label="Delete" onclick="rmDel(${jsq(c)},${jsq(r.id)})">✕</button>` : ''}</div>`).join('') || '<div class="empty">Nothing written yet.</div>'}</div></div>
+    <div class="btns">${s.phone ? `<a class="btn wa" target="_blank" rel="noopener" href="${wa(s.phone, stuReportText(c, s, n, A, rank, ranked.length))}">${ic('wa')} Send report to parent</a>` : ''}<button class="btn w" onclick="stuPrint(${jsq(c)},${jsq(sid)})">${ic('print')} Print</button></div>`;
+}
+function recSet(k, v) { DRAFT.rec.r[k] = DRAFT.rec.r[k] === v ? null : v; DRAFT.rec.changed = true; render(); }
+function lvSet(k, v) { const l = DRAFT.rec.r.levels = DRAFT.rec.r.levels || {}; l[k] = l[k] === v ? 0 : v; DRAFT.rec.changed = true; render(); }
+async function recSave(c, sid) {
+  try { const r = await api('teacher_api.php?a=rec', { sid, rec: DRAFT.rec.r }); (REP[c].recs = REP[c].recs || {})[sid] = r.rec; DRAFT.rec = null; toast('Record saved.'); render(); }
+  catch (e) { toast(e.message); }
+}
+async function rmSave(c, sid) {
+  const text = (($('rmT') || {}).value || '').trim(); if (!text) return toast('Write what happened.');
+  try { const r = await api('teacher_api.php?a=remark', { sid, type: DRAFT.rm.type, cat: DRAFT.rm.cat, text }); REP[c].remarks.unshift(r.remark); keepClear('rmT'); $('rmT').value = ''; delete STARS[c]; toast(DRAFT.rm.type === 'good' ? 'Good thing saved 👍' : 'Complaint saved.'); render(); }
+  catch (e) { toast(e.message); }
+}
+async function rmDel(c, id) {
+  if (!confirm('Delete this note?')) return;
+  try { await api('teacher_api.php?a=delremark', { id }); REP[c].remarks = REP[c].remarks.filter(r => r.id !== id); render(); } catch (e) { toast(e.message); }
+}
+function stuReportText(c, s, n, A, rank, of) {
+  const line = (l, v, a) => v === null ? '' : `\n${l}: ${v}% (class ${a ?? '—'}%)`;
+  const lv = LV_F.filter(([k]) => (n.rec.levels || {})[k]).map(([k, l]) => `${l}: ${LV_N[n.rec.levels[k]]}`).join(', ');
+  const good = n.rm.filter(r => r.type === 'good').slice(0, 3).map(r => '👍 ' + r.text).join('\n'), bad = n.rm.filter(r => r.type === 'bad').slice(0, 3).map(r => '• ' + r.text).join('\n');
+  return `*Student report — ${s.name}*\nClass ${c}${rank ? ' · Rank ' + rank + ' of ' + of : ''}\n${line('Attendance', n.att, A.att)}${line('Homework', n.hw, A.hw)}${line('Diary/ID/Book/Dress', n.kit, A.kit)}${line('Marks', n.mk, A.mk)}` +
+    (lv ? `\n\n${lv}` : '') + (good ? `\n\nGood things:\n${good}` : '') + (bad ? `\n\nPlease help with:\n${bad}` : '') + `\n\n— ${myName()}, Class Teacher, ${S.settings.school || ''}`;
+}
+function stuPrint(c, sid) {
+  const R = REP[c], s = studentById(sid), list = studentsOf(c), N = list.map(x => Object.assign({ s: x }, stuNums(R, x))), n = N.find(x => x.s.id === sid);
+  const A = { att: avgOf(N, 'att'), hw: avgOf(N, 'hw'), kit: avgOf(N, 'kit'), mk: avgOf(N, 'mk') };
+  let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
+  p.innerHTML = `<pre style="font:13px/1.6 Arial,sans-serif;white-space:pre-wrap">${esc(stuReportText(c, s, n, A, 0, 0).replace(/\*/g, ''))}\n\nRecord: ${REC_F.map(([k, l]) => l + ' ' + (n.rec[k] === 1 ? 'Yes' : n.rec[k] === 0 ? 'No' : '—')).join(' · ')}\n\nAll notes:\n${n.rm.map(r => (r.type === 'good' ? '[Good] ' : '[Complaint] ') + r.date + ' — ' + r.text + ' (' + (r.by || '') + ')').join('\n')}</pre>`;
+  window.print();
 }
 function askHoliday(c, date) {
   SHEET = () => `<h2>Holiday for Class ${esc(c)}</h2><p class="mut" style="margin:0">${fmtLong(date)} — only this class. The day will not count as present or absent.${attOf(date, c) ? ' <b>The attendance saved for this day will be removed.</b>' : ''}</p>
@@ -1555,7 +1681,7 @@ function openMe() {
     (staff.phone ? '<div class="profile-section"><b>School-record contact</b><p>' + esc(staff.phone) + '</p></div>' : '') +
     '<div class="profile-photo-actions"><label class="btn l">Change photo<input type="file" accept="image/*" capture="user" onchange="profilePhotoPick(this)"></label>' +
     (photo ? '<button class="btn l" onclick="profilePhotoRemove()">Remove photo</button>' : '') +
-    '<button class="btn l" onclick="showTeacherWelcome(true)">Replay welcome</button></div>' +
+    '<button class="btn l" onclick="showTeacherWelcome(true)">Replay welcome</button><button class="btn l" onclick="store.set(\'ta_intro\',store.get(\'ta_intro\')===\'day\'?\'every\':\'day\');openMe()">Welcome: ' + (store.get('ta_intro') === 'day' ? 'once a day' : 'every opening') + '</button></div>' +
     '<small class="profile-local">Your profile photo stays on this phone. Official staff information is managed by the school office.</small></section>';
 
   SHEET = () => `<div class="row"><h2>My account</h2><button class="btn s l" onclick="closeSheet()" aria-label="Close profile">Close</button></div>

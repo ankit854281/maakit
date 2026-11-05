@@ -31,6 +31,10 @@
 //   GET/POST ?a=kit                        daily check per child: Diary · ID card · Book · Dress (kind tchKit 'date|cls')
 //   GET  ?a=stars&cls=                    star children + children who need attention (last 30 days)
 //   GET/POST ?a=staffchat                  teacher–teacher chat, Staff room + one-to-one (kind tchMsg, kept as a record)
+//   GET  ?a=report&cls=                   class report: each child's attendance, homework, daily check, marks, record, remarks
+//   POST ?a=rec {sid,rec}                  class teacher: student record (diary/ID/book/dress/WhatsApp given?) + reading/learning levels
+//   POST ?a=remark {sid,type,cat,text}     any teacher of the class: complaint or good thing (kept as a record)
+//   POST ?a=delremark {id}                 the writer / Principal
 //
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
 //         tchNote (kept OUT of legacy load/sync — prefix "tch" in inc.php; parents get
@@ -392,7 +396,7 @@ case 'stars': {
     foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (($d['cls'] ?? '') === $cls) $kids[(string)$row['r']] = (string)($d['name'] ?? ''); }
     $z = fn() => ['hw' => 0, 'hwOf' => 0, 'hwNot' => 0, 'kit' => 0, 'kitOf' => 0, 'kitMiss' => 0, 'abs' => 0];
     $p = []; foreach ($kids as $sid => $n) $p[$sid] = $z();
-    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('tchChk','tchKit','studAtt') AND deleted=0 AND r >= ? AND r <= ?"); $q->execute([$from, $today . '|~']);
+    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('tchChk','tchKit','studAtt') AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$from, date('Y-m-d', strtotime('+1 day'))]);   // next day as the end: '~' sorts before digits in this collation
     $attDays = 0; $chkN = 0; $kitN = 0;
     foreach ($q as $row) {
         $parts = explode('|', (string)$row['r']); if (($parts[1] ?? '') !== $cls) continue;
@@ -457,6 +461,97 @@ case 'staffchat': {
     $d = ['id' => $id, 'room' => $room, 'from' => $mine, 'name' => (string)($u['label'] ?? $mine), 'text' => $text, 'at' => sch_now_ms()];
     sch_rec_put('tchMsg', $id, $d, $uid);
     sch_json(['ok' => true, 'msg' => $d]);
+}
+
+// ---- Student report + record (owner, 5 Nov 2026: "record mention karne ka format — diary nahi hai, ID card nahi liya,
+// WhatsApp student record add nahi kiya" + "class teacher ko total student report — complaint se lekar achhi baatein,
+// comparison mein bachcha kya hai, learning, reading sab") ----
+//   tchRec    'cls|sid' = {diary,id,book,dress,wa,waGroup (1 yes / 0 no), waNo, levels:{read,write,learn,speak,beh} 1–4, note}
+//   tchRemark  <id>     = {id,sid,cls,type good|bad,cat,text,date,tid,by,at}  — kept as a record; the writer or Principal can delete
+case 'report': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $cls = (string)($_GET['cls'] ?? '');
+    if ($cls === '' || !$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+    $set = sch_rec_get('settings', 'main') ?: [];
+    $start = (string)($set['sessionStart'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = (date('n') < 4 ? date('Y') - 1 : date('Y')) . '-04-01';
+    $kids = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (($d['cls'] ?? '') === $cls) $kids[(string)$row['r']] = true; }
+    $z = ['a' => 0, 'l' => 0, 'hw' => 0, 'half' => 0, 'not' => 0, 'hwOf' => 0, 'kit' => 0, 'kitOf' => 0, 'miss' => ['d' => 0, 'i' => 0, 'b' => 0, 'u' => 0]];
+    $per = []; foreach ($kids as $sid => $_) $per[$sid] = $z;
+    $attDays = 0;
+    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('studAtt','tchChk','tchKit') AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$start, date('Y-m-d', strtotime('+1 day'))]);
+    foreach ($q as $row) {
+        $pp = explode('|', (string)$row['r']); if (($pp[1] ?? '') !== $cls) continue;
+        $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        if ($row['k'] === 'studAtt') { $attDays++; foreach ((array)($d['absent'] ?? []) as $sid) if (isset($per[$sid])) $per[$sid][(($d['st'][$sid] ?? '') === 'L') ? 'l' : 'a']++; }
+        elseif ($row['k'] === 'tchChk') { foreach ((array)($d['rows'] ?? []) as $sid => $x) { $h = (string)($x['hw'] ?? ''); if (!isset($per[$sid]) || $h === '') continue; $per[$sid]['hwOf']++; $per[$sid][$h === 'done' ? 'hw' : ($h === 'half' ? 'half' : 'not')]++; } }
+        else { foreach ((array)($d['rows'] ?? []) as $sid => $x) { if (!isset($per[$sid])) continue; $per[$sid]['kitOf']++; $bad = 0; foreach (['d', 'i', 'b', 'u'] as $f) if (isset($x[$f]) && (int)$x[$f] === 0) { $per[$sid]['miss'][$f]++; $bad++; } if (!$bad) $per[$sid]['kit']++; } }
+    }
+    // marks: latest term of this session with marks (Term-2, else Term-1) — total of each subject out of 100, averaged
+    $ses = str_replace(['–', '—'], '-', trim((string)($set['session'] ?? ''))); $ses = preg_match('/^(20\d\d)-(?:20)?(\d\d)$/', $ses, $mm) ? $mm[1] . '-' . $mm[2] : '';
+    $exam = ''; $marks = [];
+    if ($ses !== '') foreach (['Term-2', 'Term-1'] as $ex) {
+        $st = $db->prepare("SELECT d FROM sch_records WHERE k='prcMarks' AND deleted=0 AND r LIKE ?"); $st->execute([str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], "$ses|$ex|$cls|") . '%']);
+        $acc = [];
+        foreach ($st as $row) { $d = json_decode((string)$row['d'], true); foreach ((array)($d['rows'] ?? []) as $sid => $m) { if (!isset($per[$sid]) || !is_array($m)) continue; $t = 0; $any = false;
+            foreach (['pt', 'nb', 'sea', 'te'] as $f) if (isset($m[$f]) && is_numeric($m[$f])) { $t += (float)$m[$f]; $any = true; }
+            if ($any) $acc[$sid][] = min(100, $t); } }
+        if ($acc) { $exam = $ex; foreach ($acc as $sid => $l) $marks[$sid] = round(array_sum($l) / count($l), 1); break; }
+    }
+    $recs = []; $st = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchRec' AND deleted=0 AND r LIKE ?"); $st->execute([str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $cls) . '|%']);
+    foreach ($st as $row) { [$c0, $sid] = array_pad(explode('|', (string)$row['r'], 2), 2, ''); if ($c0 === $cls) $recs[$sid] = json_decode((string)$row['d'], true); }
+    $rem = [];
+    foreach ($db->query("SELECT d FROM sch_records WHERE k='tchRemark' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d) && ($d['cls'] ?? '') === $cls && isset($kids[$d['sid'] ?? ''])) $rem[] = $d; }
+    usort($rem, fn($a, $b) => ($b['at'] ?? 0) <=> ($a['at'] ?? 0));
+    sch_json(['ok' => true, 'from' => $start, 'attDays' => $attDays, 'per' => (object)$per, 'marks' => (object)$marks, 'exam' => $exam,
+              'recs' => (object)$recs, 'remarks' => array_slice($rem, 0, 1500), 'canEdit' => $canClass($cls), 'me' => $role === 'teacher' ? $tid : 'P']);
+}
+
+case 'rec': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;
+    if (!$s) sch_fail('Student not found.', 404);
+    $cls = (string)($s['cls'] ?? '');
+    if (!$canClass($cls)) sch_fail('Only the class teacher or the Principal can change this record.', 403);
+    $x = is_array($in['rec'] ?? null) ? $in['rec'] : [];
+    $yn = fn($v) => $v === null || $v === '' ? null : ((int)$v ? 1 : 0);
+    $lv = []; foreach (['read', 'write', 'learn', 'speak', 'beh'] as $f) { $v = (int)($x['levels'][$f] ?? 0); if ($v >= 1 && $v <= 4) $lv[$f] = $v; }
+    $wa = preg_replace('/\D/', '', (string)($x['waNo'] ?? '')); $wa = strlen($wa) >= 10 ? substr($wa, -10) : '';
+    $d = ['diary' => $yn($x['diary'] ?? null), 'id' => $yn($x['id'] ?? null), 'book' => $yn($x['book'] ?? null), 'dress' => $yn($x['dress'] ?? null),
+          'wa' => $yn($x['wa'] ?? null), 'waGroup' => $yn($x['waGroup'] ?? null), 'waNo' => $wa, 'levels' => (object)$lv, 'note' => tch_txt($x['note'] ?? '', 500),
+          'by' => $u['label'], 'at' => sch_now_ms()];
+    sch_rec_put('tchRec', "$cls|$sid", $d, $uid);
+    $miss = []; foreach (['diary' => 'diary', 'id' => 'ID card', 'book' => 'books', 'dress' => 'dress', 'wa' => 'WhatsApp in record'] as $f => $l) if ($d[$f] === 0) $miss[] = $l;
+    sch_log($u, 'Student record', 'Record of ' . ($s['name'] ?? $sid) . ' (Class ' . $cls . ') updated' . ($miss ? ' — not yet: ' . implode(', ', $miss) : '') . ' — Teacher App');
+    sch_json(['ok' => true, 'rec' => $d]);
+}
+
+case 'remark': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;
+    if (!$s) sch_fail('Student not found.', 404);
+    $cls = (string)($s['cls'] ?? '');
+    if (!$canSee($cls)) sch_fail('You can write only about children of your own classes.', 403);
+    $type = ($in['type'] ?? '') === 'good' ? 'good' : (($in['type'] ?? '') === 'bad' ? 'bad' : '');
+    if ($type === '') sch_fail('Choose: complaint or good thing.');
+    $text = tch_txt($in['text'] ?? '', 500); if ($text === '') sch_fail('Write what happened.');
+    $date = (string)($in['date'] ?? date('Y-m-d')); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d')) $date = date('Y-m-d');
+    $id = 'r' . bin2hex(random_bytes(8));
+    $d = ['id' => $id, 'sid' => $sid, 'cls' => $cls, 'type' => $type, 'cat' => tch_txt($in['cat'] ?? '', 40), 'text' => $text, 'date' => $date,
+          'tid' => $role === 'teacher' ? $tid : 'P', 'by' => $u['label'], 'at' => sch_now_ms()];
+    sch_rec_put('tchRemark', $id, $d, $uid);
+    sch_log($u, 'Student remark', ($type === 'good' ? 'Good: ' : 'Complaint: ') . ($s['name'] ?? $sid) . ' (Class ' . $cls . ') — ' . $text);
+    sch_json(['ok' => true, 'remark' => $d]);
+}
+
+case 'delremark': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $id = (string)($in['id'] ?? ''); $old = preg_match('/^r[a-f0-9]{16}$/', $id) ? sch_rec_get('tchRemark', $id) : null;
+    if (!$old) sch_fail('Not found.', 404);
+    if ($role !== 'principal' && ($old['tid'] ?? '') !== $tid) sch_fail('Only the teacher who wrote it can delete it.', 403);
+    sch_rec_del('tchRemark', $id, $uid);
+    sch_log($u, 'Student remark', 'Deleted a remark about ' . ((sch_rec_get('student', (string)$old['sid']) ?? [])['name'] ?? $old['sid']) . ': ' . $old['text']);
+    sch_json(['ok' => true]);
 }
 
 case 'notes': {
