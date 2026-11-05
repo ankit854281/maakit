@@ -28,6 +28,10 @@
 //                                          records the Chairman app and office read (via 'Teacher App')
 //   POST ?a=check {date,cls,subj,hw,rows}  subject teacher / Principal: per child hw done|half|not, copy checked|not (kind tchChk 'date|cls|subj')
 //
+//   GET/POST ?a=kit                        daily check per child: Diary · ID card · Book · Dress (kind tchKit 'date|cls')
+//   GET  ?a=stars&cls=                    star children + children who need attention (last 30 days)
+//   GET/POST ?a=staffchat                  teacher–teacher chat, Staff room + one-to-one (kind tchMsg, kept as a record)
+//
 //  Kinds: clsHol (date-keyed, in legacy load so the web ERP shows "Holiday"),
 //         tchNote (kept OUT of legacy load/sync — prefix "tch" in inc.php; parents get
 //         only their own classes' notes through api.php?a=pdata).
@@ -186,21 +190,25 @@ case 'photos': {
         $s = json_decode((string)$row['d'], true); if (!is_array($s) || ($s['cls'] ?? '') !== $cls) continue;
         $p = sch_rec_get('phoStu', (string)$row['r']); if (!$p || empty($p['img'])) continue;
         $h = (string)$p['img'];
-        $th = sch_rec_get('phoThumb', $h);
+        $tk = 'v2|' . $h;                       // v2: thumbnails made after the crop fix (old ones were half black)
+        $th = sch_rec_get('phoThumb', $tk);
         if (!$th) {
             $img = sch_rec_get('phoImg', $h); $data = (string)($img['data'] ?? ''); if ($data === '') continue;
             $small = $data;
+            // EXIF-free JPEGs from phones can still come sideways from some uploads; GD keeps them as they are.
             if (function_exists('imagecreatefromstring')) {
                 $bin = base64_decode(substr($data, strpos($data, ',') + 1), true);
                 $src = $bin ? @imagecreatefromstring($bin) : false;
                 if ($src) {
                     $w = imagesx($src); $hh = imagesy($src); $e = min($w, $hh); $dst = imagecreatetruecolor(112, 112);
-                    imagecopyresampled($dst, $src, (int)(($w - $e) / 2), (int)(($hh - $e) / 3), 0, 0, 112, 112, $e, $e);
+                    // Square from the middle of the photo (a little higher for faces). Owner, 5 Nov 2026: the photos showed
+                    // half black because the crop offset was given as the TARGET position; it belongs to the SOURCE.
+                    imagecopyresampled($dst, $src, 0, 0, (int)(($w - $e) / 2), (int)(($hh - $e) / 3), 112, 112, $e, $e);
                     ob_start(); imagejpeg($dst, null, 78); $small = 'data:image/jpeg;base64,' . base64_encode((string)ob_get_clean());
                 }
             }
             $th = ['data' => $small];
-            if (strlen($small) < 60000) sch_rec_put('phoThumb', $h, $th, 'system');
+            if (strlen($small) < 60000) sch_rec_put('phoThumb', $tk, $th, 'system');
         }
         $out[(string)$row['r']] = ['h' => $h, 'src' => (string)$th['data']];
     }
@@ -337,6 +345,118 @@ case 'check': {
     $not = count(array_filter($rows, fn($x) => $x['hw'] === 'not')); $done = count(array_filter($rows, fn($x) => $x['hw'] === 'done'));
     sch_log($u, 'Homework check', "Class $cls $subj ($date): $done done, $not not done, " . count(array_filter($rows, fn($x) => $x['cp'] === 'ok')) . ' copies checked');
     sch_json(['ok' => true, 'rec' => $d]);
+}
+
+// ---- Daily check: Diary · ID card · Book · Dress (owner, 5 Nov 2026: "dairy id book dress fill karne ka option") ----
+// Kind tchKit 'date|cls' = {date, cls, rows:{sid:{d,i,b,u}}, by, at}. 1 = brought / wearing, 0 = missing.
+// Only the class teacher (or Principal) fills it, for the day chosen — each day keeps its own entry.
+case 'kit': {
+    if ($method === 'GET') {
+        $cls = (string)($_GET['cls'] ?? ''); $date = (string)($_GET['date'] ?? '');
+        if ($cls === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Choose the class and the date.');
+        if (!$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+        $from = date('Y-m-d', strtotime($date . ' -30 days')); $miss = []; $days = 0;
+        $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchKit' AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$from, $date]);
+        foreach ($q as $row) { [, $c0] = array_pad(explode('|', (string)$row['r'], 2), 2, ''); if ($c0 !== $cls) continue; $days++;
+            foreach ((array)((json_decode((string)$row['d'], true) ?: [])['rows'] ?? []) as $sid => $x) foreach (['d', 'i', 'b', 'u'] as $f) if (isset($x[$f]) && (int)$x[$f] === 0) $miss[$sid][$f] = ($miss[$sid][$f] ?? 0) + 1; }
+        sch_json(['ok' => true, 'rec' => sch_rec_get('tchKit', "$date|$cls"), 'miss' => (object)$miss, 'days' => $days, 'canEdit' => $canClass($cls)]);
+    }
+    $cls = tch_txt($in['cls'] ?? '', 20); $date = (string)($in['date'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date) || $date > date('Y-m-d')) sch_fail('Choose today or a past day.');
+    if (!$canClass($cls)) sch_fail('Only the class teacher or the Principal can fill the daily check of this class.', 403);
+    $ids = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (($d['cls'] ?? '') === $cls) $ids[(string)$row['r']] = true; }
+    $rows = [];
+    foreach ((array)($in['rows'] ?? []) as $sid => $x) {
+        $sid = (string)$sid; if (!isset($ids[$sid]) || !is_array($x)) continue;
+        $r = []; foreach (['d', 'i', 'b', 'u'] as $f) if (isset($x[$f])) $r[$f] = (int)$x[$f] ? 1 : 0;
+        if ($r) $rows[$sid] = $r;
+    }
+    if (!$rows) sch_fail('Mark at least one child.');
+    $key = "$date|$cls"; $old = sch_rec_get('tchKit', $key);
+    $d = ['date' => $date, 'cls' => $cls, 'rows' => $rows, 'by' => $u['label'], 'at' => sch_now_ms(), 'created' => $old['created'] ?? sch_now_ms()];
+    sch_rec_put('tchKit', $key, $d, $uid);
+    $cnt = fn($f) => count(array_filter($rows, fn($x) => isset($x[$f]) && $x[$f] === 0));
+    sch_log($u, 'Daily check', "Class $cls ($date): diary missing {$cnt('d')}, ID card {$cnt('i')}, book {$cnt('b')}, dress {$cnt('u')} — Teacher App");
+    sch_json(['ok' => true, 'rec' => $d]);
+}
+
+// ---- Star children + children who need attention (owner, 5 Nov 2026: "upar achhe bachon ko") ----
+// Last 30 days of one class, only from what teachers saved: homework checks (tchChk), daily check (tchKit), attendance.
+case 'stars': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $cls = (string)($_GET['cls'] ?? '');
+    if ($cls === '' || !$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+    $today = date('Y-m-d'); $from = date('Y-m-d', strtotime('-30 days'));
+    $kids = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (($d['cls'] ?? '') === $cls) $kids[(string)$row['r']] = (string)($d['name'] ?? ''); }
+    $z = fn() => ['hw' => 0, 'hwOf' => 0, 'hwNot' => 0, 'kit' => 0, 'kitOf' => 0, 'kitMiss' => 0, 'abs' => 0];
+    $p = []; foreach ($kids as $sid => $n) $p[$sid] = $z();
+    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('tchChk','tchKit','studAtt') AND deleted=0 AND r >= ? AND r <= ?"); $q->execute([$from, $today . '|~']);
+    $attDays = 0; $chkN = 0; $kitN = 0;
+    foreach ($q as $row) {
+        $parts = explode('|', (string)$row['r']); if (($parts[1] ?? '') !== $cls) continue;
+        $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        if ($row['k'] === 'studAtt') { $attDays++; foreach ((array)($d['absent'] ?? []) as $sid) if (isset($p[$sid]) && (($d['st'][$sid] ?? '') !== 'L')) $p[$sid]['abs']++; continue; }
+        if ($row['k'] === 'tchChk') { $chkN++; foreach ((array)($d['rows'] ?? []) as $sid => $x) { if (!isset($p[$sid]) || ($x['hw'] ?? '') === '') continue; $p[$sid]['hwOf']++; if ($x['hw'] === 'done') $p[$sid]['hw']++; if ($x['hw'] === 'not') $p[$sid]['hwNot']++; } continue; }
+        $kitN++; foreach ((array)($d['rows'] ?? []) as $sid => $x) { if (!isset($p[$sid])) continue; $p[$sid]['kitOf']++; $m = count(array_filter((array)$x, fn($v) => (int)$v === 0)); if ($m) $p[$sid]['kitMiss']++; else $p[$sid]['kit']++; }
+    }
+    $list = [];
+    foreach ($p as $sid => $x) {
+        $hwP = $x['hwOf'] ? $x['hw'] / $x['hwOf'] : null; $kitP = $x['kitOf'] ? $x['kit'] / $x['kitOf'] : null; $attP = $attDays ? ($attDays - $x['abs']) / $attDays : null;
+        $parts = array_filter([$hwP, $kitP, $attP], fn($v) => $v !== null);
+        $score = $parts ? array_sum($parts) / count($parts) : null;
+        $why = [];
+        if ($hwP !== null && $x['hwOf'] >= 2 && $hwP >= .9) $why[] = 'homework always done';
+        if ($attP !== null && $attDays >= 5 && $x['abs'] === 0) $why[] = 'full attendance';
+        if ($kitP !== null && $x['kitOf'] >= 2 && $kitP >= .99) $why[] = 'diary, ID, book, dress every day';
+        $need = [];
+        if ($x['hwNot'] >= 2) $need[] = 'homework not done ' . $x['hwNot'] . ' time(s)';
+        if ($x['kitMiss'] >= 2) $need[] = 'diary/ID/book/dress missing ' . $x['kitMiss'] . ' day(s)';
+        if ($attDays >= 5 && $x['abs'] >= 3) $need[] = 'absent ' . $x['abs'] . ' day(s)';
+        $list[] = ['sid' => $sid, 'name' => $kids[$sid], 'score' => $score === null ? null : round($score * 100), 'why' => $why, 'need' => $need] + $x;
+    }
+    $stars = array_values(array_filter($list, fn($x) => $x['score'] !== null && $x['why']));
+    usort($stars, fn($a, $b) => [$b['score'], count($b['why'])] <=> [$a['score'], count($a['why'])]);
+    $needs = array_values(array_filter($list, fn($x) => $x['need'])); usort($needs, fn($a, $b) => count($b['need']) <=> count($a['need']));
+    sch_json(['ok' => true, 'stars' => array_slice($stars, 0, 6), 'needs' => array_slice($needs, 0, 8), 'from' => $from, 'attDays' => $attDays, 'checks' => $chkN, 'kits' => $kitN]);
+}
+
+// ---- Staff chat (owner, 5 Nov 2026: "teachers bhi baat kar paye or chat record rakhiye") ----
+// Kind tchMsg (never deleted — the record stays): {id, room, from, name, text, at}. room 'all' = Staff room (every
+// teacher + Principal), 'dm|A|B' = two people (tids sorted; the Principal is 'P'). Teachers read only their rooms;
+// the Principal and the Chairman read every room (the record).
+case 'staffchat': {
+    $mine = $role === 'teacher' ? $tid : 'P';
+    $okRoom = function (string $room) use ($role, $mine): bool {
+        if ($room === 'all') return true;
+        if (!preg_match('/^dm\|([^|]{1,20})\|([^|]{1,20})$/', $room, $m)) return false;
+        return $role !== 'teacher' || $m[1] === $mine || $m[2] === $mine;
+    };
+    if ($method === 'GET') {
+        $room = (string)($_GET['room'] ?? ''); $since = (int)($_GET['since'] ?? 0);
+        $from = sch_now_ms() - 120 * 86400000; $last = []; $msgs = [];
+        foreach ($db->query("SELECT d FROM sch_records WHERE k='tchMsg' AND deleted=0") as $row) {
+            $d = json_decode((string)$row['d'], true); if (!is_array($d) || (int)($d['at'] ?? 0) < $from) continue;
+            $r = (string)($d['room'] ?? ''); if (!$okRoom($r)) continue;
+            if (!isset($last[$r]) || $d['at'] > $last[$r]['at']) $last[$r] = $d;
+            if ($r === $room && (int)$d['at'] > $since) $msgs[] = $d;
+        }
+        usort($msgs, fn($a, $b) => $a['at'] <=> $b['at']);
+        sch_json(['ok' => true, 'me' => $mine, 'rooms' => array_values($last), 'messages' => array_slice($msgs, -300), 'now' => sch_now_ms()]);
+    }
+    $room = (string)($in['room'] ?? ''); $text = tch_txt($in['text'] ?? '', 1500);
+    if ($text === '') sch_fail('Write a message.');
+    if (preg_match('/^dm\|/', $room)) {
+        $ab = explode('|', $room); $ok = count($ab) === 3 && ($ab[1] === $mine || $ab[2] === $mine);
+        $other = $ab[1] === $mine ? ($ab[2] ?? '') : ($ab[1] ?? '');
+        if (!$ok || ($other !== 'P' && !sch_rec_get('teacher', $other))) sch_fail('Choose a teacher to talk to.');
+        $room = 'dm|' . implode('|', [min($ab[1], $ab[2]), max($ab[1], $ab[2])]);
+    } elseif ($room !== 'all') sch_fail('Choose a chat.');
+    $id = 'm' . bin2hex(random_bytes(8));
+    $d = ['id' => $id, 'room' => $room, 'from' => $mine, 'name' => (string)($u['label'] ?? $mine), 'text' => $text, 'at' => sch_now_ms()];
+    sch_rec_put('tchMsg', $id, $d, $uid);
+    sch_json(['ok' => true, 'msg' => $d]);
 }
 
 case 'notes': {

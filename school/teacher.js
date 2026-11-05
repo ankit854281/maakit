@@ -184,7 +184,7 @@ async function load() {
   if (!['teacher', 'principal'].includes(res.me.role)) { LOGIN = { msg: 'This app is for teachers. Please log in with a teacher PIN.' }; store.set('sch_token', null); S = null; return render(); }
   ME = res.me; S = emptyState(); applyRecs(res.records); lastV = res.now; loadedFrom = res.from;
   loadQueue(); QUEUE.forEach(x => x.del ? delRec(x.k, x.r) : setRec(x.k, x.r, x.d)); keepLoad();
-  render(); if (!OFFLINE_COPY) flush(); showTeacherWelcome();
+  render(); if (!OFFLINE_COPY) { flush(); scLoad(null).then(() => softRender()); } showTeacherWelcome();
 }
 addEventListener('online', () => { if (OFFLINE_COPY && store.get('sch_token')) load(); });
 // Every change: shown at once on this phone, queued, sent. If the internet is off it waits (also across a restart).
@@ -338,12 +338,12 @@ function render() {
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) ? 0 : 1), 0);
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
-  const dot = { att: dueAtt, diary: dueDiary }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
+  const dot = { att: dueAtt, diary: dueDiary, conn: scUnread() }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b></div>
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
     <div class="tabs">${TABS.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
-  keepRestore();
+  keepRestore(); scScroll();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
   setNet();
 }
@@ -373,7 +373,7 @@ function keepClear(prefix) { const c = keepCtx(), box = KEEP[c]; if (!box) retur
 function keepHas(prefix) { const box = KEEP[keepCtx()] || {}; return Object.keys(box).some(id => id.startsWith(prefix)); }
 document.addEventListener('input', e => keepNote(e.target));
 document.addEventListener('change', e => keepNote(e.target));
-function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.chk && DRAFT.chk.changed) || (DRAFT.att && DRAFT.att.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
+function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.chk && DRAFT.chk.changed) || (DRAFT.att && DRAFT.att.changed) || (DRAFT.kit && DRAFT.kit.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
 function greet() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
 function closeSheet() { SHEET = null; render(); }
 function seg(items, cur, fn) { return `<div class="seg">${items.map(([k, l]) => `<button class="${k === cur ? 'on' : ''}" onclick="${fn}(${jsq(k)})">${l}</button>`).join('')}</div>`; }
@@ -498,16 +498,33 @@ function vHome() {
     .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
   const mine = S.leaves.filter(l => l.tid === me()).slice(0, 2);
   const notices = S.notices.filter(n => n.to !== 'Parents').slice(0, 3);
+  // homework I gave today, and homework from earlier days that is due today (to check in class)
+  const hwToday = bells.map(b => ({ b, e: diaryEntry(d, b.bell) })).filter(x => x.e && x.e.hw);
+  const hwDue = []; for (let i = 1; i <= 7; i++) { const dd = addDays(d, -i); Object.entries((S.diary[dd] || {})[me()] || {}).forEach(([, e]) => { if (e && e.hw && e.hwDate === d) hwDue.push({ dd, e }); }); }
+  const week = []; for (let i = 6; i >= 1; i--) { const dd = addDays(d, -i), bl = myBells(dd); if (bl.length) week.push({ dd, n: bl.length, f: bl.filter(b => diaryEntry(dd, b.bell)).length }); }
+  const wN = week.reduce((n, x) => n + x.n, 0), wF = week.reduce((n, x) => n + x.f, 0);
+  const sc = ct[0] || (allocList()[0] || {}).c, st = sc ? needStars(sc) : null, ph = sc ? needPhotos(sc) : {};
+  const quick = [['att', 'Attendance', 'check', ct.length ? { c: ct[0] } : {}], ['att', 'Daily check', 'bill', ct.length ? { c: ct[0], m: 'kit' } : {}], ['diary', 'Diary', 'book', {}], ['diary', 'Check work', 'list', { m: 'check' }],
+    ['plan', 'Lesson plan', 'note', {}], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att');
+  const kidCard = (k, why, cls) => `<div class="star ${cls}"><span class="ph">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}${cls === 'top' ? '<em>★</em>' : ''}</span><b>${esc(k.name.split(' ')[0])}</b><small>${esc(why)}</small></div>`;
+  const starsHtml = !st || st.loading ? '' : st.err ? '' : `
+    <div class="card stars-card"><h3>⭐ Star children <small>Class ${esc(sc)} · last 30 days</small></h3>
+      ${st.stars.length ? `<div class="stars">${st.stars.map(k => kidCard(k, k.why[0], 'top')).join('')}</div>` : `<p class="mut" style="margin:0">Stars appear here from homework checks, the daily check and attendance. ${ct.length ? 'Fill <b>Attendance → Daily check</b> and <b>Classroom → Check work</b>.' : 'Fill <b>Classroom → Check work</b>.'}</p>`}
+      ${st.stars.length ? `<button class="btn s l" style="margin-top:8px" onclick="go('conn',{m:'msg',c:${jsq(sc)},t:'praise'})">${ic('wa')} Send appreciation to parents</button>` : ''}</div>
+    ${st.needs.length ? `<div class="card"><h3>Needs attention <small>${st.needs.length}</small></h3>${st.needs.map(k => `<div class="li"><span class="ph sm">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="">` : `<i>${esc(initials(k.name))}</i>`}</span><div class="t"><b>${esc(k.name)}</b><span>${esc(k.need.join(' · '))}</span></div></div>`).join('')}</div>` : ''}`;
   return `<div class="row"><h2>${fmtLong(d)}</h2></div>
     ${teacherMotivation()}
     ${dayIdx(d) < 0 ? '<div class="ban hol">Sunday — no school today.</div>' : hol ? `<div class="ban hol"><b>Holiday:</b> ${esc(hol.title)}</div>` : ''}
     ${absentFrom(d, me()) !== null ? `<div class="ban warn">${absentFrom(d, me()) ? 'Half day today — you leave before the ' + BELLS[absentFrom(d, me())].n + ' bell.' : 'You are on leave / marked absent today.'}</div>` : ''}
     <div class="kp">
       <button class="k ac" onclick="go('diary')"><span>My bells today</span><b>${bells.length}</b><small>${filled} diary filled</small></button>
+      <button class="k ${hwToday.length ? 'ok' : ''}" onclick="go('diary')"><span>Homework given today</span><b>${hwToday.length}</b><small>${hwDue.length ? hwDue.length + ' due today to check' : 'in my bells'}</small></button>
       ${ct.length ? ct.slice(0, isP() ? 1 : 3).map(c => { const a = attOf(d, c), h = clsHolOn(d, c), n = studentsOf(c).length;
         return `<button class="k ${a ? 'ok' : h || !isWorkDay(d) ? '' : 'go'}" onclick="go('att',{c:'${esc(c)}'})"><span>Class ${esc(c)} attendance</span><b>${a ? (n - (a.absent || []).length) + '/' + n : h ? 'Holiday' : !isWorkDay(d) ? '—' : 'Mark'}</b><small>${a ? 'Saved ' + fmtTime(a.at || Date.now()) : h ? esc(h.title) : !isWorkDay(d) ? 'No school' : 'Not marked yet'}</small></button>`; }).join('')
         : `<button class="k" onclick="go('notes')"><span>Chapter notes</span><b>${ic('cam')}</b><small>Make notes from a book photo</small></button>`}
     </div>
+    <div class="card quick-card"><div class="quick-grid">${quick.map(([t, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(t)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}${t === 'conn' && p.m === 'staff' && scUnread() ? `<em>${scUnread()}</em>` : ''}</button>`).join('')}</div></div>
+    ${starsHtml}
     ${back.length ? `<div class="ban warn"><div><b>${back.length} school day(s) without attendance</b> in the last 30 days (${[...new Set(back.map(x => 'Class ' + x.c))].join(', ')}).<br><button class="btn s go" style="margin-top:8px" onclick="go('att',{c:'${esc(back[0].c)}',m:'pending'})">Update them together</button></div></div>` : ''}
     ${dp.length ? `<div class="ban warn"><div><b>Diary not filled:</b> ${dp.map(x => `<a href="#" onclick="go('diary',{date:'${x.d}'});return false" style="text-decoration:underline">${fmtDate(x.d)} (${x.n})</a>`).join(', ')}</div></div>` : ''}
     <div class="card"><h3>My bells <small>${bells.length ? filled + ' of ' + bells.length + ' filled' : 'none'}</small></h3>
@@ -516,6 +533,11 @@ function vHome() {
           <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>${b.arr ? 'Arrangement' + (b.for ? ' for ' + esc(T(b.for).name) : '') + ' · ' : ''}${e ? 'Topic: ' + esc(e.topic) : bellOver(d, b.bell) ? 'Diary not filled' : 'Upcoming'}</span></div>
           ${e ? '<span class="pill ok">Done</span>' : bellOver(d, b.bell) ? '<span class="pill warn">Fill</span>' : ''}</div>`; }).join('')
         : `<div class="empty">${dayIdx(d) < 0 ? 'Sunday — no classes.' : hol ? 'Holiday — no classes.' : S.grid ? 'No bells for you today.' : 'The timetable is not set yet. Use Diary → "Add a period".'}</div>`}</div>
+    <div class="card"><h3>Homework <small>${hwToday.length} given · ${hwDue.length} due today</small></h3>
+      ${hwToday.map(x => `<div class="li" onclick="go('diary',{date:'${d}',bell:${x.b.bell}})"><div class="bell"><b>${esc(x.b.cls)}</b>${esc(x.b.subj.slice(0, 5))}</div><div class="t"><b>${esc(x.e.hw)}</b><span>Given today${x.e.hwMinutes ? ' · ' + x.e.hwMinutes + ' min' : ''}${x.e.hwDate ? ' · for ' + esc(fmtDate(x.e.hwDate)) : ''}</span></div><span class="pill ok">Given</span></div>`).join('')}
+      ${hwDue.map(x => `<div class="li" onclick="go('diary',{date:'${d}',m:'check'})"><div class="bell arr"><b>${esc(x.e.cls || '')}</b>${esc(String(x.e.subj || '').slice(0, 5))}</div><div class="t"><b>${esc(x.e.hw)}</b><span>Given ${esc(fmtDate(x.dd))} · check today</span></div><span class="pill warn">Check</span></div>`).join('')}
+      ${!hwToday.length && !hwDue.length ? `<div class="empty">${bells.length ? 'No homework written yet today. Fill it in Classroom after each bell.' : 'No bells today.'}</div>` : ''}</div>
+    ${week.length ? `<div class="card"><h3>My week <small>${wF} of ${wN} diaries filled</small></h3><div class="weekbar">${week.map(x => `<div onclick="go('diary',{date:'${x.dd}'})"><i style="--h:${Math.round(x.f / x.n * 100)}%" class="${x.f === x.n ? 'full' : x.f ? '' : 'none'}"></i><small>${esc(new Date(x.dd + 'T00:00:00').toLocaleDateString(LOC(), { weekday: 'short' }))}</small></div>`).join('')}</div></div>` : ''}
     ${notices.length ? `<div class="card"><h3>Notices</h3>${notices.map(n => `<div class="li"><div class="t"><b>${esc(n.title)}</b><span>${fmtDate(n.date)}</span><p class="sm" style="margin:4px 0 0;white-space:pre-wrap">${esc(n.body)}</p></div></div>`).join('')}</div>` : ''}
     ${upcoming.length ? `<div class="card"><h3>Coming holidays</h3>${upcoming.map(h => `<div class="li"><div class="t"><b>${esc(h.t)}</b><span>${fmtDate(h.date)}${h.to && h.to !== h.date ? ' – ' + fmtDate(h.to) : ''}</span></div><span class="pill hol">Holiday</span></div>`).join('')}</div>` : ''}
     ${mine.length ? `<div class="card"><h3>My leave <small onclick="openMe()">Apply</small></h3>${mine.map(l => `<div class="li"><div class="t"><b>${fmtDate(l.from)}${l.to !== l.from ? ' – ' + fmtDate(l.to) : ''}</b><span>${esc(l.reason)}</span></div><span class="pill ${l.status === 'Approved' ? 'ok' : l.status === 'Rejected' ? 'bad' : 'warn'}">${esc(l.status)}</span></div>`).join('')}</div>` : ''}`;
@@ -542,6 +564,13 @@ function needPhotos(c) {
   api('teacher_api.php?a=photos&cls=' + encodeURIComponent(c)).then(r => { PHOTOS[c] = r.photos || {}; IDB.set('photos:' + c, PHOTOS[c]); softRender(); }).catch(() => {});
   return PHOTOS[c];
 }
+const STARS = {};
+function needStars(c) {
+  if (STARS[c]) return STARS[c];
+  STARS[c] = { loading: true };
+  api('teacher_api.php?a=stars&cls=' + encodeURIComponent(c)).then(r => { STARS[c] = r; softRender(); }).catch(e => { STARS[c] = { err: e.message }; });
+  return STARS[c];
+}
 function pctOf(c, sid) { const t = STATS[c]; if (!t || !t.days) return null; const x = (t.per || {})[sid] || { a: 0, l: 0 }; return Math.round((t.days - x.a - x.l) / t.days * 100); }
 function initials(n) { return String(n || '').split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase(); }
 function vAtt() {
@@ -551,8 +580,8 @@ function vAtt() {
   needStats(c);
   return `${allowed.length > 1 ? `<div class="fld">Class${sel('attC', allowed.map(x => [x, 'Class ' + x]), c, "DRAFT.att=null;DRAFT.reg=null;go('att',{c:this.value,m:'" + m + "'})")}</div>` : ''}
     ${attReport(c)}
-    ${seg([['day', 'Mark'], ['cal', 'Calendar'], ['reg', 'Register'], ['pending', 'Not marked']], m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;go('att',{c:${jsq(c)},m:k})})`)}
-    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : vAttDay(c)}`;
+    ${seg([['day', 'Mark'], ['kit', 'Daily check'], ['cal', 'Calendar'], ['reg', 'Register'], ['pending', 'Not marked']], m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`)}
+    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : vAttDay(c)}`;
 }
 function attReport(c) {
   const t = todayISO(), list = studentsOf(c), a = attOf(t, c), st = STATS[c] || {}, days = st.days || 0;
@@ -701,6 +730,47 @@ function threeDays(c, date) {
   const days = Object.keys(S.studAtt).filter(d => d <= date && S.studAtt[d][c]).sort().slice(-3); if (days.length < 3) return '';
   const out = studentsOf(c).filter(s => days.every(d => (S.studAtt[d][c].absent || []).includes(s.id) && (S.studAtt[d][c].st || {})[s.id] !== 'L'));
   return out.length ? `<div class="ban bad"><div><b>Absent 3 school days in a row:</b> ${out.map(s => esc(s.name)).join(', ')} — please call the parents.</div></div>` : '';
+}
+
+// ---------------------------------------------------------------- DAILY CHECK (owner, 5 Nov 2026)
+// "dairy id book dress fill karne ka option — jis din ka data fill ho us din ka data entry ho".
+// Class teacher, any day up to today: for each child Diary · ID card · Book · Dress (green = has it, red = missing).
+// Saved per day and class (teacher_api.php?a=kit, kind tchKit). Last 30 days' misses show under each name.
+const KIT_F = [['d', 'Diary'], ['i', 'ID card'], ['b', 'Book'], ['u', 'Dress']], KIT = {};
+function vKit(c) {
+  const t = todayISO(), date = P.date && P.date <= t ? P.date : t, key = date + '|' + c, list = studentsOf(c), ph = needPhotos(c);
+  const nav = `<div class="datebar"><button class="btn s w" onclick="DRAFT.kit=null;go('att',{c:${jsq(c)},m:'kit',date:'${addDays(date, -1)}'})" aria-label="Previous day">${ic('back')}</button>
+    <label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="DRAFT.kit=null;go('att',{c:${jsq(c)},m:'kit',date:this.value})"></label>
+    <button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="DRAFT.kit=null;go('att',{c:${jsq(c)},m:'kit',date:'${addDays(date, 1)}'})" aria-label="Next day">${ic('next')}</button></div>`;
+  if (dayIdx(date) < 0) return nav + '<div class="ban hol">Sunday — no school.</div>';
+  if (holidayOn(date) || clsHolOn(date, c)) return nav + `<div class="ban hol">Holiday — ${esc((holidayOn(date) || clsHolOn(date, c)).title)}. No daily check.</div>`;
+  if (!KIT[key]) { KIT[key] = { loading: true }; api('teacher_api.php?a=kit&cls=' + encodeURIComponent(c) + '&date=' + date).then(r => { KIT[key] = r; render(); }).catch(e => { KIT[key] = { err: e.message }; render(); }); }
+  const K = KIT[key];
+  if (K.loading) return nav + '<div class="load"><i></i></div>';
+  if (K.err) return nav + `<div class="card">${esc(K.err)} <button class="btn s l" onclick="delete KIT['${esc(key)}'];render()">Try again</button></div>`;
+  const att = attOf(date, c), away = new Set((att && att.absent) || []);
+  if (!DRAFT.kit || DRAFT.kit.key !== key) { const rows = {}; list.forEach(s => { const o = (K.rec && K.rec.rows || {})[s.id]; rows[s.id] = o ? Object.assign({ d: 1, i: 1, b: 1, u: 1 }, o) : { d: 1, i: 1, b: 1, u: 1 }; }); DRAFT.kit = { key, rows, changed: false }; }
+  const R = DRAFT.kit.rows, here = list.filter(s => !away.has(s.id)), miss = f => here.filter(s => !R[s.id][f]).length;
+  const full = here.filter(s => KIT_F.every(([f]) => R[s.id][f])).length;
+  return nav + `<div class="card kit-sum"><div class="row"><div><small>Class ${esc(c)} · ${here.length} present${away.size ? ' · ' + away.size + ' absent (left out)' : ''}</small><b>Daily check</b></div>${K.rec ? `<span class="pill ok">Saved ${esc(fmtTime(K.rec.at))}</span>` : '<span class="pill warn">Not saved yet</span>'}</div>
+      <div class="kit-grid">${KIT_F.map(([f, l]) => `<div class="${miss(f) ? 'm' : ''}"><b>${miss(f)}</b><span>${l} missing</span></div>`).join('')}</div>
+      <p class="mut" style="margin:6px 0 0">${full} of ${here.length} children have everything today.</p></div>
+    <div class="card"><p class="mut hint" style="margin:0 0 8px">Everything is green (has it). Tap only what a child did <b>not</b> bring — it turns red.</p>
+      <div class="kit-list">${list.map(s => { const r = R[s.id], m = (K.miss || {})[s.id] || {}, gone = away.has(s.id), pic = ph[s.id], mt = KIT_F.filter(([f]) => m[f]).map(([f, l]) => l + ' ' + m[f]).join(' · ');
+        return `<div class="kit-row ${gone ? 'gone' : ''}"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(s.name))}</i>`}</span>
+          <div class="n"><b>${esc(s.name)}</b><small>${gone ? 'Absent today' : mt ? 'Missed in 30 days: ' + esc(mt) : 'Roll ' + esc(s.rollno || '')}</small></div>
+          ${gone ? '' : `<div class="kit-btns">${KIT_F.map(([f, l]) => `<button type="button" class="${r[f] ? 'y' : 'x'}" aria-label="${esc(s.name)} ${l}: ${r[f] ? 'has it' : 'missing'}" onclick="kitTap('${esc(s.id)}','${f}')">${r[f] ? '✓' : '✕'}<small>${l.split(' ')[0]}</small></button>`).join('')}</div>`}</div>`; }).join('') || '<div class="empty">No students in this class yet.</div>'}</div>
+      ${list.length ? `<div class="sticky"><div class="btns"><button class="btn w s" onclick="kitAll()">Everyone has everything</button></div><button class="btn go full submit" style="margin-top:8px" onclick="kitSave(${jsq(c)},'${date}')">${K.rec ? 'Update' : 'Save'} daily check · ${KIT_F.map(([f, l]) => miss(f) + ' ' + l.split(' ')[0]).join(' · ')}</button></div>` : ''}</div>
+    ${K.rec && here.some(s => KIT_F.some(([f]) => !R[s.id][f])) ? `<div class="card"><h3>Tell the parents <small>things missing</small></h3>${here.filter(s => KIT_F.some(([f]) => !R[s.id][f])).map(s => { const lack = KIT_F.filter(([f]) => !R[s.id][f]).map(([, l]) => l), msg = `Dear Parent,\n${s.name} (Class ${c}) did not bring: ${lack.join(', ')} on ${fmtLong(date)}. Kindly make sure it is brought daily.\n${s.name} आज ${lack.map(x => ({ Diary: 'डायरी', 'ID card': 'आई-कार्ड', Book: 'किताब', Dress: 'ड्रेस' }[x])).join(', ')} नहीं लाया/लाई। कृपया रोज़ भेजें।\n— ${myName()}, ${S.settings.school || ''}`;
+      return `<div class="li"><div class="t"><b>${esc(s.name)}</b><span>${esc(lack.join(', '))}</span></div>${s.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(s.phone, msg)}">${ic('wa')} Send</a>` : '<span class="mut">no phone</span>'}</div>`; }).join('')}</div>` : ''}`;
+}
+function kitTap(sid, f) { const r = DRAFT.kit.rows[sid]; r[f] = r[f] ? 0 : 1; DRAFT.kit.changed = true; render(); }
+function kitAll() { Object.values(DRAFT.kit.rows).forEach(r => KIT_F.forEach(([f]) => r[f] = 1)); DRAFT.kit.changed = true; render(); }
+async function kitSave(c, date) {
+  const away = new Set(((attOf(date, c) || {}).absent) || []), rows = {};
+  Object.entries(DRAFT.kit.rows).forEach(([sid, r]) => { if (!away.has(sid)) rows[sid] = r; });
+  try { const r = await api('teacher_api.php?a=kit', { cls: c, date, rows }); const key = date + '|' + c; KIT[key] = Object.assign({}, KIT[key], { rec: r.rec }); DRAFT.kit.changed = false; delete STARS[c]; toast('Daily check saved.'); render(); }
+  catch (e) { toast(e.message); }
 }
 function askHoliday(c, date) {
   SHEET = () => `<h2>Holiday for Class ${esc(c)}</h2><p class="mut" style="margin:0">${fmtLong(date)} — only this class. The day will not count as present or absent.${attOf(date, c) ? ' <b>The attendance saved for this day will be removed.</b>' : ''}</p>
@@ -1268,8 +1338,8 @@ function uuid4() { if (window.crypto && crypto.randomUUID) return crypto.randomU
 function myClasses() { return [...new Set([...myCT(), ...allocList().map(a => a.c)])].filter(c => className().includes(c)); }
 function vConn() {
   const ct = myCT(), m = P.m || (ct.length ? 'fee' : 'msg');
-  const items = [...(ct.length ? [['fee', 'Fee calls']] : []), ['msg', 'Messages'], ['chat', 'Chat']];
-  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'chat' ? vChat() : vMsg());
+  const items = [...(ct.length ? [['fee', 'Fee calls']] : []), ['msg', 'Messages'], ['chat', 'Parents'], ['staff', 'Staff chat' + (scUnread() ? ' · ' + scUnread() : '')]];
+  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'chat' ? vChat() : m === 'staff' ? vStaff() : vMsg());
 }
 // ---- fee calls ----
 function vFee(ct) {
@@ -1401,6 +1471,66 @@ async function chatSend(sid) {
   try { await api('studio_api.php?a=message', { id: uuid4(), sid, tid: me(), text }); keepClear('chT'); CHAT = null; toast('Message sent.'); render(); }
   catch (e) { toast(e.message); }
 }
+
+// ---- staff chat (owner, 5 Nov 2026: "teachers bhi baat kar paye or chat record rakhiye") ----
+// Staff room (all teachers + Principal) and one-to-one chats. Saved on the school server as a record (never deleted);
+// the Principal and Chairman Sir can read every chat. New messages are checked every 15 seconds while a chat is open.
+let SC = null, SCR = {};
+function scSeenKey() { return 'ta_scseen_' + (ME ? ME.role + ME.tid : ''); }
+function scSeen() { try { return JSON.parse(store.get(scSeenKey()) || '{}') || {}; } catch (e) { return {}; } }
+function scMark(room, at) { const o = scSeen(); if (!o[room] || o[room] < at) { o[room] = at; store.set(scSeenKey(), JSON.stringify(o)); } }
+function scUnread() { if (!SC || !SC.rooms) return 0; const seen = scSeen(); return SC.rooms.filter(m => m.from !== SC.me && m.at > (seen[m.room] || 0)).length; }
+function scMe() { return isP() ? 'P' : me(); }
+function scName(tid) { return tid === 'P' ? 'Principal' : (T(tid).name || tid); }
+function scDm(a, b) { return 'dm|' + [a, b].sort().join('|'); }
+function scRoomName(room) { if (room === 'all') return 'Staff room'; const [, a, b] = room.split('|'); return a === scMe() ? scName(b) : b === scMe() ? scName(a) : scName(a) + ' ↔ ' + scName(b); }
+async function scLoad(room) {
+  try {
+    const old = room ? SCR[room] : null, since = old && old.length ? old[old.length - 1].at : 0;
+    const r = await api('teacher_api.php?a=staffchat' + (room ? '&room=' + encodeURIComponent(room) + '&since=' + since : ''));
+    SC = { me: r.me, rooms: r.rooms };
+    if (room) { SCR[room] = (old || []).concat(r.messages.filter(m => !(old || []).some(x => x.id === m.id))); if (SCR[room].length) scMark(room, SCR[room][SCR[room].length - 1].at); }
+    return r;
+  } catch (e) { if (!SC) SC = { err: e.message }; }
+}
+function vStaff() {
+  const room = P.room || null;
+  if (!SC || (room && !SCR[room])) { if (!(SC && SC.loading)) { const was = SC; SC = Object.assign({}, was || {}, { loading: true }); scLoad(room).then(() => { if (SC) delete SC.loading; render(); }); } return '<div class="load"><i></i></div>'; }
+  if (SC.err) return `<div class="card">${esc(SC.err)} <button class="btn s l" onclick="SC=null;render()">Try again</button></div>`;
+  const mine = scMe(), seen = scSeen();
+  if (!room) {
+    const last = {}; (SC.rooms || []).forEach(m => last[m.room] = m);
+    const people = [...(mine !== 'P' ? ['P'] : []), ...Object.keys(S.teachers).filter(t => t !== mine && t !== 'P' && S.teachers[t] && S.teachers[t].name)]
+      .map(t => ({ t, room: scDm(mine, t) })).sort((a, b) => ((last[b.room] || {}).at || 0) - ((last[a.room] || {}).at || 0) || scName(a.t).localeCompare(scName(b.t)));
+    const others = isP() || (ME && ME.role === 'chairman') ? (SC.rooms || []).filter(m => m.room !== 'all' && !m.room.split('|').includes(mine)).sort((a, b) => b.at - a.at) : [];
+    const row = (rm, title, sub) => { const m = last[rm], un = m && m.from !== mine && m.at > (seen[rm] || 0);
+      return `<div class="li" onclick="go('conn',{m:'staff',room:${jsq(rm)}})"><span class="ph sm ${rm === 'all' ? 'grp' : ''}"><i>${rm === 'all' ? '👥' : esc(initials(title))}</i></span><div class="t"><b>${esc(title)}${un ? ' <span class="pill bad">new</span>' : ''}</b><span>${m ? (m.from === mine ? 'You: ' : esc(scName(m.from).split(' ')[0]) + ': ') + esc(m.text.slice(0, 50)) : esc(sub)}</span></div>${m ? `<small class="mut">${esc(fmtTime(m.at))}</small>` : ''}</div>`; };
+    return `<div class="card"><h3>Staff room <small>everyone</small></h3>${row('all', 'Staff room', 'All teachers and the Principal — say good morning!')}</div>
+      <div class="card"><h3>Talk to one person <small>${people.length}</small></h3><input class="inp" placeholder="Search a teacher" oninput="document.querySelectorAll('.sc-p').forEach(x=>x.hidden=!x.dataset.n.includes(this.value.toLowerCase()))" style="margin-bottom:6px">
+        ${people.map(p => `<div class="sc-p" data-n="${esc(scName(p.t).toLowerCase())}">${row(p.room, scName(p.t), 'Tap to start a chat')}</div>`).join('') || '<div class="empty">No other teachers yet.</div>'}</div>
+      ${others.length ? `<div class="card"><h3>Chat record <small>Principal can read</small></h3>${others.map(m => row(m.room, scRoomName(m.room), '')).join('')}</div>` : ''}
+      <p class="mut">Chats are kept as a school record. Please keep them about school work.</p>`;
+  }
+  const msgs = SCR[room] || [], canWrite = room === 'all' || room.split('|').includes(mine);
+  let lastDay = '';
+  return `<button class="btn s w" style="align-self:flex-start" onclick="go('conn',{m:'staff'})">${ic('back')} All chats</button>
+    <div class="card"><h3>${esc(scRoomName(room))} <small>${msgs.length} message(s)</small></h3>
+      <div class="thread" id="scThread">${msgs.map(m => { const day = new Date(m.at).toDateString(), sep = day !== lastDay ? `<div class="day-sep">${esc(new Date(m.at).toLocaleDateString(LOC(), { weekday: 'short', day: 'numeric', month: 'short' }))}</div>` : ''; lastDay = day;
+        return sep + `<div class="bub ${m.from === mine ? 'out' : 'in'}">${m.from !== mine && room === 'all' ? `<b class="who">${esc(scName(m.from))}</b>` : ''}<p>${esc(m.text)}</p><small>${esc(new Date(m.at).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }))}</small></div>`; }).join('') || '<div class="empty">No messages yet. Write the first one.</div>'}</div>
+      ${canWrite ? `<div class="chips" style="margin-top:8px">${['Good morning 🙏', 'Please take my class today.', 'Noted, thank you.', 'Meeting in the staff room at 1:30.'].map(x => `<button type="button" class="chip" onclick="$('scT').value=${jsq(x)};keepNote($('scT'))">${esc(x)}</button>`).join('')}</div>
+      <div class="send"><textarea id="scT" data-keep class="inp" rows="2" maxlength="1500" placeholder="Write a message"></textarea><button class="btn go" onclick="scSend(${jsq(room)})">Send</button></div>` : '<p class="mut">You are reading this chat as a record.</p>'}</div>`;
+}
+async function scSend(room) {
+  const el = $('scT'), text = ((el || {}).value || '').trim(); if (!text) return toast('Write a message.');
+  try { const r = await api('teacher_api.php?a=staffchat', { room, text }); (SCR[room] = SCR[room] || []).push(r.msg); scMark(room, r.msg.at); el.value = ''; keepClear('scT'); render(); scScroll(); }
+  catch (e) { toast(e.message); }
+}
+function scScroll() { const t = $('scThread'); if (t) t.scrollTop = t.scrollHeight; }
+setInterval(async () => {
+  if (!S || !store.get('sch_token') || document.hidden) return;
+  if (TAB === 'conn' && P.m === 'staff' && P.room && SCR[P.room]) { const n = SCR[P.room].length; await scLoad(P.room); if (SCR[P.room].length !== n) { softRender(); scScroll(); } }
+}, 15000);
+setInterval(() => { if (S && store.get('sch_token') && !document.hidden && !(TAB === 'conn' && P.m === 'staff')) scLoad(null).then(() => softRender()); }, 60000);
 
 // ---------------------------------------------------------------- ME (leave, holidays, PIN)
 function openMe() {

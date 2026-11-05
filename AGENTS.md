@@ -878,3 +878,9 @@ Teacher App v3 — Part 3: Connect tab (5 November 2026, owner: fee calling for 
 - Messages (`vMsg`): Absent · Homework not done · Fee reminder (class teacher only, amount per child) · PTM invitation (also one message to the class group) · Appreciation · Own message; pick children (photo grid) → one WhatsApp link each. Bilingual text.
 - Chat (`vChat`): the existing Smart Studio private conversations (`studio_api.php?a=state` / `?a=message`, kind studioMsg, quiet hours 4:30 PM–8 AM). Principal reads them in Smart Studio.
 - Tests: teacher-flow.php (fees permissions, feecall), teacher-ui-seed.php adds 3 synthetic fee cards in Class 9th, teacher-ui.cjs 21.
+
+#### Teacher App — 5 Nov 2026 (owner): photo fix, Daily check, Staff chat, fuller Today
+- Attendance photos were half black: `teacher_api.php?a=photos` gave the crop offset as the *target* position in `imagecopyresampled`. Fixed; thumbnails are now kept as `phoThumb` `v2|<hash>` so the old broken ones are never used again.
+- Attendance → **Daily check**: class teacher marks per child Diary · ID card · Book · Dress for any day up to today (kind `tchKit` `date|cls`, `?a=kit`). Absent children are left out. WhatsApp note to parents for missing items.
+- Connect → **Staff chat**: Staff room + one-to-one teacher chats (kind `tchMsg`, never deleted = the record). Principal/Chairman read every chat. Unread count on the Connect tab.
+- Today: quick actions, ⭐ Star children + Needs attention (`?a=stars`, last 30 days of homework checks, daily check, attendance), Homework given/due today, My week bar.
