@@ -1021,6 +1021,7 @@ function diaryCard(date, b, signed) {
     <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>Topic: ${esc(e.topic)}${e.hw ? ' · HW: ' + esc(e.hw) : ''}</span></div><span class="pill ok">Saved</span></div></div>`;
   return `<div class="card"><div class="li" style="padding:0 0 10px"><div class="bell ${b.arr ? 'arr' : ''}"><b>${BELLS[b.bell].n.replace(/\D/g, '')}</b>${t12(BELLS[b.bell].s).replace(' ', '')}</div>
       <div class="t"><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b><span>${b.arr ? 'Arrangement' + (b.for ? ' for ' + esc(T(b.for).name) : '') : b.extra ? 'Added period' : BELLS[b.bell].n + ' bell'}</span></div>${e.at ? `<span class="pill ok">Saved ${fmtTime(e.at).split(', ').pop()}</span>` : ''}</div>
+    ${optPick(date, b, e, id)}
     <div class="dform">
       <button type="button" class="btn l full auto-fill" ${signed ? 'disabled' : ''} onclick="diaryAutoFill('${date}',${b.bell},${jsq(b.cls)},${jsq(b.subj)})">✨ Auto fill from syllabus</button>
       <div class="fld">Topic taught *<input id="${id}-t" data-keep class="inp" maxlength="200" value="${esc(e.topic || '')}" placeholder="${nx ? 'Next chapter: ' + esc(nx) : 'What did you teach?'}">
@@ -1119,12 +1120,31 @@ function chkNotify(c, sb, date, kids, due) {
     return `<div class="li"><div class="t"><b>${esc(x.name)}</b><span>${DRAFT.chk && DRAFT.chk.rows[x.id] && DRAFT.chk.rows[x.id].hw === 'half' ? 'Half done' : 'Not done'}${x.phone ? '' : ' · no phone saved'}</span></div>${x.phone ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(x.phone, msg)}">${ic('wa')} Send</a>` : ''}</div>`; }).join('')}</div>`;
 }
 function diaryMin(id, m) { const el = $(id + '-min'); el.value = m; keepNote(el); }
+// Optional bell (owner, 5 Nov 2026: "us din optional kar do"): 5th bell of 9th/10th is shared by Ankit Tripathi Sir and
+// Prabhakar Sir — they decide on the day who takes which class. The teacher chooses the class and subject in the diary;
+// the diary entry is saved with that class, so homework and syllabus go to the right class.
+function optOf(date, b) {
+  if (!b || !/\(optional\)/i.test(b.subj || '')) return null;
+  const d = dayIdx(date); if (d < 0) return null;
+  const classes = className().filter(c => { const a = cell(c, d, b.bell); return a && /\(optional\)/i.test(a.s); });
+  const subs = [...new Set(classes.map(c => cell(c, d, b.bell).s.replace(/\(optional\)/i, '').split('/').map(x => x.trim()).filter(Boolean)).flat())];
+  return classes.length ? { classes, subs } : null;
+}
+function optPick(date, b, e, id) {
+  const o = optOf(date, b); if (!o) return '';
+  const oc = e.cls && o.classes.includes(e.cls) ? e.cls : '', os = e.subj && o.subs.includes(e.subj) ? e.subj : '';
+  const chip = (k, v, cur) => `<button type="button" class="chip ${v === cur ? 'on' : ''}" onclick="$('${id}-${k}').value=${jsq(v)};keepNote($('${id}-${k}'));this.parentNode.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===this))">${esc(k === 'oc' ? 'Class ' + v : v)}</button>`;
+  return `<div class="ban inf" style="margin-bottom:10px"><div><b>Optional bell</b> — decide with the other teacher who takes which class today.
+    <div class="chips" style="margin-top:6px">${o.classes.map(c => chip('oc', c, oc)).join('')}</div><div class="chips" style="margin-top:6px">${o.subs.map(x => chip('os', x, os)).join('')}</div>
+    <input type="hidden" id="${id}-oc" data-keep value="${esc(oc)}"><input type="hidden" id="${id}-os" data-keep value="${esc(os)}"></div></div>`;
+}
 function diarySave(date, bell) {
-  const b = myBells(date).find(x => x.bell === bell) || (P.add && P.add.bell === bell ? P.add : null); if (!b) return;
+  let b = myBells(date).find(x => x.bell === bell) || (P.add && P.add.bell === bell ? P.add : null); if (!b) return;
   const id = 'b' + bell, v = k => ($(id + '-' + k) || {}).value || '', topic = v('t').trim(), hw = v('h').trim(), min = Number(v('min')), hwDate = v('date');
   if (!topic) return toast('Write the topic taught.');
   if (!$(id + '-v').checked) return toast('Tick “I really taught this” first.');
   if (hw && (!Number.isInteger(min) || min < 1 || min > 45)) return toast('Write how many minutes the homework takes (1 to 45).');
+  if (optOf(date, b)) { const oc = v('oc'), os = v('os'); if (!oc || !os) return toast('Choose which class and subject you took in this optional bell.'); b = Object.assign({}, b, { cls: oc, subj: os }); }
   const d = { cls: b.cls, subj: b.subj, topic: topic.slice(0, 200), hw: hw.slice(0, 500), classwork: v('cw').trim().slice(0, 500), books: v('books').trim().slice(0, 300), revision: v('rev').trim().slice(0, 400),
     hwMinutes: hw ? min : null, hwDate: hwDate || date, arr: !!b.arr, at: Date.now(), ...(b.extra ? { extra: true } : {}) };
   put('diary', date + '|' + me() + '|' + bell, d, 'Diary', `${BELLS[bell].n} bell, Class ${b.cls} ${b.subj}: "${topic}"` + (hw ? ` • HW: ${hw}` : '') + ' — Teacher App');

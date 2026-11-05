@@ -960,8 +960,7 @@ function vTimetable() {
 
 // ---------------------------------------------------------------- NEW TIMETABLE FROM PRABHAKAR SIR (owner, 5 Nov 2026)
 // Typed from the two register pages (Classes 1st–5th and 6th–10th). Same table every day; only the 5th bell of 9th/10th
-// alternates (written "Ankit/P" and "Prabhakar/Ankit"): Mon/Wed/Fri 9th Science (Ankit) + 10th Maths (Prabhakar),
-// Tue/Thu/Sat the other way round. Classes not on these pages (PG/LKG/UKG) keep their own timetable untouched.
+// is shared (written "Ankit/P" and "Prabhakar/Ankit"): owner made it OPTIONAL — the two teachers choose on the day. Classes not on these pages (PG/LKG/UKG) keep their own timetable untouched.
 // The Principal sees the teacher matching first, can change any match, then presses Apply. Teachers not on the new
 // timetable can be removed (their login closes, their old diary/attendance/marks stay with their name).
 const TT_NOV26 = {
@@ -980,10 +979,10 @@ const TT_NOV26 = {
     '6th':  [['AS', 'GK/Drawing'], ['K', 'Social Science'], ['DV', 'Computer'], ['MA', 'Hindi/Sanskrit'], ['AS', 'Mathematics'], ['AT', 'Science'], ['PW', 'English']],
     '7th':  [['PW', 'English'], ['AS', 'Computer/GK/Drawing'], ['K', 'Social Science'], ['AT', 'Science'], ['PW', 'English'], ['AS', 'Mathematics'], ['MA', 'Hindi/Sanskrit']],
     '8th':  [['AT', 'Science'], ['DV', 'Computer'], ['PW', 'English'], ['AS', 'Mathematics'], ['MA', 'Hindi/Sanskrit'], ['K', 'Social Science'], ['AS', 'GK/Drawing']],
-    '9th':  [['K', 'Social Science'], ['PW', 'English'], ['P', 'Mathematics'], ['K', 'Social Science'], ['ALT9', ''], ['MA', 'Social Science'], ['AT', 'Science']],
-    '10th': [['MA', 'Hindi'], ['P', 'Mathematics'], ['AT', 'Science'], ['PW', 'English'], ['ALT10', ''], ['PW', 'English'], ['K', 'Social Science']]
+    '9th':  [['K', 'Social Science'], ['PW', 'English'], ['P', 'Mathematics'], ['K', 'Social Science'], ['AT', 'Science/Mathematics (optional)'], ['MA', 'Social Science'], ['AT', 'Science']],
+    '10th': [['MA', 'Hindi'], ['P', 'Mathematics'], ['AT', 'Science'], ['PW', 'English'], ['P', 'Mathematics/Science (optional)'], ['PW', 'English'], ['K', 'Social Science']]
   },
-  alt: { ALT9: [['AT', 'Science'], ['P', 'Mathematics']], ALT10: [['P', 'Mathematics'], ['AT', 'Science']] }   // [Mon/Wed/Fri, Tue/Thu/Sat]
+  alt: {}   // owner, 5 Nov 2026: the shared 5th bell of 9th/10th is "optional" — the two teachers choose on the day (Teacher App diary)
 };
 let TTI = null;
 function ttNorm(x) { return String(x || '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w && !['maam', 'mam', 'madam', 'sir', 'ji'].includes(w)).join(' '); }   // "Mamta Ma'am" → "mamta" (whole words only)
@@ -1011,7 +1010,7 @@ function ttImport() {
   const leavers = ttLeavers(), dup = Object.values(TTI.map).filter(v => v !== 'NEW').filter((v, i, a) => a.indexOf(v) !== i);
   const cellTxt = (c, i, alt) => { let [t, sub] = TT_NOV26.rows[c][i]; if (TT_NOV26.alt[t]) [t, sub] = TT_NOV26.alt[t][alt]; return `<b>${esc(sub)}</b><br><span class="text-xs text-slate-500">${esc(nm(t))}</span>`; };
   return `<h3 class="font-bold mb-1">New timetable — Prabhakar Sir (5 Nov 2026)</h3>
-    <p class="text-sm text-slate-600 mb-3">Typed from the register pages for Classes 1st–10th. The same table runs every day. Only the <b>5th bell of 9th and 10th</b> alternates: Mon/Wed/Fri 9th Science (Ankit) + 10th Maths (Prabhakar); Tue/Thu/Sat the other way round. ${ttKeptClasses().length ? 'Classes ' + ttKeptClasses().join(', ') + ' keep their present timetable.' : ''}</p>
+    <p class="text-sm text-slate-600 mb-3">Typed from the register pages for Classes 1st–10th. The same table runs every day. The <b>5th bell of 9th and 10th</b> is <b>optional</b>: Ankit Sir and Prabhakar Sir decide on the day who takes which class, and choose it in the Teacher App diary. ${ttKeptClasses().length ? 'Classes ' + ttKeptClasses().join(', ') + ' keep their present timetable.' : ''}</p>
     <h4 class="font-bold mb-2">1 · Check the teachers</h4>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 mb-1">${Object.entries(P2).map(([k, [n]]) => `<label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg p-2"><span class="w-28 font-semibold">${esc(n)}</span><select class="inp py-1 text-xs flex-1" onchange="TTI.map['${k}']=this.value;TTI.remove={};ttLeavers().forEach(t=>TTI.remove[t]=true);render()">${opts(TTI.map[k])}</select></label>`).join('')}</div>
     ${dup.length ? `<p class="text-sm text-rose-700 font-bold mb-2">Two names point to the same teacher: ${dup.map(t => esc(T(t).name)).join(', ')}. Please fix.</p>` : ''}
