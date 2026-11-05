@@ -82,6 +82,14 @@ function tch_seed_holidays(): int {
     return $added;
 }
 
+// Gender lives in the Student Full Record (School Office register 'studinfo', field gender = Male / Female — the same
+// row Student Master edits). sid => gender.
+function tch_genders(PDO $db): array {
+    $o = [];
+    foreach ($db->query("SELECT d FROM sch_records WHERE k='regRow' AND r LIKE 'studinfo|%' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true);
+        if (is_array($d) && ($d['student'] ?? '') !== '' && in_array($d['gender'] ?? '', ['Male', 'Female'], true)) $o[(string)$d['student']] = $d['gender']; }
+    return $o;
+}
 function tch_is_ct(string $tid, string $cls): bool {
     foreach ((array)sch_rec_get('classes', 'main') as $c) if (($c['c'] ?? '') === $cls && ($c['ct'] ?? '') === $tid) return true;
     return false;
@@ -521,9 +529,9 @@ case 'board': {
     $start = (string)($set['sessionStart'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = (date('n') < 4 ? date('Y') - 1 : date('Y')) . '-04-01';
     $today = date('Y-m-d'); $ym = date('Y-m');
     $classes = array_values(array_filter(array_column((array)sch_rec_get('classes', 'main'), 'c'), 'is_string'));
-    $kids = []; $byCls = [];
+    $kids = []; $byCls = []; $gen = tch_genders($db);
     foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d) || !in_array($d['cls'] ?? '', $classes, true)) continue;
-        $sid = (string)$row['r']; $g = strtolower(substr(trim((string)($d['gender'] ?? $d['sex'] ?? '')), 0, 1));
+        $sid = (string)$row['r']; $g = strtolower(substr(trim((string)($gen[$sid] ?? $d['gender'] ?? $d['sex'] ?? '')), 0, 1));
         $kids[$sid] = ['sid' => $sid, 'name' => (string)($d['name'] ?? ''), 'cls' => $d['cls'], 'g' => $g === 'm' || $g === 'b' ? 'b' : ($g === 'f' || $g === 'g' ? 'g' : ''),
                        'a' => 0, 'l' => 0, 'ma' => 0, 'hw' => 0, 'half' => 0, 'hwOf' => 0, 'kit' => 0, 'kitOf' => 0];
         $byCls[$d['cls']][] = $sid; }
@@ -565,6 +573,28 @@ case 'board': {
     usort($ranked, fn($a, $b) => [$b['score'], $b['att'] ?? 0] <=> [$a['score'], $a['att'] ?? 0]);
     sch_json(['ok' => true, 'from' => $start, 'exam' => $exam, 'classes' => $cout, 'top' => array_slice($ranked, 0, 15), 'total' => count($kids),
               'students' => array_values($out)]);
+}
+
+// Boys / girls (owner, 5 Nov 2026: "Principal wale me add kar do, main abhi update kar dunga"). Principal only. Writes
+// gender into the child's Student Full Record ('studinfo' row, same as Student Master; the earlier row goes to regHist).
+case 'gender': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if ($role !== 'principal') sch_fail('Only the Principal can change this.', 403);
+    $rows = is_array($in['rows'] ?? null) ? $in['rows'] : []; if (!$rows || count($rows) > 400) sch_fail('Nothing to save.');
+    $info = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='regRow' AND r LIKE 'studinfo|%' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d) && ($d['student'] ?? '') !== '') $info[(string)$d['student']] = [(string)$row['r'], $d]; }
+    $n = 0; $db->beginTransaction();
+    foreach ($rows as $sid => $g) {
+        $sid = (string)$sid; if (!in_array($g, ['Male', 'Female'], true) || !sch_rec_get('student', $sid)) continue;
+        [$key, $old] = $info[$sid] ?? ['studinfo|' . substr(hash('sha256', $sid . '|'), 0, 20), null];
+        if ($old && ($old['gender'] ?? '') === $g) continue;
+        if ($old) sch_rec_put('regHist', 'studinfo|' . substr($key, 9) . '|' . sch_now_ms() . $n, ['row' => $old, 'reason' => 'Gender set in the Teacher App', 'by' => $u['label'] ?? $uid], $uid);
+        $new = ($old ?: ['student' => $sid, 'status' => 'Active']); $new['gender'] = $g; $new['_by'] = 'Teacher App (' . ($u['label'] ?? $uid) . ')'; $new['_at'] = sch_now_ms();
+        sch_rec_put('regRow', $key, $new, $uid); $n++;
+    }
+    $db->commit();
+    if ($n) sch_log($u, 'Student record', "Boys / girls set for $n child(ren) — Teacher App");
+    sch_json(['ok' => true, 'saved' => $n]);
 }
 
 case 'rec': {

@@ -530,3 +530,5 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .bd-list{margin-top:6px}.bd-list .li{width:100%;border-left:0;border-right:0;border-bottom:0;background:none;text-align:left}
 .bd-mini{cursor:pointer}.bd-my{margin:0 0 6px;font-size:12.5px}.bd-my b{color:var(--a);font-size:15px}
 .bd-top{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.bd-top div{background:var(--tint);border-radius:11px;padding:7px;text-align:center}.bd-top span{font-size:18px;display:block}.bd-top b{display:block;font-size:12px}.bd-top small{font-size:11px;color:var(--a);font-weight:700}
+.gen-r{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid var(--line)}.gen-r b{font-size:13px;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.gen-r .hwb button{width:auto;padding:0 10px;font-size:12px}.gen-r .hwb .b.on{background:#DBEAFE;border-color:#3B82F6;color:#1D4ED8}.gen-r .hwb .g.on{background:#FCE7F3;border-color:#EC4899;color:#BE185D}

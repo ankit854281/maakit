@@ -600,14 +600,31 @@ function vBoard() {
   else if (m === 'stu') body = `<div class="card"><h3>⭐ Star students <small>whole school · top ${(B.top || []).length}</small></h3>
       ${(B.top || []).map((s, i) => `<button type="button" class="bd-r" style="--d:${i * 30}ms" onclick="go('att',{c:${jsq(s.cls)},m:'stu',sid:${jsq(s.sid)}})">${rankBadge(i)}<span class="nm"><b>${esc(s.name)}</b><small>Class ${esc(s.cls)} · Att ${pctTxt(s.att)} · HW ${pctTxt(s.hw)} · Marks ${pctTxt(s.mk)}</small></span><em>${s.score}%</em></button>`).join('') || '<div class="empty">Not enough data yet.</div>'}</div>`;
   else if (m === 'prof') { const q = (P.q || '').toLowerCase(), list = (B.students || []).filter(s => !q || s.name.toLowerCase().includes(q)).sort((a, b) => className().indexOf(a.cls) - className().indexOf(b.cls) || a.name.localeCompare(b.name));
-    body = `<div class="card"><h3>Students in each class <small>${tot} total</small></h3><div class="bd-cnt">${C.map(c => `<button type="button" onclick="go('att',{c:${jsq(c.cls)},m:'stu'})"><b>${c.n}</b><span>${esc(c.cls)}</span>${c.boys || c.girls ? `<small>${c.boys}B · ${c.girls}G</small>` : ''}</button>`).join('')}</div></div>
+    body = `${isP() ? `<button class="btn l full" onclick="go('board',{m:'gen'})">♂ ♀ Set boys / girls</button>` : ''}<div class="card"><h3>Students in each class <small>${tot} total</small></h3><div class="bd-cnt">${C.map(c => `<button type="button" onclick="go('att',{c:${jsq(c.cls)},m:'stu'})"><b>${c.n}</b><span>${esc(c.cls)}</span>${c.boys || c.girls ? `<small>${c.boys}B · ${c.girls}G</small>` : ''}</button>`).join('')}</div></div>
     <div class="card"><h3>Find a student</h3><input placeholder="Type a name…" value="${esc(P.q || '')}" oninput="P.q=this.value;clearTimeout(window.__bq);window.__bq=setTimeout(()=>{const p=this.selectionStart;render();const el=document.querySelector('.bd-q');if(el){el.focus();el.setSelectionRange(p,p)}},250)" class="inp bd-q">
       <div class="bd-list">${list.slice(0, 60).map(s => `<button type="button" class="li" onclick="go('att',{c:${jsq(s.cls)},m:'stu',sid:${jsq(s.sid)}})"><div class="t"><b>${esc(s.name)}</b><span>Class ${esc(s.cls)} · Att ${pctTxt(s.att)} · HW ${pctTxt(s.hw)}${s.mk !== null ? ' · Marks ' + s.mk + '%' : ''}</span></div>${s.score !== null ? `<span class="pill ${s.score >= 75 ? 'ok' : s.score >= 50 ? 'warn' : 'bad'}">${s.score}%</span>` : ''}</button>`).join('')}${list.length > 60 ? `<p class="mut">+${list.length - 60} more — type a name</p>` : ''}</div></div>`; }
+  else if (m === 'gen' && isP()) body = genView(B, C);
   else { const R = teacherRanks();
     body = `<div class="card"><h3>Teacher work <small>last 7 days · attendance, diary, daily check, homework check</small></h3>
       ${R.map((r, i) => `<div class="bd-r">${rankBadge(i)}<span class="nm"><b>${esc(r.name)}</b><small>${r.done} of ${r.all} done</small><span class="mbs">${mini('Done', r.p)}</span></span><em class="${r.p >= 90 ? 'ok' : r.p < 60 ? 'bad' : ''}">${r.p}%</em></div>`).join('') || '<div class="empty">Nothing due yet.</div>'}
       ${BX && BX.loading ? '<p class="mut">Loading daily checks and homework checks…</p>' : ''}<p class="mut" style="margin:6px 0 0">Only the Principal and the Chairman see this list.</p></div>`; }
-  return head + seg(segs, m, `(k=>go('board',{m:k}))`) + body;
+  return head + seg(segs, m === 'gen' ? 'prof' : m, `(k=>go('board',{m:k}))`) + body;
+}
+// Boys / girls (Principal) — saved into each child's Student Full Record (teacher_api.php?a=gender).
+function genView(B, C) {
+  const c = C.some(x => x.cls === P.c) ? P.c : (C[0] || {}).cls; if (!c) return '<div class="card empty">No students.</div>';
+  const kids = (B.students || []).filter(s => s.cls === c).sort((a, b) => a.name.localeCompare(b.name));
+  if (!DRAFT.gen || DRAFT.gen.c !== c) DRAFT.gen = { c, rows: Object.fromEntries(kids.map(s => [s.sid, s.g === 'b' ? 'Male' : s.g === 'g' ? 'Female' : ''])), changed: 0 };
+  const D = DRAFT.gen, nb = kids.filter(s => D.rows[s.sid] === 'Male').length, ng = kids.filter(s => D.rows[s.sid] === 'Female').length;
+  return `<div class="card"><h3>Boys / girls <small>Class ${esc(c)} · ${nb} boys · ${ng} girls · ${kids.length - nb - ng} not set</small></h3>
+    <div class="chips" style="margin-bottom:8px">${C.map(x => `<button class="chip ${x.cls === c ? 'on' : ''}" onclick="${D.changed ? "if(!confirm('Leave without saving?'))return;" : ''}DRAFT.gen=null;go('board',{m:'gen',c:${jsq(x.cls)}})">${esc(x.cls)} <b>${x.boys + x.girls}/${x.n}</b></button>`).join('')}</div>
+    ${kids.map(s => `<div class="gen-r"><b>${esc(s.name)}</b><div class="hwb"><button type="button" class="b ${D.rows[s.sid] === 'Male' ? 'on' : ''}" onclick="DRAFT.gen.rows['${esc(s.sid)}']='Male';DRAFT.gen.changed++;render()">♂ Boy</button><button type="button" class="g ${D.rows[s.sid] === 'Female' ? 'on' : ''}" onclick="DRAFT.gen.rows['${esc(s.sid)}']='Female';DRAFT.gen.changed++;render()">♀ Girl</button></div></div>`).join('')}
+    <div class="sticky"><button class="btn go full" ${D.changed ? '' : 'disabled'} onclick="genSave()">Save Class ${esc(c)} · ${nb} boys · ${ng} girls</button></div>
+    <p class="mut" style="margin:6px 0 0">Saved in each child's Student Full Record — the same place Student Master shows Gender.</p></div>`;
+}
+async function genSave() {
+  const D = DRAFT.gen; if (!D) return; const rows = {}; Object.entries(D.rows).forEach(([k, v]) => { if (v) rows[k] = v; });
+  try { const r = await api('teacher_api.php?a=gender', { rows }); D.changed = 0; toast(r.saved + ' child(ren) saved.'); BOARD = null; DRAFT.gen = null; render(); } catch (e) { toast(e.message); }
 }
 function boardCard() {
   const B = needBoard(); if (!B.ok) return '';

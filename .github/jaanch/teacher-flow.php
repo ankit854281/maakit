@@ -165,4 +165,10 @@ $nine = array_values(array_filter($j['classes'], fn($x) => $x['cls'] === '9th'))
 [$c] = $ta('board', null, $par); tf_check($c === 403, 'parents never see the board');
 [$c] = $ta('board', null, $tok['CH']); tf_check($c === 200, 'Chairman reads the board');
 
+[$c] = $ta('gender', ['rows' => ['s1' => 'Male']], $tok['K']); tf_check($c === 403, 'only the Principal sets boys / girls');
+[$c, $j] = $ta('gender', ['rows' => ['s1' => 'Male', 's2' => 'Female', 'zz' => 'Male', 's3' => 'x']], $tok['P']); tf_check($c === 200 && $j['saved'] === 2, 'Principal saves gender (' . json_encode($j) . ')');
+[, $j] = $ta('board', null, $tok['K']); $nine = array_values(array_filter($j['classes'], fn($x) => $x['cls'] === '9th'))[0]; tf_check($nine['boys'] === 1 && $nine['girls'] === 1, 'board counts boys and girls from the Student Full Record');
+[, $j] = $ta('gender', ['rows' => ['s1' => 'Male']], $tok['P']); tf_check($j['saved'] === 0, 'unchanged child not saved again');
+[, $j] = $api('load', null, $tok['K']); tf_check(!in_array('regRow', array_column($j['records'], 'k'), true), 'student full record never in legacy load');
+
 echo "Teacher app flow: all checks passed\n";

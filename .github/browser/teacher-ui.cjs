@@ -522,6 +522,15 @@ const path = require('node:path');
     await page.locator('.hol-list .sch').filter({ hasText: 'Summer vacation' }).waitFor();
     assert.match(await page.locator('.calendar-day.holiday.sch').first().innerText(), /Vac/);
     assert.ok(await page.evaluate(() => S.cal.some(e => e.title === 'Summer vacation' && e.date === '2026-06-02' && e.to === '2026-06-30')), 'one school-wide holiday record');
+    await page.evaluate(() => go('board', { m: 'gen', c: '9th' }));
+    await page.locator('.gen-r').first().waitFor();
+    await page.locator('.gen-r').nth(0).locator('button.g').click();
+    await page.locator('.gen-r').nth(1).locator('button.b').click();
+    await page.getByRole('button', { name: /Save Class 9th/ }).click();
+    await page.getByText(/child\(ren\) saved/).first().waitFor();
+    await page.evaluate(() => go('board', { m: 'prof' }));
+    await page.locator('.bd-cnt button').first().waitFor();
+    assert.match(await page.locator('.bd-head').innerText(), /boys · \d+ girls/);
   });
   await browser.close();
   if (failures.length) {

@@ -265,7 +265,7 @@
     'Present today': ['Aaj present', 'आज उपस्थित'], 'Find a student': ['Bachcha dhoondhein', 'विद्यार्थी खोजें'],
     'Students in each class': ['Har class mein bachche', 'हर कक्षा में विद्यार्थी'], 'Share': ['Bhejein', 'भेजें'], 'Teacher work': ['Teacher ka kaam', 'शिक्षकों का कार्य'],
     'Holiday — dates': ['Chhutti — taareekh', 'अवकाश — तिथियाँ'], 'All classes': ['Sab classes', 'सभी कक्षाएँ'], 'Name': ['Naam', 'नाम'], 'Holiday — all classes / dates': ['Chhutti — sab classes / taareekh', 'अवकाश — सभी कक्षाएँ / तिथियाँ'], 'Holiday — from / to dates': ['Chhutti — se / tak', 'अवकाश — से / तक'],
-    'Holiday marked for all classes.': ['Sab classes ki chhutti lag gayi.', 'सभी कक्षाओं का अवकाश लग गया।']
+    'Holiday marked for all classes.': ['Sab classes ki chhutti lag gayi.', 'सभी कक्षाओं का अवकाश लग गया।'], '♂ ♀ Set boys / girls': ['♂ ♀ Ladke / ladkiyan bharein', '♂ ♀ लड़के / लड़कियाँ भरें'], 'Boys / girls': ['Ladke / ladkiyan', 'लड़के / लड़कियाँ'], '♂ Boy': ['♂ Ladka', '♂ लड़का'], '♀ Girl': ['♀ Ladki', '♀ लड़की']
   };
   // Sentences with numbers, dates or names. Each: [regex, (m) => Hinglish, (m) => Hindi]
   const P = [
