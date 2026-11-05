@@ -68,6 +68,8 @@
   function innerTitle() {
     if (TAB === 'att' && P.sid) return 'Student report';
     if (TAB === 'att' && P.m === 'pending') return 'Days not marked';
+    if (TAB === 'prin' && P.screen === 'staff') return 'Staff & arrangement';
+    if (TAB === 'prin' && P.screen === 'tt') return 'Timetable';
     if (TAB === 'board' && P.m === 'gen') return 'Boys / girls';
     if (TAB === 'board' && !pMode()) return 'School board';
     return '';
@@ -157,11 +159,11 @@ function vPdash() {
     <div class="card"><h3>Alerts</h3>
       ${work && pendT.length ? `<div class="pd-al warn"><span>⏳</span><div><b>${pendT.length} teacher(s) have work pending</b><small>${pendT.slice(0, 4).map(o => esc(T(o.t).name)).join(', ')}${pendT.length > 4 ? '…' : ''}</small></div><button class="btn s go" onclick="prinRemindAll('${t}')">Remind all</button></div>` : work ? '<div class="pd-al ok"><span>✓</span><div><b>Sab teachers ka aaj ka kaam ab tak poora</b></div></div>' : ''}
       ${work && notMarked.length && nowMin() >= toMin(S.settings.attendanceCutoff || '09:30') ? `<div class="pd-al bad"><span>📋</span><div><b>Attendance not marked</b><small>${notMarked.map(k => 'Class ' + esc(k.c)).join(', ')}</small></div></div>` : ''}
-      ${away.length ? `<div class="pd-al"><span>🧑‍🏫</span><div><b>On leave / absent today</b><small>${away.map(x => esc(T(x).name)).join(', ')}</small></div></div>` : ''}
+      ${away.length ? `<div class="pd-al"><span>🧑‍🏫</span><div><b>On leave / absent today</b><small>${away.map(x => esc(T(x).name)).join(', ')}</small></div><button class="btn s l" onclick="go('staff')">Arrangement</button></div>` : ''}
       ${abs3.length ? `<div class="pd-al bad"><span>⚠</span><div><b>${abs3.length} child(ren) absent 3 days in a row</b><small>${abs3.map(x => `<a href="#" onclick="go('att',{c:${jsq(x.c)},m:'stu',sid:${jsq(x.s.id)}});return false">${esc(x.s.name)} (${esc(x.c)})</a>`).join(', ')}</small></div></div>` : ''}
       ${!pendT.length && !abs3.length && !away.length && !notMarked.length && !work ? '<p class="mut" style="margin:0">No alerts.</p>' : ''}</div>
     ${boardCard()}
-    <div class="card quick-card"><div class="quick-grid">${[['prin', 'Cross-check', 'check', {}], ['att', 'Holiday', 'list', { m: 'cal' }], ['board', 'Board', 'chart', {}], ['board', 'Boys / girls', 'list', { m: 'gen' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }], ['conn', 'Messages', 'wa', { m: 'msg' }]].map(([tb, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(tb)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}</button>`).join('')}</div></div>
+    <div class="card quick-card"><div class="quick-grid">${[['staff', 'Arrangement', 'list', {}], ['tt', 'Timetable', 'note', {}], ['prin', 'Cross-check', 'check', {}], ['att', 'Holiday', 'list', { m: 'cal' }], ['board', 'Board', 'chart', {}], ['board', 'Boys / girls', 'list', { m: 'gen' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }], ['conn', 'Messages', 'wa', { m: 'msg' }]].map(([tb, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(tb)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}</button>`).join('')}</div></div>
     ${X && X.loading ? '<p class="mut">Loading daily checks and homework checks…</p>' : ''}`;
 }
 function pdLeave(id, st) {

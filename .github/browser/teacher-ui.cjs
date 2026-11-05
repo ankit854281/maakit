@@ -552,6 +552,29 @@ const path = require('node:path');
     await page.evaluate(() => { const ev = (t, x) => { const e = new Event(t, { bubbles: true }); e.touches = t === 'touchstart' ? [{ clientX: x, clientY: 300 }] : []; e.changedTouches = [{ clientX: x, clientY: 300 }]; document.querySelector('.body').dispatchEvent(e); }; ev('touchstart', 300); ev('touchend', 120); });
     await page.waitForFunction(() => TAB === 'att');
   });
+  await run('29-Cross-check-every-feature-arrangement-timetable', async () => {
+    for (const v of ['att', 'diary', 'hw', 'kit', 'lp', 'syl']) {
+      await page.evaluate(v => { SHEET = null; go('prin', { v }); }, v);
+      await page.locator('.xv button.on').waitFor();
+      assert.ok((await page.locator('.scroll').innerText()).length > 40, 'cross-check ' + v + ' draws');
+    }
+    await page.evaluate(() => go('prin', { v: 'diary' }));
+    await page.locator('.xd-h').waitFor();
+    await page.evaluate(() => go('staff'));
+    await page.locator('.xst div').first().waitFor();
+    assert.match(await page.locator('.backbar').innerText(), /Staff & arrangement/);
+    const name = await page.locator('.xst div').nth(1).locator('b').innerText();
+    await page.locator('.xst div').nth(1).click();
+    await page.waitForFunction(n => staffAbsent(todayISO()).some(t => T(t).name === n), name);
+    await page.evaluate(() => go('tt', { c: '9th' }));
+    await page.locator('table.tt').waitFor();
+    await page.locator('table.tt td').first().click();
+    await page.locator('.sheet .tt-o button').first().waitFor();
+    await page.locator('.sheet .tt-o button').filter({ hasText: 'Free / no class' }).click();
+    await page.waitForFunction(() => S.grid && S.grid['9th'] && S.grid['9th'][0][0] === -1);
+    await page.evaluate(() => go('pdash'));
+    await page.locator('.quick-grid button').filter({ hasText: 'Arrangement' }).waitFor();
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

@@ -265,7 +265,13 @@
     'Present today': ['Aaj present', 'आज उपस्थित'], 'Find a student': ['Bachcha dhoondhein', 'विद्यार्थी खोजें'],
     'Students in each class': ['Har class mein bachche', 'हर कक्षा में विद्यार्थी'], 'Share': ['Bhejein', 'भेजें'], 'Teacher work': ['Teacher ka kaam', 'शिक्षकों का कार्य'],
     'Holiday — dates': ['Chhutti — taareekh', 'अवकाश — तिथियाँ'], 'All classes': ['Sab classes', 'सभी कक्षाएँ'], 'Name': ['Naam', 'नाम'], 'Holiday — all classes / dates': ['Chhutti — sab classes / taareekh', 'अवकाश — सभी कक्षाएँ / तिथियाँ'], 'Holiday — from / to dates': ['Chhutti — se / tak', 'अवकाश — से / तक'],
-    'Holiday marked for all classes.': ['Sab classes ki chhutti lag gayi.', 'सभी कक्षाओं का अवकाश लग गया।'], '♂ ♀ Set boys / girls': ['♂ ♀ Ladke / ladkiyan bharein', '♂ ♀ लड़के / लड़कियाँ भरें'], 'Boys / girls': ['Ladke / ladkiyan', 'लड़के / लड़कियाँ'], '♂ Boy': ['♂ Ladka', '♂ लड़का'], '♀ Girl': ['♀ Ladki', '♀ लड़की']
+    'Holiday marked for all classes.': ['Sab classes ki chhutti lag gayi.', 'सभी कक्षाओं का अवकाश लग गया।'], '♂ ♀ Set boys / girls': ['♂ ♀ Ladke / ladkiyan bharein', '♂ ♀ लड़के / लड़कियाँ भरें'], 'Boys / girls': ['Ladke / ladkiyan', 'लड़के / लड़कियाँ'], '♂ Boy': ['♂ Ladka', '♂ लड़का'], '♀ Girl': ['♀ Ladki', '♀ लड़की'],
+    'HW check': ['HW check', 'गृहकार्य जाँच'], 'Remind': ['Yaad dilayein', 'याद दिलाएँ'], '✍ Sign': ['✍ Sign', '✍ हस्ताक्षर'], 'Timetable': ['Timetable', 'समय-सारणी'],
+    'Staff present?': ['Staff present?', 'स्टाफ़ उपस्थित?'], 'Who is free': ['Kaun khaali hai', 'कौन खाली है'], 'Arrangement duty this month': ['Is mahine arrangement duty', 'इस महीने व्यवस्था ड्यूटी'],
+    'Send all slips to the staff group': ['Saari slip staff group mein bhejein', 'सारी पर्चियाँ स्टाफ़ ग्रुप में भेजें'], 'Auto (best free teacher)': ['Apne aap (sabse sahi khaali teacher)', 'अपने आप (सबसे सही खाली शिक्षक)'],
+    'Periods per week': ['Hafte ke period', 'सप्ताह के पीरियड'], 'tap a box to change': ['badalne ke liye box par tap', 'बदलने के लिए बॉक्स पर टैप'], 'Free / no class': ['Khaali / koi class nahi', 'खाली / कोई कक्षा नहीं'],
+    'Leave requests': ['Chhutti ki arzi', 'अवकाश आवेदन'], 'Approve': ['Approve', 'स्वीकृत'], 'Reject': ['Mana', 'अस्वीकार'], 'Send back': ['Wapas bhejein', 'वापस भेजें'], 'Approve karna hai': ['Approve karna hai', 'स्वीकृति बाकी'],
+    'Alerts': ['Dhyan dein', 'ध्यान दें'], 'Remind all': ['Sabko yaad dilayein', 'सबको याद दिलाएँ'], 'Home': ['Home', 'होम']
   };
   // Sentences with numbers, dates or names. Each: [regex, (m) => Hinglish, (m) => Hindi]
   const P = [

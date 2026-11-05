@@ -552,3 +552,33 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .pd-topics{margin:8px 0;padding-left:20px;font-size:13px;line-height:1.6}
 .help-i{background:var(--tint);border-radius:12px;padding:9px 11px}.help-i b{font-size:13px;color:var(--a)}.help-i p{margin:3px 0 0;font-size:12.5px;line-height:1.5}.help-i.tip{background:#FFF8E6}.help-i.tip b{color:#7A4A06}
 .guide{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;font-size:13px;line-height:1.5}
+/* ---- 5 Nov 2026 (7): per-feature cross-check, arrangement, timetable (teacher-ops.js) ---- */
+.xv{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding:2px 0}.xv::-webkit-scrollbar{display:none}
+.xv button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--muted)}.xv button.on{background:var(--a);border-color:var(--a);color:#fff}
+.xg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.xg button{border:0;border-radius:12px;padding:9px 6px;text-align:left;display:flex;flex-direction:column;gap:1px;animation:popIn .3s both}
+.xg button b{font-size:14px}.xg button span{font-size:11px;font-weight:700}.xg button small{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xg .ok{background:var(--okbg)}.xg .ok span{color:var(--ok)}.xg .no{background:var(--badbg)}.xg .no span{color:var(--bad)}.xg .hol{background:#EEF0F6}.xg .hol span{color:#5B6782}
+.xd-h,.xd{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center}.xd{grid-template-columns:1fr auto;padding:8px 0;border-top:1px solid var(--line)}.xd>.btn{grid-column:1/-1;justify-self:start}
+.xd .n b{display:block;font-size:12.5px}.xd .n small{font-size:10.5px;color:var(--muted)}
+.cells{display:grid;grid-template-columns:repeat(7,26px);gap:3px}.cells i{font-style:normal;font-size:10px;color:var(--muted);text-align:center}.cells i.e{display:block;height:26px}
+.cells button{height:26px;border-radius:7px;border:0;font-size:11px;font-weight:700;padding:0}.cells .ok{background:var(--ok);color:#fff}.cells .no{background:var(--bad);color:#fff}.cells .up{background:var(--line);color:var(--muted)}.cells .arr{outline:2px dotted #F2A93B;outline-offset:-2px}
+.xh{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--line)}.xh>i{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:12px}
+.xh.ok>i{background:var(--okbg);color:var(--ok)}.xh.no>i{background:var(--badbg);color:var(--bad)}.xh .t{flex:1;min-width:0}.xh .t b{display:block;font-size:12.5px}.xh .t span,.xh .t small{display:block;font-size:11px;color:var(--muted)}
+.xl .row b{font-size:13px}.xl-t{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}.xl-t button{border:0;border-radius:10px;padding:7px 6px;text-align:left;display:flex;flex-direction:column}
+.xl-t b{font-size:12.5px}.xl-t span{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xl-t small{font-size:10px;font-weight:700}
+.xl-t .ok{background:var(--okbg)}.xl-t .ok small{color:var(--ok)}.xl-t .warn{background:#FFF4E5}.xl-t .warn small{color:#92400E}.xl-t .bad{background:var(--badbg)}.xl-t .bad small{color:var(--bad)}.xl-t .no{background:#F3F5FA}.xl-t .no small{color:var(--muted)}
+.xs{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.xs .t{flex:1;min-width:0}.xs .t b{display:block;font-size:12.5px}.xs .t span{display:block;font-size:11px;color:var(--muted)}
+.xs .bar{display:block;height:5px;border-radius:5px;background:var(--line);margin-top:4px;overflow:hidden}.xs .bar em{display:block;height:100%;width:var(--w);background:var(--a)}
+.xst{display:grid;grid-template-columns:1fr 1fr;gap:6px}.xst div{border-radius:11px;padding:8px 9px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.xst b{font-size:12.5px}.xst span{font-size:10.5px;font-weight:700}
+.xst .ok{background:var(--okbg)}.xst .ok span{color:var(--ok)}.xst .ab{background:var(--badbg)}.xst .ab span{color:var(--bad)}.xst select{font-size:11px;border:1px solid var(--line);border-radius:7px;padding:3px;background:#fff}
+.xa{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}.xa .t{flex:1;min-width:0}.xa .t b{display:block;font-size:12.5px}.xa .t span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.xa select{width:100%;font-size:12px;border:1px solid var(--line);border-radius:9px;padding:6px;background:#fff}.xa.no .t span{color:var(--bad)}
+.xf{display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12px}.xf b{flex:0 0 34px}.xf span{display:flex;flex-wrap:wrap;gap:4px}.xf em{font-style:normal;background:var(--okbg);color:var(--ok);border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600}.xf em.no{background:var(--badbg);color:var(--bad)}
+.tt-c{flex-wrap:nowrap;overflow-x:auto}.ttw{overflow-x:auto;margin:0 -4px}.tt{border-collapse:separate;border-spacing:3px;font-size:10px;min-width:100%}
+.tt th{font-size:10px;color:var(--muted);font-weight:700}.tt th small{display:block;font-weight:500;font-size:8.5px}
+.tt td{background:var(--tint);border-radius:8px;padding:4px 3px;text-align:center;min-width:44px;height:40px;cursor:pointer;vertical-align:middle;position:relative}
+.tt td b{display:block;font-size:10px;line-height:1.15;color:var(--ink)}.tt td small{display:block;font-size:9px;color:var(--muted)}.tt td.e{background:#F7F8FB;color:var(--faint);font-size:14px}
+.tt td.cl{background:var(--badbg);box-shadow:inset 0 0 0 1.5px var(--bad)}.tt td em{display:block;font-style:normal;font-size:8px;color:var(--bad);font-weight:700}
+.tt-o{display:flex;flex-direction:column;gap:6px}.tt-o button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;text-align:left;display:flex;flex-direction:column}
+.tt-o b{font-size:13px}.tt-o span{font-size:11px;color:var(--muted)}.tt-o em{font-style:normal;font-size:10.5px;color:var(--bad);font-weight:700}.tt-o .on{border-color:var(--a);background:var(--tint)}.tt-o .cl{border-color:#F5B5B5}
+.sug-c{margin-top:6px}
