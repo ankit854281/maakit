@@ -289,7 +289,7 @@ function toMin(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
 function jsq(s) { return esc(JSON.stringify(String(s ?? ''))); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-function T(tid) { return S.teachers[tid] || { name: tid }; }
+function T(tid) { return S.teachers[tid] || { name: ((S.settings || {}).leftTeachers || {})[tid] || tid }; }   // a teacher who left keeps their name in old records
 function phoneDigits(p) { const d = String(p || '').replace(/\D/g, ''); return d.length === 10 ? '91' + d : d; }
 function waLink(phone, text) { const p = phoneDigits(phone); return 'https://wa.me/' + (p || '') + '?text=' + encodeURIComponent(text); }
 function toast(msg, kind) {
@@ -930,6 +930,7 @@ function vTimetable() {
   const oddCls = (cl, di, i) => fx.odd[cl + '|' + di + '|' + i] ? ' class="bg-amber-50"' : '';
   let body = '';
   if (mode === 'setup') body = ttSetup();
+  else if (mode === 'import') body = ttImport();
   else if (!S.grid) body = '<p class="text-sm">No timetable yet. Press <b>Generate New</b>.</p>';
   else if (mode === 'class') {
     body = `<div class="mb-2 flex items-center gap-2"><span class="lbl mb-0">Class</span><select class="inp w-auto" onchange="go('timetable',{mode:'class',d:${d},c:this.value})">${CLASS_NAMES.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
@@ -949,12 +950,97 @@ function vTimetable() {
       <div class="overflow-x-auto"><table class="tbl"><tr><th>Class</th>${bellHead()}</tr>${CLASS_NAMES.map(cl => `<tr><td class="font-bold">${cl}</td>${BELLS.map((b, i) => { const a = cell(cl, d, i); return (a ? `<td${oddCls(cl, d, i)}><b>${esc(a.s)}</b><br><span class="text-xs text-slate-500">${esc(T(a.t).name)}</span></td>` : '<td class="text-slate-400 italic">Self Study</td>') + (i === RECESS_AFTER ? RECESS_TD : ''); }).join('')}</tr>`).join('')}</table></div>`;
   }
   return head('Weekly Timetable', 'Assembly 08:40–09:00 • 7 bells • Recess 10:45–11:05 • Mon–Sat • Brijesh Sir: 1st & 2nd bell only',
-      `<button onclick="genTT()" class="btn btn-g"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate New</button><button onclick="printTT()" class="btn btn-l"><i class="fa-solid fa-print"></i> Print</button>`) + `
+      `<button onclick="ttImportStart()" class="btn btn-p"><i class="fa-solid fa-file-import"></i> Prabhakar Sir's new timetable</button><button onclick="genTT()" class="btn btn-g"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate New</button><button onclick="printTT()" class="btn btn-l"><i class="fa-solid fa-print"></i> Print</button>`) + `
     <div class="flex flex-wrap gap-2">${tabs}</div>
     ${S.grid ? `<div class="card text-sm flex flex-wrap items-center gap-2"><span class="pill bg-emerald-100 text-emerald-800">${fx.pct}% fixed</span> of bells keep the same subject Monday to Saturday. <span class="pill bg-amber-50 border border-amber-200 text-amber-800">Shaded</span> = changed only where it could not fit.</div>` : ''}
     ${errors.length ? `<div class="card bg-rose-50 border-rose-200 text-sm text-rose-800">${errors.map(esc).join('<br>')}</div>` : ''}
     ${warns.length && mode === 'setup' ? `<div class="card bg-amber-50 border-amber-200 text-sm text-amber-800">${warns.map(esc).join('<br>')}</div>` : ''}
     <div class="card" id="tt-body">${body}</div>`;
+}
+
+// ---------------------------------------------------------------- NEW TIMETABLE FROM PRABHAKAR SIR (owner, 5 Nov 2026)
+// Typed from the two register pages (Classes 1st–5th and 6th–10th). Same table every day; only the 5th bell of 9th/10th
+// alternates (written "Ankit/P" and "Prabhakar/Ankit"): Mon/Wed/Fri 9th Science (Ankit) + 10th Maths (Prabhakar),
+// Tue/Thu/Sat the other way round. Classes not on these pages (PG/LKG/UKG) keep their own timetable untouched.
+// The Principal sees the teacher matching first, can change any match, then presses Apply. Teachers not on the new
+// timetable can be removed (their login closes, their old diary/attendance/marks stay with their name).
+const TT_NOV26 = {
+  people: { SK: ['Shikha', ['shikha', 'seekha', 'sikha'], 'GK, Drawing & Moral Sc.'], SM: ['Seema', ['seema'], 'Primary English'], PR: ['Priyanka', ['priyanka'], 'Primary Hindi'],
+    DG: ['Durgesh', ['durgesh'], 'Primary Maths'], DV: ['Devbrat', ['devbrat', 'devvrat', 'devrat', 'debrat'], 'Computer'], RT: ['Rati', ['rati'], 'EVS & English Conversation'],
+    AS: ['Astha', ['astha', 'aastha'], 'Maths, GK & Drawing'], PW: ['Pawan', ['pawan'], 'English'], AT: ['Ankit Tripathi', ['tripathi'], 'Science'], K: ['Kartikey', ['kartikey', 'kartik'], 'Social Science'],
+    MA: ['Mamta', ['mamta', 'mamata'], 'Hindi & Sanskrit'], P: ['Prabhakar', ['prabhakar', 'dubey'], 'Maths 9–10'] },
+  ct: { '1st': 'SK', '2nd': 'SM', '3rd': 'PR', '4th': 'DG', '5th': 'DV', '6th': 'AS', '7th': 'PW', '8th': 'AT', '9th': 'K', '10th': 'MA' },
+  // rows = bells 1–7; each cell [teacher, subject]
+  rows: {
+    '1st':  [['SK', 'GK/Drawing'], ['SM', 'English'], ['RT', 'EVS'], ['DG', 'Mathematics'], ['PR', 'Hindi'], ['SK', 'Moral Science'], ['DV', 'Computer']],
+    '2nd':  [['SM', 'English'], ['DG', 'Mathematics'], ['SM', 'English Reading & Conversation'], ['RT', 'EVS'], ['DV', 'Computer'], ['PR', 'Hindi Reading & Vyakaran'], ['SK', 'GK/Drawing']],
+    '3rd':  [['PR', 'Hindi'], ['RT', 'EVS'], ['DG', 'Mathematics'], ['PR', 'Hindi Reading & Vyakaran'], ['SK', 'GK/Drawing'], ['DV', 'Computer'], ['RT', 'English Conversation']],
+    '4th':  [['DG', 'Mathematics'], ['PR', 'Hindi'], ['SK', 'GK/Drawing'], ['DV', 'Computer'], ['SM', 'English'], ['DG', 'Mathematics'], ['PR', 'Hindi Vyakaran']],
+    '5th':  [['DV', 'Computer'], ['SK', 'GK/Drawing'], ['PR', 'Hindi'], ['SM', 'English'], ['RT', 'EVS'], ['SM', 'English Reading & Conversation'], ['DG', 'Mathematics']],
+    '6th':  [['AS', 'GK/Drawing'], ['K', 'Social Science'], ['DV', 'Computer'], ['MA', 'Hindi/Sanskrit'], ['AS', 'Mathematics'], ['AT', 'Science'], ['PW', 'English']],
+    '7th':  [['PW', 'English'], ['AS', 'Computer/GK/Drawing'], ['K', 'Social Science'], ['AT', 'Science'], ['PW', 'English'], ['AS', 'Mathematics'], ['MA', 'Hindi/Sanskrit']],
+    '8th':  [['AT', 'Science'], ['DV', 'Computer'], ['PW', 'English'], ['AS', 'Mathematics'], ['MA', 'Hindi/Sanskrit'], ['K', 'Social Science'], ['AS', 'GK/Drawing']],
+    '9th':  [['K', 'Social Science'], ['PW', 'English'], ['P', 'Mathematics'], ['K', 'Social Science'], ['ALT9', ''], ['MA', 'Social Science'], ['AT', 'Science']],
+    '10th': [['MA', 'Hindi'], ['P', 'Mathematics'], ['AT', 'Science'], ['PW', 'English'], ['ALT10', ''], ['PW', 'English'], ['K', 'Social Science']]
+  },
+  alt: { ALT9: [['AT', 'Science'], ['P', 'Mathematics']], ALT10: [['P', 'Mathematics'], ['AT', 'Science']] }   // [Mon/Wed/Fri, Tue/Thu/Sat]
+};
+let TTI = null;
+function ttNorm(x) { return String(x || '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w && !['maam', 'mam', 'madam', 'sir', 'ji'].includes(w)).join(' '); }   // "Mamta Ma'am" → "mamta" (whole words only)
+function ttImportStart() {
+  const map = {};
+  Object.entries(TT_NOV26.people).forEach(([k, [, keys]]) => {
+    if (k === 'P' && S.teachers.P) { map[k] = 'P'; return; }
+    const hit = Object.keys(S.teachers).filter(t => { const n = ttNorm(S.teachers[t].name); return keys.some(w => n.split(' ').some(p => p === w || p.startsWith(w))); });
+    map[k] = hit.length === 1 ? hit[0] : (S.teachers[k] && hit.includes(k) ? k : (hit[0] || 'NEW'));
+  });
+  TTI = { map, remove: {} };
+  ttLeavers().forEach(t => TTI.remove[t] = true);
+  go('timetable', { mode: 'import' });
+}
+function ttUsed() { return new Set(Object.values(TTI.map).filter(v => v !== 'NEW')); }
+function ttKeptClasses() { return CLASS_NAMES.filter(c => !TT_NOV26.rows[c]); }
+function ttLeavers() {                                  // teachers with no bell on the new timetable and no class / periods kept elsewhere
+  const used = ttUsed(), kept = ttKeptClasses();
+  return Object.keys(S.teachers).filter(t => t !== 'P' && !used.has(t) && !S.alloc.some(a => kept.includes(a.c) && a.t === t) && !CLASSES.some(c => kept.includes(c.c) && c.ct === t));
+}
+function ttImport() {
+  if (!TTI) return '<p class="text-sm">Opening…</p>';
+  const P2 = TT_NOV26.people, opts = sel => `<option value="NEW" ${sel === 'NEW' ? 'selected' : ''}>➕ Add as a new teacher</option>` + Object.entries(S.teachers).map(([k, t]) => `<option value="${esc(k)}" ${k === sel ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
+  const nm = k => { const m = TTI.map[k]; return m === 'NEW' ? P2[k][0] + ' (new)' : T(m).name; };
+  const leavers = ttLeavers(), dup = Object.values(TTI.map).filter(v => v !== 'NEW').filter((v, i, a) => a.indexOf(v) !== i);
+  const cellTxt = (c, i, alt) => { let [t, sub] = TT_NOV26.rows[c][i]; if (TT_NOV26.alt[t]) [t, sub] = TT_NOV26.alt[t][alt]; return `<b>${esc(sub)}</b><br><span class="text-xs text-slate-500">${esc(nm(t))}</span>`; };
+  return `<h3 class="font-bold mb-1">New timetable — Prabhakar Sir (5 Nov 2026)</h3>
+    <p class="text-sm text-slate-600 mb-3">Typed from the register pages for Classes 1st–10th. The same table runs every day. Only the <b>5th bell of 9th and 10th</b> alternates: Mon/Wed/Fri 9th Science (Ankit) + 10th Maths (Prabhakar); Tue/Thu/Sat the other way round. ${ttKeptClasses().length ? 'Classes ' + ttKeptClasses().join(', ') + ' keep their present timetable.' : ''}</p>
+    <h4 class="font-bold mb-2">1 · Check the teachers</h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 mb-1">${Object.entries(P2).map(([k, [n]]) => `<label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg p-2"><span class="w-28 font-semibold">${esc(n)}</span><select class="inp py-1 text-xs flex-1" onchange="TTI.map['${k}']=this.value;TTI.remove={};ttLeavers().forEach(t=>TTI.remove[t]=true);render()">${opts(TTI.map[k])}</select></label>`).join('')}</div>
+    ${dup.length ? `<p class="text-sm text-rose-700 font-bold mb-2">Two names point to the same teacher: ${dup.map(t => esc(T(t).name)).join(', ')}. Please fix.</p>` : ''}
+    <h4 class="font-bold mt-4 mb-2">2 · Teachers who are not on the new timetable</h4>
+    ${leavers.length ? `<div class="space-y-1 mb-1">${leavers.map(t => `<label class="flex items-center gap-2 text-sm"><input type="checkbox" ${TTI.remove[t] ? 'checked' : ''} onchange="TTI.remove['${esc(t)}']=this.checked"> Remove <b>${esc(T(t).name)}</b> <span class="text-xs text-slate-500">(${esc(T(t).role || '')}) — login closes; old records keep the name</span></label>`).join('')}</div>` : '<p class="text-sm text-slate-500">None — everyone has bells.</p>'}
+    <h4 class="font-bold mt-4 mb-2">3 · The new timetable (Monday)</h4>
+    <div class="overflow-x-auto"><table class="tbl"><tr><th>Class</th><th>Class teacher</th>${BELLS.map(b => `<th>${b.n}</th>`).join('')}</tr>${Object.keys(TT_NOV26.rows).map(c => `<tr><td class="font-bold">${c}</td><td class="text-xs">${esc(nm(TT_NOV26.ct[c]))}</td>${BELLS.map((b, i) => `<td>${cellTxt(c, i, 0)}</td>`).join('')}</tr>`).join('')}</table></div>
+    <div class="flex flex-wrap gap-2 mt-4"><button class="btn btn-g" ${dup.length ? 'disabled' : ''} onclick="ttImportApply()"><i class="fa-solid fa-check"></i> Apply the new timetable</button><button class="btn btn-l" onclick="TTI=null;go('timetable',{mode:'day'})">Cancel</button></div>`;
+}
+function ttImportApply() {
+  const P2 = TT_NOV26.people, map = Object.assign({}, TTI.map), added = [], removed = [];
+  if (!confirm('Put Prabhakar Sir\'s new timetable for Classes 1st–10th in place of the present one?')) return;
+  Object.entries(map).forEach(([k, v]) => { if (v !== 'NEW') return; let n = 1; while (S.teachers['T' + n]) n++; const id = 'T' + n;
+    S.teachers[id] = { name: P2[k][0] + (/(a|i)$/.test(P2[k][0].split(' ')[0]) && !/Ankit/.test(P2[k][0]) ? " Ma'am" : ' Sir'), role: P2[k][2], phone: '' }; map[k] = id; added.push(S.teachers[id].name); });
+  const kept = ttKeptClasses(), oldAlloc = S.alloc, oldGrid = S.grid, alloc = [], idx = {};
+  oldAlloc.forEach((a, i) => { if (kept.includes(a.c)) { idx['old' + i] = alloc.length; alloc.push({ ...a }); } });
+  const key = (c, t, sub) => { const k = c + '|' + t + '|' + sub; if (idx[k] == null) { idx[k] = alloc.length; alloc.push({ c, s: sub, t, n: 0 }); } return idx[k]; };
+  const grid = {};
+  CLASS_NAMES.forEach(c => {
+    if (TT_NOV26.rows[c]) grid[c] = DAYS.map((_, d) => BELLS.map((b, i) => { let [t, sub] = TT_NOV26.rows[c][i]; if (TT_NOV26.alt[t]) [t, sub] = TT_NOV26.alt[t][d % 2]; const j = key(c, map[t], sub); alloc[j].n++; return j; }));
+    else grid[c] = DAYS.map((_, d) => BELLS.map((b, i) => { const o = oldGrid && oldGrid[c] ? oldGrid[c][d][i] : -1; return o >= 0 && idx['old' + o] != null ? idx['old' + o] : -1; }));
+  });
+  S.alloc = alloc; S.grid = grid;
+  S.classes = CLASSES.map(x => ({ ...x, ct: TT_NOV26.ct[x.c] ? map[TT_NOV26.ct[x.c]] : x.ct })); refreshClasses();
+  S.settings.leftTeachers = S.settings.leftTeachers || {};
+  Object.keys(TTI.remove).filter(t => TTI.remove[t] && S.teachers[t] && ttLeavers().includes(t)).forEach(t => { S.settings.leftTeachers[t] = S.teachers[t].name; removed.push(S.teachers[t].name); delete S.teachers[t]; });
+  log('Timetable', 'New timetable from Prabhakar Sir (Classes 1st–10th) put in place' + (added.length ? '. New teachers: ' + added.join(', ') : '') + (removed.length ? '. Removed (left): ' + removed.join(', ') : ''));
+  TTI = null; toast('New timetable is live.' + (added.length ? ' Set a PIN for ' + added.join(', ') + ' in Settings (or they log in with 1234).' : ''));
+  go('timetable', { mode: 'day' });
 }
 function ttSetup() {
   const tOpts = sel => Object.entries(S.teachers).map(([k, t]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(t.name)}</option>`).join('');

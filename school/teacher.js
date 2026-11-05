@@ -252,7 +252,7 @@ async function ensureMonth(c, ym, force) {
 // ---------------------------------------------------------------- school data helpers (same rules as app.js)
 const me = () => ME ? ME.tid : '';
 const isP = () => ME && ME.role === 'principal';
-function T(tid) { return S.teachers[tid] || { name: tid }; }
+function T(tid) { return S.teachers[tid] || { name: ((S.settings || {}).leftTeachers || {})[tid] || tid }; }
 function className() { return (S.classes || []).map(k => k.c); }
 function myName() { const n = (T(me()).name || ME.label || '').replace(/\s*\(.*\)/, ''); return n; }
 function myCT() { return isP() ? className() : (S.classes || []).filter(k => k.ct === me()).map(k => k.c); }
