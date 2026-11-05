@@ -1355,7 +1355,7 @@ async function scanFiles(mode, c, s, files) {
     if (SCAN_AI !== false) {
       SCAN.busy = 'Reading the photo with AI… (10–30 seconds)'; render();
       try { res = await sapi('read', { mode, cls: c, subj: s, images }); }
-      catch (e) { if (!e.noAi) throw e; SCAN_AI = false; }
+      catch (e) { if (!e.noAi) throw e; SCAN_AI = false; toast(e.message); }
     }
     if (!res) {
       SCAN.busy = 'Your phone is reading the photo… (the first time takes about a minute)'; render();

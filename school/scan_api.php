@@ -43,7 +43,7 @@ case 'read': {
     if (!is_array($imgs) || !$imgs || count($imgs) > SC_MAX_IMAGES) sch_fail('Send 1 to ' . SC_MAX_IMAGES . ' photos.');
     try { $images = array_map(fn($x) => sc_image((string)$x), array_values($imgs)); }
     catch (InvalidArgumentException $e) { sch_fail($e->getMessage()); }
-    if (!sc_ai_ready()) sch_json(['ok' => false, 'noAi' => true, 'error' => 'AI reading is not switched on. Your phone will read the photo instead.'], 409);
+    if (!sc_ai_ready($mode)) sch_json(['ok' => false, 'noAi' => true, 'error' => 'AI reading is not switched on. Your phone will read the photo instead.'], 409);
 
     $uid = sch_uid_of($u); $key = $uid . '|' . date('Y-m-d');
     $db->beginTransaction();
@@ -62,7 +62,7 @@ case 'read': {
         if ($next) $ctx['nextChapter'] = (string)($next[0]['n'] ?? '');
     }
     try { $res = sc_ai_read($mode, $cls, $subj, $images, $ctx); }
-    catch (Throwable $e) { error_log('scan_api: ' . $e->getMessage()); sch_json(['ok' => false, 'noAi' => true, 'error' => 'AI could not read it just now. Your phone will read the photo instead.'], 502); }
+    catch (Throwable $e) { error_log('scan_api: ' . $e->getMessage()); sch_json(['ok' => false, 'noAi' => true, 'error' => sc_provider($mode) === 'gemini' && $e->getCode() === 429 ? SC_GEMINI_LIMIT : 'AI could not read it just now. Your phone will read the photo instead.'], 502); }
     sch_log($u, $mode === 'chapters' ? 'Syllabus' : ($mode === 'notes' ? 'Notes' : 'Lesson Plan'), 'Photo read for Class ' . $cls . ' ' . $subj . ': '
         . ($mode === 'chapters' ? count($res['chapters']) . ' chapter(s) found' : ($mode === 'notes' ? count($res['points']) . ' note point(s) drafted' : ($mode==='page'?count($res['days']).' day drafts':count($res['topics']).' topic(s) found'))) . ' (to check and save)');
     sch_json(['ok' => true, 'via' => 'ai'] + $res);

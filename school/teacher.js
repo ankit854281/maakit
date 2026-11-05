@@ -1278,7 +1278,7 @@ async function readPhotos(mode, c, s, files, busyK) {
   try {
     busy('Preparing the photo…'); const images = []; for (const f of files) images.push(await shrink(f));
     let res = null;
-    if (AI !== false) { busy('Reading the photo with AI… (10–40 seconds)'); try { res = await api('scan_api.php?a=read', { mode, cls: c, subj: s, images }); res.via = 'ai'; } catch (e) { if (!e.noAi) throw e; AI = false; } }
+    if (AI !== false) { busy('Reading the photo with AI… (10–40 seconds)'); try { res = await api('scan_api.php?a=read', { mode, cls: c, subj: s, images }); res.via = 'ai'; } catch (e) { if (!e.noAi) throw e; AI = false; toast(e.message); } }
     if (!res) { busy('Your phone is reading the photo… (the first time takes about a minute)'); const tess = await tessLoad(); let text = '';
       for (let i = 0; i < images.length; i++) { busy(`Your phone is reading photo ${i + 1} of ${images.length}…`); const r = await tess.recognize(images[i], 'eng+hin', TESS_OPTIONS); text += '\n' + ((r && r.data && r.data.text) || ''); }
       res = { via: 'phone', text }; }
@@ -1419,7 +1419,7 @@ async function noteRead(c, s) {
   const busy = m => { DRAFT.busy = m; DRAFT.busyK = 'note'; render(); }, n = DRAFT.note.n;
   try {
     let res = null;
-    if (AI !== false) { busy('AI is reading the pages and writing notes… (20–60 seconds)'); try { res = await api('scan_api.php?a=read', { mode: 'notes', cls: c, subj: s, images: imgs }); } catch (e) { if (!e.noAi) throw e; AI = false; } }
+    if (AI !== false) { busy('AI is reading the pages and writing notes… (20–60 seconds)'); try { res = await api('scan_api.php?a=read', { mode: 'notes', cls: c, subj: s, images: imgs }); } catch (e) { if (!e.noAi) throw e; AI = false; toast(e.message); } }
     if (res) { if (res.chapter && !n.chapter) n.chapter = res.chapter; n.body = res.summary || ''; n.points = res.points || []; n.words = res.words || []; n.qa = res.qa || []; n.via = 'ai'; }
     else { busy('The school AI is off — your phone is reading the text (about a minute)…'); const tess = await tessLoad(); let text = '';
       for (let i = 0; i < imgs.length; i++) { busy(`Your phone is reading page ${i + 1} of ${imgs.length}…`); const r = await tess.recognize(imgs[i], 'eng+hin', TESS_OPTIONS); text += ((r && r.data && r.data.text) || '') + '\n'; }

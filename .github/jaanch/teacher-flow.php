@@ -156,4 +156,7 @@ $put('syl', '10th|Hindi', ['chapters' => [['n' => 'Surdas', 'done' => null, 'ex'
 [, $j] = $ta('crosscheck', null, $tok['MA'], '&date=2026-11-05&days=7'); tf_check(count($j['chk']) === 0, 'not another teacher\'s checks');
 [$c] = $ta('crosscheck', null, $par, '&date=2026-11-05'); tf_check($c === 403, 'parents never');
 
+// Run provider tests in an isolated process so test keys never affect the API server.
+$gemini = proc_open([PHP_BINARY, __DIR__ . '/gemini-scan.php'], [1 => STDOUT, 2 => STDERR], $geminiPipes);
+tf_check(is_resource($gemini) && proc_close($gemini) === 0, 'Gemini book-photo provider and fallback checks');
 echo "Teacher app flow: all checks passed\n";

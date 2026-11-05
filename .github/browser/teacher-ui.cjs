@@ -382,7 +382,7 @@ const path = require('node:path');
   });
   await run('27-Syllabus-contents-photo-rows', async () => {
     const route = '**/scan_api.php?a=read';
-    let response = { ok: false, noAi: true };
+    let response = { ok: false, noAi: true, error: 'AI ki aaj ki free seema khatam — phone padh raha hai' };
     await page.route(route, r => r.fulfill({ json: response }));
     try {
       await page.evaluate(() => {
@@ -403,6 +403,7 @@ const path = require('node:path');
       });
       await upload();
       await page.getByText('Phone read the photo. Please check the rows before saving.').waitFor();
+      assert.match(await page.locator('#toast').innerText(), /AI ki aaj ki free seema khatam/);
       assert.equal(await page.locator('#scL').count(), 0);
       const draft = () => page.evaluate(() => DRAFT.sb.rows.map(r => [r.n, r.pf, r.pt, r.uncertain]));
       assert.deepEqual(await draft(), [

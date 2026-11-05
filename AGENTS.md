@@ -1,3 +1,26 @@
+# Gemini book-photo scans — owner, 5 November 2026
+
+- Only `school/scan_lib.php` book-photo modes `chapters`, `lplan`, `notes` may use Gemini.
+  `page`, Studio copy checking, toolkit, learning and child-data AI stay OpenAI-only.
+- Provider order is OpenAI key first, otherwise Gemini key, otherwise phone Tesseract.
+  An OpenAI failure does not forward photos to Gemini. Gemini errors return `noAi`;
+  HTTP 429 shows "AI ki aaj ki free seema khatam — phone padh raha hai".
+- The owner manually adds these constants to the private hosting `config.php`.
+  Replace the placeholder locally. Never commit a real key or edit that file automatically.
+
+  ```php
+  define('GEMINI_API_KEY', 'PASTE_YOUR_PRIVATE_KEY_HERE');
+  define('GEMINI_MODEL', 'gemini-2.5-flash');
+  ```
+
+- Model is optional and defaults to `gemini-2.5-flash`. An existing
+  `SCHOOL_AI_API_KEY` takes precedence. Free-tier availability and quota are controlled
+  by Google. Use book/teaching-material photos only, because free-tier data may be
+  reviewed by Google. No student notebooks, names, marks or private child records.
+- `GEMINI_TEST_URL` is an environment override for the synthetic CI server only.
+  Never configure it on hosting. `.github/jaanch/gemini-scan.php` tests the provider
+  without private config or a database and also runs from `teacher-flow.php`.
+
 # Customer app trial (APK) — owner request, 1 November 2026 (v0.2, latest wins)
 
 - `app-trial/web/index.html` is a clickable prototype of the customer app (one
