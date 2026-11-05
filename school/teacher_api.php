@@ -511,6 +511,62 @@ case 'report': {
               'recs' => (object)$recs, 'remarks' => array_slice($rem, 0, 1500), 'canEdit' => $canClass($cls), 'me' => $role === 'teacher' ? $tid : 'P']);
 }
 
+// ---- School board (owner, 5 Nov 2026: "total students ki profile, progress graph, ek notice board jisme competition
+// type me serial wise dikhe"). Every class + every child of the session in ONE pass (same formulas as ?a=report):
+// attendance % (session, this month, today), homework done %, daily check %, latest term marks %, score = average of
+// what exists. Staff only (teachers, Principal, Chairman) — it is the staff-room notice board, never sent to parents.
+case 'board': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $set = sch_rec_get('settings', 'main') ?: [];
+    $start = (string)($set['sessionStart'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = (date('n') < 4 ? date('Y') - 1 : date('Y')) . '-04-01';
+    $today = date('Y-m-d'); $ym = date('Y-m');
+    $classes = array_values(array_filter(array_column((array)sch_rec_get('classes', 'main'), 'c'), 'is_string'));
+    $kids = []; $byCls = [];
+    foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d) || !in_array($d['cls'] ?? '', $classes, true)) continue;
+        $sid = (string)$row['r']; $g = strtolower(substr(trim((string)($d['gender'] ?? $d['sex'] ?? '')), 0, 1));
+        $kids[$sid] = ['sid' => $sid, 'name' => (string)($d['name'] ?? ''), 'cls' => $d['cls'], 'g' => $g === 'm' || $g === 'b' ? 'b' : ($g === 'f' || $g === 'g' ? 'g' : ''),
+                       'a' => 0, 'l' => 0, 'ma' => 0, 'hw' => 0, 'half' => 0, 'hwOf' => 0, 'kit' => 0, 'kitOf' => 0];
+        $byCls[$d['cls']][] = $sid; }
+    $attDays = []; $monDays = []; $todayAtt = [];
+    $q = $db->prepare("SELECT k, r, d FROM sch_records WHERE k IN ('studAtt','tchChk','tchKit') AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$start, date('Y-m-d', strtotime('+1 day'))]);
+    foreach ($q as $row) {
+        $pp = explode('|', (string)$row['r']); $cls = $pp[1] ?? ''; if (!isset($byCls[$cls])) continue;
+        $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        if ($row['k'] === 'studAtt') { $attDays[$cls] = ($attDays[$cls] ?? 0) + 1; $inMon = substr($pp[0], 0, 7) === $ym; if ($inMon) $monDays[$cls] = ($monDays[$cls] ?? 0) + 1;
+            if ($pp[0] === $today) $todayAtt[$cls] = count((array)($d['absent'] ?? []));
+            foreach ((array)($d['absent'] ?? []) as $sid) if (isset($kids[$sid]) && $kids[$sid]['cls'] === $cls) { $kids[$sid][(($d['st'][$sid] ?? '') === 'L') ? 'l' : 'a']++; if ($inMon) $kids[$sid]['ma']++; } }
+        elseif ($row['k'] === 'tchChk') { foreach ((array)($d['rows'] ?? []) as $sid => $x) { $h = (string)($x['hw'] ?? ''); if (!isset($kids[$sid]) || $h === '') continue; $kids[$sid]['hwOf']++; $kids[$sid][$h === 'done' ? 'hw' : ($h === 'half' ? 'half' : 'x')] = ($kids[$sid][$h === 'done' ? 'hw' : ($h === 'half' ? 'half' : 'x')] ?? 0) + 1; } }
+        else { foreach ((array)($d['rows'] ?? []) as $sid => $x) { if (!isset($kids[$sid])) continue; $kids[$sid]['kitOf']++; $bad = 0; foreach (['d', 'i', 'b', 'u'] as $f) if (isset($x[$f]) && (int)$x[$f] === 0) $bad++; if (!$bad) $kids[$sid]['kit']++; } }
+    }
+    $ses = str_replace(['–', '—'], '-', trim((string)($set['session'] ?? ''))); $ses = preg_match('/^(20\d\d)-(?:20)?(\d\d)$/', $ses, $mm) ? $mm[1] . '-' . $mm[2] : '';
+    $marks = []; $exam = '';
+    if ($ses !== '') foreach (['Term-2', 'Term-1'] as $ex) {
+        $st = $db->prepare("SELECT d FROM sch_records WHERE k='prcMarks' AND deleted=0 AND r LIKE ?"); $st->execute([str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], "$ses|$ex|") . '%']);
+        $acc = [];
+        foreach ($st as $row) { $d = json_decode((string)$row['d'], true); foreach ((array)($d['rows'] ?? []) as $sid => $m) { if (!isset($kids[$sid]) || !is_array($m)) continue; $t = 0; $any = false;
+            foreach (['pt', 'nb', 'sea', 'te'] as $f) if (isset($m[$f]) && is_numeric($m[$f])) { $t += (float)$m[$f]; $any = true; } if ($any) $acc[$sid][] = min(100, $t); } }
+        if ($acc) { $exam = $ex; foreach ($acc as $sid => $l) $marks[$sid] = round(array_sum($l) / count($l), 1); break; }
+    }
+    $pc = fn($a, $b) => $b ? (int)round($a / $b * 100) : null;
+    $avg = function (array $v) { $v = array_values(array_filter($v, fn($x) => $x !== null)); return $v ? (int)round(array_sum($v) / count($v)) : null; };
+    $out = []; $cout = [];
+    foreach ($kids as $sid => $k) {
+        $ad = $attDays[$k['cls']] ?? 0; $md = $monDays[$k['cls']] ?? 0;
+        $att = $ad ? $pc($ad - $k['a'] - $k['l'], $ad) : null; $mon = $md ? $pc($md - $k['ma'], $md) : null;
+        $hw = $k['hwOf'] ? (int)round(($k['hw'] + $k['half'] / 2) / $k['hwOf'] * 100) : null; $kit = $pc($k['kit'], $k['kitOf']); $mk = $marks[$sid] ?? null;
+        $out[$sid] = ['sid' => $sid, 'name' => $k['name'], 'cls' => $k['cls'], 'g' => $k['g'], 'att' => $att, 'mon' => $mon, 'hw' => $hw, 'kit' => $kit, 'mk' => $mk, 'score' => $avg([$att, $hw, $kit, $mk])];
+    }
+    foreach ($classes as $c) { $ids = $byCls[$c] ?? []; $L = array_map(fn($s) => $out[$s], $ids);
+        $col = fn($f) => $avg(array_column($L, $f));
+        $cout[] = ['cls' => $c, 'n' => count($ids), 'boys' => count(array_filter($L, fn($x) => $x['g'] === 'b')), 'girls' => count(array_filter($L, fn($x) => $x['g'] === 'g')),
+                   'days' => $attDays[$c] ?? 0, 'att' => $col('att'), 'mon' => $col('mon'), 'hw' => $col('hw'), 'kit' => $col('kit'), 'mk' => $col('mk'),
+                   'today' => array_key_exists($c, $todayAtt) ? count($ids) - $todayAtt[$c] : null, 'score' => $avg([$col('att'), $col('hw'), $col('kit'), $col('mk')])]; }
+    $ranked = array_values(array_filter($out, fn($x) => $x['score'] !== null));
+    usort($ranked, fn($a, $b) => [$b['score'], $b['att'] ?? 0] <=> [$a['score'], $a['att'] ?? 0]);
+    sch_json(['ok' => true, 'from' => $start, 'exam' => $exam, 'classes' => $cout, 'top' => array_slice($ranked, 0, 15), 'total' => count($kids),
+              'students' => array_values($out)]);
+}
+
 case 'rec': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;

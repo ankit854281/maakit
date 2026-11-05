@@ -25,7 +25,7 @@ const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: 
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
 const PARTS = [['pt', 'Pre-Test', 10], ['nb', 'Notebook', 5], ['sea', 'SEA', 5], ['te', 'Term', 80]];
 // Notes live inside Planner (Planner · Lesson plan / Syllabus / Notes) so the phone keeps six tabs (owner, 5 Nov 2026: Connect added).
-const PTABS = [['prin', 'Cross-check', 'check'], ['att', 'Classes', 'list'], ['conn', 'Connect', 'chat']];   // Principal mode (owner, 5 Nov 2026)
+const PTABS = [['prin', 'Cross-check', 'check'], ['att', 'Classes', 'list'], ['board', 'Board', 'chart'], ['conn', 'Connect', 'chat']];   // Principal mode (owner, 5 Nov 2026)
 const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['res', 'Results', 'chart'], ['conn', 'Connect', 'chat']];
 // Each tab has its own colour, like the Chairman app (owner, 5 Nov 2026): header, buttons and the page's soft wash change
 // together when the tab changes. Colours are picked to stay readable with white text and to differ clearly from each other.
@@ -334,7 +334,7 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
   if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB)) || (!pm && TAB === 'prin')) TAB = pm ? 'prin' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
@@ -344,7 +344,7 @@ function render() {
   const dot = { att: dueAtt, diary: dueDiary, conn: scUnread(), prin: pm ? prinPendingCount() : 0 }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b>${isP() ? `<div class="mode-sw" role="group" aria-label="Mode"><button class="${pm ? '' : 'on'}" onclick="setMode('teacher')">Teacher</button><button class="${pm ? 'on' : ''}" onclick="setMode('principal')">Principal</button></div>` : ''}</div>
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
-    <div class="tabs${pm ? ' t3' : ''}">${tabs.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
+    <div class="tabs${pm ? ' t' + tabs.length : ''}">${tabs.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') || (k === 'home' && TAB === 'board' && !pm) ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
   keepRestore(); scScroll(); if (typeof afterRender === 'function') afterRender();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
@@ -507,7 +507,7 @@ function vHome() {
   const wN = week.reduce((n, x) => n + x.n, 0), wF = week.reduce((n, x) => n + x.f, 0);
   const sc = ct[0] || (allocList()[0] || {}).c, st = sc ? needStars(sc) : null, ph = sc ? needPhotos(sc) : {};
   const quick = [['att', 'Attendance', 'check', ct.length ? { c: ct[0] } : {}], ['att', 'Daily check', 'bill', ct.length ? { c: ct[0], m: 'kit' } : {}], ['diary', 'Diary', 'book', {}], ['diary', 'Check work', 'list', { m: 'check' }],
-    ['plan', 'Syllabus', 'note', { m: 'syl' }], ['att', 'Students', 'list', { m: 'stu', c: ct[0] || (myClasses()[0] || '') }], ['plan', 'Paper', 'print', { m: 'paper' }], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att' || q[1] === 'Students');
+    ['plan', 'Syllabus', 'note', { m: 'syl' }], ['att', 'Students', 'list', { m: 'stu', c: ct[0] || (myClasses()[0] || '') }], ['plan', 'Paper', 'print', { m: 'paper' }], ['board', 'Board', 'chart', {}], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att' || q[1] === 'Students');
   const kidCard = (k, why, cls) => `<div class="star ${cls}"><span class="ph">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}${cls === 'top' ? '<em>★</em>' : ''}</span><b>${esc(k.name.split(' ')[0])}</b><small>${esc(why)}</small></div>`;
   const starsHtml = !st || st.loading ? '' : st.err ? '' : `
     <div class="card stars-card"><h3>⭐ Star children <small>Class ${esc(sc)} · last 30 days</small></h3>
@@ -527,6 +527,7 @@ function vHome() {
     </div>
     <div class="card quick-card"><div class="quick-grid">${quick.map(([t, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(t)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}${t === 'conn' && p.m === 'staff' && scUnread() ? `<em>${scUnread()}</em>` : ''}</button>`).join('')}</div></div>
     ${myWorkCard()}
+    ${boardCard()}
     ${starsHtml}
     ${back.length ? `<div class="ban warn"><div><b>${back.length} school day(s) without attendance</b> in the last 30 days (${[...new Set(back.map(x => 'Class ' + x.c))].join(', ')}).<br><button class="btn s go" style="margin-top:8px" onclick="go('att',{c:'${esc(back[0].c)}',m:'pending'})">Update them together</button></div></div>` : ''}
     ${''/* 'Diary not filled' days are now listed in the My work card (myWorkCard, teacher-work.js) */}
@@ -667,7 +668,7 @@ function vAttCal(c) {
   for (let n = 1; n <= daysIn(ym); n++) {
     const d = ym + '-' + pad(n), sun = dayIdx(d) < 0, h = holidayOn(d) || clsHolOn(d, c), a = attOf(d, c), fut = d > t;
     let cls = 'calendar-day', txt = '';
-    if (sun) { cls += ' sun'; txt = 'Sun'; } else if (h) { cls += ' holiday'; txt = 'Holiday'; hols++; } else if (a) { cls += ' saved'; txt = Math.round((list.length - (a.absent || []).length) / Math.max(1, list.length) * 100) + '%'; saved++; } else if (fut) { cls += ' upcoming'; txt = ''; } else { cls += ' pending'; txt = 'Mark'; pend++; }
+    if (sun) { cls += ' sun'; txt = 'Sun'; } else if (h) { cls += ' holiday' + (holidayOn(d) ? ' sch' : ''); txt = holidayOn(d) ? holShort(holidayOn(d)) : 'Class'; hols++; } else if (a) { cls += ' saved'; txt = Math.round((list.length - (a.absent || []).length) / Math.max(1, list.length) * 100) + '%'; saved++; } else if (fut) { cls += ' upcoming'; txt = ''; } else { cls += ' pending'; txt = 'Mark'; pend++; }
     if (d === t) cls += ' today'; if (sel && sel[d]) cls += ' picked';
     const can = !sun && (sel ? !holidayOn(d) && d <= addDays(t, 90) : !fut || !h);
     cells.push(`<button type="button" class="${cls}" ${can ? '' : 'disabled'} aria-pressed="${d === (P.date || t)}" aria-label="${esc(fmtDate(d) + ' · ' + (h ? h.title : txt || 'Upcoming'))}" onclick="calTap(${jsq(c)},'${d}')"><b>${n}</b><small>${esc(txt)}</small></button>`);
@@ -676,8 +677,9 @@ function vAttCal(c) {
   return `<div class="card attendance-calendar cal-big"><div class="row"><button class="btn s w" onclick="go('att',{c:${jsq(c)},m:'cal',ym:'${ymAdd(ym, -1)}'})" aria-label="Previous month">${ic('back')}</button><b>${ymName(ym)}</b><button class="btn s w" ${ym >= ymOf(addDays(t, 60)) ? 'disabled' : ''} onclick="go('att',{c:${jsq(c)},m:'cal',ym:'${ymAdd(ym, 1)}'})" aria-label="Next month">${ic('next')}</button></div>
       <div class="cal-sum"><span class="pill ok">${saved} saved</span><span class="pill warn">${pend} to mark</span><span class="pill hol">${hols} holiday</span></div>
       <div class="calendar-grid">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<span class="calendar-label">${d}</span>`).join('')}${cells.join('')}</div>
+      ${holList(c, ym)}
       <p class="mut" style="margin:8px 0 0">${sel ? 'Tap the days to close for this class, then choose the reason.' : 'Tap a day to take attendance or mark a holiday. Sundays and school holidays are automatic.'}</p>
-      <div class="btns" style="margin-top:8px">${sel ? `<button class="btn w s" onclick="DRAFT.calSel=null;render()">Cancel</button>` : `<button class="btn l s" onclick="DRAFT.calSel={};render()">Select days for a holiday</button><button class="btn w s" onclick="go('att',{c:${jsq(c)},m:'pending'})">Days not marked</button>`}</div></div>
+      <div class="btns" style="margin-top:8px">${sel ? `<button class="btn w s" onclick="DRAFT.calSel=null;render()">Cancel</button>` : `<button class="btn go s" onclick="holRange(${jsq(c)})">${isP() ? 'Holiday — all classes / dates' : 'Holiday — from / to dates'}</button><button class="btn l s" onclick="DRAFT.calSel={};render()">Select days for a holiday</button><button class="btn w s" onclick="go('att',{c:${jsq(c)},m:'pending'})">Days not marked</button>`}</div></div>
     ${sel && nSel ? `<div class="card"><h3>Holiday for ${nSel} day(s) <small>Class ${esc(c)}</small></h3>${holReasons()}<button class="btn go full" style="margin-top:8px" onclick="calHolSave(${jsq(c)})">Mark ${nSel} day(s) as holiday</button></div>` : ''}`;
 }
 function holReasons() {

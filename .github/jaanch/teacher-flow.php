@@ -159,4 +159,10 @@ $put('syl', '10th|Hindi', ['chapters' => [['n' => 'Surdas', 'done' => null, 'ex'
 // Run provider tests in an isolated process so test keys never affect the API server.
 $gemini = proc_open([PHP_BINARY, __DIR__ . '/gemini-scan.php'], [1 => STDOUT, 2 => STDERR], $geminiPipes);
 tf_check(is_resource($gemini) && proc_close($gemini) === 0, 'Gemini book-photo provider and fallback checks');
+// ---- school board (5 Nov 2026): staff only, one pass, same formulas as the class report ----
+[$c, $j] = $ta('board', null, $tok['K']); tf_check($c === 200 && $j['total'] === 3 && count($j['classes']) === 2 && isset($j['students'][0]['score']), 'teacher sees the school board (' . $c . ')');
+$nine = array_values(array_filter($j['classes'], fn($x) => $x['cls'] === '9th'))[0]; tf_check($nine['n'] === 2, 'class counts');
+[$c] = $ta('board', null, $par); tf_check($c === 403, 'parents never see the board');
+[$c] = $ta('board', null, $tok['CH']); tf_check($c === 200, 'Chairman reads the board');
+
 echo "Teacher app flow: all checks passed\n";

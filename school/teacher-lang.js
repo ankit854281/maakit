@@ -259,7 +259,13 @@
     'Something wrong here? Tell the school office — they correct it in Student Master.': ['Kuch galat hai? School office ko batayein — wo Student Master mein theek karenge.', 'कुछ गलत है? विद्यालय कार्यालय को बताएँ — वे स्टूडेंट मास्टर में ठीक करेंगे।'],
     'Homework checks': ['Homework check', 'गृहकार्य जाँच'], 'nothing due': ['kuch baaki nahi', 'कुछ बाकी नहीं'],
     'Move up': ['Upar', 'ऊपर'], 'Move down': ['Neeche', 'नीचे'], 'Remove chapter': ['Chapter hatayein', 'पाठ हटाएँ'], 'From page': ['Page se', 'पृष्ठ से'], 'To page': ['Page tak', 'पृष्ठ तक'], 'Book': ['Kitaab', 'पुस्तक'],
-    'Syllabus chapters': ['Syllabus ke chapters', 'पाठ्यक्रम के पाठ']
+    'Syllabus chapters': ['Syllabus ke chapters', 'पाठ्यक्रम के पाठ'],
+    'Board': ['Board', 'बोर्ड'], 'Class competition': ['Class muqabla', 'कक्षा प्रतियोगिता'], 'who is ahead': ['kaun aage hai', 'कौन आगे है'], 'Progress graph': ['Pragati graph', 'प्रगति ग्राफ़'],
+    'Star students': ['Star bachche', 'स्टार विद्यार्थी'], 'All students': ['Sab bachche', 'सभी विद्यार्थी'], 'Teachers': ['Teachers', 'शिक्षक'], 'Total students': ['Kul bachche', 'कुल विद्यार्थी'],
+    'Present today': ['Aaj present', 'आज उपस्थित'], 'Find a student': ['Bachcha dhoondhein', 'विद्यार्थी खोजें'],
+    'Students in each class': ['Har class mein bachche', 'हर कक्षा में विद्यार्थी'], 'Share': ['Bhejein', 'भेजें'], 'Teacher work': ['Teacher ka kaam', 'शिक्षकों का कार्य'],
+    'Holiday — dates': ['Chhutti — taareekh', 'अवकाश — तिथियाँ'], 'All classes': ['Sab classes', 'सभी कक्षाएँ'], 'Name': ['Naam', 'नाम'], 'Holiday — all classes / dates': ['Chhutti — sab classes / taareekh', 'अवकाश — सभी कक्षाएँ / तिथियाँ'], 'Holiday — from / to dates': ['Chhutti — se / tak', 'अवकाश — से / तक'],
+    'Holiday marked for all classes.': ['Sab classes ki chhutti lag gayi.', 'सभी कक्षाओं का अवकाश लग गया।']
   };
   // Sentences with numbers, dates or names. Each: [regex, (m) => Hinglish, (m) => Hindi]
   const P = [

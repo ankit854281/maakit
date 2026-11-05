@@ -544,3 +544,116 @@ function myWorkCard() {
     ${setup.length ? `<details class="mw-su"><summary>Weekly / one-time work <small>${setup.length}</small></summary>${setup.map(w => mwBtn(w)).join('')}</details>` : ''}
     ${X && X.loading && !X.ok ? '<p class="mut" style="margin:4px 0 0">Checking daily check and homework checks…</p>' : ''}</div>`;
 }
+
+// ---------------------------------------------------------------- 7. School board (owner, 5 Nov 2026: "total students ki profile,
+// progress graph, notice board — competition type, serial wise"). Data: teacher_api.php?a=board (one pass over the session).
+let BOARD = null, BX = null;
+function needBoard(force) {
+  if (BOARD && !force && (BOARD.loading || Date.now() - (BOARD.got || 0) < 300000)) return BOARD;
+  const old = BOARD && BOARD.ok ? BOARD : null; BOARD = Object.assign({}, old || {}, { loading: true });
+  api('teacher_api.php?a=board').then(r => { BOARD = Object.assign(r, { ok: true, got: Date.now() }); softRender(); })
+    .catch(e => { BOARD = Object.assign({}, old || {}, { loading: false, err: e.message, got: Date.now() }); softRender(); });
+  return BOARD;
+}
+function needBX() {
+  const t = todayISO();
+  if (BX && BX.date === t && (BX.loading || Date.now() - (BX.got || 0) < 300000)) return BX;
+  BX = { date: t, loading: true };
+  api('teacher_api.php?a=crosscheck&days=7&date=' + t).then(r => { BX = Object.assign(r, { date: t, ok: true, got: Date.now() }); softRender(); }).catch(() => { BX = { date: t, loading: false, got: Date.now() }; });
+  return BX;
+}
+const MEDAL = ['🥇', '🥈', '🥉'];
+function rankBadge(i) { return `<span class="rk-b r${Math.min(i + 1, 4)}">${i < 3 ? MEDAL[i] : i + 1}</span>`; }
+function pctTxt(v) { return v === null || v === undefined ? '—' : v + '%'; }
+function teacherRanks() {
+  const X = needBX(), t = todayISO(), out = [];
+  Object.keys(S.teachers).forEach(tid => { let done = 0, all = 0;
+    for (let i = 0; i <= 6; i++) { const d = addDays(t, -i); if (d < (loadedFrom || '')) break; if (absentFrom(d, tid) === 0) continue;
+      workOf(tid, d, xOfDay(X, d)).forEach(w => { all++; if (w.done) done++; }); }
+    if (all) out.push({ tid, name: T(tid).name || tid, done, all, p: Math.round(done / all * 100) }); });
+  return out.sort((a, b) => b.p - a.p || b.done - a.done);
+}
+function boardText(B) {
+  const cl = B.classes.filter(c => c.score !== null).sort((a, b) => b.score - a.score).slice(0, 3), st = (B.top || []).slice(0, 5);
+  return `*🏆 ${S.settings.school || 'School'} — Board*\n${fmtLong(todayISO())}\n\n*Top classes*\n${cl.map((c, i) => `${MEDAL[i]} Class ${c.cls} — ${c.score}%`).join('\n')}\n\n*Star students*\n${st.map((s, i) => `${i + 1}. ${s.name} (Class ${s.cls}) — ${s.score}%`).join('\n')}\n\nScore = attendance + homework + daily check + marks.\n— ${myName()}`;
+}
+function vBoard() {
+  const B = needBoard(), m = P.m || 'cls', staff = isP() || (ME && ME.role === 'chairman');
+  if (!B.ok) return B.err ? `<div class="card">${esc(B.err)} <button class="btn s l" onclick="BOARD=null;render()">Try again</button></div>` : '<div class="load"><i></i>Making the school board…</div>';
+  const C = B.classes.filter(c => c.n), ranked = C.filter(c => c.score !== null).slice().sort((a, b) => b.score - a.score || (b.att || 0) - (a.att || 0));
+  const tot = C.reduce((n, c) => n + c.n, 0), boys = C.reduce((n, c) => n + c.boys, 0), girls = C.reduce((n, c) => n + c.girls, 0);
+  const marked = C.filter(c => c.today !== null), present = marked.reduce((n, c) => n + c.today, 0), inMarked = marked.reduce((n, c) => n + c.n, 0);
+  const avg = k => { const v = C.map(c => c[k]).filter(x => x !== null); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; };
+  const mini = (l, v) => `<span class="mb2"><i style="--w:${v || 0}%"></i><small>${l} ${pctTxt(v)}</small></span>`;
+  const head = `<div class="card bd-head"><div class="row"><div><small>${esc(fmtLong(todayISO()))}</small><h3 style="margin:2px 0 0">🏆 School board</h3></div>
+      <a class="btn wa s" target="_blank" rel="noopener" href="${wa('', boardText(B))}">${ic('wa')} Share</a></div>
+    <div class="kp bd-kp"><div class="k"><span>Total students</span><b>${tot}</b><small>${boys || girls ? boys + ' boys · ' + girls + ' girls' : C.length + ' classes'}</small></div>
+      <div class="k ${marked.length === C.length ? 'ok' : 'go'}"><span>Present today</span><b>${marked.length ? present + '/' + inMarked : '—'}</b><small>${marked.length}/${C.length} classes marked</small></div>
+      <div class="k"><span>This month</span><b>${pctTxt(avg('mon'))}</b><small>attendance</small></div><div class="k"><span>Session</span><b>${pctTxt(avg('att'))}</b><small>since ${esc(fmtDate(B.from))}</small></div></div></div>`;
+  const segs = [['cls', 'Classes'], ['stu', 'Students'], ['prof', 'All students'], ...(staff ? [['tch', 'Teachers']] : [])];
+  let body = '';
+  if (m === 'cls') body = `<div class="card"><h3>Class competition <small>who is ahead</small></h3>
+      ${ranked.map((c, i) => `<button type="button" class="bd-r" style="--d:${i * 40}ms" onclick="go('att',{c:${jsq(c.cls)},m:'stu'})">${rankBadge(i)}<span class="nm"><b>Class ${esc(c.cls)}</b><small>${c.n} students${c.today !== null ? ' · today ' + c.today + '/' + c.n : ''}</small>
+        <span class="mbs">${mini('Att', c.att)}${mini('HW', c.hw)}${mini('Check', c.kit)}${mini('Marks', c.mk)}</span></span><em>${c.score}%</em></button>`).join('') || '<div class="empty">Scores appear when attendance, homework checks and the daily check are filled.</div>'}<p class="mut" style="margin:6px 0 0">Score = average of attendance, homework done, daily check and marks.</p></div>
+    <div class="card"><h3>Progress graph <small>attendance %</small></h3><div class="bd-graph">${C.map(c => `<div class="gc" onclick="go('att',{c:${jsq(c.cls)},m:'stu'})"><div class="gb"><i class="s" style="--h:${c.att || 0}%"><b>${c.att ?? ''}</b></i><i class="m" style="--h:${c.mon || 0}%"></i></div><small>${esc(c.cls)}</small></div>`).join('')}</div>
+      <p class="mut" style="margin:6px 0 0"><span class="lvk" style="background:var(--a)"></span>Session <span class="lvk" style="background:#F2A93B"></span>This month · tap a class for its students</p></div>`;
+  else if (m === 'stu') body = `<div class="card"><h3>⭐ Star students <small>whole school · top ${(B.top || []).length}</small></h3>
+      ${(B.top || []).map((s, i) => `<button type="button" class="bd-r" style="--d:${i * 30}ms" onclick="go('att',{c:${jsq(s.cls)},m:'stu',sid:${jsq(s.sid)}})">${rankBadge(i)}<span class="nm"><b>${esc(s.name)}</b><small>Class ${esc(s.cls)} · Att ${pctTxt(s.att)} · HW ${pctTxt(s.hw)} · Marks ${pctTxt(s.mk)}</small></span><em>${s.score}%</em></button>`).join('') || '<div class="empty">Not enough data yet.</div>'}</div>`;
+  else if (m === 'prof') { const q = (P.q || '').toLowerCase(), list = (B.students || []).filter(s => !q || s.name.toLowerCase().includes(q)).sort((a, b) => className().indexOf(a.cls) - className().indexOf(b.cls) || a.name.localeCompare(b.name));
+    body = `<div class="card"><h3>Students in each class <small>${tot} total</small></h3><div class="bd-cnt">${C.map(c => `<button type="button" onclick="go('att',{c:${jsq(c.cls)},m:'stu'})"><b>${c.n}</b><span>${esc(c.cls)}</span>${c.boys || c.girls ? `<small>${c.boys}B · ${c.girls}G</small>` : ''}</button>`).join('')}</div></div>
+    <div class="card"><h3>Find a student</h3><input placeholder="Type a name…" value="${esc(P.q || '')}" oninput="P.q=this.value;clearTimeout(window.__bq);window.__bq=setTimeout(()=>{const p=this.selectionStart;render();const el=document.querySelector('.bd-q');if(el){el.focus();el.setSelectionRange(p,p)}},250)" class="inp bd-q">
+      <div class="bd-list">${list.slice(0, 60).map(s => `<button type="button" class="li" onclick="go('att',{c:${jsq(s.cls)},m:'stu',sid:${jsq(s.sid)}})"><div class="t"><b>${esc(s.name)}</b><span>Class ${esc(s.cls)} · Att ${pctTxt(s.att)} · HW ${pctTxt(s.hw)}${s.mk !== null ? ' · Marks ' + s.mk + '%' : ''}</span></div>${s.score !== null ? `<span class="pill ${s.score >= 75 ? 'ok' : s.score >= 50 ? 'warn' : 'bad'}">${s.score}%</span>` : ''}</button>`).join('')}${list.length > 60 ? `<p class="mut">+${list.length - 60} more — type a name</p>` : ''}</div></div>`; }
+  else { const R = teacherRanks();
+    body = `<div class="card"><h3>Teacher work <small>last 7 days · attendance, diary, daily check, homework check</small></h3>
+      ${R.map((r, i) => `<div class="bd-r">${rankBadge(i)}<span class="nm"><b>${esc(r.name)}</b><small>${r.done} of ${r.all} done</small><span class="mbs">${mini('Done', r.p)}</span></span><em class="${r.p >= 90 ? 'ok' : r.p < 60 ? 'bad' : ''}">${r.p}%</em></div>`).join('') || '<div class="empty">Nothing due yet.</div>'}
+      ${BX && BX.loading ? '<p class="mut">Loading daily checks and homework checks…</p>' : ''}<p class="mut" style="margin:6px 0 0">Only the Principal and the Chairman see this list.</p></div>`; }
+  return head + seg(segs, m, `(k=>go('board',{m:k}))`) + body;
+}
+function boardCard() {
+  const B = needBoard(); if (!B.ok) return '';
+  const ranked = B.classes.filter(c => c.n && c.score !== null).sort((a, b) => b.score - a.score), mine = myCT().filter(c => !isP()), my = mine.length ? ranked.findIndex(c => c.cls === mine[0]) : -1;
+  if (!ranked.length) return '';
+  return `<div class="card bd-mini" onclick="go('board')"><h3>🏆 School board <small>tap to open</small></h3>
+    ${my >= 0 ? `<p class="bd-my">Your Class ${esc(mine[0])} is <b>#${my + 1}</b> of ${ranked.length}${my === 0 ? ' 🎉' : ''}</p>` : ''}
+    <div class="bd-top">${ranked.slice(0, 3).map((c, i) => `<div><span>${MEDAL[i]}</span><b>Class ${esc(c.cls)}</b><small>${c.score}%</small></div>`).join('')}</div>
+    ${(B.top || []).length ? `<p class="mut" style="margin:6px 0 0">⭐ ${B.top.slice(0, 3).map(s => esc(s.name.split(' ')[0]) + ' (' + esc(s.cls) + ')').join(' · ')}</p>` : ''}</div>`;
+}
+
+// ---------------------------------------------------------------- 8. Holidays: one date range, all classes or one class;
+// names shown under the calendar (owner, 5 Nov 2026: "sabhi class ka ek saath holiday", "summer vacation show nahi ho raha").
+function holTitle(h) { return String((h && h.title) || 'Holiday').replace(/\s*\(BSA holiday list\)/i, ''); }
+function holShort(h) { const t = holTitle(h).toLowerCase(); return /summer|garmi|ग्रीष्म/.test(t) ? '☀ Vac' : /winter|sheet|शीत/.test(t) ? '❄ Vac' : /vacation|avkash|अवकाश/.test(t) ? 'Vac' : 'Hol'; }
+function monthHols(c, ym) {
+  const from = ym + '-01', to = ym + '-' + pad(daysIn(ym)), out = [];
+  S.cal.filter(e => e.type === 'Holiday' && e.date <= to && (e.to || e.date) >= from).forEach(e => out.push({ id: e.id, school: true, date: e.date, to: e.to || e.date, title: holTitle(e) }));
+  const cd = Object.keys(S.clsHol).filter(d => d >= from && d <= to && (S.clsHol[d] || {})[c]).sort(); let run = null;
+  cd.forEach(d => { const h = S.clsHol[d][c]; if (run && run.title === holTitle(h) && addDays(run.to, 1) === d || (run && run.title === holTitle(h) && dayIdx(addDays(run.to, 1)) < 0 && addDays(run.to, 2) === d)) run.to = d; else { run = { cls: c, date: d, to: d, title: holTitle(h) }; out.push(run); } });
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+function holList(c, ym) {
+  const L = monthHols(c, ym); if (!L.length) return '';
+  return `<div class="hol-list">${L.map(h => `<div class="${h.school ? 'sch' : 'cls'}"><b>${esc(h.title)}</b><span>${esc(fmtDate(h.date))}${h.to !== h.date ? ' – ' + esc(fmtDate(h.to)) : ''} · ${h.school ? 'all classes' : 'Class ' + esc(c)}</span>${h.school && isP() ? `<button class="x" aria-label="Remove" onclick="schHolDel(${jsq(h.id)})">✕</button>` : ''}</div>`).join('')}</div>`;
+}
+function holRange(c) {
+  const t = todayISO();
+  SHEET = () => `<h2>Holiday — dates</h2>
+    ${isP() ? `<div class="seg"><button id="hrA" class="on" onclick="this.classList.add('on');$('hrC').classList.remove('on')">All classes</button><button id="hrC" onclick="this.classList.add('on');$('hrA').classList.remove('on')">Only Class ${esc(c)}</button></div>` : `<p class="mut" style="margin:0">Only Class ${esc(c)}. A holiday for the whole school is marked by the Principal.</p>`}
+    <div class="two"><div class="fld">From<input id="hrF" type="date" class="inp" value="${t}"></div><div class="fld">To<input id="hrT" type="date" class="inp" value="${t}"></div></div>
+    <div class="fld">Name<input id="hT" class="inp" maxlength="120" placeholder="e.g. Summer vacation"></div>
+    <div class="chips">${['Summer vacation', 'Winter vacation', 'Festival', 'Local holiday', 'Exam break', 'Rain / weather'].map(x => `<button class="chip" onclick="$('hT').value=${jsq(x)}">${x}</button>`).join('')}</div>
+    <button class="btn go full" onclick="holRangeSave(${jsq(c)})">Mark holiday</button>
+    <p class="mut" style="margin:0">Sundays are left as they are. Attendance already saved on these days ${isP() ? 'is kept (a school holiday simply shows instead)' : 'is removed'}.</p>`;
+  render();
+}
+async function holRangeSave(c) {
+  const f = $('hrF').value, to = $('hrT').value || f, title = ($('hT').value || '').trim().slice(0, 120) || 'Holiday', all = isP() && $('hrA') && $('hrA').classList.contains('on');
+  if (!f || to < f) return toast('Check the dates.');
+  const days = []; for (let d = f; d <= to; d = addDays(d, 1)) { days.push(d); if (days.length > 120) return toast('At most 120 days at a time.'); }
+  if (all) { const id = 'th-' + uid(); put('cal', id, { id, date: f, to: to === f ? '' : to, title, type: 'Holiday', src: 'Teacher App', by: myName() }, 'Calendar', `Holiday for all classes: ${title} (${f}${to !== f ? ' to ' + to : ''}) — Teacher App`);
+    SHEET = null; toast('Holiday marked for all classes.'); return render(); }
+  const work = days.filter(d => dayIdx(d) >= 0 && !holidayOn(d) && !clsHolOn(d, c));
+  if (work.some(d => attOf(d, c)) && !confirm('Some of these days already have attendance. It will be removed. Continue?')) return;
+  let n = 0; for (const d of work) { try { await api('teacher_api.php?a=holiday', { cls: c, date: d, on: true, title }); setRec('clsHol', d + '|' + c, { cls: c, date: d, title, by: myName(), at: Date.now() }); if (S.studAtt[d]) delete S.studAtt[d][c]; n++; } catch (e) { toast(e.message); break; } }
+  SHEET = null; needStats(c, true); toast(n + ' day(s) marked as holiday for Class ' + c + '.'); render();
+}
+function schHolDel(id) { const e = S.cal.find(x => x.id === id); if (!e || !confirm('Remove “' + holTitle(e) + '” for all classes?')) return; putDel('cal', id, 'Calendar', 'Holiday removed: ' + holTitle(e) + ' (' + e.date + (e.to ? ' to ' + e.to : '') + ') — Teacher App'); render(); }
