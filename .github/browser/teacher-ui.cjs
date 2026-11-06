@@ -623,6 +623,18 @@ const path = require('node:path');
     await page.getByRole('button', { name: /Save · 2 child/ }).click();
     await page.getByText(/2 saved/).first().waitFor();
   });
+  await run('32-Timetable-any-subject-new-teacher-every-day', async () => {
+    await page.evaluate(() => { SHEET = null; go('staffhub', { m: 'tt', c: '10th' }); });
+    await page.locator('table.tt').waitFor();
+    await page.evaluate(() => ttPick('10th', 0, 6));
+    await page.locator('#ttDays button').filter({ hasText: 'Every day' }).click();
+    await page.locator('.tt-new summary').click();
+    await page.locator('#ttS').fill('EVS');
+    await page.locator('#ttT').selectOption('+new');
+    await page.locator('#ttN').fill('CI Palak Srivastava');
+    await page.locator('.tt-new .btn.go').click();
+    await page.waitForFunction(() => { const i = S.alloc.findIndex(a => a.c === '10th' && a.s === 'EVS' && T(a.t).name === 'CI Palak Srivastava'); return i >= 0 && S.grid['10th'].every(r => r[6] === i) && S.alloc[i].n === 6; });
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

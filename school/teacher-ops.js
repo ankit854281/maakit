@@ -181,20 +181,46 @@ function vTT() {
       <p class="mut" style="margin:6px 0 0">Red box = the same teacher is also in another class at that time.</p></div>
     <div class="card"><h3>Periods per week <small>planned vs in the timetable</small></h3>${mine.map(([a, i]) => `<div class="xs"><div class="t"><b>${esc(a.s)}</b><span>${esc(T(a.t).name)}</span></div><span class="pill ${(per[i] || 0) === (+a.n || 0) ? 'ok' : 'warn'}">${per[i] || 0} / ${+a.n || 0}</span></div>`).join('') || '<div class="empty">No subjects for this class. Add them in the web ERP → Subjects &amp; Teachers.</div>'}</div>`;
 }
+// Owner, 6 Nov 2026 ("Class 3rd 7th period Seema Ma'am English; Class 4th 7th period EVS Palak Srivastava — teacher add kar do"):
+// the box sheet can also put ANY subject + teacher (a new one too) and can fill the same bell for every day at once.
 function ttPick(c, d, b) {
   const C = className(), cur = S.grid && S.grid[c] ? S.grid[c][d][b] : -1;
-  const busy = i => { const a = S.alloc[i]; for (const x of C) { if (x === c) continue; const j = S.grid && S.grid[x] ? S.grid[x][d][b] : -1; if (j >= 0 && S.alloc[j] && S.alloc[j].t === a.t) return x; } return null; };
+  const busy = (i, dd) => { const a = S.alloc[i]; for (const x of C) { if (x === c) continue; const j = S.grid && S.grid[x] ? S.grid[x][dd][b] : -1; if (j >= 0 && S.alloc[j] && S.alloc[j].t === a.t) return x; } return null; };
   const opts = S.alloc.map((a, i) => [a, i]).filter(([a]) => a.c === c);
-  SHEET = () => `<h2>Class ${esc(c)} · ${esc(DAYS[d])} · ${esc(BELLS[b].n)} bell</h2><p class="mut" style="margin:0">${t12(BELLS[b].s)} – ${t12(BELLS[b].e)}</p>
-    <div class="tt-o">${opts.map(([a, i]) => { const bz = busy(i); return `<button class="${i === cur ? 'on' : ''}${bz ? ' cl' : ''}" onclick="ttSet(${jsq(c)},${d},${b},${i})"><b>${esc(a.s)}</b><span>${esc(T(a.t).name)}</span>${bz ? `<em>busy in ${esc(bz)}</em>` : ''}</button>`; }).join('')}
-      <button class="${cur < 0 ? 'on' : ''}" onclick="ttSet(${jsq(c)},${d},${b},-1)"><b>Free / no class</b><span>leave empty</span></button></div>`;
+  const subs = [...new Set(S.alloc.filter(a => a.c === c).map(a => a.s).concat(['English', 'Hindi', 'Mathematics', 'EVS', 'Science', 'Social Science', 'Computer', 'GK', 'Drawing', 'Sanskrit', 'Games']))];
+  const ts = Object.keys(S.teachers).sort((x, y) => T(x).name.localeCompare(T(y).name));
+  SHEET = () => `<h2>Class ${esc(c)} · ${esc(BELLS[b].n)} bell</h2><p class="mut" style="margin:0">${t12(BELLS[b].s)} – ${t12(BELLS[b].e)}</p>
+    <div class="seg" id="ttDays"><button class="on" data-all="0" onclick="this.classList.add('on');this.nextElementSibling.classList.remove('on')">Only ${esc(DAYS[d])}</button><button data-all="1" onclick="this.classList.add('on');this.previousElementSibling.classList.remove('on')">Every day (Mon–Sat)</button></div>
+    <div class="tt-o">${opts.map(([a, i]) => { const bz = busy(i, d); return `<button class="${i === cur ? 'on' : ''}${bz ? ' cl' : ''}" onclick="ttSet(${jsq(c)},${d},${b},${i},ttAll())"><b>${esc(a.s)}</b><span>${esc(T(a.t).name)}</span>${bz ? `<em>busy in ${esc(bz)} (${esc(DAYS[d].slice(0, 3))})</em>` : ''}</button>`; }).join('')}
+      <button class="${cur < 0 ? 'on' : ''}" onclick="ttSet(${jsq(c)},${d},${b},-1,ttAll())"><b>Free / no class</b><span>leave empty</span></button></div>
+    <details class="more tt-new"><summary>+ Another subject or teacher (new teacher too)</summary>
+      <div class="fld">Subject<input id="ttS" class="inp" maxlength="40" list="ttSL" placeholder="e.g. EVS"><datalist id="ttSL">${subs.map(x => `<option value="${esc(x)}">`).join('')}</datalist></div>
+      <div class="chips">${subs.slice(0, 10).map(x => `<button type="button" class="chip" onclick="$('ttS').value=${jsq(x)}">${esc(x)}</button>`).join('')}</div>
+      <div class="fld">Teacher<select id="ttT" class="inp" onchange="$('ttNW').style.display=this.value==='+new'?'':'none'"><option value="">— choose —</option>${ts.map(t => `<option value="${esc(t)}">${esc(T(t).name)}</option>`).join('')}<option value="+new">+ New teacher</option></select></div>
+      <div class="fld" id="ttNW" style="display:none">New teacher's name<input id="ttN" class="inp" maxlength="60" placeholder="e.g. Palak Srivastava Ma'am"></div>
+      <button class="btn go full" onclick="ttAdd(${jsq(c)},${d},${b})">Put in this bell</button>
+      <p class="mut" style="margin:0">A new teacher logs in with PIN 1234 the first time.</p></details>`;
   render();
 }
-function ttSet(c, d, b, i) {
-  const g = ttGrid(), a = i >= 0 ? S.alloc[i] : null;
-  if (a) { const bz = className().find(x => x !== c && g[x][d][b] >= 0 && S.alloc[g[x][d][b]] && S.alloc[g[x][d][b]].t === a.t); if (bz && !confirm(T(a.t).name + ' is already in Class ' + bz + ' at this time. Put here anyway?')) return; }
-  g[c][d][b] = i; put('grid', 'main', g, 'Timetable', `Class ${c} ${DAYS[d]} ${BELLS[b].n} bell → ${a ? a.s + ' (' + T(a.t).name + ')' : 'free'} — Teacher App`);
-  Object.keys(LOADC).forEach(k => delete LOADC[k]); SHEET = null; toast('Timetable saved.'); render();
+function ttAll() { const el = document.querySelector('#ttDays .on'); return !!(el && el.dataset.all === '1'); }
+function ttAdd(c, d, b) {
+  const s = (($('ttS') || {}).value || '').trim().slice(0, 40); let t = ($('ttT') || {}).value || '';
+  if (!s) return toast('Write the subject.'); if (!t) return toast('Choose the teacher.');
+  if (t === '+new') { const name = (($('ttN') || {}).value || '').trim().slice(0, 60); if (name.length < 3) return toast('Write the new teacher\'s name.');
+    t = newTid(name); put('teacher', t, { name, role: 'Teacher' }, 'Teachers', `New teacher added: ${name} (${t}) — Teacher App`); }
+  let i = S.alloc.findIndex(a => a.c === c && a.t === t && String(a.s).toLowerCase() === s.toLowerCase());
+  if (i < 0) { const al = JSON.parse(JSON.stringify(S.alloc)); al.push({ c, s, t, n: 0 }); i = al.length - 1; put('alloc', 'main', al, 'Timetable', `Subject added: Class ${c} ${s} — ${T(t).name} — Teacher App`); }
+  ttSet(c, d, b, i, ttAll());
+}
+function ttSet(c, d, b, i, all) {
+  const g = ttGrid(), a = i >= 0 ? S.alloc[i] : null, days = all ? DAYS.map((_, k) => k) : [d];
+  if (a) { const bz = days.map(dd => [dd, className().find(x => x !== c && g[x][dd][b] >= 0 && S.alloc[g[x][dd][b]] && S.alloc[g[x][dd][b]].t === a.t)]).filter(x => x[1]);
+    if (bz.length && !confirm(T(a.t).name + ' is already in ' + bz.map(([dd, x]) => 'Class ' + x + ' (' + DAYS[dd].slice(0, 3) + ')').join(', ') + ' at this bell. Put here anyway?')) return; }
+  days.forEach(dd => { g[c][dd][b] = i; });
+  put('grid', 'main', g, 'Timetable', `Class ${c} ${all ? 'every day' : DAYS[d]} ${BELLS[b].n} bell → ${a ? a.s + ' (' + T(a.t).name + ')' : 'free'} — Teacher App`);
+  if (a) { const placed = className().reduce((n, x) => n + (g[x] || []).reduce((m, r) => m + r.filter(j => j === i).length, 0), 0);
+    if (placed > (+a.n || 0)) { const al = JSON.parse(JSON.stringify(S.alloc)); al[i].n = placed; put('alloc', 'main', al, 'Timetable', `Class ${c} ${a.s}: ${placed} periods a week — Teacher App`); } }
+  Object.keys(LOADC).forEach(k => delete LOADC[k]); SHEET = null; toast('Timetable saved' + (all ? ' for every day.' : '.')); render();
 }
 
 // ---------------------------------------------------------------- wire the two screens through the Principal 'prin' slot
