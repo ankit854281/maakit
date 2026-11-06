@@ -13,6 +13,14 @@ function needComp(force) {
   return COMP;
 }
 const POS = { '1': '🥇 1st', '2': '🥈 2nd', '3': '🥉 3rd' };
+// Result (owner, 6 Nov 2026): only the Principal picks 🥇🥈🥉 and taps "Submit result"; then "Edit result" opens it again.
+// Teachers see the positions (and certificates carry them) only after the result is submitted.
+function resOf(ev, cat, sec) { return ev && (ev.res || {})[cat + '|' + sec]; }
+function posOf(n) { const E = COMP && COMP.events && COMP.events.find(e => e.id === n.ev); return isP() || resOf(E, n.cat, n.sec) ? n.pos || '' : ''; }
+async function compRes(ev, cat, sec, lock) {
+  if (lock && !COMP.entries.some(n => n.ev === ev && n.cat === cat && n.sec === sec && n.pos) && !confirm('Abhi koi position nahi chuni. Phir bhi submit karein?')) return;
+  try { const r = await api('teacher_api.php?a=comp', { op: 'res', ev, cat, sec, lock }); const i = COMP.events.findIndex(e => e.id === ev); COMP.events[i] = r.event; toast(lock ? 'Result submit ho gaya ✓ Teachers ko positions dikhne lagi.' : 'Ab positions badal sakte hain — phir Submit result dabaiye.'); render(); } catch (e) { toast(e.message); }
+}
 function vComp() {
   const C = needComp();
   if (C.err) return `<div class="card">${esc(C.err)} <button class="btn s l" onclick="COMP=null;render()">Try again</button></div>`;
@@ -25,21 +33,25 @@ function vComp() {
       <button class="btn go full" onclick="compCreate()">Create competition</button></div>`
     : '<div class="card empty">No competition yet. The Principal starts it in the app (☰ → Competition).</div>';
   const cat = ev.cats.includes(P.cat) ? P.cat : ev.cats[0], sec = ev.secs.some(s => s.name === P.sec) ? P.sec : (ev.secs.find(s => s.classes.some(c => myClasses().includes(c))) || ev.secs[0]).name;
-  const L = C.entries.filter(n => n.ev === ev.id && n.cat === cat && n.sec === sec).sort((a, b) => (a.pos || '9').localeCompare(b.pos || '9') || a.cls.localeCompare(b.cls) || (a.name || '').localeCompare(b.name || ''));
+  const L = C.entries.filter(n => n.ev === ev.id && n.cat === cat && n.sec === sec).sort((a, b) => (posOf(a) || '9').localeCompare(posOf(b) || '9') || a.cls.localeCompare(b.cls) || (a.name || '').localeCompare(b.name || ''));
   const kids = n => n.sids.map(studentById).filter(Boolean);
   const nm = n => n.type === 'group' ? 'Team ' + n.name : (kids(n)[0] || {}).name || '—';
   const mine = n => isP() || myClasses().includes(n.cls);
+  const done = resOf(ev, cat, sec), canPick = isP() && !done;
   return `<div class="card cp-h"><small>${esc(fmtLong(ev.date))}</small><h3>🎉 ${esc(ev.title)}</h3>${C.events.length > 1 ? `<div class="chips">${C.events.map(e => `<button class="chip ${e.id === ev.id ? 'on' : ''}" onclick="go('comp',{ev:'${e.id}'})">${esc(e.title)}</button>`).join('')}</div>` : ''}</div>
     <div class="btns cp-tools"><button class="btn s l" onclick="signOpen()">✍️ Mera sign${SIGNS && SIGNS[mySignKey()] ? ' ✓' : ''}</button><button class="btn s l" onclick="newsOpen()">🤖 Kaise karein?</button></div>
     ${seg(ev.cats.map(c => [c, c]), cat, `(k=>go('comp',{ev:'${ev.id}',cat:k,sec:${jsq(sec)}}))`)}
     ${seg(ev.secs.map(s => [s.name, s.name]), sec, `(k=>go('comp',{ev:'${ev.id}',cat:${jsq(cat)},sec:k}))`)}
     <div class="btns"><button class="btn go" onclick="compAdd('${ev.id}',${jsq(cat)},${jsq(sec)},'group')">+ Team</button><button class="btn l" onclick="compAdd('${ev.id}',${jsq(cat)},${jsq(sec)},'solo')">+ Single child</button>${L.length ? `<button class="btn w" onclick="certPrintAll('${ev.id}',${jsq(cat)},${jsq(sec)})">${ic('print')} All certificates</button>` : ''}</div>
     <div class="card"><h3>${esc(cat)} · ${esc(sec)} <small>${L.length} entr${L.length === 1 ? 'y' : 'ies'}</small></h3>
-      ${L.map(n => `<div class="cp-e ${n.pos ? 'win' : ''}"><div class="cp-phs"><div class="cp-ph" onclick="compPhoto('${ev.id}','${n.id}','w')">${n.photoW ? `<img data-ph="${ev.id}|${n.id}|w" alt="">` : `<span>${/diya|deep|lamp/i.test(n.cat) ? '🪔' : '🎨'}<small>${esc(n.cat.split(' ')[0])}</small></span>`}</div><div class="cp-ph sm" onclick="compPhoto('${ev.id}','${n.id}','')">${n.photo ? `<img data-ph="${ev.id}|${n.id}|" alt="">` : `<span>👫<small>Team</small></span>`}</div></div>
+      ${L.map(n => `<div class="cp-e ${posOf(n) ? 'win' : ''}"><div class="cp-phs"><div class="cp-ph" onclick="compPhoto('${ev.id}','${n.id}','w')">${n.photoW ? `<img data-ph="${ev.id}|${n.id}|w" alt="">` : `<span>${/diya|deep|lamp/i.test(n.cat) ? '🪔' : '🎨'}<small>${esc(n.cat.split(' ')[0])}</small></span>`}</div><div class="cp-ph sm" onclick="compPhoto('${ev.id}','${n.id}','')">${n.photo ? `<img data-ph="${ev.id}|${n.id}|" alt="">` : `<span>👫<small>Team</small></span>`}</div></div>
         <div class="t"><b>${esc(nm(n))}</b><small>Class ${esc(n.cls)}${n.type === 'group' ? ' · ' + kids(n).map(s => esc(s.name.split(' ')[0])).join(', ') : ''}</small>
-          <div class="cp-pos">${['1', '2', '3'].map(p => `<button class="${n.pos === p ? 'on' : ''}" onclick="compPos('${ev.id}','${n.id}','${n.pos === p ? '' : p}')">${POS[p]}</button>`).join('')}</div>
+          ${canPick ? `<div class="cp-pos">${['1', '2', '3'].map(p => `<button class="${n.pos === p ? 'on' : ''}" onclick="compPos('${ev.id}','${n.id}','${n.pos === p ? '' : p}')">${POS[p]}</button>`).join('')}</div>` : posOf(n) ? `<div class="cp-pos"><span class="cp-won">${POS[posOf(n)]} Position</span></div>` : ''}
           <div class="btns"><button class="btn s l" onclick="certOpen('${ev.id}','${n.id}')">🎓 Certificate</button>${mine(n) ? `<button class="btn s w" onclick="compDel('${ev.id}','${n.id}')">✕</button>` : ''}</div></div></div>`).join('') || '<div class="empty">No team or child yet. Tap “+ Team” or “+ Single child”.</div>'}</div>
-    <p class="mut">Positions: tap 🥇 / 🥈 / 🥉 (tap again to clear). Photos: big box 🎨 = rangoli / diya, small box 👫 = the team. Certificates: one for the team and one for every child.</p>`;
+    ${done ? `<div class="card cp-res ok"><b>✅ Result submitted</b><small>${esc(done.by || '')} · ${esc(fmtDate(new Date(done.at).toISOString().slice(0, 10)))}</small>${isP() ? `<button class="btn l full" onclick="compRes('${ev.id}',${jsq(cat)},${jsq(sec)},false)">✏️ Edit result</button>` : ''}</div>`
+      : isP() ? (L.length ? `<button class="btn go full cp-sub" onclick="compRes('${ev.id}',${jsq(cat)},${jsq(sec)},true)">✅ Submit result · ${esc(cat)} · ${esc(sec)}</button>` : '')
+      : `<div class="card cp-res"><b>🏆 Position Principal sir chunenge</b><small>Result submit hote hi yahan aur certificate par position aa jayegi.</small></div>`}
+    <p class="mut">Positions: ${isP() ? 'tap 🥇 / 🥈 / 🥉 (tap again to clear), then “Submit result”. To change later tap “Edit result”.' : 'only the Principal chooses them.'} Photos: big box 🎨 = rangoli / diya, small box 👫 = the team. Certificates: one for the team and one for every child.</p>`;
 }
 async function compCreate() {
   const title = ($('cpT').value || '').trim(), date = $('cpD').value, cats = ($('cpC').value || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -217,7 +229,7 @@ async function certData(evId, id, sid) {
   if (n0 && !Object.keys(PHOTOS[n0.cls] || {}).length) { try { PHOTOS[n0.cls] = (await api('teacher_api.php?a=photos&cls=' + encodeURIComponent(n0.cls))).photos || {}; } catch (e) {} }
   const E = COMP.events.find(e => e.id === evId), n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean), k = sid ? studentById(sid) : null;
   const ct = (S.classes.find(c => c.c === n.cls) || {}).ct;
-  return { school: S.settings.school || 'SN Mishra Singapore International School', event: E.title, date: fmtLong(E.date), cat: n.cat, sec: n.sec, pos: n.pos, cls: n.cls,
+  return { school: S.settings.school || 'SN Mishra Singapore International School', event: E.title, date: fmtLong(E.date), cat: n.cat, sec: n.sec, pos: posOf(n), cls: n.cls,
     name: k ? k.name : n.type === 'group' ? 'Team ' + n.name : (kids[0] || {}).name, team: n.type === 'group' ? n.name : '', member: !!k && n.type === 'group',
     members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '', signed: fmtDate(E.date) + ' ' + E.date.slice(0, 4), year: E.date.slice(0, 4), no: certNo(E.date, id, sid), seal: S.settings.school || '', tSign: ct ? SG[ct] || '' : '', pSign: SG.P || '', photoW: n.photoW ? await phOf(evId, id, 'w') : '', kids: kids.map(s => ({ name: s.name, src: ((PHOTOS[n.cls] || {})[s.id] || {}).src || '', me: s.id === sid })) };
 }
@@ -325,7 +337,7 @@ function compCard() {
   const ev = C.events.find(e => dd(e.date, t) <= 2 && dd(t, e.date) <= 3); if (!ev) return '';
   const all = ev.secs.flatMap(s => s.classes), mine = isP() && pMode() ? all : all.filter(c => myClasses().includes(c)); if (!mine.length) return '';
   const E = C.entries.filter(n => n.ev === ev.id), cnt = c => E.filter(n => n.cls === c).length, kids = E.filter(n => mine.includes(n.cls)).reduce((a, n) => a + n.sids.length, 0);
-  const none = mine.filter(c => !cnt(c)), wins = E.filter(n => n.pos && mine.includes(n.cls)).length;
+  const none = mine.filter(c => !cnt(c)), wins = E.filter(n => posOf(n) && mine.includes(n.cls)).length;
   return `<div class="card cp-dash" onclick="go('comp')"><div class="cp-dh"><span>🪔</span><div><small>${ev.date === t ? 'Aaj' : esc(fmtDate(ev.date))} · ${ev.cats.map(esc).join(' + ')}</small><b>${esc(ev.title)}</b></div></div>
     <div class="cp-dn"><div><b>${E.filter(n => mine.includes(n.cls)).length}</b><small>teams / entries</small></div><div><b>${kids}</b><small>bachche</small></div><div><b>${wins}</b><small>winners</small></div></div>
     <div class="cp-dc">${mine.map(c => `<span class="${cnt(c) ? 'ok' : 'no'}">${esc(c)} ${cnt(c) ? '✓' + cnt(c) : '—'}</span>`).join('')}</div>

@@ -697,7 +697,8 @@ case 'dellog': {
 // children, alone or as a named group; positions; a certificate for each child and each group).
 // Kind tchComp: 'ev|<id>' = {id, title, date, cats[], secs[{name, classes[]}], by, at}   (Principal)
 //               'en|<event>|<id>' = {id, ev, cat, sec, cls, type: solo|group, name, sids[], pos: ''|1|2|3, by, tid, at}
-//               (any teacher of the children's class / Principal; positions: Principal or any teacher — judges)
+//               (any teacher of the children's class / Principal; positions: Principal only, then 'Submit result'
+//               locks them in ev.res['<cat>|<sec>'] — teachers see positions only after that; 'Edit result' unlocks)
 // Each entry also writes the children's activity log (tchLog 'act', title "<event> — <cat>") so it shows in their report.
 case 'comp': {
     if ($method === 'GET') {
@@ -742,6 +743,17 @@ case 'comp': {
         $old[$w ? 'photoW' : 'photo'] = sch_now_ms(); sch_rec_put('tchComp', "en|$evId|$id", $old, $uid);
         sch_json(['ok' => true, 'entry' => $old]);
     }
+    if ($op === 'res') {            // Principal submits (lock) / edits (unlock) the result of one competition + section
+        if ($role !== 'principal') sch_fail('Only the Principal submits the result.', 403);
+        $evId = (string)($in['ev'] ?? ''); $ev = preg_match('/^e[a-f0-9]{6,20}$/', $evId) ? sch_rec_get('tchComp', "ev|$evId") : null; if (!$ev) sch_fail('Competition not found.', 404);
+        $cat = (string)($in['cat'] ?? ''); $sec = (string)($in['sec'] ?? '');
+        if (!in_array($cat, (array)$ev['cats'], true) || !in_array($sec, array_column((array)$ev['secs'], 'name'), true)) sch_fail('Choose the competition and group.');
+        $res = (array)($ev['res'] ?? []);
+        if (!empty($in['lock'])) $res["$cat|$sec"] = ['by' => $u['label'], 'at' => sch_now_ms()]; else unset($res["$cat|$sec"]);
+        $ev['res'] = (object)$res; sch_rec_put('tchComp', "ev|$evId", $ev, $uid);
+        sch_log($u, 'Competition', (!empty($in['lock']) ? 'Result submitted: ' : 'Result opened for edit: ') . $ev['title'] . " — $cat · $sec");
+        sch_json(['ok' => true, 'event' => $ev]);
+    }
     if ($op === 'entry' || $op === 'pos' || $op === 'del') {
         $evId = (string)($in['ev'] ?? ''); $ev = preg_match('/^e[a-f0-9]{6,20}$/', $evId) ? sch_rec_get('tchComp', "ev|$evId") : null; if (!$ev) sch_fail('Competition not found.', 404);
         $id = (string)($in['id'] ?? ''); $old = preg_match('/^n[a-f0-9]{8,20}$/', $id) ? sch_rec_get('tchComp', "en|$evId|$id") : null;
@@ -756,7 +768,9 @@ case 'comp': {
             $id = $old ? $id : 'n' . bin2hex(random_bytes(6));
             $d = ['id' => $id, 'ev' => $evId, 'cat' => $cat, 'sec' => $sec, 'cls' => $cls, 'type' => $type, 'name' => $name, 'sids' => $sids, 'pos' => (string)($old['pos'] ?? ''), 'by' => $u['label'], 'tid' => $role === 'teacher' ? $tid : 'P', 'at' => sch_now_ms()];
         } elseif ($op === 'pos') {
-            if ($role !== 'principal' && $role !== 'teacher') sch_fail('Not allowed.', 403);
+            // owner, 6 Nov 2026: "ranker ko bas Principal select karke submit kare, uske baad edit ka option aaye"
+            if ($role !== 'principal') sch_fail('Only the Principal chooses the positions.', 403);
+            if (!empty(((array)($ev['res'] ?? []))[$old['cat'] . '|' . $old['sec']])) sch_fail('Result is submitted. Tap “Edit result” first.');
             $pos = (string)($in['pos'] ?? ''); if (!in_array($pos, ['', '1', '2', '3'], true)) sch_fail('Bad position.');
             $d = $old; $d['pos'] = $pos; $d['posBy'] = $u['label']; $d['at'] = sch_now_ms();
         } else {
