@@ -5,7 +5,8 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-sr
 $v = fn($f) => (string)@filemtime(__DIR__ . '/' . $f);
 ?><!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Mera Certificate · SN Mishra Singapore International School</title><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#4C1D95">
-<meta property="og:title" content="🏆 Apna certificate dekhiye — SN Mishra Singapore International School"><meta property="og:description" content="Diwali Competition ke certificate — mobile number daaliye, certificate download / share kijiye.">
+<meta property="og:title" content="🏆 Aapke bachche ka certificate taiyaar hai! — SN Mishra Singapore International School"><meta property="og:description" content="Diwali Competition (Rangoli · Diya making) — bachche ka naam likhiye, certificate dekhiye, photo ke saath share kijiye.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://maakit.in/school/cert.php"><meta property="og:image" content="https://maakit.in/school/img/cert-og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/snmsis-logo.png"><link rel="stylesheet" href="cert.css?v=<?= $v('cert.css') ?>"></head>
 <body>
 <div id="intro" class="intro" aria-hidden="true">
