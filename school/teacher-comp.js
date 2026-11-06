@@ -84,10 +84,14 @@ async function phOf(ev, id) { const k = ev + '|' + id; if (CPH[k] !== undefined)
 function compThumbs() { document.querySelectorAll('img[data-ph]').forEach(async im => { if (im.src) return; const [ev, id] = im.dataset.ph.split('|'); const d = await phOf(ev, id); if (d) im.src = d; }); }
 
 // ---------------------------------------------------------------- certificates (drawn on a canvas → PNG)
+let CERT_FONT = null;
+function certFont() { if (!CERT_FONT) CERT_FONT = (window.FontFace ? new FontFace('GreatVibes', 'url(fonts/great-vibes.woff2)').load().then(f => { document.fonts.add(f); }) : Promise.resolve()).catch(() => {}); return CERT_FONT; }
+function certNo(evDate, id, sid) { let h = 0; for (const ch of id + '|' + (sid || 'T')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return 'SNMSIS/' + String(evDate).slice(0, 4) + '/' + h.toString(36).toUpperCase().padStart(7, '0').slice(-7); }
 const LOGO_IMG = new Image(); LOGO_IMG.src = 'img/snmsis-logo.png';
 function loadImg(src) { return new Promise(ok => { if (!src) return ok(null); const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
 function wrapText(x, text, maxW) { const w = String(text).split(' '), out = []; let l = ''; w.forEach(t => { const tt = l ? l + ' ' + t : t; if (x.measureText(tt).width > maxW && l) { out.push(l); l = t; } else l = tt; }); if (l) out.push(l); return out; }
 async function certPNG(o) {
+  await certFont();
   const W = 1600, H = 1130, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
   const win = !!o.pos, gold = '#C8901E', ink = '#17324D', acc = win ? '#B45309' : '#1D4ED8';
   x.fillStyle = '#FFFDF6'; x.fillRect(0, 0, W, H);
@@ -106,11 +110,32 @@ async function certPNG(o) {
   const line = `${o.cls ? 'of Class ' + o.cls + ' ' : ''}${o.member && o.team ? 'as a member of Team ' + o.team + ' ' : ''}${win ? 'for winning ' + ({ 1: 'FIRST', 2: 'SECOND', 3: 'THIRD' })[o.pos] + ' POSITION' : 'for taking part'} in the ${o.cat} competition (${o.sec})`;
   x.font = '30px Georgia, serif'; x.fillStyle = ink; wrapText(x, line, 1200).forEach(l => { x.fillText(l, W / 2, y + 14); y += 42; });
   x.font = '26px Arial'; x.fillStyle = '#5B6782'; x.fillText(`${o.event} · ${o.date}`, W / 2, y + 30);
-  if (win) { x.beginPath(); x.arc(250, 820, 84, 0, Math.PI * 2); x.fillStyle = o.pos === '1' ? '#F5C842' : o.pos === '2' ? '#CBD5E1' : '#E3A06B'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#fff'; x.stroke();
-    x.fillStyle = ink; x.font = '700 72px Georgia, serif'; x.fillText(o.pos, 250, 838); x.font = '700 22px Arial'; x.fillText(({ 1: 'FIRST', 2: 'SECOND', 3: 'THIRD' })[o.pos], 250, 872); }
+  if (win) { x.beginPath(); x.arc(250, 770, 84, 0, Math.PI * 2); x.fillStyle = o.pos === '1' ? '#F5C842' : o.pos === '2' ? '#CBD5E1' : '#E3A06B'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#fff'; x.stroke();
+    x.fillStyle = ink; x.font = '700 72px Georgia, serif'; x.fillText(o.pos, 250, 788); x.font = '700 22px Arial'; x.fillText(({ 1: 'FIRST', 2: 'SECOND', 3: 'THIRD' })[o.pos], 250, 822); }
   const ph = await loadImg(o.photo); if (ph) { const s = Math.min(250 / ph.width, 170 / ph.height), w = ph.width * s, h = ph.height * s; x.save(); x.translate(W - 260, 800); x.rotate(.04); x.fillStyle = '#fff'; x.fillRect(-w / 2 - 10, -h / 2 - 10, w + 20, h + 46); x.drawImage(ph, -w / 2, -h / 2, w, h); x.fillStyle = '#5B6782'; x.font = '18px Arial'; x.fillText(o.cat, 0, h / 2 + 26); x.restore(); }
-  x.strokeStyle = '#94A3B8'; x.lineWidth = 2; [[360, o.teacher || 'Class Teacher', 'Class Teacher'], [W - 360, o.principal, 'Principal']].forEach(([cx, n, r]) => { x.beginPath(); x.moveTo(cx - 170, H - 170); x.lineTo(cx + 170, H - 170); x.stroke(); x.fillStyle = ink; x.font = '700 24px Arial'; x.fillText(n, cx, H - 138); x.fillStyle = '#5B6782'; x.font = '20px Arial'; x.fillText(r, cx, H - 110); });
-  x.fillStyle = '#94A3B8'; x.font = '16px Arial'; x.fillText('Powered by Maakit', W / 2, H - 76);
+  // signatures: Class Teacher (left) · Principal, digitally signed in script (right)
+  x.strokeStyle = '#94A3B8'; x.lineWidth = 2;
+  [[360, o.teacher, 'Class Teacher'], [W - 360, o.principal, 'Principal']].forEach(([cx, n, r]) => {
+    const nm = String(n || '').replace(/\s*(Sir|Ma'am|Madam)$/i, '');
+    if (nm) { x.fillStyle = '#1E3A8A'; x.font = '54px GreatVibes, "Brush Script MT", cursive'; x.fillText(nm, cx, H - 204); }
+    x.beginPath(); x.moveTo(cx - 180, H - 188); x.lineTo(cx + 180, H - 188); x.stroke();
+    x.fillStyle = ink; x.font = '700 23px Arial'; x.fillText(n || '', cx, H - 158); x.fillStyle = '#5B6782'; x.font = '19px Arial'; x.fillText(r, cx, H - 132);
+    x.font = 'italic 15px Arial'; x.fillStyle = '#64748B'; x.fillText('Digitally signed · ' + o.signed, cx, H - 110); });
+  // school seal (blue rubber-stamp look)
+  x.save(); x.translate(W / 2, H - 200); x.rotate(-0.16); x.globalAlpha = .82; const blue = '#1D3FA0'; x.strokeStyle = blue; x.fillStyle = blue;
+  x.lineWidth = 5; x.beginPath(); x.arc(0, 0, 104, 0, Math.PI * 2); x.stroke(); x.lineWidth = 2; x.beginPath(); x.arc(0, 0, 94, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.arc(0, 0, 58, 0, Math.PI * 2); x.stroke();
+  const ring = (txt, r, span, fnt, bottom) => { x.font = fnt; const ch = [...txt], step = span * 2 / Math.max(ch.length - 1, 1);
+    ch.forEach((c, i) => { const ang = bottom ? span - i * step : -span + i * step; x.save(); x.rotate(ang); x.translate(0, bottom ? r : -r); x.fillText(c, 0, 0); x.restore(); }); };
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  const sw = String(o.seal || 'SN Mishra Singapore International School').toUpperCase().split(/\s+/); let cut = 1; while (cut < sw.length - 1 && sw.slice(0, cut + 1).join(' ').length <= sw.join(' ').length / 2 + 2) cut++;
+  const top = sw.slice(0, cut).join(' '), bot = sw.slice(cut).join(' ');
+  ring(top, 76, Math.min(1.35, top.length * 0.072), '700 13px Arial', false); ring(bot, 78, Math.min(1.25, bot.length * 0.064), '700 12px Arial', true);
+  x.beginPath(); x.arc(-84, 0, 3, 0, 7); x.arc(84, 0, 3, 0, 7); x.fill();
+  x.font = '700 12px Arial'; x.fillText('★ BHADOHI ★', 0, -22); x.font = '700 22px Georgia, serif'; x.fillText('SEAL', 0, 2); x.font = '700 13px Arial'; x.fillText(o.year, 0, 26);
+  x.restore(); x.textBaseline = 'alphabetic'; x.textAlign = 'center';
+  // certificate number (same child + same entry → same number every time)
+  x.fillStyle = '#94A3B8'; x.font = '15px Arial'; x.textAlign = 'left'; x.fillText('Certificate No. ' + o.no, 84, H - 76);
+  x.textAlign = 'right'; x.fillText('Powered by Maakit', W - 84, H - 76); x.textAlign = 'center';
   return cv.toDataURL('image/png');
 }
 async function certData(evId, id, sid) {
@@ -118,7 +143,7 @@ async function certData(evId, id, sid) {
   const ct = (S.classes.find(c => c.c === n.cls) || {}).ct;
   return { school: S.settings.school || 'SN Mishra Singapore International School', event: E.title, date: fmtLong(E.date), cat: n.cat, sec: n.sec, pos: n.pos, cls: n.cls,
     name: k ? k.name : n.type === 'group' ? 'Team ' + n.name : (kids[0] || {}).name, team: n.type === 'group' ? n.name : '', member: !!k && n.type === 'group',
-    members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '' };
+    members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '', signed: fmtDate(E.date) + ' ' + E.date.slice(0, 4), year: E.date.slice(0, 4), no: certNo(E.date, id, sid), seal: S.settings.school || '' };
 }
 async function certOpen(evId, id) {
   const n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean);
@@ -131,7 +156,9 @@ async function certShow(evId, id, sid) {
   const png = await certPNG(await certData(evId, id, sid)), box = document.querySelector('.cert-pv'); if (!box) return;
   const n = COMP.entries.find(z => z.id === id), fn = ('certificate-' + (sid ? (studentById(sid) || {}).name : n.type === 'group' ? 'team-' + n.name : (studentById(n.sids[0]) || {}).name) + '-' + n.cat).replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png';
   window.__CERT = { png, fn };
-  box.innerHTML = `<img src="${png}" alt="Certificate"><div class="btns"><button class="btn wa" onclick="certShare()">${ic('wa')} Share</button><a class="btn l" href="${png}" download="${esc(fn)}">Download</a><button class="btn w" onclick="certPrint([window.__CERT.png])">${ic('print')} Print</button></div>`;
+  box.innerHTML = `<img src="${png}" alt="Certificate" onclick="certFull()">` + (oldApp()
+    ? `<button class="btn wa full" onclick="certFull()">📸 Bada karke screenshot lein</button><p class="mut" style="margin:6px 0 0">Bada hone par phone ka screenshot lijiye aur WhatsApp par bhej dijiye. Print ke liye: Principal computer se “All certificates” dabayein.</p>`
+    : `<div class="btns"><button class="btn wa" onclick="certShare()">${ic('wa')} Share</button><a class="btn l" href="${png}" download="${esc(fn)}">Download</a><button class="btn w" onclick="certPrint([window.__CERT.png])">${ic('print')} Print</button></div>`);
 }
 async function certShare() {
   const c = window.__CERT; if (!c) return;
@@ -139,7 +166,16 @@ async function certShare() {
   try { const blob = await (await fetch(c.png)).blob(), file = new File([blob], c.fn, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) return await navigator.share({ files: [file], title: 'Certificate' });
   } catch (e) { if (e && e.name === 'AbortError') return; }
-  toast('Sharing a picture does not work here — tap Download, then send it on WhatsApp. (Install the new Teacher App to share directly.)');
+  certFull();
+}
+// The installed Teacher App 1.0 cannot hand a picture to WhatsApp (no share bridge, links blocked). Owner, 6 Nov 2026:
+// teachers must NOT have to download a new app — so the certificate opens full screen for a phone screenshot instead.
+function oldApp() { return !!(window.SNMSISFiles && !SNMSISFiles.shareImage); }
+function certFull() {
+  const c = window.__CERT; if (!c) return; let o = $('certFull'); if (o) o.remove();
+  o = document.createElement('div'); o.id = 'certFull'; o.className = 'cert-full'; o.onclick = () => o.remove();
+  o.innerHTML = `<img src="${c.png}" alt="Certificate"><div class="cf-tip">Ab screenshot lijiye 📸 · band karne ke liye tap karein</div>`;
+  document.body.appendChild(o); setTimeout(() => { const t = o.querySelector('.cf-tip'); if (t) t.classList.add('gone'); }, 2600);
 }
 function certPrint(list) { let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
   p.innerHTML = list.map(src => `<img src="${src}" style="width:100%;display:block;page-break-after:always">`).join(''); setTimeout(() => window.print(), 300); }

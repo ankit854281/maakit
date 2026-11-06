@@ -652,6 +652,11 @@ const path = require('node:path');
     await page.locator('.cert-pv img').waitFor();
     await page.locator('.sheet .chip').first().click();
     await page.waitForFunction(() => window.__CERT && /certificate-/.test(window.__CERT.fn) && !/team/.test(window.__CERT.fn));
+    await page.evaluate(() => { window.SNMSISFiles = { saveCsv() {} }; certShow(COMP.events[0].id, COMP.entries[0].id, ''); });   // installed app 1.0: screenshot way, no new download
+    await page.locator('.cert-pv .btn.wa').filter({ hasText: 'screenshot' }).click();
+    await page.locator('#certFull img').waitFor();
+    await page.locator('#certFull').click();
+    await page.evaluate(() => { delete window.SNMSISFiles; });
   });
   await browser.close();
   if (failures.length) {
