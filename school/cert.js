@@ -35,8 +35,18 @@ const clsIx = c => { const i = ORDER.indexOf(c); return i < 0 ? 99 : i; };
   $('cls').innerHTML = ['', ...cl].map(c => `<button type="button" data-cls="${esc(c)}" class="${c === CLS ? 'on' : ''}">${c ? esc(c) : 'All'}</button>`).join('');
   gallery(); list();
 })();
-async function photo(n, w) { const k = n.ev.id + '|' + n.id + '|' + (w ? 1 : 0); if (PH[k] !== undefined) return PH[k]; try { PH[k] = (await get(`cert_api.php?a=ph&k=${encodeURIComponent(n.ev.id + '|' + n.id)}${w ? '&w=1' : ''}`)).data || ''; } catch (e) { PH[k] = ''; } return PH[k]; }
-async function kid(sid) { if (KID[sid] !== undefined) return KID[sid]; const k = D.names[sid]; if (!k || !k.ph) return (KID[sid] = ''); try { KID[sid] = (await get('cert_api.php?a=kid&sid=' + encodeURIComponent(sid))).data || ''; } catch (e) { KID[sid] = ''; } return KID[sid]; }
+async function photo(n, w) { const k = n.ev.id + '|' + n.id + '|' + (w ? 1 : 0); if (PH[k] !== undefined) return PH[k]; for (let t = 0; t < 3; t++) { try { return (PH[k] = (await get(`cert_api.php?a=ph&k=${encodeURIComponent(n.ev.id + '|' + n.id)}${w ? '&w=1' : ''}`)).data || ''); } catch (e) { await new Promise(r => setTimeout(r, 700 * (t + 1))); } } return ''; }
+// Children's photos: at most 4 requests at a time (a busy server dropped some when ~90 went together) and a failed
+// load is retried later instead of being remembered as "no photo" (owner, 6 Nov 2026: photos missing on some certificates).
+let KQ = 0; const KW = [];
+const kslot = () => new Promise(ok => { if (KQ < 4) { KQ++; ok(); } else KW.push(ok); }), kfree = () => { const n = KW.shift(); if (n) n(); else KQ--; };
+async function kid(sid, tries) {
+  if (KID[sid]) return KID[sid]; const k = D.names[sid]; if (!k || !k.ph) return '';
+  if (KID['p' + sid]) return KID['p' + sid]; let ok = '';
+  KID['p' + sid] = (async () => { for (let t = 0; t < (tries || 3) && !ok; t++) { await kslot(); try { ok = (await get('cert_api.php?a=kid&sid=' + encodeURIComponent(sid))).data || ''; } catch (e) {} finally { kfree(); } if (!ok) await new Promise(r => setTimeout(r, 700 * (t + 1))); }
+    delete KID['p' + sid]; if (ok) KID[sid] = ok; return ok; })();
+  return KID['p' + sid];
+}
 function gallery() {
   const L = D.entries.filter(n => n.photoW || n.photo); if (!L.length) return; $('gal').hidden = false; $('gal').dataset.ok = '1';
   $('galg').innerHTML = L.map((n, i) => `<figure data-g="${i}"><img alt=""><figcaption>${esc(n.team ? 'Team ' + n.team : D.names[n.sids[0]] ? D.names[n.sids[0]].name : '')}<small>${esc(n.cls)} · ${esc(n.cat)}</small></figcaption></figure>`).join('');
@@ -61,7 +71,8 @@ function dataOf(r, kids, ph, pw) {
 async function make(r) {
   const key = r.n.id + '|' + r.sid; if (PNG[key]) return PNG[key];
   const kids = await Promise.all(r.n.sids.map(async s => ({ name: (D.names[s] || {}).name || '', src: await kid(s), me: s === r.sid })));
-  return (PNG[key] = await certPNG(dataOf(r, kids, r.n.photo ? await photo(r.n, false) : '', r.n.photoW ? await photo(r.n, true) : '')));
+  const png = await certPNG(dataOf(r, kids, r.n.photo ? await photo(r.n, false) : '', r.n.photoW ? await photo(r.n, true) : ''));
+  if (kids.every(k => k.src || !(D.names[r.n.sids[kids.indexOf(k)]] || {}).ph)) PNG[key] = png; return png;
 }
 function rowOf(el) { return ROWS.find(x => x.sid === el.dataset.sid && x.n.id === el.dataset.id); }
 function textOf(r) { return `🌟 I achieved this! 🌟
