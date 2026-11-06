@@ -677,6 +677,15 @@ const path = require('node:path');
     await page.locator('.sg-card').filter({ hasText: 'Aapka sign lag gaya' }).waitFor();
     await page.locator('.fs-card').filter({ hasText: 'CI Festival' }).waitFor();
   });
+  await run('34-Activity-calendar-Mitra', async () => {
+    await page.evaluate(() => { SHEET = null; store.set('ta_mode', 'principal'); go('acts'); });
+    await page.locator('.ac-i').first().waitFor();
+    const n = await page.locator('.ac-i .ac-g > div').count(); if (n < 3) throw new Error('activity groups missing');
+    await page.locator('.ac-i .btn').filter({ hasText: 'Kaise karein' }).first().click();
+    await page.locator('#nwBox .nw-l li').nth(6).waitFor(); await page.locator('#nwBox .btn.go').click();
+    const ok = await page.evaluate(() => { const a = actList()[0]; return actNotice(a).includes(a.title) && ACTS.every(x => /^\d\d-\d\d$/.test(x[0]) && x.length === 8); });
+    if (!ok) throw new Error('activity data broken');
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

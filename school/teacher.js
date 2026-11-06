@@ -338,9 +338,9 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);

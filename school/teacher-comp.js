@@ -412,7 +412,7 @@ async function festStoryOpen(i) {
 
 // ---------------------------------------------------------------- "Naya kya hai" helper (owner, 6 Nov 2026: a friendly bot that tells everyone about new changes)
 // When you ship something teachers must learn, bump NEWS_VER and rewrite NEWS — every user sees it once, and again from ☰.
-const NEWS_VER = '2026-11-06-comp';
+const NEWS_VER = '2026-11-06-acts';
 const NEWS = { title: 'Diwali Competition + Certificate', steps: [
   ['📋', 'Pehle haziri lagaiye', 'Jo bachche absent / leave hain woh team banate waqt list mein nahi aayenge.'],
   ['🪔', 'Home par “Competition” card', '“+ Team banao” dabaiye. Rangoli ya Diya chuniye, phir apni class ka group.'],
@@ -422,6 +422,7 @@ const NEWS = { title: 'Diwali Competition + Certificate', steps: [
   ['🎓', 'Certificate', '🎓 dabaiye — team ka ek, aur har bachche ka alag certificate. Screenshot ya Share karke parents ko bhejiye.'],
   ['💬', 'Parent ko message', 'Certificate ke neeche taiyaar message hai — Copy karke usi bachche ke parent ko WhatsApp par bhejiye.'],
   ['✨', 'WhatsApp Status', '“Story photo banao” + caption copy → WhatsApp → Status.'],
+  ['📅', 'Activity Calendar (naya)', 'Home par 📅 card ya ☰ → Activity Calendar: har din ki activity har class ke liye, syllabus se judi. 🤖 “Kaise karein?” poora tarika batata hai.'],
   ['🎉', 'Tyohar wishes', 'Home par 🪔 Tyohar card: Dhanteras / Diwali ki story photo aur wish message — Status aur parents group ke liye.']] };
 function newsOpen() {
   let o = $('nwBox'); if (o) o.remove(); o = document.createElement('div'); o.id = 'nwBox'; o.className = 'nw';
@@ -431,8 +432,8 @@ function newsOpen() {
   document.body.appendChild(o); $('nwOk').onclick = () => { store.set('ta_news', NEWS_VER); o.remove(); };
 }
 (function () {
-  const _vHome = vHome; vHome = function () { return festCard() + compCard() + _vHome(); };
-  const _vPdash = vPdash; vPdash = function () { return signCard() + festCard() + compCard() + _vPdash(); };
+  const _vHome = vHome; vHome = function () { return festCard() + compCard() + (typeof actCard === 'function' ? actCard() : '') + _vHome(); };
+  const _vPdash = vPdash; vPdash = function () { return signCard() + festCard() + compCard() + (typeof actCard === 'function' ? actCard() : '') + _vPdash(); };
   const _om = openMenu; openMenu = function () { _om(); const f = SHEET; if (f) { SHEET = () => f().replace('</h2>', '</h2><div class="btns"><button class="btn go" onclick="SHEET=null;render();newsOpen()">🤖 Naya kya hai</button><button class="btn l" onclick="SHEET=null;signOpen()">✍️ Mera sign</button></div>'); render(); } };
   const _render = render; render = function () { _render(); if (S && TAB === 'comp') compThumbs();
     if (S && ME && !window.__nwShown && store.get('ta_news') !== NEWS_VER && !document.getElementById('ta-welcome')) { window.__nwShown = true; setTimeout(newsOpen, 900); } };
