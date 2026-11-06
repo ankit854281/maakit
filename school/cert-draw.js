@@ -84,10 +84,16 @@ async function certPNG(o) {
   x.strokeStyle = gold; x.lineWidth = 3; x.strokeRect(PW + 30, 30, RW - 60, H - 60); x.lineWidth = 1; x.strokeRect(PW + 40, 40, RW - 80, H - 80);
   cToran(x, PW + 40, W - 40, 40);
   x.save(); x.globalAlpha = .9; cMandala(x, W - 40, H - 40, 120, diya ? ['#FDBA74', '#FCD34D', '#FB923C', '#FDE68A', '#fff'] : ['#F9A8D4', '#FCD34D', '#A7F3D0', '#BFDBFE', '#fff']); x.restore();
-  x.fillStyle = ink; x.font = '700 84px ' + PF; cSpaced(x, 'CERTIFICATE', cx, 252, 14);
+  // the child's own photo, big, top right (owner, 6 Nov 2026: "student wala image certificate mein dikhe")
+  const meK = (o.kids || []).find(k => k.me && k.src), meI = meK ? await loadImg(meK.src) : null;
+  if (meI) { const R = 78, px = W - 150, py = 215, e = Math.min(meI.width, meI.height); x.save(); x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 18; x.fillStyle = '#fff'; x.beginPath(); x.arc(px, py, R + 9, 0, 7); x.fill(); x.restore();
+    x.save(); x.beginPath(); x.arc(px, py, R, 0, 7); x.clip(); x.drawImage(meI, (meI.width - e) / 2, (meI.height - e) / 3, e, e, px - R, py - R, R * 2, R * 2); x.restore();
+    x.lineWidth = 6; x.strokeStyle = gold; x.beginPath(); x.arc(px, py, R + 3, 0, 7); x.stroke(); }
+  const cxT = meI ? cx - 70 : cx;
+  x.fillStyle = ink; x.font = (meI ? '700 74px ' : '700 84px ') + PF; cSpaced(x, 'CERTIFICATE', cxT, 252, meI ? 11 : 14);
   const bt = win ? 'OF ACHIEVEMENT' : 'OF PARTICIPATION'; x.font = '600 24px ' + PF; const bw = ('letterSpacing' in x ? x.measureText(bt).width + bt.length * 6 : x.measureText(bt).width) + 80;
-  const bg = x.createLinearGradient(cx - bw / 2, 0, cx + bw / 2, 0); bg.addColorStop(0, th.a); bg.addColorStop(1, th.b); x.fillStyle = bg; cRound(x, cx - bw / 2, 280, bw, 48, 24); x.fill();
-  x.fillStyle = '#fff'; cSpaced(x, bt, cx, 313, 6);
+  const bg = x.createLinearGradient(cxT - bw / 2, 0, cxT + bw / 2, 0); bg.addColorStop(0, th.a); bg.addColorStop(1, th.b); x.fillStyle = bg; cRound(x, cxT - bw / 2, 280, bw, 48, 24); x.fill();
+  x.fillStyle = '#fff'; cSpaced(x, bt, cxT, 313, 6);
   x.fillStyle = mut; x.font = '400 22px ' + PF; x.fillText(o.team && !o.member ? 'This certificate is proudly presented to the team' : 'This certificate is proudly presented to', cx, 402);
   let ns = 104; x.font = `${ns}px GreatVibes, "Brush Script MT", cursive`; while (x.measureText(o.name).width > RW - 200 && ns > 60) { ns -= 6; x.font = `${ns}px GreatVibes, "Brush Script MT", cursive`; }
   x.fillStyle = th.a; x.fillText(o.name, cx, 522);
