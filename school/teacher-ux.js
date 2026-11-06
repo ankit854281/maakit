@@ -150,7 +150,7 @@ function vPdash() {
   const plans = Object.entries(S.lplan).filter(([, p]) => p.status === 'Submitted' && !Object.prototype.hasOwnProperty.call(p, 'days')).sort((a, b) => String(b[1].week).localeCompare(String(a[1].week)));
   const away = staffAbsent(t), abs3 = threeDayAbsent(12), notMarked = cls.filter(k => !attOf(t, k.c));
   const ring = (l, a, b, sub) => `<button type="button" class="pd-r" onclick="go('prin')"><div class="ring ${b && a === b ? 'okr' : ''}" style="--p:${b ? Math.round(a / b * 100) : 0}"><span>${b === null ? '…' : b ? a + '/' + b : '—'}</span></div><b>${l}</b><small>${sub}</small></button>`;
-  return `<div class="card pd-hero"><small>${esc(fmtLong(t))}</small><h3>${work ? 'Aaj ka school' : dayIdx(t) < 0 ? 'Sunday' : 'Holiday — ' + esc(holTitle(holidayOn(t)))}</h3>
+  return `${typeof actBanner === 'function' ? actBanner(t) : ''}<div class="card pd-hero"><small>${esc(fmtLong(t))}</small><h3>${work ? 'Aaj ka school' : dayIdx(t) < 0 ? 'Sunday' : 'Holiday — ' + esc(holTitle(holidayOn(t)))}</h3>
       ${work ? `<div class="pd-big"><b>${inMarked ? present + '/' + inMarked : '—'}</b><span>students present${attDone < cls.length ? ` · ${cls.length - attDone} class(es) not marked` : ''} · ${kids} in school</span></div>
       <div class="pd-rings">${ring('Attendance', attDone, cls.length, 'classes')}${ring('Diary', bDone, bAll, 'bells over')}${ring('HW check', hDone, hAll, 'due today')}${ring('Daily check', kitDone ?? 0, D.X ? cls.length : null, 'classes')}</div>` : ''}</div>
     ${leaves.length || plans.length ? `<div class="card"><h3>Approve karna hai <small>${leaves.length + plans.length}</small></h3>
@@ -163,7 +163,7 @@ function vPdash() {
       ${abs3.length ? `<div class="pd-al bad"><span>⚠</span><div><b>${abs3.length} child(ren) absent 3 days in a row</b><small>${abs3.map(x => `<a href="#" onclick="go('att',{c:${jsq(x.c)},m:'stu',sid:${jsq(x.s.id)}});return false">${esc(x.s.name)} (${esc(x.c)})</a>`).join(', ')}</small></div></div>` : ''}
       ${!pendT.length && !abs3.length && !away.length && !notMarked.length && !work ? '<p class="mut" style="margin:0">No alerts.</p>' : ''}</div>
     ${boardCard()}
-    <div class="card quick-card"><div class="quick-grid">${[['staff', 'Arrangement', 'list', {}], ['tt', 'Timetable', 'note', {}], ['prin', 'Cross-check', 'check', {}], ['att', 'Holiday', 'list', { m: 'cal' }], ['board', 'Board', 'chart', {}], ['board', 'Boys / girls', 'list', { m: 'gen' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }], ['conn', 'Messages', 'wa', { m: 'msg' }]].map(([tb, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(tb)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}</button>`).join('')}</div></div>
+    <div class="card quick-card"><div class="quick-grid">${[['spday', 'Special day', 'sun', {}], ['staff', 'Arrangement', 'list', {}], ['tt', 'Timetable', 'note', {}], ['prin', 'Cross-check', 'check', {}], ['att', 'Holiday', 'list', { m: 'cal' }], ['board', 'Board', 'chart', {}], ['board', 'Boys / girls', 'list', { m: 'gen' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }], ['conn', 'Messages', 'wa', { m: 'msg' }]].map(([tb, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(tb)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}</button>`).join('')}</div></div>
     ${X && X.loading ? '<p class="mut">Loading daily checks and homework checks…</p>' : ''}`;
 }
 function pdLeave(id, st) {

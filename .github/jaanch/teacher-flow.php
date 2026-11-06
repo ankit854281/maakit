@@ -176,4 +176,16 @@ $nine = array_values(array_filter($j['classes'], fn($x) => $x['cls'] === '9th'))
 $r1 = sch_rec_get('tchRec', '9th|s1'); tf_check(($r1['levels']['read'] ?? 0) === 3 && $r1['id'] === 0 && count($r1['lvHist']) === 1, 'levels + record merged, history kept');
 [, $j] = $ta('recbulk', ['cls' => '9th', 'rows' => ['s1' => ['levels' => ['read' => 3, 'write' => 2]]]], $tok['K']); tf_check($j['saved'] === 0, 'no change → nothing saved');
 
+// ---- student log: parent contact, PTM, competition (6 Nov 2026) ----
+[$c, $j] = $ta('log', ['sid' => 's1', 'text' => 'Talked about homework', 'mode' => 'Call'], $tok['MA']); tf_check($c === 200 && $j['log']['kind'] === 'call', 'any teacher of the class writes parent contact');
+$cid = $j['log']['id'];
+[$c] = $ta('log', ['sid' => 's3', 'text' => 'x'], $tok['K']); tf_check($c === 403, 'not a child of another class');
+[$c] = $ta('dellog', ['id' => $cid], $tok['K']); tf_check($c === 403, 'only the writer deletes');
+[$c] = $ta('logbulk', ['cls' => '9th', 'kind' => 'ptm', 'date' => '2026-11-05', 'rows' => ['s1' => 1]], $tok['MA']); tf_check($c === 403, 'PTM attendance only by the class teacher');
+[$c, $j] = $ta('logbulk', ['cls' => '9th', 'kind' => 'ptm', 'date' => '2026-11-05', 'rows' => ['s1' => 1, 's2' => 0, 's3' => 1]], $tok['K']); tf_check($c === 200 && $j['saved'] === 2, 'PTM saved for own class children');
+[$c, $j] = $ta('logbulk', ['cls' => '9th', 'kind' => 'act', 'date' => '2026-11-05', 'title' => 'Rangoli competition', 'rows' => ['s1' => '1', 's2' => 'part']], $tok['MA']); tf_check($c === 200 && $j['saved'] === 2, 'any teacher of the class fills competition');
+[, $j] = $ta('logbulk', ['cls' => '9th', 'kind' => 'act', 'date' => '2026-11-05', 'title' => 'Rangoli competition', 'rows' => ['s1' => '1', 's2' => '']], $tok['MA']); tf_check($j['saved'] === 1, 'unchanged skipped, cleared one removed');
+[, $j] = $ta('report', null, $tok['K'], '&cls=9th'); tf_check(count(array_filter($j['logs'], fn($l) => $l['kind'] === 'act')) === 1 && count(array_filter($j['logs'], fn($l) => $l['kind'] === 'ptm')) === 2 && count(array_filter($j['logs'], fn($l) => $l['kind'] === 'call')) === 1, 'class report carries the logs');
+[, $j] = $api('load', null, $tok['K']); tf_check(!in_array('tchLog', array_column($j['records'], 'k'), true), 'logs never in legacy load');
+
 echo "Teacher app flow: all checks passed\n";

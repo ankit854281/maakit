@@ -13,8 +13,9 @@
 
 // ---------------------------------------------------------------- 3. Staff tab
 function vStaffHub() {
-  const m = ['arr', 'tt', 'work', 'leave'].includes(P.m) ? P.m : 'arr';
-  const segs = seg([['arr', 'Arrangement'], ['tt', 'Timetable'], ['work', 'Teacher work'], ['leave', 'Leave']], m, `(k=>go('staffhub',{m:k}))`);
+  const m = ['arr', 'tt', 'team', 'work', 'leave'].includes(P.m) ? P.m : 'arr';
+  const segs = seg([['arr', 'Arrangement'], ['tt', 'Timetable'], ['team', 'Teachers'], ['work', 'Work'], ['leave', 'Leave']], m, `(k=>go('staffhub',{m:k}))`);
+  if (m === 'team') return segs + vTeam();
   if (m === 'tt') return segs + vTT();
   if (m === 'work') { const R = teacherRanks();
     return segs + `<div class="card"><h3>Teacher work <small>last 7 days</small></h3>${R.map((r, i) => `<div class="bd-r">${rankBadge(i)}<span class="nm"><b>${esc(r.name)}</b><small>${r.done} of ${r.all} done — attendance, diary, daily check, homework check</small></span><em class="${r.p >= 90 ? 'ok' : r.p < 60 ? 'bad' : ''}">${r.p}%</em></div>`).join('') || '<div class="empty">Nothing due yet.</div>'}
@@ -42,7 +43,10 @@ function vBulk(c) {
   const R = needRep(c), kids = studentsOf(c), ph = needPhotos(c);
   if (R.loading) return '<div class="load"><i></i></div>';
   if (R.err) return `<div class="card">${esc(R.err)} <button class="btn s l" onclick="delete REP['${esc(c)}'];render()">Try again</button></div>`;
-  const mode = P.bm === 'rec' ? 'rec' : 'lv', F = mode === 'lv' ? BULK_LV : BULK_REC, f = F.some(x => x[0] === P.bf) ? P.bf : F[0][0];
+  const mode = ['rec', 'ptm', 'act'].includes(P.bm) ? P.bm : 'lv';
+  const segB = seg([['lv', 'Levels'], ['rec', 'Record'], ['ptm', 'PTM'], ['act', 'Competition']], mode, `(k=>{go('att',{c:${jsq(c)},m:'bulk',bm:k})})`);
+  if (mode === 'ptm' || mode === 'act') return `<div class="card"><h3>Fill for the whole class <small>Class ${esc(c)}</small></h3>${segB}</div>` + vBulkLog(c, mode);
+  const F = mode === 'lv' ? BULK_LV : BULK_REC, f = F.some(x => x[0] === P.bf) ? P.bf : F[0][0];
   if (!DRAFT.bulk || DRAFT.bulk.c !== c) DRAFT.bulk = { c, rows: {}, n: 0 };
   const B = DRAFT.bulk, cur = sid => { const r = B.rows[sid] || {}, o = (R.recs || {})[sid] || {};
     return mode === 'lv' ? ((r.levels && f in r.levels) ? r.levels[f] : ((o.levels || {})[f] || 0)) : (f in r ? r[f] : (o[f] === undefined ? null : o[f])); };
@@ -50,7 +54,7 @@ function vBulk(c) {
   const opts = mode === 'lv' ? [[1, 'Needs help'], [2, 'Average'], [3, 'Good'], [4, 'Excellent']] : [[1, 'Yes'], [0, 'No']];
   return `<div class="card"><h3>Fill for the whole class <small>Class ${esc(c)}</small></h3>
       <p class="mut" style="margin:0 0 8px">Do it once for everyone now; later change any child from Students → the child's report. Changes of levels are kept month by month.</p>
-      ${seg([['lv', 'Learning levels'], ['rec', 'Student record']], mode, `(k=>{go('att',{c:${jsq(c)},m:'bulk',bm:k})})`)}
+      ${segB}
       <div class="chips" style="margin-top:8px">${F.map(([k, l]) => `<button class="chip ${k === f ? 'on' : ''}" onclick="go('att',{c:${jsq(c)},m:'bulk',bm:'${mode}',bf:'${k}'})">${l}</button>`).join('')}</div></div>
     <div class="card bulk"><div class="roll-head"><b>${esc((F.find(x => x[0] === f) || [])[1])}</b><span class="pill">${filled}/${kids.length} filled</span></div>
       <div class="btns" style="margin:6px 0">${opts.map(([v, l]) => `<button class="btn s l" onclick="bulkAll('${mode}','${f}',${v})">All: ${l}</button>`).join('')}</div>
@@ -86,9 +90,9 @@ const MENU = [
   ['Daily', [['att', {}, 'check', 'Attendance', 'Subah haziri — sirf absent par tap'], ['att', { m: 'kit' }, 'bill', 'Daily check', 'Diary · ID · kitaab · dress'], ['diary', {}, 'book', 'Diary', 'Har bell ka topic, CW, HW'], ['diary', { m: 'check' }, 'list', 'Check work', 'Homework aur copy check']]],
   ['Weekly', [['plan', { m: 'lp' }, 'note', 'Lesson plan', 'Hafte ka plan — Auto fill'], ['plan', { m: 'syl' }, 'list', 'Syllabus', 'Kitaab, chapter, page, exam tick'], ['notes', {}, 'cam', 'Notes', 'Photo se chapter notes']]],
   ['Exams', [['res', {}, 'chart', 'Marks & result', 'Number daalo — result apne aap'], ['plan', { m: 'paper' }, 'print', 'Question paper', 'Chapter text se paper']]],
-  ['Students', [['att', { m: 'stu' }, 'list', 'Student reports', 'Har bachche ki poori report'], ['att', { m: 'bulk' }, 'check', 'Levels (whole class)', 'Reading, writing… ek saath'], ['board', {}, 'chart', 'Board', 'Classes aur bachchon ka muqabla']]],
+  ['Students', [['att', { m: 'stu' }, 'list', 'Student reports', 'Har bachche ki poori report'], ['att', { m: 'bulk' }, 'check', 'Levels (whole class)', 'Reading, writing… ek saath'], ['att', { m: 'bulk', bm: 'act' }, 'chart', 'Competition', 'Kisne bhaag liya, kaun jeeta'], ['att', { m: 'bulk', bm: 'ptm' }, 'chat', 'PTM attendance', 'Parent aaye ya nahi'], ['board', {}, 'chart', 'Board', 'Classes aur bachchon ka muqabla']]],
   ['Parents & staff', [['conn', { m: 'msg' }, 'wa', 'Messages to parents', 'Absent, homework, fee, PTM'], ['conn', { m: 'fee' }, 'phone', 'Fee calls', 'Class teacher — fee yaad dilana'], ['conn', { m: 'chat' }, 'chat', 'Parent chat', 'Parents se baat'], ['conn', { m: 'staff' }, 'chat', 'Staff chat', 'Teachers aur Principal']]],
-  ['Principal', [['pdash', {}, 'sun', 'Home', 'Aaj ka school, approvals, alerts'], ['prin', {}, 'check', 'Cross-check', 'Har kaam — kisne kiya, kisne nahi'], ['staffhub', { m: 'arr' }, 'list', 'Arrangement', 'Absent teacher ki class'], ['staffhub', { m: 'tt' }, 'note', 'Timetable', 'Class ka timetable badlo'], ['staffhub', { m: 'leave' }, 'bill', 'Leave', 'Chhutti approve'], ['att', { m: 'cal' }, 'list', 'Holidays', 'Sab classes ki chhutti'], ['board', { m: 'gen' }, 'list', 'Boys / girls', 'Ladka / ladki bharna']]]
+  ['Principal', [['pdash', {}, 'sun', 'Home', 'Aaj ka school, approvals, alerts'], ['prin', {}, 'check', 'Cross-check', 'Har kaam — kisne kiya, kisne nahi'], ['staffhub', { m: 'arr' }, 'list', 'Arrangement', 'Absent teacher ki class'], ['staffhub', { m: 'tt' }, 'note', 'Timetable', 'Class ka timetable badlo'], ['staffhub', { m: 'team' }, 'list', 'Teachers', 'Teacher badalna / naya jodna'], ['spday', {}, 'sun', 'Special day', 'Competition / function — classes band'], ['staffhub', { m: 'leave' }, 'bill', 'Leave', 'Chhutti approve'], ['att', { m: 'cal' }, 'list', 'Holidays', 'Sab classes ki chhutti'], ['board', { m: 'gen' }, 'list', 'Boys / girls', 'Ladka / ladki bharna']]]
 ];
 function openMenu() {
   const p = isP(), ct = myCT().length;

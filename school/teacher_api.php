@@ -515,7 +515,9 @@ case 'report': {
     $rem = [];
     foreach ($db->query("SELECT d FROM sch_records WHERE k='tchRemark' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d) && ($d['cls'] ?? '') === $cls && isset($kids[$d['sid'] ?? ''])) $rem[] = $d; }
     usort($rem, fn($a, $b) => ($b['at'] ?? 0) <=> ($a['at'] ?? 0));
-    sch_json(['ok' => true, 'from' => $start, 'attDays' => $attDays, 'per' => (object)$per, 'marks' => (object)$marks, 'exam' => $exam,
+    $logs = []; foreach ($db->query("SELECT d FROM sch_records WHERE k='tchLog' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d) && ($d['cls'] ?? '') === $cls && isset($kids[$d['sid'] ?? ''])) $logs[] = $d; }
+    usort($logs, fn($a, $b) => [(string)($b['date'] ?? ''), (int)($b['at'] ?? 0)] <=> [(string)($a['date'] ?? ''), (int)($a['at'] ?? 0)]);
+    sch_json(['ok' => true, 'logs' => array_slice($logs, 0, 3000), 'from' => $start, 'attDays' => $attDays, 'per' => (object)$per, 'marks' => (object)$marks, 'exam' => $exam,
               'recs' => (object)$recs, 'remarks' => array_slice($rem, 0, 1500), 'canEdit' => $canClass($cls), 'me' => $role === 'teacher' ? $tid : 'P']);
 }
 
@@ -642,6 +644,53 @@ case 'recbulk': {
     $db->commit();
     if ($n) sch_log($u, 'Student record', "Class $cls: levels / record filled for $n child(ren) together — Teacher App");
     sch_json(['ok' => true, 'saved' => $n]);
+}
+
+// Student log (owner, 6 Nov 2026: parent contact, PTM attendance, competition / activity). Kind tchLog:
+//   call  — one talk with a parent: {sid, cls, kind:'call', date, mode: Call|Visit|WhatsApp|Meeting, text}   (id 'c…', any teacher of the class)
+//   ptm   — PTM attended: key 'ptm|date|cls|sid' {present 1|0, title}                                      (class teacher / Principal, bulk)
+//   act   — activity / competition: key 'act|date|cls|sid|<8 hex of title>' {title, pos: part|1|2|3}       (any teacher of the class, bulk)
+case 'log': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null; if (!$s) sch_fail('Student not found.', 404);
+    $cls = (string)($s['cls'] ?? ''); if (!$canSee($cls)) sch_fail('You can write only about children of your own classes.', 403);
+    $text = tch_txt($in['text'] ?? '', 500); if ($text === '') sch_fail('Write what was talked about.');
+    $date = (string)($in['date'] ?? date('Y-m-d')); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d')) $date = date('Y-m-d');
+    $mode = in_array($in['mode'] ?? '', ['Call', 'Visit', 'WhatsApp', 'Meeting'], true) ? $in['mode'] : 'Call';
+    $id = 'c' . bin2hex(random_bytes(8));
+    $d = ['id' => $id, 'sid' => $sid, 'cls' => $cls, 'kind' => 'call', 'date' => $date, 'mode' => $mode, 'text' => $text, 'tid' => $role === 'teacher' ? $tid : 'P', 'by' => $u['label'], 'at' => sch_now_ms()];
+    sch_rec_put('tchLog', $id, $d, $uid);
+    sch_log($u, 'Parent contact', $mode . ' with the parent of ' . ($s['name'] ?? $sid) . ' (Class ' . $cls . '): ' . $text);
+    sch_json(['ok' => true, 'log' => $d]);
+}
+case 'logbulk': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $cls = (string)($in['cls'] ?? ''); $kind = (string)($in['kind'] ?? '');
+    if (!in_array($kind, ['ptm', 'act'], true)) sch_fail('Bad request.');
+    if ($kind === 'ptm' ? !$canClass($cls) : !$canSee($cls)) sch_fail($kind === 'ptm' ? 'Only the class teacher or the Principal can fill PTM attendance.' : 'Only teachers of this class can fill this.', 403);
+    $date = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d')) sch_fail('Choose the date (today or earlier).');
+    $title = tch_txt($in['title'] ?? '', 120); if ($kind === 'act' && $title === '') sch_fail('Write the name of the activity / competition.');
+    $rows = is_array($in['rows'] ?? null) ? $in['rows'] : []; if (!$rows || count($rows) > 200) sch_fail('Nothing to save.');
+    $n = 0; $db->beginTransaction();
+    foreach ($rows as $sid => $v) {
+        $sid = (string)$sid; $s = sch_rec_get('student', $sid); if (!$s || ($s['cls'] ?? '') !== $cls) continue;
+        $key = $kind === 'ptm' ? "ptm|$date|$cls|$sid" : "act|$date|$cls|$sid|" . substr(md5(mb_strtolower($title)), 0, 8);
+        if ($v === '' || $v === null) { if (sch_rec_get('tchLog', $key)) { sch_rec_del('tchLog', $key, $uid); $n++; } continue; }
+        if ($kind === 'ptm') { $d = ['sid' => $sid, 'cls' => $cls, 'kind' => 'ptm', 'date' => $date, 'present' => (int)$v ? 1 : 0, 'title' => $title ?: 'PTM']; }
+        else { if (!in_array((string)$v, ['part', '1', '2', '3'], true)) continue; $d = ['sid' => $sid, 'cls' => $cls, 'kind' => 'act', 'date' => $date, 'title' => $title, 'pos' => (string)$v]; }
+        $old = sch_rec_get('tchLog', $key); if ($old && array_intersect_key($old, $d) == $d) continue;
+        $d += ['tid' => $role === 'teacher' ? $tid : 'P', 'by' => $u['label'], 'at' => sch_now_ms()];
+        sch_rec_put('tchLog', $key, $d, $uid); $n++;
+    }
+    $db->commit();
+    if ($n) sch_log($u, $kind === 'ptm' ? 'PTM' : 'Activity', "Class $cls — " . ($kind === 'ptm' ? 'PTM attendance' : $title) . " ($date): $n child(ren) — Teacher App");
+    sch_json(['ok' => true, 'saved' => $n]);
+}
+case 'dellog': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $id = (string)($in['id'] ?? ''); $old = preg_match('/^c[a-f0-9]{16}$/', $id) ? sch_rec_get('tchLog', $id) : null; if (!$old) sch_fail('Not found.', 404);
+    if ($role !== 'principal' && ($old['tid'] ?? '') !== $tid) sch_fail('Only the teacher who wrote it can delete it.', 403);
+    sch_rec_del('tchLog', $id, $uid); sch_json(['ok' => true]);
 }
 
 case 'remark': {

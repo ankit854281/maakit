@@ -603,6 +603,26 @@ const path = require('node:path');
     await page.getByRole('button', { name: /Save · 1 child/ }).click();
     await page.getByText(/child\(ren\) saved/).first().waitFor();
   });
+  await run('31-Special-day-replace-teacher-competition', async () => {
+    await page.evaluate(() => { SHEET = null; go('pdash'); });
+    await page.evaluate(() => go('spday'));
+    await page.locator('#spT').fill('CI Rangoli competition');
+    await page.locator('#spB').selectOption('3');
+    await page.locator('.sheet .btn.go').click();
+    await page.locator('.ban.act').filter({ hasText: 'CI Rangoli competition' }).waitFor();
+    assert.ok(await page.evaluate(() => Object.keys(S.teachers).every(t => bellsOf(t, todayISO()).every(b => b.bell < 3 || b.extra))), 'no class bells after the 3rd bell');
+    await page.evaluate(() => go('staffhub', { m: 'team' }));
+    await page.locator('.card').filter({ hasText: 'Change who teaches' }).waitFor();
+    await page.evaluate(() => { DRAFT.rep = { from: 'MA', to: '+new', newName: 'CI Palak Srivastava', subs: null, ct: true, left: false }; repOpen('MA'); });
+    await page.locator('.sheet .btn.go').filter({ hasText: 'Apply' }).click();
+    await page.waitForFunction(() => Object.values(S.teachers).some(t => t.name === 'CI Palak Srivastava') && !S.alloc.some(a => a.t === 'MA'));
+    await page.evaluate(() => go('att', { c: '9th', m: 'bulk', bm: 'act' }));
+    await page.locator('.bk-r').first().waitFor();
+    await page.locator('.bk-r').nth(0).locator('button').filter({ hasText: '1st' }).click();
+    await page.locator('.bk-r').nth(1).locator('button').filter({ hasText: 'Took part' }).click();
+    await page.getByRole('button', { name: /Save · 2 child/ }).click();
+    await page.getByText(/2 saved/).first().waitFor();
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

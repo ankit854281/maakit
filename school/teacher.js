@@ -268,6 +268,10 @@ function attOf(date, c) { return (S.studAtt[date] || {})[c] || null; }
 function examEnd(e) { return e.to || (e.sheet && e.sheet.length ? e.sheet.map(x => x.date).sort().pop() : e.date); }
 function examClasses(e) { return e && e.classes && e.classes.length ? e.classes : className(); }
 function examBlocks(date, cls) { return S.exams.some(e => e.noClasses && e.date <= date && examEnd(e) >= date && examClasses(e).includes(cls)); }
+// Special day (owner, 6 Nov 2026: "aaj 3rd bell ke baad competition"): cal entry {type:'Activity', date, fromBell, classes[]}
+// — from that bell on there are no classes (no diary expected, no arrangement) for those classes (empty = all).
+function actOn(date, cls) { return S.cal.find(e => e.type === 'Activity' && e.date === date && (!(e.classes || []).length || !cls || e.classes.includes(cls))) || null; }
+function actBlocks(date, cls, b) { const e = actOn(date, cls); return !!e && b >= (+e.fromBell || 0); }
 function cell(c, d, b) { const i = S.grid && S.grid[c] ? S.grid[c][d][b] : -1; return i >= 0 ? S.alloc[i] : null; }
 function teacherAt(t, d, b) { for (const c of className()) { const a = cell(c, d, b); if (a && a.t === t) return a; } return null; }
 function staffAbsent(date) {
@@ -281,12 +285,12 @@ function absentFrom(date, t) {
   return +((a.from || {})[t] || 0);
 }
 function absentAt(date, t, b) { const f = absentFrom(date, t); return f !== null && b >= f; }
-function busyAt(date, x, b) { const d = dayIdx(date); const q = d < 0 ? null : teacherAt(x, d, b); return !!q && !examBlocks(date, q.c); }
+function busyAt(date, x, b) { const d = dayIdx(date); const q = d < 0 ? null : teacherAt(x, d, b); return !!q && !examBlocks(date, q.c) && !actBlocks(date, q.c, b); }
 // Arrangement: copied from app.js (arrangementBase / monthLoad) so a substitute sees the bells given to them. Change both together.
 function arrangementBase(date, load) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const absent = staffAbsent(date), ov = (S.staffAtt[date] && S.staffAtt[date].subs) || {}, extra = {}, need = [];
-  absent.forEach(t => BELLS.forEach((b, i) => { if (!absentAt(date, t, i)) return; const a = teacherAt(t, d, i); if (!a || examBlocks(date, a.c)) return; need.push({ bell: i, cls: a.c, subj: a.s, absent: t }); }));
+  absent.forEach(t => BELLS.forEach((b, i) => { if (!absentAt(date, t, i)) return; const a = teacherAt(t, d, i); if (!a || examBlocks(date, a.c) || actBlocks(date, a.c, i)) return; need.push({ bell: i, cls: a.c, subj: a.s, absent: t }); }));
   const taken = i => need.filter(n => n.bell === i && n.sub).map(n => n.sub);
   const canTake = (x, n) => x !== n.absent && !absentAt(date, x, n.bell) && !busyAt(date, x, n.bell) && !taken(n.bell).includes(x) && (!S.teachers[x].bells || S.teachers[x].bells.includes(n.bell));
   const dayLoad = x => BELLS.filter((_, j) => busyAt(date, x, j)).length;
@@ -307,7 +311,7 @@ function myBells(date) { return bellsOf(me(), date); }
 function bellsOf(tid, date) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const from = absentFrom(date, tid), out = [];
-  BELLS.forEach((b, i) => { if (from !== null && i >= from) return; const a = teacherAt(tid, d, i); if (a && !examBlocks(date, a.c) && !clsHolOn(date, a.c)) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
+  BELLS.forEach((b, i) => { if (from !== null && i >= from) return; const a = teacherAt(tid, d, i); if (a && !examBlocks(date, a.c) && !clsHolOn(date, a.c) && !actBlocks(date, a.c, i)) out.push({ bell: i, cls: a.c, subj: a.s, arr: false }); });
   if (staffAbsent(date).length) arrangementBase(date, monthLoad(date)).filter(s => s.sub === tid && !clsHolOn(date, s.cls)).forEach(s => out.push({ bell: s.bell, cls: s.cls, subj: s.subj, arr: true, for: s.absent }));
   // periods the teacher added by hand on that day (no timetable bell): kept with the bell number they chose
   Object.entries((S.diary[date] || {})[tid] || {}).forEach(([b, e]) => { if (e && e.extra && !out.some(x => x.bell === +b)) out.push({ bell: +b, cls: e.cls, subj: e.subj, arr: !!e.arr, extra: true }); });
@@ -516,6 +520,7 @@ function vHome() {
     ${st.needs.length ? `<div class="card"><h3>Needs attention <small>${st.needs.length}</small></h3>${st.needs.map(k => `<div class="li"><span class="ph sm">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="">` : `<i>${esc(initials(k.name))}</i>`}</span><div class="t"><b>${esc(k.name)}</b><span>${esc(k.need.join(' · '))}</span></div></div>`).join('')}</div>` : ''}`;
   return `<div class="row"><h2>${fmtLong(d)}</h2></div>
     ${dayIdx(d) < 0 ? '<div class="ban hol">Sunday — no school today.</div>' : hol ? `<div class="ban hol"><b>Holiday:</b> ${esc(hol.title)}</div>` : ''}
+    ${typeof actBanner === 'function' ? actBanner(d) : ''}
     ${absentFrom(d, me()) !== null ? `<div class="ban warn">${absentFrom(d, me()) ? 'Half day today — you leave before the ' + BELLS[absentFrom(d, me())].n + ' bell.' : 'You are on leave / marked absent today.'}</div>` : ''}
     ${myWorkCard()}
     <div class="card quick-card"><div class="quick-grid">${quick.map(([t, l, i, p]) => `<button type="button" onclick='go(${JSON.stringify(t)},${JSON.stringify(p)})'><span>${ic(i)}</span>${l}${t === 'conn' && p.m === 'staff' && scUnread() ? `<em>${scUnread()}</em>` : ''}</button>`).join('')}</div></div>
@@ -856,6 +861,7 @@ function vStuReport(c, sid) {
       <div><b>${esc(s.name)}</b><small>Class ${esc(c)} · Roll ${esc(s.rollno || '—')}${s.father ? ' · ' + esc(s.father) : ''}</small>
       <div class="chips" style="margin-top:6px">${rank ? `<span class="pill">Rank ${rank} of ${ranked.length}</span>` : ''}${n.score !== null ? `<span class="pill ok">Overall ${n.score}%</span>` : ''}<span class="pill bad">⚠ ${n.bad}</span><span class="pill ok">👍 ${n.good}</span></div></div></div>
     ${stuProfile(s)}
+    ${typeof stuMore === 'function' ? stuMore(c, s, R) : ''}
     <div class="card"><h3>Compared with the class <small>since ${esc(fmtDate(R.from))}</small></h3>
       ${cmp('Attendance', n.att, A.att, R.attDays ? (R.attDays - x.a - x.l) + ' of ' + R.attDays + ' days' : '')}
       ${cmp('Homework', n.hw, A.hw, x.hwOf ? x.hw + ' done · ' + (x.not || 0) + ' not done' : 'no check yet')}

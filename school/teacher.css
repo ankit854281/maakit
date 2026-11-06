@@ -601,3 +601,7 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .bk-o .y.on{background:var(--ok);border-color:var(--ok);color:#fff}.bk-o .x.on{background:var(--bad);border-color:var(--bad);color:#fff}.bk-o.rec button{min-width:50px}
 .bk-r{flex-wrap:wrap}.bk-r .bk-o{display:grid!important;grid-template-columns:repeat(4,1fr);width:100%;gap:4px}.bk-r .bk-o.rec{grid-template-columns:1fr 1fr}
 .bk-r .bk-o button{display:block;width:100%;min-width:0;padding:7px 2px}
+/* ---- 6 Nov 2026 (2): special day, teachers, student log (teacher-more.js) ---- */
+.ban.act{background:linear-gradient(135deg,#FFF3D6,#FDE2F0);border:1px solid #F6C9A6;color:#6B2F0A}.ban.act b{font-size:13.5px}
+.rep-s{display:flex;flex-direction:column;gap:4px;max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.bk-o .l3.on{background:#DDF4E6;border-color:#22A55B;color:#14532D}
