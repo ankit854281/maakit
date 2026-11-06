@@ -177,6 +177,33 @@ public class MainActivity extends Activity {
     // The native save bridge is only exposed to school-origin pages; Android's
     // document picker controls the destination. It never accepts a filesystem path.
     public final class Reports {
+        // Certificates (owner, 6 Nov 2026): a PNG drawn by the school page is shared through Android's share sheet
+        // (WhatsApp, Drive, Gallery…). Only school-origin pages; the file goes to this app's own cache folder.
+        @JavascriptInterface public void shareImage(String filename, String encoded) {
+            if (encoded == null || encoded.length() > 9_000_000) return;
+            runOnUiThread(() -> {
+                if (!trusted(Uri.parse(web.getUrl() == null ? "" : web.getUrl()))) return;
+                try {
+                    byte[] bytes = Base64.decode(encoded, Base64.DEFAULT);
+                    if (bytes.length > 6_291_456) { toast("This picture is too large."); return; }
+                    String safe = (filename == null ? "certificate.png" : filename).replaceAll("[^a-zA-Z0-9._-]", "_");
+                    if (!safe.endsWith(".png")) safe += ".png";
+                    if (safe.length() > 90) safe = "certificate.png";
+                    File dir = new File(getCacheDir(), "share");
+                    if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create share cache");
+                    File f = new File(dir, safe);
+                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(f)) { out.write(bytes); }
+                    Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", f);
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType("image/png");
+                    send.putExtra(Intent.EXTRA_STREAM, uri);
+                    send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(send, "Share certificate"));
+                } catch (IOException | IllegalArgumentException | android.content.ActivityNotFoundException e) {
+                    toast("Could not share the picture.");
+                }
+            });
+        }
         @JavascriptInterface public void saveCsv(String filename, String encoded) {
             if (encoded == null || encoded.length() > 7_000_000) return;
             runOnUiThread(() -> {

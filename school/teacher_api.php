@@ -693,6 +693,66 @@ case 'dellog': {
     sch_rec_del('tchLog', $id, $uid); sch_json(['ok' => true]);
 }
 
+// ---- Competitions (owner, 6 Nov 2026: Rangoli + Diya making — PG–UKG, 1st–5th, 6th–10th; teachers choose their
+// children, alone or as a named group; positions; a certificate for each child and each group).
+// Kind tchComp: 'ev|<id>' = {id, title, date, cats[], secs[{name, classes[]}], by, at}   (Principal)
+//               'en|<event>|<id>' = {id, ev, cat, sec, cls, type: solo|group, name, sids[], pos: ''|1|2|3, by, tid, at}
+//               (any teacher of the children's class / Principal; positions: Principal or any teacher — judges)
+// Each entry also writes the children's activity log (tchLog 'act', title "<event> — <cat>") so it shows in their report.
+case 'comp': {
+    if ($method === 'GET') {
+        $ev = []; $en = [];
+        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+            if (str_starts_with((string)$row['r'], 'ev|')) $ev[] = $d; else $en[] = $d; }
+        usort($ev, fn($a, $b) => strcmp((string)($b['date'] ?? ''), (string)($a['date'] ?? '')));
+        sch_json(['ok' => true, 'events' => $ev, 'entries' => $en]);
+    }
+    $op = (string)($in['op'] ?? '');
+    $classes = array_column((array)sch_rec_get('classes', 'main'), 'c');
+    if ($op === 'event') {
+        if ($role !== 'principal') sch_fail('Only the Principal can create a competition.', 403);
+        $id = preg_match('/^e[a-f0-9]{6,20}$/', (string)($in['id'] ?? '')) ? $in['id'] : 'e' . bin2hex(random_bytes(6));
+        $title = tch_txt($in['title'] ?? '', 120); if ($title === '') sch_fail('Write the name of the competition.');
+        $date = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) sch_fail('Choose the date.');
+        $cats = tch_list($in['cats'] ?? [], 8, fn($x) => ($t = tch_txt($x, 40)) === '' ? null : $t); if (!$cats) sch_fail('Add at least one competition (e.g. Rangoli).');
+        $secs = tch_list($in['secs'] ?? [], 8, fn($x) => is_array($x) && ($n = tch_txt($x['name'] ?? '', 40)) !== '' ? ['name' => $n, 'classes' => array_values(array_intersect((array)($x['classes'] ?? []), $classes))] : null);
+        if (!$secs) sch_fail('Add at least one group of classes.');
+        $d = ['id' => $id, 'title' => $title, 'date' => $date, 'cats' => $cats, 'secs' => $secs, 'by' => $u['label'], 'at' => sch_now_ms()];
+        sch_rec_put('tchComp', "ev|$id", $d, $uid); sch_log($u, 'Competition', "Competition: $title ($date) — " . implode(', ', $cats));
+        sch_json(['ok' => true, 'event' => $d]);
+    }
+    if ($op === 'entry' || $op === 'pos' || $op === 'del') {
+        $evId = (string)($in['ev'] ?? ''); $ev = preg_match('/^e[a-f0-9]{6,20}$/', $evId) ? sch_rec_get('tchComp', "ev|$evId") : null; if (!$ev) sch_fail('Competition not found.', 404);
+        $id = (string)($in['id'] ?? ''); $old = preg_match('/^n[a-f0-9]{8,20}$/', $id) ? sch_rec_get('tchComp', "en|$evId|$id") : null;
+        if ($op !== 'entry' && !$old) sch_fail('Entry not found.', 404);
+        if ($op === 'entry') {
+            $cat = (string)($in['cat'] ?? ''); if (!in_array($cat, (array)$ev['cats'], true)) sch_fail('Choose the competition.');
+            $sids = array_values(array_unique(array_filter((array)($in['sids'] ?? []), 'is_string'))); if (!$sids || count($sids) > 20) sch_fail('Choose the children.');
+            $cls = ''; foreach ($sids as $sid) { $s = sch_rec_get('student', $sid); if (!$s) sch_fail('Student not found.'); if ($cls === '') $cls = (string)$s['cls']; if ((string)$s['cls'] !== $cls) sch_fail('A group must be from one class.'); }
+            if (!$canSee($cls)) sch_fail('You can choose only children of your own classes.', 403);
+            $sec = ''; foreach ((array)$ev['secs'] as $x) if (in_array($cls, (array)$x['classes'], true)) { $sec = $x['name']; break; } if ($sec === '') sch_fail("Class $cls is not in this competition.");
+            $type = count($sids) > 1 || ($in['type'] ?? '') === 'group' ? 'group' : 'solo'; $name = tch_txt($in['name'] ?? '', 60); if ($type === 'group' && $name === '') sch_fail('Write the group name.');
+            $id = $old ? $id : 'n' . bin2hex(random_bytes(6));
+            $d = ['id' => $id, 'ev' => $evId, 'cat' => $cat, 'sec' => $sec, 'cls' => $cls, 'type' => $type, 'name' => $name, 'sids' => $sids, 'pos' => (string)($old['pos'] ?? ''), 'by' => $u['label'], 'tid' => $role === 'teacher' ? $tid : 'P', 'at' => sch_now_ms()];
+        } elseif ($op === 'pos') {
+            if ($role !== 'principal' && $role !== 'teacher') sch_fail('Not allowed.', 403);
+            $pos = (string)($in['pos'] ?? ''); if (!in_array($pos, ['', '1', '2', '3'], true)) sch_fail('Bad position.');
+            $d = $old; $d['pos'] = $pos; $d['posBy'] = $u['label']; $d['at'] = sch_now_ms();
+        } else {
+            if ($role !== 'principal' && ($old['tid'] ?? '') !== $tid) sch_fail('Only the teacher who added it can remove it.', 403);
+            sch_rec_del('tchComp', "en|$evId|$id", $uid);
+            foreach ((array)$old['sids'] as $sid) { $k = 'act|' . $ev['date'] . '|' . $old['cls'] . '|' . $sid . '|' . substr(md5(mb_strtolower($ev['title'] . ' — ' . $old['cat'])), 0, 8); if (sch_rec_get('tchLog', $k)) sch_rec_del('tchLog', $k, $uid); }
+            sch_json(['ok' => true]);
+        }
+        sch_rec_put('tchComp', "en|$evId|$id", $d, $uid);
+        $lt = $ev['title'] . ' — ' . $d['cat'];
+        foreach ((array)$d['sids'] as $sid) sch_rec_put('tchLog', 'act|' . $ev['date'] . '|' . $d['cls'] . '|' . $sid . '|' . substr(md5(mb_strtolower($lt)), 0, 8),
+            ['sid' => $sid, 'cls' => $d['cls'], 'kind' => 'act', 'date' => $ev['date'], 'title' => $lt . ($d['type'] === 'group' ? ' (group ' . $d['name'] . ')' : ''), 'pos' => $d['pos'] === '' ? 'part' : $d['pos'], 'tid' => $d['tid'], 'by' => $u['label'], 'at' => sch_now_ms()], $uid);
+        sch_json(['ok' => true, 'entry' => $d]);
+    }
+    sch_fail('Bad request.');
+}
+
 case 'remark': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;
