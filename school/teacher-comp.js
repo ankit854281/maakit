@@ -213,12 +213,64 @@ async function certOpen(evId, id) {
   render(); certShow(evId, id, '');
 }
 async function certShow(evId, id, sid) {
-  const png = await certPNG(await certData(evId, id, sid)), box = document.querySelector('.cert-pv'); if (!box) return;
+  const o = await certData(evId, id, sid), png = await certPNG(o), box = document.querySelector('.cert-pv'); if (!box) return;
   const n = COMP.entries.find(z => z.id === id), fn = ('certificate-' + (sid ? (studentById(sid) || {}).name : n.type === 'group' ? 'team-' + n.name : (studentById(n.sids[0]) || {}).name) + '-' + n.cat).replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png';
-  window.__CERT = { png, fn };
-  box.innerHTML = `<img src="${png}" alt="Certificate" onclick="certFull()">` + (oldApp()
-    ? `<button class="btn wa full" onclick="certFull()">📸 Bada karke screenshot lein</button><p class="mut" style="margin:6px 0 0">Bada hone par phone ka screenshot lijiye aur WhatsApp par bhej dijiye. Print ke liye: Principal computer se “All certificates” dabayein.</p>`
-    : `<div class="btns"><button class="btn wa" onclick="certShare()">${ic('wa')} Share</button><a class="btn l" href="${png}" download="${esc(fn)}">Download</a><button class="btn w" onclick="certPrint([window.__CERT.png])">${ic('print')} Print</button></div>`);
+  window.__CERT = { png, fn, o };
+  const kids = (sid ? [sid] : n.sids).map(studentById).filter(Boolean), caps = certCaps(o), old = oldApp();
+  window.__CT = [...kids.map(k => certMsg(o, k)), ...caps];
+  box.innerHTML = `<img src="${png}" alt="Certificate" onclick="certFull()">
+    <div class="cs-step"><b>1 · Certificate bhejiye</b>${old
+      ? `<button class="btn wa full" onclick="certFull()">📸 Bada karke screenshot lein</button><small>Bada hone par phone ka screenshot lijiye, phir WhatsApp par bhejiye.</small>`
+      : `<div class="btns"><button class="btn wa" onclick="certShare()">${ic('wa')} Share</button><a class="btn l" href="${png}" download="${esc(fn)}">Download</a><button class="btn w" onclick="certPrint([window.__CERT.png])">${ic('print')} Print</button></div>`}</div>
+    <div class="cs-step"><b>2 · Parent ko message</b><small>Kisko: bachche ke mummy-papa ko (school record wala number). Pehle certificate bhejiye, phir yeh message.</small>
+      ${kids.map((k, i) => `<div class="cs-row"><div><b>${esc(k.name)}</b><small>${k.phone ? '📞 ' + esc(String(k.phone).slice(-10)) : 'Number save nahi hai'}</small></div>
+        ${k.phone && !old ? `<a class="btn wa s" target="_blank" rel="noopener" href="${wa(k.phone, window.__CT[i])}">${ic('wa')} Bhejo</a>` : ''}<button class="btn l s" onclick="certCopy(${i})">Copy</button></div>`).join('')}
+      <details class="cs-msg"><summary>Message dekhiye</summary><pre>${esc(window.__CT[0] || '')}</pre></details></div>
+    <div class="cs-step"><b>3 · WhatsApp Status / Story</b><small>Story wali photo banaiye → screenshot / share → WhatsApp → Status → photo chuniye → neeche ka caption paste kijiye.</small>
+      <button class="btn go full" onclick="certStoryOpen()">✨ Story photo banao</button>
+      ${caps.map((c, j) => `<div class="cs-cap"><p>${esc(c)}</p><button class="btn l s" onclick="certCopy(${kids.length + j})">Copy</button></div>`).join('')}</div>`;
+}
+function certCopy(i) { const t = (window.__CT || [])[i]; if (!t) return; const done = () => toast('Copy ho gaya — WhatsApp mein dabakar rakhiye → Paste.');
+  const fb = () => { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { toast('Copy nahi hua — message dabakar rakhiye aur copy kijiye.'); } ta.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb(); }
+const POSW = { 1: 'First', 2: 'Second', 3: 'Third' }, POSE = { 1: '🥇', 2: '🥈', 3: '🥉' };
+function certMsg(o, k) {
+  const by = `\n\n— ${myName()}\n${o.school}`, team = o.team ? ` ne *Team ${o.team}* ke saath` : ' ne';
+  return o.pos
+    ? `Namaste 🙏\nBadhai ho! 🎉 Aapke bachche *${k.name}* (Class ${o.cls})${team} *${o.event}* ki *${o.cat}* pratiyogita mein *${POSE[o.pos]} ${POSW[o.pos]} position* jeeti hai 🏆\nBachche ki mehnat aur creativity par poore school ko garv hai. Certificate saath mein bheja hai — ghar par zaroor shabashi dijiye 💐${by}`
+    : `Namaste 🙏\nAapke bachche *${k.name}* (Class ${o.cls})${team} *${o.event}* ki *${o.cat}* pratiyogita mein bahut sundar bhaag liya 🎨✨\nHar bachcha apne aap mein ek kalakaar hai — aise hi aage badhte rahein. Participation certificate saath mein bheja hai, ghar par zaroor shabashi dijiye 💐${by}`;
+}
+function certCaps(o) {
+  const nm = o.name, yr = o.year, tag = `#SNMSIS #${String(o.event).replace(/[^A-Za-z0-9]/g, '') || 'Diwali' + yr}`;
+  return o.pos ? [`🏆 Proud moment! ${nm} (Class ${o.cls}) ne ${o.cat} pratiyogita mein ${POSE[o.pos]} ${POSW[o.pos]} position jeeti! Mehnat + creativity = jeet ✨ ${tag}`,
+      `Jeet unki hoti hai jo dil se mehnat karte hain 💪 Bahut bahut badhai ${nm}! 🎉 — ${o.school}`,
+      `🪔 Chhote haath, bade sapne! ${o.event} mein hamare ${nm} ka kamaal 🌟 ${tag}`]
+    : [`🎨 Har bachcha ek kalakaar! ${nm} ne ${o.cat} pratiyogita mein sundar bhaag liya ✨ ${tag}`,
+      `Jeetna zaroori nahi, koshish karna zaroori hai 🌟 Shabash ${nm}! — ${o.school}`,
+      `🪔 Diwali ki roshni, bachchon ki creativity — ${o.event} ki khoobsurat yaadein 💛 ${tag}`];
+}
+async function certStory(png, o) {
+  await certFont(); const W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+  const diya = /diya|deep|dip|lamp/i.test(o.cat), a = diya ? '#7C2D12' : '#4C1D95', b = diya ? '#EA580C' : '#BE185D';
+  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, a); g.addColorStop(1, b); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.save(); x.globalAlpha = .12; cMandala(x, W, 0, 360, ['#fff', '#fff', '#fff', '#fff', '#fff']); cMandala(x, 0, H, 420, ['#fff', '#fff', '#fff', '#fff', '#fff']); x.restore();
+  cToran(x, 0, W, 0);
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(W / 2, 230, 70, 0, 7); x.fill(); if (LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, W / 2 - 60, 170, 120, 120);
+  x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = '600 34px ' + PF; x.fillText(o.school, W / 2, 352);
+  x.fillStyle = '#FDE68A'; x.font = '700 76px ' + PF; cSpaced(x, o.pos ? 'PROUD MOMENT' : 'SHABASH!', W / 2, 480, 6);
+  const im = await loadImg(png), cw = 1000, ch = cw * im.height / im.width; x.save(); x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 40; x.drawImage(im, (W - cw) / 2, 560, cw, ch); x.restore();
+  let y = 560 + ch + 175; x.fillStyle = '#fff'; let ns = 110; x.font = `${ns}px GreatVibes, cursive`; while (x.measureText(o.name).width > W - 120 && ns > 60) { ns -= 6; x.font = `${ns}px GreatVibes, cursive`; } x.fillText(o.name, W / 2, y);
+  y += 90; const chip = o.pos ? `${POSE[o.pos]} ${POSW[o.pos]} Position · ${o.cat}` : `🎨 ${o.cat} · Participant`; x.font = '600 38px ' + PF; const w = x.measureText(chip).width + 80;
+  x.fillStyle = 'rgba(255,255,255,.95)'; cRound(x, W / 2 - w / 2, y - 50, w, 76, 38); x.fill(); x.fillStyle = a; x.fillText(chip, W / 2, y);
+  y += 110; x.fillStyle = '#fff'; x.font = 'italic 500 40px ' + PF; wrapText(x, o.pos ? '“Mehnat aur creativity ki jeet!”' : '“Har bachcha ek kalakaar hai.”', W - 160).forEach(l => { x.fillText(l, W / 2, y); y += 54; });
+  x.font = '500 30px ' + PF; x.fillStyle = 'rgba(255,255,255,.85)'; x.fillText(`${o.event} · ${o.date}`, W / 2, H - 120);
+  return cv.toDataURL('image/png');
+}
+async function certStoryOpen() {
+  const c = window.__CERT; if (!c) return; toast('Story photo ban rahi hai…'); const st = await certStory(c.png, c.o), sfn = c.fn.replace(/\.png$/, '-story.png');
+  if (!oldApp()) { if (window.SNMSISFiles && SNMSISFiles.shareImage) return SNMSISFiles.shareImage(sfn, st.split(',')[1]);
+    try { const f = new File([await (await fetch(st)).blob()], sfn, { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [f] })) return await navigator.share({ files: [f] }); } catch (e) { if (e && e.name === 'AbortError') return; } }
+  certFull(st);
 }
 async function certShare() {
   const c = window.__CERT; if (!c) return;
@@ -231,10 +283,10 @@ async function certShare() {
 // The installed Teacher App 1.0 cannot hand a picture to WhatsApp (no share bridge, links blocked). Owner, 6 Nov 2026:
 // teachers must NOT have to download a new app — so the certificate opens full screen for a phone screenshot instead.
 function oldApp() { return !!(window.SNMSISFiles && !SNMSISFiles.shareImage); }
-function certFull() {
-  const c = window.__CERT; if (!c) return; let o = $('certFull'); if (o) o.remove();
+function certFull(src) {
+  const c = window.__CERT; if (!c) return; const img = typeof src === 'string' ? src : c.png; let o = $('certFull'); if (o) o.remove();
   o = document.createElement('div'); o.id = 'certFull'; o.className = 'cert-full'; o.onclick = () => o.remove();
-  o.innerHTML = `<img src="${c.png}" alt="Certificate"><div class="cf-tip">Ab screenshot lijiye 📸 · band karne ke liye tap karein</div>`;
+  o.innerHTML = `<img src="${img}" alt="Certificate"><div class="cf-tip">Ab screenshot lijiye 📸 · band karne ke liye tap karein</div>`;
   document.body.appendChild(o); setTimeout(() => { const t = o.querySelector('.cf-tip'); if (t) t.classList.add('gone'); }, 2600);
 }
 function certPrint(list) { let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }

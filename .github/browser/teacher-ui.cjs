@@ -656,6 +656,9 @@ const path = require('node:path');
     await page.locator('.cert-pv .btn.wa').filter({ hasText: 'screenshot' }).click();
     await page.locator('#certFull img').waitFor();
     await page.locator('#certFull').click();
+    await page.locator('.cs-step').filter({ hasText: 'Parent ko message' }).locator('button').filter({ hasText: 'Copy' }).first().waitFor();
+    await page.locator('.cs-step .btn.go').filter({ hasText: 'Story photo' }).click();
+    await page.locator('#certFull img').waitFor(); await page.locator('#certFull').click();
     await page.evaluate(() => { delete window.SNMSISFiles; });
     await page.evaluate(() => { SHEET = null; go('pdash'); });
     await page.locator('.cp-dash').filter({ hasText: 'Abhi team nahi bani' }).waitFor();   // Principal dashboard card
