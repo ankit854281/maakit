@@ -14,7 +14,7 @@ require __DIR__ . '/inc.php';
 function cert_limit(): void {
     $f = sys_get_temp_dir() . '/sncert_' . md5(sch_ip()); $now = time(); $L = [];
     if (is_file($f)) { $L = array_values(array_filter((array)json_decode((string)@file_get_contents($f), true), fn($t) => is_int($t) && $t > $now - 3600)); }
-    if (count($L) >= 25) sch_fail('Bahut baar koshish ho gayi. Thodi der baad try karein.', 429);
+    if (count($L) >= 25) sch_fail('Too many attempts. Please try again later.', 429);
     $L[] = $now; @file_put_contents($f, json_encode($L), LOCK_EX);
 }
 function cert_rows(PDO $db): array {
@@ -61,12 +61,12 @@ try {
     }
     if ($a === 'find' && $method === 'POST') {
         $in = json_decode((string)file_get_contents('php://input', false, null, 0, 2000), true);
-        $mob = sch_phone10((string)($in['mobile'] ?? '')); if ($mob === '') sch_fail('10 ank ka mobile number likhiye.');
+        $mob = sch_phone10((string)($in['mobile'] ?? '')); if ($mob === '') sch_fail('Please enter a 10-digit mobile number.');
         cert_limit();
-        $kids = sch_children($mob); if (!$kids) sch_fail('Is number se koi bachcha nahi mila. Naam likh kar dhoondhiye, ya class teacher se sampark karein.', 404);
+        $kids = sch_children($mob); if (!$kids) sch_fail('No student is registered with this mobile number. Please search by name or contact the class teacher.', 404);
         sch_json(['ok' => true, 'ids' => array_values(array_map(fn($k) => (string)($k['id'] ?? ''), $kids))]);
     }
     sch_fail('Bad request.');
 } catch (Throwable $e) {
-    error_log('cert_api: ' . $e->getMessage()); sch_fail('Server problem. Thodi der baad try karein.', 500);
+    error_log('cert_api: ' . $e->getMessage()); sch_fail('Server error. Please try again later.', 500);
 }

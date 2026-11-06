@@ -18,7 +18,7 @@ const clsIx = c => { const i = ORDER.indexOf(c); return i < 0 ? 99 : i; };
   D.entries.forEach(n => n.sids.forEach(sid => { const k = D.names[sid]; if (k) ROWS.push({ sid, n, name: k.name, cls: k.cls }); }));
   ROWS.sort((a, b) => clsIx(a.cls) - clsIx(b.cls) || a.name.localeCompare(b.name));
   const cl = [...new Set(ROWS.map(r => r.cls))].sort((a, b) => clsIx(a) - clsIx(b));
-  $('cls').innerHTML = ['', ...cl].map(c => `<button type="button" data-cls="${esc(c)}" class="${c === CLS ? 'on' : ''}">${c ? esc(c) : 'Sab'}</button>`).join('');
+  $('cls').innerHTML = ['', ...cl].map(c => `<button type="button" data-cls="${esc(c)}" class="${c === CLS ? 'on' : ''}">${c ? esc(c) : 'All'}</button>`).join('');
   gallery(); list();
 })();
 async function photo(n, w) { const k = n.ev.id + '|' + n.id + '|' + (w ? 1 : 0); if (PH[k] !== undefined) return PH[k]; try { PH[k] = (await get(`cert_api.php?a=ph&k=${encodeURIComponent(n.ev.id + '|' + n.id)}${w ? '&w=1' : ''}`)).data || ''; } catch (e) { PH[k] = ''; } return PH[k]; }
@@ -33,9 +33,9 @@ function gallery() {
 function list() {
   const q = $('q').value.trim().toLowerCase(); if ($('gal').dataset.ok) $('gal').hidden = !!(q || IDS || CLS);
   const L = ROWS.filter(r => (!CLS || r.cls === CLS) && (IDS ? IDS.includes(r.sid) : (!q || r.name.toLowerCase().includes(q) || (r.n.team || '').toLowerCase().includes(q))));
-  $('res').innerHTML = `<p class="cnt">${L.length} certificate${IDS ? ' — is number ke bachche' : ''}</p>` + L.slice(0, 120).map(r => `<div class="card row" data-sid="${esc(r.sid)}" data-id="${esc(r.n.id)}">
+  $('res').innerHTML = `<p class="cnt">${L.length} certificate${L.length === 1 ? '' : 's'}${IDS ? ' for this mobile number' : ''}</p>` + L.slice(0, 120).map(r => `<div class="card row" data-sid="${esc(r.sid)}" data-id="${esc(r.n.id)}">
       <div class="rh"><span class="av" data-av="${esc(r.sid)}">${esc(certInitials(r.name))}</span><div><b>${esc(r.name)}</b><small>Class ${esc(r.cls)} · ${esc(r.n.cat)}${r.n.team ? ' · Team ' + esc(r.n.team) : ''}</small></div><em>${r.n.pos ? MEDAL[r.n.pos] : '🎖️'}</em></div>
-      <div class="pv"></div><button class="open">🎓 Certificate dekho</button></div>`).join('') + (L.length > 120 ? '<p class="cnt">Aur dekhne ke liye naam likhiye.</p>' : '') + (!L.length ? '<p class="cnt">Koi nahi mila. Naam ki spelling badal kar dekhiye.</p>' : '');
+      <div class="pv"></div><button class="open">🎓 View certificate</button></div>`).join('') + (L.length > 120 ? '<p class="cnt">Type a name to see more.</p>' : '') + (!L.length ? '<p class="cnt">No match found. Please check the spelling.</p>' : '');
   document.querySelectorAll('[data-av]').forEach(async el => { const s = await kid(el.dataset.av); if (s) el.innerHTML = `<img src="${s}" alt="">`; });
 }
 function dataOf(r, kids, ph, pw) {
@@ -50,35 +50,38 @@ async function make(r) {
   return (PNG[key] = await certPNG(dataOf(r, kids, r.n.photo ? await photo(r.n, false) : '', r.n.photoW ? await photo(r.n, true) : '')));
 }
 function rowOf(el) { return ROWS.find(x => x.sid === el.dataset.sid && x.n.id === el.dataset.id); }
-function textOf(r) { return `🌟 I achieved this! 🌟\n${r.name} (Class ${r.cls}) ko ${r.n.ev.title} ki ${r.n.cat} pratiyogita mein ${r.n.pos ? POSN[r.n.pos] + ' Position 🏆' : 'participation certificate 🎉'} mila!\n${D.school}\n\nApna certificate yahan dekhiye 👉 ${LINK}`; }
+function textOf(r) { return `🌟 I achieved this! 🌟
+${r.name} (Class ${r.cls}) has received ${r.n.pos ? 'the ' + POSN[r.n.pos] + ' Position 🏆' : 'a Certificate of Participation 🎉'} in ${r.n.cat} at the ${r.n.ev.title}, ${D.school}.
+
+View your child's certificate here 👉 ${LINK}`; }
 function copyText(t) { try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).catch(() => fbCopy(t)); return; } } catch (e) {} fbCopy(t); }
 function fbCopy(t) { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); }
 function say(m) { let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); } t.textContent = m; t.classList.add('on'); clearTimeout(say.t); say.t = setTimeout(() => t.classList.remove('on'), 5000); }
-function full(src) { const o = document.createElement('div'); o.className = 'full'; o.innerHTML = `<img src="${src}" alt=""><small>Band karne ke liye tap karein</small>`; o.onclick = () => o.remove(); document.body.appendChild(o); }
+function full(src) { const o = document.createElement('div'); o.className = 'full'; o.innerHTML = `<img src="${src}" alt=""><small>Tap to close</small>`; o.onclick = () => o.remove(); document.body.appendChild(o); }
 
 let T0 = 0;
 $('q').addEventListener('input', () => { clearTimeout(T0); const v = $('q').value.replace(/\D/g, ''); IDS = null; $('msg').textContent = '';
   if (v.length >= 10 && /^[\d\s+()-]+$/.test($('q').value.trim())) T0 = setTimeout(findMobile, 300); else T0 = setTimeout(list, 120); });
 $('f').addEventListener('submit', e => { e.preventDefault(); const v = $('q').value.replace(/\D/g, ''); if (v.length >= 10) findMobile(); else list(); $('q').blur(); setTimeout(() => $('res').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); });
 async function findMobile() {
-  const m = $('q').value.replace(/\D/g, '').slice(-10); $('msg').textContent = 'Dhoondh rahe hain…';
+  const m = $('q').value.replace(/\D/g, '').slice(-10); $('msg').textContent = 'Searching…';
   try { const r = await fetch('cert_api.php?a=find', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m }) }), j = await r.json().catch(() => null);
-    if (!r.ok || !j || !j.ok) { $('msg').textContent = (j && j.error) || 'Server problem.'; IDS = []; } else { IDS = j.ids; $('msg').textContent = ''; } } catch (e) { $('msg').textContent = 'Internet nahi hai.'; IDS = null; }
+    if (!r.ok || !j || !j.ok) { $('msg').textContent = (j && j.error) || 'Server problem.'; IDS = []; } else { IDS = j.ids; $('msg').textContent = ''; } } catch (e) { $('msg').textContent = 'No internet connection. Please try again.'; IDS = null; }
   list();
 }
 document.addEventListener('click', async e => {
   const c = e.target.closest('#cls button'); if (c) { CLS = c.dataset.cls; document.querySelectorAll('#cls button').forEach(b => b.classList.toggle('on', b === c)); list(); return; }
   const b = e.target.closest('.row button'); if (!b) return; const card = b.closest('.row'), r = rowOf(card); if (!r) return;
   const fn = ('certificate-' + r.name + '-' + r.n.cat).replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png';
-  if (b.classList.contains('open')) { b.disabled = true; b.textContent = 'Ban raha hai…'; const png = await make(r);
-    card.querySelector('.pv').innerHTML = `<img src="${png}" alt="Certificate">`; b.outerHTML = `<div class="bt"><button class="wa" data-a="share">💬 WhatsApp / Share</button><button data-a="dl">⬇️ Download</button><button data-a="cp">📋 Message copy</button></div><p class="hint">Photo ke saath message bhi jaata hai. Agar WhatsApp mein message na dikhe to wahan dabakar <b>Paste</b> kijiye — message pehle se copy hai.</p>`;
+  if (b.classList.contains('open')) { b.disabled = true; b.textContent = 'Preparing…'; const png = await make(r);
+    card.querySelector('.pv').innerHTML = `<img src="${png}" alt="Certificate">`; b.outerHTML = `<div class="bt"><button class="wa" data-a="share">💬 WhatsApp / Share</button><button data-a="dl">⬇️ Download</button><button data-a="cp">📋 Copy message</button></div><p class="hint">The certificate is shared as an image with a message. If the message does not appear in WhatsApp, long-press the text box and tap <b>Paste</b> — it is already copied.</p>`;
     card.querySelector('.pv img').onclick = () => full(png); return; }
   const a = b.dataset.a, png = await make(r);
   // the image itself + the message as caption (owner: "image share ho, message ke saath — link nahi"); the message is also copied in case an app drops it
   const txt = textOf(r); copyText(txt);
-  if (a === 'cp') { say('Message copy ho gaya — WhatsApp mein dabakar Paste kijiye.'); return; }
+  if (a === 'cp') { say('Message copied. Long-press in WhatsApp and tap Paste.'); return; }
   if (a === 'share') { try { const f = new File([await (await fetch(png)).blob()], fn, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text: txt }); return; } } catch (er) { if (er && er.name === 'AbortError') return; }
-    say('Is browser se photo seedha share nahi hoti — certificate download ho gaya. Gallery se WhatsApp par bhejiye; message copy hai, Paste kar dijiye. (Chrome mein link kholne se seedha share hota hai.)'); }
+    say('This browser cannot share images directly, so the certificate has been downloaded. Share it from your gallery — the message is already copied. Tip: open this link in Chrome to share in one tap.'); }
   const l = document.createElement('a'); l.href = png; l.download = fn; document.body.appendChild(l); l.click(); l.remove();
 });
