@@ -85,57 +85,117 @@ function compThumbs() { document.querySelectorAll('img[data-ph]').forEach(async 
 
 // ---------------------------------------------------------------- certificates (drawn on a canvas → PNG)
 let CERT_FONT = null;
-function certFont() { if (!CERT_FONT) CERT_FONT = (window.FontFace ? new FontFace('GreatVibes', 'url(fonts/great-vibes.woff2)').load().then(f => { document.fonts.add(f); }) : Promise.resolve()).catch(() => {}); return CERT_FONT; }
+function certFont() { if (!CERT_FONT) CERT_FONT = Promise.all([window.FontFace ? new FontFace('GreatVibes', 'url(fonts/great-vibes.woff2)').load().then(f => { document.fonts.add(f); }) : 0, ...['400', '500', '600', '700'].map(w => document.fonts ? document.fonts.load(w + ' 20px Poppins') : 0)]).catch(() => {}); return CERT_FONT; }
 function certNo(evDate, id, sid) { let h = 0; for (const ch of id + '|' + (sid || 'T')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return 'SNMSIS/' + String(evDate).slice(0, 4) + '/' + h.toString(36).toUpperCase().padStart(7, '0').slice(-7); }
 const LOGO_IMG = new Image(); LOGO_IMG.src = 'img/snmsis-logo.png';
 function loadImg(src) { return new Promise(ok => { if (!src) return ok(null); const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
 function wrapText(x, text, maxW) { const w = String(text).split(' '), out = []; let l = ''; w.forEach(t => { const tt = l ? l + ' ' + t : t; if (x.measureText(tt).width > maxW && l) { out.push(l); l = t; } else l = tt; }); if (l) out.push(l); return out; }
+// Modern festive certificate (owner, 6 Nov 2026: "old version lag raha hai, competition se related kuchh nahi dikh raha,
+// logo/design attractive, digital sign chhota aur professional"). Left panel = the competition (rangoli mandala / diya or the
+// team's real photo) + position; right = text; small signatures, small seal, marigold toran on top.
+const PF = '"Poppins", Arial, sans-serif';
+function cMandala(x, cx, cy, R, cols) {
+  x.save(); x.translate(cx, cy);
+  [[16, 1, .30, 0], [12, .78, .26, .13], [8, .55, .24, 0], [8, .34, .22, .2]].forEach(([n, rr, w, off], li) => {
+    x.fillStyle = cols[li % cols.length];
+    for (let i = 0; i < n; i++) { x.save(); x.rotate(i * Math.PI * 2 / n + off); x.beginPath(); x.ellipse(0, -R * rr * .62, R * w * rr * .55, R * rr * .38, 0, 0, Math.PI * 2); x.fill(); x.restore(); }
+  });
+  x.fillStyle = cols[4] || '#fff'; for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; x.beginPath(); x.arc(Math.cos(a) * R * 1.02, Math.sin(a) * R * 1.02, R * .035, 0, 7); x.fill(); }
+  x.fillStyle = cols[0]; x.beginPath(); x.arc(0, 0, R * .16, 0, 7); x.fill(); x.fillStyle = cols[4] || '#fff'; x.beginPath(); x.arc(0, 0, R * .07, 0, 7); x.fill();
+  x.restore();
+}
+function cDiya(x, cx, cy, s) {
+  x.save(); x.translate(cx, cy);
+  const gl = x.createRadialGradient(0, -s * .75, 0, 0, -s * .75, s * 1.1); gl.addColorStop(0, 'rgba(255,214,90,.55)'); gl.addColorStop(1, 'rgba(255,214,90,0)'); x.fillStyle = gl; x.beginPath(); x.arc(0, -s * .75, s * 1.1, 0, 7); x.fill();
+  const fl = x.createLinearGradient(0, -s * 1.25, 0, -s * .2); fl.addColorStop(0, '#FFF3B0'); fl.addColorStop(.5, '#FFB300'); fl.addColorStop(1, '#FF5A1F'); x.fillStyle = fl;
+  x.beginPath(); x.moveTo(0, -s * 1.3); x.bezierCurveTo(s * .32, -s * .8, s * .22, -s * .28, 0, -s * .25); x.bezierCurveTo(-s * .22, -s * .28, -s * .32, -s * .8, 0, -s * 1.3); x.fill();
+  const bw = x.createLinearGradient(0, -s * .25, 0, s * .45); bw.addColorStop(0, '#F59E0B'); bw.addColorStop(1, '#9A3412'); x.fillStyle = bw;
+  x.beginPath(); x.moveTo(-s, -s * .22); x.quadraticCurveTo(-s * .9, s * .5, 0, s * .5); x.quadraticCurveTo(s * .9, s * .5, s * 1.15, -s * .3); x.quadraticCurveTo(s * .4, -s * .05, -s, -s * .22); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.55)'; for (let i = -2; i <= 2; i++) { x.beginPath(); x.arc(i * s * .3, s * .14, s * .055, 0, 7); x.fill(); }
+  x.restore();
+}
+function cToran(x, x0, x1, y) {
+  const n = 9, w = (x1 - x0) / n;
+  for (let i = 0; i < n; i++) { const a = x0 + i * w, b = a + w;
+    for (let k = 0; k <= 8; k++) { const t = k / 8, px = a + (b - a) * t, py = y + Math.sin(Math.PI * t) * 26;
+      x.fillStyle = k % 2 ? '#F59E0B' : '#F97316'; x.beginPath(); x.arc(px, py, 8, 0, 7); x.fill(); }
+    x.fillStyle = '#15803D'; x.beginPath(); x.ellipse(a + w / 2, y + 44, 7, 15, 0, 0, 7); x.fill(); x.fillStyle = '#F97316'; x.beginPath(); x.arc(a + w / 2, y + 64, 7, 0, 7); x.fill(); }
+}
+function cRound(x, X, Y, W, H, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + W, Y, X + W, Y + H, r); x.arcTo(X + W, Y + H, X, Y + H, r); x.arcTo(X, Y + H, X, Y, r); x.arcTo(X, Y, X + W, Y, r); x.closePath(); }
+function cSpaced(x, t, cx, y, sp) { if ('letterSpacing' in x) { x.letterSpacing = sp + 'px'; x.fillText(t, cx + sp / 2, y); x.letterSpacing = '0px'; } else x.fillText(t, cx, y); }
 async function certPNG(o) {
   await certFont();
   const W = 1600, H = 1130, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
-  const win = !!o.pos, gold = '#C8901E', ink = '#17324D', acc = win ? '#B45309' : '#1D4ED8';
-  x.fillStyle = '#FFFDF6'; x.fillRect(0, 0, W, H);
-  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#F2A93B'); g.addColorStop(.5, '#E3417F'); g.addColorStop(1, '#6366F1');
-  x.fillStyle = g; x.fillRect(0, 0, W, 26); x.fillRect(0, H - 26, W, 26); x.fillRect(0, 0, 26, H); x.fillRect(W - 26, 0, 26, H);
-  x.strokeStyle = gold; x.lineWidth = 4; x.strokeRect(50, 50, W - 100, H - 100); x.lineWidth = 1.5; x.strokeRect(62, 62, W - 124, H - 124);
-  if (LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, W / 2 - 70, 82, 140, 140);
-  x.textAlign = 'center'; x.fillStyle = ink; x.font = '700 40px Georgia, serif'; x.fillText(o.school || '', W / 2, 262);
-  x.font = '22px Arial'; x.fillStyle = '#5B6782'; x.fillText(o.place || 'Bhadohi, Uttar Pradesh', W / 2, 296);
-  x.fillStyle = acc; x.font = '700 58px Georgia, serif'; x.fillText(win ? 'CERTIFICATE OF ACHIEVEMENT' : 'CERTIFICATE OF PARTICIPATION', W / 2, 390);
-  x.fillStyle = '#5B6782'; x.font = 'italic 28px Georgia, serif'; x.fillText(o.team && !o.member ? 'This is proudly presented to the team' : 'This is proudly presented to', W / 2, 452);
-  x.fillStyle = ink; x.font = '700 66px Georgia, serif'; x.fillText(o.name, W / 2, 540);
-  x.strokeStyle = gold; x.lineWidth = 2; x.beginPath(); x.moveTo(W / 2 - 360, 560); x.lineTo(W / 2 + 360, 560); x.stroke();
-  let y = 606; x.font = '26px Arial'; x.fillStyle = '#334155';
-  if (o.members) { wrapText(x, 'Members: ' + o.members, 1150).forEach(l => { x.fillText(l, W / 2, y); y += 36; }); }
-  const line = `${o.cls ? 'of Class ' + o.cls + ' ' : ''}${o.member && o.team ? 'as a member of Team ' + o.team + ' ' : ''}${win ? 'for winning ' + ({ 1: 'FIRST', 2: 'SECOND', 3: 'THIRD' })[o.pos] + ' POSITION' : 'for taking part'} in the ${o.cat} competition (${o.sec})`;
-  x.font = '30px Georgia, serif'; x.fillStyle = ink; wrapText(x, line, 1200).forEach(l => { x.fillText(l, W / 2, y + 14); y += 42; });
-  x.font = '26px Arial'; x.fillStyle = '#5B6782'; x.fillText(`${o.event} · ${o.date}`, W / 2, y + 30);
-  if (win) { x.beginPath(); x.arc(250, 770, 84, 0, Math.PI * 2); x.fillStyle = o.pos === '1' ? '#F5C842' : o.pos === '2' ? '#CBD5E1' : '#E3A06B'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#fff'; x.stroke();
-    x.fillStyle = ink; x.font = '700 72px Georgia, serif'; x.fillText(o.pos, 250, 788); x.font = '700 22px Arial'; x.fillText(({ 1: 'FIRST', 2: 'SECOND', 3: 'THIRD' })[o.pos], 250, 822); }
-  const ph = await loadImg(o.photo); if (ph) { const s = Math.min(250 / ph.width, 170 / ph.height), w = ph.width * s, h = ph.height * s; x.save(); x.translate(W - 260, 800); x.rotate(.04); x.fillStyle = '#fff'; x.fillRect(-w / 2 - 10, -h / 2 - 10, w + 20, h + 46); x.drawImage(ph, -w / 2, -h / 2, w, h); x.fillStyle = '#5B6782'; x.font = '18px Arial'; x.fillText(o.cat, 0, h / 2 + 26); x.restore(); }
-  // signatures: Class Teacher (left) · Principal, digitally signed in script (right)
-  x.strokeStyle = '#94A3B8'; x.lineWidth = 2;
-  [[360, o.teacher, 'Class Teacher'], [W - 360, o.principal, 'Principal']].forEach(([cx, n, r]) => {
+  const diya = /diya|deep|dip|lamp/i.test(o.cat), win = !!o.pos, PW = 470;
+  const th = diya ? { a: '#7C2D12', b: '#C2410C', acc: '#EA580C' } : { a: '#4C1D95', b: '#BE185D', acc: '#DB2777' };
+  const gold = '#C99A2E', ink = '#1E1B4B', mut = '#6B7280';
+  // background + frame
+  x.fillStyle = '#FFFCF5'; x.fillRect(0, 0, W, H);
+  // left panel
+  const lg = x.createLinearGradient(0, 0, PW, H); lg.addColorStop(0, th.a); lg.addColorStop(1, th.b); x.fillStyle = lg; x.fillRect(0, 0, PW, H);
+  x.save(); x.globalAlpha = .13; cMandala(x, PW / 2, H - 40, 330, ['#fff', '#fff', '#fff', '#fff', '#fff']); cMandala(x, -20, 120, 160, ['#fff', '#fff', '#fff', '#fff', '#fff']); x.restore();
+  // logo + school
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(PW / 2, 128, 74, 0, 7); x.fill(); x.strokeStyle = gold; x.lineWidth = 4; x.stroke();
+  if (LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, PW / 2 - 62, 66, 124, 124);
+  x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = '600 25px ' + PF; let ly = 248; wrapText(x, o.school || '', PW - 70).forEach(l => { x.fillText(l, PW / 2, ly); ly += 34; });
+  x.font = '400 17px ' + PF; x.fillStyle = 'rgba(255,255,255,.75)'; x.fillText(o.place || 'Bhadohi, Uttar Pradesh', PW / 2, ly + 2);
+  // the competition: real photo, else the drawing
+  const ph = await loadImg(o.photo), cy = 610;
+  if (ph) { const s = Math.min(300 / ph.width, 300 / ph.height), w = ph.width * s, h = ph.height * s; x.save(); x.translate(PW / 2, cy); x.rotate(-.035);
+    x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 24; x.fillStyle = '#fff'; x.fillRect(-w / 2 - 12, -h / 2 - 12, w + 24, h + 58); x.shadowBlur = 0; x.drawImage(ph, -w / 2, -h / 2, w, h);
+    x.fillStyle = '#374151'; x.font = '500 18px ' + PF; x.fillText(o.team ? 'Team ' + o.team : o.cat, 0, h / 2 + 32); x.restore(); }
+  else { x.fillStyle = 'rgba(255,255,255,.12)'; x.beginPath(); x.arc(PW / 2, cy, 165, 0, 7); x.fill();
+    if (diya) { cDiya(x, PW / 2 - 70, cy + 55, 46); cDiya(x, PW / 2 + 70, cy + 55, 46); cDiya(x, PW / 2, cy + 20, 70); }
+    else cMandala(x, PW / 2, cy, 135, ['#F472B6', '#FBBF24', '#34D399', '#60A5FA', '#FFFFFF']); }
+  // competition name
+  x.fillStyle = '#FDE68A'; x.font = '700 30px ' + PF; cSpaced(x, String(o.cat).toUpperCase(), PW / 2, 868, 3);
+  x.fillStyle = '#fff'; x.font = '500 19px ' + PF; x.fillText('COMPETITION · ' + o.sec, PW / 2, 900);
+  // position ribbon
+  const rl = win ? ({ 1: '1ST POSITION', 2: '2ND POSITION', 3: '3RD POSITION' })[o.pos] : 'PARTICIPANT', rc = win ? (o.pos === '1' ? ['#FDE68A', '#D97706'] : o.pos === '2' ? ['#F1F5F9', '#94A3B8'] : ['#FED7AA', '#C2410C']) : ['#FFFFFF', '#E5E7EB'];
+  const rg = x.createLinearGradient(0, 950, 0, 1010); rg.addColorStop(0, rc[0]); rg.addColorStop(1, rc[1]); x.fillStyle = rg; cRound(x, PW / 2 - 140, 948, 280, 60, 30); x.fill();
+  x.fillStyle = win ? '#3B1F00' : th.a; x.font = '700 22px ' + PF; x.fillText((win ? ['', '🥇', '🥈', '🥉'][+o.pos] + ' ' : '') + rl, PW / 2, 987);
+  // right side
+  const cx = PW + (W - PW) / 2, RW = W - PW;
+  x.strokeStyle = gold; x.lineWidth = 3; x.strokeRect(PW + 30, 30, RW - 60, H - 60); x.lineWidth = 1; x.strokeRect(PW + 40, 40, RW - 80, H - 80);
+  cToran(x, PW + 40, W - 40, 40);
+  x.save(); x.globalAlpha = .9; cMandala(x, W - 40, H - 40, 120, diya ? ['#FDBA74', '#FCD34D', '#FB923C', '#FDE68A', '#fff'] : ['#F9A8D4', '#FCD34D', '#A7F3D0', '#BFDBFE', '#fff']); x.restore();
+  x.fillStyle = ink; x.font = '700 84px ' + PF; cSpaced(x, 'CERTIFICATE', cx, 252, 14);
+  const bt = win ? 'OF ACHIEVEMENT' : 'OF PARTICIPATION'; x.font = '600 24px ' + PF; const bw = ('letterSpacing' in x ? x.measureText(bt).width + bt.length * 6 : x.measureText(bt).width) + 80;
+  const bg = x.createLinearGradient(cx - bw / 2, 0, cx + bw / 2, 0); bg.addColorStop(0, th.a); bg.addColorStop(1, th.b); x.fillStyle = bg; cRound(x, cx - bw / 2, 280, bw, 48, 24); x.fill();
+  x.fillStyle = '#fff'; cSpaced(x, bt, cx, 313, 6);
+  x.fillStyle = mut; x.font = '400 22px ' + PF; x.fillText(o.team && !o.member ? 'This certificate is proudly presented to the team' : 'This certificate is proudly presented to', cx, 402);
+  let ns = 104; x.font = `${ns}px GreatVibes, "Brush Script MT", cursive`; while (x.measureText(o.name).width > RW - 200 && ns > 60) { ns -= 6; x.font = `${ns}px GreatVibes, "Brush Script MT", cursive`; }
+  x.fillStyle = th.a; x.fillText(o.name, cx, 522);
+  const lw = Math.min(RW - 220, Math.max(380, x.measureText(o.name).width + 60)), ug = x.createLinearGradient(cx - lw / 2, 0, cx + lw / 2, 0); ug.addColorStop(0, 'rgba(201,154,46,0)'); ug.addColorStop(.5, gold); ug.addColorStop(1, 'rgba(201,154,46,0)');
+  x.strokeStyle = ug; x.lineWidth = 3; x.beginPath(); x.moveTo(cx - lw / 2, 552); x.lineTo(cx + lw / 2, 552); x.stroke();
+  let y = 610; x.fillStyle = '#374151';
+  if (o.members) { x.font = '500 21px ' + PF; wrapText(x, 'Team members: ' + o.members, RW - 240).forEach(l => { x.fillText(l, cx, y); y += 32; }); y += 6; }
+  const what = win ? `for winning ${({ 1: 'FIRST', 2: 'SECOND', 3: 'THIRD' })[o.pos]} POSITION in the ${o.cat} Competition` : `for taking part with great creativity in the ${o.cat} Competition`;
+  const who = `${o.cls ? 'Class ' + o.cls : ''}${o.member && o.team ? ' · Team ' + o.team : ''}`;
+  x.font = '400 25px ' + PF; wrapText(x, what, RW - 220).forEach(l => { x.fillText(l, cx, y); y += 38; });
+  if (who) { x.font = '600 22px ' + PF; x.fillStyle = th.b; x.fillText(who, cx, y + 2); y += 34; }
+  x.font = '500 19px ' + PF; const chip = `✦  ${o.event}  ·  ${o.date}  ✦`, cw = x.measureText(chip).width + 50;
+  x.fillStyle = diya ? '#FFF1E6' : '#FCE7F3'; cRound(x, cx - cw / 2, y + 26, cw, 44, 22); x.fill(); x.fillStyle = th.a; x.fillText(chip, cx, y + 55);
+  // signatures (small, professional) + seal
+  const sy = H - 150;
+  [[PW + 230, o.teacher, 'Class Teacher'], [W - 300, o.principal, 'Principal']].forEach(([sx, n, r]) => {
     const nm = String(n || '').replace(/\s*(Sir|Ma'am|Madam)$/i, '');
-    if (nm) { x.fillStyle = '#1E3A8A'; x.font = '54px GreatVibes, "Brush Script MT", cursive'; x.fillText(nm, cx, H - 204); }
-    x.beginPath(); x.moveTo(cx - 180, H - 188); x.lineTo(cx + 180, H - 188); x.stroke();
-    x.fillStyle = ink; x.font = '700 23px Arial'; x.fillText(n || '', cx, H - 158); x.fillStyle = '#5B6782'; x.font = '19px Arial'; x.fillText(r, cx, H - 132);
-    x.font = 'italic 15px Arial'; x.fillStyle = '#64748B'; x.fillText('Digitally signed · ' + o.signed, cx, H - 110); });
-  // school seal (blue rubber-stamp look)
-  x.save(); x.translate(W / 2, H - 200); x.rotate(-0.16); x.globalAlpha = .82; const blue = '#1D3FA0'; x.strokeStyle = blue; x.fillStyle = blue;
-  x.lineWidth = 5; x.beginPath(); x.arc(0, 0, 104, 0, Math.PI * 2); x.stroke(); x.lineWidth = 2; x.beginPath(); x.arc(0, 0, 94, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.arc(0, 0, 58, 0, Math.PI * 2); x.stroke();
+    if (nm) { x.fillStyle = '#1E3A8A'; x.font = '40px GreatVibes, "Brush Script MT", cursive'; x.fillText(nm, sx, sy - 12); }
+    x.strokeStyle = '#CBD5E1'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(sx - 120, sy); x.lineTo(sx + 120, sy); x.stroke();
+    x.fillStyle = ink; x.font = '600 17px ' + PF; x.fillText(n || '', sx, sy + 26); x.fillStyle = mut; x.font = '400 14px ' + PF; x.fillText(r, sx, sy + 46);
+    x.font = '500 11.5px ' + PF; const t = '✔ Digitally signed · ' + o.signed, tw = x.measureText(t).width + 22; x.fillStyle = '#ECFDF5'; cRound(x, sx - tw / 2, sy + 56, tw, 22, 11); x.fill(); x.fillStyle = '#047857'; x.fillText(t, sx, sy + 71); });
+  x.save(); x.translate(cx - 5, sy + 4); x.rotate(-0.16); x.globalAlpha = .85; const blue = '#1D3FA0'; x.strokeStyle = blue; x.fillStyle = blue;
+  x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 74, 0, 7); x.stroke(); x.lineWidth = 1.5; x.beginPath(); x.arc(0, 0, 67, 0, 7); x.stroke(); x.beginPath(); x.arc(0, 0, 41, 0, 7); x.stroke();
   const ring = (txt, r, span, fnt, bottom) => { x.font = fnt; const ch = [...txt], step = span * 2 / Math.max(ch.length - 1, 1);
     ch.forEach((c, i) => { const ang = bottom ? span - i * step : -span + i * step; x.save(); x.rotate(ang); x.translate(0, bottom ? r : -r); x.fillText(c, 0, 0); x.restore(); }); };
   x.textAlign = 'center'; x.textBaseline = 'middle';
   const sw = String(o.seal || 'SN Mishra Singapore International School').toUpperCase().split(/\s+/); let cut = 1; while (cut < sw.length - 1 && sw.slice(0, cut + 1).join(' ').length <= sw.join(' ').length / 2 + 2) cut++;
   const top = sw.slice(0, cut).join(' '), bot = sw.slice(cut).join(' ');
-  ring(top, 76, Math.min(1.35, top.length * 0.072), '700 13px Arial', false); ring(bot, 78, Math.min(1.25, bot.length * 0.064), '700 12px Arial', true);
-  x.beginPath(); x.arc(-84, 0, 3, 0, 7); x.arc(84, 0, 3, 0, 7); x.fill();
-  x.font = '700 12px Arial'; x.fillText('★ BHADOHI ★', 0, -22); x.font = '700 22px Georgia, serif'; x.fillText('SEAL', 0, 2); x.font = '700 13px Arial'; x.fillText(o.year, 0, 26);
-  x.restore(); x.textBaseline = 'alphabetic'; x.textAlign = 'center';
-  // certificate number (same child + same entry → same number every time)
-  x.fillStyle = '#94A3B8'; x.font = '15px Arial'; x.textAlign = 'left'; x.fillText('Certificate No. ' + o.no, 84, H - 76);
-  x.textAlign = 'right'; x.fillText('Powered by Maakit', W - 84, H - 76); x.textAlign = 'center';
+  ring(top, 54, Math.min(1.35, top.length * 0.074), '700 10px Arial', false); ring(bot, 55, Math.min(1.25, bot.length * 0.066), '700 9.5px Arial', true);
+  x.beginPath(); x.arc(-60, 0, 2.2, 0, 7); x.arc(60, 0, 2.2, 0, 7); x.fill();
+  x.font = '700 9px Arial'; x.fillText('★ BHADOHI ★', 0, -15); x.font = '700 17px Georgia, serif'; x.fillText('SEAL', 0, 2); x.font = '700 10px Arial'; x.fillText(o.year, 0, 18);
+  x.restore(); x.textBaseline = 'alphabetic';
+  x.fillStyle = '#9CA3AF'; x.font = '400 13px ' + PF; x.textAlign = 'left'; x.fillText('Certificate No. ' + o.no, PW + 56, H - 52); x.textAlign = 'center'; x.fillText('Powered by Maakit', cx, H - 52);
   return cv.toDataURL('image/png');
 }
 async function certData(evId, id, sid) {
