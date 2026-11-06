@@ -661,6 +661,8 @@ const path = require('node:path');
     await page.locator('.cert-pv .btn.wa').filter({ hasText: 'screenshot' }).click();
     await page.locator('#certFull img').waitFor();
     await page.locator('#certFull').click();
+    await page.evaluate(() => certPrintAll(COMP.events[0].id, 'Rangoli', '6th – 10th')); await page.locator('#certGal .cg-i img').nth(2).waitFor({ timeout: 60000 });   // in the app: list, not print
+    await page.locator('#certGal .cg-i img').first().click(); await page.locator('#certFull img').waitFor(); await page.locator('#certFull').click(); await page.locator('#certGal .cg-h .btn').click();
     await page.locator('.cs-step').filter({ hasText: 'Parent ko message' }).locator('button').filter({ hasText: 'Copy' }).first().waitFor();
     await page.locator('.cs-step .btn.go').filter({ hasText: 'Story photo' }).click();
     await page.locator('#certFull img').waitFor(); await page.locator('#certFull').click();

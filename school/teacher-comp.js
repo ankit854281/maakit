@@ -305,7 +305,16 @@ function certFull(src) {
   o.innerHTML = `<img src="${img}" alt="Certificate"><div class="cf-tip">Ab screenshot lijiye 📸 · band karne ke liye tap karein</div>`;
   document.body.appendChild(o); setTimeout(() => { const t = o.querySelector('.cf-tip'); if (t) t.classList.add('gone'); }, 2600);
 }
-function certPrint(list) { let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
+// Inside the Teacher App (Android WebView) window.print() does nothing (owner, 6 Nov 2026: "All certificates se app mein open nahi ho raha"),
+// so there the certificates open as a list: tap one → full screen for a screenshot (new app: Share). Printing is done from Chrome on a computer.
+function certGallery(list) {
+  let g = $('certGal'); if (g) g.remove(); g = document.createElement('div'); g.id = 'certGal'; g.className = 'cert-gal'; window.__GAL = list;
+  g.innerHTML = `<div class="cg-h"><b>🎓 ${list.length} certificate</b><button class="btn s l" onclick="$('certGal').remove()">✕ Band</button></div>
+    <p class="cg-t">Har certificate par tap karein → bada hoga → screenshot lekar WhatsApp par bhejiye.${oldApp() ? '' : ' Ya “Share” dabaiye.'} <b>Print ke liye:</b> computer par Chrome mein maakit.in/school/teacher.php kholkar “All certificates” dabaiye.</p>
+    ${list.map((src, i) => `<div class="cg-i"><img src="${src}" alt="" onclick="certFull(window.__GAL[${i}])">${oldApp() || !(window.SNMSISFiles && SNMSISFiles.shareImage) ? '' : `<button class="btn wa s" onclick="SNMSISFiles.shareImage('certificate-${i + 1}.png', window.__GAL[${i}].split(',')[1])">Share</button>`}</div>`).join('')}`;
+  document.body.appendChild(g);
+}
+function certPrint(list) { if (window.SNMSISFiles) return certGallery(list); let p = document.querySelector('.prt'); if (!p) { p = document.createElement('div'); p.className = 'prt'; document.body.appendChild(p); }
   p.innerHTML = list.map(src => `<img src="${src}" style="width:100%;display:block;page-break-after:always">`).join(''); setTimeout(() => window.print(), 300); }
 async function certPrintEntry(evId, id) { const n = COMP.entries.find(z => z.id === id); toast('Making the certificates…'); const L = [await certPNG(await certData(evId, id, ''))]; for (const sid of n.sids) L.push(await certPNG(await certData(evId, id, sid))); certPrint(L); }
 async function certPrintAll(evId, cat, sec) {
