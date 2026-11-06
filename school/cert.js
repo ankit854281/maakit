@@ -51,6 +51,9 @@ async function make(r) {
 }
 function rowOf(el) { return ROWS.find(x => x.sid === el.dataset.sid && x.n.id === el.dataset.id); }
 function textOf(r) { return `🌟 I achieved this! 🌟\n${r.name} (Class ${r.cls}) ko ${r.n.ev.title} ki ${r.n.cat} pratiyogita mein ${r.n.pos ? POSN[r.n.pos] + ' Position 🏆' : 'participation certificate 🎉'} mila!\n${D.school}\n\nApna certificate yahan dekhiye 👉 ${LINK}`; }
+function copyText(t) { try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).catch(() => fbCopy(t)); return; } } catch (e) {} fbCopy(t); }
+function fbCopy(t) { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); }
+function say(m) { let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); } t.textContent = m; t.classList.add('on'); clearTimeout(say.t); say.t = setTimeout(() => t.classList.remove('on'), 5000); }
 function full(src) { const o = document.createElement('div'); o.className = 'full'; o.innerHTML = `<img src="${src}" alt=""><small>Band karne ke liye tap karein</small>`; o.onclick = () => o.remove(); document.body.appendChild(o); }
 
 let T0 = 0;
@@ -68,11 +71,14 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('.row button'); if (!b) return; const card = b.closest('.row'), r = rowOf(card); if (!r) return;
   const fn = ('certificate-' + r.name + '-' + r.n.cat).replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png';
   if (b.classList.contains('open')) { b.disabled = true; b.textContent = 'Ban raha hai…'; const png = await make(r);
-    card.querySelector('.pv').innerHTML = `<img src="${png}" alt="Certificate">`; b.outerHTML = `<div class="bt"><button class="go" data-a="share">📤 Share</button><button data-a="dl">⬇️ Download</button><button class="wa" data-a="wa">💬 WhatsApp</button></div>`;
+    card.querySelector('.pv').innerHTML = `<img src="${png}" alt="Certificate">`; b.outerHTML = `<div class="bt"><button class="wa" data-a="share">💬 WhatsApp / Share</button><button data-a="dl">⬇️ Download</button><button data-a="cp">📋 Message copy</button></div><p class="hint">Photo ke saath message bhi jaata hai. Agar WhatsApp mein message na dikhe to wahan dabakar <b>Paste</b> kijiye — message pehle se copy hai.</p>`;
     card.querySelector('.pv img').onclick = () => full(png); return; }
   const a = b.dataset.a, png = await make(r);
-  if (a === 'wa') { location.href = 'https://wa.me/?text=' + encodeURIComponent(textOf(r)); return; }
+  // the image itself + the message as caption (owner: "image share ho, message ke saath — link nahi"); the message is also copied in case an app drops it
+  const txt = textOf(r); copyText(txt);
+  if (a === 'cp') { say('Message copy ho gaya — WhatsApp mein dabakar Paste kijiye.'); return; }
   if (a === 'share') { try { const f = new File([await (await fetch(png)).blob()], fn, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text: textOf(r) }); return; } } catch (er) { if (er && er.name === 'AbortError') return; } }
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text: txt }); return; } } catch (er) { if (er && er.name === 'AbortError') return; }
+    say('Is browser se photo seedha share nahi hoti — certificate download ho gaya. Gallery se WhatsApp par bhejiye; message copy hai, Paste kar dijiye. (Chrome mein link kholne se seedha share hota hai.)'); }
   const l = document.createElement('a'); l.href = png; l.download = fn; document.body.appendChild(l); l.click(); l.remove();
 });
