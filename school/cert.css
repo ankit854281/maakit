@@ -3,13 +3,6 @@
 @font-face{font-family:Poppins;src:url(fonts/poppins-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:swap}
 @font-face{font-family:Poppins;src:url(fonts/poppins-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
 *{box-sizing:border-box}html,body{margin:0}body{font-family:Poppins,system-ui,sans-serif;background:#F5F3FF;color:#1E1B4B}
-.intro{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:#fff;
-  background:radial-gradient(circle at 50% 35%,#7C3AED 0,#4C1D95 45%,#1E0B3A 100%);transition:opacity .7s,transform .7s}
-.intro.out{opacity:0;transform:scale(1.06);pointer-events:none}
-.intro .ring{width:150px;height:150px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;animation:pop .9s cubic-bezier(.2,1.4,.4,1) both}
-.intro .ring::before{content:"";position:absolute;inset:-18px;border-radius:50%;background:conic-gradient(#F472B6,#FBBF24,#34D399,#60A5FA,#A78BFA,#F472B6);z-index:-1;animation:spin 6s linear infinite;-webkit-mask:radial-gradient(circle,transparent 62%,#000 63%);mask:radial-gradient(circle,transparent 62%,#000 63%)}
-.intro .ring img{width:124px;height:124px}
-.intro h1{margin:6px 0 0;font-size:22px;line-height:1.3;animation:up .8s .5s both}.intro p{margin:0;color:#FDE68A;font-weight:600;animation:up .8s .8s both}
 .diyas{display:flex;gap:26px;align-items:flex-end;animation:up .8s .3s both}.diyas i{width:46px;height:22px;border-radius:0 0 30px 30px;background:linear-gradient(#F59E0B,#9A3412);position:relative}.diyas i.big{width:62px;height:28px}
 .diyas i::before{content:"";position:absolute;left:50%;bottom:100%;width:14px;height:24px;margin-left:-7px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#FFF7AE,#FBBF24 45%,#F97316);animation:flick .5s infinite alternate;filter:drop-shadow(0 0 10px #FBBF24)}
 .sparks{position:absolute;inset:0;background-image:radial-gradient(2px 2px at 20% 30%,#FDE68A,transparent),radial-gradient(2px 2px at 80% 20%,#fff,transparent),radial-gradient(3px 3px at 60% 70%,#F9A8D4,transparent),radial-gradient(2px 2px at 30% 80%,#FDE68A,transparent),radial-gradient(2px 2px at 90% 60%,#A7F3D0,transparent),radial-gradient(2px 2px at 45% 15%,#fff,transparent);animation:tw 2s infinite alternate}
@@ -41,3 +34,21 @@ footer{text-align:center;font-size:12px;color:#6B7280;margin-top:24px;line-heigh
 .hint{font-size:11.5px;color:#6B7280;margin:8px 2px 0;line-height:1.45}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);max-width:92vw;background:#1E1B4B;color:#fff;font-size:13px;line-height:1.45;padding:10px 14px;border-radius:14px;opacity:0;transition:.3s;z-index:70;text-align:center}.toast.on{opacity:1;transform:translateX(-50%)}
 #f{flex-wrap:nowrap}#f input{flex:1 1 auto;width:auto}#f button{flex:0 0 auto;padding:12px 14px}
+/* opening story — same SNMSIS welcome as the Chairman app (chairman.css .ad) */
+.ad{position:fixed;inset:0;z-index:60;background:#120E3A;overflow:hidden;color:#fff;transition:opacity .6s,transform .6s}.ad.out{opacity:0;transform:scale(1.05);pointer-events:none}
+.ad-bars{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;right:90px;z-index:3;display:flex;gap:5px}
+.ad-bars i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
+.ad-bars i::after{content:"";position:absolute;inset:0;width:0;background:#fff;border-radius:9px}.ad-bars i.done::after{width:100%}.ad-bars i.run::after{animation:adbar var(--ms) linear forwards}
+@keyframes adbar{to{width:100%}}
+.ad-skip{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:12px;z-index:4;min-height:36px;padding:0 16px;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:13px;font-weight:600}
+.ad-s{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:70px 24px 40px}
+.ad-s.on{display:flex;animation:adin .5s ease-out}@keyframes adin{from{opacity:0;transform:scale(.97)}}
+.ad-s.s1{background:radial-gradient(120% 80% at 50% 0%,#3B32B5,#120E3A 70%)}.ad-s.s2{background:linear-gradient(160deg,#4338CA,#1E1B6B)}.ad-s.s3{background:radial-gradient(120% 90% at 50% 100%,#9D174D,#1A0F3D 72%)}
+.ad-logo{width:130px;height:130px;border-radius:50%;background:#fff;padding:4px;box-shadow:0 0 0 12px rgba(255,255,255,.12),0 0 0 26px rgba(255,255,255,.06),0 24px 50px rgba(0,0,0,.45);animation:pop .8s cubic-bezier(.2,1.6,.4,1);position:relative;z-index:1}
+.ad-k{margin:0;font-size:13px;letter-spacing:.24em;text-transform:uppercase;opacity:.8}.ad-h{margin:0;font-size:34px;font-weight:700;line-height:1.15}.ad-h.xl{font-size:46px;letter-spacing:.12em}
+.ad-t{margin:0;font-size:15px;line-height:1.55;opacity:.92;max-width:300px}.ad-gold{color:#F5C842}
+.lang{height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center}.lang b{font-size:32px;font-weight:700;line-height:1.3;animation:lw .42s ease-out}.lang small{font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-top:6px}
+@keyframes lw{from{opacity:0;transform:translateY(14px) scale(.96);filter:blur(4px)}}
+.ad-go{margin-top:16px;width:100%;max-width:330px;height:50px;border-radius:999px;border:0;background:#F5C842;color:#1d1600;font:inherit;font-size:15px;font-weight:600;box-shadow:0 10px 24px rgba(245,200,66,.3)}
+.ad .sparks{pointer-events:none}
+@media (prefers-reduced-motion:reduce){.ad *{animation-duration:.01ms!important}}

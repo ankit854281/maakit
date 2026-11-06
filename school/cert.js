@@ -6,7 +6,21 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const LINK = location.origin + location.pathname;
 const POSN = { 1: 'First', 2: 'Second', 3: 'Third' }, MEDAL = { 1: '🥇', 2: '🥈', 3: '🥉' };
 let D = null, ROWS = [], CLS = '', IDS = null; const PH = {}, KID = {}, PNG = {};
-setTimeout(() => { const i = $('intro'); if (i) { i.classList.add('out'); setTimeout(() => i.remove(), 700); } }, 2600);
+// Opening story (same SNMSIS welcome as the Chairman app): logo + SNMSIS in many languages → SNMSIS → the certificates
+const LANGS = [['SNMSIS', 'English'], ['एस एन एम एस आई एस', 'हिन्दी'], ['এস এন এম এস আই এস', 'বাংলা'], ['எஸ் என் எம் எஸ் ஐ எஸ்', 'தமிழ்'], ['ఎస్ ఎన్ ఎమ్ ఎస్ ఐ ఎస్', 'తెలుగు'],
+  ['એસ એન એમ એસ આઈ એસ', 'ગુજરાતી'], ['ਐਸ ਐਨ ਐਮ ਐਸ ਆਈ ਐਸ', 'ਪੰਜਾਬੀ'], ['ಎಸ್ ಎನ್ ಎಂ ಎಸ್ ಐ ಎಸ್', 'ಕನ್ನಡ'], ['എസ് എൻ എം എസ് ഐ എസ്', 'മലയാളം'], ['ایس این ایم ایس آئی ایس', 'اردو'],
+  ['エス・エヌ・エム・エス・アイ・エス', '日本語'], ['ЭС ЭН ЭМ ЭС АЙ ЭС', 'Русский'], ['إس إن إم إس آي إس', 'العربية'], ['SNMSIS', 'English']];
+const SCN = [6000, 2600, 3600]; let SI = -1, ST = [];
+function scene() {
+  const ad = $('intro'); if (!ad) return; SI++; if (SI >= SCN.length) return endIntro();
+  const bars = ad.querySelectorAll('.ad-bars i'), sc = ad.querySelectorAll('.ad-s');
+  bars.forEach((b, j) => { b.className = j < SI ? 'done' : ''; }); bars[SI].style.setProperty('--ms', SCN[SI] + 'ms'); void bars[SI].offsetWidth; bars[SI].className = 'run';
+  sc.forEach((s, j) => s.classList.toggle('on', j === SI));
+  if (SI === 0) { let n = 0; const el = $('lang'); const step = () => { if (SI !== 0) return; const [w, l] = LANGS[n % LANGS.length]; el.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < LANGS.length) ST.push(setTimeout(step, (SCN[0] - 600) / LANGS.length)); }; ST.push(setTimeout(step, 600)); }
+  ST.push(setTimeout(scene, SCN[SI]));
+}
+function endIntro() { ST.forEach(clearTimeout); ST = []; SI = 99; const i = $('intro'); if (i) { i.classList.add('out'); setTimeout(() => i.remove(), 600); } }
+$('adSkip').onclick = endIntro; $('adGo').onclick = endIntro; scene();
 const longDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const shortDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) + ' ' + d.slice(0, 4);
 const get = async u => { const r = await fetch(u, { cache: 'no-store' }); const j = await r.json().catch(() => null); if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem.'); return j; };

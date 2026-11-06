@@ -9,12 +9,10 @@ $v = fn($f) => (string)@filemtime(__DIR__ . '/' . $f);
 <meta property="og:type" content="website"><meta property="og:url" content="https://maakit.in/school/cert.php"><meta property="og:image" content="https://maakit.in/school/img/cert-og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/snmsis-logo.png"><link rel="stylesheet" href="cert.css?v=<?= $v('cert.css') ?>"></head>
 <body>
-<div id="intro" class="intro" aria-hidden="true">
-  <div class="sparks"></div>
-  <div class="ring"><img src="img/snmsis-logo.png" alt=""></div>
-  <div class="diyas"><i></i><i class="big"></i><i></i></div>
-  <h1>SN Mishra Singapore<br>International School</h1>
-  <p>🎉 Competition Certificates</p>
+<div id="intro" class="ad" aria-hidden="true"><div class="ad-bars"><i></i><i></i><i></i></div><button class="ad-skip" type="button" id="adSkip">Skip</button>
+  <section class="ad-s s1"><div class="sparks"></div><img class="ad-logo" src="img/snmsis-logo.png" alt=""><div class="lang" id="lang"></div><p class="ad-t">SN Mishra Singapore International School · Bhadohi</p></section>
+  <section class="ad-s s2"><p class="ad-k">One school · every language</p><h1 class="ad-h xl">SNMSIS</h1><p class="ad-t">A name the whole world can read — and a school the whole town trusts.</p></section>
+  <section class="ad-s s3"><div class="sparks"></div><div class="diyas"><i></i><i class="big"></i><i></i></div><p class="ad-k">Diwali Activities 2026</p><h1 class="ad-h">Every child's<br><span class="ad-gold">certificate is ready</span></h1><p class="ad-t">Rangoli · Diya Making — with photos, ready to share.</p><button class="ad-go" type="button" id="adGo">View certificates</button></section>
 </div>
 <main id="app" class="app">
   <header class="top"><img src="img/snmsis-logo.png" alt=""><div><small>SN Mishra Singapore International School</small><b>🏆 Certificates</b></div></header>
