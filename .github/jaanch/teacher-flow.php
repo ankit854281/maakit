@@ -213,6 +213,16 @@ $ta('comp', ['op' => 'res', 'ev' => $ev, 'cat' => 'Rangoli', 'sec' => '6th – 1
 [, $j] = $ta('comp', null, $tok['K']); tf_check(count($j['entries']) === 1 && count($j['events']) === 1, 'signatures never mixed into the competition list');
 
 
+// ---- public certificate page: parents find their child's certificates by the registered mobile (6 Nov 2026) ----
+@array_map('unlink', glob(sys_get_temp_dir() . '/sncert_*') ?: []);
+[$c, $j] = tf_http('/school/cert_api.php?a=find', ['mobile' => '9876500001']); $kid = $j['children'][0] ?? [];
+tf_check($c === 200 && ($kid['id'] ?? '') === 's1' && count($kid['certs']) >= 1 && $kid['certs'][0]['cat'] === 'Rangoli', 'parent finds the child and the competition entry');
+tf_check(array_column($kid['certs'][0]['kids'], 'me') === [true, false] && !isset($kid['certs'][0]['kids'][1]['src']), 'teammates by name only, no other child photos');
+[$c] = tf_http('/school/cert_api.php?a=find', ['mobile' => '9000000000']); tf_check($c === 404, 'unknown number finds nothing');
+[$c] = tf_http('/school/cert_api.php?a=find', ['mobile' => '12']); tf_check($c === 400, 'short number refused');
+$code = 0; for ($i = 0; $i < 26; $i++) { [$code] = tf_http('/school/cert_api.php?a=find', ['mobile' => '9000000000']); } tf_check($code === 429, 'number guessing is limited');
+@array_map('unlink', glob(sys_get_temp_dir() . '/sncert_*') ?: []);
+
 // ---- coordinator: assign, copy check by rotation with proof, blind re-check, teacher reply, Principal decides (6 Nov 2026) ----
 $put('student', 's4', ['id' => 's4', 'name' => 'Deepa', 'cls' => '9th', 'adm' => '104']); $put('teacher', 'RV', ['name' => 'Ravi Sir']);
 [$c] = $ta('coord', ['op' => 'assign', 'tid' => 'MA', 'classes' => ['9th']], $tok['K']); tf_check($c === 403, 'only the Principal names a coordinator');
