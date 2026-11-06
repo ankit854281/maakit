@@ -702,8 +702,9 @@ case 'dellog': {
 case 'comp': {
     if ($method === 'GET') {
         $ev = []; $en = [];
+        if (($_GET['sg'] ?? '') !== '') { $out = []; foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r LIKE 'sg|%'") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $out[substr((string)$row['r'], 3)] = $d['data'] ?? ''; } sch_json(['ok' => true, 'signs' => $out]); }
         if (($_GET['ph'] ?? '') !== '') { $p = sch_rec_get('tchComp', 'ph|' . preg_replace('/[^a-z0-9|]/', '', (string)$_GET['ph'])); sch_json(['ok' => true, 'data' => $p['data'] ?? '']); }
-        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r NOT LIKE 'ph|%'") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r NOT LIKE 'ph|%' AND r NOT LIKE 'sg|%'") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
             if (str_starts_with((string)$row['r'], 'ev|')) $ev[] = $d; else $en[] = $d; }
         usort($ev, fn($a, $b) => strcmp((string)($b['date'] ?? ''), (string)($a['date'] ?? '')));
         sch_json(['ok' => true, 'events' => $ev, 'entries' => $en]);
@@ -721,6 +722,14 @@ case 'comp': {
         $d = ['id' => $id, 'title' => $title, 'date' => $date, 'cats' => $cats, 'secs' => $secs, 'by' => $u['label'], 'at' => sch_now_ms()];
         sch_rec_put('tchComp', "ev|$id", $d, $uid); sch_log($u, 'Competition', "Competition: $title ($date) — " . implode(', ', $cats));
         sch_json(['ok' => true, 'event' => $d]);
+    }
+    if ($op === 'sign') {           // own signature (drawn on the phone) for certificates — Principal = 'P'
+        $who = $role === 'principal' ? 'P' : ($role === 'teacher' ? $tid : ''); if ($who === '') sch_fail('Not allowed.', 403);
+        $data = (string)($in['data'] ?? '');
+        if ($data === '') { sch_rec_del('tchComp', "sg|$who", $uid); sch_json(['ok' => true]); }
+        if (!preg_match('#^data:image/png;base64,[A-Za-z0-9+/=]+$#', $data) || strlen($data) > 200000) sch_fail('Sign again — the picture is too big.');
+        sch_rec_put('tchComp', "sg|$who", ['data' => $data, 'by' => $u['label'], 'at' => sch_now_ms()], $uid); sch_log($u, 'Competition', 'Saved signature for certificates');
+        sch_json(['ok' => true]);
     }
     if ($op === 'photo') {          // rangoli / diya photo of one entry (jpeg data URL, made small in the browser)
         $evId = (string)($in['ev'] ?? ''); $id = (string)($in['id'] ?? '');

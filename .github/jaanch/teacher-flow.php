@@ -200,5 +200,10 @@ $cid = $j['log']['id'];
 [, $j] = $ta('comp', null, $tok['K'], "&ph=$ev|$en"); tf_check($j['data'] === 'data:image/jpeg;base64,/9j/AAAA', 'photo fetched alone');
 [, $j] = $ta('report', null, $tok['K'], '&cls=9th'); tf_check(count(array_filter($j['logs'], fn($l) => $l['kind'] === 'act' && $l['pos'] === '1' && str_contains($l['title'], 'Roshni'))) === 2, 'both children get the win in their record');
 [$c] = $ta('comp', ['op' => 'del', 'ev' => $ev, 'id' => $en], $tok['K']); tf_check($c === 403, 'only the writer or Principal removes');
+[$c] = $ta('comp', ['op' => 'sign', 'data' => 'data:image/jpeg;base64,AAAA'], $tok['K']); tf_check($c === 400, 'signature must be a png');
+[$c] = $ta('comp', ['op' => 'sign', 'data' => 'data:image/png;base64,iVBORw0KGgo='], $tok['P']); tf_check($c === 200, 'Principal saves signature');
+[, $j] = $ta('comp', null, $tok['K'], '&sg=1'); tf_check(($j['signs']['P'] ?? '') === 'data:image/png;base64,iVBORw0KGgo=', 'signatures listed by teacher id (Principal = P)');
+[, $j] = $ta('comp', null, $tok['K']); tf_check(count($j['entries']) === 1 && count($j['events']) === 1, 'signatures never mixed into the competition list');
+
 
 echo "Teacher app flow: all checks passed\n";

@@ -25,7 +25,7 @@ const path = require('node:path');
   };
   await page.goto('http://127.0.0.1:8099/school/teacher.php', { waitUntil: 'domcontentloaded' });
   await page.locator('#lgT').waitFor();
-  await page.evaluate(() => localStorage.setItem('ta_intro_day', todayISO()));   // the opening story is checked in step 20
+  await page.evaluate(() => { localStorage.setItem('ta_intro_day', todayISO()); localStorage.setItem('ta_news', NEWS_VER); });   // the opening story is checked in step 20; the 'Naya kya hai' helper in step 33
   await page.locator('#lgT').selectOption('K');
   await page.locator('#lgPin').fill('7777');
   await page.locator('.lg button').filter({ hasText: 'Open' }).click();
@@ -484,7 +484,7 @@ const path = require('node:path');
     await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
     await page.goto('http://127.0.0.1:8099/school/teacher.php', { waitUntil: 'domcontentloaded' });
     await page.locator('#lgT').waitFor();
-    await page.evaluate(() => localStorage.setItem('ta_intro_day', todayISO()));
+    await page.evaluate(() => { localStorage.setItem('ta_intro_day', todayISO()); localStorage.setItem('ta_news', NEWS_VER); });
     await page.locator('#lgT').selectOption('MA');
     await page.locator('#lgPin').fill('8888');
     await page.locator('.lg button').filter({ hasText: 'Open' }).click();
@@ -500,7 +500,7 @@ const path = require('node:path');
     await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
     await page.goto('http://127.0.0.1:8099/school/teacher.php', { waitUntil: 'domcontentloaded' });
     await page.locator('.lg').waitFor();
-    await page.evaluate(() => localStorage.setItem('ta_intro_day', todayISO()));
+    await page.evaluate(() => { localStorage.setItem('ta_intro_day', todayISO()); localStorage.setItem('ta_news', NEWS_VER); });
     await page.locator('.lg .seg button').filter({ hasText: 'Principal' }).click();
     await page.locator('#lgPin').fill('2468');
     await page.locator('.lg button').filter({ hasText: 'Open' }).click();
@@ -665,9 +665,17 @@ const path = require('node:path');
     await page.locator('.cs-step .btn.go').filter({ hasText: 'Story photo' }).click();
     await page.locator('#certFull img').waitFor(); await page.locator('#certFull').click();
     await page.evaluate(() => { delete window.SNMSISFiles; });
+    await page.evaluate(() => newsOpen()); await page.locator('#nwBox .nw-l li').nth(5).waitFor(); await page.locator('#nwOk').click();
+    await page.evaluate(() => signOpen()); await page.locator('#sgPad').waitFor();
+    const bx = await page.locator('#sgPad').boundingBox(); await page.mouse.move(bx.x + 30, bx.y + 60); await page.mouse.down(); await page.mouse.move(bx.x + 120, bx.y + 40, { steps: 8 }); await page.mouse.move(bx.x + 220, bx.y + 80, { steps: 8 }); await page.mouse.up();
+    await page.locator('.sheet .btn.go').filter({ hasText: 'Save sign' }).click(); await page.waitForFunction(() => SIGNS && SIGNS.P && !SHEET);
+    const fest = await page.evaluate(async () => { FEST.push([todayISO(), 'CI Festival', 'CI line']); const L = festNow(); window.__FEST = L; const st = await festStory(L[0]); return { n: L.length, ok: st.length > 50000 }; });
+    if (!fest.n || !fest.ok) throw new Error('festival story not made');
     await page.evaluate(() => { SHEET = null; go('pdash'); });
     await page.locator('.cp-dash').filter({ hasText: 'Abhi team nahi bani' }).waitFor();   // Principal dashboard card
     await page.locator('.cp-dash .cp-dc .ok').filter({ hasText: '9th' }).waitFor();
+    await page.locator('.sg-card').filter({ hasText: 'Aapka sign lag gaya' }).waitFor();
+    await page.locator('.fs-card').filter({ hasText: 'CI Festival' }).waitFor();
   });
   await browser.close();
   if (failures.length) {

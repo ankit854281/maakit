@@ -30,6 +30,7 @@ function vComp() {
   const nm = n => n.type === 'group' ? 'Team ' + n.name : (kids(n)[0] || {}).name || '—';
   const mine = n => isP() || myClasses().includes(n.cls);
   return `<div class="card cp-h"><small>${esc(fmtLong(ev.date))}</small><h3>🎉 ${esc(ev.title)}</h3>${C.events.length > 1 ? `<div class="chips">${C.events.map(e => `<button class="chip ${e.id === ev.id ? 'on' : ''}" onclick="go('comp',{ev:'${e.id}'})">${esc(e.title)}</button>`).join('')}</div>` : ''}</div>
+    <div class="btns cp-tools"><button class="btn s l" onclick="signOpen()">✍️ Mera sign${SIGNS && SIGNS[mySignKey()] ? ' ✓' : ''}</button><button class="btn s l" onclick="newsOpen()">🤖 Kaise karein?</button></div>
     ${seg(ev.cats.map(c => [c, c]), cat, `(k=>go('comp',{ev:'${ev.id}',cat:k,sec:${jsq(sec)}}))`)}
     ${seg(ev.secs.map(s => [s.name, s.name]), sec, `(k=>go('comp',{ev:'${ev.id}',cat:${jsq(cat)},sec:k}))`)}
     <div class="btns"><button class="btn go" onclick="compAdd('${ev.id}',${jsq(cat)},${jsq(sec)},'group')">+ Team</button><button class="btn l" onclick="compAdd('${ev.id}',${jsq(cat)},${jsq(sec)},'solo')">+ Single child</button>${L.length ? `<button class="btn w" onclick="certPrintAll('${ev.id}',${jsq(cat)},${jsq(sec)})">${ic('print')} All certificates</button>` : ''}</div>
@@ -38,7 +39,7 @@ function vComp() {
         <div class="t"><b>${esc(nm(n))}</b><small>Class ${esc(n.cls)}${n.type === 'group' ? ' · ' + kids(n).map(s => esc(s.name.split(' ')[0])).join(', ') : ''}</small>
           <div class="cp-pos">${['1', '2', '3'].map(p => `<button class="${n.pos === p ? 'on' : ''}" onclick="compPos('${ev.id}','${n.id}','${n.pos === p ? '' : p}')">${POS[p]}</button>`).join('')}</div>
           <div class="btns"><button class="btn s l" onclick="certOpen('${ev.id}','${n.id}')">🎓 Certificate</button>${mine(n) ? `<button class="btn s w" onclick="compDel('${ev.id}','${n.id}')">✕</button>` : ''}</div></div></div>`).join('') || '<div class="empty">No team or child yet. Tap “+ Team” or “+ Single child”.</div>'}</div>
-    <p class="mut">Positions: tap 🥇 / 🥈 / 🥉 (tap again to clear). Photo: tap the box. Certificates: one for the team and one for every child.</p>`;
+    <p class="mut">Positions: tap 🥇 / 🥈 / 🥉 (tap again to clear). Photo: tap the box — best is the team standing with their rangoli / diya. Certificates: one for the team and one for every child.</p>`;
 }
 async function compCreate() {
   const title = ($('cpT').value || '').trim(), date = $('cpD').value, cats = ($('cpC').value || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -180,10 +181,11 @@ async function certPNG(o) {
   x.font = '500 19px ' + PF; const chip = `✦  ${o.event}  ·  ${o.date}  ✦`, cw = x.measureText(chip).width + 50;
   x.fillStyle = diya ? '#FFF1E6' : '#FCE7F3'; cRound(x, cx - cw / 2, y + 26, cw, 44, 22); x.fill(); x.fillStyle = th.a; x.fillText(chip, cx, y + 55);
   // signatures (small, professional) + seal
-  const sy = H - 150;
-  [[PW + 230, o.teacher, 'Class Teacher'], [W - 300, o.principal, 'Principal']].forEach(([sx, n, r]) => {
+  const sy = H - 150, sgT = await loadImg(o.tSign), sgP = await loadImg(o.pSign);
+  [[PW + 230, o.teacher, 'Class Teacher', sgT], [W - 300, o.principal, 'Principal', sgP]].forEach(([sx, n, r, sg]) => {
     const nm = String(n || '').replace(/\s*(Sir|Ma'am|Madam)$/i, '');
-    if (nm) { x.fillStyle = '#1E3A8A'; x.font = '40px GreatVibes, "Brush Script MT", cursive'; x.fillText(nm, sx, sy - 12); }
+    if (sg) { const k = Math.min(230 / sg.width, 78 / sg.height), w = sg.width * k, h = sg.height * k; x.drawImage(sg, sx - w / 2, sy - 4 - h, w, h); }
+    else if (nm) { x.fillStyle = '#1E3A8A'; x.font = '40px GreatVibes, "Brush Script MT", cursive'; x.fillText(nm, sx, sy - 12); }
     x.strokeStyle = '#CBD5E1'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(sx - 120, sy); x.lineTo(sx + 120, sy); x.stroke();
     x.fillStyle = ink; x.font = '600 17px ' + PF; x.fillText(n || '', sx, sy + 26); x.fillStyle = mut; x.font = '400 14px ' + PF; x.fillText(r, sx, sy + 46);
     x.font = '500 11.5px ' + PF; const t = '✔ Digitally signed · ' + o.signed, tw = x.measureText(t).width + 22; x.fillStyle = '#ECFDF5'; cRound(x, sx - tw / 2, sy + 56, tw, 22, 11); x.fill(); x.fillStyle = '#047857'; x.fillText(t, sx, sy + 71); });
@@ -202,11 +204,11 @@ async function certPNG(o) {
   return cv.toDataURL('image/png');
 }
 async function certData(evId, id, sid) {
-  const E = COMP.events.find(e => e.id === evId), n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean), k = sid ? studentById(sid) : null;
+  const SG = await needSigns(); const E = COMP.events.find(e => e.id === evId), n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean), k = sid ? studentById(sid) : null;
   const ct = (S.classes.find(c => c.c === n.cls) || {}).ct;
   return { school: S.settings.school || 'SN Mishra Singapore International School', event: E.title, date: fmtLong(E.date), cat: n.cat, sec: n.sec, pos: n.pos, cls: n.cls,
     name: k ? k.name : n.type === 'group' ? 'Team ' + n.name : (kids[0] || {}).name, team: n.type === 'group' ? n.name : '', member: !!k && n.type === 'group',
-    members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '', signed: fmtDate(E.date) + ' ' + E.date.slice(0, 4), year: E.date.slice(0, 4), no: certNo(E.date, id, sid), seal: S.settings.school || '' };
+    members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '', signed: fmtDate(E.date) + ' ' + E.date.slice(0, 4), year: E.date.slice(0, 4), no: certNo(E.date, id, sid), seal: S.settings.school || '', tSign: ct ? SG[ct] || '' : '', pSign: SG.P || '' };
 }
 async function certOpen(evId, id) {
   const n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean);
@@ -287,7 +289,7 @@ async function certShare() {
 // teachers must NOT have to download a new app — so the certificate opens full screen for a phone screenshot instead.
 function oldApp() { return !!(window.SNMSISFiles && !SNMSISFiles.shareImage); }
 function certFull(src) {
-  const c = window.__CERT; if (!c) return; const img = typeof src === 'string' ? src : c.png; let o = $('certFull'); if (o) o.remove();
+  const img = typeof src === 'string' ? src : (window.__CERT || {}).png; if (!img) return; let o = $('certFull'); if (o) o.remove();
   o = document.createElement('div'); o.id = 'certFull'; o.className = 'cert-full'; o.onclick = () => o.remove();
   o.innerHTML = `<img src="${img}" alt="Certificate"><div class="cf-tip">Ab screenshot lijiye 📸 · band karne ke liye tap karein</div>`;
   document.body.appendChild(o); setTimeout(() => { const t = o.querySelector('.cf-tip'); if (t) t.classList.add('gone'); }, 2600);
@@ -301,6 +303,9 @@ async function certPrintAll(evId, cat, sec) {
   certPrint(out);
 }
 
+function signCard() { if (!isP()) return ''; const sg = SIGNS ? SIGNS.P : undefined; if (SIGNS === null) needSigns().then(() => softRender());
+  return `<div class="card sg-card"><div class="cp-dh"><span>✍️</span><div><small>Certificates ke liye</small><b>${sg ? 'Aapka sign lag gaya ✓' : 'Apna sign lagaiye'}</b></div>${sg ? `<img src="${sg}" alt="">` : ''}</div>
+    <button class="btn ${sg ? 'l' : 'go'} full" onclick="signOpen()">${sg ? 'Sign badlo' : '✍️ Sign kijiye (ungli se)'}</button></div>`; }
 // Dashboard card (owner, 6 Nov 2026: "teacher hi group banayenge — Principal aur teacher ke dashboard mein add karo").
 // Shown from 2 days before to 3 days after the competition: teachers see their classes' teams, the Principal sees which classes have not added any.
 function compCard() {
@@ -316,10 +321,108 @@ function compCard() {
     ${none.length ? `<p class="cp-dw">${isP() && pMode() ? 'Abhi team nahi bani: ' + none.map(esc).join(', ') : 'Apni class ki team banaiye: ' + none.map(esc).join(', ')}</p>` : ''}
     <button class="btn go full" onclick="event.stopPropagation();go('comp')">${isP() && pMode() ? 'Competition kholo' : '+ Team banao / certificate'}</button></div>`;
 }
+
+// ---------------------------------------------------------------- signatures drawn on the phone (owner, 6 Nov 2026: "Principal sir sign kaise karenge")
+let SIGNS = null;
+async function needSigns(force) { if (SIGNS && !force) return SIGNS; try { SIGNS = (await api('teacher_api.php?a=comp&sg=1')).signs || {}; } catch (e) { SIGNS = SIGNS || {}; } return SIGNS; }
+function mySignKey() { return isP() ? 'P' : me(); }
+function signOpen() {
+  needSigns().then(() => { const had = SIGNS && SIGNS[mySignKey()];
+    SHEET = () => `<h2>✍️ Mera sign</h2><p class="mut" style="margin:0 0 8px">Ungli se neeche white box mein apna sign kijiye. Yeh sign har certificate par ${isP() ? 'Principal' : 'Class Teacher'} ki jagah aayega.</p>
+      ${had ? `<p class="mut" style="margin:0 0 4px">Abhi wala sign:</p><img class="sg-old" src="${had}" alt="">` : ''}
+      <canvas id="sgPad" class="sg-pad" width="700" height="280"></canvas>
+      <div class="btns"><button class="btn l" onclick="signClear()">Mitao</button><button class="btn go" onclick="signSave()">Save sign</button>${had ? `<button class="btn w" onclick="signRemove()">Hatao</button>` : ''}</div>`;
+    render(); setTimeout(signBind, 50); });
+}
+let SG_DIRTY = false;
+function signBind() {
+  const c = $('sgPad'); if (!c) return; const x = c.getContext('2d'); x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#1E3A8A'; SG_DIRTY = false;
+  let on = false; const pt = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+  c.onpointerdown = e => { on = true; c.setPointerCapture(e.pointerId); const [a, b] = pt(e); x.beginPath(); x.moveTo(a, b); e.preventDefault(); };
+  c.onpointermove = e => { if (!on) return; const [a, b] = pt(e); x.lineTo(a, b); x.stroke(); SG_DIRTY = true; e.preventDefault(); };
+  c.onpointerup = c.onpointercancel = () => { on = false; };
+}
+function signClear() { const c = $('sgPad'); if (c) { c.getContext('2d').clearRect(0, 0, c.width, c.height); SG_DIRTY = false; } }
+function signTrim(c) { const x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
+  for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (d[(y * c.width + i) * 4 + 3] > 10) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 <= x0) return null; const o = document.createElement('canvas'); o.width = x1 - x0 + 16; o.height = y1 - y0 + 16; o.getContext('2d').drawImage(c, x0 - 8, y0 - 8, o.width, o.height, 0, 0, o.width, o.height); return o.toDataURL('image/png'); }
+async function signSave() { const c = $('sgPad'); if (!c || !SG_DIRTY) return toast('Pehle box mein sign kijiye.'); const data = signTrim(c); if (!data) return toast('Pehle box mein sign kijiye.');
+  try { await api('teacher_api.php?a=comp', { op: 'sign', data }); SIGNS[mySignKey()] = data; SHEET = null; toast('Sign save ho gaya ✓ Ab har certificate par yahi aayega.'); render(); } catch (e) { toast(e.message); } }
+async function signRemove() { try { await api('teacher_api.php?a=comp', { op: 'sign', data: '' }); delete SIGNS[mySignKey()]; SHEET = null; toast('Sign hata diya.'); render(); } catch (e) { toast(e.message); } }
+
+// ---------------------------------------------------------------- festival wishes for WhatsApp Status (owner, 6 Nov 2026: Dhanteras story)
+// Dates checked on 6 Nov 2026 (Time Out India). Holidays in the school calendar are added on top. Add next year's dates here.
+const FEST = [['2026-11-06', 'Dhanteras', 'Maa Lakshmi aur Bhagwan Dhanvantari aapke ghar sukh, samriddhi aur achchi sehat layein.'],
+  ['2026-11-07', 'Choti Diwali', 'Har andhera door ho aur har ghar khushiyon se roshan ho.'],
+  ['2026-11-08', 'Diwali', 'Diyon ki roshni aapke jeevan mein khushiyan, gyaan aur samriddhi laaye.'],
+  ['2026-11-10', 'Govardhan Puja', 'Bhagwan Shri Krishna sabki raksha karein aur ghar ann-dhan se bhara rahe.'],
+  ['2026-11-11', 'Bhai Dooj', 'Bhai-behen ka pyaar aur bandhan hamesha aise hi mazboot rahe.']];
+function festNow() {
+  const t = todayISO(), tm = (() => { const d = new Date(t + 'T00:00:00'); d.setDate(d.getDate() + 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })();
+  const L = FEST.filter(f => f[0] === t || f[0] === tm).map(f => ({ date: f[0], name: f[1], line: f[2] }));
+  (S.cal || []).filter(e => e.type === 'Holiday' && (e.date === t || e.date === tm) && !/vacation|district|local|exam|sunday|rain|weather|trip/i.test(e.title))
+    .forEach(e => { const nm = String(e.title).replace(/\s*\(.*?\)\s*/g, '').trim(); if (nm && !L.some(f => f.name.toLowerCase() === nm.toLowerCase())) L.push({ date: e.date, name: nm, line: 'Aapko aur aapke parivaar ko dher saari khushiyan aur shubhkamnayein.' }); });
+  return L.sort((a, b) => a.date.localeCompare(b.date));
+}
+function festMsg(f) { return `🪔 *${f.name} ki hardik shubhkamnayein* 🪔\n${f.line}\n\n${S.settings.school || 'School'} parivaar ki or se aapko aur aapke parivaar ko dher saari shubhkamnayein 🙏\n— ${myName()}`; }
+function festCard() {
+  const L = festNow(); if (!L.length) return ''; window.__FEST = L; const t = todayISO();
+  return `<div class="card fs-card"><div class="cp-dh"><span>🪔</span><div><small>Tyohar · parents aur Status ke liye</small><b>${L.map(f => (f.date === t ? 'Aaj ' : 'Kal ') + esc(f.name)).join(' · ')}</b></div></div>
+    ${L.map((f, i) => `<div class="btns"><button class="btn go" onclick="festStoryOpen(${i})">✨ ${esc(f.name)} story photo</button><button class="btn l" onclick="festCopy(${i})">Copy wish</button></div>`).join('')}
+    <small class="mut">Story photo → screenshot / share → WhatsApp Status. Wish copy karke parents group mein bhejiye.</small></div>`;
+}
+function festCopy(i) { const f = (window.__FEST || [])[i]; if (!f) return; window.__CT = [festMsg(f)]; certCopy(0); }
+async function festStory(f) {
+  await certFont(); const W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#3B0A45'); g.addColorStop(.55, '#7C2D12'); g.addColorStop(1, '#C2410C'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.save(); x.globalAlpha = .14; cMandala(x, W / 2, 1180, 520, ['#FDE68A', '#FDBA74', '#FDE68A', '#fff', '#fff']); x.restore();
+  for (let i = 0; i < 70; i++) { x.fillStyle = `rgba(253,230,138,${.25 + (i % 5) * .12})`; x.beginPath(); x.arc((i * 137) % W, (i * 263) % 900 + 120, 2 + (i % 3), 0, 7); x.fill(); }
+  cToran(x, 0, W, 0);
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(W / 2, 240, 74, 0, 7); x.fill(); if (LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, W / 2 - 63, 177, 126, 126);
+  x.textAlign = 'center'; x.fillStyle = '#FDE68A'; x.font = '600 34px ' + PF; x.fillText(S.settings.school || '', W / 2, 368);
+  x.fillStyle = '#fff'; x.font = '500 40px ' + PF; cSpaced(x, 'HAPPY', W / 2, 520, 18);
+  let fs = 170; x.font = `${fs}px GreatVibes, cursive`; while (x.measureText(f.name).width > W - 100 && fs > 90) { fs -= 8; x.font = `${fs}px GreatVibes, cursive`; }
+  const tg = x.createLinearGradient(0, 560, 0, 720); tg.addColorStop(0, '#FEF3C7'); tg.addColorStop(1, '#F59E0B'); x.fillStyle = tg; x.fillText(f.name, W / 2, 690);
+  cDiya(x, W / 2 - 230, 1080, 85); cDiya(x, W / 2 + 230, 1080, 85); cDiya(x, W / 2, 1030, 130);
+  x.fillStyle = '#fff'; x.font = '500 42px ' + PF; let y = 1300; wrapText(x, f.line, W - 160).forEach(l => { x.fillText(l, W / 2, y); y += 60; });
+  x.fillStyle = 'rgba(255,255,255,.9)'; x.font = '400 32px ' + PF; y += 40; x.fillText('Aapko aur aapke parivaar ko', W / 2, y); x.fillText('hardik shubhkamnayein 🙏', W / 2, y + 46);
+  x.fillStyle = '#FDE68A'; x.font = '600 34px ' + PF; x.fillText('— ' + (isP() ? 'Principal, Teachers & Staff' : myName()), W / 2, H - 150);
+  x.fillStyle = 'rgba(255,255,255,.8)'; x.font = '400 28px ' + PF; x.fillText((S.settings.school || '') + ', Bhadohi', W / 2, H - 100);
+  return cv.toDataURL('image/png');
+}
+async function festStoryOpen(i) {
+  const f = (window.__FEST || [])[i]; if (!f) return; toast('Story photo ban rahi hai…'); const st = await festStory(f), fn = f.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-wishes.png';
+  if (!oldApp()) { if (window.SNMSISFiles && SNMSISFiles.shareImage) return SNMSISFiles.shareImage(fn, st.split(',')[1]);
+    try { const fl = new File([await (await fetch(st)).blob()], fn, { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [fl] })) return await navigator.share({ files: [fl], text: festMsg(f) }); } catch (e) { if (e && e.name === 'AbortError') return; } }
+  certFull(st);
+}
+
+// ---------------------------------------------------------------- "Naya kya hai" helper (owner, 6 Nov 2026: a friendly bot that tells everyone about new changes)
+// When you ship something teachers must learn, bump NEWS_VER and rewrite NEWS — every user sees it once, and again from ☰.
+const NEWS_VER = '2026-11-06-comp';
+const NEWS = { title: 'Diwali Competition + Certificate', steps: [
+  ['📋', 'Pehle haziri lagaiye', 'Jo bachche absent / leave hain woh team banate waqt list mein nahi aayenge.'],
+  ['🪔', 'Home par “Competition” card', '“+ Team banao” dabaiye. Rangoli ya Diya chuniye, phir apni class ka group.'],
+  ['👫', 'Team banaiye', 'Team ka naam likhiye (jaise Roshni), bachchon par tap kijiye, Save. Akele bachche ke liye “+ Single child”.'],
+  ['📷', 'Photo lagaiye', 'Box par tap → sabse achchi photo: team ke bachche apni rangoli / diye ke saath ek hi photo mein. Yahi photo certificate par aayegi.'],
+  ['🥇', 'Result', 'Jeetne wali team par 🥇 🥈 🥉 dabaiye. Baaki sab ko “Participation” certificate apne aap milega.'],
+  ['🎓', 'Certificate', '🎓 dabaiye — team ka ek, aur har bachche ka alag certificate. Screenshot ya Share karke parents ko bhejiye.'],
+  ['💬', 'Parent ko message', 'Certificate ke neeche taiyaar message hai — Copy karke usi bachche ke parent ko WhatsApp par bhejiye.'],
+  ['✨', 'WhatsApp Status', '“Story photo banao” + caption copy → WhatsApp → Status.'],
+  ['🎉', 'Tyohar wishes', 'Home par 🪔 Tyohar card: Dhanteras / Diwali ki story photo aur wish message — Status aur parents group ke liye.']] };
+function newsOpen() {
+  let o = $('nwBox'); if (o) o.remove(); o = document.createElement('div'); o.id = 'nwBox'; o.className = 'nw';
+  o.innerHTML = `<div class="nw-in"><div class="nw-bot"><span class="nw-face">🤖</span><div class="nw-bub"><b>Namaste ${esc(myName().split(' ')[0])} ji! 👋</b><br>Main Maakit Mitra hoon. App mein naya aaya hai: <b>${esc(NEWS.title)}</b>. Aise use kijiye 👇</div></div>
+    <ol class="nw-l">${NEWS.steps.map(([e, t, d]) => `<li><span>${e}</span><div><b>${esc(t)}</b><small>${esc(d)}</small></div></li>`).join('')}</ol>
+    <button class="btn go full" id="nwOk">Samajh gaya 👍</button><small class="nw-f">Dobara dekhna ho to ☰ menu → “Naya kya hai”.</small></div>`;
+  document.body.appendChild(o); $('nwOk').onclick = () => { store.set('ta_news', NEWS_VER); o.remove(); };
+}
 (function () {
-  const _vHome = vHome; vHome = function () { return compCard() + _vHome(); };
-  const _vPdash = vPdash; vPdash = function () { return compCard() + _vPdash(); };
-  const _render = render; render = function () { _render(); if (S && TAB === 'comp') compThumbs(); };
+  const _vHome = vHome; vHome = function () { return festCard() + compCard() + _vHome(); };
+  const _vPdash = vPdash; vPdash = function () { return signCard() + festCard() + compCard() + _vPdash(); };
+  const _om = openMenu; openMenu = function () { _om(); const f = SHEET; if (f) { SHEET = () => f().replace('</h2>', '</h2><div class="btns"><button class="btn go" onclick="SHEET=null;render();newsOpen()">🤖 Naya kya hai</button><button class="btn l" onclick="SHEET=null;signOpen()">✍️ Mera sign</button></div>'); render(); } };
+  const _render = render; render = function () { _render(); if (S && TAB === 'comp') compThumbs();
+    if (S && ME && !window.__nwShown && store.get('ta_news') !== NEWS_VER && !document.getElementById('ta-welcome')) { window.__nwShown = true; setTimeout(newsOpen, 900); } };
   const _go = go; go = function (tab, p) { if (tab === 'comp') DRAFT.ce = null; if ((tab === 'home' || tab === 'pdash' || tab === 'comp') && COMP && COMP.ok && Date.now() - COMP.at > 60000) needComp(true); return _go(tab, p); };
   if (typeof MENU !== 'undefined') MENU.forEach(g => { if (g[0] === 'Students') { const i = g[1].findIndex(x => x[3] === 'Competition'); const it = ['comp', {}, 'chart', 'Competition', 'Team, photo, jeetne wale, certificate']; if (i >= 0) g[1][i] = it; else g[1].unshift(it); } });
 })();
