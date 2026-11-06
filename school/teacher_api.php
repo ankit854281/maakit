@@ -607,13 +607,41 @@ case 'rec': {
     $yn = fn($v) => $v === null || $v === '' ? null : ((int)$v ? 1 : 0);
     $lv = []; foreach (['read', 'write', 'learn', 'speak', 'beh'] as $f) { $v = (int)($x['levels'][$f] ?? 0); if ($v >= 1 && $v <= 4) $lv[$f] = $v; }
     $wa = preg_replace('/\D/', '', (string)($x['waNo'] ?? '')); $wa = strlen($wa) >= 10 ? substr($wa, -10) : '';
+    $prev = sch_rec_get('tchRec', "$cls|$sid") ?: []; $hist = array_values((array)($prev['lvHist'] ?? []));
+    if ($lv != (array)($prev['levels'] ?? [])) { $hist = array_values(array_filter($hist, fn($e) => ($e['d'] ?? '') !== date('Y-m-d'))); $hist[] = ['d' => date('Y-m-d'), 'l' => (object)$lv]; $hist = array_slice($hist, -24); }
     $d = ['diary' => $yn($x['diary'] ?? null), 'id' => $yn($x['id'] ?? null), 'book' => $yn($x['book'] ?? null), 'dress' => $yn($x['dress'] ?? null),
           'wa' => $yn($x['wa'] ?? null), 'waGroup' => $yn($x['waGroup'] ?? null), 'waNo' => $wa, 'levels' => (object)$lv, 'note' => tch_txt($x['note'] ?? '', 500),
-          'by' => $u['label'], 'at' => sch_now_ms()];
+          'lvHist' => $hist, 'by' => $u['label'], 'at' => sch_now_ms()];
     sch_rec_put('tchRec', "$cls|$sid", $d, $uid);
     $miss = []; foreach (['diary' => 'diary', 'id' => 'ID card', 'book' => 'books', 'dress' => 'dress', 'wa' => 'WhatsApp in record'] as $f => $l) if ($d[$f] === 0) $miss[] = $l;
     sch_log($u, 'Student record', 'Record of ' . ($s['name'] ?? $sid) . ' (Class ' . $cls . ') updated' . ($miss ? ' — not yet: ' . implode(', ', $miss) : '') . ' — Teacher App');
     sch_json(['ok' => true, 'rec' => $d]);
+}
+
+// One-time bulk entry for a whole class (owner, 6 Nov 2026: "learning / reading ek baar bulk me entry ho jaye, uske baad
+// daily me rahe"). Class teacher / Principal. Merges into each child's tchRec (other fields kept); every change of levels
+// is also kept in lvHist [{d, l}] (last 24) so progress over the year can be seen.
+case 'recbulk': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $cls = (string)($in['cls'] ?? ''); if ($cls === '' || !$canClass($cls)) sch_fail('Only the class teacher or the Principal can fill this.', 403);
+    $rows = is_array($in['rows'] ?? null) ? $in['rows'] : []; if (!$rows || count($rows) > 200) sch_fail('Nothing to save.');
+    $today = date('Y-m-d'); $n = 0; $db->beginTransaction();
+    foreach ($rows as $sid => $x) {
+        $sid = (string)$sid; $s = sch_rec_get('student', $sid); if (!$s || ($s['cls'] ?? '') !== $cls || !is_array($x)) continue;
+        $old = sch_rec_get('tchRec', "$cls|$sid") ?: []; $d = $old;
+        if (isset($x['levels']) && is_array($x['levels'])) { $lv = (array)($old['levels'] ?? []);
+            foreach (['read', 'write', 'learn', 'speak', 'beh'] as $f) if (array_key_exists($f, $x['levels'])) { $v = (int)$x['levels'][$f]; if ($v >= 1 && $v <= 4) $lv[$f] = $v; else unset($lv[$f]); }
+            if ($lv != (array)($old['levels'] ?? [])) { $h = array_values(array_filter((array)($old['lvHist'] ?? []), fn($e) => ($e['d'] ?? '') !== $today)); $h[] = ['d' => $today, 'l' => $lv]; $d['lvHist'] = array_slice($h, -24); }
+            $d['levels'] = $lv; }
+        foreach (['diary', 'id', 'book', 'dress', 'wa', 'waGroup'] as $f) if (array_key_exists($f, $x)) $d[$f] = $x[$f] === null || $x[$f] === '' ? null : ((int)$x[$f] ? 1 : 0);
+        if ($d == $old) continue;
+        $d['by'] = $u['label']; $d['at'] = sch_now_ms(); $d['levels'] = (object)($d['levels'] ?? []);
+        if (isset($d['lvHist'])) $d['lvHist'] = array_map(fn($e) => ['d' => $e['d'] ?? '', 'l' => (object)($e['l'] ?? [])], (array)$d['lvHist']);
+        sch_rec_put('tchRec', "$cls|$sid", $d, $uid); $n++;
+    }
+    $db->commit();
+    if ($n) sch_log($u, 'Student record', "Class $cls: levels / record filled for $n child(ren) together — Teacher App");
+    sch_json(['ok' => true, 'saved' => $n]);
 }
 
 case 'remark': {

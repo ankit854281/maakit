@@ -171,4 +171,9 @@ $nine = array_values(array_filter($j['classes'], fn($x) => $x['cls'] === '9th'))
 [, $j] = $ta('gender', ['rows' => ['s1' => 'Male']], $tok['P']); tf_check($j['saved'] === 0, 'unchanged child not saved again');
 [, $j] = $api('load', null, $tok['K']); tf_check(!in_array('regRow', array_column($j['records'], 'k'), true), 'student full record never in legacy load');
 
+[$c] = $ta('recbulk', ['cls' => '9th', 'rows' => ['s1' => ['levels' => ['read' => 3]]]], $tok['MA']); tf_check($c === 403, 'a subject teacher cannot fill the class record');
+[$c, $j] = $ta('recbulk', ['cls' => '9th', 'rows' => ['s1' => ['levels' => ['read' => 3, 'write' => 2], 'id' => 0], 's3' => ['levels' => ['read' => 4]], 'zz' => ['id' => 1]]], $tok['K']); tf_check($c === 200 && $j['saved'] === 1, 'class teacher fills levels for the class; other-class / unknown children skipped (' . json_encode($j) . ')');
+$r1 = sch_rec_get('tchRec', '9th|s1'); tf_check(($r1['levels']['read'] ?? 0) === 3 && $r1['id'] === 0 && count($r1['lvHist']) === 1, 'levels + record merged, history kept');
+[, $j] = $ta('recbulk', ['cls' => '9th', 'rows' => ['s1' => ['levels' => ['read' => 3, 'write' => 2]]]], $tok['K']); tf_check($j['saved'] === 0, 'no change → nothing saved');
+
 echo "Teacher app flow: all checks passed\n";

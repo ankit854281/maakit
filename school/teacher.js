@@ -25,7 +25,7 @@ const BELLS = [{ n: '1st', s: '09:00', e: '09:35' }, { n: '2nd', s: '09:35', e: 
   { n: '4th', s: '11:05', e: '11:40' }, { n: '5th', s: '11:40', e: '12:15' }, { n: '6th', s: '12:15', e: '12:50' }, { n: '7th', s: '12:50', e: '13:30' }];
 const PARTS = [['pt', 'Pre-Test', 10], ['nb', 'Notebook', 5], ['sea', 'SEA', 5], ['te', 'Term', 80]];
 // Notes live inside Planner (Planner · Lesson plan / Syllabus / Notes) so the phone keeps six tabs (owner, 5 Nov 2026: Connect added).
-const PTABS = [['pdash', 'Home', 'sun'], ['prin', 'Cross-check', 'check'], ['att', 'Classes', 'list'], ['board', 'Board', 'chart'], ['conn', 'Connect', 'chat']];   // Principal mode (owner, 5 Nov 2026)
+const PTABS = [['pdash', 'Home', 'sun'], ['prin', 'Cross-check', 'check'], ['board', 'Students', 'list'], ['staffhub', 'Staff', 'note'], ['conn', 'Connect', 'chat']];   // Chairman-app style (owner, 6 Nov 2026)   // Principal mode (owner, 5 Nov 2026)
 const TABS = [['home', 'Today', 'sun'], ['att', 'Attendance', 'check'], ['diary', 'Classroom', 'book'], ['plan', 'Planner', 'list'], ['res', 'Results', 'chart'], ['conn', 'Connect', 'chat']];
 // Each tab has its own colour, like the Chairman app (owner, 5 Nov 2026): header, buttons and the page's soft wash change
 // together when the tab changes. Colours are picked to stay readable with white text and to differ clearly from each other.
@@ -39,7 +39,7 @@ const TH = {
   res:   { a: '#047857', a2: '#22B573', soft: '#D1F2E2', tint: '#EEFAF3', sh: 'rgba(4,120,87,.28)', head: 'linear-gradient(150deg,#34D399 0%,#059669 55%,#065F46 100%)', page: '#DDF4E8' }
 };
 function theme() {
-  const th = TH[TAB === 'notes' ? 'plan' : TAB === 'prin' || TAB === 'pdash' ? 'home' : TAB] || TH.home, r = document.documentElement.style;
+  const th = TH[TAB === 'notes' ? 'plan' : TAB === 'prin' || TAB === 'pdash' ? 'home' : TAB === 'staffhub' ? 'plan' : TAB === 'board' && pMode() ? 'att' : TAB] || TH.home, r = document.documentElement.style;
   r.setProperty('--a', th.a); r.setProperty('--a2', th.a2); r.setProperty('--soft', th.soft); r.setProperty('--tint', th.tint);
   r.setProperty('--hshadow', th.sh); r.setProperty('--head', th.head); r.setProperty('--page', th.page);
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', th.a);
@@ -334,9 +334,9 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB)) || (!pm && (TAB === 'prin' || TAB === 'pdash'))) TAB = pm ? 'pdash' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
@@ -585,9 +585,9 @@ function vAtt() {
   const c = all.includes(P.c) ? P.c : (allowed[0] || all[0]), isCT = allowed.includes(c), m = isCT ? (P.m || 'day') : 'stu';
   if (isCT) needStats(c);
   return `${all.length > 1 ? `<div class="fld">Class${sel('attC', all.map(x => [x, 'Class ' + x + (allowed.includes(x) ? ' · class teacher' : '')]), c, "DRAFT.att=null;DRAFT.reg=null;DRAFT.rec=null;go('att',{c:this.value,m:'" + m + "'})")}</div>` : ''}
-    ${!isCT ? `<div class="ban inf"><div><b>Class ${esc(c)} — students</b><br><span class="sm">You teach this class. You can see every child's report and add good things or complaints. Attendance and the student record are kept by the class teacher${(S.classes.find(k => k.c === c) || {}).ct ? ' (' + esc(T(S.classes.find(k => k.c === c).ct).name) + ')' : ''}.</span></div></div>` : m === 'stu' && P.sid ? '' : attReport(c)}
-    ${isCT ? seg([['day', 'Mark'], ['kit', 'Daily check'], ['stu', 'Students'], ['cal', 'Calendar'], ['reg', 'Register']], m === 'pending' ? 'cal' : m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`) : ''}
-    ${m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : m === 'stu' ? (P.sid ? vStuReport(c, P.sid) : vStudents(c)) : vAttDay(c)}`;
+    ${isCT && m === 'bulk' ? '' : !isCT ? `<div class="ban inf"><div><b>Class ${esc(c)} — students</b><br><span class="sm">You teach this class. You can see every child's report and add good things or complaints. Attendance and the student record are kept by the class teacher${(S.classes.find(k => k.c === c) || {}).ct ? ' (' + esc(T(S.classes.find(k => k.c === c).ct).name) + ')' : ''}.</span></div></div>` : m === 'stu' && P.sid ? '' : attReport(c)}
+    ${isCT ? seg([['day', 'Mark'], ['kit', 'Daily check'], ['stu', 'Students'], ['bulk', 'Levels'], ['cal', 'Calendar'], ['reg', 'Register']], m === 'pending' ? 'cal' : m, `(k=>{DRAFT.att=null;DRAFT.reg=null;DRAFT.calSel=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:k})})`) : ''}
+    ${m === 'bulk' ? vBulk(c) : m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : m === 'stu' ? (P.sid ? vStuReport(c, P.sid) : vStudents(c)) : vAttDay(c)}`;
 }
 function attReport(c) {
   const t = todayISO(), list = studentsOf(c), a = attOf(t, c), st = STATS[c] || {}, days = st.days || 0;

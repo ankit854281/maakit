@@ -585,3 +585,19 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .xc-big div{cursor:pointer;padding:9px 9px;min-height:62px}.xc-big b{font-size:13.5px;overflow-wrap:anywhere}.xc-big span{display:block;font-size:10.5px;margin-top:2px}
 .xc-cls .warn{background:#FFF4E5}.xc-cls .warn span{color:#92400E}.xc-cls .hol{background:#EEF0F6}.xc-cls .hol span{color:#5B6782}
 .help-i.miss{background:var(--badbg)}.help-i.miss b{color:var(--bad)}
+/* ---- 6 Nov 2026: Chairman-style setup — menu, search, Staff tab, class levels (teacher-nav.js) ---- */
+.menub{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font-size:15px;flex-shrink:0;padding:0}
+.srch{padding:0 14px 12px;position:relative}.srch label{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.95);border-radius:12px;padding:0 10px;color:var(--muted)}
+.srch input{border:0;outline:0;background:none;flex:1;min-height:40px;font-size:13px}.srch svg.i{width:16px;height:16px}
+.sr-r{position:absolute;left:14px;right:14px;top:48px;z-index:30;background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(20,33,61,.18);max-height:50vh;overflow:auto}.sr-r:empty{display:none}
+.sr-r button{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:9px 12px}.sr-r button:first-child{border-top:0}.sr-r b{display:block;font-size:13px;color:var(--ink)}.sr-r span{font-size:11px;color:var(--muted)}.sr-r p{margin:0;padding:12px;font-size:12px;color:var(--muted)}
+.mn-g{margin-top:4px}.mn-g>small{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 5px}
+.mn-l{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mn-l button{display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px}
+.mn-l button>span{flex:0 0 32px;height:32px;border-radius:10px;background:var(--tint);color:var(--a);display:grid;place-items:center}.mn-l button>span svg.i{width:17px;height:17px}
+.mn-l b{display:block;font-size:12.5px}.mn-l small{display:block;font-size:10px;color:var(--muted);line-height:1.3}
+.bk-r{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}.bk-r>b{flex:1;min-width:0;font-size:12.5px;font-weight:600;overflow-wrap:anywhere}
+.bk-o{display:flex;gap:3px;flex-shrink:0}.bk-o button{border:1.5px solid var(--line);background:#fff;border-radius:8px;font-size:10.5px;font-weight:700;padding:6px 6px;color:var(--muted);min-width:44px}
+.bk-o .l1.on{background:#FDE2E2;border-color:#E25555;color:#9B1C1C}.bk-o .l2.on{background:#FFF1D6;border-color:#E5A11C;color:#8A5A00}.bk-o .l3.on{background:#DDF4E6;border-color:#22A55B;color:#14532D}.bk-o .l4.on{background:#DBEAFE;border-color:#3B82F6;color:#1D4ED8}
+.bk-o .y.on{background:var(--ok);border-color:var(--ok);color:#fff}.bk-o .x.on{background:var(--bad);border-color:var(--bad);color:#fff}.bk-o.rec button{min-width:50px}
+.bk-r{flex-wrap:wrap}.bk-r .bk-o{display:grid!important;grid-template-columns:repeat(4,1fr);width:100%;gap:4px}.bk-r .bk-o.rec{grid-template-columns:1fr 1fr}
+.bk-r .bk-o button{display:block;width:100%;min-width:0;padding:7px 2px}
