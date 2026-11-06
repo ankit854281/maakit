@@ -24,14 +24,14 @@ const clsIx = c => { const i = ORDER.indexOf(c); return i < 0 ? 99 : i; };
 async function photo(n, w) { const k = n.ev.id + '|' + n.id + '|' + (w ? 1 : 0); if (PH[k] !== undefined) return PH[k]; try { PH[k] = (await get(`cert_api.php?a=ph&k=${encodeURIComponent(n.ev.id + '|' + n.id)}${w ? '&w=1' : ''}`)).data || ''; } catch (e) { PH[k] = ''; } return PH[k]; }
 async function kid(sid) { if (KID[sid] !== undefined) return KID[sid]; const k = D.names[sid]; if (!k || !k.ph) return (KID[sid] = ''); try { KID[sid] = (await get('cert_api.php?a=kid&sid=' + encodeURIComponent(sid))).data || ''; } catch (e) { KID[sid] = ''; } return KID[sid]; }
 function gallery() {
-  const L = D.entries.filter(n => n.photoW || n.photo); if (!L.length) return; $('gal').hidden = false;
+  const L = D.entries.filter(n => n.photoW || n.photo); if (!L.length) return; $('gal').hidden = false; $('gal').dataset.ok = '1';
   $('galg').innerHTML = L.map((n, i) => `<figure data-g="${i}"><img alt=""><figcaption>${esc(n.team ? 'Team ' + n.team : D.names[n.sids[0]] ? D.names[n.sids[0]].name : '')}<small>${esc(n.cls)} · ${esc(n.cat)}</small></figcaption></figure>`).join('');
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); load(e.target); } }), { rootMargin: '200px' }) : null;
   const load = async f => { const n = L[+f.dataset.g], src = await photo(n, n.photoW) || await photo(n, false); if (src) f.querySelector('img').src = src; };
   document.querySelectorAll('#galg figure').forEach(f => { io ? io.observe(f) : load(f); f.onclick = () => { const im = f.querySelector('img'); if (im.src) full(im.src); }; });
 }
 function list() {
-  const q = $('q').value.trim().toLowerCase();
+  const q = $('q').value.trim().toLowerCase(); if ($('gal').dataset.ok) $('gal').hidden = !!(q || IDS || CLS);
   const L = ROWS.filter(r => (!CLS || r.cls === CLS) && (IDS ? IDS.includes(r.sid) : (!q || r.name.toLowerCase().includes(q) || (r.n.team || '').toLowerCase().includes(q))));
   $('res').innerHTML = `<p class="cnt">${L.length} certificate${IDS ? ' — is number ke bachche' : ''}</p>` + L.slice(0, 120).map(r => `<div class="card row" data-sid="${esc(r.sid)}" data-id="${esc(r.n.id)}">
       <div class="rh"><span class="av" data-av="${esc(r.sid)}">${esc(certInitials(r.name))}</span><div><b>${esc(r.name)}</b><small>Class ${esc(r.cls)} · ${esc(r.n.cat)}${r.n.team ? ' · Team ' + esc(r.n.team) : ''}</small></div><em>${r.n.pos ? MEDAL[r.n.pos] : '🎖️'}</em></div>
@@ -59,7 +59,7 @@ function full(src) { const o = document.createElement('div'); o.className = 'ful
 let T0 = 0;
 $('q').addEventListener('input', () => { clearTimeout(T0); const v = $('q').value.replace(/\D/g, ''); IDS = null; $('msg').textContent = '';
   if (v.length >= 10 && /^[\d\s+()-]+$/.test($('q').value.trim())) T0 = setTimeout(findMobile, 300); else T0 = setTimeout(list, 120); });
-$('f').addEventListener('submit', e => { e.preventDefault(); const v = $('q').value.replace(/\D/g, ''); if (v.length >= 10) findMobile(); else list(); $('q').blur(); });
+$('f').addEventListener('submit', e => { e.preventDefault(); const v = $('q').value.replace(/\D/g, ''); if (v.length >= 10) findMobile(); else list(); $('q').blur(); setTimeout(() => $('res').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); });
 async function findMobile() {
   const m = $('q').value.replace(/\D/g, '').slice(-10); $('msg').textContent = 'Dhoondh rahe hain…';
   try { const r = await fetch('cert_api.php?a=find', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m }) }), j = await r.json().catch(() => null);

@@ -20,12 +20,12 @@ $v = fn($f) => (string)@filemtime(__DIR__ . '/' . $f);
   <header class="top"><img src="img/snmsis-logo.png" alt=""><div><small>SN Mishra Singapore International School</small><b>🏆 Mera Certificate</b></div></header>
   <section class="card find">
     <h2>🔍 Apna certificate dhoondhiye</h2>
-    <form id="f"><input id="q" type="search" autocomplete="off" placeholder="Bachche ka naam ya mobile number" aria-label="Naam ya mobile number"></form>
+    <form id="f"><input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="Bachche ka naam ya mobile number" aria-label="Naam ya mobile number"><button type="submit">🔍 Dhoondho</button></form>
     <div id="cls" class="chips"></div>
     <p id="msg" class="msg"></p>
   </section>
-  <section id="gal" class="card gal" hidden><h2>📸 Competition ki photos</h2><div id="galg" class="galg"></div></section>
   <section id="res"></section>
+  <section id="gal" class="card gal" hidden><h2>📸 Competition ki photos</h2><div id="galg" class="galg"></div></section>
   <footer>Number nahi mila? Class teacher ya school office se sampark karein.<br>Powered by Maakit</footer>
 </main>
 <script src="cert-draw.js?v=<?= $v('cert-draw.js') ?>"></script><script src="cert.js?v=<?= $v('cert.js') ?>"></script>
