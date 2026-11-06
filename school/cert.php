@@ -18,11 +18,12 @@ $v = fn($f) => (string)@filemtime(__DIR__ . '/' . $f);
 <main id="app" class="app">
   <header class="top"><img src="img/snmsis-logo.png" alt=""><div><small>SN Mishra Singapore International School</small><b>🏆 Mera Certificate</b></div></header>
   <section class="card find">
-    <h2>Apna certificate paaiye</h2>
-    <p>Wahi mobile number likhiye jo school mein bachche ke record mein diya hai.</p>
-    <form id="f"><input id="mob" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="Mobile number (10 ank)" required><button type="submit">Certificate dikhao</button></form>
+    <h2>🔍 Apna certificate dhoondhiye</h2>
+    <form id="f"><input id="q" type="search" autocomplete="off" placeholder="Bachche ka naam ya mobile number" aria-label="Naam ya mobile number"></form>
+    <div id="cls" class="chips"></div>
     <p id="msg" class="msg"></p>
   </section>
+  <section id="gal" class="card gal" hidden><h2>📸 Competition ki photos</h2><div id="galg" class="galg"></div></section>
   <section id="res"></section>
   <footer>Number nahi mila? Class teacher ya school office se sampark karein.<br>Powered by Maakit</footer>
 </main>

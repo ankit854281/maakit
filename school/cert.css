@@ -30,3 +30,11 @@
 .bt{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.bt button{background:#EDE9FE;color:#4C1D95;padding:11px 6px;font-size:13.5px}.bt .go{background:linear-gradient(135deg,#7C3AED,#DB2777);color:#fff}.bt .wa{background:#25D366;color:#fff}
 .none{color:#6B7280;font-size:13px}.tip{font-size:12.5px;color:#4B5563;text-align:center;margin:14px 6px}
 footer{text-align:center;font-size:12px;color:#6B7280;margin-top:24px;line-height:1.6}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px}.chips button{font:inherit;font-size:13px;font-weight:600;border:1.5px solid #DDD6FE;background:#fff;color:#4C1D95;border-radius:20px;padding:6px 12px;white-space:nowrap;cursor:pointer}.chips button.on{background:#7C3AED;border-color:#7C3AED;color:#fff}
+.gal h2,.find h2{margin:0 0 10px;font-size:17px}.galg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.galg figure{margin:0;cursor:pointer}.galg img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:#EDE9FE;display:block}
+.galg figcaption{font-size:11px;font-weight:600;line-height:1.25;margin-top:4px}.galg small{display:block;color:#6B7280;font-weight:400}
+.cnt{font-size:12.5px;color:#6B7280;margin:14px 4px 0}.row{padding:12px 14px}.rh{display:flex;gap:10px;align-items:center}.rh>div{flex:1;min-width:0}.rh b{display:block;font-size:15px}.rh small{color:#6B7280;font-size:12px}.rh em{font-style:normal;font-size:24px}
+.av{width:44px;height:44px;border-radius:50%;background:#EDE9FE;color:#4C1D95;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 44px}.av img{width:100%;height:100%;object-fit:cover}
+.row .open{width:100%;margin-top:10px;font:inherit;font-weight:600;border:0;border-radius:12px;padding:10px;background:#EDE9FE;color:#4C1D95;cursor:pointer}.row .pv:empty{display:none}
+.full{position:fixed;inset:0;z-index:60;background:rgba(15,10,40,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px}.full img{max-width:100%;max-height:88vh;border-radius:8px}.full small{color:#ddd}
+#f input{font-size:16px}
