@@ -95,6 +95,40 @@ function of_all(array $students, ?array $only = null): array {
 try {
 switch ($a) {
 
+case 'attendance': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $u = sch_auth();
+    if (!in_array($u['role'], ['accountant', 'principal', 'chairman'], true)) sch_fail('Not allowed.', 403);
+    $date = of_date($_GET['date'] ?? date('Y-m-d'));
+    $settings = sch_rec_get('settings', 'main') ?? [];
+    $schoolHoliday = date('w', strtotime($date)) === '0';
+    foreach (of_rows('cal') as $event) {
+        if (($event['type'] ?? '') === 'Holiday' && ($event['date'] ?? '') <= $date && ($event['to'] ?? $event['date'] ?? '') >= $date) $schoolHoliday = true;
+    }
+    $students = of_students();
+    $rows = [];
+    $totals = array_fill_keys(['total', 'present', 'absent', 'leave', 'pending', 'holiday'], 0);
+    foreach (sch_rec_get('classes', 'main') ?? [] as $class) {
+        $cls = (string)$class['c'];
+        $kids = array_filter($students, fn($s) => $s['cls'] === $cls);
+        $att = sch_rec_get('studAtt', $date . '|' . $cls);
+        $holiday = $schoolHoliday || sch_rec_get('clsHol', $date . '|' . $cls) !== null;
+        $row = ['class' => $cls, 'teacher' => sch_teacher_name($class['ct'] ?? null), 'total' => count($kids),
+            'present' => 0, 'absent' => 0, 'leave' => 0, 'pending' => 0, 'holiday' => 0,
+            'status' => $holiday ? 'Holiday' : ($att === null ? 'Pending' : 'Saved')];
+        foreach ($kids as $sid => $student) {
+            if ($holiday) $row['holiday']++;
+            elseif ($att === null) $row['pending']++;
+            elseif (($att['st'][$sid] ?? '') === 'L') $row['leave']++;
+            elseif (in_array((string)$sid, array_map('strval', (array)($att['absent'] ?? [])), true)) $row['absent']++;
+            else $row['present']++;
+        }
+        foreach ($totals as $key => $value) $totals[$key] += $row[$key];
+        $rows[] = $row;
+    }
+    sch_json(['ok' => true, 'date' => $date, 'school' => $settings['school'] ?? 'School', 'rows' => $rows, 'totals' => $totals]);
+}
+
 case 'data': {
     $u = sch_auth();
     if (!in_array($u['role'], ['principal', 'accountant', 'reception', 'chairman'], true)) sch_fail('Not allowed.', 403);

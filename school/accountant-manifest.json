@@ -1,0 +1,1 @@
+{"name":"SNMSIS Accountant","short_name":"Accounts","id":"snmsis-accountant","start_url":"accountant.php","scope":"./","display":"standalone","background_color":"#eef3f2","theme_color":"#134d48","icons":[{"src":"img/snmsis-logo.png","sizes":"any","type":"image/png","purpose":"any"}]}

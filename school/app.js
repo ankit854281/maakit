@@ -4064,3 +4064,12 @@ VIEWS.progress=()=>'<iframe class="edu-iframe" title="Progress Report" src="prog
 const ACREM=new Map();
 function academicReminderCard(date){queueMicrotask(()=>loadAcademicReminder(date));return '<div class="card"><h3 class="h3">Daily Teaching</h3><p id="academicReminder" data-date="'+esc(date)+'" class="text-sm">Checking saved teaching records…</p><button onclick="go(&quot;academics&quot;)" class="btn btn-p mt-2">Child checks & pending report</button></div>';}
 async function loadAcademicReminder(date){const key=U.role+'|'+U.tid+'|'+date;try{let cached=ACREM.get(key);if(!cached||Date.now()-cached.at>120000){const r=await fetch('academics_api.php?a=report&date='+encodeURIComponent(date),{headers:{'X-School-Token':TOKEN}}),d=await r.json();if(!r.ok||!d.ok)throw Error('Open Daily Teaching to check this day.');cached={at:Date.now(),data:d};ACREM.set(key,cached);}const node=document.getElementById('academicReminder');if(!node||node.dataset.date!==date)return;const rows=cached.data.report,count=rows.reduce((n,t)=>n+t.pending.length,0);node.textContent=!cached.data.configured?'Set the timetable before relying on the teaching report.':count?count+' follow-up item(s) in saved records. Open the report for the next action.':'No pending items found in the recorded teaching checks.';}catch(e){const node=document.getElementById('academicReminder');if(node&&node.dataset.date===date)node.textContent='Open Daily Teaching to review saved checks and pending work.';}}
+
+// Daily office report reads the same attendance saved by the Teacher App.
+for (const role of ['accountant', 'principal', 'chairman']) {
+  NAV[role].push(['dailyattendance', 'fa-clipboard-user', 'Daily Attendance Report']);
+}
+VIEWS.dailyattendance = () => '<iframe title="Daily Attendance Report" src="dailyattendance.php" style="width:100%;min-height:85vh;border:0"></iframe>';
+
+NAV.accountant.unshift(['accountantapp','fa-mobile-screen','Accountant App']);
+VIEWS.accountantapp=()=>'<div class="card"><h3 class="h3">Accountant App</h3><p>Fees, receipts, daily attendance and staff in one phone app.</p><a class="btn btn-p" href="accountant.php">Open Accountant App</a></div>';
