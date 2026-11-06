@@ -35,11 +35,11 @@ function vComp() {
     ${seg(ev.secs.map(s => [s.name, s.name]), sec, `(k=>go('comp',{ev:'${ev.id}',cat:${jsq(cat)},sec:k}))`)}
     <div class="btns"><button class="btn go" onclick="compAdd('${ev.id}',${jsq(cat)},${jsq(sec)},'group')">+ Team</button><button class="btn l" onclick="compAdd('${ev.id}',${jsq(cat)},${jsq(sec)},'solo')">+ Single child</button>${L.length ? `<button class="btn w" onclick="certPrintAll('${ev.id}',${jsq(cat)},${jsq(sec)})">${ic('print')} All certificates</button>` : ''}</div>
     <div class="card"><h3>${esc(cat)} · ${esc(sec)} <small>${L.length} entr${L.length === 1 ? 'y' : 'ies'}</small></h3>
-      ${L.map(n => `<div class="cp-e ${n.pos ? 'win' : ''}"><div class="cp-ph" onclick="compPhoto('${ev.id}','${n.id}')">${n.photo ? `<img data-ph="${ev.id}|${n.id}" alt="">` : `<span>${ic('cam')}<small>Photo</small></span>`}</div>
+      ${L.map(n => `<div class="cp-e ${n.pos ? 'win' : ''}"><div class="cp-phs"><div class="cp-ph" onclick="compPhoto('${ev.id}','${n.id}','w')">${n.photoW ? `<img data-ph="${ev.id}|${n.id}|w" alt="">` : `<span>${/diya|deep|lamp/i.test(n.cat) ? '🪔' : '🎨'}<small>${esc(n.cat.split(' ')[0])}</small></span>`}</div><div class="cp-ph sm" onclick="compPhoto('${ev.id}','${n.id}','')">${n.photo ? `<img data-ph="${ev.id}|${n.id}|" alt="">` : `<span>👫<small>Team</small></span>`}</div></div>
         <div class="t"><b>${esc(nm(n))}</b><small>Class ${esc(n.cls)}${n.type === 'group' ? ' · ' + kids(n).map(s => esc(s.name.split(' ')[0])).join(', ') : ''}</small>
           <div class="cp-pos">${['1', '2', '3'].map(p => `<button class="${n.pos === p ? 'on' : ''}" onclick="compPos('${ev.id}','${n.id}','${n.pos === p ? '' : p}')">${POS[p]}</button>`).join('')}</div>
           <div class="btns"><button class="btn s l" onclick="certOpen('${ev.id}','${n.id}')">🎓 Certificate</button>${mine(n) ? `<button class="btn s w" onclick="compDel('${ev.id}','${n.id}')">✕</button>` : ''}</div></div></div>`).join('') || '<div class="empty">No team or child yet. Tap “+ Team” or “+ Single child”.</div>'}</div>
-    <p class="mut">Positions: tap 🥇 / 🥈 / 🥉 (tap again to clear). Photo: tap the box — best is the team standing with their rangoli / diya. Certificates: one for the team and one for every child.</p>`;
+    <p class="mut">Positions: tap 🥇 / 🥈 / 🥉 (tap again to clear). Photos: big box 🎨 = rangoli / diya, small box 👫 = the team. Certificates: one for the team and one for every child.</p>`;
 }
 async function compCreate() {
   const title = ($('cpT').value || '').trim(), date = $('cpD').value, cats = ($('cpC').value || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -74,18 +74,18 @@ async function compSave(ev, cat, type) {
 async function compPos(ev, id, pos) { try { const r = await api('teacher_api.php?a=comp', { op: 'pos', ev, id, pos }); const i = COMP.entries.findIndex(n => n.id === id); COMP.entries[i] = r.entry; render(); } catch (e) { toast(e.message); } }
 async function compDel(ev, id) { if (!confirm('Remove this entry?')) return; try { await api('teacher_api.php?a=comp', { op: 'del', ev, id }); COMP.entries = COMP.entries.filter(n => n.id !== id); render(); } catch (e) { toast(e.message); } }
 let CP_TARGET = null;
-function compPhoto(ev, id) {
-  CP_TARGET = [ev, id]; let inp = $('cpIn'); if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment'; inp.id = 'cpIn'; inp.hidden = true; inp.onchange = () => compPhotoGot(inp); document.body.appendChild(inp); }
+function compPhoto(ev, id, kind) {
+  CP_TARGET = [ev, id, kind || '']; let inp = $('cpIn'); if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment'; inp.id = 'cpIn'; inp.hidden = true; inp.onchange = () => compPhotoGot(inp); document.body.appendChild(inp); }
   inp.value = ''; inp.click();
 }
 async function compPhotoGot(inp) {
-  const f = inp.files && inp.files[0]; if (!f || !CP_TARGET) return; const [ev, id] = CP_TARGET;
+  const f = inp.files && inp.files[0]; if (!f || !CP_TARGET) return; const [ev, id, kind] = CP_TARGET;
   try { toast('Saving the photo…'); const data = await new Promise((ok, bad) => { const img = new Image(), u = URL.createObjectURL(f); img.onload = () => { const m = 1100, r = Math.min(1, m / Math.max(img.width, img.height)), cv = document.createElement('canvas'); cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(u); let q = .8, o = cv.toDataURL('image/jpeg', q); while (o.length > 650000 && q > .35) { q -= .1; o = cv.toDataURL('image/jpeg', q); } ok(o); }; img.onerror = () => bad(new Error('This photo could not be opened.')); img.src = u; });
-    const r = await api('teacher_api.php?a=comp', { op: 'photo', ev, id, data }); CPH[ev + '|' + id] = data; const i = COMP.entries.findIndex(n => n.id === id); COMP.entries[i] = r.entry; toast('Photo saved.'); render();
+    const r = await api('teacher_api.php?a=comp', { op: 'photo', ev, id, data, kind }); CPH[ev + '|' + id + '|' + kind] = data; const i = COMP.entries.findIndex(n => n.id === id); COMP.entries[i] = r.entry; toast('Photo saved.'); render();
   } catch (e) { toast(e.message); }
 }
-async function phOf(ev, id) { const k = ev + '|' + id; if (CPH[k] !== undefined) return CPH[k]; try { const r = await api('teacher_api.php?a=comp&ph=' + encodeURIComponent(k)); CPH[k] = r.data || ''; } catch (e) { CPH[k] = ''; } return CPH[k]; }
-function compThumbs() { document.querySelectorAll('img[data-ph]').forEach(async im => { if (im.src) return; const [ev, id] = im.dataset.ph.split('|'); const d = await phOf(ev, id); if (d) im.src = d; }); }
+async function phOf(ev, id, kind) { kind = kind || ''; const k = ev + '|' + id + '|' + kind; if (CPH[k] !== undefined) return CPH[k]; try { const r = await api('teacher_api.php?a=comp&ph=' + encodeURIComponent(ev + '|' + id) + (kind ? '&k=' + kind : '')); CPH[k] = r.data || ''; } catch (e) { CPH[k] = ''; } return CPH[k]; }
+function compThumbs() { document.querySelectorAll('img[data-ph]').forEach(async im => { if (im.src) return; const [ev, id, kind] = im.dataset.ph.split('|'); const d = await phOf(ev, id, kind); if (d) im.src = d; }); }
 
 // ---------------------------------------------------------------- certificates (drawn on a canvas → PNG)
 let CERT_FONT = null;
@@ -144,10 +144,13 @@ async function certPNG(o) {
   x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = '600 25px ' + PF; let ly = 248; wrapText(x, o.school || '', PW - 70).forEach(l => { x.fillText(l, PW / 2, ly); ly += 34; });
   x.font = '400 17px ' + PF; x.fillStyle = 'rgba(255,255,255,.75)'; x.fillText(o.place || 'Bhadohi, Uttar Pradesh', PW / 2, ly + 2);
   // the competition: real photo, else the drawing
-  const ph = await loadImg(o.photo), cy = 610;
-  if (ph) { const s = Math.min(300 / ph.width, 300 / ph.height), w = ph.width * s, h = ph.height * s; x.save(); x.translate(PW / 2, cy); x.rotate(-.035);
-    x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 24; x.fillStyle = '#fff'; x.fillRect(-w / 2 - 12, -h / 2 - 12, w + 24, h + 58); x.shadowBlur = 0; x.drawImage(ph, -w / 2, -h / 2, w, h);
-    x.fillStyle = '#374151'; x.font = '500 18px ' + PF; x.fillText(o.team ? 'Team ' + o.team : o.cat, 0, h / 2 + 32); x.restore(); }
+  // the competition: rangoli / diya photo big, team photo small on top; no photos → the drawing
+  const pw = await loadImg(o.photoW), pt = await loadImg(o.photo), cy = 600;
+  const pola = (im, cx0, cy0, max, rot, cap) => { const k = Math.min(max / im.width, max / im.height), w = im.width * k, h = im.height * k; x.save(); x.translate(cx0, cy0); x.rotate(rot);
+    x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 22; x.fillStyle = '#fff'; x.fillRect(-w / 2 - 10, -h / 2 - 10, w + 20, h + (cap ? 48 : 20)); x.shadowBlur = 0; x.drawImage(im, -w / 2, -h / 2, w, h);
+    if (cap) { x.fillStyle = '#374151'; x.font = '500 16px ' + PF; x.textAlign = 'center'; x.fillText(cap, 0, h / 2 + 27); } x.restore(); };
+  if (pw && pt) { pola(pw, PW / 2 - 30, cy - 85, 270, -.05, o.cat); pola(pt, PW / 2 + 100, cy + 110, 165, .07, o.team ? 'Team ' + o.team : 'Team'); }
+  else if (pw || pt) pola(pw || pt, PW / 2, cy, 300, -.035, pw ? o.cat : (o.team ? 'Team ' + o.team : o.cat));
   else { x.fillStyle = 'rgba(255,255,255,.12)'; x.beginPath(); x.arc(PW / 2, cy, 165, 0, 7); x.fill();
     if (diya) { cDiya(x, PW / 2 - 70, cy + 55, 46); cDiya(x, PW / 2 + 70, cy + 55, 46); cDiya(x, PW / 2, cy + 20, 70); }
     else cMandala(x, PW / 2, cy, 135, ['#F472B6', '#FBBF24', '#34D399', '#60A5FA', '#FFFFFF']); }
@@ -180,6 +183,12 @@ async function certPNG(o) {
   if (who) { x.font = '600 22px ' + PF; x.fillStyle = th.b; x.fillText(who, cx, y + 2); y += 34; }
   x.font = '500 19px ' + PF; const chip = `✦  ${o.event}  ·  ${o.date}  ✦`, cw = x.measureText(chip).width + 50;
   x.fillStyle = diya ? '#FFF1E6' : '#FCE7F3'; cRound(x, cx - cw / 2, y + 26, cw, 44, 22); x.fill(); x.fillStyle = th.a; x.fillText(chip, cx, y + 55);
+  // children's photos like the attendance cards (owner, 6 Nov 2026); this child bigger with a gold ring
+  if (o.kids && o.kids.length) { const K = o.kids, imgs = await Promise.all(K.map(k => loadImg(k.src))), n = K.length, step = Math.min(92, (RW - 260) / n), rr = Math.min(30, step / 2 - 6), ry = Math.min(y + 122, H - 262);
+    K.forEach((k, i) => { const kx = cx - step * (n - 1) / 2 + i * step, r = k.me ? rr + 9 : rr, im = imgs[i];
+      x.save(); x.beginPath(); x.arc(kx, ry, r, 0, 7); x.closePath(); if (im) { x.clip(); const e = Math.min(im.width, im.height); x.drawImage(im, (im.width - e) / 2, (im.height - e) / 3, e, e, kx - r, ry - r, r * 2, r * 2); } else { x.fillStyle = diya ? '#FED7AA' : '#E9D5FF'; x.fill(); x.fillStyle = th.a; x.font = `600 ${Math.round(r * .7)}px ${PF}`; x.textBaseline = 'middle'; x.fillText(initials(k.name), kx, ry + 1); x.textBaseline = 'alphabetic'; } x.restore();
+      x.lineWidth = k.me ? 5 : 3; x.strokeStyle = k.me ? gold : '#fff'; x.beginPath(); x.arc(kx, ry, r, 0, 7); x.stroke();
+      if (n <= 10 || k.me) { x.fillStyle = k.me ? th.a : '#4B5563'; x.font = `${k.me ? 600 : 500} ${n > 7 ? 11 : 13}px ${PF}`; x.fillText(String(k.name).split(' ')[0], kx, ry + r + 18); } }); }
   // signatures (small, professional) + seal
   const sy = H - 150, sgT = await loadImg(o.tSign), sgP = await loadImg(o.pSign);
   [[PW + 230, o.teacher, 'Class Teacher', sgT], [W - 300, o.principal, 'Principal', sgP]].forEach(([sx, n, r, sg]) => {
@@ -204,11 +213,13 @@ async function certPNG(o) {
   return cv.toDataURL('image/png');
 }
 async function certData(evId, id, sid) {
-  const SG = await needSigns(); const E = COMP.events.find(e => e.id === evId), n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean), k = sid ? studentById(sid) : null;
+  const SG = await needSigns(); const n0 = COMP.entries.find(z => z.id === id);
+  if (n0 && !Object.keys(PHOTOS[n0.cls] || {}).length) { try { PHOTOS[n0.cls] = (await api('teacher_api.php?a=photos&cls=' + encodeURIComponent(n0.cls))).photos || {}; } catch (e) {} }
+  const E = COMP.events.find(e => e.id === evId), n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean), k = sid ? studentById(sid) : null;
   const ct = (S.classes.find(c => c.c === n.cls) || {}).ct;
   return { school: S.settings.school || 'SN Mishra Singapore International School', event: E.title, date: fmtLong(E.date), cat: n.cat, sec: n.sec, pos: n.pos, cls: n.cls,
     name: k ? k.name : n.type === 'group' ? 'Team ' + n.name : (kids[0] || {}).name, team: n.type === 'group' ? n.name : '', member: !!k && n.type === 'group',
-    members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '', signed: fmtDate(E.date) + ' ' + E.date.slice(0, 4), year: E.date.slice(0, 4), no: certNo(E.date, id, sid), seal: S.settings.school || '', tSign: ct ? SG[ct] || '' : '', pSign: SG.P || '' };
+    members: !k && n.type === 'group' ? kids.map(s => s.name).join(', ') : '', teacher: ct ? T(ct).name : '', principal: (S.teachers.P || {}).name || '', photo: n.photo ? await phOf(evId, id) : '', signed: fmtDate(E.date) + ' ' + E.date.slice(0, 4), year: E.date.slice(0, 4), no: certNo(E.date, id, sid), seal: S.settings.school || '', tSign: ct ? SG[ct] || '' : '', pSign: SG.P || '', photoW: n.photoW ? await phOf(evId, id, 'w') : '', kids: kids.map(s => ({ name: s.name, src: ((PHOTOS[n.cls] || {})[s.id] || {}).src || '', me: s.id === sid })) };
 }
 async function certOpen(evId, id) {
   const n = COMP.entries.find(z => z.id === id), kids = n.sids.map(studentById).filter(Boolean);
@@ -335,13 +346,15 @@ function signOpen() {
     render(); setTimeout(signBind, 50); });
 }
 let SG_DIRTY = false;
-function signBind() {
-  const c = $('sgPad'); if (!c) return; const x = c.getContext('2d'); x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#1E3A8A'; SG_DIRTY = false;
-  let on = false; const pt = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
-  c.onpointerdown = e => { on = true; c.setPointerCapture(e.pointerId); const [a, b] = pt(e); x.beginPath(); x.moveTo(a, b); e.preventDefault(); };
-  c.onpointermove = e => { if (!on) return; const [a, b] = pt(e); x.lineTo(a, b); x.stroke(); SG_DIRTY = true; e.preventDefault(); };
-  c.onpointerup = c.onpointercancel = () => { on = false; };
-}
+// Pointer events are handled on the document (the sheet can be re-drawn while it opens — per-canvas handlers would be lost).
+function signBind() { SG_DIRTY = false; }
+(function () { let on = false; const pad = e => e.target && e.target.id === 'sgPad' ? e.target : null;
+  const pt = (c, e) => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+  const pen = c => { const x = c.getContext('2d'); x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#1E3A8A'; return x; };
+  document.addEventListener('pointerdown', e => { const c = pad(e); if (!c) return; on = true; try { c.setPointerCapture(e.pointerId); } catch (er) {} const x = pen(c), [a, b] = pt(c, e); x.beginPath(); x.moveTo(a, b); e.preventDefault(); });
+  document.addEventListener('pointermove', e => { const c = on && $('sgPad'); if (!c) return; const x = pen(c), [a, b] = pt(c, e); x.lineTo(a, b); x.stroke(); SG_DIRTY = true; e.preventDefault(); }, { passive: false });
+  ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { on = false; }));
+})();
 function signClear() { const c = $('sgPad'); if (c) { c.getContext('2d').clearRect(0, 0, c.width, c.height); SG_DIRTY = false; } }
 function signTrim(c) { const x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
   for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (d[(y * c.width + i) * 4 + 3] > 10) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; }
@@ -404,7 +417,7 @@ const NEWS = { title: 'Diwali Competition + Certificate', steps: [
   ['📋', 'Pehle haziri lagaiye', 'Jo bachche absent / leave hain woh team banate waqt list mein nahi aayenge.'],
   ['🪔', 'Home par “Competition” card', '“+ Team banao” dabaiye. Rangoli ya Diya chuniye, phir apni class ka group.'],
   ['👫', 'Team banaiye', 'Team ka naam likhiye (jaise Roshni), bachchon par tap kijiye, Save. Akele bachche ke liye “+ Single child”.'],
-  ['📷', 'Photo lagaiye', 'Box par tap → sabse achchi photo: team ke bachche apni rangoli / diye ke saath ek hi photo mein. Yahi photo certificate par aayegi.'],
+  ['📷', '2 photo lagaiye', 'Bada box 🎨 = rangoli / diya ki photo. Chhota box 👫 = team ke bachchon ki photo. Dono certificate par aayengi, aur bachchon ki attendance wali photo neeche gol mein.'],
   ['🥇', 'Result', 'Jeetne wali team par 🥇 🥈 🥉 dabaiye. Baaki sab ko “Participation” certificate apne aap milega.'],
   ['🎓', 'Certificate', '🎓 dabaiye — team ka ek, aur har bachche ka alag certificate. Screenshot ya Share karke parents ko bhejiye.'],
   ['💬', 'Parent ko message', 'Certificate ke neeche taiyaar message hai — Copy karke usi bachche ke parent ko WhatsApp par bhejiye.'],

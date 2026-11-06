@@ -666,7 +666,7 @@ const path = require('node:path');
     await page.locator('#certFull img').waitFor(); await page.locator('#certFull').click();
     await page.evaluate(() => { delete window.SNMSISFiles; });
     await page.evaluate(() => newsOpen()); await page.locator('#nwBox .nw-l li').nth(5).waitFor(); await page.locator('#nwOk').click();
-    await page.evaluate(() => signOpen()); await page.locator('#sgPad').waitFor();
+    await page.evaluate(() => signOpen()); await page.locator('#sgPad').waitFor(); await pause(700);
     const bx = await page.locator('#sgPad').boundingBox(); await page.mouse.move(bx.x + 30, bx.y + 60); await page.mouse.down(); await page.mouse.move(bx.x + 120, bx.y + 40, { steps: 8 }); await page.mouse.move(bx.x + 220, bx.y + 80, { steps: 8 }); await page.mouse.up();
     await page.locator('.sheet .btn.go').filter({ hasText: 'Save sign' }).click(); await page.waitForFunction(() => SIGNS && SIGNS.P && !SHEET);
     const fest = await page.evaluate(async () => { FEST.push([todayISO(), 'CI Festival', 'CI line']); const L = festNow(); window.__FEST = L; const st = await festStory(L[0]); return { n: L.length, ok: st.length > 50000 }; });

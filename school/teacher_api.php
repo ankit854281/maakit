@@ -703,8 +703,8 @@ case 'comp': {
     if ($method === 'GET') {
         $ev = []; $en = [];
         if (($_GET['sg'] ?? '') !== '') { $out = []; foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r LIKE 'sg|%'") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $out[substr((string)$row['r'], 3)] = $d['data'] ?? ''; } sch_json(['ok' => true, 'signs' => $out]); }
-        if (($_GET['ph'] ?? '') !== '') { $p = sch_rec_get('tchComp', 'ph|' . preg_replace('/[^a-z0-9|]/', '', (string)$_GET['ph'])); sch_json(['ok' => true, 'data' => $p['data'] ?? '']); }
-        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r NOT LIKE 'ph|%' AND r NOT LIKE 'sg|%'") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        if (($_GET['ph'] ?? '') !== '') { $p = sch_rec_get('tchComp', (($_GET['k'] ?? '') === 'w' ? 'pr|' : 'ph|') . preg_replace('/[^a-z0-9|]/', '', (string)$_GET['ph'])); sch_json(['ok' => true, 'data' => $p['data'] ?? '']); }
+        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r NOT LIKE 'ph|%' AND r NOT LIKE 'pr|%' AND r NOT LIKE 'sg|%'") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
             if (str_starts_with((string)$row['r'], 'ev|')) $ev[] = $d; else $en[] = $d; }
         usort($ev, fn($a, $b) => strcmp((string)($b['date'] ?? ''), (string)($a['date'] ?? '')));
         sch_json(['ok' => true, 'events' => $ev, 'entries' => $en]);
@@ -736,8 +736,10 @@ case 'comp': {
         $old = preg_match('/^e[a-f0-9]{6,20}$/', $evId) && preg_match('/^n[a-f0-9]{8,20}$/', $id) ? sch_rec_get('tchComp', "en|$evId|$id") : null; if (!$old) sch_fail('Entry not found.', 404);
         if ($role === 'teacher' && !sch_in_class($tid, (string)$old['cls']) && !tch_is_ct($tid, (string)$old['cls'])) sch_fail('Only teachers of this class can add the photo.', 403);
         $data = (string)($in['data'] ?? ''); if (!preg_match('#^data:image/jpeg;base64,[A-Za-z0-9+/=]+$#', $data) || strlen($data) > 700000) sch_fail('Send a smaller JPEG photo.');
-        sch_rec_put('tchComp', "ph|$evId|$id", ['data' => $data, 'by' => $u['label'], 'at' => sch_now_ms()], $uid);
-        $old['photo'] = sch_now_ms(); sch_rec_put('tchComp', "en|$evId|$id", $old, $uid);
+        // two photos per entry (owner, 6 Nov 2026): kind 'team' (ph|, the one teachers already added) and kind 'w' = the rangoli / diya itself (pr|)
+        $w = ($in['kind'] ?? '') === 'w';
+        sch_rec_put('tchComp', ($w ? 'pr|' : 'ph|') . "$evId|$id", ['data' => $data, 'by' => $u['label'], 'at' => sch_now_ms()], $uid);
+        $old[$w ? 'photoW' : 'photo'] = sch_now_ms(); sch_rec_put('tchComp', "en|$evId|$id", $old, $uid);
         sch_json(['ok' => true, 'entry' => $old]);
     }
     if ($op === 'entry' || $op === 'pos' || $op === 'del') {
