@@ -690,6 +690,19 @@ const path = require('node:path');
     const ok = await page.evaluate(() => { const a = actList()[0]; return actNotice(a).includes(a.title) && ACTS.every(x => /^\d\d-\d\d$/.test(x[0]) && x.length === 8); });
     if (!ok) throw new Error('activity data broken');
   });
+  await run('35-Coordinator', async () => {
+    await page.evaluate(() => { SHEET = null; store.set('ta_mode', 'principal'); CO = null; go('pdash'); });
+    await page.locator('.co-p').waitFor();
+    await page.evaluate(() => coAssignOpen()); await page.locator('#caT').selectOption({ index: 1 });
+    await page.locator('.sheet .chip').filter({ hasText: '9th' }).click(); await page.locator('.sheet .btn.go').filter({ hasText: 'Save' }).click();
+    await page.waitForFunction(() => CO && CO.ok && Object.keys(CO.rows).some(k => k.startsWith('c|')));
+    await page.evaluate(() => go('coord', { m: 'rep' })); await page.locator('.co-tb').waitFor();
+    // the coordinator's own screens (render only): pretend to be that teacher
+    const r = await page.evaluate(() => { const keep = ME; const c = Object.values(CO.rows).find(x => x.tid && x.classes); ME = Object.assign({}, ME, { role: 'teacher', tid: c.tid });
+      go('coord'); const home = document.querySelectorAll('.co-task').length; go('coord', { m: 'cc' }); const kids = document.querySelectorAll('.co-kid').length, pts = document.querySelectorAll('.co-kid .co-pts button').length;
+      go('coord', { m: 'rd' }); const rd = document.querySelectorAll('.co-rd').length; go('coord', { m: 'sv' }); const sv = document.querySelectorAll('.co-svp').length; ME = keep; go('pdash'); return { home, kids, pts, rd, sv }; });
+    if (r.home !== 5 || r.kids < 3 || r.pts !== r.kids * 6 || !r.rd || r.sv < 20) throw new Error('coordinator screens: ' + JSON.stringify(r));
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

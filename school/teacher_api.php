@@ -700,6 +700,98 @@ case 'dellog': {
 //               (any teacher of the children's class / Principal; positions: Principal only, then 'Submit result'
 //               locks them in ev.res['<cat>|<sec>'] — teachers see positions only after that; 'Edit result' unlocks)
 // Each entry also writes the children's activity log (tchLog 'act', title "<event> — <cat>") so it shows in their report.
+case 'coord': {
+    // Coordinator (owner, 6 Nov 2026): the Principal names a teacher coordinator for some classes; the app hands her the work
+    // (copy check by rotation with photo proof, diary check, reading levels, worksheets, thought of the day), a random
+    // blind re-check by another teacher, the checked teacher's reply, and a weekly report card for the Principal.
+    // Records: tchCoord  c|<tid> assignment · cc|<id> copy check · cp|<id>|<i> its photos · vf|<id> re-check task ·
+    //          dc|<date>|<tid> diary marks · rd|<YYYY-MM>|<cls> reading levels · ws|<id> worksheet · sv|<date> thought.
+    $rows = []; foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchCoord' AND deleted=0 AND r NOT LIKE 'cp|%'") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $rows[(string)$row['r']] = $d; }
+    $me = $role === 'teacher' ? $tid : 'P'; $myC = $rows["c|$me"] ?? null; $isCo = $role === 'teacher' && $myC;
+    $coCls = fn(string $cls): bool => $role === 'principal' || ($isCo && in_array($cls, (array)$myC['classes'], true));
+    if ($method === 'GET') {
+        if (($_GET['cp'] ?? '') !== '') { $k = preg_replace('/[^a-z0-9|]/', '', (string)$_GET['cp']); $cc = $rows['cc|' . explode('|', $k)[0]] ?? null;
+            if (!$cc || !($role === 'principal' || $cc['by'] === $me || $cc['tid'] === $me)) sch_fail('Not allowed.', 403);
+            $p = sch_rec_get('tchCoord', "cp|$k"); sch_json(['ok' => true, 'data' => $p['data'] ?? '']); }
+        $out = []; $from = date('Y-m-d', strtotime('-70 days'));
+        foreach ($rows as $r => $d) { $t = explode('|', $r)[0];
+            $ok = match ($t) { 'c', 'sv', 'ws' => true,
+                'cc' => ($d['date'] ?? '') >= $from && ($role === 'principal' || $d['by'] === $me || $d['tid'] === $me),
+                'vf' => $role === 'principal' || ($d['to'] ?? '') === $me || ($rows['cc|' . ($d['cc'] ?? '')]['by'] ?? '') === $me,
+                'dc', 'rd' => $role === 'principal' || $isCo, default => false };
+            if ($t === 'vf' && ($d['to'] ?? '') === $me && !isset($d['res'])) $d = array_diff_key($d, ['want' => 1]);   // blind: the re-checker never sees the coordinator's marks
+            if ($ok) $out[$r] = $d; }
+        sch_json(['ok' => true, 'rows' => (object)$out]);
+    }
+    $op = (string)($in['op'] ?? ''); $now = sch_now_ms(); $date = date('Y-m-d');
+    $classes = array_column((array)sch_rec_get('classes', 'main'), 'c');
+    $pts = fn($p) => array_map(fn($k) => (int)!empty(((array)$p)[$k]), array_combine(['d', 'cw', 'hw', 'sg', 'cr', 'nt'], ['d', 'cw', 'hw', 'sg', 'cr', 'nt']));
+    if ($op === 'assign') {
+        if ($role !== 'principal') sch_fail('Only the Principal names a coordinator.', 403);
+        $t = (string)($in['tid'] ?? ''); if (!preg_match('/^[A-Za-z0-9_-]{1,20}$/', $t) || !sch_rec_get('teacher', $t)) sch_fail('Choose the teacher.');
+        $cl = array_values(array_intersect(array_map('strval', (array)($in['classes'] ?? [])), $classes));
+        if (!$cl) { sch_rec_del('tchCoord', "c|$t", $uid); sch_json(['ok' => true]); }
+        sch_rec_put('tchCoord', "c|$t", ['tid' => $t, 'classes' => $cl, 'at' => $now], $uid); sch_log($u, 'Coordinator', "Coordinator: $t for " . implode(', ', $cl)); sch_json(['ok' => true]);
+    }
+    if ($op === 'cc') {
+        $cls = (string)($in['cls'] ?? ''); if (!$coCls($cls)) sch_fail('Only the coordinator of this class can check copies.', 403);
+        $t = (string)($in['tid'] ?? ''); $subj = tch_txt($in['subj'] ?? '', 40); if ($t === '' || $subj === '') sch_fail('Choose the subject.');
+        $kids = tch_list($in['kids'] ?? [], 8, function ($k) use ($cls, $pts) { $s = sch_rec_get('student', (string)($k['sid'] ?? '')); return $s && ($s['cls'] ?? '') === $cls ? ['sid' => (string)$k['sid'], 'p' => $pts($k['p'] ?? [])] : null; });
+        if (count($kids) < 3) sch_fail('Check at least 3 copies.');
+        $good = tch_txt($in['good'] ?? '', 200); if ($good === '') sch_fail('Write one good thing (kya achha tha).');
+        $id = bin2hex(random_bytes(6)); $sum = 0; foreach ($kids as $k) $sum += array_sum($k['p']);
+        $d = ['id' => $id, 'date' => $date, 'cls' => $cls, 'subj' => $subj, 'tid' => $t, 'by' => $me, 'kids' => $kids, 'good' => $good, 'remark' => tch_txt($in['remark'] ?? '', 300), 'score' => round($sum / count($kids), 1), 'photos' => 0, 'at' => $now];
+        sch_rec_put('tchCoord', "cc|$id", $d, $uid);
+        // blind re-check of one copy by another teacher (never the coordinator, never the checked teacher)
+        $pool = []; foreach ($db->query("SELECT r FROM sch_records WHERE k='teacher' AND deleted=0") as $row) { $x = (string)$row['r']; if ($x !== $me && $x !== $t && $x !== 'P') $pool[] = $x; }
+        if ($pool) { $k = $kids[random_int(0, count($kids) - 1)]; $vid = bin2hex(random_bytes(6));
+            sch_rec_put('tchCoord', "vf|$vid", ['id' => $vid, 'cc' => $id, 'to' => $pool[random_int(0, count($pool) - 1)], 'cls' => $cls, 'subj' => $subj, 'sid' => $k['sid'], 'want' => $k['p'], 'date' => $date, 'at' => $now], $uid); }
+        sch_log($u, 'Coordinator', "Copy check: Class $cls $subj ($t) — score {$d['score']}/6"); sch_json(['ok' => true, 'cc' => $d]);
+    }
+    if ($op === 'ccphoto') {
+        $id = (string)($in['id'] ?? ''); $i = (int)($in['i'] ?? -1); $cc = $rows["cc|$id"] ?? null; if (!$cc || $cc['by'] !== $me || $i < 0 || $i > 7) sch_fail('Not allowed.', 403);
+        $data = (string)($in['data'] ?? ''); if (!preg_match('#^data:image/jpeg;base64,[A-Za-z0-9+/=]+$#', $data) || strlen($data) > 380000) sch_fail('Send a smaller photo.');
+        sch_rec_put('tchCoord', "cp|$id|$i", ['data' => $data, 'at' => $now], $uid); $cc['photos'] = (int)$cc['photos'] | (1 << $i); sch_rec_put('tchCoord', "cc|$id", $cc, $uid); sch_json(['ok' => true]);
+    }
+    if ($op === 'vf') {
+        $id = (string)($in['id'] ?? ''); $v = $rows["vf|$id"] ?? null; if (!$v || $v['to'] !== $me) sch_fail('Not your task.', 403); if (isset($v['res'])) sch_fail('Already done.');
+        $res = $pts($in['p'] ?? []); $same = 0; foreach ($res as $k => $x) $same += (int)($x === (int)($v['want'][$k] ?? 0));
+        $v['res'] = $res; $v['match'] = $same; $v['doneAt'] = $now; sch_rec_put('tchCoord', "vf|$id", $v, $uid); sch_json(['ok' => true, 'match' => $same]);
+    }
+    if ($op === 'resp') {
+        $id = (string)($in['id'] ?? ''); $cc = $rows["cc|$id"] ?? null; if (!$cc || $cc['tid'] !== $me) sch_fail('Not allowed.', 403);
+        $ans = ($in['ans'] ?? '') === 'no' ? 'no' : 'ok'; $cc['resp'] = ['ans' => $ans, 'note' => tch_txt($in['note'] ?? '', 300), 'at' => $now];
+        sch_rec_put('tchCoord', "cc|$id", $cc, $uid); sch_json(['ok' => true]);
+    }
+    if ($op === 'decide') {
+        if ($role !== 'principal') sch_fail('Only the Principal decides.', 403);
+        $id = (string)($in['id'] ?? ''); $cc = $rows["cc|$id"] ?? null; if (!$cc || ($cc['resp']['ans'] ?? '') !== 'no') sch_fail('Nothing to decide.');
+        $cc['resp']['decision'] = ($in['who'] ?? '') === 'teacher' ? 'teacher' : 'coord'; sch_rec_put('tchCoord', "cc|$id", $cc, $uid); sch_json(['ok' => true]);
+    }
+    if ($op === 'dc') {
+        if (!$isCo) sch_fail('Only a coordinator.', 403); $dd = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dd)) sch_fail('Bad date.');
+        $marks = []; foreach (array_slice((array)($in['marks'] ?? []), 0, 200, true) as $k => $v) if (preg_match('/^[A-Za-z0-9_-]{1,20}\|\d{1,2}$/', (string)$k)) $marks[$k] = $v ? 1 : 0;
+        sch_rec_put('tchCoord', "dc|$dd|$me", ['date' => $dd, 'by' => $me, 'marks' => $marks, 'at' => $now], $uid); sch_json(['ok' => true]);
+    }
+    if ($op === 'rd') {
+        $cls = (string)($in['cls'] ?? ''); if (!$coCls($cls)) sch_fail('Only the coordinator of this class.', 403); $m = date('Y-m');
+        $lv = []; foreach (array_slice((array)($in['levels'] ?? []), 0, 80, true) as $sid => $v) if (in_array((int)$v, [1, 2, 3, 4, 5], true)) $lv[(string)$sid] = (int)$v;
+        sch_rec_put('tchCoord', "rd|$m|$cls", ['month' => $m, 'cls' => $cls, 'by' => $me, 'levels' => (object)$lv, 'date' => $date, 'at' => $now], $uid); sch_json(['ok' => true]);
+    }
+    if ($op === 'ws') {
+        if (!$isCo && $role !== 'principal') sch_fail('Only the coordinator.', 403); $cls = (string)($in['cls'] ?? ''); if (!in_array($cls, $classes, true)) sch_fail('Choose the class.');
+        $qs = tch_list($in['qs'] ?? [], 12, fn($q) => ($t = tch_txt($q, 300)) === '' ? null : $t); if (count($qs) < 3) sch_fail('Write at least 3 questions.');
+        $id = bin2hex(random_bytes(6)); $d = ['id' => $id, 'cls' => $cls, 'subj' => tch_txt($in['subj'] ?? '', 40), 'ch' => tch_txt($in['ch'] ?? '', 80), 'qs' => $qs, 'by' => $me, 'date' => $date, 'at' => $now];
+        sch_rec_put('tchCoord', "ws|$id", $d, $uid); sch_json(['ok' => true, 'ws' => $d]);
+    }
+    if ($op === 'sv') {
+        if (!$isCo && $role !== 'principal') sch_fail('Only the coordinator.', 403); $dd = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dd)) sch_fail('Bad date.');
+        $txt = tch_txt($in['text'] ?? '', 200); if ($txt === '') sch_fail('Write the thought.');
+        sch_rec_put('tchCoord', "sv|$dd", ['date' => $dd, 'text' => $txt, 'word' => tch_txt($in['word'] ?? '', 80), 'by' => $me, 'at' => $now], $uid); sch_json(['ok' => true]);
+    }
+    sch_fail('Bad request.');
+}
+
 case 'comp': {
     if ($method === 'GET') {
         $ev = []; $en = [];

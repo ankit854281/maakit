@@ -424,7 +424,7 @@ async function festStoryOpen(i) {
 
 // ---------------------------------------------------------------- "Naya kya hai" helper (owner, 6 Nov 2026: a friendly bot that tells everyone about new changes)
 // When you ship something teachers must learn, bump NEWS_VER and rewrite NEWS — every user sees it once, and again from ☰.
-const NEWS_VER = '2026-11-06-acts';
+const NEWS_VER = '2026-11-06-coord';
 const NEWS = { title: 'Diwali Competition + Certificate', steps: [
   ['📋', 'Pehle haziri lagaiye', 'Jo bachche absent / leave hain woh team banate waqt list mein nahi aayenge.'],
   ['🪔', 'Home par “Competition” card', '“+ Team banao” dabaiye. Rangoli ya Diya chuniye, phir apni class ka group.'],
@@ -435,6 +435,7 @@ const NEWS = { title: 'Diwali Competition + Certificate', steps: [
   ['💬', 'Parent ko message', 'Certificate ke neeche taiyaar message hai — Copy karke usi bachche ke parent ko WhatsApp par bhejiye.'],
   ['✨', 'WhatsApp Status', '“Story photo banao” + caption copy → WhatsApp → Status.'],
   ['📅', 'Activity Calendar (naya)', 'Home par 📅 card ya ☰ → Activity Calendar: har din ki activity har class ke liye, syllabus se judi. 🤖 “Kaise karein?” poora tarika batata hai.'],
+  ['👩‍💼', 'Coordinator (naya)', 'Coordinator aapki copy jaanch kar report bhejengi — Home par dikhegi. 👍 “Dekh liya” ya ✋ “Sahmat nahi” dabaiye. Kabhi aapko “🔍 Dobara jaanch” milegi — 2 minute ka kaam.'],
   ['🎉', 'Tyohar wishes', 'Home par 🪔 Tyohar card: Dhanteras / Diwali ki story photo aur wish message — Status aur parents group ke liye.']] };
 function newsOpen() {
   let o = $('nwBox'); if (o) o.remove(); o = document.createElement('div'); o.id = 'nwBox'; o.className = 'nw';

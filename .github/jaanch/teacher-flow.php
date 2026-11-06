@@ -213,4 +213,24 @@ $ta('comp', ['op' => 'res', 'ev' => $ev, 'cat' => 'Rangoli', 'sec' => '6th – 1
 [, $j] = $ta('comp', null, $tok['K']); tf_check(count($j['entries']) === 1 && count($j['events']) === 1, 'signatures never mixed into the competition list');
 
 
+// ---- coordinator: assign, copy check by rotation with proof, blind re-check, teacher reply, Principal decides (6 Nov 2026) ----
+$put('student', 's4', ['id' => 's4', 'name' => 'Deepa', 'cls' => '9th', 'adm' => '104']); $put('teacher', 'RV', ['name' => 'Ravi Sir']);
+[$c] = $ta('coord', ['op' => 'assign', 'tid' => 'MA', 'classes' => ['9th']], $tok['K']); tf_check($c === 403, 'only the Principal names a coordinator');
+[$c] = $ta('coord', ['op' => 'assign', 'tid' => 'MA', 'classes' => ['9th', 'Nope']], $tok['P']); tf_check($c === 200, 'Principal names Mamta coordinator of 9th');
+$kids = [['sid' => 's1', 'p' => ['d' => 1, 'cw' => 1, 'hw' => 0, 'sg' => 1, 'cr' => 1, 'nt' => 1]], ['sid' => 's2', 'p' => ['d' => 1, 'cw' => 1, 'hw' => 1, 'sg' => 1, 'cr' => 0, 'nt' => 1]], ['sid' => 's4', 'p' => ['d' => 1]]];
+[$c] = $ta('coord', ['op' => 'cc', 'cls' => '9th', 'subj' => 'Maths', 'tid' => 'K', 'kids' => $kids, 'good' => 'Neat'], $tok['K']); tf_check($c === 403, 'a teacher who is not coordinator cannot check copies');
+[$c] = $ta('coord', ['op' => 'cc', 'cls' => '9th', 'subj' => 'Maths', 'tid' => 'K', 'kids' => $kids, 'good' => ''], $tok['MA']); tf_check($c === 400, 'a good point is required');
+[$c, $j] = $ta('coord', ['op' => 'cc', 'cls' => '9th', 'subj' => 'Maths', 'tid' => 'K', 'kids' => $kids, 'good' => 'Neat handwriting'], $tok['MA']); tf_check($c === 200 && $j['cc']['score'] == 3.7, 'coordinator saves a copy check with its score'); $cc = $j['cc']['id'];
+[$c] = $ta('coord', ['op' => 'ccphoto', 'id' => $cc, 'i' => 0, 'data' => 'data:image/jpeg;base64,/9j/AA'], $tok['MA']); tf_check($c === 200, 'photo proof saved');
+[, $j] = $ta('coord', null, $tok['P']); $vf = array_values(array_filter((array)$j['rows'], fn($r) => isset($r['cc']) && $r['cc'] === $cc));
+tf_check(count($vf) === 1 && $vf[0]['to'] === 'RV', 'a blind re-check goes to a third teacher (never the coordinator or the checked teacher)');
+[, $j] = $ta('coord', null, $tok['K']); tf_check(isset($j['rows']->{"cc|$cc"}) || isset(((array)$j['rows'])["cc|$cc"]), 'the checked teacher sees the report');
+[$c] = $ta('coord', ['op' => 'resp', 'id' => $cc, 'ans' => 'no', 'note' => 'HW was checked on the next page'], $tok['K']); tf_check($c === 200, 'teacher disagrees with a note');
+[$c] = $ta('coord', ['op' => 'decide', 'id' => $cc, 'who' => 'teacher'], $tok['P']); tf_check($c === 200, 'Principal decides');
+[$c] = $ta('coord', ['op' => 'sv', 'date' => '2026-11-06', 'text' => 'Mehnat ka phal meetha', 'word' => 'Effort'], $tok['MA']); tf_check($c === 200, 'coordinator sets the thought of the day');
+[$c] = $ta('coord', ['op' => 'rd', 'cls' => '10th', 'levels' => ['s3' => 3]], $tok['MA']); tf_check($c === 403, 'reading levels only for her classes');
+[$c] = $ta('coord', ['op' => 'ws', 'cls' => '9th', 'subj' => 'Maths', 'ch' => 'Numbers', 'qs' => ['a', 'b', 'c']], $tok['MA']); tf_check($c === 200, 'worksheet saved');
+[, $j] = $ta('coord', null, $tok['K']); tf_check(!array_filter(array_keys((array)$j['rows']), fn($k) => str_starts_with($k, 'rd|') || str_starts_with($k, 'dc|')), 'reading and diary marks stay with coordinator and Principal');
+sch_rec_del('student', 's4', 'principal'); sch_rec_del('teacher', 'RV', 'principal');   // keep the shared CI data as the browser test expects it
+
 echo "Teacher app flow: all checks passed\n";
