@@ -50,11 +50,14 @@ function compAdd(ev, cat, sec, type) {
   if (!cls.length) return toast('None of your classes is in ' + sec + '.');
   if (!DRAFT.ce || DRAFT.ce.k !== ev + cat + sec + type) DRAFT.ce = { k: ev + cat + sec + type, c: cls[0], sel: {}, name: '' };
   const D = DRAFT.ce, ph = needPhotos(D.c), taken = new Set(COMP.entries.filter(n => n.ev === ev && n.cat === cat).flatMap(n => n.sids));
+  // Absent / leave children of the competition day are hidden (owner, 6 Nov 2026); "Dikhao" brings them back if the attendance was wrong.
+  const att = attOf(E.date, D.c), away = new Set((att && att.absent) || []), all = studentsOf(D.c), list = all.filter(s => D.showAbs || !away.has(s.id) || D.sel[s.id]), hid = all.length - list.length;
   SHEET = () => `<h2>${type === 'group' ? '+ Team' : '+ Single child'} · ${esc(cat)}</h2>
     ${cls.length > 1 ? `<div class="chips">${cls.map(c => `<button class="chip ${c === D.c ? 'on' : ''}" onclick="DRAFT.ce.c=${jsq(c)};DRAFT.ce.sel={};compAdd('${ev}',${jsq(cat)},${jsq(sec)},'${type}')">${esc(c)}</button>`).join('')}</div>` : `<p class="mut" style="margin:0">Class ${esc(D.c)}</p>`}
     ${type === 'group' ? `<div class="fld">Team name<input id="ceN" class="inp" maxlength="60" value="${esc(D.name)}" placeholder="e.g. Roshni, Deepak, Rainbow" oninput="DRAFT.ce.name=this.value"></div><div class="chips">${['Roshni', 'Deepak', 'Rainbow', 'Tara', 'Kamal', 'Ujala'].map(x => `<button class="chip" onclick="$('ceN').value=${jsq(x)};DRAFT.ce.name=${jsq(x)}">${x}</button>`).join('')}</div>` : ''}
     <p class="mut" style="margin:6px 0 0">${type === 'group' ? 'Tap the children of this team' : 'Tap the children (each is entered alone)'} — grey = already in ${esc(cat)}.</p>
-    <div class="pick">${studentsOf(D.c).map(s => `<button type="button" class="pk ${D.sel[s.id] ? 'on' : ''} ${taken.has(s.id) ? 'dim' : ''}" onclick="DRAFT.ce.sel[${jsq(s.id)}]=!DRAFT.ce.sel[${jsq(s.id)}];this.classList.toggle('on')"><span class="ph sm">${ph[s.id] ? `<img src="${esc(ph[s.id].src)}" alt="">` : `<i>${esc(initials(s.name))}</i>`}</span><b>${esc(s.name)}</b></button>`).join('')}</div>
+    ${hid ? `<p class="cp-abs">🚫 ${hid} bachche aaj absent / leave hain — list mein nahi dikh rahe. <button class="chip" onclick="DRAFT.ce.showAbs=true;compAdd('${ev}',${jsq(cat)},${jsq(sec)},'${type}')">Dikhao</button></p>` : !att ? `<p class="cp-abs">Class ${esc(D.c)} ki haziri ${E.date === todayISO() ? 'aaj abhi' : 'us din'} nahi lagi — sab bachche dikh rahe hain.</p>` : ''}
+    <div class="pick">${list.map(s => `<button type="button" class="pk ${D.sel[s.id] ? 'on' : ''} ${taken.has(s.id) ? 'dim' : ''}" onclick="DRAFT.ce.sel[${jsq(s.id)}]=!DRAFT.ce.sel[${jsq(s.id)}];this.classList.toggle('on')"><span class="ph sm">${ph[s.id] ? `<img src="${esc(ph[s.id].src)}" alt="">` : `<i>${esc(initials(s.name))}</i>`}</span><b>${esc(s.name)}</b>${away.has(s.id) ? '<em>Absent</em>' : ''}</button>`).join('')}</div>
     <button class="btn go full" onclick="compSave('${ev}',${jsq(cat)},'${type}')">Save</button>`;
   render();
 }
