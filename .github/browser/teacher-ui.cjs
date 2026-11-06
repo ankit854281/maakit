@@ -657,6 +657,9 @@ const path = require('node:path');
     await page.locator('#certFull img').waitFor();
     await page.locator('#certFull').click();
     await page.evaluate(() => { delete window.SNMSISFiles; });
+    await page.evaluate(() => { SHEET = null; go('pdash'); });
+    await page.locator('.cp-dash').filter({ hasText: 'Abhi team nahi bani' }).waitFor();   // Principal dashboard card
+    await page.locator('.cp-dash .cp-dc .ok').filter({ hasText: '9th' }).waitFor();
   });
   await browser.close();
   if (failures.length) {

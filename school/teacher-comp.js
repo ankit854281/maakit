@@ -9,7 +9,7 @@ const COMP_DEF = { title: 'Diwali Competition ' + new Date().getFullYear(), cats
 function needComp(force) {
   if (COMP && !force && (COMP.loading || COMP.ok)) return COMP;
   COMP = Object.assign({}, COMP || {}, { loading: true });
-  api('teacher_api.php?a=comp').then(r => { COMP = Object.assign(r, { ok: true }); softRender(); }).catch(e => { COMP = { err: e.message }; softRender(); });
+  api('teacher_api.php?a=comp').then(r => { COMP = Object.assign(r, { ok: true, at: Date.now() }); softRender(); }).catch(e => { COMP = { err: e.message }; softRender(); });
   return COMP;
 }
 const POS = { '1': '🥇 1st', '2': '🥈 2nd', '3': '🥉 3rd' };
@@ -245,8 +245,26 @@ async function certPrintAll(evId, cat, sec) {
   for (const n of L) { if (n.type === 'group') out.push(await certPNG(await certData(evId, n.id, ''))); for (const sid of n.sids) out.push(await certPNG(await certData(evId, n.id, n.type === 'group' ? sid : ''))); }
   certPrint(out);
 }
+
+// Dashboard card (owner, 6 Nov 2026: "teacher hi group banayenge — Principal aur teacher ke dashboard mein add karo").
+// Shown from 2 days before to 3 days after the competition: teachers see their classes' teams, the Principal sees which classes have not added any.
+function compCard() {
+  const C = needComp(); if (!C.ok) return '';
+  const t = todayISO(), dd = (a, b) => Math.round((new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5);
+  const ev = C.events.find(e => dd(e.date, t) <= 2 && dd(t, e.date) <= 3); if (!ev) return '';
+  const all = ev.secs.flatMap(s => s.classes), mine = isP() && pMode() ? all : all.filter(c => myClasses().includes(c)); if (!mine.length) return '';
+  const E = C.entries.filter(n => n.ev === ev.id), cnt = c => E.filter(n => n.cls === c).length, kids = E.filter(n => mine.includes(n.cls)).reduce((a, n) => a + n.sids.length, 0);
+  const none = mine.filter(c => !cnt(c)), wins = E.filter(n => n.pos && mine.includes(n.cls)).length;
+  return `<div class="card cp-dash" onclick="go('comp')"><div class="cp-dh"><span>🪔</span><div><small>${ev.date === t ? 'Aaj' : esc(fmtDate(ev.date))} · ${ev.cats.map(esc).join(' + ')}</small><b>${esc(ev.title)}</b></div></div>
+    <div class="cp-dn"><div><b>${E.filter(n => mine.includes(n.cls)).length}</b><small>teams / entries</small></div><div><b>${kids}</b><small>bachche</small></div><div><b>${wins}</b><small>winners</small></div></div>
+    <div class="cp-dc">${mine.map(c => `<span class="${cnt(c) ? 'ok' : 'no'}">${esc(c)} ${cnt(c) ? '✓' + cnt(c) : '—'}</span>`).join('')}</div>
+    ${none.length ? `<p class="cp-dw">${isP() && pMode() ? 'Abhi team nahi bani: ' + none.map(esc).join(', ') : 'Apni class ki team banaiye: ' + none.map(esc).join(', ')}</p>` : ''}
+    <button class="btn go full" onclick="event.stopPropagation();go('comp')">${isP() && pMode() ? 'Competition kholo' : '+ Team banao / certificate'}</button></div>`;
+}
 (function () {
+  const _vHome = vHome; vHome = function () { return compCard() + _vHome(); };
+  const _vPdash = vPdash; vPdash = function () { return compCard() + _vPdash(); };
   const _render = render; render = function () { _render(); if (S && TAB === 'comp') compThumbs(); };
-  const _go = go; go = function (tab, p) { if (tab === 'comp') DRAFT.ce = null; return _go(tab, p); };
+  const _go = go; go = function (tab, p) { if (tab === 'comp') DRAFT.ce = null; if ((tab === 'home' || tab === 'pdash' || tab === 'comp') && COMP && COMP.ok && Date.now() - COMP.at > 60000) needComp(true); return _go(tab, p); };
   if (typeof MENU !== 'undefined') MENU.forEach(g => { if (g[0] === 'Students') { const i = g[1].findIndex(x => x[3] === 'Competition'); const it = ['comp', {}, 'chart', 'Competition', 'Team, photo, jeetne wale, certificate']; if (i >= 0) g[1][i] = it; else g[1].unshift(it); } });
 })();
