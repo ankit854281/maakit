@@ -702,7 +702,8 @@ case 'dellog': {
 case 'comp': {
     if ($method === 'GET') {
         $ev = []; $en = [];
-        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+        if (($_GET['ph'] ?? '') !== '') { $p = sch_rec_get('tchComp', 'ph|' . preg_replace('/[^a-z0-9|]/', '', (string)$_GET['ph'])); sch_json(['ok' => true, 'data' => $p['data'] ?? '']); }
+        foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchComp' AND deleted=0 AND r NOT LIKE 'ph|%'") as $row) { $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
             if (str_starts_with((string)$row['r'], 'ev|')) $ev[] = $d; else $en[] = $d; }
         usort($ev, fn($a, $b) => strcmp((string)($b['date'] ?? ''), (string)($a['date'] ?? '')));
         sch_json(['ok' => true, 'events' => $ev, 'entries' => $en]);
@@ -720,6 +721,15 @@ case 'comp': {
         $d = ['id' => $id, 'title' => $title, 'date' => $date, 'cats' => $cats, 'secs' => $secs, 'by' => $u['label'], 'at' => sch_now_ms()];
         sch_rec_put('tchComp', "ev|$id", $d, $uid); sch_log($u, 'Competition', "Competition: $title ($date) — " . implode(', ', $cats));
         sch_json(['ok' => true, 'event' => $d]);
+    }
+    if ($op === 'photo') {          // rangoli / diya photo of one entry (jpeg data URL, made small in the browser)
+        $evId = (string)($in['ev'] ?? ''); $id = (string)($in['id'] ?? '');
+        $old = preg_match('/^e[a-f0-9]{6,20}$/', $evId) && preg_match('/^n[a-f0-9]{8,20}$/', $id) ? sch_rec_get('tchComp', "en|$evId|$id") : null; if (!$old) sch_fail('Entry not found.', 404);
+        if ($role === 'teacher' && !sch_in_class($tid, (string)$old['cls']) && !tch_is_ct($tid, (string)$old['cls'])) sch_fail('Only teachers of this class can add the photo.', 403);
+        $data = (string)($in['data'] ?? ''); if (!preg_match('#^data:image/jpeg;base64,[A-Za-z0-9+/=]+$#', $data) || strlen($data) > 700000) sch_fail('Send a smaller JPEG photo.');
+        sch_rec_put('tchComp', "ph|$evId|$id", ['data' => $data, 'by' => $u['label'], 'at' => sch_now_ms()], $uid);
+        $old['photo'] = sch_now_ms(); sch_rec_put('tchComp', "en|$evId|$id", $old, $uid);
+        sch_json(['ok' => true, 'entry' => $old]);
     }
     if ($op === 'entry' || $op === 'pos' || $op === 'del') {
         $evId = (string)($in['ev'] ?? ''); $ev = preg_match('/^e[a-f0-9]{6,20}$/', $evId) ? sch_rec_get('tchComp', "ev|$evId") : null; if (!$ev) sch_fail('Competition not found.', 404);

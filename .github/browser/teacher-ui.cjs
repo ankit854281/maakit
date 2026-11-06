@@ -635,6 +635,24 @@ const path = require('node:path');
     await page.locator('.tt-new .btn.go').click();
     await page.waitForFunction(() => { const i = S.alloc.findIndex(a => a.c === '10th' && a.s === 'EVS' && T(a.t).name === 'CI Palak Srivastava'); return i >= 0 && S.grid['10th'].every(r => r[6] === i) && S.alloc[i].n === 6; });
   });
+  await run('33-Competition-team-photo-certificate', async () => {
+    await page.evaluate(() => { SHEET = null; store.set('ta_mode', 'principal'); COMP = null; go('comp'); });
+    await page.locator('.cp-new .btn.go').click();
+    await page.locator('.cp-h').waitFor();
+    await page.locator('.seg button').filter({ hasText: '6th – 10th' }).click();
+    await page.locator('.btns .btn.go').filter({ hasText: '+ Team' }).click();
+    await page.locator('.sheet .chip').filter({ hasText: '9th' }).click();
+    await page.locator('#ceN').fill('Roshni');
+    await page.locator('.sheet .pk').nth(0).click(); await page.locator('.sheet .pk').nth(1).click();
+    await page.locator('.sheet .btn.go').filter({ hasText: 'Save' }).click();
+    await page.locator('.cp-e').first().waitFor();
+    await page.locator('.cp-pos button').filter({ hasText: '1st' }).first().click();
+    await page.waitForFunction(() => COMP.entries[0] && COMP.entries[0].pos === '1');
+    await page.locator('.cp-e .btn').filter({ hasText: 'Certificate' }).first().click();
+    await page.locator('.cert-pv img').waitFor();
+    await page.locator('.sheet .chip').first().click();
+    await page.waitForFunction(() => window.__CERT && /certificate-/.test(window.__CERT.fn) && !/team/.test(window.__CERT.fn));
+  });
   await browser.close();
   if (failures.length) {
     console.error('\nTEACHER UI FAILURES:\n' + failures.join('\n\n'));

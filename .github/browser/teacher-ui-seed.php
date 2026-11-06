@@ -5,6 +5,7 @@ if (DB_NAME !== 'maakit_jaanch') throw new RuntimeException('CI database only');
 require_once __DIR__ . '/../../inc/db.php';
 require_once __DIR__ . '/../../school/inc.php';
 $put = fn($k, $r, $d) => sch_rec_put($k, $r, $d, 'principal');
+sch_db()->exec("DELETE FROM sch_records WHERE k='tchComp'");   // competition step 33 starts from "no competition yet"
 $put('teacher', 'S', ['name' => 'Demo Teacher Shreya']);
 $put('teacher', 'Q', ['name' => 'Demo Teacher Shyam']);
 $grid = [];

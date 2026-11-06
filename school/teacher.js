@@ -338,9 +338,9 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
@@ -511,7 +511,7 @@ function vHome() {
   const wN = week.reduce((n, x) => n + x.n, 0), wF = week.reduce((n, x) => n + x.f, 0);
   const sc = ct[0] || (allocList()[0] || {}).c, st = sc ? needStars(sc) : null, ph = sc ? needPhotos(sc) : {};
   const quick = [['att', 'Attendance', 'check', ct.length ? { c: ct[0] } : {}], ['att', 'Daily check', 'bill', ct.length ? { c: ct[0], m: 'kit' } : {}], ['diary', 'Diary', 'book', {}], ['diary', 'Check work', 'list', { m: 'check' }],
-    ['plan', 'Syllabus', 'note', { m: 'syl' }], ['att', 'Students', 'list', { m: 'stu', c: ct[0] || (myClasses()[0] || '') }], ['plan', 'Paper', 'print', { m: 'paper' }], ['board', 'Board', 'chart', {}], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att' || q[1] === 'Students');
+    ['plan', 'Syllabus', 'note', { m: 'syl' }], ['att', 'Students', 'list', { m: 'stu', c: ct[0] || (myClasses()[0] || '') }], ['plan', 'Paper', 'print', { m: 'paper' }], ['comp', 'Competition', 'chart', {}], ['board', 'Board', 'chart', {}], ['res', 'Marks', 'chart', {}], ['conn', 'Parents', 'wa', { m: 'msg' }], ['conn', 'Staff chat', 'chat', { m: 'staff' }]].filter(q => ct.length || q[0] !== 'att' || q[1] === 'Students');
   const kidCard = (k, why, cls) => `<div class="star ${cls}"><span class="ph">${ph[k.sid] ? `<img src="${esc(ph[k.sid].src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}${cls === 'top' ? '<em>★</em>' : ''}</span><b>${esc(k.name.split(' ')[0])}</b><small>${esc(why)}</small></div>`;
   const starsHtml = !st || st.loading ? '' : st.err ? '' : `
     <div class="card stars-card"><h3>⭐ Star children <small>Class ${esc(sc)} · last 30 days</small></h3>

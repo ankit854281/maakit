@@ -188,4 +188,17 @@ $cid = $j['log']['id'];
 [, $j] = $ta('report', null, $tok['K'], '&cls=9th'); tf_check(count(array_filter($j['logs'], fn($l) => $l['kind'] === 'act')) === 1 && count(array_filter($j['logs'], fn($l) => $l['kind'] === 'ptm')) === 2 && count(array_filter($j['logs'], fn($l) => $l['kind'] === 'call')) === 1, 'class report carries the logs');
 [, $j] = $api('load', null, $tok['K']); tf_check(!in_array('tchLog', array_column($j['records'], 'k'), true), 'logs never in legacy load');
 
+// ---- competition: event (Principal), teams, positions, photo (6 Nov 2026) ----
+[$c] = $ta('comp', ['op' => 'event', 'title' => 'Diwali', 'date' => '2026-11-06', 'cats' => ['Rangoli'], 'secs' => [['name' => '6th – 10th', 'classes' => ['9th', '10th']]]], $tok['K']); tf_check($c === 403, 'only the Principal creates a competition');
+[$c, $j] = $ta('comp', ['op' => 'event', 'title' => 'Diwali Competition', 'date' => '2026-11-06', 'cats' => ['Rangoli', 'Diya making'], 'secs' => [['name' => '6th – 10th', 'classes' => ['9th', '10th']]]], $tok['P']); tf_check($c === 200, 'Principal creates the competition'); $ev = $j['event']['id'];
+[$c] = $ta('comp', ['op' => 'entry', 'ev' => $ev, 'cat' => 'Rangoli', 'type' => 'group', 'sids' => ['s1', 's2']], $tok['MA']); tf_check($c === 400, 'a team needs a name');
+[$c, $j] = $ta('comp', ['op' => 'entry', 'ev' => $ev, 'cat' => 'Rangoli', 'type' => 'group', 'name' => 'Roshni', 'sids' => ['s1', 's2']], $tok['MA']); tf_check($c === 200 && $j['entry']['sec'] === '6th – 10th' && $j['entry']['type'] === 'group', 'teacher of the class adds a team'); $en = $j['entry']['id'];
+[$c] = $ta('comp', ['op' => 'pos', 'ev' => $ev, 'id' => $en, 'pos' => '1'], $tok['K']); tf_check($c === 200, 'position set');
+[$c] = $ta('comp', ['op' => 'photo', 'ev' => $ev, 'id' => $en, 'data' => 'data:image/png;base64,AAAA'], $tok['MA']); tf_check($c === 400, 'photo must be a jpeg');
+[$c] = $ta('comp', ['op' => 'photo', 'ev' => $ev, 'id' => $en, 'data' => 'data:image/jpeg;base64,/9j/AAAA'], $tok['MA']); tf_check($c === 200, 'rangoli photo saved');
+[, $j] = $ta('comp', null, $tok['K']); tf_check(count($j['events']) === 1 && count($j['entries']) === 1 && $j['entries'][0]['pos'] === '1' && !empty($j['entries'][0]['photo']), 'list has the event, team, position and photo (not the photo data)');
+[, $j] = $ta('comp', null, $tok['K'], "&ph=$ev|$en"); tf_check($j['data'] === 'data:image/jpeg;base64,/9j/AAAA', 'photo fetched alone');
+[, $j] = $ta('report', null, $tok['K'], '&cls=9th'); tf_check(count(array_filter($j['logs'], fn($l) => $l['kind'] === 'act' && $l['pos'] === '1' && str_contains($l['title'], 'Roshni'))) === 2, 'both children get the win in their record');
+[$c] = $ta('comp', ['op' => 'del', 'ev' => $ev, 'id' => $en], $tok['K']); tf_check($c === 403, 'only the writer or Principal removes');
+
 echo "Teacher app flow: all checks passed\n";
