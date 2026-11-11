@@ -16,6 +16,8 @@ deployment:
     - /bin/cp -R  ./school    $DEPLOYPATH
     # Coaching Saathi (maakit.in/coaching) — apna folder, apni cs_ tables
     - /bin/cp -R  ./coaching  $DEPLOYPATH
+    # Maakit Library demo (maakit.in/library) — akeli HTML file, koi database nahi
+    - /bin/cp -R  ./library   $DEPLOYPATH
     - /bin/cp     ./*.php     $DEPLOYPATH
     - /bin/cp -R  ./sql       $DEPLOYPATH
     - /bin/cp     ./*.json    $DEPLOYPATH 2>/dev/null || true

@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maakit Library · Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#1f1a2e;--mut:#6f6a7d;--line:#ebe7f0;--bg:#f4f3f8;--card:#fff;--brand:#c2185b;--brand2:#f39c12;--ok:#12a150;--okbg:#e3f6ea;--warn:#b7791f;--warnbg:#fdf2dc;--bad:#d93a4b;--badbg:#fde6e8;--tab:#c2185b;--tabbg:#fbe9f0;--sh:0 1px 2px rgba(31,26,46,.04),0 6px 18px rgba(31,26,46,.06);--r:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 Inter,"Noto Sans Devanagari",system-ui,sans-serif}
+body.hi{font-family:"Noto Sans Devanagari",Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.app{display:flex;min-height:100vh}
+nav{width:244px;background:#fff;border-right:1px solid var(--line);padding:16px 12px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 16px}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px}
+.bn{font-weight:600;font-size:14px;line-height:1.25}
+.bs{font-size:11px;color:var(--mut)}
+.nb{display:flex;gap:11px;align-items:center;width:100%;text-align:left;background:none;border:none;color:var(--ink);padding:9px 10px;border-radius:11px;cursor:pointer;margin-bottom:2px;font-weight:500}
+.nb .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c)}
+.nb:hover{background:#f6f4f9}
+.nb.on{background:color-mix(in srgb,var(--c) 10%,#fff);color:var(--c)}
+.nb.on .ico{background:var(--c);color:#fff}
+.nb .cnt{margin-left:auto;background:var(--bad);color:#fff;font-size:11px;font-weight:600;border-radius:999px;padding:0 7px;line-height:18px}
+.lang{margin-top:auto;padding:12px 6px 4px;border-top:1px solid var(--line)}
+.seg{display:flex;background:#f3f1f7;border-radius:10px;padding:3px}
+.seg button{flex:1;border:none;background:none;padding:6px 4px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mut)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+main{flex:1;min-width:0;padding:22px 28px 96px}
+.ph{background:linear-gradient(120deg,var(--tab),color-mix(in srgb,var(--tab) 60%,#fff));color:#fff;border-radius:var(--r);padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ph .pi{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.2);display:grid;place-items:center}
+.ph .pi svg{width:22px;height:22px}
+.ph h1{font-size:21px;font-weight:700;margin:0;letter-spacing:-.01em}
+.ph p{margin:2px 0 0;opacity:.9;font-size:13px}
+.ph .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.ph .btn{background:#fff;color:var(--tab);box-shadow:none}
+.ph .btn.gh{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4)}
+h2{font-size:15px;font-weight:600;margin:0 0 10px}
+.card{background:var(--card);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;box-shadow:var(--sh)}
+.card.tight{padding:4px 12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.tile{background:#fff;border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);border-top:4px solid var(--tc,#7b5cff)}
+.tile .l{font-size:12px;color:var(--mut);font-weight:500;display:flex;gap:6px;align-items:center}
+.tile .l svg{width:15px;height:15px;color:var(--tc)}
+.tile .n{font-size:24px;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+.tile .h{font-size:12px;color:var(--mut)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:11px;padding:9px 15px;font-weight:600;cursor:pointer;background:var(--tab);color:#fff;white-space:nowrap;text-decoration:none;box-shadow:0 2px 8px color-mix(in srgb,var(--tab) 30%,transparent)}
+.btn svg{width:16px;height:16px}
+.btn:hover{filter:brightness(1.07)}
+.btn.s{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.s:hover{background:#f7f5fa;filter:none}
+.btn.ok{background:var(--ok);box-shadow:0 2px 8px rgba(18,161,80,.25)}
+.btn.wa{background:#1fae54;box-shadow:0 2px 8px rgba(31,174,84,.25)}
+.btn.x{background:none;color:var(--mut);box-shadow:none;padding:6px 8px}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:11px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--tab)}
+textarea{min-height:90px;resize:vertical}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:0 0 4px}
+.f{margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.err{color:var(--bad);font-size:12px;min-height:16px}
+.hint{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+body.hi th{text-transform:none;letter-spacing:0;font-size:12px}
+td{padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.tw{overflow-x:auto}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.due{background:var(--badbg);color:var(--bad)}.pill.soon{background:var(--warnbg);color:var(--warn)}.pill.off{background:#eeedf2;color:#76727f}.pill.new{background:#ebe5ff;color:#5b3fd1}
+.mut{color:var(--mut)}.small{font-size:12px}.b{font-weight:600}
+a.lk{color:var(--ink);font-weight:600;text-decoration:none}
+a.lk:hover{color:var(--tab)}
+.empty{text-align:center;padding:34px 16px;color:var(--mut)}
+.empty b{display:block;font-size:16px;color:var(--ink);margin-bottom:4px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;background:#fff;padding:4px;border-radius:12px;box-shadow:var(--sh);width:fit-content;max-width:100%}
+.tabs button{border:none;background:none;border-radius:9px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--mut)}
+.tabs button.on{background:var(--tab);color:#fff}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:9px}
+.seat{border-radius:12px;padding:9px 4px;text-align:center;cursor:pointer;min-height:62px;border:1.5px solid}
+.seat b{display:block;font-size:15px}
+.seat span{font-size:10px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat.free{background:#f1fbf5;border-color:#bfe8cf;color:#0e7a3e}
+.seat.busy{background:#eef1fd;border-color:#c4cdf6;color:#3446a8}
+.seat.busy.due{background:#fdeef0;border-color:#f3c0c6;color:var(--bad)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mut);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ov{position:fixed;inset:0;background:rgba(31,26,46,.45);display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto;z-index:20}
+.ov.on{display:flex}
+.modal{background:#fff;border-radius:20px;width:min(640px,100%);padding:22px;box-shadow:0 20px 60px rgba(31,26,46,.25)}
+.modal h3{font-size:19px;font-weight:700;margin:0 0 14px}
+.mf{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;z-index:30;display:none;max-width:90vw}
+.months{display:flex;gap:6px;flex-wrap:wrap}
+.mchk{display:flex;flex-direction:column;align-items:center;font-size:10px;color:var(--mut);cursor:pointer;gap:2px}
+.mchk input{width:18px;height:18px;accent-color:var(--ok);cursor:pointer}
+.receipt{background:#fbfaf7;border:1.5px dashed #ddd5c4;border-radius:12px;padding:14px;white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px}
+.qr{display:inline-block;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line)}
+.qr img,.qr canvas{display:block}
+.dots{display:flex;gap:3px}
+.dot{width:12px;height:12px;border-radius:3px;background:#ebe8f0}
+.dot.p{background:var(--ok)}
+.notice{background:#fff8e8;border:1px solid #f4e2b6;color:#7a5410;padding:10px 14px;border-radius:12px;font-size:13px;margin-bottom:14px}
+.chip{display:inline-block;background:#f3f1f7;border-radius:6px;padding:1px 7px;font-size:12px;font-family:ui-monospace,monospace}
+.steps{display:grid;gap:10px;counter-reset:s}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--tab);color:#fff;display:grid;place-items:center;font-weight:700;flex-shrink:0;font-size:13px}
+.check{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:none}
+.check .ck{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;background:#eeedf2;color:#fff}
+.check.done .ck{background:var(--ok)}
+.check.done .t{color:var(--mut);text-decoration:line-through}
+.bar{height:8px;background:#eeedf2;border-radius:99px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--ok);border-radius:99px}
+.phone{width:min(340px,100%);border-radius:34px;background:#fff;box-shadow:0 20px 50px rgba(31,26,46,.18);overflow:hidden;border:8px solid #1f1a2e;margin:0 auto}
+.phone .pt{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:22px 18px 30px}
+.phone .pt h4{font-size:19px;margin:4px 0 2px}
+.phone .pb{padding:0 14px 16px;margin-top:-18px}
+.phone .pc{background:#fff;border-radius:14px;box-shadow:var(--sh);padding:12px 14px;margin-bottom:10px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:10px}
+.cal div{padding:4px 0;border-radius:6px;background:#f3f1f7;color:var(--mut)}
+.cal div.p{background:var(--ok);color:#fff}
+.cal div.x{background:transparent}
+.big{font-size:24px;font-weight:700}
+.chartbox{position:relative;height:250px}
+.kiosk{min-height:100vh;background:linear-gradient(135deg,#0f8f8f,#12a150);display:flex;align-items:center;justify-content:center;padding:20px}
+.kiosk .card{max-width:420px;width:100%;text-align:center;padding:26px}
+.poster{border:2px dashed #b9e2dd;border-radius:16px;padding:16px;text-align:center;background:#f4fbfa}
+.poster h3{margin:0 0 4px;font-size:17px}
+.center{text-align:center}
+@media(max-width:860px){
+ .app{display:block}
+ nav{position:fixed;bottom:0;top:auto;left:0;right:0;width:auto;height:auto;padding:6px;display:flex;flex-direction:row;z-index:10;overflow-x:auto;border-right:none;border-top:1px solid var(--line)}
+ .brand,.lang{display:none}
+ .nb{flex-direction:column;gap:2px;font-size:10px;padding:4px;justify-content:center;margin:0;min-width:66px;position:relative;text-align:center}
+ .nb .cnt{position:absolute;top:0;right:8px;font-size:9px;line-height:15px}
+ main{padding:14px 12px 100px}
+ .toast{bottom:86px}
+ .g2,.g3{grid-template-columns:1fr}
+ .ph .acts{margin-left:0}
+ .mlang{display:block!important}
+}
+.mlang{display:none;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+/* ================= Translations (key = English) ================= */
+const EN_TERMS = {'term1':'Reports, dues and attendance are only as accurate as the data the library enters. Missing entries can make reports wrong.','term2':'Attendance reports are correct only for students whose attendance is updated daily (by QR or manual register).','term3':'Fee money goes directly to the library\'s own UPI / bank. Maakit is not responsible for any payment transaction.','term4':'Student data (name, mobile, fees) is only for the library\'s use. The library will not share it without consent.','term5':'WhatsApp messages go from the library\'s own number. The library is responsible for wrong or spam messages.','term6':'Plan fees are paid in advance. When a plan ends, features may stop, but data stays safe for 30 days.','term7':'Maakit may update the app to improve it. Major changes will be informed in advance.'};
+const L = {
+hl: {
+'Manual Register':'Manual Register','Mark all present':'Sabko present karein','Mark all absent':'Sabko absent karein','Save register':'Register save karein','Register saved':'Register save ho gaya','Present':'Present','All shifts':'Sabhi shift','Attendance updated':'Attendance update hai','Data coverage':'Data kitna update hai','students have attendance in the last 7 days':'students ki attendance pichhle 7 din mein update hai','Reports are accurate only for students whose data is entered.':'Report sirf unhi students ki sahi hogi jinka data bhara gaya hai.',
+'Overview':'Overview','Student Ledger':'Student Khata','Seat Utilisation':'Seat Istemaal','Dues Ageing':'Baaki ka Hisaab','Registered':'Registration','Months studied':'Kitne mahine padha','Months paid':'Kitne mahine ki fees di','Total paid':'Kul jama','Pending':'Baaki','Pending since':'Kab se baaki','Last visit':'Aakhri baar aaye','Last 7 days':'Pichhle 7 din','Regular':'Niyamit','Irregular':'Kabhi-kabhi','Not coming':'Nahi aa raha','No data':'Data nahi','days ago':'din pehle',
+'Shift-wise vacancy':'Shift ke hisaab se khali seat','Vacant seats':'Khali seat','Income missed per month':'Har mahine chhoot raha paisa','Total income missed':'Kul chhoot raha paisa','Free seats by hour':'Har ghante kitni seat khali','Seat-wise income':'Seat ke hisaab se kamai','Monthly from seat':'Seat se mahine ki kamai','empty':'khali','Hour':'Ghanta','Free':'Khali',
+'Expected this month':'Is mahine aana chahiye','Collected':'Aaya','Collection rate':'Collection %','Outstanding by age':'Kitne purane baaki','1 month':'1 mahina','2 months':'2 mahine','3+ months':'3+ mahine','Expected vs collected':'Aana chahiye vs aaya','Expected':'Aana chahiye',
+'Terms & Conditions':'Niyam aur Shartein','I accept the terms':'Main niyam sweekar karta/karti hoon','Accepted on':'Sweekar kiya','Please read and accept the Terms & Conditions.':'Kripya Niyam aur Shartein padhkar sweekar karein.','Read':'Padhein',
+'term1':'Reports, dues aur attendance utne hi sahi honge jitni sahi data entry library karegi. Data na bharne par report galat ho sakti hai.','term2':'Attendance report sirf unhi students ki sahi dikhegi jinki attendance roz update hoti hai (QR ya manual register se).','term3':'Fees ka paisa seedha library ke UPI / bank mein jaata hai. Maakit kisi bhi payment ke len-den ki zimmedaar nahi hai.','term4':'Student ka data (naam, mobile, fees) sirf library ke kaam ke liye hai. Library ise bina anumati kisi aur ko nahi degi.','term5':'WhatsApp messages library ke apne number se jaate hain. Galat ya spam message bhejne ki zimmedaari library ki hogi.','term6':'Plan ki fees advance mein hai. Plan khatam hone par features band ho sakte hain, lekin data 30 din tak surakshit rahega.','term7':'Maakit app ko behtar banane ke liye badlav kar sakta hai. Bade badlav ki jaankari pehle di jayegi.',
+'Posters':'Posters','Plans':'Plans','Current plan':'Abhi ka plan','Most popular':'Sabse zyada liya gaya','per month':'per mahina','per year':'per saal','or':'ya','Choose plan':'Plan chunein','Your plan':'Aapka plan','Demo: switch plan to see the difference':'Demo: plan badal kar farq dekhein','This feature is in the Pro plan':'Ye feature Pro plan mein hai','Upgrade to unlock':'Kholne ke liye plan badlein','See plans':'Plans dekhein',
+'Basic':'Basic','Pro':'Pro','Premium':'Premium','Everything in Pro':'Pro ki sabhi suvidhayein','Up to 50 students':'50 students tak','Unlimited students':'Unlimited students','Fees, seats and dues':'Fees, seat aur baaki hisaab','WhatsApp reminders (one by one)':'WhatsApp reminder (ek-ek karke)','QR attendance':'QR attendance','Student app':'Student app','Reports and charts':'Reports aur charts','Auto posters + festival calendar':'Auto poster + tyohaar calendar','Topper of the Month poster':'Topper of the Month poster','Bulk messages':'Ek saath messages','Automatic WhatsApp reminders':'Automatic WhatsApp reminder','Multiple branches':'Kai branch','Posters with your own branding only':'Sirf aapki branding wale poster','Personal setup and priority support':'Personal setup aur priority support','Basic plan allows up to 50 active students':'Basic plan mein 50 active students tak hi jud sakte hain',
+'Ready-made posters for every occasion. Download and post on your WhatsApp or Instagram story.':'Har mauke ke liye taiyaar poster. Download karke WhatsApp ya Instagram story par lagayein.','Festival calendar':'Tyohaar calendar','Upcoming':'Aane wale','Today':'Aaj','Download poster':'Poster download karein','Downloaded':'Download ho gaya','Long-press the image to save it':'Image ko dabakar rakhein aur save karein','Topper of the Month':'Topper of the Month','Most study hours in the last 30 days':'Pichhle 30 din mein sabse zyada padhai','hours':'ghante','Admission Open':'Admission Open','Seats available':'Seat khali hai','Holiday Notice':'Chhutti ki suchna','Custom notice':'Apni suchna','Write your notice':'Apni suchna likhein','Library will remain closed':'Library band rahegi','Poster types':'Poster ke prakar','Pick a date with a dot, or pick a poster type.':'Dot wali date chunein, ya poster ka prakar chunein.','No occasion on this date':'Is date par koi mauka nahi','Call':'Call','Powered by Maakit':'Powered by Maakit','Fee Reminder':'Fee Reminder','Please pay your fee on time':'Kripya fees samay par jama karein',
+'Dashboard':'Dashboard','Students':'Students','Seat Map':'Seat Map','Attendance':'Attendance','Fee Collection':'Fee Collection','Reports':'Reports','Messages':'Messages','Student App':'Student App','Settings':'Settings',
+'Demo library':'Demo library','This is a sample library. Change anything you like; reload the page to start fresh.':'Ye ek namune ki library hai. Kuch bhi badal kar dekhein, page dobara kholne par sab pehle jaisa ho jayega.','Reset demo':'Demo reset karein',
+'Good morning':'Suprabhat','Good afternoon':'Namaskar','Good evening':'Shubh sandhya','students present today':'students aaj aaye',
+'Add Student':'Student Jodein','Collect Fee':'Fee Jama Karein','Send Reminders':'Reminder Bhejein','Add Expense':'Kharcha Jodein','Mark Attendance':'Attendance Lagayein',
+'Active Students':'Active Students','Fees Due':'Baaki Fees','Collected Today':'Aaj Ki Collection','Collected This Month':'Is Mahine Ki Collection','Expenses This Month':'Is Mahine Ka Kharcha','Net This Month':'Is Mahine Ki Bachat',
+'students':'students','Fees due':'Fees baaki','Due in 3 days':'3 din mein due','All clear':'Sab theek hai','more':'aur','months':'mahine','month':'mahina',
+'Setup progress':'Setup kitna hua','Library profile':'Library ki jaankari','Shifts and fees':'Shift aur fees','Seats and lockers':'Seats aur lockers','UPI for payments':'Payment ke liye UPI','Add first students':'Pehle students jodein','Open':'Kholein','Setup complete':'Setup poora ho gaya',
+'new admission requests':'naye admission request','Review':'Dekhein','Seat occupancy':'Seat bharti','booked':'booked','occupied':'bhari',
+'All Students':'Sabhi Students','Bulk Import':'Ek Saath Jodein','Admission Link':'Admission Link','Requests':'Requests',
+'Search by name, mobile or seat':'Naam, mobile ya seat se khojein','Active':'Active','Fee due':'Fees baaki','Due soon':'Jald due','Paid':'Jama','Left':'Library chhod di','All':'Sabhi',
+'Name':'Naam','Seat / Shift':'Seat / Shift','Monthly Fee':'Mahine ki fees','Next Due':'Agli date','Status':'Status','Mobile':'Mobile','Shift':'Shift','Seat':'Seat','Joined':'Joining',
+'No students yet':'Abhi koi student nahi','Add a student or import from Excel.':'Student jodein ya Excel se import karein.','Nothing found':'Kuch nahi mila','Try another search or filter.':'Doosra search ya filter try karein.',
+'New Student':'Naya Student','Edit Student':'Student Badlein','Full name':'Poora naam','Mobile (WhatsApp)':'Mobile (WhatsApp)','Father\'s name':'Pita ka naam','Preparing for':'Kis exam ki taiyaari','Address':'Pata','Shift / Plan':'Shift / Plan','Locker no.':'Locker no.','optional':'zaroori nahi','Joining date':'Joining date','Admission fee (₹)':'Admission fee (₹)','First month\'s fee received now':'Pehle mahine ki fees abhi mil gayi',
+'Assign later':'Baad mein denge','Cancel':'Raddh karein','Save':'Save karein','Mark as left':'Library chhod di','Make active again':'Dobara active karein',
+'Enter the name':'Naam likhein','Enter a valid 10-digit mobile number':'Sahi 10 ank ka mobile number likhein','This mobile number is already registered':'Ye mobile number pehle se registered hai','This seat is taken in this shift':'Is shift mein ye seat bhari hai','Enter the fee':'Fees likhein',
+'Student added':'Student jud gaya','Saved':'Save ho gaya','Could not save. Please try again.':'Save nahi hua. Dobara koshish karein.',
+'Send a welcome message?':'Welcome message bhejein?','Later':'Baad mein','Send on WhatsApp':'WhatsApp par bhejein',
+'Months (tick = paid)':'Mahine (tick = jama)','Tick old months here; each tick records a payment.':'Purane mahinon ka tick yahin lagayein. Har tick ek payment record banata hai.','due':'baaki','Next fee':'Agli fees','Payment history':'Payment history','No payments yet':'Abhi koi payment nahi','Edit':'Badlein','Close':'Band karein','Confirm?':'Pakka?','Remove':'Hatayein',
+'Import from Excel / Google Sheets':'Excel / Google Sheet se import','Copy the columns from your sheet and paste below, one student per line. Order:':'Sheet se columns copy karke neeche paste karein, har line mein ek student. Kram:','Only name and mobile are required. Date as DD-MM-YYYY.':'Sirf naam aur mobile zaroori hai. Date DD-MM-YYYY mein.','Check':'Check karein','valid':'sahi','with errors':'galat','Lines with errors will be skipped.':'Galat lines chhod di jayengi.','Import':'Import karein','OK':'OK',
+'Name missing':'Naam nahi hai','Invalid mobile':'Mobile galat hai','Already registered':'Pehle se registered','Date not understood':'Date samajh nahi aayi','Seat taken / invalid':'Seat bhari / galat',
+'Students fill the form themselves':'Student khud form bharein','Share this link in your WhatsApp group. Students fill name, mobile and shift; you approve with a seat.':'Ye link apne WhatsApp group mein bhejein. Student naam, mobile aur shift bharega, aap seat dekar approve karenge.','Copy':'Copy karein','Copied':'Copy ho gaya','Preview form':'Form dekhein',
+'No new requests':'Koi naya request nahi','Approve':'Approve karein','Reject':'Mana karein','Admission Form':'Admission Form','Your name':'Aapka naam','Submit':'Bhejein','Form received':'Form mil gaya','The library will contact you soon.':'Library jald aapse sampark karegi.','Back to app':'App mein wapas',
+'Select a shift. Tap a vacant seat to assign a student.':'Shift chunein. Khali seat par tap karke student ko seat dein.','Vacant':'Khali','Occupied':'Bhari','Fee due ':'Fees baaki ','Students without a seat':'Bina seat wale students','Everyone has a seat.':'Sabke paas seat hai.','New student on this seat':'Is seat par naya student','Assign':'Seat dein',
+'Today':'Aaj','Last 14 days':'Pichhle 14 din','Present today':'Aaj aaye','Inside now':'Abhi andar','Absent':'Nahi aaye','Check In':'Check In','Check Out':'Check Out','In':'In','Out':'Out','Hours':'Ghante',
+'How students mark attendance':'Students attendance kaise lagayenge','Print this QR and paste it at the entrance.':'Ye QR print karke gate par lagayein.','Student scans it with the phone camera or Google Lens.':'Student phone camera ya Google Lens se scan karega.','First time: enters own mobile number. The phone remembers it.':'Pehli baar apna mobile number daalega. Phone use yaad rakh lega.','Every day after that: scan and tap Check In / Check Out.':'Uske baad roz: scan karein aur Check In / Check Out dabayein.','Scan to mark attendance':'Attendance ke liye scan karein','Open check-in page':'Check-in page kholein','Manual entry':'Haath se entry','When a student has no phone with them.':'Jab student ke paas phone na ho.','Checked in':'Check in ho gaya','Checked out':'Check out ho gaya','Already done for today':'Aaj ka ho chuka hai',
+'Green box = present. Students coming least are at the top.':'Hara dabba = aaye. Sabse kam aane wale upar hain.','Check on them':'Haal-chaal poochhein',
+'Enter your mobile number':'Apna mobile number daalein','Continue':'Aage badhein','Number not found in this library':'Ye number is library mein nahi mila','Not you? Change number':'Aap nahi hain? Number badlein','Welcome':'Swagat hai','See you tomorrow':'Kal milte hain','Your fee is due':'Aapki fees baaki hai',
+'Due Fees':'Baaki Fees','Old Records':'Purana Hisaab','Collections':'Collection','Expenses':'Kharcha',
+'All due':'Sabhi baaki','Due 2+ months':'2+ mahine se baaki','Due today':'Aaj due','In 3 days':'3 din mein','This week':'Is hafte','Total':'Kul','Remind these':'Inhe reminder bhejein','Due amount':'Baaki rakam','Since':'Kab se','Nobody here':'Is list mein koi nahi',
+'Student':'Student','months due':'mahine baaki','No dues.':'Koi fees baaki nahi.','Months to pay':'Kitne mahine ki fees','Amount (₹)':'Rakam (₹)','Date':'Tareekh','Mode':'Tarika','Note (discount, partial…)':'Note (discount, aadhi rakam…)','Show UPI QR to student':'Student ko UPI QR dikhayein','Student scans and pays, then tap Confirm Payment.':'Student scan karke payment kare, phir Payment Confirm dabayein.','Confirm Payment':'Payment Confirm Karein','Select at least one month':'Kam se kam ek mahina chunein','Fee received':'Fees mil gayi','Fee Receipt':'Fee Receipt','Send receipt':'Receipt bhejein',
+'Last 6 months. Tick the months already paid before you started using the app. These are saved as old records and not counted in today\'s collection.':'Pichhle 6 mahine. App shuru karne se pehle jo fees mil chuki thi, us mahine par tick lagayein. Ye purane record ki tarah save hoga, aaj ki collection mein nahi judega.','Mark all paid':'Sab jama','No collections in this month':'Is mahine koi collection nahi','Months':'Mahine','Amount':'Rakam',
+'Total expenses':'Kul kharcha','No expenses recorded this month':'Is mahine koi kharcha nahi likha','What for':'Kis cheez ka','Rent':'Kiraya','Electricity':'Bijli','Internet':'Internet','Staff / Cleaning':'Staff / Safai','Water':'Pani','Repairs':'Marammat','Other':'Anya','Expense saved':'Kharcha save ho gaya','Enter the amount':'Rakam likhein',
+'6-month collection':'6 mahine ki collection','6-month expenses':'6 mahine ka kharcha','6-month net':'6 mahine ki bachat','Lockers in use':'Locker use mein','Collection vs expenses':'Collection vs kharcha','Daily attendance':'Roz ki attendance','Students by shift':'Shift ke hisaab se students','Payment modes':'Payment ke tarike','Monthly summary':'Mahine ka hisaab','Net':'Bachat','Collection':'Collection',
+'Send on WhatsApp one by one. Each button opens WhatsApp with the message ready.':'WhatsApp par ek-ek karke bhejein. Har button par message pehle se likha milega.','Send to':'Kisko bhejein','Message':'Message','Students with fees due':'Jinki fees baaki hai','Due in next 3 days':'Agle 3 din mein due','All active students':'Sabhi active students','Fee reminder':'Fees reminder','Upcoming fee':'Aane wali fees','Notice (holiday, rules…)':'Suchna (chhutti, niyam…)','Write the notice':'Suchna likhein','Preview':'Namuna','sent':'bheje','Copy all numbers':'Sabhi number copy karein','Reset sent':'Bheje hue reset karein','Sent':'Bhej diya',
+'Every student gets this app on their phone to see fees, seat, attendance and receipts, and pay by UPI.':'Har student ke phone par ye app hoga. Wo apni fees, seat, attendance aur receipt dekhega, aur UPI se fees bharega.','View as':'Kis student ki nazar se dekhein','Hello':'Namaste','Pay by UPI':'UPI se bharein','All paid':'Sab jama','Attendance this month':'Is mahine ki attendance','days':'din','Notice':'Suchna','Receipts':'Receipts','My ID QR':'Mera ID QR','Show this at the desk if you forgot your phone check-in.':'Check-in na ho paye to desk par ye dikhayein.','In the live version, students log in with mobile number and OTP.':'Asli version mein student mobile number aur OTP se login karega.',
+'Library Profile':'Library Profile','Shifts & Fees':'Shift aur Fees','Seats & Lockers':'Seats aur Lockers','Payments':'Payments','Message Templates':'Message Templates','Language':'Bhasha',
+'Library name':'Library ka naam','Owner name':'Owner ka naam','Library ID':'Library ID','Notice on student app':'Student app par suchna','Change PIN':'PIN badlein','leave blank to keep':'khali chhodein to wahi rahega',
+'Each shift has its own timing and monthly fee. The same seat can go to different students in different shifts if timings do not overlap.':'Har shift ka apna time aur mahine ki fees. Agar time na takraye to ek hi seat alag shift mein alag students ko di ja sakti hai.','Add Shift':'Shift Jodein','Add common shifts':'Aam shift jodein','Timing':'Time','No shifts yet':'Abhi koi shift nahi','Shift name':'Shift ka naam','Start':'Shuru','End':'Khatam','Fee per month (₹)':'Fees per mahina (₹)','Changing the fee does not change existing students\' fees.':'Fees badalne se purane students ki fees nahi badlegi.','Pick a valid timing':'Sahi time chunein','A shift with this name exists':'Is naam ki shift pehle se hai','Shift saved':'Shift save ho gayi',
+'Total seats':'Kul seats','Locker fee per month (₹)':'Locker fees per mahina (₹)','Seats cannot be fewer than an occupied seat number':'Bhari hui seat number se kam seats nahi ho sakti',
+'UPI ID':'UPI ID','Shown as QR while collecting fees and in student app.':'Fees lete waqt aur student app mein QR ban kar dikhega.','Admission fee':'Admission fee','Charged once to new students. 0 = none.':'Naye student se ek baar. 0 = nahi.',
+'These words fill in automatically:':'Ye shabd apne aap bhar jayenge:','Restore defaults':'Pehle jaise karein','Absence check':'Kam aane wale students','Receipt':'Receipt','Welcome message':'Welcome message','Notice prefix':'Suchna ki shuruaat',
+'App language':'App ki bhasha','English':'English','Hinglish':'Hinglish','Hindi':'हिंदी','Messages to students also follow this language unless you edit them.':'Students ko jaane wale message bhi isi bhasha mein honge, jab tak aap unhe badlein nahi.',
+'Old record':'Purana record','Cash':'Cash','UPI':'UPI','Bank':'Bank','Thank you!':'Dhanyavaad!','Paid till':'Jama hai','next fee':'agli fees','Full day':'Poora din','Morning':'Subah','Evening':'Shaam','Night':'Raat'
+},
+hi: {
+'Manual Register':'हाज़िरी रजिस्टर','Mark all present':'सभी उपस्थित','Mark all absent':'सभी अनुपस्थित','Save register':'रजिस्टर सेव करें','Register saved':'रजिस्टर सेव हो गया','Present':'उपस्थित','All shifts':'सभी शिफ्ट','Attendance updated':'हाज़िरी अपडेट है','Data coverage':'डेटा कितना अपडेट है','students have attendance in the last 7 days':'छात्रों की हाज़िरी पिछले 7 दिनों में अपडेट है','Reports are accurate only for students whose data is entered.':'रिपोर्ट केवल उन्हीं छात्रों की सही होगी जिनका डेटा भरा गया है।',
+'Overview':'सारांश','Student Ledger':'छात्र खाता','Seat Utilisation':'सीट उपयोग','Dues Ageing':'बकाया का हिसाब','Registered':'पंजीकरण','Months studied':'कितने महीने पढ़ा','Months paid':'कितने महीने की फीस दी','Total paid':'कुल जमा','Pending':'बाकी','Pending since':'कब से बाकी','Last visit':'आखिरी बार आए','Last 7 days':'पिछले 7 दिन','Regular':'नियमित','Irregular':'कभी-कभी','Not coming':'नहीं आ रहा','No data':'डेटा नहीं','days ago':'दिन पहले',
+'Shift-wise vacancy':'शिफ्ट के अनुसार खाली सीट','Vacant seats':'खाली सीट','Income missed per month':'हर महीने छूट रही आय','Total income missed':'कुल छूट रही आय','Free seats by hour':'हर घंटे कितनी सीट खाली','Seat-wise income':'सीट के अनुसार आय','Monthly from seat':'सीट से मासिक आय','empty':'खाली','Hour':'घंटा','Free':'खाली',
+'Expected this month':'इस महीने आना चाहिए','Collected':'आया','Collection rate':'वसूली %','Outstanding by age':'कितना पुराना बकाया','1 month':'1 महीना','2 months':'2 महीने','3+ months':'3+ महीने','Expected vs collected':'आना चाहिए बनाम आया','Expected':'आना चाहिए',
+'Terms & Conditions':'नियम और शर्तें','I accept the terms':'मैं नियम स्वीकार करता/करती हूँ','Accepted on':'स्वीकार किया','Please read and accept the Terms & Conditions.':'कृपया नियम और शर्तें पढ़कर स्वीकार करें।','Read':'पढ़ें',
+'term1':'रिपोर्ट, बकाया और हाज़िरी उतनी ही सही होंगी जितनी सही डेटा एंट्री लाइब्रेरी करेगी। डेटा न भरने पर रिपोर्ट गलत हो सकती है।','term2':'हाज़िरी रिपोर्ट केवल उन्हीं छात्रों की सही दिखेगी जिनकी हाज़िरी रोज़ अपडेट होती है (QR या रजिस्टर से)।','term3':'फीस का पैसा सीधे लाइब्रेरी के UPI / बैंक में जाता है। Maakit किसी भी भुगतान के लेन-देन का ज़िम्मेदार नहीं है।','term4':'छात्र का डेटा (नाम, मोबाइल, फीस) केवल लाइब्रेरी के काम के लिए है। लाइब्रेरी इसे बिना अनुमति किसी और को नहीं देगी।','term5':'WhatsApp संदेश लाइब्रेरी के अपने नंबर से जाते हैं। गलत या स्पैम संदेश की ज़िम्मेदारी लाइब्रेरी की होगी।','term6':'प्लान की फीस अग्रिम है। प्लान खत्म होने पर सुविधाएँ बंद हो सकती हैं, पर डेटा 30 दिन तक सुरक्षित रहेगा।','term7':'Maakit ऐप को बेहतर बनाने के लिए बदलाव कर सकता है। बड़े बदलाव की जानकारी पहले दी जाएगी।',
+'Posters':'पोस्टर','Plans':'प्लान','Current plan':'अभी का प्लान','Most popular':'सबसे लोकप्रिय','per month':'प्रति माह','per year':'प्रति वर्ष','or':'या','Choose plan':'प्लान चुनें','Your plan':'आपका प्लान','Demo: switch plan to see the difference':'डेमो: प्लान बदलकर अंतर देखें','This feature is in the Pro plan':'यह सुविधा Pro प्लान में है','Upgrade to unlock':'खोलने के लिए प्लान बदलें','See plans':'प्लान देखें',
+'Basic':'Basic','Pro':'Pro','Premium':'Premium','Everything in Pro':'Pro की सभी सुविधाएँ','Up to 50 students':'50 छात्रों तक','Unlimited students':'असीमित छात्र','Fees, seats and dues':'फीस, सीट और बकाया','WhatsApp reminders (one by one)':'WhatsApp रिमाइंडर (एक-एक करके)','QR attendance':'QR हाज़िरी','Student app':'छात्र ऐप','Reports and charts':'रिपोर्ट और चार्ट','Auto posters + festival calendar':'ऑटो पोस्टर + त्योहार कैलेंडर','Topper of the Month poster':'महीने के टॉपर का पोस्टर','Bulk messages':'एक साथ संदेश','Automatic WhatsApp reminders':'ऑटोमैटिक WhatsApp रिमाइंडर','Multiple branches':'कई शाखाएँ','Posters with your own branding only':'केवल आपकी ब्रांडिंग वाले पोस्टर','Personal setup and priority support':'व्यक्तिगत सेटअप और प्राथमिक सहायता','Basic plan allows up to 50 active students':'Basic प्लान में केवल 50 सक्रिय छात्र जुड़ सकते हैं',
+'Ready-made posters for every occasion. Download and post on your WhatsApp or Instagram story.':'हर मौके के लिए तैयार पोस्टर। डाउनलोड करके WhatsApp या Instagram स्टोरी पर लगाएँ।','Festival calendar':'त्योहार कैलेंडर','Upcoming':'आने वाले','Today':'आज','Download poster':'पोस्टर डाउनलोड करें','Downloaded':'डाउनलोड हो गया','Long-press the image to save it':'इमेज को दबाकर रखें और सेव करें','Topper of the Month':'महीने के टॉपर','Most study hours in the last 30 days':'पिछले 30 दिनों में सबसे ज़्यादा पढ़ाई','hours':'घंटे','Admission Open':'प्रवेश प्रारंभ','Seats available':'सीटें खाली हैं','Holiday Notice':'छुट्टी की सूचना','Custom notice':'अपनी सूचना','Write your notice':'अपनी सूचना लिखें','Library will remain closed':'लाइब्रेरी बंद रहेगी','Poster types':'पोस्टर के प्रकार','Pick a date with a dot, or pick a poster type.':'बिंदु वाली तारीख चुनें, या पोस्टर का प्रकार चुनें।','No occasion on this date':'इस तारीख पर कोई अवसर नहीं','Call':'कॉल','Powered by Maakit':'Powered by Maakit','Fee Reminder':'फीस रिमाइंडर','Please pay your fee on time':'कृपया फीस समय पर जमा करें',
+'Dashboard':'डैशबोर्ड','Students':'छात्र','Seat Map':'सीट मैप','Attendance':'हाज़िरी','Fee Collection':'फीस','Reports':'रिपोर्ट','Messages':'मैसेज','Student App':'छात्र ऐप','Settings':'सेटिंग्स',
+'Demo library':'डेमो लाइब्रेरी','This is a sample library. Change anything you like; reload the page to start fresh.':'यह एक नमूना लाइब्रेरी है। कुछ भी बदलकर देखें, पेज दोबारा खोलने पर सब पहले जैसा हो जाएगा।','Reset demo':'डेमो रीसेट करें',
+'Good morning':'सुप्रभात','Good afternoon':'नमस्कार','Good evening':'शुभ संध्या','students present today':'छात्र आज आए',
+'Add Student':'छात्र जोड़ें','Collect Fee':'फीस जमा करें','Send Reminders':'रिमाइंडर भेजें','Add Expense':'खर्च जोड़ें','Mark Attendance':'हाज़िरी लगाएँ',
+'Active Students':'सक्रिय छात्र','Fees Due':'बाकी फीस','Collected Today':'आज की वसूली','Collected This Month':'इस महीने की वसूली','Expenses This Month':'इस महीने का खर्च','Net This Month':'इस महीने की बचत',
+'students':'छात्र','Fees due':'फीस बाकी','Due in 3 days':'3 दिन में देय','All clear':'सब ठीक है','more':'और','months':'महीने','month':'महीना',
+'Setup progress':'सेटअप की स्थिति','Library profile':'लाइब्रेरी की जानकारी','Shifts and fees':'शिफ्ट और फीस','Seats and lockers':'सीट और लॉकर','UPI for payments':'भुगतान के लिए UPI','Add first students':'पहले छात्र जोड़ें','Open':'खोलें','Setup complete':'सेटअप पूरा हुआ',
+'new admission requests':'नए प्रवेश अनुरोध','Review':'देखें','Seat occupancy':'सीट भराव','booked':'बुक','occupied':'भरी',
+'All Students':'सभी छात्र','Bulk Import':'एक साथ जोड़ें','Admission Link':'प्रवेश लिंक','Requests':'अनुरोध',
+'Search by name, mobile or seat':'नाम, मोबाइल या सीट से खोजें','Active':'सक्रिय','Fee due':'फीस बाकी','Due soon':'जल्द देय','Paid':'जमा','Left':'छोड़ दिया','All':'सभी',
+'Name':'नाम','Seat / Shift':'सीट / शिफ्ट','Monthly Fee':'मासिक फीस','Next Due':'अगली तारीख','Status':'स्थिति','Mobile':'मोबाइल','Shift':'शिफ्ट','Seat':'सीट','Joined':'प्रवेश',
+'No students yet':'अभी कोई छात्र नहीं','Add a student or import from Excel.':'छात्र जोड़ें या Excel से इम्पोर्ट करें।','Nothing found':'कुछ नहीं मिला','Try another search or filter.':'दूसरा खोज या फ़िल्टर आज़माएँ।',
+'New Student':'नया छात्र','Edit Student':'छात्र बदलें','Full name':'पूरा नाम','Mobile (WhatsApp)':'मोबाइल (WhatsApp)','Father\'s name':'पिता का नाम','Preparing for':'किस परीक्षा की तैयारी','Address':'पता','Shift / Plan':'शिफ्ट / प्लान','Locker no.':'लॉकर नं.','optional':'वैकल्पिक','Joining date':'प्रवेश तिथि','Admission fee (₹)':'प्रवेश शुल्क (₹)','First month\'s fee received now':'पहले महीने की फीस अभी मिल गई',
+'Assign later':'बाद में देंगे','Cancel':'रद्द करें','Save':'सेव करें','Mark as left':'लाइब्रेरी छोड़ दी','Make active again':'दोबारा सक्रिय करें',
+'Enter the name':'नाम लिखें','Enter a valid 10-digit mobile number':'सही 10 अंकों का मोबाइल नंबर लिखें','This mobile number is already registered':'यह मोबाइल नंबर पहले से दर्ज है','This seat is taken in this shift':'इस शिफ्ट में यह सीट भरी है','Enter the fee':'फीस लिखें',
+'Student added':'छात्र जुड़ गया','Saved':'सेव हो गया','Could not save. Please try again.':'सेव नहीं हुआ। दोबारा कोशिश करें।',
+'Send a welcome message?':'स्वागत संदेश भेजें?','Later':'बाद में','Send on WhatsApp':'WhatsApp पर भेजें',
+'Months (tick = paid)':'महीने (टिक = जमा)','Tick old months here; each tick records a payment.':'पुराने महीनों पर यहीं टिक लगाएँ। हर टिक एक भुगतान दर्ज करता है।','due':'बाकी','Next fee':'अगली फीस','Payment history':'भुगतान इतिहास','No payments yet':'अभी कोई भुगतान नहीं','Edit':'बदलें','Close':'बंद करें','Confirm?':'पक्का?','Remove':'हटाएँ',
+'Import from Excel / Google Sheets':'Excel / Google Sheet से इम्पोर्ट','Copy the columns from your sheet and paste below, one student per line. Order:':'शीट से कॉलम कॉपी करके नीचे पेस्ट करें, हर लाइन में एक छात्र। क्रम:','Only name and mobile are required. Date as DD-MM-YYYY.':'केवल नाम और मोबाइल ज़रूरी है। तारीख DD-MM-YYYY में।','Check':'जाँचें','valid':'सही','with errors':'गलत','Lines with errors will be skipped.':'गलत लाइनें छोड़ दी जाएँगी।','Import':'इम्पोर्ट करें','OK':'ठीक',
+'Name missing':'नाम नहीं है','Invalid mobile':'मोबाइल गलत है','Already registered':'पहले से दर्ज','Date not understood':'तारीख समझ नहीं आई','Seat taken / invalid':'सीट भरी / गलत',
+'Students fill the form themselves':'छात्र खुद फॉर्म भरें','Share this link in your WhatsApp group. Students fill name, mobile and shift; you approve with a seat.':'यह लिंक अपने WhatsApp ग्रुप में भेजें। छात्र नाम, मोबाइल और शिफ्ट भरेंगे, आप सीट देकर स्वीकृति देंगे।','Copy':'कॉपी करें','Copied':'कॉपी हो गया','Preview form':'फॉर्म देखें',
+'No new requests':'कोई नया अनुरोध नहीं','Approve':'स्वीकार करें','Reject':'अस्वीकार करें','Admission Form':'प्रवेश फॉर्म','Your name':'आपका नाम','Submit':'भेजें','Form received':'फॉर्म मिल गया','The library will contact you soon.':'लाइब्रेरी जल्द आपसे संपर्क करेगी।','Back to app':'ऐप में वापस',
+'Select a shift. Tap a vacant seat to assign a student.':'शिफ्ट चुनें। खाली सीट पर टैप करके छात्र को सीट दें।','Vacant':'खाली','Occupied':'भरी','Fee due ':'फीस बाकी ','Students without a seat':'बिना सीट वाले छात्र','Everyone has a seat.':'सबके पास सीट है।','New student on this seat':'इस सीट पर नया छात्र','Assign':'सीट दें',
+'Today':'आज','Last 14 days':'पिछले 14 दिन','Present today':'आज आए','Inside now':'अभी अंदर','Absent':'नहीं आए','Check In':'चेक इन','Check Out':'चेक आउट','In':'आए','Out':'गए','Hours':'घंटे',
+'How students mark attendance':'छात्र हाज़िरी कैसे लगाएँगे','Print this QR and paste it at the entrance.':'यह QR प्रिंट करके गेट पर लगाएँ।','Student scans it with the phone camera or Google Lens.':'छात्र फ़ोन कैमरा या Google Lens से स्कैन करेगा।','First time: enters own mobile number. The phone remembers it.':'पहली बार अपना मोबाइल नंबर डालेगा। फ़ोन उसे याद रखेगा।','Every day after that: scan and tap Check In / Check Out.':'उसके बाद रोज़: स्कैन करें और चेक इन / चेक आउट दबाएँ।','Scan to mark attendance':'हाज़िरी के लिए स्कैन करें','Open check-in page':'चेक-इन पेज खोलें','Manual entry':'हाथ से एंट्री','When a student has no phone with them.':'जब छात्र के पास फ़ोन न हो।','Checked in':'चेक इन हो गया','Checked out':'चेक आउट हो गया','Already done for today':'आज का हो चुका है',
+'Green box = present. Students coming least are at the top.':'हरा डिब्बा = उपस्थित। सबसे कम आने वाले ऊपर हैं।','Check on them':'हाल-चाल पूछें',
+'Enter your mobile number':'अपना मोबाइल नंबर डालें','Continue':'आगे बढ़ें','Number not found in this library':'यह नंबर इस लाइब्रेरी में नहीं मिला','Not you? Change number':'आप नहीं हैं? नंबर बदलें','Welcome':'स्वागत है','See you tomorrow':'कल मिलते हैं','Your fee is due':'आपकी फीस बाकी है',
+'Due Fees':'बाकी फीस','Old Records':'पुराना हिसाब','Collections':'वसूली','Expenses':'खर्च',
+'All due':'सभी बाकी','Due 2+ months':'2+ महीने से बाकी','Due today':'आज देय','In 3 days':'3 दिन में','This week':'इस हफ़्ते','Total':'कुल','Remind these':'इन्हें रिमाइंडर भेजें','Due amount':'बाकी राशि','Since':'कब से','Nobody here':'इस सूची में कोई नहीं',
+'Student':'छात्र','months due':'महीने बाकी','No dues.':'कोई फीस बाकी नहीं।','Months to pay':'कितने महीने की फीस','Amount (₹)':'राशि (₹)','Date':'तारीख','Mode':'तरीका','Note (discount, partial…)':'नोट (छूट, आंशिक…)','Show UPI QR to student':'छात्र को UPI QR दिखाएँ','Student scans and pays, then tap Confirm Payment.':'छात्र स्कैन करके भुगतान करे, फिर भुगतान पक्का करें दबाएँ।','Confirm Payment':'भुगतान पक्का करें','Select at least one month':'कम से कम एक महीना चुनें','Fee received':'फीस मिल गई','Fee Receipt':'फीस रसीद','Send receipt':'रसीद भेजें',
+'Last 6 months. Tick the months already paid before you started using the app. These are saved as old records and not counted in today\'s collection.':'पिछले 6 महीने। ऐप शुरू करने से पहले जिन महीनों की फीस मिल चुकी थी, उन पर टिक लगाएँ। यह पुराने रिकॉर्ड की तरह सेव होगा, आज की वसूली में नहीं जुड़ेगा।','Mark all paid':'सब जमा','No collections in this month':'इस महीने कोई वसूली नहीं','Months':'महीने','Amount':'राशि',
+'Total expenses':'कुल खर्च','No expenses recorded this month':'इस महीने कोई खर्च दर्ज नहीं','What for':'किस चीज़ का','Rent':'किराया','Electricity':'बिजली','Internet':'इंटरनेट','Staff / Cleaning':'स्टाफ / सफ़ाई','Water':'पानी','Repairs':'मरम्मत','Other':'अन्य','Expense saved':'खर्च सेव हो गया','Enter the amount':'राशि लिखें',
+'6-month collection':'6 महीने की वसूली','6-month expenses':'6 महीने का खर्च','6-month net':'6 महीने की बचत','Lockers in use':'उपयोग में लॉकर','Collection vs expenses':'वसूली बनाम खर्च','Daily attendance':'रोज़ की हाज़िरी','Students by shift':'शिफ्ट के अनुसार छात्र','Payment modes':'भुगतान के तरीके','Monthly summary':'महीने का हिसाब','Net':'बचत','Collection':'वसूली',
+'Send on WhatsApp one by one. Each button opens WhatsApp with the message ready.':'WhatsApp पर एक-एक करके भेजें। हर बटन पर संदेश पहले से लिखा मिलेगा।','Send to':'किसे भेजें','Message':'संदेश','Students with fees due':'जिनकी फीस बाकी है','Due in next 3 days':'अगले 3 दिन में देय','All active students':'सभी सक्रिय छात्र','Fee reminder':'फीस रिमाइंडर','Upcoming fee':'आने वाली फीस','Notice (holiday, rules…)':'सूचना (छुट्टी, नियम…)','Write the notice':'सूचना लिखें','Preview':'नमूना','sent':'भेजे','Copy all numbers':'सभी नंबर कॉपी करें','Reset sent':'भेजे हुए रीसेट करें','Sent':'भेज दिया',
+'Every student gets this app on their phone to see fees, seat, attendance and receipts, and pay by UPI.':'हर छात्र के फ़ोन पर यह ऐप होगा। वह अपनी फीस, सीट, हाज़िरी और रसीद देखेगा, और UPI से फीस भरेगा।','View as':'किस छात्र की नज़र से देखें','Hello':'नमस्ते','Pay by UPI':'UPI से भरें','All paid':'सब जमा','Attendance this month':'इस महीने की हाज़िरी','days':'दिन','Notice':'सूचना','Receipts':'रसीदें','My ID QR':'मेरा ID QR','Show this at the desk if you forgot your phone check-in.':'चेक-इन न हो पाए तो डेस्क पर यह दिखाएँ।','In the live version, students log in with mobile number and OTP.':'असली संस्करण में छात्र मोबाइल नंबर और OTP से लॉगिन करेंगे।',
+'Library Profile':'लाइब्रेरी प्रोफ़ाइल','Shifts & Fees':'शिफ्ट और फीस','Seats & Lockers':'सीट और लॉकर','Payments':'भुगतान','Message Templates':'संदेश टेम्पलेट','Language':'भाषा',
+'Library name':'लाइब्रेरी का नाम','Owner name':'मालिक का नाम','Library ID':'लाइब्रेरी ID','Notice on student app':'छात्र ऐप पर सूचना','Change PIN':'PIN बदलें','leave blank to keep':'खाली छोड़ें तो वही रहेगा',
+'Each shift has its own timing and monthly fee. The same seat can go to different students in different shifts if timings do not overlap.':'हर शिफ्ट का अपना समय और मासिक फीस। समय न टकराए तो एक ही सीट अलग शिफ्ट में अलग छात्रों को दी जा सकती है।','Add Shift':'शिफ्ट जोड़ें','Add common shifts':'सामान्य शिफ्ट जोड़ें','Timing':'समय','No shifts yet':'अभी कोई शिफ्ट नहीं','Shift name':'शिफ्ट का नाम','Start':'शुरू','End':'खत्म','Fee per month (₹)':'मासिक फीस (₹)','Changing the fee does not change existing students\' fees.':'फीस बदलने से पुराने छात्रों की फीस नहीं बदलेगी।','Pick a valid timing':'सही समय चुनें','A shift with this name exists':'इस नाम की शिफ्ट पहले से है','Shift saved':'शिफ्ट सेव हो गई',
+'Total seats':'कुल सीटें','Locker fee per month (₹)':'लॉकर फीस प्रति माह (₹)','Seats cannot be fewer than an occupied seat number':'भरी हुई सीट संख्या से कम सीटें नहीं हो सकतीं',
+'UPI ID':'UPI ID','Shown as QR while collecting fees and in student app.':'फीस लेते समय और छात्र ऐप में QR बनकर दिखेगा।','Admission fee':'प्रवेश शुल्क','Charged once to new students. 0 = none.':'नए छात्र से एक बार। 0 = नहीं।',
+'These words fill in automatically:':'ये शब्द अपने आप भर जाएँगे:','Restore defaults':'पहले जैसा करें','Absence check':'कम आने वाले छात्र','Receipt':'रसीद','Welcome message':'स्वागत संदेश','Notice prefix':'सूचना की शुरुआत',
+'App language':'ऐप की भाषा','English':'English','Hinglish':'Hinglish','Hindi':'हिंदी','Messages to students also follow this language unless you edit them.':'छात्रों को जाने वाले संदेश भी इसी भाषा में होंगे, जब तक आप उन्हें न बदलें।',
+'Old record':'पुराना रिकॉर्ड','Cash':'नकद','UPI':'UPI','Bank':'बैंक','Thank you!':'धन्यवाद!','Paid till':'जमा है','next fee':'अगली फीस','Full day':'पूरा दिन','Morning':'सुबह','Evening':'शाम','Night':'रात'
+}};
+const TPL = {
+ en: { reminder: 'Dear {name}, your {library} fee of {amount} for {months} month(s) is pending. Please pay via UPI: {upi}. Thank you!', soon: 'Dear {name}, your next {library} fee of {amount} is due on {date}. Please pay on time. Thank you!', receipt: 'Dear {name}, we have received {amount} at {library}. Seat: {seat}. Next fee: {date}. Thank you!', welcome: 'Welcome to {library}, {name}! Your seat {seat} ({shift}) is booked. Monthly fee: {fee}. All the best!', absent: 'Dear {name}, we have missed you at {library} lately. Hope all is well. Your seat {seat} is waiting for you.', notice: 'Dear {name}, notice from {library}: ' },
+ hl: { reminder: 'Namaste {name}, {library} ki {months} mahine ki fees {amount} baaki hai. Kripya UPI se jama karein: {upi}. Dhanyavaad!', soon: 'Namaste {name}, {library} ki agli fees {amount} ki tareekh {date} hai. Kripya samay par jama karein. Dhanyavaad!', receipt: 'Namaste {name}, {library} mein aapki fees {amount} prapt ho gayi hai. Seat: {seat}. Agli fees: {date}. Dhanyavaad!', welcome: '{library} mein aapka swagat hai, {name}! Aapki seat {seat} ({shift}) book ho gayi hai. Mahine ki fees: {fee}. Shubhkamnayein!', absent: 'Namaste {name}, kuch dinon se aap {library} nahi aa rahe hain. Aasha hai sab theek hai. Aapki seat {seat} aapka intezaar kar rahi hai.', notice: 'Namaste {name}, {library} ki suchna: ' },
+ hi: { reminder: 'नमस्ते {name}, {library} की {months} महीने की फीस {amount} बाकी है। कृपया UPI से जमा करें: {upi}। धन्यवाद!', soon: 'नमस्ते {name}, {library} की अगली फीस {amount} की तारीख {date} है। कृपया समय पर जमा करें। धन्यवाद!', receipt: 'नमस्ते {name}, {library} में आपकी फीस {amount} प्राप्त हुई। सीट: {seat}। अगली फीस: {date}। धन्यवाद!', welcome: '{library} में आपका स्वागत है, {name}! आपकी सीट {seat} ({shift}) बुक हो गई है। मासिक फीस: {fee}। शुभकामनाएँ!', absent: 'नमस्ते {name}, कुछ दिनों से आप {library} नहीं आ रहे हैं। आशा है सब ठीक है। आपकी सीट {seat} आपका इंतज़ार कर रही है।', notice: 'नमस्ते {name}, {library} की सूचना: ' }
+};
+let lang = 'en';
+const T = (k, v) => { let s = (L[lang] || {})[k] || EN_TERMS[k] || k; if (v) s = s.replace(/\{(\w+)\}/g, (m, x) => v[x] ?? m); return s; };
+
+/* ================= Icons ================= */
+const P = {
+ home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.3-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.3.2 4 1.8 4.5 4.5"/>',
+ grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ check: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.5 2.5L16 9.5"/>',
+ wallet: '<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/><path d="M6 6V5a2 2 0 0 1 2-2h9"/>',
+ chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ msg: '<path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/>',
+ phone: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+ cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+ plus: '<path d="M12 5v14M5 12h14"/>', send: '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>', rupee: '<path d="M7 4h11M7 8.5h11M7 4c6 0 6 9 0 9h-.5L15 21"/>', qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>',
+ clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', trend: '<path d="m3 17 6-6 4 4 8-8M15 7h6v6"/>', receipt: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>', bank: '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', wa: '<path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5"/>', door: '<path d="M14 3h5v18h-5M10 17l5-5-5-5M15 12H3"/>', alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>', crown: '<path d="m3 7 4.5 4L12 4l4.5 7L21 7l-2 12H5z"/>', dl: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>'
+};
+const I = (n) => `<svg class="i" viewBox="0 0 24 24">${P[n] || ''}</svg>`;
+
+/* ================= Store (demo, in memory) ================= */
+const S = { settings: null, plans: [], students: [], payments: [], expenses: [], joins: [], attendance: [] };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const Store = {
+  async setSettings(d) { S.settings = d; refresh(); },
+  async add(c, d) { const x = Object.assign({ id: uid() }, d); S[c].push(x); refresh(); return x; },
+  async update(c, id, d) { Object.assign(S[c].find((x) => x.id === id), d); refresh(); },
+  async remove(c, id) { S[c] = S[c].filter((x) => x.id !== id); refresh(); }
+};
+let refreshT; function refresh() { clearTimeout(refreshT); refreshT = setTimeout(render, 20); }
+
+/* ================= Helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rs = (n) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+const pad = (n) => String(n).padStart(2, '0');
+const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parse = (s) => { if (!s) return null; const [y, m, d] = String(s).split('-').map(Number); return new Date(y, m - 1, d); };
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const loc = () => lang === 'hi' ? 'hi-IN' : 'en-IN';
+const fmt = (s) => { const d = typeof s === 'string' ? parse(s) : s; return d ? d.toLocaleDateString(loc(), { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; };
+const mon = (s) => { const d = parse(s); return d ? d.toLocaleDateString(loc(), { month: 'short', year: '2-digit' }) : ''; };
+const addMonths = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth() + n, 1); const last = new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate(); x.setDate(Math.min(d.getDate(), last)); return x; };
+const daysBetween = (a, b) => Math.round((b - a) / 86400000);
+const toMin = (t) => { const [h, m] = String(t || '0:0').split(':').map(Number); return h * 60 + (m || 0); };
+const t12 = (t) => { if (!t) return ''; let [h, m] = String(t).split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + (m ? ':' + pad(m) : '') + ' ' + ap; };
+const mo = (n) => n + ' ' + (n === 1 ? T('month') : T('months'));
+const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3200); }
+async function safe(fn, ok) { try { await fn(); if (ok) toast(ok); return true; } catch (e) { toast(T('Could not save. Please try again.')); return false; } }
+const phoneOk = (p) => /^[6-9]\d{9}$/.test(p);
+const cleanPhone = (p) => String(p || '').replace(/\D/g, '').slice(-10);
+const wa = (phone, text) => 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(text);
+const planOf = (id) => S.plans.find((p) => p.id === id);
+const pName = (p) => p ? T(p.name) : '—';
+const planLabel = (p) => p ? pName(p) + ' · ' + t12(p.start) + '–' + t12(p.end) : '—';
+const monthly = (st) => (Number(st.fee) || 0) + (st.locker ? Number(S.settings?.lockerFee) || 0 : 0);
+const upiLink = (amt, note) => 'upi://pay?pa=' + encodeURIComponent(S.settings?.upi || '') + '&pn=' + encodeURIComponent(S.settings?.name || '') + (amt ? '&am=' + amt : '') + '&cu=INR&tn=' + encodeURIComponent(note || 'Library fee');
+function drawQR(el, text, size = 150) { if (!el) return; el.innerHTML = ''; if (window.QRCode) { try { new QRCode(el, { text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); return; } catch (e) {} } el.textContent = text; el.style.fontSize = '10px'; el.style.maxWidth = size + 'px'; el.style.wordBreak = 'break-all'; }
+function overlap(a, b) { if (!a || !b) return false; const seg = (p) => { const s = toMin(p.start), e = toMin(p.end); return e > s ? [[s, e]] : [[s, 1440], [0, e]]; }; return seg(a).some(([s1, e1]) => seg(b).some(([s2, e2]) => s1 < e2 && s2 < e1)); }
+
+/* Fees */
+function cycles(st) { const j = parse(st.joinDate); if (!j) return []; const out = [], t = st.left && st.leftOn ? parse(st.leftOn) : today(); for (let i = 0; i < 120; i++) { const d = addMonths(j, i); if (d > t && i > 0) break; out.push(iso(d)); } return out; }
+function paidSet(st) { const s = new Set(); S.payments.forEach((p) => { if (p.studentId === st.id) (p.cycles || []).forEach((c) => s.add(c)); }); return s; }
+function feeInfo(st) {
+  const cs = cycles(st), paid = paidSet(st), t = today(), dueCycles = cs.filter((c) => !paid.has(c));
+  let next = null; for (let i = 0; i < 240; i++) { const c = iso(addMonths(parse(st.joinDate), i)); if (!paid.has(c)) { next = c; break; } }
+  const amount = dueCycles.length * monthly(st);
+  let status = 'ok'; if (st.left) status = 'off'; else if (dueCycles.length) status = 'due'; else if (next && daysBetween(t, parse(next)) <= 3) status = 'soon';
+  return { dueCycles, next, amount, status };
+}
+const ST_LABEL = () => ({ ok: T('Paid'), due: T('Fee due'), soon: T('Due soon'), off: T('Left') });
+const tpl = (k) => (S.settings?.templates || {})[k] || TPL[lang][k];
+function fill(t, st, extra = {}) { const fi = feeInfo(st), p = planOf(st.planId); const v = Object.assign({ name: st.name, library: S.settings?.name || 'Library', amount: rs(fi.amount), months: fi.dueCycles.length, date: fmt(fi.next), seat: st.seat || '—', shift: pName(p), fee: rs(monthly(st)), upi: S.settings?.upi || '—' }, extra); return t.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m); }
+const remindText = (s, i) => fill(tpl(i.status === 'due' ? 'reminder' : 'soon'), s, i.status === 'due' ? {} : { amount: rs(monthly(s)) });
+
+/* ================= Navigation ================= */
+const NAV = [['home', 'home', 'Dashboard', '#6d4aff'], ['students', 'users', 'Students', '#1e7be0'], ['seats', 'grid', 'Seat Map', '#0f9d74'], ['attend', 'check', 'Attendance', '#0b8f8f'], ['fees', 'wallet', 'Fee Collection', '#c2185b'], ['reports', 'chart', 'Reports', '#e8750a'], ['messages', 'msg', 'Messages', '#1fae54'], ['studentapp', 'phone', 'Student App', '#8e44ad'], ['posters', 'image', 'Posters', '#e0245e'], ['plans', 'crown', 'Plans', '#b8860b'], ['settings', 'cog', 'Settings', '#5b6b7f']];
+let view = 'home', sub = {}, charts = [];
+const tabColor = () => (NAV.find((n) => n[0] === view) || NAV[0])[3];
+function destroyCharts() { charts.forEach((c) => { try { c.destroy(); } catch (e) {} }); charts = []; }
+function setLang(l) { lang = l; document.documentElement.lang = l === 'hi' ? 'hi' : 'en'; document.body.classList.toggle('hi', l === 'hi'); S.settings.lang = l; render(); }
+const langSeg = () => `<div class="seg">${[['en', 'English'], ['hl', 'Hinglish'], ['hi', 'हिंदी']].map(([k, l]) => `<button data-lang="${k}" class="${lang === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+
+function render() {
+  const root = $('#root');
+  if (location.hash === '#join') return renderJoin(root);
+  if (location.hash === '#checkin') return renderCheckin(root);
+  destroyCharts();
+  const dueN = S.students.filter((s) => feeInfo(s).status === 'due').length, joinN = S.joins.filter((j) => j.status === 'new').length;
+  const cnt = { fees: dueN, students: joinN };
+  const a = document.activeElement, keep = a && a.id && a.matches('input,textarea') ? { id: a.id, s: a.selectionStart } : null;
+  document.documentElement.style.setProperty('--tab', tabColor());
+  root.innerHTML = `<div class="app"><nav><div class="brand"><div class="logo">M</div><div><div class="bn">${esc(S.settings.name)}</div><div class="bs">Maakit Library · <b style="color:var(--tab)">${T(PLANS[S.settings.plan].name)}</b></div></div></div>
+   ${NAV.map(([k, ic, l, c]) => `<button class="nb ${view === k ? 'on' : ''}" data-nav="${k}" style="--c:${c}"><span class="ico">${I(isLocked(k) ? 'lock' : ic)}</span>${T(l)}${cnt[k] ? `<span class="cnt">${cnt[k]}</span>` : ''}</button>`).join('')}
+   <div class="lang"><label>${T('App language')}</label>${langSeg()}</div></nav><main id="main"></main></div>`;
+  root.querySelectorAll('[data-nav]').forEach((b) => b.onclick = () => { view = b.dataset.nav; sub = {}; render(); scrollTo(0, 0); });
+  root.querySelectorAll('[data-lang]').forEach((b) => b.onclick = () => setLang(b.dataset.lang));
+  const m = $('#main');
+  if (isLocked(view)) lockScreen(m); else ({ home: vHome, students: vStudents, seats: vSeats, attend: vAttend, fees: vFees, reports: vReports, messages: vMessages, studentapp: vStudentApp, posters: vPosters, plans: vPlans, settings: vSettings })[view](m);
+  m.insertAdjacentHTML('afterbegin', `<div class="mlang">${langSeg()}</div><div class="notice row"><span><b>${T('Demo library')}</b> · ${T('This is a sample library. Change anything you like; reload the page to start fresh.')}</span><span class="sp"></span><button class="btn s sm" id="demoReset">${T('Reset demo')}</button></div>`);
+  m.querySelectorAll('.mlang [data-lang]').forEach((b) => b.onclick = () => setLang(b.dataset.lang));
+  $('#demoReset').onclick = () => { const l = lang; seedDemo(); lang = l; S.settings.lang = l; view = 'home'; sub = {}; render(); toast(T('Saved')); };
+  if (keep) { const e = document.getElementById(keep.id); if (e) { e.focus(); try { e.setSelectionRange(keep.s, keep.s); } catch (x) {} } }
+}
+function head(icon, title, subtitle, acts = '') { return `<div class="ph"><div class="pi">${I(icon)}</div><div><h1>${title}</h1><p>${subtitle}</p></div><div class="acts">${acts}</div></div>`; }
+function tabsBar(items, cur, attr = 't') { return `<div class="tabs">${items.map(([k, l]) => `<button data-${attr}="${k}" class="${cur === k ? 'on' : ''}">${l}</button>`).join('')}</div>`; }
+function bindTabs(m, attr = 't', key = 'tab') { m.querySelectorAll(`[data-${attr}]`).forEach((b) => b.onclick = () => { if (key === 'tab') sub = { tab: b.dataset[attr] }; else sub[key] = b.dataset[attr]; render(); }); }
+function bindCommon(m) {
+  m.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { view = b.dataset.go; sub = b.dataset.tab ? { tab: b.dataset.tab } : {}; render(); scrollTo(0, 0); });
+  m.querySelectorAll('[data-stu]').forEach((a) => a.onclick = (e) => { e.preventDefault(); openStudent(a.dataset.stu); });
+  m.querySelectorAll('[data-act=addStudent]').forEach((b) => b.onclick = () => studentForm());
+  m.querySelectorAll('[data-act=pay]').forEach((b) => b.onclick = () => payForm());
+  m.querySelectorAll('[data-act=expense]').forEach((b) => b.onclick = () => expenseForm());
+  m.querySelectorAll('[data-pay]').forEach((b) => b.onclick = () => payForm(b.dataset.pay));
+  m.querySelectorAll('[data-terms]').forEach((b) => b.onclick = () => termsModal());
+}
+function modal(html) { $('#modal').innerHTML = html; $('#ov').classList.add('on'); }
+function closeModal() { $('#ov').classList.remove('on'); }
+$('#ov').addEventListener('click', (e) => { if (e.target.id === 'ov') closeModal(); });
+function confirmBtn(b, fn) { if (b.dataset.sure) fn(); else { b.dataset.sure = 1; b.textContent = T('Confirm?'); setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = T('Remove'); } }, 3000); } }
+
+/* ================= Dashboard ================= */
+function vHome(m) {
+  const act = S.students.filter((s) => !s.left), t = today(), mk = iso(t).slice(0, 7), h = new Date().getHours();
+  const infos = act.map((s) => [s, feeInfo(s)]), due = infos.filter(([, i]) => i.status === 'due'), soon = infos.filter(([, i]) => i.status === 'soon');
+  const sum = (arr) => arr.reduce((a, p) => a + Number(p.amount || 0), 0);
+  const dueAmt = due.reduce((a, [, i]) => a + i.amount, 0);
+  const live = S.payments.filter((p) => p.mode !== 'old');
+  const monthIn = sum(live.filter((p) => String(p.date).startsWith(mk))), todayIn = sum(live.filter((p) => p.date === iso(t))), monthOut = sum(S.expenses.filter((e) => String(e.date).startsWith(mk)));
+  const present = S.attendance.filter((a) => a.date === iso(t)).length, joinN = S.joins.filter((j) => j.status === 'new').length;
+  const greet = h < 12 ? T('Good morning') : h < 17 ? T('Good afternoon') : T('Good evening');
+  const setup = [[T('Library profile'), !!(S.settings.name && S.settings.phone), 'settings', 'profile'], [T('Shifts and fees'), S.plans.length > 0, 'settings', 'plans'], [T('Seats and lockers'), S.settings.seats > 0, 'settings', 'seats'], [T('UPI for payments'), !!S.settings.upi, 'settings', 'pay'], [T('Add first students'), act.length > 0, 'students', 'list']];
+  const doneN = setup.filter((x) => x[1]).length;
+  const tile = (icon, l, n, c, hint = '') => `<div class="tile" style="--tc:${c}"><div class="l">${I(icon)}${l}</div><div class="n">${n}</div>${hint ? `<div class="h">${hint}</div>` : ''}</div>`;
+  m.innerHTML = head('home', `${greet}, ${esc(S.settings.owner.split(' ')[0])}`, `${fmt(t)} · ${present} ${T('students present today')}`, `<button class="btn" data-act="addStudent">${I('plus')}${T('Add Student')}</button><button class="btn gh" data-act="pay">${I('rupee')}${T('Collect Fee')}</button><button class="btn gh" data-go="messages">${I('send')}${T('Send Reminders')}</button>`)
+  + (!S.settings.termsAt ? `<div class="notice row" style="background:#fdeef0;border-color:#f3c0c6;color:#8a1c2b"><span>${T('Please read and accept the Terms & Conditions.')}</span><span class="sp"></span><button class="btn sm" data-terms="1">${T('Read')}</button></div>` : '')
+  + (joinN ? `<div class="notice row"><span>${joinN} ${T('new admission requests')}</span><span class="sp"></span><button class="btn sm" data-go="students" data-tab="joins">${T('Review')}</button></div>` : '')
+  + `<div class="tiles">${tile('users', T('Active Students'), act.length, '#6d4aff')}${tile('alert', T('Fees Due'), rs(dueAmt), '#d93a4b', due.length + ' ' + T('students'))}${tile('rupee', T('Collected Today'), rs(todayIn), '#12a150')}${tile('trend', T('Collected This Month'), rs(monthIn), '#c2185b')}${tile('receipt', T('Expenses This Month'), rs(monthOut), '#e8750a')}${tile('bank', T('Net This Month'), rs(monthIn - monthOut), '#1e7be0')}</div>
+  <div class="g2"><div class="card"><div class="row"><h2>${T('Fees due')} (${due.length})</h2><span class="sp"></span><button class="btn x sm" data-go="fees">${T('Open')} →</button></div>${miniList(due)}</div><div class="card"><div class="row"><h2>${T('Due in 3 days')} (${soon.length})</h2></div>${miniList(soon)}</div></div>
+  <div class="g2"><div class="card"><div class="row"><h2>${T('Setup progress')}</h2><span class="sp"></span><span class="pill ${doneN === setup.length ? 'ok' : 'soon'}">${doneN}/${setup.length}</span></div><div class="bar"><span style="width:${doneN / setup.length * 100}%"></span></div>
+   <div style="margin-top:8px">${setup.map(([l, d, v, tb]) => `<div class="check ${d ? 'done' : ''}"><span class="ck">${d ? '✓' : ''}</span><span class="t">${l}</span><span class="sp"></span>${d ? '' : `<button class="btn sm" data-go="${v}" data-tab="${tb}">${T('Open')}</button>`}</div>`).join('')}</div></div>
+   <div class="card"><h2>${T('Seat occupancy')}</h2>${S.plans.map((p) => { const n = act.filter((s) => s.seat && overlap(planOf(s.planId), p)).length; return `<div style="margin:10px 0"><div class="row small"><span class="b">${esc(planLabel(p))}</span><span class="sp"></span><span class="mut">${n}/${S.settings.seats} ${T('occupied')}</span></div><div class="bar"><span style="width:${Math.min(100, n / S.settings.seats * 100)}%;background:var(--tab)"></span></div></div>`; }).join('')}</div></div>`;
+  bindCommon(m);
+}
+function miniList(arr) {
+  if (!arr.length) return `<p class="mut small">${T('All clear')} ✓</p>`;
+  return '<table>' + arr.slice(0, 6).map(([s, i]) => `<tr><td><a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a><div class="mut small">${T('Seat')} ${esc(s.seat || '—')} · ${i.status === 'due' ? mo(i.dueCycles.length) : fmt(i.next)}</div></td><td style="text-align:right"><div class="b">${rs(i.status === 'due' ? i.amount : monthly(s))}</div><a class="btn wa sm" target="_blank" rel="noopener" href="${wa(s.phone, remindText(s, i))}">${I('wa')}WhatsApp</a></td></tr>`).join('') + '</table>' + (arr.length > 6 ? `<p class="small mut">+${arr.length - 6} ${T('more')}</p>` : '');
+}
+
+/* ================= Students ================= */
+function vStudents(m) {
+  const tab = sub.tab || 'list', joinN = S.joins.filter((j) => j.status === 'new').length;
+  m.innerHTML = head('users', T('Students'), `${S.students.filter((s) => !s.left).length} ${T('Active').toLowerCase()} · ${S.settings.name}`, `<button class="btn" data-act="addStudent">${I('plus')}${T('Add Student')}</button>`) + tabsBar([['list', T('All Students')], ['bulk', T('Bulk Import')], ['link', T('Admission Link')], ['joins', T('Requests') + ' (' + joinN + ')']], tab) + '<div id="tb"></div>';
+  bindTabs(m); bindCommon(m);
+  ({ list: tStudentList, bulk: tBulk, link: tLink, joins: tJoins })[tab]($('#tb'));
+}
+function tStudentList(tb) {
+  const q = (sub.q || '').toLowerCase(), f = sub.f || 'active', order = { due: 0, soon: 1, ok: 2, off: 3 };
+  let rows = S.students.map((s) => [s, feeInfo(s)]).filter(([s, i]) => (f === 'all' || (f === 'active' ? !s.left : f === 'left' ? s.left : i.status === f)) && (!q || [s.name, s.phone, s.seat, s.father].join(' ').toLowerCase().includes(q)));
+  rows.sort((a, b) => order[a[1].status] - order[b[1].status] || a[0].name.localeCompare(b[0].name));
+  const SL = ST_LABEL();
+  tb.innerHTML = `<div class="row" style="margin-bottom:12px"><input id="stq" placeholder="${T('Search by name, mobile or seat')}" value="${esc(sub.q || '')}" style="flex:1;min-width:200px"><select id="stf" style="width:auto">${[['active', T('Active')], ['due', T('Fee due')], ['soon', T('Due soon')], ['ok', T('Paid')], ['left', T('Left')], ['all', T('All')]].map(([k, l]) => `<option value="${k}" ${f === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+  <div class="card tight tw">${rows.length ? `<table><tr><th>${T('Name')}</th><th>${T('Seat / Shift')}</th><th>${T('Monthly Fee')}</th><th>${T('Next Due')}</th><th>${T('Status')}</th><th></th></tr>${rows.map(([s, i]) => `<tr><td><a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a><div class="mut small">${esc(s.phone)}${s.exam ? ' · ' + esc(s.exam) : ''}</div></td><td>${esc(s.seat || '—')}${s.locker ? ` <span class="chip">${esc(s.locker)}</span>` : ''}<div class="mut small">${esc(pName(planOf(s.planId)))}</div></td><td>${rs(monthly(s))}</td><td>${i.status === 'due' ? `<span class="b" style="color:var(--bad)">${rs(i.amount)}</span><div class="mut small">${mo(i.dueCycles.length)}</div>` : fmt(i.next)}</td><td><span class="pill ${i.status}">${SL[i.status]}</span></td><td style="text-align:right">${s.left ? '' : `<button class="btn ok sm" data-pay="${s.id}">${T('Collect Fee')}</button>`}</td></tr>`).join('')}</table>` : `<div class="empty"><b>${S.students.length ? T('Nothing found') : T('No students yet')}</b>${S.students.length ? T('Try another search or filter.') : T('Add a student or import from Excel.')}</div>`}</div>`;
+  $('#stq').oninput = (e) => { sub.q = e.target.value; render(); };
+  $('#stf').onchange = (e) => { sub.f = e.target.value; render(); };
+  bindCommon(tb);
+}
+function seatOptions(planId, cur, exceptId) {
+  const p = planOf(planId), taken = new Map();
+  S.students.forEach((s) => { if (!s.left && s.seat && s.id !== exceptId && overlap(planOf(s.planId), p)) taken.set(String(s.seat), s.name); });
+  let o = `<option value="">${T('Assign later')}</option>`;
+  for (let i = 1; i <= S.settings.seats; i++) { const k = String(i), t = taken.get(k); o += `<option value="${k}" ${String(cur) === k ? 'selected' : ''} ${t ? 'disabled' : ''}>${T('Seat')} ${k}${t ? ' — ' + esc(t) : ''}</option>`; }
+  return o;
+}
+function seatFree(planId, seat, exceptId) { if (!seat) return true; const p = planOf(planId); return !S.students.some((s) => !s.left && String(s.seat) === String(seat) && s.id !== exceptId && overlap(planOf(s.planId), p)); }
+function studentForm(id, preset = {}, after) {
+  const s = id ? S.students.find((x) => x.id === id) : Object.assign({ planId: S.plans[0]?.id, joinDate: iso(today()) }, preset);
+  modal(`<h3>${id ? T('Edit Student') : T('New Student')}</h3>
+  <div class="g2"><div class="f"><label>${T('Full name')} *</label><input id="fN" value="${esc(s.name || '')}"></div><div class="f"><label>${T('Mobile (WhatsApp)')} *</label><input id="fP" inputmode="numeric" maxlength="10" value="${esc(s.phone || '')}"></div></div>
+  <div class="g2"><div class="f"><label>${T('Father\'s name')}</label><input id="fF" value="${esc(s.father || '')}"></div><div class="f"><label>${T('Preparing for')}</label><input id="fE" value="${esc(s.exam || '')}" placeholder="SSC, UPSC, NEET…"></div></div>
+  <div class="g2"><div class="f"><label>${T('Shift / Plan')} *</label><select id="fPl">${S.plans.map((p) => `<option value="${p.id}" ${p.id === s.planId ? 'selected' : ''}>${esc(planLabel(p))} · ${rs(p.fee)}</option>`).join('')}</select></div><div class="f"><label>${T('Seat')}</label><select id="fS">${seatOptions(s.planId, s.seat, id)}</select></div></div>
+  <div class="g3"><div class="f"><label>${T('Monthly Fee')} (₹) *</label><input id="fFee" type="number" value="${esc(s.fee ?? planOf(s.planId)?.fee ?? '')}"></div><div class="f"><label>${T('Locker no.')} <span class="mut">(${T('optional')}, +${rs(S.settings.lockerFee)})</span></label><input id="fL" value="${esc(s.locker || '')}" placeholder="L-4"></div><div class="f"><label>${T('Joining date')}</label><input id="fJ" type="date" value="${esc(s.joinDate)}"></div></div>
+  ${id ? '' : `<div class="g2"><div class="f"><label>${T('Admission fee (₹)')}</label><input id="fAd" type="number" value="${S.settings.admissionFee || 0}"></div><div class="f" style="display:flex;align-items:flex-end"><label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink);margin-bottom:10px"><input type="checkbox" id="fPaid" style="width:auto" checked> ${T('First month\'s fee received now')}</label></div></div>`}
+  <div class="err" id="fErr"></div>
+  <div class="mf">${id ? `<button class="btn x" id="fLeft">${s.left ? T('Make active again') : T('Mark as left')}</button><span class="sp"></span>` : ''}<button class="btn s" id="fC">${T('Cancel')}</button><button class="btn" id="fOk">${T('Save')}</button></div>`);
+  $('#fPl').onchange = () => { const p = planOf($('#fPl').value); $('#fS').innerHTML = seatOptions(p.id, $('#fS').value, id); $('#fFee').value = p.fee; };
+  $('#fC').onclick = closeModal;
+  if (id) $('#fLeft').onclick = async () => { closeModal(); await safe(() => Store.update('students', id, { left: !s.left, leftOn: !s.left ? iso(today()) : null }), T('Saved')); };
+  $('#fOk').onclick = async () => {
+    const d = { name: $('#fN').value.trim(), phone: cleanPhone($('#fP').value), father: $('#fF').value.trim(), exam: $('#fE').value.trim(), planId: $('#fPl').value, seat: $('#fS').value, fee: Number($('#fFee').value) || 0, locker: $('#fL').value.trim(), joinDate: $('#fJ').value || iso(today()) };
+    const e = !d.name ? T('Enter the name') : !phoneOk(d.phone) ? T('Enter a valid 10-digit mobile number') : S.students.some((x) => x.phone === d.phone && x.id !== id && !x.left) ? T('This mobile number is already registered') : !seatFree(d.planId, d.seat, id) ? T('This seat is taken in this shift') : !d.fee ? T('Enter the fee') : '';
+    if (e) { $('#fErr').textContent = e; return; }
+    if (!id && S.settings.plan === 'basic' && S.students.filter((x) => !x.left).length >= 50) { $('#fErr').textContent = T('Basic plan allows up to 50 active students'); return; }
+    if (id) { if (await safe(() => Store.update('students', id, d), T('Saved'))) closeModal(); return; }
+    const adm = Number($('#fAd').value) || 0, paidNow = $('#fPaid').checked; let st;
+    const ok = await safe(async () => { st = await Store.add('students', Object.assign(d, { left: false })); if (paidNow || adm) await Store.add('payments', { studentId: st.id, cycles: paidNow ? [d.joinDate] : [], amount: (paidNow ? monthly(d) : 0) + adm, admission: adm, date: iso(today()), mode: 'Cash' }); }, T('Student added'));
+    if (ok) { if (after) after(st); const txt = fill(tpl('welcome'), st); modal(`<h3>✓ ${esc(st.name)}</h3><p class="mut">${T('Send a welcome message?')}</p><div class="receipt">${esc(txt)}</div><div class="mf"><button class="btn s" id="wC">${T('Later')}</button><a class="btn wa" target="_blank" rel="noopener" href="${wa(st.phone, txt)}">${I('wa')}${T('Send on WhatsApp')}</a></div>`); $('#wC').onclick = closeModal; }
+  };
+}
+function openStudent(id) {
+  const s = S.students.find((x) => x.id === id); if (!s) return;
+  const i = feeInfo(s), p = planOf(s.planId), cs = cycles(s), paid = paidSet(s), SL = ST_LABEL();
+  const pays = S.payments.filter((x) => x.studentId === id).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  modal(`<h3>${esc(s.name)} <span class="pill ${i.status}">${SL[i.status]}</span></h3>
+  <p class="mut small">${esc(s.phone)}${s.father ? ' · ' + esc(s.father) : ''}${s.exam ? ' · ' + esc(s.exam) : ''}<br>${T('Seat')} ${esc(s.seat || '—')}${s.locker ? ' · ' + T('Locker no.') + ' ' + esc(s.locker) : ''} · ${esc(planLabel(p))} · ${rs(monthly(s))}/${T('month')} · ${T('Joined')} ${fmt(s.joinDate)}</p>
+  <div class="card" style="background:#faf9fc;box-shadow:none;border:1px solid var(--line)"><div class="b">${T('Months (tick = paid)')}</div><p class="hint" style="margin:2px 0 8px">${T('Tick old months here; each tick records a payment.')}</p><div class="months">${cs.map((c) => `<label class="mchk"><input type="checkbox" data-cy="${c}" ${paid.has(c) ? 'checked' : ''}>${mon(c)}</label>`).join('')}</div></div>
+  <p>${i.status === 'due' ? `<span class="b" style="color:var(--bad)">${rs(i.amount)} ${T('due')}</span> · ${mo(i.dueCycles.length)}` : `<span class="mut">${T('Next fee')}:</span> <b>${fmt(i.next)}</b>`}</p>
+  <div class="b">${T('Payment history')}</div>${pays.length ? '<table>' + pays.map((x) => `<tr><td>${fmt(x.date)}</td><td class="b">${rs(x.amount)}</td><td class="mut small">${x.mode === 'old' ? T('Old record') : T(x.mode)} · ${(x.cycles || []).map(mon).join(', ')}</td><td style="text-align:right"><button class="btn x sm" data-delpay="${x.id}">${T('Remove')}</button></td></tr>`).join('') + '</table>' : `<p class="mut small">${T('No payments yet')}</p>`}
+  <div class="mf"><a class="btn wa" target="_blank" rel="noopener" href="${wa(s.phone, remindText(s, i))}">${I('wa')}WhatsApp</a><span class="sp"></span><button class="btn s" id="oE">${T('Edit')}</button>${s.left ? '' : `<button class="btn ok" id="oP">${T('Collect Fee')}</button>`}<button class="btn s" id="oC">${T('Close')}</button></div>`);
+  $('#oC').onclick = closeModal; $('#oE').onclick = () => studentForm(id); if ($('#oP')) $('#oP').onclick = () => payForm(id);
+  $('#modal').querySelectorAll('[data-cy]').forEach((c) => c.onchange = async () => { await tickCycle(s, c.dataset.cy, c.checked); setTimeout(() => openStudent(id), 60); });
+  $('#modal').querySelectorAll('[data-delpay]').forEach((b) => b.onclick = () => confirmBtn(b, async () => { await safe(() => Store.remove('payments', b.dataset.delpay), T('Saved')); setTimeout(() => openStudent(id), 60); }));
+}
+async function tickCycle(s, cy, on) {
+  if (on) return safe(() => Store.add('payments', { studentId: s.id, cycles: [cy], amount: monthly(s), date: cy, mode: 'old' }));
+  const p = S.payments.find((x) => x.studentId === s.id && (x.cycles || []).includes(cy)); if (!p) return;
+  return safe(() => p.cycles.length > 1 ? Store.update('payments', p.id, { cycles: p.cycles.filter((z) => z !== cy), amount: Math.max(0, p.amount - monthly(s)) }) : Store.remove('payments', p.id));
+}
+function parseDate(s) { s = String(s || '').trim(); if (!s) return iso(today()); let m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/); if (m) { let y = +m[3]; if (y < 100) y += 2000; const d = new Date(y, m[2] - 1, m[1]); return isNaN(d) ? null : iso(d); } m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return m ? iso(new Date(m[1], m[2] - 1, m[3])) : null; }
+function tBulk(tb) {
+  tb.innerHTML = `<div class="card"><h2>${T('Import from Excel / Google Sheets')}</h2><p class="hint">${T('Copy the columns from your sheet and paste below, one student per line. Order:')} <span class="chip">Name, Mobile, Shift, Seat, Joining date, Fee</span> ${T('Only name and mobile are required. Date as DD-MM-YYYY.')}</p>
+  <textarea id="bulkT" placeholder="Rahul Kumar, 9876543210, Morning, 12, 01-10-2026, 600">${esc(sub.bulk || '')}</textarea><div class="row" style="margin-top:10px"><button class="btn" id="bPrev">${T('Check')}</button></div></div><div id="bOut"></div>`;
+  $('#bPrev').onclick = () => { sub.bulk = $('#bulkT').value; bulkPreview(); };
+  if (sub.bulk) bulkPreview();
+}
+function bulkPreview() {
+  const lines = (sub.bulk || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean), phones = new Set(S.students.filter((s) => !s.left).map((s) => s.phone)), seen = new Set(), seatUse = new Map();
+  const rows = lines.map((l) => {
+    const c = l.split(/\t|,/).map((x) => x.trim());
+    const plan = S.plans.find((p) => [p.name, T(p.name)].some((n) => n.toLowerCase() === (c[2] || '').toLowerCase())) || S.plans[0];
+    const r = { name: c[0], phone: cleanPhone(c[1]), planId: plan?.id, seat: (c[3] || '').replace(/\D/g, ''), joinDate: parseDate(c[4]), fee: Number(c[5]) || plan?.fee || 0, err: '' };
+    if (!r.name) r.err = T('Name missing'); else if (!phoneOk(r.phone)) r.err = T('Invalid mobile'); else if (phones.has(r.phone) || seen.has(r.phone)) r.err = T('Already registered'); else if (!r.joinDate) r.err = T('Date not understood');
+    else if (r.seat && (+r.seat > S.settings.seats || !seatFree(r.planId, r.seat) || (seatUse.get(r.seat) || []).some((pid) => overlap(planOf(pid), plan)))) r.err = T('Seat taken / invalid');
+    if (!r.err) { seen.add(r.phone); if (r.seat) seatUse.set(r.seat, [...(seatUse.get(r.seat) || []), r.planId]); }
+    return r;
+  });
+  const good = rows.filter((r) => !r.err);
+  $('#bOut').innerHTML = `<div class="card tw"><h2>${good.length} ${T('valid')} · ${rows.length - good.length} ${T('with errors')}</h2><table><tr><th>#</th><th>${T('Name')}</th><th>${T('Mobile')}</th><th>${T('Shift')}</th><th>${T('Seat')}</th><th>${T('Joined')}</th><th>${T('Monthly Fee')}</th><th></th></tr>${rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.phone)}</td><td>${esc(pName(planOf(r.planId)))}</td><td>${esc(r.seat || '—')}</td><td>${r.joinDate ? fmt(r.joinDate) : '—'}</td><td>${rs(r.fee)}</td><td>${r.err ? `<span class="pill due">${esc(r.err)}</span>` : `<span class="pill ok">${T('OK')}</span>`}</td></tr>`).join('')}</table>
+  <div class="row" style="margin-top:12px"><span class="hint">${T('Lines with errors will be skipped.')}</span><span class="sp"></span><button class="btn" id="bGo" ${good.length ? '' : 'disabled'}>${T('Import')} (${good.length})</button></div></div>`;
+  $('#bGo').onclick = async () => { for (const r of good) { const { err, ...d } = r; await Store.add('students', Object.assign(d, { left: false })); } sub = { tab: 'list' }; toast(good.length + ' ' + T('Student added')); render(); };
+}
+function tLink(tb) {
+  const url = location.href.split('#')[0] + '#join';
+  tb.innerHTML = `<div class="card"><h2>${T('Students fill the form themselves')}</h2><p class="hint">${T('Share this link in your WhatsApp group. Students fill name, mobile and shift; you approve with a seat.')}</p>
+  <div class="row"><input readonly value="${esc(url)}" id="lnk" style="flex:1;min-width:220px"><button class="btn s" id="cp">${T('Copy')}</button><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(S.settings.name + ' — ' + T('Admission Form') + ': ' + url)}">${I('wa')}WhatsApp</a></div><button class="btn x sm" id="tryJ" style="margin-top:8px">${T('Preview form')} →</button></div>`;
+  $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(url); toast(T('Copied')); } catch (e) { $('#lnk').select(); } };
+  $('#tryJ').onclick = () => { location.hash = 'join'; };
+}
+function tJoins(tb) {
+  const list = S.joins.filter((j) => j.status === 'new');
+  tb.innerHTML = `<div class="card tight tw">${list.length ? `<table><tr><th>${T('Name')}</th><th>${T('Mobile')}</th><th>${T('Shift')}</th><th>${T('Date')}</th><th></th></tr>${list.map((j) => `<tr><td class="b">${esc(j.name)}<div class="mut small">${esc(j.exam || '')}</div></td><td>${esc(j.phone)}</td><td>${esc(pName(planOf(j.planId)))}</td><td class="small">${fmt(String(j.createdAt).slice(0, 10))}</td><td style="text-align:right;white-space:nowrap"><button class="btn sm" data-ap="${j.id}">${T('Approve')}</button> <button class="btn x sm" data-rj="${j.id}">${T('Reject')}</button></td></tr>`).join('')}</table>` : `<div class="empty"><b>${T('No new requests')}</b></div>`}</div>`;
+  tb.querySelectorAll('[data-ap]').forEach((b) => b.onclick = () => { const j = S.joins.find((x) => x.id === b.dataset.ap); studentForm(null, { name: j.name, phone: j.phone, exam: j.exam, planId: j.planId, fee: planOf(j.planId)?.fee }, () => Store.update('joins', j.id, { status: 'done' })); });
+  tb.querySelectorAll('[data-rj]').forEach((b) => b.onclick = () => safe(() => Store.update('joins', b.dataset.rj, { status: 'rejected' }), T('Saved')));
+}
+function renderJoin(root) {
+  document.documentElement.style.setProperty('--tab', '#1e7be0');
+  root.innerHTML = `<div class="kiosk" style="background:linear-gradient(135deg,#1e7be0,#6d4aff)"><div class="card" style="text-align:left"><div class="center"><div class="logo" style="margin:0 auto 10px">M</div><h3 style="margin:0">${esc(S.settings.name)}</h3><p class="mut">${T('Admission Form')}</p></div>
+  <div class="f"><label>${T('Your name')} *</label><input id="jN"></div><div class="f"><label>${T('Mobile (WhatsApp)')} *</label><input id="jP" inputmode="numeric" maxlength="10"></div><div class="f"><label>${T('Preparing for')}</label><input id="jE"></div>
+  <div class="f"><label>${T('Shift')} *</label><select id="jS">${S.plans.map((p) => `<option value="${p.id}">${esc(planLabel(p))} · ${rs(p.fee)}</option>`).join('')}</select></div><div class="err" id="jErr"></div><button class="btn" id="jGo" style="width:100%;justify-content:center">${T('Submit')}</button><button class="btn x" id="jBack" style="width:100%;justify-content:center;margin-top:6px">← ${T('Back to app')}</button></div></div>`;
+  const back = () => { history.replaceState(null, '', location.pathname + location.search); render(); };
+  $('#jBack').onclick = back;
+  $('#jGo').onclick = async () => {
+    const d = { name: $('#jN').value.trim(), phone: cleanPhone($('#jP').value), exam: $('#jE').value.trim(), planId: $('#jS').value, status: 'new', createdAt: new Date().toISOString() };
+    const e = !d.name ? T('Enter the name') : !phoneOk(d.phone) ? T('Enter a valid 10-digit mobile number') : ''; if (e) { $('#jErr').textContent = e; return; }
+    await Store.add('joins', d); clearTimeout(refreshT);
+    root.innerHTML = `<div class="kiosk" style="background:linear-gradient(135deg,#1e7be0,#6d4aff)"><div class="card"><div class="logo" style="margin:0 auto 10px">✓</div><h3>${T('Form received')}</h3><p class="mut">${T('The library will contact you soon.')}</p><button class="btn s" id="jB2">← ${T('Back to app')}</button></div></div>`;
+    $('#jB2').onclick = back;
+  };
+}
+
+/* ================= Seat Map ================= */
+function vSeats(m) {
+  const pid = sub.plan && planOf(sub.plan) ? sub.plan : S.plans[0].id, p = planOf(pid), occ = new Map();
+  S.students.forEach((s) => { if (!s.left && s.seat && overlap(planOf(s.planId), p)) occ.set(String(s.seat), s); });
+  m.innerHTML = head('grid', T('Seat Map'), T('Select a shift. Tap a vacant seat to assign a student.')) + tabsBar(S.plans.map((x) => [x.id, planLabel(x)]), pid, 'p')
+  + `<div class="card"><div class="row" style="margin-bottom:12px"><div class="legend"><span><i style="background:#bfe8cf"></i>${T('Vacant')} (${S.settings.seats - occ.size})</span><span><i style="background:#c4cdf6"></i>${T('Occupied')} (${occ.size})</span><span><i style="background:#f3c0c6"></i>${T('Fee due')}</span></div></div>
+  <div class="seats">${Array.from({ length: S.settings.seats }, (_, i) => { const k = String(i + 1), s = occ.get(k); return s ? `<div class="seat busy ${feeInfo(s).status === 'due' ? 'due' : ''}" data-s="${s.id}"><b>${k}</b><span>${esc(s.name.split(' ')[0])}</span></div>` : `<div class="seat free" data-free="${k}"><b>${k}</b><span>${T('Vacant')}</span></div>`; }).join('')}</div></div>`;
+  bindTabs(m, 'p', 'plan');
+  m.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => openStudent(b.dataset.s));
+  m.querySelectorAll('[data-free]').forEach((b) => b.onclick = () => seatAssign(pid, b.dataset.free));
+}
+function seatAssign(pid, seat) {
+  const waiting = S.students.filter((s) => !s.left && !s.seat);
+  modal(`<h3>${T('Seat')} ${seat} · ${esc(pName(planOf(pid)))}</h3>${waiting.length ? `<div class="f"><label>${T('Students without a seat')}</label><select id="saS">${waiting.map((s) => `<option value="${s.id}">${esc(s.name)} · ${esc(pName(planOf(s.planId)))}</option>`).join('')}</select></div>` : `<p class="mut">${T('Everyone has a seat.')}</p>`}
+  <div class="err" id="saErr"></div><div class="mf"><button class="btn s" id="saNew">${I('plus')}${T('New student on this seat')}</button>${waiting.length ? `<button class="btn" id="saOk">${T('Assign')}</button>` : ''}</div>`);
+  $('#saNew').onclick = () => studentForm(null, { planId: pid, seat, fee: planOf(pid).fee });
+  if ($('#saOk')) $('#saOk').onclick = async () => { const s = S.students.find((x) => x.id === $('#saS').value); if (!seatFree(s.planId, seat, s.id)) { $('#saErr').textContent = T('This seat is taken in this shift'); return; } if (await safe(() => Store.update('students', s.id, { seat }), T('Saved'))) closeModal(); };
+}
+
+/* ================= Attendance ================= */
+async function toggleAtt(sid) {
+  const d = iso(today()), rec = S.attendance.find((a) => a.studentId === sid && a.date === d);
+  if (!rec) { await Store.add('attendance', { studentId: sid, date: d, in: nowHM(), out: null }); return 'in'; }
+  if (!rec.out) { await Store.update('attendance', rec.id, { out: nowHM() }); return 'out'; }
+  return 'done';
+}
+const hrs = (a) => { if (!a.in || !a.out) return 0; let h = (toMin(a.out) - toMin(a.in)) / 60; if (h < 0) h += 24; return h; };
+function vAttend(m) {
+  const tab = sub.tab || 'today', d = iso(today()), act = S.students.filter((s) => !s.left);
+  m.innerHTML = head('check', T('Attendance'), fmt(today())) + coverageNote() + tabsBar([['today', T('Today')], ['register', T('Manual Register')], ['history', T('Last 14 days')]], tab) + '<div id="tb"></div>';
+  bindTabs(m); const tb = $('#tb');
+  if (tab === 'register') { tRegister(tb); bindCommon(tb); return; }
+  if (tab === 'today') {
+    const recs = new Map(S.attendance.filter((a) => a.date === d).map((a) => [a.studentId, a])), inside = [...recs.values()].filter((a) => !a.out).length;
+    const rows = act.slice().sort((a, b) => (recs.has(b.id) - recs.has(a.id)) || a.name.localeCompare(b.name));
+    const tile = (icon, l, n, c) => `<div class="tile" style="--tc:${c}"><div class="l">${I(icon)}${l}</div><div class="n">${n}</div></div>`;
+    tb.innerHTML = `<div class="tiles">${tile('check', T('Present today'), recs.size + ' / ' + act.length, '#12a150')}${tile('door', T('Inside now'), inside, '#0b8f8f')}${tile('alert', T('Absent'), act.length - recs.size, '#d93a4b')}</div>
+    <div class="g2"><div class="card"><h2>${T('How students mark attendance')}</h2><div class="steps">${[T('Print this QR and paste it at the entrance.'), T('Student scans it with the phone camera or Google Lens.'), T('First time: enters own mobile number. The phone remembers it.'), T('Every day after that: scan and tap Check In / Check Out.')].map((x, i) => `<div class="step"><span class="n">${i + 1}</span><span>${x}</span></div>`).join('')}</div>
+     <div class="hint" style="margin-top:12px">${T('Manual entry')}: ${T('When a student has no phone with them.')}</div><div class="row" style="margin-top:6px"><select id="manS" style="flex:1">${act.map((s) => `<option value="${s.id}">${esc(s.name)} · ${T('Seat')} ${esc(s.seat || '—')}</option>`).join('')}</select><button class="btn" id="manGo">${T('Check In')} / ${T('Check Out')}</button></div></div>
+     <div class="card"><div class="poster"><div class="small mut b">${esc(S.settings.name)}</div><h3>${T('Scan to mark attendance')}</h3><div class="qr" id="gateQr" style="margin:10px auto"></div><div class="small mut">${T('Check In')} · ${T('Check Out')}</div></div><button class="btn s" id="openK" style="margin-top:12px;width:100%;justify-content:center">${I('qr')}${T('Open check-in page')}</button></div></div>
+    <div class="card tight tw"><table><tr><th>${T('Name')}</th><th>${T('Shift')}</th><th>${T('In')}</th><th>${T('Out')}</th><th>${T('Hours')}</th><th></th></tr>${rows.map((s) => { const a = recs.get(s.id); return `<tr><td><a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a><div class="mut small">${T('Seat')} ${esc(s.seat || '—')}</div></td><td>${esc(pName(planOf(s.planId)))}</td><td>${a ? t12(a.in) : `<span class="pill off">${T('Absent')}</span>`}</td><td>${a && a.out ? t12(a.out) : a ? `<span class="pill ok">${T('Inside now')}</span>` : ''}</td><td>${a && a.out ? hrs(a).toFixed(1) : ''}</td><td style="text-align:right">${!a || !a.out ? `<button class="btn sm ${a ? 's' : 'ok'}" data-tg="${s.id}">${a ? T('Check Out') : T('Check In')}</button>` : ''}</td></tr>`; }).join('')}</table></div>`;
+    drawQR($('#gateQr'), location.href.split('#')[0] + '#checkin', 150);
+    $('#openK').onclick = () => { location.hash = 'checkin'; };
+    const tg = async (sid) => { const r = await toggleAtt(sid); toast(r === 'in' ? T('Checked in') : r === 'out' ? T('Checked out') : T('Already done for today')); };
+    $('#manGo').onclick = () => tg($('#manS').value);
+    tb.querySelectorAll('[data-tg]').forEach((b) => b.onclick = () => tg(b.dataset.tg));
+  } else {
+    const days = []; for (let k = 13; k >= 0; k--) { const x = today(); x.setDate(x.getDate() - k); days.push(iso(x)); }
+    const set = new Set(S.attendance.map((a) => a.studentId + '|' + a.date));
+    const rows = act.map((s) => { const el = days.filter((x) => x >= s.joinDate), n = el.filter((x) => set.has(s.id + '|' + x)).length; return [s, n, el.length, el.length ? Math.round(n / el.length * 100) : 0]; }).sort((a, b) => a[3] - b[3]);
+    tb.innerHTML = `<p class="hint">${T('Green box = present. Students coming least are at the top.')}</p><div class="card tight tw"><table><tr><th>${T('Name')}</th><th>${T('Last 14 days')}</th><th>%</th><th></th></tr>${rows.map(([s, n, e, pc]) => `<tr><td><a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a></td><td><div class="dots">${days.map((x) => `<span class="dot ${set.has(s.id + '|' + x) ? 'p' : ''}" title="${fmt(x)}"></span>`).join('')}</div></td><td><span class="b" style="color:${pc < 50 ? 'var(--bad)' : pc < 75 ? 'var(--warn)' : 'var(--ok)'}">${pc}%</span> <span class="mut small">${n}/${e}</span></td><td style="text-align:right">${pc < 50 && e ? `<a class="btn wa sm" target="_blank" rel="noopener" href="${wa(s.phone, fill(tpl('absent'), s))}">${T('Check on them')}</a>` : ''}</td></tr>`).join('')}</table></div>`;
+  }
+  bindCommon(tb);
+}
+let kioskPhone = '', kioskMsg = '';
+function renderCheckin(root) {
+  document.documentElement.style.setProperty('--tab', '#0b8f8f');
+  const s = S.students.find((x) => x.phone === kioskPhone && !x.left);
+  const rec = s && S.attendance.find((a) => a.studentId === s.id && a.date === iso(today()));
+  const sample = S.students.find((x) => !x.left)?.phone || '';
+  root.innerHTML = `<div class="kiosk"><div class="card"><div class="logo" style="margin:0 auto 10px">M</div><h3 style="margin:0 0 2px">${esc(S.settings.name)}</h3><p class="mut" style="margin-top:0">${T('Attendance')} · ${fmt(today())}</p>
+  ${s ? `<div style="margin:16px 0"><div class="big">${T('Hello')}, ${esc(s.name.split(' ')[0])}</div><div class="mut">${T('Seat')} ${esc(s.seat || '—')} · ${esc(pName(planOf(s.planId)))}</div></div>
+   ${rec && rec.out ? `<p class="pill ok">${T('Already done for today')}</p>` : `<button class="btn ${rec ? 's' : 'ok'}" id="kGo" style="width:100%;justify-content:center;padding:14px;font-size:16px">${rec ? T('Check Out') : T('Check In')}</button>`}
+   <div style="margin-top:12px">${kioskMsg}</div><button class="btn x sm" id="kChange" style="margin-top:8px">${T('Not you? Change number')}</button>`
+  : `<div class="f" style="text-align:left;margin-top:14px"><label>${T('Enter your mobile number')}</label><input id="kP" inputmode="numeric" maxlength="10" style="font-size:20px;text-align:center;letter-spacing:.12em" placeholder="${sample}"></div><div class="err" id="kE"></div><button class="btn" id="kNext" style="width:100%;justify-content:center">${T('Continue')}</button>`}
+  <button class="btn x" id="kBack" style="margin-top:12px">← ${T('Back to app')}</button></div></div>`;
+  $('#kBack').onclick = () => { kioskMsg = ''; history.replaceState(null, '', location.pathname + location.search); view = 'attend'; render(); };
+  if ($('#kChange')) $('#kChange').onclick = () => { kioskPhone = ''; kioskMsg = ''; render(); };
+  if ($('#kNext')) $('#kNext').onclick = () => { const p = cleanPhone($('#kP').value); if (!S.students.some((x) => x.phone === p && !x.left)) { $('#kE').textContent = T('Number not found in this library'); return; } kioskPhone = p; render(); };
+  if ($('#kGo')) $('#kGo').onclick = async () => { const r = await toggleAtt(s.id), fi = feeInfo(s); kioskMsg = `<div class="b" style="color:var(--ok)">${r === 'in' ? T('Welcome') + ' · ' + nowHM() : T('See you tomorrow') + ' · ' + nowHM()}</div>${fi.status === 'due' ? `<p class="pill due" style="margin-top:8px">${T('Your fee is due')}: ${rs(fi.amount)}</p>` : ''}`; clearTimeout(refreshT); render(); };
+}
+
+/* ================= Fees ================= */
+function vFees(m) {
+  const tab = sub.tab || 'due';
+  m.innerHTML = head('wallet', T('Fee Collection'), S.settings.name, `<button class="btn" data-act="pay">${I('rupee')}${T('Collect Fee')}</button><button class="btn gh" data-act="expense">${I('plus')}${T('Add Expense')}</button>`) + tabsBar([['due', T('Due Fees')], ['old', T('Old Records')], ['history', T('Collections')], ['exp', T('Expenses')]], tab) + '<div id="tb"></div>';
+  bindTabs(m); bindCommon(m);
+  ({ due: tDue, old: tOld, history: tHistory, exp: tExp })[tab]($('#tb'));
+}
+function tDue(tb) {
+  const f = sub.f || 'due', t = today(), all = S.students.filter((s) => !s.left).map((s) => [s, feeInfo(s)]);
+  const g = { due: all.filter(([, i]) => i.status === 'due'), over: all.filter(([, i]) => i.dueCycles.length >= 2), today: all.filter(([, i]) => i.next === iso(t) || i.dueCycles.includes(iso(t))), soon: all.filter(([, i]) => i.status === 'soon'), week: all.filter(([, i]) => i.next && daysBetween(t, parse(i.next)) >= 0 && daysBetween(t, parse(i.next)) <= 7) };
+  const rows = g[f].sort((a, b) => b[1].amount - a[1].amount), total = rows.reduce((a, [s, i]) => a + (i.amount || monthly(s)), 0);
+  tb.innerHTML = tabsBar([['due', T('All due')], ['over', T('Due 2+ months')], ['today', T('Due today')], ['soon', T('In 3 days')], ['week', T('This week')]].map(([k, l]) => [k, l + ' (' + g[k].length + ')']), f, 'f')
+  + `<div class="row" style="margin-bottom:12px"><span class="b">${T('Total')}: ${rs(total)}</span><span class="sp"></span><button class="btn s" id="dMsg" ${rows.length ? '' : 'disabled'}>${I('send')}${T('Remind these')}</button></div>
+  <div class="card tight tw">${rows.length ? `<table><tr><th>${T('Name')}</th><th>${T('Seat')}</th><th>${T('Due amount')}</th><th>${T('Since')}</th><th></th></tr>${rows.map(([s, i]) => `<tr><td><a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a><div class="mut small">${esc(s.phone)}</div></td><td>${esc(s.seat || '—')}</td><td><span class="b" style="color:${i.amount ? 'var(--bad)' : 'inherit'}">${rs(i.amount || monthly(s))}</span><div class="mut small">${i.dueCycles.length ? mo(i.dueCycles.length) : T('next fee')}</div></td><td class="small">${fmt(i.dueCycles[0] || i.next)}</td><td style="text-align:right;white-space:nowrap"><a class="btn wa sm" target="_blank" rel="noopener" href="${wa(s.phone, remindText(s, i))}">${I('wa')}WhatsApp</a> <button class="btn ok sm" data-pay="${s.id}">${T('Collect Fee')}</button></td></tr>`).join('')}</table>` : `<div class="empty"><b>${T('Nobody here')}</b></div>`}</div>`;
+  bindTabs(tb, 'f', 'f');
+  $('#dMsg').onclick = () => { view = 'messages'; sub = { group: f === 'soon' || f === 'week' ? 'soon' : 'due' }; render(); };
+  bindCommon(tb);
+}
+function payForm(sid) {
+  const act = S.students.filter((s) => !s.left).sort((a, b) => a.name.localeCompare(b.name));
+  modal(`<h3>${T('Collect Fee')}</h3><div class="f"><label>${T('Student')}</label><select id="pS">${act.map((s) => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${esc(s.name)} · ${T('Seat')} ${esc(s.seat || '—')} · ${esc(s.phone)}</option>`).join('')}</select></div><div id="pBody"></div>`);
+  const draw = () => {
+    const s = S.students.find((x) => x.id === $('#pS').value), i = feeInfo(s), paid = paidSet(s), up = [];
+    for (let k = 0; k < 240 && up.length < 12; k++) { const cy = iso(addMonths(parse(s.joinDate), k)); if (!paid.has(cy)) up.push(cy); }
+    const def = Math.max(1, i.dueCycles.length);
+    $('#pBody').innerHTML = `<p class="small">${i.dueCycles.length ? `<span class="b" style="color:var(--bad)">${i.dueCycles.length} ${T('months due')} · ${rs(i.amount)}</span>` : `<span class="mut">${T('No dues.')} ${T('Next fee')}: ${fmt(i.next)}</span>`} · <span class="mut">${rs(monthly(s))}/${T('month')}</span></p>
+    <div class="f"><label>${T('Months to pay')}</label><div class="months">${up.map((c, k) => `<label class="mchk"><input type="checkbox" data-c="${c}" ${k < def ? 'checked' : ''}>${mon(c)}</label>`).join('')}</div></div>
+    <div class="g3"><div class="f"><label>${T('Amount (₹)')}</label><input id="pA" type="number"></div><div class="f"><label>${T('Date')}</label><input id="pD" type="date" value="${iso(today())}"></div><div class="f"><label>${T('Mode')}</label><select id="pM"><option value="Cash">${T('Cash')}</option><option value="UPI">UPI</option><option value="Bank">${T('Bank')}</option></select></div></div>
+    <div class="f"><label>${T('Note (discount, partial…)')}</label><input id="pN"></div>
+    ${S.settings.upi ? `<button class="btn s sm" id="pQr" type="button">${I('qr')}${T('Show UPI QR to student')}</button><div id="pQrBox" style="display:none;text-align:center;margin-top:10px"><div class="qr" id="pQrEl"></div><p class="hint">${esc(S.settings.upi)} · ${T('Student scans and pays, then tap Confirm Payment.')}</p></div>` : ''}
+    <div class="err" id="pErr"></div><div class="mf"><button class="btn s" id="pC">${T('Cancel')}</button><button class="btn ok" id="pOk">${T('Confirm Payment')}</button></div>`;
+    const sum = () => { $('#pA').value = $('#pBody').querySelectorAll('[data-c]:checked').length * monthly(s); if ($('#pQrBox') && $('#pQrBox').style.display === 'block') drawQR($('#pQrEl'), upiLink($('#pA').value, s.name), 160); };
+    $('#pBody').querySelectorAll('[data-c]').forEach((c) => c.onchange = sum); sum();
+    if ($('#pQr')) $('#pQr').onclick = () => { $('#pQrBox').style.display = 'block'; $('#pM').value = 'UPI'; drawQR($('#pQrEl'), upiLink($('#pA').value, s.name), 160); };
+    $('#pC').onclick = closeModal;
+    $('#pOk').onclick = async () => {
+      const cs = [...$('#pBody').querySelectorAll('[data-c]:checked')].map((c) => c.dataset.c), amt = Number($('#pA').value);
+      if (!cs.length) { $('#pErr').textContent = T('Select at least one month'); return; }
+      const pay = { studentId: s.id, cycles: cs, amount: amt || 0, date: $('#pD').value || iso(today()), mode: $('#pM').value, note: $('#pN').value.trim() };
+      if (await safe(() => Store.add('payments', pay), T('Fee received'))) setTimeout(() => receipt(s.id, pay), 40);
+    };
+  };
+  $('#pS').onchange = draw; draw();
+}
+function receipt(sid, pay) {
+  const s = S.students.find((x) => x.id === sid), i = feeInfo(s);
+  const txt = `${S.settings.name}\n${T('Fee Receipt')}\n------------------\n${T('Name')}: ${s.name}\n${T('Seat')}: ${s.seat || '—'} (${pName(planOf(s.planId))})\n${T('Months')}: ${pay.cycles.map(mon).join(', ')}\n${T('Amount')}: ${rs(pay.amount)} (${T(pay.mode)})\n${T('Date')}: ${fmt(pay.date)}\n${T('Next fee')}: ${fmt(i.next)}\n------------------\n${T('Thank you!')}`;
+  modal(`<h3>✓ ${T('Fee received')}</h3><div class="receipt">${esc(txt)}</div><div class="mf"><button class="btn s" id="rCp">${T('Copy')}</button><button class="btn s" id="rC">${T('Close')}</button><a class="btn wa" target="_blank" rel="noopener" href="${wa(s.phone, txt)}">${I('wa')}${T('Send receipt')}</a></div>`);
+  $('#rC').onclick = closeModal; $('#rCp').onclick = async () => { try { await navigator.clipboard.writeText(txt); toast(T('Copied')); } catch (e) {} };
+}
+function tOld(tb) {
+  const act = S.students.filter((s) => !s.left).sort((a, b) => a.name.localeCompare(b.name)), t = today(), cols = [];
+  for (let k = 5; k >= 0; k--) cols.push(new Date(t.getFullYear(), t.getMonth() - k, 1));
+  const keyIn = (s, md) => cycles(s).find((c) => { const d = parse(c); return d.getFullYear() === md.getFullYear() && d.getMonth() === md.getMonth(); });
+  tb.innerHTML = `<p class="hint">${T('Last 6 months. Tick the months already paid before you started using the app. These are saved as old records and not counted in today\'s collection.')}</p>
+  <div class="card tight tw"><table><tr><th>${T('Name')}</th><th>${T('Monthly Fee')}</th>${cols.map((c) => `<th style="text-align:center">${c.toLocaleDateString(loc(), { month: 'short' })}</th>`).join('')}<th></th></tr>${act.map((s) => { const paid = paidSet(s); return `<tr><td><a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a><div class="mut small">${T('Joined')} ${fmt(s.joinDate)}</div></td><td>${rs(monthly(s))}</td>${cols.map((c) => { const k = keyIn(s, c); return `<td style="text-align:center">${k ? `<input type="checkbox" style="width:18px;height:18px;accent-color:var(--ok)" data-s="${s.id}" data-k="${k}" ${paid.has(k) ? 'checked' : ''}>` : '<span class="mut">·</span>'}</td>`; }).join('')}<td style="text-align:right"><button class="btn x sm" data-all="${s.id}">${T('Mark all paid')}</button></td></tr>`; }).join('')}</table></div>`;
+  tb.querySelectorAll('[data-k]').forEach((c) => c.onchange = () => tickCycle(S.students.find((x) => x.id === c.dataset.s), c.dataset.k, c.checked));
+  tb.querySelectorAll('[data-all]').forEach((b) => b.onclick = () => { const s = S.students.find((x) => x.id === b.dataset.all), i = feeInfo(s); if (!i.dueCycles.length) { toast(T('No dues.')); return; } safe(() => Store.add('payments', { studentId: s.id, cycles: i.dueCycles, amount: i.amount, date: iso(today()), mode: 'old' }), T('Saved')); });
+  bindCommon(tb);
+}
+function tHistory(tb) {
+  const mk = sub.month || iso(today()).slice(0, 7), list = S.payments.filter((p) => String(p.date).startsWith(mk) && p.mode !== 'old').sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const total = list.reduce((a, p) => a + Number(p.amount || 0), 0), by = {}; list.forEach((p) => by[p.mode] = (by[p.mode] || 0) + Number(p.amount || 0));
+  tb.innerHTML = `<div class="row" style="margin-bottom:12px"><input type="month" id="hm" value="${mk}" style="width:auto"><span class="b">${T('Total')}: ${rs(total)}</span><span class="mut small">${Object.entries(by).map(([k, v]) => T(k) + ' ' + rs(v)).join(' · ')}</span></div>
+  <div class="card tight tw">${list.length ? `<table><tr><th>${T('Date')}</th><th>${T('Name')}</th><th>${T('Months')}</th><th>${T('Amount')}</th><th>${T('Mode')}</th></tr>${list.map((p) => { const s = S.students.find((x) => x.id === p.studentId); return `<tr><td>${fmt(p.date)}</td><td>${s ? `<a href="#" class="lk" data-stu="${s.id}">${esc(s.name)}</a>` : '—'}</td><td class="small">${(p.cycles || []).map(mon).join(', ')}</td><td class="b">${rs(p.amount)}</td><td>${T(p.mode)}${p.note ? `<div class="mut small">${esc(p.note)}</div>` : ''}</td></tr>`; }).join('')}</table>` : `<div class="empty"><b>${T('No collections in this month')}</b></div>`}</div>`;
+  $('#hm').onchange = (e) => { sub.month = e.target.value; render(); };
+  bindCommon(tb);
+}
+const EXP = ['Rent', 'Electricity', 'Internet', 'Staff / Cleaning', 'Water', 'Repairs', 'Other'];
+function tExp(tb) {
+  const mk = sub.month || iso(today()).slice(0, 7), list = S.expenses.filter((e) => String(e.date).startsWith(mk)).sort((a, b) => String(b.date).localeCompare(String(a.date))), total = list.reduce((a, e) => a + Number(e.amount || 0), 0);
+  tb.innerHTML = `<div class="row" style="margin-bottom:12px"><input type="month" id="em" value="${mk}" style="width:auto"><span class="b">${T('Total expenses')}: ${rs(total)}</span></div>
+  <div class="card tight tw">${list.length ? `<table><tr><th>${T('Date')}</th><th>${T('What for')}</th><th>${T('Amount')}</th><th></th></tr>${list.map((e) => `<tr><td>${fmt(e.date)}</td><td>${esc(T(e.what))}${e.note ? `<div class="mut small">${esc(e.note)}</div>` : ''}</td><td class="b">${rs(e.amount)}</td><td style="text-align:right"><button class="btn x sm" data-de="${e.id}">${T('Remove')}</button></td></tr>`).join('')}</table>` : `<div class="empty"><b>${T('No expenses recorded this month')}</b></div>`}</div>`;
+  $('#em').onchange = (e) => { sub.month = e.target.value; render(); };
+  tb.querySelectorAll('[data-de]').forEach((b) => b.onclick = () => confirmBtn(b, () => safe(() => Store.remove('expenses', b.dataset.de), T('Saved'))));
+}
+function expenseForm() {
+  modal(`<h3>${T('Add Expense')}</h3><div class="f"><label>${T('What for')}</label><select id="eW">${EXP.map((x) => `<option value="${x}">${T(x)}</option>`).join('')}</select></div><div class="g2"><div class="f"><label>${T('Amount (₹)')} *</label><input id="eA" type="number"></div><div class="f"><label>${T('Date')}</label><input id="eD" type="date" value="${iso(today())}"></div></div><div class="f"><label>Note</label><input id="eN"></div><div class="err" id="eErr"></div><div class="mf"><button class="btn s" id="eC">${T('Cancel')}</button><button class="btn" id="eOk">${T('Save')}</button></div>`);
+  $('#eC').onclick = closeModal;
+  $('#eOk').onclick = async () => { const a = Number($('#eA').value); if (!(a > 0)) { $('#eErr').textContent = T('Enter the amount'); return; } if (await safe(() => Store.add('expenses', { what: $('#eW').value, note: $('#eN').value.trim(), amount: a, date: $('#eD').value || iso(today()) }), T('Expense saved'))) closeModal(); };
+}
+
+/* ================= Reports ================= */
+function vReports(m) {
+  const rtab = sub.tab || 'overview';
+  if (rtab !== 'overview') { m.innerHTML = head('chart', T('Reports'), S.settings.name) + coverageNote() + tabsBar([['overview', T('Overview')], ['ledger', T('Student Ledger')], ['seat', T('Seat Utilisation')], ['age', T('Dues Ageing')]], rtab) + '<div id="tb"></div>'; bindTabs(m); bindCommon(m); ({ ledger: tLedger, seat: tSeatUse, age: tAgeing })[rtab]($('#tb')); return; }
+  const t = today(), months = []; for (let k = 5; k >= 0; k--) months.push(new Date(t.getFullYear(), t.getMonth() - k, 1));
+  const key = (d) => iso(d).slice(0, 7), sum = (a) => a.reduce((x, p) => x + Number(p.amount || 0), 0);
+  const inc = months.map((mm) => sum(S.payments.filter((p) => String(p.date).startsWith(key(mm))))), exp = months.map((mm) => sum(S.expenses.filter((e) => String(e.date).startsWith(key(mm)))));
+  const labels = months.map((mm) => mm.toLocaleDateString(loc(), { month: 'short' })), act = S.students.filter((s) => !s.left);
+  const modes = {}; S.payments.filter((p) => String(p.date) >= key(months[0])).forEach((p) => { const k = p.mode === 'old' ? T('Old record') : T(p.mode); modes[k] = (modes[k] || 0) + Number(p.amount || 0); });
+  const days = []; for (let k = 13; k >= 0; k--) { const x = today(); x.setDate(x.getDate() - k); days.push(iso(x)); }
+  const att = days.map((x) => S.attendance.filter((a) => a.date === x).length), tIn = inc.reduce((a, b) => a + b, 0), tOut = exp.reduce((a, b) => a + b, 0);
+  const tile = (icon, l, n, c) => `<div class="tile" style="--tc:${c}"><div class="l">${I(icon)}${l}</div><div class="n">${n}</div></div>`;
+  m.innerHTML = head('chart', T('Reports'), S.settings.name) + coverageNote() + tabsBar([['overview', T('Overview')], ['ledger', T('Student Ledger')], ['seat', T('Seat Utilisation')], ['age', T('Dues Ageing')]], rtab) + `<div class="tiles">${tile('trend', T('6-month collection'), rs(tIn), '#12a150')}${tile('receipt', T('6-month expenses'), rs(tOut), '#e8750a')}${tile('bank', T('6-month net'), rs(tIn - tOut), '#1e7be0')}${tile('lock', T('Lockers in use'), act.filter((s) => s.locker).length, '#8e44ad')}</div>
+  <div class="g2"><div class="card"><h2>${T('Collection vs expenses')}</h2><div class="chartbox"><canvas id="c1"></canvas></div></div><div class="card"><h2>${T('Daily attendance')}</h2><div class="chartbox"><canvas id="c2"></canvas></div></div><div class="card"><h2>${T('Students by shift')}</h2><div class="chartbox"><canvas id="c3"></canvas></div></div><div class="card"><h2>${T('Payment modes')}</h2><div class="chartbox"><canvas id="c4"></canvas></div></div></div>
+  <div class="card tw"><h2>${T('Monthly summary')}</h2><table><tr><th></th><th>${T('Collection')}</th><th>${T('Expenses')}</th><th>${T('Net')}</th></tr>${months.map((mm, i) => `<tr><td>${mm.toLocaleDateString(loc(), { month: 'long', year: 'numeric' })}</td><td>${rs(inc[i])}</td><td>${rs(exp[i])}</td><td class="b" style="color:${inc[i] - exp[i] >= 0 ? 'var(--ok)' : 'var(--bad)'}">${rs(inc[i] - exp[i])}</td></tr>`).reverse().join('')}</table></div>`;
+  bindTabs(m); bindCommon(m);
+  if (!window.Chart) return;
+  Chart.defaults.font.family = lang === 'hi' ? 'Noto Sans Devanagari' : 'Inter'; Chart.defaults.color = '#6f6a7d';
+  const r = (v) => '₹' + Number(v).toLocaleString('en-IN'), grid = { color: '#efedf3' };
+  charts.push(new Chart($('#c1'), { type: 'bar', data: { labels, datasets: [{ label: T('Collection'), data: inc, backgroundColor: '#12a150', borderRadius: 6 }, { label: T('Expenses'), data: exp, backgroundColor: '#f2a65a', borderRadius: 6 }] }, options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + r(c.raw) } } }, scales: { y: { ticks: { callback: r }, grid }, x: { grid: { display: false } } } } }));
+  charts.push(new Chart($('#c2'), { type: 'line', data: { labels: days.map((x) => parse(x).getDate()), datasets: [{ data: att, borderColor: '#0b8f8f', backgroundColor: 'rgba(11,143,143,.1)', fill: true, tension: 0, pointRadius: 3 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid }, x: { grid: { display: false } } } } }));
+  charts.push(new Chart($('#c3'), { type: 'bar', data: { labels: S.plans.map(pName), datasets: [{ data: S.plans.map((p) => act.filter((s) => s.planId === p.id).length), backgroundColor: ['#6d4aff', '#1e7be0', '#0f9d74', '#e8750a', '#c2185b'], borderRadius: 6 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid }, y: { grid: { display: false } } } } }));
+  charts.push(new Chart($('#c4'), { type: 'doughnut', data: { labels: Object.keys(modes), datasets: [{ data: Object.values(modes), backgroundColor: ['#12a150', '#6d4aff', '#c4c0cc', '#e8750a', '#1e7be0'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '64%', plugins: { tooltip: { callbacks: { label: (c) => c.label + ': ' + r(c.raw) } } } } }));
+}
+
+/* ================= Messages ================= */
+function vMessages(m) {
+  const g = sub.group || 'due', k = sub.tpl || (g === 'due' ? 'reminder' : g === 'soon' ? 'soon' : 'notice'), extra = sub.extra || '', sent = sub.sent || {};
+  const act = S.students.filter((s) => !s.left).map((s) => [s, feeInfo(s)]), groups = { due: act.filter(([, i]) => i.status === 'due'), soon: act.filter(([, i]) => i.status === 'soon'), all: act }, list = groups[g];
+  const txtFor = (s) => fill(tpl(k), s, k === 'soon' ? { amount: rs(monthly(s)) } : {}) + (k === 'notice' ? extra : '');
+  m.innerHTML = head('msg', T('Messages'), T('Send on WhatsApp one by one. Each button opens WhatsApp with the message ready.'))
+  + `<div class="card"><div class="g2"><div class="f"><label>${T('Send to')}</label><select id="mG">${[['due', T('Students with fees due')], ['soon', T('Due in next 3 days')], ['all', T('All active students')]].map(([x, l]) => `<option value="${x}" ${g === x ? 'selected' : ''}>${l} (${groups[x].length})</option>`).join('')}</select></div><div class="f"><label>${T('Message')}</label><select id="mT">${[['reminder', T('Fee reminder')], ['soon', T('Upcoming fee')], ['notice', T('Notice (holiday, rules…)')], ['welcome', T('Welcome message')], ['absent', T('Absence check')]].map(([x, l]) => `<option value="${x}" ${k === x ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+  ${k === 'notice' ? `<div class="f"><label>${T('Write the notice')}</label><input id="mX" value="${esc(extra)}"></div>` : ''}
+  ${list[0] ? `<label>${T('Preview')}</label><div class="receipt" style="font-family:inherit">${esc(txtFor(list[0][0]))}</div>` : ''}
+  <div class="row" style="margin-top:12px"><span class="mut small">${Object.keys(sent).length} / ${list.length} ${T('sent')}</span><span class="sp"></span><button class="btn s sm" id="mCp">${T('Copy all numbers')}</button><button class="btn x sm" id="mReset">${T('Reset sent')}</button></div></div>
+  <div class="card tight tw">${list.length ? '<table>' + list.map(([s, i]) => `<tr style="${sent[s.id] ? 'opacity:.5' : ''}"><td class="b">${esc(s.name)}<div class="mut small" style="font-weight:400">${esc(s.phone)} · ${T('Seat')} ${esc(s.seat || '—')}</div></td><td class="small">${i.status === 'due' ? `<span style="color:var(--bad)">${rs(i.amount)}</span>` : fmt(i.next)}</td><td style="text-align:right"><a class="btn wa sm" target="_blank" rel="noopener" data-sent="${s.id}" href="${wa(s.phone, txtFor(s))}">${sent[s.id] ? '✓ ' + T('Sent') : 'WhatsApp'}</a></td></tr>`).join('') + '</table>' : `<div class="empty"><b>${T('Nobody here')}</b></div>`}</div>`;
+  $('#mG').onchange = (e) => { sub = { group: e.target.value }; render(); };
+  $('#mT').onchange = (e) => { sub.tpl = e.target.value; render(); };
+  if ($('#mX')) $('#mX').oninput = (e) => { sub.extra = e.target.value; clearTimeout(vMessages.t); vMessages.t = setTimeout(render, 500); };
+  m.querySelectorAll('[data-sent]').forEach((a) => a.addEventListener('click', () => { sub.sent = Object.assign({}, sub.sent, { [a.dataset.sent]: 1 }); setTimeout(render, 300); }));
+  $('#mCp').onclick = async () => { try { await navigator.clipboard.writeText(list.map(([s]) => s.phone).join(', ')); toast(T('Copied')); } catch (e) {} };
+  $('#mReset').onclick = () => { sub.sent = {}; render(); };
+}
+
+/* ================= Student App ================= */
+function vStudentApp(m) {
+  const act = S.students.filter((s) => !s.left).sort((a, b) => a.name.localeCompare(b.name)), sid = sub.sid && act.some((s) => s.id === sub.sid) ? sub.sid : act[0].id;
+  const s = act.find((x) => x.id === sid), i = feeInfo(s), p = planOf(s.planId), t = today(), dim = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate(), lead = (new Date(t.getFullYear(), t.getMonth(), 1).getDay() + 6) % 7;
+  const present = new Set(S.attendance.filter((a) => a.studentId === s.id).map((a) => a.date)), pm = [...present].filter((x) => x.startsWith(iso(t).slice(0, 7))).length;
+  const pays = S.payments.filter((x) => x.studentId === s.id).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 4);
+  const wk = lang === 'hi' ? ['सो', 'मं', 'बु', 'गु', 'शु', 'श', 'र'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  m.innerHTML = head('phone', T('Student App'), T('Every student gets this app on their phone to see fees, seat, attendance and receipts, and pay by UPI.'))
+  + `<div class="row" style="margin-bottom:16px"><label style="margin:0">${T('View as')}</label><select id="saSel" style="width:auto">${act.map((x) => `<option value="${x.id}" ${x.id === sid ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
+  <div class="phone"><div class="pt"><div class="small" style="opacity:.85">${esc(S.settings.name)}</div><h4>${T('Hello')}, ${esc(s.name.split(' ')[0])}</h4><div class="small">${T('Seat')} ${esc(s.seat || '—')} · ${esc(planLabel(p))}${s.locker ? ' · ' + esc(s.locker) : ''}</div></div><div class="pb">
+   <div class="pc">${i.status === 'due' ? `<div class="small mut">${T('Fees due')}</div><div class="big" style="color:var(--bad)">${rs(i.amount)}</div><div class="small mut">${mo(i.dueCycles.length)} · ${T('Since').toLowerCase()} ${fmt(i.dueCycles[0])}</div>${S.settings.upi ? `<div class="center" style="margin-top:10px"><div class="qr" id="saQr"></div><div style="margin-top:8px"><a class="btn" href="${upiLink(i.amount, s.name)}">${T('Pay by UPI')}</a></div></div>` : ''}` : `<div class="small mut">${T('Monthly Fee')}</div><div class="big" style="color:var(--ok)">${T('All paid')} ✓</div><div class="small mut">${T('Next fee')} ${rs(monthly(s))} · ${fmt(i.next)}</div>`}</div>
+   <div class="pc"><div class="row"><span class="b">${T('Attendance this month')}</span><span class="sp"></span><span class="pill ok">${pm} ${T('days')}</span></div><div class="cal" style="margin-top:8px">${wk.map((x) => `<div class="x b">${x}</div>`).join('')}${'<div class="x"></div>'.repeat(lead)}${Array.from({ length: dim }, (_, k) => `<div class="${present.has(iso(new Date(t.getFullYear(), t.getMonth(), k + 1))) ? 'p' : ''}">${k + 1}</div>`).join('')}</div></div>
+   ${S.settings.notice ? `<div class="pc" style="background:#fff8e8"><div class="b">${T('Notice')}</div><div class="small">${esc(S.settings.notice)}</div></div>` : ''}
+   <div class="pc"><div class="b">${T('Receipts')}</div>${pays.map((x) => `<div class="row small" style="margin-top:6px"><span>${fmt(x.date)}</span><span class="mut">${(x.cycles || []).map(mon).join(', ')}</span><span class="sp"></span><b>${rs(x.amount)}</b></div>`).join('') || `<div class="small mut">${T('No payments yet')}</div>`}</div>
+   <div class="pc center"><div class="b">${T('My ID QR')}</div><div class="qr" id="idQr" style="margin:8px auto"></div><div class="small mut">${T('Show this at the desk if you forgot your phone check-in.')}</div></div>
+  </div></div><p class="hint center" style="margin-top:12px">${T('In the live version, students log in with mobile number and OTP.')}</p>`;
+  $('#saSel').onchange = (e) => { sub.sid = e.target.value; render(); };
+  if ($('#saQr')) drawQR($('#saQr'), upiLink(i.amount, s.name), 130);
+  drawQR($('#idQr'), 'MAAKIT-LIB:' + (S.settings.code || '') + ':' + s.phone, 110);
+}
+
+
+
+/* ================= Coverage, register, ledger ================= */
+function coverage() { const act = S.students.filter((s) => !s.left), f = today(); f.setDate(f.getDate() - 6); const fs = iso(f), w = new Set(S.attendance.filter((a) => a.date >= fs).map((a) => a.studentId)); return { n: act.filter((s) => w.has(s.id)).length, of: act.length }; }
+function coverageNote() { const c = coverage(), pc = c.of ? Math.round(c.n / c.of * 100) : 0; return `<div class="card" style="padding:12px 16px"><div class="row"><span class="b">${T('Data coverage')}: ${c.n}/${c.of} (${pc}%)</span><span class="mut small">${T('students have attendance in the last 7 days')}</span><span class="sp"></span><button class="btn x sm" data-terms="1">${T('Terms & Conditions')}</button></div><div class="bar" style="margin-top:8px"><span style="width:${pc}%;background:${pc >= 80 ? 'var(--ok)' : pc >= 50 ? 'var(--warn)' : 'var(--bad)'}"></span></div><div class="hint" style="margin-top:6px">${T('Reports are accurate only for students whose data is entered.')}</div></div>`; }
+function tRegister(tb) {
+  const d = sub.rdate || iso(today()), pf = sub.rplan || 'all';
+  const act = S.students.filter((s) => !s.left && s.joinDate <= d && (pf === 'all' || s.planId === pf)).sort((a, b) => (+a.seat || 999) - (+b.seat || 999));
+  if (!sub.rmark || sub.rmarkKey !== d + pf) { sub.rmark = {}; act.forEach((s) => { sub.rmark[s.id] = S.attendance.some((a) => a.studentId === s.id && a.date === d); }); sub.rmarkKey = d + pf; }
+  const mk = sub.rmark, pN = Object.values(mk).filter(Boolean).length;
+  tb.innerHTML = `<div class="card"><div class="row"><div><label>${T('Date')}</label><input type="date" id="rD" value="${d}" max="${iso(today())}" style="width:auto"></div><div><label>${T('Shift')}</label><select id="rP" style="width:auto"><option value="all">${T('All shifts')}</option>${S.plans.map((p) => `<option value="${p.id}" ${pf === p.id ? 'selected' : ''}>${esc(planLabel(p))}</option>`).join('')}</select></div><span class="sp"></span><button class="btn s sm" id="rAll">${T('Mark all present')}</button><button class="btn s sm" id="rNone">${T('Mark all absent')}</button></div></div>
+  <div class="card tight tw"><table><tr><th>${T('Seat')}</th><th>${T('Name')}</th><th>${T('Shift')}</th><th style="text-align:right">${T('Present')} ${pN}/${act.length}</th></tr>${act.map((s) => `<tr><td class="b">${esc(s.seat || '—')}</td><td>${esc(s.name)}</td><td class="mut">${esc(pName(planOf(s.planId)))}</td><td style="text-align:right"><button class="btn sm ${mk[s.id] ? 'ok' : 's'}" data-rm="${s.id}" style="min-width:96px;justify-content:center">${mk[s.id] ? '✓ ' + T('Present') : T('Absent')}</button></td></tr>`).join('')}</table></div>
+  <div class="row"><span class="sp"></span><button class="btn" id="rSave">${T('Save register')}</button></div>`;
+  $('#rD').onchange = (e) => { sub.rdate = e.target.value; render(); };
+  $('#rP').onchange = (e) => { sub.rplan = e.target.value; render(); };
+  $('#rAll').onclick = () => { act.forEach((s) => mk[s.id] = true); render(); };
+  $('#rNone').onclick = () => { act.forEach((s) => mk[s.id] = false); render(); };
+  tb.querySelectorAll('[data-rm]').forEach((b) => b.onclick = () => { mk[b.dataset.rm] = !mk[b.dataset.rm]; render(); });
+  $('#rSave').onclick = async () => {
+    for (const s of act) {
+      const rec = S.attendance.find((a) => a.studentId === s.id && a.date === d), p = planOf(s.planId);
+      if (mk[s.id] && !rec) S.attendance.push({ id: uid(), studentId: s.id, date: d, in: p.start, out: d === iso(today()) ? null : p.end, manual: true });
+      if (!mk[s.id] && rec) S.attendance = S.attendance.filter((a) => a !== rec);
+    }
+    sub.rmarkKey = ''; toast(T('Register saved')); render();
+  };
+}
+function ledgerRow(s) {
+  const i = feeInfo(s), pays = S.payments.filter((p) => p.studentId === s.id), paidN = paidSet(s).size;
+  const end = s.left && s.leftOn ? parse(s.leftOn) : today(); let studied = 0; for (let k = 0; k < 240; k++) { if (addMonths(parse(s.joinDate), k) <= end) studied++; else break; }
+  const att = S.attendance.filter((a) => a.studentId === s.id).map((a) => a.date).sort(), last = att[att.length - 1] || null;
+  const f = today(); f.setDate(f.getDate() - 6); const w7 = att.filter((x) => x >= iso(f)).length;
+  let st = 'nodata'; if (last) { const gap = daysBetween(parse(last), today()); st = gap > 7 ? 'gone' : w7 >= 4 ? 'reg' : 'irr'; }
+  return { s, i, studied, paidN, total: pays.reduce((a, p) => a + Number(p.amount || 0), 0), last, w7, st };
+}
+const ATT_ST = () => ({ reg: [T('Regular'), 'ok'], irr: [T('Irregular'), 'soon'], gone: [T('Not coming'), 'due'], nodata: [T('No data'), 'off'] });
+function tLedger(tb) {
+  const q = (sub.lq || '').toLowerCase(), rows = S.students.filter((s) => !q || (s.name + s.phone).toLowerCase().includes(q)).map(ledgerRow).sort((a, b) => b.i.amount - a.i.amount || a.s.name.localeCompare(b.s.name)), AS = ATT_ST(), SL = ST_LABEL();
+  tb.innerHTML = `<div class="row" style="margin-bottom:12px"><input id="lq" placeholder="${T('Search by name, mobile or seat')}" value="${esc(sub.lq || '')}" style="flex:1;min-width:200px"></div>
+  <div class="card tight tw"><table><tr><th>${T('Name')}</th><th>${T('Registered')}</th><th>${T('Months studied')}</th><th>${T('Months paid')}</th><th>${T('Total paid')}</th><th>${T('Pending')}</th><th>${T('Pending since')}</th><th>${T('Last visit')}</th><th>${T('Last 7 days')}</th><th>${T('Status')}</th></tr>
+  ${rows.map((r) => `<tr><td><a href="#" class="lk" data-stu="${r.s.id}">${esc(r.s.name)}</a><div class="mut small">${esc(r.s.phone)} · ${T('Seat')} ${esc(r.s.seat || '—')}</div></td><td class="small">${fmt(r.s.joinDate)}</td><td class="center">${r.studied}</td><td class="center">${r.paidN}</td><td class="b">${rs(r.total)}</td><td>${r.i.amount ? `<span class="b" style="color:var(--bad)">${rs(r.i.amount)}</span><div class="mut small">${mo(r.i.dueCycles.length)}</div>` : '<span class="pill ok">0</span>'}</td><td class="small">${r.i.dueCycles.length ? fmt(r.i.dueCycles[0]) : '—'}</td><td class="small">${r.last ? (daysBetween(parse(r.last), today()) === 0 ? T('Today') : daysBetween(parse(r.last), today()) + ' ' + T('days ago')) : '—'}</td><td class="center">${r.w7}/7</td><td>${r.s.left ? `<span class="pill off">${SL.off}</span>` : `<span class="pill ${AS[r.st][1]}">${AS[r.st][0]}</span>`}</td></tr>`).join('')}</table></div>`;
+  $('#lq').oninput = (e) => { sub.lq = e.target.value; render(); };
+  bindCommon(tb);
+}
+function seatStats() {
+  const act = S.students.filter((s) => !s.left && s.seat);
+  const shifts = S.plans.map((p) => { const occ = act.filter((s) => overlap(planOf(s.planId), p)).length, vac = S.settings.seats - occ; return { p, occ, vac, miss: vac * p.fee }; });
+  const hours = Array.from({ length: 24 }, (_, h) => { const mid = h * 60 + 30, occ = act.filter((s) => { const p = planOf(s.planId), st = toMin(p.start), en = toMin(p.end); return en > st ? mid >= st && mid < en : mid >= st || mid < en; }).length; return { h, free: S.settings.seats - occ, occ }; });
+  return { shifts, hours };
+}
+function tSeatUse(tb) {
+  const { shifts, hours } = seatStats(), act = S.students.filter((s) => !s.left && s.seat);
+  const seats = Array.from({ length: S.settings.seats }, (_, i) => { const k = String(i + 1), occ = act.filter((s) => s.seat === k); const cells = S.plans.map((p) => occ.find((s) => s.planId === p.id || overlap(planOf(s.planId), p))); return { k, occ, cells, amt: occ.reduce((a, s) => a + monthly(s), 0) }; });
+  const totalMiss = shifts.reduce((a, x) => a + x.miss, 0);
+  tb.innerHTML = `<div class="card tw"><div class="row"><h2 style="margin:0">${T('Shift-wise vacancy')}</h2><span class="sp"></span><span class="pill due">${T('Total income missed')}: ${rs(totalMiss)}</span></div><table style="margin-top:8px"><tr><th>${T('Shift')}</th><th>${T('Occupied')}</th><th>${T('Vacant seats')}</th><th>${T('Fee per month (₹)')}</th><th>${T('Income missed per month')}</th></tr>${shifts.map((x) => `<tr><td class="b">${esc(planLabel(x.p))}</td><td>${x.occ}</td><td><span class="b" style="color:${x.vac ? 'var(--bad)' : 'var(--ok)'}">${x.vac}</span> / ${S.settings.seats}</td><td>${rs(x.p.fee)}</td><td class="b" style="color:var(--bad)">${rs(x.miss)}</td></tr>`).join('')}</table></div>
+  <div class="card"><h2>${T('Free seats by hour')}</h2><div class="chartbox"><canvas id="ch"></canvas></div></div>
+  <div class="card tight tw"><h2 style="padding-top:10px">${T('Seat-wise income')}</h2><table><tr><th>${T('Seat')}</th>${S.plans.map((p) => `<th>${esc(pName(p))}</th>`).join('')}<th>${T('Monthly from seat')}</th></tr>${seats.map((r) => `<tr><td class="b">${r.k}</td>${r.cells.map((c) => c ? `<td class="small">${esc(c.name.split(' ')[0])}</td>` : `<td class="small" style="color:var(--bad)">${T('empty')}</td>`).join('')}<td class="b" style="color:${r.amt ? 'inherit' : 'var(--bad)'}">${rs(r.amt)}</td></tr>`).join('')}</table></div>`;
+  if (window.Chart) charts.push(new Chart($('#ch'), { type: 'bar', data: { labels: hours.map((x) => t12(pad(x.h) + ':00')), datasets: [{ label: T('Free'), data: hours.map((x) => x.free), backgroundColor: hours.map((x) => x.free > S.settings.seats * .5 ? '#f2a65a' : '#12a150'), borderRadius: 4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: S.settings.seats, grid: { color: '#efedf3' } }, x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } } } } }));
+}
+function tAgeing(tb) {
+  const act = S.students.filter((s) => !s.left).map((s) => [s, feeInfo(s)]), b = { 1: [0, 0], 2: [0, 0], 3: [0, 0] };
+  act.forEach(([, i]) => { const n = i.dueCycles.length; if (!n) return; const k = n >= 3 ? 3 : n; b[k][0]++; b[k][1] += i.amount; });
+  const t = today(), months = []; for (let k = 5; k >= 0; k--) months.push(new Date(t.getFullYear(), t.getMonth() - k, 1));
+  const key = (d) => iso(d).slice(0, 7);
+  const exp = months.map((mm) => S.students.reduce((a, s) => a + (cycles(s).some((c) => c.startsWith(key(mm))) ? monthly(s) : 0), 0));
+  const col = months.map((mm) => S.payments.filter((p) => (p.cycles || []).some((c) => c.startsWith(key(mm)))).reduce((a, p) => a + Number(p.amount || 0) / Math.max(1, (p.cycles || []).length) * (p.cycles || []).filter((c) => c.startsWith(key(mm))).length, 0));
+  const rate = (i) => exp[i] ? Math.round(Math.min(100, col[i] / exp[i] * 100)) : 0;
+  const tile = (l, n, h, c) => `<div class="tile" style="--tc:${c}"><div class="l">${l}</div><div class="n">${n}</div><div class="h">${h}</div></div>`;
+  tb.innerHTML = `<div class="tiles">${tile(T('Expected this month'), rs(exp[5]), '', '#1e7be0')}${tile(T('Collected'), rs(col[5]), '', '#12a150')}${tile(T('Collection rate'), rate(5) + '%', '', rate(5) >= 80 ? '#12a150' : '#e8750a')}</div>
+  <div class="card"><h2>${T('Outstanding by age')}</h2><div class="tiles" style="margin:0">${tile(T('1 month'), rs(b[1][1]), b[1][0] + ' ' + T('students'), '#e8750a')}${tile(T('2 months'), rs(b[2][1]), b[2][0] + ' ' + T('students'), '#d93a4b')}${tile(T('3+ months'), rs(b[3][1]), b[3][0] + ' ' + T('students'), '#8b0000')}</div></div>
+  <div class="card tw"><h2>${T('Expected vs collected')}</h2><table><tr><th></th><th>${T('Expected')}</th><th>${T('Collected')}</th><th>${T('Pending')}</th><th>${T('Collection rate')}</th></tr>${months.map((mm, i) => `<tr><td>${mm.toLocaleDateString(loc(), { month: 'long', year: 'numeric' })}</td><td>${rs(exp[i])}</td><td>${rs(col[i])}</td><td style="color:var(--bad)">${rs(Math.max(0, exp[i] - col[i]))}</td><td><div class="row small" style="flex-wrap:nowrap"><div class="bar" style="width:90px"><span style="width:${rate(i)}%"></span></div>${rate(i)}%</div></td></tr>`).reverse().join('')}</table></div>`;
+}
+function termsModal() {
+  const acc = S.settings.termsAt;
+  modal(`<h3>${T('Terms & Conditions')}</h3><ol style="padding-left:20px;margin:0">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<li style="margin-bottom:8px">${T('term' + n)}</li>`).join('')}</ol>
+  ${acc ? `<p class="pill ok">✓ ${T('Accepted on')} ${fmt(acc)}</p>` : `<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink);margin-top:12px"><input type="checkbox" id="tA" style="width:auto"> ${T('I accept the terms')}</label>`}
+  <div class="mf"><button class="btn s" id="tC">${T('Close')}</button>${acc ? '' : `<button class="btn" id="tOk" disabled>${T('Save')}</button>`}</div>`);
+  $('#tC').onclick = closeModal;
+  if ($('#tA')) { $('#tA').onchange = (e) => { $('#tOk').disabled = !e.target.checked; }; $('#tOk').onclick = () => { S.settings.termsAt = iso(today()); closeModal(); render(); toast(T('Saved')); }; }
+}
+
+/* ================= Plans ================= */
+const PLANS = {
+  basic: { name: 'Basic', m: 199, y: 1999, color: '#5b6b7f', feats: ['Up to 50 students', 'Fees, seats and dues', 'WhatsApp reminders (one by one)'], no: ['QR attendance', 'Student app', 'Reports and charts', 'Auto posters + festival calendar'] },
+  pro: { name: 'Pro', m: 399, y: 3999, color: '#e0245e', pop: true, feats: ['Unlimited students', 'Fees, seats and dues', 'QR attendance', 'Student app', 'Reports and charts', 'Bulk messages', 'Auto posters + festival calendar', 'Topper of the Month poster'], no: ['Automatic WhatsApp reminders'] },
+  premium: { name: 'Premium', m: 1499, y: 14999, color: '#b8860b', feats: ['Everything in Pro', 'Automatic WhatsApp reminders', 'Multiple branches', 'Posters with your own branding only', 'Personal setup and priority support'], no: [] }
+};
+const LOCK_BASIC = ['attend', 'reports', 'posters', 'studentapp', 'messages'];
+const isLocked = (v) => S.settings?.plan === 'basic' && LOCK_BASIC.includes(v);
+function lockScreen(m) {
+  const n = NAV.find((x) => x[0] === view);
+  m.innerHTML = head(n[1], T(n[2]), T('This feature is in the Pro plan')) + `<div class="card center" style="padding:40px 20px"><div style="width:64px;height:64px;border-radius:18px;background:var(--tabbg);color:var(--tab);display:grid;place-items:center;margin:0 auto 12px">${I('lock')}</div><h2 style="font-size:18px">${T('This feature is in the Pro plan')}</h2><p class="mut">${T('Upgrade to unlock')}</p><button class="btn" data-go="plans">${I('crown')}${T('See plans')}</button></div>`;
+  bindCommon(m);
+}
+function vPlans(m) {
+  const cur = S.settings.plan;
+  m.innerHTML = head('crown', T('Plans'), T('Current plan') + ': ' + T(PLANS[cur].name)) + `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;align-items:start">${Object.entries(PLANS).map(([k, p]) => `<div class="card" style="padding:22px;border:2px solid ${p.pop ? p.color : 'transparent'};position:relative;${p.pop ? 'transform:translateY(-6px);box-shadow:0 14px 34px rgba(224,36,94,.18)' : ''}">${p.pop ? `<span class="pill" style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:${p.color};color:#fff">★ ${T('Most popular')}</span>` : ''}
+    <div class="b" style="color:${p.color};font-size:15px">${T(p.name)}</div><div style="margin:8px 0 2px"><span style="font-size:32px;font-weight:700">₹${p.m.toLocaleString('en-IN')}</span> <span class="mut">/ ${T('per month').replace(/^per /, '')}</span></div><div class="mut small">${T('or')} ₹${p.y.toLocaleString('en-IN')} ${T('per year')}</div>
+    <div style="margin:14px 0">${p.feats.map((f) => `<div class="row small" style="margin:6px 0;gap:8px;flex-wrap:nowrap"><span style="color:var(--ok)">✓</span><span>${T(f)}</span></div>`).join('')}${p.no.map((f) => `<div class="row small mut" style="margin:6px 0;gap:8px;flex-wrap:nowrap;text-decoration:line-through"><span>✕</span><span>${T(f)}</span></div>`).join('')}</div>
+    ${cur === k ? `<button class="btn s" disabled style="width:100%;justify-content:center">${T('Your plan')}</button>` : `<button class="btn" data-plan="${k}" style="width:100%;justify-content:center;background:${p.color}">${T('Choose plan')}</button>`}</div>`).join('')}</div>
+  <p class="hint center" style="margin-top:6px">${T('Demo: switch plan to see the difference')} · <a href="#" class="lk" data-terms="1">${T('Terms & Conditions')}</a></p>`;
+  bindCommon(m);
+  m.querySelectorAll('[data-plan]').forEach((b) => b.onclick = () => { S.settings.plan = b.dataset.plan; render(); toast(T('Saved')); });
+}
+
+/* ================= Posters ================= */
+const OCC = [
+  ['2026-11-08', '🪔', ['Happy Diwali', 'Shubh Deepawali', 'शुभ दीपावली'], ['May your hard work light up your success', 'Aapki mehnat se roshan ho aapki safalta', 'आपकी मेहनत से रोशन हो आपकी सफलता'], ['#ff8a00', '#c2185b']],
+  ['2026-11-14', '🎈', ['Happy Children\'s Day', 'Bal Diwas ki Shubhkamnayein', 'बाल दिवस की शुभकामनाएँ'], ['Keep the curiosity alive', 'Seekhne ki chaah kabhi kam na ho', 'सीखने की चाह कभी कम न हो'], ['#00b4db', '#0083b0']],
+  ['2026-11-15', '🌅', ['Happy Chhath Puja', 'Chhath Puja ki Shubhkamnayein', 'छठ पूजा की शुभकामनाएँ'], ['May the Sun God bless your efforts', 'Surya Dev aapki mehnat ko safal karein', 'सूर्य देव आपकी मेहनत को सफल करें'], ['#f7971e', '#d4145a']],
+  ['2026-11-24', '🙏', ['Happy Guru Nanak Jayanti', 'Guru Nanak Jayanti ki Badhai', 'गुरु नानक जयंती की बधाई'], ['Truth, service and hard work', 'Sach, seva aur mehnat', 'सच, सेवा और मेहनत'], ['#f2994a', '#f2c94c']],
+  ['2026-12-25', '🎄', ['Merry Christmas', 'Merry Christmas', 'क्रिसमस की शुभकामनाएँ'], ['Gift yourself focused hours this season', 'Is season khud ko padhai ka tohfa dein', 'इस मौसम खुद को पढ़ाई का तोहफ़ा दें'], ['#11998e', '#c0392b']],
+  ['2027-01-01', '🎉', ['Happy New Year 2027', 'Naya Saal 2027 Mubarak', 'नववर्ष 2027 की शुभकामनाएँ'], ['New year, new goals, same seat', 'Naya saal, naye lakshya, wahi lagan', 'नया साल, नए लक्ष्य, वही लगन'], ['#8e2de2', '#4a00e0']],
+  ['2027-01-12', '📖', ['National Youth Day', 'Rashtriya Yuva Diwas', 'राष्ट्रीय युवा दिवस'], ['Arise, awake and stop not till the goal is reached', 'Utho, jaago aur lakshya tak ruko mat', 'उठो, जागो और लक्ष्य तक रुको मत'], ['#f12711', '#f5af19']],
+  ['2027-01-15', '🪁', ['Happy Makar Sankranti', 'Makar Sankranti ki Shubhkamnayein', 'मकर संक्रांति की शुभकामनाएँ'], ['Let your dreams fly high', 'Aapke sapne oonchi udaan bharein', 'आपके सपने ऊँची उड़ान भरें'], ['#fc4a1a', '#f7b733']],
+  ['2027-01-26', '🇮🇳', ['Happy Republic Day', 'Gantantra Diwas ki Shubhkamnayein', 'गणतंत्र दिवस की शुभकामनाएँ'], ['Study today, serve the nation tomorrow', 'Aaj padhai, kal desh ki seva', 'आज पढ़ाई, कल देश की सेवा'], ['#ff9933', '#138808']],
+  ['2027-02-11', '🪷', ['Happy Vasant Panchami', 'Saraswati Puja ki Shubhkamnayein', 'सरस्वती पूजा की शुभकामनाएँ'], ['May Maa Saraswati bless every student', 'Maa Saraswati har vidyarthi ko aashirwad dein', 'माँ सरस्वती हर विद्यार्थी को आशीर्वाद दें'], ['#f7b733', '#fc4a1a']],
+  ['2027-03-08', '🌸', ['Happy Women\'s Day', 'Mahila Diwas ki Shubhkamnayein', 'महिला दिवस की शुभकामनाएँ'], ['Salute to every girl chasing her dreams', 'Har sapna dekhne wali beti ko salaam', 'हर सपना देखने वाली बेटी को सलाम'], ['#ec008c', '#fc6767']],
+  ['2027-03-22', '🎨', ['Happy Holi', 'Holi ki Shubhkamnayein', 'होली की शुभकामनाएँ'], ['Colour your life with success', 'Safalta ke rang se rang de zindagi', 'सफलता के रंग से रंग दे ज़िंदगी'], ['#ee0979', '#ff6a00']],
+  ['2027-04-14', '⚖️', ['Ambedkar Jayanti', 'Ambedkar Jayanti', 'अंबेडकर जयंती'], ['Educate, agitate, organise', 'Shikshit bano, sangathit raho', 'शिक्षित बनो, संगठित रहो'], ['#1e3c72', '#2a5298']],
+  ['2027-04-23', '📚', ['World Book Day', 'Vishwa Pustak Diwas', 'विश्व पुस्तक दिवस'], ['A book a day keeps failure away', 'Kitaab se dosti, safalta se dosti', 'किताब से दोस्ती, सफलता से दोस्ती'], ['#6a3093', '#a044ff']],
+  ['2027-06-19', '📘', ['National Reading Day', 'Rashtriya Pathan Diwas', 'राष्ट्रीय पठन दिवस'], ['Read more, grow more', 'Jitna padhoge, utna badhoge', 'जितना पढ़ोगे, उतना बढ़ोगे'], ['#0f2027', '#2c5364']],
+  ['2027-08-15', '🇮🇳', ['Happy Independence Day', 'Swatantrata Diwas ki Shubhkamnayein', 'स्वतंत्रता दिवस की शुभकामनाएँ'], ['Freedom to dream, discipline to achieve', 'Sapne dekhne ki azaadi, poore karne ki lagan', 'सपने देखने की आज़ादी, पूरे करने की लगन'], ['#ff9933', '#138808']],
+  ['2027-09-05', '🍎', ['Happy Teachers\' Day', 'Shikshak Diwas ki Shubhkamnayein', 'शिक्षक दिवस की शुभकामनाएँ'], ['Thank you to every guide on our journey', 'Har maargdarshak ko dhanyavaad', 'हर मार्गदर्शक को धन्यवाद'], ['#c94b4b', '#4b134f']],
+  ['2027-10-02', '🕊️', ['Gandhi Jayanti', 'Gandhi Jayanti', 'गांधी जयंती'], ['Be the change you wish to see', 'Woh badlaav bano jo dekhna chahte ho', 'वह बदलाव बनो जो देखना चाहते हो'], ['#56ab2f', '#a8e063']]
+];
+const li = () => lang === 'en' ? 0 : lang === 'hl' ? 1 : 2;
+function occOn(ds) { const o = OCC.find((x) => x[0] === ds); if (o) return { type: 'occ', o }; if (ds.endsWith('-01')) return { type: 'topper' }; return null; }
+function topList() {
+  const from = today(); from.setDate(from.getDate() - 30); const f = iso(from), h = {};
+  S.attendance.filter((a) => a.date >= f).forEach((a) => { h[a.studentId] = (h[a.studentId] || 0) + hrs(a); });
+  return Object.entries(h).map(([id, v]) => [S.students.find((s) => s.id === id), v]).filter(([s]) => s && !s.left).sort((a, b) => b[1] - a[1]).slice(0, 5);
+}
+function wrapText(ctx, text, x, y, maxW, lh) { const words = String(text).split(' '); let line = '', yy = y; for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line, x, yy); line = w; yy += lh; } else line = t; } if (line) ctx.fillText(line, x, yy); return yy; }
+function drawPoster(cv, spec) {
+  const W = 1080, H = 1920, c = cv.getContext('2d'); cv.width = W; cv.height = H;
+  const F = lang === 'hi' ? '"Noto Sans Devanagari", sans-serif' : 'Inter, sans-serif';
+  const [c1, c2] = spec.colors; const g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, c1); g.addColorStop(1, c2); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  c.fillStyle = 'rgba(255,255,255,.10)'; [[900, 220, 300], [120, 760, 220], [980, 1250, 180], [200, 1500, 120]].forEach(([x, y, r]) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); });
+  c.textAlign = 'center'; c.fillStyle = '#fff';
+  c.font = `600 40px ${F}`; c.globalAlpha = .9; c.fillText(S.settings.name.toUpperCase(), W / 2, 150); c.globalAlpha = 1;
+  if (spec.kind === 'topper') {
+    c.font = '150px serif'; c.fillText('🏆', W / 2, 400);
+    c.font = `800 92px ${F}`; c.fillText(T('Topper of the Month'), W / 2, 540);
+    c.font = `500 40px ${F}`; c.globalAlpha = .9; c.fillText(T('Most study hours in the last 30 days'), W / 2, 610); c.globalAlpha = 1;
+    const list = topList(), medal = ['🥇', '🥈', '🥉', '4', '5'];
+    list.forEach(([s, h], i) => { const y = 680 + i * 170; c.fillStyle = 'rgba(255,255,255,.16)'; c.beginPath(); c.roundRect(110, y, W - 220, 145, 36); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'left'; c.font = i < 3 ? '80px serif' : `800 64px ${F}`; c.fillText(medal[i], 160, y + 100); c.font = `700 54px ${F}`; c.fillText(s.name, 290, y + 74); c.font = `500 34px ${F}`; c.globalAlpha = .85; c.fillText(T('Seat') + ' ' + (s.seat || '—') + ' · ' + pName(planOf(s.planId)), 290, y + 120); c.globalAlpha = 1; c.textAlign = 'right'; c.font = `800 58px ${F}`; c.fillText(Math.round(h) + 'h', W - 160, y + 92); c.textAlign = 'center'; });
+  } else {
+    c.font = '220px serif'; c.fillText(spec.icon, W / 2, 560);
+    c.font = `800 104px ${F}`; let y = wrapText(c, spec.title, W / 2, 760, W - 160, 120);
+    c.font = `500 52px ${F}`; c.globalAlpha = .95; y = wrapText(c, spec.sub, W / 2, y + 110, W - 200, 70); c.globalAlpha = 1;
+    if (spec.date) { c.font = `600 44px ${F}`; c.fillStyle = 'rgba(255,255,255,.2)'; const tw = c.measureText(spec.date).width + 80; c.beginPath(); c.roundRect(W / 2 - tw / 2, y + 60, tw, 84, 42); c.fill(); c.fillStyle = '#fff'; c.fillText(spec.date, W / 2, y + 117); }
+  }
+  c.fillStyle = 'rgba(255,255,255,.95)'; c.beginPath(); c.roundRect(80, H - 380, W - 160, 250, 40); c.fill();
+  c.fillStyle = '#1f1a2e'; c.textAlign = 'center'; c.font = `800 54px ${F}`; c.fillText(S.settings.name, W / 2, H - 290);
+  const vac = S.plans.map((p) => S.settings.seats - S.students.filter((s) => !s.left && s.seat && overlap(planOf(s.planId), p)).length);
+  c.fillStyle = '#6f6a7d'; const vt = T('Seats available') + ': ' + S.plans.map((p, i) => pName(p) + ' ' + vac[i]).join(' · '); let fs = 38; do { c.font = `500 ${fs}px ${F}`; fs -= 2; } while (c.measureText(vt).width > W - 220 && fs > 20); c.fillText(vt, W / 2, H - 225);
+  c.font = `700 44px ${F}`; c.fillStyle = c1; c.fillText('📞 ' + T('Call') + ': ' + S.settings.phone, W / 2, H - 160);
+  if (S.settings.plan !== 'premium') { c.font = `500 28px ${F}`; c.fillStyle = 'rgba(255,255,255,.8)'; c.fillText(T('Powered by Maakit'), W / 2, H - 60); }
+}
+function posterSpec(ds) {
+  const o = occOn(ds), k = sub.kind;
+  if (k === 'admission') return { kind: 'occ', icon: '📚', title: T('Admission Open'), sub: T('Seats available') + ' · ' + S.plans.map((p) => pName(p) + ' ' + rs(p.fee)).join(' · '), colors: ['#1e7be0', '#6d4aff'] };
+  if (k === 'holiday') return { kind: 'occ', icon: '📅', title: T('Holiday Notice'), sub: (sub.ptext || T('Library will remain closed')), date: fmt(ds), colors: ['#5b6b7f', '#1f1a2e'] };
+  if (k === 'fee') return { kind: 'occ', icon: '⏰', title: T('Fee Reminder'), sub: T('Please pay your fee on time') + (S.settings.upi ? ' · UPI: ' + S.settings.upi : ''), colors: ['#d93a4b', '#ff8a00'] };
+  if (k === 'custom') return { kind: 'occ', icon: '📢', title: T('Notice'), sub: sub.ptext || T('Write your notice'), date: fmt(ds), colors: ['#0b8f8f', '#12a150'] };
+  if (k === 'topper' || (o && o.type === 'topper')) return { kind: 'topper', colors: ['#b8860b', '#e0245e'] };
+  if (o && o.type === 'occ') return { kind: 'occ', icon: o.o[1], title: o.o[2][li()], sub: o.o[3][li()], date: fmt(ds), colors: o.o[4] };
+  return null;
+}
+function vPosters(m) {
+  const t = today(), base = sub.mon ? parse(sub.mon) : new Date(t.getFullYear(), t.getMonth(), 1), y = base.getFullYear(), mo = base.getMonth();
+  const dim = new Date(y, mo + 1, 0).getDate(), lead = (new Date(y, mo, 1).getDay() + 6) % 7, sel = sub.date || iso(t);
+  const wk = lang === 'hi' ? ['सो', 'मं', 'बु', 'गु', 'शु', 'श', 'र'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const upcoming = OCC.filter((o) => o[0] >= iso(t)).slice(0, 6);
+  m.innerHTML = head('image', T('Posters'), T('Ready-made posters for every occasion. Download and post on your WhatsApp or Instagram story.'))
+  + `<div class="g2" style="align-items:start"><div>
+    <div class="card"><div class="row" style="margin-bottom:10px"><h2 style="margin:0">${T('Festival calendar')}</h2><span class="sp"></span><button class="btn s sm" id="pmPrev">${I('left')}</button><span class="b" style="min-width:110px;text-align:center">${base.toLocaleDateString(loc(), { month: 'long', year: 'numeric' })}</span><button class="btn s sm" id="pmNext">${I('right')}</button></div>
+     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center">${wk.map((w) => `<div class="small mut b">${w}</div>`).join('')}${'<div></div>'.repeat(lead)}${Array.from({ length: dim }, (_, i) => { const ds = iso(new Date(y, mo, i + 1)), o = occOn(ds), isSel = ds === sel && !sub.kind; return `<button data-d="${ds}" style="border:1.5px solid ${isSel ? 'var(--tab)' : 'var(--line)'};background:${isSel ? 'var(--tab)' : ds === iso(t) ? '#fff4f7' : '#fff'};color:${isSel ? '#fff' : 'inherit'};border-radius:10px;padding:6px 0 4px;cursor:pointer;min-height:48px"><div class="b">${i + 1}</div><div style="font-size:14px;line-height:1">${o ? (o.type === 'occ' ? o.o[1] : '🏆') : ''}</div></button>`; }).join('')}</div>
+     <p class="hint" style="margin-bottom:0">${T('Pick a date with a dot, or pick a poster type.')}</p></div>
+    <div class="card"><h2>${T('Poster types')}</h2><div class="row">${[['topper', '🏆 ' + T('Topper of the Month')], ['admission', '📚 ' + T('Admission Open')], ['fee', '⏰ ' + T('Fee Reminder')], ['holiday', '📅 ' + T('Holiday Notice')], ['custom', '📢 ' + T('Custom notice')]].map(([k, l]) => `<button class="btn ${sub.kind === k ? '' : 's'} sm" data-kind="${k}">${l}</button>`).join('')}</div>
+     ${sub.kind === 'holiday' || sub.kind === 'custom' ? `<div class="f" style="margin-top:10px"><input id="ptext" value="${esc(sub.ptext || '')}" placeholder="${T('Write your notice')}"></div>` : ''}</div>
+    <div class="card"><h2>${T('Upcoming')}</h2>${upcoming.map((o) => `<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><span style="font-size:20px">${o[1]}</span><span class="b">${o[2][li()]}</span><span class="sp"></span><span class="mut small">${fmt(o[0])}</span><button class="btn s sm" data-d="${o[0]}">${T('Open')}</button></div>`).join('')}</div>
+  </div>
+  <div class="card center" style="position:sticky;top:16px"><div id="pvWrap"></div></div></div>`;
+  const spec = posterSpec(sel), wrap = $('#pvWrap');
+  if (!spec) wrap.innerHTML = `<div class="empty"><b>${fmt(sel)}</b>${T('No occasion on this date')}</div>`;
+  else {
+    const cv = document.createElement('canvas'); drawPoster(cv, spec); const url = cv.toDataURL('image/png');
+    wrap.innerHTML = `<img src="${url}" alt="poster" style="width:100%;max-width:320px;border-radius:16px;box-shadow:var(--sh)"><div style="margin-top:12px"><button class="btn" id="pDl">${I('dl')}${T('Download poster')}</button></div><p class="hint" id="pHint"></p>`;
+    $('#pDl').onclick = async () => {
+      try { const d = window.claude ? await window.claude.use('downloads') : null; if (!d) throw { code: 'unavailable' }; const blob = await new Promise((r) => cv.toBlob(r, 'image/png')); await d.save({ filename: (S.settings.name + '-' + (sub.kind || sel)).replace(/[^\w-]+/g, '-') + '.png', data: blob }); toast(T('Downloaded')); }
+      catch (e) { if (e && e.code === 'declined') return; $('#pHint').textContent = T('Long-press the image to save it'); }
+    };
+  }
+  $('#pmPrev').onclick = () => { sub.mon = iso(new Date(y, mo - 1, 1)); render(); };
+  $('#pmNext').onclick = () => { sub.mon = iso(new Date(y, mo + 1, 1)); render(); };
+  m.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => { sub.date = b.dataset.d; sub.kind = null; const d = parse(b.dataset.d); sub.mon = iso(new Date(d.getFullYear(), d.getMonth(), 1)); render(); });
+  m.querySelectorAll('[data-kind]').forEach((b) => b.onclick = () => { sub.kind = b.dataset.kind; render(); });
+  if ($('#ptext')) $('#ptext').oninput = (e) => { sub.ptext = e.target.value; clearTimeout(vPosters.t); vPosters.t = setTimeout(render, 600); };
+}
+
+/* ================= Settings ================= */
+function vSettings(m) {
+  const tab = sub.tab || 'profile';
+  m.innerHTML = head('cog', T('Settings'), S.settings.name) + tabsBar([['profile', T('Library Profile')], ['plans', T('Shifts & Fees')], ['seats', T('Seats & Lockers')], ['pay', T('Payments')], ['tpl', T('Message Templates')], ['lang', T('Language')], ['terms', T('Terms & Conditions')]], tab) + '<div id="tb"></div>';
+  bindTabs(m);
+  const tb = $('#tb'), st = S.settings, saveS = (d) => safe(() => Store.setSettings(Object.assign({}, st, d)), T('Saved'));
+  if (tab === 'profile') {
+    tb.innerHTML = `<div class="card"><div class="g2"><div class="f"><label>${T('Library name')}</label><input id="a1" value="${esc(st.name)}"></div><div class="f"><label>${T('Owner name')}</label><input id="a2" value="${esc(st.owner)}"></div></div><div class="g3"><div class="f"><label>${T('Mobile')}</label><input id="a3" value="${esc(st.phone)}" maxlength="10"></div><div class="f"><label>${T('Library ID')}</label><input id="a4" value="${esc(st.code || '')}"></div><div class="f"><label>${T('Change PIN')} <span class="mut">(${T('leave blank to keep')})</span></label><input id="a5" maxlength="4" inputmode="numeric"></div></div><div class="f"><label>${T('Notice on student app')}</label><input id="a6" value="${esc(st.notice || '')}"></div><div class="err" id="aE"></div><button class="btn" id="aS">${T('Save')}</button></div>`;
+    $('#aS').onclick = () => { const d = { name: $('#a1').value.trim(), owner: $('#a2').value.trim(), phone: cleanPhone($('#a3').value), code: $('#a4').value.trim().toUpperCase(), notice: $('#a6').value.trim() }, pin = $('#a5').value.trim(); if (!d.name) { $('#aE').textContent = T('Enter the name'); return; } if (!phoneOk(d.phone)) { $('#aE').textContent = T('Enter a valid 10-digit mobile number'); return; } if (pin) d.pin = pin; saveS(d); };
+  }
+  if (tab === 'plans') {
+    tb.innerHTML = `<div class="card"><p class="hint" style="margin-top:0">${T('Each shift has its own timing and monthly fee. The same seat can go to different students in different shifts if timings do not overlap.')}</p>${S.plans.length ? `<table><tr><th>${T('Shift name')}</th><th>${T('Timing')}</th><th>${T('Hours')}</th><th>${T('Fee per month (₹)')}</th><th>${T('Students')}</th><th></th></tr>${S.plans.map((p) => { const n = S.students.filter((s) => !s.left && s.planId === p.id).length; let h = (toMin(p.end) - toMin(p.start)) / 60; if (h <= 0) h += 24; return `<tr><td class="b">${esc(pName(p))}</td><td>${t12(p.start)} – ${t12(p.end)}</td><td>${h}</td><td>${rs(p.fee)}</td><td>${n}</td><td style="text-align:right;white-space:nowrap"><button class="btn x sm" data-ep="${p.id}">${T('Edit')}</button>${n ? '' : ` <button class="btn x sm" data-dp="${p.id}">${T('Remove')}</button>`}</td></tr>`; }).join('')}</table>` : `<div class="empty"><b>${T('No shifts yet')}</b></div>`}<div class="row" style="margin-top:12px"><button class="btn" id="npl">${I('plus')}${T('Add Shift')}</button></div></div>`;
+    $('#npl').onclick = () => planForm();
+    tb.querySelectorAll('[data-ep]').forEach((b) => b.onclick = () => planForm(b.dataset.ep));
+    tb.querySelectorAll('[data-dp]').forEach((b) => b.onclick = () => confirmBtn(b, () => safe(() => Store.remove('plans', b.dataset.dp), T('Saved'))));
+  }
+  if (tab === 'seats') {
+    const maxSeat = Math.max(0, ...S.students.filter((s) => !s.left && s.seat).map((s) => +s.seat));
+    tb.innerHTML = `<div class="card"><div class="g2"><div class="f"><label>${T('Total seats')}</label><input id="b1" type="number" value="${st.seats}"></div><div class="f"><label>${T('Locker fee per month (₹)')}</label><input id="b2" type="number" value="${st.lockerFee || 0}"></div></div><div class="err" id="bE"></div><button class="btn" id="bS">${T('Save')}</button></div>`;
+    $('#bS').onclick = () => { const n = +$('#b1').value; if (!(n > 0) || n < maxSeat) { $('#bE').textContent = T('Seats cannot be fewer than an occupied seat number') + ' (' + maxSeat + ')'; return; } saveS({ seats: n, lockerFee: +$('#b2').value || 0 }); };
+  }
+  if (tab === 'pay') {
+    tb.innerHTML = `<div class="g2"><div class="card"><div class="f"><label>${T('UPI ID')}</label><input id="c1" value="${esc(st.upi || '')}" placeholder="name@ybl"><div class="hint">${T('Shown as QR while collecting fees and in student app.')}</div></div><div class="f"><label>${T('Admission fee')} (₹)</label><input id="c2" type="number" value="${st.admissionFee || 0}"><div class="hint">${T('Charged once to new students. 0 = none.')}</div></div><button class="btn" id="cS">${T('Save')}</button></div><div class="card center"><div class="qr" id="upiQr"></div><div class="hint" style="margin-top:6px">${esc(st.upi || '')}</div></div></div>`;
+    drawQR($('#upiQr'), upiLink('', 'Library fee'), 150);
+    $('#cS').onclick = () => saveS({ upi: $('#c1').value.trim(), admissionFee: +$('#c2').value || 0 });
+  }
+  if (tab === 'tpl') {
+    const names = { reminder: T('Fee reminder'), soon: T('Upcoming fee'), receipt: T('Receipt'), welcome: T('Welcome message'), absent: T('Absence check'), notice: T('Notice prefix') };
+    tb.innerHTML = `<div class="card"><p class="hint" style="margin-top:0">${T('These words fill in automatically:')} ${['name', 'library', 'amount', 'months', 'date', 'seat', 'shift', 'fee', 'upi'].map((x) => `<span class="chip">{${x}}</span>`).join(' ')}</p>${Object.keys(TPL.en).map((k) => `<div class="f"><label>${names[k]}</label><textarea id="tp_${k}" style="min-height:60px">${esc(tpl(k))}</textarea></div>`).join('')}<button class="btn" id="tpS">${T('Save')}</button> <button class="btn s" id="tpR">${T('Restore defaults')}</button></div>`;
+    $('#tpS').onclick = () => { const o = {}; Object.keys(TPL.en).forEach((k) => { const v = $('#tp_' + k).value; if (v !== TPL[lang][k]) o[k] = v; }); saveS({ templates: o }); };
+    $('#tpR').onclick = () => saveS({ templates: {} });
+  }
+  if (tab === 'terms') { tb.innerHTML = `<div class="card"><ol style="padding-left:20px;margin:0">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<li style="margin-bottom:8px">${T('term' + n)}</li>`).join('')}</ol><div style="margin-top:10px">${st.termsAt ? `<span class="pill ok">✓ ${T('Accepted on')} ${fmt(st.termsAt)}</span>` : `<button class="btn" data-terms="1">${T('I accept the terms')}</button>`}</div></div>`; bindCommon(tb); }
+  if (tab === 'lang') {
+    tb.innerHTML = `<div class="card" style="max-width:420px"><label>${T('App language')}</label>${langSeg()}<p class="hint">${T('Messages to students also follow this language unless you edit them.')}</p></div>`;
+    tb.querySelectorAll('[data-lang]').forEach((b) => b.onclick = () => setLang(b.dataset.lang));
+  }
+}
+function planForm(id) {
+  const p = id ? planOf(id) : { name: '', start: '06:00', end: '12:00', fee: '' };
+  modal(`<h3>${id ? T('Edit') : T('Add Shift')}</h3><div class="f"><label>${T('Shift name')} *</label><input id="plN" value="${esc(p.name)}" placeholder="Morning, Evening, Night, Full day"></div><div class="g3"><div class="f"><label>${T('Start')}</label><input id="plS" type="time" value="${p.start}"></div><div class="f"><label>${T('End')}</label><input id="plE" type="time" value="${p.end}"></div><div class="f"><label>${T('Fee per month (₹)')} *</label><input id="plF" type="number" value="${p.fee}"></div></div>${id ? `<p class="hint">${T('Changing the fee does not change existing students\' fees.')}</p>` : ''}<div class="err" id="plErr"></div><div class="mf"><button class="btn s" id="plC">${T('Cancel')}</button><button class="btn" id="plOk">${T('Save')}</button></div>`);
+  $('#plC').onclick = closeModal;
+  $('#plOk').onclick = async () => { const d = { name: $('#plN').value.trim(), start: $('#plS').value, end: $('#plE').value, fee: +$('#plF').value }; const e = !d.name ? T('Enter the name') : !d.start || !d.end || d.start === d.end ? T('Pick a valid timing') : !(d.fee > 0) ? T('Enter the fee') : S.plans.some((x) => x.name.toLowerCase() === d.name.toLowerCase() && x.id !== id) ? T('A shift with this name exists') : ''; if (e) { $('#plErr').textContent = e; return; } if (await safe(() => id ? Store.update('plans', id, d) : Store.add('plans', d), T('Shift saved'))) closeModal(); };
+}
+
+/* ================= Demo data ================= */
+function seedDemo() {
+  const t = today(), d = (n) => iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() + n));
+  let k = 0; const id = () => 'd' + (++k);
+  S.settings = { name: 'Saraswati Self Study Library', owner: 'Ramesh Yadav', phone: '9000000001', code: 'LIB-0001', seats: 40, pin: '1234', admissionFee: 200, upi: 'saraswatilibrary@ybl', lockerFee: 100, notice: 'Library will remain closed on Diwali (2 days). Please keep your locker key safe.', templates: {}, lang, plan: 'pro' };
+  S.plans = [{ id: 'p1', name: 'Morning', start: '06:00', end: '14:00', fee: 500 }, { id: 'p2', name: 'Evening', start: '14:00', end: '22:00', fee: 500 }, { id: 'p3', name: 'Full day', start: '06:00', end: '22:00', fee: 900 }, { id: 'p4', name: 'Night', start: '22:00', end: '06:00', fee: 400 }];
+  const names = ['Rahul Kumar', 'Priya Singh', 'Amit Maurya', 'Neha Gupta', 'Vikas Yadav', 'Pooja Tiwari', 'Sandeep Pal', 'Anjali Mishra', 'Rohit Bind', 'Shivani Dubey', 'Arjun Patel', 'Kajal Verma', 'Deepak Saroj', 'Ritika Pandey', 'Manish Gautam', 'Sneha Srivastava', 'Ajay Prajapati', 'Khushboo Jaiswal', 'Ravi Shankar', 'Nidhi Chaurasia', 'Akash Vishwakarma', 'Muskan Ansari', 'Gaurav Upadhyay', 'Simran Kesari', 'Abhishek Rai', 'Payal Sonkar', 'Sachin Bharti', 'Aarti Kushwaha'];
+  const exams = ['SSC', 'UPSC', 'UP Police', 'Railway', 'Board 12th', 'NEET', 'Bank PO', 'TET'];
+  const spec = [['p1',1,4,0,0],['p2',1,3,5,0],['p1',2,5,0,2],['p3',3,2,-3,0],['p1',4,1,2,0],['p2',4,3,0,1],['p1',5,4,10,0],['p2',6,2,0,0],['p3',7,1,-2,0],['p1',8,3,-5,1],['p2',8,5,0,0],['p1',9,2,3,0],['p4',10,1,0,0],['p1',11,4,0,3],['p2',12,2,-8,0],['p3',13,3,0,0],['p1',14,1,-1,0],['p2',15,4,0,1],['p1',16,2,0,0],['p2',16,1,4,0],['p3',18,2,0,1],['p1',19,3,0,0],['p2',20,1,-3,0],['p1',21,2,0,0],['p4',22,2,0,1],['p2',23,3,0,0],['p1',24,0,-10,0],['p2',25,0,-4,0]];
+  S.students = []; S.payments = []; S.attendance = [];
+  spec.forEach(([pl, seat, mAgo, dd, unpaid], i) => {
+    const plan = S.plans.find((p) => p.id === pl), lk = i % 5 === 1 ? 'L-' + (i + 1) : '';
+    const st = { id: id(), name: names[i], phone: String(9800000000 + 1000003 * (i + 7)).slice(0, 10), exam: exams[i % exams.length], planId: pl, seat: String(seat), fee: plan.fee, locker: lk, joinDate: iso(new Date(t.getFullYear(), t.getMonth() - mAgo, t.getDate() + dd)), left: false };
+    S.students.push(st);
+    const cs = cycles(st); cs.slice(0, Math.max(0, cs.length - unpaid)).forEach((c, n) => S.payments.push({ id: id(), studentId: st.id, cycles: [c], amount: plan.fee + (lk ? 100 : 0) + (n === 0 ? 200 : 0), admission: n === 0 ? 200 : 0, date: c, mode: n % 3 === 0 ? 'Cash' : 'UPI' }));
+  });
+  S.students.push({ id: id(), name: 'Mohit Saini', phone: '9811122233', exam: 'SSC', planId: 'p1', seat: '30', fee: 500, joinDate: iso(new Date(t.getFullYear(), t.getMonth() - 3, 2)), left: true, leftOn: d(-20) });
+  S.joins = [{ id: id(), name: 'Shubham Yadav', phone: '9876012345', exam: 'UP Police', planId: 'p1', status: 'new', createdAt: new Date().toISOString() }, { id: id(), name: 'Komal Gupta', phone: '9876054321', exam: 'Board 12th', planId: 'p2', status: 'new', createdAt: new Date(Date.now() - 86400000).toISOString() }];
+  S.expenses = [];
+  [0, -1, -2, -3, -4, -5].forEach((mm) => { const dt = iso(new Date(t.getFullYear(), t.getMonth() + mm, 5)); S.expenses.push({ id: id(), what: 'Rent', amount: 4000, date: dt }, { id: id(), what: 'Electricity', amount: 1100 - 100 * mm, date: dt }, { id: id(), what: 'Internet', amount: 600, date: dt }); });
+  S.expenses.push({ id: id(), what: 'Repairs', note: '2 chairs', amount: 600, date: d(-6) });
+  let r = 7; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280, hm = (x) => pad(Math.floor(x / 60)) + ':' + pad(x % 60);
+  S.students.filter((x) => !x.left).forEach((st, i) => { const base = toMin(S.plans.find((p) => p.id === st.planId).start), rate = i % 9 === 4 ? 0.3 : 0.85; for (let kk = 13; kk >= 0; kk--) { const ds = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - kk)); if (ds < st.joinDate || rnd() > (kk === 0 ? 0.65 : rate)) continue; const inM = (base + Math.floor(rnd() * 50)) % 1440, outM = (inM + 300 + Math.floor(rnd() * 180)) % 1440; S.attendance.push({ id: id(), studentId: st.id, date: ds, in: hm(inM), out: kk === 0 && rnd() < 0.6 ? null : hm(outM) }); } });
+}
+
+seedDemo();
+addEventListener('hashchange', render);
+render();
+})();
+</script>
+</body>
+</html>
