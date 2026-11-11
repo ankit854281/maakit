@@ -1,0 +1,42 @@
+name: MADHAV V6 quality gates
+on:
+  push:
+    branches: [madhav-v6-development]
+    paths:
+      - 'jyotish/madhav/**'
+      - '.github/workflows/madhav-v6.yml'
+  pull_request:
+    paths:
+      - 'jyotish/madhav/**'
+      - '.github/workflows/madhav-v6.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, curl
+          coverage: none
+      - name: PHP syntax
+        run: |
+          php -l jyotish/madhav/api.php
+          php -l jyotish/madhav/madhav_core.php
+          php -l jyotish/madhav/ai_provider.php
+          php -l jyotish/madhav/tests.php
+      - name: PHP test suite
+        run: php jyotish/madhav/tests.php
+      - name: Frontend syntax
+        run: node --check jyotish/madhav/app.js
+      - name: Intro and app-shell regression tests
+        run: node jyotish/madhav/startup.test.cjs
+      - name: Verify sample corpus JSON
+        run: |
+          node -e 'const k=require("./jyotish/madhav/knowledge.json");if(!Array.isArray(k.verses)||k.verses.length<4||new Set(k.verses.map(v=>v.id)).size!==k.verses.length)process.exit(1)'
+      - name: Check no leaked AI token literal
+        run: |
+          if grep -REn 'sk-[a-zA-Z0-9_-]{16,}' jyotish/madhav --include='*.html' --include='*.js' --include='*.php' --include='*.json'; then exit 1; fi

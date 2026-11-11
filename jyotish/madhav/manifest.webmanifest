@@ -1,0 +1,20 @@
+{
+  "name": "MADHAV — बोलो पार्थ",
+  "short_name": "MADHAV",
+  "description": "Bhagavad Gita-inspired bilingual reflection and mindful japa",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#12102a",
+  "theme_color": "#12102a",
+  "lang": "hi",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./madhav-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
