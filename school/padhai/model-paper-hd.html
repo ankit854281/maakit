@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hydrodynamics — Model Paper with Solutions</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+<style>.hero{background:linear-gradient(135deg,#0369a1,#7c3aed 60%,#06b6d4)}.unit-h{background:linear-gradient(120deg,#0284c7,#7c3aed)}.top{background:linear-gradient(120deg,#075985,#6d28d9)}</style>
+</head>
+<body data-book="mp-hd" class="qpaper">
+<div class="top"><a class="back" href="hydrodynamics.html">← Hydrodynamics</a><b>Model Paper</b></div>
+<div class="hero">
+  <h1>✍️ Hydrodynamics — Model Paper</h1>
+  <p>Time: 3 Hours · Maximum Marks: 75</p>
+  <span class="date">Practice paper with complete solutions</span>
+</div>
+<div class="wrap">
+
+<div class="card">
+  <div class="box b-warn"><span class="lbl">⚠️ Note</span>Yeh <b>model (practice) paper</b> hai, UP ki state universities ke typical M.Sc. pattern par aapke syllabus ke saare units se banaya gaya hai. Yeh kisi university ka asli pichle saal ka paper <b>nahi</b> hai. Sign convention: \(\mathbf q=-\nabla\phi\).</div>
+  <h3>Kaise use karein</h3>
+  <ol><li>Solutions band rakh kar 3 ghante me copy par likhiye.</li><li>Phir har "Solution" kholkar milaiye.</li><li>Galat hue topics ebook me dobara padhiye.</li></ol>
+</div>
+
+<div class="unit-h"><h2>Section A — Short answer</h2><p>Attempt all questions. 5 × 3 = 15 marks</p></div>
+<div class="card">
+  <p class="q">Q1. Distinguish between the Lagrangian and Eulerian methods of describing fluid motion. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Lagrangian:</b> an individual particle is followed; its position \(\mathbf r=\mathbf r(a,b,c,t)\) is studied, (a, b, c) being its initial position. Independent variables: a, b, c, t.<br>
+  <b>Eulerian:</b> attention is fixed on points of space; velocity \(\mathbf q(x,y,z,t)\), pressure, density are studied there as functions of time. Independent variables: x, y, z, t.<br>
+  The Lagrangian method gives the history of each particle; the Eulerian gives the flow field and is mathematically simpler. They are connected by \(\frac{D}{Dt}=\frac{\partial}{\partial t}+\mathbf q\cdot\nabla\).</div></details>
+
+  <p class="q">Q2. Find the streamlines for the flow \(u=-\omega y,\ v=\omega x\) (ω constant). <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(\frac{dx}{-\omega y}=\frac{dy}{\omega x}\Rightarrow x\,dx+y\,dy=0\Rightarrow\boxed{x^2+y^2=c}\). The streamlines are concentric circles about the origin (rigid rotation). Vorticity \(\zeta=v_x-u_y=2\omega\ne0\): the motion is rotational.</div></details>
+
+  <p class="q">Q3. Show that \(\phi=x^2-y^2\) represents a possible irrotational motion of an incompressible liquid and find the stream function. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(\nabla^2\phi=2-2=0\): continuity holds, so the motion is possible; it is irrotational because a velocity potential exists. \(w=\phi+i\psi\) with \(\phi=\operatorname{Re}(z^2)\), so \(w=z^2\) and \(\boxed{\psi=2xy}\). (Check: \(u=-\phi_x=-2x=-\psi_y\), \(v=-\phi_y=2y=\psi_x\).)</div></details>
+
+  <p class="q">Q4. Write the complex potential of a source, a sink and a doublet. What is the image of a source in a plane wall? <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Source m at \(z_0\): \(w=-m\log(z-z_0)\). Sink m: \(w=m\log(z-z_0)\). Doublet μ (axis along x) at \(z_0\): \(w=\frac{\mu}{z-z_0}\).<br>
+  The image of a source in a plane wall is an equal source at the mirror-image point on the other side of the wall.</div></details>
+
+  <p class="q">Q5. State D'Alembert's paradox. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  A body moving with uniform velocity through an infinite ideal (inviscid, incompressible) liquid, the motion being irrotational and without circulation, experiences no resultant force (zero drag). It is a paradox because real bodies do feel drag; the discrepancy arises from neglecting viscosity.</div></details>
+</div>
+
+<div class="unit-h"><h2>Section B — Medium answer</h2><p>Attempt any four. 4 × 7½ = 30 marks</p></div>
+<div class="card">
+  <p class="q">Q6. Show that \(\frac{x^2}{a^2k^2t^4}+kt^2\left(\frac{y^2}{b^2}+\frac{z^2}{c^2}\right)=1\) is a possible form of the boundary surface of a liquid. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  A surface F = 0 is a boundary surface if \(\frac{DF}{Dt}=0\) for some velocity satisfying continuity. Let \(F=\frac{x^2}{a^2k^2t^4}+kt^2\big(\frac{y^2}{b^2}+\frac{z^2}{c^2}\big)-1\) and try \(u=\frac{2x}t,\ v=-\frac yt,\ w=-\frac zt\).<br>
+  \(\frac{\partial F}{\partial t}=-\frac{4x^2}{a^2k^2t^5}+2kt\big(\frac{y^2}{b^2}+\frac{z^2}{c^2}\big)\); \(uF_x=\frac{4x^2}{a^2k^2t^5}\); \(vF_y=-\frac{2kty^2}{b^2}\); \(wF_z=-\frac{2ktz^2}{c^2}\).<br>
+  Sum = 0, so DF/Dt = 0. Continuity: \(u_x+v_y+w_z=\frac2t-\frac1t-\frac1t=0\). Hence F = 0 is a possible boundary surface. ∎</div></details>
+
+  <p class="q">Q7. Derive Bernoulli's equation for steady motion of an ideal fluid under conservative forces. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <ol><li>Euler: \(\frac{\partial\mathbf q}{\partial t}+(\mathbf q\cdot\nabla)\mathbf q=-\nabla\Omega-\frac1\rho\nabla p\), with \(\mathbf F=-\nabla\Omega\).</li>
+  <li>Identity: \((\mathbf q\cdot\nabla)\mathbf q=\nabla(\frac12q^2)-\mathbf q\times\boldsymbol\omega\). If ρ = ρ(p), \(\frac1\rho\nabla p=\nabla\int\frac{dp}\rho\).</li>
+  <li>Steady: \(\frac{\partial\mathbf q}{\partial t}=0\). Hence \(\nabla H=\mathbf q\times\boldsymbol\omega\), \(H=\int\frac{dp}\rho+\frac12q^2+\Omega\).</li>
+  <li>Take the dot product with \(d\mathbf r\) along a streamline (\(d\mathbf r\parallel\mathbf q\)): \(dH=(\mathbf q\times\boldsymbol\omega)\cdot d\mathbf r=0\).</li>
+  <li>So \(\int\frac{dp}\rho+\frac12q^2+\Omega=\) constant along each streamline. For an incompressible liquid under gravity: \(\boxed{\frac p\rho+\frac12q^2+gz=\text{const}}\). If the motion is also irrotational, the constant is the same everywhere. ∎</li></ol></div></details>
+
+  <p class="q">Q8. A source of strength m is at distance f from the centre of a fixed circular cylinder of radius a (f &gt; a). Find the image system and verify that the cylinder is a streamline. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  By the Milne-Thomson circle theorem with \(f(z)=-m\log(z-f)\): \(\bar f(a^2/z)=-m\log\big(\frac{a^2}z-f\big)=-m\log\big(z-\frac{a^2}f\big)+m\log z-m\log(-f)\).<br>
+  So (dropping a constant) \(w=-m\log(z-f)-m\log\big(z-\frac{a^2}{f}\big)+m\log z\): <b>image = source m at the inverse point \(a^2/f\) + sink m at the centre.</b><br>
+  Verification: on |z| = a, \(z-\frac{a^2}f=\frac{z(f-\bar z)}{f}\), so \(w=-m\log[(z-f)(f-\bar z)]+m\log f=-m\log(-|z-f|^2)+m\log f\). The argument of \(-|z-f|^2\) is π (constant), so ψ is constant on the circle: it is a streamline. ∎</div></details>
+
+  <p class="q">Q9. State and prove Kelvin's circulation theorem. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Statement.</b> In an inviscid fluid moving under conservative body forces, with density a function of pressure only, the circulation round any closed circuit moving with the fluid remains constant.<br>
+  <b>Proof.</b> \(\Gamma=\oint_C\mathbf q\cdot d\mathbf r\).
+  \(\frac{D\Gamma}{Dt}=\oint\frac{D\mathbf q}{Dt}\cdot d\mathbf r+\oint\mathbf q\cdot\frac{D}{Dt}d\mathbf r\). Since \(\frac{D}{Dt}d\mathbf r=d\mathbf q\), the second integral is \(\oint d(\frac12q^2)=0\).
+  By Euler, \(\frac{D\mathbf q}{Dt}=-\nabla(\Omega+\int\frac{dp}\rho)\), so the first integral is \(-\oint d(\Omega+\int\frac{dp}\rho)=0\). Hence \(\frac{D\Gamma}{Dt}=0\). ∎<br>
+  <b>Corollary.</b> Motion once irrotational remains irrotational (permanence of irrotational motion).</div></details>
+
+  <p class="q">Q10. A circular cylinder of radius a moves with velocity U in an infinite liquid at rest at infinity. Find the velocity potential and the kinetic energy of the liquid. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Take \(\phi=\frac Ar\cos\theta\) (Laplace's equation, vanishes at ∞). On r = a, \(-\frac{\partial\phi}{\partial r}=U\cos\theta\Rightarrow A=Ua^2\). So \(\boxed{\phi=\frac{Ua^2}{r}\cos\theta,\ w=\frac{Ua^2}{z}}\), \(\psi=-\frac{Ua^2}{r}\sin\theta\).<br>
+  KE per unit length \(T=-\frac\rho2\oint\phi\,d\psi\). On r = a: \(\phi=Ua\cos\theta\), \(d\psi=-Ua\cos\theta\,d\theta\):
+  \(T=\frac\rho2U^2a^2\int_0^{2\pi}\cos^2\theta\,d\theta=\boxed{\frac12\pi\rho a^2U^2}\) = ½ (mass of liquid displaced) U².</div></details>
+
+  <p class="q">Q11. A sphere of density σ is released from rest in a liquid of density ρ. Find its initial acceleration. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Liquid motion: \(\phi=\frac{Ua^3}{2r^2}\cos\theta\); KE of liquid \(=\frac13\pi\rho a^3U^2=\frac12\cdot\frac{M'}2U^2\), \(M'=\frac43\pi a^3\rho\).<br>
+  Total KE \(=\frac12\big(M+\frac{M'}{2}\big)U^2\), \(M=\frac43\pi a^3\sigma\). External force (weight − buoyancy) \(=\frac43\pi a^3(\sigma-\rho)g\).<br>
+  Energy: \(\big(M+\frac{M'}2\big)U\frac{dU}{dt}=\frac43\pi a^3(\sigma-\rho)gU\Rightarrow\big(\sigma+\frac\rho2\big)\frac{dU}{dt}=(\sigma-\rho)g\).<br>
+  \(\boxed{\frac{dU}{dt}=\frac{2(\sigma-\rho)}{2\sigma+\rho}\,g}\) (downward if σ &gt; ρ). For a very light sphere (σ → 0), upward acceleration 2g.</div></details>
+</div>
+
+<div class="unit-h"><h2>Section C — Long answer</h2><p>Attempt any three. 3 × 10 = 30 marks</p></div>
+<div class="card">
+  <p class="q">Q12. Derive the equation of continuity in the Eulerian form. Deduce its form for an incompressible fluid and for irrotational motion of an incompressible fluid. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <ol><li>Let S be a closed surface fixed in space, enclosing volume V; n = outward unit normal. Mass inside \(=\int_V\rho\,dV\).</li>
+  <li>Rate of increase of mass inside \(=\int_V\frac{\partial\rho}{\partial t}dV\).</li>
+  <li>Rate at which mass flows out across S \(=\int_S\rho\mathbf q\cdot\mathbf n\,dS=\int_V\nabla\cdot(\rho\mathbf q)dV\) (Gauss divergence theorem).</li>
+  <li>No sources/sinks inside: \(\int_V\frac{\partial\rho}{\partial t}dV=-\int_V\nabla\cdot(\rho\mathbf q)dV\), i.e. \(\int_V\big[\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)\big]dV=0\).</li>
+  <li>V is arbitrary and the integrand continuous, so \(\boxed{\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)=0}\), or in Cartesian form \(\frac{\partial\rho}{\partial t}+\frac{\partial(\rho u)}{\partial x}+\frac{\partial(\rho v)}{\partial y}+\frac{\partial(\rho w)}{\partial z}=0\).</li>
+  <li>Expanding: \(\frac{D\rho}{Dt}+\rho\nabla\cdot\mathbf q=0\).</li>
+  <li><b>Incompressible</b> (\(\frac{D\rho}{Dt}=0\)): \(\nabla\cdot\mathbf q=0\), i.e. \(u_x+v_y+w_z=0\).</li>
+  <li><b>Irrotational and incompressible</b> (\(\mathbf q=-\nabla\phi\)): \(\nabla\cdot(-\nabla\phi)=0\Rightarrow\boxed{\nabla^2\phi=0}\) (Laplace's equation). ∎</li></ol></div></details>
+
+  <p class="q">Q13. State and prove the theorem of Blasius. Use it to find the force on a circular cylinder placed in a uniform stream U with circulation Γ. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Statement.</b> In steady 2-D irrotational flow with complex potential w past a fixed cylinder C (no external forces), the thrust is given by \(X-iY=\frac{i\rho}2\oint_C\big(\frac{dw}{dz}\big)^2dz\).<br>
+  <b>Proof.</b>
+  <ol><li>On an element ds of C (counter-clockwise), pressure acts along the inward normal: \(dX=-p\,dy,\ dY=p\,dx\). So \(dX-i\,dY=-ip(dx-i\,dy)=-ip\,d\bar z\).</li>
+  <li>Bernoulli: \(p=C-\frac12\rho q^2\); \(\oint d\bar z=0\). So \(X-iY=\frac{i\rho}2\oint q^2\,d\bar z\).</li>
+  <li>C is a streamline, so \(dw=d\phi\) is real on C: \(\frac{dw}{dz}dz=\frac{d\bar w}{d\bar z}d\bar z\).</li>
+  <li>\(q^2d\bar z=\frac{dw}{dz}\frac{d\bar w}{d\bar z}d\bar z=\big(\frac{dw}{dz}\big)^2dz\). Hence the result. ∎</li></ol>
+  <b>Application.</b> \(w=-U\big(z+\frac{a^2}z\big)+\frac{i\Gamma}{2\pi}\log z\); \(\frac{dw}{dz}=-U+\frac{Ua^2}{z^2}+\frac{i\Gamma}{2\pi z}\).
+  Coefficient of \(\frac1z\) in \(\big(\frac{dw}{dz}\big)^2\): \(2(-U)\frac{i\Gamma}{2\pi}=-\frac{iU\Gamma}\pi\) (other terms have no 1/z). By the residue theorem \(\oint\big(\frac{dw}{dz}\big)^2dz=2\pi i\big(-\frac{iU\Gamma}{\pi}\big)=2U\Gamma\).<br>
+  \(X-iY=\frac{i\rho}{2}\cdot2U\Gamma=i\rho U\Gamma\Rightarrow\boxed{X=0,\ |Y|=\rho U\Gamma}\): no drag; a lift ρUΓ per unit length perpendicular to the stream (Kutta–Joukowski).</div></details>
+
+  <p class="q">Q14. State and prove the Milne-Thomson circle theorem. Hence find the complex potential for a uniform stream U past a fixed circular cylinder of radius a, the stagnation points and the pressure on the cylinder. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Statement.</b> If f(z) is the complex potential of a flow with no singularities in |z| ≤ a, then on introducing the cylinder |z| = a the complex potential becomes \(w=f(z)+\bar f(a^2/z)\).<br>
+  <b>Proof.</b>
+  <ol><li>On |z| = a, \(\bar z=a^2/z\), so \(\bar f(a^2/z)=\overline{f(z)}\) and \(w=f(z)+\overline{f(z)}\) is real: ψ = 0, the circle is a streamline.</li>
+  <li>For |z| &gt; a, \(|a^2/z|\lt a\); singularities of \(\bar f(a^2/z)\) are inside the circle, so no new singularities appear in the liquid.</li>
+  <li>As z → ∞, \(\bar f(a^2/z)\to\bar f(0)\) (constant), so the original flow is recovered far away. ∎</li></ol>
+  <b>Application.</b> \(f(z)=-Uz\Rightarrow w=-U\big(z+\frac{a^2}z\big)\).
+  \(\frac{dw}{dz}=-U\big(1-\frac{a^2}{z^2}\big)\). On \(z=ae^{i\theta}\): \(q=U|1-e^{-2i\theta}|=2U|\sin\theta|\).
+  Stagnation points: q = 0 ⇒ θ = 0, π, i.e. z = ±a.
+  Pressure: \(p=p_\infty+\frac12\rho(U^2-q^2)=\boxed{p_\infty+\frac12\rho U^2(1-4\sin^2\theta)}\). (Symmetric ⇒ zero resultant: D'Alembert's paradox.)</div></details>
+
+  <p class="q">Q15. Liquid streams with velocity U past a fixed sphere of radius a. Find the velocity potential, the velocity on the surface, the pressure on the surface and the Stokes stream function. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <ol><li>Axisymmetric Laplace solutions: \(\phi=\big(Ar+\frac{B}{r^2}\big)\cos\theta\). At infinity \(\phi\to-Ur\cos\theta\) ⇒ A = −U.</li>
+  <li>Sphere fixed: \(\frac{\partial\phi}{\partial r}=0\) at r = a ⇒ \(-U-\frac{2B}{a^3}=0\Rightarrow B=-\frac{Ua^3}{2}\).</li>
+  <li>\(\boxed{\phi=-U\Big(r+\frac{a^3}{2r^2}\Big)\cos\theta}\).</li>
+  <li>On r = a: \(q_r=0\), \(q_\theta=-\frac1r\frac{\partial\phi}{\partial\theta}=-\frac32U\sin\theta\) ⇒ \(\boxed{q=\frac32U\sin\theta}\); stagnation at θ = 0, π; max \(\frac32U\) at θ = π/2.</li>
+  <li>Bernoulli: \(\boxed{p=p_\infty+\frac12\rho U^2\Big(1-\frac94\sin^2\theta\Big)}\).</li>
+  <li>Stokes stream function (\(q_r=\frac{1}{r^2\sin\theta}\psi_\theta\), \(q_\theta=-\frac1{r\sin\theta}\psi_r\)): \(\boxed{\psi=\frac12U\sin^2\theta\Big(r^2-\frac{a^3}{r}\Big)}\). Check: \(q_r=U\cos\theta\big(1-\frac{a^3}{r^3}\big)=-\frac{\partial\phi}{\partial r}\) ✓, and ψ = 0 on r = a (sphere is a stream surface). ∎</li></ol></div></details>
+</div>
+
+<div class="card"><div class="box b-trick"><span class="lbl">🧠 Self-check</span>Har derivation me diagram + assumptions likhe? Final result box me? Tab hi poore marks milte hain.</div></div>
+<p class="foot">Maakit · Model paper for practice</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hydrodynamics — Astha Ma'am ki Exam Taiyari</title>
+<title>Hydrodynamics — Exam Study Guide</title>
 <link rel="stylesheet" href="katex/katex.min.css">
 <script defer src="katex/katex.min.js"></script>
 <script defer src="katex/auto-render.min.js"></script>
@@ -16,447 +16,528 @@
 
 <div class="hero">
   <h1>🌊 Hydrodynamics</h1>
-  <p>Astha Ma'am ke liye — paani (liquid) kaise behta hai, aasaan bhasha me.</p>
-  <p>Har topic par <b>exam me aane ka chance</b> likha hai.</p>
-  <span class="date">Exam: 28 November 2026</span>
+  <p>Complete study guide — definitions, full derivations, solved examples, exam pattern and model paper.</p>
+  <span class="date">Semester Examination: 28 November 2026</span>
 </div>
 
 <nav class="units">
-  <a href="#guide">Kaise padhein</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#formula">Formula sheet</a><a href="#imp">Important Qs</a>
+  <a href="#guide">How to use</a><a href="#pattern">Exam pattern</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#formula">Formula sheet</a><a href="model-paper-hd.html">Model paper ✍️</a>
 </nav>
 
 <div class="wrap">
 
 <div class="card sheet" id="guide">
-  <h3>🗺️ Ma'am, shuru karne se pehle</h3>
-  <p>Hydrodynamics = <b>ideal liquid</b> (jisme friction/viscosity nahi) ka motion. Poore subject me 3 cheezein baar-baar aati hain:</p>
+  <h3>How to use this guide</h3>
+  <p>Hydrodynamics = <b>ideal (inviscid) liquid</b> ka motion. Har topic: 💡 Concept → 📖 Definition → 📜 Theorem / result → ✒️ Derivation → ✍️ Solved example.</p>
   <div class="tbl"><table>
-    <tr><th>Symbol</th><th>Matlab</th></tr>
-    <tr><td>\(\mathbf q=(u,v,w)\)</td><td>Velocity — liquid kitni tez aur kis disha me</td></tr>
-    <tr><td>\(p,\ \rho\)</td><td>Pressure aur density</td></tr>
-    <tr><td>\(\phi\)</td><td>Velocity potential — \(\mathbf q=-\nabla\phi\)</td></tr>
-    <tr><td>\(\psi\)</td><td>Stream function — \(\psi\) = constant wali lines hi streamlines</td></tr>
-    <tr><td>\(w=\phi+i\psi\)</td><td>Complex potential (2-D flow)</td></tr>
+    <tr><th>Symbol</th><th>Meaning</th></tr>
+    <tr><td>\(\mathbf q=(u,v,w)\)</td><td>Velocity of liquid</td></tr>
+    <tr><td>\(p,\ \rho\)</td><td>Pressure, density</td></tr>
+    <tr><td>\(\mathbf F=(X,Y,Z)\)</td><td>Body force per unit mass; conservative: \(\mathbf F=-\nabla\Omega\)</td></tr>
+    <tr><td>\(\phi\)</td><td>Velocity potential, \(\mathbf q=-\nabla\phi\)</td></tr>
+    <tr><td>\(\psi\)</td><td>Stream function</td></tr>
+    <tr><td>\(w=\phi+i\psi\)</td><td>Complex potential (2-D)</td></tr>
   </table></div>
-  <div class="box b-warn"><span class="lbl">⚠️ Sign convention</span>Is ebook me \(\mathbf q=-\nabla\phi\) liya hai (zyadatar Indian books — Raisinghania, M.D. Ray — yahi lete hain). Aapki class/book me \(\mathbf q=+\nabla\phi\) ho to sirf sign badal jaayega, method same.</div>
-  <p>Box ke rang: <span class="tag">💡 Seedhi baat</span> <span class="tag">✍️ Example</span> <span class="tag">📝 Exam me aise likho</span> <span class="tag">🧠 Trick</span> <span class="tag">❓ Sawaal aise aata hai</span></p>
-  <p><span class="chance ch-h">🔥 Bahut zyada chance</span> <span class="chance ch-m">⭐ Medium</span> <span class="chance ch-l">📌 Kam</span></p>
-  <h4>Plan (Real Analysis 25 Nov ke baad 26 – 27 Nov) + roz 1 ghanta ab se</h4>
-  <div class="tbl"><table><tr><th>Kab</th><th>Kya</th></tr>
-  <tr><td>Ab se 24 Nov (roz 1 ghanta)</td><td>Unit I aur II — basic formulas</td></tr>
-  <tr><td>26 Nov</td><td>Unit III + IV</td></tr>
-  <tr><td>27 Nov</td><td>Formula sheet + Important Questions</td></tr></table></div>
+  <div class="box b-warn"><span class="lbl">⚠️ Sign convention</span>Is guide me \(\mathbf q=-\nabla\phi\) liya hai (Raisinghania, M.D. Raisinghania / Ray–Sharma jaisi Indian books). Agar class me \(\mathbf q=+\nabla\phi\) padhaya gaya ho to sirf φ aur ψ ka sign badlega; method aur answers ka roop wahi rahega.</div>
+  <h4>Study plan</h4>
+  <div class="tbl"><table><tr><th>When</th><th>Topics</th></tr>
+  <tr><td>Ab se 24 Nov (roz 1 ghanta)</td><td>Unit I aur II</td></tr>
+  <tr><td>26 Nov</td><td>Unit III aur IV</td></tr>
+  <tr><td>27 Nov</td><td>Model paper likh kar solution se milaiye + formula sheet</td></tr></table></div>
+</div>
+
+<div class="card sheet" id="pattern">
+  <h3>Exam pattern</h3>
+  <p>UP ki state universities me M.A./M.Sc. Mathematics ka paper aam taur par: <b>100 marks = 25 internal + 75 Semester End Exam</b>, 3 hours.</p>
+  <div class="tbl"><table>
+    <tr><th>Section</th><th>Kya aata hai</th><th>Marks</th></tr>
+    <tr><td>A — Short</td><td>Definitions, difference, chhote numericals (streamlines, possible motion). All compulsory.</td><td>~15–20</td></tr>
+    <tr><td>B — Medium</td><td>Chhote derivations, images, numericals. Choice.</td><td>~25–30</td></tr>
+    <tr><td>C — Long</td><td>Continuity, Euler, Bernoulli, Kelvin, Blasius, Milne-Thomson, sphere/cylinder motion. Choice.</td><td>~30</td></tr>
+  </table></div>
+  <div class="box b-warn"><span class="lbl">⚠️ Zaroori</span>Exact pattern university ke notice / admit card par dekh lijiye. <a href="model-paper-hd.html">Model Paper</a> isi typical pattern par bana practice paper hai — asli pichle saal ka paper nahi.</div>
+  <div class="box b-trick"><span class="lbl">🧠 Answer writing</span>Har derivation me: (1) assumptions likhiye (ideal, incompressible, irrotational…), (2) diagram banaiye (axis, θ, U ki disha), (3) numbered steps, (4) final result box me.</div>
 </div>
 
 <!-- ===================================================== UNIT I -->
-<div class="unit-h" id="u1"><h2>Unit I — Kinematics & Equations of Motion</h2><p>Liquid ko kaise describe karein, continuity, Euler, Bernoulli.</p></div>
+<div class="unit-h" id="u1"><h2>Unit I — Kinematics and Equations of Motion</h2><p>Lagrangian & Eulerian methods, continuity, boundary surface, stream/path/streak lines, velocity potential, vorticity, Euler's and Lagrange's equations, Bernoulli, impulsive action.</p></div>
 
 <div class="card" data-id="h1.1">
-  <h3 class="topic">1.1 Lagrangian aur Eulerian method</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — difference (short question)</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
-  Nadi ko do tareeke se dekh sakte hain:
-  <ul><li><b>Lagrangian:</b> ek patta (particle) pakdo aur uske saath-saath chalo — woh kahan-kahan gaya. Position \(x = x(a,b,c,t)\), jahan (a, b, c) = shuru ki position.</li>
-  <li><b>Eulerian:</b> pul (bridge) par khade raho aur dekho ki <b>us jagah</b> se guzarne wala paani kitni speed se ja raha hai. Velocity \(\mathbf q=\mathbf q(x,y,z,t)\).</li></ul></div>
+  <h3 class="topic">1.1 Lagrangian and Eulerian methods</h3>
+  <span class="chance ch-h">🔥 High — short question</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span><b>Lagrangian:</b> ek particle ko pakad kar uske saath chalo (nadi me patta). <b>Eulerian:</b> ek fixed jagah (pul) par khade hokar dekho ki wahan se guzarne wale paani ki velocity kya hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>
+  <b>Lagrangian method:</b> the position of a particle is given as \(\mathbf r=\mathbf r(a,b,c,t)\), where (a, b, c) is its initial position; velocity \(\dot{\mathbf r}\), acceleration \(\ddot{\mathbf r}\).<br>
+  <b>Eulerian method:</b> the velocity \(\mathbf q(x,y,z,t)\), pressure and density are studied at fixed points (x, y, z) of space as functions of time.</div>
   <div class="tbl"><table><tr><th>Lagrangian</th><th>Eulerian</th></tr>
-  <tr><td>Particle ko follow karo</td><td>Fixed point par dekho</td></tr>
-  <tr><td>Variables: a, b, c, t</td><td>Variables: x, y, z, t</td></tr>
-  <tr><td>Har particle ki history milti hai</td><td>Field (poora picture) milta hai — zyada use hota hai</td></tr></table></div>
-  <div class="box b-exam"><span class="lbl">📝 Material (total) derivative</span>
-  Particle ke saath chalte hue badlav:
-  $$\frac{D}{Dt}=\frac{\partial}{\partial t}+u\frac{\partial}{\partial x}+v\frac{\partial}{\partial y}+w\frac{\partial}{\partial z}=\frac{\partial}{\partial t}+(\mathbf q\cdot\nabla)$$
-  Acceleration \(=\dfrac{D\mathbf q}{Dt}\).</div>
-  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Lagrange = "Le chalo" (particle ke saath). Euler = "Ek jagah" khade raho.</div>
+  <tr><td>Independent variables a, b, c, t</td><td>Independent variables x, y, z, t</td></tr>
+  <tr><td>History of each particle</td><td>Field of flow at each point</td></tr>
+  <tr><td>Mathematically harder</td><td>Easier, generally used</td></tr></table></div>
+  <div class="box b-thm"><span class="lbl">📜 Material (total) derivative</span>Rate of change following a particle:
+  $$\frac{D}{Dt}=\frac{\partial}{\partial t}+u\frac{\partial}{\partial x}+v\frac{\partial}{\partial y}+w\frac{\partial}{\partial z}=\frac{\partial}{\partial t}+\mathbf q\cdot\nabla .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>Let \(f(x,y,z,t)\). In time δt the particle moves from (x, y, z) to (x + uδt, y + vδt, z + wδt). So \(\delta f=\frac{\partial f}{\partial t}\delta t+\frac{\partial f}{\partial x}u\delta t+\frac{\partial f}{\partial y}v\delta t+\frac{\partial f}{\partial z}w\delta t\). Divide by δt and let δt → 0. ∎ Acceleration \(=\frac{D\mathbf q}{Dt}=\frac{\partial\mathbf q}{\partial t}+(\mathbf q\cdot\nabla)\mathbf q\).</div>
 </div>
 
 <div class="card" data-id="h1.2">
   <h3 class="topic">1.2 Equation of continuity</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — derivation 10 marks</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
-  Paani na banta hai, na mitta hai (<b>mass conservation</b>). Ek chhote dabbe me jitna paani ghusa minus jitna nikla = andar ka paani kitna badha.</div>
-  <div class="box b-exam"><span class="lbl">📝 Eulerian form + derivation</span>
-  $$\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)=0$$
-  <ol>
-    <li>Ek fixed volume V lo, surface S. Andar ka mass \(=\int_V\rho\,dV\).</li>
-    <li>Mass badhne ki rate \(=\int_V\frac{\partial\rho}{\partial t}dV\).</li>
-    <li>Surface se bahar jaata mass \(=\int_S\rho\,\mathbf q\cdot\mathbf n\,dS=\int_V\nabla\cdot(\rho\mathbf q)\,dV\) (Gauss divergence theorem).</li>
-    <li>Badhna = −(bahar jaana): \(\int_V\left[\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)\right]dV=0\).</li>
-    <li>V koi bhi ho sakta hai ⇒ bracket = 0. ∎</li>
-  </ol></div>
-  <div class="box b-exam"><span class="lbl">📝 Doosre roop</span>
-  <ul><li>\(\dfrac{D\rho}{Dt}+\rho\,\nabla\cdot\mathbf q=0\)</li>
-  <li><b>Incompressible</b> (ρ constant): \(\nabla\cdot\mathbf q=0\), yaani \(\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y}+\frac{\partial w}{\partial z}=0\)</li>
-  <li>Irrotational + incompressible: \(\nabla^2\phi=0\) (<b>Laplace equation</b>)</li>
-  <li><b>Lagrangian form:</b> \(\rho J=\rho_0\), jahan \(J=\dfrac{\partial(x,y,z)}{\partial(a,b,c)}\)</li></ul></div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>Kya \(u=-\frac{2xyz}{(x^2+y^2)^2},\ v=\frac{(x^2-y^2)z}{(x^2+y^2)^2},\ w=\frac{y}{x^2+y^2}\) ek possible incompressible motion hai? Method: \(u_x+v_y+w_z\) nikalo — 0 aaye to haan. (Yahan 0 aata hai ⇒ possible.)</div>
-  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"Derive the equation of continuity in Eulerian / Lagrangian form." / "Show that … is a possible motion of incompressible fluid."</div>
+  <span class="chance ch-h">🔥 High — 10-mark derivation</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Mass na banta hai na mitta hai. Kisi fixed volume me mass badhne ki rate = andar aane wala mass − bahar jaane wala mass.</div>
+  <div class="box b-thm"><span class="lbl">📜 Eulerian form</span>
+  $$\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)=0,\qquad\text{equivalently}\qquad\frac{D\rho}{Dt}+\rho\,\nabla\cdot\mathbf q=0 .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation (vector method)</span>
+  <ol><li>Take an arbitrary closed surface S fixed in space enclosing volume V. Mass inside \(=\int_V\rho\,dV\).</li>
+  <li>Rate of increase of mass inside \(=\frac{\partial}{\partial t}\int_V\rho\,dV=\int_V\frac{\partial\rho}{\partial t}\,dV\).</li>
+  <li>Rate of outflow of mass across S \(=\int_S\rho\,\mathbf q\cdot\mathbf n\,dS=\int_V\nabla\cdot(\rho\mathbf q)\,dV\) (Gauss divergence theorem; n = outward normal).</li>
+  <li>No sources or sinks inside, so increase = −outflow: \(\int_V\big[\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)\big]dV=0\).</li>
+  <li>This holds for every V and the integrand is continuous, so \(\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)=0\). ∎</li>
+  <li>Since \(\nabla\cdot(\rho\mathbf q)=\rho\nabla\cdot\mathbf q+\mathbf q\cdot\nabla\rho\), this is \(\frac{D\rho}{Dt}+\rho\nabla\cdot\mathbf q=0\).</li></ol></div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation (Cartesian, elementary parallelepiped)</span>
+  <ol><li>Take a small box with centre P(x, y, z) and edges δx, δy, δz parallel to the axes.</li>
+  <li>Mass flowing in per unit time through the face at \(x-\frac{\delta x}{2}\): \(\big[\rho u-\frac{\delta x}{2}\frac{\partial(\rho u)}{\partial x}\big]\delta y\,\delta z\); out through the face at \(x+\frac{\delta x}{2}\): \(\big[\rho u+\frac{\delta x}{2}\frac{\partial(\rho u)}{\partial x}\big]\delta y\,\delta z\).</li>
+  <li>Net outflow in the x-direction \(=\frac{\partial(\rho u)}{\partial x}\delta x\,\delta y\,\delta z\); similarly for y and z.</li>
+  <li>Rate of increase of mass in the box \(=\frac{\partial\rho}{\partial t}\delta x\,\delta y\,\delta z\) = −(total net outflow).</li>
+  <li>Dividing by δx δy δz: \(\frac{\partial\rho}{\partial t}+\frac{\partial(\rho u)}{\partial x}+\frac{\partial(\rho v)}{\partial y}+\frac{\partial(\rho w)}{\partial z}=0\). ∎</li></ol></div>
+  <div class="box b-thm"><span class="lbl">📜 Lagrangian form</span>\(\rho J=\rho_0\), where \(J=\dfrac{\partial(x,y,z)}{\partial(a,b,c)}\) and \(\rho_0\) is the initial density.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>A small element initially of volume δa δb δc (density \(\rho_0\)) occupies at time t the volume \(\delta x\,\delta y\,\delta z=J\,\delta a\,\delta b\,\delta c\). Its mass does not change: \(\rho J\,\delta a\,\delta b\,\delta c=\rho_0\,\delta a\,\delta b\,\delta c\), so \(\rho J=\rho_0\). ∎</div>
+  <div class="box b-easy"><span class="lbl">💡 Special cases</span>Incompressible (ρ constant): \(\nabla\cdot\mathbf q=0\), i.e. \(u_x+v_y+w_z=0\). Incompressible and irrotational (\(\mathbf q=-\nabla\phi\)): \(\nabla^2\phi=0\) (Laplace's equation).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> Show that \(u=-\frac{2xyz}{(x^2+y^2)^2},\ v=\frac{(x^2-y^2)z}{(x^2+y^2)^2},\ w=\frac{y}{x^2+y^2}\) are the velocity components of a possible liquid motion.<br>
+  Let \(r^2=x^2+y^2\).
+  \(\frac{\partial u}{\partial x}=-2yz\,\frac{r^4-x\cdot2r^2\cdot2x}{r^8}=-2yz\,\frac{y^2-3x^2}{r^6}\).
+  \(\frac{\partial v}{\partial y}=z\,\frac{-2y\,r^4-(x^2-y^2)\cdot2r^2\cdot2y}{r^8}=z\,\frac{-2y(x^2+y^2)-4y(x^2-y^2)}{r^6}=2yz\,\frac{y^2-3x^2}{r^6}\).
+  \(\frac{\partial w}{\partial z}=0\). Sum \(=0\). The equation of continuity for an incompressible liquid holds, so the motion is possible. ∎</div>
 </div>
 
 <div class="card" data-id="h1.3">
   <h3 class="topic">1.3 Boundary surface</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Boundary (jaise bartan ki deewar ya chalti hui surface) ke paar paani nahi jaata. Jo particle surface par hai, woh surface par hi rehta hai.</div>
-  <div class="box b-exam"><span class="lbl">📝 Condition</span>Surface \(F(x,y,z,t)=0\) boundary surface hai iff
-  $$\frac{DF}{Dt}=\frac{\partial F}{\partial t}+u\frac{\partial F}{\partial x}+v\frac{\partial F}{\partial y}+w\frac{\partial F}{\partial z}=0.$$
-  Matlab: surface ki normal velocity = liquid ki normal velocity.</div>
-  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"Show that \(\frac{x^2}{a^2k^2t^4}+kt^2\left(\frac{y^2}{b^2}+\frac{z^2}{c^2}\right)=1\) is a possible form of boundary surface." — method: F banao, DF/Dt = 0 se u, v, w check karo.</div>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>A surface \(F(x,y,z,t)=0\) can be a boundary surface of a liquid iff
+  $$\frac{DF}{Dt}\equiv\frac{\partial F}{\partial t}+u\frac{\partial F}{\partial x}+v\frac{\partial F}{\partial y}+w\frac{\partial F}{\partial z}=0\quad\text{on }F=0.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>At a boundary there is no flow across it: the liquid velocity normal to the surface equals the normal velocity of the surface itself.</li>
+  <li>Let a particle at (x, y, z) on the surface at time t move to (x + uδt, y + vδt, z + wδt) at t + δt. It stays on the surface, so \(F(x+u\delta t,\,y+v\delta t,\,z+w\delta t,\,t+\delta t)=0\).</li>
+  <li>Expanding by Taylor's theorem and using F(x, y, z, t) = 0: \(\delta t\big[\frac{\partial F}{\partial t}+u\frac{\partial F}{\partial x}+v\frac{\partial F}{\partial y}+w\frac{\partial F}{\partial z}\big]+O(\delta t^2)=0\).</li>
+  <li>Divide by δt and let δt → 0: \(\frac{DF}{Dt}=0\). ∎ (Equivalently, normal velocity of the surface \(=-\frac{\partial F/\partial t}{|\nabla F|}=\mathbf q\cdot\frac{\nabla F}{|\nabla F|}\).)</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> Show that \(\frac{x^2}{a^2k^2t^4}+kt^2\left(\frac{y^2}{b^2}+\frac{z^2}{c^2}\right)=1\) is a possible form of boundary surface of a liquid, and find suitable velocity components.<br>
+  Take \(F=\frac{x^2}{a^2k^2t^4}+kt^2\left(\frac{y^2}{b^2}+\frac{z^2}{c^2}\right)-1\). Try \(u=\frac{2x}{t},\ v=-\frac yt,\ w=-\frac zt\).<br>
+  \(\frac{\partial F}{\partial t}=-\frac{4x^2}{a^2k^2t^5}+2kt\left(\frac{y^2}{b^2}+\frac{z^2}{c^2}\right)\);
+  \(u\frac{\partial F}{\partial x}=\frac{2x}{t}\cdot\frac{2x}{a^2k^2t^4}=\frac{4x^2}{a^2k^2t^5}\);
+  \(v\frac{\partial F}{\partial y}=-\frac yt\cdot\frac{2kt^2y}{b^2}=-\frac{2kty^2}{b^2}\);
+  \(w\frac{\partial F}{\partial z}=-\frac{2ktz^2}{c^2}\).
+  Sum \(=0\), so DF/Dt = 0. Also \(u_x+v_y+w_z=\frac2t-\frac1t-\frac1t=0\) (continuity holds). Hence F = 0 is a possible boundary surface with these velocities. ∎</div>
 </div>
 
 <div class="card" data-id="h1.4">
-  <h3 class="topic">1.4 Streamlines, pathlines, streak lines</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — definitions + numerical</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
-  <ul><li><b>Streamline:</b> ek pal ki photo — har point par velocity ki disha jodne wali line (tangent = velocity).</li>
-  <li><b>Pathline:</b> ek particle ka poora raasta (video jaise).</li>
-  <li><b>Streak line:</b> ek fixed point se guzre saare particles ko jodne wali line (jaise agarbatti ka dhuan).</li></ul>
-  <b>Steady flow me teeno ek hi hote hain.</b></div>
-  <div class="box b-exam"><span class="lbl">📝 Equations</span>
-  Streamlines: \(\dfrac{dx}{u}=\dfrac{dy}{v}=\dfrac{dz}{w}\) (t ko constant maano)<br>
-  Pathlines: \(\dfrac{dx}{dt}=u,\ \dfrac{dy}{dt}=v,\ \dfrac{dz}{dt}=w\)</div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>
-  \(u=x,\ v=-y\) (2-D). Streamlines?
-  <ol><li>\(\frac{dx}{x}=\frac{dy}{-y}\)</li><li>Integrate: \(\log x=-\log y+\log c\)</li><li>\(\boxed{xy=c}\) — rectangular hyperbolas.</li></ol></div>
+  <h3 class="topic">1.4 Streamlines, pathlines and streak lines</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>
+  <b>Streamline:</b> a curve, drawn at a given instant, whose tangent at every point is in the direction of the velocity there.<br>
+  <b>Pathline:</b> the curve actually traced by a single particle during its motion.<br>
+  <b>Streak line:</b> the locus at a given instant of all particles that have passed through a fixed point (e.g. dye from a fixed nozzle).<br>
+  In <b>steady</b> motion all three coincide.</div>
+  <div class="box b-thm"><span class="lbl">📜 Equations</span>Streamlines: \(\dfrac{dx}{u}=\dfrac{dy}{v}=\dfrac{dz}{w}\) (t held constant). Pathlines: \(\dfrac{dx}{dt}=u,\ \dfrac{dy}{dt}=v,\ \dfrac{dz}{dt}=w\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation (streamline)</span>Along a streamline the tangent \(d\mathbf r=(dx,dy,dz)\) is parallel to \(\mathbf q\): \(d\mathbf r\times\mathbf q=\mathbf 0\), which gives \(\frac{dx}u=\frac{dy}v=\frac{dz}w\). ∎</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> For \(u=x,\ v=-y\) (2-D), find streamlines and pathlines.<br>
+  Streamlines: \(\frac{dx}{x}=\frac{dy}{-y}\Rightarrow\log x=-\log y+\log c\Rightarrow\boxed{xy=c}\) (rectangular hyperbolas).<br>
+  Pathlines: \(\frac{dx}{dt}=x\Rightarrow x=x_0e^t\); \(\frac{dy}{dt}=-y\Rightarrow y=y_0e^{-t}\). Eliminating t: \(xy=x_0y_0\) — the same hyperbolas (steady motion). ∎</div>
 </div>
 
 <div class="card" data-id="h1.5">
-  <h3 class="topic">1.5 Velocity potential, vorticity, rotational / irrotational</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
-  Paani me ek chhoti si "chakri" (paddle wheel) daalo. Ghoome ⇒ <b>rotational</b>. Na ghoome ⇒ <b>irrotational</b>.<br>
-  Ghoomne ka naap = <b>vorticity</b> \(\boldsymbol\omega=\nabla\times\mathbf q\).<br>
-  Irrotational flow me ek function \(\phi\) milta hai jisse velocity aati hai: \(\mathbf q=-\nabla\phi\) — yahi <b>velocity potential</b>.</div>
-  <div class="box b-exam"><span class="lbl">📝 Definitions</span>
-  <ul><li>Vorticity \(\boldsymbol\omega=\nabla\times\mathbf q=(\xi,\eta,\zeta)\)</li>
-  <li>Irrotational ⇔ \(\boldsymbol\omega=\mathbf 0\) ⇔ velocity potential exists, \(u=-\phi_x,\ v=-\phi_y,\ w=-\phi_z\)</li>
-  <li><b>Vortex line:</b> jiska tangent har point par ω ki disha me: \(\frac{dx}{\xi}=\frac{dy}{\eta}=\frac{dz}{\zeta}\)</li>
-  <li><b>Vortex tube:</b> closed curve ke har point se guzarti vortex lines se bana tube.</li></ul></div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\phi=x^2-y^2\) ⇒ \(u=-2x,\ v=2y\). Check: \(\nabla^2\phi=2-2=0\) ✓ (incompressible). Streamlines \(\frac{dx}{-2x}=\frac{dy}{2y}\) ⇒ \(xy=c\).</div>
-  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"Show that the motion is irrotational and find the velocity potential." / "Find vortex lines for \(u=y+z,\ v=z+x,\ w=x+y\)" (yahan curl = 0, to irrotational).</div>
+  <h3 class="topic">1.5 Velocity potential, vorticity, rotational and irrotational motion</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Paani me chhoti chakri (paddle wheel) rakho: ghoome ⇒ rotational, na ghoome ⇒ irrotational. Ghoomne ka naap = vorticity.</div>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>
+  <b>Vorticity</b> \(\boldsymbol\omega=\nabla\times\mathbf q=(\xi,\eta,\zeta)\), \(\xi=w_y-v_z,\ \eta=u_z-w_x,\ \zeta=v_x-u_y\).<br>
+  Motion is <b>irrotational</b> if \(\boldsymbol\omega=\mathbf 0\), otherwise <b>rotational</b>.<br>
+  If \(u\,dx+v\,dy+w\,dz=-d\phi\) (exact), φ is the <b>velocity potential</b>: \(\mathbf q=-\nabla\phi\).<br>
+  <b>Vortex line:</b> a curve whose tangent is along ω: \(\frac{dx}{\xi}=\frac{dy}{\eta}=\frac{dz}{\zeta}\). <b>Vortex tube:</b> vortex lines through every point of a small closed curve.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>The motion is irrotational iff a velocity potential exists.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>If \(\mathbf q=-\nabla\phi\), then \(\nabla\times\mathbf q=-\nabla\times\nabla\phi=\mathbf 0\). Conversely if \(\nabla\times\mathbf q=\mathbf 0\) in a simply connected region, \(u\,dx+v\,dy+w\,dz\) is an exact differential (conditions \(w_y=v_z\) etc.), so it equals \(-d\phi\) for some φ. ∎</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> Show that \(u=y+z,\ v=z+x,\ w=x+y\) is irrotational and find φ. Is it a possible incompressible motion?<br>
+  \(\xi=w_y-v_z=1-1=0\), \(\eta=u_z-w_x=1-1=0\), \(\zeta=v_x-u_y=1-1=0\): irrotational.<br>
+  \(-d\phi=(y+z)dx+(z+x)dy+(x+y)dz=d(xy+yz+zx)\), so \(\boxed{\phi=-(xy+yz+zx)}\).<br>
+  \(u_x+v_y+w_z=0\): possible incompressible motion. ∎</div>
 </div>
 
 <div class="card" data-id="h1.6">
-  <h3 class="topic">1.6 Euler's equation of motion</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — derivation 10 marks</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Newton ka F = ma, paani ke liye. Mass × acceleration = body force (gravity) + pressure ka dhakka.</div>
-  <div class="box b-exam"><span class="lbl">📝 Equation + derivation</span>
-  $$\frac{D\mathbf q}{Dt}=\mathbf F-\frac1\rho\nabla p$$
-  <ol><li>Ek moving volume V lo (surface S). Mass \(\int\rho\,dV\) constant.</li>
-  <li>Body force \(=\int_V\rho\mathbf F\,dV\). Pressure force \(=-\int_S p\,\mathbf n\,dS=-\int_V\nabla p\,dV\) (Gauss).</li>
-  <li>Newton: \(\int_V\rho\frac{D\mathbf q}{Dt}dV=\int_V(\rho\mathbf F-\nabla p)\,dV\).</li>
-  <li>V koi bhi ⇒ \(\rho\frac{D\mathbf q}{Dt}=\rho\mathbf F-\nabla p\). ∎</li></ol>
-  Components: \(\frac{\partial u}{\partial t}+u\frac{\partial u}{\partial x}+v\frac{\partial u}{\partial y}+w\frac{\partial u}{\partial z}=X-\frac1\rho\frac{\partial p}{\partial x}\) (v, w ke liye bhi aise hi).</div>
-  <div class="box b-exam"><span class="lbl">📝 Vector form (Lamb)</span>
-  \(\dfrac{\partial\mathbf q}{\partial t}-\mathbf q\times\boldsymbol\omega=-\nabla\Big(\tfrac12q^2+\Omega+\int\tfrac{dp}{\rho}\Big)\) jab \(\mathbf F=-\nabla\Omega\). Bernoulli isi se nikalta hai.</div>
-  <div class="box b-exam"><span class="lbl">📝 Lagrange's equations (Lagrangian form)</span>
-  $$\Big(\ddot x-X\Big)\frac{\partial x}{\partial a}+\Big(\ddot y-Y\Big)\frac{\partial y}{\partial a}+\Big(\ddot z-Z\Big)\frac{\partial z}{\partial a}=-\frac1\rho\frac{\partial p}{\partial a}$$
-  (b aur c ke liye bhi same.) Euler ki equation ko \(\partial x/\partial a\) etc. se multiply karke jodne par milti hai.</div>
+  <h3 class="topic">1.6 Euler's equations of motion; Lagrange's equations</h3>
+  <span class="chance ch-h">🔥 High — 10-mark derivation</span>
+  <div class="box b-thm"><span class="lbl">📜 Euler's equation</span>
+  $$\frac{D\mathbf q}{Dt}=\mathbf F-\frac1\rho\nabla p,\qquad\text{i.e.}\quad\frac{\partial u}{\partial t}+u\frac{\partial u}{\partial x}+v\frac{\partial u}{\partial y}+w\frac{\partial u}{\partial z}=X-\frac1\rho\frac{\partial p}{\partial x}$$
+  (and similarly for v, w).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Consider a volume V bounded by S moving with the liquid. Its mass \(\int_V\rho\,dV\) is constant.</li>
+  <li>Forces on it: body force \(\int_V\rho\mathbf F\,dV\); pressure (normal thrust, inviscid liquid) \(-\int_Sp\,\mathbf n\,dS=-\int_V\nabla p\,dV\) (Gauss).</li>
+  <li>Rate of change of momentum \(=\frac{D}{Dt}\int_V\rho\mathbf q\,dV=\int_V\rho\frac{D\mathbf q}{Dt}dV\) (mass of each element is conserved).</li>
+  <li>Newton's second law: \(\int_V\big[\rho\frac{D\mathbf q}{Dt}-\rho\mathbf F+\nabla p\big]dV=0\) for every V.</li>
+  <li>Hence \(\frac{D\mathbf q}{Dt}=\mathbf F-\frac1\rho\nabla p\). ∎</li></ol></div>
+  <div class="box b-thm"><span class="lbl">📜 Lamb's (vector) form</span>With \(\mathbf F=-\nabla\Omega\):
+  $$\frac{\partial\mathbf q}{\partial t}-\mathbf q\times\boldsymbol\omega=-\nabla\Big(\tfrac12q^2+\Omega\Big)-\frac1\rho\nabla p .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>Use the vector identity \((\mathbf q\cdot\nabla)\mathbf q=\nabla(\tfrac12q^2)-\mathbf q\times(\nabla\times\mathbf q)\) in \(\frac{\partial\mathbf q}{\partial t}+(\mathbf q\cdot\nabla)\mathbf q=-\nabla\Omega-\frac1\rho\nabla p\). ∎</div>
+  <div class="box b-thm"><span class="lbl">📜 Lagrange's equations of motion</span>
+  $$\Big(\frac{\partial^2x}{\partial t^2}-X\Big)\frac{\partial x}{\partial a}+\Big(\frac{\partial^2y}{\partial t^2}-Y\Big)\frac{\partial y}{\partial a}+\Big(\frac{\partial^2z}{\partial t^2}-Z\Big)\frac{\partial z}{\partial a}=-\frac1\rho\frac{\partial p}{\partial a}$$
+  and two similar equations with b and c.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>In Lagrangian variables the acceleration is \((\ddot x,\ddot y,\ddot z)\), so Euler's equations read \(\ddot x-X=-\frac1\rho\frac{\partial p}{\partial x}\), etc. Multiply these three by \(\frac{\partial x}{\partial a},\frac{\partial y}{\partial a},\frac{\partial z}{\partial a}\) and add. By the chain rule \(\frac{\partial p}{\partial x}\frac{\partial x}{\partial a}+\frac{\partial p}{\partial y}\frac{\partial y}{\partial a}+\frac{\partial p}{\partial z}\frac{\partial z}{\partial a}=\frac{\partial p}{\partial a}\). This gives the first equation; b and c are similar. ∎</div>
 </div>
 
 <div class="card" data-id="h1.7">
   <h3 class="topic">1.7 Bernoulli's equation</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — har paper me</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Jahan paani <b>tez</b> behta hai wahan <b>pressure kam</b>. Pipe patla ⇒ speed zyada ⇒ pressure kam. Energy ka hisaab: pressure energy + kinetic energy + height energy = constant.</div>
-  <div class="box b-exam"><span class="lbl">📝 Do roop</span>
-  <b>(a) Irrotational, unsteady</b> (F = −∇Ω, barotropic):
-  $$\int\frac{dp}{\rho}+\frac12q^2+\Omega-\frac{\partial\phi}{\partial t}=C(t)$$
-  <b>(b) Steady flow</b> — streamline ke along:
-  $$\frac p\rho+\frac12q^2+gz=\text{constant}$$
-  <b>Derivation idea:</b> Lamb form me irrotational (ω = 0) aur \(\mathbf q=-\nabla\phi\) rakho ⇒ \(\nabla\big(-\frac{\partial\phi}{\partial t}+\frac12q^2+\Omega+\int\frac{dp}\rho\big)=0\) ⇒ bracket sirf t ka function. Steady me: Lamb form ko q se dot karo, \(\mathbf q\cdot(\mathbf q\times\boldsymbol\omega)=0\), to streamline par constant.</div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>Tanki me h gehraai par chhed: \(\frac{p_0}{\rho}+0+gh=\frac{p_0}{\rho}+\frac12v^2+0\) ⇒ \(\boxed{v=\sqrt{2gh}}\) (Torricelli).</div>
-  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"State and prove Bernoulli's theorem for steady/unsteady irrotational motion."</div>
+  <span class="chance ch-h">🔥 High — every paper</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Jahan paani tez behta hai wahan pressure kam. Pressure-energy + kinetic energy + potential energy = constant.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (a) — irrotational motion</span>If the motion is irrotational (\(\mathbf q=-\nabla\phi\)), the body force is conservative (\(\mathbf F=-\nabla\Omega\)) and ρ is a function of p only, then throughout the liquid
+  $$\int\frac{dp}{\rho}+\frac12q^2+\Omega-\frac{\partial\phi}{\partial t}=C(t).$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>In Lamb's form put ω = 0 and \(\mathbf q=-\nabla\phi\), so \(\frac{\partial\mathbf q}{\partial t}=-\nabla\frac{\partial\phi}{\partial t}\).</li>
+  <li>Since ρ = ρ(p), \(\frac1\rho\nabla p=\nabla\int\frac{dp}\rho\).</li>
+  <li>The equation becomes \(\nabla\Big(-\frac{\partial\phi}{\partial t}+\frac12q^2+\Omega+\int\frac{dp}\rho\Big)=\mathbf 0\).</li>
+  <li>So the bracket is independent of x, y, z: it is a function C(t) of time only. ∎</li></ol>
+  For <b>steady</b> irrotational motion C is an absolute constant; for an incompressible liquid under gravity \(\frac p\rho+\frac12q^2+gz=\) const everywhere.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (b) — steady motion (rotational allowed)</span>In steady motion with \(\mathbf F=-\nabla\Omega\) and ρ = ρ(p), \(\int\frac{dp}\rho+\frac12q^2+\Omega\) is constant along each streamline (and along each vortex line).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>Steady: \(\frac{\partial\mathbf q}{\partial t}=0\), so Lamb's form gives \(\nabla H=\mathbf q\times\boldsymbol\omega\), \(H=\int\frac{dp}\rho+\frac12q^2+\Omega\). Take the dot product with a small element \(d\mathbf r\) along a streamline (parallel to q): \(dH=(\mathbf q\times\boldsymbol\omega)\cdot d\mathbf r=0\). So H is constant along the streamline (same for a vortex line, \(d\mathbf r\parallel\boldsymbol\omega\)). ∎</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> Find the velocity of efflux from a small hole at depth h below the free surface of a large tank (Torricelli).<br>
+  Apply steady Bernoulli along a streamline from the free surface (pressure \(p_0\), speed ≈ 0, height h) to the hole (pressure \(p_0\), speed v, height 0): \(\frac{p_0}\rho+0+gh=\frac{p_0}\rho+\frac12v^2+0\Rightarrow\boxed{v=\sqrt{2gh}}\). ∎</div>
 </div>
 
 <div class="card" data-id="h1.8">
-  <h3 class="topic">1.8 Impulsive action</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Achanak dhakka (jaise bartan ko jhatke se chalana). Bahut kam time me bahut bada pressure — use <b>impulsive pressure</b> \(\varpi\) kehte hain. Velocity achanak \(\mathbf q_1\) se \(\mathbf q_2\) ho jaati hai.</div>
-  <div class="box b-exam"><span class="lbl">📝 Equation</span>
-  $$\mathbf q_2-\mathbf q_1=\mathbf I-\frac1\rho\nabla\varpi$$
-  (\(\mathbf I\) = impulsive body force per unit mass.) Liquid rest se shuru ho aur I = 0 ho ⇒ motion irrotational, aur \(\varpi=\rho\phi+C\). Incompressible me \(\nabla^2\varpi=0\).</div>
+  <h3 class="topic">1.8 Equation of impulsive action</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>An impulsive force is a very large force acting for a very short time τ; impulse \(\mathbf I=\lim_{\tau\to0}\int_0^\tau\mathbf F\,dt\) (per unit mass). Impulsive pressure \(\varpi=\lim_{\tau\to0}\int_0^\tau p\,dt\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If the velocity changes suddenly from \(\mathbf q_1\) to \(\mathbf q_2\),
+  $$\mathbf q_2-\mathbf q_1=\mathbf I-\frac1\rho\nabla\varpi .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Euler: \(\frac{D\mathbf q}{Dt}=\mathbf F-\frac1\rho\nabla p\). Integrate over the short interval (0, τ) following the particle; the particle hardly moves, and ρ is constant during the impulse.</li>
+  <li>\(\int_0^\tau\frac{D\mathbf q}{Dt}dt=\mathbf q_2-\mathbf q_1\); \(\int_0^\tau\mathbf F\,dt\to\mathbf I\); \(\int_0^\tau\nabla p\,dt=\nabla\int_0^\tau p\,dt\to\nabla\varpi\).</li>
+  <li>Hence \(\mathbf q_2-\mathbf q_1=\mathbf I-\frac1\rho\nabla\varpi\). ∎</li></ol>
+  <b>Corollaries:</b> if the liquid starts from rest (\(\mathbf q_1=0\)) and no impulsive body force acts (I = 0), then \(\mathbf q_2=-\frac1\rho\nabla\varpi\): the motion set up is irrotational with \(\phi=\frac{\varpi}{\rho}\) + const. Taking divergence for an incompressible liquid: \(\nabla^2\varpi=0\).</div>
 </div>
 
 <!-- ===================================================== UNIT II -->
-<div class="unit-h" id="u2"><h2>Unit II — 2-D Flow: Sources, Sinks, Images, Circulation</h2><p>Complex potential se poora flow ek line me likhna.</p></div>
+<div class="unit-h" id="u2"><h2>Unit II — Two-dimensional Motion, Images, Circulation</h2><p>Stream function, complex potential, sources, sinks, doublets, images, Blasius, Kelvin, kinetic energy, momentum theorem, D'Alembert's paradox.</p></div>
 
 <div class="card" data-id="h2.1">
-  <h3 class="topic">2.1 Stream function aur complex potential</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — base of Unit II, III</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>2-D incompressible flow me ek function \(\psi\) hota hai — \(\psi\) = constant lines hi streamlines hain. Do streamlines ke beech ka paani ka flow = \(\psi_2-\psi_1\).<br>Irrotational bhi ho to \(\phi\) aur \(\psi\) ko jod kar ek complex function bana lo: \(w=\phi+i\psi\) — sab kuch isi se.</div>
-  <div class="box b-exam"><span class="lbl">📝 Relations (q = −∇φ)</span>
-  $$u=-\frac{\partial\phi}{\partial x}=-\frac{\partial\psi}{\partial y},\qquad v=-\frac{\partial\phi}{\partial y}=\frac{\partial\psi}{\partial x}$$
-  Yeh <b>Cauchy–Riemann</b> equations hain ⇒ \(w=\phi+i\psi\) analytic function of \(z=x+iy\).
-  $$\frac{dw}{dz}=-u+iv,\qquad q=\left|\frac{dw}{dz}\right|$$
-  \(\phi\) aur \(\psi\) dono Laplace satisfy karte hain; \(\phi\)= const aur \(\psi\) = const lines ek doosre ke perpendicular.</div>
+  <h3 class="topic">2.1 Stream function and complex potential</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Stream function</span>For 2-D incompressible motion, continuity \(u_x+v_y=0\) makes \(v\,dx-u\,dy\) an exact differential \(d\psi\). The function ψ is the <b>stream function</b>:
+  $$u=-\frac{\partial\psi}{\partial y},\qquad v=\frac{\partial\psi}{\partial x}.$$
+  The curves ψ = constant are the streamlines, and \(\psi_2-\psi_1\) is the volume flux (per unit thickness) between two streamlines.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proofs</span>
+  <ol><li>Exactness: \(\frac{\partial v}{\partial y}=\frac{\partial(-u)}{\partial x}\) is exactly \(u_x+v_y=0\).</li>
+  <li>On ψ = c: \(d\psi=v\,dx-u\,dy=0\Rightarrow\frac{dx}u=\frac{dy}v\), the streamline equation.</li>
+  <li>Flux across a curve from A to B (unit normal \(\mathbf n\,ds=(dy,-dx)\) to the right of the direction of travel): \(\int(u\,dy-v\,dx)=-\int d\psi\), whose magnitude is \(|\psi_B-\psi_A|\). ∎</li></ol></div>
+  <div class="box b-thm"><span class="lbl">📜 Complex potential</span>If the motion is also irrotational, \(u=-\phi_x=-\psi_y,\ v=-\phi_y=\psi_x\). These are the Cauchy–Riemann equations \(\phi_x=\psi_y,\ \phi_y=-\psi_x\), so \(w=\phi+i\psi\) is an analytic function of z = x + iy, and
+  $$\frac{dw}{dz}=\phi_x+i\psi_x=-u+iv,\qquad q=\Big|\frac{dw}{dz}\Big| .$$
+  φ and ψ both satisfy Laplace's equation, and the families φ = const, ψ = const cut orthogonally.</div>
   <div class="tbl"><table><tr><th>Flow</th><th>Complex potential w</th></tr>
-  <tr><td>Uniform stream U (x-disha me)</td><td>\(-Uz\)</td></tr>
-  <tr><td>Source strength m at \(z_0\)</td><td>\(-m\log(z-z_0)\)</td></tr>
-  <tr><td>Sink strength m at \(z_0\)</td><td>\(+m\log(z-z_0)\)</td></tr>
-  <tr><td>Doublet strength μ at \(z_0\)</td><td>\(\dfrac{\mu}{z-z_0}\)</td></tr>
-  <tr><td>Vortex (circulation Γ) at \(z_0\)</td><td>\(\dfrac{i\Gamma}{2\pi}\log(z-z_0)\)</td></tr></table></div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(w=z^2\) ⇒ \(\phi=x^2-y^2,\ \psi=2xy\). Streamlines \(xy\)= const. \(dw/dz=2z\) ⇒ \(u=-2x,\ v=2y\), speed \(q=2r\).</div>
+  <tr><td>Uniform stream U along x-axis</td><td>\(-Uz\)</td></tr>
+  <tr><td>Uniform stream U at angle α</td><td>\(-Ue^{-i\alpha}z\)</td></tr>
+  <tr><td>Source of strength m at \(z_0\)</td><td>\(-m\log(z-z_0)\)</td></tr>
+  <tr><td>Sink of strength m at \(z_0\)</td><td>\(+m\log(z-z_0)\)</td></tr>
+  <tr><td>Doublet of strength μ at \(z_0\) (axis along x)</td><td>\(\dfrac{\mu}{z-z_0}\)</td></tr>
+  <tr><td>Vortex of circulation Γ at \(z_0\)</td><td>\(\dfrac{i\Gamma}{2\pi}\log(z-z_0)\)</td></tr></table></div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> For \(w=z^2\), find φ, ψ, velocity and streamlines.<br>
+  \(w=(x+iy)^2\Rightarrow\phi=x^2-y^2,\ \psi=2xy\). \(\frac{dw}{dz}=2z=-u+iv\Rightarrow u=-2x,\ v=2y\); speed \(q=2r\). Streamlines xy = const (rectangular hyperbolas) — flow in a right-angled corner. ∎</div>
 </div>
 
 <div class="card" data-id="h2.2">
-  <h3 class="topic">2.2 Sources, sinks aur doublets</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
-  <b>Source:</b> ek point jahan se paani har disha me barabar nikalta hai (jaise nal). <b>Sink:</b> jahan paani andar jaata hai (jaise naali).<br>
-  <b>Doublet:</b> ek source aur ek sink ko bahut paas laao aur strength badha do (m × distance = μ fixed) — ek naya flow banta hai.</div>
-  <div class="box b-exam"><span class="lbl">📝 2-D source</span>
-  Strength m: har second \(2\pi m\) paani nikalta hai. Radial velocity \(q_r=\dfrac{m}{r}\), \(\phi=-m\log r,\ \psi=-m\theta\).<br>
-  <b>Doublet:</b> source m at a, sink m at origin ke paas; \(m\to\infty\), \(a\to0\), \(ma=\mu\):
-  $$w=-m\log(z-a)+m\log z\ \longrightarrow\ \frac{\mu}{z}$$</div>
-  <div class="box b-ex"><span class="lbl">✍️ Example: source + sink</span>Source m at (a,0), sink m at (−a,0): \(w=-m\log(z-a)+m\log(z+a)\). Streamlines \(\psi=-m(\theta_1-\theta_2)\)= const ⇒ dono points se guzarte <b>circles</b>.</div>
-  <div class="box b-ex"><span class="lbl">✍️ 3-D source (Unit IV me kaam aayega)</span>Strength m: \(\phi=\dfrac mr\), \(q_r=\dfrac{m}{r^2}\), har second \(4\pi m\) paani.</div>
+  <h3 class="topic">2.2 Sources, sinks and doublets</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>A (2-D) <b>source</b> of strength m is a point from which liquid flows out radially and symmetrically, the volume emitted per unit time (per unit thickness) being 2πm. A <b>sink</b> is a negative source. A <b>doublet</b> is the limit of a source m and a sink −m at distance δs apart as m → ∞, δs → 0 with \(m\,\delta s=\mu\) finite; the line from sink to source is its axis.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation — source</span>
+  <ol><li>By symmetry the velocity is radial, \(q_r(r)\). Volume through a circle of radius r per unit time: \(2\pi r\,q_r=2\pi m\Rightarrow q_r=\frac mr\).</li>
+  <li>\(q_r=-\frac{\partial\phi}{\partial r}=\frac mr\Rightarrow\phi=-m\log r\). Similarly \(\psi=-m\theta\) (from \(q_r=-\frac1r\frac{\partial\psi}{\partial\theta}\)).</li>
+  <li>\(w=\phi+i\psi=-m(\log r+i\theta)=-m\log z\). For a source at \(z_0\): \(w=-m\log(z-z_0)\). ∎</li></ol></div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation — doublet</span>Source m at \(z_0+\delta s\,e^{i\alpha}\), sink m at \(z_0\): \(w=-m\log(z-z_0-\delta s\,e^{i\alpha})+m\log(z-z_0)=-m\log\Big(1-\frac{\delta s\,e^{i\alpha}}{z-z_0}\Big)\approx\frac{m\,\delta s\,e^{i\alpha}}{z-z_0}\). In the limit, \(w=\frac{\mu e^{i\alpha}}{z-z_0}\); for axis along the x-axis (α = 0) \(w=\frac{\mu}{z-z_0}\). With \(z_0=0\): \(\phi=\frac{\mu\cos\theta}{r},\ \psi=-\frac{\mu\sin\theta}{r}\); streamlines \(r=c\sin\theta\) are circles touching the x-axis at the origin. ∎</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> A source m at (a, 0) and an equal sink at (−a, 0). Show that the streamlines are circles through the two points.<br>
+  \(w=-m\log(z-a)+m\log(z+a)\Rightarrow\psi=-m(\theta_1-\theta_2)\), where \(\theta_1,\theta_2\) are the angles at P subtended from (a, 0) and (−a, 0). ψ = const ⇒ \(\theta_1-\theta_2\) = const, i.e. the angle APB subtended by AB at P is constant ⇒ P lies on a circle through A(a, 0) and B(−a, 0). ∎</div>
+  <div class="box b-easy"><span class="lbl">💡 3-D source (Unit IV)</span>Strength m: \(q_r=\frac m{r^2}\), \(\phi=\frac mr\), volume per unit time 4πm.</div>
 </div>
 
 <div class="card" data-id="h2.3">
-  <h3 class="topic">2.3 Images — line, circle, sphere</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — circle wala pakka</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Deewar ke paas source ho to paani deewar ke paar nahi ja sakta. Trick: deewar hata do aur <b>shishe (mirror) ki tarah</b> doosri taraf ek nakli source rakh do — uska asar deewar par normal velocity zero kar deta hai. Yahi <b>image</b> hai.</div>
-  <div class="tbl"><table><tr><th>Object</th><th>Boundary</th><th>Image system</th></tr>
-  <tr><td>Source m at \(z_0\)</td><td>Straight line (wall)</td><td>Same source m at mirror point \(\bar z_0\)</td></tr>
-  <tr><td>Source m at distance f from centre</td><td>Circle radius a</td><td>Source m at inverse point \(a^2/f\) + sink m at centre</td></tr>
-  <tr><td>Doublet</td><td>Circle</td><td>Doublet at inverse point (strength \(\mu a^2/f^2\))</td></tr>
-  <tr><td>3-D source m at distance f</td><td>Sphere radius a</td><td>Source \(\frac{ma}{f}\) at inverse point \(a^2/f\) + line sink (strength \(m/a\) per unit length) centre se inverse point tak</td></tr></table></div>
-  <div class="box b-exam"><span class="lbl">📝 Circle wala proof (short)</span>
-  <ol><li>Source m at A (OA = f), circle |z| = a. Inverse point A′, OA′ = \(a^2/f\).</li>
-  <li>System: source m at A, source m at A′, sink m at O: \(w=-m\log(z-f)-m\log(z-\tfrac{a^2}{f})+m\log z\).</li>
-  <li>Circle par \(z=ae^{i\theta}\) rakho. \(\psi\) = constant aata hai ⇒ circle ek streamline ⇒ uske paar flow nahi. ∎</li></ol>
-  Short-cut: <b>Milne-Thomson circle theorem</b> (Unit III) se seedha.</div>
-  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"Find the image of a source with respect to a circle." / "Image of a source in a plane / sphere."</div>
+  <h3 class="topic">2.3 Images — with respect to a line, a circle and a sphere</h3>
+  <span class="chance ch-h">🔥 High — circle case</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>If a system S of sources, sinks, doublets in a liquid bounded by a rigid surface C can be replaced (in the region occupied by the liquid) by S together with another system S′ on the other side of C such that C becomes a streamline, then S′ is the <b>image</b> of S in C.</div>
+  <div class="box b-thm"><span class="lbl">📜 (a) Image of a source in a straight line (plane wall)</span>The image of a source m at (0, a) in the wall y = 0 is an equal source m at (0, −a).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>\(w=-m\log(z-ia)-m\log(z+ia)=-m\log(z^2+a^2)\). On y = 0, z = x is real, so \(z^2+a^2=x^2+a^2\gt0\) and \(\psi=-m\arg(x^2+a^2)=0\). Hence y = 0 is a streamline: no flow across the wall. ∎</div>
+  <div class="box b-thm"><span class="lbl">📜 (b) Image of a source in a circle</span>The image of a source m at distance f (&gt; a) from the centre of a circular cylinder of radius a consists of an equal source m at the inverse point (distance \(a^2/f\)) and an equal sink m at the centre.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <ol><li>Take the centre at O and the source at z = f. Proposed system: \(w=-m\log(z-f)-m\log\big(z-\frac{a^2}{f}\big)+m\log z\).</li>
+  <li>On the circle \(|z|=a\): \(z\bar z=a^2\), so \(z-\frac{a^2}{f}=z-\frac{z\bar z}{f}=\frac{z(f-\bar z)}{f}\).</li>
+  <li>Hence on the circle \(w=-m\log(z-f)-m\log z-m\log(f-\bar z)+m\log f+m\log z=-m\log[(z-f)(f-\bar z)]+m\log f\).</li>
+  <li>\((z-f)(f-\bar z)=-(z-f)\overline{(z-f)}=-|z-f|^2\), a negative real number; its argument is the constant π. So ψ = −mπ = constant on the circle.</li>
+  <li>The circle is a streamline, so the system gives the motion outside the cylinder. ∎</li></ol></div>
+  <div class="box b-thm"><span class="lbl">📜 (c) Image of a doublet in a circle</span>A doublet of strength μ at distance f from the centre (axis along OA) has as image a doublet of strength \(\mu a^2/f^2\) at the inverse point, its axis being the reflection of the original axis in OA. (Follows directly from the Milne-Thomson circle theorem, 3.1.)</div>
+  <div class="box b-thm"><span class="lbl">📜 (d) Image of a source in a sphere (3-D)</span>The image of a source of strength m at distance f from the centre of a sphere of radius a is a source \(\frac{ma}{f}\) at the inverse point (distance \(a^2/f\)) together with a uniform line sink of strength \(\frac ma\) per unit length extending from the centre to the inverse point.</div>
+  <div class="box b-easy"><span class="lbl">💡 Note on (d)</span>Is result ka poora proof Legendre polynomial expansion (\(\frac1R=\sum\frac{r^n}{f^{n+1}}P_n(\cos\theta)\)) se hota hai; exam me aam taur par statement aur diagram poochha jaata hai. <b>Check:</b> image source \(\frac{ma}{f}\) ki total strength aur line sink ki total strength \(\frac ma\times\frac{a^2}{f}=\frac{ma}{f}\) barabar hain — yaani sphere ke andar net koi liquid paida nahi hota, jaisa hona chahiye.</div>
 </div>
 
 <div class="card" data-id="h2.4">
   <h3 class="topic">2.4 Theorem of Blasius</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — statement + use</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Steady flow me paani ek fixed cylinder par kitna force lagata hai — ek contour integral se nikal aata hai.</div>
-  <div class="box b-exam"><span class="lbl">📝 Statement</span>
-  Steady 2-D irrotational flow, fixed cylinder C, complex potential w. Force (X, Y) aur moment M (origin ke around):
-  $$X-iY=\frac{i\rho}{2}\oint_C\left(\frac{dw}{dz}\right)^2dz,\qquad M=\text{Re}\left[-\frac\rho2\oint_C z\left(\frac{dw}{dz}\right)^2dz\right]$$
-  <b>Proof idea:</b> Surface ke chhote hisse par pressure force \(p\,ds\); Bernoulli se \(p=C-\frac12\rho q^2\); cylinder streamline hai to \(d\psi=0\) ⇒ \((dw/dz)^2dz\) ka form ban jaata hai.</div>
-  <div class="box b-ex"><span class="lbl">✍️ Use: Kutta–Joukowski lift</span>Uniform stream U past cylinder with circulation Γ: Blasius + residue theorem ⇒ drag X = 0, lift \(=\rho U\Gamma\) (per unit length).</div>
+  <span class="chance ch-h">🔥 High — full proof</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>In a steady 2-D irrotational motion with complex potential w, given by a fixed cylinder C, the force (X, Y) per unit length and the moment M about the origin exerted by the liquid on the cylinder are
+  $$X-iY=\frac{i\rho}{2}\oint_C\Big(\frac{dw}{dz}\Big)^2dz,\qquad M=\operatorname{Re}\Big[-\frac\rho2\oint_Cz\Big(\frac{dw}{dz}\Big)^2dz\Big],$$
+  external forces being neglected.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <ol><li>Take an element ds of the contour C (described counter-clockwise) at (x, y), with dz = dx + i dy. The pressure p acts along the inward normal; its components on the element are \(dX=-p\,dy,\ dY=p\,dx\).</li>
+  <li>So \(dX-i\,dY=-p\,(dy+i\,dx)=-ip\,(dx-i\,dy)=-ip\,d\bar z\), and \(X-iY=-i\oint_Cp\,d\bar z\).</li>
+  <li>Bernoulli (steady, no external force): \(p=C-\frac12\rho q^2\). Since \(\oint_C d\bar z=0\): \(X-iY=\frac{i\rho}{2}\oint_Cq^2\,d\bar z\).</li>
+  <li>C is a streamline (ψ = const), so along C, \(dw=d\phi\) is real: \(\frac{dw}{dz}dz=\overline{\Big(\frac{dw}{dz}dz\Big)}=\frac{d\bar w}{d\bar z}d\bar z\).</li>
+  <li>\(q^2=\frac{dw}{dz}\cdot\frac{d\bar w}{d\bar z}\), so \(q^2\,d\bar z=\frac{dw}{dz}\Big(\frac{d\bar w}{d\bar z}d\bar z\Big)=\frac{dw}{dz}\cdot\frac{dw}{dz}dz=\Big(\frac{dw}{dz}\Big)^2dz\).</li>
+  <li>Therefore \(X-iY=\frac{i\rho}{2}\oint_C\big(\frac{dw}{dz}\big)^2dz\).</li>
+  <li><b>Moment:</b> \(dM=x\,dY-y\,dX=p(x\,dx+y\,dy)=\operatorname{Re}(p\,z\,d\bar z)\). With \(p=C-\frac12\rho q^2\) and \(\oint(x\,dx+y\,dy)=0\): \(M=\operatorname{Re}\big[-\frac\rho2\oint q^2z\,d\bar z\big]\), and by step 5, \(q^2z\,d\bar z=z\big(\frac{dw}{dz}\big)^2dz\). Hence \(M=\operatorname{Re}\big[-\frac\rho2\oint_Cz\big(\frac{dw}{dz}\big)^2dz\big]\). ∎</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Application — Kutta–Joukowski lift</span>
+  Uniform stream U past a circular cylinder with circulation Γ: \(w=-U\big(z+\frac{a^2}{z}\big)+\frac{i\Gamma}{2\pi}\log z\).<br>
+  \(\frac{dw}{dz}=-U+\frac{Ua^2}{z^2}+\frac{i\Gamma}{2\pi z}\). In \(\big(\frac{dw}{dz}\big)^2\) the coefficient of \(\frac1z\) is \(2(-U)\frac{i\Gamma}{2\pi}=-\frac{iU\Gamma}{\pi}\).
+  By the residue theorem \(\oint\big(\frac{dw}{dz}\big)^2dz=2\pi i\cdot\big(-\frac{iU\Gamma}{\pi}\big)=2U\Gamma\).<br>
+  \(X-iY=\frac{i\rho}{2}\cdot2U\Gamma=i\rho U\Gamma\Rightarrow X=0,\ Y=-\rho U\Gamma\).
+  So there is <b>no drag</b>, and a force of magnitude \(\rho U\Gamma\) perpendicular to the stream (lift). ∎</div>
 </div>
 
 <div class="card" data-id="h2.5">
-  <h3 class="topic">2.5 Circulation aur Kelvin's circulation theorem</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — proof 10 marks</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Ek band raaste (closed curve) ke chaaron taraf paani kitna "ghoom" raha hai = <b>circulation</b>. Kelvin kehte hain: ideal liquid me, paani ke saath chalne wale raaste ka circulation <b>kabhi nahi badalta</b>.</div>
-  <div class="box b-exam"><span class="lbl">📝 Definition + theorem + proof</span>
-  Circulation \(\Gamma=\oint_C\mathbf q\cdot d\mathbf r=\oint(u\,dx+v\,dy+w\,dz)\). Stokes se \(\Gamma=\int_S\boldsymbol\omega\cdot\mathbf n\,dS\).<br>
-  <b>Kelvin:</b> In an inviscid fluid with conservative body force (\(\mathbf F=-\nabla\Omega\)) and \(\rho\) a function of p only, the circulation round any closed curve moving with the fluid is constant: \(\dfrac{D\Gamma}{Dt}=0\).
-  <ol><li>\(\frac{D}{Dt}\oint\mathbf q\cdot d\mathbf r=\oint\frac{D\mathbf q}{Dt}\cdot d\mathbf r+\oint\mathbf q\cdot\frac{D}{Dt}(d\mathbf r)\)</li>
-  <li>\(\frac{D}{Dt}(d\mathbf r)=d\mathbf q\), to doosra term \(=\oint\mathbf q\cdot d\mathbf q=\oint d(\tfrac12q^2)=0\) (closed curve).</li>
-  <li>Euler se \(\frac{D\mathbf q}{Dt}=-\nabla(\Omega+\int\frac{dp}\rho)\) ⇒ pehla term \(=-\oint d(\Omega+\int\frac{dp}{\rho})=0\).</li>
-  <li>Isliye \(\frac{D\Gamma}{Dt}=0\). ∎</li></ol></div>
-  <div class="box b-exam"><span class="lbl">📝 Permanence of irrotational motion</span>Kelvin ka nateeja: agar motion ek baar irrotational hai (har curve par Γ = 0), to <b>hamesha irrotational rahega</b>. Isliye rest se shuru hone wala ideal liquid motion irrotational hota hai.</div>
+  <h3 class="topic">2.5 Flow, circulation and Kelvin's circulation theorem</h3>
+  <span class="chance ch-h">🔥 High — 10-mark proof</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>The <b>flow</b> along a curve from A to B is \(\int_A^B\mathbf q\cdot d\mathbf r=\int(u\,dx+v\,dy+w\,dz)\). If the curve is closed, the flow round it is the <b>circulation</b> \(\Gamma=\oint_C\mathbf q\cdot d\mathbf r\). By Stokes' theorem \(\Gamma=\int_S\boldsymbol\omega\cdot\mathbf n\,dS\). In irrotational motion, flow from A to B \(=\phi_A-\phi_B\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Kelvin's circulation theorem</span>In an inviscid liquid with conservative body forces (\(\mathbf F=-\nabla\Omega\)) and density a function of pressure only, the circulation round any closed circuit moving with the liquid is constant in time: \(\dfrac{D\Gamma}{Dt}=0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <ol><li>\(\frac{D}{Dt}\oint_C\mathbf q\cdot d\mathbf r=\oint_C\frac{D\mathbf q}{Dt}\cdot d\mathbf r+\oint_C\mathbf q\cdot\frac{D}{Dt}(d\mathbf r)\).</li>
+  <li>The circuit moves with the liquid, so \(\frac{D}{Dt}(d\mathbf r)=d\mathbf q\). Then \(\oint\mathbf q\cdot d\mathbf q=\oint d\big(\frac12q^2\big)=0\) (single-valued function round a closed curve).</li>
+  <li>Euler's equation: \(\frac{D\mathbf q}{Dt}=-\nabla\Omega-\frac1\rho\nabla p=-\nabla\big(\Omega+\int\frac{dp}\rho\big)\). So \(\oint\frac{D\mathbf q}{Dt}\cdot d\mathbf r=-\oint d\big(\Omega+\int\frac{dp}\rho\big)=0\).</li>
+  <li>Hence \(\frac{D\Gamma}{Dt}=0\). ∎</li></ol></div>
+  <div class="box b-thm"><span class="lbl">📜 Permanence of irrotational motion</span>Under the same conditions, if the motion is irrotational at any one instant, it remains irrotational for all time.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>If the motion is irrotational at \(t_0\), then \(\Gamma=\int\boldsymbol\omega\cdot\mathbf n\,dS=0\) for every circuit. By Kelvin's theorem the circulation round each circuit moving with the liquid stays 0. So \(\int_S\boldsymbol\omega\cdot\mathbf n\,dS=0\) for every small surface at all later times, which forces ω = 0. ∎ (Hence liquid starting from rest under such forces moves irrotationally.)</div>
 </div>
 
 <div class="card" data-id="h2.6">
   <h3 class="topic">2.6 Kinetic energy of liquid</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-exam"><span class="lbl">📝 Formula</span>
-  $$T=\frac\rho2\int_V q^2\,dV=\frac\rho2\int_S\phi\frac{\partial\phi}{\partial n}\,dS$$
-  (n = normal, liquid se bahar ki taraf, yaani body ke andar.) Green's theorem aur \(\nabla^2\phi=0\) se.<br>
-  <b>Infinite liquid</b> me bahar wali surface (infinity) ka contribution zero hota hai — sirf body ki surface par integral bachta hai.</div>
-  <div class="box b-trick"><span class="lbl">🧠 Yaad karo</span><b>Kelvin's minimum energy theorem:</b> diye gaye boundary motion ke liye irrotational motion ki KE sabse kam hoti hai.</div>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>For irrotational motion of an incompressible liquid in region V with boundary S,
+  $$T=\frac\rho2\int_Vq^2\,dV=\frac\rho2\int_S\phi\,\frac{\partial\phi}{\partial n}\,dS,$$
+  where n is the normal drawn out of the liquid. In 2-D (per unit length) along the boundary: \(T=-\frac\rho2\oint\phi\,d\psi\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>\(q^2=\nabla\phi\cdot\nabla\phi\), and \(\nabla\cdot(\phi\nabla\phi)=\nabla\phi\cdot\nabla\phi+\phi\nabla^2\phi=q^2\) since \(\nabla^2\phi=0\).</li>
+  <li>By Gauss: \(\int_Vq^2dV=\int_V\nabla\cdot(\phi\nabla\phi)dV=\int_S\phi\,\frac{\partial\phi}{\partial n}dS\).</li>
+  <li>Multiply by ρ/2. ∎</li></ol>
+  <b>Infinite liquid:</b> when the liquid extends to infinity and is at rest there, φ = O(1/r) (2-D: O(1/r) for a moving body without circulation; 3-D: O(1/r²)), so the integral over a large outer sphere/circle → 0 and only the body surface contributes.</div>
+  <div class="box b-thm"><span class="lbl">📜 Kelvin's minimum energy theorem</span>The irrotational motion of a liquid in a simply connected region has less kinetic energy than any other motion with the same normal velocities at the boundary.</div>
 </div>
 
 <div class="card" data-id="h2.7">
-  <h3 class="topic">2.7 Euler's momentum theorem aur D'Alembert paradox</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — D'Alembert paradox</span>
-  <div class="box b-easy"><span class="lbl">💡 Momentum theorem</span>Ek fixed surface ke andar paani ka momentum kitna badha = us par lagne wala force (body force + pressure) − surface se bahar jaata momentum. Steady me: <b>force = momentum ka bahar jaata flux</b>.</div>
-  <div class="box b-easy"><span class="lbl">💡 D'Alembert paradox</span>Ideal liquid me koi body steady, uniform chal rahi ho (circulation nahi), to us par <b>koi drag nahi lagta</b> — jabki asal duniya me lagta hai! Yahi "paradox" hai. Wajah: humne viscosity (friction) chhod di hai.</div>
-  <div class="box b-ex"><span class="lbl">✍️ Cylinder se dikhao</span>
-  <ol><li>Stream U past cylinder: surface par speed \(q=2U\sin\theta\).</li>
-  <li>Bernoulli: \(p=p_\infty+\frac12\rho U^2(1-4\sin^2\theta)\).</li>
-  <li>θ aur π − θ par pressure barabar ⇒ aage aur peeche ka dhakka cancel.</li>
-  <li>Drag \(=-\int_0^{2\pi}p\cos\theta\,a\,d\theta=0\). ∎</li></ol></div>
+  <h3 class="topic">2.7 Euler's momentum theorem and D'Alembert's paradox</h3>
+  <span class="chance ch-h">🔥 High — paradox</span>
+  <div class="box b-thm"><span class="lbl">📜 Euler's momentum theorem</span>For liquid inside a fixed closed surface S (volume V):
+  $$\frac{\partial}{\partial t}\int_V\rho\mathbf q\,dV=\int_V\rho\mathbf F\,dV-\int_Sp\,\mathbf n\,dS-\int_S\rho\,\mathbf q\,(\mathbf q\cdot\mathbf n)\,dS .$$
+  In steady motion: the resultant of the body forces and the pressure thrusts on the liquid inside S equals the rate at which momentum flows out across S.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>Momentum inside S changes because of (i) forces on the liquid inside — body force \(\int\rho\mathbf F\,dV\) and surface pressure \(-\int p\,\mathbf n\,dS\); and (ii) momentum carried across S by the liquid: through dS the volume \(\mathbf q\cdot\mathbf n\,dS\) leaves per unit time, carrying momentum \(\rho\mathbf q(\mathbf q\cdot\mathbf n)dS\). Equating gives the result. ∎</div>
+  <div class="box b-thm"><span class="lbl">📜 D'Alembert's paradox</span>A body moving with uniform velocity through an infinite ideal liquid, in irrotational motion without circulation, experiences no resultant force (no drag).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Demonstration for a circular cylinder</span>
+  <ol><li>Uniform stream U past a fixed cylinder (equivalent to the cylinder moving with −U): \(w=-U\big(z+\frac{a^2}{z}\big)\); on r = a the speed is \(q=2U\sin\theta\) (see 3.1).</li>
+  <li>Bernoulli: \(p+\frac12\rho q^2=p_\infty+\frac12\rho U^2\Rightarrow p=p_\infty+\frac12\rho U^2(1-4\sin^2\theta)\).</li>
+  <li>Drag \(X=-\int_0^{2\pi}p\cos\theta\,a\,d\theta\) and lift \(Y=-\int_0^{2\pi}p\sin\theta\,a\,d\theta\). Since \(\int_0^{2\pi}\cos\theta\,d\theta=\int_0^{2\pi}\sin^2\theta\cos\theta\,d\theta=0\) and similarly with sin θ, X = Y = 0.</li>
+  <li>Pressure is symmetric fore-and-aft (θ ↔ π − θ) and above-below, so the thrusts cancel. ∎ (Also from Blasius with Γ = 0.) The "paradox": real bodies feel drag — because real liquids are viscous.</li></ol></div>
 </div>
 
 <!-- ===================================================== UNIT III -->
-<div class="unit-h" id="u3"><h2>Unit III — Motion of Cylinders</h2><p>Circular aur elliptic cylinder paani me chale ya paani unke paas se guzre.</p></div>
+<div class="unit-h" id="u3"><h2>Unit III — Motion of Cylinders</h2><p>Milne-Thomson circle theorem, circular and elliptic cylinders, streaming past cylinders, kinetic energy, coaxial cylinders.</p></div>
 
 <div class="card" data-id="h3.1">
-  <h3 class="topic">3.1 Milne-Thomson circle theorem</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — sabse important theorem</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Ek flow f(z) diya hai. Usme radius a ka cylinder rakh do — naya flow kya hoga? Bas ek formula!</div>
-  <div class="box b-exam"><span class="lbl">📝 Statement + proof</span>
-  Let f(z) be the complex potential of a flow with no singularities in \(|z|\le a\). If a circular cylinder \(|z|=a\) is introduced, the complex potential becomes
-  $$w=f(z)+\bar f\!\left(\frac{a^2}{z}\right).$$
-  <ol><li>Circle par \(z\bar z=a^2\) ⇒ \(\frac{a^2}{z}=\bar z\).</li>
-  <li>To circle par \(w=f(z)+\bar f(\bar z)=f(z)+\overline{f(z)}\) = real.</li>
-  <li>Imaginary part \(\psi=0\) ⇒ circle ek streamline ⇒ paani paar nahi jaata ✓.</li>
-  <li>\(|z|\gt a\) me \(\bar f(a^2/z)\) ki singularities nahi aati (woh circle ke andar hain), aur infinity par original flow wapas ✓. ∎</li></ol></div>
-  <div class="box b-ex"><span class="lbl">✍️ Example: stream past fixed circular cylinder</span>
-  <ol><li>\(f(z)=-Uz\) ⇒ \(\bar f(a^2/z)=-U\frac{a^2}{z}\).</li>
-  <li>\(\boxed{w=-U\left(z+\frac{a^2}{z}\right)}\)</li>
-  <li>\(\phi=-U\left(r+\frac{a^2}{r}\right)\cos\theta,\ \psi=-U\left(r-\frac{a^2}{r}\right)\sin\theta\)</li>
-  <li>Surface par speed \(q=2U\sin\theta\); stagnation points θ = 0, π; max speed 2U at θ = π/2.</li></ol></div>
-  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"State and prove Milne-Thomson circle theorem. Hence find the flow past a circular cylinder / image of a source in a circle."</div>
+  <h3 class="topic">3.1 Milne-Thomson circle theorem; stream past a circular cylinder</h3>
+  <span class="chance ch-h">🔥 High — most important theorem</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let f(z) be the complex potential of a 2-D irrotational flow having no singularities within \(|z|\le a\). If a circular cylinder \(|z|=a\) is introduced into the flow, the complex potential becomes
+  $$w=f(z)+\bar f\Big(\frac{a^2}{z}\Big),$$
+  where \(\bar f(z)=\overline{f(\bar z)}\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <ol><li><b>Boundary condition.</b> On \(|z|=a\), \(\bar z=\frac{a^2}{z}\). So \(\bar f\big(\frac{a^2}{z}\big)=\bar f(\bar z)=\overline{f(z)}\), and \(w=f(z)+\overline{f(z)}=2\operatorname{Re}f(z)\), which is real. Hence ψ = 0 on the circle: the circle is a streamline.</li>
+  <li><b>No new singularities outside.</b> If z is outside the circle (|z| &gt; a), then \(\big|\frac{a^2}{z}\big|\lt a\). All singularities of f lie outside the circle, so those of \(\bar f(a^2/z)\) lie inside it. Thus outside the cylinder w has exactly the singularities of f.</li>
+  <li><b>Far field.</b> As \(|z|\to\infty\), \(\frac{a^2}{z}\to0\), a regular point of \(\bar f\), so the added term tends to a constant and the original flow is recovered at large distances.</li>
+  <li>Hence w is the required complex potential. ∎</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example — uniform stream past a fixed circular cylinder</span>
+  <ol><li>\(f(z)=-Uz\Rightarrow\bar f(z)=-Uz\Rightarrow\bar f(a^2/z)=-\frac{Ua^2}{z}\).</li>
+  <li>\(\boxed{w=-U\Big(z+\frac{a^2}{z}\Big)}\), so \(\phi=-U\big(r+\frac{a^2}{r}\big)\cos\theta,\ \psi=-U\big(r-\frac{a^2}{r}\big)\sin\theta\).</li>
+  <li>On r = a: \(q_r=0\), \(q_\theta=-\frac1r\frac{\partial\phi}{\partial\theta}=-2U\sin\theta\), so speed \(q=2U|\sin\theta|\).</li>
+  <li>Stagnation points θ = 0, π; maximum speed 2U at θ = ±π/2.</li>
+  <li>Pressure: \(p=p_\infty+\frac12\rho U^2(1-4\sin^2\theta)\).</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example — image of a source by the circle theorem</span>Source m at z = f (f &gt; a): \(f(z)=-m\log(z-f)\). \(\bar f(a^2/z)=-m\log\big(\frac{a^2}{z}-f\big)=-m\log\big(z-\frac{a^2}{f}\big)+m\log z+\text{const}\). So the image is a source m at \(a^2/f\) and a sink m at the centre — same as 2.3(b). ∎</div>
 </div>
 
 <div class="card" data-id="h3.2">
   <h3 class="topic">3.2 Circular cylinder moving in liquid at rest</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Cylinder U speed se chal raha hai, paani door se ruka hua. Cylinder ko apne saath kuch paani bhi dhakelna padta hai — isliye woh "bhaari" lagta hai. Is extra mass ko <b>added (virtual) mass</b> kehte hain.</div>
-  <div class="box b-exam"><span class="lbl">📝 Result</span>
-  $$w=\frac{Ua^2}{z},\qquad \phi=\frac{Ua^2}{r}\cos\theta$$
-  (Check: \(-\partial\phi/\partial r=U\cos\theta\) at r = a — cylinder ki normal velocity ✓.)<br>
-  KE of liquid (per unit length): \(T=\frac12\pi\rho a^2U^2=\frac12M'U^2\), \(M'=\pi\rho a^2\) = hataaye gaye paani ka mass.<br>
-  Equation of motion: \((M+M')\dfrac{dU}{dt}=F\) (external force).</div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>Cylinder density σ, paani ρ, gravity me upar/neeche: \((\sigma+\rho)\frac{dU}{dt}=(\sigma-\rho)g\) ⇒ acceleration \(\frac{\sigma-\rho}{\sigma+\rho}g\).</div>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>A circular cylinder of radius a moving with velocity U (along x) in an infinite liquid at rest at infinity:
+  $$w=\frac{Ua^2}{z},\quad\phi=\frac{Ua^2}{r}\cos\theta,\quad T=\frac12\pi\rho a^2U^2=\frac12M'U^2,$$
+  where \(M'=\pi\rho a^2\) is the mass of liquid displaced per unit length. Equation of motion under external force F: \((M+M')\dfrac{dU}{dt}=F\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>φ must satisfy Laplace's equation, vanish at infinity, and give the right normal velocity on r = a. Try \(\phi=\frac{A}{r}\cos\theta\).</li>
+  <li>On r = a the liquid's normal velocity equals the cylinder's: \(-\frac{\partial\phi}{\partial r}=U\cos\theta\Rightarrow\frac{A}{a^2}=U\Rightarrow A=Ua^2\). So \(\phi=\frac{Ua^2}{r}\cos\theta\), \(w=\frac{Ua^2}{z}\), \(\psi=-\frac{Ua^2}{r}\sin\theta\).</li>
+  <li>KE: \(T=-\frac\rho2\oint\phi\,d\psi\). On r = a: \(\phi=Ua\cos\theta\), \(d\psi=-Ua\cos\theta\,d\theta\). \(T=-\frac\rho2\int_0^{2\pi}Ua\cos\theta(-Ua\cos\theta)d\theta=\frac\rho2U^2a^2\pi\).</li>
+  <li>Energy equation: rate of work by F = rate of increase of total KE: \(FU=\frac{d}{dt}\big[\frac12(M+M')U^2\big]=(M+M')U\frac{dU}{dt}\). ∎</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> A circular cylinder of density σ is released from rest in a liquid of density ρ (gravity along the axis of motion, the cylinder's axis horizontal). Find its initial acceleration.<br>
+  Per unit length, mass \(M=\pi a^2\sigma\), added mass \(M'=\pi a^2\rho\), net force \(F=(M-M')g=\pi a^2(\sigma-\rho)g\).
+  \((\sigma+\rho)\pi a^2\frac{dU}{dt}=(\sigma-\rho)\pi a^2g\Rightarrow\boxed{\frac{dU}{dt}=\frac{\sigma-\rho}{\sigma+\rho}\,g}\). ∎</div>
 </div>
 
 <div class="card" data-id="h3.3">
   <h3 class="topic">3.3 Elliptic cylinder</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Ellipse ke liye <b>elliptic coordinates</b> lete hain: \(z=c\cosh\zeta\), \(\zeta=\xi+i\eta\). Cylinder ki surface \(\xi=\alpha\), jahan \(a=c\cosh\alpha,\ b=c\sinh\alpha\) (semi-axes), \(c^2=a^2-b^2\).</div>
-  <div class="box b-exam"><span class="lbl">📝 Results</span>
-  <ul><li><b>Stream U (major axis ke along) past fixed elliptic cylinder:</b> \(w=-U(a+b)\cosh(\zeta-\alpha)\). (Check: \(\xi=\alpha\) par \(\cosh(i\eta)=\cos\eta\) real ⇒ ψ = 0 ✓.)</li>
-  <li><b>Elliptic cylinder moving</b> with velocity U along major axis (a) in liquid at rest: KE \(=\frac12\pi\rho b^2U^2\) (added mass \(\pi\rho b^2\)).</li>
-  <li>Minor axis ke along: KE \(=\frac12\pi\rho a^2U^2\).</li></ul></div>
-  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Added mass me <b>doosri</b> axis aati hai — major axis ke along chalo to \(b^2\), minor ke along to \(a^2\). (Circle me a = b ⇒ \(\pi\rho a^2\) ✓.)</div>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-def"><span class="lbl">📖 Elliptic coordinates</span>\(z=c\cosh\zeta\), \(\zeta=\xi+i\eta\): \(x=c\cosh\xi\cos\eta,\ y=c\sinh\xi\sin\eta\). The curves ξ = const are confocal ellipses with foci (±c, 0). The cylinder is ξ = α with semi-axes \(a=c\cosh\alpha,\ b=c\sinh\alpha\); so \(c^2=a^2-b^2\) and \(e^\alpha=\frac{a+b}{c}\).</div>
+  <div class="box b-thm"><span class="lbl">📜 (a) Elliptic cylinder moving along its major axis with velocity U</span>
+  $$w=Ub\sqrt{\frac{a+b}{a-b}}\;e^{-\zeta},\qquad T=\frac12\pi\rho b^2U^2 .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Boundary condition for a body moving with velocity U along x: across an element of the boundary the normal flux of liquid equals that of the body, which gives \(\psi=-Uy+\text{const}\) on the boundary (with \(u=-\psi_y\), \(v=\psi_x\)).</li>
+  <li>The motion must die out at infinity, where \(z\approx\frac c2e^\zeta\). Try \(w=Ae^{-\zeta}\) (A real): \(\psi=-Ae^{-\xi}\sin\eta\).</li>
+  <li>On ξ = α: \(\psi=-Ae^{-\alpha}\sin\eta\), while \(-Uy=-Uc\sinh\alpha\sin\eta=-Ub\sin\eta\). Matching: \(Ae^{-\alpha}=Ub\Rightarrow A=Ube^{\alpha}=Ub\frac{a+b}{c}=Ub\sqrt{\frac{a+b}{a-b}}\).</li>
+  <li>KE \(=-\frac\rho2\oint\phi\,d\psi\). On ξ = α: \(\phi=Ae^{-\alpha}\cos\eta=Ub\cos\eta\), \(\psi=-Ub\sin\eta\), \(d\psi=-Ub\cos\eta\,d\eta\). \(T=-\frac\rho2\int_0^{2\pi}Ub\cos\eta(-Ub\cos\eta)\,d\eta=\frac12\pi\rho b^2U^2\). ∎</li></ol>
+  Moving along the minor axis (velocity V along y): similarly \(T=\frac12\pi\rho a^2V^2\).</div>
+  <div class="box b-thm"><span class="lbl">📜 (b) Uniform stream U (along major axis) past a fixed elliptic cylinder</span>
+  $$w=-U(a+b)\cosh(\zeta-\alpha).$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Verification</span>
+  <ol><li>On ξ = α: \(\cosh(\zeta-\alpha)=\cosh(i\eta)=\cos\eta\), real ⇒ ψ = 0: the ellipse is a streamline.</li>
+  <li>At infinity \(\cosh(\zeta-\alpha)\approx\frac12e^{\zeta-\alpha}\) and \(z\approx\frac c2e^\zeta\), so \(w\approx-U(a+b)e^{-\alpha}\frac zc=-Uz\) (since \((a+b)e^{-\alpha}=c\)). The uniform stream is recovered.</li>
+  <li>w is regular outside the ellipse. ∎</li></ol></div>
+  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Added mass me <b>doosri</b> semi-axis aati hai: major axis ke along chalo to \(\pi\rho b^2\), minor ke along to \(\pi\rho a^2\). Circle (a = b) me \(\pi\rho a^2\) ✓.</div>
 </div>
 
 <div class="card" data-id="h3.4">
-  <h3 class="topic">3.4 Initial motion between two coaxial cylinders</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Ek cylinder (radius a) doosre bade cylinder (radius b) ke andar hai, beech me paani. Andar wala achanak U velocity se chale to paani ka motion aur KE?</div>
-  <div class="box b-exam"><span class="lbl">📝 Method + result</span>
-  <ol><li>\(\phi=\left(Ar+\frac Br\right)\cos\theta\) lo (Laplace ka solution).</li>
-  <li>r = a par \(-\partial\phi/\partial r=U\cos\theta\); r = b par \(-\partial\phi/\partial r=0\) (outer fixed).</li>
-  <li>Hal karo: \(A=\frac{Ua^2}{b^2-a^2},\ B=\frac{Ua^2b^2}{b^2-a^2}\).</li>
-  <li>KE \(=\frac12\pi\rho a^2U^2\,\dfrac{b^2+a^2}{b^2-a^2}\).</li></ol>
-  Check: \(b\to\infty\) ⇒ \(\frac12\pi\rho a^2U^2\) (akela cylinder) ✓.</div>
+  <h3 class="topic">3.4 Initial motion between two coaxial circular cylinders</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>A circular cylinder of radius a is suddenly moved with velocity U inside a fixed coaxial cylinder of radius b, the space between being filled with liquid. Then
+  $$\phi=\frac{Ua^2}{b^2-a^2}\Big(r+\frac{b^2}{r}\Big)\cos\theta,\qquad T=\frac12\pi\rho a^2U^2\,\frac{b^2+a^2}{b^2-a^2}.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Liquid starting from rest moves irrotationally (1.8). Try \(\phi=\big(Ar+\frac Br\big)\cos\theta\), which satisfies Laplace's equation.</li>
+  <li>Outer cylinder fixed: \(\frac{\partial\phi}{\partial r}=0\) at r = b ⇒ \(A-\frac{B}{b^2}=0\).</li>
+  <li>Inner cylinder: \(-\frac{\partial\phi}{\partial r}=U\cos\theta\) at r = a ⇒ \(-\big(A-\frac{B}{a^2}\big)=U\).</li>
+  <li>Solving: \(B=\frac{Ua^2b^2}{b^2-a^2},\ A=\frac{Ua^2}{b^2-a^2}\).</li>
+  <li>KE: only the inner surface contributes (∂φ/∂n = 0 on the outer). On r = a, with n out of the liquid (into the inner cylinder), \(\frac{\partial\phi}{\partial n}=-\frac{\partial\phi}{\partial r}=U\cos\theta\), and \(\phi=\big(Aa+\frac Ba\big)\cos\theta=\frac{Ua(a^2+b^2)}{b^2-a^2}\cos\theta\).</li>
+  <li>\(T=\frac\rho2\int_0^{2\pi}\frac{Ua(a^2+b^2)}{b^2-a^2}\cos\theta\cdot U\cos\theta\cdot a\,d\theta=\frac12\pi\rho a^2U^2\frac{b^2+a^2}{b^2-a^2}\). ∎</li></ol>
+  Check: b → ∞ gives \(\frac12\pi\rho a^2U^2\), the single cylinder.</div>
 </div>
 
 <!-- ===================================================== UNIT IV -->
-<div class="unit-h" id="u4"><h2>Unit IV — 3-D Motion: Spheres & Stokes's Stream Function</h2><p>Gola (sphere) paani me chale ya paani gole ke paas se guzre.</p></div>
+<div class="unit-h" id="u4"><h2>Unit IV — Three-dimensional Motion: Spheres, Stokes's Stream Function</h2><p>Axisymmetric irrotational motion, sphere moving in liquid, streaming past a sphere, motion under gravity, concentric spheres, Stokes's stream function.</p></div>
 
 <div class="card" data-id="h4.1">
-  <h3 class="topic">4.1 Irrotational motion in 3-D (axisymmetric)</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Sphere wale problems me flow ek axis ke around symmetric hota hai, to spherical coordinates (r, θ) lete hain. \(\nabla^2\phi=0\) ke solutions:
-  $$\phi=\left(Ar^n+\frac{B}{r^{n+1}}\right)P_n(\cos\theta)$$
-  Sphere problems me zyadatar n = 1 (\(P_1=\cos\theta\)): \(\phi=\left(Ar+\frac{B}{r^2}\right)\cos\theta\).</div>
+  <h3 class="topic">4.1 Irrotational motion in three dimensions (axial symmetry)</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>For motion symmetric about an axis, in spherical polars (r, θ), Laplace's equation is
+  $$\frac{\partial}{\partial r}\Big(r^2\frac{\partial\phi}{\partial r}\Big)+\frac1{\sin\theta}\frac{\partial}{\partial\theta}\Big(\sin\theta\frac{\partial\phi}{\partial\theta}\Big)=0,$$
+  with solutions \(\phi=\big(Ar^n+\frac{B}{r^{n+1}}\big)P_n(\cos\theta)\), \(P_n\) = Legendre polynomial.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Check for n = 1</span>Try \(\phi=R(r)\cos\theta\). The θ-part gives \(\frac1{\sin\theta}\frac{d}{d\theta}(-\sin^2\theta)=-2\cos\theta\). So \((r^2R')'-2R=0\). Putting \(R=r^k\): \(k(k+1)=2\Rightarrow k=1\) or \(k=-2\). Hence \(\phi=\big(Ar+\frac{B}{r^2}\big)\cos\theta\) — used in all sphere problems. ∎</div>
 </div>
 
 <div class="card" data-id="h4.2">
-  <h3 class="topic">4.2 Sphere moving in liquid at rest</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance</span>
-  <div class="box b-exam"><span class="lbl">📝 Derivation steps</span>
-  <ol><li>Sphere radius a, velocity U (θ = 0 disha me). \(\phi=\frac{B}{r^2}\cos\theta\) lo (infinity par 0).</li>
-  <li>Surface par normal velocity barabar: \(-\frac{\partial\phi}{\partial r}\Big|_{r=a}=U\cos\theta\) ⇒ \(\frac{2B}{a^3}=U\) ⇒ \(B=\frac{Ua^3}{2}\).</li>
-  <li>\(\boxed{\phi=\dfrac{Ua^3}{2r^2}\cos\theta}\)</li>
-  <li>KE \(=\frac{\rho}{2}\int\phi\frac{\partial\phi}{\partial n}dS=\frac13\pi\rho a^3U^2=\frac12\cdot\frac{M'}{2}U^2\), jahan \(M'=\frac43\pi a^3\rho\).</li></ol>
-  Matlab sphere ka <b>added mass = hataaye gaye paani ka aadha</b>.</div>
-  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Cylinder: added mass = poora displaced mass. Sphere: added mass = <b>aadha</b> displaced mass.</div>
+  <h3 class="topic">4.2 Sphere moving in liquid at rest at infinity</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>
+  $$\phi=\frac{Ua^3}{2r^2}\cos\theta,\qquad T=\frac13\pi\rho a^3U^2=\frac12\Big(\frac{M'}{2}\Big)U^2,\quad M'=\frac43\pi a^3\rho .$$
+  The added (virtual) mass of a sphere is half the mass of liquid displaced.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>The liquid is at rest at infinity, so take \(\phi=\frac{B}{r^2}\cos\theta\) (the Ar term would grow at infinity).</li>
+  <li>On r = a the normal velocity of the liquid equals that of the sphere: \(-\frac{\partial\phi}{\partial r}=U\cos\theta\Rightarrow\frac{2B}{a^3}=U\Rightarrow B=\frac{Ua^3}{2}\).</li>
+  <li>KE: \(T=\frac\rho2\int_S\phi\frac{\partial\phi}{\partial n}dS\), n into the sphere, \(\frac{\partial\phi}{\partial n}=-\frac{\partial\phi}{\partial r}=U\cos\theta\); on r = a, \(\phi=\frac{Ua}{2}\cos\theta\); \(dS=2\pi a^2\sin\theta\,d\theta\).</li>
+  <li>\(T=\frac\rho2\int_0^\pi\frac{Ua}{2}\cos\theta\cdot U\cos\theta\cdot2\pi a^2\sin\theta\,d\theta=\frac{\pi\rho a^3U^2}{2}\cdot\frac23=\frac13\pi\rho a^3U^2\). ∎</li></ol></div>
 </div>
 
 <div class="card" data-id="h4.3">
   <h3 class="topic">4.3 Liquid streaming past a fixed sphere</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance</span>
-  <div class="box b-exam"><span class="lbl">📝 Result</span>
-  Uniform stream U past fixed sphere radius a:
-  $$\phi=-U\left(r+\frac{a^3}{2r^2}\right)\cos\theta$$
-  <ol><li>Door par \(\phi\approx-Ur\cos\theta=-Ux\) ⇒ velocity U ✓.</li>
-  <li>r = a par \(\partial\phi/\partial r=-U(1-1)\cos\theta=0\) ✓ (sphere ke paar flow nahi).</li>
-  <li>Surface par speed \(q=\frac32U\sin\theta\); max \(\frac32U\) at θ = π/2.</li>
-  <li>Pressure (Bernoulli): \(p=p_\infty+\frac12\rho U^2\left(1-\frac94\sin^2\theta\right)\).</li></ol></div>
-  <div class="box b-trick"><span class="lbl">🧠 Compare</span>Cylinder ke paas max speed <b>2U</b>, sphere ke paas <b>1.5U</b>.</div>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>
+  $$\phi=-U\Big(r+\frac{a^3}{2r^2}\Big)\cos\theta,\qquad q\big|_{r=a}=\frac32U\sin\theta,\qquad p=p_\infty+\frac12\rho U^2\Big(1-\frac94\sin^2\theta\Big).$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Far away the stream is uniform: \(\phi\to-Ux=-Ur\cos\theta\). Take \(\phi=\big(-Ur+\frac{B}{r^2}\big)\cos\theta\).</li>
+  <li>Fixed sphere: \(\frac{\partial\phi}{\partial r}=0\) at r = a ⇒ \(-U-\frac{2B}{a^3}=0\Rightarrow B=-\frac{Ua^3}{2}\).</li>
+  <li>On r = a: \(q_r=0\), \(q_\theta=-\frac1r\frac{\partial\phi}{\partial\theta}=-U\big(1+\frac12\big)\sin\theta\), so \(q=\frac32U\sin\theta\) (max \(\frac32U\) at θ = π/2; stagnation at θ = 0, π).</li>
+  <li>Bernoulli: \(p+\frac12\rho q^2=p_\infty+\frac12\rho U^2\) gives the pressure. ∎</li></ol>
+  (This is the sphere-moving solution with a uniform stream −U superposed, which brings the sphere to rest.)</div>
+  <div class="box b-trick"><span class="lbl">🧠 Compare</span>Cylinder: max speed 2U, added mass = displaced mass. Sphere: max speed 1.5U, added mass = ½ displaced mass.</div>
 </div>
 
 <div class="card" data-id="h4.4">
-  <h3 class="topic">4.4 Equation of motion of sphere — gravity ke under</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — numerical</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Gola (density σ) paani (density ρ) me gir raha hai. Neeche kheenchne wala = weight − buoyancy. Par gole ko apne saath aadha displaced paani bhi hilana padta hai.</div>
-  <div class="box b-exam"><span class="lbl">📝 Equation</span>
-  V = volume. \(\left(\sigma V+\frac12\rho V\right)\dfrac{dU}{dt}=(\sigma-\rho)Vg\)
-  $$\frac{dU}{dt}=\frac{2(\sigma-\rho)}{2\sigma+\rho}\,g$$</div>
-  <div class="box b-ex"><span class="lbl">✍️ Example</span>Hawa se bhara halka gola (σ ≈ 0) paani me chhodo: \(\frac{dU}{dt}=\frac{-2\rho}{\rho}g=-2g\) ⇒ <b>2g se upar</b> jaata hai (shuru me).</div>
+  <h3 class="topic">4.4 Equation of motion of a sphere; sphere under gravity</h3>
+  <span class="chance ch-h">🔥 High — numerical</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>A sphere of mass M moving in a straight line through liquid at rest at infinity under an external force F obeys
+  $$\Big(M+\frac{M'}{2}\Big)\frac{dU}{dt}=F .$$
+  Under gravity (sphere density σ, liquid density ρ, volume V): \(\big(\sigma+\frac\rho2\big)V\frac{dU}{dt}=(\sigma-\rho)Vg\), i.e.
+  $$\frac{dU}{dt}=\frac{2(\sigma-\rho)}{2\sigma+\rho}\,g .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Total KE = KE of sphere + KE of liquid \(=\frac12MU^2+\frac12\cdot\frac{M'}{2}U^2\) (4.2).</li>
+  <li>Rate of work of external forces = rate of increase of KE: \(FU=\big(M+\frac{M'}2\big)U\frac{dU}{dt}\). Divide by U.</li>
+  <li>Under gravity the external force is weight − buoyancy \(=(\sigma-\rho)Vg\) (buoyancy from the hydrostatic part of the pressure), and \(M=\sigma V,\ M'=\rho V\). ∎</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>
+  <b>Q.</b> A hollow sphere of negligible mass (σ ≈ 0) is released from rest under water. Find its initial acceleration.<br>
+  \(\frac{dU}{dt}=\frac{2(0-\rho)}{0+\rho}g=-2g\): it starts moving upwards with acceleration 2g. ∎</div>
 </div>
 
 <div class="card" data-id="h4.5">
   <h3 class="topic">4.5 Concentric spheres</h3>
-  <span class="chance ch-m">⭐ Medium chance</span>
-  <div class="box b-exam"><span class="lbl">📝 Result</span>
-  Sphere radius a, velocity U, ek fixed concentric sphere radius b ke andar; beech me paani.
-  <ol><li>\(\phi=\left(Ar+\frac{B}{r^2}\right)\cos\theta\).</li>
-  <li>r = a par \(-\phi_r=U\cos\theta\); r = b par \(\phi_r=0\).</li>
-  <li>KE \(=\frac13\pi\rho a^3U^2\,\dfrac{b^3+2a^3}{b^3-a^3}\).</li></ol>
-  Check: \(b\to\infty\) ⇒ \(\frac13\pi\rho a^3U^2\) (akela sphere) ✓.</div>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>A sphere of radius a moves with velocity U inside a fixed concentric sphere of radius b, the space between filled with liquid. Then
+  $$\phi=\frac{Ua^3}{b^3-a^3}\Big(r+\frac{b^3}{2r^2}\Big)\cos\theta,\qquad T=\frac13\pi\rho a^3U^2\,\frac{b^3+2a^3}{b^3-a^3}.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Derivation</span>
+  <ol><li>Take \(\phi=\big(Ar+\frac{B}{r^2}\big)\cos\theta\); \(\frac{\partial\phi}{\partial r}=\big(A-\frac{2B}{r^3}\big)\cos\theta\).</li>
+  <li>Outer sphere fixed: \(A-\frac{2B}{b^3}=0\). Inner sphere: \(-\big(A-\frac{2B}{a^3}\big)=U\).</li>
+  <li>Solving: \(B=\frac{Ua^3b^3}{2(b^3-a^3)},\ A=\frac{Ua^3}{b^3-a^3}\).</li>
+  <li>On r = a: \(\phi=\big(Aa+\frac B{a^2}\big)\cos\theta=\frac{Ua(2a^3+b^3)}{2(b^3-a^3)}\cos\theta\), \(\frac{\partial\phi}{\partial n}=U\cos\theta\).</li>
+  <li>\(T=\frac\rho2\int_0^\pi\frac{Ua(2a^3+b^3)}{2(b^3-a^3)}\cos\theta\cdot U\cos\theta\cdot2\pi a^2\sin\theta\,d\theta=\frac13\pi\rho a^3U^2\frac{b^3+2a^3}{b^3-a^3}\). ∎</li></ol>
+  Check: b → ∞ gives \(\frac13\pi\rho a^3U^2\).</div>
 </div>
 
 <div class="card" data-id="h4.6">
   <h3 class="topic">4.6 Stokes's stream function</h3>
-  <span class="chance ch-h">🔥 Bahut zyada chance — definition + sphere example</span>
-  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>3-D me axis ke around symmetric flow ke liye bhi ek stream function hota hai — <b>Stokes's stream function ψ</b>. ψ = constant surfaces hi stream surfaces. Do surfaces ke beech flow = \(2\pi(\psi_2-\psi_1)\).</div>
-  <div class="box b-exam"><span class="lbl">📝 Definition (spherical r, θ)</span>
-  $$q_r=\frac{1}{r^2\sin\theta}\frac{\partial\psi}{\partial\theta},\qquad q_\theta=-\frac{1}{r\sin\theta}\frac{\partial\psi}{\partial r}$$
-  (Sign convention book ke hisaab se badal sakta hai.)</div>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>For incompressible motion symmetric about an axis, in spherical polars (r, θ), Stokes's stream function ψ is defined by
+  $$q_r=\frac{1}{r^2\sin\theta}\frac{\partial\psi}{\partial\theta},\qquad q_\theta=-\frac{1}{r\sin\theta}\frac{\partial\psi}{\partial r}.$$
+  The surfaces ψ = const are stream surfaces, and \(2\pi(\psi_2-\psi_1)\) is the volume flux between two of them. (Some books use the opposite overall sign.)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Existence</span>
+  <ol><li>Continuity for axisymmetric flow: \(\frac{\partial}{\partial r}(r^2\sin\theta\,q_r)+\frac{\partial}{\partial\theta}(r\sin\theta\,q_\theta)=0\).</li>
+  <li>This is the condition for \(r^2\sin\theta\,q_r\,d\theta-r\sin\theta\,q_\theta\,dr\) to be an exact differential \(d\psi\). Then \(\psi_\theta=r^2\sin\theta\,q_r\) and \(\psi_r=-r\sin\theta\,q_\theta\), which is the definition. ∎</li>
+  <li>Flux through the cap of a sphere of radius r from θ = 0 to θ: \(\int_0^\theta q_r\,2\pi r^2\sin\theta\,d\theta=2\pi[\psi(\theta)-\psi(0)]\).</li></ol></div>
   <div class="tbl"><table><tr><th>Flow</th><th>Stokes ψ</th></tr>
-  <tr><td>Uniform stream U</td><td>\(\frac12Ur^2\sin^2\theta\)</td></tr>
-  <tr><td>3-D source m</td><td>\(-m\cos\theta\)</td></tr>
-  <tr><td>Stream past fixed sphere</td><td>\(\frac12U\sin^2\theta\left(r^2-\frac{a^3}{r}\right)\)</td></tr></table></div>
-  <div class="box b-ex"><span class="lbl">✍️ Check</span>Sphere wale ψ me r = a rakho: \(r^2-\frac{a^3}{r}=a^2-a^2=0\) ⇒ ψ = 0 ⇒ sphere ek stream surface ✓.</div>
+  <tr><td>Uniform stream U along the axis</td><td>\(\frac12Ur^2\sin^2\theta\)</td></tr>
+  <tr><td>3-D source m at origin</td><td>\(-m\cos\theta\)</td></tr>
+  <tr><td>Stream U past a fixed sphere</td><td>\(\frac12U\sin^2\theta\Big(r^2-\frac{a^3}{r}\Big)\)</td></tr></table></div>
+  <div class="box b-ex"><span class="lbl">✍️ Verification — stream past a sphere</span>
+  \(\psi_\theta=U\sin\theta\cos\theta\big(r^2-\frac{a^3}r\big)\Rightarrow q_r=U\cos\theta\big(1-\frac{a^3}{r^3}\big)\);
+  \(\psi_r=\frac12U\sin^2\theta\big(2r+\frac{a^3}{r^2}\big)\Rightarrow q_\theta=-U\sin\theta\big(1+\frac{a^3}{2r^3}\big)\).
+  These agree with φ of 4.3. On r = a, ψ = 0, so the sphere is a stream surface. ∎</div>
 </div>
 
 <!-- ===================================================== FORMULA SHEET -->
-<div class="unit-h" id="formula"><h2>📋 Formula Sheet</h2><p>Exam se ek din pehle sirf yeh.</p></div>
+<div class="unit-h" id="formula"><h2>📋 Formula Sheet</h2><p>Last-day revision.</p></div>
 <div class="card sheet">
   <div class="tbl"><table>
   <tr><th>Topic</th><th>Formula</th></tr>
   <tr><td>Material derivative</td><td>\(\frac{D}{Dt}=\frac{\partial}{\partial t}+\mathbf q\cdot\nabla\)</td></tr>
-  <tr><td>Continuity</td><td>\(\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)=0\); incompressible \(\nabla\cdot\mathbf q=0\)</td></tr>
+  <tr><td>Continuity</td><td>\(\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf q)=0\); Lagrangian \(\rho J=\rho_0\)</td></tr>
   <tr><td>Boundary surface</td><td>\(\frac{DF}{Dt}=0\)</td></tr>
   <tr><td>Streamlines</td><td>\(\frac{dx}u=\frac{dy}v=\frac{dz}w\)</td></tr>
   <tr><td>Euler</td><td>\(\frac{D\mathbf q}{Dt}=\mathbf F-\frac1\rho\nabla p\)</td></tr>
-  <tr><td>Bernoulli (steady)</td><td>\(\frac p\rho+\frac12q^2+gz\)= const</td></tr>
-  <tr><td>Bernoulli (unsteady, irrot.)</td><td>\(\int\frac{dp}\rho+\frac12q^2+\Omega-\frac{\partial\phi}{\partial t}=C(t)\)</td></tr>
+  <tr><td>Bernoulli</td><td>\(\int\frac{dp}\rho+\frac12q^2+\Omega-\frac{\partial\phi}{\partial t}=C(t)\); steady \(\frac p\rho+\frac12q^2+gz\) = const</td></tr>
+  <tr><td>Impulsive</td><td>\(\mathbf q_2-\mathbf q_1=\mathbf I-\frac1\rho\nabla\varpi\)</td></tr>
   <tr><td>Complex velocity</td><td>\(\frac{dw}{dz}=-u+iv\)</td></tr>
-  <tr><td>Source / sink / doublet</td><td>\(\mp m\log(z-z_0)\), \(\frac{\mu}{z-z_0}\)</td></tr>
+  <tr><td>Source / doublet</td><td>\(-m\log(z-z_0)\), \(\frac\mu{z-z_0}\)</td></tr>
+  <tr><td>Image in circle</td><td>source at \(a^2/f\) + sink at centre</td></tr>
   <tr><td>Blasius</td><td>\(X-iY=\frac{i\rho}2\oint(\frac{dw}{dz})^2dz\)</td></tr>
   <tr><td>Kelvin</td><td>\(\frac{D\Gamma}{Dt}=0\)</td></tr>
+  <tr><td>KE</td><td>\(T=\frac\rho2\int\phi\frac{\partial\phi}{\partial n}dS\); 2-D \(-\frac\rho2\oint\phi\,d\psi\)</td></tr>
   <tr><td>Milne-Thomson</td><td>\(w=f(z)+\bar f(a^2/z)\)</td></tr>
-  <tr><td>Stream past cylinder</td><td>\(w=-U(z+\frac{a^2}{z})\), \(q=2U\sin\theta\)</td></tr>
-  <tr><td>Cylinder KE (moving)</td><td>\(\frac12\pi\rho a^2U^2\)</td></tr>
-  <tr><td>Sphere moving</td><td>\(\phi=\frac{Ua^3}{2r^2}\cos\theta\), KE \(\frac13\pi\rho a^3U^2\)</td></tr>
+  <tr><td>Stream past cylinder</td><td>\(w=-U(z+\frac{a^2}z)\), \(q=2U\sin\theta\)</td></tr>
+  <tr><td>Moving cylinder</td><td>\(w=\frac{Ua^2}z\), \(T=\frac12\pi\rho a^2U^2\)</td></tr>
+  <tr><td>Elliptic (major axis)</td><td>\(T=\frac12\pi\rho b^2U^2\); fixed: \(w=-U(a+b)\cosh(\zeta-\alpha)\)</td></tr>
+  <tr><td>Coaxial cylinders</td><td>\(T=\frac12\pi\rho a^2U^2\frac{b^2+a^2}{b^2-a^2}\)</td></tr>
+  <tr><td>Moving sphere</td><td>\(\phi=\frac{Ua^3}{2r^2}\cos\theta\), \(T=\frac13\pi\rho a^3U^2\)</td></tr>
   <tr><td>Stream past sphere</td><td>\(\phi=-U(r+\frac{a^3}{2r^2})\cos\theta\), \(q=\frac32U\sin\theta\)</td></tr>
   <tr><td>Sphere under gravity</td><td>\(\frac{dU}{dt}=\frac{2(\sigma-\rho)}{2\sigma+\rho}g\)</td></tr>
+  <tr><td>Concentric spheres</td><td>\(T=\frac13\pi\rho a^3U^2\frac{b^3+2a^3}{b^3-a^3}\)</td></tr>
   </table></div>
+  <p class="note">Model paper with full solutions: <a href="model-paper-hd.html">Hydrodynamics — Model Paper</a>.</p>
 </div>
 
-<!-- ===================================================== IMPORTANT QS -->
-<div class="unit-h" id="imp"><h2>🎯 Important Questions</h2><p>Syllabus ke standard derivations — aam taur par yahi poochhe jaate hain.</p></div>
-<div class="card sheet">
-  <h4>Long questions (10 marks)</h4>
-  <ol>
-    <li>Equation of continuity — Eulerian (aur Lagrangian) form. <span class="tag">1.2</span></li>
-    <li>Euler's equations of motion. <span class="tag">1.6</span></li>
-    <li>Bernoulli's theorem (steady + unsteady irrotational). <span class="tag">1.7</span></li>
-    <li>Image of a source w.r.t. a circle. <span class="tag">2.3</span></li>
-    <li>Theorem of Blasius. <span class="tag">2.4</span></li>
-    <li>Kelvin's circulation theorem + permanence of irrotational motion. <span class="tag">2.5</span></li>
-    <li>Milne-Thomson circle theorem; flow past circular cylinder. <span class="tag">3.1</span></li>
-    <li>Motion of a sphere in liquid at rest; KE. <span class="tag">4.2</span></li>
-    <li>Liquid streaming past a fixed sphere; pressure on surface. <span class="tag">4.3</span></li>
-  </ol>
-  <h4>Short questions (2–5 marks)</h4>
-  <ol>
-    <li>Lagrangian vs Eulerian. <span class="tag">1.1</span></li>
-    <li>Streamlines, pathlines, streak lines — difference; streamlines of u = x, v = −y. <span class="tag">1.4</span></li>
-    <li>Rotational vs irrotational; vortex line. <span class="tag">1.5</span></li>
-    <li>Possible boundary surface / possible liquid motion check. <span class="tag">1.2 · 1.3</span></li>
-    <li>Complex potential of source, sink, doublet. <span class="tag">2.1 · 2.2</span></li>
-    <li>D'Alembert paradox. <span class="tag">2.7</span></li>
-    <li>Sphere falling under gravity — acceleration. <span class="tag">4.4</span></li>
-    <li>Stokes's stream function — define. <span class="tag">4.6</span></li>
-  </ol>
-  <div class="box b-trick"><span class="lbl">🧠 Last tip</span>Hydrodynamics me <b>diagram</b> (cylinder/sphere, axis, θ, U ki disha) zaroor banaiye — examiner ko method turant samajh aata hai aur marks milte hain. All the best, Ma'am! 🌟</div>
-</div>
-
-<p class="foot">Maakit · S.N. Mishra Singapore International School · Astha Ma'am ki exam taiyari</p>
+<p class="foot">Maakit · S.N. Mishra Singapore International School · Exam study guide</p>
 </div>
 <script src="padhai.js"></script>
 </body>

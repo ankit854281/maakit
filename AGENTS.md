@@ -1009,3 +1009,8 @@ Owner: "astha maam ko padne keliye add kar dijiye taaki vo study karke apna exam
 Home, shown only when the teacher's name matches astha/aastha (and to the Principal). No school data is read
 or written; "padh liya" ticks are localStorage inside padhai/. `teacher-sw.js` caches `padhai/` network-first
 so the books open without internet after one visit. The card hides itself after 28 Nov 2026.
+Rewrite 11 Nov 2026 (owner: "professional pattern, poora likho, last exam ke paper solution ke saath"): both books now
+follow Definition → Theorem → full Proof → Solved example, with an exam-pattern section, and `model-paper-ra.html` /
+`model-paper-hd.html` (75 marks, Sections A/B/C, full solutions). The university is unknown, so these are clearly
+labelled PRACTICE papers on the typical UP-university pattern — never present them as real past papers; add real
+papers only from photos the owner sends.

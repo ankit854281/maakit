@@ -52,3 +52,10 @@ th{background:#f1ebff;color:#3b0764}
 .big{font-size:22px;font-weight:800;color:#3b0764}
 @media print{.top,.units,.done{display:none}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}body{background:#fff}}
 .katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+.b-def{background:#fff6d6;border-color:#d97706}.b-def>.lbl{color:#b45309}
+.b-thm{background:#efe9ff;border-color:#6d28d9}.b-thm>.lbl{color:#5b21b6}
+.b-proof{background:#fafafa;border-color:#334155}.b-proof>.lbl{color:#334155}
+.b-sol{background:#f0fdf4;border-color:#15803d}.b-sol>.lbl{color:#15803d}
+.qpaper .q{font-weight:700;color:#1e1b4b;margin:14px 0 4px}
+.qpaper .marks{float:right;font-size:13px;color:#6b6580;font-weight:700}
+.note{font-size:14px;color:#6b6580}

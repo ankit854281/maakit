@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Real Analysis — Model Paper with Solutions</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+</head>
+<body data-book="mp-ra" class="qpaper">
+<div class="top"><a class="back" href="real-analysis.html">← Real Analysis</a><b>Model Paper</b></div>
+<div class="hero">
+  <h1>✍️ Real Analysis — Model Paper</h1>
+  <p>Time: 3 Hours · Maximum Marks: 75</p>
+  <span class="date">Practice paper with complete solutions</span>
+</div>
+<div class="wrap">
+
+<div class="card">
+  <div class="box b-warn"><span class="lbl">⚠️ Note</span>Yeh <b>model (practice) paper</b> hai, UP ki state universities ke typical M.Sc. pattern par aapke syllabus ke saare units se banaya gaya hai. Yeh kisi university ka asli pichle saal ka paper <b>nahi</b> hai. Asli paper ki photo milte hi use bhi solution ke saath joda ja sakta hai.</div>
+  <h3>Kaise use karein</h3>
+  <ol><li>Pehle sirf questions dekhiye (solutions band rakhiye) aur 3 ghante me copy par likhiye.</li>
+  <li>Phir har question ka "Solution" kholkar milaiye.</li>
+  <li>Jo galat hua, ebook me us topic ko dobara padhiye.</li></ol>
+</div>
+
+<!-- ===================================== SECTION A -->
+<div class="unit-h"><h2>Section A — Short answer</h2><p>Attempt all questions. 5 × 3 = 15 marks</p></div>
+<div class="card">
+  <p class="q">Q1. Define a countable set. Show that the set of all integers ℤ is countable. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  A set A is countable if there is a one-one mapping of ℕ onto A.<br>
+  Define \(f:\mathbb N\to\mathbb Z\) by \(f(n)=\frac n2\) if n is even, \(f(n)=-\frac{n-1}{2}\) if n is odd. Then f(1) = 0, f(2) = 1, f(3) = −1, f(4) = 2, f(5) = −2, …
+  f is one-one (different n give different integers) and onto (0 = f(1), a positive k = f(2k), a negative −k = f(2k + 1)). Hence ℤ is countable.</div></details>
+
+  <p class="q">Q2. Evaluate \(\displaystyle\int_0^3 x\,d([x]+x)\), where [x] is the greatest integer function. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  By linearity in α: \(\int_0^3x\,d([x]+x)=\int_0^3x\,d[x]+\int_0^3x\,dx\).<br>
+  [x] jumps by 1 at x = 1, 2, 3, so \(\int_0^3x\,d[x]=1+2+3=6\). And \(\int_0^3x\,dx=\frac92\).<br>
+  Answer \(=6+\frac92=\boxed{\frac{21}{2}}\).</div></details>
+
+  <p class="q">Q3. Show that \(f(x,y)=\dfrac{x^2y}{x^4+y^2}\) (\(f(0,0)=0\)) is not continuous at (0, 0). <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Along \(y=mx^2\): \(f=\dfrac{mx^4}{x^4+m^2x^4}=\dfrac{m}{1+m^2}\), which depends on m. Different paths give different limits, so the limit at (0, 0) does not exist and f is not continuous there.
+  (Note: along every straight line y = mx the limit is 0, so a parabola path is needed here.)</div></details>
+
+  <p class="q">Q4. Define absolute and conditional convergence. Give one example of each. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(\sum a_n\) is absolutely convergent if \(\sum|a_n|\) converges; conditionally convergent if \(\sum a_n\) converges but \(\sum|a_n|\) diverges.<br>
+  Absolute: \(\sum\frac{(-1)^{n+1}}{n^2}\) (since \(\sum\frac1{n^2}\) converges). Conditional: \(\sum\frac{(-1)^{n+1}}{n}\) (converges by Leibniz, but \(\sum\frac1n\) diverges).</div></details>
+
+  <p class="q">Q5. Define uniform convergence of a sequence of functions. Show that \(f_n(x)=\frac{\sin nx}{n}\) converges uniformly on ℝ. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(f_n\to f\) uniformly on E if for every ε &gt; 0 there is N (independent of x) with \(|f_n(x)-f(x)|\lt\varepsilon\) for all n ≥ N, x ∈ E.<br>
+  Here f = 0 and \(M_n=\sup_x\big|\frac{\sin nx}{n}\big|=\frac1n\to0\). By the \(M_n\)-test the convergence is uniform on ℝ.</div></details>
+</div>
+
+<!-- ===================================== SECTION B -->
+<div class="unit-h"><h2>Section B — Medium answer</h2><p>Attempt any four. 4 × 7½ = 30 marks</p></div>
+<div class="card">
+  <p class="q">Q6. Expand \(e^x\cos y\) in powers of x and y up to terms of the third degree. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  At (0, 0): \(f=1\); \(f_x=e^x\cos y=1\); \(f_y=-e^x\sin y=0\); \(f_{xx}=1\); \(f_{xy}=0\); \(f_{yy}=-e^x\cos y=-1\);
+  \(f_{xxx}=1\); \(f_{xxy}=0\); \(f_{xyy}=-1\); \(f_{yyy}=e^x\sin y=0\).<br>
+  Taylor: \(f=f+(xf_x+yf_y)+\frac1{2!}(x^2f_{xx}+2xyf_{xy}+y^2f_{yy})+\frac1{3!}(x^3f_{xxx}+3x^2yf_{xxy}+3xy^2f_{xyy}+y^3f_{yyy})+\dots\)<br>
+  \(=1+x+\frac12(x^2-y^2)+\frac16(x^3-3xy^2)+\dots\)<br>
+  \(\boxed{e^x\cos y=1+x+\tfrac12(x^2-y^2)+\tfrac16(x^3-3xy^2)+\dots}\)
+  (Check: this is the real part of \(e^{x+iy}=1+z+\frac{z^2}2+\frac{z^3}6\).)</div></details>
+
+  <p class="q">Q7. Prove that every monotonic function on [a, b] is Riemann integrable. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Let f be increasing (decreasing is similar). f is bounded: \(f(a)\le f\le f(b)\). If f(a) = f(b), f is constant and integrable. Otherwise, given ε &gt; 0 choose n with \(\frac{(b-a)[f(b)-f(a)]}{n}\lt\varepsilon\).<br>
+  Let P divide [a, b] into n equal parts, \(\Delta x_i=\frac{b-a}{n}\). Since f is increasing, \(M_i=f(x_i)\) and \(m_i=f(x_{i-1})\).<br>
+  \(U(P,f)-L(P,f)=\sum_{i=1}^n[f(x_i)-f(x_{i-1})]\frac{b-a}{n}=\frac{b-a}{n}[f(b)-f(a)]\lt\varepsilon\) (telescoping sum).<br>
+  By Riemann's criterion, \(f\in\mathcal R[a,b]\). ∎</div></details>
+
+  <p class="q">Q8. If f is continuous on [a, b] and α is monotonically increasing, prove that there exists ξ ∈ [a, b] such that \(\int_a^bf\,d\alpha=f(\xi)[\alpha(b)-\alpha(a)]\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  f is continuous on the compact interval [a, b], so \(f\in\mathcal R(\alpha)\) and f attains its minimum m and maximum M.<br>
+  Since \(m\le f(x)\le M\): \(m[\alpha(b)-\alpha(a)]\le\int_a^bf\,d\alpha\le M[\alpha(b)-\alpha(a)]\).<br>
+  If \(\alpha(b)=\alpha(a)\), both sides are 0; any ξ works. Otherwise \(\lambda=\frac{\int f\,d\alpha}{\alpha(b)-\alpha(a)}\in[m,M]\). By the intermediate value theorem there is \(\xi\in[a,b]\) with \(f(\xi)=\lambda\). Hence \(\int_a^bf\,d\alpha=f(\xi)[\alpha(b)-\alpha(a)]\). ∎</div></details>
+
+  <p class="q">Q9. Prove Cantor's theorem: for any set A, card A &lt; card P(A). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  (i) The map \(a\mapsto\{a\}\) is one-one from A into P(A); so card A ≤ card P(A).<br>
+  (ii) Suppose \(f:A\to P(A)\) is onto. Put \(B=\{a\in A:a\notin f(a)\}\). B ∈ P(A), so B = f(b) for some b ∈ A.
+  If b ∈ B then b ∉ f(b) = B; if b ∉ B = f(b) then b ∈ B. Either way a contradiction. So no such onto map exists and A is not equivalent to P(A).<br>
+  From (i) and (ii), card A &lt; card P(A). ∎</div></details>
+
+  <p class="q">Q10. Test for convergence: (a) \(\sum\frac{\cos n\theta}{n}\), θ ≠ 2kπ; (b) \(\sum\frac{(-1)^n}{n}\cdot\frac{n+1}{n}\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>(a)</b> Using \(2\sin\frac\theta2\cos k\theta=\sin(k+\frac12)\theta-\sin(k-\frac12)\theta\) and telescoping: \(\sum_{k=1}^n\cos k\theta=\frac{\sin(n+\frac12)\theta-\sin\frac\theta2}{2\sin\frac\theta2}\), so \(\big|\sum_{k=1}^n\cos k\theta\big|\le\frac{1}{|\sin\frac\theta2|}\) — bounded. \(b_n=\frac1n\downarrow0\). By Dirichlet's test, the series converges.<br>
+  <b>(b)</b> \(\sum\frac{(-1)^n}{n}\) converges (Leibniz). \(b_n=\frac{n+1}{n}=1+\frac1n\) is monotonically decreasing and bounded (1 &lt; b_n ≤ 2). By Abel's test, the series converges.</div></details>
+
+  <p class="q">Q11. Show that \(\sum_{n=1}^\infty\frac{x}{(1+x)^{n}}\) converges for x ≥ 0 but not uniformly on [0, ∞). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  At x = 0 every term is 0, sum S(0) = 0. For x &gt; 0 it is a geometric series with ratio \(\frac1{1+x}\lt1\):
+  \(S(x)=\frac{x}{1+x}\cdot\frac{1}{1-\frac1{1+x}}=\frac{x}{1+x}\cdot\frac{1+x}{x}=1\).<br>
+  So S(x) = 1 for x &gt; 0 and S(0) = 0: the series converges for every x ≥ 0.<br>
+  Each term is continuous on [0, ∞) but the sum S is discontinuous at 0. If the convergence were uniform, S would be continuous (uniform limit of continuous partial sums). Hence the convergence is not uniform on [0, ∞).
+  (Directly: \(S(x)-S_n(x)=\frac{1}{(1+x)^n}\) for x &gt; 0, whose sup over x &gt; 0 is 1, not → 0.)</div></details>
+</div>
+
+<!-- ===================================== SECTION C -->
+<div class="unit-h"><h2>Section C — Long answer</h2><p>Attempt any three. 3 × 10 = 30 marks</p></div>
+<div class="card">
+  <p class="q">Q12. State and prove the Fundamental Theorem of Integral Calculus. Hence evaluate \(\int_0^1x^2\,dx\). <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Statement.</b> If \(f\in\mathcal R[a,b]\) and F is differentiable on [a, b] with \(F'=f\), then \(\int_a^bf\,dx=F(b)-F(a)\).<br>
+  <b>Proof.</b>
+  <ol><li>Let ε &gt; 0. Since \(f\in\mathcal R\), there is a partition P with \(U(P,f)-L(P,f)\lt\varepsilon\).</li>
+  <li>By the Mean Value Theorem on \([x_{i-1},x_i]\): \(F(x_i)-F(x_{i-1})=F'(t_i)\Delta x_i=f(t_i)\Delta x_i\), \(t_i\in(x_{i-1},x_i)\).</li>
+  <li>Adding, \(\sum f(t_i)\Delta x_i=F(b)-F(a)\).</li>
+  <li>As \(m_i\le f(t_i)\le M_i\), \(L(P,f)\le F(b)-F(a)\le U(P,f)\); also \(L(P,f)\le\int_a^bf\le U(P,f)\).</li>
+  <li>Hence \(|F(b)-F(a)-\int_a^bf|\le U(P,f)-L(P,f)\lt\varepsilon\). ε is arbitrary, so \(\int_a^bf=F(b)-F(a)\). ∎</li></ol>
+  <b>Application.</b> \(f(x)=x^2\) is continuous, hence integrable; \(F(x)=\frac{x^3}3\) has \(F'=f\). So \(\int_0^1x^2dx=\frac13-0=\boxed{\frac13}\).</div></details>
+
+  <p class="q">Q13. Define the Riemann–Stieltjes integral. Prove that a bounded function f is R–S integrable w.r.t. α on [a, b] iff for every ε &gt; 0 there is a partition P with U(P, f, α) − L(P, f, α) &lt; ε. Deduce that every continuous function is R–S integrable. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Definition.</b> α increasing, f bounded on [a, b]. For P, \(\Delta\alpha_i=\alpha(x_i)-\alpha(x_{i-1})\), \(U(P,f,\alpha)=\sum M_i\Delta\alpha_i\), \(L(P,f,\alpha)=\sum m_i\Delta\alpha_i\). If \(\inf_PU=\sup_PL\), then \(f\in\mathcal R(\alpha)\) and the common value is \(\int_a^bf\,d\alpha\).<br>
+  <b>Lemma (refinement).</b> If \(P^*\supseteq P\) then \(L(P)\le L(P^*)\le U(P^*)\le U(P)\). (Adding one point \(x^*\in(x_{i-1},x_i)\): with \(w_1,w_2\) the infima on the two parts, \(w_1,w_2\ge m_i\), so \(w_1[\alpha(x^*)-\alpha(x_{i-1})]+w_2[\alpha(x_i)-\alpha(x^*)]\ge m_i\Delta\alpha_i\); similarly for U.) Hence every lower sum ≤ every upper sum and \(\underline\int\le\overline\int\).<br>
+  <b>Proof of the criterion.</b>
+  <ol><li>(⇐) For every P, \(L(P)\le\underline\int f\,d\alpha\le\overline\int f\,d\alpha\le U(P)\), so \(0\le\overline\int-\underline\int\le U(P)-L(P)\lt\varepsilon\). ε arbitrary ⇒ equality ⇒ \(f\in\mathcal R(\alpha)\).</li>
+  <li>(⇒) Let \(I=\int f\,d\alpha\). Choose \(P_1,P_2\) with \(L(P_1)\gt I-\frac\varepsilon2\), \(U(P_2)\lt I+\frac\varepsilon2\). With \(P=P_1\cup P_2\): \(U(P)\le U(P_2)\lt I+\frac\varepsilon2\lt L(P_1)+\varepsilon\le L(P)+\varepsilon\). ∎</li></ol>
+  <b>Deduction.</b> Let f be continuous, ε &gt; 0. Choose η &gt; 0 with \(\eta[\alpha(b)-\alpha(a)]\lt\varepsilon\). f is uniformly continuous on [a, b]: there is δ with \(|x-t|\lt\delta\Rightarrow|f(x)-f(t)|\lt\eta\). For P with all \(\Delta x_i\lt\delta\), \(M_i-m_i\le\eta\), so \(U-L\le\eta\sum\Delta\alpha_i=\eta[\alpha(b)-\alpha(a)]\lt\varepsilon\). By the criterion, \(f\in\mathcal R(\alpha)\). ∎</div></details>
+
+  <p class="q">Q14. State and prove the Schroeder–Bernstein theorem. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Statement.</b> If A is equivalent to a subset of B and B is equivalent to a subset of A, then A ~ B.<br>
+  <b>Proof.</b>
+  <ol><li>Let \(f:A\to B\), \(g:B\to A\) be one-one.</li>
+  <li>Put \(A_0=A\setminus g(B)\), \(A_{n+1}=g(f(A_n))\) for n ≥ 0, and \(A^*=\bigcup_{n\ge0}A_n\).</li>
+  <li>Define \(h:A\to B\): \(h(x)=f(x)\) for \(x\in A^*\); \(h(x)=g^{-1}(x)\) for \(x\notin A^*\) (well defined, since \(x\notin A_0\) means \(x\in g(B)\), and g is one-one).</li>
+  <li><b>One-one:</b> f and \(g^{-1}\) are one-one on their parts. If \(f(x)=g^{-1}(y)\) with \(x\in A_n\), \(y\notin A^*\), then \(y=g(f(x))\in A_{n+1}\subseteq A^*\), a contradiction.</li>
+  <li><b>Onto:</b> let b ∈ B. If \(b\in f(A^*)\), b = h(x) for some x ∈ A*. If not, let \(y=g(b)\). Were y ∈ A*, then (as y ∉ A₀) \(y\in g(f(A_n))\) for some n, so \(b\in f(A_n)\subseteq f(A^*)\) — contradiction. Hence y ∉ A* and \(h(y)=g^{-1}(y)=b\).</li>
+  <li>So h is one-one and onto: A ~ B. ∎</li></ol>
+  <b>Illustration.</b> (0, 1) ~ [0, 1] using f(x) = x and \(g(x)=\frac{x+1}3\).</div></details>
+
+  <p class="q">Q15. State and prove the Weierstrass M-test. Show that if \(f_n\) are continuous on E and \(f_n\to f\) uniformly, then f is continuous. Hence show that \(\sum\frac{\sin nx}{n^3}\) defines a continuous function on ℝ. <span class="marks">10</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>M-test.</b> If \(|u_n(x)|\le M_n\) for all x ∈ E, n ∈ ℕ, and \(\sum M_n\) converges, then \(\sum u_n\) converges uniformly (and absolutely) on E.<br>
+  <b>Proof.</b> Given ε, by the Cauchy criterion for \(\sum M_n\) there is N with \(M_{n+1}+\dots+M_m\lt\varepsilon\) for m &gt; n ≥ N. Then for every x: \(|u_{n+1}(x)+\dots+u_m(x)|\le M_{n+1}+\dots+M_m\lt\varepsilon\). N does not depend on x, so by the Cauchy criterion for uniform convergence the series converges uniformly. ∎<br>
+  <b>Continuity.</b> Let \(x_0\in E\), ε &gt; 0. Choose N with \(|f_N(x)-f(x)|\lt\frac\varepsilon3\) for all x; choose δ with \(|f_N(x)-f_N(x_0)|\lt\frac\varepsilon3\) for \(|x-x_0|\lt\delta\). Then \(|f(x)-f(x_0)|\le|f(x)-f_N(x)|+|f_N(x)-f_N(x_0)|+|f_N(x_0)-f(x_0)|\lt\varepsilon\). ∎<br>
+  <b>Application.</b> \(\big|\frac{\sin nx}{n^3}\big|\le\frac1{n^3}\) and \(\sum\frac1{n^3}\) converges, so the series converges uniformly on ℝ. Its partial sums are continuous (finite sums of continuous functions), hence the sum \(\sum\frac{\sin nx}{n^3}\) is continuous on ℝ.</div></details>
+</div>
+
+<div class="card">
+  <div class="box b-trick"><span class="lbl">🧠 Self-check</span>Section A + B me 40+ aur Section C me 2 poore theorems sahi likh liye — to aap exam ke liye achchhi tarah taiyar hain.</div>
+</div>
+<p class="foot">Maakit · Model paper for practice</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>
