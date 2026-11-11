@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Real Analysis — Astha Ma'am ki Exam Taiyari</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+</head>
+<body data-book="real-analysis">
+
+<div class="top"><a class="back" href="index.html">← Books</a><b>Real Analysis</b><span class="prog" id="prog"></span></div>
+
+<div class="hero">
+  <h1>📘 Real Analysis</h1>
+  <p>Astha Ma'am ke liye — aasaan bhasha me, step-by-step, exam ke hisaab se.</p>
+  <p>Har topic par likha hai ki <b>exam me aane ka chance</b> kitna hai.</p>
+  <span class="date">Exam: 25 November 2026</span>
+</div>
+
+<nav class="units">
+  <a href="#guide">Kaise padhein</a><a href="#u1">Unit 1</a><a href="#u2">Unit 2</a><a href="#u3">Unit 3</a><a href="#u4">Unit 4</a><a href="#formula">Formula sheet</a><a href="#imp">Important Qs</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ===================================================== GUIDE -->
+<div class="card sheet" id="guide">
+  <h3>🗺️ Ma'am, aise padhiye</h3>
+  <p>Har topic me 5 rang ke box hain. Inka matlab yaad rakhiye:</p>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Topic ka matlab aam bhasha me — pehle yeh padhiye.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Numbers ke saath step-by-step hal kiya hua sawaal.</div>
+  <div class="box b-exam"><span class="lbl">📝 Exam me aise likho</span>Definition / theorem bilkul isi tarah copy me likhiye.</div>
+  <div class="box b-trick"><span class="lbl">🧠 Yaad rakhne ki trick</span>Chhoti line jo exam hall me yaad aa jaaye.</div>
+  <div class="box b-q"><span class="lbl">❓ Exam me sawaal aise aata hai</span>Paper me yeh topic kis roop me poocha jaata hai.</div>
+  <h4>Exam chance ka matlab</h4>
+  <p><span class="chance ch-h">🔥 Bahut zyada chance</span> — har haal me taiyar karna hai.<br>
+  <span class="chance ch-m">⭐ Medium chance</span> — short question ya part (b) me aata hai.<br>
+  <span class="chance ch-l">📌 Kam chance</span> — time bache to padhiye.</p>
+  <h4>14 din ka plan (11 – 24 Nov)</h4>
+  <div class="tbl"><table>
+    <tr><th>Din</th><th>Kya padhna hai</th></tr>
+    <tr><td>1 – 3</td><td>Unit 1 — several variables, Taylor, Riemann integral</td></tr>
+    <tr><td>4 – 6</td><td>Unit 2 — Riemann-Stieltjes integral</td></tr>
+    <tr><td>7 – 9</td><td>Unit 3 — countable sets, series ke tests</td></tr>
+    <tr><td>10 – 12</td><td>Unit 4 — uniform convergence</td></tr>
+    <tr><td>13 – 14</td><td>Formula sheet + Important Questions likh kar practice</td></tr>
+  </table></div>
+  <div class="box b-trick"><span class="lbl">🧠 Answer likhne ka formula</span>
+  <b>Definition → Theorem statement → Proof (steps me) → Ek example.</b> Example dene se marks badhte hain.</div>
+</div>
+
+<!-- ===================================================== UNIT 1 -->
+<div class="unit-h" id="u1"><h2>Unit 1 — Functions of Several Variables & Riemann Integral</h2><p>f(x, y) jaise functions, unka derivative, aur area nikalne ka tareeka.</p></div>
+
+<div class="card" data-id="1.1">
+  <h3 class="topic">1.1 Several variables ka function</h3>
+  <span class="chance ch-l">📌 Kam chance (par aage sab isi par based hai)</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Ab tak \(f(x)\) padha — <b>ek input, ek output</b>. Ab \(f(x,y)\) hai — <b>do input, ek output</b>.<br>
+  Real life: kamre ka temperature aapki jagah \((x, y)\) par depend karta hai. Temperature \(= f(x,y)\). Bas!</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>
+  \(f(x,y) = x^2 + y\). To \(f(2,3) = 4 + 3 = 7\).<br>
+  \(\mathbb{R}^n\) = n numbers ka group. \(f(x,y) = (x+y,\ xy)\) me input 2 numbers, output 2 numbers, yaani \(f:\mathbb{R}^2\to\mathbb{R}^2\).</div>
+</div>
+
+<div class="card" data-id="1.2">
+  <h3 class="topic">1.2 Continuity — "jhatka nahi lagna chahiye"</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — example wala sawaal</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Input thoda badlo to output bhi thoda hi badle — graph me koi tootna nahi.<br>
+  Ek variable me x sirf left-right se aata hai. Do variables me point \((x,y)\) <b>har raaste</b> se \((0,0)\) ke paas aa sakta hai — line se, parabola se. <b>Har raaste par same answer aana chahiye.</b></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example (sabse famous)</span>
+  \(f(x,y)=\dfrac{xy}{x^2+y^2}\), aur \(f(0,0)=0\). Kya \((0,0)\) par continuous hai?
+  <ol>
+    <li>Raasta \(y = mx\) lo: \(f = \dfrac{x\cdot mx}{x^2+m^2x^2} = \dfrac{m}{1+m^2}\).</li>
+    <li>m = 0 (x-axis) par answer 0. m = 1 (line y = x) par answer 1/2.</li>
+    <li>Alag raaste, alag answer — isliye limit exist nahi karti.</li>
+    <li><b>Answer: f, (0,0) par continuous nahi hai.</b></li>
+  </ol></div>
+  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Discontinuity dikhani ho to <b>y = mx</b> rakho. Answer me m bacha to limit nahi hai.</div>
+  <div class="box b-exam"><span class="lbl">📝 Exam me aise likho</span>
+  Let \(E\subset\mathbb{R}^n\) be open and \(f:E\to\mathbb{R}^m\). f is continuous at \(a\in E\) if for every \(\varepsilon\gt 0\) there exists \(\delta\gt 0\) such that \(\|x-a\|\lt\delta \Rightarrow \|f(x)-f(a)\|\lt\varepsilon\).</div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>
+  "Show that \(f(x,y)=\frac{xy}{x^2+y^2}\) is not continuous at (0,0) though its partial derivatives exist." (5 marks)</div>
+</div>
+
+<div class="card" data-id="1.3">
+  <h3 class="topic">1.3 Partial derivative — "ek variable ko freeze karo"</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  x ke respect me derivative lena hai? <b>y ko constant (number) maan lo</b> aur normal derivative le lo. Bas itna hi.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>
+  \(f(x,y) = x^2y + 3y^2\)
+  <ul>
+    <li>\(\partial f/\partial x\): y constant. \(x^2y \to 2xy\), \(3y^2 \to 0\). <b>Answer: 2xy</b></li>
+    <li>\(\partial f/\partial y\): x constant. \(x^2y\to x^2\), \(3y^2\to 6y\). <b>Answer: \(x^2+6y\)</b></li>
+  </ul></div>
+  <div class="box b-exam"><span class="lbl">📝 Formula</span>
+  $$\frac{\partial f}{\partial x}(a,b)=\lim_{h\to 0}\frac{f(a+h,b)-f(a,b)}{h}$$</div>
+  <div class="box b-warn"><span class="lbl">⚠️ Dhyan do</span>
+  Upar wale \(\frac{xy}{x^2+y^2}\) ke (0,0) par dono partial derivatives exist karte hain (dono 0), phir bhi function continuous nahi. Matlab <b>partial derivative hona kaafi nahi</b> — isliye "differentiability" chahiye.</div>
+</div>
+
+<div class="card" data-id="1.4">
+  <h3 class="topic">1.4 Differentiability — derivative ek "matrix" hai</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Ek curve ko bahut zoom karo to woh seedhi line jaisa dikhta hai (tangent). Surface ko zoom karo to <b>flat plane</b> jaisa dikhna chahiye. Dikhe to function differentiable.<br>
+  Us flat approximation ko ek <b>matrix</b> se likhte hain — <b>Jacobian matrix</b>. Isliye kehte hain "derivative ek linear transformation hai".</div>
+  <div class="box b-ex"><span class="lbl">✍️ Jacobian nikalo</span>
+  \(f(x,y) = (x^2y,\ x+y)\). Har output ka har input se partial derivative:
+  <div class="tbl"><table><tr><th></th><th>∂/∂x</th><th>∂/∂y</th></tr><tr><td>\(f_1 = x^2y\)</td><td>2xy</td><td>\(x^2\)</td></tr><tr><td>\(f_2 = x+y\)</td><td>1</td><td>1</td></tr></table></div>
+  Yahi 2×2 table Jacobian matrix \(f'(x,y)\) hai.</div>
+  <div class="box b-exam"><span class="lbl">📝 Definition</span>
+  \(f:E\to\mathbb{R}^m\) (E open in \(\mathbb{R}^n\)) is differentiable at x if there exists a linear transformation \(A:\mathbb{R}^n\to\mathbb{R}^m\) such that
+  $$\lim_{h\to 0}\frac{\|f(x+h)-f(x)-Ah\|}{\|h\|}=0.$$
+  Then \(A=f'(x)\) is the derivative of f at x.</div>
+  <div class="box b-trick"><span class="lbl">🧠 Seedhi (ladder) yaad karo</span>
+  <ol><li>Partial derivatives exist <b>+ continuous</b> ⇒ Differentiable</li><li>Differentiable ⇒ Continuous, aur partial derivatives exist</li><li>Ulta hamesha sach nahi.</li></ol></div>
+  <h4>Theorem: Derivative unique hota hai (proof)</h4>
+  <div class="box b-exam"><span class="lbl">📝 Proof steps</span>
+  <ol>
+    <li>Maan lo do derivatives \(A_1, A_2\) hain. \(B = A_1 - A_2\).</li>
+    <li>Triangle inequality se \(\dfrac{\|Bh\|}{\|h\|}\to 0\) as \(h\to 0\).</li>
+    <li>\(h = tu\) lo (u fixed, \(t\to0\)). B linear hai to \(\dfrac{\|Bh\|}{\|h\|} = \dfrac{\|Bu\|}{\|u\|}\) — yeh t par depend hi nahi karta.</li>
+    <li>Jo t par depend na kare aur 0 ki taraf jaaye, woh 0 hai. To \(Bu=0\) har u ke liye.</li>
+    <li>Isliye \(B=0\), yaani \(A_1=A_2\). ∎</li>
+  </ol></div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>
+  "Define derivative of \(f:\mathbb{R}^n\to\mathbb{R}^m\). Prove that it is unique." / "Find the Jacobian matrix of …"</div>
+</div>
+
+<div class="card" data-id="1.5">
+  <h3 class="topic">1.5 Chain rule</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  z, x aur y par depend; x aur y, t par depend. To z ka t se badlav = (z ka x se × x ka t se) + (z ka y se × y ka t se). Chain ki tarah multiply.
+  $$\frac{dz}{dt}=\frac{\partial z}{\partial x}\frac{dx}{dt}+\frac{\partial z}{\partial y}\frac{dy}{dt}$$</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>
+  \(z=x^2+y^2,\ x=\cos t,\ y=\sin t\)
+  <ol><li>\(z_x = 2x,\ z_y = 2y\)</li><li>\(dx/dt = -\sin t,\ dy/dt = \cos t\)</li><li>\(dz/dt = 2\cos t(-\sin t) + 2\sin t\cos t = 0\)</li><li>Check: \(z = \cos^2t+\sin^2t = 1\), constant. Sahi!</li></ol></div>
+  <div class="box b-exam"><span class="lbl">📝 Statement</span>
+  If f is differentiable at \(x_0\) and g is differentiable at \(f(x_0)\), then \(F=g\circ f\) is differentiable at \(x_0\) and \(F'(x_0)=g'(f(x_0))\,f'(x_0)\).</div>
+</div>
+
+<div class="card" data-id="1.6">
+  <h3 class="topic">1.6 Taylor's theorem (do variables)</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — expansion ka numerical</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Ek variable me: \(f(a+h) = f(a) + hf'(a) + \frac{h^2}{2!}f''(a)+\dots\)<br>
+  Do variables me bilkul same — bas derivative ki jagah \(\left(h\frac{\partial}{\partial x}+k\frac{\partial}{\partial y}\right)\) aata hai. Second degree tak khol kar:
+  $$f(a+h,b+k)\approx f+hf_x+kf_y+\frac{1}{2!}\left(h^2f_{xx}+2hk\,f_{xy}+k^2f_{yy}\right)$$
+  (sab derivatives point (a, b) par)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example: \(e^x\sin y\) ko (0,0) ke paas second degree tak</span>
+  <div class="tbl"><table><tr><th>Derivative</th><th>Formula</th><th>(0,0) par</th></tr>
+  <tr><td>f</td><td>\(e^x\sin y\)</td><td>0</td></tr><tr><td>\(f_x\)</td><td>\(e^x\sin y\)</td><td>0</td></tr><tr><td>\(f_y\)</td><td>\(e^x\cos y\)</td><td>1</td></tr>
+  <tr><td>\(f_{xx}\)</td><td>\(e^x\sin y\)</td><td>0</td></tr><tr><td>\(f_{xy}\)</td><td>\(e^x\cos y\)</td><td>1</td></tr><tr><td>\(f_{yy}\)</td><td>\(-e^x\sin y\)</td><td>0</td></tr></table></div>
+  Formula me (h = x, k = y): \(0+0+y+\frac12(0+2xy+0) = \boxed{y+xy}\)</div>
+  <div class="box b-exam"><span class="lbl">📝 Statement + proof idea</span>
+  If f has continuous partial derivatives of order n near (a, b), then
+  $$f(a+h,b+k)=\sum_{r=0}^{n-1}\frac{1}{r!}\Big(h\tfrac{\partial}{\partial x}+k\tfrac{\partial}{\partial y}\Big)^r f(a,b)+R_n,$$
+  $$R_n=\frac{1}{n!}\Big(h\tfrac{\partial}{\partial x}+k\tfrac{\partial}{\partial y}\Big)^n f(a+\theta h,b+\theta k),\ 0\lt\theta\lt 1.$$
+  <b>Proof:</b> \(\varphi(t)=f(a+th,\,b+tk)\) lo. Yeh sirf t ka function hai, to one-variable Maclaurin lagao. Chain rule se \(\varphi'(t)=(h\partial_x+k\partial_y)f\). Phir t = 1 rakho. ∎</div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>
+  "Expand \(e^x \sin y\) / \(e^x\cos y\) / \(x^2y+3y-2\) in powers of x and y up to second degree."</div>
+</div>
+
+<div class="card" data-id="1.7">
+  <h3 class="topic">1.7 Riemann integral — "rectangles se area"</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Curve ke neeche ka area chahiye. Interval [a, b] ko tukdon me kaato — isko <b>partition P</b> kehte hain. Har tukde par rectangle:
+  <ul><li><b>Upper sum U</b>: har tukde ki <b>sabse oonchi</b> value (\(M_i\)) se — area se zyada aata hai.</li>
+  <li><b>Lower sum L</b>: har tukde ki <b>sabse neechi</b> value (\(m_i\)) se — area se kam aata hai.</li></ul>
+  $$U(P,f)=\sum M_i\,\Delta x_i,\qquad L(P,f)=\sum m_i\,\Delta x_i$$
+  Zyada tukde karo to U neeche aata hai, L upar jaata hai. <b>Dono ek number par mil jaayein to function integrable</b>, aur wahi number integral.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example: \(f(x)=x\) on [0, 1]</span>
+  <ol><li>n barabar tukde, har tukda 1/n.</li><li>Upper: \(U=\frac1n(\frac1n+\frac2n+\dots+\frac nn)=\frac{n+1}{2n}\)</li><li>Lower: \(L=\frac1n(0+\frac1n+\dots+\frac{n-1}n)=\frac{n-1}{2n}\)</li><li>\(n\to\infty\): dono \(\frac12\). <b>\(\int_0^1x\,dx=\frac12\)</b> (triangle ka area bhi 1/2!)</li></ol></div>
+  <div class="box b-exam"><span class="lbl">📝 Riemann criterion (bahut important)</span>
+  A bounded function f is Riemann integrable on [a, b] if and only if for every \(\varepsilon\gt0\) there exists a partition P such that \(U(P,f)-L(P,f)\lt\varepsilon\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Non-integrable example (zaroor yaad karo)</span>
+  Dirichlet function: f(x) = 1 agar x rational, 0 agar irrational, [0,1] par.
+  <ol><li>Har chhote tukde me rational bhi hain, irrational bhi.</li><li>To har tukde me \(M_i=1,\ m_i=0\).</li><li>U = 1, L = 0 — kitne bhi tukde karo.</li><li><b>Upper ≠ lower, isliye integrable nahi.</b></li></ol></div>
+  <div class="box b-trick"><span class="lbl">🧠 Kaun integrable hai</span>Continuous ✔ · Monotonic ✔ · Finite jumps wala bounded ✔ · Dirichlet ✘</div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>
+  "State and prove the necessary and sufficient condition for Riemann integrability." / "Show that Dirichlet's function is not R-integrable." / "Every continuous function is integrable — prove."</div>
+</div>
+
+<div class="card" data-id="1.8">
+  <h3 class="topic">1.8 Properties of Riemann integral</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Sab wahi jo normal integration me hota hai:
+  <ul><li>\(\int(f+g)=\int f+\int g\), \(\int cf = c\int f\)</li><li>\(f\le g\Rightarrow \int f\le\int g\)</li><li>\(\int_a^b=\int_a^c+\int_c^b\)</li><li>\(|\int f|\le\int|f|\)</li><li>\(|f|\le M \Rightarrow |\int_a^b f|\le M(b-a)\)</li><li>f, g integrable ⇒ fg integrable</li></ul></div>
+</div>
+
+<div class="card" data-id="1.9">
+  <h3 class="topic">1.9 Fundamental Theorem of Calculus</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — proof aata hai</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Integration aur differentiation <b>ulte</b> kaam hain.<br>
+  <b>First FTC:</b> \(F(x)=\int_a^x f(t)dt\) = a se x tak area. x thoda badhao to area f(x) ki speed se badhta hai, isliye \(F'(x)=f(x)\).<br>
+  <b>Second FTC:</b> Agar \(F'=f\) to \(\int_a^bf=F(b)-F(a)\). Yahi roz use karte hain: \(\int_0^2x^2dx=\frac83\).</div>
+  <div class="box b-exam"><span class="lbl">📝 Second FTC ka proof</span>
+  <b>Statement:</b> If f is Riemann integrable on [a, b] and F is differentiable with F′ = f, then \(\int_a^b f\,dx = F(b)-F(a)\).
+  <ol>
+    <li>\(\varepsilon\gt0\) lo. Riemann criterion se P lo jisme \(U-L\lt\varepsilon\).</li>
+    <li>Har tukde par Mean Value Theorem: \(F(x_i)-F(x_{i-1})=f(t_i)\Delta x_i\).</li>
+    <li>Sab jodo: \(\sum f(t_i)\Delta x_i = F(b)-F(a)\) (beech ke terms cancel).</li>
+    <li>\(m_i\le f(t_i)\le M_i\), isliye \(L\le F(b)-F(a)\le U\).</li>
+    <li>\(\int f\) bhi L aur U ke beech hai.</li>
+    <li>Dono chhote gap (\(\lt\varepsilon\)) me, to \(|F(b)-F(a)-\int f|\lt\varepsilon\). ε arbitrary ⇒ barabar. ∎</li>
+  </ol></div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"State and prove the fundamental theorem of integral calculus." (10 marks)</div>
+</div>
+
+<!-- ===================================================== UNIT 2 -->
+<div class="unit-h" id="u2"><h2>Unit 2 — Riemann-Stieltjes (R-S) Integral</h2><p>Riemann jaisa hi, bas width \(\Delta x\) ki jagah \(\Delta\alpha\).</p></div>
+
+<div class="card" data-id="2.1">
+  <h3 class="topic">2.1 R-S integral kya hai? (dukaan wala example)</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — definition</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Dukaan socho. f(x) = daam (price) time x par. α(x) = time x tak <b>kitna maal bika</b>.
+  <ul><li>\(\int f\,dx\) = daam × time — koi matlab nahi.</li><li>\(\int f\,d\alpha\) = daam × kitna bika = <b>total kamai</b>!</li></ul>
+  Formula Riemann jaisa, bas \(\Delta\alpha_i=\alpha(x_i)-\alpha(x_{i-1})\):
+  $$U(P,f,\alpha)=\sum M_i\,\Delta\alpha_i,\qquad L(P,f,\alpha)=\sum m_i\,\Delta\alpha_i$$</div>
+  <div class="box b-exam"><span class="lbl">📝 Definition</span>
+  Let α be monotonically increasing on [a, b] and f bounded. If \(\inf_P U(P,f,\alpha)=\sup_P L(P,f,\alpha)\), then f is Riemann–Stieltjes integrable w.r.t. α, written \(f\in R(\alpha)\), and the common value is \(\int_a^b f\,d\alpha\).</div>
+  <div class="box b-trick"><span class="lbl">🧠 Yaad rakho</span>α hamesha <b>increasing</b> (taaki \(\Delta\alpha\ge0\)). Agar α(x) = x, to yeh normal Riemann integral hi hai.</div>
+</div>
+
+<div class="card" data-id="2.2">
+  <h3 class="topic">2.2 Jab α smooth ho — sabse aasaan calculation</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — numerical</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>\(d\alpha = \alpha'(x)\,dx\). Bas badal do aur normal integration karo!
+  $$\int_a^b f\,d\alpha=\int_a^b f(x)\,\alpha'(x)\,dx$$</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 1: \(\int_0^1 x\,d(x^2)\)</span>
+  <ol><li>\(\alpha=x^2\Rightarrow\alpha'=2x\)</li><li>\(\int_0^1x\cdot2x\,dx=\int_0^12x^2dx\)</li><li>\(=\left[\frac{2x^3}{3}\right]_0^1=\boxed{\frac23}\)</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 2: \(\int_0^{\pi/2} x\,d(\sin x)\)</span>
+  <ol><li>\(\alpha'=\cos x\)</li><li>\(\int x\cos x\,dx = x\sin x+\cos x\) (by parts)</li><li>\(\left(\frac\pi2+0\right)-(0+1)=\boxed{\frac\pi2-1}\)</li></ol></div>
+</div>
+
+<div class="card" data-id="2.3">
+  <h3 class="topic">2.3 Jab α jump kare — greatest integer [x]</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — numerical</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  [x] (greatest integer) x = 1, 2, 3… par 1 ka jump karta hai, baaki jagah flat. Flat jagah \(\Delta\alpha = 0\), to kuch nahi milta. <b>Sirf jump wali jagah se kamai.</b><br>
+  <b>Rule:</b> \(\int f\,d\alpha = \sum (\text{jump ka size})\times f(\text{jump point})\)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 1: \(\int_0^3 x\,d[x]\)</span>
+  <ol><li>0 ke baad 3 tak jump: x = 1, 2, 3 par, har jump = 1.</li><li>Answer \(=f(1)+f(2)+f(3)=1+2+3=\boxed{6}\)</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 2</span>\(\int_0^3 x^2\,d[x]=1+4+9=\boxed{14}\) &nbsp;·&nbsp; \(\int_0^2 e^x\,d[x]=e+e^2\)</div>
+  <div class="box b-exam"><span class="lbl">📝 Unit step function</span>
+  \(I(x)=0\ (x\le0),\ 1\ (x\gt0)\). If \(a\lt s\lt b\), f bounded and continuous at s, and \(\alpha(x)=I(x-s)\), then \(\int_a^b f\,d\alpha=f(s)\).</div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"Evaluate \(\int_0^3 x\,d[x]\)" / "\(\int_0^2 x^2\,d[x]\)" / "\(\int_0^1 x\,d(x^2)\)" — 2 se 5 marks, pakka number.</div>
+</div>
+
+<div class="card" data-id="2.4">
+  <h3 class="topic">2.4 Kab integrate kar sakte hain? (Existence)</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — proof</span>
+  <div class="box b-exam"><span class="lbl">📝 Theorem (Riemann's condition)</span>
+  \(f\in R(\alpha)\) on [a, b] if and only if for every \(\varepsilon\gt0\) there exists a partition P such that \(U(P,f,\alpha)-L(P,f,\alpha)\lt\varepsilon\).
+  <ol>
+    <li><b>(⇐)</b> \(L\le\) lower integral \(\le\) upper integral \(\le U\). To (upper − lower) \(\le U-L\lt\varepsilon\). ε kitna bhi chhota ⇒ dono barabar ⇒ integrable.</li>
+    <li><b>(⇒)</b> Integral = I. \(P_1\) lo jisme \(L(P_1)\gt I-\frac\varepsilon2\), \(P_2\) lo jisme \(U(P_2)\lt I+\frac\varepsilon2\). \(P=P_1\cup P_2\). Zyada tukde se U ghatta, L badhta hai, to \(U(P)-L(P)\lt\varepsilon\). ∎</li>
+  </ol></div>
+  <div class="tbl"><table><tr><th>Condition</th><th>Result</th></tr>
+  <tr><td>f continuous</td><td>\(f\in R(\alpha)\) — hamesha</td></tr>
+  <tr><td>f monotonic, α continuous</td><td>\(f\in R(\alpha)\)</td></tr>
+  <tr><td>f me finite jumps, un points par α continuous</td><td>\(f\in R(\alpha)\)</td></tr></table></div>
+  <div class="box b-exam"><span class="lbl">📝 Proof: f continuous ⇒ f ∈ R(α)</span>
+  <ol><li>Closed interval par continuous ⇒ <b>uniformly continuous</b>.</li><li>η > 0 aisa lo ki \(\eta[\alpha(b)-\alpha(a)]\lt\varepsilon\).</li><li>Partition itna barik ki har tukde me \(M_i-m_i\le\eta\).</li><li>\(U-L=\sum(M_i-m_i)\Delta\alpha_i\le\eta\sum\Delta\alpha_i=\eta[\alpha(b)-\alpha(a)]\lt\varepsilon\). ∎</li></ol></div>
+</div>
+
+<div class="card" data-id="2.5">
+  <h3 class="topic">2.5 Properties of R-S integral</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 List (Riemann jaisi)</span>
+  <ul><li>\(\int(f_1+f_2)d\alpha=\int f_1d\alpha+\int f_2d\alpha\); \(\int cf\,d\alpha=c\int f\,d\alpha\)</li>
+  <li>\(f_1\le f_2\Rightarrow\int f_1d\alpha\le\int f_2d\alpha\)</li><li>\(\int_a^b=\int_a^c+\int_c^b\)</li>
+  <li>\(\int f\,d(\alpha_1+\alpha_2)=\int f\,d\alpha_1+\int f\,d\alpha_2\)</li><li>\(\int f\,d(c\alpha)=c\int f\,d\alpha\) (c > 0)</li>
+  <li>\(|f|\le M\Rightarrow|\int f\,d\alpha|\le M[\alpha(b)-\alpha(a)]\)</li>
+  <li><b>By parts:</b> \(\int_a^b f\,dg=f(b)g(b)-f(a)g(a)-\int_a^b g\,df\)</li></ul></div>
+</div>
+
+<div class="card" data-id="2.6">
+  <h3 class="topic">2.6 R-S integral as a limit of sums</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  M ya m lene ki zaroorat nahi. Har tukde me <b>koi bhi point</b> \(t_i\) lo:
+  $$S(P,f,\alpha)=\sum f(t_i)\,\Delta\alpha_i \;\longrightarrow\; \int_a^b f\,d\alpha \quad\text{jab }\mu(P)=\max\Delta x_i\to0$$
+  Kyun? \(f(t_i)\) hamesha \(m_i\) aur \(M_i\) ke beech, to S bhi L aur U ke beech "sandwich" ho jaata hai.</div>
+</div>
+
+<div class="card" data-id="2.7">
+  <h3 class="topic">2.7 Mean Value Theorems</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — First MVT proof</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Kul kamai = (koi ek "average daam") × (kul bikri).</div>
+  <div class="box b-exam"><span class="lbl">📝 First MVT + proof</span>
+  If f is continuous on [a, b] and α increasing, there exists \(\xi\in[a,b]\) with
+  $$\int_a^b f\,d\alpha=f(\xi)\,[\alpha(b)-\alpha(a)].$$
+  <ol><li>m = min f, M = max f ⇒ \(m\le f\le M\).</li><li>Integrate: \(m[\alpha(b)-\alpha(a)]\le\int f\,d\alpha\le M[\alpha(b)-\alpha(a)]\).</li><li>Divide karo — beech ka number milta hai. Intermediate Value Theorem se f usko kisi \(\xi\) par leta hai. ∎</li></ol></div>
+  <div class="box b-exam"><span class="lbl">📝 Second MVT</span>
+  If α continuous and f monotonic on [a, b], there exists ξ with
+  $$\int_a^b f\,d\alpha=f(a)[\alpha(\xi)-\alpha(a)]+f(b)[\alpha(b)-\alpha(\xi)].$$</div>
+  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Second MVT: "a se ξ tak f(a), ξ se b tak f(b)".</div>
+</div>
+
+<div class="card" data-id="2.8">
+  <h3 class="topic">2.8 Integration aur differentiation</h3>
+  <span class="chance ch-l">📌 Kam chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>\(F(x)=\int_a^x f\,d\alpha\). Jahan α continuous, wahan F continuous. Jahan f continuous aur α differentiable: <b>\(F'(x)=f(x)\alpha'(x)\)</b>.</div>
+</div>
+
+<!-- ===================================================== UNIT 3 -->
+<div class="unit-h" id="u3"><h2>Unit 3 — Countable Sets, Cardinal Numbers & Series</h2><p>Infinity ko ginna, aur infinite numbers jodna.</p></div>
+
+<div class="card" data-id="3.1">
+  <h3 class="topic">3.1 Countable set — "jisko 1, 2, 3… se gin sako"</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — definition</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Har element par 1, 2, 3, 4… ka token laga sako aur koi chhoote nahi — to countable.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>
+  <div class="tbl"><table><tr><th>N</th><td>1</td><td>2</td><td>3</td><td>4</td><td>…</td></tr><tr><th>Even</th><td>2</td><td>4</td><td>6</td><td>8</td><td>…</td></tr></table></div>
+  Rule n → 2n. <b>Even numbers "aadhe" lagte hain, phir bhi utne hi jitne N!</b><br>
+  Integers: 0, 1, −1, 2, −2, 3, −3, … — line me lag gaye, to countable.</div>
+  <div class="box b-exam"><span class="lbl">📝 Definitions</span>
+  <ul><li>A ~ B (equivalent) if there is a one-one onto map A → B.</li><li>A is <b>countable</b> if A ~ N.</li><li><b>At most countable</b>: finite or countable.</li><li><b>Uncountable</b>: neither finite nor countable.</li></ul></div>
+</div>
+
+<div class="card" data-id="3.2">
+  <h3 class="topic">3.2 Q countable hai — proof</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance</span>
+  <div class="box b-exam"><span class="lbl">📝 Proof (height method)</span>
+  <ol><li>Har positive rational p/q (lowest form) ki <b>height = p + q</b>.</li>
+  <li>Height 2: 1/1 · Height 3: 1/2, 2/1 · Height 4: 1/3, 3/1 · Height 5: 1/4, 2/3, 3/2, 4/1 …</li>
+  <li>Har height par <b>finite</b> rationals.</li><li>Height-wise likhte jao: 1, 1/2, 2, 1/3, 3, 1/4, 2/3, 3/2, 4, …</li>
+  <li>Har rational kabhi na kabhi aayega ⇒ positive rationals countable.</li><li>0 aur negatives Z ki tarah beech me daalo ⇒ <b>Q countable</b>. ∎</li></ol></div>
+</div>
+
+<div class="card" data-id="3.3">
+  <h3 class="topic">3.3 R uncountable hai — Cantor ka diagonal trick</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — sabse famous proof</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Real numbers ki kitni bhi lambi list banao, koi na koi hamesha chhoot jaayega.</div>
+  <div class="box b-exam"><span class="lbl">📝 Proof ((0,1) ke liye kaafi)</span>
+  <ol><li>Maan lo (0,1) ki poori list ban gayi: \(x_1, x_2, x_3,\dots\)</li>
+  <li>\(x_1=0.\mathbf{5}137\ldots,\ x_2=0.2\mathbf{8}41\ldots,\ x_3=0.90\mathbf{3}6\ldots,\ x_4=0.442\mathbf{5}\ldots\)</li>
+  <li><b>Diagonal</b> digits dekho: 5, 8, 3, 5, …</li>
+  <li>Naya number y: har diagonal digit badlo — digit 5 nahi to 5 likho, 5 hai to 4. y = 0.4554…</li>
+  <li>y har \(x_n\) se n-th digit par alag ⇒ <b>list me nahi</b>.</li><li>Par y ∈ (0,1) — contradiction. <b>(0,1), aur R, uncountable.</b> ∎</li></ol></div>
+  <div class="box b-trick"><span class="lbl">🧠 Yaad karo</span>Countable: N, Z, Q. Uncountable: R, irrationals, [0,1]. Countable sets ka countable union bhi countable.</div>
+</div>
+
+<div class="card" data-id="3.4">
+  <h3 class="topic">3.4 Cardinal numbers — "set ka size"</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="tbl"><table><tr><th>Set</th><th>Cardinal</th><th>Naam</th></tr><tr><td>N, Z, Q</td><td>\(\aleph_0\)</td><td>Aleph-null (sabse chhota infinity)</td></tr><tr><td>R, [0,1]</td><td>c</td><td>Continuum (bada infinity)</td></tr></table></div>
+  <div class="box b-trick"><span class="lbl">🧠 Rules</span>\(\aleph_0+\aleph_0=\aleph_0,\ \aleph_0\cdot\aleph_0=\aleph_0,\ c+c=c,\ 2^{\aleph_0}=c,\ \aleph_0\lt c\)</div>
+  <div class="box b-exam"><span class="lbl">📝 Cantor's theorem</span>For every set A, card A &lt; card P(A) (power set). Matlab infinity ke upar aur bada infinity — khatam nahi hota.</div>
+</div>
+
+<div class="card" data-id="3.5">
+  <h3 class="topic">3.5 Schroeder-Bernstein theorem</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — statement + use</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>A ko B me fit kar sako (one-one) aur B ko A me fit kar sako ⇒ dono <b>barabar size</b>. Jaise a ≤ b aur b ≤ a ⇒ a = b.</div>
+  <div class="box b-exam"><span class="lbl">📝 Statement</span>If A is equivalent to a subset of B and B is equivalent to a subset of A, then A ~ B.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Use: (0,1) ~ [0,1]</span>
+  <ol><li>(0,1) ⊂ [0,1] — seedha fit.</li><li>[0,1] → (0,1): \(x\mapsto\frac{x+1}{3}\), [0,1] ko [1/3, 2/3] me bhejta hai, one-one.</li><li>Dono taraf fit ⇒ <b>(0,1) ~ [0,1]</b>.</li></ol></div>
+  <div class="box b-easy"><span class="lbl">💡 Proof idea</span>f : A→B, g : B→A one-one. Har element ke "ancestors" peeche track karo: jo A me shuru hue un par f, jo B me shuru hue un par \(g^{-1}\). Bijection ban jaata hai.</div>
+</div>
+
+<div class="card" data-id="3.6">
+  <h3 class="topic">3.6 Series — convergence, divergence, oscillation</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>\(\sum a_n\) ke partial sums \(s_n=a_1+\dots+a_n\) dekho:
+  <div class="tbl"><table><tr><th>Type</th><th>Matlab</th><th>Example</th></tr><tr><td>Convergent</td><td>\(s_n\) ek number ke paas</td><td>1 + 1/2 + 1/4 + … = 2</td></tr><tr><td>Divergent</td><td>\(s_n\to\pm\infty\)</td><td>1 + 2 + 3 + …</td></tr><tr><td>Oscillating</td><td>upar-neeche</td><td>1 − 1 + 1 − … (1, 0, 1, 0…)</td></tr></table></div></div>
+  <div class="box b-warn"><span class="lbl">⚠️ Golden rule</span>Converge ⇒ \(a_n\to0\). <b>Ulta nahi:</b> \(\sum\frac1n\) me \(a_n\to0\) phir bhi diverge.</div>
+  <div class="box b-exam"><span class="lbl">📝 Cauchy criterion</span>\(\sum a_n\) converges iff for every ε > 0 there is N such that \(|a_{n+1}+\dots+a_m|\lt\varepsilon\) for all m > n ≥ N.</div>
+</div>
+
+<div class="card" data-id="3.7">
+  <h3 class="topic">3.7 Absolute vs conditional convergence</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Minus sign hata kar bhi converge ⇒ <b>absolute</b>. Sirf minus sign ki wajah se converge ⇒ <b>conditional</b>.</div>
+  <div class="tbl"><table><tr><th>Series</th><th>\(\sum a_n\)</th><th>\(\sum|a_n|\)</th><th>Type</th></tr>
+  <tr><td>1 − 1/4 + 1/9 − …</td><td>Converge</td><td>Converge</td><td>Absolute</td></tr>
+  <tr><td>1 − 1/2 + 1/3 − …</td><td>Converge (log 2)</td><td>Diverge</td><td>Conditional</td></tr></table></div>
+  <div class="box b-exam"><span class="lbl">📝 Results</span><b>Absolutely convergent ⇒ convergent</b> (kyunki \(|a_{n+1}+\dots+a_m|\le|a_{n+1}|+\dots+|a_m|\)).<br>
+  <b>Leibniz test:</b> \(u_n\) decreasing aur \(u_n\to0\) ⇒ \(u_1-u_2+u_3-\dots\) converges.</div>
+</div>
+
+<div class="card" data-id="3.8">
+  <h3 class="topic">3.8 Abel's aur Dirichlet's tests</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — proof + example</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Jab series \(a_n\times b_n\) jaisi ho (do sequences ka guna):</div>
+  <div class="tbl"><table><tr><th>Test</th><th>\(\sum a_n\) se chahiye</th><th>\(b_n\) se chahiye</th></tr>
+  <tr><td><b>Dirichlet</b></td><td>Partial sums <b>bounded</b></td><td>Monotonic, <b>\(b_n\to0\)</b></td></tr>
+  <tr><td><b>Abel</b></td><td>\(\sum a_n\) <b>convergent</b></td><td>Monotonic, <b>bounded</b></td></tr></table></div>
+  <div class="box b-trick"><span class="lbl">🧠 Trick</span>Dirichlet me \(a_n\) kamzor (sirf bounded) ⇒ \(b_n\) mazboot (0 tak). Abel me \(a_n\) mazboot (convergent) ⇒ \(b_n\) kamzor chalega (sirf bounded).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example: \(\sum\frac{\sin n\theta}{n}\) (θ ≠ 2kπ)</span>
+  <ol><li>\(a_n=\sin n\theta,\ b_n=\frac1n\).</li><li>\(|\sin\theta+\dots+\sin n\theta|\le\frac{1}{|\sin(\theta/2)|}\) — bounded.</li><li>1/n ghatta aur 0 tak jaata hai.</li><li>Dirichlet se <b>converge</b>.</li></ol></div>
+  <div class="box b-exam"><span class="lbl">📝 Abel's lemma + Dirichlet proof</span>
+  \(A_n=a_1+\dots+a_n\):
+  $$\sum_{k=1}^n a_kb_k=\sum_{k=1}^{n-1}A_k(b_k-b_{k+1})+A_nb_n$$
+  \(|A_k|\le M\). Tail ko is lemma se likho; \(b_k-b_{k+1}\ge0\) telescope hokar \(\le 2M\,b_{n+1}\) deta hai. \(b_n\to0\) ⇒ tail \(\lt\varepsilon\) ⇒ Cauchy criterion se converge. ∎</div>
+</div>
+
+<div class="card" data-id="3.9">
+  <h3 class="topic">3.9 Multiplication of series (Cauchy product)</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Do polynomials ki tarah guna: \(c_n=a_0b_n+a_1b_{n-1}+\dots+a_nb_0\).</div>
+  <div class="box b-exam"><span class="lbl">📝 Results</span>
+  <ul><li><b>Mertens:</b> ek absolutely convergent (A), doosri convergent (B) ⇒ product AB par converge.</li>
+  <li><b>Abel:</b> teeno converge (A, B, C) ⇒ C = AB.</li>
+  <li>⚠️ Dono sirf conditional ho to product diverge kar sakta hai: \(a_n=b_n=\frac{(-1)^n}{\sqrt{n+1}}\).</li></ul></div>
+</div>
+
+<div class="card" data-id="3.10">
+  <h3 class="topic">3.10 Rearrangement — order badalna</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — Riemann's theorem</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>2 + 3 = 3 + 2. Par infinite series me order badalne se <b>answer badal sakta hai!</b>
+  <ul><li><b>Absolutely convergent:</b> kaise bhi order — sum same (Dirichlet).</li><li><b>Conditionally convergent:</b> order badal kar <b>koi bhi number</b>, ya ∞ (Riemann).</li></ul></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>
+  1 − 1/2 + 1/3 − 1/4 + … = log 2<br>Order: do positive, ek negative: (1 + 1/3 − 1/2) + (1/5 + 1/7 − 1/4) + … = <b>(3/2) log 2</b>. Same terms, alag answer!</div>
+  <div class="box b-exam"><span class="lbl">📝 Riemann theorem proof idea (target S)</span>
+  <ol><li>Positive terms ka jod ∞, negative terms ka −∞ (warna absolute ho jaati).</li><li>Positive jodo jab tak S se upar.</li><li>Negative jodo jab tak S se neeche.</li><li>Repeat. Terms → 0, to S se doori ghatti jaati ⇒ S par converge. ∎</li></ol></div>
+</div>
+
+<div class="card" data-id="3.11">
+  <h3 class="topic">3.11 Sum of series — yaad karne wale</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="tbl"><table><tr><th>Series</th><th>Result</th></tr>
+  <tr><td>\(1+r+r^2+\dots\ (|r|\lt1)\)</td><td>\(\frac{1}{1-r}\)</td></tr>
+  <tr><td>\(\sum\frac1{n^p}\)</td><td>converge sirf p > 1</td></tr>
+  <tr><td>\(\sum\frac{1}{n(n+1)}\)</td><td>1 (telescoping)</td></tr>
+  <tr><td>\(1-\frac12+\frac13-\dots\)</td><td>log 2</td></tr>
+  <tr><td>\(1+\frac1{1!}+\frac1{2!}+\dots\)</td><td>e</td></tr></table></div>
+</div>
+
+<!-- ===================================================== UNIT 4 -->
+<div class="unit-h" id="u4"><h2>Unit 4 — Pointwise & Uniform Convergence</h2><p>Functions ki sequence: \(f_1(x), f_2(x), f_3(x),\dots\) kisi f(x) ki taraf "ek saath" jaati hai ya nahi.</p></div>
+
+<div class="card" data-id="4.1">
+  <h3 class="topic">4.1 Pointwise vs Uniform — class wala example</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — definitions + difference</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>
+  Teacher boli "sab 90% laao".<br>
+  <b>Pointwise:</b> har student pahunchta hai — koi 2 mahine me, koi 2 saal me. Sab pahunche, par <b>ek fixed time nahi</b>.<br>
+  <b>Uniform:</b> "10 mahine baad <b>poori class ek saath</b> 90% par" — sabke liye ek fixed time (ek hi N).</div>
+  <div class="box b-trick"><span class="lbl">🧠 Picture</span>Limit f ke graph ke upar-neeche ε ki patti banao. Uniform = kuch n ke baad \(f_n\) ka <b>poora graph</b> patti ke andar.</div>
+  <div class="box b-exam"><span class="lbl">📝 Definitions</span>
+  <b>Pointwise:</b> for every x ∈ E and ε > 0 there is N(ε, x) with \(|f_n(x)-f(x)|\lt\varepsilon\) for n ≥ N.<br>
+  <b>Uniform:</b> for every ε > 0 there is N(ε), <b>independent of x</b>, with \(|f_n(x)-f(x)|\lt\varepsilon\) for all n ≥ N and all x ∈ E.<br>
+  Uniform ⇒ pointwise; converse false.</div>
+</div>
+
+<div class="card" data-id="4.2">
+  <h3 class="topic">4.2 \(M_n\)-test — uniform check karne ka sabse aasaan tareeka</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — numericals pakke</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>\(f_n\) aur f ke beech <b>sabse bada gap</b> nikalo. Woh bhi 0 ki taraf jaaye ⇒ uniform.
+  $$M_n=\sup_{x\in E}|f_n(x)-f(x)|$$$$f_n\to f\text{ uniformly}\iff M_n\to0$$</div>
+  <div class="box b-trick"><span class="lbl">🧠 4 steps — har sawaal me</span><ol><li>Limit f(x) nikalo (n → ∞).</li><li>Gap \(g(x)=|f_n-f|\).</li><li>g ka maximum (derivative = 0) = \(M_n\).</li><li>\(M_n\to0\)? Haan ⇒ uniform, nahi ⇒ not uniform.</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 1 (uniform): \(f_n=\frac{x}{1+nx^2}\) on R</span>
+  <ol><li>f(x) = 0.</li><li>Gap = \(\frac{|x|}{1+nx^2}\).</li><li>Max at \(x=\frac1{\sqrt n}\): value \(\frac{1}{2\sqrt n}\).</li><li>\(M_n=\frac1{2\sqrt n}\to0\) ⇒ <b>uniform</b>.</li></ol></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 2 (NOT uniform — sabse famous): \(f_n=x^n\) on [0,1]</span>
+  <ol><li>0 ≤ x &lt; 1: \(x^n\to0\). x = 1: 1. To f = 0 (x &lt; 1), f(1) = 1.</li><li>Gap = \(x^n\) (x &lt; 1).</li><li>x = 0.9999 lo — \(x^n\) lagbhag 1. To \(M_n=1\).</li><li>\(M_n\not\to0\) ⇒ <b>not uniform</b>.</li></ol>
+  Lesson: har \(x^n\) continuous, par limit me x = 1 par jump. Uniform hota to aisa nahi hota.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example 3: \(f_n=\frac{nx}{1+n^2x^2}\) on [0,1]</span>
+  f = 0. x = 1/n par \(f_n=\frac12\) ⇒ \(M_n\ge\frac12\) ⇒ [0,1] par <b>not uniform</b>. [a,1] (a > 0) par uniform.</div>
+  <div class="box b-q"><span class="lbl">❓ Sawaal aise aata hai</span>"Show that \(\{x^n\}\) is not uniformly convergent on [0,1] but uniformly on [0, k], k &lt; 1." / "Test uniform convergence of \(\frac{x}{1+nx^2}\)."</div>
+</div>
+
+<div class="card" data-id="4.3">
+  <h3 class="topic">4.3 Cauchy criterion for uniform convergence</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — proof</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>Limit f pata na ho tab bhi: aage ke \(f_n\) aur \(f_m\) aapas me (sab x par ek saath) bahut paas hon.</div>
+  <div class="box b-exam"><span class="lbl">📝 Statement + proof</span>
+  \(\{f_n\}\) converges uniformly on E iff for every ε > 0 there is N with \(|f_n(x)-f_m(x)|\lt\varepsilon\) for all m, n ≥ N, all x ∈ E.
+  <ol><li><b>(⇒)</b> \(|f_n-f|\lt\frac\varepsilon2\) sab x par. \(|f_n-f_m|\le|f_n-f|+|f-f_m|\lt\varepsilon\).</li>
+  <li><b>(⇐)</b> Har x par \(\{f_n(x)\}\) Cauchy ⇒ converge, f(x) kaho. Condition me m → ∞: \(|f_n(x)-f(x)|\le\varepsilon\) sab x, sab n ≥ N ⇒ uniform. ∎</li></ol></div>
+</div>
+
+<div class="card" data-id="4.4">
+  <h3 class="topic">4.4 Weierstrass M-test — series ka hero</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — har paper me</span>
+  <div class="box b-easy"><span class="lbl">💡 Seedhi baat</span>x hata do — har term ka <b>sabse bada possible size</b> \(M_n\) nikalo. \(\sum M_n\) converge ⇒ function series <b>uniformly</b> converge.</div>
+  <div class="box b-exam"><span class="lbl">📝 Statement + proof</span>
+  If \(|u_n(x)|\le M_n\) for all x ∈ E, all n, and \(\sum M_n\) converges, then \(\sum u_n(x)\) converges uniformly and absolutely on E.<br>
+  <b>Proof:</b> \(\sum M_n\) Cauchy: \(M_{n+1}+\dots+M_m\lt\varepsilon\). Har x par \(|u_{n+1}(x)+\dots+u_m(x)|\le M_{n+1}+\dots+M_m\lt\varepsilon\). N, x par depend nahi ⇒ uniform. ∎</div>
+  <div class="box b-ex"><span class="lbl">✍️ Examples</span>
+  <ul><li>\(\sum\frac{\sin nx}{n^2}\): \(|\cdot|\le\frac1{n^2}\), \(\sum\frac1{n^2}\) conv ⇒ <b>uniform on R</b>.</li>
+  <li>\(\sum\frac{\cos nx}{n^p}\), p > 1 ⇒ uniform on R.</li>
+  <li>\(\sum\frac{1}{n^2+x^2}\le\frac1{n^2}\) ⇒ uniform.</li>
+  <li>\(\sum x^n\) on [−r, r], r &lt; 1: \(|x^n|\le r^n\) ⇒ uniform.</li></ul></div>
+</div>
+
+<div class="card" data-id="4.5">
+  <h3 class="topic">4.5 Abel & Dirichlet tests (uniform version)</h3>
+  <span class="chance ch-m">⭐ Medium chance</span>
+  <div class="tbl"><table><tr><th>Test</th><th>\(\sum u_n(x)\)</th><th>\(v_n(x)\)</th></tr>
+  <tr><td>Dirichlet</td><td>partial sums uniformly bounded</td><td>monotonic, \(v_n\to0\) uniformly</td></tr>
+  <tr><td>Abel</td><td>uniformly convergent</td><td>monotonic, uniformly bounded</td></tr></table></div>
+  <div class="box b-trick"><span class="lbl">🧠 Kab use karein</span>Jab M-test fail ho (alternating series, absolute convergence nahi). Example: \(\sum\frac{(-1)^n}{n+x^2}\) — Dirichlet se uniform.</div>
+</div>
+
+<div class="card" data-id="4.6">
+  <h3 class="topic">4.6 Uniform convergence ke 3 fayde</h3>
+  <span class="chance ch-h">🔥 Bahut zyada chance — continuity wala proof</span>
+  <div class="box b-exam"><span class="lbl">📝 Fayda 1 — Continuity (ε/3 proof)</span>
+  Each \(f_n\) continuous and \(f_n\to f\) uniformly ⇒ f continuous.
+  <ol><li>N aisa ki sab x par \(|f-f_N|\lt\frac\varepsilon3\).</li><li>\(f_N\) continuous: \(|x-x_0|\lt\delta\Rightarrow|f_N(x)-f_N(x_0)|\lt\frac\varepsilon3\).</li><li>Teen chhalang:</li></ol>
+  $$|f(x)-f(x_0)|\le|f(x)-f_N(x)|+|f_N(x)-f_N(x_0)|+|f_N(x_0)-f(x_0)|\lt\varepsilon\quad\blacksquare$$</div>
+  <div class="box b-exam"><span class="lbl">📝 Fayda 2 — Integration</span>
+  $$\lim_{n\to\infty}\int_a^b f_n\,dx=\int_a^b f\,dx$$
+  Proof: \(|\int f_n-\int f|\le\int|f_n-f|\le M_n(b-a)\to0\). Series ko <b>term-by-term integrate</b> kar sakte ho.</div>
+  <div class="box b-warn"><span class="lbl">⚠️ Fayda 3 — Differentiation (dhyan se)</span>
+  Sirf \(f_n\) uniform kaafi nahi — <b>\(f_n'\) uniform chahiye</b> (aur kisi ek point par \(f_n(x_0)\) converge). Tab \(f'=\lim f_n'\).<br>
+  Counter-example: \(f_n=\frac{\sin nx}{\sqrt n}\to0\) uniformly, par \(f_n'(0)=\sqrt n\to\infty\).</div>
+  <div class="tbl"><table><tr><th>Kya chahiye</th><th>Pointwise kaafi?</th><th>Uniform kaafi?</th></tr>
+  <tr><td>Limit continuous</td><td>Nahi</td><td>Haan</td></tr><tr><td>lim ↔ ∫</td><td>Nahi</td><td>Haan</td></tr><tr><td>lim ↔ d/dx</td><td>Nahi</td><td>Nahi — \(f_n'\) uniform chahiye</td></tr></table></div>
+</div>
+
+<!-- ===================================================== FORMULA SHEET -->
+<div class="unit-h" id="formula"><h2>📋 Formula & Definition Sheet</h2><p>Exam se ek din pehle sirf yeh page padhiye.</p></div>
+<div class="card sheet">
+  <div class="tbl"><table>
+  <tr><th>Topic</th><th>Yaad rakhne wali cheez</th></tr>
+  <tr><td>Continuity check</td><td>y = mx rakho; answer m par depend ⇒ discontinuous</td></tr>
+  <tr><td>Differentiable</td><td>\(\frac{\|f(x+h)-f(x)-Ah\|}{\|h\|}\to0\), A = Jacobian</td></tr>
+  <tr><td>Taylor (2nd degree)</td><td>\(f+hf_x+kf_y+\frac12(h^2f_{xx}+2hkf_{xy}+k^2f_{yy})\)</td></tr>
+  <tr><td>Riemann criterion</td><td>\(U(P,f)-L(P,f)\lt\varepsilon\)</td></tr>
+  <tr><td>Second FTC</td><td>\(\int_a^bf=F(b)-F(a)\)</td></tr>
+  <tr><td>R-S, α smooth</td><td>\(\int f\,d\alpha=\int f\alpha'\,dx\)</td></tr>
+  <tr><td>R-S, α = [x]</td><td>jump points par f ki values ka jod</td></tr>
+  <tr><td>First MVT (R-S)</td><td>\(\int f\,d\alpha=f(\xi)[\alpha(b)-\alpha(a)]\)</td></tr>
+  <tr><td>Countable</td><td>N, Z, Q; Uncountable: R (diagonal)</td></tr>
+  <tr><td>Schroeder-Bernstein</td><td>A ≤ B aur B ≤ A ⇒ A ~ B</td></tr>
+  <tr><td>Dirichlet test</td><td>\(\sum a_n\) bounded + \(b_n\downarrow0\)</td></tr>
+  <tr><td>Abel test</td><td>\(\sum a_n\) convergent + \(b_n\) monotonic bounded</td></tr>
+  <tr><td>Riemann rearrangement</td><td>Conditional ⇒ koi bhi sum</td></tr>
+  <tr><td>\(M_n\)-test</td><td>\(\sup|f_n-f|\to0\) ⇔ uniform</td></tr>
+  <tr><td>Weierstrass M-test</td><td>\(|u_n|\le M_n,\ \sum M_n\) conv ⇒ uniform</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================================================== IMPORTANT QS -->
+<div class="unit-h" id="imp"><h2>🎯 Important Questions</h2><p>Syllabus ke standard theorems — aam taur par yahi poochhe jaate hain. Har ek ke aage topic number.</p></div>
+<div class="card sheet">
+  <h4>Long questions (10 marks)</h4>
+  <ol>
+    <li>Necessary and sufficient condition for Riemann integrability — prove. <span class="tag">1.7</span></li>
+    <li>Fundamental theorem of integral calculus — state and prove. <span class="tag">1.9</span></li>
+    <li>Taylor's theorem for two variables; expand \(e^x\sin y\). <span class="tag">1.6</span></li>
+    <li>Every continuous function is R-S integrable. <span class="tag">2.4</span></li>
+    <li>First mean value theorem for R-S integral. <span class="tag">2.7</span></li>
+    <li>Q countable, R uncountable. <span class="tag">3.2 · 3.3</span></li>
+    <li>Schroeder-Bernstein; show (0,1) ~ [0,1]. <span class="tag">3.5</span></li>
+    <li>Dirichlet's test; apply to \(\sum\frac{\sin n\theta}{n}\). <span class="tag">3.8</span></li>
+    <li>Riemann's rearrangement theorem with example. <span class="tag">3.10</span></li>
+    <li>Cauchy's criterion for uniform convergence. <span class="tag">4.3</span></li>
+    <li>Weierstrass M-test. <span class="tag">4.4</span></li>
+    <li>Uniform limit of continuous functions is continuous. <span class="tag">4.6</span></li>
+  </ol>
+  <h4>Short questions / numericals (2–5 marks)</h4>
+  <ol>
+    <li>\(\frac{xy}{x^2+y^2}\) not continuous at (0,0). <span class="tag">1.2</span></li>
+    <li>Jacobian of a given function. <span class="tag">1.4</span></li>
+    <li>Dirichlet function not R-integrable. <span class="tag">1.7</span></li>
+    <li>\(\int_0^3x\,d[x]\), \(\int_0^1x\,d(x^2)\). <span class="tag">2.2 · 2.3</span></li>
+    <li>Absolute vs conditional convergence with examples. <span class="tag">3.7</span></li>
+    <li>\(x^n\) not uniform on [0,1]. <span class="tag">4.2</span></li>
+    <li>\(\frac{x}{1+nx^2}\) uniform on R. <span class="tag">4.2</span></li>
+    <li>Uniform convergence of \(\sum\frac{\sin nx}{n^2}\). <span class="tag">4.4</span></li>
+  </ol>
+  <div class="box b-trick"><span class="lbl">🧠 Last din ki tip</span>Har "📝 Exam me aise likho" box ek copy me 2 baar likh lijiye. Sahi definitions se hi aadhe marks pakke ho jaate hain. All the best, Ma'am! 🌟</div>
+</div>
+
+<p class="foot">Maakit · S.N. Mishra Singapore International School · Astha Ma'am ki exam taiyari</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>

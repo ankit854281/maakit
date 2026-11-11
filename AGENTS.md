@@ -999,3 +999,13 @@ Teacher App v3 — Part 3: Connect tab (5 November 2026, owner: fee calling for 
 - API `cert_api.php`: `a=all` (entries, children names + class, signs — never phone numbers), `a=ph` (team / work photo), `a=kid` (attendance thumbnail, only for children in a competition), `a=find` POST (mobile → ids, 25 / hour / IP). Positions only after the Principal submitted that result (`ev.res`).
 - Certificate drawing now lives in `school/cert-draw.js` (certPNG, certStory, cMandala, cDiya, cToran, certNo …), loaded by teacher.php before teacher-comp.js and by cert.php. Change the certificate design there only — both places use it.
 - Teacher App: Competition page "🔗 Parents ke liye link" copies a ready WhatsApp message with the link.
+
+### Astha Ma'am — Exam Taiyari ebooks (11 November 2026)
+
+Owner: "astha maam ko padne keliye add kar dijiye taaki vo study karke apna exam de". Static pages in
+`school/padhai/` (index, `real-analysis.html` exam 25 Nov 2026, `hydrodynamics.html` exam 28 Nov 2026,
+`padhai.css`, `padhai.js`, KaTeX 0.16.11 bundled in `padhai/katex/` with woff2 fonts only, MIT licence kept).
+`school/teacher-study.js` (loaded last in `teacher.php`) adds ☰ Menu → "Meri padhai" and a countdown card on
+Home, shown only when the teacher's name matches astha/aastha (and to the Principal). No school data is read
+or written; "padh liya" ticks are localStorage inside padhai/. `teacher-sw.js` caches `padhai/` network-first
+so the books open without internet after one visit. The card hides itself after 28 Nov 2026.

@@ -4,7 +4,7 @@
 // School data is NEVER cached by this worker: api.php / *_api.php always go to the server. The teacher's last data
 // copy lives in the app itself (IndexedDB, teacher.js `IDB`) and unsent changes wait in the app's own queue.
 const CACHE = 'snmsis-teacher-shell-v2';
-const SHELL = /\/school\/(teacher\.php|teacher[-\w]*\.(js|css|json)|login-otp\.js|img\/.+|fonts\/.+)(\?.*)?$/;
+const SHELL = /\/school\/(teacher\.php|teacher[-\w]*\.(js|css|json)|login-otp\.js|img\/.+|fonts\/.+|padhai\/.+)(\?.*)?$/;
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys()
   .then(keys => Promise.all(keys.filter(k => k.startsWith('snmsis-teacher-shell') && k !== CACHE).map(k => caches.delete(k))))
