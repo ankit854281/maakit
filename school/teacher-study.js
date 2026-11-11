@@ -1,31 +1,31 @@
 // ============================================================================
 //  Teacher App — owner, 11 Nov 2026 ("astha maam ko padne keliye add kar dijiye taaki vo study karke apna exam de").
-//  Loaded LAST. Adds "Meri Exam Taiyari" (school/padhai/: Real Analysis 25 Nov, Hydrodynamics 28 Nov 2026) for
-//  Astha Ma'am only (name contains astha/aastha) — the Principal also sees it, to check. Static pages, no data
-//  is read or written; the "padh liya" ticks live in the phone's localStorage inside padhai/.
-//  1. ☰ Menu: group "Meri padhai" → opens padhai/index.html.
+//  Loaded LAST. Adds "Meri Exam Taiyari" (school/padhai/: Real Analysis 25 Nov, Hydrodynamics 28 Nov 2026).
+//  Owner, same day: "ye sab teacher me kyu show kar rha hai bas astha me show kare" — shown ONLY when the logged-in
+//  person is a teacher (not the Principal) whose own name contains astha/aastha. Nobody else sees the menu item
+//  or the card. Static pages, no school data is read or written; "padh liya" ticks live in localStorage in padhai/.
+//  1. ☰ Menu: group "Meri padhai". The group is added to / removed from MENU right before EVERY render, so a sheet
+//     that re-renders later (sync, language change) never shows it to anyone else.
 //  2. Home (teacher mode): one card at the top with the exam countdown.
 // ============================================================================
 'use strict';
 (function () {
-  function studyOn() { try { return isP() || /a+stha/i.test(myName() || ''); } catch (e) { return false; } }
-  function openStudy() { location.href = 'padhai/index.html'; }
+  const GROUP = ['Meri padhai', [['study', {}, 'book', 'Meri Exam Taiyari', 'Real Analysis · Hydrodynamics']]];
+  function studyOn() {
+    try { return !!(S && ME && ME.role === 'teacher' && /a+stha/i.test(myName() || '')); } catch (e) { return false; }
+  }
+  function syncMenu() {
+    if (typeof MENU === 'undefined' || !Array.isArray(MENU)) return;
+    const i = MENU.indexOf(GROUP), on = studyOn();
+    if (on && i < 0) MENU.unshift(GROUP);
+    if (!on && i >= 0) MENU.splice(i, 1);
+  }
+  function openStudy() { if (studyOn()) location.href = 'padhai/index.html'; }
   window.openStudy = openStudy;
 
-  // 1. Menu entry (MENU is a const array in teacher-nav.js; openMenu() reads it each time)
-  if (typeof MENU !== 'undefined' && Array.isArray(MENU) && !MENU.some(g => g[0] === 'Meri padhai')) {
-    MENU.splice(0, 0, ['Meri padhai', [['study', {}, 'book', 'Meri Exam Taiyari', 'Real Analysis · Hydrodynamics ebook']]]);
-    const _open = openMenu;
-    openMenu = function () {
-      const keep = MENU[0];
-      if (!studyOn() && keep && keep[0] === 'Meri padhai') { MENU.shift(); try { _open(); } finally { MENU.unshift(keep); } return; }
-      _open();
-    };
-  }
   const _go = go;
   go = function (tab, p) { if (tab === 'study') return openStudy(); return _go(tab, p); };
 
-  // 2. Home card with countdown
   function daysTo(iso) { const t = new Date(todayISO() + 'T00:00:00'), d = new Date(iso + 'T00:00:00'); return Math.round((d - t) / 864e5); }
   function card() {
     const ra = daysTo('2026-11-25'), hy = daysTo('2026-11-28');
@@ -38,6 +38,7 @@
   }
   const _render = render;
   render = function () {
+    try { syncMenu(); } catch (e) { /* ignore */ }
     _render();
     try {
       if (!S || TAB !== 'home' || SHEET || !studyOn()) return;
