@@ -265,3 +265,14 @@ body{position:static}
 .destination-card .art{height:215px!important}
 @media(max-width:390px){.experience{height:595px!important}.destination-card .art{height:205px!important}}
 @media(max-height:650px){.experience{height:525px!important}}
+
+/* Only the photos rotate — never force the whole page or destination cards to move. */
+.photo-rotator{position:absolute;inset:0;overflow:hidden;background:#24334c}
+.photo-rotator .rotation-image{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s ease;pointer-events:none}
+.photo-rotator .rotation-image.is-active{opacity:1}
+.hero-rotator{z-index:0}
+.hero-rotator .rotation-image{object-position:center 40%}
+.card-rotator{z-index:0}
+.card-rotator .rotation-image{object-position:center}
+.photo-slide-hint{position:absolute;right:10px;bottom:10px;z-index:2;background:#101928bd;color:white;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700}
+@media(prefers-reduced-motion:reduce){.photo-rotator .rotation-image{transition:none}}
