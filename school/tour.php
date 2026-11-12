@@ -86,36 +86,50 @@ $link = 'https://maakit.in/school/tour.php';
   <section class="experience" id="experience" aria-label="Prayagraj tour interactive presentation">
     <div class="exp-top"><span class="exp-brand"><img src="img/snmsis-logo.png" width="32" height="32" alt=""> SNMSIS <small>CHILDREN'S DAY SPECIAL</small></span><a class="exp-skip" href="#all-details">View all details ↓</a></div>
     <div class="exp-track" id="expTrack" tabindex="0" aria-label="Swipe left to see tour highlights">
-      <section class="exp-slide exp-first" aria-label="Slide 1 of 5">
+      <section class="exp-slide exp-first" aria-label="Slide 1 of 6">
         <img class="exp-photo" src="tour.php?photo=gallery2" alt="Real photo of Mughal tombs at Khusro Bagh" width="1200" height="900" fetchpriority="high">
         <div class="exp-shade"></div><div class="exp-content"><span class="exp-chip">🎉 14 NOV 2026 · SATURDAY</span>
           <h1>CHALO<br><em>PRAYAGRAJ!</em></h1><p class="exp-lead">This Children's Day, adventure begins beyond the classroom. 🚌</p><p class="exp-hindi">इस बाल दिवस, किताबों से आगे बढ़कर दुनिया देखें!</p>
           <div class="exp-mini"><span>🎓 CLASS 4–10</span><span>📍 4 DESTINATIONS</span></div>
         </div>
       </section>
-      <section class="exp-slide exp-history" aria-label="Slide 2 of 5">
+      <section class="exp-slide exp-history" aria-label="Slide 2 of 6">
         <img class="exp-photo" src="tour.php?photo=gallery2" alt="Historic Khusro Bagh tombs" width="1200" height="900" loading="lazy">
         <div class="exp-shade"></div><div class="exp-content"><span class="exp-chip">🏛️ DISCOVER & EXPLORE</span><h2>HISTORY<br><em>COMES ALIVE!</em></h2>
           <p class="exp-lead">Museum treasures, Mughal tombs & beautiful architecture</p><p class="exp-hindi">सिक्के • मूर्तियाँ • मकबरे • इतिहास की रोचक कहानियाँ</p><div class="exp-mini"><span>🏛️ Allahabad Museum</span><span>🏰 Khusro Bagh</span><span>⛪ Cathedral</span></div>
         </div>
       </section>
-      <section class="exp-slide exp-fun" aria-label="Slide 3 of 5">
+      <section class="exp-slide exp-fun" aria-label="Slide 3 of 6">
         <div class="exp-pattern" aria-hidden="true"><span>🎊</span><span>🎈</span><span>🎡</span><span>🐘</span></div>
         <div class="exp-content"><span class="exp-chip">🥳 FUN • FRIENDS • SMILES</span><h2>FUN &<br><em>ENJOYMENT!</em></h2><p class="exp-lead">Hathi Park, greenery, fresh air and moments with friends</p><p class="exp-hindi">हँसी-मज़ाक, दोस्तों के साथ खेल और ढेर सारी यादें!</p><div class="exp-mini"><span>🌳 Nature</span><span>🤝 Friendship</span><span>📸 Group photos</span></div>
         </div>
       </section>
-      <section class="exp-slide exp-celebrate" aria-label="Slide 4 of 5">
+      <section class="exp-slide exp-celebrate" aria-label="Slide 4 of 6">
         <div class="exp-pattern" aria-hidden="true"><span>🎉</span><span>🎂</span><span>✨</span><span>🎁</span></div>
         <div class="exp-content"><span class="exp-chip">🎂 CHILDREN'S DAY CELEBRATION</span><h2>MAKE<br><em>MEMORIES!</em></h2><p class="exp-lead">A day to explore, laugh, observe and celebrate being a child</p><p class="exp-hindi">खुशियाँ मनाएँ, नई बातें सीखें, यादगार पल संजोएँ!</p><div class="exp-mini"><span>🔍 Discovery challenges</span><span>📸 Picture moments</span><span>💛 Togetherness</span></div><small class="exp-caution">Activities are suggested highlights; the school will confirm the final programme.</small>
         </div>
       </section>
-      <section class="exp-slide exp-register" aria-label="Slide 5 of 5">
+      <section class="exp-slide exp-ready" aria-label="Slide 5 of 6">
+        <div class="exp-pattern" aria-hidden="true"><span>🎒</span><span>🪪</span><span>🍱</span><span>📓</span></div>
+        <div class="exp-content exp-ready-content"><span class="exp-chip">✅ IMPORTANT • MUST BRING</span>
+          <h2>READY FOR<br><em>THE TOUR?</em></h2><p class="exp-hindi">यात्रा के लिए ये सभी चीज़ें अनिवार्य हैं</p>
+          <div class="exp-checklist">
+            <div><b>👕 School Uniform</b><small>पूरी स्कूल ड्रेस पहनकर आएँ</small></div>
+            <div><b>🪪 School ID Card</b><small>स्कूल पहचान पत्र साथ रखें</small></div>
+            <div><b>🍱 Lunch / Tiffin + Water</b><small>टिफिन और पानी की बोतल</small></div>
+            <div><b>📓 School Diary</b><small>स्कूल डायरी अनिवार्य है</small></div>
+            <div><b>📞 Parent's Contact Number</b><small>डायरी में अभिभावक का चालू मोबाइल नंबर लिखें</small></div>
+          </div>
+          <p class="exp-small">Follow teacher instructions • शिक्षक के निर्देशों का पालन करें</p>
+        </div>
+      </section>
+      <section class="exp-slide exp-register" aria-label="Slide 6 of 6">
         <div class="exp-content"><span class="exp-chip">🚨 LIMITED SEATS AVAILABLE</span><h2>DON'T MISS<br><em>THE FUN!</em></h2><p class="exp-lead">📅 14 November · 🎓 Classes 4 to 10</p><p class="exp-hindi">सीट बुक कराने के लिए अपने Class Teacher से संपर्क करें।</p>
           <a href="#registration" class="exp-cta">🎒 Register with Class Teacher ↓</a><a class="exp-share" id="expShare" href="#">📲 Share with Friends</a><p class="exp-small">Bus charges & timings will be shared by the school.</p>
         </div>
       </section>
     </div>
-    <div class="exp-controls"><button type="button" id="expPrev" class="exp-prev" aria-label="Previous slide">← Back</button><div class="exp-dots" id="expDots" aria-label="Slide progress"><button class="active" aria-label="Slide 1" aria-current="step" data-index="0"></button><button aria-label="Slide 2" data-index="1"></button><button aria-label="Slide 3" data-index="2"></button><button aria-label="Slide 4" data-index="3"></button><button aria-label="Slide 5" data-index="4"></button></div><button type="button" id="expNext" class="exp-next">Next →</button></div>
+    <div class="exp-controls"><button type="button" id="expPrev" class="exp-prev" aria-label="Previous slide">← Back</button><div class="exp-dots" id="expDots" aria-label="Slide progress"><button class="active" aria-label="Slide 1" aria-current="step" data-index="0"></button><button aria-label="Slide 2" data-index="1"></button><button aria-label="Slide 3" data-index="2"></button><button aria-label="Slide 4" data-index="3"></button><button aria-label="Slide 5" data-index="4"></button><button aria-label="Slide 6" data-index="5"></button></div><button type="button" id="expNext" class="exp-next">Next →</button></div>
     <div class="exp-bottom"><span>Swipe left to explore 👉 · आगे देखने के लिए स्वाइप करें</span><a href="#all-details">Full tour information ↓</a></div>
   </section>
   <div id="all-details" class="exp-details-title"><h2>Explore the full tour ✨</h2><p>सभी जगहों की तस्वीरें, इतिहास और ज़रूरी जानकारी</p><div class="count" id="count" aria-live="polite"></div></div>
@@ -159,13 +173,13 @@ $link = 'https://maakit.in/school/tour.php';
   <div class="learn"><div><i>🏛️</i><b>History</b><small>इतिहास</small></div><div><i>🎨</i><b>Art & Heritage</b><small>कला व विरासत</small></div><div><i>🔍</i><b>Observation</b><small>अवलोकन</small></div><div><i>🤝</i><b>Teamwork</b><small>टीमवर्क</small></div><div><i>🌿</i><b>Nature</b><small>प्रकृति</small></div><div><i>📸</i><b>Memories</b><small>यादें</small></div></div>
 
   <h2 class="sec">🎒 What to bring<small>साथ क्या लाएँ</small></h2>
-  <div class="bring"><span>👕 School uniform</span><span>🪪 School ID card</span><span>🥤 Water bottle</span><span>🍱 Tiffin</span><span>📓 Small notebook & pen</span><span>🧢 Cap</span></div>
+  <div class="bring"><span>👕 School uniform · स्कूल ड्रेस</span><span>🪪 School ID card · पहचान पत्र</span><span>🥤 Water bottle · पानी</span><span>🍱 Lunch / Tiffin · खाना</span><span>📓 School diary (compulsory) · स्कूल डायरी अनिवार्य</span><span>📞 Parent’s working contact number in diary · अभिभावक का चालू नंबर</span></div>
 
   <div class="note"><b>🎟️ Entry / प्रवेश:</b> Allahabad Museum is free for school students up to Class 12 in uniform or with school ID, accompanied by teachers. Hathi Park entry is about ₹5–₹10 (to be confirmed); other site fees may apply. The cathedral is usually open to the public on Sundays, so going inside on Saturday is not assured.<br>
     <b>ध्यान दें:</b> यूनिफॉर्म / ID और शिक्षक के साथ संग्रहालय में प्रवेश निःशुल्क है। पार्क व अन्य शुल्क की पुष्टि विद्यालय करेगा। चर्च के अंदर शनिवार को प्रवेश की गारंटी नहीं है।<br>
     <b>🚌 Bus charges and departure / return time</b> will be announced by the school. बस शुल्क और प्रस्थान / वापसी का समय विद्यालय बताएगा।</div>
 
-  <section class="cta" id="registration"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 4–10: register with your Class Teacher.<br>कक्षा 4–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
+  <section class="cta" id="registration"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 4–10: register with your Class Teacher. Bring uniform, ID card, lunch, school diary and parent’s contact number.<br>कक्षा 4–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
     <a class="btn wa" id="wa" href="#">📲 Share on WhatsApp</a><button class="btn y" id="copy" type="button">🔗 Copy link</button><a class="btn l" href="index.php">School ERP</a></section>
   <footer>With best wishes · School Management<br>S.N. Mishra Singapore International School · Jagannathpur, Bhadohi<br>Powered by Maakit</footer>
 </main>
