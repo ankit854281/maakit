@@ -24,14 +24,15 @@
   const mName = ym => new Date(ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   function draw() {
     const can = D.can, n = nChanges(), work = D.days.filter(d => d.kind === 'work' && !d.future);
-    const groups = [['Teachers', D.staff.filter(s => s.teaching)], ['Other staff', D.staff.filter(s => !s.teaching)]];
+    const groups = [['Teachers', D.staff.filter(s => s.teaching && !s.until)], ['Other staff', D.staff.filter(s => !s.teaching && !s.until)], ['Left the school (worked till the date shown)', D.staff.filter(s => s.until)]];
     const head = D.days.map(d => `<th class="${d.kind}" title="${esc(d.title)}" ${can && d.kind === 'work' && !d.future ? `onclick="saDay('${d.date}')"` : ''}>${+d.date.slice(8)}<small>${'SMTWTFS'[new Date(d.date + 'T00:00:00').getDay()]}</small></th>`).join('');
-    const row = s => `<tr><td class="nm"><b>${esc(s.name)}</b><small>${esc(s.role)}</small></td>${D.days.map(d => {
+    const row = s => `<tr><td class="nm"><b>${esc(s.name)}</b><small>${esc(s.role)}${s.until ? ' · till ' + esc(s.until.split('-').reverse().join('-')) : ''}</small></td>${D.days.map(d => {
+        if (s.until && d.date > s.until) return '<td class="c off">–</td>';
         if (d.kind !== 'work') return `<td class="c off">${d.kind === 'sun' ? 'S' : 'H'}</td>`.replace('>H<', '>·<');
         if (d.future) return '<td class="c fut"></td>';
         const v = val(s.id, d.date), ch = CH[d.date] && CH[d.date][s.id];
         return `<td class="c ${v}${ch ? ' ch' : ''}" ${can && v !== 'L' ? `onclick="saTap('${s.id}','${d.date}')"` : ''}>${v === 'P' ? '✓' : v === 'H' ? '½' : v}</td>`; }).join('')}
-        <td class="tot ${work.some(d => ['A'].includes(val(s.id, d.date))) ? 'bad' : ''}">${(() => { let a = 0; work.forEach(d => { const v = val(s.id, d.date); a += v === 'A' || v === 'L' ? 1 : v === 'H' ? .5 : 0; }); return a ? a + ' off' : '✓'; })()}</td></tr>`;
+        <td class="tot ${work.some(d => ['A'].includes(val(s.id, d.date))) ? 'bad' : ''}">${(() => { let a = 0; work.forEach(d => { if (s.until && d.date > s.until) return; const v = val(s.id, d.date); a += v === 'A' || v === 'L' ? 1 : v === 'H' ? .5 : 0; }); return a ? a + ' off' : '✓'; })()}</td></tr>`;
     $('app').innerHTML = `<div class="bar"><select onchange="saMonth(this.value)">${months().map(m => `<option value="${m}" ${m === YM ? 'selected' : ''}>${mName(m)}</option>`).join('')}</select>
         ${can ? `<button class="go" ${n ? '' : 'disabled'} onclick="saSave()">Save ${n ? n + ' change' + (n > 1 ? 's' : '') : ''}</button>` : ''}
         <button onclick="saCsv()">Download CSV</button>${can ? '<label class="btn">Upload CSV<input type="file" accept=".csv,text/csv" onchange="saUpload(this)"></label>' : ''}
@@ -44,9 +45,9 @@
   window.saMonth = ym => { if (nChanges() && !confirm('Leave without saving your changes?')) return draw(); YM = ym; load(); };
   window.saTap = (id, d) => { const cur = val(id, d), nx = { P: 'A', A: 'H', H: 'P' }[cur] || 'P', orig = (D.att[id] && D.att[id][d]) || 'P';
     CH[d] = CH[d] || {}; if (nx === orig) delete CH[d][id]; else CH[d][id] = nx; draw(); };
-  window.saDay = d => { const allP = D.staff.every(s => ['P', 'L'].includes(val(s.id, d))), to = allP ? 'A' : 'P';
+  window.saDay = d => { const allP = D.staff.filter(s => !(s.until && d > s.until)).every(s => ['P', 'L'].includes(val(s.id, d))), to = allP ? 'A' : 'P';
     if (!confirm((to === 'A' ? 'Mark EVERYONE absent' : 'Mark everyone present') + ' on ' + d.split('-').reverse().join('-') + '?')) return;
-    D.staff.forEach(s => { if (val(s.id, d) === 'L') return; const orig = (D.att[s.id] && D.att[s.id][d]) || 'P'; CH[d] = CH[d] || {}; if (to === orig) delete CH[d][s.id]; else CH[d][s.id] = to; }); draw(); };
+    D.staff.forEach(s => { if (val(s.id, d) === 'L' || (s.until && d > s.until)) return; const orig = (D.att[s.id] && D.att[s.id][d]) || 'P'; CH[d] = CH[d] || {}; if (to === orig) delete CH[d][s.id]; else CH[d][s.id] = to; }); draw(); };
   window.saUndo = () => { CH = {}; draw(); };
   window.saSave = async () => {
     try { const r = await api('a=save', { ym: YM, set: CH }); toast(`Saved ${r.changed} entr${r.changed === 1 ? 'y' : 'ies'}` + (r.skipped ? ` · ${r.skipped} skipped` : '')); await load(); }
@@ -74,7 +75,7 @@
       rows.slice(1).forEach(r => {
         let id = iId >= 0 ? r[iId].trim() : ''; if (!D.staff.some(s => s.id === id)) id = byName[(iNm >= 0 ? r[iNm] : '').toLowerCase().replace(/\s+/g, ' ').trim()] || '';
         if (!id) { if ((r[iNm] || r[iId] || '').trim()) miss.push((r[iNm] || r[iId]).trim()); return; }
-        Object.entries(dayCol).forEach(([i, d]) => { const v = (r[i] || '').trim().toUpperCase().replace('½', 'H'); if (!work.has(d) || !['P', 'A', 'H'].includes(v) || val(id, d) === 'L') return;
+        Object.entries(dayCol).forEach(([i, d]) => { const v = (r[i] || '').trim().toUpperCase().replace('½', 'H'); const sx = D.staff.find(x => x.id === id); if (!work.has(d) || !['P', 'A', 'H'].includes(v) || val(id, d) === 'L' || (sx.until && d > sx.until)) return;
           const orig = (D.att[id] && D.att[id][d]) || 'P'; CH[d] = CH[d] || {}; if (v === orig) delete CH[d][id]; else { CH[d][id] = v; n++; } });
       });
       draw(); toast(`${n} change${n === 1 ? '' : 's'} read from the file — check and press Save.` + (miss.length ? ` Not found: ${miss.slice(0, 3).join(', ')}${miss.length > 3 ? '…' : ''}` : ''));

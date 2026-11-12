@@ -35,6 +35,7 @@ $put('teacher', 'MA', ['name' => 'Mamta Ma\'am', 'role' => 'Hindi']);
 $put('salStaff', 'xdriver1', ['name' => 'Babulal Mishra', 'role' => 'Driver — Bus', 'monthly' => 26000, 'paidLeave' => 1, 'active' => true]);
 $put('salStaff', 'xdai1', ['name' => 'Parwati', 'role' => 'Dai', 'monthly' => null, 'paidLeave' => 1, 'active' => true]);
 $put('cal', 'h1', ['id' => 'h1', 'date' => '2026-09-15', 'title' => 'Holiday', 'type' => 'Holiday']);
+$put('salSeed', 'former-2026-10', ['test' => 1]);   // the one-time former-staff seed is checked separately at the end
 $put('staffAtt', '2026-09-02', ['absent' => ['MA'], 'subs' => ['MA|1' => 'K']]);
 $pin = fn($uid, $role, $tid, $p) => $pdo->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,0)')->execute([$uid, $role, $tid, password_hash($p, PASSWORD_DEFAULT)]);
 $pin('principal', 'principal', 'P', '2468'); $pin('accountant', 'accountant', null, '4321'); $pin('t:K', 'teacher', 'K', '7777'); $pin('chairman', 'chairman', null, '6666');
@@ -78,5 +79,22 @@ sa_check($rowK['calc']['auto']['half'] === 1, 'teacher half day reaches salary')
 // ---- privacy ----
 [, $j] = $api('load', null, $tok['K']); sa_check(!array_filter($j['records'], fn($x) => $x['k'] === 'salAtt'), 'salAtt never in the normal load');
 sa_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Staff Attendance' AND x LIKE 'Bulk update 2026-09%'")->fetchColumn() === 2, 'logged');
+
+// ---- staff who left: worked till 31 Oct 2026 (one-time seed, owner 12 Nov 2026) ----
+$put('teacher', 'BY', ['name' => 'Brijesh Yadav Sir', 'role' => 'Maths']);
+$put('settings', 'main', ['school' => 'Staff Test School', 'session' => '2026-27', 'sessionStart' => '2026-04-01', 'leftTeachers' => ['AP' => "Amisha Pandey Ma'am"]]);
+$pdo->exec("DELETE FROM sch_records WHERE k='salSeed'");
+[, $j] = $sa('month', null, $tok['CH'], '&ym=2026-10'); sa_check(!sch_rec_get('salSeed', 'former-2026-10'), 'Chairman view does not write the seed');
+[$c, $j] = $sa('month', null, $tok['P'], '&ym=2026-10'); $L = array_column($j['staff'], null, 'id');
+sa_check($c === 200 && ($L['t:BY']['until'] ?? '') === '2026-10-31' && ($L['t:AP']['until'] ?? '') === '2026-10-31', 'existing teacher and left teacher found by name: ' . json_encode($j['staff']));
+$new = array_values(array_filter($j['staff'], fn($x) => in_array($x['name'], ['Akash Tiwari', "Shiva Rai Ma'am"], true) && $x['until'] === '2026-10-31'));
+sa_check(count($new) === 2 && count($j['staff']) === 8, 'Akash Tiwari and Shiva Rai added as staff till October: ' . json_encode($j['staff']));
+$sa('month', null, $tok['P'], '&ym=2026-10'); sa_check((int)$pdo->query("SELECT COUNT(*) FROM sch_records WHERE k='salStaff' AND d LIKE '%Akash%'")->fetchColumn() === 1, 'seed runs once');
+[, $j] = $sa('month', null, $tok['P'], '&ym=' . date('Y-m')); sa_check(!array_filter($j['staff'], fn($x) => $x['until'] !== ''), 'not shown after October');
+[$c, $j] = $sa('save', ['ym' => '2026-10', 'set' => ['2026-10-05' => ['t:AP' => 'A', 't:BY' => 'H', $new[0]['id'] => 'A']]], $tok['P']);
+sa_check($c === 200 && $j['changed'] === 3, 'October saved for them: ' . json_encode($j));
+$o = sch_rec_get('staffAtt', '2026-10-05'); sa_check(in_array('AP', $o['absent'], true) && (int)$o['from']['BY'] === 4 && sch_rec_get('salAtt', '2026-10-05')['a'] === [$new[0]['id']], 'left teacher under old tid, other staff in salAtt');
+if (date('Y-m') > '2026-11') {} else { [, $j] = $sa('save', ['ym' => date('Y-m'), 'set' => [date('Y-m') . '-02' => [$new[0]['id'] => 'A']]], $tok['P']); sa_check($j['changed'] === 0, 'no saving after the last day'); }
+sa_check(!array_filter(sal_sheet(date('Y-m'))['rows'], fn($r) => $r['staff']['id'] === 't:BY'), 'not in salary after they left');
 
 echo "Staff attendance flow: OK\n";

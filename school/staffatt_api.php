@@ -29,19 +29,58 @@ $u = sch_auth(); $role = (string)$u['role']; $uid = sch_uid_of($u);
 if (!in_array($role, ['principal', 'accountant', 'chairman', 'dataentry', 'manager'], true)) sch_fail('Staff attendance is open for the Principal, Accountant, Data Entry and Chairman.', 403);
 
 function sa_ym(string $ym): string { if (!sal_ym_ok($ym) || $ym > date('Y-m')) sch_fail('Choose a month (not a future month).'); return $ym; }
-function sa_staff(): array {
-    $left = (array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []); $out = [];
+// Staff who LEFT keep their months (owner, 12 Nov 2026: "Akash Tiwari, Amisha Pandey Ma'am, Brijesh Kumar Yadav,
+// Shiva Rai Ma'am oct tak working me the — inka attendance add kariye"). salStaff[id].until = last working day:
+// shown for months up to that month, and days after it cannot be saved. Left teachers (settings.leftTeachers) with
+// salStaff['t:tid'].until come back for those months under their old tid, so staffAtt / arrangement keep matching.
+function sa_staff(string $ym = ''): array {
+    $left = (array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []); $set = sal_rows('salStaff'); $out = [];
+    $show = function (array $x) use ($ym): bool { $u = (string)($x['until'] ?? ''); return $u === '' || $ym === '' || $ym <= substr($u, 0, 7); };
     foreach (sal_staff_list() as $id => $s) {
-        if (!$s['active'] || ($s['tid'] !== null && isset($left[$s['tid']]))) continue;
-        $out[] = ['id' => $id, 'name' => $s['name'], 'role' => $s['role'], 'teaching' => $s['teaching']];
+        $x = $set[$id] ?? []; $until = (string)($x['until'] ?? '');
+        if ($until === '' && (!$s['active'] || ($s['tid'] !== null && isset($left[$s['tid']])))) continue;
+        if (!$show($x)) continue;
+        $out[] = ['id' => $id, 'name' => $s['name'], 'role' => $s['role'], 'teaching' => $s['teaching'], 'until' => $until];
+    }
+    foreach ($left as $tid => $name) {
+        $id = 't:' . $tid; $x = $set[$id] ?? []; if (empty($x['until']) || !$show($x) || in_array($id, array_column($out, 'id'), true)) continue;
+        $out[] = ['id' => $id, 'name' => (string)$name, 'role' => (string)($x['role'] ?? 'Teacher'), 'teaching' => true, 'until' => (string)$x['until']];
     }
     return $out;
+}
+function sa_norm(string $n): array {
+    $n = strtolower($n); $n = preg_replace("/\b(ma'?am|madam|sir|mr|mrs|ms|miss|dr)\b\.?/", ' ', $n); $n = preg_replace('/[^a-z]+/', ' ', $n);
+    return array_values(array_filter(explode(' ', trim($n))));
+}
+function sa_same(string $a, string $b): bool {
+    $x = sa_norm($a); $y = sa_norm($b); if (count($x) < 2 || count($y) < 2) return $x && $x === $y;
+    return !array_diff($x, $y) || !array_diff($y, $x);
+}
+// One-time (flag salSeed/former-2026-10): the four who worked till October 2026. An existing teacher / staff entry
+// with the same name gets `until`; otherwise a new non-teaching entry is made (salary not set).
+function sa_seed_former(string $uid): void {
+    if (sch_rec_get('salSeed', 'former-2026-10')) return;
+    $people = [["Akash Tiwari", 'Accountant'], ["Amisha Pandey Ma'am", 'Teacher'], ['Brijesh Kumar Yadav', 'Teacher'], ["Shiva Rai Ma'am", 'Reception']];
+    $until = '2026-10-31'; $set = sal_rows('salStaff'); $cand = [];
+    foreach (sal_staff_list() as $id => $s) $cand[$id] = $s['name'];
+    foreach ((array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []) as $tid => $n) $cand['t:' . $tid] ??= (string)$n;
+    $done = [];
+    foreach ($people as [$name, $role]) {
+        $hit = null; foreach ($cand as $id => $n) if (sa_same($n, $name)) { $hit = $id; break; }
+        if ($hit !== null) { $d = ($set[$hit] ?? []) + []; $d['until'] = $until; if (!isset($d['role']) && str_starts_with($hit, 't:')) $d['role'] = $role; sch_rec_put('salStaff', $hit, $d, $uid); $done[] = "$name (found, worked till 31 Oct)"; continue; }
+        $id = 'x' . substr(md5('former|' . $name), 0, 12);
+        sch_rec_put('salStaff', $id, ['name' => $name, 'role' => $role, 'monthly' => null, 'paidLeave' => 1, 'active' => false, 'until' => $until], $uid);
+        $done[] = "$name (added, worked till 31 Oct)";
+    }
+    sch_rec_put('salSeed', 'former-2026-10', ['at' => sch_now_ms(), 'done' => $done], $uid);
+    sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Staff Attendance', 'Former staff added for their months: ' . implode('; ', $done));
 }
 
 try {
 switch ($a) {
 case 'month': {
     $ym = sa_ym((string)($_GET['ym'] ?? date('Y-m')));
+    if ($role !== 'chairman') sa_seed_former('system');
     $cal = sal_rows('cal'); $work = array_flip(sal_workdays($ym, $cal)); $n = (int)date('t', strtotime($ym . '-01')); $today = date('Y-m-d');
     $hol = []; foreach ($cal as $e) if (($e['type'] ?? '') === 'Holiday' && !empty($e['date'])) { $d = (string)$e['date']; $to = (string)(($e['to'] ?? '') ?: $d); for ($i = 0; $d <= $to && $i < 400; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $hol[$d] = (string)($e['title'] ?? 'Holiday'); }
     $days = [];
@@ -52,7 +91,7 @@ case 'month': {
         for ($d = max((string)$l['from'], $ym . '-01'), $i = 0; $d <= min((string)$l['to'], $ym . '-31') && $i < 40; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $att['t:' . $l['tid']][$d] = 'L';
     }
     foreach (sal_rows('salAtt', $ym) as $d => $r) { foreach ((array)($r['a'] ?? []) as $x) $att[$x][$d] = 'A'; foreach ((array)($r['h'] ?? []) as $x) $att[$x][$d] = 'H'; }
-    sch_json(['ok' => true, 'ym' => $ym, 'staff' => sa_staff(), 'days' => $days, 'att' => (object)$att, 'can' => $role !== 'chairman', 'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')]);
+    sch_json(['ok' => true, 'ym' => $ym, 'staff' => sa_staff($ym), 'days' => $days, 'att' => (object)$att, 'can' => $role !== 'chairman', 'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')]);
 }
 case 'save': {
     if ($method !== 'POST') sch_fail('POST only', 405);
@@ -60,7 +99,7 @@ case 'save': {
     $in = json_decode(file_get_contents('php://input', false, null, 0, 400000) ?: '', true); if (!is_array($in)) sch_fail('Bad request.');
     $ym = sa_ym((string)($in['ym'] ?? '')); $set = is_array($in['set'] ?? null) ? $in['set'] : [];
     $work = array_flip(sal_workdays($ym, sal_rows('cal'))); $today = date('Y-m-d');
-    $ids = array_column(sa_staff(), 'name', 'id'); $changed = 0; $skipped = 0;
+    $L = sa_staff($ym); $ids = array_column($L, 'name', 'id'); $till = array_column($L, 'until', 'id'); $changed = 0; $skipped = 0;
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
     foreach ($set as $d => $row) {
@@ -69,7 +108,7 @@ case 'save': {
         $sa = sch_rec_get('staffAtt', $d) ?? []; $na = sch_rec_get('salAtt', $d) ?? []; $sa0 = $sa; $na0 = $na;
         foreach ($row as $id => $v) {
             $id = (string)$id; $v = strtoupper((string)$v);
-            if (!isset($ids[$id]) || !in_array($v, ['P', 'A', 'H'], true)) { $skipped++; continue; }
+            if (!isset($ids[$id]) || !in_array($v, ['P', 'A', 'H'], true) || ($till[$id] !== '' && $d > $till[$id])) { $skipped++; continue; }
             if (str_starts_with($id, 't:')) {
                 $t = substr($id, 2); $abs = array_values(array_diff((array)($sa['absent'] ?? []), [$t])); $from = (array)($sa['from'] ?? []); unset($from[$t]);
                 if ($v !== 'P') { $abs[] = $t; if ($v === 'H') $from[$t] = SA_HALF_BELL; }

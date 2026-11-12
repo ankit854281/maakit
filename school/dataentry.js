@@ -1,13 +1,14 @@
 /* Data Entry page (dataentry.php) — non-teaching data-entry staff (role 'dataentry') and the Principal.
    Tabs: Student attendance (classes not marked by the class teacher, any day in the last 120 days) ·
-   Staff attendance (staffatt.php) · Homework (all classes of a day, ready WhatsApp text per class). */
+   Staff attendance (staffatt.php) · Homework (all classes of a day, ready WhatsApp text per class) ·
+   Diary & Kit (Diary / ID card / Dress / Books given — tick boxes per child, class-wise given / pending). */
 (function () {
   const $ = id => document.getElementById(id), store = { get: k => localStorage.getItem(k), set: (k, v) => v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const pad = n => String(n).padStart(2, '0'), iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), today = iso(new Date());
   const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
   const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3500); };
-  let TAB = 'att', SUB = 'day', MON = null, DATE = today, DAY = null, CLS = null, ST = {}, HW = null, ME = '', NAMES = {}, MUST = false;
+  let KIT = null, KC = null, KCH = {}, KF = '', TAB = 'att', SUB = 'day', MON = null, DATE = today, DAY = null, CLS = null, ST = {}, HW = null, ME = '', NAMES = {}, MUST = false;
   async function api(path, body) {
     const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get('sch_token') || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
     let j = null; try { j = await r.json(); } catch (e) {}
@@ -34,14 +35,15 @@
   // ---------- frame ----------
   function frame(body) {
     $('app').innerHTML = `<div class="top"><div><b>Data Entry</b><small>${esc(ME)} · ${esc(fmt(DATE))}</small></div><button onclick="deLogout()">Log out</button></div>
-      <div class="tabs">${[['att', 'Student attendance'], ['staff', 'Staff attendance'], ['hw', 'Homework']].map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="deTab('${k}')">${l}</button>`).join('')}</div><div class="pg">${body}</div>`;
+      <div class="tabs">${[['att', 'Student attendance'], ['staff', 'Staff attendance'], ['hw', 'Homework'], ['kit', 'Diary & Kit']].map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="deTab('${k}')">${l}</button>`).join('')}</div><div class="pg">${body}</div>`;
   }
-  window.deTab = k => { TAB = k; CLS = null; draw(); };
+  window.deTab = k => { if (TAB === 'kit' && k !== 'kit' && kitN() && !confirm('Leave without saving the ticks?')) return; TAB = k; CLS = null; KC = null; KCH = {}; if (k === 'kit') KIT = null; draw(); };
   window.deDate = v => { if (!v || v > today) return toast('Choose a past date.'); DATE = v; DAY = null; HW = null; CLS = null; if (MON && MON.ym !== v.slice(0, 7)) MON = null; draw(); };
   const dateBox = () => `<div class="card row"><label class="mut" style="white-space:nowrap">Date</label><input type="date" value="${DATE}" max="${today}" onchange="deDate(this.value)"></div>`;
   async function draw() {
     if (!store.get('sch_token') || MUST) return loginView();
     if (TAB === 'staff') return frame(`<iframe src="staffatt.php?embed=1" title="Staff attendance"></iframe><p class="mut">Tap boxes for teachers and other staff, then press Save. CSV download / upload for many days.</p>`);
+    if (TAB === 'kit') return kitView();
     if (TAB === 'hw') {
       if (!HW) { frame(dateBox() + '<div class="card mut">Opening…</div>'); try { HW = await api('dataentry_api.php?a=homework&date=' + DATE); } catch (e) { return frame(dateBox() + `<div class="card">${esc(e.message)}</div>`); } }
       const by = {}; HW.items.forEach(i => (by[i.cls] = by[i.cls] || []).push(i));
@@ -86,6 +88,35 @@
       ${c.students.map(s => `<div class="kid"><div><small>${esc(s.roll || '')}</small><b>${esc(s.name)}</b></div><div class="pal">${['P', 'A', 'L'].map(k => `<button class="${k} ${(ST[s.id] || 'P') === k ? 'on' : ''}" onclick="deSet('${s.id}','${k}')">${k}</button>`).join('')}</div></div>`).join('') || '<p class="mut">No children in this class.</p>'}
       <button class="btn go" style="width:100%;margin-top:12px" onclick="deSave()">Save attendance</button></div>`);
   }
+  // ---------- Diary & Kit: Diary / ID card / Dress / Books given (dataentry_api.php ?a=kit) ----------
+  const kitN = () => Object.values(KCH).reduce((a, r) => a + Object.keys(r).length, 0);
+  const has = (s, k) => KCH[s.id] && k in KCH[s.id] ? KCH[s.id][k] : !!(s.kit && s.kit[k]);
+  async function kitView() {
+    if (!KIT) { frame('<div class="card mut">Opening…</div>'); try { KIT = await api('dataentry_api.php?a=kit'); ME = ME || KIT.me; } catch (e) { return frame(`<div class="card">${esc(e.message)}</div>`); } }
+    const IT = Object.entries(KIT.items), cnt = (L, k) => L.filter(s => has(s, k)).length, all = KIT.classes.flatMap(c => c.students);
+    const cell = (g, t) => `<td class="${g < t ? 'bad' : 'okc'}">${g}/${t}${g < t ? `<small> · ${t - g} left</small>` : ' ✓'}</td>`;
+    if (!KC) return frame(`<div class="card"><div class="row"><h3>Diary · ID card · Dress · Books</h3><span class="mut">Session ${esc(KIT.session)}</span></div>
+      <div class="kpis k4">${IT.map(([k, l]) => { const g = cnt(all, k); return `<div class="${g < all.length ? 'r' : 'g'}"><b>${g}/${all.length}</b><span>${esc(l)} given</span><span>${all.length - g} still to get</span></div>`; }).join('')}</div>
+      <div style="overflow-x:auto"><table class="rep"><tr><th>Class</th><th>Children</th>${IT.map(([, l]) => `<th>${esc(l)}</th>`).join('')}</tr>
+      ${KIT.classes.filter(c => c.students.length).map(c => `<tr onclick="deKit('${esc(c.c)}')" style="cursor:pointer"><td><b>${esc(c.c)}</b></td><td>${c.students.length}</td>${IT.map(([k]) => cell(cnt(c.students, k), c.students.length)).join('')}</tr>`).join('')}
+      <tr class="tot"><td>Total</td><td>${all.length}</td>${IT.map(([k]) => `<td>${cnt(all, k)}/${all.length}</td>`).join('')}</tr></table></div>
+      <p class="mut" style="margin:8px 0 0">Tap a class, tick what each child has got, press Save. The date and your name are kept with every tick.</p></div>`);
+    const c = KIT.classes.find(x => x.c === KC), L = c.students.filter(s => !KF || !has(s, KF)), n = kitN();
+    frame(`<div class="card"><div class="row"><h3>Class ${esc(c.c)}</h3><button class="btn l s" onclick="deKit(null)">← Classes</button></div>
+      <div class="kpis k4">${IT.map(([k, l]) => { const g = cnt(c.students, k); return `<div class="${g < c.students.length ? 'r' : 'g'}"><b>${g}/${c.students.length}</b><span>${esc(l)}</span></div>`; }).join('')}</div>
+      <div class="sub" style="flex-wrap:wrap"><button class="${KF ? '' : 'on'}" onclick="deKitF('')">All children</button>${IT.map(([k, l]) => `<button class="${KF === k ? 'on' : ''}" onclick="deKitF('${k}')">${esc(l)} not given</button>`).join('')}</div>
+      <div style="overflow-x:auto"><table class="rep kit"><tr><th>Child</th>${IT.map(([k, l]) => `<th><button class="btn l s" onclick="deKitAll('${k}')" title="Tick all">${esc(l)}</button></th>`).join('')}</tr>
+      ${L.map(s => `<tr><td><small class="mut">${esc(s.roll || '')}</small> <b>${esc(s.name)}</b></td>${IT.map(([k]) => { const on = has(s, k), w = s.kit && s.kit[k]; return `<td><label class="tick ${KCH[s.id] && k in KCH[s.id] ? 'ch' : ''}" title="${w ? esc('Given ' + w.on.split('-').reverse().join('-') + ' · ' + w.by) : 'Not given yet'}"><input type="checkbox" ${on ? 'checked' : ''} onchange="deKitT('${s.id}','${k}',this.checked)">${w && on ? `<small>${esc(w.on.slice(8) + '/' + w.on.slice(5, 7))}</small>` : ''}</label></td>`; }).join('')}</tr>`).join('') || `<tr><td colspan="5" class="mut">${KF ? 'Everyone has got it ✓' : 'No children in this class.'}</td></tr>`}</table></div>
+      <button class="btn go" style="width:100%;margin-top:12px" ${n ? '' : 'disabled'} onclick="deKitSave()">Save${n ? ' ' + n + ' change' + (n > 1 ? 's' : '') : ''}</button>
+      ${IT.map(([k, l]) => { const P = c.students.filter(s => !has(s, k)); return P.length ? `<p class="mut" style="margin:8px 0 0"><b>${esc(l)} not given (${P.length}):</b> ${P.map(s => esc(s.name)).join(', ')}</p>` : ''; }).join('')}</div>`);
+  }
+  window.deKit = c => { if (KC && c !== KC && kitN() && !confirm('Leave without saving the ticks?')) return; KC = c; KCH = {}; KF = ''; draw(); };
+  window.deKitF = k => { KF = k; draw(); };
+  window.deKitT = (id, k, v) => { const s = KIT.classes.find(x => x.c === KC).students.find(x => x.id === id), orig = !!(s.kit && s.kit[k]);
+    KCH[id] = KCH[id] || {}; if (v === orig) delete KCH[id][k]; else KCH[id][k] = v; if (!Object.keys(KCH[id]).length) delete KCH[id]; draw(); };
+  window.deKitAll = k => { const L = KIT.classes.find(x => x.c === KC).students, to = !L.every(s => has(s, k));
+    L.forEach(s => { const orig = !!(s.kit && s.kit[k]); KCH[s.id] = KCH[s.id] || {}; if (to === orig) delete KCH[s.id][k]; else KCH[s.id][k] = to; if (!Object.keys(KCH[s.id]).length) delete KCH[s.id]; }); draw(); };
+  window.deKitSave = async () => { try { const r = await api('dataentry_api.php?a=kitsave', { cls: KC, set: KCH }); toast(`Saved for Class ${KC} (${r.changed} change${r.changed === 1 ? '' : 's'}).`); KCH = {}; KIT = null; draw(); } catch (e) { toast(e.message); } };
   const subSeg = () => `<div class="sub">${[['day', 'Day'], ['month', 'Month (day by day)']].map(([k, l]) => `<button class="${SUB === k ? 'on' : ''}" onclick="deSub('${k}')">${l}</button>`).join('')}</div>`;
   window.deSub = k => { SUB = k; CLS = null; draw(); };
   window.deOpen = c => { CLS = c; ST = {}; if (c) { const x = DAY.classes.find(y => y.c === c); if (x.att) x.att.absent.forEach(id => ST[id] = (x.att.st && x.att.st[id]) === 'L' ? 'L' : 'A'); } draw(); };

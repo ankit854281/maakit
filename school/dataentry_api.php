@@ -12,6 +12,11 @@
 //   GET  ?a=month&ym=                  day by day: classes marked, total, present, absent, leave, %
 //   GET  ?a=homework&date=            every class's homework of that day from the teachers' diaries
 //                                     (for sharing on the class WhatsApp groups)
+//   GET  ?a=kit                       Diary / ID card / Dress / Books — who has got it, class by class (this session)
+//   POST ?a=kitsave {cls, set:{sid:{diary:bool, idcard:bool, dress:bool, books:bool}}}
+//                                     owner, 12 Nov 2026: "dairy kitne bacho ka aya hai kitne le chuke hain, same
+//                                     id card, dress, book — check box jaisa". Record regKit[session|sid] =
+//                                     {items:{diary:{on:date, by:name}}} ('reg' prefix — never in the normal load).
 //  Staff attendance: staffatt.php (staffatt_api.php allows 'dataentry').
 //  Principal can use this page too.
 // ============================================================================
@@ -38,6 +43,9 @@ function de_holiday(PDO $db, string $date): string {
     foreach (de_rows($db, 'cal') as $e) if (($e['type'] ?? '') === 'Holiday' && ($e['date'] ?? '9') <= $date && (($e['to'] ?? '') ?: ($e['date'] ?? '')) >= $date) return (string)($e['title'] ?? 'Holiday');
     return date('w', strtotime($date)) === '0' ? 'Sunday' : '';
 }
+const DE_KIT = ['diary' => 'Diary', 'idcard' => 'ID card', 'dress' => 'Dress', 'books' => 'Books'];
+function de_session(): string { $s = trim((string)((sch_rec_get('settings', 'main') ?? [])['session'] ?? '')); if ($s === '') sch_fail('The school session is not filled in (ERP → Settings).'); return $s; }
+function de_kit_rows(PDO $db, string $sess): array { $o = []; foreach (de_rows($db, 'regKit', $sess . '|') as $r => $d) $o[substr($r, strlen($sess) + 1)] = (array)($d['items'] ?? []); return $o; }
 function de_teacher(string $tid): string { $t = sch_rec_get('teacher', $tid); return (string)($t['name'] ?? $tid); }
 
 try {
@@ -108,6 +116,39 @@ case 'homework': {
     }
     usort($out, fn($x, $y) => [$x['cls'], $x['bell']] <=> [$y['cls'], $y['bell']]);
     sch_json(['ok' => true, 'date' => $date, 'items' => $out, 'classes' => array_values(array_filter(array_map(fn($c) => (string)($c['c'] ?? ''), (array)(sch_rec_get('classes', 'main') ?? []))))]);
+}
+case 'kit': {
+    $sess = de_session(); $items = de_kit_rows($db, $sess); $kids = [];
+    foreach (de_rows($db, 'student') as $sid => $st) if (empty($st['inactive']) && ($st['cls'] ?? '') !== '') $kids[(string)$st['cls']][] = ['id' => (string)$sid, 'name' => (string)($st['name'] ?? ''), 'roll' => (string)($st['rollno'] ?? ''), 'kit' => (object)($items[(string)$sid] ?? [])];
+    $out = [];
+    foreach ((array)(sch_rec_get('classes', 'main') ?? []) as $c) {
+        $cn = (string)($c['c'] ?? ''); if ($cn === '') continue;
+        $L = $kids[$cn] ?? []; usort($L, fn($x, $y) => [(int)$x['roll'] ?: 999, $x['name']] <=> [(int)$y['roll'] ?: 999, $y['name']]);
+        $out[] = ['c' => $cn, 'students' => $L];
+    }
+    sch_json(['ok' => true, 'session' => $sess, 'items' => DE_KIT, 'classes' => $out, 'me' => $u['label']]);
+}
+case 'kitsave': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $in = json_decode(file_get_contents('php://input', false, null, 0, 200000) ?: '', true); if (!is_array($in)) sch_fail('Bad request.');
+    $cls = (string)($in['cls'] ?? ''); $sess = de_session(); $who = preg_replace('/\s*\(Data Entry\)$/', '', (string)$u['label']); $today = date('Y-m-d');
+    $valid = []; foreach (de_rows($db, 'student') as $sid => $st) if (($st['cls'] ?? '') === $cls && empty($st['inactive'])) $valid[(string)$sid] = (string)($st['name'] ?? '');
+    if (!$valid) sch_fail('Unknown class.');
+    $db->beginTransaction(); $given = []; $back = [];
+    foreach ((array)($in['set'] ?? []) as $sid => $row) {
+        $sid = (string)$sid; if (!isset($valid[$sid]) || !is_array($row)) continue;
+        $key = $sess . '|' . $sid; $rec = sch_rec_get('regKit', $key) ?? ['items' => []]; $it = (array)($rec['items'] ?? []); $ch = false;
+        foreach ($row as $k => $v) {
+            $k = (string)$k; if (!isset(DE_KIT[$k])) continue;
+            if ($v === true && !isset($it[$k])) { $it[$k] = ['on' => $today, 'by' => $who]; $ch = true; $given[DE_KIT[$k]][] = $valid[$sid]; }
+            elseif ($v === false && isset($it[$k])) { unset($it[$k]); $ch = true; $back[DE_KIT[$k]][] = $valid[$sid]; }
+        }
+        if ($ch) sch_rec_put('regKit', $key, ['items' => (object)$it, 'cls' => $cls], $uid);
+    }
+    $txt = []; foreach ($given as $k => $n) $txt[] = "$k given: " . implode(', ', $n); foreach ($back as $k => $n) $txt[] = "$k un-ticked: " . implode(', ', $n);
+    if ($txt) sch_log($u, 'Diary / ID / Dress / Books', "Class $cls ($sess): " . implode(' · ', $txt));
+    $db->commit();
+    sch_json(['ok' => true, 'changed' => array_sum(array_map('count', $given)) + array_sum(array_map('count', $back))]);
 }
 default: sch_fail('Unknown action.');
 }

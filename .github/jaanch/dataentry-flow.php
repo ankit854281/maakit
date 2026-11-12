@@ -68,6 +68,21 @@ de_check($c === 200 && $day && $day['marked'] === 2 && $day['classes'] === 2 && 
 [$c, $j] = $de('homework', null, $DE, "&date=$d"); de_check($c === 200 && count($j['items']) === 1 && $j['items'][0]['teacher'] === 'Kartikey Sir', 'homework list');
 [$c] = de_http('/school/staffatt_api.php?a=month&ym=' . date('Y-m'), null, $DE); de_check($c === 200, 'data entry opens staff attendance');
 
+// ---- Diary / ID card / Dress / Books given ----
+[$c] = $de('kit', null, $K); de_check($c === 403, 'teacher cannot open the kit register');
+[$c, $j] = $de('kit', null, $DE); $kc = array_column($j['classes'], null, 'c');
+de_check($c === 200 && array_keys($j['items']) === ['diary', 'idcard', 'dress', 'books'] && count($kc['9th']['students']) === 2 && (array)$kc['9th']['students'][0]['kit'] === [], 'kit opens, nothing given yet');
+[$c, $j] = $de('kitsave', ['cls' => '9th', 'set' => ['s1' => ['diary' => true, 'idcard' => true, 'bogus' => true], 's2' => ['diary' => true], 's3' => ['diary' => true]]], $DE);
+de_check($c === 200 && $j['changed'] === 3, 'kit saved, other class child + unknown item ignored: ' . json_encode($j));
+$k1 = sch_rec_get('regKit', '2026-27|s1'); de_check(array_keys($k1['items']) === ['diary', 'idcard'] && $k1['items']['diary']['by'] === 'Shubh Upadhyay' && $k1['items']['diary']['on'] === date('Y-m-d'), 'kit record: ' . json_encode($k1));
+de_check(sch_rec_get('regKit', '2026-27|s3') === null, 'Class 10 child not touched');
+$de('kitsave', ['cls' => '9th', 'set' => ['s2' => ['diary' => false]]], $DE); de_check((array)sch_rec_get('regKit', '2026-27|s2')['items'] === [], 'un-tick');
+[, $j] = $de('kit', null, $P); $s1 = array_values(array_filter(array_column($j['classes'], null, 'c')['9th']['students'], fn($x) => $x['id'] === 's1'))[0];
+de_check(isset($s1['kit']['diary'], $s1['kit']['idcard']) && !isset($s1['kit']['dress']), 'Principal sees it');
+[, $j] = $api('load', null, $P); de_check(!array_filter($j['records'] ?? [], fn($x) => $x['k'] === 'regKit'), 'regKit not in the normal load');
+de_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Diary / ID / Dress / Books' AND x LIKE 'Class 9th%Diary given: Aman, Bina%'")->fetchColumn() === 1, 'kit logged');
+$pdo->exec("DELETE FROM sch_records WHERE k='regKit'");   // keep the entry-log counts below as they were
+
 // ---- who entered what ----
 [$c] = de_http('/school/entrylog_api.php?a=list', null, $DE); de_check($c === 403, 'data entry cannot open the entry log');
 [$c] = de_http('/school/entrylog_api.php?a=list', null, $K); de_check($c === 403, 'teacher cannot open the entry log');

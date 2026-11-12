@@ -76,6 +76,7 @@ case 'staff': {
     } else {
         $s = sal_find($id); $old = sal_rows('salStaff')[$id] ?? [];
         $d = ['monthly' => $monthly, 'paidLeave' => (float)$pl, 'active' => $active];
+        if (isset($old['until'])) $d['until'] = $old['until']; if (isset($old['role']) && $s['teaching']) $d['role'] = $old['role'];   // keep 'worked till' (staffatt_api.php)
         if (!$s['teaching']) { $d['name'] = sal_text($in['name'] ?? $s['name'], 60) ?: $s['name']; $d['role'] = sal_text($in['role'] ?? $s['role'], 40) ?: $s['role']; }
         $what = "{$s['name']}: " . ($monthly === null ? 'salary not set' : 'salary ₹' . number_format($monthly)) . ", paid leave $pl/month" . ($active ? '' : ', inactive');
         if (($old['monthly'] ?? null) === $monthly && (float)($old['paidLeave'] ?? 1) === (float)$pl && ($old['active'] ?? true) === $active && !isset($d['name'])) sch_json(['ok' => true, 'id' => $id]);
