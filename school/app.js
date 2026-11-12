@@ -665,7 +665,8 @@ function vLogin() {
   const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}</option>`).join('');
   const STAFF = ['principal', 'chairman', 'accountant', 'reception'], isStaff = STAFF.includes(loginRole), off = STATUS.office || { accountant: 'Akash Tiwari', reception: 'Shiva Rai' };
   const roles = [['teacher', 'Teacher'], ['student', 'Student'], ['parent', 'Parent'], ['principal', 'Staff']];
-  const staffSel = `<div><label class="lbl">Who are you?</label><select id="lg-staff" class="inp" onchange="loginRole=this.value;render()">${[['principal', 'Principal'], ['chairman', 'Chairman'], ['accountant', esc(off.accountant) + ' — Accountant'], ['reception', esc(off.reception) + ' — Reception']]
+  // Data Entry and Manager have their own pages (own PIN login) — choosing them here opens that page (12 Nov 2026)
+  const staffSel = `<div><label class="lbl">Who are you?</label><select id="lg-staff" class="inp" onchange="if(this.value==='dataentry')location.href='dataentry.php';else if(this.value==='manager')location.href='manager.php';else{loginRole=this.value;render()}">${[['principal', 'Principal'], ['chairman', 'Chairman'], ['accountant', esc(off.accountant) + ' — Accountant'], ['reception', esc(off.reception) + ' — Reception'], ['dataentry', esc(off.dataentry || 'Shubh Upadhyay') + ' — Data Entry'], ['manager', esc(off.manager && off.manager !== 'Manager' ? off.manager + ' — ' : '') + 'Manager (Salary app)']]
     .map(([r, l]) => `<option value="${r}" ${loginRole === r ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
   return shell(`
       <h2 class="text-xl font-semibold">Log in</h2>

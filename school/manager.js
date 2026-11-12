@@ -13,6 +13,8 @@
   const TK = 'sal_token';                                   // own token key: the Salary app login never mixes with the ERP login on the same phone
   let YM = ymOf(now), D = null, VIEW = 'all', MUST = false, ROLE = store.get('sal_role') || 'manager', NAMES = {};
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('manager-sw.js').catch(() => {});
+  // Opened from the Chairman app (?from=ch): use the Chairman's login already on this phone — no second PIN.
+  if (/[?&]from=ch/.test(location.search) && !store.get(TK) && store.get('sch_token')) { store.set(TK, store.get('sch_token')); store.set('sal_shared', '1'); ROLE = 'chairman'; store.set('sal_role', 'chairman'); }
   async function api(path, body) {
     const r = await fetch(path, { method: body ? 'POST' : 'GET', cache: 'no-store', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get(TK) || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
     let j = null; try { j = await r.json(); } catch (e) {}
@@ -34,13 +36,18 @@
   }
   window.ROLESET = v => { ROLE = v; store.set('sal_role', v); };
   window.mgLogin = async () => { const pin = $('lP').value.trim();
-    try { const r = await api('api.php?a=login', { role: ROLE, pin }); store.set(TK, r.token); window._old = pin; MUST = !!r.mustChange; draw(); } catch (e) { toast(e.message); } };
+    try { const r = await api('api.php?a=login', { role: ROLE, pin }); store.set('sal_shared', null); store.set(TK, r.token); window._old = pin; MUST = !!r.mustChange; draw(); } catch (e) { toast(e.message); } };
   window.mgNewPin = async () => { const n = $('nP').value.trim(); if (!/^\d{4,8}$/.test(n) || n === '1234') return toast('PIN must be 4–8 digits and not 1234.');
     try { await api('api.php?a=setpin', { old: window._old || '1234', pin: n }); MUST = false; toast('PIN saved.'); draw(); } catch (e) { toast(e.message); } };
-  window.mgLogout = async () => { try { await api('api.php?a=logout', {}); } catch (e) {} store.set(TK, null); D = null; draw(); };
+  // a login carried over from the Chairman app is only forgotten here — logging it out would also log out the Chairman app
+  window.mgLogout = async () => { if (!store.get('sal_shared')) { try { await api('api.php?a=logout', {}); } catch (e) {} } store.set('sal_shared', null); store.set(TK, null); D = null; draw(); };
   // ---------------- main ----------------
   function months() { const o = []; for (let i = -6; i <= 1; i++) o.push(ymOf(new Date(now.getFullYear(), now.getMonth() + i, 1))); return o.reverse(); }
-  async function load() { $('app').innerHTML = '<div class="pg"><div class="card mut">Opening salary…</div></div>'; try { D = await sal('sheet', null, '&ym=' + YM); } catch (e) { $('app').innerHTML = `<div class="pg"><div class="card">${esc(e.message)}</div></div>`; return; } draw(); }
+  async function load() { $('app').innerHTML = '<div class="pg"><div class="card mut">Opening salary…</div></div>';
+    try { D = await sal('sheet', null, '&ym=' + YM); }
+    catch (e) { if (/only in the Salary app/.test(e.message)) { store.set(TK, null); store.set('sal_shared', null); toast('This login cannot open salary. Log in as the Manager or the Chairman.'); return loginView(); }
+      $('app').innerHTML = `<div class="pg"><div class="card">${esc(e.message)}</div></div>`; return; }
+    draw(); }
   window.mgMonth = v => { YM = v; load(); };
   window.mgView = v => { VIEW = v; draw(); };
   function why(c) {

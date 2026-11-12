@@ -1306,8 +1306,29 @@ function staffBody() {
   const cl = Object.keys(cat);
   return `<div class="pg">${pieCard('Teachers today', pie('sAtt', aL, ab ? [T.length - ab.length, ab.length] : [0, 0], [P.green, P.pink], ab ? pc(ratio(T.length - ab.length, T.length)) : '—', ab ? 'present' : 'not marked'), legend(aL, ab ? [T.length - ab.length, ab.length] : [0, 0], [P.green, P.pink]))}
       ${pieCard('This month', pie('sMon', aL, md.length ? [possible - absD, absD] : [0, 0], [P.green, P.pink], md.length ? pc(ratio(possible - absD, possible)) : '—', md.length + ' days'), legend(['Present days', 'Absent days'], md.length ? [possible - absD, absD] : [0, 0], [P.green, P.pink]))}
-      ${cl.length ? pieCard('Staff by type', pie('sCat', cl, cl.map(x => cat[x]), PAL, E.length, 'active staff'), legend(cl, cl.map(x => cat[x]), PAL)) : ''}</div><div style="height:12px"></div>${card('Staff salary', '<p class="note" style="margin-top:0">Salary is seen only by you and the Manager, in the Salary app (separate login with your Chairman PIN).</p><a class="btn" href="manager.php" style="display:inline-block;text-decoration:none;padding:10px 16px;border-radius:99px;background:#0F5132;color:#fff">Open Salary app</a>')}<div style="height:12px"></div>${schTeach()}<div style="height:12px"></div>${leaveRep()}${md.length ? '<div style="height:12px"></div>' + staffRegister(ym) : ''}`;
+      ${cl.length ? pieCard('Staff by type', pie('sCat', cl, cl.map(x => cat[x]), PAL, E.length, 'active staff'), legend(cl, cl.map(x => cat[x]), PAL)) : ''}</div><div style="height:12px"></div>${salCard()}<div style="height:12px"></div>${schTeach()}<div style="height:12px"></div>${leaveRep()}${md.length ? '<div style="height:12px"></div>' + staffRegister(ym) : ''}`;
 }
+// Staff salary (12 Nov 2026): salary only for the Chairman and the Manager. "Open Salary app" carries this login over
+// (manager.php?from=ch — no second PIN). The Manager's name and PIN are set right here (only the Chairman can).
+function salCard() {
+  const nm = (window.MGR_NAME || '');
+  return card('Staff salary', `<p class="note" style="margin-top:0">Only you and the Manager see salary — in the Salary app.</p>
+    <a href="manager.php?from=ch" style="display:inline-block;text-decoration:none;padding:11px 18px;border-radius:99px;background:#0F5132;color:#fff;font-weight:700">Open Salary app</a>
+    <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700">Manager login — name and PIN</summary>
+      <div style="display:grid;gap:8px;margin-top:8px"><input id="mgN" placeholder="Manager's name" maxlength="40" value="${esc(nm)}" style="padding:10px;border:1px solid #ccd;border-radius:12px;font:inherit">
+      <input id="mgP" type="password" inputmode="numeric" maxlength="8" placeholder="Manager's PIN (1234 = Manager chooses own)" style="padding:10px;border:1px solid #ccd;border-radius:12px;font:inherit">
+      <button onclick="mgrSave()" style="padding:11px;border:0;border-radius:99px;background:#F5C842;font:inherit;font-weight:700">Save Manager login</button>
+      <p class="note" style="margin:0">Then tell the Manager: open maakit.in/school/manager.php → Manager → this PIN.</p></div></details>`);
+}
+async function mgrSave() {
+  const n = $('mgN').value.trim(), p = $('mgP').value.trim();
+  if (!n && !p) return toastC('Write the name or the PIN.');
+  if (p && !/^\d{4,8}$/.test(p)) return toastC('PIN must be 4 to 8 digits.');
+  try { if (n) { await api('salary_api.php?a=managername', { name: n }); window.MGR_NAME = n; } if (p) await api('api.php?a=setpin', { uid: 'manager', pin: p });
+    toastC('Manager login saved' + (p ? ' — PIN ' + (p === '1234' ? '1234 (Manager will choose a new one)' : 'set') : '') + '.'); $('mgP').value = ''; } catch (e) { toastC(e.message); }
+}
+function toastC(t) { try { if (typeof toast === 'function') return toast(t); } catch (e) {} alert(t); }
+
 // Leave policy report (12 Nov 2026): the same numbers the salary uses — teacher_api.php?a=leavereport (leavepolicy_lib.php)
 let LREP = null;
 function leaveRep() {
