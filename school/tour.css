@@ -259,3 +259,9 @@ body{position:static}
 .destination-actions{padding:8px 14px 12px!important}
 @media(max-width:390px){.experience{height:530px!important}.exp-content h1,.exp-content h2{font-size:32px!important}.exp-ready .exp-content h2{font-size:27px!important}.exp-checklist{gap:4px!important}.exp-checklist div{padding:5px 8px!important}.exp-checklist b{font-size:11px!important}.exp-checklist small{font-size:10px!important}}
 @media(max-height:650px){.experience{height:470px!important}.exp-content h1,.exp-content h2{font-size:29px!important}.exp-mini span{padding:5px!important}.exp-ready .exp-content h2{font-size:25px!important}.exp-checklist div{padding:4px 8px!important}}
+
+/* Slightly larger compact design, without returning to full-screen scrolling. */
+.experience{height:635px!important}
+.destination-card .art{height:215px!important}
+@media(max-width:390px){.experience{height:595px!important}.destination-card .art{height:205px!important}}
+@media(max-height:650px){.experience{height:525px!important}}
