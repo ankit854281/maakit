@@ -54,3 +54,20 @@ document.querySelectorAll('.place .art .tour-photo').forEach(img=>{
 // Top-of-page campaign shares the same verified message as the bottom WhatsApp button.
 const topShare = $('heroShare');
 if(topShare) topShare.href = 'https://wa.me/?text=' + encodeURIComponent(MSG);
+
+// Full-screen swipe story with explicit accessible Previous / Next buttons.
+(() => {
+ const track=$('expTrack'), next=$('expNext'), prev=$('expPrev'), dots=$('expDots');
+ if(!track||!next||!prev||!dots)return;
+ const slides=[...track.querySelectorAll('.exp-slide')], indicators=[...dots.querySelectorAll('button')];
+ let active=0;
+ const paint=()=>{prev.disabled=active===0;next.textContent=active===slides.length-1?'See all ↓':'Next →';indicators.forEach((d,i)=>{d.classList.toggle('active',i===active);if(i===active)d.setAttribute('aria-current','step');else d.removeAttribute('aria-current')})};
+ const go=i=>{active=Math.max(0,Math.min(slides.length-1,i));track.scrollTo({left:active*track.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});paint()};
+ prev.addEventListener('click',()=>go(active-1));
+ next.addEventListener('click',()=>{if(active===slides.length-1){$('all-details')?.scrollIntoView({behavior:'smooth'});return}go(active+1)});
+ indicators.forEach((d,i)=>d.addEventListener('click',()=>go(i)));
+ let raf=0;track.addEventListener('scroll',()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;active=Math.min(slides.length-1,Math.max(0,Math.round(track.scrollLeft/Math.max(1,track.clientWidth))));paint()})},{passive:true});
+ track.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();go(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();go(active-1)}});
+ window.addEventListener('resize',()=>go(active));paint();
+ const share=$('expShare');if(share)share.href='https://wa.me/?text='+encodeURIComponent(MSG);
+})();
