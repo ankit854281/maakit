@@ -156,3 +156,20 @@ html{scroll-behavior:smooth}
 
 /* Edge-to-edge experience on phones, while detailed information stays in normal cards. */
 @media(max-width:699px){.experience{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:100svh;min-height:520px}.exp-top{padding-left:16px;padding-right:16px}.exp-content{padding-left:24px;padding-right:24px}}
+
+/* Autoplay-ready storytelling with large photographs and an easy-to-read packing checklist. */
+.exp-first .exp-photo,.exp-history .exp-photo{object-fit:cover;object-position:center center}
+.exp-ready{background:radial-gradient(ellipse at 85% 9%,#3976ac,#25205b 60%,#111b37 100%);align-items:center}
+.exp-ready .exp-pattern{opacity:.11}
+.exp-ready-content{padding-bottom:14px}
+.exp-ready .exp-content h2{font-size:clamp(30px,8vw,48px);margin:8px 0}
+.exp-ready .exp-hindi{margin-bottom:9px!important;font-size:12px!important}
+.exp-checklist{display:grid;grid-template-columns:1fr;gap:6px;margin:9px 0}
+.exp-checklist div{padding:9px 12px;border-radius:11px;background:#ffffff1b;border:1px solid #ffffff35;line-height:1.25}
+.exp-checklist b{display:block;font-size:13px;color:#fff}
+.exp-checklist small{display:block;color:#e4eafa;font-size:11px;margin-top:2px}
+.exp-ready .exp-small{font-size:10px!important;margin-top:8px!important}
+.exp-controls .exp-next{min-width:110px}
+.exp-bottom span{opacity:.8}
+@media(max-height:700px){.exp-ready .exp-content h2{font-size:29px}.exp-ready .exp-chip{padding:5px 8px}.exp-checklist{gap:4px;margin:5px 0}.exp-checklist div{padding:6px 9px}.exp-checklist b{font-size:12px}.exp-checklist small{font-size:10px}.exp-ready-content{padding-bottom:6px}}
+@media(max-height:570px){.exp-ready .exp-content h2{font-size:26px}.exp-checklist div{padding:4px 8px}.exp-ready .exp-hindi{margin:1px 0!important}.exp-checklist b{font-size:11px}.exp-checklist small{font-size:9px}}
