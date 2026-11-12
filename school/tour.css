@@ -1,0 +1,52 @@
+@font-face{font-family:Poppins;src:url(fonts/poppins-latin-400-normal.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Poppins;src:url(fonts/poppins-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:Poppins;src:url(fonts/poppins-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:Poppins;src:url(fonts/poppins-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:Poppins,"Noto Sans Devanagari",system-ui,sans-serif;background:#FFF8EC;color:#1F1A2E}
+.sparks{position:absolute;inset:0;background-image:radial-gradient(2px 2px at 20% 30%,#FDE68A,transparent),radial-gradient(2px 2px at 80% 20%,#fff,transparent),radial-gradient(3px 3px at 60% 70%,#F9A8D4,transparent),radial-gradient(2px 2px at 30% 80%,#FDE68A,transparent),radial-gradient(2px 2px at 90% 60%,#A7F3D0,transparent),radial-gradient(2px 2px at 45% 15%,#fff,transparent);animation:tw 2s infinite alternate}
+@keyframes pop{from{transform:scale(.2) rotate(-40deg);opacity:0}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes up{from{transform:translateY(18px);opacity:0}}@keyframes flick{to{transform:scale(1.12,.9) translateY(1px)}}@keyframes tw{to{opacity:.4}}
+/* opening story — same SNMSIS welcome as the Chairman app (chairman.css .ad) */
+.ad{position:fixed;inset:0;z-index:60;background:#120E3A;overflow:hidden;color:#fff;transition:opacity .6s,transform .6s}.ad.out{opacity:0;transform:scale(1.05);pointer-events:none}
+.ad-bars{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;right:90px;z-index:3;display:flex;gap:5px}
+.ad-bars i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.28);overflow:hidden;position:relative}
+.ad-bars i::after{content:"";position:absolute;inset:0;width:0;background:#fff;border-radius:9px}.ad-bars i.done::after{width:100%}.ad-bars i.run::after{animation:adbar var(--ms) linear forwards}
+@keyframes adbar{to{width:100%}}
+.ad-skip{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));right:12px;z-index:4;min-height:36px;padding:0 16px;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:13px;font-weight:600}
+.ad-s{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:70px 24px 40px}
+.ad-s.on{display:flex;animation:adin .5s ease-out}@keyframes adin{from{opacity:0;transform:scale(.97)}}
+.ad-s.s1{background:radial-gradient(120% 80% at 50% 0%,#3B32B5,#120E3A 70%)}.ad-s.s2{background:linear-gradient(160deg,#4338CA,#1E1B6B)}.ad-s.s3{background:radial-gradient(120% 90% at 50% 100%,#9D174D,#1A0F3D 72%)}
+.ad-logo{width:130px;height:130px;border-radius:50%;background:#fff;padding:4px;box-shadow:0 0 0 12px rgba(255,255,255,.12),0 0 0 26px rgba(255,255,255,.06),0 24px 50px rgba(0,0,0,.45);animation:pop .8s cubic-bezier(.2,1.6,.4,1);position:relative;z-index:1}
+.ad-k{margin:0;font-size:13px;letter-spacing:.24em;text-transform:uppercase;opacity:.8}.ad-h{margin:0;font-size:34px;font-weight:700;line-height:1.15}.ad-h.xl{font-size:46px;letter-spacing:.12em}
+.ad-t{margin:0;font-size:15px;line-height:1.55;opacity:.92;max-width:300px}.ad-gold{color:#F5C842}
+.lang{height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center}.lang b{font-size:32px;font-weight:700;line-height:1.3;animation:lw .42s ease-out}.lang small{font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-top:6px}
+@keyframes lw{from{opacity:0;transform:translateY(14px) scale(.96);filter:blur(4px)}}
+.ad-go{margin-top:16px;width:100%;max-width:330px;height:50px;border-radius:999px;border:0;background:#F5C842;color:#1d1600;font:inherit;font-size:15px;font-weight:600;box-shadow:0 10px 24px rgba(245,200,66,.3)}
+.ad .sparks{pointer-events:none}
+@media (prefers-reduced-motion:reduce){.ad *{animation-duration:.01ms!important}}
+/* ---- Children's Day Prayagraj Tour (tour.php) — same opening story as cert.php ---- */
+.ad-s.t2{background:radial-gradient(120% 90% at 50% 0%,#F97316,#7C2D12 75%)}.ad-s.t3{background:linear-gradient(170deg,#0EA5E9,#1E3A8A)}
+.kids{display:flex;gap:10px;align-items:flex-end;animation:up .8s .2s both}.kids span{font-size:46px;animation:hop 1s infinite alternate}.kids span:nth-child(2){animation-delay:.2s}.kids span:nth-child(3){animation-delay:.4s}
+@keyframes hop{to{transform:translateY(-10px)}}
+.road{position:relative;width:100%;max-width:340px;height:90px;overflow:hidden}.road::after{content:"";position:absolute;left:0;right:0;bottom:12px;height:4px;background:repeating-linear-gradient(90deg,#fff 0 22px,transparent 22px 40px);opacity:.6;animation:lane .6s linear infinite}
+@keyframes lane{to{background-position:-40px 0}}.bus{position:absolute;bottom:16px;left:-140px;width:130px;animation:drive 3.2s ease-out forwards}@keyframes drive{to{left:calc(50% - 65px)}}
+.wrap{max-width:620px;margin:0 auto;padding:14px 14px 40px}
+.hero{position:relative;overflow:hidden;border-radius:26px;padding:22px 18px 20px;color:#fff;background:linear-gradient(150deg,#F97316 0%,#DB2777 55%,#7C3AED 100%);box-shadow:0 14px 34px rgba(219,39,119,.25)}
+.hero .sparks{opacity:.7}.hero .sch{display:flex;gap:10px;align-items:center}.hero .sch img{width:48px;height:48px;border-radius:50%;background:#fff;padding:3px}.hero .sch small{font-size:11px;opacity:.9;line-height:1.3}
+.hero .tag{display:inline-block;margin-top:14px;background:rgba(255,255,255,.2);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600}
+.hero h1{margin:10px 0 4px;font-size:30px;line-height:1.15}.hero h1 span{color:#FDE68A}.hero p{margin:0;font-size:14px;opacity:.95;line-height:1.5}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.facts div{background:rgba(255,255,255,.18);border-radius:16px;padding:10px 6px;text-align:center}.facts b{display:block;font-size:15px}.facts small{font-size:11px;opacity:.9}
+.count{display:flex;gap:6px;justify-content:center;margin-top:14px}.count div{background:#1F1A2E;color:#FDE68A;border-radius:12px;padding:6px 10px;text-align:center;min-width:58px}.count b{display:block;font-size:20px}.count small{font-size:10px;color:#fff;opacity:.8}
+h2.sec{font-size:19px;margin:22px 4px 10px}h2.sec small{display:block;font-size:13px;font-weight:500;color:#7a6f88}
+.place{background:#fff;border-radius:22px;overflow:hidden;margin-bottom:14px;box-shadow:0 6px 18px rgba(31,26,46,.07)}
+.place .art{height:150px;display:flex;align-items:flex-end;justify-content:center;position:relative}.place .art svg{width:100%;height:100%}
+.place .no{position:absolute;top:10px;left:12px;background:#fff;color:#1F1A2E;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700}
+.place .bd{padding:14px 16px 16px}.place h3{margin:0;font-size:18px}.place h3 small{font-size:13px;font-weight:500;color:#7a6f88;margin-left:6px}.place .loc{font-size:12px;color:#8a7f98;margin:2px 0 8px}
+.place p{margin:0 0 6px;font-size:14px;line-height:1.55}.place p.hi{color:#5b5368}.place ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}.place li{font-size:12px;background:#FFF1E0;color:#9A3412;border-radius:99px;padding:4px 10px}
+.learn{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.learn div{background:#fff;border-radius:18px;padding:12px 6px;text-align:center;box-shadow:0 4px 12px rgba(31,26,46,.06)}.learn i{font-style:normal;font-size:28px;display:block}.learn b{font-size:13px;display:block}.learn small{font-size:11px;color:#7a6f88}
+.note{background:#FFFBEB;border:1px dashed #F59E0B;border-radius:18px;padding:12px 14px;font-size:13px;line-height:1.55;margin-top:14px}.note b{color:#92400E}
+.cta{margin-top:16px;border-radius:22px;padding:18px;background:linear-gradient(135deg,#1E3A8A,#7C3AED);color:#fff;text-align:center}.cta h3{margin:0 0 4px;font-size:20px}.cta p{margin:0 0 12px;font-size:14px;opacity:.95}
+.btn{display:block;width:100%;border:0;border-radius:99px;padding:13px;font:inherit;font-size:15px;font-weight:700;text-decoration:none;text-align:center;cursor:pointer;margin-top:8px}.btn.wa{background:#22C55E;color:#fff}.btn.y{background:#FDE68A;color:#1F1A2E}.btn.l{background:rgba(255,255,255,.18);color:#fff}
+.bring{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.bring span{background:#fff;border-radius:99px;padding:6px 11px;font-size:12.5px;box-shadow:0 2px 8px rgba(31,26,46,.06)}
+footer{text-align:center;font-size:12px;color:#8a7f98;margin-top:22px;line-height:1.6}
+.art.a1{background:linear-gradient(#BAE6FD,#E0F2FE)}.art.a2{background:linear-gradient(#BBF7D0,#F0FDF4)}.art.a3{background:linear-gradient(#FDE68A,#FFFBEB)}.art.a4{background:linear-gradient(#C7D2FE,#EEF2FF)}
+.count div.big{min-width:auto;padding:8px 14px}
