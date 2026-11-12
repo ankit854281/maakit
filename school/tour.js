@@ -50,3 +50,7 @@ document.querySelectorAll('.place .art .tour-photo').forEach(img=>{
  img.addEventListener('load',()=>img.closest('.art')?.classList.remove('photo-failed'));
  if(img.complete&&!img.naturalWidth)fail();
 });
+
+// Top-of-page campaign shares the same verified message as the bottom WhatsApp button.
+const topShare = $('heroShare');
+if(topShare) topShare.href = 'https://wa.me/?text=' + encodeURIComponent(MSG);
