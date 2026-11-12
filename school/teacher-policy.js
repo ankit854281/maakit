@@ -140,3 +140,101 @@
   .lp-t td.no,.lp-t small.no{color:#b42318;font-weight:700}.lp-t td.ok{color:#15803d;font-weight:700}.lp-t td.lv{color:#9a6700;font-weight:700}.lp-t td.z{color:#aab}.lp-t tr.warn td{background:#FFF1F0}`;
   document.head.appendChild(st);
 })();
+
+/* ============================================================================
+   Leave assistant (12 Nov 2026, owner: "bot add kardo — vo reason de, bot leave
+   likh de, uske according class arrangement ho jaye").
+   Today tab → "Apply for leave": dates + reason in a few words (Hindi / Hinglish /
+   English) → the app writes a formal application, checks the staff rules before
+   sending and shows how many periods will need an arrangement. The Principal reads
+   the full application under Staff → Leave. Once approved, the arrangement is made
+   by itself (staffAbsent counts approved leave).
+   + Principal: Staff → "Staff attendance" opens staffatt.php (all staff, bulk / CSV).
+   ============================================================================ */
+(function () {
+  const REASONS = [['ill', 'Not well / fever'], ['func', 'Family function / wedding'], ['med', 'Doctor / hospital'], ['emer', 'Family emergency'], ['death', 'Death in family'], ['exam', 'Exam / interview'], ['pers', 'Urgent personal work']];
+  const KW = [['death', /death|died|nidhan|dehant|maut|shraddh|antim|funeral|गुज़र|निधन/i], ['ill', /fever|bukhar|bimar|beemar|sick|tabiyat|tabiat|cold|cough|pet dard|headache|dard|बीमार|बुखार|तबीयत/i],
+    ['med', /doctor|hospital|checkup|check-up|operation|clinic|dawai|medical|डॉक्टर|अस्पताल/i], ['func', /shadi|shaadi|wedding|marriage|function|tilak|mundan|engagement|sagai|birthday|puja|pooja|शादी|समारोह/i],
+    ['exam', /exam|interview|pariksha|test|admit|परीक्षा/i], ['emer', /emergency|urgent|accident|achanak|turant|ज़रूरी|दुर्घटना/i]];
+  const SENT = { ill: 'as I am not keeping well and the doctor has advised me rest', func: 'as I have to attend an important family function', med: 'as I have to visit the doctor / hospital for a medical check-up', emer: 'due to a sudden family emergency',
+    death: 'due to the sad demise of a close family member', exam: 'as I have to appear in an examination / interview', pers: 'due to some urgent personal work that needs my presence' };
+  let BOT = { from: '', to: '', kind: '', words: '', letter: '' };
+  const days = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5) + 1;
+  const dLong = iso => new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  function guessKind(t) { for (const [k, re] of KW) if (re.test(t)) return k; return t.trim() ? 'own' : 'pers'; }
+  function writeLetter() {
+    const f = BOT.from, t = BOT.to, n = days(f, t), me_ = T(me()), kind = BOT.kind || guessKind(BOT.words);
+    const why = kind === 'own' ? 'due to ' + BOT.words.trim().replace(/[.\s]+$/, '') : SENT[kind];
+    const ct = (typeof myCT === 'function' ? myCT() : []), school = (S.settings && S.settings.school) || 'S.N. Mishra Singapore International School';
+    return `To,\nThe Principal,\n${school},\nBhadohi (U.P.)\n\nDate: ${dLong(todayISO())}\n\nSubject: Application for leave ${n > 1 ? 'from ' + dLong(f) + ' to ' + dLong(t) + ' (' + n + ' days)' : 'on ' + dLong(f)}\n\nRespected Sir / Madam,\n\nWith due respect, I, ${myName()}, ${me_.role ? me_.role + ' teacher' : 'teacher'}${ct.length ? ' and class teacher of Class ' + ct.join(', ') : ''}, request you to kindly grant me leave ${n > 1 ? 'for ' + n + ' days from ' + dLong(f) + ' to ' + dLong(t) : 'for one day on ' + dLong(f)} ${why}.${BOT.words.trim() && kind !== 'own' ? '\n(Details: ' + BOT.words.trim() + ')' : ''}\n\nI shall complete my pending work in the Teacher App before the leave and after I return. My periods may kindly be given as arrangement to other teachers.\n\nKindly grant me leave for the above period.\n\nThanking you,\n\nYours obediently,\n${myName()}`;
+  }
+  function checks() {
+    const out = [], f = BOT.from, t = BOT.to, q = (window.LPPOL || { noticeHour: 7, noticeDays: 2, emergency: 1 });
+    if (!f || !t || t < f) return { bad: 'Choose the From and To dates.', out };
+    for (let d = f, i = 0; d <= t && i < 62; i++, d = addDays(d, 1)) { const w = new Date(d + 'T00:00:00').getDay(); if (w === 1 || w === 6) return { bad: 'Staff rules: no leave on a ' + (w === 1 ? 'Monday' : 'Saturday') + ' (' + fmtDate(d) + '). Change the dates.', out };
+      const p = (S.cal || []).find(e => ['Exam', 'Event', 'PTM', 'Activity'].includes(e.type) && e.date <= d && (e.to || e.date) >= d); if (p) return { bad: 'Staff rules: no leave on a school programme day — ' + p.title + ' (' + fmtDate(d) + ').', out }; }
+    const ahead = Math.round((new Date(f + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 864e5);
+    if (ahead < q.noticeDays) { if (f < todayISO() || (f === todayISO() && new Date().getHours() >= q.noticeHour)) return { bad: 'Emergency leave must be asked before ' + q.noticeHour + ':00 a.m. on the same day.', out };
+      const used = S.leaves.filter(l => l.tid === me() && l.emergency && l.status !== 'Rejected' && (l.from || '').slice(0, 7) === f.slice(0, 7)).length;
+      if (used >= q.emergency) return { bad: 'You have already used your ' + q.emergency + ' emergency leave this month. Planned leave must be asked ' + q.noticeDays + ' days in advance.', out };
+      out.push(['warn', 'Emergency leave (less than ' + q.noticeDays + ' days ahead) — only ' + q.emergency + ' a month.']); }
+    else out.push(['ok', 'Planned leave — asked ' + ahead + ' days in advance.']);
+    let per = 0; for (let d = f, i = 0; d <= t && i < 62; i++, d = addDays(d, 1)) { try { per += bellsOf(me(), d).length; } catch (e) {} }
+    out.push(['ok', per ? per + ' of your periods on these days will be given to other teachers by itself once the Principal approves.' : 'No periods of yours on these days.']);
+    const n = days(f, t), monthUsed = S.leaves.filter(l => l.tid === me() && l.status === 'Approved' && (l.from || '').slice(0, 7) === f.slice(0, 7)).reduce((a, l) => a + days(l.from > f.slice(0, 7) + '-01' ? l.from : f.slice(0, 7) + '-01', l.to), 0);
+    if (monthUsed + n > ((window.LPPOL || {}).maxLeave || 4)) out.push(['warn', 'With this leave you cross ' + ((window.LPPOL || {}).maxLeave || 4) + ' days this month — salary will be paid only for the days worked.']);
+    return { bad: '', out };
+  }
+  window.lpBot = function (keep) {
+    if (!keep) BOT = { from: addDays(todayISO(), 2), to: addDays(todayISO(), 2), kind: '', words: '', letter: '' };
+    const c = checks();
+    SHEET = () => `<div class="row"><h2>Apply for leave</h2><button class="btn s l" onclick="closeSheet()">Close</button></div>
+      <div class="two"><div class="fld">From<input id="bF" type="date" class="inp" value="${BOT.from}" onchange="lpBotSet()"></div><div class="fld">To<input id="bT" type="date" class="inp" value="${BOT.to}" onchange="lpBotSet()"></div></div>
+      <div class="fld" style="margin-top:8px">Reason — tap one or write in your own words (Hindi / Hinglish / English)</div>
+      <div class="lpb-chips">${REASONS.map(([k, l]) => `<button class="${BOT.kind === k ? 'on' : ''}" onclick="lpBotKind('${k}')">${esc(l)}</button>`).join('')}</div>
+      <input id="bW" class="inp" maxlength="200" placeholder="e.g. bhai ki shaadi hai / bukhar hai" value="${esc(BOT.words)}" oninput="BOTW(this.value)">
+      ${c.bad ? `<div class="lpb-msg bad">${esc(c.bad)}</div>` : c.out.map(([k, m]) => `<div class="lpb-msg ${k}">${esc(m)}</div>`).join('')}
+      <button class="btn l full" style="margin-top:8px" ${c.bad ? 'disabled' : ''} onclick="lpBotWrite()">✍ Write my application</button>
+      ${BOT.letter ? `<div class="fld" style="margin-top:10px">Your application (you can change it)<textarea id="bL" class="inp lpb-letter" rows="14" oninput="BOTL(this.value)">${esc(BOT.letter)}</textarea></div>
+        <button class="btn go full" style="margin-top:8px" ${c.bad ? 'disabled' : ''} onclick="lpBotSend()">Send to Principal</button>` : ''}
+      <p class="mut" style="margin:8px 0 0">Leave is valid only after the Principal approves it. <a href="#" onclick="lpRules();return false">Staff rules</a></p>`;
+    render();
+  };
+  window.BOTW = v => { BOT.words = v; };
+  window.BOTL = v => { BOT.letter = v; };
+  window.lpBotSet = () => { BOT.from = $('bF').value; BOT.to = $('bT').value; if (BOT.to < BOT.from) BOT.to = BOT.from; if (BOT.letter) BOT.letter = writeLetter(); lpBot(true); };
+  window.lpBotKind = k => { BOT.kind = BOT.kind === k ? '' : k; const w = $('bW'); if (w) BOT.words = w.value; if (BOT.letter) BOT.letter = writeLetter(); lpBot(true); };
+  window.lpBotWrite = () => { const w = $('bW'); if (w) BOT.words = w.value; if (!BOT.kind && !BOT.words.trim()) return toast('Tap a reason or write it in a few words.'); BOT.letter = writeLetter(); lpBot(true); };
+  window.lpBotSend = () => {
+    const c = checks(); if (c.bad) return toast(c.bad);
+    const L = $('bL'); if (L) BOT.letter = L.value; const short = (BOT.kind && BOT.kind !== 'own' ? (REASONS.find(r => r[0] === BOT.kind) || ['', ''])[1] : '') + (BOT.words.trim() ? (BOT.kind ? ' — ' : '') + BOT.words.trim() : '');
+    const id = uid(); put('leave', id, { id, tid: me(), from: BOT.from, to: BOT.to, reason: (short || 'Leave').slice(0, 200), letter: BOT.letter.slice(0, 3000), status: 'Pending', at: Date.now() }, 'Leave', `${myName()} applied for leave ${BOT.from} to ${BOT.to}: ${short} — Teacher App (application)`);
+    S.leaves.sort((a, b) => (b.at || 0) - (a.at || 0)); SHEET = null; toast('Application sent. You will see Approved / Rejected in My account.'); render();
+  };
+  // Today tab: a clear "Apply for leave" button for teachers (+ last request status)
+  if (typeof vHome === 'function') {
+    const _vh = vHome;
+    vHome = function () { const html = _vh.apply(this, arguments);
+      if (!S || !ME || (typeof pMode === 'function' && pMode())) return html;
+      const last = S.leaves.filter(l => l.tid === me())[0];
+      const card = `<div class="card lpb-home"><div class="row"><div><b>Need leave?</b><small>${last ? 'Last request ' + esc(fmtDate(last.from)) + ': ' + esc(last.status) + (last.rejectReason ? ' — ' + esc(last.rejectReason) : '') : 'Write the reason in a few words — the app writes the application.'}</small></div><button class="btn go" onclick="lpBot()">Apply for leave</button></div></div>`;
+      return card + html; };
+  }
+  // Principal Staff hub: + "Staff attendance" (all staff, bulk / CSV) and the full applications
+  if (typeof vStaffHub === 'function') {
+    const _v = vStaffHub;
+    vStaffHub = function () {
+      if (P && P.m === 'satt') return seg([['arr', 'Arrangement'], ['tt', 'Timetable'], ['team', 'Teachers'], ['work', 'Work'], ['leave', 'Leave'], ['satt', 'Staff attendance']], 'satt', `(k=>go('staffhub',{m:k}))`) +
+        `<div class="card" style="padding:0;overflow:hidden"><iframe src="staffatt.php?embed=1" style="width:100%;height:78vh;border:0;display:block" title="Staff attendance"></iframe></div><p class="mut">Teachers, drivers, Dai, watchman, office — tap boxes, press Save. CSV download / upload for many days at once.</p>`;
+      let html = _v.apply(this, arguments).replace(/(<div class="seg">[\s\S]*?Leave<\/button>)/, `$1<button onclick="go('staffhub',{m:'satt'})">Staff attendance</button>`);
+      if (P && P.m === 'leave') { const pend = S.leaves.filter(l => l.status === 'Pending' && l.letter);
+        if (pend.length) html += `<div class="card"><h3>Applications <small>${pend.length}</small></h3>${pend.map(l => `<details class="lpb-app"><summary><b>${esc(T(l.tid).name)}</b> · ${esc(fmtDate(l.from))}${l.to !== l.from ? ' – ' + esc(fmtDate(l.to)) : ''}${l.emergency ? ' · emergency' : ''}</summary><pre>${esc(l.letter)}</pre></details>`).join('')}</div>`; }
+      return html; };
+  }
+  const st = document.createElement('style');
+  st.textContent = `.lpb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.lpb-chips button{border:1px solid #cfd6de;background:#fff;border-radius:99px;padding:6px 11px;font:inherit;font-size:13px}.lpb-chips button.on{background:#17324D;color:#fff;border-color:#17324D}
+  .lpb-msg{margin-top:8px;border-radius:10px;padding:8px 10px;font-size:13px}.lpb-msg.ok{background:#E6F6EC;color:#14532d}.lpb-msg.warn{background:#FFF4D6;color:#7a4d00}.lpb-msg.bad{background:#FDECEC;color:#8a1c1c;font-weight:600}
+  .lpb-letter{font-family:inherit;font-size:13px;line-height:1.45;white-space:pre-wrap}.lpb-home .row{display:flex;align-items:center;justify-content:space-between;gap:10px}.lpb-home small{display:block;color:#667;font-size:12px;margin-top:2px}
+  .lpb-app{border-top:1px solid #eef1f4;padding:8px 0}.lpb-app summary{cursor:pointer;font-size:14px}.lpb-app pre{white-space:pre-wrap;font-family:inherit;font-size:13px;background:#f7f8fa;border-radius:10px;padding:10px;margin:8px 0 0}`;
+  document.head.appendChild(st);
+})();

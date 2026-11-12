@@ -3325,7 +3325,7 @@ function vSalary() {
   const months = []; for (let i = -3; i <= 1; i++) months.push(ymAdd(todayISO().slice(0, 7), i));
   const statusPill = r => r.status === 'Paid' ? '<span class="pill bg-emerald-100 text-emerald-800">Paid</span>' : r.status === 'Due' ? '<span class="pill bg-amber-100 text-amber-800">Due</span>' : '<span class="pill bg-slate-100 text-slate-600">Salary not set</span>';
   const card = r => { const s = r.staff, c = r.calc, open = SALOPEN === s.id, id = s.id.replace(/[^a-z0-9]/gi, '');
-    const why = c.manual ? 'entered by office' : c.auto ? `${dd(c.auto.absent)} absent without leave${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}${c.auto.leave ? ', ' + c.auto.leave + ' leave' : ''}` : 'enter days';
+    const why = c.manual ? 'entered by office' : c.auto && c.auto.nonTeaching ? `from Staff Attendance${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}` : c.auto ? `${dd(c.auto.absent)} absent without leave${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}${c.auto.leave ? ', ' + c.auto.leave + ' leave' : ''}` : 'enter days';
     return `<div class="card ${s.active ? '' : 'opacity-60'}"><div class="flex flex-wrap items-start justify-between gap-2">
         <div class="min-w-0"><p class="font-bold text-ink">${esc(s.name)} ${statusPill(r)}</p><p class="text-xs text-slate-500">${esc(s.role)}${s.teaching ? '' : ' · non-teaching'}${s.active ? '' : ' · inactive'}</p></div>
         <div class="text-right"><p class="text-xs text-slate-500">Net pay</p><p class="text-xl font-extrabold text-ink">${r.status === 'Not set' ? '—' : rs(c.net)}</p></div></div>
@@ -3350,7 +3350,7 @@ function vSalary() {
         <button onclick="salPay(${jsq(s.id)},'${id}')" class="btn btn-g self-end"><i class="fa-solid fa-check"></i> Mark paid ${rs(c.net)}</button></div></div>` : ''}</div>`; };
   return head('Staff Salary', `${ymLong(ym)} · ${SAL.workDays} working days (Sundays and holidays left out). Absences come from Staff Attendance and approved leave. Leave policy: paid leave covers approved leave and half days; absent without approved leave is always cut; zero absence adds the full-attendance bonus.`,
       `<select class="inp w-auto" onchange="SAL=null;SALOPEN=null;go('salary',{ym:this.value})">${months.map(m => `<option value="${m}" ${m === ym ? 'selected' : ''}>${ymLong(m)}</option>`).join('')}</select>
-       <button onclick="salRegister()" class="btn btn-l"><i class="fa-solid fa-print"></i> Register</button>${SAL.can.staff ? '<button onclick="salStaffEdit(\'\')" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add staff</button>' : ''}`) + `
+       <a href="staffatt.php" target="_blank" class="btn btn-l"><i class="fa-solid fa-calendar-check"></i> Staff attendance</a>       <button onclick="salRegister()" class="btn btn-l"><i class="fa-solid fa-print"></i> Register</button>${SAL.can.staff ? '<button onclick="salStaffEdit(\'\')" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add staff</button>' : ''}`) + `
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="kpi kpi-peach"><span class="kpi-ic"><i class="fa-solid fa-wallet"></i></span><span class="kpi-val">${rs(tot('gross'))}</span><span class="kpi-lbl">Total salary</span><span class="kpi-sub">${set.length} staff with salary set</span></div>
       <div class="kpi kpi-lav"><span class="kpi-ic"><i class="fa-solid fa-user-minus"></i></span><span class="kpi-val">${rs(tot('deduction'))}</span><span class="kpi-lbl">Cut for absence</span><span class="kpi-sub">advance ${rs(tot('advance'))} · bonus ${rs(tot('bonus'))}</span></div>

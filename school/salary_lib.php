@@ -56,6 +56,15 @@ function sal_absent_days(string $tid, array $work, array $att, array $leaves): a
     return ['absent' => $full, 'half' => $half, 'leave' => $leave, 'total' => $full + $leave + $half * 0.5];
 }
 
+// Non-teaching staff (driver, Dai, watchman…): absence from Staff Attendance (salAtt). No leave system for them, so an
+// absence is counted like leave (paid leave covers it). null = no attendance kept this month → office types the days.
+function sal_nt_days(string $id, array $nat): ?array {
+    if (!$nat) return null;
+    $full = 0; $half = 0;
+    foreach ($nat as $r) { if (in_array($id, (array)($r['a'] ?? []), true)) $full++; elseif (in_array($id, (array)($r['h'] ?? []), true)) $half++; }
+    return ['absent' => 0, 'half' => $half, 'leave' => $full, 'total' => $full + $half * 0.5, 'nonTeaching' => true];
+}
+
 function sal_calc(array $staff, array $adj, array $work, ?array $auto): array {
     $gross = (int)($staff['monthly'] ?? 0);
     $wd = count($work);
@@ -66,17 +75,18 @@ function sal_calc(array $staff, array $adj, array $work, ?array $auto): array {
     $unapproved = (!$manual && $auto !== null) ? (float)($auto['absent'] ?? 0) : 0.0;
     $unpaid = max(0.0, $absent - $unapproved - $paidLeave) + $unapproved;
     $ded = $wd ? (int)round($gross / $wd * min($unpaid, $wd)) : 0;
-    $autoBonus = (!$manual && $auto !== null && $gross > 0 && $wd > 0 && (float)($auto['total'] ?? 0) == 0.0) ? lp_policy()['bonus'] : 0;
+    $teach = $auto !== null && empty($auto['nonTeaching']);     // staff rules (bonus, worked-only) are for teachers
+    $autoBonus = ($teach && !$manual && $gross > 0 && $wd > 0 && (float)($auto['total'] ?? 0) == 0.0) ? lp_policy()['bonus'] : 0;
     // Staff rules v3 (owner): total leave above maxLeave (default 4) in the month = salary only for the days actually worked:
     // gross ÷ days of the month × (working days − absence). Sundays, holidays and paid leave are not paid that month.
     $dim = $wd ? (int)date('t', strtotime(substr((string)$work[0], 0, 7) . '-01')) : 0; $offDays = max(0, $dim - $wd); $offCut = 0;
-    if (!$manual && $auto !== null && $dim > 0 && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave']) {
+    if ($teach && !$manual && $dim > 0 && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave']) {
         $workedPay = (int)round($gross / $dim * max(0.0, $wd - $absent));
         $offCut = max(0, ($gross - $workedPay) - $ded); $ded = $gross - $workedPay; $unpaid = $absent;
     }
     $adv = (int)($adj['advance'] ?? 0); $bonus = (int)($adj['bonus'] ?? 0) + $autoBonus;
     return ['gross' => $gross, 'workDays' => $wd, 'absent' => $absent, 'manual' => $manual, 'auto' => $auto, 'paidLeave' => $paidLeave,
-            'unapproved' => $unapproved, 'unpaid' => $unpaid, 'deduction' => $ded, 'advance' => $adv, 'bonus' => $bonus, 'autoBonus' => $autoBonus, 'offDays' => $offCut ? $offDays : 0, 'offCut' => $offCut, 'workedOnly' => $offCut > 0 || ($dim > 0 && !$manual && $auto !== null && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave']),
+            'unapproved' => $unapproved, 'unpaid' => $unpaid, 'deduction' => $ded, 'advance' => $adv, 'bonus' => $bonus, 'autoBonus' => $autoBonus, 'offDays' => $offCut ? $offDays : 0, 'offCut' => $offCut, 'workedOnly' => $teach && !$manual && $dim > 0 && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave'],
             'net' => $gross - $ded - $adv + $bonus, 'note' => (string)($adj['note'] ?? '')];
 }
 
@@ -98,13 +108,14 @@ function sal_staff_list(): array {
 function sal_sheet(string $ym, ?string $onlyId = null): array {
     $work = sal_workdays($ym, sal_rows('cal'));
     $att = sal_rows('staffAtt', $ym); $leaves = sal_rows('leave'); $saved = sal_rows('salMonth', $ym . '|');
+    $nat = array_intersect_key(sal_rows('salAtt', $ym), array_flip($work));   // non-teaching attendance (staffatt_api.php), working days only
     $rows = [];
     foreach (sal_staff_list() as $id => $s) {
         if ($onlyId !== null && $id !== $onlyId) continue;
         $m = $saved[$ym . '|' . $id] ?? [];
         if (($m['status'] ?? '') === 'Paid') { $rows[] = ['staff' => $s, 'calc' => $m['calc'], 'status' => 'Paid', 'pay' => array_intersect_key($m, array_flip(['paidOn', 'mode', 'ref', 'by', 'at']))]; continue; }
         if (!$s['active'] && !$m) continue;
-        $auto = $s['tid'] !== null ? sal_absent_days($s['tid'], $work, $att, $leaves) : null;
+        $auto = $s['tid'] !== null ? sal_absent_days($s['tid'], $work, $att, $leaves) : sal_nt_days($id, $nat);
         $rows[] = ['staff' => $s, 'calc' => sal_calc($s, $m, $work, $auto), 'status' => $s['monthly'] === null ? 'Not set' : 'Due', 'pay' => null];
     }
     return ['ym' => $ym, 'workDays' => count($work), 'rows' => $rows];
