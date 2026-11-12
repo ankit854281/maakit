@@ -54,7 +54,7 @@ case 'status': {
     usort($teachers, fn($x, $y) => strcmp($x['name'], $y['name']));
     $set = sch_rec_get('settings', 'main');
     sch_json(['ok' => true, 'setup' => $hasP === 0, 'teachers' => $teachers,
-              'office' => ['accountant' => trim((string)($set['accountantName'] ?? '')) ?: 'Akash Tiwari', 'reception' => trim((string)($set['receptionName'] ?? '')) ?: 'Shiva Rai', 'dataentry' => trim((string)($set['dataentryName'] ?? '')) ?: 'Shubh Upadhyay'],
+              'office' => ['accountant' => trim((string)($set['accountantName'] ?? '')) ?: 'Akash Tiwari', 'reception' => trim((string)($set['receptionName'] ?? '')) ?: 'Shiva Rai', 'dataentry' => trim((string)($set['dataentryName'] ?? '')) ?: 'Shubh Upadhyay', 'manager' => trim((string)($set['managerName'] ?? '')) ?: 'Manager'],
               'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School')]);
 }
 
@@ -98,6 +98,7 @@ case 'login': {
         case 'accountant':
         case 'reception': $uid = $role; $valid = true; break;   // school office (fees) — office_api.php
         case 'dataentry': $uid = $role; $valid = true; break;   // non-teaching data entry (12 Nov 2026) — dataentry.php only
+        case 'manager':   $uid = $role; $valid = true; break;   // Salary app (12 Nov 2026) — manager.php only, salary with the Chairman
         case 'teacher':
             $tid = preg_replace('/[^A-Za-z0-9_]/', '', (string)($in['tid'] ?? ''));
             if ($tid === 'P') sch_fail('Please use the Principal login.');
@@ -308,11 +309,12 @@ case 'setpin': {
         $st->execute([$selfUid]);
         if (!password_verify((string)($in['old'] ?? ''), (string)$st->fetchColumn())) sch_fail('Old PIN is wrong.', 403);
         $target = $selfUid;
-    } elseif ($u['role'] !== 'principal' || (int)$u['must_change'] === 1) {
-        sch_fail('Only the Principal can set other PINs.', 403);
+    } elseif ((int)$u['must_change'] === 1 || !(($u['role'] === 'principal' && $target !== 'manager') || ($u['role'] === 'chairman' && $target === 'manager'))) {
+        // Salary app (12 Nov 2026): only the Chairman sets / resets the Manager's PIN — the Principal cannot open salary
+        sch_fail($target === 'manager' ? 'Only the Chairman can set the Manager\'s PIN.' : 'Only the Principal can set other PINs.', 403);
     }
     if ($target === 'chairman') { $role = 'chairman'; $tid = null; }
-    elseif ($target === 'accountant' || $target === 'reception' || $target === 'dataentry') { $role = $target; $tid = null; }
+    elseif ($target === 'accountant' || $target === 'reception' || $target === 'dataentry' || $target === 'manager') { $role = $target; $tid = null; }
     elseif ($target === 'principal') { $role = 'principal'; $tid = 'P'; }
     elseif (preg_match('/^t:([A-Za-z0-9_]{1,20})$/', $target, $m) && $m[1] !== 'P' && sch_rec_get('teacher', $m[1])) { $role = 'teacher'; $tid = $m[1]; }
     elseif (preg_match('/^p:(\d{10})$/', $target, $m) && sch_children($m[1])) { $role = 'parent'; $tid = $m[1]; }
@@ -326,7 +328,7 @@ case 'setpin': {
        ->execute([$target, $role, $tid, password_hash($pin, PASSWORD_DEFAULT), $must]);
     if ($target !== $selfUid) $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$target]);   // purane phone se bahar
     $who = match ($role) { 'teacher' => sch_teacher_name($tid), 'parent' => 'parent ' . substr((string)$tid, 0, 2) . 'xxxxxx' . substr((string)$tid, -2),
-                           'student' => sch_user_label(['role' => 'student', 'tid' => $tid]), 'accountant', 'reception', 'dataentry' => sch_user_label(['role' => $role, 'tid' => null]), default => ucfirst($role) };
+                           'student' => sch_user_label(['role' => 'student', 'tid' => $tid]), 'accountant', 'reception', 'dataentry', 'manager' => sch_user_label(['role' => $role, 'tid' => null]), default => ucfirst($role) };
     sch_log($u, 'PIN', 'PIN ' . ($target === $selfUid ? 'chosen by ' . $u['label'] : ($must ? 'reset to 1234 for ' : 'set for ') . $who));
     sch_json(['ok' => true]);
 }

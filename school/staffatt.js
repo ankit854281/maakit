@@ -2,7 +2,7 @@
    Tap a date at the top: whole day Present / Absent. "Download CSV" gives the month in a sheet; fill P / A / H and
    "Upload CSV" saves it (matched by ID, else by name). Approved teacher leave (L) is shown, not changed here. */
 (function () {
-  const $ = id => document.getElementById(id), tok = () => localStorage.getItem('sch_token') || '';
+  const $ = id => document.getElementById(id), tok = () => localStorage.getItem(/[?&]tk=sal/.test(location.search) ? 'sal_token' : 'sch_token') || '';   // tk=sal: inside the Salary app (own login)
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const emb = /[?&]embed=1/.test(location.search); if (emb) document.body.classList.add('emb');
   const now = new Date(), ymOf = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');

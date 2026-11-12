@@ -15,7 +15,7 @@ const SCH_KINDS = ['settings','classes','teacher','alloc','grid','exams','studen
 const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav','clsHol'];   // clsHol = class holiday (teacher_api.php)
 const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal'];
 const SCH_SESSION_DAYS = 30;
-const SCH_NO_LOAD = ['parent', 'student', 'accountant', 'reception', 'dataentry'];   // inhe poore school ka data nahi milta
+const SCH_NO_LOAD = ['parent', 'student', 'accountant', 'reception', 'dataentry', 'manager'];   // inhe poore school ka data nahi milta
 const SCH_MAX_RECORD = 400000;          // ek record max ~400 KB (timetable grid ke liye kaafi)
 
 function sch_db(): PDO {
@@ -128,6 +128,10 @@ function sch_uid_of(array $u): string {
 
 function sch_user_label(array $u): string {
     if ($u['role'] === 'chairman') return 'Chairman';
+    if ($u['role'] === 'manager') {
+        $n = trim((string)((sch_rec_get('settings', 'main') ?? [])['managerName'] ?? ''));
+        return ($n !== '' && $n !== 'Manager' ? $n . ' (Manager)' : 'Manager');
+    }
     if ($u['role'] === 'dataentry') {
         $n = trim((string)((sch_rec_get('settings', 'main') ?? [])['dataentryName'] ?? ''));
         return ($n !== '' ? $n : 'Shubh Upadhyay') . ' (Data Entry)';

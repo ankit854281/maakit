@@ -56,6 +56,7 @@ case 'att': {
 
 case 'teacher': {
     $tid = (string)($_GET['tid'] ?? ''); pf_who('t:' . $tid);
+    if ($u['role'] !== 'chairman') sch_json(['ok' => true, 'salary' => null, 'hidden' => true]);   // salary: Manager + Chairman only (12 Nov 2026)
     $id = 't:' . $tid; $months = [];
     foreach (pf_rows('salMonth', '%|' . $id) as $r => $m) {
         $ym = explode('|', $r)[0];

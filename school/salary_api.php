@@ -2,15 +2,18 @@
 // ============================================================
 // Staff salary API — maakit.in/school/salary_api.php
 //
-//   GET  ?a=sheet&ym=2026-10      Principal / Accountant — poore staff ki sheet
-//   POST ?a=staff  {id?, name, role, monthly, paidLeave, active}   sirf Principal
+//   GET  ?a=sheet&ym=2026-10      Manager / Chairman (view) — poore staff ki sheet
+//   POST ?a=staff  {id?, name, role, monthly, paidLeave, active}   sirf Manager
 //        (teacher ke liye id = "t:<tid>"; naya non-teaching staff: id khaali)
-//   POST ?a=adjust {ym, id, advance, bonus, manualAbsent, note}    Principal / Accountant
-//   POST ?a=pay    {ym, id, mode, ref, date}                       Principal / Accountant
-//   POST ?a=unpay  {ym, id, reason}                                sirf Principal
+//   POST ?a=adjust {ym, id, advance, bonus, manualAbsent, note}    sirf Manager
+//   POST ?a=pay    {ym, id, mode, ref, date}                       sirf Manager
+//   POST ?a=unpay  {ym, id, reason}                                sirf Manager
 //   GET  ?a=mine                  Teacher — sirf apni paid salary slips
-//   GET  ?a=summary               Principal / Accountant / Chairman — 6 mahine ka jod (Admin dashboard)
+//   GET  ?a=summary               Manager / Chairman — 6 mahine ka jod
 //
+// Owner, 12 Nov 2026: salary sirf MANAGER (login 'manager', Salary app manager.php) aur CHAIRMAN dekhein —
+// "bas manager, chairman sir dekh payen, aur koi nahi". Manager sab karta hai (salary set, adjust, pay, reopen);
+// Chairman sab dekhta hai (read-only). Principal / Accountant ko ab salary nahi dikhti. Teacher sirf apni paid slip.
 // Salary ki baat kisi aur ko nahi dikhni chahiye: records "sal" prefix
 // (salStaff, salMonth) aam sync / load me kabhi nahi jaate.
 // ============================================================
@@ -23,7 +26,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
 $in = [];
 if ($method === 'POST') { $in = json_decode(file_get_contents('php://input', false, null, 0, 100000) ?: '', true); if (!is_array($in)) sch_fail('Bad request.'); }
-function sal_need(array $u, array $roles): void { if (!in_array($u['role'], $roles, true)) sch_fail('Not allowed.', 403); }
+function sal_need(array $u, array $roles): void { if (!in_array($u['role'], $roles, true)) sch_fail($roles === ['teacher', 'principal'] ? 'Not allowed.' : 'Salary is open only in the Salary app — for the Manager and the Chairman.', 403); }
 function sal_text($v, int $max): string { return mb_substr(trim(preg_replace('/[\x00-\x1F\x7F]/u', ' ', (string)$v)), 0, $max); }
 function sal_find(string $id): array { $all = sal_staff_list(); if (!isset($all[$id])) sch_fail('Staff member not found.'); return $all[$id]; }
 function sal_ym_in(array $in): string { $ym = (string)($in['ym'] ?? ''); if (!sal_ym_ok($ym) || $ym > date('Y-m', strtotime('+1 month'))) sch_fail('Choose a month.'); return $ym; }
@@ -32,14 +35,16 @@ try {
 switch ($a) {
 
 case 'sheet': {
-    $u = sch_auth(); sal_need($u, ['principal', 'accountant']);
+    $u = sch_auth(); sal_need($u, ['manager', 'chairman']);
     $ym = (string)($_GET['ym'] ?? date('Y-m'));
     if (!sal_ym_ok($ym)) sch_fail('Choose a month.');
-    sch_json(['ok' => true, 'can' => ['staff' => $u['role'] === 'principal', 'unpay' => $u['role'] === 'principal'], 'modes' => SAL_MODES, 'today' => date('Y-m-d')] + sal_sheet($ym));
+    $m = $u['role'] === 'manager';
+    sch_json(['ok' => true, 'can' => ['staff' => $m, 'unpay' => $m, 'edit' => $m], 'me' => $u['label'], 'modes' => SAL_MODES, 'today' => date('Y-m-d'),
+              'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')] + sal_sheet($ym));
 }
 
 case 'summary': {                      // Admin dashboard: last 6 months, totals only
-    $u = sch_auth(); sal_need($u, ['principal', 'accountant', 'chairman']);
+    $u = sch_auth(); sal_need($u, ['manager', 'chairman']);
     $out = [];
     for ($i = 5; $i >= 0; $i--) {
         $ym = date('Y-m', strtotime(date('Y-m-01') . " -$i month"));
@@ -54,7 +59,7 @@ case 'summary': {                      // Admin dashboard: last 6 months, totals
 
 case 'staff': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    $u = sch_auth(); sal_need($u, ['principal']);
+    $u = sch_auth(); sal_need($u, ['manager']);
     $id = (string)($in['id'] ?? '');
     try {
         $monthly = ($in['monthly'] ?? '') === '' || ($in['monthly'] ?? null) === null ? null : sal_rupees($in['monthly'], 0, 500000, 'Monthly salary');
@@ -82,7 +87,7 @@ case 'staff': {
 
 case 'adjust': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    $u = sch_auth(); sal_need($u, ['principal', 'accountant']);
+    $u = sch_auth(); sal_need($u, ['manager']);
     $ym = sal_ym_in($in); $id = (string)($in['id'] ?? ''); $s = sal_find($id);
     $key = $ym . '|' . $id; $old = sch_rec_get('salMonth', $key) ?? [];
     if (($old['status'] ?? '') === 'Paid') sch_fail('Already paid. Ask the Principal to reopen it first.');
@@ -99,7 +104,7 @@ case 'adjust': {
 
 case 'pay': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    $u = sch_auth(); sal_need($u, ['principal', 'accountant']);
+    $u = sch_auth(); sal_need($u, ['manager']);
     $ym = sal_ym_in($in); $id = (string)($in['id'] ?? ''); $s = sal_find($id);
     $mode = (string)($in['mode'] ?? ''); if (!in_array($mode, SAL_MODES, true)) sch_fail('Choose how the salary was paid.');
     $ref = sal_text($in['ref'] ?? '', 60);
@@ -125,7 +130,7 @@ case 'pay': {
 
 case 'unpay': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    $u = sch_auth(); sal_need($u, ['principal']);
+    $u = sch_auth(); sal_need($u, ['manager']);
     $ym = sal_ym_in($in); $id = (string)($in['id'] ?? ''); $key = $ym . '|' . $id;
     $reason = sal_text($in['reason'] ?? '', 200); if ($reason === '') sch_fail('Write why it is being reopened.');
     $old = sch_rec_get('salMonth', $key);
@@ -134,6 +139,15 @@ case 'unpay': {
           'status' => 'Draft', 'reopened' => ['reason' => $reason, 'by' => $u['label'], 'at' => sch_now_ms(), 'was' => array_intersect_key($old, array_flip(['calc', 'paidOn', 'mode', 'ref', 'by']))]];
     sch_rec_put('salMonth', $key, $d, sch_uid_of($u));
     sch_log($u, 'Salary', 'REOPENED ' . ($old['name'] ?? $id) . " $ym (was ₹" . number_format((int)($old['calc']['net'] ?? 0)) . " paid on " . ($old['paidOn'] ?? '') . "): $reason");
+    sch_json(['ok' => true]);
+}
+
+case 'managername': {                  // POST {name} — Chairman names the Manager (shown on the Salary app login)
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $u = sch_auth(); sal_need($u, ['chairman']);
+    $name = sal_text($in['name'] ?? '', 40);
+    $set = sch_rec_get('settings', 'main') ?? []; $set['managerName'] = $name; sch_rec_put('settings', 'main', $set, 'chairman');
+    sch_log($u, 'Salary', 'Manager name set to ' . ($name !== '' ? $name : 'Manager'));
     sch_json(['ok' => true]);
 }
 

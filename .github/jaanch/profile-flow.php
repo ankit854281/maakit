@@ -3,7 +3,7 @@
 //  जाँच — Profiles (school/profile_api.php) + salary summary
 //
 //  Purani attendance (5 mahine) sirf Principal/Chairman ko → teacher ki
-//  salary history sirf Principal → shikayat/note sirf Principal likhe,
+//  salary history sirf Chairman (Manager app) → shikayat/note sirf Principal likhe,
 //  Chairman padh sake, teacher/parent kabhi nahi → "prof" records aam
 //  sync/load me nahi (teacher ke phone par shikayat nahi pahunchni chahiye).
 // ============================================================
@@ -57,9 +57,10 @@ pf_check($c === 200 && in_array("studAtt|$old|9th", $ks, true) && in_array("staf
 [$c] = $p('att', null, $tok['P'], '&from=2020-01-01&to=' . date('Y-m-d')); pf_check($c === 400, 'max 400 days');
 [$c] = $p('att', null, $tok['P'], '&from=x&to=y'); pf_check($c === 400, 'bad dates');
 
-// ---- teacher salary history: Principal only ----
-[$c, $j] = $p('teacher', null, $tok['P'], '&tid=K');
-pf_check($c === 200 && $j['salary']['monthly'] === 25000 && count($j['salary']['months']) === 1 && $j['salary']['months'][0]['net'] === 24000, 'salary history');
+// ---- teacher salary history: Chairman only now (salary = Manager + Chairman, owner 12 Nov 2026) ----
+[$c, $j] = $p('teacher', null, $tok['P'], '&tid=K'); pf_check($c === 200 && $j['salary'] === null, 'Principal no longer sees salary history');
+[$c, $j] = $p('teacher', null, $tok['CH'], '&tid=K');
+pf_check($c === 200 && $j['salary']['monthly'] === 25000 && count($j['salary']['months']) === 1 && $j['salary']['months'][0]['net'] === 24000, 'salary history (Chairman)');
 [$c] = $p('teacher', null, $tok['P'], '&tid=ZZ'); pf_check($c === 400, 'unknown teacher');
 
 // ---- notes ----
@@ -75,6 +76,7 @@ pf_check($c === 200 && $j['salary']['monthly'] === 25000 && count($j['salary']['
 [, $j] = $p('notes', null, $tok['P'], '&who=t:K'); pf_check(!$j['notes'], 'removed note gone');
 
 // ---- salary summary for the Admin dashboard ----
-[$c, $j] = pf_http('/school/salary_api.php?a=summary', null, $tok['P']); pf_check($c === 200 && count($j['months']) === 6 && $j['months'][5]['staff'] === 1, 'salary summary: ' . json_encode($j['months'] ?? null));
+[$c] = pf_http('/school/salary_api.php?a=summary', null, $tok['P']); pf_check($c === 403, 'Principal cannot see salary summary');
+[$c, $j] = pf_http('/school/salary_api.php?a=summary', null, $tok['CH']); pf_check($c === 200 && count($j['months']) === 6 && $j['months'][5]['staff'] === 1, 'salary summary: ' . json_encode($j['months'] ?? null));
 [$c] = pf_http('/school/salary_api.php?a=summary', null, $tok['K']); pf_check($c === 403, 'teacher cannot see salary summary');
 echo "Profile flow: OK\n";

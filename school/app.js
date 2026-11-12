@@ -532,7 +532,7 @@ let view = null, P = {}; // P = per-view params
 async function go(v, params) { view = v; P = params || {}; if (P.date) await ensureDate(P.date); render(); window.scrollTo(0, 0); }
 
 const NAV = {
-  principal: [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['staff','fa-user-check','Staff & Arrangement'],['salary','fa-money-check-dollar','Salary'],['timetable','fa-calendar-week','Timetable'],
+  principal: [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['staff','fa-user-check','Staff & Arrangement'],['timetable','fa-calendar-week','Timetable'],
               ['attendance','fa-clipboard-user','Student Attendance'],['tnotes','fa-book-bookmark','Notes & Class Holidays'],['diaries','fa-book-open-reader','Diaries'],['syllabus','fa-list-check','Syllabus'],
               ['lplans','fa-clipboard-check','Lesson Plans'],['exams','fa-file-pen','Exams & Date Sheets'],['quizt','fa-bolt','Quiz Duel'],['fees','fa-indian-rupee-sign','Fee Structure'],['fdesk','fa-cash-register','Fee Desk'],['fcalls','fa-phone','Dues Calling'],['freceipts','fa-receipt','Receipts'],['results','fa-square-poll-vertical','Report Cards & Results'],['behaviour','fa-hand-holding-heart','Behaviour'],
               ['speaking','fa-microphone','Speaking'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],
@@ -543,7 +543,7 @@ const NAV = {
               ['marks','fa-pen-to-square','Marks Entry'],['myweek','fa-calendar-week','My Week'],['fame','fa-trophy','Hall of Fame'],['calendar','fa-calendar-days','Calendar'],['leave','fa-plane-departure','Leave'],['salary','fa-money-check-dollar','My Salary'],['rules','fa-scale-balanced','School Rules'],['office','fa-folder-tree','School Office']],
   student:   [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
   parent:    [['phome','fa-house','Home'],['game','fa-gamepad','Game Zone'],['quiz','fa-bolt','Quiz Duel'],['pfees','fa-indian-rupee-sign','Fees'],['phw','fa-book-open','Homework'],['presults','fa-chart-simple','Progress'],['pnotices','fa-bullhorn','Notices']],
-  accountant:[['salary','fa-money-check-dollar','Staff Salary'],['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
+  accountant:[['fdesk','fa-cash-register','Fee Desk'],['fdues','fa-list-ol','Dues'],['fcalls','fa-phone','Calls'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
   reception: [['fcalls','fa-phone','Calls'],['fdues','fa-list-ol','Dues'],['freceipts','fa-receipt','Receipts'],['office','fa-folder-tree','School Office']],
   chairman:  [['dash','fa-gauge','Dashboard'],['admin','fa-chart-pie','Admin Dashboard'],['rules','fa-scale-balanced','Rules & Policies'],['fdues','fa-list-ol','Fee Dues'],['exams','fa-file-pen','Exams'],['fees','fa-indian-rupee-sign','Fee Structure'],['results','fa-square-poll-vertical','Report Cards & Results'],['tnotes','fa-book-bookmark','Notes & Class Holidays'],['fame','fa-trophy','Hall of Fame'],['syllabus','fa-list-check','Syllabus'],['calendar','fa-calendar-days','Calendar'],['log','fa-clock-rotate-left','Activity Log'],['office','fa-folder-tree','School Office']]
 };
@@ -566,7 +566,7 @@ const GROUPS = {
   parent:    [['Home', 'fa-house', ['phome', 'pnotices', 'faculty']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning', 'studio']],
               ['Progress & Fees', 'fa-chart-simple', ['presults', 'pfees', 'finance']]],
   student:   [['Home', 'fa-house', ['phome', 'pnotices']], ['Learning', 'fa-book-open', ['phw', 'game', 'quiz', 'learning']], ['Progress', 'fa-chart-simple', ['presults', 'finance']]],
-  accountant:[['Fees', 'fa-wallet', ['finance', 'fdesk', 'fdues', 'fcalls', 'freceipts']], ['Staff', 'fa-user-tie', ['salary']], ['Office', 'fa-folder-tree', ['office']]],
+  accountant:[['Fees', 'fa-wallet', ['finance', 'fdesk', 'fdues', 'fcalls', 'freceipts']], ['Office', 'fa-folder-tree', ['office']]],
   reception: [['Fees', 'fa-wallet', ['fcalls', 'fdues', 'freceipts', 'finance']], ['Office', 'fa-folder-tree', ['office']]]
 };
 const NAV_HIDDEN = { principal: ['settings'] };      // reached from the gear button in the header
@@ -3298,6 +3298,9 @@ function pFeeDues() {
     ${PFD.receipts.length ? `<div class="card"><h3 class="h3">Receipts</h3><table class="tbl mt-2 text-sm"><tr><th>No.</th><th>Date</th><th>Child</th><th class="text-right">Amount</th><th>Mode</th></tr>${PFD.receipts.map(p => `<tr><td>${p.no}</td><td>${fmtDate(p.date)}</td><td>${esc(p.name)}</td><td class="text-right">${rs(p.amt)}</td><td>${esc(p.mode)}</td></tr>`).join('')}</table></div>` : ''}`;
 }
 
+// Salary moved to the Salary app (manager.php) — Manager + Chairman only (owner, 12 Nov 2026). Old menu items that
+// still open 'salary' for the Principal / Accountant show this note instead of the page.
+function salaryMovedCard() { return head('Staff Salary', 'Salary is now only in the Salary app — the Manager handles it, the Chairman can see it.', '') + `<div class="card text-sm">Owner's decision (12 Nov 2026): salary is seen only by the Manager and Chairman Sir in the <b>Salary app</b>. <a class="underline" href="manager.php" target="_blank">Open the Salary app</a> (Manager / Chairman login).</div>`; }
 // ---------------------------------------------------------------- STAFF SALARY (school/salary_api.php — Principal + Accountant; teachers see their own paid slips)
 let SAL = null, SALBUSY = false, SALOPEN = null;
 async function salapi(a, body, q) {
@@ -3320,6 +3323,7 @@ const ymLong = ym => { const [y, m] = ym.split('-').map(Number); return new Date
 const dd = n => (Math.round(n * 10) / 10).toString();
 function vSalary() {
   if (U.role === 'teacher') return vMySalary();
+  if (U.role !== 'chairman') return salaryMovedCard();
   const ym = P.ym || todayISO().slice(0, 7);
   if (!SAL || (SAL.ym !== ym && !SAL.error)) { salLoad(ym); return head('Staff Salary') + '<div class="card text-sm text-slate-500">Loading salary sheet…</div>'; }
   if (SAL.error) return head('Staff Salary') + `<div class="card text-sm text-rose-700">${esc(SAL.error)} <button onclick="SAL=null;render()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
@@ -3519,7 +3523,7 @@ async function profFetch() {
   try {
     const notes = await pfapi('notes', null, { who: key });
     const d = { notes: notes.notes, types: notes.types };
-    if (PROF.kind === 't' && U.role === 'principal') { try { d.salary = (await pfapi('teacher', null, { tid: PROF.id })).salary; } catch (e) { d.salaryErr = e.message; } }
+    if (PROF.kind === 't' && U.role === 'chairman') { try { d.salary = (await pfapi('teacher', null, { tid: PROF.id })).salary; } catch (e) { d.salaryErr = e.message; } }
     PROFDATA[key] = d;
   } catch (e) { PROFDATA[key] = { error: e.message }; }
   if (PROF && PROF.kind === 's') ofFresh();
@@ -3575,15 +3579,15 @@ function profTeacher(tid) {
         <span class="pill ${PINS['t:' + tid] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}">${PINS['t:' + tid] ? 'Own PIN' : 'Uses 1234'}</span></div></div></div>
     <div class="cap-row">${cap('Periods / week', loadOf(tid), 'c-lav')}${cap('Subjects', allocs.length, 'c-peach')}${cap('Present this month', tm[4].pct == null ? '—' : tm[4].pct + '%', 'c-mint')}
       ${cap('Absent (5 months)', dd(absent5) + ' days', absent5 > 6 ? 'c-red' : 'c-lime')}${cap('Leave (5 months)', leave5 + ' days', 'c-lav')}${cap('Arrangements this month', duty, 'c-peach')}
-      ${cap('Lesson plans this month', lpW.length, 'c-mint')}${cap('Monthly salary', sal ? (sal.monthly == null ? 'Not set' : rs(sal.monthly)) : U.role === 'principal' ? '…' : '—', 'c-lime')}</div>
+      ${cap('Lesson plans this month', lpW.length, 'c-mint')}${cap('Monthly salary', sal ? (sal.monthly == null ? 'Not set' : rs(sal.monthly)) : '—', 'c-lime')}</div>
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
       <div class="card"><h3 class="h3 mb-2">Attendance — last 5 months</h3>${HISTBUSY ? '<p class="text-xs text-slate-500">Loading older months…</p>' : ''}
         <table class="tbl"><tr><th>Month</th><th class="text-right">School days</th><th class="text-right">Absent</th><th class="text-right">Half day</th><th class="text-right">Leave</th><th class="text-right">Present</th></tr>
         ${tm.slice().reverse().map(x => `<tr><td>${ymLong(x.m)}</td><td class="text-right">${x.days}</td><td class="text-right ${x.abs ? 'text-rose-700 font-semibold' : ''}">${x.abs}</td><td class="text-right">${x.half}</td><td class="text-right">${x.leave}</td><td class="text-right font-semibold">${x.pct == null ? '—' : x.pct + '%'}</td></tr>`).join('')}</table></div>
-      <div class="card"><h3 class="h3 mb-2">Salary</h3>${U.role !== 'principal' ? '<p class="text-sm text-slate-500">Only the Principal sees salary.</p>' : d.busy ? '<p class="text-sm text-slate-500">Loading…</p>' : d.salaryErr ? `<p class="text-sm text-rose-700">${esc(d.salaryErr)}</p>` : !sal ? '' : `
+      <div class="card"><h3 class="h3 mb-2">Salary</h3>${U.role !== 'chairman' ? '<p class="text-sm text-slate-500">Salary is seen only in the Salary app — by the Manager and the Chairman.</p>' : d.busy ? '<p class="text-sm text-slate-500">Loading…</p>' : d.salaryErr ? `<p class="text-sm text-rose-700">${esc(d.salaryErr)}</p>` : !sal ? '' : `
         <p class="text-sm mb-2">Monthly <b>${sal.monthly == null ? 'not set' : rs(sal.monthly)}</b> · paid leave ${dd(sal.paidLeave)} day(s) a month</p>
         ${sal.months.length ? `<table class="tbl"><tr><th>Month</th><th class="text-right">Absent</th><th class="text-right">Net</th><th>Status</th></tr>${sal.months.map(m => `<tr><td>${ymLong(m.ym)}</td><td class="text-right">${m.absent == null ? '—' : dd(m.absent)}</td><td class="text-right font-semibold">${m.net == null ? '—' : rs(m.net)}</td><td>${m.status === 'Paid' ? `<span class="pill bg-emerald-50 text-emerald-700">Paid ${m.paidOn ? fmtDate(m.paidOn) : ''}</span>` : '<span class="pill bg-amber-50 text-amber-800">Not paid</span>'}</td></tr>`).join('')}</table>` : '<p class="text-sm text-slate-500">No salary month saved yet.</p>'}
-        <button onclick="closeProfile();go('salary')" class="btn btn-sm btn-l mt-3">Open Salary</button>`}</div>
+        <a href="manager.php" target="_blank" class="btn btn-sm btn-l mt-3">Open Salary app</a>`}</div>
       <div class="card"><h3 class="h3 mb-2">Classes &amp; subjects</h3><div class="flex flex-wrap gap-2">${allocs.map(a => `<span class="cap-t c-lav sm"><small>Class ${esc(a.c)}</small><b>${esc(a.s)} · ${a.n}/wk</b></span>`).join('') || '<p class="text-sm text-slate-500">No periods.</p>'}</div>
         ${syl.length ? `<h4 class="font-semibold mt-4 mb-1 text-sm">Syllabus</h4>${syl.map(x => `<div class="att-row"><span>${esc(x.k.replace('|', ' · '))}</span><span class="text-sm ${x.st.lag ? 'text-rose-700 font-semibold' : 'text-slate-600'}">${x.st.done}/${x.st.total} chapters${x.st.lag ? ' · behind' : ''}</span></div>`).join('')}` : ''}</div>
       <div class="card"><h3 class="h3 mb-2">This week's timetable</h3>${teacherWeek(tid)}</div>
@@ -3671,7 +3675,7 @@ function printStudentReport(id) {
 
 // ---------------------------------------------------------------- ADMIN DASHBOARD (reports with graphs)
 let SALSUM = null;
-async function loadSalSum() { if (SALSUM) return; SALSUM = { busy: true }; try { SALSUM = (await salapi('summary')).months; } catch (e) { SALSUM = { error: e.message }; } if (view === 'admin') render(); }
+async function loadSalSum() { if (SALSUM) return; if (U.role !== 'chairman') { SALSUM = { error: 'Salary is only in the Salary app (Manager & Chairman).' }; return; } SALSUM = { busy: true }; try { SALSUM = (await salapi('summary')).months; } catch (e) { SALSUM = { error: e.message }; } if (view === 'admin') render(); }
 function vAdmin() {
   ofFresh(); if (!SALSUM) loadSalSum(); loadHistory();
   const ym = todayISO().slice(0, 7), months = lastMonths(6), shortM = m => new Date(m + '-01T00:00:00').toLocaleString('en-IN', { month: 'short' });
