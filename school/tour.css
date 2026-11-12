@@ -50,3 +50,20 @@ h2.sec{font-size:19px;margin:22px 4px 10px}h2.sec small{display:block;font-size:
 footer{text-align:center;font-size:12px;color:#8a7f98;margin-top:22px;line-height:1.6}
 .art.a1{background:linear-gradient(#BAE6FD,#E0F2FE)}.art.a2{background:linear-gradient(#BBF7D0,#F0FDF4)}.art.a3{background:linear-gradient(#FDE68A,#FFFBEB)}.art.a4{background:linear-gradient(#C7D2FE,#EEF2FF)}
 .count div.big{min-width:auto;padding:8px 14px}
+
+/* Real licensed photographs: SVG stays as visual fallback until the local photo loads. */
+.place .art .tour-photo{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.place .art.photo-loaded .tour-photo{display:block}
+.place .art.photo-loaded svg{display:none}
+.place .art.photo-loaded .no{z-index:2}
+.photo-credit{display:block;margin:5px 0 1px;color:#786c83;font-size:10px;line-height:1.45}
+.photo-credit a{color:#6d28d9;text-decoration:underline}
+.place .art+.photo-credit{padding:0 14px 8px;background:#fff}
+.tour-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gallery-card{background:#fff;border-radius:16px;overflow:hidden;margin:0;box-shadow:0 4px 14px rgba(31,26,46,.08)}
+.gallery-card img{width:100%;height:135px;object-fit:cover;display:block}
+.gallery-card figcaption{padding:10px;font-size:12px;line-height:1.4}
+.gallery-card strong{display:block;margin-bottom:4px}
+.gallery-card .photo-credit{font-size:10px}
+.gallery-card.photo-failed{display:none}
+@media(max-width:390px){.tour-gallery{gap:8px}.gallery-card img{height:115px}.gallery-card figcaption{padding:8px}}
