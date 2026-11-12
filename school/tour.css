@@ -67,3 +67,17 @@ footer{text-align:center;font-size:12px;color:#8a7f98;margin-top:22px;line-heigh
 .gallery-card .photo-credit{font-size:10px}
 .gallery-card.photo-failed{display:none}
 @media(max-width:390px){.tour-gallery{gap:8px}.gallery-card img{height:115px}.gallery-card figcaption{padding:8px}}
+
+/* Real photography occupies the destination cards; the old cartoons have been removed. */
+.place .art{height:220px;display:block;position:relative;overflow:hidden;background:#dbe8f3}
+.place .art .tour-photo,.place .art.photo-loaded .tour-photo{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.place .art.photo-failed .tour-photo{display:none}
+.place .art .no{z-index:3;box-shadow:0 2px 8px #0002}
+.place .art.a1{background:linear-gradient(125deg,#2d5870,#add3dd)}
+.place .art.a3{background:linear-gradient(125deg,#634a36,#d9b583)}
+.place .art.a4{background:linear-gradient(125deg,#334c69,#a7c9dc)}
+.place .art.photo-failed:after{content:'Photo currently unavailable • तस्वीर उपलब्ध नहीं';position:absolute;inset:0;display:grid;place-items:center;color:white;text-shadow:0 1px 4px #0008;text-align:center;padding:28px;font-weight:600;font-size:14px}
+.place .art.a2{background:linear-gradient(125deg,#137656,#9cd5bc)}
+.park-photo-pending{height:100%;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:#fff;text-shadow:0 1px 4px #0006;text-align:center}.park-photo-pending strong{font-size:25px}.park-photo-pending small{font-size:13px}
+.place .art+.photo-credit{padding:6px 14px 0}
+@media(max-width:390px){.place .art{height:195px}}
