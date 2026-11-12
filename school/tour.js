@@ -5,17 +5,17 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const LANGS = [['SNMSIS', 'English'], ['एस एन एम एस आई एस', 'हिन्दी'], ['এস এন এম এস আই এস', 'বাংলা'], ['எஸ் என் எம் எஸ் ஐ எஸ்', 'தமிழ்'], ['ఎస్ ఎన్ ఎమ్ ఎస్ ఐ ఎస్', 'తెలుగు'],
   ['એસ એન એમ એસ આઈ એસ', 'ગુજરાતી'], ['ਐਸ ਐਨ ਐਮ ਐਸ ਆਈ ਐਸ', 'ਪੰਜਾਬੀ'], ['ಎಸ್ ಎನ್ ಎಂ ಎಸ್ ಐ ಎಸ್', 'ಕನ್ನಡ'], ['എസ് എൻ എം എസ് ഐ എസ്', 'മലയാളം'], ['ایس این ایم ایس آئی ایس', 'اردو'],
   ['エス・エヌ・エム・エス・アイ・エス', '日本語'], ['ЭС ЭН ЭМ ЭС АЙ ЭС', 'Русский'], ['إس إن إم إس آي إس', 'العربية'], ['SNMSIS', 'English']];
-const SCN = [5200, 3200, 4200]; let SI = -1, ST = [];
+const SCN = [2000, 1700, 2200]; let SI = -1, ST = [];
 function scene() {
   const ad = $('intro'); if (!ad) return; SI++; if (SI >= SCN.length) return endIntro();
   const bars = ad.querySelectorAll('.ad-bars i'), sc = ad.querySelectorAll('.ad-s');
   bars.forEach((b, j) => { b.className = j < SI ? 'done' : ''; }); bars[SI].style.setProperty('--ms', SCN[SI] + 'ms'); void bars[SI].offsetWidth; bars[SI].className = 'run';
   sc.forEach((s, j) => s.classList.toggle('on', j === SI));
-  if (SI === 0) { let n = 0; const el = $('lang'); const step = () => { if (SI !== 0) return; const [w, l] = LANGS[n % LANGS.length]; el.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < LANGS.length) ST.push(setTimeout(step, (SCN[0] - 600) / LANGS.length)); }; ST.push(setTimeout(step, 600)); }
+  if (SI === 0) { let n = 0; const el = $('lang'); const step = () => { if (SI !== 0) return; const [w, l] = LANGS[n % LANGS.length]; el.innerHTML = `<b dir="auto">${esc(w)}</b><small>${esc(l)}</small>`; n++; if (n < LANGS.length) ST.push(setTimeout(step, (SCN[0] - 600) / LANGS.length)); }; ST.push(setTimeout(step, 200)); }
   ST.push(setTimeout(scene, SCN[SI]));
 }
-function endIntro() { ST.forEach(clearTimeout); ST = []; SI = 99; const i = $('intro'); if (i) { i.classList.add('out'); setTimeout(() => i.remove(), 600); } }
-$('adSkip').onclick = endIntro; $('adGo').onclick = endIntro; scene();
+function endIntro() { try { sessionStorage.setItem('snmsis-tour-intro-seen','1'); } catch (_) {} ST.forEach(clearTimeout); ST = []; SI = 99; const i = $('intro'); if (i) { i.classList.add('out'); setTimeout(() => i.remove(), 600); } }
+$('adSkip').onclick = endIntro; $('adGo').onclick = endIntro; try { if (sessionStorage.getItem('snmsis-tour-intro-seen') === '1') endIntro(); else scene(); } catch (_) { scene(); }
 // countdown to Saturday 14 Nov 2026, 8 a.m. India time
 const TRIP = new Date('2026-11-14T08:00:00+05:30').getTime();
 function tick() {
