@@ -208,3 +208,16 @@ html,body{max-width:100%;overflow-x:clip}
 @media(min-width:784px){.wrap>.learn,.wrap>.bring,.wrap>.note,.wrap>.tour-gallery{margin-left:auto;margin-right:auto}.destination-card .art{height:53%}}
 @media(max-height:670px){.destination-card .art{height:35%;min-height:145px}.destination-card .bd{padding:8px 14px 3px}.destination-card p{margin-bottom:4px}.destination-actions{padding:5px 14px}.destination-next{padding:9px 14px}}
 @media(prefers-reduced-motion:reduce){.destination-deck{scroll-behavior:auto}}
+
+/* ---- Page setup fix (Claude, 12 Nov 2026 evening, owner: "page setup nahi ho raha — edit karo, image mat badlo").
+   The destination deck was a full-screen box with its own scroll inside the page (and each card scrolled again inside
+   it) — on phones the page got stuck and only one place was visible. Now it is a normal list: all four places one
+   below the other, the page scrolls normally. Images are unchanged. Keep this block LAST in the file. */
+.destination-deck{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;scroll-snap-type:none!important;background:transparent!important;padding:0!important;margin:0 0 6px}
+.destination-deck .destination-card{height:auto!important;min-height:0!important;max-height:none!important;overflow:hidden!important;scroll-snap-align:none!important;border-radius:22px!important;margin:0 0 16px!important;box-shadow:0 6px 18px rgba(31,26,46,.08)!important;display:block!important}
+.destination-card .art{height:230px!important;min-height:0!important;position:relative;overflow:hidden}
+.destination-card .art .tour-photo{width:100%;height:100%;object-fit:cover;display:block}
+.destination-card .bd{padding:14px 16px 6px!important}
+.destination-card .destination-actions{padding:6px 16px 14px}
+.park-art{width:100%;height:100%;display:block}
+html,body{overflow-x:hidden}
