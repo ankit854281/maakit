@@ -86,3 +86,13 @@ if(topShare) topShare.href = 'https://wa.me/?text=' + encodeURIComponent(MSG);
  const cards=[...deck.querySelectorAll('.destination-card')];
  cards.forEach((card,i)=>{const btn=card.querySelector('.destination-next');if(!btn||i===cards.length-1)return;btn.addEventListener('click',e=>{e.preventDefault();cards[i+1].scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})})});
 })();
+
+// Reliable page-level scrolling when a parent taps the visible down button.
+document.querySelectorAll('a.exp-down, a.details-skip').forEach(a=>{
+ a.addEventListener('click',e=>{
+  const destination=document.querySelector(a.getAttribute('href'));
+  if(!destination)return;
+  e.preventDefault();
+  destination.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+ });
+});
