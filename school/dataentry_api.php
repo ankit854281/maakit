@@ -9,6 +9,7 @@
 //   GET  ?a=day&date=YYYY-MM-DD       classes, children, that day's attendance (or "not marked"), holidays
 //   POST ?a=att {date, cls, st:{sid:'A'|'L'}}   student attendance for a class that the class teacher did not mark
 //                                     (same studAtt record + format as the Teacher App; who saved it is kept)
+//   GET  ?a=month&ym=                  day by day: classes marked, total, present, absent, leave, %
 //   GET  ?a=homework&date=            every class's homework of that day from the teachers' diaries
 //                                     (for sharing on the class WhatsApp groups)
 //  Staff attendance: staffatt.php (staffatt_api.php allows 'dataentry').
@@ -77,6 +78,25 @@ case 'att': {
     sch_log($u, 'Student Attendance', "Class $cls ($date): " . (count($valid) - count($absent)) . '/' . count($valid) . ' present' . ($names ? '. Absent/leave: ' . implode(', ', $names) : '') . ($prev ? ' — corrected by Data Entry (was saved by ' . ($prev['by'] ?? 'someone') . ')' : ' — entered by Data Entry (class teacher had not marked)'));
     $db->commit();
     sch_json(['ok' => true]);
+}
+case 'month': {             // GET &ym= — each school day of the month: classes marked, total, present, absent, leave, %
+    $ym = (string)($_GET['ym'] ?? date('Y-m')); if (!preg_match('/^20\d\d-(0[1-9]|1[0-2])$/', $ym) || $ym > date('Y-m')) sch_fail('Choose a month.');
+    $roll = []; foreach (de_rows($db, 'student') as $s) if (empty($s['inactive']) && ($s['cls'] ?? '') !== '') $roll[(string)$s['cls']] = ($roll[(string)$s['cls']] ?? 0) + 1;
+    $classes = array_values(array_filter(array_map(fn($c) => (string)($c['c'] ?? ''), (array)(sch_rec_get('classes', 'main') ?? []))));
+    $att = de_rows($db, 'studAtt', $ym . '-'); $hol = de_rows($db, 'clsHol', $ym . '-');
+    $days = []; $n = (int)date('t', strtotime($ym . '-01')); $today = date('Y-m-d');
+    for ($i = 1; $i <= $n; $i++) {
+        $d = sprintf('%s-%02d', $ym, $i); if ($d > $today) break;
+        $h = de_holiday($db, $d); $row = ['date' => $d, 'holiday' => $h, 'marked' => 0, 'classes' => 0, 'total' => 0, 'present' => 0, 'absent' => 0, 'leave' => 0];
+        if ($h === '') foreach ($classes as $c) {
+            if (isset($hol[$d . '|' . $c]) || empty($roll[$c])) continue;
+            $row['classes']++; $r = $att[$d . '|' . $c] ?? null; if (!$r) continue;
+            $row['marked']++; $ab = count((array)($r['absent'] ?? [])); $lv = count(array_filter((array)($r['st'] ?? []), fn($v) => $v === 'L'));
+            $row['total'] += $roll[$c]; $row['absent'] += $ab - $lv; $row['leave'] += $lv; $row['present'] += $roll[$c] - $ab;
+        }
+        $days[] = $row;
+    }
+    sch_json(['ok' => true, 'ym' => $ym, 'days' => array_reverse($days)]);
 }
 case 'homework': {
     $date = de_date((string)($_GET['date'] ?? date('Y-m-d')));

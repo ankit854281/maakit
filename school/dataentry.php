@@ -21,5 +21,8 @@ input,select,textarea{font:inherit;border:1px solid #c7d0da;border-radius:12px;p
 .lg{max-width:380px;margin:40px auto;background:#fff;border-radius:20px;padding:20px}.lg h2{margin:0 0 4px;color:#17324D}.lg .f{margin-top:12px}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#17202a;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;display:none;z-index:20;max-width:90vw}
 iframe{width:100%;height:80vh;border:0;border-radius:16px;background:#fff}
+.sub{display:flex;gap:6px;margin-bottom:10px}.sub button{border:1px solid #c7d0da;background:#fff;border-radius:99px;padding:7px 13px;font:inherit;font-size:13px}.sub button.on{background:#17324D;color:#fff;border-color:#17324D}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:4px 0 10px}.kpis div{background:#f2f4f7;border-radius:12px;padding:8px 4px;text-align:center}.kpis b{display:block;font-size:18px}.kpis span{font-size:11px;color:#556}.kpis .g{background:#E6F6EC}.kpis .r{background:#FDECEC}.kpis .b{background:#E3EEFF}.kpis .y{background:#FFF4D6}
+table.rep{width:100%;border-collapse:collapse;font-size:13px}table.rep th{background:#17324D;color:#fff;font-weight:normal;padding:6px;text-align:left}table.rep td{border-bottom:1px solid #eef1f4;padding:7px 6px}table.rep td.bad{color:#b42318;font-weight:bold}table.rep tr.hol td{color:#99a;background:#fafbfc}table.rep tr.tot td{font-weight:bold;background:#f6f7f9}
 </style></head><body><div id="app"></div><div id="toast"></div>
 <script src="dataentry.js?v=<?= htmlspecialchars($v) ?>"></script></body></html>

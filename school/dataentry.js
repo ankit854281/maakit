@@ -7,7 +7,7 @@
   const pad = n => String(n).padStart(2, '0'), iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), today = iso(new Date());
   const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
   const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3500); };
-  let TAB = 'att', DATE = today, DAY = null, CLS = null, ST = {}, HW = null, ME = '', NAMES = {}, MUST = false;
+  let TAB = 'att', SUB = 'day', MON = null, DATE = today, DAY = null, CLS = null, ST = {}, HW = null, ME = '', NAMES = {}, MUST = false;
   async function api(path, body) {
     const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get('sch_token') || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
     let j = null; try { j = await r.json(); } catch (e) {}
@@ -37,7 +37,7 @@
       <div class="tabs">${[['att', 'Student attendance'], ['staff', 'Staff attendance'], ['hw', 'Homework']].map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="deTab('${k}')">${l}</button>`).join('')}</div><div class="pg">${body}</div>`;
   }
   window.deTab = k => { TAB = k; CLS = null; draw(); };
-  window.deDate = v => { if (!v || v > today) return toast('Choose a past date.'); DATE = v; DAY = null; HW = null; CLS = null; draw(); };
+  window.deDate = v => { if (!v || v > today) return toast('Choose a past date.'); DATE = v; DAY = null; HW = null; CLS = null; if (MON && MON.ym !== v.slice(0, 7)) MON = null; draw(); };
   const dateBox = () => `<div class="card row"><label class="mut" style="white-space:nowrap">Date</label><input type="date" value="${DATE}" max="${today}" onchange="deDate(this.value)"></div>`;
   async function draw() {
     if (!store.get('sch_token') || MUST) return loginView();
@@ -53,9 +53,28 @@
     }
     if (!DAY) { frame(dateBox() + '<div class="card mut">Opening…</div>'); try { DAY = await api('dataentry_api.php?a=day&date=' + DATE); ME = DAY.me; } catch (e) { return frame(dateBox() + `<div class="card">${esc(e.message)}</div>`); } }
     if (DAY.holiday) return frame(dateBox() + `<div class="card"><h3>${esc(DAY.holiday)}</h3><p class="mut">No attendance on this day.</p></div>`);
+    if (!CLS && SUB === 'month') {
+      const ym = DATE.slice(0, 7);
+      if (!MON || MON.ym !== ym) { frame(subSeg() + dateBox() + '<div class="card mut">Opening…</div>'); try { MON = await api('dataentry_api.php?a=month&ym=' + ym); } catch (e) { return frame(subSeg() + dateBox() + `<div class="card">${esc(e.message)}</div>`); } }
+      const W = MON.days.filter(d => !d.holiday && d.total), T = W.reduce((a, d) => ({ t: a.t + d.total, p: a.p + d.present }), { t: 0, p: 0 });
+      return frame(subSeg() + dateBox() + `<div class="card"><div class="row"><h3>${esc(new Date(ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }))}</h3><span class="mut">${W.length} school days · ${T.t ? Math.round(T.p / T.t * 100) : 0}% present</span></div>
+        <div style="overflow-x:auto"><table class="rep"><tr><th>Date</th><th>Classes marked</th><th>Total</th><th>Present</th><th>Absent</th><th>Leave</th><th>%</th></tr>
+        ${MON.days.map(d => d.holiday ? `<tr class="hol"><td>${esc(fmt(d.date).slice(0, -6))}</td><td colspan="6">${esc(d.holiday)}</td></tr>`
+          : `<tr onclick="deDate('${d.date}');deSub('day')" style="cursor:pointer"><td>${esc(fmt(d.date).slice(0, -6))}</td><td class="${d.marked < d.classes ? 'bad' : ''}">${d.marked}/${d.classes}</td><td>${d.total}</td><td>${d.present}</td><td class="${d.absent ? 'bad' : ''}">${d.absent}</td><td>${d.leave}</td><td><b>${d.total ? Math.round(d.present / d.total * 100) + '%' : '—'}</b></td></tr>`).join('')}</table></div>
+        <p class="mut" style="margin:8px 0 0">Total / present count only the classes that were marked. Tap a day to see each class.</p></div>`);
+    }
     if (!CLS) {
       const not = DAY.classes.filter(c => !c.att && !c.holiday);
-      return frame(dateBox() + `<div class="card"><div class="row"><h3>Classes</h3><span class="mut">${not.length ? not.length + ' not marked' : 'all marked ✓'}</span></div>
+      const C = DAY.classes.filter(c => !c.holiday), M = C.filter(c => c.att), cnt = c => { const L = c.att ? c.att.absent.filter(id => c.att.st && c.att.st[id] === 'L').length : 0; const A = c.att ? c.att.absent.length - L : 0; return { t: c.students.length, a: A, l: L, p: c.students.length - A - L }; };
+      const S = M.reduce((x, c) => { const k = cnt(c); return { t: x.t + k.t, p: x.p + k.p, a: x.a + k.a, l: x.l + k.l }; }, { t: 0, p: 0, a: 0, l: 0 }), pc = (p, t) => t ? Math.round(p / t * 100) + '%' : '—';
+      const repCard = `<div class="card"><div class="row"><h3>Day report · ${esc(fmt(DATE))}</h3><span class="mut">${M.length}/${C.length} classes marked</span></div>
+        <div class="kpis"><div><b>${S.t}</b><span>Total</span></div><div class="g"><b>${S.p}</b><span>Present</span></div><div class="r"><b>${S.a}</b><span>Absent</span></div><div class="b"><b>${S.l}</b><span>Leave</span></div><div class="y"><b>${pc(S.p, S.t)}</b><span>Present %</span></div></div>
+        <div style="overflow-x:auto"><table class="rep"><tr><th>Class</th><th>Total</th><th>Present</th><th>Absent</th><th>Leave</th><th>%</th><th>Marked by</th></tr>
+        ${DAY.classes.map(c => { if (c.holiday) return `<tr class="hol"><td>${esc(c.c)}</td><td colspan="6">${esc(c.holiday)}</td></tr>`; if (!c.att) return `<tr onclick="deOpen('${esc(c.c)}')" style="cursor:pointer"><td><b>${esc(c.c)}</b></td><td>${c.students.length}</td><td colspan="4" class="bad">Not marked</td><td>${esc(c.ct)}</td></tr>`;
+          const k = cnt(c); return `<tr onclick="deOpen('${esc(c.c)}')" style="cursor:pointer"><td><b>${esc(c.c)}</b></td><td>${k.t}</td><td>${k.p}</td><td class="${k.a ? 'bad' : ''}">${k.a}</td><td>${k.l}</td><td><b>${pc(k.p, k.t)}</b></td><td class="mut">${esc(c.att.by || '')}</td></tr>`; }).join('')}
+        <tr class="tot"><td>Total</td><td>${S.t}</td><td>${S.p}</td><td>${S.a}</td><td>${S.l}</td><td>${pc(S.p, S.t)}</td><td></td></tr></table></div>
+        <p class="mut" style="margin:8px 0 0">Totals count only the classes that are marked. Tap a class to mark or correct it.</p></div>`;
+      return frame(subSeg() + dateBox() + repCard + `<div class="card"><div class="row"><h3>Classes</h3><span class="mut">${not.length ? not.length + ' not marked' : 'all marked ✓'}</span></div>
         <div class="cls">${DAY.classes.map(c => c.holiday ? `<button class="c-hol"><b>${esc(c.c)}</b><small>${esc(c.holiday)}</small></button>`
           : `<button class="${c.att ? 'c-ok' : 'c-no'}" onclick="deOpen('${esc(c.c)}')"><b>${esc(c.c)}</b><small>${c.att ? (c.students.length - c.att.absent.length) + '/' + c.students.length + ' present · ' + esc(c.att.by || '') : 'Not marked · ' + esc(c.ct || '')}</small></button>`).join('')}</div>
         <p class="mut" style="margin:10px 0 0">Red = the class teacher has not marked attendance. Tap it, mark, Save. Your name is saved with it.</p></div>`);
@@ -67,10 +86,12 @@
       ${c.students.map(s => `<div class="kid"><div><small>${esc(s.roll || '')}</small><b>${esc(s.name)}</b></div><div class="pal">${['P', 'A', 'L'].map(k => `<button class="${k} ${(ST[s.id] || 'P') === k ? 'on' : ''}" onclick="deSet('${s.id}','${k}')">${k}</button>`).join('')}</div></div>`).join('') || '<p class="mut">No children in this class.</p>'}
       <button class="btn go" style="width:100%;margin-top:12px" onclick="deSave()">Save attendance</button></div>`);
   }
+  const subSeg = () => `<div class="sub">${[['day', 'Day'], ['month', 'Month (day by day)']].map(([k, l]) => `<button class="${SUB === k ? 'on' : ''}" onclick="deSub('${k}')">${l}</button>`).join('')}</div>`;
+  window.deSub = k => { SUB = k; CLS = null; draw(); };
   window.deOpen = c => { CLS = c; ST = {}; if (c) { const x = DAY.classes.find(y => y.c === c); if (x.att) x.att.absent.forEach(id => ST[id] = (x.att.st && x.att.st[id]) === 'L' ? 'L' : 'A'); } draw(); };
   window.deSet = (id, k) => { if (k === 'P') delete ST[id]; else ST[id] = k; draw(); };
   window.deAll = k => { ST = {}; draw(); };
-  window.deSave = async () => { try { await api('dataentry_api.php?a=att', { date: DATE, cls: CLS, st: ST }); toast('Attendance saved for Class ' + CLS + '.'); DAY = null; CLS = null; draw(); } catch (e) { toast(e.message); } };
+  window.deSave = async () => { try { await api('dataentry_api.php?a=att', { date: DATE, cls: CLS, st: ST }); toast('Attendance saved for Class ' + CLS + '.'); DAY = null; MON = null; CLS = null; draw(); } catch (e) { toast(e.message); } };
   window.deCopy = t => { navigator.clipboard && navigator.clipboard.writeText(t).then(() => toast('Copied.'), () => toast('Copy did not work — select and copy.')); };
   draw();
 })();

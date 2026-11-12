@@ -60,6 +60,10 @@ $r = sch_rec_get('studAtt', "$d|9th"); de_check($r['absent'] === ['s1', 's2'] &&
 [$c] = $de('att', ['date' => $d, 'cls' => '11th', 'st' => []], $DE); de_check($c === 400, 'unknown class');
 de_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Student Attendance' AND x LIKE 'Class 9th%entered by Data Entry%'")->fetchColumn() === 1, 'logged');
 
+// ---- month: day by day ----
+[$c, $j] = $de('month', null, $DE, '&ym=' . substr($d, 0, 7)); $day = array_values(array_filter($j['days'], fn($x) => $x['date'] === $d))[0] ?? null;
+de_check($c === 200 && $day && $day['marked'] === 2 && $day['classes'] === 2 && $day['total'] === 3 && $day['present'] === 1 && $day['absent'] === 1 && $day['leave'] === 1, 'day totals: ' . json_encode($day));
+
 // ---- homework / staff attendance ----
 [$c, $j] = $de('homework', null, $DE, "&date=$d"); de_check($c === 200 && count($j['items']) === 1 && $j['items'][0]['teacher'] === 'Kartikey Sir', 'homework list');
 [$c] = de_http('/school/staffatt_api.php?a=month&ym=' . date('Y-m'), null, $DE); de_check($c === 200, 'data entry opens staff attendance');
