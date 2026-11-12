@@ -83,22 +83,42 @@ $link = 'https://maakit.in/school/tour.php';
     <p class="ad-t">Saturday 14 Nov 2026 · Classes 4–10 · 4 amazing places</p><button class="ad-go" type="button" id="adGo">See the tour</button></section>
 </div>
 <main class="wrap">
-  <section class="hero hero-campaign">
-    <div class="hero-picture">
-      <img src="tour.php?photo=gallery2" alt="Real historical Mughal tombs at Khusro Bagh, Prayagraj" width="1200" height="900" fetchpriority="high">
-      <div class="hero-photo-shade"></div>
-      <div class="sch"><img src="img/snmsis-logo.png" alt="School logo" width="48" height="48"><small>S.N. MISHRA SINGAPORE<br>INTERNATIONAL SCHOOL</small></div>
-      <span class="hero-stamp">🎉 CHILDREN'S DAY • 2026</span>
-      <div class="hero-headline"><span class="hero-eyebrow">ONE DAY. FOUR UNFORGETTABLE PLACES.</span><h1>CHALO<br><span>PRAYAGRAJ!</span></h1><p>सीखेंगे भी, घूमेंगे भी — यादें बनाएँगे साथ! 🚌</p></div>
+  <section class="experience" id="experience" aria-label="Prayagraj tour interactive presentation">
+    <div class="exp-top"><span class="exp-brand"><img src="img/snmsis-logo.png" width="32" height="32" alt=""> SNMSIS <small>CHILDREN'S DAY SPECIAL</small></span><a class="exp-skip" href="#all-details">View all details ↓</a></div>
+    <div class="exp-track" id="expTrack" tabindex="0" aria-label="Swipe left to see tour highlights">
+      <section class="exp-slide exp-first" aria-label="Slide 1 of 5">
+        <img class="exp-photo" src="tour.php?photo=gallery2" alt="Real photo of Mughal tombs at Khusro Bagh" width="1200" height="900" fetchpriority="high">
+        <div class="exp-shade"></div><div class="exp-content"><span class="exp-chip">🎉 14 NOV 2026 · SATURDAY</span>
+          <h1>CHALO<br><em>PRAYAGRAJ!</em></h1><p class="exp-lead">This Children's Day, adventure begins beyond the classroom. 🚌</p><p class="exp-hindi">इस बाल दिवस, किताबों से आगे बढ़कर दुनिया देखें!</p>
+          <div class="exp-mini"><span>🎓 CLASS 4–10</span><span>📍 4 DESTINATIONS</span></div>
+        </div>
+      </section>
+      <section class="exp-slide exp-history" aria-label="Slide 2 of 5">
+        <img class="exp-photo" src="tour.php?photo=gallery2" alt="Historic Khusro Bagh tombs" width="1200" height="900" loading="lazy">
+        <div class="exp-shade"></div><div class="exp-content"><span class="exp-chip">🏛️ DISCOVER & EXPLORE</span><h2>HISTORY<br><em>COMES ALIVE!</em></h2>
+          <p class="exp-lead">Museum treasures, Mughal tombs & beautiful architecture</p><p class="exp-hindi">सिक्के • मूर्तियाँ • मकबरे • इतिहास की रोचक कहानियाँ</p><div class="exp-mini"><span>🏛️ Allahabad Museum</span><span>🏰 Khusro Bagh</span><span>⛪ Cathedral</span></div>
+        </div>
+      </section>
+      <section class="exp-slide exp-fun" aria-label="Slide 3 of 5">
+        <div class="exp-pattern" aria-hidden="true"><span>🎊</span><span>🎈</span><span>🎡</span><span>🐘</span></div>
+        <div class="exp-content"><span class="exp-chip">🥳 FUN • FRIENDS • SMILES</span><h2>FUN &<br><em>ENJOYMENT!</em></h2><p class="exp-lead">Hathi Park, greenery, fresh air and moments with friends</p><p class="exp-hindi">हँसी-मज़ाक, दोस्तों के साथ खेल और ढेर सारी यादें!</p><div class="exp-mini"><span>🌳 Nature</span><span>🤝 Friendship</span><span>📸 Group photos</span></div>
+        </div>
+      </section>
+      <section class="exp-slide exp-celebrate" aria-label="Slide 4 of 5">
+        <div class="exp-pattern" aria-hidden="true"><span>🎉</span><span>🎂</span><span>✨</span><span>🎁</span></div>
+        <div class="exp-content"><span class="exp-chip">🎂 CHILDREN'S DAY CELEBRATION</span><h2>MAKE<br><em>MEMORIES!</em></h2><p class="exp-lead">A day to explore, laugh, observe and celebrate being a child</p><p class="exp-hindi">खुशियाँ मनाएँ, नई बातें सीखें, यादगार पल संजोएँ!</p><div class="exp-mini"><span>🔍 Discovery challenges</span><span>📸 Picture moments</span><span>💛 Togetherness</span></div><small class="exp-caution">Activities are suggested highlights; the school will confirm the final programme.</small>
+        </div>
+      </section>
+      <section class="exp-slide exp-register" aria-label="Slide 5 of 5">
+        <div class="exp-content"><span class="exp-chip">🚨 LIMITED SEATS AVAILABLE</span><h2>DON'T MISS<br><em>THE FUN!</em></h2><p class="exp-lead">📅 14 November · 🎓 Classes 4 to 10</p><p class="exp-hindi">सीट बुक कराने के लिए अपने Class Teacher से संपर्क करें।</p>
+          <a href="#registration" class="exp-cta">🎒 Register with Class Teacher ↓</a><a class="exp-share" id="expShare" href="#">📲 Share with Friends</a><p class="exp-small">Bus charges & timings will be shared by the school.</p>
+        </div>
+      </section>
     </div>
-    <div class="hero-panel">
-      <div class="hero-pills"><span>📅 SAT, 14 NOV</span><span>🎓 CLASS 4–10</span><span>📍 PRAYAGRAJ</span></div>
-      <div class="hero-places"><strong>🏛️ Museum</strong><strong>🐘 Hathi Park</strong><strong>🏰 Khusro Bagh</strong><strong>⛪ Cathedral</strong></div>
-      <div class="hero-action"><a class="hero-register" href="#registration">🚨 LIMITED SEATS · RESERVE YOUR SEAT <span aria-hidden="true">↓</span></a><a class="hero-share" id="heroShare" href="#">📲 Share</a></div>
-      <div class="hero-note">Class Teacher se jaldi contact karein • अपने कक्षा शिक्षक से संपर्क करें</div>
-      <div class="hero-countline"><span>⏳ Tour countdown</span><div class="count" id="count" aria-live="polite"></div></div>
-    </div>
+    <div class="exp-controls"><button type="button" id="expPrev" class="exp-prev" aria-label="Previous slide">← Back</button><div class="exp-dots" id="expDots" aria-label="Slide progress"><button class="active" aria-label="Slide 1" aria-current="step" data-index="0"></button><button aria-label="Slide 2" data-index="1"></button><button aria-label="Slide 3" data-index="2"></button><button aria-label="Slide 4" data-index="3"></button><button aria-label="Slide 5" data-index="4"></button></div><button type="button" id="expNext" class="exp-next">Next →</button></div>
+    <div class="exp-bottom"><span>Swipe left to explore 👉 · आगे देखने के लिए स्वाइप करें</span><a href="#all-details">Full tour information ↓</a></div>
   </section>
+  <div id="all-details" class="exp-details-title"><h2>Explore the full tour ✨</h2><p>सभी जगहों की तस्वीरें, इतिहास और ज़रूरी जानकारी</p><div class="count" id="count" aria-live="polite"></div></div>
 
   <h2 class="sec">One day, four amazing places ✨<small>एक ही यात्रा में इतिहास, कला, स्थापत्य, प्रकृति और खूब सारी नई सीख</small></h2>
 
