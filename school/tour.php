@@ -87,7 +87,12 @@ $link = 'https://maakit.in/school/tour.php';
     <div class="exp-top"><span class="exp-brand"><img src="img/snmsis-logo.png" width="32" height="32" alt=""> SNMSIS <small>CHILDREN'S DAY SPECIAL</small></span><a class="exp-skip" href="#all-details">View all details ↓</a></div>
     <div class="exp-track" id="expTrack" tabindex="0" aria-label="Swipe left to see tour highlights">
       <section class="exp-slide exp-first" aria-label="Slide 1 of 6">
-        <img class="exp-photo" src="tour.php?photo=gallery2" alt="Real photo of Mughal tombs at Khusro Bagh" width="1200" height="900" fetchpriority="high">
+        <div class="photo-rotator hero-rotator" data-auto-photos aria-label="Automatic real photo slideshow of Prayagraj">
+          <img class="rotation-image is-active" src="tour.php?photo=gallery2" alt="Khusro Bagh historic tombs" width="1200" height="900" fetchpriority="high">
+          <img class="rotation-image" src="tour.php?photo=gallery1" alt="Inside the dome at Khusro Bagh" width="1200" height="900" loading="lazy">
+          <img class="rotation-image" src="tour.php?photo=gallery3" alt="Entrance to Man Bai tomb, Khusro Bagh" width="1200" height="900" loading="lazy">
+          <img class="rotation-image" src="tour.php?photo=gallery4" alt="All Saints Cathedral, Prayagraj" width="1200" height="900" loading="lazy">
+        </div>
         <div class="exp-shade"></div><div class="exp-content"><span class="exp-chip">🎉 14 NOV 2026 · SATURDAY</span>
           <h1>CHALO<br><em>PRAYAGRAJ!</em></h1><p class="exp-lead">This Children's Day, adventure begins beyond the classroom. 🚌</p><p class="exp-hindi">इस बाल दिवस, किताबों से आगे बढ़कर दुनिया देखें!</p>
           <div class="exp-mini"><span>🎓 CLASS 4–10</span><span>📍 4 DESTINATIONS</span></div>
@@ -151,8 +156,12 @@ $link = 'https://maakit.in/school/tour.php';
       <ul><li>Teamwork & friendship</li><li>Respect nature</li><li>Play safely</li></ul></div><div class="destination-actions"><span>📍 2 / 4</span><a href="#destination-3" class="destination-next">Next destination ↓</a></div></article>
 
   <article class="place destination-card" id="destination-3"><div class="art a3"><span class="no">03 · Mughal garden</span>
-    <img class="tour-photo" src="tour.php?photo=gallery2" data-local-src="img/tour/khusro-tombs.jpg" alt="Historic Mughal tombs at Khusro Bagh" loading="lazy" width="1200" height="900">
-    </div><small class="photo-credit">📸 Tahmasp3 · CC0 1.0 · <a href="https://commons.wikimedia.org/wiki/File:Nisar_Begum%27s_and_Khusrau%27s_tombs,_located_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small>
+    <div class="photo-rotator card-rotator" data-auto-photos aria-label="Khusro Bagh photographs">
+      <img class="rotation-image is-active" src="tour.php?photo=gallery2" alt="Historic Mughal tombs at Khusro Bagh" loading="lazy" width="1200" height="900">
+      <img class="rotation-image" src="tour.php?photo=gallery1" alt="The dome of Khusro's tomb" loading="lazy" width="1200" height="900">
+      <img class="rotation-image" src="tour.php?photo=gallery3" alt="Entrance to Man Bai's tomb" loading="lazy" width="1200" height="900">
+    </div><span class="photo-slide-hint">📸 3 real photos · Auto slide</span>
+    </div><small class="photo-credit">📸 Tahmasp3 · CC0 1.0 · <a href="https://commons.wikimedia.org/wiki/File:Nisar_Begum%27s_and_Khusrau%27s_tombs,_located_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Tombs</a>, <a href="https://commons.wikimedia.org/wiki/File:Below_the_dome_of_Khusrau%27s_tomb_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Dome</a>, <a href="https://commons.wikimedia.org/wiki/File:Entrance_to_Man_Bai%27s_tomb_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Entrance</a> · Wikimedia Commons</small>
     <div class="bd"><h3>🏰 Khusro Bagh<small>खुसरो बाग</small></h3><div class="loc">📍 Near Prayagraj Junction, Lukarganj</div>
       <p>A historic Mughal garden with tombs linked to Prince Khusro — domes, arches and old stonework.</p><p class="hi">मुगलकालीन मकबरे, गुंबद और बगीचा — इतिहास को करीब से देखें।</p>
       <ul><li>Domes & arches</li><li>Mughal architecture</li><li>Protect monuments</li></ul></div><div class="destination-actions"><span>📍 3 / 4</span><a href="#destination-4" class="destination-next">Next destination ↓</a></div></article>
