@@ -22,7 +22,7 @@
 // ============================================================================
 declare(strict_types=1);
 
-const LP_DEFAULT = ['ver' => 3, 'noticeHour' => 7, 'autoDays' => 0, 'bonus' => 300, 'warnAfter' => 2,
+const LP_DEFAULT = ['ver' => 4, 'noticeHour' => 7, 'autoDays' => 0, 'bonus' => 300, 'warnAfter' => 2,
                     'noticeDays' => 2, 'emergency' => 1, 'maxLeave' => 4];
 const LP_NO_LEAVE_DAYS = [1 => 'Monday', 6 => 'Saturday'];            // date('w') => name — leave is never granted on these days
 const LP_PROGRAM_TYPES = ['Exam', 'Event', 'PTM', 'Activity'];      // calendar entries on which no leave is granted
@@ -55,8 +55,10 @@ function lp_rules(?array $p = null): array {
         'CONDUCT — No teacher is permitted to discuss school matters, other staff members, or any student\'s results or fees with parents or outside persons without the Principal\'s permission.',
         'CONDUCT — Teachers shall speak only in English within the school premises with students, staff and parents (Hindi and Sanskrit periods excepted).',
         'CONDUCT — Teachers shall come to school in the prescribed school uniform / dress code on every working day.',
+        'WORK — All daily work shall be completed in the Teacher App on the same day: attendance before the cut-off time, class work and homework diary for every period, homework and copy checking, daily check, weekly lesson plan, syllabus progress and marks entry. Work not entered in the app shall be treated as not done.',
+        'WORK — Other teaching duties — arrangement periods, remedial classes, examinations, competitions and any duty given by the Principal — are compulsory and shall be completed on time.',
         'RESULTS — Class teachers and subject teachers are responsible for the results of their classes: at least 80% of the students of every class and subject must score above 75%. Results below this standard shall be reviewed with the teacher concerned.',
-        'REVIEW — Annual increment and continuation of service shall be decided on the basis of attendance, conduct and results.',
+        'REVIEW — A teacher\'s evaluation, annual increment and continuation of service depend entirely on the work record in the Teacher App, the growth of his or her students (attendance, reading and learning levels, results), attendance and conduct.',
         'These rules apply equally to every teacher. Acceptance in the Teacher App is binding. Whenever the rules change, the app shall ask every teacher to accept them again.',
     ];
 }

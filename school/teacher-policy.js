@@ -83,12 +83,14 @@
     if (R.err) return `<div class="card"><h3>Leave report</h3><p class="mut">${esc(R.err)}</p></div>`;
     const p = R.policy, notOk = R.rows.filter(r => !r.accepted), bonus = R.rows.filter(r => r.bonus).length, bad = R.rows.filter(r => r.unapproved).length;
     const cell = (v, cls) => `<td class="${v ? cls : 'z'}">${v || '–'}</td>`;
+    let W = {}; try { if (typeof teacherRanks === 'function') teacherRanks().forEach(w => { W[w.tid] = w.p; }); } catch (e) {}   // app work, last 7 days (same as Staff → Work)
+    const wk = tid => W[tid] === undefined ? '<td class="z">–</td>' : `<td class="${W[tid] >= 90 ? 'ok' : W[tid] >= 70 ? 'lv' : 'no'}">${W[tid]}%</td>`;
     return `<div class="card lp-rep"><h3>Leave report <small>${esc(ymName(ym))} · ${R.daysSoFar} of ${R.workDays} school days so far</small></h3>
       <div class="lp-seg">${[ymNow(), ymPrev(ymNow()), ymPrev(ymPrev(ymNow()))].map(m => `<button class="${m === ym ? 'on' : ''}" onclick="lpYm('${m}')">${esc(ymName(m))}</button>`).join('')}</div>
       <div class="lp-kpi"><span class="g"><b>${bonus}</b>Full attendance (bonus ₹${p.bonus})</span><span class="r"><b>${bad}</b>Absent without permission</span><span class="${notOk.length ? 'r' : 'g'}"><b>${R.rows.length - notOk.length}/${R.rows.length}</b>Rules accepted</span></div>
-      <div class="lp-tw"><table class="lp-t"><thead><tr><th>Teacher</th><th>Leave</th><th>Half</th><th>No permission</th><th>Late asks</th><th>Bonus</th></tr></thead><tbody>
-      ${R.rows.map(r => `<tr class="${r.warn ? 'warn' : ''}"><td><b>${esc(r.name)}</b>${r.accepted ? '' : '<small class="no">rules not accepted</small>'}${r.warn ? '<small class="no">give written warning</small>' : ''}</td>${cell(r.leave, 'lv')}${cell(r.half, 'lv')}${cell(r.unapproved, 'no')}${cell(r.late, 'no')}${cell(r.bonus ? '₹' + r.bonus : 0, 'ok')}</tr>`).join('')}</tbody></table></div>
-      <p class="mut" style="margin:6px 0 0">Salary uses the same numbers by itself: paid leave covers leave + half days; "No permission" days are always cut; full attendance adds the bonus.</p></div>
+      <div class="lp-tw"><table class="lp-t"><thead><tr><th>Teacher</th><th>App work 7d</th><th>Leave</th><th>Half</th><th>No permission</th><th>Late asks</th><th>Bonus</th></tr></thead><tbody>
+      ${R.rows.map(r => `<tr class="${r.warn ? 'warn' : ''}"><td><b>${esc(r.name)}</b>${r.accepted ? '' : '<small class="no">rules not accepted</small>'}${r.warn ? '<small class="no">give written warning</small>' : ''}</td>${wk(r.tid)}${cell(r.leave, 'lv')}${cell(r.half, 'lv')}${cell(r.unapproved, 'no')}${cell(r.late, 'no')}${cell(r.bonus ? '₹' + r.bonus : 0, 'ok')}</tr>`).join('')}</tbody></table></div>
+      <p class="mut" style="margin:6px 0 0">App work = attendance, diary, daily check and homework check done in the app in the last 7 days (below 70% in red). Salary uses the same leave numbers by itself: paid leave covers leave + half days; "No permission" days are always cut; full attendance adds the bonus.</p></div>
       ${ME.role === 'principal' ? setCard(p) : ''}`;
   }
   function setCard(p) {
