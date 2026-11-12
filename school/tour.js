@@ -78,3 +78,11 @@ if(topShare) topShare.href = 'https://wa.me/?text=' + encodeURIComponent(MSG);
  window.addEventListener('resize',()=>go(active));paint();schedule();
  const share=$('expShare');if(share)share.href='https://wa.me/?text='+encodeURIComponent(MSG);
 })();
+
+// Full-height destination cards: down arrow scrolls within the vertical snap deck,
+// avoiding the page-level anchor scrolling past the deck.
+(() => {
+ const deck=document.querySelector('.destination-deck');if(!deck)return;
+ const cards=[...deck.querySelectorAll('.destination-card')];
+ cards.forEach((card,i)=>{const btn=card.querySelector('.destination-next');if(!btn||i===cards.length-1)return;btn.addEventListener('click',e=>{e.preventDefault();cards[i+1].scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})})});
+})();
