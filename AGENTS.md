@@ -1054,3 +1054,7 @@ papers only from photos the owner sends.
 ### Children's Day Prayagraj Tour page (12 Nov 2026, owner: "jaise Diwali diya competition ka banaya tha waise tour ka bhi banaiye")
 - `school/tour.php` + `tour.css` + `tour.js`: public page in the `cert.php` style — 3-scene opening story (logo + SNMSIS in many languages → Children's Day → bus "Chalo Prayagraj!"), hero with date / classes / place and a live countdown to Sat 14 Nov 2026 08:00 IST, the 4 places (Allahabad Museum, Hathi Park, Khusro Bagh, All Saints Cathedral) with OUR OWN inline-SVG drawings, learn / what to bring / entry note, register-with-class-teacher CTA, WhatsApp share text, OG image `img/tour-og.jpg` (drawn). Strict CSP (no inline styles — use classes).
 - The earlier `tour-prayagraj-14-nov-2026.html` (made by the other AI, hot-linked third-party photos from MNM Travels / Airial / Incredible India / Club Mahindra) is now a small redirect to `tour.php` keeping the same OG preview, so links already shared still work. Do not bring back other websites' photos.
+
+# Children's Day Prayagraj Tour page — photographs (12 Nov 2026)
+- Wikimedia Commons CC BY-SA/CC0 photos are resized to 1200px JPG below 250KB and cached on first image request in `school/img/tour/` on hosting; Hathi Park keeps its original SVG until a verified photo is available.
+- Author, license, Wikimedia Commons links and resize attribution are shown below the place photos and inside gallery captions in `school/tour.php`.
