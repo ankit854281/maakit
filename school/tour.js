@@ -42,3 +42,11 @@ document.querySelectorAll('.tour-gallery img').forEach(img => {
   img.addEventListener('error', () => img.closest('.gallery-card')?.classList.add('photo-failed'));
   if (img.complete && !img.naturalWidth) img.closest('.gallery-card')?.classList.add('photo-failed');
 });
+
+// Keep photos visible while loading; a hidden lazy-loaded image may never start downloading.
+document.querySelectorAll('.place .art .tour-photo').forEach(img=>{
+ const fail=()=>img.closest('.art')?.classList.add('photo-failed');
+ img.addEventListener('error',fail);
+ img.addEventListener('load',()=>img.closest('.art')?.classList.remove('photo-failed'));
+ if(img.complete&&!img.naturalWidth)fail();
+});
