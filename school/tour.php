@@ -125,7 +125,7 @@ $link = 'https://maakit.in/school/tour.php';
       </section>
       <section class="exp-slide exp-register" aria-label="Slide 6 of 6">
         <div class="exp-content"><span class="exp-chip">🚨 LIMITED SEATS AVAILABLE</span><h2>DON'T MISS<br><em>THE FUN!</em></h2><p class="exp-lead">📅 14 November · 🎓 Classes 4 to 10</p><p class="exp-hindi">सीट बुक कराने के लिए अपने Class Teacher से संपर्क करें।</p>
-          <a href="#registration" class="exp-cta">🎒 Register with Class Teacher ↓</a><a class="exp-share" id="expShare" href="#">📲 Share with Friends</a><p class="exp-small">Bus charges & timings will be shared by the school.</p>
+          <a href="#registration" class="exp-cta">🎒 Register with Class Teacher ↓</a><a class="exp-share" id="expShare" href="#">📲 Share with Friends</a><p class="exp-small">Departure and return timings will be shared by the school.</p>
         </div>
       </section>
     </div>
@@ -177,9 +177,8 @@ $link = 'https://maakit.in/school/tour.php';
   <h2 class="sec">🎒 What to bring<small>साथ क्या लाएँ</small></h2>
   <div class="bring"><span>👕 School uniform · स्कूल ड्रेस</span><span>🪪 School ID card · पहचान पत्र</span><span>🥤 Water bottle · पानी</span><span>🍱 Lunch / Tiffin · खाना</span><span>📓 School diary (compulsory) · स्कूल डायरी अनिवार्य</span><span>📞 Parent’s working contact number in diary · अभिभावक का चालू नंबर</span></div>
 
-  <div class="note"><b>🎟️ Entry / प्रवेश:</b> Allahabad Museum is free for school students up to Class 12 in uniform or with school ID, accompanied by teachers. Hathi Park entry is about ₹5–₹10 (to be confirmed); other site fees may apply. The cathedral is usually open to the public on Sundays, so going inside on Saturday is not assured.<br>
-    <b>ध्यान दें:</b> यूनिफॉर्म / ID और शिक्षक के साथ संग्रहालय में प्रवेश निःशुल्क है। पार्क व अन्य शुल्क की पुष्टि विद्यालय करेगा। चर्च के अंदर शनिवार को प्रवेश की गारंटी नहीं है।<br>
-    <b>🚌 Bus charges and departure / return time</b> will be announced by the school. बस शुल्क और प्रस्थान / वापसी का समय विद्यालय बताएगा।</div>
+  <div class="note"><b>📌 Important / ज़रूरी सूचना:</b> Students must wear their school uniform, carry their school ID card and school diary, and write an active parent contact number in the diary. The school will share departure and return timings separately. Entry inside All Saints Cathedral on Saturday is subject to permission.<br>
+    <b>ध्यान दें:</b> विद्यार्थी स्कूल ड्रेस पहनें, पहचान पत्र व स्कूल डायरी साथ रखें और डायरी में अभिभावक का चालू मोबाइल नंबर लिखें। प्रस्थान और वापसी का समय विद्यालय अलग से बताएगा। शनिवार को चर्च के अंदर प्रवेश अनुमति पर निर्भर होगा.</div>
 
   <section class="cta" id="registration"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 4–10: register with your Class Teacher. Bring uniform, ID card, lunch, school diary and parent’s contact number.<br>कक्षा 4–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
     <a class="btn wa" id="wa" href="#">📲 Share on WhatsApp</a><button class="btn y" id="copy" type="button">🔗 Copy link</button><a class="btn l" href="index.php">School ERP</a></section>
