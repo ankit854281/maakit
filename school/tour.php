@@ -134,36 +134,38 @@ $link = 'https://maakit.in/school/tour.php';
   </section>
   <div id="all-details" class="exp-details-title"><h2>Explore the full tour ✨</h2><p>सभी जगहों की तस्वीरें, इतिहास और ज़रूरी जानकारी</p><div class="count" id="count" aria-live="polite"></div></div>
 
-  <h2 class="sec">One day, four amazing places ✨<small>एक ही यात्रा में इतिहास, कला, स्थापत्य, प्रकृति और खूब सारी नई सीख</small></h2>
+  <h2 class="sec destination-heading">One day, four amazing places ✨<small>एक ही यात्रा में इतिहास, कला, स्थापत्य, प्रकृति और खूब सारी नई सीख</small></h2>
 
-  <article class="place"><div class="art a1"><span class="no">01 · Museum</span>
+  <section class="destination-deck" id="destinations" aria-label="Swipe up for next destination">
+  <article class="place destination-card" id="destination-1"><div class="art a1"><span class="no">01 · Museum</span>
     <img class="tour-photo" src="tour.php?photo=museum" data-local-src="img/tour/museum.jpg" alt="Allahabad Museum, Prayagraj" loading="lazy" width="1200" height="1600">
     </div><small class="photo-credit">📸 Krishna Kant Sharma · CC BY-SA 4.0 · <a href="https://commons.wikimedia.org/wiki/File:Allahabad_Museum.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small>
     <div class="bd"><h3>🏛️ Allahabad Museum<small>इलाहाबाद संग्रहालय</small></h3><div class="loc">📍 Chandrashekhar Azad Park, Civil Lines</div>
       <p>Ancient coins, sculptures, paintings, archaeological objects and exhibits of India's freedom movement.</p><p class="hi">प्राचीन सिक्के, मूर्तियाँ, चित्रकलाएँ और स्वतंत्रता संग्राम से जुड़ी ऐतिहासिक वस्तुएँ।</p>
-      <ul><li>How historians study the past</li><li>Art & heritage</li><li>Freedom fighters' story</li></ul></div></article>
+      <ul><li>How historians study the past</li><li>Art & heritage</li><li>Freedom fighters' story</li></ul></div><div class="destination-actions"><span>📍 1 / 4</span><a href="#destination-2" class="destination-next">Next destination ↓</a></div></article>
 
-  <article class="place"><div class="art a2"><span class="no">02 · Park</span><div class="park-photo-pending"><strong>🐘 Hathi Park</strong><small>Real photograph not yet available<br>असली तस्वीर उपलब्ध नहीं है</small></div>
+  <article class="place destination-card" id="destination-2"><div class="art a2"><span class="no">02 · Park</span><div class="park-photo-pending"><strong>🐘 Hathi Park</strong><small>Real photograph not yet available<br>असली तस्वीर उपलब्ध नहीं है</small></div>
     </div>
     <div class="bd"><h3>🐘 Hathi Park<small>हाथी पार्क</small></h3><div class="loc">📍 Civil Lines</div>
       <p>The famous elephant-shaped slide, greenery and safe group fun under teacher supervision.</p><p class="hi">हाथी वाली प्रसिद्ध स्लाइड, हरियाली और दोस्तों के साथ सुरक्षित खेल।</p>
-      <ul><li>Teamwork & friendship</li><li>Respect nature</li><li>Play safely</li></ul></div></article>
+      <ul><li>Teamwork & friendship</li><li>Respect nature</li><li>Play safely</li></ul></div><div class="destination-actions"><span>📍 2 / 4</span><a href="#destination-3" class="destination-next">Next destination ↓</a></div></article>
 
-  <article class="place"><div class="art a3"><span class="no">03 · Mughal garden</span>
+  <article class="place destination-card" id="destination-3"><div class="art a3"><span class="no">03 · Mughal garden</span>
     <img class="tour-photo" src="tour.php?photo=gallery2" data-local-src="img/tour/khusro-tombs.jpg" alt="Historic Mughal tombs at Khusro Bagh" loading="lazy" width="1200" height="900">
     </div><small class="photo-credit">📸 Tahmasp3 · CC0 1.0 · <a href="https://commons.wikimedia.org/wiki/File:Nisar_Begum%27s_and_Khusrau%27s_tombs,_located_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small>
     <div class="bd"><h3>🏰 Khusro Bagh<small>खुसरो बाग</small></h3><div class="loc">📍 Near Prayagraj Junction, Lukarganj</div>
       <p>A historic Mughal garden with tombs linked to Prince Khusro — domes, arches and old stonework.</p><p class="hi">मुगलकालीन मकबरे, गुंबद और बगीचा — इतिहास को करीब से देखें।</p>
-      <ul><li>Domes & arches</li><li>Mughal architecture</li><li>Protect monuments</li></ul></div></article>
+      <ul><li>Domes & arches</li><li>Mughal architecture</li><li>Protect monuments</li></ul></div><div class="destination-actions"><span>📍 3 / 4</span><a href="#destination-4" class="destination-next">Next destination ↓</a></div></article>
 
-  <article class="place"><div class="art a4"><span class="no">04 · Cathedral</span>
+  <article class="place destination-card" id="destination-4"><div class="art a4"><span class="no">04 · Cathedral</span>
     <img class="tour-photo" src="tour.php?photo=gallery4" data-local-src="img/tour/cathedral-view.jpg" alt="All Saints Cathedral, Prayagraj" loading="lazy" width="1200" height="1600">
     </div><small class="photo-credit">📸 Ar.anujgupta · CC BY-SA 4.0 · <a href="https://commons.wikimedia.org/wiki/File:All_Saints_Cathedral,_Prayagraj,_Uttar_Pradesh,_India_(2018)553.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small>
     <div class="bd"><h3>⛪ All Saints Cathedral<small>पत्थर गिरजाघर</small></h3><div class="loc">📍 Civil Lines, Sarojini Naidu Marg</div>
       <p>Remarkable stone architecture, pointed arches and the beauty of a historic Gothic-style church.</p><p class="hi">पत्थरों की नक्काशी, ऊँचे मेहराब और अनोखी वास्तुकला।</p>
-      <ul><li>Gothic architecture</li><li>Respect all cultures</li><li>Observe & sketch</li></ul></div></article>
+      <ul><li>Gothic architecture</li><li>Respect all cultures</li><li>Observe & sketch</li></ul></div><div class="destination-actions"><span>📍 4 / 4</span><a href="#gallery" class="destination-next">View gallery ↓</a></div></article>
 
-  <h2 class="sec">📸 Photo gallery<small>इतिहास को तस्वीरों में देखें · Real photographs</small></h2>
+  </section>
+  <h2 class="sec" id="gallery">📸 Photo gallery<small>इतिहास को तस्वीरों में देखें · Real photographs</small></h2>
   <div class="tour-gallery"><figure class="gallery-card"><img src="tour.php?photo=gallery1" data-local-src="img/tour/khusro-dome.jpg" alt="Interior dome, Khusro Bagh" loading="lazy" width="1200" height="900"><figcaption><strong>Interior dome, Khusro Bagh</strong><small class="photo-credit">📸 Tahmasp3 · CC0 1.0 · <a href="https://commons.wikimedia.org/wiki/File:Below_the_dome_of_Khusrau%27s_tomb_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small></figcaption></figure>
 <figure class="gallery-card"><img src="tour.php?photo=gallery2" data-local-src="img/tour/khusro-tombs.jpg" alt="Mughal tombs in Khusro Bagh" loading="lazy" width="1200" height="900"><figcaption><strong>Mughal tombs in Khusro Bagh</strong><small class="photo-credit">📸 Tahmasp3 · CC0 1.0 · <a href="https://commons.wikimedia.org/wiki/File:Nisar_Begum%27s_and_Khusrau%27s_tombs,_located_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small></figcaption></figure>
 <figure class="gallery-card"><img src="tour.php?photo=gallery3" data-local-src="img/tour/khusro-gateway.jpg" alt="Stone entrance at Khusro Bagh" loading="lazy" width="1200" height="900"><figcaption><strong>Stone entrance at Khusro Bagh</strong><small class="photo-credit">📸 Tahmasp3 · CC0 1.0 · <a href="https://commons.wikimedia.org/wiki/File:Entrance_to_Man_Bai%27s_tomb_at_Bagh-e-Khusrau,_Allahabad.jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a> · resized</small></figcaption></figure>
