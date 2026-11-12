@@ -83,13 +83,21 @@ $link = 'https://maakit.in/school/tour.php';
     <p class="ad-t">Saturday 14 Nov 2026 · Classes 4–10 · 4 amazing places</p><button class="ad-go" type="button" id="adGo">See the tour</button></section>
 </div>
 <main class="wrap">
-  <section class="hero"><div class="sparks"></div>
-    <div class="sch"><img src="img/snmsis-logo.png" alt=""><small>S.N. Mishra Singapore International School<br>Jagannathpur, Bhadohi</small></div>
-    <span class="tag">🎉 Children's Day Special · बाल दिवस विशेष</span>
-    <h1>Prayagraj <span>Educational Tour</span></h1>
-    <p>इतिहास को देखो, नई बातें सीखो, दोस्तों के साथ यादें बनाओ!<br>Explore · Discover · Learn · Enjoy</p>
-    <div class="facts"><div><b>14 Nov</b><small>Saturday · शनिवार</small></div><div><b>Class 4–10</b><small>कक्षा 4 से 10</small></div><div><b>Prayagraj</b><small>Uttar Pradesh</small></div></div>
-    <div class="count" id="count" aria-live="polite"></div>
+  <section class="hero hero-campaign">
+    <div class="hero-picture">
+      <img src="tour.php?photo=gallery2" alt="Real historical Mughal tombs at Khusro Bagh, Prayagraj" width="1200" height="900" fetchpriority="high">
+      <div class="hero-photo-shade"></div>
+      <div class="sch"><img src="img/snmsis-logo.png" alt="School logo" width="48" height="48"><small>S.N. MISHRA SINGAPORE<br>INTERNATIONAL SCHOOL</small></div>
+      <span class="hero-stamp">🎉 CHILDREN'S DAY • 2026</span>
+      <div class="hero-headline"><span class="hero-eyebrow">ONE DAY. FOUR UNFORGETTABLE PLACES.</span><h1>CHALO<br><span>PRAYAGRAJ!</span></h1><p>सीखेंगे भी, घूमेंगे भी — यादें बनाएँगे साथ! 🚌</p></div>
+    </div>
+    <div class="hero-panel">
+      <div class="hero-pills"><span>📅 SAT, 14 NOV</span><span>🎓 CLASS 4–10</span><span>📍 PRAYAGRAJ</span></div>
+      <div class="hero-places"><strong>🏛️ Museum</strong><strong>🐘 Hathi Park</strong><strong>🏰 Khusro Bagh</strong><strong>⛪ Cathedral</strong></div>
+      <div class="hero-action"><a class="hero-register" href="#registration">🚨 LIMITED SEATS · RESERVE YOUR SEAT <span aria-hidden="true">↓</span></a><a class="hero-share" id="heroShare" href="#">📲 Share</a></div>
+      <div class="hero-note">Class Teacher se jaldi contact karein • अपने कक्षा शिक्षक से संपर्क करें</div>
+      <div class="hero-countline"><span>⏳ Tour countdown</span><div class="count" id="count" aria-live="polite"></div></div>
+    </div>
   </section>
 
   <h2 class="sec">One day, four amazing places ✨<small>एक ही यात्रा में इतिहास, कला, स्थापत्य, प्रकृति और खूब सारी नई सीख</small></h2>
@@ -137,7 +145,7 @@ $link = 'https://maakit.in/school/tour.php';
     <b>ध्यान दें:</b> यूनिफॉर्म / ID और शिक्षक के साथ संग्रहालय में प्रवेश निःशुल्क है। पार्क व अन्य शुल्क की पुष्टि विद्यालय करेगा। चर्च के अंदर शनिवार को प्रवेश की गारंटी नहीं है।<br>
     <b>🚌 Bus charges and departure / return time</b> will be announced by the school. बस शुल्क और प्रस्थान / वापसी का समय विद्यालय बताएगा।</div>
 
-  <section class="cta"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 4–10: register with your Class Teacher.<br>कक्षा 4–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
+  <section class="cta" id="registration"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 4–10: register with your Class Teacher.<br>कक्षा 4–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
     <a class="btn wa" id="wa" href="#">📲 Share on WhatsApp</a><button class="btn y" id="copy" type="button">🔗 Copy link</button><a class="btn l" href="index.php">School ERP</a></section>
   <footer>With best wishes · School Management<br>S.N. Mishra Singapore International School · Jagannathpur, Bhadohi<br>Powered by Maakit</footer>
 </main>
