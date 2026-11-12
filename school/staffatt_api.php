@@ -26,7 +26,7 @@ $a = (string)($_GET['a'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
 $u = sch_auth(); $role = (string)$u['role']; $uid = sch_uid_of($u);
-if (!in_array($role, ['principal', 'accountant', 'chairman'], true)) sch_fail('Staff attendance is open for the Principal, Accountant and Chairman.', 403);
+if (!in_array($role, ['principal', 'accountant', 'chairman', 'dataentry'], true)) sch_fail('Staff attendance is open for the Principal, Accountant, Data Entry and Chairman.', 403);
 
 function sa_ym(string $ym): string { if (!sal_ym_ok($ym) || $ym > date('Y-m')) sch_fail('Choose a month (not a future month).'); return $ym; }
 function sa_staff(): array {

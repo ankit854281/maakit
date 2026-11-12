@@ -1603,7 +1603,7 @@ function vLog() {
   const q = (P.q || '').toLowerCase(), k = P.k || '';
   const kinds = [...new Set(S.log.map(l => l.k))].sort();
   const list = S.log.filter(l => (!k || l.k === k) && (!q || (l.u + ' ' + l.x).toLowerCase().includes(q)));
-  return head('Activity Log', 'Every action is noted automatically — who, what, when. Showing the latest 1,000; Export CSV gives the full log.', `<button onclick="exportLog()" class="btn btn-l"><i class="fa-solid fa-file-csv"></i> Export CSV</button>`) + `
+  return head('Activity Log', 'Every action is noted automatically — who, what, when. Showing the latest 1,000; Export CSV gives the full log.', `<a href="entrylog.php" target="_blank" class="btn btn-p"><i class="fa-solid fa-user-pen"></i> Who entered what</a><button onclick="exportLog()" class="btn btn-l"><i class="fa-solid fa-file-csv"></i> Export CSV</button>`) + `
     <div class="card flex flex-col sm:flex-row gap-2"><input class="inp" placeholder="Search name or text…" value="${esc(P.q || '')}" onchange="go('log',{q:this.value,k:${jsq(k)}})">
       <select class="inp sm:w-56" onchange="go('log',{q:${jsq(P.q || '')},k:this.value})"><option value="">All activity types</option>${kinds.map(x => `<option ${x === k ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
     <div class="card overflow-x-auto"><table class="tbl"><tr><th>When</th><th>Who</th><th>Type</th><th>Activity</th></tr>${list.slice(0, 500).map(l => `<tr><td class="whitespace-nowrap text-xs">${fmtTime(l.t)}</td><td class="font-semibold whitespace-nowrap">${esc(l.u)}</td><td><span class="pill bg-indigo-50 text-indigo-800">${esc(l.k)}</span></td><td class="text-sm">${esc(l.x)}</td></tr>`).join('')}</table>
@@ -1637,8 +1637,10 @@ function vSettings() {
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Chairman</b> ${pinBadge('chairman')}</span><button onclick="setPin('chairman','Chairman')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Accountant</b> ${esc(S.settings.accountantName || 'Akash Tiwari')} ${pinBadge('accountant')}</span><button onclick="setPin('accountant','the Accountant')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Reception</b> ${esc(S.settings.receptionName || 'Shiva Rai')} ${pinBadge('reception')}</span><button onclick="setPin('reception','Reception')" class="btn btn-sm btn-l">Set PIN</button></div>
+        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Data Entry</b> ${esc(S.settings.dataentryName || 'Shubh Upadhyay')} ${pinBadge('dataentry')} · <a href="dataentry.php" target="_blank" class="underline">open page</a></span><button onclick="setPin('dataentry','Data Entry')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="grid grid-cols-2 gap-2"><div><label class="lbl">Accountant's name</label><input id="se-acct" class="inp" value="${esc(S.settings.accountantName || 'Akash Tiwari')}"></div>
-          <div><label class="lbl">Reception's name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || 'Shiva Rai')}"></div></div>
+          <div><label class="lbl">Reception's name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || 'Shiva Rai')}"></div>
+          <div><label class="lbl">Data Entry name</label><input id="se-dent" class="inp" value="${esc(S.settings.dataentryName || 'Shubh Upadhyay')}"></div></div>
         <button onclick="saveOfficeNames()" class="btn btn-sm btn-l">Save names</button>
         <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Everyone except the Principal starts with PIN 1234 and must choose their own at first login. Nobody can see a PIN after it is set; if someone forgets, press Set PIN and type 1234 to reset it.</p></div>
       <div class="card lg:col-span-2 overflow-x-auto"><h3 class="font-bold mb-2">Teachers — login PIN & WhatsApp number</h3>
@@ -1664,7 +1666,8 @@ function saveSchool() {
 }
 function saveOfficeNames() {
   const a = document.getElementById('se-acct').value.trim() || 'Akash Tiwari', r = document.getElementById('se-recp').value.trim() || 'Shiva Rai';
-  S.settings.accountantName = a; S.settings.receptionName = r; log('Settings', `Office staff: Accountant ${a}, Reception ${r}`); toast('Saved'); render();
+  const de = (document.getElementById('se-dent') || {}).value; S.settings.dataentryName = (de || '').trim() || 'Shubh Upadhyay';
+  S.settings.accountantName = a; S.settings.receptionName = r; log('Settings', `Office staff: Accountant ${a}, Reception ${r}, Data Entry ${S.settings.dataentryName}`); toast('Saved'); render();
 }
 async function setPin(uidx, name) {
   const pin = prompt('New PIN for ' + name + ' (4 to 8 digits). Type 1234 to reset — they will then choose their own.'); if (pin === null) return;

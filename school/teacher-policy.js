@@ -225,7 +225,7 @@
     const _v = vStaffHub;
     vStaffHub = function () {
       if (P && P.m === 'satt') return seg([['arr', 'Arrangement'], ['tt', 'Timetable'], ['team', 'Teachers'], ['work', 'Work'], ['leave', 'Leave'], ['satt', 'Staff attendance']], 'satt', `(k=>go('staffhub',{m:k}))`) +
-        `<div class="card" style="padding:0;overflow:hidden"><iframe src="staffatt.php?embed=1" style="width:100%;height:78vh;border:0;display:block" title="Staff attendance"></iframe></div><p class="mut">Teachers, drivers, Dai, watchman, office — tap boxes, press Save. CSV download / upload for many days at once.</p>`;
+        `<div class="card" style="padding:0;overflow:hidden"><iframe src="staffatt.php?embed=1" style="width:100%;height:78vh;border:0;display:block" title="Staff attendance"></iframe></div><p class="mut">Teachers, drivers, Dai, watchman, office — tap boxes, press Save. CSV download / upload for many days at once. <a href="entrylog.php" target="_blank">Who entered what →</a></p>`;
       let html = _v.apply(this, arguments).replace(/(<div class="seg">[\s\S]*?Leave<\/button>)/, `$1<button onclick="go('staffhub',{m:'satt'})">Staff attendance</button>`);
       if (P && P.m === 'leave') { const pend = S.leaves.filter(l => l.status === 'Pending' && l.letter);
         if (pend.length) html += `<div class="card"><h3>Applications <small>${pend.length}</small></h3>${pend.map(l => `<details class="lpb-app"><summary><b>${esc(T(l.tid).name)}</b> · ${esc(fmtDate(l.from))}${l.to !== l.from ? ' – ' + esc(fmtDate(l.to)) : ''}${l.emergency ? ' · emergency' : ''}</summary><pre>${esc(l.letter)}</pre></details>`).join('')}</div>`; }
