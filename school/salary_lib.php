@@ -7,12 +7,16 @@
 //   gair-hazri    = staff attendance me absent (half day = 0.5) + approved leave
 //                   (sirf kaam ke dino par; ek din ek hi baar ginta hai)
 //                   — non-teaching staff ke liye accountant khud din likhta hai
-//   bina-vetan din = gair-hazri − mahine ki paid leave (default 1)
+//   bina-vetan din = (approved leave + half day) − mahine ki paid leave (default 1)
+//                   + bina ijazat absent (staffAtt me absent, approved leave nahi) — ye
+//                   paid leave se kabhi nahi bharta (leave policy, 12 Nov 2026)
+//   bonus         = Adjust ka bonus + full-attendance bonus (zero absence, policy ₹300)
 //   katauti       = salary ÷ kaam ke din × bina-vetan din
 //   net           = salary − katauti − advance + bonus
 // "Paid" hone par us waqt ke number jam (freeze) jaate hain.
 // ============================================================
 declare(strict_types=1);
+require_once __DIR__ . '/leavepolicy_lib.php';
 
 const SAL_MODES = ['Bank transfer', 'Cash', 'UPI', 'Cheque'];
 
@@ -57,11 +61,15 @@ function sal_calc(array $staff, array $adj, array $work, ?array $auto): array {
     $manual = isset($adj['manualAbsent']) && $adj['manualAbsent'] !== null && $adj['manualAbsent'] !== '';
     $absent = $manual ? (float)$adj['manualAbsent'] : (float)($auto['total'] ?? 0);
     $paidLeave = (float)($staff['paidLeave'] ?? 1);
-    $unpaid = max(0.0, $absent - $paidLeave);
+    // Leave policy: paid leave covers approved leave + half days; absent without permission is always cut.
+    $unapproved = (!$manual && $auto !== null) ? (float)($auto['absent'] ?? 0) : 0.0;
+    $unpaid = max(0.0, $absent - $unapproved - $paidLeave) + $unapproved;
     $ded = $wd ? (int)round($gross / $wd * min($unpaid, $wd)) : 0;
-    $adv = (int)($adj['advance'] ?? 0); $bonus = (int)($adj['bonus'] ?? 0);
+    $autoBonus = (!$manual && $auto !== null && $gross > 0 && $wd > 0 && (float)($auto['total'] ?? 0) == 0.0) ? lp_policy()['bonus'] : 0;
+    $adv = (int)($adj['advance'] ?? 0); $bonus = (int)($adj['bonus'] ?? 0) + $autoBonus;
     return ['gross' => $gross, 'workDays' => $wd, 'absent' => $absent, 'manual' => $manual, 'auto' => $auto, 'paidLeave' => $paidLeave,
-            'unpaid' => $unpaid, 'deduction' => $ded, 'advance' => $adv, 'bonus' => $bonus, 'net' => $gross - $ded - $adv + $bonus, 'note' => (string)($adj['note'] ?? '')];
+            'unapproved' => $unapproved, 'unpaid' => $unpaid, 'deduction' => $ded, 'advance' => $adv, 'bonus' => $bonus, 'autoBonus' => $autoBonus,
+            'net' => $gross - $ded - $adv + $bonus, 'note' => (string)($adj['note'] ?? '')];
 }
 
 // Sab staff: teacher records (apne aap) + non-teaching staff (salStaff, id "x…")

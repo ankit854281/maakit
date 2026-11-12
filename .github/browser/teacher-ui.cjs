@@ -489,6 +489,13 @@ const path = require('node:path');
     await page.locator('#lgPin').fill('8888');
     await page.locator('.lg button').filter({ hasText: 'Open' }).click();
     await page.locator('.tabs').waitFor({ timeout: 15000 });
+    // Leave policy (12 Nov 2026): MA has not accepted the leave rules yet → the one-time "I agree" screen blocks the app
+    await page.locator('#lpGate').waitFor({ timeout: 10000 });
+    assert.ok(await page.locator('#lpGate .lp-list li').count() >= 8, 'leave rules listed');
+    assert.ok(await page.locator('#lpBtn').isDisabled(), 'cannot continue without the tick');
+    await page.locator('#lpTick').check();
+    await page.locator('#lpBtn').click();
+    await page.locator('#lpGate').waitFor({ state: 'detached', timeout: 10000 });
     await page.evaluate(() => { const w = document.getElementById('ta-welcome'); if (w) closeTeacherWelcome(); go('att', { c: '9th' }); });
     await page.locator('.stu-r').first().waitFor();
     assert.match(await page.locator('.ban.inf').first().innerText(), /You teach this class/);

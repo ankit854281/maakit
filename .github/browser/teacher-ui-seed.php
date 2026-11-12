@@ -37,4 +37,9 @@ foreach ([['s1', 'Aman', 2500], ['s2', 'Bina', 0], ['ui9-03', 'Demo Student 03',
     $months = [['', 'D/A', 'Fee Name', 'Amount', 'Paid/Disc Amount', 'Balance', 'N Paid', 'Status'], [$mon], ['', '', 'Tution Fee', (string)max($amt, 1000), (string)($amt ? max($amt, 1000) - $amt : 1000), (string)$amt, '', $amt ? 'Not Paid' : 'Paid']];
     $put('regRow', 'oldfeecard|ui-fee-' . $sid, ['session' => $ses, 'liveId' => $sid, 'oldId' => $sid, 'name' => $nm, 'cls' => '9th', 'section' => 'A', 'months' => $months, 'oldFee' => '0', 'transferFee' => '0', 'asOn' => date('d-m-Y'), 'nextReceipt' => '1-901']);
 }
+// Leave policy (12 Nov 2026): the UI steps below run as teachers who already accepted the leave rules once;
+// 'MA' (if seeded) is left out so the one-time "I agree" screen is checked in its own step.
+require_once __DIR__ . '/../../school/leavepolicy_lib.php';
+foreach ($pdo->query("SELECT r FROM sch_records WHERE k='teacher' AND deleted=0")->fetchAll(PDO::FETCH_COLUMN) as $t)
+    if ($t !== 'MA') $put('tchAccept', (string)$t, ['tid' => (string)$t, 'ver' => lp_policy()['ver'], 'at' => sch_now_ms()]);
 echo "CI Teacher UI seed: 12 students in 9th, 6 in 10th\n";

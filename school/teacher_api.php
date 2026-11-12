@@ -14,6 +14,9 @@
 //   POST ?a=holiday {cls,date,title,on}    class teacher / Principal: this class has no school on this day
 //                                          (kind clsHol 'date|cls'; any attendance of that day is removed —
 //                                          a holiday is not counted as present or absent anywhere)
+//   GET  ?a=policy / POST ?a=accept {ver}  leave rules + the teacher's one-time "I agree" (kind tchAccept, leavepolicy_lib.php)
+//   GET  ?a=leavereport&ym=               Principal/Chairman: each teacher's leave, late leave, absent without permission, bonus
+//   POST ?a=policyset {noticeHour,autoDays,bonus,warnAfter,again}   Principal: change the rules (new version = everyone accepts again)
 //   GET  ?a=notes&cls=&subj=               chapter notes of a class (and subject)
 //   GET  ?a=overview                      Principal/Chairman: class holidays and note metadata
 //   POST ?a=note {id?,cls,subj,chapter,title,body,points[],words[],qa[]}   subject teacher / Principal
@@ -112,6 +115,38 @@ $canSee = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cl
 
 switch ($a) {
 
+// ---- Leave policy (12 Nov 2026, owner: "sab automated karo") — leavepolicy_lib.php ----
+case 'policy': {            // the rules + has this teacher accepted the current version
+    require_once __DIR__ . '/leavepolicy_lib.php';
+    $p = lp_policy(); $acc = $role === 'teacher' ? lp_accepted($tid) : null;
+    sch_json(['ok' => true, 'policy' => $p, 'rules' => lp_rules($p), 'accepted' => $role !== 'teacher' || $acc !== null, 'acceptedAt' => $acc['at'] ?? null]);
+}
+case 'accept': {            // POST {ver} — the teacher agrees to the rules (kept as a record with the time)
+    require_once __DIR__ . '/leavepolicy_lib.php';
+    if ($method !== 'POST' || $role !== 'teacher') sch_fail('Only a teacher accepts the leave rules.', 403);
+    $p = lp_policy(); if ((int)($in['ver'] ?? 0) !== $p['ver']) sch_fail('The rules changed — read them again.');
+    $name = (string)((sch_rec_get('teacher', $tid) ?? [])['name'] ?? $tid);
+    sch_rec_put('tchAccept', $tid, ['tid' => $tid, 'name' => $name, 'ver' => $p['ver'], 'at' => sch_now_ms(), 'rules' => lp_rules($p)], $uid);
+    sch_log($u, 'Leave policy', "$name accepted the leave rules (version {$p['ver']})");
+    sch_json(['ok' => true]);
+}
+case 'leavereport': {       // GET &ym= — Principal / Chairman: each teacher's month (leave, late, without permission, bonus, accepted)
+    require_once __DIR__ . '/leavepolicy_lib.php';
+    if (!in_array($role, ['principal', 'chairman'], true)) sch_fail('Only the Principal and Chairman see the leave report.', 403);
+    $ym = (string)($_GET['ym'] ?? date('Y-m')); if (!preg_match('/^20\d\d-(0[1-9]|1[0-2])$/', $ym)) sch_fail('Bad month.');
+    sch_json(['ok' => true] + lp_month($ym));
+}
+case 'policyset': {         // POST {noticeHour, autoDays, bonus, warnAfter, again} — Principal; again = everyone accepts once more
+    require_once __DIR__ . '/leavepolicy_lib.php';
+    if ($method !== 'POST' || $role !== 'principal') sch_fail('Only the Principal changes the leave rules.', 403);
+    $old = lp_policy(); $new = $old;
+    foreach (['noticeHour' => [0, 23], 'autoDays' => [0, 10], 'bonus' => [0, 5000], 'warnAfter' => [1, 10]] as $k => [$lo, $hi])
+        if (isset($in[$k]) && is_numeric($in[$k])) $new[$k] = max($lo, min($hi, (int)$in[$k]));
+    if (!empty($in['again']) || $new != $old) $new['ver'] = $old['ver'] + 1;
+    sch_rec_put('tchPolicy', 'main', $new, $uid);
+    sch_log($u, 'Leave policy', "Rules changed (version {$new['ver']}): notice {$new['noticeHour']}:00, auto-approve up to {$new['autoDays']} day(s), bonus ₹{$new['bonus']}, warning after {$new['warnAfter']}");
+    sch_json(['ok' => true, 'policy' => $new]);
+}
 
 case 'overview': {
     if ($method !== 'GET') sch_fail('GET only', 405);

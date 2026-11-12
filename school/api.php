@@ -242,6 +242,13 @@ case 'sync': {
             if ($u['role'] !== 'principal' || $content != $incoming) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>'Open Daily Teaching to revise this daily plan.']; continue; }
         }
         if ($k === 'diary') { try { tool_hw_guard($k,$r,$d,(string)((sch_rec_get('settings','main')??[])['session']??'')); } catch (InvalidArgumentException $e) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } }
+        // Leave policy (12 Nov 2026): a teacher's NEW leave request is stamped, marked on time / late and,
+        // when on time and short, approved by itself (leavepolicy_lib.php). The arrangement then fills the bells.
+        if ($k === 'leave' && $u['role'] === 'teacher' && sch_rec_get('leave', $r) === null) {
+            require_once __DIR__ . '/leavepolicy_lib.php';
+            $raw = lp_on_leave($d, (string)$u['tid']);
+            if (($raw['status'] ?? '') === 'Approved') sch_log($u, 'Leave', 'Approved by itself (leave policy): ' . ($raw['from'] ?? '') . ' to ' . ($raw['to'] ?? ''));
+        }
         sch_rec_put($k, $r, $raw, $uid);
         $done[] = ['k' => $k, 'r' => $r];
     }

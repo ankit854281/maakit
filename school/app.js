@@ -3325,14 +3325,14 @@ function vSalary() {
   const months = []; for (let i = -3; i <= 1; i++) months.push(ymAdd(todayISO().slice(0, 7), i));
   const statusPill = r => r.status === 'Paid' ? '<span class="pill bg-emerald-100 text-emerald-800">Paid</span>' : r.status === 'Due' ? '<span class="pill bg-amber-100 text-amber-800">Due</span>' : '<span class="pill bg-slate-100 text-slate-600">Salary not set</span>';
   const card = r => { const s = r.staff, c = r.calc, open = SALOPEN === s.id, id = s.id.replace(/[^a-z0-9]/gi, '');
-    const why = c.manual ? 'entered by office' : c.auto ? `${dd(c.auto.absent)} absent${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}${c.auto.leave ? ', ' + c.auto.leave + ' leave' : ''}` : 'enter days';
+    const why = c.manual ? 'entered by office' : c.auto ? `${dd(c.auto.absent)} absent without leave${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}${c.auto.leave ? ', ' + c.auto.leave + ' leave' : ''}` : 'enter days';
     return `<div class="card ${s.active ? '' : 'opacity-60'}"><div class="flex flex-wrap items-start justify-between gap-2">
         <div class="min-w-0"><p class="font-bold text-ink">${esc(s.name)} ${statusPill(r)}</p><p class="text-xs text-slate-500">${esc(s.role)}${s.teaching ? '' : ' · non-teaching'}${s.active ? '' : ' · inactive'}</p></div>
         <div class="text-right"><p class="text-xs text-slate-500">Net pay</p><p class="text-xl font-extrabold text-ink">${r.status === 'Not set' ? '—' : rs(c.net)}</p></div></div>
       ${r.status === 'Not set' ? '' : `<div class="flex flex-wrap gap-2 mt-3 text-xs">
         <span class="pill bg-slate-100 text-slate-700">Salary ${rs(c.gross)}</span><span class="pill bg-slate-100 text-slate-700">Absent ${dd(c.absent)} (${why})</span>
         <span class="pill bg-slate-100 text-slate-700">Paid leave ${dd(c.paidLeave)}</span>${c.deduction ? `<span class="pill bg-rose-50 text-rose-700">Cut ${rs(c.deduction)} for ${dd(c.unpaid)} day(s)</span>` : ''}
-        ${c.advance ? `<span class="pill bg-rose-50 text-rose-700">Advance −${rs(c.advance)}</span>` : ''}${c.bonus ? `<span class="pill bg-emerald-50 text-emerald-700">Bonus +${rs(c.bonus)}</span>` : ''}${c.note ? `<span class="pill bg-slate-100 text-slate-600">${esc(c.note)}</span>` : ''}</div>`}
+        ${c.advance ? `<span class="pill bg-rose-50 text-rose-700">Advance −${rs(c.advance)}</span>` : ''}${c.bonus - (c.autoBonus || 0) ? `<span class="pill bg-emerald-50 text-emerald-700">Bonus +${rs(c.bonus - (c.autoBonus || 0))}</span>` : ''}${c.autoBonus ? `<span class="pill bg-emerald-50 text-emerald-700">Full attendance bonus +${rs(c.autoBonus)}</span>` : ''}${c.unapproved ? `<span class="pill bg-rose-50 text-rose-700">${dd(c.unapproved)} day(s) without permission — always cut</span>` : ''}${c.note ? `<span class="pill bg-slate-100 text-slate-600">${esc(c.note)}</span>` : ''}</div>`}
       ${r.pay ? `<p class="text-xs text-slate-500 mt-2">Paid ${fmtDate(r.pay.paidOn)} by ${esc(r.pay.mode)}${r.pay.ref ? ' (' + esc(r.pay.ref) + ')' : ''} · ${esc(r.pay.by)}</p>` : ''}
       <div class="flex flex-wrap gap-2 mt-3">
         ${r.status === 'Due' ? `<button onclick="SALOPEN=${open ? 'null' : jsq(s.id)};render()" class="btn btn-sm ${open ? 'btn-l' : 'btn-p'}">${open ? 'Close' : 'Adjust & pay'}</button>` : ''}
@@ -3341,14 +3341,14 @@ function vSalary() {
       ${open ? `<div class="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-3"><div class="grid grid-cols-2 gap-2">
         <div><label class="lbl">Absent days</label><input id="sa-${id}-ab" type="number" step="0.5" min="0" class="inp" value="${c.manual ? c.absent : ''}" placeholder="${s.teaching ? 'Auto: ' + dd(c.auto ? c.auto.total : 0) : 'Days'}"></div>
         <div><label class="lbl">Advance (₹)</label><input id="sa-${id}-adv" type="number" min="0" class="inp" value="${c.advance || ''}"></div>
-        <div><label class="lbl">Bonus / other (₹)</label><input id="sa-${id}-bon" type="number" min="0" class="inp" value="${c.bonus || ''}"></div>
+        <div><label class="lbl">Bonus / other (₹)</label><input id="sa-${id}-bon" type="number" min="0" class="inp" value="${(c.bonus - (c.autoBonus || 0)) || ''}"></div>
         <div><label class="lbl">Note</label><input id="sa-${id}-note" class="inp" maxlength="200" value="${esc(c.note || '')}"></div>
         <button onclick="salAdjust(${jsq(s.id)},'${id}')" class="btn btn-l col-span-2">Save changes</button></div>
         <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200"><div><label class="lbl">Paid by</label><select id="sa-${id}-mode" class="inp">${SAL.modes.map(m => `<option>${esc(m)}</option>`).join('')}</select></div>
         <div><label class="lbl">Ref. / cheque no.</label><input id="sa-${id}-ref" class="inp" maxlength="60"></div>
         <div><label class="lbl">Paid on</label><input id="sa-${id}-date" type="date" class="inp" value="${SAL.today}" max="${SAL.today}"></div>
         <button onclick="salPay(${jsq(s.id)},'${id}')" class="btn btn-g self-end"><i class="fa-solid fa-check"></i> Mark paid ${rs(c.net)}</button></div></div>` : ''}</div>`; };
-  return head('Staff Salary', `${ymLong(ym)} · ${SAL.workDays} working days (Sundays and holidays left out). Absences come from Staff Attendance and approved leave.`,
+  return head('Staff Salary', `${ymLong(ym)} · ${SAL.workDays} working days (Sundays and holidays left out). Absences come from Staff Attendance and approved leave. Leave policy: paid leave covers approved leave and half days; absent without approved leave is always cut; zero absence adds the full-attendance bonus.`,
       `<select class="inp w-auto" onchange="SAL=null;SALOPEN=null;go('salary',{ym:this.value})">${months.map(m => `<option value="${m}" ${m === ym ? 'selected' : ''}>${ymLong(m)}</option>`).join('')}</select>
        <button onclick="salRegister()" class="btn btn-l"><i class="fa-solid fa-print"></i> Register</button>${SAL.can.staff ? '<button onclick="salStaffEdit(\'\')" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add staff</button>' : ''}`) + `
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -3377,7 +3377,7 @@ async function salAdjust(id, k) {
 }
 async function salPay(id, k) {
   const g = x => document.getElementById(`sa-${k}-${x}`).value.trim(), r = SAL.rows.find(x => x.staff.id === id);
-  if (g('ab') !== (r.calc.manual ? String(r.calc.absent) : '') || +g('adv') !== r.calc.advance || +g('bon') !== r.calc.bonus) return toast('Press "Save changes" first, then mark paid.', 'a');
+  if (g('ab') !== (r.calc.manual ? String(r.calc.absent) : '') || +g('adv') !== r.calc.advance || +g('bon') !== r.calc.bonus - (r.calc.autoBonus || 0)) return toast('Press "Save changes" first, then mark paid.', 'a');
   if (!confirm(`Mark ${r.staff.name}'s salary for ${ymLong(SAL.ym)} as PAID: ${rs(r.calc.net)} by ${g('mode')}?`)) return;
   try { await salapi('pay', { ym: SAL.ym, id, mode: g('mode'), ref: g('ref'), date: g('date') }); toast('Marked paid'); SALOPEN = null; } catch (e) { toast(e.message, 'r'); }
   const ym = SAL.ym; SAL = null; await salLoad(ym); const p = SAL.rows && SAL.rows.find(x => x.staff.id === id); if (p && p.status === 'Paid') salSlip(id);
@@ -3393,7 +3393,7 @@ function salSlipHTML(name, role, ym, c, pay) {
     <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:16px">${esc(S.settings.school)}, ${esc(S.settings.place || 'Bhadohi')}</b><span>SALARY SLIP — ${ymLong(ym)}</span></div>
     <p style="margin:8px 0"><b>${esc(name)}</b> · ${esc(role)}</p>
     <table style="width:100%;border-collapse:collapse;font-size:13px">${row('Monthly salary', rs(c.gross))}${row('Working days', c.workDays)}${row('Absent days', dd(c.absent))}${row('Paid leave allowed', dd(c.paidLeave))}
-      ${row(`Cut for ${dd(c.unpaid)} unpaid day(s)`, '− ' + rs(c.deduction))}${c.advance ? row('Advance recovered', '− ' + rs(c.advance)) : ''}${c.bonus ? row('Bonus / other', '+ ' + rs(c.bonus)) : ''}
+      ${row(`Cut for ${dd(c.unpaid)} unpaid day(s)`, '− ' + rs(c.deduction))}${c.advance ? row('Advance recovered', '− ' + rs(c.advance)) : ''}${c.bonus - (c.autoBonus || 0) ? row('Bonus / other', '+ ' + rs(c.bonus - (c.autoBonus || 0))) : ''}${c.autoBonus ? row('Full attendance bonus', '+ ' + rs(c.autoBonus)) : ''}
       <tr><td style="padding:8px"><b>Net paid</b></td><td style="padding:8px;text-align:right"><b style="font-size:16px">${rs(c.net)}</b></td></tr></table>
     ${pay ? `<p style="font-size:12px;margin-top:6px">Paid on ${fmtDate(pay.paidOn)} by ${esc(pay.mode)}${pay.ref ? ' (' + esc(pay.ref) + ')' : ''}</p>` : ''}
     <div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Principal ______________</span></div>

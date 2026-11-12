@@ -1306,7 +1306,18 @@ function staffBody() {
   const cl = Object.keys(cat);
   return `<div class="pg">${pieCard('Teachers today', pie('sAtt', aL, ab ? [T.length - ab.length, ab.length] : [0, 0], [P.green, P.pink], ab ? pc(ratio(T.length - ab.length, T.length)) : '—', ab ? 'present' : 'not marked'), legend(aL, ab ? [T.length - ab.length, ab.length] : [0, 0], [P.green, P.pink]))}
       ${pieCard('This month', pie('sMon', aL, md.length ? [possible - absD, absD] : [0, 0], [P.green, P.pink], md.length ? pc(ratio(possible - absD, possible)) : '—', md.length + ' days'), legend(['Present days', 'Absent days'], md.length ? [possible - absD, absD] : [0, 0], [P.green, P.pink]))}
-      ${cl.length ? pieCard('Staff by type', pie('sCat', cl, cl.map(x => cat[x]), PAL, E.length, 'active staff'), legend(cl, cl.map(x => cat[x]), PAL)) : ''}</div><div style="height:12px"></div>${schTeach()}${md.length ? '<div style="height:12px"></div>' + staffRegister(ym) : ''}`;
+      ${cl.length ? pieCard('Staff by type', pie('sCat', cl, cl.map(x => cat[x]), PAL, E.length, 'active staff'), legend(cl, cl.map(x => cat[x]), PAL)) : ''}</div><div style="height:12px"></div>${schTeach()}<div style="height:12px"></div>${leaveRep()}${md.length ? '<div style="height:12px"></div>' + staffRegister(ym) : ''}`;
+}
+// Leave policy report (12 Nov 2026): the same numbers the salary uses — teacher_api.php?a=leavereport (leavepolicy_lib.php)
+let LREP = null;
+function leaveRep() {
+  if (LREP === null) { LREP = 'busy'; api('teacher_api.php?a=leavereport').then(d => { LREP = d; render(); }).catch(e => { LREP = { err: e.message }; render(); }); }
+  if (LREP === 'busy') return card('Leave this month', '<p class="note">Opening…</p>');
+  if (LREP.err) return card('Leave this month', `<p class="note">${esc(LREP.err)}</p>`);
+  const R = LREP.rows, p = LREP.policy, c = (v, cl) => v ? `<td class="${cl}">${v}</td>` : '<td>–</td>';
+  return card('Leave this month · ' + MN[+LREP.ym.slice(5, 7)], `<div class="kp">${k('Full attendance', String(R.filter(r => r.bonus).length), 'get ₹' + p.bonus + ' bonus', 'ok')}${k('Without permission', String(R.filter(r => r.unapproved).length), 'teachers — salary cut', R.some(r => r.unapproved) ? 'warn' : 'ok')}${k('Rules accepted', R.filter(r => r.accepted).length + '/' + R.length, 'in the Teacher App', R.every(r => r.accepted) ? 'ok' : 'warn')}</div>
+    <div class="tw"><table class="tbl"><tr><th>Teacher</th><th>Leave</th><th>Half day</th><th>No permission</th><th>Late asks</th><th>Bonus</th></tr>${R.map(r => `<tr><td>${esc(r.name)}${r.accepted ? '' : ' <span class="tag brk">rules not accepted</span>'}${r.warn ? ' <span class="tag brk">warning due</span>' : ''}</td>${c(r.leave, '')}${c(r.half, '')}${c(r.unapproved, 'ca')}${c(r.late, 'ca')}${c(r.bonus ? '₹' + r.bonus : 0, 'cp')}</tr>`).join('')}</table></div>
+    <p class="note">On-time leave (asked a day before, or before ${p.noticeHour}:00 the same day) of up to ${p.autoDays} day(s) is approved by itself and the arrangement is made by itself. "No permission" = absent without approved leave — always cut from salary. Full attendance adds ₹${p.bonus} to the salary by itself.</p>`);
 }
 function staffRegister(ym) {
   const T = Object.entries(SC.teachers), days = SC.sdates.filter(d => d.slice(0, 7) === ym);
