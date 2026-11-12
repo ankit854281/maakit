@@ -16,7 +16,7 @@
 //                                          a holiday is not counted as present or absent anywhere)
 //   GET  ?a=policy / POST ?a=accept {ver}  leave rules + the teacher's one-time "I agree" (kind tchAccept, leavepolicy_lib.php)
 //   GET  ?a=leavereport&ym=               Principal/Chairman: each teacher's leave, late leave, absent without permission, bonus
-//   POST ?a=policyset {noticeHour,autoDays,bonus,warnAfter,again}   Principal: change the rules (new version = everyone accepts again)
+//   POST ?a=policyset {noticeHour,autoDays,bonus,warnAfter,noticeDays,emergency,maxLeave,again}   Principal: change the rules (new version = everyone accepts again)
 //   GET  ?a=notes&cls=&subj=               chapter notes of a class (and subject)
 //   GET  ?a=overview                      Principal/Chairman: class holidays and note metadata
 //   POST ?a=note {id?,cls,subj,chapter,title,body,points[],words[],qa[]}   subject teacher / Principal
@@ -140,11 +140,11 @@ case 'policyset': {         // POST {noticeHour, autoDays, bonus, warnAfter, aga
     require_once __DIR__ . '/leavepolicy_lib.php';
     if ($method !== 'POST' || $role !== 'principal') sch_fail('Only the Principal changes the leave rules.', 403);
     $old = lp_policy(); $new = $old;
-    foreach (['noticeHour' => [0, 23], 'autoDays' => [0, 10], 'bonus' => [0, 5000], 'warnAfter' => [1, 10]] as $k => [$lo, $hi])
+    foreach (['noticeHour' => [0, 23], 'autoDays' => [0, 10], 'bonus' => [0, 5000], 'warnAfter' => [1, 10], 'noticeDays' => [1, 15], 'emergency' => [0, 5], 'maxLeave' => [1, 15]] as $k => [$lo, $hi])
         if (isset($in[$k]) && is_numeric($in[$k])) $new[$k] = max($lo, min($hi, (int)$in[$k]));
     if (!empty($in['again']) || $new != $old) $new['ver'] = $old['ver'] + 1;
     sch_rec_put('tchPolicy', 'main', $new, $uid);
-    sch_log($u, 'Leave policy', "Rules changed (version {$new['ver']}): notice {$new['noticeHour']}:00, auto-approve up to {$new['autoDays']} day(s), bonus ₹{$new['bonus']}, warning after {$new['warnAfter']}");
+    sch_log($u, 'Leave policy', "Rules changed (version {$new['ver']}): apply {$new['noticeDays']} days ahead, {$new['emergency']} emergency/month before {$new['noticeHour']}:00, >{$new['maxLeave']} leave = Sundays unpaid, auto-approve up to {$new['autoDays']} day(s), bonus ₹{$new['bonus']}, warning after {$new['warnAfter']}");
     sch_json(['ok' => true, 'policy' => $new]);
 }
 

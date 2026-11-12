@@ -10,6 +10,7 @@
 //   bina-vetan din = (approved leave + half day) − mahine ki paid leave (default 1)
 //                   + bina ijazat absent (staffAtt me absent, approved leave nahi) — ye
 //                   paid leave se kabhi nahi bharta (leave policy, 12 Nov 2026)
+//   4 se zyada chhutti (policy maxLeave) = salary sirf kaam kiye dino ki: gross ÷ mahine ke din × (kaam ke din − gair-hazri)
 //   bonus         = Adjust ka bonus + full-attendance bonus (zero absence, policy ₹300)
 //   katauti       = salary ÷ kaam ke din × bina-vetan din
 //   net           = salary − katauti − advance + bonus
@@ -66,9 +67,16 @@ function sal_calc(array $staff, array $adj, array $work, ?array $auto): array {
     $unpaid = max(0.0, $absent - $unapproved - $paidLeave) + $unapproved;
     $ded = $wd ? (int)round($gross / $wd * min($unpaid, $wd)) : 0;
     $autoBonus = (!$manual && $auto !== null && $gross > 0 && $wd > 0 && (float)($auto['total'] ?? 0) == 0.0) ? lp_policy()['bonus'] : 0;
+    // Staff rules v3 (owner): total leave above maxLeave (default 4) in the month = salary only for the days actually worked:
+    // gross ÷ days of the month × (working days − absence). Sundays, holidays and paid leave are not paid that month.
+    $dim = $wd ? (int)date('t', strtotime(substr((string)$work[0], 0, 7) . '-01')) : 0; $offDays = max(0, $dim - $wd); $offCut = 0;
+    if (!$manual && $auto !== null && $dim > 0 && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave']) {
+        $workedPay = (int)round($gross / $dim * max(0.0, $wd - $absent));
+        $offCut = max(0, ($gross - $workedPay) - $ded); $ded = $gross - $workedPay; $unpaid = $absent;
+    }
     $adv = (int)($adj['advance'] ?? 0); $bonus = (int)($adj['bonus'] ?? 0) + $autoBonus;
     return ['gross' => $gross, 'workDays' => $wd, 'absent' => $absent, 'manual' => $manual, 'auto' => $auto, 'paidLeave' => $paidLeave,
-            'unapproved' => $unapproved, 'unpaid' => $unpaid, 'deduction' => $ded, 'advance' => $adv, 'bonus' => $bonus, 'autoBonus' => $autoBonus,
+            'unapproved' => $unapproved, 'unpaid' => $unpaid, 'deduction' => $ded, 'advance' => $adv, 'bonus' => $bonus, 'autoBonus' => $autoBonus, 'offDays' => $offCut ? $offDays : 0, 'offCut' => $offCut, 'workedOnly' => $offCut > 0 || ($dim > 0 && !$manual && $auto !== null && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave']),
             'net' => $gross - $ded - $adv + $bonus, 'note' => (string)($adj['note'] ?? '')];
 }
 

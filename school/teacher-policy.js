@@ -34,25 +34,25 @@
   function showGate(p) {
     if (document.getElementById('lpGate')) return;
     const d = document.createElement('div'); d.id = 'lpGate';
-    d.innerHTML = `<div class="lp-box"><div class="lp-head"><b>Staff leave rules</b><span>Leave niyam · Version ${p.policy.ver}</span></div>
-      <p class="lp-hi">Namaste ${esc(myName())} — app istemal karne se pehle ye niyam padhiye aur sehmati dijiye.</p>
+    d.innerHTML = `<div class="lp-box"><div class="lp-head"><b>Staff Rules</b><span>Leave · Salary · Conduct · Results — Version ${p.policy.ver}</span></div>
+      <p class="lp-hi">${esc(myName())}, read every rule below and accept it to continue using the Teacher App.</p>
       <ol class="lp-list">${p.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol>
-      <label class="lp-ok"><input type="checkbox" id="lpTick" onchange="document.getElementById('lpBtn').disabled=!this.checked"> Maine sab niyam padh liye hain aur main inse sehmat hoon.</label>
-      <button class="btn go full" id="lpBtn" disabled onclick="lpAccept()">Main sehmat hoon — app kholiye</button>
-      <p class="mut" style="margin:6px 0 0;text-align:center">Aapki sehmati samay ke saath school record me rakhi jayegi.</p></div>`;
+      <label class="lp-ok"><input type="checkbox" id="lpTick" onchange="document.getElementById('lpBtn').disabled=!this.checked"> I have read all the rules above and I agree to follow them.</label>
+      <button class="btn go full" id="lpBtn" disabled onclick="lpAccept()">I agree — open the app</button>
+      <p class="mut" style="margin:6px 0 0;text-align:center">Your acceptance is saved in the school record with the date and time.</p></div>`;
     document.body.appendChild(d);
   }
   window.lpAccept = async function () {
     const b = document.getElementById('lpBtn'); if (b) { b.disabled = true; b.textContent = 'Saving…'; }
-    try { await api('teacher_api.php?a=accept', { ver: LP.policy.ver }); LP.accepted = true; gateDone = ME.tid; const g = document.getElementById('lpGate'); if (g) g.remove(); toast('Dhanyavaad — niyam save ho gaye.'); }
-    catch (e) { toast(e.message); if (b) { b.disabled = false; b.textContent = 'Main sehmat hoon — app kholiye'; } if (/changed/.test(e.message)) { const g = document.getElementById('lpGate'); if (g) g.remove(); LP = null; gate(); } }
+    try { await api('teacher_api.php?a=accept', { ver: LP.policy.ver }); LP.accepted = true; gateDone = ME.tid; const g = document.getElementById('lpGate'); if (g) g.remove(); toast('Thank you — your acceptance is saved.'); }
+    catch (e) { toast(e.message); if (b) { b.disabled = false; b.textContent = 'I agree — open the app'; } if (/changed/.test(e.message)) { const g = document.getElementById('lpGate'); if (g) g.remove(); LP = null; gate(); } }
   };
   setInterval(gate, 3000);
 
   // ---------- 2. rules sheet (anyone) ----------
   window.lpRules = async function () {
     try { await lpLoad(); } catch (e) { return toast(e.message); }
-    SHEET = () => `<div class="row"><h2>Staff leave rules</h2><button class="btn s l" onclick="closeSheet()">Close</button></div>
+    SHEET = () => `<div class="row"><h2>Staff Rules</h2><button class="btn s l" onclick="closeSheet()">Close</button></div>
       <ol class="lp-list">${LP.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol>
       ${LP.acceptedAt ? `<p class="mut">You accepted these rules on ${esc(new Date(LP.acceptedAt).toLocaleString('en-IN'))}.</p>` : ''}`;
     render();
@@ -63,9 +63,9 @@
   openMe = function () {
     _openMe.apply(this, arguments);
     const f = SHEET; if (typeof f !== 'function') return;
-    const h = (LP && LP.policy) ? LP.policy.noticeHour : 7, n = (LP && LP.policy) ? LP.policy.autoDays : 0;
+    const q = (LP && LP.policy) || { noticeHour: 7, noticeDays: 2, emergency: 1, maxLeave: 4 };
     SHEET = () => f().replace('onclick="leaveApply()">Send to Principal</button>', `onclick="leaveApply()">Send leave request</button>
-      <p class="mut lp-note">Kal ya aage ki chhutti, ya aaj ki ${h}:00 baje se pehle — ${n ? n + ' din tak apne aap approve.' : 'time par maani jayegi; Principal approve karenge.'} ${h}:00 ke baad aaj ki chhutti = late (Principal decide karenge). <a href="#" onclick="lpRules();return false">Read rules</a></p>`);
+      <p class="mut lp-note">Staff rules: apply ${q.noticeDays} days in advance · ${q.emergency} emergency leave a month, before ${q.noticeHour}:00 a.m. · no leave on Monday, Saturday or programme days · more than ${q.maxLeave} leave in a month = salary only for days worked. Valid only after the Principal approves. <a href="#" onclick="lpRules();return false">Read all rules</a></p>`);
     render();
   };
 
@@ -95,6 +95,8 @@
     return `<div class="card"><h3>Leave rules <small>version ${p.ver}</small></h3>
       <div class="two"><div class="fld">On-time before (hour)<input id="lpH" type="number" min="0" max="23" class="inp" value="${p.noticeHour}"></div><div class="fld">Auto-approve up to (days)<input id="lpD" type="number" min="0" max="10" class="inp" value="${p.autoDays}"></div></div>
       <div class="two" style="margin-top:8px"><div class="fld">Full-attendance bonus (₹)<input id="lpB" type="number" min="0" max="5000" class="inp" value="${p.bonus}"></div><div class="fld">Warning after (days without permission)<input id="lpW" type="number" min="1" max="10" class="inp" value="${p.warnAfter}"></div></div>
+      <div class="two" style="margin-top:8px"><div class="fld">Apply how many days ahead<input id="lpN" type="number" min="1" max="15" class="inp" value="${p.noticeDays}"></div><div class="fld">Emergency leave a month<input id="lpE" type="number" min="0" max="5" class="inp" value="${p.emergency}"></div></div>
+      <div class="fld" style="margin-top:8px">Leave in a month above which salary = days worked only<input id="lpM" type="number" min="1" max="15" class="inp" value="${p.maxLeave}"></div>
       <div class="two" style="margin-top:8px"><button class="btn go" onclick="lpSave()">Save rules</button><button class="btn l" onclick="lpPrint()">Print rules</button></div>
       <button class="btn l full" style="margin-top:8px" onclick="lpRules()">See the rules teachers read</button>
       <p class="mut" style="margin:6px 0 0">Changing a rule makes every teacher read and accept the rules again in the app.</p></div>`;
@@ -102,7 +104,7 @@
   window.lpSave = async function () {
     const g = id => document.getElementById(id).value;
     if (!confirm('Save the new leave rules? Every teacher will be asked to accept them again.')) return;
-    try { await api('teacher_api.php?a=policyset', { noticeHour: +g('lpH'), autoDays: +g('lpD'), bonus: +g('lpB'), warnAfter: +g('lpW') }); LP = null; LPREP = {}; toast('Rules saved.'); render(); } catch (e) { toast(e.message); }
+    try { await api('teacher_api.php?a=policyset', { noticeHour: +g('lpH'), autoDays: +g('lpD'), bonus: +g('lpB'), warnAfter: +g('lpW'), noticeDays: +g('lpN'), emergency: +g('lpE'), maxLeave: +g('lpM') }); LP = null; LPREP = {}; toast('Rules saved.'); render(); } catch (e) { toast(e.message); }
   };
   window.lpPrint = async function () {
     try { await lpLoad(true); } catch (e) { return toast(e.message); }
@@ -110,7 +112,7 @@
     const names = Object.entries(S.teachers || {}).filter(([k]) => !((S.settings || {}).leftTeachers || {})[k]).map(([, t]) => t.name).sort();
     const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups to print.');
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Staff leave rules</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:18px;text-align:center;margin:0}h2{font-size:15px;text-align:center;margin:4px 0 14px}ol li{margin:6px 0;line-height:1.45}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border:1px solid #888;padding:7px;font-size:13px;text-align:left}.s{display:flex;justify-content:space-between;margin-top:40px}</style></head><body>
-      <h1>${esc(school)}, Bhadohi</h1><h2>STAFF LEAVE RULES (Version ${LP.policy.ver}) — ${esc(new Date().toLocaleDateString('en-IN'))}</h2>
+      <h1>${esc(school)}, Bhadohi</h1><h2>STAFF RULES (Version ${LP.policy.ver}) — ${esc(new Date().toLocaleDateString('en-IN'))}</h2>
       <ol>${LP.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol>
       <table><thead><tr><th style="width:40px">S.No</th><th>Teacher name</th><th style="width:120px">Date</th><th style="width:170px">Signature</th></tr></thead><tbody>${names.map((n, i) => `<tr><td>${i + 1}</td><td>${esc(n)}</td><td></td><td></td></tr>`).join('')}</tbody></table>
       <div class="s"><span>Principal ______________</span><span>Chairman ______________</span></div><p style="font-size:10px;color:#666;text-align:center;margin-top:20px">Powered by Maakit</p>

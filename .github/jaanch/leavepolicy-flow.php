@@ -32,28 +32,44 @@ $put('settings', 'main', ['school' => 'Leave Test School', 'session' => '2026-27
 $put('teacher', 'K', ['name' => 'Kartikey Sir', 'role' => 'Social Science']);
 $put('teacher', 'MA', ['name' => 'Mamta Ma\'am', 'role' => 'Hindi']);
 
-// ---- default (owner, 12 Nov 2026): nothing is approved by itself ----
-lp_check(lp_policy()['autoDays'] === 0, 'auto-approve is off by default');
-$r0 = lp_on_leave(['id' => 'x', 'tid' => 'K', 'from' => '2026-11-13', 'to' => '2026-11-13', 'status' => 'Pending'], 'K', strtotime('2026-11-12 06:00 Asia/Kolkata'));
-lp_check($r0['status'] === 'Pending' && $r0['late'] === false, 'on-time leave still waits for the Principal');
-lp_check(str_contains(implode(' ', lp_rules()), 'Har chhutti Principal approve karenge'), 'rules say the Principal approves every leave');
-// the rest checks the optional auto-approve (Principal sets autoDays = 2)
-$put('tchPolicy', 'main', ['ver' => 2, 'autoDays' => 2]);
-
-// ---- unit: on time / late / long (India time) ----
+// ---- staff rules v3 (owner, 12 Nov 2026). 12 Nov 2026 is a Thursday. ----
+lp_check(lp_policy()['autoDays'] === 0 && lp_policy()['ver'] >= 3, 'auto-approve is off by default, rule book v3');
 $at = fn($s) => strtotime($s . ' Asia/Kolkata');
 $L = fn($f, $t) => ['id' => 'x', 'tid' => 'K', 'from' => $f, 'to' => $t, 'reason' => 'r', 'status' => 'Pending'];
+$r = lp_on_leave($L('2026-11-17', '2026-11-17'), 'K', $at('2026-11-12 10:00'));
+lp_check($r['status'] === 'Pending' && $r['emergency'] === false, 'Tuesday applied 5 days ahead = planned, waits for the Principal: ' . json_encode($r));
+$r = lp_on_leave($L('2026-11-16', '2026-11-16'), 'K', $at('2026-11-12 10:00'));
+lp_check($r['status'] === 'Rejected' && str_contains($r['rejectReason'], 'Monday'), 'no leave on Monday: ' . json_encode($r));
+$r = lp_on_leave($L('2026-11-13', '2026-11-14'), 'K', $at('2026-11-12 10:00'));
+lp_check($r['status'] === 'Rejected' && str_contains($r['rejectReason'], 'Saturday'), 'no leave on Saturday (inside a range)');
 $r = lp_on_leave($L('2026-11-12', '2026-11-12'), 'K', $at('2026-11-12 06:30'));
-lp_check($r['status'] === 'Approved' && !empty($r['auto']) && $r['late'] === false, 'today before 7:00 = on time, approved: ' . json_encode($r));
+lp_check($r['status'] === 'Pending' && $r['emergency'] === true && $r['late'] === false, 'same day before 7:00 = emergency, waits');
 $r = lp_on_leave($L('2026-11-12', '2026-11-12'), 'K', $at('2026-11-12 08:10'));
-lp_check($r['status'] === 'Pending' && $r['late'] === true, 'today after 7:00 = late, waits: ' . json_encode($r));
-$r = lp_on_leave($L('2026-11-11', '2026-11-11'), 'K', $at('2026-11-12 06:00'));
-lp_check($r['status'] === 'Pending' && $r['late'] === true, 'a past day is late');
-$r = lp_on_leave($L('2026-11-13', '2026-11-14'), 'K', $at('2026-11-12 21:00'));
-lp_check($r['status'] === 'Approved' && $r['decidedBy'] === 'Auto (leave policy)', 'tomorrow, 2 days = approved by itself');
-$r = lp_on_leave($L('2026-11-13', '2026-11-15'), 'K', $at('2026-11-12 10:00'));
-lp_check($r['status'] === 'Pending' && $r['late'] === false, '3 days on time = waits for the Principal, not late');
-lp_check(count(lp_rules()) >= 8 && str_contains(implode(' ', lp_rules()), '₹300'), 'rules text has the bonus');
+lp_check($r['status'] === 'Rejected' && str_contains($r['rejectReason'], '7:00'), 'emergency after 7:00 rejected');
+$put('leave', 'em1', ['id' => 'em1', 'tid' => 'K', 'from' => '2026-11-05', 'to' => '2026-11-05', 'status' => 'Approved', 'emergency' => true]);
+$r = lp_on_leave($L('2026-11-13', '2026-11-13'), 'K', $at('2026-11-12 18:00'));
+lp_check($r['status'] === 'Rejected' && str_contains($r['rejectReason'], 'limit'), 'second emergency leave in a month rejected: ' . json_encode($r));
+$r = lp_on_leave(['tid' => 'MA'] + $L('2026-11-13', '2026-11-13'), 'MA', $at('2026-11-12 18:00'));
+lp_check($r['status'] === 'Pending' && $r['emergency'] === true, 'another teacher still has her emergency leave');
+$put('cal', 'ev1', ['id' => 'ev1', 'date' => '2026-11-19', 'title' => 'Annual Function', 'type' => 'Event']);
+$r = lp_on_leave($L('2026-11-18', '2026-11-19'), 'K', $at('2026-11-12 10:00'));
+lp_check($r['status'] === 'Rejected' && str_contains($r['rejectReason'], 'Annual Function'), 'no leave on a programme day');
+$rules = implode(' ', lp_rules());
+foreach (['Monday or a Saturday', '2 days in advance', 'exceeds 4 days', 'only in English', 'uniform', '80% of the students', 'above 75%', 'without the Principal'] as $w) lp_check(str_contains($rules, $w), "rules mention: $w");
+// optional auto-approve (Principal sets autoDays = 2): planned short leave approved on arrival
+$put('tchPolicy', 'main', ['ver' => 3, 'autoDays' => 2]);
+$r = lp_on_leave($L('2026-11-24', '2026-11-25'), 'K', $at('2026-11-12 10:00'));
+lp_check($r['status'] === 'Approved' && $r['decidedBy'] === 'Auto (leave policy)', 'planned 2-day leave approved by itself when switched on: ' . json_encode($r) . json_encode(lp_policy()));
+$r = lp_on_leave($L('2026-11-24', '2026-11-26'), 'K', $at('2026-11-12 10:00'));
+lp_check($r['status'] === 'Pending', '3 days still wait');
+$put('tchPolicy', 'main', ['ver' => 3]);
+// salary: more than 4 leave = paid only for days worked
+require_once __DIR__ . '/../../school/salary_lib.php';
+$wd = sal_workdays('2026-09', []); $st = ['monthly' => 30000, 'paidLeave' => 1];
+$c5 = sal_calc($st, [], $wd, ['absent' => 0, 'half' => 0, 'leave' => 5, 'total' => 5]);
+lp_check(count($wd) === 26 && $c5['net'] === 21000 && $c5['workedOnly'] === true, '5 leave: 30000 ÷ 30 × (26 − 5) = 21000: ' . json_encode($c5));
+$c4 = sal_calc($st, [], $wd, ['absent' => 0, 'half' => 0, 'leave' => 4, 'total' => 4]);
+lp_check($c4['workedOnly'] === false && $c4['deduction'] === (int)round(30000 / 26 * 3), '4 leave: normal rule (3 unpaid days)');
 
 // ---- logins ----
 $pin = fn($uid, $role, $tid, $p) => $pdo->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,0)')->execute([$uid, $role, $tid, password_hash($p, PASSWORD_DEFAULT)]);
@@ -64,26 +80,31 @@ foreach ([['P', ['role' => 'principal', 'pin' => '2468']], ['K', ['role' => 'tea
 }
 
 // ---- accept the rules once ----
-[$c, $j] = $ta('policy', null, $tok['K']); lp_check($c === 200 && $j['accepted'] === false && $j['policy']['ver'] === 2 && count($j['rules']) >= 8, 'teacher has not accepted yet');
+[$c, $j] = $ta('policy', null, $tok['K']); lp_check($c === 200 && $j['accepted'] === false && $j['policy']['ver'] === 3 && count($j['rules']) >= 15, 'teacher has not accepted yet');
 [$c, $j] = $ta('policy', null, $tok['P']); lp_check($c === 200 && $j['accepted'] === true, 'Principal is never blocked');
 [$c] = $ta('accept', ['ver' => 9], $tok['K']); lp_check($c === 400, 'old version refused');
-[$c] = $ta('accept', ['ver' => 2], $tok['P']); lp_check($c === 403, 'Principal does not accept');
-[$c] = $ta('accept', ['ver' => 2], $tok['CH']); lp_check($c === 403, 'Chairman only views');
-[$c] = $ta('accept', ['ver' => 2], $tok['K']); lp_check($c === 200, 'K accepts');
+[$c] = $ta('accept', ['ver' => 3], $tok['P']); lp_check($c === 403, 'Principal does not accept');
+[$c] = $ta('accept', ['ver' => 3], $tok['CH']); lp_check($c === 403, 'Chairman only views');
+[$c] = $ta('accept', ['ver' => 3], $tok['K']); lp_check($c === 200, 'K accepts');
 [, $j] = $ta('policy', null, $tok['K']); lp_check($j['accepted'] === true && $j['acceptedAt'] > 0, 'K accepted with the time');
 lp_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Leave policy' AND x LIKE 'Kartikey Sir accepted%'")->fetchColumn() === 1, 'acceptance logged');
 
 // ---- leave through the normal sync ----
-$tom = date('Y-m-d', strtotime('+1 day')); $far = date('Y-m-d', strtotime('+10 day')); $far3 = date('Y-m-d', strtotime('+13 day'));
+$tue = fn($n) => date('Y-m-d', strtotime("+$n weeks tuesday"));   // a Tuesday at least a week away — never Monday / Saturday
+$tom = $tue(1); $far = $tue(2); $far3 = date('Y-m-d', strtotime($far . ' +2 day'));
+$pdo->exec("DELETE FROM sch_records WHERE k IN ('cal','leave')");
 [$c, $j] = $api('sync', ['put' => [['k' => 'leave', 'r' => 'lv1', 'd' => ['id' => 'lv1', 'tid' => 'K', 'from' => $tom, 'to' => $tom, 'reason' => 'Shaadi', 'status' => 'Pending', 'at' => 1]]], 'del' => [], 'log' => []], $tok['K']);
 lp_check($c === 200 && !$j['rejected'], 'leave sent');
-$v = sch_rec_get('leave', 'lv1'); lp_check($v['status'] === 'Approved' && $v['auto'] === true && $v['late'] === false && $v['appliedAt'] > 0, 'tomorrow 1 day approved by the server itself: ' . json_encode($v));
+$v = sch_rec_get('leave', 'lv1'); lp_check($v['status'] === 'Pending' && $v['emergency'] === false && $v['appliedAt'] > 0, 'planned leave stamped, waits for the Principal: ' . json_encode($v));
+$mon = date('Y-m-d', strtotime('+1 weeks monday'));
+$api('sync', ['put' => [['k' => 'leave', 'r' => 'lvM', 'd' => ['id' => 'lvM', 'tid' => 'K', 'from' => $mon, 'to' => $mon, 'reason' => 'x', 'status' => 'Pending', 'at' => 4]]], 'del' => [], 'log' => []], $tok['K']);
+$v = sch_rec_get('leave', 'lvM'); lp_check($v['status'] === 'Rejected' && str_contains($v['rejectReason'], 'Monday'), 'Monday leave rejected by the server: ' . json_encode($v));
 [, $j] = $api('sync', ['put' => [['k' => 'leave', 'r' => 'lv2', 'd' => ['id' => 'lv2', 'tid' => 'K', 'from' => $far, 'to' => $far3, 'reason' => 'Ghar', 'status' => 'Pending', 'at' => 2]]], 'del' => [], 'log' => []], $tok['K']);
-lp_check(sch_rec_get('leave', 'lv2')['status'] === 'Pending', '4-day leave waits for the Principal');
+lp_check(sch_rec_get('leave', 'lv2')['status'] === 'Pending', 'Tue–Thu leave waits for the Principal');
 [, $j] = $api('sync', ['put' => [['k' => 'leave', 'r' => 'lv3', 'd' => ['id' => 'lv3', 'tid' => 'K', 'from' => $far, 'to' => $far, 'reason' => 'x', 'status' => 'Approved', 'at' => 3]]], 'del' => [], 'log' => []], $tok['K']);
 lp_check(count($j['rejected']) === 1 && sch_rec_get('leave', 'lv3') === null, 'a teacher cannot send an approved leave');
 [, $j] = $api('sync', ['put' => [['k' => 'leave', 'r' => 'lv1', 'd' => ['id' => 'lv1', 'tid' => 'K', 'from' => $tom, 'to' => $tom, 'reason' => 'Shaadi', 'status' => 'Pending', 'at' => 1]]], 'del' => [], 'log' => []], $tok['K']);
-lp_check(count($j['rejected']) === 1 && sch_rec_get('leave', 'lv1')['status'] === 'Approved', 'an old Pending copy cannot undo the approval');
+lp_check(!$j['rejected'] && sch_rec_get('leave', 'lv1')['status'] === 'Pending', 'teacher may resend her own pending request');
 
 // ---- report ----
 [$c] = $ta('leavereport', null, $tok['K']); lp_check($c === 403, 'teacher cannot see the report');
@@ -93,8 +114,8 @@ $byT = array_column($j['rows'], null, 'tid'); lp_check($byT['K']['accepted'] ===
 
 // ---- change the rules → everyone accepts again ----
 [$c] = $ta('policyset', ['bonus' => 500], $tok['K']); lp_check($c === 403, 'teacher cannot change rules');
-[$c, $j] = $ta('policyset', ['bonus' => 500, 'noticeHour' => 6], $tok['P']); lp_check($c === 200 && $j['policy']['ver'] === 3 && $j['policy']['bonus'] === 500, 'Principal changes the bonus');
-[, $j] = $ta('policy', null, $tok['K']); lp_check($j['accepted'] === false && str_contains(implode(' ', $j['rules']), '₹500') && str_contains(implode(' ', $j['rules']), '6:00'), 'new version asks again');
+[$c, $j] = $ta('policyset', ['bonus' => 500, 'noticeHour' => 6], $tok['P']); lp_check($c === 200 && $j['policy']['ver'] === 4 && $j['policy']['bonus'] === 500, 'Principal changes the bonus');
+[, $j] = $ta('policy', null, $tok['K']); lp_check($j['accepted'] === false && str_contains(implode(' ', $j['rules']), '₹500') && str_contains(implode(' ', $j['rules']), '6:00 a.m.'), 'new version asks again');
 lp_check(lp_policy()['bonus'] === 500, 'salary reads the new bonus');
 
 // ---- private records never reach the normal load ----

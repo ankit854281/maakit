@@ -103,12 +103,12 @@ $put('staffAtt', '2026-09-22', ['absent' => ['K']]);
 [$c] = $s('unpay', ['ym' => '2026-09', 'id' => 't:K', 'reason' => ''], $tok['P']); sl_check($c === 400, 'reopen needs a reason');
 [$c] = $s('unpay', ['ym' => '2026-09', 'id' => 't:K', 'reason' => 'Missed absence on 22nd'], $tok['P']); sl_check($c === 200, 'principal reopens');
 [, $j] = $s('sheet', null, $tok['P'], $q); $k = $row($j, 't:K')['calc'];
-sl_check($row($j, 't:K')['status'] === 'Due' && $k['absent'] === 4.5 && $k['advance'] === 3000 && $k['net'] === 19000, 'reopened: recalculated, adjustments kept: ' . json_encode($k));
+sl_check($row($j, 't:K')['status'] === 'Due' && $k['absent'] === 4.5 && $k['advance'] === 3000 && $k['workedOnly'] === true && $k['net'] === 14583, 'reopened: recalculated, adjustments kept; 4.5 leave > 4 = paid only for days worked: 25000 ÷ 30 × 20.5 − 3000 + 500: ' . json_encode($k));
 [$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:K', 'mode' => 'Cash', 'date' => date('Y-m-d')], $tok['P']); sl_check($c === 200, 'paid again');
 sl_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Salary' AND x LIKE 'REOPENED Kartikey Sir 2026-09%Missed absence on 22nd'")->fetchColumn() === 1, 'reopen logged');
 
 // ---- teacher sees only their own paid slips ----
-[$c, $j] = $s('mine', null, $tok['K']); sl_check($c === 200 && count($j['slips']) === 1 && $j['slips'][0]['calc']['net'] === 19000, 'K sees own slip');
+[$c, $j] = $s('mine', null, $tok['K']); sl_check($c === 200 && count($j['slips']) === 1 && $j['slips'][0]['calc']['net'] === 14583, 'K sees own slip');
 [$c, $j] = $s('mine', null, $tok['MA']); sl_check($c === 200 && !$j['slips'], 'MA sees nothing (not paid)');
 [$c] = $s('mine', null, $tok['A']); sl_check($c === 403, 'mine is for teachers');
 

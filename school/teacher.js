@@ -1880,7 +1880,7 @@ function openMe() {
     <div class="card"><h3>Apply for leave</h3><div class="two"><div class="fld">From<input id="lvF" type="date" class="inp" value="${t}"></div><div class="fld">To<input id="lvT" type="date" class="inp" value="${t}"></div></div>
       <div class="fld" style="margin-top:8px">Reason<input id="lvR" class="inp" maxlength="200" placeholder="e.g. Family function"></div>
       <button class="btn go full" style="margin-top:8px" onclick="leaveApply()">Send to Principal</button>
-      ${mine.length ? mine.slice(0, 6).map(l => `<div class="li"><div class="t"><b>${fmtDate(l.from)}${l.to !== l.from ? ' – ' + fmtDate(l.to) : ''}</b><span>${esc(l.reason)}</span></div><span class="pill ${l.status === 'Approved' ? 'ok' : l.status === 'Rejected' ? 'bad' : 'warn'}">${esc(l.status)}</span></div>`).join('') : ''}</div>
+      ${mine.length ? mine.slice(0, 6).map(l => `<div class="li"><div class="t"><b>${fmtDate(l.from)}${l.to !== l.from ? ' – ' + fmtDate(l.to) : ''}${l.emergency ? ' · emergency' : ''}</b><span>${esc(l.reason)}</span>${l.rejectReason ? `<span style="color:var(--bad,#b42318)">${esc(l.rejectReason)}</span>` : ''}</div><span class="pill ${l.status === 'Approved' ? 'ok' : l.status === 'Rejected' ? 'bad' : 'warn'}">${esc(l.status)}</span></div>`).join('') : ''}</div>
     <div class="card"><h3>School holidays ahead</h3>${hol.length ? hol.map(h => `<div class="li"><div class="t"><b>${esc(h.title)}</b><span>${fmtDate(h.date)}${h.to && h.to !== h.date ? ' – ' + fmtDate(h.to) : ''}</span></div></div>`).join('') : '<div class="empty">None in the calendar.</div>'}
       <p class="mut" style="margin:6px 0 0">The Basic Shiksha Parishad / BSA Bhadohi holiday list is added to the school calendar by itself. The Principal can remove any day in the web ERP → Calendar.</p></div>
     <div class="card"><h3>Change my PIN</h3><div class="two"><input id="pO" class="inp pin" type="password" inputmode="numeric" placeholder="Old"><input id="pN" class="inp pin" type="password" inputmode="numeric" placeholder="New"></div>
@@ -1893,12 +1893,11 @@ function openMe() {
 function leaveApply() {
   const from = $('lvF').value, to = $('lvT').value, reason = $('lvR').value.trim();
   if (!from || !to || to < from) return toast('Check the dates.'); if (!reason) return toast('Write a reason.');
+  for (let d = from, i = 0; d <= to && i < 62; i++, d = addDays(d, 1)) { const w = new Date(d + 'T00:00:00').getDay(); if (w === 1 || w === 6) return toast('Staff rules: leave is not granted on a ' + (w === 1 ? 'Monday' : 'Saturday') + ' (' + fmtDate(d) + ').'); }
   const id = uid(); put('leave', id, { id, tid: me(), from, to, reason: reason.slice(0, 200), status: 'Pending', at: Date.now() }, 'Leave', `${myName()} requested leave ${from} to ${to}: ${reason} — Teacher App`);
   S.leaves.sort((a, b) => (b.at || 0) - (a.at || 0));
-  // Leave policy (leavepolicy_lib.php decides on the server; this only tells the teacher what will happen)
-  const lp = (window.LPPOL || { noticeHour: 7, autoDays: 0 }), tdy = todayISO(), days = Math.round((new Date(to) - new Date(from)) / 864e5) + 1;
-  const onTime = from > tdy || (from === tdy && new Date().getHours() < lp.noticeHour);
-  toast(!onTime ? 'Late request — the Principal will decide. Until then it counts as leave without permission.' : lp.autoDays && days <= lp.autoDays ? 'On time — your leave is approved by itself and your bells get an arrangement.' : 'Leave request sent to the Principal.'); openMe();
+  // Staff rules (leavepolicy_lib.php checks every request on the server and rejects it by itself, with the reason)
+  toast('Request sent. The system checks it against the staff rules — see Approved / Rejected (with the reason) below.'); openMe();
 }
 async function pinChange() { const o = $('pO').value.trim(), n = $('pN').value.trim(); if (!/^\d{4,8}$/.test(n)) return toast('New PIN must be 4 to 8 digits.'); if (n === '1234') return toast('Choose a PIN other than 1234.');
   try { await api('api.php?a=setpin', { old: o, pin: n }); toast('PIN changed.'); closeSheet(); } catch (e) { toast(e.message); } }
