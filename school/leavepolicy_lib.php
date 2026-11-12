@@ -8,10 +8,10 @@
 //  in the Teacher App → Staff → Leave policy):
 //   • Leave is asked in the app. A leave asked for TOMORROW or later, or for
 //     today before the notice hour (default 07:00), is ON TIME.
-//   • On-time leave of up to autoDays days (default 2) is approved by itself the
-//     moment it reaches the server — the arrangement fills those bells by itself.
-//     Longer leave waits for the Principal. Late leave stays Pending and is
-//     marked late; the Principal may still approve it.
+//   • Owner, 12 Nov 2026 (same day): NO leave is approved by itself — every leave
+//     waits for the Principal (autoDays default 0). The Principal may set
+//     autoDays > 0 later; then on-time short leave is approved on arrival.
+//     Late leave is marked late and counts as without permission until approved.
 //   • Salary: paid leave (per staff, default 1 a month) covers approved leave and
 //     half days only. A day marked absent in Staff Attendance with no approved
 //     leave is "without permission" and is ALWAYS cut.
@@ -22,7 +22,7 @@
 // ============================================================================
 declare(strict_types=1);
 
-const LP_DEFAULT = ['ver' => 1, 'noticeHour' => 7, 'autoDays' => 2, 'bonus' => 300, 'warnAfter' => 2];
+const LP_DEFAULT = ['ver' => 2, 'noticeHour' => 7, 'autoDays' => 0, 'bonus' => 300, 'warnAfter' => 2];
 
 function lp_policy(): array {
     $s = (array)(sch_rec_get('tchPolicy', 'main') ?? []);
@@ -38,8 +38,8 @@ function lp_rules(?array $p = null): array {
     $h = sprintf('%d:00 baje', $p['noticeHour']);
     return [
         'Chhutti sirf Teacher App se maangi jayegi (My account → Apply for leave). Phone / WhatsApp par boli gayi chhutti nahi maani jayegi.',
-        "Kal ya usse aage ki chhutti, ya aaj ki chhutti subah $h se pehle maangi gayi to wo time par maani jayegi" . ($p['autoDays'] > 0 ? " — {$p['autoDays']} din tak ki aisi chhutti apne aap approve ho jayegi aur aapke bell ka arrangement apne aap lag jayega." : '.'),
-        ($p['autoDays'] > 0 ? "{$p['autoDays']} din se lambi chhutti Principal approve karenge. " : '') . "Aaj ki chhutti $h ke baad maangi gayi to wo 'late' hai — Principal ke approve karne tak bina ijazat ki maani jayegi.",
+        "Kal ya usse aage ki chhutti, ya aaj ki chhutti subah $h se pehle maangi gayi to wo time par maani jayegi" . ($p['autoDays'] > 0 ? " — {$p['autoDays']} din tak ki aisi chhutti apne aap approve ho jayegi aur aapke bell ka arrangement apne aap lag jayega." : '. Approve hote hi aapke bell ka arrangement apne aap lag jayega.'),
+        ($p['autoDays'] > 0 ? "{$p['autoDays']} din se lambi chhutti Principal approve karenge. " : 'Har chhutti Principal approve karenge — approve hone se pehle chhutti par na jayein. ') . "Aaj ki chhutti $h ke baad maangi gayi to wo 'late' hai — Principal ke approve karne tak bina ijazat ki maani jayegi.",
         'Har mahine 1 paid leave milti hai (Principal kisi staff ki zyada rakh sakte hain). Approved chhutti aur half day isi me se kat-te hain; usse zyada din ki salary katti hai.',
         'Bina approved chhutti ke school na aana (Staff Attendance me absent) = bina ijazat chhutti. Us din ki salary hamesha katti hai — paid leave se nahi bharti.',
         'Mahine me ek bhi din absent nahi (na chhutti, na half day) to ₹' . number_format($p['bonus']) . ' full-attendance bonus us mahine ki salary me apne aap judega.',

@@ -63,9 +63,9 @@
   openMe = function () {
     _openMe.apply(this, arguments);
     const f = SHEET; if (typeof f !== 'function') return;
-    const h = (LP && LP.policy) ? LP.policy.noticeHour : 7, n = (LP && LP.policy) ? LP.policy.autoDays : 2;
+    const h = (LP && LP.policy) ? LP.policy.noticeHour : 7, n = (LP && LP.policy) ? LP.policy.autoDays : 0;
     SHEET = () => f().replace('onclick="leaveApply()">Send to Principal</button>', `onclick="leaveApply()">Send leave request</button>
-      <p class="mut lp-note">Kal ya aage ki chhutti, ya aaj ki ${h}:00 baje se pehle — ${n ? n + ' din tak apne aap approve.' : 'time par.'} ${h}:00 ke baad aaj ki chhutti = late (Principal decide karenge). <a href="#" onclick="lpRules();return false">Read rules</a></p>`);
+      <p class="mut lp-note">Kal ya aage ki chhutti, ya aaj ki ${h}:00 baje se pehle — ${n ? n + ' din tak apne aap approve.' : 'time par maani jayegi; Principal approve karenge.'} ${h}:00 ke baad aaj ki chhutti = late (Principal decide karenge). <a href="#" onclick="lpRules();return false">Read rules</a></p>`);
     render();
   };
 

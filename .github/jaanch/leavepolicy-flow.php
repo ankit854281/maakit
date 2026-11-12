@@ -32,6 +32,14 @@ $put('settings', 'main', ['school' => 'Leave Test School', 'session' => '2026-27
 $put('teacher', 'K', ['name' => 'Kartikey Sir', 'role' => 'Social Science']);
 $put('teacher', 'MA', ['name' => 'Mamta Ma\'am', 'role' => 'Hindi']);
 
+// ---- default (owner, 12 Nov 2026): nothing is approved by itself ----
+lp_check(lp_policy()['autoDays'] === 0, 'auto-approve is off by default');
+$r0 = lp_on_leave(['id' => 'x', 'tid' => 'K', 'from' => '2026-11-13', 'to' => '2026-11-13', 'status' => 'Pending'], 'K', strtotime('2026-11-12 06:00 Asia/Kolkata'));
+lp_check($r0['status'] === 'Pending' && $r0['late'] === false, 'on-time leave still waits for the Principal');
+lp_check(str_contains(implode(' ', lp_rules()), 'Har chhutti Principal approve karenge'), 'rules say the Principal approves every leave');
+// the rest checks the optional auto-approve (Principal sets autoDays = 2)
+$put('tchPolicy', 'main', ['ver' => 2, 'autoDays' => 2]);
+
 // ---- unit: on time / late / long (India time) ----
 $at = fn($s) => strtotime($s . ' Asia/Kolkata');
 $L = fn($f, $t) => ['id' => 'x', 'tid' => 'K', 'from' => $f, 'to' => $t, 'reason' => 'r', 'status' => 'Pending'];
@@ -56,12 +64,12 @@ foreach ([['P', ['role' => 'principal', 'pin' => '2468']], ['K', ['role' => 'tea
 }
 
 // ---- accept the rules once ----
-[$c, $j] = $ta('policy', null, $tok['K']); lp_check($c === 200 && $j['accepted'] === false && $j['policy']['ver'] === 1 && count($j['rules']) >= 8, 'teacher has not accepted yet');
+[$c, $j] = $ta('policy', null, $tok['K']); lp_check($c === 200 && $j['accepted'] === false && $j['policy']['ver'] === 2 && count($j['rules']) >= 8, 'teacher has not accepted yet');
 [$c, $j] = $ta('policy', null, $tok['P']); lp_check($c === 200 && $j['accepted'] === true, 'Principal is never blocked');
 [$c] = $ta('accept', ['ver' => 9], $tok['K']); lp_check($c === 400, 'old version refused');
-[$c] = $ta('accept', ['ver' => 1], $tok['P']); lp_check($c === 403, 'Principal does not accept');
-[$c] = $ta('accept', ['ver' => 1], $tok['CH']); lp_check($c === 403, 'Chairman only views');
-[$c] = $ta('accept', ['ver' => 1], $tok['K']); lp_check($c === 200, 'K accepts');
+[$c] = $ta('accept', ['ver' => 2], $tok['P']); lp_check($c === 403, 'Principal does not accept');
+[$c] = $ta('accept', ['ver' => 2], $tok['CH']); lp_check($c === 403, 'Chairman only views');
+[$c] = $ta('accept', ['ver' => 2], $tok['K']); lp_check($c === 200, 'K accepts');
 [, $j] = $ta('policy', null, $tok['K']); lp_check($j['accepted'] === true && $j['acceptedAt'] > 0, 'K accepted with the time');
 lp_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Leave policy' AND x LIKE 'Kartikey Sir accepted%'")->fetchColumn() === 1, 'acceptance logged');
 
@@ -85,7 +93,7 @@ $byT = array_column($j['rows'], null, 'tid'); lp_check($byT['K']['accepted'] ===
 
 // ---- change the rules → everyone accepts again ----
 [$c] = $ta('policyset', ['bonus' => 500], $tok['K']); lp_check($c === 403, 'teacher cannot change rules');
-[$c, $j] = $ta('policyset', ['bonus' => 500, 'noticeHour' => 6], $tok['P']); lp_check($c === 200 && $j['policy']['ver'] === 2 && $j['policy']['bonus'] === 500, 'Principal changes the bonus');
+[$c, $j] = $ta('policyset', ['bonus' => 500, 'noticeHour' => 6], $tok['P']); lp_check($c === 200 && $j['policy']['ver'] === 3 && $j['policy']['bonus'] === 500, 'Principal changes the bonus');
 [, $j] = $ta('policy', null, $tok['K']); lp_check($j['accepted'] === false && str_contains(implode(' ', $j['rules']), '₹500') && str_contains(implode(' ', $j['rules']), '6:00'), 'new version asks again');
 lp_check(lp_policy()['bonus'] === 500, 'salary reads the new bonus');
 

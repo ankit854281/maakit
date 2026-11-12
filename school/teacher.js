@@ -1896,7 +1896,7 @@ function leaveApply() {
   const id = uid(); put('leave', id, { id, tid: me(), from, to, reason: reason.slice(0, 200), status: 'Pending', at: Date.now() }, 'Leave', `${myName()} requested leave ${from} to ${to}: ${reason} — Teacher App`);
   S.leaves.sort((a, b) => (b.at || 0) - (a.at || 0));
   // Leave policy (leavepolicy_lib.php decides on the server; this only tells the teacher what will happen)
-  const lp = (window.LPPOL || { noticeHour: 7, autoDays: 2 }), tdy = todayISO(), days = Math.round((new Date(to) - new Date(from)) / 864e5) + 1;
+  const lp = (window.LPPOL || { noticeHour: 7, autoDays: 0 }), tdy = todayISO(), days = Math.round((new Date(to) - new Date(from)) / 864e5) + 1;
   const onTime = from > tdy || (from === tdy && new Date().getHours() < lp.noticeHour);
   toast(!onTime ? 'Late request — the Principal will decide. Until then it counts as leave without permission.' : lp.autoDays && days <= lp.autoDays ? 'On time — your leave is approved by itself and your bells get an arrangement.' : 'Leave request sent to the Principal.'); openMe();
 }
