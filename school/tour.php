@@ -22,13 +22,18 @@ if (isset($_GET['photo'])) {
   if (!is_file($file)) {
     if (!is_dir($folder)) @mkdir($folder, 0755, true);
     if (is_dir($folder) && function_exists('imagecreatefromstring')) {
-      $url = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/' . rawurlencode($commonsName) . '?width=1200';
+      // Commons sometimes fails to produce a resized thumbnail. Retry the original file instead.
+      $redirect = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/' . rawurlencode($commonsName);
       $bytes = false;
       if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_TIMEOUT => 14, CURLOPT_USERAGENT => 'SNMSIS-SchoolTour/1.0 (educational Wikimedia Commons attribution)', CURLOPT_SSL_VERIFYPEER => true]);
-        $data = curl_exec($ch); $status = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-        if ($status === 200 && is_string($data) && strlen($data) < 6000000) $bytes = $data;
+        foreach ([$redirect . '?width=1200', $redirect] as $url) {
+          $ch = curl_init($url);
+          curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_TIMEOUT => 10, CURLOPT_USERAGENT => 'SNMSIS-SchoolTour/1.0 (educational Wikimedia Commons attribution)', CURLOPT_SSL_VERIFYPEER => true]);
+          $data = curl_exec($ch); $status = curl_getinfo($ch, CURLINFO_HTTP_CODE); $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE) ?: ''; curl_close($ch);
+          if ($status === 200 && is_string($data) && strlen($data) < 12000000 && stripos($mime, 'image/') === 0) {
+            $bytes = $data; break;
+          }
+        }
       }
       if ($bytes !== false) {
         $src = @imagecreatefromstring($bytes);
