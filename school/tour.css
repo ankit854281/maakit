@@ -173,3 +173,38 @@ html{scroll-behavior:smooth}
 .exp-bottom span{opacity:.8}
 @media(max-height:700px){.exp-ready .exp-content h2{font-size:29px}.exp-ready .exp-chip{padding:5px 8px}.exp-checklist{gap:4px;margin:5px 0}.exp-checklist div{padding:6px 9px}.exp-checklist b{font-size:12px}.exp-checklist small{font-size:10px}.exp-ready-content{padding-bottom:6px}}
 @media(max-height:570px){.exp-ready .exp-content h2{font-size:26px}.exp-checklist div{padding:4px 8px}.exp-ready .exp-hindi{margin:1px 0!important}.exp-checklist b{font-size:11px}.exp-checklist small{font-size:9px}}
+
+/* True edge-to-edge mobile app mode. This overrides older narrow .wrap and 699px rules. */
+html,body{max-width:100%;overflow-x:clip}
+.wrap{width:100%;max-width:none;margin:0;padding:0 0 36px}
+.experience{width:100%;max-width:none;height:100svh;height:100dvh;min-height:0;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none}
+.exp-track,.exp-slide{height:100%;max-width:100%}
+.exp-slide{min-height:0}
+.exp-content{max-width:760px;margin-inline:auto}
+.exp-top{max-width:none}
+.exp-bottom{padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
+.exp-details-title{padding:18px 16px 4px}
+.exp-details-title .count{margin-bottom:12px}
+.destination-heading{text-align:center;margin:16px 12px!important}
+.destination-deck{height:100svh;height:100dvh;min-height:0;overflow-y:auto;scroll-snap-type:y mandatory;scroll-behavior:smooth;overscroll-behavior-y:contain;scrollbar-width:none;background:#101a32}
+.destination-deck::-webkit-scrollbar{display:none}
+.destination-deck .destination-card{min-height:100%;height:100%;width:100%;margin:0;border-radius:0;scroll-snap-align:start;scroll-snap-stop:always;box-shadow:none;background:#fff;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain}
+.destination-card .art{height:46%;min-height:200px;flex:none}
+.destination-card .art .tour-photo{object-position:center}
+.destination-card>.photo-credit{background:#fff;padding:7px 15px 0;font-size:10px}
+.destination-card .bd{padding:17px 20px 8px;max-width:760px;width:100%;margin:0 auto}
+.destination-card h3{font-size:clamp(22px,5vw,32px)}
+.destination-card h3 small{display:block;margin:4px 0 0;font-size:14px}
+.destination-card .loc{font-size:13px}
+.destination-card p{font-size:clamp(14px,3vw,17px);line-height:1.55}
+.destination-card li{font-size:12px}
+.destination-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 20px max(14px,env(safe-area-inset-bottom,0px));margin-top:auto;background:#fff;max-width:760px;width:100%;margin-inline:auto}
+.destination-actions span{color:#736984;font-size:12px;font-weight:700}
+.destination-next{padding:13px 18px;color:white;background:#db2777;border-radius:999px;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 4px 13px #db27773b}
+#gallery{scroll-margin-top:15px}
+.wrap>.sec:not(.destination-heading),.wrap>.learn,.wrap>.bring,.wrap>.note,.wrap>.cta,.wrap>.tour-gallery,.wrap>footer{max-width:760px;margin-left:auto;margin-right:auto}
+.wrap>.sec:not(.destination-heading){padding-left:15px;padding-right:15px}
+.wrap>.learn,.wrap>.bring,.wrap>.note,.wrap>.tour-gallery{margin-left:12px;margin-right:12px}
+@media(min-width:784px){.wrap>.learn,.wrap>.bring,.wrap>.note,.wrap>.tour-gallery{margin-left:auto;margin-right:auto}.destination-card .art{height:53%}}
+@media(max-height:670px){.destination-card .art{height:35%;min-height:145px}.destination-card .bd{padding:8px 14px 3px}.destination-card p{margin-bottom:4px}.destination-actions{padding:5px 14px}.destination-next{padding:9px 14px}}
+@media(prefers-reduced-motion:reduce){.destination-deck{scroll-behavior:auto}}
