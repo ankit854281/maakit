@@ -235,3 +235,27 @@ html,body{overflow-y:auto;overscroll-behavior-y:auto;scroll-snap-type:none}
 .destination-deck .destination-card{overflow:visible!important}
 .destination-next{display:inline-flex;align-items:center;min-height:44px}
 @media(max-width:390px){.exp-bottom{min-height:64px}.exp-bottom span{font-size:10px}.exp-bottom .exp-down{font-size:11px;padding:8px}}
+
+/* Owner rollback: compact, reliably scrollable tour page. Never create nested vertical scrollboxes. */
+html{scroll-behavior:auto!important;scroll-snap-type:none!important;overflow-y:auto!important}
+html,body{width:100%;max-width:100%;overflow-x:hidden!important;overscroll-behavior-y:auto!important}
+body{position:static}
+.wrap{max-width:620px!important;width:100%!important;margin:0 auto!important;padding:10px 12px 36px!important;overflow:visible!important}
+.experience{width:100%!important;max-width:100%!important;height:560px!important;min-height:0!important;max-height:none!important;margin:0 0 16px!important;border-radius:20px!important;box-shadow:0 8px 22px #151a3930!important;overflow:hidden!important}
+.exp-track{height:auto!important;min-height:0!important;flex:1!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x mandatory!important;overscroll-behavior-y:auto!important;touch-action:pan-x pan-y!important}
+.exp-slide{height:100%!important;min-height:0!important}
+.exp-top{padding-top:10px!important}
+.exp-content{padding:0 18px 15px!important}
+.exp-content h1,.exp-content h2{font-size:36px!important}
+.exp-controls{padding:7px 10px!important}
+.exp-bottom{min-height:46px!important;padding:4px 9px 8px!important}
+.exp-bottom .exp-down{min-height:35px!important;padding:7px 9px!important}
+.exp-details-title{padding:10px 6px!important}
+.destination-heading{margin:16px 5px 10px!important}
+.destination-deck{display:block!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;scroll-behavior:auto!important;scroll-snap-type:none!important;overscroll-behavior-y:auto!important;margin:0!important;padding:0!important}
+.destination-deck .destination-card{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;scroll-snap-type:none!important;scroll-snap-align:none!important;display:block!important;border-radius:19px!important;margin:0 0 14px!important}
+.destination-card .art{height:185px!important;min-height:0!important}
+.destination-card .bd{padding:12px 14px 7px!important}
+.destination-actions{padding:8px 14px 12px!important}
+@media(max-width:390px){.experience{height:530px!important}.exp-content h1,.exp-content h2{font-size:32px!important}.exp-ready .exp-content h2{font-size:27px!important}.exp-checklist{gap:4px!important}.exp-checklist div{padding:5px 8px!important}.exp-checklist b{font-size:11px!important}.exp-checklist small{font-size:10px!important}}
+@media(max-height:650px){.experience{height:470px!important}.exp-content h1,.exp-content h2{font-size:29px!important}.exp-mini span{padding:5px!important}.exp-ready .exp-content h2{font-size:25px!important}.exp-checklist div{padding:4px 8px!important}}
