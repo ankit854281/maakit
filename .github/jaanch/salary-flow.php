@@ -112,6 +112,8 @@ sl_check($row($j, 't:K')['status'] === 'Due' && $k['absent'] === 4.5 && $k['adva
 sl_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Salary' AND x LIKE 'REOPENED Kartikey Sir 2026-09%Missed absence on 22nd'")->fetchColumn() === 1, 'reopen logged');
 // Manager PIN: only the Chairman sets / resets it
 [$c] = $api('setpin', ['uid' => 'manager', 'pin' => '1234'], $tok['P']); sl_check($c === 403, 'Principal cannot reset the Manager PIN');
+$pdo->exec("DELETE FROM sch_users WHERE uid='manager'");
+[$c] = $api('login', ['role' => 'manager', 'pin' => '1234']); sl_check($c === 403, 'no first-time 1234 for the Manager — Chairman must set the PIN first');
 [$c] = $api('setpin', ['uid' => 'manager', 'pin' => '4545'], $tok['CH']); sl_check($c === 200, 'Chairman sets the Manager PIN');
 [$c] = $api('setpin', ['uid' => 't:K', 'pin' => '1234'], $tok['CH']); sl_check($c === 403, 'Chairman cannot set other PINs');
 [$c, $j] = $api('login', ['role' => 'manager', 'pin' => '4545']); sl_check($c === 200 && $j['me']['label'] === 'Manager', 'Manager logs in with the new PIN');

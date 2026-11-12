@@ -30,7 +30,7 @@
       ${MUST ? `<div class="f"><label>Choose your own PIN (4–8 digits, not 1234)</label><input id="nP" type="password" inputmode="numeric" maxlength="8"></div><button class="btn go full f" onclick="mgNewPin()">Save my PIN</button>`
       : `<div class="f"><label>Who are you?</label><select id="lR" onchange="ROLESET(this.value)"><option value="manager" ${ROLE === 'manager' ? 'selected' : ''}>${esc(NAMES.manager || 'Manager')} — Manager</option><option value="chairman" ${ROLE === 'chairman' ? 'selected' : ''}>Chairman</option></select></div>
         <div class="f"><label>PIN</label><input id="lP" type="password" inputmode="numeric" maxlength="8" onkeydown="if(event.key==='Enter')mgLogin()"></div><button class="btn go full f" onclick="mgLogin()">Open</button>
-        <p class="mut f">Manager: first PIN 1234, then choose your own. Only the Chairman can reset the Manager's PIN.</p>`}</div>`;
+        <p class="mut f">Manager: use the PIN the Chairman gave you (if it was 1234 you will choose your own). Only the Chairman sets or resets the Manager's PIN.</p>`}</div>`;
   }
   window.ROLESET = v => { ROLE = v; store.set('sal_role', v); };
   window.mgLogin = async () => { const pin = $('lP').value.trim();

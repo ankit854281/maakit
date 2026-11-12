@@ -98,7 +98,8 @@ case 'login': {
         case 'accountant':
         case 'reception': $uid = $role; $valid = true; break;   // school office (fees) — office_api.php
         case 'dataentry': $uid = $role; $valid = true; break;   // non-teaching data entry (12 Nov 2026) — dataentry.php only
-        case 'manager':   $uid = $role; $valid = true; break;   // Salary app (12 Nov 2026) — manager.php only, salary with the Chairman
+        case 'manager':   $uid = $role; $valid = false; break;  // Salary app (12 Nov 2026) — manager.php only. No "first PIN 1234":
+                                                                // the Chairman must set the Manager's PIN first, so nobody else gets in
         case 'teacher':
             $tid = preg_replace('/[^A-Za-z0-9_]/', '', (string)($in['tid'] ?? ''));
             if ($tid === 'P') sch_fail('Please use the Principal login.');
