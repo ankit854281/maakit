@@ -30,3 +30,15 @@ const LINK = 'https://maakit.in/school/tour.php';
 const MSG = `🚌 *Children's Day Prayagraj Educational Tour*\n🎉 बाल दिवस विशेष — SN Mishra Singapore International School\n\n📅 Saturday, 14 Nov 2026\n🎓 Classes 4–10\n📍 Allahabad Museum · Hathi Park · Khusro Bagh · All Saints Cathedral\n\n🚨 Limited seats — register with your Class Teacher.\nपूरी जानकारी: ${LINK}`;
 $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(MSG);
 $('copy').onclick = async () => { try { if (navigator.share) { await navigator.share({ title: "Children's Day Prayagraj Tour", text: MSG.replace(LINK, '').trim(), url: LINK }); return; } await navigator.clipboard.writeText(MSG); $('copy').textContent = '✅ Copied'; } catch (e) {} };
+
+// The photo endpoint saves verified Wikimedia Commons images to img/tour/ on first request.
+// Keep the hand-drawn SVG if a photo is unavailable; never show a broken placeholder.
+document.querySelectorAll('.place .tour-photo').forEach(img => {
+  img.addEventListener('load', () => img.closest('.art')?.classList.add('photo-loaded'));
+  img.addEventListener('error', () => img.closest('.art')?.classList.remove('photo-loaded'));
+  if (img.complete && img.naturalWidth) img.closest('.art')?.classList.add('photo-loaded');
+});
+document.querySelectorAll('.tour-gallery img').forEach(img => {
+  img.addEventListener('error', () => img.closest('.gallery-card')?.classList.add('photo-failed'));
+  if (img.complete && !img.naturalWidth) img.closest('.gallery-card')?.classList.add('photo-failed');
+});
