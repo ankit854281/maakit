@@ -130,9 +130,9 @@ $link = 'https://maakit.in/school/tour.php';
       </section>
     </div>
     <div class="exp-controls"><button type="button" id="expPrev" class="exp-prev" aria-label="Previous slide">← Back</button><div class="exp-dots" id="expDots" aria-label="Slide progress"><button class="active" aria-label="Slide 1" aria-current="step" data-index="0"></button><button aria-label="Slide 2" data-index="1"></button><button aria-label="Slide 3" data-index="2"></button><button aria-label="Slide 4" data-index="3"></button><button aria-label="Slide 5" data-index="4"></button><button aria-label="Slide 6" data-index="5"></button></div><button type="button" id="expNext" class="exp-next">Next →</button></div>
-    <div class="exp-bottom"><span>Swipe left to explore 👉 · आगे देखने के लिए स्वाइप करें</span><a href="#all-details">Full tour information ↓</a></div>
+    <div class="exp-bottom"><span>👈 Swipe for slides • नीचे जाने के लिए ↓</span><a class="exp-down" href="#all-details" aria-label="Scroll down to all tour places">⬇ नीचे जाएँ · See all places</a></div>
   </section>
-  <div id="all-details" class="exp-details-title"><h2>Explore the full tour ✨</h2><p>सभी जगहों की तस्वीरें, इतिहास और ज़रूरी जानकारी</p><div class="count" id="count" aria-live="polite"></div></div>
+  <div id="all-details" class="exp-details-title"><a class="details-skip" href="#destinations">⬇ चारों स्थान देखें · View 4 places</a><h2>Explore the full tour ✨</h2><p>सभी जगहों की तस्वीरें, इतिहास और ज़रूरी जानकारी</p><div class="count" id="count" aria-live="polite"></div></div>
 
   <h2 class="sec destination-heading">One day, four amazing places ✨<small>एक ही यात्रा में इतिहास, कला, स्थापत्य, प्रकृति और खूब सारी नई सीख</small></h2>
 
