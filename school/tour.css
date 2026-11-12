@@ -81,3 +81,38 @@ footer{text-align:center;font-size:12px;color:#8a7f98;margin-top:22px;line-heigh
 .park-photo-pending{height:100%;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:#fff;text-shadow:0 1px 4px #0006;text-align:center}.park-photo-pending strong{font-size:25px}.park-photo-pending small{font-size:13px}
 .place .art+.photo-credit{padding:6px 14px 0}
 @media(max-width:390px){.place .art{height:195px}}
+
+/* Marketing-first mobile fold: the complete offer, dates, locations and CTA are immediately visible. */
+html{scroll-behavior:smooth}
+.wrap{max-width:680px;padding-top:8px}
+.hero-campaign{padding:0;background:#fff;border-radius:25px;box-shadow:0 12px 32px #27334b20;color:#1d2540;overflow:hidden}
+.hero-campaign .hero-picture{position:relative;min-height:285px;background:linear-gradient(130deg,#6c4253,#233956);color:white;overflow:hidden}
+.hero-campaign .hero-picture>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 44%}
+.hero-campaign .hero-photo-shade{position:absolute;inset:0;background:linear-gradient(180deg,#091728c9 0%,#09172815 38%,#0a173bdc 100%)}
+.hero-campaign .sch{position:absolute;top:13px;left:15px;z-index:2;gap:8px}
+.hero-campaign .sch small{font-size:10px;line-height:1.35;font-weight:700;letter-spacing:.04em;color:#fff}
+.hero-campaign .sch img{width:42px;height:42px}
+.hero-stamp{position:absolute;top:72px;left:15px;padding:6px 10px;background:#ffdb6d;color:#54220b;border-radius:30px;font-size:11px;font-weight:700;z-index:1}
+.hero-headline{position:absolute;bottom:17px;left:17px;right:17px;z-index:1}
+.hero-eyebrow{display:block;letter-spacing:.09em;font-size:10px;font-weight:700;color:#ffe8b1}
+.hero-campaign h1{font-size:clamp(37px,9vw,56px);line-height:1.01;margin:6px 0 8px;font-weight:700;letter-spacing:-.03em}
+.hero-campaign h1 span{color:#ffe17b}
+.hero-campaign .hero-headline p{font-size:13px;font-weight:600;line-height:1.35}
+.hero-panel{padding:13px 14px 14px}
+.hero-pills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.hero-pills span{text-align:center;border-radius:9px;background:#edf1fc;padding:9px 3px;color:#222d51;font-size:11px;font-weight:700}
+.hero-places{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:10px 0}
+.hero-places strong{background:#f9f4e8;border:1px solid #f1e4d1;text-align:center;padding:9px 2px;border-radius:10px;color:#573b31;font-size:10px;line-height:1.25}
+.hero-action{display:grid;grid-template-columns:minmax(0,1fr) 95px;gap:8px}
+.hero-action a{min-height:46px;display:flex;justify-content:center;align-items:center;text-align:center;border-radius:12px;text-decoration:none;font-size:12px;font-weight:700;line-height:1.3;padding:8px}
+.hero-register{background:#dc2361;color:white;box-shadow:0 4px 12px #db277740}
+.hero-share{background:#e3f7e9;color:#116332}
+.hero-note{text-align:center;font-size:11px;color:#665a6f;margin:9px 0}
+.hero-countline{display:flex;align-items:center;justify-content:center;gap:9px;border-top:1px solid #f0eaf0;padding-top:7px}
+.hero-countline>span{font-size:11px;font-weight:700;color:#6b627b}
+.hero-countline .count{margin:0;gap:4px}
+.hero-countline .count div{min-width:39px;border-radius:7px;padding:4px 5px}
+.hero-countline .count b{font-size:14px}
+.hero-countline .count small{font-size:9px}
+.cta{scroll-margin-top:30px}
+@media(max-width:390px){.hero-campaign .hero-picture{min-height:265px}.hero-stamp{top:66px}.hero-campaign h1{font-size:39px}.hero-places strong{font-size:9px}.hero-pills span{font-size:10px}.hero-action{grid-template-columns:minmax(0,1fr) 82px}.hero-action a{font-size:11px}.hero-panel{padding:10px 11px}.hero-places{margin:7px 0}.hero-note{margin:6px 0}}
