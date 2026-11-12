@@ -22,7 +22,7 @@
     $('app').innerHTML = `<div class="lg"><h2>Data Entry</h2><p class="mut">${esc(NAMES.dataentry || 'Data Entry')} · SN Mishra SIS</p>
       ${MUST ? `<div class="f"><label class="mut">Choose your own PIN (4–8 digits)</label><input id="nPin" type="password" inputmode="numeric" maxlength="8"></div><button class="btn go f" style="width:100%" onclick="deNewPin()">Save my PIN</button>`
         : `<div class="f"><label class="mut">PIN</label><input id="pin" type="password" inputmode="numeric" maxlength="8" onkeydown="if(event.key==='Enter')deLogin()"></div><button class="btn go f" style="width:100%" onclick="deLogin()">Open</button>
-        <p class="mut f">First time: PIN 1234 — then choose your own. Forgot it? Ask the Principal to reset it (ERP → Settings → Logins).</p>`}</div>`;
+        <p class="mut f">First time: PIN 1234 — then choose your own. Forgot it? Ask the Principal to reset it (ERP → Settings → Logins).</p>${/; wv\)/.test(navigator.userAgent) ? '' : '<p class="mut f"><a href="https://github.com/ankit854281/maakit/releases/download/dataentry-android-v1/snmsis-dataentry.apk">⬇ Download the SNMSIS Data Entry app (Android)</a></p>'}`}</div>`;
   }
   window.deLogin = async () => {
     try { const r = await api('api.php?a=login', { role: 'dataentry', pin: $('pin').value.trim() }); store.set('sch_token', r.token); MUST = !!r.mustChange; if (MUST) { window._old = $('pin').value.trim(); return loginView(); } draw(); }
