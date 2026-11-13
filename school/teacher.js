@@ -1578,7 +1578,7 @@ function vConn() {
 // Class teacher (or the fee caller) calls parents about the tour and tags each child; the Manager's Tour fee list shows the tags.
 const TOURC = {};
 const TTAGS = [['going', '✅ Going · pay later'], ['no', '❌ Not going'], ['think', '🤔 Will tell'], ['noans', '📵 No answer']];
-function tourState(k) { return k.paid ? 'paid' : k.tag ? k.tag.tag || 'none' : k.book ? 'going' : 'none'; }
+function tourState(k) { return k.paid ? 'paid' : k.jp ? 'jp' : k.tag ? k.tag.tag || 'none' : k.book ? 'going' : 'none'; }
 function vTourCall(ct) {
   const c = ct.includes(P.c) ? P.c : ct[0];
   if (!TOURC[c]) { TOURC[c] = { loading: true }; api('teacher_api.php?a=tours&cls=' + encodeURIComponent(c)).then(r => { TOURC[c] = r; render(); }).catch(e => { TOURC[c] = { err: e.message }; render(); }); }
@@ -1587,16 +1587,16 @@ function vTourCall(ct) {
   if (D.err) return pick + `<div class="card">${esc(D.err)} <button class="btn s l" onclick="delete TOURC['${esc(c)}'];render()">Try again</button></div>`;
   if (!D.tours.length) return pick + `<div class="card">No tour for Class ${esc(c)} right now.</div>`;
   const t = D.tours.find(x => x.id === P.t) || D.tours[0], K = t.kids, f = P.f || 'all';
-  const n = st => K.filter(k => tourState(k) === st).length, going = K.filter(k => ['paid', 'going'].includes(tourState(k))).length;
+  const n = st => K.filter(k => tourState(k) === st).length, going = K.filter(k => ['paid', 'going', 'jp'].includes(tourState(k))).length;
   const L = K.filter(k => f === 'all' || tourState(k) === f || (f === 'todo' && tourState(k) === 'none'));
   const msg = k => `Namaste 🙏\nSN Mishra Singapore International School se ${myName()} bol rahe hain.\n*${t.name}* — ${fmtDate(t.date)}\nFee: ${rs(t.amount)}\n${k.name} ko tour par bhejna hai to kripya aaj hi bata dijiye. Seats limited hain.\nPage: https://maakit.in/school/tour.php`;
-  const chip = k => { const s = tourState(k); return s === 'paid' ? `<span class="pill" style="background:#dcfce7;color:#14532d">✓ Paid ${rs(k.paid.amount)}</span>` : s === 'none' ? '<span class="pill">Not called</span>' : `<span class="pill" style="background:${{ going: '#fef3c7', no: '#fee4e2', think: '#e0f2fe', noans: '#eef2f0' }[s]}">${esc((TTAGS.find(x => x[0] === s) || [, s])[1])}</span>`; };
+  const chip = k => { const s = tourState(k); return s === 'paid' ? `<span class="pill" style="background:#dcfce7;color:#14532d">✓ Paid ${rs(k.paid.amount)}</span>` : s === 'jp' ? '<span class="pill" style="background:#ede9fe;color:#5b21b6">🎟 JP Sir · no fee</span>' : s === 'none' ? '<span class="pill">Not called</span>' : `<span class="pill" style="background:${{ going: '#fef3c7', no: '#fee4e2', think: '#e0f2fe', noans: '#eef2f0' }[s]}">${esc((TTAGS.find(x => x[0] === s) || [, s])[1])}</span>`; };
   return pick + (D.tours.length > 1 ? `<div class="fld">Tour${sel('tcT', D.tours.map(x => [x.id, x.name]), t.id, `go('conn',{m:'tour',c:${jsq(c)},t:this.value})`)}</div>` : '') +
-    `<div class="card"><h3>🚌 ${esc(t.name)} <small>${esc(fmtDate(t.date))} · ${rs(t.amount)}</small></h3><p class="mut" style="margin:0">Class ${esc(c)}: <b>${going}</b> going of ${K.length} · paid ${n('paid')} · pay later ${n('going')} · not going ${n('no')}</p></div>
+    `<div class="card"><h3>🚌 ${esc(t.name)} <small>${esc(fmtDate(t.date))} · ${rs(t.amount)}</small></h3><p class="mut" style="margin:0">Class ${esc(c)}: <b>${going}</b> going of ${K.length} · paid ${n('paid')} · pay later ${n('going')}${n('jp') ? ' · JP Sir ' + n('jp') : ''} · not going ${n('no')}</p></div>
     <div class="chips">${[['all', 'All', K.length], ['todo', 'Not called', n('none')], ['going', 'Pay later', n('going')], ['paid', 'Paid', n('paid')], ['think', 'Will tell', n('think')], ['noans', 'No answer', n('noans')], ['no', 'Not going', n('no')]].map(([k, l, x]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="go('conn',{m:'tour',c:${jsq(c)},t:${jsq(t.id)},f:'${k}'})">${l} <b>${x}</b></button>`).join('')}</div>
     <div class="fee-list">${L.map(k => `<div class="fee-row"><span class="ph sm"><i>${esc(initials(k.name))}</i></span>
       <div class="n"><b>${esc(k.name)}</b><small>${k.father ? esc(k.father) + ' · ' : ''}${chip(k)}${k.tag && k.tag.note ? ' ' + esc(k.tag.note) : ''}</small></div>
-      <div class="acts">${k.phone ? `<a class="ib" href="tel:+91${esc(k.phone)}" aria-label="Call ${esc(k.name)}" onclick="setTimeout(()=>tourTagSheet(${jsq(c)},${jsq(t.id)},${jsq(k.id)}),1200)">${ic('phone')}</a><a class="ib" href="${esc(wa(k.phone, msg(k)))}" target="_blank" rel="noopener" aria-label="WhatsApp ${esc(k.name)}">💬</a>` : ''}${k.paid ? '' : `<button class="ib" aria-label="Tag ${esc(k.name)}" onclick="tourTagSheet(${jsq(c)},${jsq(t.id)},${jsq(k.id)})">${ic('check')}</button>`}</div></div>`).join('') || '<div class="empty">Nobody here.</div>'}</div>
+      <div class="acts">${k.phone ? `<a class="ib" href="tel:+91${esc(k.phone)}" aria-label="Call ${esc(k.name)}" onclick="setTimeout(()=>tourTagSheet(${jsq(c)},${jsq(t.id)},${jsq(k.id)}),1200)">${ic('phone')}</a><a class="ib" href="${esc(wa(k.phone, msg(k)))}" target="_blank" rel="noopener" aria-label="WhatsApp ${esc(k.name)}">💬</a>` : ''}${k.paid || k.jp ? '' : `<button class="ib" aria-label="Tag ${esc(k.name)}" onclick="tourTagSheet(${jsq(c)},${jsq(t.id)},${jsq(k.id)})">${ic('check')}</button>`}</div></div>`).join('') || '<div class="empty">Nobody here.</div>'}</div>
     <p class="mut">Tags you save here show in the office Tour fee list. "Going · pay later" writes the child's name for the tour; the fee is taken in the office.</p>`;
 }
 function tourTagSheet(c, tid, sid) {

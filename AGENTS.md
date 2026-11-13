@@ -1100,3 +1100,6 @@ papers only from photos the owner sends.
 - Teacher App → Connect → "🚌 Tour calls" (class teacher's own class; the fee caller every class): `teacher_api.php?a=tours&cls=` / `?a=tourtag {tour, sid, tag, note}`. Tags `going` (pay later — also writes `regTourBook` on), `no` (name off), `think`, `noans`; record `regTourTag` `tour|sid`, logged. Call button opens the tag sheet after the call; WhatsApp invite text with the tour page link. Paid comes from the Tour fee receipts.
 - Cash Book → Tour fee shows each unpaid child's tag chip (note + who) and filters Will tell / No answer / Not going.
 - Class 3 added once to the Prayagraj tour (`cd_tour_add3`, flag `settings.tourAdd3`; the Manager can untick it in Edit tour). tour.php/tour.js now say Classes 3–10. Tests: cashdesk-flow.php.
+
+### Tour: "JP Sir" — going, no fee (13 Nov 2026, owner: "kuchh bachche JP Sir ke according jaate hain jo payment nahi dete")
+- `cashdesk_api.php?a=tourbook {…, on:true, jp:true}` → `regTourBook.jp`. Tour fee: "🎟 JP Sir" button on every unpaid child; such a child counts in Going and a "🎟 JP Sir" column, NEVER in Pay later / ₹ due; all lists (simple, going, print, WhatsApp) show "JP Sir" instead of an amount. "Pay later instead" / Remove undo it. Teacher tag "going" keeps JP Sir; Teacher App shows "🎟 JP Sir · no fee" and no tag button. Test: cashdesk-flow.php.

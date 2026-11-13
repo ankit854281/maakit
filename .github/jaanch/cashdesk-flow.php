@@ -119,6 +119,13 @@ $tc = fn($a, $b = null, $t = null, $q = '') => cd_http('/school/teacher_api.php?
 [, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['book'] !== null && $k['s2']['tag']['tag'] === 'going' && $k['s2']['tag']['note'] === 'pays Saturday', 'office sees the tag, name written ' . json_encode($k['s2']));
 [$c] = $tc('tourtag', ['tour' => $T, 'sid' => 's2', 'tag' => 'no'], $tok['K']);
 [, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s2']['book'] === null && $k['s2']['tag']['tag'] === 'no', 'not going removes the name');
+// JP Sir: going, no fee (13 Nov 2026)
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => true, 'jp' => true], $M);
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s2']['book']['jp'] === true && $k['s2']['pay'] === null, 'JP Sir: going, no fee');
+[$c] = $tc('tourtag', ['tour' => $T, 'sid' => 's2', 'tag' => 'going'], $tok['K']);
+[, $j] = $tc('tours', null, $tok['K'], '&cls=4th'); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['jp'] === true, 'teacher tag keeps JP Sir');
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => true], $M);
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['book']['jp'] === false, 'back to pay later');
 // Class 3 joins a Prayagraj tour once
 $put('classes', 'main', [['c' => '4th', 'ct' => 'K'], ['c' => '5th', 'ct' => ''], ['c' => '1st', 'ct' => ''], ['c' => '3rd', 'ct' => '']]);
 $st = sch_rec_get('settings', 'main'); unset($st['tourAdd3']); $put('settings', 'main', $st);

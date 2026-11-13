@@ -355,7 +355,7 @@ case 'tours': {
         $L = [];
         foreach ($kids as $k) { $key = $tour . '|' . $k['id']; $p = $pays[$key] ?? null; $bk = $books[$key] ?? null; $tg = $tags[$key] ?? null;
             $L[] = $k + ['paid' => $p && ($p['status'] ?? '') === 'Paid' ? ['no' => (string)$p['no'], 'amount' => (int)$p['amount'], 'date' => (string)$p['date']] : null,
-                'book' => $bk && !empty($bk['on']), 'tag' => $tg ? ['tag' => (string)$tg['tag'], 'note' => (string)($tg['note'] ?? ''), 'by' => (string)($tg['by'] ?? ''), 'at' => (int)($tg['at'] ?? 0)] : null]; }
+                'book' => $bk && !empty($bk['on']), 'jp' => $bk && !empty($bk['on']) && !empty($bk['jp']), 'tag' => $tg ? ['tag' => (string)$tg['tag'], 'note' => (string)($tg['note'] ?? ''), 'by' => (string)($tg['by'] ?? ''), 'at' => (int)($tg['at'] ?? 0)] : null]; }
         $out[] = ['id' => (string)$tour, 'name' => (string)$t['name'], 'date' => (string)$t['date'], 'amount' => (int)$t['amount'], 'kids' => $L];
     }
     usort($out, fn($x, $y) => strcmp($y['date'], $x['date']));
@@ -374,7 +374,8 @@ case 'tourtag': {
     $who = sch_user_label($u);
     sch_rec_put('regTourTag', $key, ['tag' => $tag, 'note' => $note, 'by' => $who, 'at' => sch_now_ms(), 'name' => (string)($st['name'] ?? ''), 'cls' => $cls], $uid);
     $paid = (sch_rec_get('regTourPay', $key)['status'] ?? '') === 'Paid';
-    if (!$paid && ($tag === 'going' || $tag === 'no')) sch_rec_put('regTourBook', $key, ['on' => $tag === 'going', 'by' => $who, 'at' => sch_now_ms(), 'name' => (string)($st['name'] ?? ''), 'cls' => $cls], $uid);
+    $bk0 = sch_rec_get('regTourBook', $key);
+    if (!$paid && ($tag === 'going' || $tag === 'no')) sch_rec_put('regTourBook', $key, ['on' => $tag === 'going', 'jp' => $tag === 'going' && !empty($bk0['on']) && !empty($bk0['jp']), 'by' => $who, 'at' => sch_now_ms(), 'name' => (string)($st['name'] ?? ''), 'cls' => $cls], $uid);
     $lbl = ['going' => 'Going (pay later)', 'no' => 'Not going', 'think' => 'Will tell later', 'noans' => 'No answer', '' => 'tag removed'][$tag];
     sch_log($u, 'Tour calling', "{$st['name']} ($cls), {$t['name']}: $lbl" . ($note !== '' ? " — $note" : ''));
     sch_json(['ok' => true]);
