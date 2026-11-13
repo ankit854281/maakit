@@ -126,6 +126,8 @@ $tc = fn($a, $b = null, $t = null, $q = '') => cd_http('/school/teacher_api.php?
 [, $j] = $tc('tours', null, $tok['K'], '&cls=4th'); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['jp'] === true, 'teacher tag keeps JP Sir');
 [$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => true], $M);
 [, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['book']['jp'] === false, 'back to pay later');
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's3', 'on' => true, 'jp' => true], $M);
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s3']['book']['jp'] === true && $k['s3']['pay']['status'] === 'Paid', 'JP Sir tag on a paid child, receipt stays');
 // Class 3 joins a Prayagraj tour once
 $put('classes', 'main', [['c' => '4th', 'ct' => 'K'], ['c' => '5th', 'ct' => ''], ['c' => '1st', 'ct' => ''], ['c' => '3rd', 'ct' => '']]);
 $st = sch_rec_get('settings', 'main'); unset($st['tourAdd3']); $put('settings', 'main', $st);
