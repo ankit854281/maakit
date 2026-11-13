@@ -109,6 +109,24 @@ cd_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Tour fee'")->fe
 [$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => false], $M);
 [, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s2']['book'] === null, 'name removed');
 
+// ---- Tour calling from the Teacher App, tags (13 Nov 2026) ----
+$tc = fn($a, $b = null, $t = null, $q = '') => cd_http('/school/teacher_api.php?a=' . $a . $q, $b, $t);
+[$c, $j] = $tc('tours', null, $tok['K'], '&cls=4th'); cd_check($c === 200 && count($j['tours']) === 1 && count($j['tours'][0]['kids']) === 2, 'class teacher sees the tour for 4th ' . json_encode($j));
+[$c] = $tc('tours', null, $tok['K'], '&cls=5th'); cd_check($c === 403, 'not the class teacher of 5th');
+[$c] = $tc('tourtag', ['tour' => $T, 'sid' => 's3', 'tag' => 'going'], $tok['K']); cd_check($c === 403, 'cannot tag another class');
+[$c] = $tc('tourtag', ['tour' => $T, 'sid' => 's2', 'tag' => 'bad'], $tok['K']); cd_check($c === 400, 'unknown tag refused');
+[$c] = $tc('tourtag', ['tour' => $T, 'sid' => 's2', 'tag' => 'going', 'note' => 'pays Saturday'], $tok['K']); cd_check($c === 200, 'tag going');
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['book'] !== null && $k['s2']['tag']['tag'] === 'going' && $k['s2']['tag']['note'] === 'pays Saturday', 'office sees the tag, name written ' . json_encode($k['s2']));
+[$c] = $tc('tourtag', ['tour' => $T, 'sid' => 's2', 'tag' => 'no'], $tok['K']);
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s2']['book'] === null && $k['s2']['tag']['tag'] === 'no', 'not going removes the name');
+// Class 3 joins a Prayagraj tour once
+$put('classes', 'main', [['c' => '4th', 'ct' => 'K'], ['c' => '5th', 'ct' => ''], ['c' => '1st', 'ct' => ''], ['c' => '3rd', 'ct' => '']]);
+$st = sch_rec_get('settings', 'main'); unset($st['tourAdd3']); $put('settings', 'main', $st);
+$t0 = sch_rec_get('regTour', $T); $t0['name'] = 'Prayagraj Tour'; $put('regTour', $T, $t0);
+[, $j] = $cd('tours', null, $M); cd_check(in_array('3rd', $j['tours'][0]['classes'], true), 'Class 3 added to the Prayagraj tour');
+$t0 = sch_rec_get('regTour', $T); $t0['classes'] = ['4th', '5th']; $put('regTour', $T, $t0);
+[, $j] = $cd('tours', null, $M); cd_check(!in_array('3rd', $j['tours'][0]['classes'], true), 'only once — the Manager can untick it');
+
 // ---- Manager in Fee Receipt ----
 [$c] = cd_http('/school/feecollect_api.php?a=state', null, $M); cd_check($c === 200, 'Manager opens Fee Receipt');
 

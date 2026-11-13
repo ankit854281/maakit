@@ -74,6 +74,18 @@ function cd_kind(array $r): string {
     if ((string)$r['head'] === 'Opening Balance') return 'opening';
     return ['RV' => 'income', 'JV' => 'expense', 'SV' => 'expense', 'BD' => 'deposit', 'SW' => 'withdraw'][$r['kind']] ?? (($r['crCash'] ?? 0) > 0 ? 'expense' : 'income');
 }
+/** Owner, 13 Nov 2026: "third class bhi add karna hai" — Class 3 joins the Prayagraj tour once (the Manager can untick it later). */
+function cd_tour_add3(): void {
+    $set = sch_rec_get('settings', 'main') ?? []; if (!empty($set['tourAdd3'])) return;
+    $all = array_values(array_filter(array_map(fn($c) => (string)($c['c'] ?? ''), (array)(sch_rec_get('classes', 'main') ?? []))));
+    $c3 = array_values(array_filter($all, fn($c) => preg_match('/^(3|3rd|III)\b/i', $c)));
+    foreach (cd_rows('regTour') as $id => $t) if (stripos((string)($t['name'] ?? ''), 'prayagraj') !== false) {
+        $add = array_diff($c3, (array)($t['classes'] ?? [])); if (!$add || !($t['classes'] ?? [])) continue;
+        $t['classes'] = array_values(array_merge((array)$t['classes'], $add)); sch_rec_put('regTour', (string)$id, $t, 'system');
+        sch_log(['label' => 'System', 'role' => 'system'], 'Tour fee', 'Class ' . implode(', ', $add) . ' added to ' . $t['name'] . ' (owner, 13 Nov 2026)');
+    }
+    $set['tourAdd3'] = 1; sch_rec_put('settings', 'main', $set, 'system');
+}
 function cd_students(): array {
     $o = [];
     foreach (cd_rows('student') as $sid => $s) if (empty($s['inactive']) && ($s['cls'] ?? '') !== '')
@@ -156,11 +168,12 @@ case 'verify': {
 }
 case 'tours': {
     $ses = cd_session(); $kids = cd_students(); $out = [];
-    $pays = cd_rows('regTourPay'); $books = cd_rows('regTourBook');
+    $pays = cd_rows('regTourPay'); $books = cd_rows('regTourBook'); $tags = cd_rows('regTourTag');
+    cd_tour_add3();
     foreach (cd_rows('regTour') as $tid => $t) {
         if (($t['session'] ?? '') !== $ses) continue;
         $cls = (array)($t['classes'] ?? []); $L = [];
-        foreach ($kids as $s) if (!$cls || in_array($s['cls'], $cls, true)) { $p = $pays[$tid . '|' . $s['id']] ?? null; $b = $books[$tid . '|' . $s['id']] ?? null; $L[] = $s + ['book' => $b && !empty($b['on']) ? ['by' => (string)($b['by'] ?? ''), 'at' => (int)($b['at'] ?? 0)] : null, 'pay' => $p ? ['no' => $p['no'], 'amount' => $p['amount'] / 100, 'mode' => $p['mode'], 'ref' => $p['ref'] ?? '', 'date' => $p['date'], 'by' => $p['by'], 'status' => $p['status'], 'reason' => $p['reason'] ?? ''] : null]; }
+        foreach ($kids as $s) if (!$cls || in_array($s['cls'], $cls, true)) { $p = $pays[$tid . '|' . $s['id']] ?? null; $b = $books[$tid . '|' . $s['id']] ?? null; $tg = $tags[$tid . '|' . $s['id']] ?? null; $L[] = $s + ['tag' => $tg && ($tg['tag'] ?? '') !== '' ? ['tag' => (string)$tg['tag'], 'note' => (string)($tg['note'] ?? ''), 'by' => (string)($tg['by'] ?? '')] : null, 'book' => $b && !empty($b['on']) ? ['by' => (string)($b['by'] ?? ''), 'at' => (int)($b['at'] ?? 0)] : null, 'pay' => $p ? ['no' => $p['no'], 'amount' => $p['amount'] / 100, 'mode' => $p['mode'], 'ref' => $p['ref'] ?? '', 'date' => $p['date'], 'by' => $p['by'], 'status' => $p['status'], 'reason' => $p['reason'] ?? ''] : null]; }
         foreach ($pays as $k => $p) if (str_starts_with($k, $tid . '|') && !isset($kids[substr($k, strlen($tid) + 1)])) $L[] = ['id' => substr($k, strlen($tid) + 1), 'name' => (string)($p['name'] ?? ''), 'cls' => (string)($p['cls'] ?? ''), 'roll' => '', 'father' => '', 'phone' => '', 'pay' => ['no' => $p['no'], 'amount' => $p['amount'] / 100, 'mode' => $p['mode'], 'ref' => $p['ref'] ?? '', 'date' => $p['date'], 'by' => $p['by'], 'status' => $p['status'], 'reason' => $p['reason'] ?? '']];
         $out[] = ['id' => $tid, 'name' => (string)$t['name'], 'date' => (string)$t['date'], 'amount' => ((int)$t['amount']) / 100, 'classes' => $cls, 'kids' => $L];
     }

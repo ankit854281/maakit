@@ -337,6 +337,48 @@ case 'fees': {
               'promises' => (object)$promises, 'calls' => array_slice($calls, 0, 400), 'outcomes' => OF_OUTCOMES]);
 }
 
+case 'tours': {
+    // Tour calling (owner, 13 Nov 2026: "teachers me tour calling ka option" + "tour wale me tag"): the class teacher (or the
+    // school's fee caller) calls parents about the tour and tags each child. Tags: going (pay later), no, think, noans.
+    // Paid children come from the Tour fee receipts (cashdesk_api.php). Tag 'going' also writes the name for the tour.
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $cls = (string)($_GET['cls'] ?? '');
+    if ($cls === '' || !($canClass($cls) || $feeCaller)) sch_fail('Only the class teacher (or the school\'s fee caller) calls about the tour for this class.', 403);
+    $set = sch_rec_get('settings', 'main') ?: []; $ses = trim((string)($set['session'] ?? '')) ?: date('Y');
+    $rows = function (string $k) use ($db): array { $q = $db->prepare('SELECT r, d FROM sch_records WHERE k=? AND deleted=0'); $q->execute([$k]); $o = [];
+        foreach ($q as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $o[(string)$row['r']] = $d; } return $o; };
+    $pays = $rows('regTourPay'); $books = $rows('regTourBook'); $tags = $rows('regTourTag'); $out = [];
+    $kids = []; foreach ($rows('student') as $sid => $st) if (empty($st['inactive']) && ($st['cls'] ?? '') === $cls) $kids[] = ['id' => (string)$sid, 'name' => (string)($st['name'] ?? ''), 'father' => (string)($st['father'] ?? ''), 'phone' => (string)($st['phone'] ?? '')];
+    usort($kids, fn($x, $y) => strcmp($x['name'], $y['name']));
+    foreach ($rows('regTour') as $tour => $t) {
+        if (($t['session'] ?? '') !== $ses || (($t['classes'] ?? []) && !in_array($cls, (array)$t['classes'], true))) continue;
+        $L = [];
+        foreach ($kids as $k) { $key = $tour . '|' . $k['id']; $p = $pays[$key] ?? null; $bk = $books[$key] ?? null; $tg = $tags[$key] ?? null;
+            $L[] = $k + ['paid' => $p && ($p['status'] ?? '') === 'Paid' ? ['no' => (string)$p['no'], 'amount' => (int)$p['amount'], 'date' => (string)$p['date']] : null,
+                'book' => $bk && !empty($bk['on']), 'tag' => $tg ? ['tag' => (string)$tg['tag'], 'note' => (string)($tg['note'] ?? ''), 'by' => (string)($tg['by'] ?? ''), 'at' => (int)($tg['at'] ?? 0)] : null]; }
+        $out[] = ['id' => (string)$tour, 'name' => (string)$t['name'], 'date' => (string)$t['date'], 'amount' => (int)$t['amount'], 'kids' => $L];
+    }
+    usort($out, fn($x, $y) => strcmp($y['date'], $x['date']));
+    sch_json(['ok' => true, 'cls' => $cls, 'tours' => $out, 'school' => (string)($set['school'] ?? '')]);
+}
+case 'tourtag': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $tour = (string)($in['tour'] ?? ''); $sid = (string)($in['sid'] ?? ''); $tag = (string)($in['tag'] ?? ''); $note = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['note'] ?? ''))), 0, 200);
+    if (!in_array($tag, ['going', 'no', 'think', 'noans', ''], true)) sch_fail('Choose a tag.');
+    $t = preg_match('/^t[a-f0-9]{10}$/', $tour) ? sch_rec_get('regTour', $tour) : null; if (!$t) sch_fail('Tour not found.');
+    $st = sch_rec_get('student', $sid); if (!$st || !empty($st['inactive'])) sch_fail('Child not found.');
+    $cls = (string)($st['cls'] ?? '');
+    if (!($canClass($cls) || $feeCaller)) sch_fail('Only the class teacher (or the school\'s fee caller) tags children of this class.', 403);
+    if (($t['classes'] ?? []) && !in_array($cls, (array)$t['classes'], true)) sch_fail('This child\'s class is not on this tour.');
+    $key = $tour . '|' . $sid;
+    $who = sch_user_label($u);
+    sch_rec_put('regTourTag', $key, ['tag' => $tag, 'note' => $note, 'by' => $who, 'at' => sch_now_ms(), 'name' => (string)($st['name'] ?? ''), 'cls' => $cls], $uid);
+    $paid = (sch_rec_get('regTourPay', $key)['status'] ?? '') === 'Paid';
+    if (!$paid && ($tag === 'going' || $tag === 'no')) sch_rec_put('regTourBook', $key, ['on' => $tag === 'going', 'by' => $who, 'at' => sch_now_ms(), 'name' => (string)($st['name'] ?? ''), 'cls' => $cls], $uid);
+    $lbl = ['going' => 'Going (pay later)', 'no' => 'Not going', 'think' => 'Will tell later', 'noans' => 'No answer', '' => 'tag removed'][$tag];
+    sch_log($u, 'Tour calling', "{$st['name']} ($cls), {$t['name']}: $lbl" . ($note !== '' ? " — $note" : ''));
+    sch_json(['ok' => true]);
+}
 case 'feecall': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;

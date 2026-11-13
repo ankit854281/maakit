@@ -70,8 +70,8 @@ $v = fn($f) => (string)@filemtime(__DIR__ . '/' . $f);
 $link = 'https://maakit.in/school/tour.php';
 ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Children's Day Prayagraj Tour · SN Mishra Singapore International School</title><meta name="theme-color" content="#DB2777">
-<meta name="description" content="Children's Day educational tour to Prayagraj on Saturday 14 November 2026 for Classes 4 to 10 — Allahabad Museum, Hathi Park, Khusro Bagh and All Saints Cathedral.">
-<meta property="og:title" content="🚌 Children's Day Prayagraj Tour — 14 Nov 2026 · SNMSIS"><meta property="og:description" content="Classes 4–10 · Allahabad Museum · Hathi Park · Khusro Bagh · All Saints Cathedral. Limited seats — register with your class teacher.">
+<meta name="description" content="Children's Day educational tour to Prayagraj on Saturday 14 November 2026 for Classes 3 to 10 — Allahabad Museum, Hathi Park, Khusro Bagh and All Saints Cathedral.">
+<meta property="og:title" content="🚌 Children's Day Prayagraj Tour — 14 Nov 2026 · SNMSIS"><meta property="og:description" content="Classes 3–10 · Allahabad Museum · Hathi Park · Khusro Bagh · All Saints Cathedral. Limited seats — register with your class teacher.">
 <meta property="og:type" content="website"><meta property="og:url" content="<?= $link ?>"><meta property="og:image" content="https://maakit.in/school/img/tour-og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/snmsis-logo.png"><link rel="stylesheet" href="tour.css?v=<?= $v('tour.css') ?>"></head>
 <body>
@@ -80,7 +80,7 @@ $link = 'https://maakit.in/school/tour.php';
   <section class="ad-s t2"><div class="sparks"></div><div class="kids"><span>🧒</span><span>👧</span><span>🧒🏽</span></div><p class="ad-k">14 November · बाल दिवस</p><h1 class="ad-h">Happy<br><span class="ad-gold">Children's Day</span></h1><p class="ad-t">इस बार बाल दिवस — क्लास से बाहर, इतिहास के बीच!</p></section>
   <section class="ad-s t3"><div class="sparks"></div><p class="ad-k">Educational Tour · शैक्षिक भ्रमण</p><h1 class="ad-h">Chalo<br><span class="ad-gold">Prayagraj!</span></h1>
     <div class="road"><svg class="bus" viewBox="0 0 130 60" aria-hidden="true"><rect x="2" y="8" width="122" height="38" rx="9" fill="#FBBF24"/><rect x="10" y="15" width="18" height="14" rx="2" fill="#BAE6FD"/><rect x="32" y="15" width="18" height="14" rx="2" fill="#BAE6FD"/><rect x="54" y="15" width="18" height="14" rx="2" fill="#BAE6FD"/><rect x="76" y="15" width="18" height="14" rx="2" fill="#BAE6FD"/><rect x="100" y="15" width="18" height="22" rx="2" fill="#BAE6FD"/><rect x="2" y="33" width="122" height="5" fill="#DC2626"/><text x="50" y="44" font-size="6" font-family="sans-serif" font-weight="700" fill="#7C2D12">SNMSIS</text><circle cx="28" cy="48" r="8" fill="#1F2937"/><circle cx="28" cy="48" r="3" fill="#9CA3AF"/><circle cx="98" cy="48" r="8" fill="#1F2937"/><circle cx="98" cy="48" r="3" fill="#9CA3AF"/></svg></div>
-    <p class="ad-t">Saturday 14 Nov 2026 · Classes 4–10 · 4 amazing places</p><button class="ad-go" type="button" id="adGo">See the tour</button></section>
+    <p class="ad-t">Saturday 14 Nov 2026 · Classes 3–10 · 4 amazing places</p><button class="ad-go" type="button" id="adGo">See the tour</button></section>
 </div>
 <main class="wrap">
   <section class="experience" id="experience" aria-label="Prayagraj tour interactive presentation">
@@ -95,7 +95,7 @@ $link = 'https://maakit.in/school/tour.php';
         </div>
         <div class="exp-shade"></div><div class="exp-content"><span class="exp-chip">🎉 14 NOV 2026 · SATURDAY</span>
           <h1>CHALO<br><em>PRAYAGRAJ!</em></h1><p class="exp-lead">This Children's Day, adventure begins beyond the classroom. 🚌</p><p class="exp-hindi">इस बाल दिवस, किताबों से आगे बढ़कर दुनिया देखें!</p>
-          <div class="exp-mini"><span>🎓 CLASS 4–10</span><span>📍 4 DESTINATIONS</span></div>
+          <div class="exp-mini"><span>🎓 CLASS 3–10</span><span>📍 4 DESTINATIONS</span></div>
         </div>
       </section>
       <section class="exp-slide exp-history" aria-label="Slide 2 of 6">
@@ -129,7 +129,7 @@ $link = 'https://maakit.in/school/tour.php';
         </div>
       </section>
       <section class="exp-slide exp-register" aria-label="Slide 6 of 6">
-        <div class="exp-content"><span class="exp-chip">🚨 LIMITED SEATS AVAILABLE</span><h2>DON'T MISS<br><em>THE FUN!</em></h2><p class="exp-lead">📅 14 November · 🎓 Classes 4 to 10</p><p class="exp-hindi">सीट बुक कराने के लिए अपने Class Teacher से संपर्क करें।</p>
+        <div class="exp-content"><span class="exp-chip">🚨 LIMITED SEATS AVAILABLE</span><h2>DON'T MISS<br><em>THE FUN!</em></h2><p class="exp-lead">📅 14 November · 🎓 Classes 3 to 10</p><p class="exp-hindi">सीट बुक कराने के लिए अपने Class Teacher से संपर्क करें।</p>
           <a href="#registration" class="exp-cta">🎒 Register with Class Teacher ↓</a><a class="exp-share" id="expShare" href="#">📲 Share with Friends</a><p class="exp-small">Departure and return timings will be shared by the school.</p>
         </div>
       </section>
@@ -189,7 +189,7 @@ $link = 'https://maakit.in/school/tour.php';
   <div class="note"><b>📌 Important / ज़रूरी सूचना:</b> Students must wear their school uniform, carry their school ID card and school diary, and write an active parent contact number in the diary. The school will share departure and return timings separately. Entry inside All Saints Cathedral on Saturday is subject to permission.<br>
     <b>ध्यान दें:</b> विद्यार्थी स्कूल ड्रेस पहनें, पहचान पत्र व स्कूल डायरी साथ रखें और डायरी में अभिभावक का चालू मोबाइल नंबर लिखें। प्रस्थान और वापसी का समय विद्यालय अलग से बताएगा। शनिवार को चर्च के अंदर प्रवेश अनुमति पर निर्भर होगा.</div>
 
-  <section class="cta" id="registration"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 4–10: register with your Class Teacher. Bring uniform, ID card, lunch, school diary and parent’s contact number.<br>कक्षा 4–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
+  <section class="cta" id="registration"><h3>🚨 Limited seats · सीमित सीटें</h3><p>Classes 3–10: register with your Class Teacher. Bring uniform, ID card, lunch, school diary and parent’s contact number.<br>कक्षा 3–10 के विद्यार्थी सीट के लिए अपने कक्षा शिक्षक से संपर्क करें।</p>
     <a class="btn wa" id="wa" href="#">📲 Share on WhatsApp</a><button class="btn y" id="copy" type="button">🔗 Copy link</button><a class="btn l" href="index.php">School ERP</a></section>
   <footer>With best wishes · School Management<br>S.N. Mishra Singapore International School · Jagannathpur, Bhadohi<br>Powered by Maakit</footer>
 </main>
