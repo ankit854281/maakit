@@ -1201,7 +1201,7 @@ function profileBody() {
     <section class="pf"><div class="pfh">${avatar(sid, name, true)}<div><h2>${esc(name)}</h2><p>Class ${esc(cls)}${sec ? '-' + esc(sec) : ''}${(f.rollno || (x && x.adm)) ? ' · Adm ' + esc(f.rollno || x.adm) : ''}</p><p>${esc(f.fname || (x && x.father) || (s2 && s2.father) || '')}</p>
       <div>${x && x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}${x && x.zero && x.dueNow > 0 ? '<span class="tag brk">₹0 paid</span>' : ''}${x && x.broken ? '<span class="tag brk">Promise broken</span>' : ''}${lr ? `<span class="tag">${esc(lr.grade)}</span>` : ''}</div></div></div>
       <div class="pp">${pies.join('')}</div>
-      <div class="pa">${phone ? `<a href="tel:+91${phone}" onclick="callNow('${esc(sid)}')">${ic('phone', 18)}<span>Call</span></a><a target="_blank" rel="noopener" href="https://wa.me/91${phone}${x ? '?text=' + encodeURIComponent(remind(x)) : ''}" ${x ? `onclick="logMsg(['${esc(sid)}'],'Fee reminder',remind(D.all.find(z=>z.sid==='${esc(sid)}')))"` : ''}>${ic('wa', 18)}<span>WhatsApp</span></a>` : ''}<button onclick="noteCall('${esc(sid)}')">${ic('note', 18)}<span>Write call</span></button>${D.role === 'principal' ? `<a href="stumaster.php" target="_blank" rel="noopener">${ic('share', 18)}<span>Edit</span></a>` : ''}</div></section>
+      <div class="pa">${phone ? `<a href="tel:+91${phone}" onclick="callNow('${esc(sid)}')">${ic('phone', 18)}<span>Call</span></a><a target="_blank" rel="noopener" href="https://wa.me/91${phone}${x ? '?text=' + encodeURIComponent(remind(x)) : ''}" ${x ? `onclick="logMsg(['${esc(sid)}'],'Fee reminder',remind(D.all.find(z=>z.sid==='${esc(sid)}')))"` : ''}>${ic('wa', 18)}<span>WhatsApp</span></a>` : ''}<button onclick="noteCall('${esc(sid)}')">${ic('note', 18)}<span>Write call</span></button><button onclick="DemandBill.open('${esc(sid)}',store.get('sch_token'))">${ic('share', 18)}<span>Demand bill</span></button>${D.role === 'principal' ? `<a href="stumaster.php" target="_blank" rel="noopener">${ic('share', 18)}<span>Edit</span></a>` : ''}</div></section>
     ${segs('ptab', [['over', 'Profile'], ['fee', 'Fees'], ['att', 'Attendance'], ['res', 'Results'], ['calls', 'Calls']], 'sticky')}
     <div style="height:12px"></div>${body}`;
 }
@@ -1295,8 +1295,8 @@ const sylList = R => `<div class="sl">${R.map(r => { const p = ratio(r.done, r.t
 
 // ---------------------------------------------------------------- Fees and Staff tabs
 function feesBody() {
-  const fs = S.fs || 'sum', nav = segs('fs', [['sum', 'Summary'], ['month', 'Month'], ['dues', 'Dues'], ['calls', 'Calls & messages']], 'sm');
-  return nav + '<div style="height:12px"></div>' + ({ sum: overview, month: monthBody, dues: duesBody, calls: callBody }[fs])();
+  const fs = S.fs || 'sum', nav = segs('fs', [['sum', 'Summary'], ['month', 'Month'], ['dues', 'Dues'], ['bill', 'Demand bill'], ['calls', 'Calls & messages']], 'sm');
+  return nav + '<div style="height:12px"></div>' + ({ sum: overview, month: monthBody, dues: duesBody, bill: billCard, calls: callBody }[fs])();
 }
 function staffBody() {
   const w = needSchool(); if (w) return w;
@@ -1310,6 +1310,8 @@ function staffBody() {
 }
 // Staff salary (12 Nov 2026): salary only for the Chairman and the Manager. "Open Salary app" carries this login over
 // (manager.php?from=ch — no second PIN). The Manager's name and PIN are set right here (only the Chairman can).
+// Fee demand bill (13 Nov 2026): any child → the 12 Nov bill design as a picture to share with the parent (demandbill.js)
+function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get('sch_token'), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {
   const nm = (window.MGR_NAME || '');
   return card('Staff salary', `<p class="note" style="margin-top:0">Only you and the Manager see salary — in the Salary app.</p>

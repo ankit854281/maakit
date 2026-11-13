@@ -71,10 +71,13 @@
         ${can && r.status === 'Due' ? `<button class="btn go" onclick="mgPay('${id}')">Pay ${rs(c.net)}</button><button class="btn l" onclick="mgAdj('${id}')">Adjust</button>` : ''}
         ${can && r.status !== 'Paid' ? `<button class="btn l" onclick="mgStaff('${id}')">${r.status === 'Not set' ? 'Set salary' : 'Edit salary'}</button>` : ''}</div></div>`;
   }
+  function segs() { const R = D.rows, paid = R.filter(r => r.status === 'Paid');
+    return `<div class="seg">${[['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
   async function draw() {
     if (!store.get(TK) || MUST) return loginView();
     if (!D) return load();
-    if (VIEW === 'att') return frame(`<iframe src="staffatt.php?embed=1&tk=sal" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
+    if (VIEW === 'bill') { frame(segs() + `<div class="card"><h3 style="margin:0 0 8px;color:#0F5132">📄 Fee demand bill for parents</h3><div id="billPick"></div></div>`); return DemandBill.picker(store.get(TK), 'billPick'); }
+    if (VIEW === 'att') return frame(segs() + `<iframe src="staffatt.php?embed=1&tk=sal" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
     const R = D.rows, set = R.filter(r => r.status !== 'Not set'), paid = R.filter(r => r.status === 'Paid'), sum = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
     const list = VIEW === 'due' ? R.filter(r => r.status === 'Due') : VIEW === 'paid' ? paid : VIEW === 'notset' ? R.filter(r => r.status === 'Not set') : R;
     const tch = list.filter(r => r.staff.teaching), oth = list.filter(r => !r.staff.teaching);
@@ -82,7 +85,7 @@
         <div class="k r"><span>Cut for absence</span><b>${rs(sum('deduction'))}</b><small>advance ${rs(sum('advance'))}</small></div>
         <div class="k g"><span>Net to pay</span><b>${rs(sum('net'))}</b><small>bonus ${rs(sum('bonus'))}</small></div>
         <div class="k y"><span>Paid</span><b>${paid.length} / ${set.length}</b><small>${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid</small></div></div>
-      <div class="seg">${[['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>
+      ${segs()}
       ${tch.length ? `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">Teachers (${tch.length})</h3>${tch.map(card).join('')}</div>` : ''}
       ${oth.length ? `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">Other staff (${oth.length})</h3>${oth.map(card).join('')}</div>` : ''}
       ${!list.length ? '<div class="card mut">Nobody in this list.</div>' : ''}

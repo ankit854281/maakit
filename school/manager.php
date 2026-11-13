@@ -25,4 +25,4 @@ $v = (string)@filemtime(__DIR__ . '/manager.js');
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#13221b;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;display:none;z-index:30;max-width:90vw}
 iframe{width:100%;height:78vh;border:0;border-radius:16px;background:#fff}
 </style></head><body><div id="app"></div><div id="sh"></div><div id="toast"></div>
-<script src="manager.js?v=<?= htmlspecialchars($v) ?>"></script></body></html>
+<script src="demandbill.js?v=<?= (string)@filemtime(__DIR__ . '/demandbill.js') ?>"></script><script src="manager.js?v=<?= htmlspecialchars($v) ?>"></script></body></html>
