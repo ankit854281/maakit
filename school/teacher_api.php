@@ -113,7 +113,9 @@ if ($method === 'POST') {
 $canClass = fn(string $cls): bool => $role === 'principal' || ($role === 'teacher' && tch_is_ct($tid, $cls));
 // Fee calling for the whole school (owner, 13 Nov 2026: "Akash Sir wala fee calling Adarsh Sir ko — app me do"):
 // teachers in settings.feeCallers (default Adarsh Dubey Sir, 'AD') call the parents of EVERY class from the Teacher App.
-$feeCaller = $role === 'teacher' && in_array($tid, (array)((sch_rec_get('settings', 'main') ?? [])['feeCallers'] ?? ['AD']), true);
+// No list saved → any teacher whose name has "Adarsh" (his id may be AD, AD2 … depending on how he was added).
+$fcList = (sch_rec_get('settings', 'main') ?? [])['feeCallers'] ?? null;
+$feeCaller = $role === 'teacher' && (is_array($fcList) ? in_array($tid, $fcList, true) : ($tid === 'AD' || stripos(sch_teacher_name($tid), 'adarsh') !== false));
 $canSee = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cls);
 
 switch ($a) {

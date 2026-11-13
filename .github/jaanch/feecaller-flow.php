@@ -11,14 +11,16 @@ function fch(string $path, $body, ?string $tok): array { $c = curl_init('http://
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 $put = fn($k, $r, $d) => sch_rec_put($k, $r, $d, 'principal');
 $put('settings', 'main', ['school' => 'FC School', 'session' => '2026-27', 'sessionStart' => '2026-04-01']);
-$put('teacher', 'AD', ['name' => 'Adarsh Dubey Sir']); $put('teacher', 'K', ['name' => 'Kartikey Sir']); $put('teacher', 'MA', ['name' => 'Mamta']);
+$put('teacher', 'AD', ['name' => 'Adarsh Dubey Sir']); $put('teacher', 'K', ['name' => 'Kartikey Sir']); $put('teacher', 'AD2', ['name' => 'Adarsh Dubey']); $put('teacher', 'MA', ['name' => 'Mamta']);
 $put('classes', 'main', [['c' => '9th', 'ct' => 'K'], ['c' => '10th', 'ct' => 'MA']]);
 $put('student', 'f1', ['id' => 'f1', 'name' => 'Aman', 'cls' => '10th', 'phone' => '9839100011']);
 $pin = fn($uid, $tid, $p) => $pdo->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,0)')->execute([$uid, 'teacher', $tid, password_hash($p, PASSWORD_DEFAULT)]);
-$pin('t:AD', 'AD', '1111'); $pin('t:K', 'K', '2222');
+$pin('t:AD', 'AD', '1111'); $pin('t:K', 'K', '2222'); $pin('t:AD2', 'AD2', '3333');
 [, $j] = fch('/school/api.php?a=login', ['role' => 'teacher', 'tid' => 'AD', 'pin' => '1111'], null); $AD = $j['token'];
 [, $j] = fch('/school/api.php?a=login', ['role' => 'teacher', 'tid' => 'K', 'pin' => '2222'], null); $K = $j['token'];
 [$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $AD); fcc($c === 200, 'Adarsh Sir (default fee caller) opens any class');
+[, $j] = fch('/school/api.php?a=login', ['role' => 'teacher', 'tid' => 'AD2', 'pin' => '3333'], null);
+[$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $j['token']); fcc($c === 200, 'Adarsh Sir found by name even when his id is AD2');
 [$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $K); fcc($c === 403, 'another class teacher cannot open 10th');
 [$c] = fch('/school/teacher_api.php?a=fees&cls=9th', null, $K); fcc($c === 200, 'class teacher still opens own class');
 [$c, $j] = fch('/school/teacher_api.php?a=feecall', ['sid' => 'f1', 'outcome' => 'Not answered'], $AD); fcc($c !== 403 && str_contains($j['error'] ?? 'fee card', 'fee card'), 'Adarsh Sir is allowed to save a call (this synthetic child has no fee card): ' . json_encode($j));

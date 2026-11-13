@@ -1567,7 +1567,7 @@ const rs = p => '₹' + (Math.round((p || 0) / 100)).toLocaleString('en-IN');
 function uuid4() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); const h = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); }
 function myClasses() { return [...new Set([...myCT(), ...allocList().map(a => a.c)])].filter(c => className().includes(c)); }
 // Fee calling: class teacher → own class; the school's fee caller (settings.feeCallers, default Adarsh Sir 'AD') → every class
-function isFeeCaller() { return !isP() && ((S.settings || {}).feeCallers || ['AD']).includes(me()); }
+function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() && (Array.isArray(L) ? L.includes(me()) : (me() === 'AD' || /adarsh/i.test(((S.teachers || {})[me()] || {}).name || ''))); }
 function feeCls() { return isFeeCaller() ? (S.classes || []).map(k => k.c) : myCT(); }
 function vConn() {
   const ct = feeCls(), m = P.m || (ct.length ? 'fee' : 'msg');
