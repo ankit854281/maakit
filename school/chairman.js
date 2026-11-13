@@ -1320,7 +1320,7 @@ function salCard() {
       <div style="display:grid;gap:8px;margin-top:8px"><input id="mgN" placeholder="Manager's name" maxlength="40" value="${esc(nm)}" style="padding:10px;border:1px solid #ccd;border-radius:12px;font:inherit">
       <input id="mgP" type="password" inputmode="numeric" maxlength="8" placeholder="Manager's PIN (1234 = Manager chooses own)" style="padding:10px;border:1px solid #ccd;border-radius:12px;font:inherit">
       <button onclick="mgrSave()" style="padding:11px;border:0;border-radius:99px;background:#F5C842;font:inherit;font-weight:700">Save Manager login</button>
-      <p class="note" style="margin:0">Then send the Manager the Salary app and this PIN: <a href="https://github.com/ankit854281/maakit/releases/download/salary-android-v1/snmsis-salary.apk">Download Salary app (Android)</a> — or open maakit.in/school/manager.php → Manager.</p></div></details>`);
+      <p class="note" style="margin:0">Then send the Manager the Salary app and this PIN: <a href="https://maakit.in/school/downloads/snmsis-salary.apk">Download Salary app (Android)</a> — or open maakit.in/school/manager.php → Manager.</p></div></details>`);
 }
 async function mgrSave() {
   const n = $('mgN').value.trim(), p = $('mgP').value.trim();
