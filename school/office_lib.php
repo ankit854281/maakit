@@ -21,7 +21,7 @@ const OF_OUTCOMES = ['Promised to pay', 'Not answered', 'Switched off', 'Call ba
 function of_names(): array {
     $s = sch_rec_get('settings', 'main') ?? [];
     $a = trim((string)($s['accountantName'] ?? '')); $r = trim((string)($s['receptionName'] ?? ''));
-    return ['accountant' => $a !== '' ? $a : 'Akash Tiwari', 'reception' => $r !== '' ? $r : 'Shiva Rai'];
+    return ['accountant' => $a !== '' ? $a : 'Akash Tiwari', 'reception' => $r !== '' ? $r : 'Adarsh Dubey'];
 }
 
 function of_session(): array {

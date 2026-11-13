@@ -5,7 +5,7 @@
 // Kaun kya kar sakta hai:
 //   Accountant (Akash Tiwari): fees jama + raseed, bachche ka pichhla bakaya /
 //                alag mahina fees / free scheme / chhoot, calls bhi
-//   Reception  (Shiva Rai):    bakaya list, phone + WhatsApp, call ka nateeja
+//   Reception  (fee calling — Adarsh Dubey Sir from 13 Nov 2026; earlier Shiva Rai):    bakaya list, phone + WhatsApp, call ka nateeja
 //   Principal:  sab kuchh + raseed radd (cancel, wajah ke saath)
 //   Chairman:   sirf dekh sakte hain
 //   Parent / Student: sirf apne bachche ka bakaya aur raseedein (?a=mine)

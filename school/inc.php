@@ -139,7 +139,7 @@ function sch_user_label(array $u): string {
     if ($u['role'] === 'accountant' || $u['role'] === 'reception') {
         $s = sch_rec_get('settings', 'main') ?? [];
         $n = trim((string)($s[$u['role'] . 'Name'] ?? ''));
-        return ($n !== '' ? $n : ($u['role'] === 'accountant' ? 'Akash Tiwari' : 'Shiva Rai')) . ($u['role'] === 'accountant' ? ' (Accountant)' : ' (Reception)');
+        return ($n !== '' ? $n : ($u['role'] === 'accountant' ? 'Akash Tiwari' : 'Adarsh Dubey')) . ($u['role'] === 'accountant' ? ' (Accountant)' : ' (Fee Calling)');
     }
     if ($u['role'] === 'student') {
         $s = sch_rec_get('student', (string)$u['tid']);

@@ -66,7 +66,7 @@ of_check($c === 200 && $j['mustChange'] === true && $j['me']['label'] === 'Akash
 [$c] = $api('setpin', ['old' => '1234', 'pin' => '4321'], $j['token']); of_check($c === 200, 'accountant sets PIN');
 [, $j] = $api('login', ['role' => 'accountant', 'pin' => '4321']); $A = $j['token'];
 $pin('reception', 'reception', null, '5555'); [, $j] = $api('login', ['role' => 'reception', 'pin' => '5555']); $R = $j['token'];
-of_check($j['me']['label'] === 'Shiva Rai (Reception)', 'reception label');
+of_check($j['me']['label'] === 'Adarsh Dubey (Fee Calling)', 'fee calling (reception) label: Adarsh Dubey from 13 Nov 2026');
 $pin('chairman', 'chairman', null, '6666'); [, $j] = $api('login', ['role' => 'chairman', 'pin' => '6666']); $CH = $j['token'];
 $pin('p:9839100011', 'parent', '9839100011', '3333'); [, $j] = $api('login', ['role' => 'parent', 'phone' => '9839100011', 'pin' => '3333']); $PA = $j['token'];
 $pin('s:b1', 'student', 'b1', '7777'); [, $j] = $api('login', ['role' => 'student', 'adm' => '21', 'pin' => '7777']); $SB = $j['token'];
@@ -121,7 +121,7 @@ sort($nos); of_check($nos === [2, 3, 4, 5, 6], 'parallel receipts numbered 2..6:
 [$c] = $o('call', ['sid' => 'a2', 'outcome' => 'Promised to pay', 'promise' => ''], $R); of_check($c === 400, 'promise needs a date');
 [$c] = $o('call', ['sid' => 'a2', 'outcome' => 'Made up'], $R); of_check($c === 400, 'outcome from the list');
 [$c, $j] = $o('call', ['sid' => 'a2', 'outcome' => 'Promised to pay', 'promise' => date('Y-m-d', time() + 3 * 86400), 'note' => 'Will pay Monday'], $R);
-of_check($c === 200 && $j['call']['fam'] === '9839100011' && count($j['call']['sids']) === 3 && $j['call']['by'] === 'Shiva Rai (Reception)', 'call saved for whole family');
+of_check($c === 200 && $j['call']['fam'] === '9839100011' && count($j['call']['sids']) === 3 && $j['call']['by'] === 'Adarsh Dubey (Fee Calling)', 'call saved for whole family');
 [$c, $D] = $o('data', null, $R); of_check($c === 200 && !$D['can']['pay'] && $D['can']['call'] && count($D['calls']) === 1, 'reception sees the call');
 
 // ---- accountant settings: old due, free scheme, concession, own fee ----

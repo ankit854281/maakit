@@ -588,7 +588,7 @@ function render() {
   const groups = navGroups(), cur = groups.find(g => g.items.some(x => x[0] === view)) || groups[0];
   const name = (userName() || '?').replace(/\s*\(.*\)/, '').trim();
   const initials = U.role === 'parent' ? 'P' : name.split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
-  const roleName = { principal: 'Principal', teacher: 'Teacher', chairman: 'Chairman', parent: 'Parent', student: 'Student', accountant: 'Accountant', reception: 'Reception' }[U.role] || U.role;
+  const roleName = { principal: 'Principal', teacher: 'Teacher', chairman: 'Chairman', parent: 'Parent', student: 'Student', accountant: 'Accountant', reception: 'Fee Calling' }[U.role] || U.role;
   const page = NAV[U.role].find(x => x[0] === view);
   // Old-ERP look for office roles (school/classic.js): same menu, names and colours as the old ERP.
   const classic = typeof classicOn === 'function' && classicOn();
@@ -663,10 +663,10 @@ function vLogin() {
       <button onclick="saveFirstPin()" class="btn btn-p w-full py-3">Save my PIN</button>
       <button onclick="forceLogout()" class="btn btn-l w-full">Cancel</button>`);
   const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}</option>`).join('');
-  const STAFF = ['principal', 'chairman', 'accountant', 'reception'], isStaff = STAFF.includes(loginRole), off = STATUS.office || { accountant: 'Akash Tiwari', reception: 'Shiva Rai' };
+  const STAFF = ['principal', 'chairman', 'accountant', 'reception'], isStaff = STAFF.includes(loginRole), off = STATUS.office || { accountant: 'Akash Tiwari', reception: 'Adarsh Dubey' };
   const roles = [['teacher', 'Teacher'], ['student', 'Student'], ['parent', 'Parent'], ['principal', 'Staff']];
   // Data Entry and Manager have their own pages (own PIN login) — choosing them here opens that page (12 Nov 2026)
-  const staffSel = `<div><label class="lbl">Who are you?</label><select id="lg-staff" class="inp" onchange="if(this.value==='dataentry')location.href='dataentry.php';else if(this.value==='manager')location.href='manager.php';else{loginRole=this.value;render()}">${[['principal', 'Principal'], ['chairman', 'Chairman'], ['accountant', esc(off.accountant) + ' — Accountant'], ['reception', esc(off.reception) + ' — Reception'], ['dataentry', esc(off.dataentry || 'Shubh Upadhyay') + ' — Data Entry'], ['manager', esc(off.manager && off.manager !== 'Manager' ? off.manager + ' — ' : '') + 'Manager (Salary app)']]
+  const staffSel = `<div><label class="lbl">Who are you?</label><select id="lg-staff" class="inp" onchange="if(this.value==='dataentry')location.href='dataentry.php';else if(this.value==='manager')location.href='manager.php';else{loginRole=this.value;render()}">${[['principal', 'Principal'], ['chairman', 'Chairman'], ['accountant', esc(off.accountant) + ' — Accountant'], ['reception', esc(off.reception) + ' — Fee Calling'], ['dataentry', esc(off.dataentry || 'Shubh Upadhyay') + ' — Data Entry'], ['manager', esc(off.manager && off.manager !== 'Manager' ? off.manager + ' — ' : '') + 'Manager (Salary app)']]
     .map(([r, l]) => `<option value="${r}" ${loginRole === r ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
   return shell(`
       <h2 class="text-xl font-semibold">Log in</h2>
@@ -1637,10 +1637,10 @@ function vSettings() {
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Principal</b> (you) ${pinBadge('principal')}</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change my PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Chairman</b> ${pinBadge('chairman')}</span><button onclick="setPin('chairman','Chairman')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Accountant</b> ${esc(S.settings.accountantName || 'Akash Tiwari')} ${pinBadge('accountant')}</span><button onclick="setPin('accountant','the Accountant')" class="btn btn-sm btn-l">Set PIN</button></div>
-        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Reception</b> ${esc(S.settings.receptionName || 'Shiva Rai')} ${pinBadge('reception')}</span><button onclick="setPin('reception','Reception')" class="btn btn-sm btn-l">Set PIN</button></div>
+        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Fee Calling (Reception)</b> ${esc(S.settings.receptionName || 'Adarsh Dubey')} ${pinBadge('reception')}</span><button onclick="setPin('reception','Reception')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Data Entry</b> ${esc(S.settings.dataentryName || 'Shubh Upadhyay')} ${pinBadge('dataentry')} · <a href="dataentry.php" target="_blank" class="underline">open page</a> · <a href="https://github.com/ankit854281/maakit/releases/download/dataentry-android-v1/snmsis-dataentry.apk" class="underline">Android app</a></span><button onclick="setPin('dataentry','Data Entry')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="grid grid-cols-2 gap-2"><div><label class="lbl">Accountant's name</label><input id="se-acct" class="inp" value="${esc(S.settings.accountantName || 'Akash Tiwari')}"></div>
-          <div><label class="lbl">Reception's name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || 'Shiva Rai')}"></div>
+          <div><label class="lbl">Fee calling (Reception) name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || 'Adarsh Dubey')}"></div>
           <div><label class="lbl">Data Entry name</label><input id="se-dent" class="inp" value="${esc(S.settings.dataentryName || 'Shubh Upadhyay')}"></div></div>
         <button onclick="saveOfficeNames()" class="btn btn-sm btn-l">Save names</button>
         <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Everyone except the Principal starts with PIN 1234 and must choose their own at first login. Nobody can see a PIN after it is set; if someone forgets, press Set PIN and type 1234 to reset it.</p></div>
@@ -1666,7 +1666,7 @@ function saveSchool() {
   log('Settings', 'School settings updated'); toast('Saved'); render();
 }
 function saveOfficeNames() {
-  const a = document.getElementById('se-acct').value.trim() || 'Akash Tiwari', r = document.getElementById('se-recp').value.trim() || 'Shiva Rai';
+  const a = document.getElementById('se-acct').value.trim() || 'Akash Tiwari', r = document.getElementById('se-recp').value.trim() || 'Adarsh Dubey';
   const de = (document.getElementById('se-dent') || {}).value; S.settings.dataentryName = (de || '').trim() || 'Shubh Upadhyay';
   S.settings.accountantName = a; S.settings.receptionName = r; log('Settings', `Office staff: Accountant ${a}, Reception ${r}, Data Entry ${S.settings.dataentryName}`); toast('Saved'); render();
 }
@@ -3215,7 +3215,7 @@ function vFDues() {
         <td class="text-right">${s.dues.missing ? '<span class="text-amber-700">Not set</span>' : s.dues.free ? 'Free' : rs(s.dues.monthly)}</td><td class="text-right">${rs(s.dues.paid)}</td><td class="text-right font-semibold text-rose-700">${rs(Math.max(0, s.dues.due))}</td></tr>`).join('') || '<tr><td colspan="6" class="text-slate-500">Nothing due.</td></tr>'}</table></div>`;
 }
 
-// ---- Dues calling (Reception: Shiva Rai)
+// ---- Dues calling (Reception login = fee calling: Adarsh Dubey Sir from 13 Nov 2026)
 function vFCalls() {
   const w = ofReady('Dues Calling'); if (w) return w;
   const tab = P.tab || 'today', today = OF.today, c = P.c || '';
@@ -3227,12 +3227,12 @@ function vFCalls() {
   const tabs = [['today', `Follow-up today (${due.length})`], ['new', `Not called this week (${fresh.length})`], ['all', `All dues (${fams.length})`], ['log', 'Call log']]
     .map(([k, l]) => `<button onclick="go('fcalls',{tab:'${k}',c:${jsq(c)}})" class="btn btn-sm ${tab === k ? 'btn-p' : 'btn-l'}">${l}</button>`).join('');
   const body = tab === 'log' ? ofCallLog() : (lists[tab].length ? lists[tab].map(ofFamCard).join('') : '<div class="card text-sm text-slate-500">Nobody in this list. 🎉</div>');
-  return head('Dues Calling', `${esc(OF.names.reception)} (Reception) · call, then save what they said`, `<button onclick="ofLoad(true)" class="btn btn-l"><i class="fa-solid fa-rotate"></i> Refresh</button>`) + `
+  return head('Dues Calling', `${esc(OF.names.reception)} (Fee Calling) · call, then save what they said`, `<button onclick="ofLoad(true)" class="btn btn-l"><i class="fa-solid fa-rotate"></i> Refresh</button>`) + `
     <div class="flex flex-wrap gap-2 items-center">${tabs}<select class="inp w-auto py-1 text-sm" onchange="go('fcalls',{tab:'${tab}',c:this.value})"><option value="">All classes</option>${CLASS_NAMES.map(x => `<option ${x === c ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
     <div class="space-y-3">${body}</div>`;
 }
 function ofReminder(f) {
-  return `नमस्ते 🙏 ${OF.school} से ${OF.names.reception} बोल रही हूँ।\n` + f.kids.filter(k => k.dues.due > 0).map(k => `${k.name} (Class ${k.cls}) की फीस ₹${k.dues.due.toLocaleString('en-IN')} बाकी है।`).join('\n')
+  return `नमस्ते 🙏 ${OF.school} से ${OF.names.reception} बोल रहे हैं।\n` + f.kids.filter(k => k.dues.due > 0).map(k => `${k.name} (Class ${k.cls}) की फीस ₹${k.dues.due.toLocaleString('en-IN')} बाकी है।`).join('\n')
     + `\nकृपया जल्द से जल्द विद्यालय कार्यालय में जमा करें। रसीद ज़रूर लें। धन्यवाद।`;
 }
 function ofFamCard(f) {
