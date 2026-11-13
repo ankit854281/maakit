@@ -38,8 +38,9 @@ function sal_workdays(string $ym, array $cal): array {
         $d = (string)$e['date']; $to = (string)(($e['to'] ?? '') ?: $d);
         for ($i = 0; $d <= $to && $i < 400; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $hol[$d] = 1;
     }
+    $open = sal_rows('salOpen', $ym . '-');   // holiday / Sunday the staff came to school (staffatt_api.php ?a=open) = a working day for staff
     $out = []; $n = (int)date('t', strtotime($ym . '-01'));
-    for ($i = 1; $i <= $n; $i++) { $d = sprintf('%s-%02d', $ym, $i); if (date('w', strtotime($d)) !== '0' && !isset($hol[$d])) $out[] = $d; }
+    for ($i = 1; $i <= $n; $i++) { $d = sprintf('%s-%02d', $ym, $i); if ((date('w', strtotime($d)) !== '0' && !isset($hol[$d])) || isset($open[$d])) $out[] = $d; }
     return $out;
 }
 

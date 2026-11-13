@@ -17,6 +17,7 @@ $v = (string)@filemtime(__DIR__ . '/staffatt.js');
 table{border-collapse:separate;border-spacing:0;font-size:12px}th,td{border-bottom:1px solid #eef1f4;border-right:1px solid #f1f3f6;text-align:center;padding:0}
 thead th{position:sticky;top:0;background:#17324D;color:#fff;z-index:3;padding:5px 2px;min-width:30px;font-weight:normal;cursor:pointer}thead th small{display:block;font-size:9px;opacity:.75}
 thead th.sun,thead th.hol{background:#5b6b7c;cursor:default}
+thead th.can{cursor:pointer}thead th.open{background:#7a4b00}.opn{margin:6px 0;font-size:13px;color:#556}.opn span{display:inline-block;background:#FFF1CC;color:#7a4b00;border-radius:99px;padding:3px 4px 3px 10px;margin:2px 4px 2px 0}.opn button{border:0;background:transparent;color:#b42318;font-weight:bold;cursor:pointer;padding:0 6px}
 th.nm,td.nm{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:5px 8px;min-width:150px;max-width:190px}thead th.nm{z-index:4;background:#17324D}
 td.nm b{display:block;font-size:13px}td.nm small{color:#667;font-size:11px}tr.grp td{background:#F6F0E4;font-weight:bold;text-align:left;padding:5px 8px;position:sticky;left:0}
 td.c{width:30px;height:34px;cursor:pointer;font-weight:bold;user-select:none}td.c.P{color:#1d8f4e}td.c.A{background:#FDE2E1;color:#b42318}td.c.H{background:#FFF1CC;color:#8a5a00}td.c.L{background:#E3EEFF;color:#1d4ed8;cursor:not-allowed}

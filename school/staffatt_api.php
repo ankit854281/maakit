@@ -83,8 +83,8 @@ case 'month': {
     if ($role !== 'chairman') sa_seed_former('system');
     $cal = sal_rows('cal'); $work = array_flip(sal_workdays($ym, $cal)); $n = (int)date('t', strtotime($ym . '-01')); $today = date('Y-m-d');
     $hol = []; foreach ($cal as $e) if (($e['type'] ?? '') === 'Holiday' && !empty($e['date'])) { $d = (string)$e['date']; $to = (string)(($e['to'] ?? '') ?: $d); for ($i = 0; $d <= $to && $i < 400; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $hol[$d] = (string)($e['title'] ?? 'Holiday'); }
-    $days = [];
-    for ($i = 1; $i <= $n; $i++) { $d = sprintf('%s-%02d', $ym, $i); $days[] = ['date' => $d, 'kind' => isset($work[$d]) ? 'work' : (date('w', strtotime($d)) === '0' ? 'sun' : 'hol'), 'title' => $hol[$d] ?? '', 'future' => $d > $today]; }
+    $days = []; $open = sal_rows('salOpen', $ym . '-');
+    for ($i = 1; $i <= $n; $i++) { $d = sprintf('%s-%02d', $ym, $i); $days[] = ['date' => $d, 'kind' => isset($work[$d]) ? 'work' : (date('w', strtotime($d)) === '0' ? 'sun' : 'hol'), 'title' => $hol[$d] ?? (date('w', strtotime($d)) === '0' ? 'Sunday' : ''), 'future' => $d > $today, 'open' => isset($open[$d])]; }
     $att = [];
     foreach (sal_rows('staffAtt', $ym) as $d => $r) foreach ((array)($r['absent'] ?? []) as $t) $att['t:' . $t][$d] = ((int)(($r['from'] ?? [])[$t] ?? 0)) > 0 ? 'H' : 'A';
     foreach (sal_rows('leave') as $l) if (($l['status'] ?? '') === 'Approved' && !empty($l['tid'])) {
@@ -125,6 +125,28 @@ case 'save': {
     sch_log($u, 'Staff Attendance', "Bulk update $ym: $changed entr" . ($changed === 1 ? 'y' : 'ies') . ($skipped ? ", $skipped skipped (Sunday / holiday / future / unknown)" : ''));
     $db->commit();
     sch_json(['ok' => true, 'changed' => $changed, 'skipped' => $skipped]);
+}
+case 'open': {
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if ($role === 'chairman') sch_fail('The Chairman login can only view.', 403);
+    $in = json_decode(file_get_contents('php://input', false, null, 0, 2000) ?: '', true); if (!is_array($in)) sch_fail('Bad request.');
+    $d = (string)($in['date'] ?? ''); $on = ($in['on'] ?? true) !== false;
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || $d > date('Y-m-d')) sch_fail('Choose a date that is not in the future.');
+    $wasOpen = (bool)sch_rec_get('salOpen', $d);
+    if ($on) {
+        if ($wasOpen) sch_json(['ok' => true]);
+        $cal = sal_rows('cal');
+        if (in_array($d, sal_workdays(substr($d, 0, 7), $cal), true)) sch_fail('This is already a working day.');
+        $title = date('w', strtotime($d)) === '0' ? 'Sunday' : 'Holiday';
+        foreach ($cal as $e) if (($e['type'] ?? '') === 'Holiday' && ($e['date'] ?? '9') <= $d && (($e['to'] ?? '') ?: ($e['date'] ?? '')) >= $d) $title = (string)($e['title'] ?? 'Holiday');
+        sch_rec_put('salOpen', $d, ['by' => $u['label'], 'at' => sch_now_ms(), 'title' => $title], $uid);
+        sch_log($u, 'Staff Attendance', "Staff came to school on $d ($title) — opened for staff attendance");
+    } else {
+        if (!$wasOpen) sch_json(['ok' => true]);
+        sch_rec_del('salOpen', $d, $uid);
+        sch_log($u, 'Staff Attendance', "$d is a holiday for staff again (staff attendance of that day no longer counts)");
+    }
+    sch_json(['ok' => true]);
 }
 default: sch_fail('Unknown action.');
 }

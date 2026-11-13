@@ -23,7 +23,7 @@ const EL_KINDS = [
     'acctPay' => 'Fee receipt (old desk)', 'acctCall' => 'Fee call', 'acctStu' => 'Fee settings of a child', 'ofcRcpt' => 'Fee receipt', 'ofcLed' => 'Fee card', 'ofcSeq' => 'Receipt number',
     'regRow' => 'School Office register', 'salStaff' => 'Staff salary setting', 'salMonth' => 'Salary month', 'phoStu' => 'Student photo', 'phoImg' => 'Photo',
     'tchAccept' => 'Staff rules accepted', 'tchPolicy' => 'Staff rules changed', 'tchKit' => 'Daily check', 'tchChk' => 'Homework / copy check', 'tchNote' => 'Chapter notes',
-    'tchMsg' => 'Staff chat', 'profNote' => 'Profile note', 'finTx' => 'Accounts entry', 'regKit' => 'Diary / ID card / Dress / Books given',
+    'tchMsg' => 'Staff chat', 'profNote' => 'Profile note', 'finTx' => 'Accounts entry', 'regKit' => 'Diary / ID card / Dress / Books given', 'salOpen' => 'Holiday opened for staff',
 ];
 const EL_SKIP = ['regSeq', 'acctSeq', 'acctNonce', 'scanUse', 'phoThumb', 'gameR', 'gameMiss', 'gamePack', 'gameLock', 'quizD', 'quizC', 'regHist', 'regPage', 'prcOld', 'oldfeecard', 'salSeed'];
 

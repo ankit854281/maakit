@@ -80,6 +80,20 @@ sa_check($rowK['calc']['auto']['half'] === 1, 'teacher half day reaches salary')
 [, $j] = $api('load', null, $tok['K']); sa_check(!array_filter($j['records'], fn($x) => $x['k'] === 'salAtt'), 'salAtt never in the normal load');
 sa_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Staff Attendance' AND x LIKE 'Bulk update 2026-09%'")->fetchColumn() === 2, 'logged');
 
+// ---- staff came on a holiday / Sunday (owner, 13 Nov 2026) ----
+[$c] = $sa('open', ['date' => '2026-09-15', 'on' => true], $tok['CH']); sa_check($c === 403, 'Chairman cannot open a holiday');
+[$c] = $sa('open', ['date' => '2026-09-16', 'on' => true], $tok['P']); sa_check($c === 400, 'a normal working day cannot be opened');
+[$c] = $sa('open', ['date' => '2026-09-15', 'on' => true], $tok['A']); sa_check($c === 200, 'holiday opened');
+[$c] = $sa('open', ['date' => '2026-09-13', 'on' => true], $tok['P']); sa_check($c === 200, 'Sunday opened');
+[, $j] = $sa('month', null, $tok['P'], '&ym=2026-09'); $dd = array_column($j['days'], null, 'date');
+sa_check($dd['2026-09-15']['kind'] === 'work' && $dd['2026-09-15']['open'] && $dd['2026-09-13']['kind'] === 'work' && $dd['2026-09-14']['open'] === false, 'opened days are working days for staff: ' . json_encode($dd['2026-09-15']));
+[, $j] = $sa('save', ['ym' => '2026-09', 'set' => ['2026-09-15' => ['xdriver1' => 'A', 't:K' => 'A']]], $tok['P']); sa_check($j['changed'] === 2 && $j['skipped'] === 0, 'attendance saved on the opened holiday');
+sa_check(in_array('K', sch_rec_get('staffAtt', '2026-09-15')['absent'], true), 'teacher absent on the opened holiday');
+sa_check(sal_sheet('2026-09')['workDays'] === 27, 'salary counts the opened days');
+$sa('open', ['date' => '2026-09-13', 'on' => false], $tok['P']); sa_check(sal_sheet('2026-09')['workDays'] === 26 && sch_rec_get('salOpen', '2026-09-13') === null, 'closed again');
+sa_check(sch_rec_get('cal', 'h1')['type'] === 'Holiday', 'school calendar unchanged');
+$sa('open', ['date' => '2026-09-15', 'on' => false], $tok['P']); $pdo->exec("DELETE FROM sch_records WHERE k IN ('staffAtt','salAtt') AND r='2026-09-15'");
+
 // ---- staff who left: worked till 31 Oct 2026 (one-time seed, owner 12 Nov 2026) ----
 $put('teacher', 'BY', ['name' => 'Brijesh Yadav Sir', 'role' => 'Maths']);
 $put('settings', 'main', ['school' => 'Staff Test School', 'session' => '2026-27', 'sessionStart' => '2026-04-01', 'leftTeachers' => ['AP' => "Amisha Pandey Ma'am"]]);

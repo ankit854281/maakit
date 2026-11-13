@@ -25,7 +25,7 @@
   function draw() {
     const can = D.can, n = nChanges(), work = D.days.filter(d => d.kind === 'work' && !d.future);
     const groups = [['Teachers', D.staff.filter(s => s.teaching && !s.until)], ['Other staff', D.staff.filter(s => !s.teaching && !s.until)], ['Left the school (worked till the date shown)', D.staff.filter(s => s.until)]];
-    const head = D.days.map(d => `<th class="${d.kind}" title="${esc(d.title)}" ${can && d.kind === 'work' && !d.future ? `onclick="saDay('${d.date}')"` : ''}>${+d.date.slice(8)}<small>${'SMTWTFS'[new Date(d.date + 'T00:00:00').getDay()]}</small></th>`).join('');
+    const head = D.days.map(d => `<th class="${d.kind}${d.open ? ' open' : ''}${can && !d.future ? ' can' : ''}" title="${esc(d.open ? 'Opened for staff — ' + d.title : d.kind !== 'work' ? d.title + (can && !d.future ? ' — tap if staff came to school' : '') : d.title)}" ${can && !d.future ? `onclick="${d.kind === 'work' ? 'saDay' : 'saOpen'}('${d.date}')"` : ''}>${+d.date.slice(8)}<small>${'SMTWTFS'[new Date(d.date + 'T00:00:00').getDay()]}</small></th>`).join('');
     const row = s => `<tr><td class="nm"><b>${esc(s.name)}</b><small>${esc(s.role)}${s.until ? ' · till ' + esc(s.until.split('-').reverse().join('-')) : ''}</small></td>${D.days.map(d => {
         if (s.until && d.date > s.until) return '<td class="c off">–</td>';
         if (d.kind !== 'work') return `<td class="c off">${d.kind === 'sun' ? 'S' : 'H'}</td>`.replace('>H<', '>·<');
@@ -37,10 +37,11 @@
         ${can ? `<button class="go" ${n ? '' : 'disabled'} onclick="saSave()">Save ${n ? n + ' change' + (n > 1 ? 's' : '') : ''}</button>` : ''}
         <button onclick="saCsv()">Download CSV</button>${can ? '<label class="btn">Upload CSV<input type="file" accept=".csv,text/csv" onchange="saUpload(this)"></label>' : ''}
         ${n ? '<button onclick="saUndo()">Undo all</button>' : ''}</div>
+      ${D.days.some(d => d.open) ? `<div class="opn"><b>Holiday / Sunday — staff came:</b> ${D.days.filter(d => d.open).map(d => `<span>${+d.date.slice(8)} ${esc(mName(YM).split(' ')[0].slice(0, 3))} · ${esc(d.title)}${can ? `<button title="Make it a holiday again" onclick="saClose('${d.date}')">✕</button>` : ''}</span>`).join('')}</div>` : ''}
       <div class="leg"><span><i style="color:#1d8f4e">✓</i>Present</span><span><i style="background:#FDE2E1;color:#b42318">A</i>Absent</span><span><i style="background:#FFF1CC;color:#8a5a00">½</i>Half day</span><span><i style="background:#E3EEFF;color:#1d4ed8">L</i>Approved leave</span><span><i style="background:#f2f4f6;color:#b8c0c8">S</i>Sunday / holiday</span></div>
       <div class="wrap"><table><thead><tr><th class="nm">${esc(mName(YM))} · ${work.length} days so far</th>${head}<th>Total</th></tr></thead><tbody>
       ${groups.filter(g => g[1].length).map(([g, L]) => `<tr class="grp"><td class="nm" colspan="1">${g} (${L.length})</td><td colspan="${D.days.length + 1}"></td></tr>` + L.map(row).join('')).join('')}</tbody></table></div>
-      <p class="help">${can ? 'Tap a box: ✓ Present → A Absent → ½ Half day. Tap a date at the top to mark everyone present or absent that day. Press <b>Save</b> once at the end. ' : ''}Teachers' attendance here is the same as Staff Attendance in the ERP and Teacher App — the arrangement and salary use it by themselves. Approved leave (L) comes from the leave requests. CSV: download, fill P / A / H under each date, upload.</p>`;
+      <p class="help">${can ? 'Tap a box: ✓ Present → A Absent → ½ Half day. Tap a date at the top to mark everyone present or absent that day. <b>Staff came on a holiday or Sunday?</b> Tap that grey date to open it for staff. Press <b>Save</b> once at the end. ' : ''}Teachers' attendance here is the same as Staff Attendance in the ERP and Teacher App — the arrangement and salary use it by themselves. Approved leave (L) comes from the leave requests. CSV: download, fill P / A / H under each date, upload.</p>`;
   }
   window.saMonth = ym => { if (nChanges() && !confirm('Leave without saving your changes?')) return draw(); YM = ym; load(); };
   window.saTap = (id, d) => { const cur = val(id, d), nx = { P: 'A', A: 'H', H: 'P' }[cur] || 'P', orig = (D.att[id] && D.att[id][d]) || 'P';
@@ -48,6 +49,11 @@
   window.saDay = d => { const allP = D.staff.filter(s => !(s.until && d > s.until)).every(s => ['P', 'L'].includes(val(s.id, d))), to = allP ? 'A' : 'P';
     if (!confirm((to === 'A' ? 'Mark EVERYONE absent' : 'Mark everyone present') + ' on ' + d.split('-').reverse().join('-') + '?')) return;
     D.staff.forEach(s => { if (val(s.id, d) === 'L' || (s.until && d > s.until)) return; const orig = (D.att[s.id] && D.att[s.id][d]) || 'P'; CH[d] = CH[d] || {}; if (to === orig) delete CH[d][s.id]; else CH[d][s.id] = to; }); draw(); };
+  window.saOpen = async d => { if (nChanges()) return toast('Save your changes first.'); const x = D.days.find(y => y.date === d);
+    if (!confirm(`${d.split('-').reverse().join('-')} is ${x.title || 'a holiday'}. Did the staff come to school that day?\n\nOK = open this day for staff attendance (everyone Present; then tap who did not come). It counts as a working day for staff salary. Students' calendar does not change.`)) return;
+    try { await api('a=open', { date: d, on: true }); toast('Opened. Now mark who did not come and press Save.'); await load(); } catch (e) { toast(e.message); } };
+  window.saClose = async d => { if (nChanges()) return toast('Save your changes first.'); if (!confirm(`Make ${d.split('-').reverse().join('-')} a holiday again for staff? Attendance marked that day will not count.`)) return;
+    try { await api('a=open', { date: d, on: false }); toast('Holiday again.'); await load(); } catch (e) { toast(e.message); } };
   window.saUndo = () => { CH = {}; draw(); };
   window.saSave = async () => {
     try { const r = await api('a=save', { ym: YM, set: CH }); toast(`Saved ${r.changed} entr${r.changed === 1 ? 'y' : 'ies'}` + (r.skipped ? ` · ${r.skipped} skipped` : '')); await load(); }
