@@ -111,6 +111,9 @@ if ($method === 'POST') {
     if ($role === 'chairman') sch_fail('The Chairman login can only view.', 403);
 }
 $canClass = fn(string $cls): bool => $role === 'principal' || ($role === 'teacher' && tch_is_ct($tid, $cls));
+// Fee calling for the whole school (owner, 13 Nov 2026: "Akash Sir wala fee calling Adarsh Sir ko — app me do"):
+// teachers in settings.feeCallers (default Adarsh Dubey Sir, 'AD') call the parents of EVERY class from the Teacher App.
+$feeCaller = $role === 'teacher' && in_array($tid, (array)((sch_rec_get('settings', 'main') ?? [])['feeCallers'] ?? ['AD']), true);
 $canSee = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cls);
 
 switch ($a) {
@@ -315,7 +318,7 @@ case 'fees': {
     // Other teachers never see fees. Amounts are paise, exactly as the Chairman app's calling list.
     if ($method !== 'GET') sch_fail('GET only', 405);
     $cls = (string)($_GET['cls'] ?? '');
-    if ($cls === '' || !$canClass($cls)) sch_fail('Only the class teacher sees the fees of this class.', 403);
+    if ($cls === '' || !($canClass($cls) || $feeCaller)) sch_fail('Only the class teacher (or the school\'s fee caller) sees the fees of this class.', 403);
     $session = ff_session(); $snap = ff_snapshot($db, $session); $kids = []; $ids = [];
     foreach ($snap as $sid => $x) if (($x['cls'] ?? '') === $cls) {
         $last = end($x['receipts']) ?: null;
@@ -335,7 +338,7 @@ case 'fees': {
 case 'feecall': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $sid = (string)($in['sid'] ?? ''); $s = $sid !== '' ? sch_rec_get('student', $sid) : null;
-    if (!$s || !$canClass((string)($s['cls'] ?? ''))) sch_fail('Only the class teacher can call about this child\'s fee.', 403);
+    if (!$s || !($canClass((string)($s['cls'] ?? '')) || $feeCaller)) sch_fail('Only the class teacher (or the school\'s fee caller) can call about this child\'s fee.', 403);
     $out = (string)($in['outcome'] ?? ''); if (!in_array($out, OF_OUTCOMES, true)) sch_fail('Choose the call result.');
     $session = ff_session();
     $db->beginTransaction(); $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();

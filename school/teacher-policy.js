@@ -217,8 +217,9 @@
     vHome = function () { const html = _vh.apply(this, arguments);
       if (!S || !ME || (typeof pMode === 'function' && pMode())) return html;
       const last = S.leaves.filter(l => l.tid === me())[0];
+      const fc = typeof isFeeCaller === 'function' && isFeeCaller() ? `<div class="card lpb-home"><div class="row"><div><b>📞 Fee calling — all classes</b><small>Call parents about dues, write what they said. The office and Chairman Sir see it.</small></div><button class="btn go" onclick="go('conn',{m:'fee'})">Open</button></div></div>` : '';
       const card = `<div class="card lpb-home"><div class="row"><div><b>Need leave?</b><small>${last ? 'Last request ' + esc(fmtDate(last.from)) + ': ' + esc(last.status) + (last.rejectReason ? ' — ' + esc(last.rejectReason) : '') : 'Write the reason in a few words — the app writes the application.'}</small></div><button class="btn go" onclick="lpBot()">Apply for leave</button></div></div>`;
-      return card + html; };
+      return fc + card + html; };
   }
   // Principal Staff hub: + "Staff attendance" (all staff, bulk / CSV) and the full applications
   if (typeof vStaffHub === 'function') {

@@ -1566,8 +1566,11 @@ let CHAT = null;
 const rs = p => '₹' + (Math.round((p || 0) / 100)).toLocaleString('en-IN');
 function uuid4() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); const h = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); }
 function myClasses() { return [...new Set([...myCT(), ...allocList().map(a => a.c)])].filter(c => className().includes(c)); }
+// Fee calling: class teacher → own class; the school's fee caller (settings.feeCallers, default Adarsh Sir 'AD') → every class
+function isFeeCaller() { return !isP() && ((S.settings || {}).feeCallers || ['AD']).includes(me()); }
+function feeCls() { return isFeeCaller() ? (S.classes || []).map(k => k.c) : myCT(); }
 function vConn() {
-  const ct = myCT(), m = P.m || (ct.length ? 'fee' : 'msg');
+  const ct = feeCls(), m = P.m || (ct.length ? 'fee' : 'msg');
   const items = [...(ct.length ? [['fee', 'Fee calls']] : []), ['msg', 'Messages'], ['chat', 'Parents'], ['staff', 'Staff chat' + (scUnread() ? ' · ' + scUnread() : '')]];
   return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'chat' ? vChat() : m === 'staff' ? vStaff() : vMsg());
 }
