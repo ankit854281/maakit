@@ -26,8 +26,8 @@ try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable
 $u = sch_auth();
 $role = (string)$u['role'];
 $uid = sch_uid_of($u);
-if (!in_array($role, ['principal', 'chairman', 'accountant', 'reception'], true)) sch_fail('Fee Receipt is not open for this login.', 403);
-$canCollect = in_array($role, ['principal', 'accountant'], true);
+if (!in_array($role, ['principal', 'chairman', 'accountant', 'reception', 'manager'], true)) sch_fail('Fee Receipt is not open for this login.', 403);
+$canCollect = in_array($role, ['principal', 'accountant', 'manager'], true);   // manager: Manager app (owner, 13 Nov 2026: "manager app me fee receipt karne ka")
 $isP = $role === 'principal';
 $in = [];
 if ($method === 'POST') { $in = json_decode((string)file_get_contents('php://input', false, null, 0, 200000), true); if (!is_array($in)) sch_fail('Bad request.'); }
@@ -70,7 +70,7 @@ case 'ledger': {
 }
 case 'collect': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    if (!$canCollect) sch_fail('Only the Accountant or the Principal can take fees.', 403);
+    if (!$canCollect) sch_fail('Only the Accountant, Manager or the Principal can take fees.', 403);
     $live = ofc_live($ses); if (!$live) sch_fail('Fees for ' . $ses . ' are not taken here yet. The Principal starts the session first.');
     $sid = (string)($in['sid'] ?? ''); $nonce = (string)($in['nonce'] ?? '');
     if (!preg_match('/^[a-f0-9]{16,64}$/', $nonce)) sch_fail('Bad request.');

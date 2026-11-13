@@ -11,7 +11,7 @@
   const dmy = d => d ? d.split('-').reverse().join('-') : '';
   const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3500); };
   const TK = 'sal_token';                                   // own token key: the Salary app login never mixes with the ERP login on the same phone
-  let YM = ymOf(now), D = null, VIEW = 'all', MUST = false, ROLE = store.get('sal_role') || 'manager', NAMES = {};
+  let SEC = store.get('mg_sec') || 'sal', YM = ymOf(now), D = null, VIEW = 'all', MUST = false, ROLE = store.get('sal_role') || 'manager', NAMES = {};
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('manager-sw.js').catch(() => {});
   // Opened from the Chairman app (?from=ch): use the Chairman's login already on this phone — no second PIN.
   if (/[?&]from=ch/.test(location.search) && !store.get(TK) && store.get('sch_token')) { store.set(TK, store.get('sch_token')); store.set('sal_shared', '1'); ROLE = 'chairman'; store.set('sal_role', 'chairman'); }
@@ -73,8 +73,17 @@
   }
   function segs() { const R = D.rows, paid = R.filter(r => r.status === 'Paid');
     return `<div class="seg">${[['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
+  // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
+  // Fee Receipt = feecollect.php (the one place fees are taken), Cash Book + Tour fee = cashdesk.php — same login (tk=sal).
+  const SECS = [['sal', 'Salary'], ['fee', 'Fee Receipt'], ['cash', 'Cash Book'], ['tour', 'Tour fee']];
+  window.mgSec = k => { SEC = k; store.set('mg_sec', k); draw(); };
+  const secBar = () => `<div class="seg" style="margin-bottom:12px">${SECS.map(([k, l]) => `<button class="${SEC === k ? 'on' : ''}" onclick="mgSec('${k}')">${l}</button>`).join('')}</div>`;
   async function draw() {
     if (!store.get(TK) || MUST) return loginView();
+    if (SEC !== 'sal') {
+      const src = { fee: 'feecollect.php?embed=1&tk=sal', cash: 'cashdesk.php?embed=1&tk=sal&tab=day', tour: 'cashdesk.php?embed=1&tk=sal&tab=tour' }[SEC];
+      return frame(`<iframe src="${src}" title="${SEC}" style="height:82vh"></iframe>${SEC === 'fee' ? '<p class="mut">Fee Receipt is the same screen as the ERP — the receipt number continues the school series. On a phone, turn it sideways for the full form.</p>' : ''}`);
+    }
     if (!D) return load();
     if (VIEW === 'bill') { frame(segs() + `<div class="card"><h3 style="margin:0 0 8px;color:#0F5132">📄 Fee demand bill for parents</h3><div id="billPick"></div></div>`); return DemandBill.picker(store.get(TK), 'billPick'); }
     if (VIEW === 'att') return frame(segs() + `<iframe src="staffatt.php?embed=1&tk=sal" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
@@ -93,8 +102,8 @@
       <p class="mut">${D.workDays} working days in ${esc(ymName(YM))} (Sundays and holidays left out). Absence comes from Staff Attendance and approved leave by itself; staff rules (paid leave, no-permission cut, more-than-4-leave rule, full-attendance bonus) are applied by themselves. Only the Manager and the Chairman can open this app.</p>`);
   }
   function frame(body) {
-    $('app').innerHTML = `<div class="top"><div><b>Salary</b><small>${esc(D ? D.me : '')}${D && !D.can.edit ? ' · view only' : ''}</small></div>
-      <div style="display:flex;gap:6px"><select onchange="mgMonth(this.value)">${months().map(m => `<option value="${m}" ${m === YM ? 'selected' : ''}>${ymName(m)}</option>`).join('')}</select><button onclick="mgLogout()">Log out</button></div></div><div class="pg">${body}</div>`;
+    $('app').innerHTML = `<div class="top"><div><b>${SEC === 'sal' ? 'Salary' : esc(SECS.find(x => x[0] === SEC)[1])}</b><small>${esc(D ? D.me : 'Manager app')}${D && !D.can.edit ? ' · view only' : ''}</small></div>
+      <div style="display:flex;gap:6px">${SEC === 'sal' ? `<select onchange="mgMonth(this.value)">${months().map(m => `<option value="${m}" ${m === YM ? 'selected' : ''}>${ymName(m)}</option>`).join('')}</select>` : ''}<button onclick="mgLogout()">Log out</button></div></div><div class="pg">${secBar()}${body}</div>`;
   }
   // ---------------- sheets ----------------
   const row = id => D.rows.find(r => r.staff.id === id);

@@ -17,7 +17,7 @@ const SES0 = (QS.get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
 
 function toast(t) { const el = $('ofcToast'); el.textContent = t; clearTimeout(toast.t); toast.t = setTimeout(() => { el.textContent = ''; }, 7000); }
 async function api(a, body, q) {
-  const r = await fetch('feecollect_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : ''), { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': localStorage.getItem('sch_token') || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const r = await fetch('feecollect_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : ''), { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': localStorage.getItem(/[?&]tk=sal/.test(location.search) ? 'sal_token' : 'sch_token') || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
   let d; try { d = await r.json(); } catch (e) { throw Error('The server did not answer properly. Please try again.'); }
   if (!r.ok || !d.ok) throw Error(d.error || 'Could not complete this.');
   return d;
@@ -328,7 +328,7 @@ function printReceipt(r) {
 }
 async function printOld(no) {
   try {
-    const r = await fetch('registers_api.php?a=rows&m=oldrcptdet', { headers: { 'X-School-Token': localStorage.getItem('sch_token') || '' } }); const d = await r.json();
+    const r = await fetch('registers_api.php?a=rows&m=oldrcptdet', { headers: { 'X-School-Token': localStorage.getItem(/[?&]tk=sal/.test(location.search) ? 'sal_token' : 'sch_token') || '' } }); const d = await r.json();
     const x = (d.rows || []).find(z => z.session.replace(/^(20\d\d)-20(\d\d)$/, '$1-$2') === ST.ses && z.receiptNo === no);
     if (!x) return toast('The full old receipt ' + no + ' is not in the Old ERP Receipt Details.');
     printHtml(receiptHtml({ title: x.title, receiptNo: x.receiptNo, date: x.date, name: x.name, cls: x.cls, adm: x.adm, mother: x.mother, father: x.father, scheme: x.scheme, lines: x.lines, balance: x.balance, payable: x.payable, lateFee: x.lateFee, adjustment: x.adjustment, mode: x.mode, received: x.received, bank: x.bank, cheque: x.cheque, remark: x.remark, user: x.user }));
