@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.print.PrintAttributes;
+import android.print.PrintManager;
 import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
@@ -22,6 +24,7 @@ public class MainActivity extends Activity {
     private LinearLayout error;
     private byte[] report;
     private boolean failed;
+    private WebView printView;           // page being printed / saved as PDF (owner, 13 Nov 2026)
     private ValueCallback<Uri[]> pick;   // CSV upload (Staff attendance) — Android's own file picker
 
     private static boolean trusted(Uri uri) {
@@ -135,6 +138,31 @@ public class MainActivity extends Activity {
     // The native save bridge is only exposed to school-origin pages; Android's
     // document picker controls the destination. It never accepts a filesystem path.
     public final class Reports {
+        // Owner, 13 Nov 2026: "print ke baad save as PDF ka option nahi" — lists (tour, receipts) open Android's own
+        // print screen, where "Save as PDF" is a printer. The page is rendered with JavaScript off and no network.
+        @JavascriptInterface public void printHtml(String title, String html) {
+            if (html == null || html.length() > 3_000_000) return;
+            runOnUiThread(() -> {
+                if (!trusted(Uri.parse(web.getUrl() == null ? "" : web.getUrl()))) return;
+                final String job = (title == null || title.trim().isEmpty() ? "SNMSIS" : title.trim()).replaceAll("[^a-zA-Z0-9 ._-]", " ").trim();
+                WebView pv = new WebView(MainActivity.this);
+                pv.getSettings().setJavaScriptEnabled(false);
+                pv.getSettings().setAllowFileAccess(false);
+                pv.getSettings().setAllowContentAccess(false);
+                pv.getSettings().setBlockNetworkLoads(true);
+                pv.setWebViewClient(new WebViewClient() {
+                    @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return true; }
+                    @Override public void onPageFinished(WebView view, String url) {
+                        PrintManager pm = (PrintManager) getSystemService(PRINT_SERVICE);
+                        if (pm == null) { toast("Printing is not available on this phone."); return; }
+                        try { pm.print(job.isEmpty() ? "SNMSIS" : job, view.createPrintDocumentAdapter(job.isEmpty() ? "SNMSIS" : job), new PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build()); }
+                        catch (RuntimeException e) { toast("Could not open the print screen."); }
+                    }
+                });
+                printView = pv;
+                pv.loadDataWithBaseURL("https://maakit.in/school/", html, "text/html", "UTF-8", null);
+            });
+        }
         @JavascriptInterface public void saveCsv(String filename, String encoded) {
             if (encoded == null || encoded.length() > 7_000_000) return;
             runOnUiThread(() -> {

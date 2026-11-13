@@ -149,12 +149,14 @@
   }
   window.fqWa = () => { const r = DONE, s = ST.students.find(x => x.id === r.sid) || {}, ph = String(s.phone || '').replace(/\D/g, '').slice(-10);
     const a = document.createElement('a'); a.href = 'https://wa.me/' + (ph.length === 10 ? '91' + ph : '') + '?text=' + encodeURIComponent(rcText(r)); a.target = '_blank'; a.rel = 'noopener'; a.click(); };
-  window.fqPrint = () => { const r = DONE, w = window.open('', '_blank');
-    if (!w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Printing works from the phone browser or a computer — send it on WhatsApp here.' : 'Allow pop-ups to print.');
+  window.fqPrint = () => { const r = DONE, bridge = window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function', w = bridge ? null : window.open('', '_blank');
+    if (!bridge && !w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Update the Salary app (new version) to print or save PDF — or send it on WhatsApp.' : 'Allow pop-ups to print.');
     const one = c => `<div class="rc"><h2>${esc(ST.school)}</h2><h3>Fee Receipt <small>(${c})</small></h3><table><tr><th>Receipt No.</th><td>${esc(r.no)}</td><th>Date</th><td>${dmy(r.date)}</td></tr><tr><th>Student</th><td colspan="3">${esc(r.name)} — ${esc(r.cls)} ${esc(r.section || '')}${r.adm ? ' · Adm ' + esc(r.adm) : ''}</td></tr><tr><th>Father</th><td colspan="3">${esc(r.father || '')}</td></tr></table>
       <table style="margin-top:8px"><tr><th>#</th><th>Fee head</th><th>Months</th><th class="n">Amount</th></tr>${(r.lines || []).map(l => `<tr><td>${esc(l[0])}</td><td>${esc(l[1])}</td><td>${esc(l[2])}</td><td class="n">${rs(l[3])}</td></tr>`).join('')}${r.late ? `<tr><td></td><td colspan="2">Late fee</td><td class="n">${rs(r.late)}</td></tr>` : ''}<tr><th colspan="3">Received (${esc(r.mode)})</th><th class="n">${rs(r.received)}</th></tr><tr><td colspan="3">Balance due</td><td class="n">${rs(r.balanceAfter)}</td></tr></table>
       <p style="margin-top:26px">Received by: ${esc(r.by)}<span style="float:right">Signature: __________</span></p></div>`;
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${esc(r.no)}</title><style>body{font-family:Arial,sans-serif;font-size:13px;margin:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:5px;text-align:left}.n{text-align:right}h2,h3{text-align:center;margin:2px 0}.rc{border:1px solid #333;padding:12px;margin-bottom:16px;page-break-inside:avoid}</style></head><body>${one('Parent copy')}${one('Office copy')}<script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); };
+    const doc = `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${esc(r.no)}</title><style>body{font-family:Arial,sans-serif;font-size:13px;margin:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:5px;text-align:left}.n{text-align:right}h2,h3{text-align:center;margin:2px 0}.rc{border:1px solid #333;padding:12px;margin-bottom:16px;page-break-inside:avoid}</style></head><body>${one('Parent copy')}${one('Office copy')}</body></html>`;
+    if (bridge) { SNMSISFiles.printHtml('Receipt ' + r.no, doc); toast('Choose "Save as PDF" as the printer, then share the PDF.'); return; }
+    w.document.write(doc.replace('</body>', '<script>window.onload=()=>window.print()<\/script></body>')); w.document.close(); };
   window.fqNext = () => { DONE = null; SID = ''; LD = null; SEARCH = ''; draw(); setTimeout(() => { const e = $('fqS'); if (e) e.focus(); }, 50); };
   boot();
 })();
