@@ -12,7 +12,7 @@
   const dmy = d => d ? d.split('-').reverse().join('-') : '', ymName = ym => new Date(ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3800); };
   const KIND = { fee: 'Fee receipt', tour: 'Tour fee', expense: 'Expense', income: 'Income', opening: 'Opening balance', deposit: 'Bank deposit', withdraw: 'Self withdrawal' };
-  let TAB = ['day', 'month', 'tour'].includes(Q.get('tab')) ? Q.get('tab') : 'day', DATE = today, YM = today.slice(0, 7), D = null, M = null, T = null, TID = '', TCLS = '', TQ = '';
+  let TAB = ['day', 'month', 'tour'].includes(Q.get('tab')) ? Q.get('tab') : 'day', DATE = today, YM = today.slice(0, 7), D = null, M = null, T = null, TID = '', TCLS = '', TQ = '', TST = '';
   async function api(a, body, q) {
     const r = await fetch('cashdesk_api.php?a=' + a + (q || ''), { method: body ? 'POST' : 'GET', cache: 'no-store', headers: { 'Content-Type': 'application/json', 'X-School-Token': TOK() }, ...(body ? { body: JSON.stringify(body) } : {}) });
     let j = null; try { j = await r.json(); } catch (e) {}
@@ -96,21 +96,30 @@
     if (!T.tours.some(t => t.id === TID)) TID = T.tours[0].id;
     const t = T.tours.find(x => x.id === TID), paid = t.kids.filter(s => s.pay && s.pay.status === 'Paid'), coll = paid.reduce((a, s) => a + s.pay.amount, 0);
     const cls = t.classes.length ? t.classes : [...new Set(t.kids.map(s => s.cls))];
-    const L = t.kids.filter(s => (!TCLS || s.cls === TCLS) && (!TQ || (s.name + ' ' + s.father).toLowerCase().includes(TQ.toLowerCase())));
+    const isPaid = s => s.pay && s.pay.status === 'Paid', later = t.kids.filter(s => s.book && !isPaid(s));
+    const st = s => isPaid(s) ? 'paid' : s.book ? 'later' : 'no';
+    const L = t.kids.filter(s => (!TCLS || s.cls === TCLS) && (!TST || st(s) === TST) && (!TQ || (s.name + ' ' + s.father).toLowerCase().includes(TQ.toLowerCase())));
     frame(`<div class="card"><div class="row"><select onchange="cdTid(this.value)" style="max-width:320px">${T.tours.map(x => `<option value="${x.id}" ${x.id === TID ? 'selected' : ''}>${esc(x.name)} · ${dmy(x.date)}</option>`).join('')}</select>
         ${T.can ? `<span class="acts"><button class="btn l s" onclick="cdTour('${t.id}')">Edit tour</button><button class="btn l s" onclick="cdTour('')">+ New tour</button></span>` : ''}</div>
         <p class="mut" style="margin:6px 0 0">${rs(t.amount)} per child · Classes ${esc(cls.join(', '))}</p></div>
-      <div class="kp"><div class="k"><span>Children</span><b>${t.kids.length}</b></div><div class="k g"><span>Paid</span><b>${paid.length}</b><small>${rs(coll)}</small></div><div class="k r"><span>Not paid</span><b>${t.kids.length - paid.length}</b></div><div class="k y"><span>Collected</span><b>${rs(coll)}</b></div></div>
+      <div class="kp"><div class="k"><span>Children</span><b>${t.kids.length}</b></div><div class="k g"><span>Paid</span><b>${paid.length}</b><small>${rs(coll)}</small></div><div class="k r"><span>Going · pay later</span><b>${later.length}</b><small>${rs(later.length * t.amount)} due</small></div><div class="k y"><span>Total going</span><b>${paid.length + later.length}</b><small>${rs(coll)} collected</small></div></div>
       <div class="card"><div style="overflow-x:auto"><table class="t"><tr><th>Class</th><th class="n">Children</th><th class="n">Paid</th><th class="n">Left</th><th class="n">₹</th></tr>
         ${cls.map(c => { const K = t.kids.filter(s => s.cls === c), P = K.filter(s => s.pay && s.pay.status === 'Paid'); return `<tr onclick="cdTc('${esc(c)}')" style="cursor:pointer"><td><b>${esc(c)}</b></td><td class="n">${K.length}</td><td class="n">${P.length}</td><td class="n" style="${K.length - P.length ? 'color:#b42318;font-weight:bold' : ''}">${K.length - P.length}</td><td class="n">${rs(P.reduce((a, s) => a + s.pay.amount, 0))}</td></tr>`; }).join('')}</table></div></div>
-      <div class="card"><div class="row"><select onchange="cdTc(this.value)" style="max-width:160px"><option value="">All classes</option>${cls.map(c => `<option ${c === TCLS ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select><input placeholder="Search child or father" value="${esc(TQ)}" oninput="cdTq(this.value)" style="max-width:260px"></div>
+      <div class="card"><div class="row"><select onchange="cdTc(this.value)" style="max-width:160px"><option value="">All classes</option>${cls.map(c => `<option ${c === TCLS ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select><select onchange="cdTst(this.value)" style="max-width:200px"><option value="">Everyone</option><option value="later" ${TST === 'later' ? 'selected' : ''}>Going · pay later</option><option value="paid" ${TST === 'paid' ? 'selected' : ''}>Paid</option><option value="no" ${TST === 'no' ? 'selected' : ''}>Not going yet</option></select><input placeholder="Search child or father" value="${esc(TQ)}" oninput="cdTq(this.value)" style="max-width:260px">${later.length ? '<button class="btn l s" onclick="cdLater()">🖨 Pay-later list</button>' : ''}</div>
         ${L.map(s => { const p = s.pay, ok = p && p.status === 'Paid', i = t.kids.indexOf(s);
           return `<div class="kid"><div><b>${esc(s.name)}</b><small>${esc(s.cls)}${s.father ? ' · ' + esc(s.father) : ''}${p && !ok ? ` · <span class="cnl">receipt ${esc(p.no)} cancelled: ${esc(p.reason)}</span>` : ''}</small></div>
             ${ok ? `<div class="paid">✓ ${esc(p.no)} · ${rs(p.amount)} ${esc(p.mode)}<br>${dmy(p.date)} · ${esc(p.by)}<div class="acts" style="justify-content:flex-end;margin-top:4px"><button class="btn l s" onclick="cdRc(${i})">Receipt</button><button class="btn l s" onclick="cdRcWa(${i})">WhatsApp</button>${T.can ? `<button class="btn r s" onclick="cdTcancel(${i})">Cancel</button>` : ''}</div></div>`
-              : T.can ? `<button class="btn go s" onclick="cdTpay(${i})">Take ${rs(t.amount)}</button>` : '<span class="mut">Not paid</span>'}</div>`; }).join('') || '<p class="mut">No child found.</p>'}</div>`);
+              : s.book ? `<div class="paid" style="color:#9a6700">✔ Going · fee ${rs(t.amount)} later<br>${esc(s.book.by)}${T.can ? `<div class="acts" style="justify-content:flex-end;margin-top:4px"><button class="btn go s" onclick="cdTpay(${i})">Take ${rs(t.amount)}</button><button class="btn l s" onclick="cdTbook(${i},0)">Remove</button></div>` : ''}</div>`
+              : T.can ? `<span class="acts"><button class="btn l s" onclick="cdTbook(${i},1)">✔ Going · pay later</button><button class="btn go s" onclick="cdTpay(${i})">Take ${rs(t.amount)}</button></span>` : '<span class="mut">Not going yet</span>'}</div>`; }).join('') || '<p class="mut">No child found.</p>'}</div>`);
   }
   window.cdTid = v => { TID = v; TCLS = ''; draw(); };
   window.cdTc = v => { TCLS = v; draw(); };
+  window.cdTst = v => { TST = v; draw(); };
+  window.cdTbook = async (i, on) => { const s = T.tours.find(x => x.id === TID).kids[i]; if (!on && !confirm('Remove ' + s.name + ' from the tour list?')) return;
+    try { await api('tourbook', { tour: TID, sid: s.id, on: !!on }); toast(on ? s.name + ' — name written, fee later.' : 'Removed.'); T = null; draw(); } catch (e) { toast(e.message); } };
+  window.cdLater = () => { const t = T.tours.find(x => x.id === TID), L = t.kids.filter(s => s.book && !(s.pay && s.pay.status === 'Paid')).sort((a, b) => a.cls.localeCompare(b.cls, 'en', { numeric: true }) || a.name.localeCompare(b.name));
+    printHTML('Pay-later list — ' + t.name, `<h2 class="c">${esc(T.school)}</h2><h3 class="c">${esc(t.name)} — ${dmy(t.date)}<br><small>Going, fee not paid yet: ${L.length} children · ${rs(L.length * t.amount)} due</small></h3>
+      <table><tr><th>#</th><th>Student</th><th>Class</th><th>Father</th><th>Phone</th><th>Fee due</th><th>Paid / Sign</th></tr>${L.map((s, n) => `<tr><td>${n + 1}</td><td>${esc(s.name)}</td><td>${esc(s.cls)}</td><td>${esc(s.father || '')}</td><td>${esc(s.phone || '')}</td><td>${rs(t.amount)}</td><td></td></tr>`).join('')}</table>`); };
   window.cdTq = v => { TQ = v; clearTimeout(cdTq.t); cdTq.t = setTimeout(() => { draw(); const e = document.querySelector('input[placeholder^="Search"]'); if (e) { e.focus(); e.setSelectionRange(v.length, v.length); } }, 350); };
   window.cdTour = id => { const t = T.tours.find(x => x.id === id) || { name: id ? '' : "Children's Day Prayagraj Tour", date: '', amount: '', classes: [] };
     sheet(`<h3>${id ? 'Edit tour' : 'New tour'}</h3><div class="f"><label>Tour name</label><input id="tN" maxlength="80" value="${esc(t.name)}"></div>

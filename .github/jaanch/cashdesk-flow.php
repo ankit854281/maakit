@@ -101,6 +101,14 @@ cd_check(sch_rec_get('regTourPay', "$T|s1")['status'] === 'Cancelled' && sch_rec
 [, $j] = $api('load', null, $tok['P']); cd_check(!array_filter($j['records'] ?? [], fn($x) => in_array($x['k'], ['regTour', 'regTourPay'], true)), 'tour records not in the normal load');
 cd_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Tour fee'")->fetchColumn() === 5, 'tour logged');
 
+// ---- Name written now, tour fee later (13 Nov 2026) ----
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => true], $M); cd_check($c === 200, 'name written, pay later');
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's4', 'on' => true], $M); cd_check($c === 400, 'class not on the tour cannot be written');
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => true], $tok['CH']); cd_check($c === 403, 'Chairman only views');
+[, $j] = $cd('tours', null, $tok['CH']); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['book'] !== null && $k['s2']['pay'] === null && $k['s3']['book'] === null, 'Chairman sees who is going, fee later');
+[$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's2', 'on' => false], $M);
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s2']['book'] === null, 'name removed');
+
 // ---- Manager in Fee Receipt ----
 [$c] = cd_http('/school/feecollect_api.php?a=state', null, $M); cd_check($c === 200, 'Manager opens Fee Receipt');
 

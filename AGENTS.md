@@ -1088,3 +1088,6 @@ papers only from photos the owner sends.
 - `board_bank.json` and `*.py` are denied in the root `.htaccess` (they hold the answers).
 - Android: `school/board-android/` (com.maakit.snmsis.board → board.php, purple) copy of the Data Entry wrapper; `.github/workflows/board-apk.yml` → release `board-android-v1/snmsis-board.apk`; download link on the board.php login (hidden inside the app).
 - Test: `.github/jaanch/board-flow.php` (also checks every bank question: 4 different options, answer index, explanation, unique id).
+
+### Tour: name written now, fee later (13 Nov 2026, owner: "kuch bachche bas name tick kara rahe hain, payment baad me denge")
+- Cash Book → Tour fee: each unpaid child has "✔ Going · pay later" (`cashdesk_api.php?a=tourbook {tour, sid, on}`, record `regTourBook` `tour|sid`, logged). Shown in yellow with Take ₹ / Remove; counts "Going · pay later" (₹ due) and "Total going"; filter Everyone / Going · pay later / Paid / Not going yet; "🖨 Pay-later list" prints class-wise with phone and a sign column. Taking the fee later works as before (receipt TR/…). Chairman views only. Test: cashdesk-flow.php.
