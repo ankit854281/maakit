@@ -1,0 +1,58 @@
+name: SNMSIS Board Prep APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'school/board-android/**'
+      - 'school/img/board-512.png'
+      - '.github/workflows/board-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: board-apk
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Use the app icon
+        run: |
+          mkdir -p school/board-android/app/src/main/res/drawable
+          cp school/img/board-512.png school/board-android/app/src/main/res/drawable/app_icon.png
+      - name: Build and check Android app
+        working-directory: school/board-android
+        run: gradle --no-daemon assembleDebug lintDebug
+      - name: Verify APK and signature
+        run: |
+          cp school/board-android/app/build/outputs/apk/debug/app-debug.apk snmsis-board.apk
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose snmsis-board.apk
+          "$BUILD_TOOLS/aapt" dump badging snmsis-board.apk > apk-info.txt
+          head -20 apk-info.txt
+          sha256sum snmsis-board.apk > snmsis-board.apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snmsis-board-apk
+          path: |
+            snmsis-board.apk
+            snmsis-board.apk.sha256
+          retention-days: 30
+      - name: Publish direct download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="board-android-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "SNMSIS Board Prep Android" --notes "Direct-install Android app for https://maakit.in/school/board.php. Internet and the school PIN are required. Android debug signing; not a Play Store release."
+          fi
+          gh release upload "$TAG" snmsis-board.apk snmsis-board.apk.sha256 --clobber

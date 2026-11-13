@@ -54,7 +54,8 @@
 # config.php me database ka password hai. PHP file khul kar kuchh
 # dikhati to nahi, par agar kabhi PHP band pada to saaf-saaf dikh
 # jata. Isliye seedhe hi band.
-<FilesMatch "^(config\.php|config\.sample\.php|composer\.(json|lock)|package(-lock)?\.json|\.env.*|.*\.(sql|log|bak|old|zip|tar|gz|ini|yml|yaml|md|txt))$">
+# board_bank.json + *.py: Class 10 Board Prep answers — only board_api.php reads them (13 Nov 2026)
+<FilesMatch "^(config\.php|config\.sample\.php|composer\.(json|lock)|package(-lock)?\.json|board_bank\.json|\.env.*|.*\.(sql|log|bak|old|zip|tar|gz|ini|yml|yaml|md|txt|py))$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

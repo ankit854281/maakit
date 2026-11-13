@@ -1,0 +1,16 @@
+{
+  "name": "SNMSIS Board Prep — Class 10",
+  "short_name": "Board Prep",
+  "description": "Class 10 board exam practice of SN Mishra Singapore International School — chapter practice, chapter tests and mock tests",
+  "start_url": "board.php",
+  "scope": "./",
+  "id": "snmsis-board",
+  "display": "standalone",
+  "background_color": "#3B1F7A",
+  "theme_color": "#3B1F7A",
+  "icons": [
+    { "src": "img/board-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/board-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/board-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
