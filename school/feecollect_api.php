@@ -4,6 +4,7 @@
 //
 //   GET  ?a=state&ses=2026-27          sessions, students, who may do what, next receipt no
 //   GET  ?a=ledger&ses=&sid=           one child: heads, totals, old due, receipts, old card
+//   GET  ?a=today&ses=&date=           receipts of one day (Quick Fee in the Manager app)
 //   POST ?a=collect {ses,sid,alloc[{i,amt}],late,discount,mode,…,nonce}   Accountant / Principal
 //   POST ?a=cancel  {ses,no,reason,nonce}                                  Principal
 //   POST ?a=start   {ses,apply,confirm:'START'}                            Principal
@@ -67,6 +68,18 @@ case 'ledger': {
     $ph = sch_rec_get('phoStu', $sid); $photo = $ph ? (string)((sch_rec_get('phoImg', (string)$ph['img']) ?? [])['data'] ?? '') : '';
     sch_json(['ok' => true, 'photo' => $photo, 'ledger' => $L, 'totals' => $t, 'oldDue' => $L ? ofc_old_due($ses, $sid, $L) : null, 'receipts' => $rcpts($ses, $sid), 'card' => $card, 'adj' => ofc_adj_list($ses, $sid),
         'cardMonths' => $L ? null : ((ofc_cards($ses)[$sid] ?? [])['months'] ?? null)]);
+}
+case 'today': {
+    // Quick Fee (Manager app, 13 Nov 2026): today's receipts for the "Aaj ki fee" box.
+    $tz = new DateTimeZone('Asia/Kolkata'); $d = (string)($_GET['date'] ?? (new DateTimeImmutable('now', $tz))->format('Y-m-d'));
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || $ses === '') sch_fail('Choose the session and the date.');
+    $out = []; $by = []; $tot = 0;
+    foreach ($rcpts($ses) as $r) { if ($r['date'] !== $d) continue;
+        $ok = ($r['status'] ?? '') !== 'Cancelled';
+        $out[] = ['no' => $r['no'], 'n' => $r['n'], 'name' => $r['name'], 'cls' => $r['cls'], 'received' => $r['received'], 'mode' => $r['mode'], 'by' => $r['by'], 'time' => $r['time'] ?? '', 'status' => $r['status'] ?? ''];
+        if ($ok) { $tot += $r['received']; $by[$r['mode']] = ($by[$r['mode']] ?? 0) + $r['received']; } }
+    usort($out, fn($x, $y) => $y['n'] <=> $x['n']);
+    sch_json(['ok' => true, 'date' => $d, 'receipts' => $out, 'total' => $tot, 'byMode' => $by]);
 }
 case 'collect': {
     if ($method !== 'POST') sch_fail('POST only', 405);

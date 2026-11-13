@@ -76,13 +76,16 @@
   // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
   // Fee Receipt = feecollect.php (the one place fees are taken), Cash Book + Tour fee = cashdesk.php — same login (tk=sal).
   const SECS = [['sal', 'Salary'], ['fee', 'Fee Receipt'], ['cash', 'Cash Book'], ['tour', 'Tour fee']];
+  window.mgFeeFull = () => { store.set('mg_feefull', store.get('mg_feefull') === '1' ? '0' : '1'); draw(); };
   window.mgSec = k => { SEC = k; store.set('mg_sec', k); draw(); };
   const secBar = () => `<div class="seg" style="margin-bottom:12px">${SECS.map(([k, l]) => `<button class="${SEC === k ? 'on' : ''}" onclick="mgSec('${k}')">${l}</button>`).join('')}</div>`;
   async function draw() {
     if (!store.get(TK) || MUST) return loginView();
     if (SEC !== 'sal') {
-      const src = { fee: 'feecollect.php?embed=1&tk=sal', cash: 'cashdesk.php?embed=1&tk=sal&tab=day', tour: 'cashdesk.php?embed=1&tk=sal&tab=tour' }[SEC];
-      return frame(`<iframe src="${src}" title="${SEC}" style="height:82vh"></iframe>${SEC === 'fee' ? '<p class="mut">Fee Receipt is the same screen as the ERP — the receipt number continues the school series. On a phone, turn it sideways for the full form.</p>' : ''}`);
+      // Fee (13 Nov 2026, owner: "manager app se fee lena thoda smart banaiye"): Quick Fee (feequick.php) first; the full ERP form stays one tap away.
+      const full = SEC === 'fee' && store.get('mg_feefull') === '1';
+      const src = { fee: full ? 'feecollect.php?embed=1&tk=sal' : 'feequick.php?embed=1&tk=sal', cash: 'cashdesk.php?embed=1&tk=sal&tab=day', tour: 'cashdesk.php?embed=1&tk=sal&tab=tour' }[SEC];
+      return frame(`<iframe src="${src}" title="${SEC}" style="height:82vh"></iframe>${SEC === 'fee' ? `<p class="mut">${full ? 'Full Fee Receipt form (same as the ERP). Turn the phone sideways.' : 'Quick Fee — same receipts and numbers as the ERP Fee Receipt.'} <a href="#" onclick="mgFeeFull();return false">${full ? '‹ Back to Quick Fee' : 'Open the full form (discount, add fee, cancel) ›'}</a></p>` : ''}`);
     }
     if (!D) return load();
     if (VIEW === 'bill') { frame(segs() + `<div class="card"><h3 style="margin:0 0 8px;color:#0F5132">📄 Fee demand bill for parents</h3><div id="billPick"></div></div>`); return DemandBill.picker(store.get(TK), 'billPick'); }
