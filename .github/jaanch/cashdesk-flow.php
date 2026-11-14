@@ -128,6 +128,14 @@ $tc = fn($a, $b = null, $t = null, $q = '') => cd_http('/school/teacher_api.php?
 [, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s2']['book']['jp'] === false, 'back to pay later');
 [$c] = $cd('tourbook', ['tour' => $T, 'sid' => 's3', 'on' => true, 'jp' => true], $M);
 [, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s3']['book']['jp'] === true && $k['s3']['pay']['status'] === 'Paid', 'JP Sir tag on a paid child, receipt stays');
+// Tour attendance on the day (14 Nov 2026)
+[$c] = $cd('touratt', ['tour' => $T, 'sids' => ['s2'], 'p' => 'X'], $M); cd_check($c === 400, 'bad attendance value refused');
+[$c] = $cd('touratt', ['tour' => $T, 'sids' => ['s2'], 'p' => 'P'], $tok['CH']); cd_check($c === 403, 'Chairman cannot mark attendance');
+[$c, $j] = $cd('touratt', ['tour' => $T, 'sids' => ['s1', 's3'], 'p' => 'P'], $M); cd_check($c === 200 && $j['n'] === 2, 'whole group present at once');
+[$c] = $cd('touratt', ['tour' => $T, 'sids' => ['s2'], 'p' => 'A'], $M); cd_check($c === 200, 'one child absent');
+[, $j] = $cd('tours', null, $tok['CH']); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($k['s1']['att']['p'] === 'P' && $k['s3']['att']['p'] === 'P' && $k['s2']['att']['p'] === 'A', 'Chairman sees tour attendance ' . json_encode($k['s2']['att']));
+[$c] = $cd('touratt', ['tour' => $T, 'sids' => ['s2'], 'p' => ''], $M);
+[, $j] = $cd('tours', null, $M); $k = array_column($j['tours'][0]['kids'], null, 'id'); cd_check($c === 200 && $k['s2']['att'] === null, 'attendance cleared');
 // Class 3 joins a Prayagraj tour once
 $put('classes', 'main', [['c' => '4th', 'ct' => 'K'], ['c' => '5th', 'ct' => ''], ['c' => '1st', 'ct' => ''], ['c' => '3rd', 'ct' => '']]);
 $st = sch_rec_get('settings', 'main'); unset($st['tourAdd3']); $put('settings', 'main', $st);

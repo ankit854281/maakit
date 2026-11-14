@@ -168,12 +168,12 @@ case 'verify': {
 }
 case 'tours': {
     $ses = cd_session(); $kids = cd_students(); $out = [];
-    $pays = cd_rows('regTourPay'); $books = cd_rows('regTourBook'); $tags = cd_rows('regTourTag');
+    $pays = cd_rows('regTourPay'); $books = cd_rows('regTourBook'); $tags = cd_rows('regTourTag'); $atts = cd_rows('regTourAtt');
     cd_tour_add3();
     foreach (cd_rows('regTour') as $tid => $t) {
         if (($t['session'] ?? '') !== $ses) continue;
         $cls = (array)($t['classes'] ?? []); $L = [];
-        foreach ($kids as $s) if (!$cls || in_array($s['cls'], $cls, true)) { $p = $pays[$tid . '|' . $s['id']] ?? null; $b = $books[$tid . '|' . $s['id']] ?? null; $tg = $tags[$tid . '|' . $s['id']] ?? null; $L[] = $s + ['tag' => $tg && ($tg['tag'] ?? '') !== '' ? ['tag' => (string)$tg['tag'], 'note' => (string)($tg['note'] ?? ''), 'by' => (string)($tg['by'] ?? '')] : null, 'book' => $b && !empty($b['on']) ? ['by' => (string)($b['by'] ?? ''), 'at' => (int)($b['at'] ?? 0), 'jp' => !empty($b['jp'])] : null, 'pay' => $p ? ['no' => $p['no'], 'amount' => $p['amount'] / 100, 'mode' => $p['mode'], 'ref' => $p['ref'] ?? '', 'date' => $p['date'], 'by' => $p['by'], 'status' => $p['status'], 'reason' => $p['reason'] ?? ''] : null]; }
+        foreach ($kids as $s) if (!$cls || in_array($s['cls'], $cls, true)) { $p = $pays[$tid . '|' . $s['id']] ?? null; $b = $books[$tid . '|' . $s['id']] ?? null; $tg = $tags[$tid . '|' . $s['id']] ?? null; $at = $atts[$tid . '|' . $s['id']] ?? null; $L[] = $s + ['att' => $at && in_array($at['p'] ?? '', ['P', 'A'], true) ? ['p' => $at['p'], 'by' => (string)($at['by'] ?? '')] : null, 'tag' => $tg && ($tg['tag'] ?? '') !== '' ? ['tag' => (string)$tg['tag'], 'note' => (string)($tg['note'] ?? ''), 'by' => (string)($tg['by'] ?? '')] : null, 'book' => $b && !empty($b['on']) ? ['by' => (string)($b['by'] ?? ''), 'at' => (int)($b['at'] ?? 0), 'jp' => !empty($b['jp'])] : null, 'pay' => $p ? ['no' => $p['no'], 'amount' => $p['amount'] / 100, 'mode' => $p['mode'], 'ref' => $p['ref'] ?? '', 'date' => $p['date'], 'by' => $p['by'], 'status' => $p['status'], 'reason' => $p['reason'] ?? ''] : null]; }
         foreach ($pays as $k => $p) if (str_starts_with($k, $tid . '|') && !isset($kids[substr($k, strlen($tid) + 1)])) $L[] = ['id' => substr($k, strlen($tid) + 1), 'name' => (string)($p['name'] ?? ''), 'cls' => (string)($p['cls'] ?? ''), 'roll' => '', 'father' => '', 'phone' => '', 'pay' => ['no' => $p['no'], 'amount' => $p['amount'] / 100, 'mode' => $p['mode'], 'ref' => $p['ref'] ?? '', 'date' => $p['date'], 'by' => $p['by'], 'status' => $p['status'], 'reason' => $p['reason'] ?? '']];
         $out[] = ['id' => $tid, 'name' => (string)$t['name'], 'date' => (string)$t['date'], 'amount' => ((int)$t['amount']) / 100, 'classes' => $cls, 'kids' => $L];
     }
@@ -239,6 +239,22 @@ case 'tourbook': {
     sch_rec_put('regTourBook', $tid . '|' . $sid, ['on' => $on, 'jp' => $jp, 'by' => (string)$u['label'], 'at' => sch_now_ms(), 'name' => $s['name'], 'cls' => $s['cls']], $uid);
     sch_log($u, 'Tour fee', ($jp ? 'Going as per JP Sir (no fee): ' : ($on ? 'Name written (going, will pay later): ' : 'Name removed from the tour list: ')) . "{$s['name']} ({$s['cls']}), {$t['name']}");
     sch_json(['ok' => true]);
+}
+case 'touratt': {
+    // Owner, 14 Nov 2026: "tour ki attendance" — on the tour day mark each going child Present / Absent (one or a whole class at once).
+    $tid = (string)($in['tour'] ?? ''); $p = (string)($in['p'] ?? ''); if (!in_array($p, ['P', 'A', ''], true)) sch_fail('Choose Present or Absent.');
+    $t = preg_match('/^t[a-f0-9]{10}$/', $tid) ? sch_rec_get('regTour', $tid) : null; if (!$t) sch_fail('Tour not found.');
+    $sids = array_values(array_unique(array_map('strval', (array)($in['sids'] ?? [$in['sid'] ?? ''])))); if (!$sids || count($sids) > 400) sch_fail('Choose the children.');
+    $kids = cd_students(); $n = 0;
+    foreach ($sids as $sid) {
+        $key = $tid . '|' . $sid; $pay = sch_rec_get('regTourPay', $key); $bk = sch_rec_get('regTourBook', $key);
+        if (!(($pay['status'] ?? '') === 'Paid' || !empty($bk['on']))) continue;   // only children on the going list
+        $nm = $kids[$sid]['name'] ?? (string)($pay['name'] ?? $bk['name'] ?? ''); $cl = $kids[$sid]['cls'] ?? (string)($pay['cls'] ?? $bk['cls'] ?? '');
+        sch_rec_put('regTourAtt', $key, ['p' => $p, 'by' => (string)$u['label'], 'at' => sch_now_ms(), 'name' => $nm, 'cls' => $cl], $uid); $n++;
+    }
+    if (!$n) sch_fail('This child is not on the going list.');
+    sch_log($u, 'Tour attendance', ($p === 'P' ? 'Present' : ($p === 'A' ? 'Absent' : 'Cleared')) . ": $n child" . ($n > 1 ? 'ren' : '') . ", {$t['name']}");
+    sch_json(['ok' => true, 'n' => $n]);
 }
 default: sch_fail('Unknown action.');
 }
