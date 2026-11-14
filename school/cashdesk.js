@@ -196,34 +196,73 @@
     printHTML('Pay-later list — ' + t.name, `<h2 class="c">${esc(T.school)}</h2><h3 class="c">${esc(t.name)} — ${dmy(t.date)}<br><small>Going, fee not paid yet: ${L.length} children · ${rs(L.length * t.amount)} due</small></h3>
       <table><tr><th>#</th><th>Student</th><th>Class</th><th>Father</th><th>Phone</th><th>Fee due</th><th>Paid / Sign</th></tr>${L.map((s, n) => `<tr><td>${n + 1}</td><td>${esc(s.name)}</td><td>${esc(s.cls)}</td><td>${esc(s.father || '')}</td><td>${esc(s.phone || '')}</td><td>${rs(t.amount)}</td><td></td></tr>`).join('')}</table>`); };
   // Tour attendance (owner, 14 Nov 2026: "attendance kaise lagayen" → tour ki attendance): on the tour day mark each going child ✅ / ❌.
-  let ACLS = '', AST = '';
-  // Owner, 14 Nov 2026: "absent present sab ek me hi dikh raha hai, aur jinko maine add kiya" → separate tabs: All / Present / Absent / Not marked / Added (name written without paying: fee later or JP Sir).
-  const addOf = s => !!s.book && !(s.pay && s.pay.status === 'Paid');
-  const attFil = s => !AST || (AST === 'P' ? s.att && s.att.p === 'P' : AST === 'A' ? s.att && s.att.p === 'A' : AST === 'N' ? !s.att : AST === 'ADD' ? addOf(s) : true);
-  const ATTAB = { '': 'Going', P: 'Present', A: 'Absent', N: 'Not marked', ADD: 'Added' };
+  let ACLS = '', AST = '', ATTB = false;
+  // Owner, 14 Nov 2026: tabs (Going / Present / Absent / Not marked / Added) and short tricks — "jo nahi aaye unka naam hatane ka,
+  // attendance submit karne ka, jo aaye unko add karne ka, aur fee update karne ka short trick", and keep a record of absent children.
+  // A child removed from the going list keeps his attendance mark, so the Absent tab / print stays a record ("🚫 naam hataya").
+  const addOf = s => !!s.book && !(s.pay && s.pay.status === 'Paid'), dueOf = s => addOf(s) && !s.book.jp, goOf = s => (s.pay && s.pay.status === 'Paid') || !!s.book;
+  const attBase = t => t.kids.filter(s => goOf(s) || s.att).sort((a, b) => a.cls.localeCompare(b.cls, 'en', { numeric: true }) || a.name.localeCompare(b.name));
+  const attFil = s => !AST || (AST === 'P' ? s.att && s.att.p === 'P' : AST === 'A' ? s.att && s.att.p === 'A' : AST === 'N' ? goOf(s) && !s.att : AST === 'ADD' ? addOf(s) : AST === 'FEE' ? dueOf(s) : goOf(s));
+  const ATTAB = { '': 'Going', P: 'Present', A: 'Absent', N: 'Not marked', ADD: 'Added', FEE: 'Fee baaki' };
+  const attSum = G => ({ p: G.filter(s => s.att && s.att.p === 'P'), a: G.filter(s => s.att && s.att.p === 'A'), n: G.filter(s => goOf(s) && !s.att), g: G.filter(goOf) });
   window.cdAttTab = v => { AST = v; cdAtt(); };
-  const attSum = G => ({ p: G.filter(s => s.att && s.att.p === 'P'), a: G.filter(s => s.att && s.att.p === 'A'), n: G.filter(s => !s.att) });
-  window.cdAtt = c => { if (c !== undefined) ACLS = c; const t = T.tours.find(x => x.id === TID), G = goingOf(t), cls = tCls(t).filter(x => G.some(s => s.cls === x));
-    if (ACLS && !cls.includes(ACLS)) ACLS = ''; const LC = G.filter(s => !ACLS || s.cls === ACLS), L = LC.filter(attFil), A = attSum(LC), B = attSum(L), nAdd = LC.filter(addOf).length;
+  window.cdAtt = c => { if (c !== undefined) ACLS = c; const t = T.tours.find(x => x.id === TID), G = attBase(t), cls = tCls(t).filter(x => G.some(s => s.cls === x));
+    if (ACLS && !cls.includes(ACLS)) ACLS = ''; const LC = G.filter(s => !ACLS || s.cls === ACLS), L = LC.filter(attFil), A = attSum(LC), B = attSum(L);
+    const goN = LC.filter(goOf).length, nAdd = LC.filter(addOf).length, nFee = LC.filter(dueOf).length;
+    const absGo = L.filter(s => AST === 'A' && goOf(s)), absRm = absGo.filter(addOf), absPd = absGo.filter(s => !addOf(s));
     const tb = (v, cl, n) => `<button class="k ${cl}" style="border:2px solid ${AST === v ? '#0F5132' : 'transparent'};cursor:pointer;font:inherit;text-align:left" onclick="cdAttTab('${v}')"><span>${ATTAB[v]}</span><b>${n}</b></button>`;
     const pb = (s, v, l, on, off) => `<button class="btn s" style="min-width:74px;${s.att && s.att.p === v ? on : off}" onclick="cdAttSet(['${esc(s.id)}'],'${s.att && s.att.p === v ? '' : v}')">${l}</button>`;
+    const row = (s, n) => { const i = t.kids.indexOf(s), ph = phOf(s), go = goOf(s), pd = s.pay && s.pay.status === 'Paid';
+      const chip = !go ? ' · <b style="color:#b42318">🚫 naam hataya</b>' : addOf(s) ? (s.book.jp ? ' · 🎟 JP Sir' : ` · <b style="color:#9a6700">⏳ fee ${rs(t.amount)} baaki</b>`) : pd ? ` · <span style="color:#14532d">✓ fee di ${esc(s.pay.no)}</span>` : '';
+      const acts = [ph.length === 10 ? `<a class="btn l s" href="tel:+91${ph}">📞</a>` : '',
+        T.can && dueOf(s) ? `<button class="btn go s" onclick="cdAttPay(${i})">💰 Fee ${rs(t.amount)}</button>` : '',
+        T.can && go && s.att && s.att.p === 'A' && addOf(s) ? `<button class="btn l s" style="color:#b42318" onclick="cdAttDrop(['${esc(s.id)}'])">🚫 Naam hatao</button>` : '',
+        T.can && go && s.att && s.att.p === 'A' && pd ? `<button class="btn l s" style="color:#b42318" onclick="cdTcancel(${i})">Receipt cancel</button>` : ''].join('');
+      return `<div style="padding:8px 2px;border-top:1px solid #eef3f0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b style="font-size:14px">${n + 1}. ${esc(s.name)}</b><small style="display:block;color:#6b7b73">${esc(s.cls)}${s.father ? ' · ' + esc(s.father) : ''}${chip}${s.att ? ' · by ' + esc(s.att.by) : ''}</small></div>
+        ${T.can && go ? `<span class="acts" style="flex-wrap:nowrap">${pb(s, 'P', '✅ Present', 'background:#14532d;color:#fff', 'background:#eef2f0;color:#14532d')}${pb(s, 'A', '❌ Absent', 'background:#b42318;color:#fff', 'background:#eef2f0;color:#b42318')}</span>` : `<b>${s.att ? (s.att.p === 'P' ? '✅ Present' : '❌ Absent') : '—'}</b>`}</div>
+        ${acts ? `<div class="acts" style="margin-top:5px">${acts}</div>` : ''}</div>`; };
     sheet(`<h3>🙋 Tour attendance</h3><p class="mut" style="margin:0 0 8px">${esc(t.name)} · ${dmy(t.date)}</p>
-      <div class="kp">${tb('', '', LC.length)}${tb('P', 'g', A.p.length)}${tb('A', 'r', A.a.length)}${tb('N', 'y', A.n.length)}${tb('ADD', '', nAdd)}</div>
-      <p class="mut" style="margin:6px 0 0;font-size:12px">Box dabaiye — sirf wahi bachche dikhenge. Added = jinka naam fee ke bina likha gaya (fee later / JP Sir).</p>
+      <div class="kp">${tb('', '', goN)}${tb('P', 'g', A.p.length)}${tb('A', 'r', A.a.length)}${tb('N', 'y', A.n.length)}${tb('ADD', '', nAdd)}${tb('FEE', 'y', nFee)}</div>
+      <p class="mut" style="margin:6px 0 0;font-size:12px">Box dabaiye — sirf wahi bachche dikhenge. Added = naam bina fee ke likha (fee baad me / JP Sir).</p>
       <div class="acts" style="margin:10px 0"><button class="btn s ${!ACLS ? '' : 'l'}" onclick="cdAtt('')">All</button>${cls.map(c => `<button class="btn s ${ACLS === c ? '' : 'l'}" onclick="cdAtt('${esc(c)}')">${esc(c)}</button>`).join('')}</div>
-      ${T.can && B.n.length ? `<button class="btn go full" onclick="cdAttSet(${esc(JSON.stringify(B.n.map(s => s.id)))},'P')">✅ Mark the other ${B.n.length} present${ACLS ? ' (' + esc(ACLS) + ')' : ''}</button>` : ''}
-      <div style="margin-top:10px">${L.map((s, n) => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #eef3f0"><div><b style="font-size:14px">${n + 1}. ${esc(s.name)}</b><small style="display:block;color:#6b7b73">${esc(s.cls)}${s.father ? ' · ' + esc(s.father) : ''}${addOf(s) ? (s.book.jp ? ' · 🎟 JP Sir' : ' · ➕ Added, fee later') : ''}${s.att ? ' · by ' + esc(s.att.by) : ''}</small></div>
-        ${T.can ? `<span class="acts" style="flex-wrap:nowrap">${pb(s, 'P', '✅ Present', 'background:#14532d;color:#fff', 'background:#eef2f0;color:#14532d')}${pb(s, 'A', '❌ Absent', 'background:#b42318;color:#fff', 'background:#eef2f0;color:#b42318')}</span>` : `<b>${s.att ? (s.att.p === 'P' ? '✅ Present' : '❌ Absent') : '—'}</b>`}</div>`).join('') || `<p class="mut">${G.length ? 'Is box me koi bachcha nahi.' : 'Nobody on the going list yet.'}</p>`}</div>
+      ${T.can ? `<div style="display:grid;gap:8px">
+        ${B.n.length ? `<button class="btn go full" onclick="cdAttSubmit(${esc(JSON.stringify(B.n.map(s => s.id)))})">✅ Submit — baaki ${B.n.length} sab Present${ACLS ? ' (' + esc(ACLS) + ')' : ''}</button>` : ''}
+        ${absRm.length ? `<button class="btn full" style="background:#b42318;color:#fff" onclick="cdAttDrop(${esc(JSON.stringify(absRm.map(s => s.id)))})">🚫 Absent ${absRm.length} bachchon ka naam hatao</button>` : ''}
+        ${absPd.length ? `<p class="mut" style="margin:0;font-size:12px">${absPd.length} absent bachchon ne fee di hai — unka naam hatane ke liye unke aage "Receipt cancel" dabaiye.</p>` : ''}
+        <button class="btn l full" onclick="cdAttNew()">➕ Jo aaye par list me nahi — add karein</button></div>` : ''}
+      <div style="margin-top:10px">${L.map(row).join('') || `<p class="mut">${G.length ? 'Is box me koi bachcha nahi.' : 'Nobody on the going list yet.'}</p>`}</div>
       <div class="acts" style="margin-top:14px"><button class="btn go" onclick="cdAttWa()">📲 WhatsApp</button><button class="btn l" onclick="cdAttPrint()">🖨 Print${AST ? ' (' + ATTAB[AST] + ')' : ''}</button><button class="btn l" onclick="cdClose()">Close</button></div>`); };
-  window.cdAttSet = async (ids, p) => { const t = T.tours.find(x => x.id === TID), y = window.scrollY, sc = document.querySelector('.sheet .in'), st = sc ? sc.scrollTop : 0;
-    try { await api('touratt', { tour: TID, sids: ids, p }); t.kids.forEach(s => { if (ids.includes(s.id)) s.att = p ? { p, by: T.me } : null; }); cdAtt(); const s2 = document.querySelector('.sheet .in'); if (s2) s2.scrollTop = st; if (ids.length > 1) toast(ids.length + ' marked present.'); } catch (e) { toast(e.message); } };
-  const attRows = (t, f) => tCls(t).map(c => { const K = goingOf(t).filter(s => s.cls === c && (!f || f(s))); return { c, K, ...attSum(K) }; }).filter(r => r.K.length);
-  window.cdAttWa = () => { const t = T.tours.find(x => x.id === TID), A = attSum(goingOf(t));
-    const txt = `🚌 *${t.name} — ${dmy(t.date)}*\n*Tour attendance*\n` + attRows(t).map(r => `\n*Class ${r.c}* — ✅ ${r.p.length} · ❌ ${r.a.length}${r.n.length ? ' · not marked ' + r.n.length : ''}` + (r.a.length ? '\nAbsent: ' + r.a.map(s => s.name).join(', ') : '')).join('\n') + `\n\n*Going: ${A.p.length + A.a.length + A.n.length}*\n✅ Present: ${A.p.length}\n❌ Absent: ${A.a.length}${A.n.length ? '\nNot marked: ' + A.n.length : ''}`;
+  const attKeep = f => { const sc = document.querySelector('.sheet .in'), st = sc ? sc.scrollTop : 0; f(); const s2 = document.querySelector('.sheet .in'); if (s2) s2.scrollTop = st; };
+  window.cdAttSet = async (ids, p) => { const t = T.tours.find(x => x.id === TID);
+    try { await api('touratt', { tour: TID, sids: ids, p }); t.kids.forEach(s => { if (ids.includes(s.id)) s.att = p ? { p, by: T.me } : null; }); attKeep(cdAtt); return true; } catch (e) { toast(e.message); return false; } };
+  window.cdAttSubmit = async ids => { if (await cdAttSet(ids, 'P')) { const A = attSum(attBase(T.tours.find(x => x.id === TID)));
+    toast(`Attendance submit: ✅ ${A.p.length} present, ❌ ${A.a.length} absent.`); if (!A.n.length && confirm('Attendance poori ho gayi. WhatsApp par report bhejein?')) cdAttWa(); } };
+  window.cdAttDrop = async ids => { const t = T.tours.find(x => x.id === TID), K = t.kids.filter(s => ids.includes(s.id) && addOf(s));
+    if (!K.length || !confirm(K.length === 1 ? K[0].name + ' ka naam tour list se hatayen?\n(Absent record me naam rahega.)' : K.length + ' absent bachchon ka naam tour list se hatayen?\n(Absent record me naam rahega.)')) return;
+    let n = 0; for (const s of K) { try { await api('tourbook', { tour: TID, sid: s.id, on: false }); s.book = null; n++; } catch (e) { toast(e.message); break; } }
+    if (n) toast(n + ' naam hata diye. Absent box me record hai.'); attKeep(cdAtt); };
+  window.cdAttPay = i => cdTpay(i, true);
+  // Walk-in: a child who came on the bus but was not on the list — one tap writes the name and marks Present.
+  let AQ = '';
+  const newList = () => { const t = T.tours.find(x => x.id === TID), q = AQ.trim().toLowerCase();
+    const K = t.kids.filter(s => !goOf(s) && (!ACLS || s.cls === ACLS) && (!q || (s.name + ' ' + (s.father || '') + ' ' + s.cls).toLowerCase().includes(q))).sort((a, b) => a.cls.localeCompare(b.cls, 'en', { numeric: true }) || a.name.localeCompare(b.name));
+    return K.slice(0, 80).map(s => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #eef3f0"><div><b style="font-size:14px">${esc(s.name)}</b><small style="display:block;color:#6b7b73">${esc(s.cls)}${s.father ? ' · ' + esc(s.father) : ''}</small></div>
+      <span class="acts" style="flex-wrap:nowrap"><button class="btn go s" onclick="cdAttCame('${esc(s.id)}',0)">➕ Aaya</button><button class="btn l s" onclick="cdAttCame('${esc(s.id)}',1)">🎟 JP Sir</button></span></div>`).join('') + (K.length > 80 ? `<p class="mut">${K.length - 80} aur — naam likh kar dhoondhiye.</p>` : '') || '<p class="mut">Koi bachcha nahi mila.</p>'; };
+  window.cdAttNew = () => { sheet(`<h3>➕ Jo aaye par list me nahi</h3><p class="mut" style="margin:0 0 8px">"Aaya" dabate hi naam tour list me likh jayega (fee baad me) aur Present lag jayegi.${ACLS ? ' Class: ' + esc(ACLS) : ''}</p>
+      <input id="aQ" placeholder="Bachche ya pita ka naam" value="${esc(AQ)}" oninput="cdAttQ(this.value)" style="width:100%"><div id="aL" style="margin-top:8px">${newList()}</div>
+      <div class="acts" style="margin-top:14px"><button class="btn go" onclick="cdAtt()">← Attendance par wapas</button></div>`); };
+  window.cdAttQ = v => { AQ = v; $('aL').innerHTML = newList(); };
+  window.cdAttCame = async (sid, jp) => { const t = T.tours.find(x => x.id === TID), s = t.kids.find(x => x.id === sid); if (!s) return;
+    try { await api('tourbook', { tour: TID, sid, on: true, jp: !!jp }); s.book = { on: true, jp: !!jp, by: T.me };
+      await api('touratt', { tour: TID, sids: [sid], p: 'P' }); s.att = { p: 'P', by: T.me };
+      toast(s.name + ' — list me add, Present ✅' + (jp ? ' (JP Sir)' : ' · fee ' + rs(t.amount) + ' baaki')); $('aL').innerHTML = newList(); } catch (e) { toast(e.message); } };
+  const attRows = (t, f) => tCls(t).map(c => { const K = attBase(t).filter(s => s.cls === c && (!f || f(s))); return { c, K, ...attSum(K) }; }).filter(r => r.K.length);
+  window.cdAttWa = () => { const t = T.tours.find(x => x.id === TID), A = attSum(attBase(t));
+    const txt = `🚌 *${t.name} — ${dmy(t.date)}*\n*Tour attendance*\n` + attRows(t).map(r => `\n*Class ${r.c}* — ✅ ${r.p.length} · ❌ ${r.a.length}${r.n.length ? ' · not marked ' + r.n.length : ''}` + (r.a.length ? '\nAbsent: ' + r.a.map(s => s.name).join(', ') : '')).join('\n') + `\n\n*Going: ${A.g.length}*\n✅ Present: ${A.p.length}\n❌ Absent: ${A.a.length}${A.n.length ? '\nNot marked: ' + A.n.length : ''}`;
     const a = document.createElement('a'); a.href = 'https://wa.me/?text=' + encodeURIComponent(txt); a.target = '_blank'; a.click(); };
-  window.cdAttPrint = () => { const t = T.tours.find(x => x.id === TID), A = attSum(goingOf(t).filter(attFil)), mk = s => s.att ? (s.att.p === 'P' ? '<b style="color:#14532d">Present</b>' : '<b style="color:#b42318">Absent</b>') : '';
+  window.cdAttPrint = () => { const t = T.tours.find(x => x.id === TID), A = attSum(attBase(t).filter(attFil)), mk = s => s.att ? (s.att.p === 'P' ? '<b style="color:#14532d">Present</b>' : '<b style="color:#b42318">Absent</b>' + (goOf(s) ? '' : ' <small>(naam hataya)</small>')) : '';
     printHTML('Tour attendance — ' + t.name, `<style>h4{background:#0F5132;color:#fff;padding:6px 8px;margin:14px 0 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cls{page-break-inside:avoid}</style>
-      <h2 class="c">${esc(T.school)}</h2><h3 class="c">${esc(t.name)} — ${dmy(t.date)}<br><small>Tour attendance${AST ? ' — ' + ATTAB[AST] + ' list' : ''} · Going ${A.p.length + A.a.length + A.n.length} · Present ${A.p.length} · Absent ${A.a.length}${A.n.length ? ' · Not marked ' + A.n.length : ''}</small></h3>
+      <h2 class="c">${esc(T.school)}</h2><h3 class="c">${esc(t.name)} — ${dmy(t.date)}<br><small>Tour attendance${AST ? ' — ' + ATTAB[AST] + ' list' : ''} · Going ${A.g.length} · Present ${A.p.length} · Absent ${A.a.length}${A.n.length ? ' · Not marked ' + A.n.length : ''}</small></h3>
       ${attRows(t, attFil).map(r => `<div class="cls"><h4>Class ${esc(r.c)} — present ${r.p.length}, absent ${r.a.length}</h4><table><tr><th>#</th><th>Student</th><th>Father</th><th>Phone</th><th>Attendance</th><th>Sign</th></tr>${r.K.map((s, n) => `<tr><td>${n + 1}</td><td>${esc(s.name)}</td><td>${esc(s.father || '')}</td><td>${esc(s.phone || '')}</td><td>${mk(s)}</td><td style="width:70px"></td></tr>`).join('')}</table></div>`).join('')}
       <p style="margin-top:30px">Prepared by: ${esc(T.me)}<span style="float:right">Checked by: ____________</span></p>`); };
   window.cdTq = v => { TQ = v; clearTimeout(cdTq.t); cdTq.t = setTimeout(() => { draw(); const e = document.querySelector('input[placeholder^="Search"]'); if (e) { e.focus(); e.setSelectionRange(v.length, v.length); } }, 350); };
@@ -233,16 +272,16 @@
       <div class="f"><label>Classes going</label><div class="chips">${T.classes.map(c => `<label><input type="checkbox" class="tC" value="${esc(c)}" ${t.classes.includes(c) ? 'checked' : ''}>${esc(c)}</label>`).join('')}</div></div>
       <button class="btn go full f" onclick="cdTourSave('${id}')">Save tour</button>`); };
   window.cdTourSave = async id => { try { const r = await api('tour', { id, name: $('tN').value, date: $('tD').value, amount: $('tA').value, classes: [...document.querySelectorAll('.tC:checked')].map(x => x.value) }); cdClose(); toast('Tour saved.'); TID = r.id; T = null; draw(); } catch (e) { toast(e.message); } };
-  window.cdTpay = i => { const t = T.tours.find(x => x.id === TID), s = t.kids[i];
+  window.cdTpay = (i, fromAtt) => { ATTB = !!fromAtt; const t = T.tours.find(x => x.id === TID), s = t.kids[i];
     sheet(`<h3>Tour fee — ${esc(s.name)}</h3><p class="mut">${esc(s.cls)} · ${esc(t.name)}</p>
       <div class="two"><div class="f"><label>Amount (₹)</label><input id="pA" type="number" inputmode="decimal" value="${t.amount}"></div><div class="f"><label>Date</label><input id="pD" type="date" value="${today}" max="${today}"></div></div>
       <div class="two"><div class="f"><label>Mode</label><select id="pM">${T.modes.map(m => `<option>${m}</option>`).join('')}</select></div><div class="f"><label>UPI / cheque no. (if not cash)</label><input id="pR" maxlength="40"></div></div>
       <button class="btn go full f" onclick="cdTpaySave(${i})">Save and make receipt</button>`); };
   window.cdTpaySave = async i => { const s = T.tours.find(x => x.id === TID).kids[i];
     try { const r = await api('tourpay', { tour: TID, sid: s.id, amount: $('pA').value, date: $('pD').value, mode: $('pM').value, ref: $('pR').value }); cdClose(); toast('Receipt ' + r.no + ' made.'); T = null; D = null; await draw();
-      const k = T.tours.find(x => x.id === TID).kids.findIndex(x => x.id === s.id); if (k >= 0) cdRcWa(k, true); } catch (e) { toast(e.message); } };
+      const k = T.tours.find(x => x.id === TID).kids.findIndex(x => x.id === s.id); if (k >= 0) cdRcWa(k, true); if (ATTB) { ATTB = false; cdAtt(); } } catch (e) { toast(e.message); } };
   window.cdTcancel = async i => { const s = T.tours.find(x => x.id === TID).kids[i], why = prompt('Cancel receipt ' + s.pay.no + ' of ' + s.name + '?\nWrite why:'); if (!why) return;
-    try { await api('tourcancel', { tour: TID, sid: s.id, reason: why }); toast('Receipt cancelled.'); T = null; D = null; draw(); } catch (e) { toast(e.message); } };
+    const inAtt = /Tour attendance/.test((document.querySelector('.sheet h3') || {}).textContent || ''); try { await api('tourcancel', { tour: TID, sid: s.id, reason: why }); toast('Receipt cancelled.'); T = null; D = null; await draw(); if (inAtt) cdAtt(); } catch (e) { toast(e.message); } };
   const rcText = (t, s) => `*${T.school}*\nTour Fee Receipt ${s.pay.no}\nDate: ${dmy(s.pay.date)}\n\nStudent: ${s.name} (${s.cls})\nTour: ${t.name} — ${dmy(t.date)}\nAmount received: ${rs(s.pay.amount)} (${s.pay.mode}${s.pay.ref ? ' ' + s.pay.ref : ''})\nReceived by: ${s.pay.by}\n\nThank you.`;
   window.cdRcWa = (i, ask) => { const t = T.tours.find(x => x.id === TID), s = t.kids[i]; if (ask && !confirm('Receipt made. Send it to the parent on WhatsApp?')) return;
     const ph = String(s.phone || '').replace(/\D/g, '').slice(-10), a = document.createElement('a'); a.href = 'https://wa.me/' + (ph.length === 10 ? '91' + ph : '') + '?text=' + encodeURIComponent(rcText(t, s)); a.target = '_blank'; a.click(); };
