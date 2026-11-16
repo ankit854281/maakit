@@ -17,6 +17,7 @@
 //   GET  ?a=photos&ids=…  | &sid=          photos as data URLs (staff only)
 //   GET  ?a=marks&ses=&exam=&cls=          new marks (Exam-I) of a class
 //   POST ?a=marks {ses,exam,cls,subject,rows} save one subject's marks (teacher of that subject / Principal)
+//   GET  ?a=status&ses=&exam=              Marks Status: every class × subject, how many children are filled
 //   POST ?a=extra {ses,exam,cls,rows}      co-scholastic, remark, attendance (class teacher / Principal)
 //   POST ?a=import {kind,…,apply}          Principal: old ERP cards or photos; never overwrites
 //
@@ -127,6 +128,36 @@ case 'marks': {
     sch_rec_put('prcMarks', "$ses|$exam|$cls|$subj", ['subject' => $subj, 'rows' => $clean, 'by' => $u['label'] ?? $uid, 'at' => sch_now_ms()], $uid);
     sch_log($u, 'Progress Report', "$exam marks saved: Class $cls $subj (" . count($clean) . ' students)');
     sch_json(['ok' => true]);
+}
+// Marks Status (owner, 16 Nov 2026: "kaise pata chalega kitne class ka marks entry ho gaya hai").
+// Every class × subject of the timetable allocation for one session + term: how many children have all four parts
+// (Pre. Test, Notebook, SEA, Term Exam — a number or AB) out of the class strength, who saved it and when; plus the
+// class teacher's co-scholastic / remark / attendance count. Read only; staff who can read cards.
+case 'status': {
+    if (!$readCards) sch_fail('Not open for this login.', 403);
+    $ses = prc_ses((string)($_GET['ses'] ?? '')); $exam = (string)($_GET['exam'] ?? '');
+    if ($ses === '' || !in_array($exam, ['Term-1', 'Term-2'], true)) throw new InvalidArgumentException('Choose the session and Term-1 or Term-2.');
+    $kids = []; foreach (reg_students() as $k) if (empty($k['inactive']) && in_array($k['cls'], PRC_CLASSES, true) && !str_starts_with($k['id'], 'old-')) $kids[$k['cls']][$k['id']] = 1;
+    $tname = function (string $id): string { static $c = []; return $c[$id] ??= (string)((sch_rec_get('teacher', $id) ?? [])['name'] ?? $id); };
+    $subs = []; foreach ((array)sch_rec_get('alloc', 'main') as $al) { $c = (string)($al['c'] ?? ''); $sj = (string)($al['s'] ?? ''); if ($c === '' || $sj === '' || !in_array($c, PRC_CLASSES, true)) continue;
+        $subs[$c][$sj] ??= []; $t = (string)($al['t'] ?? ''); if ($t !== '' && !in_array($t, $subs[$c][$sj], true)) $subs[$c][$sj][] = $t; }
+    $ct = []; foreach ((array)sch_rec_get('classes', 'main') as $c) if (($c['ct'] ?? '') !== '') $ct[(string)($c['c'] ?? '')] = $tname((string)$c['ct']);
+    $saved = $rows('prcMarks', "$ses|$exam|"); $out = [];
+    foreach (PRC_CLASSES as $cls) {
+        $n = count($kids[$cls] ?? []); $list = $subs[$cls] ?? [];
+        foreach ($saved as $key => $d) { $sj = (string)($d['subject'] ?? ''); if (explode('|', $key)[2] === $cls && $sj !== '' && !isset($list[$sj])) $list[$sj] = []; }
+        if (!$n && !$list) continue;
+        $sl = [];
+        foreach ($list as $sj => $tids) {
+            $d = $saved["$ses|$exam|$cls|$sj"] ?? null; $full = 0; $part = 0;
+            foreach ((array)($d['rows'] ?? []) as $sid => $m) { if (!isset($kids[$cls][$sid])) continue; $f = 0; foreach (PRC_PARTS as [$k]) if ((string)(((array)$m)[$k] ?? '') !== '') $f++; if ($f === count(PRC_PARTS)) $full++; elseif ($f) $part++; }
+            $sl[] = ['s' => $sj, 'teachers' => array_map($tname, $tids), 'full' => $full, 'part' => $part, 'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
+        }
+        $x = sch_rec_get('prcExtra', "$ses|$exam|$cls"); $xf = 0;
+        foreach ((array)($x['rows'] ?? []) as $sid => $r) { if (!isset($kids[$cls][$sid])) continue; $r = (array)$r; if (($r['art'] ?? '') !== '' || ($r['disc'] ?? '') !== '' || ($r['remark'] ?? '') !== '' || ($r['days'] ?? '') !== '') $xf++; }
+        $out[] = ['cls' => $cls, 'n' => $n, 'ct' => $ct[$cls] ?? '', 'subjects' => $sl, 'extra' => $xf, 'extraBy' => (string)($x['by'] ?? ''), 'extraAt' => (int)($x['at'] ?? 0)];
+    }
+    sch_json(['ok' => true, 'classes' => $out, 'parts' => count(PRC_PARTS)]);
 }
 case 'extra': {
     if ($method !== 'POST') sch_fail('POST only', 405);

@@ -64,6 +64,11 @@ try {
     [$c, $d] = prq('extra', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['days' => '90', 'present' => '95']]]); pc($c === 400, 'presents cannot pass working days');
     [$c] = prq('extra', $T2, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['art' => 'C']]]); pc($c === 403, 'a subject teacher who is not the class teacher cannot change co-scholastic');
     [$c] = prq('extra', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['art' => 'A', 'work' => 'B', 'health' => 'A', 'disc' => 'A', 'days' => '90', 'present' => '54', 'remark' => 'Synthetic remark']]]); pc($c === 200, 'class teacher saves co-scholastic');
+    // Marks Status: English filled for both synthetic children, Maths (PRX) not started, co-scholastic counted; parents refused
+    [$c, $d] = prq('status', $P, null, '&ses=2026-27&exam=Term-1'); $one = array_values(array_filter((array)($d['classes'] ?? []), fn($x) => $x['cls'] === '1st'))[0] ?? [];
+    $sj = array_column((array)($one['subjects'] ?? []), null, 's');
+    pc($c === 200 && ($sj['Synthetic English']['full'] ?? 0) >= 2 && ($sj['Synthetic Maths']['full'] ?? -1) === 0 && in_array('PRX', $sj['Synthetic Maths']['teachers'] ?? [], true) && ($one['extra'] ?? 0) >= 1, 'marks status ' . substr(json_encode($one), 0, 300));
+    [$c] = prq('status', $F, null, '&ses=2026-27&exam=Term-1'); pc($c === 403, 'parents cannot open marks status');
     [$c, , $raw] = prq('load', $P, null, '', 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null);
     pc($c === 200 && $recs !== 'null' && !str_contains($recs, 'prcMarks') && !str_contains($recs, 'Synthetic remark') && !str_contains($recs, 'base64'), 'legacy sync hides progress reports and photos');
     echo "Progress Report: old cards kept exactly (never overwritten), photos by student, old ERP mark limits, teacher scoping, co-scholastic checks and sync privacy passed\n";

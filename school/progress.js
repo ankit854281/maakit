@@ -9,9 +9,10 @@ let IX = null, TAB = 'card', Q = { ses: '', cls: '1st', sec: '', exam: 'Term-2',
 const SES0 = (new URLSearchParams(location.search).get('session') || '').replace(/^(20\d\d)-20(\d\d)$/, '$1-$2');
 { // old ERP menu deep links: ?tab=card|entry|extra|sheet&exam=Final
   const u = new URLSearchParams(location.search), t = u.get('tab'), e = u.get('exam');
-  if (['card', 'entry', 'extra', 'sheet', 'import'].includes(t)) TAB = t;
+  if (['card', 'entry', 'extra', 'sheet', 'status', 'import'].includes(t)) TAB = t;
   if (['Term-1', 'Term-2', 'Final'].includes(e)) Q.exam = e;
 }
+let ST = null;   // Marks Status: api('status') reply
 let SH = null;   // Result Sheet: {key, rows, subjects, parts}
 const PHOTO = {};   // old path or 'sid:<id>' -> data URL
 
@@ -161,7 +162,7 @@ const OLDCSS = `.k td, .k th{ border-style: solid; border-width: 1px; border-col
 
 // ---------------------------------------------------------------- loading
 async function boot() {
-  try { IX = await api('index'); Q.ses = SES0 || IX.session || Object.keys(IX.summary).sort().reverse()[0] || ''; if (TAB === 'entry' || TAB === 'extra') openEntry(); else render(); }
+  try { IX = await api('index'); Q.ses = SES0 || IX.session || Object.keys(IX.summary).sort().reverse()[0] || ''; if (TAB === 'entry' || TAB === 'extra') openEntry(); else if (TAB === 'status') openStatus(); else render(); }
   catch (e) { $('prRoot').innerHTML = `<div class="pr"><h3>Progress Report</h3><p>${esc(e.message)}</p></div>`; }
 }
 async function showCards() {
@@ -284,16 +285,49 @@ function sheetHtml() {
     <p class="pr-muted">${SH.from === 'old' ? 'As copied from the old ERP result sheet.' : 'Built from the marks entered here (Pre. Test + Notebook + SEA + Term Exam, 9-point grade, rank by total).'}</p>`;
 }
 
+// ---------------------------------------------------------------- Marks Status (owner, 16 Nov 2026: "kitne class ka marks entry ho gaya")
+async function openStatus() {
+  ST = null; if (!['Term-1', 'Term-2'].includes(Q.exam)) Q.exam = 'Term-1'; render();
+  try { ST = await api('status', null, { ses: Q.ses, exam: Q.exam }); } catch (e) { ST = { err: e.message }; }
+  render();
+}
+const when = ms => ms ? new Date(ms).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+function statusHtml() {
+  if (!ST) return '<p class="pr-muted">Opening…</p>';
+  if (ST.err) return `<p class="pr-muted">${esc(ST.err)}</p>`;
+  const C = ST.classes.filter(c => c.n);
+  const st = (f, n) => !n ? 'na' : f >= n ? 'ok' : f ? 'half' : 'no';
+  const color = { ok: '#D7F5DD', half: '#FFF1C7', no: '#FDE2E2', na: '#EEE' }, word = { ok: 'Done', half: 'Partly', no: 'Not started', na: '—' };
+  const subDone = c => c.subjects.filter(x => st(x.full, c.n) === 'ok').length;
+  const clsDone = C.filter(c => c.subjects.length && subDone(c) === c.subjects.length).length;
+  const allSub = C.reduce((a, c) => a + c.subjects.length, 0), allDone = C.reduce((a, c) => a + subDone(c), 0);
+  const pend = C.flatMap(c => c.subjects.filter(x => st(x.full, c.n) !== 'ok').map(x => ({ c, x })));
+  const chip = (c, x) => { const k = st(x.full, c.n); return `<span title="${esc((x.teachers.join(', ') || 'No teacher') + (x.at ? ' · saved ' + when(x.at) + ' by ' + x.by : ''))}" style="display:inline-block;margin:2px;padding:3px 8px;border-radius:12px;background:${color[k]};white-space:nowrap">${esc(x.s)} <b>${x.full}/${c.n}</b>${x.part ? ` <small>(+${x.part} half)</small>` : ''}</span>`; };
+  return `<div class="pr-tools" style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0">
+      <div style="padding:10px 16px;border-radius:12px;background:#D7F5DD"><b style="font-size:20px">${clsDone} / ${C.length}</b><br>classes fully done</div>
+      <div style="padding:10px 16px;border-radius:12px;background:#E8E6FF"><b style="font-size:20px">${allDone} / ${allSub}</b><br>subjects done</div>
+      <div style="padding:10px 16px;border-radius:12px;background:#FDE2E2"><b style="font-size:20px">${pend.length}</b><br>subjects pending</div>
+      <button onclick="openStatus()">Refresh</button> <button onclick="window.print()">Print</button></div>
+    <table class="pr-e"><tr><th>Class</th><th>Students</th><th>Class Teacher</th><th>Subjects done</th><th>Marks of each subject (children filled / class)</th><th>Co-Scholastic / Remark</th></tr>
+    ${C.map(c => { const d = subDone(c), k = !c.subjects.length ? 'na' : d === c.subjects.length ? 'ok' : d || c.subjects.some(x => x.full || x.part) ? 'half' : 'no', xk = st(c.extra, c.n);
+      return `<tr><td><b>${esc(c.cls)}</b></td><td>${c.n}</td><td>${esc(c.ct || '—')}</td><td style="background:${color[k]}"><b>${d}/${c.subjects.length}</b> ${word[k]}</td>
+        <td style="text-align:left">${c.subjects.map(x => chip(c, x)).join('') || '<span class="pr-muted">No subject in timetable allocation</span>'}</td>
+        <td style="background:${color[xk]}">${c.extra}/${c.n}${c.extraAt ? `<br><small>${esc(when(c.extraAt))}</small>` : ''}</td></tr>`; }).join('')}</table>
+    <h4 style="margin:16px 0 6px">Pending — who has to fill (${pend.length})</h4>
+    ${pend.length ? `<table class="pr-e"><tr><th>Class</th><th>Subject</th><th>Teacher</th><th>Filled</th><th>Last saved</th></tr>${pend.map(({ c, x }) => `<tr><td>${esc(c.cls)}</td><td>${esc(x.s)}</td><td>${esc(x.teachers.join(', ') || '— not given in allocation')}</td><td>${x.full}/${c.n}${x.part ? ` (+${x.part} half)` : ''}</td><td>${x.at ? esc(when(x.at) + ' · ' + x.by) : 'Not started'}</td></tr>`).join('')}</table>` : '<p><b>All marks are entered for ' + esc(Q.exam) + '.</b></p>'}
+    <p class="pr-muted">A child counts as filled when all four parts (Pre. Test, Notebook, SEA, Term Exam) have marks or AB. "Half" = some parts still empty. Green = done, yellow = partly, red = not started. Hold the mouse on a subject to see the teacher and when it was saved.</p>`;
+}
+
 // ---------------------------------------------------------------- drawing
 const opt = (v, t, on) => `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(t)}</option>`;
 function render() {
   if (!IX) return;
   const sessions = [...new Set([Q.ses, IX.session, ...Object.keys(IX.summary)].filter(Boolean))].sort().reverse();
-  const tabs = [['card', 'Progress Card'], ['sheet', 'Result Sheet'], ['entry', 'Marks Entry'], ['extra', 'Co-Scholastic / Remark / Attendance']].concat(IX.isPrincipal ? [['import', 'Import from old ERP']] : []);
+  const tabs = [['card', 'Progress Card'], ['sheet', 'Result Sheet'], ['entry', 'Marks Entry'], ['extra', 'Co-Scholastic / Remark / Attendance'], ['status', 'Marks Status']].concat(IX.isPrincipal ? [['import', 'Import from old ERP']] : []);
   const sel = `<div class="pr-sel">
-    <label>Session<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.ses=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === Q.ses)).join('')}</select></label>
-    <label>Class<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.cls=this.value;Q.sec='';Q.stu='';CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${IX.classes.map(c => opt(c, c, c === Q.cls)).join('')}</select></label>
-    <label>Exam Type<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.exam=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${(TAB === 'card' || TAB === 'sheet' ? IX.exams : ['Term-1', 'Term-2']).map(e => opt(e, e === 'Final' ? 'Final (Term-1 + Term-2)' : e, e === Q.exam)).join('')}</select></label>
+    <label>Session<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.ses=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : TAB === 'status' ? 'openStatus()' : 'openEntry()'}">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === Q.ses)).join('')}</select></label>
+    ${TAB === 'status' ? '' : `<label>Class<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.cls=this.value;Q.sec='';Q.stu='';CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : TAB === 'status' ? 'openStatus()' : 'openEntry()'}">${IX.classes.map(c => opt(c, c, c === Q.cls)).join('')}</select></label>`}
+    <label>Exam Type<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.exam=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : TAB === 'status' ? 'openStatus()' : 'openEntry()'}">${(TAB === 'card' || TAB === 'sheet' ? IX.exams : ['Term-1', 'Term-2']).map(e => opt(e, e === 'Final' ? 'Final (Term-1 + Term-2)' : e, e === Q.exam)).join('')}</select></label>
     ${TAB === 'card' ? `<label>Section<select onchange="Q.sec=this.value;CARDS=[]">${opt('', 'All', !Q.sec)}${['A', 'B', 'C', 'D', 'E'].map(x => opt(x, x, x === Q.sec)).join('')}</select></label>
     <label>Student<input value="${esc(Q.stu)}" placeholder="All" onchange="Q.stu=this.value.trim();CARDS=[]"></label>
     <label>Marks from<select onchange="Q.src=this.value;CARDS=[]">${opt('auto', 'Automatic', Q.src === 'auto')}${opt('old', 'Old ERP card', Q.src === 'old')}${opt('new', 'Marks entered here', Q.src === 'new')}</select></label>` : ''}
@@ -319,6 +353,8 @@ function render() {
       <table class="pr-e"><tr><th>Name</th><th>Art Education</th><th>Work Education</th><th>Health &amp; Physical</th><th>Discipline</th><th>Working Days</th><th>Presents</th><th>Class Teacher's Remark</th>${Q.exam === 'Term-2' ? '<th>Result</th><th>Promoted to</th>' : ''}</tr>
       ${MK.students.map(s => `<tr><td>${esc(s.name)}</td><td>${g(s.id, 'art')}</td><td>${g(s.id, 'work')}</td><td>${g(s.id, 'health')}</td><td>${g(s.id, 'disc')}</td><td>${t(s.id, 'days', 50)}</td><td>${t(s.id, 'present', 50)}</td><td>${t(s.id, 'remark', 260)}</td>${Q.exam === 'Term-2' ? `<td>${t(s.id, 'result', 60)}</td><td>${t(s.id, 'promoted', 50)}</td>` : ''}</tr>`).join('')}</table>
       <p class="pr-muted">Result left empty = PASS at 33% or more, and "Promoted to" = the next class, as on the old cards.</p><button onclick="saveExtra()">Save</button>`);
+  } else if (TAB === 'status') {
+    body = sel + statusHtml();
   } else {
     const p = IMP && IMP.prev;
     body = `<div class="pr-box"><p>Choose a file made from the old ERP: <b>7-Old-ERP-Progress-Reports-&lt;session&gt;.json</b> (one per session) or <b>8-Old-ERP-Photos.json</b>. You see what will come in first; nothing already here is changed.</p>
@@ -326,8 +362,8 @@ function render() {
       ${p ? `<p>${p.toAdd} new, ${p.unchanged} already here${p.linked !== undefined ? `, ${p.linked} photos will be linked to students${p.notInErp ? ' (' + p.notInErp + ' children are not in the new ERP; their photos are still kept for their old cards)' : ''}` : ''}.</p><button onclick="applyImport()">Import</button>` : ''}</div>
       <p class="pr-muted">Old ERP cards here: ${Object.entries(IX.summary).sort().map(([s, e]) => esc(s) + ' — ' + Object.entries(e).map(([x, c]) => esc(x) + ' ' + Object.values(c).reduce((a, b) => a + b, 0)).join(', ')).join(' · ') || 'none yet'}.</p>`;
   }
-  $('prRoot').innerHTML = `<div class="pr"><div class="pr-tabs">${tabs.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="if(TAB==='entry'&&!leaveEntry())return;TAB='${k}';${k === 'entry' || k === 'extra' ? 'openEntry()' : 'render()'}">${esc(l)}</button>`).join('')}</div>
-    <h3 class="pr-title">${TAB === 'card' ? (Q.exam === 'Final' ? 'Progress Card(I-VIII)' : 'Term Progress Card') : TAB === 'sheet' ? (Q.exam === 'Final' ? 'Result Sheet(Term1+Term2)' : 'Result Sheet ( Term)') : TAB === 'entry' ? 'Marks Entry(Term)' : TAB === 'extra' ? 'Class Teacher Attendance/Remark' : 'Import from old ERP'}</h3>${body}</div>`;
+  $('prRoot').innerHTML = `<div class="pr"><div class="pr-tabs">${tabs.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="if(TAB==='entry'&&!leaveEntry())return;TAB='${k}';${k === 'entry' || k === 'extra' ? 'openEntry()' : k === 'status' ? 'openStatus()' : 'render()'}">${esc(l)}</button>`).join('')}</div>
+    <h3 class="pr-title">${TAB === 'card' ? (Q.exam === 'Final' ? 'Progress Card(I-VIII)' : 'Term Progress Card') : TAB === 'sheet' ? (Q.exam === 'Final' ? 'Result Sheet(Term1+Term2)' : 'Result Sheet ( Term)') : TAB === 'entry' ? 'Marks Entry(Term)' : TAB === 'extra' ? 'Class Teacher Attendance/Remark' : TAB === 'status' ? 'Marks Entry Status' : 'Import from old ERP'}</h3>${body}</div>`;
   if (TAB === 'card' && CARDS.length) fillPhotos([...document.querySelectorAll('img[data-ph]')].map(i => i.getAttribute('data-ph')));
 }
 boot();
