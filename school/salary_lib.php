@@ -130,3 +130,48 @@ function sal_rupees($v, int $min, int $max, string $what): int {
     $n = (int)$v; if ($n < $min || $n > $max) throw new InvalidArgumentException("$what must be between ₹$min and ₹" . number_format($max) . '.');
     return $n;
 }
+
+// ============================================================
+// September 2026 salary sheet → Salary app (owner, 16 Nov 2026: "ye data school new ERP me update karne ke liye
+// diya hai, jisse salary system strong aur auto ho paye"). Monthly salaries from the school's own Excel
+// (fac_attendence_of_oct_month.xlsx, sheet "Sep 2026 Month Payout", names as in its Sep attendance sheet).
+// The Manager sees a preview (?a=importplan) and applies it (?a=import): ONLY staff whose salary is NOT set get it;
+// a salary already set is never changed. Atul Pal had no salary in the sheet, so he is not listed.
+// ============================================================
+const SAL_SHEET_2026_09 = [
+    ['Prabhakar Dubey', 11000], ['Rati Singh', 10000], ['Mamta Shukla', 8000], ['Brijesh Kumar', 6000], ['Pawan Bhalla', 9000],
+    ['Ritu Singh', 5500], ['Priyanka Singh', 4500], ['Monika Tiwari', 4000], ['Amisha Pandey', 6000], ['Astha Pandey', 9000],
+    ['Shiva Rai', 6000], ['Seema Patel', 4500], ['Shristi Dubey', 3500], ['Durgesh Yadav', 7000], ['Devvrat Yadav', 6500],
+    ['Akash Tiwari', 5000], ['Dipshika Mishra', 3000], ['Shradha Singh', 4500], ['Adarsh Dubey', 7000], ['Shikha Pandey', 4000],
+];
+
+// Name words, spelling-tolerant: "Shrishti" = "Shristi", "Devvrat" = "Devrat", Ma'am / Sir ignored.
+function sal_name_words(string $n): array {
+    $n = strtolower($n); $n = preg_replace("/\b(ma'?am|madam|sir|mr|mrs|ms|miss|dr)\b\.?/", ' ', $n); $n = preg_replace('/[^a-z]+/', ' ', $n);
+    $out = [];
+    foreach (array_filter(explode(' ', trim($n))) as $w) { $w = str_replace(['ee', 'oo', 'w', 'h'], ['i', 'u', 'v', ''], $w); $out[] = preg_replace('/(.)\1+/', '$1', $w); }
+    return array_values(array_unique(array_filter($out)));
+}
+// Same person = same first name AND every word of the shorter name is in the longer one
+// ("Brijesh Kumar" = "Brijesh Kumar Yadav", "Ritu Singh" = "Ritu"; "Priyanka Singh" ≠ "Priyanka Jaiswal").
+function sal_name_same(string $a, string $b): bool {
+    $x = sal_name_words($a); $y = sal_name_words($b);
+    if (!$x || !$y || $x[0] !== $y[0]) return false;
+    return !array_diff($x, $y) || !array_diff($y, $x);
+}
+
+function sal_import_plan(): array {
+    $all = sal_staff_list(); $out = [];
+    foreach (SAL_SHEET_2026_09 as [$name, $monthly]) {
+        $hits = array_values(array_filter($all, fn($s) => sal_name_same($s['name'], $name)));
+        if (count($hits) > 1) { $act = array_values(array_filter($hits, fn($s) => $s['active'])); if (count($act) === 1) $hits = $act; }
+        $r = ['sheet' => $name, 'monthly' => $monthly, 'id' => null, 'erpName' => '', 'current' => null, 'action' => 'notfound'];
+        if (count($hits) > 1) { $r['action'] = 'many'; $r['erpName'] = implode(', ', array_map(fn($s) => $s['name'], $hits)); }
+        elseif ($hits) {
+            $s = $hits[0]; $r['id'] = $s['id']; $r['erpName'] = $s['name']; $r['current'] = $s['monthly'];
+            $r['action'] = $s['monthly'] === null ? 'set' : ((int)$s['monthly'] === $monthly ? 'same' : 'keep');
+        }
+        $out[] = $r;
+    }
+    return $out;
+}

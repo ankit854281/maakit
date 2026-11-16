@@ -98,6 +98,7 @@
         <div class="k g"><span>Net to pay</span><b>${rs(sum('net'))}</b><small>bonus ${rs(sum('bonus'))}</small></div>
         <div class="k y"><span>Paid</span><b>${paid.length} / ${set.length}</b><small>${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid</small></div></div>
       ${segs()}
+      ${R.some(r => r.status === 'Not set') ? `<div class="card" style="border:2px dashed #198754"><b>📥 Salary from the September 2026 sheet</b><p class="mut" style="margin:4px 0 8px">${R.filter(r => r.status === 'Not set').length} staff have no salary yet. Fill them from the school's September salary sheet in one tap — a salary already set is never changed.</p><button class="btn go" onclick="mgImport()">See and fill</button></div>` : ''}
       ${tch.length ? `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">Teachers (${tch.length})</h3>${tch.map(card).join('')}</div>` : ''}
       ${oth.length ? `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">Other staff (${oth.length})</h3>${oth.map(card).join('')}</div>` : ''}
       ${!list.length ? '<div class="card mut">Nobody in this list.</div>' : ''}
@@ -133,6 +134,14 @@
       <div class="f"><label>Ref. / cheque / UPI no. (optional)</label><input id="pR" maxlength="60"></div>
       <button class="btn go full f" onclick="mgPaySave('${id}')">Mark paid</button><button class="btn l full f" onclick="mgClose()">Cancel</button>`); };
   window.mgPaySave = async id => { try { await sal('pay', { ym: YM, id, mode: $('pM').value, ref: $('pR').value.trim(), date: $('pD').value }); await after('Marked paid.'); mgSlip(id); } catch (e) { toast(e.message); } };
+  // September 2026 Excel salaries (salary_api.php importplan / import) — preview first, then only "not set" staff get it.
+  window.mgImport = async () => { let P; try { P = await sal('importplan'); } catch (e) { return toast(e.message); }
+    const lab = { set: ['Will be filled', '#198754'], same: ['Already same', '#6c757d'], keep: ['Already set — not changed', '#b45309'], notfound: ['Not found in ERP — set by hand', '#dc3545'], many: ['More than one match — set by hand', '#dc3545'] };
+    const n = P.rows.filter(r => r.action === 'set').length;
+    sheet(`<h3>Salary from the September 2026 sheet</h3><p class="mut">Name in the sheet → name in the ERP. Only green rows are saved.</p>
+      <div style="max-height:55vh;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">${P.rows.map(r => `<tr style="border-bottom:1px solid #e5e7eb"><td style="padding:6px 4px">${esc(r.sheet)}${r.erpName ? `<br><small class="mut">ERP: ${esc(r.erpName)}</small>` : ''}</td><td style="padding:6px 4px;text-align:right"><b>${rs(r.monthly)}</b>${r.action === 'keep' ? `<br><small class="mut">now ${rs(r.current)}</small>` : ''}</td><td style="padding:6px 4px;color:${lab[r.action][1]};font-size:12px">${lab[r.action][0]}</td></tr>`).join('')}</table></div>
+      ${P.can && n ? `<button class="btn go full f" onclick="mgImportSave()">Fill ${n} salar${n === 1 ? 'y' : 'ies'}</button>` : `<p class="mut">${P.can ? 'Nothing to fill.' : 'Only the Manager can fill salaries.'}</p>`}<button class="btn l full f" onclick="mgClose()">Close</button>`); };
+  window.mgImportSave = async () => { try { const r = await sal('import', {}); after(r.count + ' salaries filled. Check the names marked red by hand.'); } catch (e) { toast(e.message); } };
   window.mgUnpay = async id => { const reason = prompt('Why reopen this paid salary? (kept in the record)'); if (!reason) return;
     try { await sal('unpay', { ym: YM, id, reason }); after('Reopened.'); } catch (e) { toast(e.message); } };
   function slipHTML(r) { const c = r.calc, p = r.pay || {}, rowH = (a, b) => `<tr><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb">${a}</td><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${b}</td></tr>`;

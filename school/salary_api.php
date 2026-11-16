@@ -10,6 +10,8 @@
 //   POST ?a=unpay  {ym, id, reason}                                sirf Manager
 //   GET  ?a=mine                  Teacher — sirf apni paid salary slips
 //   GET  ?a=summary               Manager / Chairman — 6 mahine ka jod
+//   GET  ?a=importplan            Manager / Chairman — September 2026 Excel sheet ki salary ka preview
+//   POST ?a=import                sirf Manager — sheet ki salary sirf unhe jinki salary set nahi (set wali kabhi nahi badalti)
 //
 // Owner, 12 Nov 2026: salary sirf MANAGER (login 'manager', Salary app manager.php) aur CHAIRMAN dekhein —
 // "bas manager, chairman sir dekh payen, aur koi nahi". Manager sab karta hai (salary set, adjust, pay, reopen);
@@ -55,6 +57,31 @@ case 'summary': {                      // Admin dashboard: last 6 months, totals
                   'paid' => count($paid), 'paidAmt' => array_sum(array_map(fn($r) => (int)$r['calc']['net'], $paid))];
     }
     sch_json(['ok' => true, 'months' => $out]);
+}
+
+case 'importplan': {
+    $u = sch_auth(); sal_need($u, ['manager', 'chairman']);
+    sch_json(['ok' => true, 'rows' => sal_import_plan(), 'can' => $u['role'] === 'manager']);
+}
+
+case 'import': {                       // Sep 2026 Excel salaries → only staff with NO salary set
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    $u = sch_auth(); sal_need($u, ['manager']);
+    $db->beginTransaction();
+    $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
+    $set = sal_rows('salStaff'); $done = [];
+    foreach (sal_import_plan() as $r) {
+        if ($r['action'] !== 'set') continue;
+        $d = $set[$r['id']] ?? [];
+        if (array_key_exists('monthly', $d) && $d['monthly'] !== null) continue;
+        $d['monthly'] = $r['monthly']; $d['paidLeave'] = (float)($d['paidLeave'] ?? 1); $d['active'] = $d['active'] ?? true;
+        if (str_starts_with($r['id'], 'x')) { $d['name'] = $d['name'] ?? $r['erpName']; $d['role'] = $d['role'] ?? 'Staff'; }
+        sch_rec_put('salStaff', $r['id'], $d, sch_uid_of($u));
+        $done[] = $r['erpName'] . ' ₹' . number_format($r['monthly']);
+    }
+    if ($done) sch_log($u, 'Salary', 'Salaries filled from the September 2026 salary sheet: ' . implode('; ', $done));
+    $db->commit();
+    sch_json(['ok' => true, 'count' => count($done)]);
 }
 
 case 'staff': {

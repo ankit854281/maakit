@@ -110,6 +110,22 @@ $put('staffAtt', '2026-09-22', ['absent' => ['K']]);
 sl_check($row($j, 't:K')['status'] === 'Due' && $k['absent'] === 4.5 && $k['advance'] === 3000 && $k['workedOnly'] === true && $k['net'] === 14583, 'reopened: recalculated, adjustments kept; 4.5 leave > 4 = paid only for days worked: 25000 ÷ 30 × 20.5 − 3000 + 500: ' . json_encode($k));
 [$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:K', 'mode' => 'Cash', 'date' => date('Y-m-d')], $tok['M']); sl_check($c === 200, 'paid again');
 sl_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Salary' AND x LIKE 'REOPENED Kartikey Sir 2026-09%Missed absence on 22nd'")->fetchColumn() === 1, 'reopen logged');
+// ---- September 2026 sheet → only staff with no salary (owner, 16 Nov 2026) ----
+sl_check(sal_name_same('Shristi Dubey', "Shrishti Dubey Ma'am") && sal_name_same('Brijesh Kumar', 'Brijesh Kumar Yadav') && sal_name_same('Ritu Singh', 'Ritu')
+    && !sal_name_same('Priyanka Singh', 'Priyanka Jaiswal') && !sal_name_same('Shikha Pandey', 'Seekha Mishra') && sal_name_same('Devvrat Yadav', 'Devrat Yadav Sir'), 'name matching');
+$put('teacher', 'RT', ['name' => 'Ritu', 'role' => 'PG']);
+$put('teacher', 'SD', ['name' => "Shrishti Dubey Ma'am", 'role' => 'Nursery']);
+$put('teacher', 'PJ', ['name' => 'Priyanka Jaiswal', 'role' => 'English']);
+[$c] = $s('import', [], $tok['CH']); sl_check($c === 403, 'Chairman cannot import salaries');
+[$c, $j] = $s('importplan', null, $tok['CH']); sl_check($c === 200 && $j['can'] === false, 'Chairman sees the preview');
+$pl = array_column($j['rows'], null, 'sheet');
+sl_check($pl['Ritu Singh']['action'] === 'set' && $pl['Ritu Singh']['id'] === 't:RT' && $pl['Shristi Dubey']['action'] === 'set' && $pl['Mamta Shukla']['action'] === 'keep'
+    && $pl['Priyanka Singh']['action'] === 'notfound' && $pl['Monika Tiwari']['action'] === 'notfound', 'import preview: ' . json_encode($pl['Mamta Shukla']));
+[$c, $j] = $s('import', [], $tok['M']); sl_check($c === 200 && $j['count'] === 2, 'manager fills 2 salaries');
+sl_check(sch_rec_get('salStaff', 't:RT')['monthly'] === 5500 && sch_rec_get('salStaff', 't:SD')['monthly'] === 3500 && sch_rec_get('salStaff', 't:MA')['monthly'] === 18000
+    && sch_rec_get('salStaff', 't:PJ') === null, 'only not-set salaries filled; a set salary is never changed');
+[, $j] = $s('import', [], $tok['M']); sl_check($j['count'] === 0, 'import twice = nothing new');
+sl_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Salary' AND x LIKE 'Salaries filled from the September 2026 salary sheet%'")->fetchColumn() === 1, 'import logged');
 // Manager PIN: only the Chairman sets / resets it
 [$c] = $api('setpin', ['uid' => 'manager', 'pin' => '1234'], $tok['P']); sl_check($c === 403, 'Principal cannot reset the Manager PIN');
 $pdo->exec("DELETE FROM sch_users WHERE uid='manager'");
