@@ -55,7 +55,14 @@ $rows = function (string $k, string $prefix) use ($db): array {
     foreach ($st as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $o[(string)$row['r']] = $d; } return $o;
 };
 $teachesSubject = function (string $cls, string $subj) use ($role, $tid): bool { return $role === 'principal' || ($role === 'teacher' && sch_teaches($tid, $cls, $subj)); };
-$classTeacher = function (string $cls) use ($role, $tid): bool { return $role === 'principal' || ($role === 'teacher' && sch_in_class($tid, $cls)); };
+// Co-scholastic / remark / attendance: only the class teacher set in Classes (ct) or the Principal — owner, 16 Nov 2026.
+// (sch_in_class also lets every subject teacher of the class in, which let any of them overwrite the class teacher's grades.)
+$classTeacher = function (string $cls) use ($role, $tid): bool {
+    if ($role === 'principal') return true;
+    if ($role !== 'teacher' || $tid === '') return false;
+    foreach ((array)sch_rec_get('classes', 'main') as $c) if (($c['c'] ?? '') === $cls && ($c['ct'] ?? '') === $tid) return true;
+    return false;
+};
 
 try {
 switch ($a) {

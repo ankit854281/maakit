@@ -21,13 +21,16 @@ function prq($a, $token, $body = null, $q = '', $api = 'progress_api.php') {
     return [$code, json_decode((string)$raw, true), (string)$raw];
 }
 $db = sch_db();
-$oldAlloc = sch_rec_get('alloc', 'main');
+$oldAlloc = sch_rec_get('alloc', 'main'); $oldClasses = sch_rec_get('classes', 'main');
 $P = prtok('principal', 'principal', 'P'); $T = prtok('t:PRT', 'teacher', 'PRT'); $T2 = prtok('t:PRX', 'teacher', 'PRX'); $F = prtok('p:9811177777', 'parent', '9811177777');
 $clean = fn() => $db->exec("DELETE FROM sch_records WHERE k LIKE 'prc%' OR k LIKE 'pho%' OR (k='student' AND r IN ('pr-s1','pr-s2'))");
 try {
     $clean();
     foreach ([['pr-s1', 'Synthetic Progress One'], ['pr-s2', 'Synthetic Progress Two']] as [$id, $n]) sch_rec_put('student', $id, ['id' => $id, 'adm' => strtoupper($id), 'name' => $n, 'cls' => '1st', 'section' => 'A', 'phone' => '9811177777'], 'principal');
     sch_rec_put('alloc', 'main', array_merge((array)$oldAlloc, [['t' => 'PRT', 'c' => '1st', 's' => 'Synthetic English']]), 'principal');
+    // PRX teaches 1st too but is NOT its class teacher; PRT is (Classes › ct)
+    sch_rec_put('alloc', 'main', array_merge((array)$oldAlloc, [['t' => 'PRT', 'c' => '1st', 's' => 'Synthetic English'], ['t' => 'PRX', 'c' => '1st', 's' => 'Synthetic Maths']]), 'principal');
+    sch_rec_put('classes', 'main', array_merge(array_values(array_filter((array)$oldClasses, fn($x) => ($x['c'] ?? '') !== '1st')), [['c' => '1st', 'ct' => 'PRT']]), 'principal');
 
     [$c] = prq('index', $F); pc($c === 403, 'parents cannot open progress reports');
     // Old ERP card kept exactly, never overwritten
@@ -59,12 +62,14 @@ try {
     pc(($m['pr-s1']['te'] ?? null) === 33 && ($m['pr-s2']['pt'] ?? null) === 'AB' && in_array('Synthetic English', $d['subjects'], true), 'marks kept as entered ' . json_encode($m));
     [$c, $d] = prq('extra', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['art' => 'D']]]); pc($c === 400, 'co-scholastic grades are A to C');
     [$c, $d] = prq('extra', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['days' => '90', 'present' => '95']]]); pc($c === 400, 'presents cannot pass working days');
+    [$c] = prq('extra', $T2, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['art' => 'C']]]); pc($c === 403, 'a subject teacher who is not the class teacher cannot change co-scholastic');
     [$c] = prq('extra', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'rows' => ['pr-s1' => ['art' => 'A', 'work' => 'B', 'health' => 'A', 'disc' => 'A', 'days' => '90', 'present' => '54', 'remark' => 'Synthetic remark']]]); pc($c === 200, 'class teacher saves co-scholastic');
     [$c, , $raw] = prq('load', $P, null, '', 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null);
     pc($c === 200 && $recs !== 'null' && !str_contains($recs, 'prcMarks') && !str_contains($recs, 'Synthetic remark') && !str_contains($recs, 'base64'), 'legacy sync hides progress reports and photos');
     echo "Progress Report: old cards kept exactly (never overwritten), photos by student, old ERP mark limits, teacher scoping, co-scholastic checks and sync privacy passed\n";
 } finally {
     $clean();
+    if ($oldClasses !== null) sch_rec_put('classes', 'main', $oldClasses, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='classes' AND r='main'");
     if ($oldAlloc !== null) sch_rec_put('alloc', 'main', $oldAlloc, 'principal'); else $db->exec("DELETE FROM sch_records WHERE k='alloc' AND r='main'");
     foreach (['t:PRT', 't:PRX', 'p:9811177777'] as $u) { $db->prepare('DELETE FROM sch_sessions WHERE uid=?')->execute([$u]); $db->prepare('DELETE FROM sch_users WHERE uid=?')->execute([$u]); }
 }

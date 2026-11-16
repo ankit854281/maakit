@@ -28,10 +28,11 @@ function grade(p) { return p >= 91 ? 'A1' : p >= 81 ? 'A2' : p >= 71 ? 'B1' : p 
 const pct = (a, b) => b ? Math.round(a / b * 10000) / 100 : 0;                 // 2 decimals, "77" not "77.00" — as the old card prints
 const num = v => v === '' || v === undefined || v === null || String(v).toUpperCase() === 'AB' ? 0 : Number(v);
 const show = v => v === undefined || v === null ? '' : String(v);
+const r2 = v => Math.round(v * 100) / 100;   // 7.1 + 3.2 = 10.3, not 10.299999999999999
 function termOf(marks, sid, subjects) {
   const by = Object.fromEntries(Object.values(marks || {}).map(x => [x.subject, x]));
-  const rows = subjects.map(s => { const m = ((by[s] || {}).rows || {})[sid] || {}; const t = num(m.pt) + num(m.nb) + num(m.sea) + num(m.te); return { s, m, t, g: grade(t) }; });
-  const tot = k => rows.reduce((a, r) => a + num(r.m[k]), 0), sum = rows.reduce((a, r) => a + r.t, 0), max = rows.length * 100;
+  const rows = subjects.map(s => { const m = ((by[s] || {}).rows || {})[sid] || {}; const t = r2(num(m.pt) + num(m.nb) + num(m.sea) + num(m.te)); return { s, m, t, g: grade(t) }; });
+  const tot = k => r2(rows.reduce((a, r) => a + num(r.m[k]), 0)), sum = r2(rows.reduce((a, r) => a + r.t, 0)), max = rows.length * 100;
   return { rows, pt: tot('pt'), nb: tot('nb'), sea: tot('sea'), te: tot('te'), sum, max, p: pct(sum, max), g: grade(pct(sum, max)), any: rows.some(r => ['pt', 'nb', 'sea', 'te'].some(k => show(r.m[k]) !== '')) };
 }
 
@@ -202,19 +203,30 @@ async function newCards() {
 function printCards() { if (!CARDS.length) return toast('Show the cards first.'); window.print(); }
 
 // ---------------------------------------------------------------- marks entry (same components as the old Examination-I)
-async function openEntry() {
+async function openEntry(keep) {
+  if (keep === undefined && MK && MK.subject) keep = MK.subject;
   MK = null; render();
   if (!['Term-1', 'Term-2'].includes(Q.exam)) { Q.exam = 'Term-1'; }
-  try { MK = await api('marks', null, { ses: Q.ses, exam: Q.exam, cls: Q.cls }); MK.subject = MK.subject && MK.mySubjects.includes(MK.subject) ? MK.subject : (MK.mySubjects[0] || ''); render(); } catch (e) { toast(e.message); }
+  try { MK = await api('marks', null, { ses: Q.ses, exam: Q.exam, cls: Q.cls }); MK.subject = keep && MK.mySubjects.includes(keep) ? keep : (MK.mySubjects[0] || ''); render(); } catch (e) { toast(e.message); }
 }
 function entryRow(s, m) {
-  const t = num(m.pt) + num(m.nb) + num(m.sea) + num(m.te), any = ['pt', 'nb', 'sea', 'te'].some(k => show(m[k]) !== '');
-  return `<tr><td>${esc(s.name)}</td>${IX.parts.map(([k, , max]) => `<td><input class="pr-n" data-sid="${esc(s.id)}" data-k="${k}" value="${esc(show(m[k]))}" maxlength="5" oninput="entryTotal(this)" placeholder="/${max}"></td>`).join('')}<td class="pr-t">${any ? t : ''}</td><td class="pr-t">${any ? grade(t) : ''}</td></tr>`;
+  const t = r2(num(m.pt) + num(m.nb) + num(m.sea) + num(m.te)), any = ['pt', 'nb', 'sea', 'te'].some(k => show(m[k]) !== '');
+  return `<tr><td>${esc(s.name)}</td>${IX.parts.map(([k, , max]) => `<td><input class="pr-n" data-sid="${esc(s.id)}" data-k="${k}" data-max="${max}" value="${esc(show(m[k]))}" maxlength="5" inputmode="decimal" oninput="entryTotal(this)" placeholder="/${max}"></td>`).join('')}<td class="pr-t">${any ? t : ''}</td><td class="pr-t">${any ? grade(t) : ''}</td></tr>`;
 }
-function entryTotal(el) { const tr = el.closest('tr'), v = [...tr.querySelectorAll('input')].map(i => i.value); const any = v.some(x => x.trim() !== ''); const t = v.reduce((a, x) => a + num(x.trim()), 0); tr.cells[5].textContent = any ? t : ''; tr.cells[6].textContent = any ? grade(t) : ''; }
+// A box goes red when it is not a number 0..max or AB; Save refuses while any box is red (same as the Teacher App).
+const badMark = i => { const v = i.value.trim().toUpperCase(); return v !== '' && v !== 'AB' && !(/^\d{1,3}(\.\d{1,2})?$/.test(v) && +v <= +i.dataset.max); };
+function entryTotal(el) {
+  el.classList.toggle('pr-bad', badMark(el)); el.style.background = badMark(el) ? '#FDE2E2' : ''; el.style.borderColor = badMark(el) ? '#D93025' : '';
+  MK.dirty = true;
+  const tr = el.closest('tr'), v = [...tr.querySelectorAll('input')].map(i => i.value); const any = v.some(x => x.trim() !== ''); const t = r2(v.reduce((a, x) => a + (num(x.trim()) || 0), 0)); tr.cells[5].textContent = any ? t : ''; tr.cells[6].textContent = any ? grade(t) : '';
+}
+// Changing subject / class / exam / tab with unsaved marks asks first, so typed marks are not lost silently.
+function leaveEntry() { return TAB !== 'entry' || !(MK && MK.dirty) || confirm('Marks you typed are not saved yet. Leave without saving?'); }
 async function saveMarks() {
-  const rows = {}; document.querySelectorAll('.pr-n').forEach(i => { (rows[i.dataset.sid] = rows[i.dataset.sid] || {})[i.dataset.k] = i.value.trim(); });
-  try { await api('marks', { ses: Q.ses, exam: Q.exam, cls: Q.cls, subject: MK.subject, rows }); toast('Marks saved.'); await openEntry(); } catch (e) { toast(e.message); }
+  const bad = [...document.querySelectorAll('.pr-n')].filter(badMark).length;
+  if (bad) return toast(bad + ' box(es) in red: marks must be 0 to the maximum, or AB. Please correct them, then Save.');
+  const rows = {}; document.querySelectorAll('.pr-n').forEach(i => { (rows[i.dataset.sid] = rows[i.dataset.sid] || {})[i.dataset.k] = i.value.trim().toUpperCase(); });
+  try { await api('marks', { ses: Q.ses, exam: Q.exam, cls: Q.cls, subject: MK.subject, rows }); const keep = MK.subject; toast('Marks saved.'); await openEntry(keep); } catch (e) { toast(e.message); }
 }
 async function saveExtra() {
   const rows = {}; document.querySelectorAll('[data-x]').forEach(i => { (rows[i.dataset.sid] = rows[i.dataset.sid] || {})[i.dataset.x] = i.value.trim(); });
@@ -279,9 +291,9 @@ function render() {
   const sessions = [...new Set([Q.ses, IX.session, ...Object.keys(IX.summary)].filter(Boolean))].sort().reverse();
   const tabs = [['card', 'Progress Card'], ['sheet', 'Result Sheet'], ['entry', 'Marks Entry'], ['extra', 'Co-Scholastic / Remark / Attendance']].concat(IX.isPrincipal ? [['import', 'Import from old ERP']] : []);
   const sel = `<div class="pr-sel">
-    <label>Session<select onchange="Q.ses=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === Q.ses)).join('')}</select></label>
-    <label>Class<select onchange="Q.cls=this.value;Q.sec='';Q.stu='';CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${IX.classes.map(c => opt(c, c, c === Q.cls)).join('')}</select></label>
-    <label>Exam Type<select onchange="Q.exam=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${(TAB === 'card' || TAB === 'sheet' ? IX.exams : ['Term-1', 'Term-2']).map(e => opt(e, e === 'Final' ? 'Final (Term-1 + Term-2)' : e, e === Q.exam)).join('')}</select></label>
+    <label>Session<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.ses=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${sessions.map(x => opt(x, x.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), x === Q.ses)).join('')}</select></label>
+    <label>Class<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.cls=this.value;Q.sec='';Q.stu='';CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${IX.classes.map(c => opt(c, c, c === Q.cls)).join('')}</select></label>
+    <label>Exam Type<select onchange="if(!leaveEntry()){this.selectedIndex=[...this.options].findIndex(o=>o.defaultSelected);return}Q.exam=this.value;CARDS=[];${TAB === 'card' || TAB === 'sheet' ? 'SH=null;render()' : 'openEntry()'}">${(TAB === 'card' || TAB === 'sheet' ? IX.exams : ['Term-1', 'Term-2']).map(e => opt(e, e === 'Final' ? 'Final (Term-1 + Term-2)' : e, e === Q.exam)).join('')}</select></label>
     ${TAB === 'card' ? `<label>Section<select onchange="Q.sec=this.value;CARDS=[]">${opt('', 'All', !Q.sec)}${['A', 'B', 'C', 'D', 'E'].map(x => opt(x, x, x === Q.sec)).join('')}</select></label>
     <label>Student<input value="${esc(Q.stu)}" placeholder="All" onchange="Q.stu=this.value.trim();CARDS=[]"></label>
     <label>Marks from<select onchange="Q.src=this.value;CARDS=[]">${opt('auto', 'Automatic', Q.src === 'auto')}${opt('old', 'Old ERP card', Q.src === 'old')}${opt('new', 'Marks entered here', Q.src === 'new')}</select></label>` : ''}
@@ -295,7 +307,7 @@ function render() {
     body = `${sel}<div class="pr-tools"><button onclick="showSheet()" ${BUSY ? 'disabled' : ''}>${BUSY ? 'Loading…' : 'Show'}</button> <button onclick="window.print()">Print</button></div>${sheetHtml()}`;
   } else if (TAB === 'entry') {
     body = sel + (!MK ? '<p class="pr-muted">Opening…</p>' : !MK.mySubjects.length ? '<p class="pr-muted">No subject of this class is given to you in the timetable allocation.</p>' : `
-      <label class="pr-inline">Subject <select onchange="MK.subject=this.value;render()">${MK.mySubjects.map(s => opt(s, s, s === MK.subject)).join('')}</select></label>
+      <label class="pr-inline">Subject <select onchange="if(!leaveEntry()){this.value=MK.subject;return}MK.dirty=false;MK.subject=this.value;render()">${MK.mySubjects.map(s => opt(s, s, s === MK.subject)).join('')}</select></label>
       <table class="pr-e"><tr><th>Name</th>${IX.parts.map(([, l, m]) => `<th>${esc(l)}<br>${m}</th>`).join('')}<th>Total<br>100</th><th>Grade</th></tr>
       ${MK.students.map(s => entryRow(s, (((MK.marks[Q.ses + '|' + Q.exam + '|' + Q.cls + '|' + MK.subject] || {}).rows || {})[s.id]) || {})).join('')}</table>
       <p class="pr-muted">Write AB for absent. Total = Pre. Test + Notebook + SEA + Term Exam; grade on the 9-point scale, as in the old ERP.</p><button onclick="saveMarks()">Save Marks</button>`);
@@ -314,7 +326,7 @@ function render() {
       ${p ? `<p>${p.toAdd} new, ${p.unchanged} already here${p.linked !== undefined ? `, ${p.linked} photos will be linked to students${p.notInErp ? ' (' + p.notInErp + ' children are not in the new ERP; their photos are still kept for their old cards)' : ''}` : ''}.</p><button onclick="applyImport()">Import</button>` : ''}</div>
       <p class="pr-muted">Old ERP cards here: ${Object.entries(IX.summary).sort().map(([s, e]) => esc(s) + ' — ' + Object.entries(e).map(([x, c]) => esc(x) + ' ' + Object.values(c).reduce((a, b) => a + b, 0)).join(', ')).join(' · ') || 'none yet'}.</p>`;
   }
-  $('prRoot').innerHTML = `<div class="pr"><div class="pr-tabs">${tabs.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="TAB='${k}';${k === 'entry' || k === 'extra' ? 'openEntry()' : 'render()'}">${esc(l)}</button>`).join('')}</div>
+  $('prRoot').innerHTML = `<div class="pr"><div class="pr-tabs">${tabs.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="if(TAB==='entry'&&!leaveEntry())return;TAB='${k}';${k === 'entry' || k === 'extra' ? 'openEntry()' : 'render()'}">${esc(l)}</button>`).join('')}</div>
     <h3 class="pr-title">${TAB === 'card' ? (Q.exam === 'Final' ? 'Progress Card(I-VIII)' : 'Term Progress Card') : TAB === 'sheet' ? (Q.exam === 'Final' ? 'Result Sheet(Term1+Term2)' : 'Result Sheet ( Term)') : TAB === 'entry' ? 'Marks Entry(Term)' : TAB === 'extra' ? 'Class Teacher Attendance/Remark' : 'Import from old ERP'}</h3>${body}</div>`;
   if (TAB === 'card' && CARDS.length) fillPhotos([...document.querySelectorAll('img[data-ph]')].map(i => i.getAttribute('data-ph')));
 }
