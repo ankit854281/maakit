@@ -129,6 +129,9 @@ function sal_sheet(string $ym, ?string $onlyId = null): array {
         if ($s['until'] !== '' && $ym > substr($s['until'], 0, 7) && !$m) continue;   // left the school (staffatt_api.php `until`)
         if ($s['from'] !== '' && $ym < substr($s['from'], 0, 7) && !$m) continue;     // joined later (salStaff `from`, 17 Nov 2026)
         $auto = $s['tid'] !== null ? sal_absent_days($s['tid'], $work, $att, $leaves) : sal_nt_days($id, $nat);
+        // Owner, 17 Nov 2026 ("4 se zyada chhutti wala niyam rakhna hai"): a former teacher kept as a staff entry (role Teacher,
+        // e.g. Amisha Pandey) follows the teacher rules too — more-than-4-leave and full-attendance bonus.
+        if ($auto !== null && $s['tid'] === null && preg_match('/teacher/i', (string)$s['role'])) unset($auto['nonTeaching']);
         $rows[] = ['staff' => $s, 'calc' => sal_calc($s, $m, $work, $auto), 'status' => $s['monthly'] === null ? 'Not set' : 'Due', 'pay' => null];
     }
     // Owner, 17 Nov 2026: "register Sr. No ke according" — staff in the teacher register's order first (regNo 1…20), others after
