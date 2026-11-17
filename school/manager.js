@@ -111,7 +111,7 @@
     }
     if (!D) return load();
     if (VIEW === 'bill') { frame(segs() + `<div class="card"><h3 style="margin:0 0 8px;color:#0F5132">📄 Fee demand bill for parents</h3><div id="billPick"></div></div>`); return DemandBill.picker(store.get(TK), 'billPick'); }
-    if (VIEW === 'att') return frame(segs() + `<iframe src="staffatt.php?embed=1&tk=sal" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
+    if (VIEW === 'att') return frame(segs() + `<iframe src="staffatt.php?embed=1&tk=sal&ym=${YM}" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
     const R = D.rows, set = R.filter(r => r.status !== 'Not set'), paid = R.filter(r => r.status === 'Paid'), sum = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
     if (VIEW === 'table') return frame(kpis(set, paid, sum) + segs() + monthTable());
     const list = VIEW === 'due' ? R.filter(r => r.status === 'Due') : VIEW === 'paid' ? paid : VIEW === 'notset' ? R.filter(r => r.status === 'Not set') : R;

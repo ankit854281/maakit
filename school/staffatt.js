@@ -6,7 +6,9 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const emb = /[?&]embed=1/.test(location.search); if (emb) document.body.classList.add('emb');
   const now = new Date(), ymOf = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  let YM = ymOf(now), D = null, CH = {};
+  // ?ym=2026-10 — the Salary app opens attendance on the month chosen there (owner, 17 Nov 2026: Oct chosen, Nov opened)
+  const qYM = (location.search.match(/[?&]ym=(\d{4}-\d{2})/) || [])[1];
+  let YM = qYM || ymOf(now), D = null, CH = {};
   const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3200); };
   async function api(path, body) {
     const r = await fetch('staffatt_api.php?' + path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': tok() }, ...(body ? { body: JSON.stringify(body) } : {}) });
