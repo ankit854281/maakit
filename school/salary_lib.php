@@ -101,10 +101,10 @@ function sal_staff_list(): array {
     foreach (sal_rows('teacher') as $tid => $t) {
         $id = 't:' . $tid; $s = $set[$id] ?? [];
         $out[$id] = ['id' => $id, 'tid' => (string)$tid, 'name' => (string)($t['name'] ?? $tid), 'role' => (string)($t['role'] ?? 'Teacher'),
-                     'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1, 'active' => $s['active'] ?? true, 'teaching' => true, 'until' => (string)($s['until'] ?? '')];
+                     'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1, 'active' => $s['active'] ?? true, 'teaching' => true, 'until' => (string)($s['until'] ?? ''), 'from' => (string)($s['from'] ?? '')];
     }
     foreach ($set as $id => $s) if (str_starts_with($id, 'x')) $out[$id] = ['id' => $id, 'tid' => null, 'name' => (string)($s['name'] ?? ''), 'role' => (string)($s['role'] ?? 'Staff'),
-        'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1, 'active' => $s['active'] ?? true, 'teaching' => false, 'until' => (string)($s['until'] ?? '')];
+        'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1, 'active' => $s['active'] ?? true, 'teaching' => false, 'until' => (string)($s['until'] ?? ''), 'from' => (string)($s['from'] ?? '')];
     uasort($out, fn($a, $b) => [!$a['active'], !$a['teaching'], $a['name']] <=> [!$b['active'], !$b['teaching'], $b['name']]);
     return $out;
 }
@@ -121,9 +121,15 @@ function sal_sheet(string $ym, ?string $onlyId = null): array {
         if (($m['status'] ?? '') === 'Paid') { $rows[] = ['staff' => $s, 'calc' => $m['calc'], 'status' => 'Paid', 'pay' => array_intersect_key($m, array_flip(['paidOn', 'mode', 'ref', 'by', 'at']))]; continue; }
         if (!$s['active'] && !$m) continue;
         if ($s['until'] !== '' && $ym > substr($s['until'], 0, 7) && !$m) continue;   // left the school (staffatt_api.php `until`)
+        if ($s['from'] !== '' && $ym < substr($s['from'], 0, 7) && !$m) continue;     // joined later (salStaff `from`, 17 Nov 2026)
         $auto = $s['tid'] !== null ? sal_absent_days($s['tid'], $work, $att, $leaves) : sal_nt_days($id, $nat);
         $rows[] = ['staff' => $s, 'calc' => sal_calc($s, $m, $work, $auto), 'status' => $s['monthly'] === null ? 'Not set' : 'Due', 'pay' => null];
     }
+    // Owner, 17 Nov 2026: "register Sr. No ke according" — staff in the teacher register's order first (regNo 1…20), others after
+    $ord = sal_reg_order(sal_staff_list()); $pos = 0;
+    foreach ($rows as &$r) { $r['regNo'] = $ord[$r['staff']['id']] ?? null; $r['_p'] = $pos++; } unset($r);
+    usort($rows, fn($a, $b) => [$a['regNo'] === null, $a['regNo'] ?? 0, $a['_p']] <=> [$b['regNo'] === null, $b['regNo'] ?? 0, $b['_p']]);
+    foreach ($rows as &$r) unset($r['_p']); unset($r);
     return ['ym' => $ym, 'workDays' => count($work), 'rows' => $rows];
 }
 
@@ -221,4 +227,27 @@ function sal_seed_oct_register(string $uid = 'system'): void {
         if ($na !== $na0) sch_rec_put('salAtt', $d, $na, $uid); }
     sch_rec_put('salSeed', 'oct-2026-register', ['at' => sch_now_ms(), 'opened' => $opened, 'absentMarked' => $marked, 'notFound' => array_keys($miss)], $uid);
     sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Staff Attendance', 'October 2026 register: opened ' . ($opened ? implode(', ', $opened) . ' Oct' : 'no day') . " for staff, $marked absent marked" . ($miss ? '; not found: ' . implode(', ', array_keys($miss)) : ''));
+}
+
+// Register serial no. (Teacher Attendance Register, order of SAL_REG_2026_10_ABSENT = Sr. No. 1–20) → staff id
+function sal_reg_order(array $list): array {
+    $o = []; $i = 0;
+    foreach (array_keys(SAL_REG_2026_10_ABSENT) as $n) { $i++; $id = sal_reg_match($n, $list); if ($id !== null && !isset($o[$id])) $o[$id] = $i; }
+    return $o;
+}
+// Owner, 17 Nov 2026: "oct me Palak kaha se aa gayi" — teachers who are NOT in the October 2026 register joined later.
+// One time (flag salSeed/joined-2026-11): each active teacher of the ERP with no match in the register gets
+// salStaff `from` = 2026-11-01, so October (and earlier) salary and staff attendance leave them out. The Manager can change
+// "Working from" in Edit salary. A `from` already set is never changed.
+function sal_seed_joined_nov(string $uid = 'system'): void {
+    if (date('Y-m-d') < '2026-11-01' || sch_rec_get('salSeed', 'joined-2026-11')) return;
+    $list = sal_staff_list(); $ord = sal_reg_order($list);
+    if (count($ord) < 10) return;   // only the real school (most register names found) — never a test or another school's ERP
+    $set = sal_rows('salStaff'); $left = (array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []); $done = [];
+    foreach ($list as $id => $s) {
+        if (!$s['teaching'] || !$s['active'] || isset($ord[$id]) || $s['from'] !== '' || $s['until'] !== '' || isset($left[$s['tid']])) continue;
+        $d = $set[$id] ?? []; $d['from'] = '2026-11-01'; sch_rec_put('salStaff', $id, $d, $uid); $done[] = $s['name'];
+    }
+    sch_rec_put('salSeed', 'joined-2026-11', ['at' => sch_now_ms(), 'from2026_11' => $done], $uid);
+    if ($done) sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Salary', 'Not in the October 2026 teacher register — working from November 2026: ' . implode(', ', $done));
 }

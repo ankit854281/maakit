@@ -35,7 +35,8 @@ function sa_ym(string $ym): string { if (!sal_ym_ok($ym) || $ym > date('Y-m')) s
 // salStaff['t:tid'].until come back for those months under their old tid, so staffAtt / arrangement keep matching.
 function sa_staff(string $ym = ''): array {
     $left = (array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []); $set = sal_rows('salStaff'); $out = [];
-    $show = function (array $x) use ($ym): bool { $u = (string)($x['until'] ?? ''); return $u === '' || $ym === '' || $ym <= substr($u, 0, 7); };
+    $show = function (array $x) use ($ym): bool { $u = (string)($x['until'] ?? ''); $f = (string)($x['from'] ?? '');
+        return ($u === '' || $ym === '' || $ym <= substr($u, 0, 7)) && ($f === '' || $ym === '' || $ym >= substr($f, 0, 7)); };   // `from`: joined later (17 Nov 2026)
     foreach (sal_staff_list() as $id => $s) {
         $x = $set[$id] ?? []; $until = (string)($x['until'] ?? '');
         if ($until === '' && (!$s['active'] || ($s['tid'] !== null && isset($left[$s['tid']])))) continue;
@@ -81,7 +82,7 @@ switch ($a) {
 case 'month': {
     $ym = sa_ym((string)($_GET['ym'] ?? date('Y-m')));
     if ($role !== 'chairman') sa_seed_former('system');
-    if ($role !== 'chairman' || $ym === '2026-10') sal_seed_oct_register('system');   // October register days the ERP had closed (salary_lib.php)
+    if ($role !== 'chairman' || $ym === '2026-10') { sal_seed_oct_register('system'); sal_seed_joined_nov('system'); }   // October register days the ERP had closed (salary_lib.php)
     $cal = sal_rows('cal'); $work = array_flip(sal_workdays($ym, $cal)); $n = (int)date('t', strtotime($ym . '-01')); $today = date('Y-m-d');
     $hol = []; foreach ($cal as $e) if (($e['type'] ?? '') === 'Holiday' && !empty($e['date'])) { $d = (string)$e['date']; $to = (string)(($e['to'] ?? '') ?: $d); for ($i = 0; $d <= $to && $i < 400; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $hol[$d] = (string)($e['title'] ?? 'Holiday'); }
     $days = []; $open = sal_rows('salOpen', $ym . '-');

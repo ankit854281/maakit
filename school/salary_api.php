@@ -41,13 +41,14 @@ case 'sheet': {
     $ym = (string)($_GET['ym'] ?? date('Y-m'));
     if (!sal_ym_ok($ym)) sch_fail('Choose a month.');
     sal_seed_oct_register('system');   // October 2026 register: closed school days opened for staff (salary_lib.php)
+    sal_seed_joined_nov('system');     // teachers not in the October register: working from November (salary_lib.php)
     $m = $u['role'] === 'manager';
     sch_json(['ok' => true, 'can' => ['staff' => $m, 'unpay' => $m, 'edit' => $m], 'me' => $u['label'], 'modes' => SAL_MODES, 'today' => date('Y-m-d'),
               'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')] + sal_sheet($ym));
 }
 
 case 'summary': {                      // Admin dashboard: last 6 months, totals only
-    $u = sch_auth(); sal_need($u, ['manager', 'chairman']);
+    $u = sch_auth(); sal_need($u, ['manager', 'chairman']); sal_seed_joined_nov('system');
     $out = [];
     for ($i = 5; $i >= 0; $i--) {
         $ym = date('Y-m', strtotime(date('Y-m-01') . " -$i month"));
@@ -104,10 +105,12 @@ case 'staff': {
     } else {
         $s = sal_find($id); $old = sal_rows('salStaff')[$id] ?? [];
         $d = ['monthly' => $monthly, 'paidLeave' => (float)$pl, 'active' => $active];
-        if (isset($old['until'])) $d['until'] = $old['until']; if (isset($old['role']) && $s['teaching']) $d['role'] = $old['role'];   // keep 'worked till' (staffatt_api.php)
+        if (isset($old['until'])) $d['until'] = $old['until']; if (isset($old['from'])) $d['from'] = $old['from'];
+        if (array_key_exists('from', $in)) { $f = (string)($in['from'] ?? ''); if ($f !== '' && !preg_match('/^\d{4}-\d{2}$/', $f)) sch_fail('Choose the month they started.'); if ($f === '') unset($d['from']); else $d['from'] = $f . '-01'; } if (isset($old['role']) && $s['teaching']) $d['role'] = $old['role'];   // keep 'worked till' (staffatt_api.php)
         if (!$s['teaching']) { $d['name'] = sal_text($in['name'] ?? $s['name'], 60) ?: $s['name']; $d['role'] = sal_text($in['role'] ?? $s['role'], 40) ?: $s['role']; }
         $what = "{$s['name']}: " . ($monthly === null ? 'salary not set' : 'salary ₹' . number_format($monthly)) . ", paid leave $pl/month" . ($active ? '' : ', inactive');
-        if (($old['monthly'] ?? null) === $monthly && (float)($old['paidLeave'] ?? 1) === (float)$pl && ($old['active'] ?? true) === $active && !isset($d['name'])) sch_json(['ok' => true, 'id' => $id]);
+        if (($d['from'] ?? '') !== ($old['from'] ?? '')) $what .= ', working from ' . (($d['from'] ?? '') !== '' ? substr($d['from'], 0, 7) : 'always');
+        if (($old['monthly'] ?? null) === $monthly && (float)($old['paidLeave'] ?? 1) === (float)$pl && ($old['active'] ?? true) === $active && !isset($d['name']) && ($d['from'] ?? '') === ($old['from'] ?? '')) sch_json(['ok' => true, 'id' => $id]);
     }
     sch_rec_put('salStaff', $id, $d, sch_uid_of($u));
     sch_log($u, 'Salary', 'Staff salary setting — ' . $what);
