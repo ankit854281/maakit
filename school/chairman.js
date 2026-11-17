@@ -1314,13 +1314,22 @@ function staffBody() {
 function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get('sch_token'), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {
   const nm = (window.MGR_NAME || '');
-  return card('Staff salary', `<p class="note" style="margin-top:0">Only you and the Manager see salary — in the Salary app.</p>
+  setTimeout(salSum, 30);
+  return card('Staff salary', `<p class="note" style="margin-top:0">Only you and the Manager see salary — in the Salary app.</p><div id="salSum"></div>
     <a href="manager.php?from=ch" style="display:inline-block;text-decoration:none;padding:11px 18px;border-radius:99px;background:#0F5132;color:#fff;font-weight:700">Open Salary app</a>
     <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700">Manager login — name and PIN</summary>
       <div style="display:grid;gap:8px;margin-top:8px"><input id="mgN" placeholder="Manager's name" maxlength="40" value="${esc(nm)}" style="padding:10px;border:1px solid #ccd;border-radius:12px;font:inherit">
       <input id="mgP" type="password" inputmode="numeric" maxlength="8" placeholder="Manager's PIN (1234 = Manager chooses own)" style="padding:10px;border:1px solid #ccd;border-radius:12px;font:inherit">
       <button onclick="mgrSave()" style="padding:11px;border:0;border-radius:99px;background:#F5C842;font:inherit;font-weight:700">Save Manager login</button>
       <p class="note" style="margin:0">Then send the Manager the Salary app and this PIN: <a href="https://maakit.in/school/downloads/snmsis-salary.apk">Download Salary app (Android)</a> — or open maakit.in/school/manager.php → Manager.</p></div></details>`);
+}
+// Owner, 17 Nov 2026: Chairman sees right here how much salary is to be paid for the full month (last month + this month).
+async function salSum() {
+  const el = $('salSum'); if (!el) return;
+  try { const j = await api('salary_api.php?a=summary'), M = j.months.slice(-2), rs = n => '₹' + Math.round(+n || 0).toLocaleString('en-IN');
+    el.innerHTML = M.map(m => `<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #eee"><div><b>${esc(new Date(m.ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }))}</b><br><small class="note">${m.staff} staff · salary ${rs(m.gross)} · cut ${rs(m.cut)} · paid ${m.paid}/${m.staff}</small></div><div style="text-align:right"><small class="note">To pay</small><br><b style="font-size:18px">${m.staff ? rs(m.net) : '—'}</b></div></div>`).join('')
+      + (M.some(m => !m.staff) ? '<p class="note">No salary set yet for a month with "—". The Manager fills it in the Salary app.</p>' : '') + '<div style="height:10px"></div>';
+  } catch (e) { el.innerHTML = ''; }
 }
 async function mgrSave() {
   const n = $('mgN').value.trim(), p = $('mgP').value.trim();

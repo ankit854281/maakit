@@ -11,7 +11,8 @@
   const dmy = d => d ? d.split('-').reverse().join('-') : '';
   const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 3500); };
   const TK = 'sal_token';                                   // own token key: the Salary app login never mixes with the ERP login on the same phone
-  let SEC = store.get('mg_sec') || 'sal', YM = ymOf(now), D = null, VIEW = 'all', MUST = false, ROLE = store.get('sal_role') || 'manager', NAMES = {};
+  let SEC = store.get('mg_sec') || 'sal', YM = ymOf(now.getDate() <= 20 ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now), D = null, VIEW = 'all', MUST = false, ROLE = store.get('sal_role') || 'manager', NAMES = {};
+  if (ROLE === 'chairman') VIEW = 'table';
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('manager-sw.js').catch(() => {});
   // Opened from the Chairman app (?from=ch): use the Chairman's login already on this phone — no second PIN.
   if (/[?&]from=ch/.test(location.search) && !store.get(TK) && store.get('sch_token')) { store.set(TK, store.get('sch_token')); store.set('sal_shared', '1'); ROLE = 'chairman'; store.set('sal_role', 'chairman'); }
@@ -59,11 +60,13 @@
     if (a.leave) p.push(a.leave + ' leave'); if (a.half) p.push(a.half + ' half day'); if (a.absent) p.push(dd(a.absent) + ' without permission');
     return p.join(', ') || 'full attendance';
   }
+  // Owner, 17 Nov 2026: "proper working days, present, absent, CL ye sab add kariye, chairman sir ko show kare kitna salary dena hai pure month ka"
+  const clUsed = c => Math.max(0, (+c.absent || 0) - (+c.unpaid || 0)), present = c => Math.max(0, (+c.workDays || 0) - (+c.absent || 0));
   function card(r) {
     const s = r.staff, c = r.calc, st = r.status === 'Not set' ? 'Not' : r.status, can = D.can.edit, id = s.id;
     return `<div class="st"><div class="h"><div><b>${esc(s.name)}<span class="tag ${st}">${r.status === 'Not set' ? 'Salary not set' : esc(r.status)}</span></b><small>${esc(s.role)}${s.teaching ? '' : ' · other staff'}</small></div>
       <div class="net"><small class="mut">Net pay</small><b>${r.status === 'Not set' ? '—' : rs(c.net)}</b></div></div>
-      ${r.status === 'Not set' ? '' : `<div class="pills"><span class="pl">Salary ${rs(c.gross)}</span><span class="pl">${esc(why(c))}</span><span class="pl">Paid leave ${dd(c.paidLeave)}</span>
+      ${r.status === 'Not set' ? '' : `<div class="pills"><span class="pl">Salary ${rs(c.gross)}</span><span class="pl">Working days ${c.workDays}</span><span class="pl g">Present ${dd(present(c))}</span><span class="pl ${c.absent ? 'r' : ''}">Absent ${dd(c.absent)}</span><span class="pl">CL used ${dd(clUsed(c))} / ${dd(c.paidLeave)}</span><span class="pl">${esc(why(c))}</span>
         ${c.deduction ? `<span class="pl r">Cut ${rs(c.deduction)} (${dd(c.unpaid)} day${c.unpaid == 1 ? '' : 's'})</span>` : ''}${c.workedOnly ? '<span class="pl r">More than 4 leave — paid for days worked</span>' : ''}
         ${c.advance ? `<span class="pl r">Advance −${rs(c.advance)}</span>` : ''}${c.autoBonus ? `<span class="pl g">Full attendance +${rs(c.autoBonus)}</span>` : ''}${c.bonus - (c.autoBonus || 0) ? `<span class="pl g">Bonus +${rs(c.bonus - (c.autoBonus || 0))}</span>` : ''}${c.note ? `<span class="pl y">${esc(c.note)}</span>` : ''}</div>`}
       ${r.pay ? `<p class="mut" style="margin:6px 0 0">Paid ${esc(dmy(r.pay.paidOn))} by ${esc(r.pay.mode)}${r.pay.ref ? ' (' + esc(r.pay.ref) + ')' : ''} · ${esc(r.pay.by || '')}</p>` : ''}
@@ -71,8 +74,27 @@
         ${can && r.status === 'Due' ? `<button class="btn go" onclick="mgPay('${id}')">Pay ${rs(c.net)}</button><button class="btn l" onclick="mgAdj('${id}')">Adjust</button>` : ''}
         ${can && r.status !== 'Paid' ? `<button class="btn l" onclick="mgStaff('${id}')">${r.status === 'Not set' ? 'Set salary' : 'Edit salary'}</button>` : ''}</div></div>`;
   }
+  function kpis(set, paid, sum) {
+    return `<div class="kp"><div class="k"><span>Total salary</span><b>${rs(sum('gross'))}</b><small>${set.length} staff with salary set</small></div>
+        <div class="k r"><span>Cut for absence</span><b>${rs(sum('deduction'))}</b><small>advance ${rs(sum('advance'))}</small></div>
+        <div class="k g"><span>Net to pay · full month</span><b>${rs(sum('net'))}</b><small>bonus ${rs(sum('bonus'))}</small></div>
+        <div class="k y"><span>Paid</span><b>${paid.length} / ${set.length}</b><small>${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid</small></div></div>`;
+  }
+  // 📋 Month sheet: one line per staff — Working days, Present, Absent, CL, cut, net — and the month total (Chairman opens here).
+  function monthTable() {
+    const td = 'style="border:1px solid #dfe7e2;padding:6px 5px;text-align:center;white-space:nowrap"', th = 'style="border:1px solid #dfe7e2;padding:6px 5px;background:#0F5132;color:#fff;font-size:12px"';
+    const R = D.rows, set = R.filter(r => r.status !== 'Not set'), ns = R.filter(r => r.status === 'Not set'), tot = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
+    const line = (r, i) => { const c = r.calc;
+      return `<tr><td ${td}>${i + 1}</td><td ${td.replace('center', 'left')}><b>${esc(r.staff.name)}</b><br><small class="mut">${esc(r.staff.role)}</small></td><td ${td}>${rs(c.gross)}</td><td ${td}>${c.workDays}</td><td ${td}>${dd(present(c))}</td><td ${td}>${dd(c.absent)}</td><td ${td}>${dd(clUsed(c))}</td><td ${td}>${dd(c.unpaid)}</td><td ${td}>${c.deduction ? '−' + rs(c.deduction) : '—'}</td><td ${td}>${(c.bonus || 0) - (c.advance || 0) ? ((c.bonus || 0) - (c.advance || 0) > 0 ? '+' : '−') + rs(Math.abs((c.bonus || 0) - (c.advance || 0))) : '—'}</td><td ${td}><b>${rs(c.net)}</b></td><td ${td}>${esc(r.status)}</td></tr>`; };
+    return `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">${esc(ymName(YM))} — salary sheet</h3><p class="mut" style="margin:0 0 8px">${D.workDays} working days (Sundays and holidays left out). CL = paid leave used this month.</p>
+      <div style="overflow:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><tr>${['#', 'Name', 'Salary', 'Working days', 'Present', 'Absent', 'CL', 'Cut days', 'Cut ₹', 'Bonus / advance', 'Net pay', 'Status'].map(h => `<th ${th}>${h}</th>`).join('')}</tr>
+      ${set.map(line).join('')}
+      <tr style="background:#E3F4EA"><td ${td} colspan="2"><b>Total (${set.length})</b></td><td ${td}><b>${rs(tot('gross'))}</b></td><td ${td} colspan="5"></td><td ${td}><b>−${rs(tot('deduction'))}</b></td><td ${td}></td><td ${td}><b style="font-size:15px">${rs(tot('net'))}</b></td><td ${td}></td></tr></table></div>
+      ${ns.length ? `<p style="margin:10px 0 0;color:#8a1c1c"><b>Salary not set (${ns.length}):</b> ${ns.map(r => esc(r.staff.name)).join(', ')} — not in the total. The Manager sets it in "Salary not set".</p>` : ''}
+      <div class="acts"><button class="btn l" onclick="mgRegister()">Print this sheet</button></div></div>`;
+  }
   function segs() { const R = D.rows, paid = R.filter(r => r.status === 'Paid');
-    return `<div class="seg">${[['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
+    return `<div class="seg">${[['table', '📋 Month sheet'], ['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
   // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
   // Fee Receipt = feecollect.php (the one place fees are taken), Cash Book + Tour fee = cashdesk.php — same login (tk=sal).
   const SECS = [['sal', 'Salary'], ['fee', 'Fee Receipt'], ['cash', 'Cash Book'], ['tour', 'Tour fee']];
@@ -91,12 +113,10 @@
     if (VIEW === 'bill') { frame(segs() + `<div class="card"><h3 style="margin:0 0 8px;color:#0F5132">📄 Fee demand bill for parents</h3><div id="billPick"></div></div>`); return DemandBill.picker(store.get(TK), 'billPick'); }
     if (VIEW === 'att') return frame(segs() + `<iframe src="staffatt.php?embed=1&tk=sal" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
     const R = D.rows, set = R.filter(r => r.status !== 'Not set'), paid = R.filter(r => r.status === 'Paid'), sum = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
+    if (VIEW === 'table') return frame(kpis(set, paid, sum) + segs() + monthTable());
     const list = VIEW === 'due' ? R.filter(r => r.status === 'Due') : VIEW === 'paid' ? paid : VIEW === 'notset' ? R.filter(r => r.status === 'Not set') : R;
     const tch = list.filter(r => r.staff.teaching), oth = list.filter(r => !r.staff.teaching);
-    frame(`<div class="kp"><div class="k"><span>Total salary</span><b>${rs(sum('gross'))}</b><small>${set.length} staff with salary set</small></div>
-        <div class="k r"><span>Cut for absence</span><b>${rs(sum('deduction'))}</b><small>advance ${rs(sum('advance'))}</small></div>
-        <div class="k g"><span>Net to pay</span><b>${rs(sum('net'))}</b><small>bonus ${rs(sum('bonus'))}</small></div>
-        <div class="k y"><span>Paid</span><b>${paid.length} / ${set.length}</b><small>${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid</small></div></div>
+    frame(kpis(set, paid, sum) + `
       ${segs()}
       ${R.some(r => r.status === 'Not set') ? `<div class="card" style="border:2px dashed #198754"><b>📥 Salary from the September 2026 sheet</b><p class="mut" style="margin:4px 0 8px">${R.filter(r => r.status === 'Not set').length} staff have no salary yet. Fill them from the school's September salary sheet in one tap — a salary already set is never changed.</p><button class="btn go" onclick="mgImport()">See and fill</button></div>` : ''}
       ${tch.length ? `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">Teachers (${tch.length})</h3>${tch.map(card).join('')}</div>` : ''}
@@ -146,16 +166,16 @@
     try { await sal('unpay', { ym: YM, id, reason }); after('Reopened.'); } catch (e) { toast(e.message); } };
   function slipHTML(r) { const c = r.calc, p = r.pay || {}, rowH = (a, b) => `<tr><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb">${a}</td><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${b}</td></tr>`;
     return `<div style="border:1.5px solid #0F5132;border-radius:14px;padding:16px;margin-bottom:16px;page-break-inside:avoid;font-family:Arial,sans-serif"><div style="display:flex;justify-content:space-between"><b style="font-size:16px">${esc(D.school || 'SN Mishra Singapore International School')}, Bhadohi</b><span>SALARY SLIP — ${esc(ymName(YM))}</span></div>
-      <p style="margin:8px 0"><b>${esc(r.staff.name)}</b> · ${esc(r.staff.role)}</p><table style="width:100%;border-collapse:collapse;font-size:13px">${rowH('Monthly salary', rs(c.gross))}${rowH('Working days', c.workDays)}${rowH('Absent days', dd(c.absent))}${rowH('Paid leave allowed', dd(c.paidLeave))}
+      <p style="margin:8px 0"><b>${esc(r.staff.name)}</b> · ${esc(r.staff.role)}</p><table style="width:100%;border-collapse:collapse;font-size:13px">${rowH('Monthly salary', rs(c.gross))}${rowH('Working days', c.workDays)}${rowH('Present days', dd(present(c)))}${rowH('Absent days', dd(c.absent))}${rowH('CL (paid leave) used', dd(clUsed(c)) + ' of ' + dd(c.paidLeave))}
       ${rowH('Cut for absence', '− ' + rs(c.deduction))}${c.advance ? rowH('Advance recovered', '− ' + rs(c.advance)) : ''}${c.autoBonus ? rowH('Full attendance bonus', '+ ' + rs(c.autoBonus)) : ''}${c.bonus - (c.autoBonus || 0) ? rowH('Bonus / other', '+ ' + rs(c.bonus - (c.autoBonus || 0))) : ''}
       <tr><td style="padding:8px"><b>Net paid</b></td><td style="padding:8px;text-align:right"><b style="font-size:16px">${rs(c.net)}</b></td></tr></table>
       ${p.paidOn ? `<p style="font-size:12px">Paid on ${esc(dmy(p.paidOn))} by ${esc(p.mode)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</p>` : ''}<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Manager ______________</span></div></div>`; }
   function printHTML(title, body) { const w = window.open('', '_blank'); if (!w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Printing works from a computer or the phone browser: maakit.in/school/manager.php' : 'Allow pop-ups to print.'); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}<script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
   window.mgSlip = id => { const r = row(id); if (r) printHTML('Salary slip', slipHTML(r)); };
   window.mgRegister = () => { const R = D.rows.filter(r => r.status !== 'Not set'), td = 'style="border:1px solid #999;padding:5px;font-size:12px"';
-    printHTML('Salary register', `<h2 style="font-family:Arial;margin:0">${esc(D.school || 'SN Mishra Singapore International School')} — Salary register ${esc(ymName(YM))}</h2><table style="border-collapse:collapse;width:100%;font-family:Arial;margin-top:10px"><tr>${['Name', 'Job', 'Salary', 'Absent', 'Cut', 'Advance', 'Bonus', 'Net', 'Status', 'Paid on', 'Sign'].map(h => `<th ${td}>${h}</th>`).join('')}</tr>
-      ${R.map(r => `<tr><td ${td}>${esc(r.staff.name)}</td><td ${td}>${esc(r.staff.role)}</td><td ${td}>${rs(r.calc.gross)}</td><td ${td}>${dd(r.calc.absent)}</td><td ${td}>${rs(r.calc.deduction)}</td><td ${td}>${rs(r.calc.advance)}</td><td ${td}>${rs(r.calc.bonus)}</td><td ${td}><b>${rs(r.calc.net)}</b></td><td ${td}>${esc(r.status)}</td><td ${td}>${esc(r.pay ? dmy(r.pay.paidOn) : '')}</td><td ${td} style="width:90px"></td></tr>`).join('')}
-      <tr><td ${td} colspan="7"><b>Total</b></td><td ${td}><b>${rs(R.reduce((a, r) => a + r.calc.net, 0))}</b></td><td ${td} colspan="3"></td></tr></table><div style="display:flex;justify-content:space-between;margin-top:30px;font-family:Arial;font-size:12px"><span>Manager ______________</span><span>Chairman ______________</span></div>`); };
+    printHTML('Salary register', `<h2 style="font-family:Arial;margin:0">${esc(D.school || 'SN Mishra Singapore International School')} — Salary register ${esc(ymName(YM))}</h2><table style="border-collapse:collapse;width:100%;font-family:Arial;margin-top:10px"><tr>${['Name', 'Job', 'Salary', 'Working days', 'Present', 'Absent', 'CL', 'Cut', 'Advance', 'Bonus', 'Net', 'Status', 'Paid on', 'Sign'].map(h => `<th ${td}>${h}</th>`).join('')}</tr>
+      ${R.map(r => `<tr><td ${td}>${esc(r.staff.name)}</td><td ${td}>${esc(r.staff.role)}</td><td ${td}>${rs(r.calc.gross)}</td><td ${td}>${r.calc.workDays}</td><td ${td}>${dd(present(r.calc))}</td><td ${td}>${dd(r.calc.absent)}</td><td ${td}>${dd(clUsed(r.calc))}</td><td ${td}>${rs(r.calc.deduction)}</td><td ${td}>${rs(r.calc.advance)}</td><td ${td}>${rs(r.calc.bonus)}</td><td ${td}><b>${rs(r.calc.net)}</b></td><td ${td}>${esc(r.status)}</td><td ${td}>${esc(r.pay ? dmy(r.pay.paidOn) : '')}</td><td ${td} style="width:90px"></td></tr>`).join('')}
+      <tr><td ${td} colspan="10"><b>Total</b></td><td ${td}><b>${rs(R.reduce((a, r) => a + r.calc.net, 0))}</b></td><td ${td} colspan="3"></td></tr></table><div style="display:flex;justify-content:space-between;margin-top:30px;font-family:Arial;font-size:12px"><span>Manager ______________</span><span>Chairman ______________</span></div>`); };
   // Chairman: Manager's name and PIN
   window.mgManager = () => sheet(`<h3>Manager login</h3><p class="mut">Only you (Chairman) can set the Manager's name and reset the Manager's PIN.</p>
       <div class="f"><label>Manager's name</label><input id="mN" maxlength="40" value="${esc(NAMES.manager && NAMES.manager !== 'Manager' ? NAMES.manager : '')}"></div><button class="btn full f" onclick="mgManagerName()">Save name</button>
