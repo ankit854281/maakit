@@ -72,7 +72,7 @@ sa_check(!in_array('xdriver1', sch_rec_get('salAtt', '2026-09-04')['a'], true), 
 // ---- salary uses it ----
 $sheet = sal_sheet('2026-09'); $row = array_values(array_filter($sheet['rows'], fn($r) => $r['staff']['id'] === 'xdriver1'))[0];
 $cc = $row['calc'];
-sa_check($cc['auto']['total'] == 2 && $cc['unpaid'] == 1 && $cc['deduction'] === 1040 && $cc['autoBonus'] === 0 && $cc['workedOnly'] === false, 'driver: 2 absent − 1 paid leave = 1 day cut (26000/25), no teacher bonus: ' . json_encode($cc));
+sa_check($cc['auto']['total'] == 2 && $cc['unpaid'] == 1 && $cc['deduction'] === 867 && $cc['autoBonus'] === 0 && $cc['workedOnly'] === false, 'driver: 2 absent − 1 paid leave = 1 day cut (26000 ÷ 30), no teacher bonus: ' . json_encode($cc));
 $rowK = array_values(array_filter($sheet['rows'], fn($r) => $r['staff']['id'] === 't:K'))[0];
 sa_check($rowK['calc']['auto']['half'] === 1, 'teacher half day reaches salary');
 

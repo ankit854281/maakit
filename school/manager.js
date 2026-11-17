@@ -123,7 +123,7 @@
       ${oth.length ? `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">Other staff (${oth.length})</h3>${oth.map(card).join('')}</div>` : ''}
       ${!list.length ? '<div class="card mut">Nobody in this list.</div>' : ''}
       <div class="acts">${D.can.staff ? '<button class="btn" onclick="mgStaff(\'\')">+ Add staff</button>' : ''}<button class="btn l" onclick="mgRegister()">Print register</button>${ROLE === 'chairman' || D.me === 'Chairman' ? '<button class="btn l" onclick="mgManager()">Manager login</button>' : ''}</div>
-      <p class="mut">${D.workDays} working days in ${esc(ymName(YM))} (Sundays and holidays left out). Absence comes from Staff Attendance and approved leave by itself; staff rules (paid leave, no-permission cut, more-than-4-leave rule, full-attendance bonus) are applied by themselves. Only the Manager and the Chairman can open this app.</p>`);
+      <p class="mut">${D.workDays} working days in ${esc(ymName(YM))} (Sundays and holidays left out). Absence comes from Staff Attendance and approved leave by itself; per day = salary ÷ days in the month, the first absent day(s) are covered by paid leave (CL), then the more-than-4-leave rule and the full-attendance bonus apply by themselves. Only the Manager and the Chairman can open this app.</p>`);
   }
   function frame(body) {
     $('app').innerHTML = `<div class="top"><div><b>${SEC === 'sal' ? 'Salary' : esc(SECS.find(x => x[0] === SEC)[1])}</b><small>${esc(D ? D.me : 'Manager app')}${D && !D.can.edit ? ' · view only' : ''}</small></div>

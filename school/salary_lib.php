@@ -72,15 +72,19 @@ function sal_calc(array $staff, array $adj, array $work, ?array $auto): array {
     $manual = isset($adj['manualAbsent']) && $adj['manualAbsent'] !== null && $adj['manualAbsent'] !== '';
     $absent = $manual ? (float)$adj['manualAbsent'] : (float)($auto['total'] ?? 0);
     $paidLeave = (float)($staff['paidLeave'] ?? 1);
-    // Leave policy: paid leave covers approved leave + half days; absent without permission is always cut.
+    // Owner, 17 Nov 2026 ("9000 ÷ 31, 4 din absent, 1 CL minus, 3 din ki salary katega"): the school's own sheet rule —
+    // per day = monthly ÷ days in the month (31 in October, 30 in November), and the paid leave (CL, default 1) covers the
+    // first absent days whatever the kind. Before this, the rate was ÷ working days and "absent without permission" was
+    // never covered by CL. $unapproved stays only to show how many days were without leave.
     $unapproved = (!$manual && $auto !== null) ? (float)($auto['absent'] ?? 0) : 0.0;
-    $unpaid = max(0.0, $absent - $unapproved - $paidLeave) + $unapproved;
-    $ded = $wd ? (int)round($gross / $wd * min($unpaid, $wd)) : 0;
+    $unpaid = max(0.0, $absent - $paidLeave);
+    $dim = $wd ? (int)date('t', strtotime(substr((string)$work[0], 0, 7) . '-01')) : 0;
+    $ded = $dim ? (int)round($gross / $dim * min($unpaid, $wd)) : 0;
     $teach = $auto !== null && empty($auto['nonTeaching']);     // staff rules (bonus, worked-only) are for teachers
     $autoBonus = ($teach && !$manual && $gross > 0 && $wd > 0 && (float)($auto['total'] ?? 0) == 0.0) ? lp_policy()['bonus'] : 0;
     // Staff rules v3 (owner): total leave above maxLeave (default 4) in the month = salary only for the days actually worked:
     // gross ÷ days of the month × (working days − absence). Sundays, holidays and paid leave are not paid that month.
-    $dim = $wd ? (int)date('t', strtotime(substr((string)$work[0], 0, 7) . '-01')) : 0; $offDays = max(0, $dim - $wd); $offCut = 0;
+    $offDays = max(0, $dim - $wd); $offCut = 0;
     if ($teach && !$manual && $dim > 0 && (float)($auto['total'] ?? 0) > lp_policy()['maxLeave']) {
         $workedPay = (int)round($gross / $dim * max(0.0, $wd - $absent));
         $offCut = max(0, ($gross - $workedPay) - $ded); $ded = $gross - $workedPay; $unpaid = $absent;

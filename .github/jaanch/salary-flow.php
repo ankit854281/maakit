@@ -81,14 +81,14 @@ sl_check($c === 200 && str_starts_with($D, 'x'), 'driver added');
 [$c] = $s('adjust', ['ym' => '2026-09', 'id' => $D, 'manualAbsent' => 2.3], $tok['M']); sl_check($c === 400, 'half days only');
 [, $j] = $s('sheet', null, $tok['M'], $q);
 $k = $row($j, 't:K')['calc']; $d = $row($j, $D)['calc']; $m = $row($j, 't:MA')['calc'];
-sl_check($k['unpaid'] === 2.5 && $k['deduction'] === 2500 && $k['net'] === 25000 - 2500 - 3000 + 500, 'K net 20000: ' . json_encode($k));
-sl_check($d['deduction'] === 720 && $d['net'] === 8280 && $d['manual'] === true, 'driver 9000/25*2 = 720: ' . json_encode($d));
+sl_check($k['unpaid'] === 2.5 && $k['deduction'] === 2083 && $k['net'] === 25000 - 2083 - 3000 + 500, 'K: 3.5 absent − 1 CL = 2.5 days × 25000 ÷ 30 = 2083, net 20417: ' . json_encode($k));
+sl_check($d['deduction'] === 600 && $d['net'] === 8400 && $d['manual'] === true, 'driver 9000 ÷ 30 × 2 = 600: ' . json_encode($d));
 sl_check($m['deduction'] === 0 && $m['autoBonus'] === 300 && $m['net'] === 18300, 'MA no absence = full-attendance bonus ₹300 (leave policy): ' . json_encode($m));
 sl_check($k['unapproved'] == 1 && $k['autoBonus'] === 0, 'K: 1 day absent without leave, no bonus: ' . json_encode($k));
-// leave policy: paid leave covers approved leave + half days only; absent without permission is always cut
+// owner 17 Nov 2026: CL (paid leave) covers the first absent days of any kind; per day = monthly ÷ days in the month
 $wd = sal_workdays('2026-09', []); $st = ['monthly' => 26000, 'paidLeave' => 1];
 $c1 = sal_calc($st, [], $wd, ['absent' => 1, 'half' => 0, 'leave' => 0, 'total' => 1]);
-sl_check($c1['unpaid'] === 1.0 && $c1['deduction'] === 1000 && $c1['autoBonus'] === 0, 'one day without permission is cut even with paid leave left: ' . json_encode($c1));
+sl_check($c1['unpaid'] === 0.0 && $c1['deduction'] === 0 && $c1['autoBonus'] === 0, 'one day without permission is covered by the 1 CL (no bonus): ' . json_encode($c1));
 $c2 = sal_calc($st, [], $wd, ['absent' => 0, 'half' => 0, 'leave' => 1, 'total' => 1]);
 sl_check($c2['unpaid'] === 0.0 && $c2['deduction'] === 0, 'one approved leave = paid leave, no cut');
 $c3 = sal_calc($st, ['manualAbsent' => 1], $wd, ['absent' => 1, 'half' => 0, 'leave' => 0, 'total' => 1]);
@@ -98,11 +98,11 @@ sl_check($c3['unpaid'] === 0.0 && $c3['autoBonus'] === 0, 'office-typed absent d
 [$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:K', 'mode' => 'Gold', 'date' => '2026-10-05'], $tok['M']); sl_check($c === 400, 'pay mode from list');
 [$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:K', 'mode' => 'Bank transfer', 'ref' => 'NEFT123', 'date' => date('Y-m-d', strtotime('+2 days'))], $tok['M']); sl_check($c === 400, 'no future pay date');
 [$c, $j] = $s('pay', ['ym' => '2026-09', 'id' => 't:K', 'mode' => 'Bank transfer', 'ref' => 'NEFT123', 'date' => date('Y-m-d')], $tok['M']);
-sl_check($c === 200 && $j['row']['status'] === 'Paid' && $j['row']['calc']['net'] === 20000, 'K paid');
+sl_check($c === 200 && $j['row']['status'] === 'Paid' && $j['row']['calc']['net'] === 20417, 'K paid');
 [$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:K', 'mode' => 'Cash', 'date' => date('Y-m-d')], $tok['M']); sl_check($c === 400, 'cannot pay twice');
 [$c] = $s('adjust', ['ym' => '2026-09', 'id' => 't:K', 'advance' => 0], $tok['M']); sl_check($c === 400, 'paid month is locked');
 $put('staffAtt', '2026-09-22', ['absent' => ['K']]);
-[, $j] = $s('sheet', null, $tok['M'], $q); sl_check($row($j, 't:K')['calc']['net'] === 20000, 'paid numbers frozen after a later attendance change');
+[, $j] = $s('sheet', null, $tok['M'], $q); sl_check($row($j, 't:K')['calc']['net'] === 20417, 'paid numbers frozen after a later attendance change');
 [$c] = $s('unpay', ['ym' => '2026-09', 'id' => 't:K', 'reason' => 'x'], $tok['CH']); sl_check($c === 403, 'Chairman cannot reopen (view only)');
 [$c] = $s('unpay', ['ym' => '2026-09', 'id' => 't:K', 'reason' => ''], $tok['M']); sl_check($c === 400, 'reopen needs a reason');
 [$c] = $s('unpay', ['ym' => '2026-09', 'id' => 't:K', 'reason' => 'Missed absence on 22nd'], $tok['M']); sl_check($c === 200, 'manager reopens');

@@ -3356,7 +3356,7 @@ function vSalary() {
         <div><label class="lbl">Ref. / cheque no.</label><input id="sa-${id}-ref" class="inp" maxlength="60"></div>
         <div><label class="lbl">Paid on</label><input id="sa-${id}-date" type="date" class="inp" value="${SAL.today}" max="${SAL.today}"></div>
         <button onclick="salPay(${jsq(s.id)},'${id}')" class="btn btn-g self-end"><i class="fa-solid fa-check"></i> Mark paid ${rs(c.net)}</button></div></div>` : ''}</div>`; };
-  return head('Staff Salary', `${ymLong(ym)} · ${SAL.workDays} working days (Sundays and holidays left out). Absences come from Staff Attendance and approved leave. Leave policy: paid leave covers approved leave and half days; absent without approved leave is always cut; zero absence adds the full-attendance bonus.`,
+  return head('Staff Salary', `${ymLong(ym)} · ${SAL.workDays} working days (Sundays and holidays left out). Absences come from Staff Attendance and approved leave. Per day = salary ÷ days in the month; paid leave (CL) covers the first absent day(s), then cut; zero absence adds the full-attendance bonus.`,
       `<select class="inp w-auto" onchange="SAL=null;SALOPEN=null;go('salary',{ym:this.value})">${months.map(m => `<option value="${m}" ${m === ym ? 'selected' : ''}>${ymLong(m)}</option>`).join('')}</select>
        <a href="staffatt.php" target="_blank" class="btn btn-l"><i class="fa-solid fa-calendar-check"></i> Staff attendance</a>       <button onclick="salRegister()" class="btn btn-l"><i class="fa-solid fa-print"></i> Register</button>${SAL.can.staff ? '<button onclick="salStaffEdit(\'\')" class="btn btn-p"><i class="fa-solid fa-plus"></i> Add staff</button>' : ''}`) + `
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -69,7 +69,7 @@ $wd = sal_workdays('2026-09', []); $st = ['monthly' => 30000, 'paidLeave' => 1];
 $c5 = sal_calc($st, [], $wd, ['absent' => 0, 'half' => 0, 'leave' => 5, 'total' => 5]);
 lp_check(count($wd) === 26 && $c5['net'] === 21000 && $c5['workedOnly'] === true, '5 leave: 30000 ÷ 30 × (26 − 5) = 21000: ' . json_encode($c5));
 $c4 = sal_calc($st, [], $wd, ['absent' => 0, 'half' => 0, 'leave' => 4, 'total' => 4]);
-lp_check($c4['workedOnly'] === false && $c4['deduction'] === (int)round(30000 / 26 * 3), '4 leave: normal rule (3 unpaid days)');
+lp_check($c4['workedOnly'] === false && $c4['deduction'] === (int)round(30000 / 30 * 3), '4 leave: normal rule (3 unpaid days × 30000 ÷ 30)');
 
 // ---- logins ----
 $pin = fn($uid, $role, $tid, $p) => $pdo->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,0)')->execute([$uid, $role, $tid, password_hash($p, PASSWORD_DEFAULT)]);
