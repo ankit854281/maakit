@@ -102,7 +102,7 @@
       .msw{overflow:auto;max-height:70vh;border:1px solid #dfe7e2;border-radius:12px}</style>
       <div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start"><div><h3 style="margin:0;color:#0F5132">${esc(ymName(YM))} — Salary sheet</h3>
         <p class="mut" style="margin:2px 0 0">${D.workDays} working days · ${R.length} staff · Net to pay <b style="color:#0F5132">${rs(tot('net'))}</b></p></div></div>
-      <div class="acts" style="margin:10px 0">${'<button class="btn go" onclick="mgSheetPdf()">📄 PDF / Print</button><button class="btn" onclick="mgSheetCsv()">⬇ Excel</button><button class="btn" style="background:#25D366" onclick="mgSheetWa()">WhatsApp</button><button class="btn l" onclick="mgSheetPic()">🖼 Share picture</button>'}</div>
+      <div class="acts" style="margin:10px 0">${'<button class="btn go" onclick="mgSheetPdf()">📄 PDF</button><button class="btn l" onclick="mgSheetPrint()">🖨 Print</button><button class="btn" onclick="mgSheetCsv()">⬇ Excel</button><button class="btn" style="background:#25D366" onclick="mgSheetWa()">WhatsApp</button><button class="btn l" onclick="mgSheetPic()">🖼 Share picture</button>'}</div>
       <div class="msw"><table class="ms"><thead><tr>${COLS.map((h, i) => `<th class="${i === 0 ? 'sr' : i === 1 ? 'nm' : ''}">${h}</th>`).join('')}</tr></thead><tbody>
       ${R.map(line).join('')}
       <tr class="t"><td class="sr"></td><td class="nm">Total (${R.length})</td><td>${rs(tot('gross'))}</td><td colspan="5"></td><td class="ab">−${rs(tot('deduction'))}</td><td></td><td class="np">${rs(tot('net'))}</td></tr></tbody></table></div>
@@ -122,8 +122,57 @@
       <tr><td style="${td};font-weight:bold;text-align:right" colspan="3">Total (${R.length} staff)</td><td style="${td};font-weight:bold">${rs(tot('gross'))}</td><td style="${td}" colspan="6"></td><td style="${td};font-weight:bold">${rs(tot('deduction'))}</td><td style="${td}"></td><td style="${td};font-weight:bold;font-size:13px">${rs(tot('net'))}</td><td style="${td}"></td></tr></table>
       <div style="display:flex;justify-content:space-between;margin-top:34px;font-size:12px"><span>Prepared by (Manager) ______________</span><span>Checked by ______________</span><span>Approved by (Chairman) ______________</span></div></body></html>`;
   }
-  window.mgSheetPdf = () => { const doc = sheetDoc();
-    if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') { SNMSISFiles.printHtml('Salary ' + ymName(YM), doc); return toast('Printer me "Save as PDF" chuniye, phir PDF share kijiye.'); }
+  // The sheet as a picture (canvas) — used for "Share picture" and for the PDF (one or more A4 landscape pages).
+  function sheetCanvas() {
+    const R = sheetRows(), S = 2, W = 1500, rh = 32, top = 112, H = top + (R.length + 2) * rh + 90, c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
+    const x = c.getContext('2d'); x.scale(S, S); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    const cols = [['Sr.', 40, 'c'], ['Name', 250, 'l'], ['Designation', 150, 'l'], ['Salary', 100, 'r'], ['W.D.', 60, 'c'], ['Present', 75, 'c'], ['Absent', 70, 'c'], ['CL', 50, 'c'], ['Cut days', 80, 'c'], ['Per day', 90, 'r'], ['Deduction', 110, 'r'], ['Bonus/Adv.', 110, 'r'], ['Net Payable', 130, 'r'], ['Sign', 145, 'c']];
+    let cx = 20; const X = cols.map(([, w]) => { const v = cx; cx += w; return v; });
+    const put = (t, i, y, bold, col) => { const [, w, al] = cols[i]; x.font = (bold ? 'bold ' : '') + '15px Arial'; x.fillStyle = col || '#111'; x.textAlign = al === 'l' ? 'left' : al === 'r' ? 'right' : 'center'; x.fillText(String(t), al === 'l' ? X[i] + 6 : al === 'r' ? X[i] + w - 8 : X[i] + w / 2, y); };
+    x.textAlign = 'center'; x.fillStyle = '#0F5132'; x.font = 'bold 26px Arial'; x.fillText(SCH() + ', Bhadohi', W / 2, 38); x.fillStyle = '#222'; x.font = '18px Arial'; x.fillText('Staff Salary Sheet — ' + ymName(YM), W / 2, 66);
+    x.font = '13px Arial'; x.fillStyle = '#555'; x.fillText(D.workDays + ' working days · Per day = salary ÷ days in the month · first absent day(s) covered by CL', W / 2, 88);
+    let y = top - 10; x.fillStyle = '#0F5132'; x.fillRect(20, y, cx - 20, rh); cols.forEach(([h], i) => put(h, i, y + 21, true, '#fff')); y += rh;
+    const dim = new Date(+YM.slice(0, 4), +YM.slice(5, 7), 0).getDate();
+    R.forEach((r, n) => { const cc = r.calc, ba = bonAdv(cc); if (n % 2) { x.fillStyle = '#F2F7F3'; x.fillRect(20, y, cx - 20, rh); }
+      [r.regNo || '—', r.staff.name.slice(0, 30), (r.staff.role || '').slice(0, 18), rs(cc.gross), cc.workDays, dd(present(cc)), dd(cc.absent), dd(clUsed(cc)), dd(cc.unpaid), rs(cc.gross / dim), cc.deduction ? rs(cc.deduction) : '—', ba ? (ba > 0 ? '+' : '−') + rs(Math.abs(ba)) : '—', rs(cc.net), r.status === 'Paid' ? 'Paid' : '']
+        .forEach((v, i) => put(v, i, y + 21, i === 12, i === 10 && cc.deduction ? '#b42318' : null));
+      x.strokeStyle = '#d5dfd9'; x.beginPath(); x.moveTo(20, y + rh); x.lineTo(cx, y + rh); x.stroke(); y += rh; });
+    x.fillStyle = '#E3F4EA'; x.fillRect(20, y, cx - 20, rh); put('Total (' + R.length + ' staff)', 1, y + 21, true, '#0F5132'); put(rs(R.reduce((a, r) => a + r.calc.gross, 0)), 3, y + 21, true, '#0F5132');
+    put(rs(R.reduce((a, r) => a + r.calc.deduction, 0)), 10, y + 21, true, '#b42318'); put(rs(R.reduce((a, r) => a + r.calc.net, 0)), 12, y + 21, true, '#0F5132');
+    x.strokeStyle = '#0F5132'; x.strokeRect(20, top - 10, cx - 20, y + rh - (top - 10)); y += rh + 60;
+    x.textAlign = 'left'; x.fillStyle = '#222'; x.font = '14px Arial'; x.fillText('Prepared by (Manager) ________________', 30, y); x.textAlign = 'center'; x.fillText('Checked by ________________', W / 2, y); x.textAlign = 'right'; x.fillText('Approved by (Chairman) ________________', W - 30, y);
+    return c;
+  }
+  // Tiny PDF writer: each A4-landscape page = one JPEG slice of the canvas (no library needed).
+  function canvasPdf(c) {
+    const pw = 842, ph = 595, m = 18, sliceH = Math.floor(c.width * (ph - 2 * m) / (pw - 2 * m)), parts = [];
+    for (let y0 = 0; y0 < c.height; y0 += sliceH) { const h = Math.min(sliceH, c.height - y0), p = document.createElement('canvas'); p.width = c.width; p.height = h; const px = p.getContext('2d'); px.fillStyle = '#fff'; px.fillRect(0, 0, p.width, h); px.drawImage(c, 0, y0, c.width, h, 0, 0, c.width, h);
+      const bin = atob(p.toDataURL('image/jpeg', 0.92).split(',')[1]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); parts.push({ jpg: u, w: p.width, h }); }
+    const enc = t => new TextEncoder().encode(t), chunks = [], off = []; let len = 0; const add = b => { chunks.push(b); len += b.length; };
+    const n = parts.length, kids = parts.map((_, i) => (3 + i * 3) + ' 0 R').join(' ');
+    add(enc('%PDF-1.4\n%\xE2\xE3\n'));
+    const obj = (id, body, stream) => { off[id] = len; add(enc(id + ' 0 obj\n' + body + (stream ? '\nstream\n' : '\nendobj\n'))); if (stream) { add(stream); add(enc('\nendstream\nendobj\n')); } };
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>'); obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+    parts.forEach((p, i) => { const id = 3 + i * 3, sc = (pw - 2 * m) / p.w, dh = p.h * sc, cs = enc(`q ${(pw - 2 * m).toFixed(2)} 0 0 ${dh.toFixed(2)} ${m} ${(ph - m - dh).toFixed(2)} cm /Im0 Do Q`);
+      obj(id, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 ${id + 1} 0 R >> >> /Contents ${id + 2} 0 R >>`);
+      obj(id + 1, `<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpg.length} >>`, p.jpg);
+      obj(id + 2, `<< /Length ${cs.length} >>`, cs); });
+    const total = 3 + n * 3, xref = len; let t = `xref\n0 ${total}\n0000000000 65535 f \n`; for (let i = 1; i < total; i++) t += String(off[i]).padStart(10, '0') + ' 00000 n \n';
+    add(enc(t + `trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`));
+    const out = new Uint8Array(len); let k = 0; chunks.forEach(b => { out.set(b, k); k += b.length; }); return out;
+  }
+  const b64 = u => { let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); };
+  async function giveFile(bytes, name, mime) {
+    if (window.SNMSISFiles && typeof SNMSISFiles.shareFile === 'function') return SNMSISFiles.shareFile(name, b64(bytes), mime);   // Salary app 1.2+
+    const file = new File([bytes], name, { type: mime });
+    try { if (navigator.canShare && navigator.canShare({ files: [file] })) return await navigator.share({ files: [file], title: name }); } catch (e) { if (e && e.name === 'AbortError') return; }
+    if (window.SNMSISFiles) return toast('Purana Salary app hai — naya app install kijiye (Log out ke neeche "Download Salary app"), tab PDF seedha share hoga.');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove(); toast(name + ' downloaded.');
+  }
+  window.mgSheetPdf = async () => { if (!D || !sheetRows().length) return toast('Nothing to put in the PDF.'); toast('PDF ban raha hai…');
+    try { await giveFile(canvasPdf(sheetCanvas()), 'Salary-' + YM + '.pdf', 'application/pdf'); } catch (e) { toast('PDF nahi bana: ' + e.message); } };
+  window.mgSheetPrint = () => { const doc = sheetDoc();
+    if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') return SNMSISFiles.printHtml('Salary ' + ymName(YM), doc);
     const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups to print.'); w.document.write(doc.replace('</body>', '<script>window.onload=()=>window.print()<\/script></body>')); w.document.close(); };
   window.mgSheetCsv = () => { const R = sheetRows(), q = v => '"' + String(v).replace(/"/g, '""') + '"';
     const L = [['Sr.', 'Name', 'Designation', 'Monthly Salary', 'Working Days', 'Present', 'Absent', 'CL', 'Cut Days', 'Deduction', 'Bonus', 'Advance', 'Net Payable', 'Status'].join(',')];
@@ -136,17 +185,9 @@
     return `*${SCH()}*\nStaff salary — ${ymName(YM)} (${D.workDays} working days)\n\n` + R.map(r => `${r.regNo ? r.regNo + '. ' : ''}${r.staff.name}: ${rs(r.calc.net)}${r.calc.absent ? ` (absent ${dd(r.calc.absent)}${r.calc.deduction ? ', cut ' + rs(r.calc.deduction) : ''})` : ''}`).join('\n')
       + `\n\n*Total to pay: ${rs(R.reduce((a, r) => a + r.calc.net, 0))}*`; }
   window.mgSheetWa = () => { const u = 'https://wa.me/?text=' + encodeURIComponent(waText()); const w = window.open(u, '_blank'); if (!w) location.href = u; };
-  window.mgSheetPic = async () => { const R = sheetRows(), W = 1100, rh = 34, H = 120 + (R.length + 2) * rh + 30, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-    const X = [14, 60, 340, 450, 520, 600, 670, 730, 820, 930]; const hd = ['Sr.', 'Name', 'Salary', 'W.D.', 'Present', 'Absent', 'CL', 'Cut ₹', 'Bonus/Adv', 'Net pay'];
-    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.fillStyle = '#0F5132'; x.font = 'bold 24px Arial'; x.fillText(SCH(), 14, 36); x.font = '17px Arial'; x.fillStyle = '#333'; x.fillText('Staff salary — ' + ymName(YM) + ' · ' + D.workDays + ' working days', 14, 64);
-    let y = 84; x.fillStyle = '#0F5132'; x.fillRect(0, y, W, rh); x.fillStyle = '#fff'; x.font = 'bold 15px Arial'; hd.forEach((h, i) => x.fillText(h, X[i], y + 22)); y += rh;
-    R.forEach((r, n) => { const cc = r.calc, ba = bonAdv(cc); if (n % 2) { x.fillStyle = '#F2F7F3'; x.fillRect(0, y, W, rh); } x.font = '15px Arial'; x.fillStyle = '#111';
-      [String(r.regNo || '—'), r.staff.name.slice(0, 30), rs(cc.gross), String(cc.workDays), dd(present(cc)), dd(cc.absent), dd(clUsed(cc)), cc.deduction ? '−' + rs(cc.deduction) : '—', ba ? (ba > 0 ? '+' : '−') + rs(Math.abs(ba)) : '—', rs(cc.net)].forEach((v, i) => { x.font = (i === 9 ? 'bold ' : '') + '15px Arial'; x.fillStyle = i === 7 && cc.deduction ? '#b42318' : '#111'; x.fillText(v, X[i], y + 22); }); y += rh; });
-    x.fillStyle = '#E3F4EA'; x.fillRect(0, y, W, rh); x.fillStyle = '#0F5132'; x.font = 'bold 16px Arial'; x.fillText('Total (' + R.length + ')', X[1], y + 23); x.fillText(rs(R.reduce((a, r) => a + r.calc.gross, 0)), X[2], y + 23); x.fillText(rs(R.reduce((a, r) => a + r.calc.net, 0)), X[9], y + 23);
-    const blob = await new Promise(r => c.toBlob(r, 'image/png')), file = new File([blob], 'Salary-' + YM + '.png', { type: 'image/png' });
-    try { if (navigator.canShare && navigator.canShare({ files: [file] })) return await navigator.share({ files: [file], title: 'Salary ' + ymName(YM) }); } catch (e) { if (e && e.name === 'AbortError') return; }
-    if (window.SNMSISFiles) { toast('App me picture share nahi hoti — PDF bana raha hoon.'); return mgSheetPdf(); }
-    const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); toast('Picture downloaded — WhatsApp me attach kijiye.'); };
+  window.mgSheetPic = async () => { if (!D || !sheetRows().length) return toast('Nothing to share.');
+    const c = sheetCanvas(), bin = atob(c.toDataURL('image/png').split(',')[1]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    try { await giveFile(u, 'Salary-' + YM + '.png', 'image/png'); } catch (e) { toast('Picture nahi bani: ' + e.message); } };
   function segs() { const R = D.rows, paid = R.filter(r => r.status === 'Paid');
     return `<div class="seg">${[['table', '📋 Month sheet'], ['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
   // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
@@ -226,7 +267,7 @@
       ${p.paidOn ? `<p style="font-size:12px">Paid on ${esc(dmy(p.paidOn))} by ${esc(p.mode)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</p>` : ''}<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Manager ______________</span></div></div>`; }
   function printHTML(title, body) { if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') { SNMSISFiles.printHtml(title, `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}</body></html>`); return toast('Printer me "Save as PDF" chuniye, phir PDF share kijiye.'); } const w = window.open('', '_blank'); if (!w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Printing works from a computer or the phone browser: maakit.in/school/manager.php' : 'Allow pop-ups to print.'); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}<script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
   window.mgSlip = id => { const r = row(id); if (r) printHTML('Salary slip', slipHTML(r)); };
-  window.mgRegister = () => mgSheetPdf();   // Print register = the same A4 salary sheet (17 Nov 2026)
+  window.mgRegister = () => mgSheetPrint();   // Print register = the same A4 salary sheet (17 Nov 2026)
   // Chairman: Manager's name and PIN
   window.mgManager = () => sheet(`<h3>Manager login</h3><p class="mut">Only you (Chairman) can set the Manager's name and reset the Manager's PIN.</p>
       <div class="f"><label>Manager's name</label><input id="mN" maxlength="40" value="${esc(NAMES.manager && NAMES.manager !== 'Manager' ? NAMES.manager : '')}"></div><button class="btn full f" onclick="mgManagerName()">Save name</button>
