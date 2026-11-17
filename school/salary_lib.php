@@ -103,6 +103,12 @@ function sal_staff_list(): array {
         $out[$id] = ['id' => $id, 'tid' => (string)$tid, 'name' => (string)($t['name'] ?? $tid), 'role' => (string)($t['role'] ?? 'Teacher'),
                      'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1, 'active' => $s['active'] ?? true, 'teaching' => true, 'until' => (string)($s['until'] ?? ''), 'from' => (string)($s['from'] ?? '')];
     }
+    // Owner, 17 Nov 2026 ("Brijesh, Amisha … oct month ki salary add nahi hai"): a teacher removed from the teacher list
+    // (settings.leftTeachers) with a "worked till" date still gets salary for the months up to it.
+    foreach ((array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []) as $tid => $nm) { $id = 't:' . $tid; $s = $set[$id] ?? [];
+        if (isset($out[$id]) || empty($s['until'])) continue;
+        $out[$id] = ['id' => $id, 'tid' => (string)$tid, 'name' => (string)$nm, 'role' => (string)($s['role'] ?? 'Teacher'), 'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1,
+                     'active' => false, 'teaching' => true, 'until' => (string)$s['until'], 'from' => (string)($s['from'] ?? '')]; }
     foreach ($set as $id => $s) if (str_starts_with($id, 'x')) $out[$id] = ['id' => $id, 'tid' => null, 'name' => (string)($s['name'] ?? ''), 'role' => (string)($s['role'] ?? 'Staff'),
         'monthly' => $s['monthly'] ?? null, 'paidLeave' => $s['paidLeave'] ?? 1, 'active' => $s['active'] ?? true, 'teaching' => false, 'until' => (string)($s['until'] ?? ''), 'from' => (string)($s['from'] ?? '')];
     uasort($out, fn($a, $b) => [!$a['active'], !$a['teaching'], $a['name']] <=> [!$b['active'], !$b['teaching'], $b['name']]);
@@ -119,7 +125,7 @@ function sal_sheet(string $ym, ?string $onlyId = null): array {
         if ($onlyId !== null && $id !== $onlyId) continue;
         $m = $saved[$ym . '|' . $id] ?? [];
         if (($m['status'] ?? '') === 'Paid') { $rows[] = ['staff' => $s, 'calc' => $m['calc'], 'status' => 'Paid', 'pay' => array_intersect_key($m, array_flip(['paidOn', 'mode', 'ref', 'by', 'at']))]; continue; }
-        if (!$s['active'] && !$m) continue;
+        if (!$s['active'] && $s['until'] === '' && !$m) continue;   // left with a "worked till" date: shown up to that month
         if ($s['until'] !== '' && $ym > substr($s['until'], 0, 7) && !$m) continue;   // left the school (staffatt_api.php `until`)
         if ($s['from'] !== '' && $ym < substr($s['from'], 0, 7) && !$m) continue;     // joined later (salStaff `from`, 17 Nov 2026)
         $auto = $s['tid'] !== null ? sal_absent_days($s['tid'], $work, $att, $leaves) : sal_nt_days($id, $nat);
@@ -250,4 +256,36 @@ function sal_seed_joined_nov(string $uid = 'system'): void {
     }
     sch_rec_put('salSeed', 'joined-2026-11', ['at' => sch_now_ms(), 'from2026_11' => $done], $uid);
     if ($done) sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Salary', 'Not in the October 2026 teacher register — working from November 2026: ' . implode(', ', $done));
+}
+
+// Owner, 17 Nov 2026: "4 Brijesh Yadav Sir, 10 Amisha Pandey, 12 Shiva Rai, 17 Akash Tiwari, 18 Deepshikha — oct month ki salary
+// add nahi hai". One time (flag salSeed/oct-2026-staff): every name in the October register is made to appear in October —
+// a teacher who left (settings.leftTeachers) gets "worked till 31 Oct"; a name found nowhere in the ERP gets a staff entry
+// worked till 31 Oct. Then, if the person has no salary yet, the September 2026 sheet salary is filled; and the register's
+// October absences are written for these people (only adding absent days, never removing what the office saved).
+function sal_seed_oct_staff(string $uid = 'system'): void {
+    if (date('Y-m-d') < '2026-11-01' || sch_rec_get('salSeed', 'oct-2026-staff')) return;
+    $list = sal_staff_list(); if (count(sal_reg_order($list)) < 8) return;   // only the real school, never a test database
+    $set = sal_rows('salStaff'); $left = (array)((sch_rec_get('settings', 'main') ?? [])['leftTeachers'] ?? []); $done = [];
+    $cand = []; foreach ($left as $tid => $nm) $cand['t:' . $tid] = ['name' => (string)$nm];
+    $work = sal_workdays('2026-10', sal_rows('cal')); $sheet = []; foreach (SAL_SHEET_2026_09 as [$n, $m]) $sheet[$n] = $m;
+    foreach (SAL_REG_2026_10_ABSENT as $name => $days) {
+        $id = sal_reg_match($name, $list); $new = false;
+        if ($id === null) { $id = sal_reg_match($name, $cand); if ($id !== null) { $d = $set[$id] ?? []; $d['until'] = '2026-10-31'; $d['role'] = $d['role'] ?? 'Teacher'; sch_rec_put('salStaff', $id, $d, $uid); $set[$id] = $d; $new = true; } }
+        if ($id === null) { $id = 'x' . substr(md5('reg2026-10|' . $name), 0, 12);
+            if (!isset($set[$id])) { $set[$id] = ['name' => $name, 'role' => 'Teacher', 'monthly' => null, 'paidLeave' => 1, 'active' => false, 'until' => '2026-10-31']; sch_rec_put('salStaff', $id, $set[$id], $uid); } $new = true; }
+        $s = $list[$id] ?? null; $working = $s && $s['active'] && $s['until'] === '' && !$new;   // normal working teacher: salary only, attendance untouched
+        if ($s && !$s['active'] && $s['until'] === '' && str_starts_with($id, 'x')) { $d = $set[$id] ?? []; $d['until'] = '2026-10-31'; sch_rec_put('salStaff', $id, $d, $uid); $set[$id] = $d; }
+        // salary from the September sheet when none is set
+        $d = $set[$id] ?? []; $msg = $name;
+        if (($d['monthly'] ?? null) === null) { foreach ($sheet as $sn => $m) if (sal_name_same($sn, $name)) { $d['monthly'] = $m; $d['paidLeave'] = $d['paidLeave'] ?? 1; sch_rec_put('salStaff', $id, $d, $uid); $set[$id] = $d; $msg .= " ₹$m"; break; } }
+        if ($working) { if ($msg !== $name) $done[] = $msg . ' (salary filled)'; continue; }
+        // October absences from the register
+        foreach ($days as $i) { $dt = sprintf('2026-10-%02d', $i); if (!in_array($dt, $work, true)) continue;
+            if (str_starts_with($id, 't:')) { $t = substr($id, 2); $sa = sch_rec_get('staffAtt', $dt) ?? []; $abs = (array)($sa['absent'] ?? []); if (in_array($t, $abs, true)) continue; $abs[] = $t; $sa['absent'] = $abs; $sa['from'] = (object)(array)($sa['from'] ?? []); sch_rec_put('staffAtt', $dt, $sa, $uid); }
+            else { $na = sch_rec_get('salAtt', $dt) ?? []; $a = (array)($na['a'] ?? []); if (in_array($id, $a, true)) continue; $a[] = $id; $na['a'] = $a; sch_rec_put('salAtt', $dt, $na, $uid); } }
+        $done[] = $msg . ' (' . count($days) . ' absent)';
+    }
+    sch_rec_put('salSeed', 'oct-2026-staff', ['at' => sch_now_ms(), 'done' => $done], $uid);
+    if ($done) sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Salary', 'October 2026 register staff added for October: ' . implode('; ', $done));
 }
