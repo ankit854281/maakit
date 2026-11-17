@@ -79,14 +79,23 @@
       const iId = H.findIndex(h => /^id$/i.test(h)), iNm = H.findIndex(h => /^name$/i.test(h));
       if (!Object.keys(dayCol).length || (iId < 0 && iNm < 0)) return toast('Use the downloaded format: ID, Name, Role, then 01, 02, 03 … as the first row.');
       const byName = {}; D.staff.forEach(s => byName[s.name.toLowerCase().replace(/\s+/g, ' ').trim()] = s.id);
+      // Owner, 17 Nov 2026: register names ("Devvrat Yadav", "Monika Tiwari") must find ERP names ("Devvrat Sir", "Monika Ma'am").
+      // Same rule as salary_lib.php sal_name_words(): Sir/Ma'am ignored, spelling-tolerant; first word equal and one name's words
+      // inside the other's; used only when exactly one staff matches.
+      const nw = n => [...new Set(String(n).toLowerCase().replace(/\b(ma'?am|madam|sir|mr|mrs|ms|miss|dr)\b\.?/g, ' ').replace(/[^a-z]+/g, ' ').trim().split(' ').filter(Boolean)
+        .map(w => w.replace(/ee/g, 'i').replace(/oo/g, 'u').replace(/w/g, 'v').replace(/h/g, '').replace(/(.)\1+/g, '$1')))];
+      const fuzzy = n => { const a = nw(n); if (!a.length) return '';
+        const m = D.staff.filter(x => { const b = nw(x.name); if (!b.length || a[0] !== b[0]) return false; const [sm, bg] = a.length <= b.length ? [a, b] : [b, a]; return sm.every(w => bg.includes(w)); });
+        return m.length === 1 ? m[0].id : ''; };
+      const closed = new Set();
       const work = new Set(D.days.filter(d => d.kind === 'work' && !d.future).map(d => d.date)); let n = 0; const miss = [];
       rows.slice(1).forEach(r => {
-        let id = iId >= 0 ? r[iId].trim() : ''; if (!D.staff.some(s => s.id === id)) id = byName[(iNm >= 0 ? r[iNm] : '').toLowerCase().replace(/\s+/g, ' ').trim()] || '';
+        let id = iId >= 0 ? r[iId].trim() : ''; if (!D.staff.some(s => s.id === id)) id = byName[(iNm >= 0 ? r[iNm] : '').toLowerCase().replace(/\s+/g, ' ').trim()] || (iNm >= 0 ? fuzzy(r[iNm]) : '');
         if (!id) { if ((r[iNm] || r[iId] || '').trim()) miss.push((r[iNm] || r[iId]).trim()); return; }
-        Object.entries(dayCol).forEach(([i, d]) => { const v = (r[i] || '').trim().toUpperCase().replace('½', 'H'); const sx = D.staff.find(x => x.id === id); if (!work.has(d) || !['P', 'A', 'H'].includes(v) || val(id, d) === 'L' || (sx.until && d > sx.until)) return;
+        Object.entries(dayCol).forEach(([i, d]) => { const v = (r[i] || '').trim().toUpperCase().replace('½', 'H'); const sx = D.staff.find(x => x.id === id); if (['A', 'H'].includes(v) && !work.has(d) && D.days.some(x => x.date === d && !x.future)) closed.add(+d.slice(8)); if (!work.has(d) || !['P', 'A', 'H'].includes(v) || val(id, d) === 'L' || (sx.until && d > sx.until)) return;
           const orig = (D.att[id] && D.att[id][d]) || 'P'; CH[d] = CH[d] || {}; if (v === orig) delete CH[d][id]; else { CH[d][id] = v; n++; } });
       });
-      draw(); toast(`${n} change${n === 1 ? '' : 's'} read from the file — check and press Save.` + (miss.length ? ` Not found: ${miss.slice(0, 3).join(', ')}${miss.length > 3 ? '…' : ''}` : ''));
+      draw(); toast(`${n} change${n === 1 ? '' : 's'} read from the file — check and press Save.` + (miss.length ? ` Not found: ${miss.slice(0, 3).join(', ')}${miss.length > 3 ? '…' : ''}` : '') + (closed.size ? ` Absent on a Sunday / holiday here, not taken: ${[...closed].sort((a, b) => a - b).join(', ')} — open that day first.` : ''));
     }; rd.readAsText(file);
   };
   window.addEventListener('beforeunload', e => { if (D && nChanges()) { e.preventDefault(); e.returnValue = ''; } });
