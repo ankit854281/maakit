@@ -175,3 +175,46 @@ function sal_import_plan(): array {
     }
     return $out;
 }
+
+// ============================================================
+// October 2026 teacher register (owner, 17 Nov 2026: "1 2 3 date ko school me teacher work kiye, aap lock karke rakkhe ho,
+// attendance update nahi ho payega"). The ERP calendar had school days of October as holidays, so staff attendance could
+// not be filled on them. One time (flag salSeed/oct-2026-register): every day the register shows teachers working that is
+// closed in the ERP is opened for staff (salOpen, same as the "staff came" tap), and the register's absentees for ONLY those
+// newly opened days are written (nobody could fill them before). Days already open are never touched — what the office
+// saved stays. Register holidays: Sundays, 10 (blank column), 19–21 (written holiday), 26 and 30 (blank columns).
+// ============================================================
+const SAL_REG_2026_10_OFF = [4, 10, 11, 18, 19, 20, 21, 25, 26, 30];
+const SAL_REG_2026_10_ABSENT = [   // name in the register => days absent
+    'Prabhakar Dubey' => [9], 'Rati Singh' => [27, 28, 29], 'Mamta Shukla' => [29], 'Brijesh Kumar' => [13, 15, 23, 24, 27, 28, 29, 31],
+    'Pawan Bhalla' => [23, 28], 'Atul Pal' => [15, 23, 29, 31], 'Ritu Singh' => [23], 'Priyanka Singh' => [23, 24], 'Monika Tiwari' => [3, 23, 29, 31],
+    'Amisha Pandey' => [1, 2, 3, 9, 15, 16, 17, 22, 23, 24, 27, 28, 29, 31], 'Astha Pandey' => [1, 2, 5, 23], 'Shiva Rai' => [12, 22, 23, 27, 28, 29, 31],
+    'Seema Patel' => [29], 'Shradha Singh' => [16, 17, 23], 'Durgesh Yadav' => [23], 'Devvrat Yadav' => [23], 'Akash Tiwari' => [12, 13, 31],
+    'Dipshika Mishra' => [3, 9, 31], 'Adarsh Dubey' => [23], 'Shikha Pandey' => [23, 27],
+];
+// register name → staff id: first word equal and one name's words inside the other's (Sir/Ma'am ignored); only a single match counts
+function sal_reg_match(string $name, array $list): ?string {
+    $a = sal_name_words($name); if (!$a) return null; $hit = [];
+    foreach ($list as $id => $s) { $b = sal_name_words((string)$s['name']); if (!$b || $a[0] !== $b[0]) continue;
+        [$sm, $bg] = count($a) <= count($b) ? [$a, $b] : [$b, $a]; if (!array_diff($sm, $bg)) $hit[] = $id; }
+    return count($hit) === 1 ? $hit[0] : null;
+}
+function sal_seed_oct_register(string $uid = 'system'): void {
+    if (date('Y-m-d') < '2026-11-01' || sch_rec_get('salSeed', 'oct-2026-register')) return;
+    $work = array_flip(sal_workdays('2026-10', sal_rows('cal'))); $opened = [];
+    for ($i = 1; $i <= 31; $i++) { $d = sprintf('2026-10-%02d', $i);
+        if (in_array($i, SAL_REG_2026_10_OFF, true) || isset($work[$d])) continue;
+        sch_rec_put('salOpen', $d, ['by' => 'October register', 'at' => sch_now_ms(), 'title' => date('w', strtotime($d)) === '0' ? 'Sunday' : 'Holiday'], $uid);
+        $opened[] = $i; }
+    $list = sal_staff_list(); $miss = []; $marked = 0;
+    foreach ($opened as $i) { $d = sprintf('2026-10-%02d', $i);
+        $sa = sch_rec_get('staffAtt', $d) ?? []; $na = sch_rec_get('salAtt', $d) ?? []; $sa0 = $sa; $na0 = $na;
+        foreach (SAL_REG_2026_10_ABSENT as $name => $days) { if (!in_array($i, $days, true)) continue;
+            $id = sal_reg_match($name, $list); if ($id === null) { $miss[$name] = 1; continue; }
+            if (str_starts_with($id, 't:')) { $t = substr($id, 2); $abs = (array)($sa['absent'] ?? []); if (!in_array($t, $abs, true)) { $abs[] = $t; $marked++; } $sa['absent'] = array_values($abs); $sa['from'] = (object)(array)($sa['from'] ?? []); }
+            else { $x = (array)($na['a'] ?? []); if (!in_array($id, $x, true)) { $x[] = $id; $marked++; } $na['a'] = array_values($x); } }
+        if ($sa !== $sa0) sch_rec_put('staffAtt', $d, $sa, $uid);
+        if ($na !== $na0) sch_rec_put('salAtt', $d, $na, $uid); }
+    sch_rec_put('salSeed', 'oct-2026-register', ['at' => sch_now_ms(), 'opened' => $opened, 'absentMarked' => $marked, 'notFound' => array_keys($miss)], $uid);
+    sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Staff Attendance', 'October 2026 register: opened ' . ($opened ? implode(', ', $opened) . ' Oct' : 'no day') . " for staff, $marked absent marked" . ($miss ? '; not found: ' . implode(', ', array_keys($miss)) : ''));
+}

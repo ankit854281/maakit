@@ -40,6 +40,7 @@ case 'sheet': {
     $u = sch_auth(); sal_need($u, ['manager', 'chairman']);
     $ym = (string)($_GET['ym'] ?? date('Y-m'));
     if (!sal_ym_ok($ym)) sch_fail('Choose a month.');
+    sal_seed_oct_register('system');   // October 2026 register: closed school days opened for staff (salary_lib.php)
     $m = $u['role'] === 'manager';
     sch_json(['ok' => true, 'can' => ['staff' => $m, 'unpay' => $m, 'edit' => $m], 'me' => $u['label'], 'modes' => SAL_MODES, 'today' => date('Y-m-d'),
               'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')] + sal_sheet($ym));
