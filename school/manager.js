@@ -81,18 +81,72 @@
         <div class="k y"><span>Paid</span><b>${paid.length} / ${set.length}</b><small>${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid</small></div></div>`;
   }
   // 📋 Month sheet: one line per staff — Working days, Present, Absent, CL, cut, net — and the month total (Chairman opens here).
+  // Owner, 17 Nov 2026: "formatting aur share ya download karne ka option nahi diya, proper dekh bhi nahi raha" —
+  // phone view: name column stays fixed while the numbers scroll; buttons: PDF (print → Save as PDF, works inside the
+  // Android app through SNMSISFiles.printHtml), Excel (CSV through SNMSISFiles.saveCsv / browser download),
+  // WhatsApp (summary text) and Share picture (browser share sheet; inside the app → PDF instead).
+  const SCH = () => D.school || 'SN Mishra Singapore International School';
+  const sheetRows = () => D.rows.filter(r => r.status !== 'Not set');
+  const bonAdv = c => (c.bonus || 0) - (c.advance || 0);
+  const COLS = ['Sr.', 'Name', 'Salary', 'W.D.', 'Present', 'Absent', 'CL', 'Cut days', 'Cut ₹', 'Bonus/Adv.', 'Net pay'];
   function monthTable() {
-    const td = 'style="border:1px solid #dfe7e2;padding:6px 5px;text-align:center;white-space:nowrap"', th = 'style="border:1px solid #dfe7e2;padding:6px 5px;background:#0F5132;color:#fff;font-size:12px"';
-    const R = D.rows, set = R.filter(r => r.status !== 'Not set'), ns = R.filter(r => r.status === 'Not set'), tot = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
-    const line = (r, i) => { const c = r.calc;
-      return `<tr><td ${td}>${r.regNo || '—'}</td><td ${td.replace('center', 'left')}><b>${esc(r.staff.name)}</b><br><small class="mut">${esc(r.staff.role)}</small></td><td ${td}>${rs(c.gross)}</td><td ${td}>${c.workDays}</td><td ${td}>${dd(present(c))}</td><td ${td}>${dd(c.absent)}</td><td ${td}>${dd(clUsed(c))}</td><td ${td}>${dd(c.unpaid)}</td><td ${td}>${c.deduction ? '−' + rs(c.deduction) : '—'}</td><td ${td}>${(c.bonus || 0) - (c.advance || 0) ? ((c.bonus || 0) - (c.advance || 0) > 0 ? '+' : '−') + rs(Math.abs((c.bonus || 0) - (c.advance || 0))) : '—'}</td><td ${td}><b>${rs(c.net)}</b></td><td ${td}>${esc(r.status)}</td></tr>`; };
-    return `<div class="card"><h3 style="margin:0 0 4px;color:#0F5132">${esc(ymName(YM))} — salary sheet</h3><p class="mut" style="margin:0 0 8px">${D.workDays} working days (Sundays and holidays left out). CL = paid leave used this month. Order = Sr. No. of the Teacher Attendance Register; "—" = not in the register.</p>
-      <div style="overflow:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><tr>${['Reg. Sr.', 'Name', 'Salary', 'Working days', 'Present', 'Absent', 'CL', 'Cut days', 'Cut ₹', 'Bonus / advance', 'Net pay', 'Status'].map(h => `<th ${th}>${h}</th>`).join('')}</tr>
-      ${set.map(line).join('')}
-      <tr style="background:#E3F4EA"><td ${td} colspan="2"><b>Total (${set.length})</b></td><td ${td}><b>${rs(tot('gross'))}</b></td><td ${td} colspan="5"></td><td ${td}><b>−${rs(tot('deduction'))}</b></td><td ${td}></td><td ${td}><b style="font-size:15px">${rs(tot('net'))}</b></td><td ${td}></td></tr></table></div>
-      ${ns.length ? `<p style="margin:10px 0 0;color:#8a1c1c"><b>Salary not set (${ns.length}):</b> ${ns.map(r => esc(r.staff.name)).join(', ')} — not in the total. The Manager sets it in "Salary not set".</p>` : ''}
-      <div class="acts"><button class="btn l" onclick="mgRegister()">Print this sheet</button></div></div>`;
+    const R = sheetRows(), ns = D.rows.filter(r => r.status === 'Not set'), tot = k => R.reduce((a, r) => a + (+r.calc[k] || 0), 0);
+    const line = (r, i) => { const c = r.calc, ba = bonAdv(c);
+      return `<tr class="${i % 2 ? 'z' : ''}"><td class="sr">${r.regNo || '—'}</td><td class="nm"><b>${esc(r.staff.name)}</b><small>${esc(r.staff.role)}${r.status === 'Paid' ? ' · <span style="color:#14532d">Paid</span>' : ''}</small></td>
+        <td>${rs(c.gross)}</td><td>${c.workDays}</td><td>${dd(present(c))}</td><td class="${c.absent ? 'ab' : ''}">${dd(c.absent)}</td><td>${dd(clUsed(c))}</td><td>${dd(c.unpaid)}</td>
+        <td class="ab">${c.deduction ? '−' + rs(c.deduction) : '—'}</td><td>${ba ? (ba > 0 ? '+' : '−') + rs(Math.abs(ba)) : '—'}</td><td class="np">${rs(c.net)}</td></tr>`; };
+    return `<style>.ms{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:720px;width:100%}.ms th,.ms td{border-bottom:1px solid #e3ebe6;padding:7px 6px;text-align:center;white-space:nowrap;background:#fff}
+      .ms th{background:#0F5132;color:#fff;font-size:11.5px;position:sticky;top:0;z-index:2}.ms tr.z td{background:#F6FAF7}.ms .sr{position:sticky;left:0;z-index:1;width:34px;color:#5b6b63}
+      .ms .nm{position:sticky;left:34px;z-index:1;text-align:left;min-width:128px;max-width:150px;white-space:normal;border-right:1px solid #cfdcd4}.ms .nm small{display:block;color:#6b7b73;font-size:11px}
+      .ms th.sr,.ms th.nm{z-index:3;background:#0F5132}.ms .ab{color:#b42318}.ms .np{font-weight:700;color:#0F5132;font-size:13.5px}.ms tr.t td{background:#E3F4EA;font-weight:700;border-top:2px solid #0F5132}
+      .msw{overflow:auto;max-height:70vh;border:1px solid #dfe7e2;border-radius:12px}</style>
+      <div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start"><div><h3 style="margin:0;color:#0F5132">${esc(ymName(YM))} — Salary sheet</h3>
+        <p class="mut" style="margin:2px 0 0">${D.workDays} working days · ${R.length} staff · Net to pay <b style="color:#0F5132">${rs(tot('net'))}</b></p></div></div>
+      <div class="acts" style="margin:10px 0">${'<button class="btn go" onclick="mgSheetPdf()">📄 PDF / Print</button><button class="btn" onclick="mgSheetCsv()">⬇ Excel</button><button class="btn" style="background:#25D366" onclick="mgSheetWa()">WhatsApp</button><button class="btn l" onclick="mgSheetPic()">🖼 Share picture</button>'}</div>
+      <div class="msw"><table class="ms"><thead><tr>${COLS.map((h, i) => `<th class="${i === 0 ? 'sr' : i === 1 ? 'nm' : ''}">${h}</th>`).join('')}</tr></thead><tbody>
+      ${R.map(line).join('')}
+      <tr class="t"><td class="sr"></td><td class="nm">Total (${R.length})</td><td>${rs(tot('gross'))}</td><td colspan="5"></td><td class="ab">−${rs(tot('deduction'))}</td><td></td><td class="np">${rs(tot('net'))}</td></tr></tbody></table></div>
+      <p class="mut" style="margin:8px 0 0">Sr. = Teacher Attendance Register Sr. No. ("—" = not in it) · W.D. = working days · CL = paid leave used · ← → scroll the numbers, the name stays.</p>
+      ${ns.length ? `<p style="margin:8px 0 0;color:#8a1c1c"><b>Salary not set (${ns.length}):</b> ${ns.map(r => esc(r.staff.name)).join(', ')} — not in the total.</p>` : ''}</div>`;
   }
+  // A4 landscape payout sheet (same for PDF and print)
+  function sheetDoc() {
+    const R = sheetRows(), td = 'border:1px solid #888;padding:5px 4px;font-size:11px;text-align:center', tot = k => R.reduce((a, r) => a + (+r.calc[k] || 0), 0);
+    const H = ['Sr.', 'Name', 'Designation', 'Monthly Salary', 'Working Days', 'Present', 'Absent', 'CL', 'Cut Days', 'Per Day', 'Deduction', 'Bonus / Advance', 'Net Payable', 'Signature'];
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Salary ${esc(ymName(YM))}</title><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#111;margin:0}table{border-collapse:collapse;width:100%}th{background:#0F5132;color:#fff}tr:nth-child(even) td{background:#f3f7f4}</style></head><body>
+      <div style="text-align:center"><div style="font-size:18px;font-weight:bold">${esc(SCH())}, Bhadohi</div><div style="font-size:14px;margin-top:2px">Staff Salary Sheet — ${esc(ymName(YM))}</div>
+      <div style="font-size:11px;color:#444;margin:3px 0 8px">${D.workDays} working days · Per day = salary ÷ days in the month · first absent day(s) covered by CL</div></div>
+      <table><tr>${H.map(h => `<th style="${td};font-size:10.5px">${h}</th>`).join('')}</tr>
+      ${R.map(r => { const c = r.calc, ba = bonAdv(c), dim = new Date(+YM.slice(0, 4), +YM.slice(5, 7), 0).getDate();
+        return `<tr><td style="${td}">${r.regNo || '—'}</td><td style="${td};text-align:left"><b>${esc(r.staff.name)}</b></td><td style="${td}">${esc(r.staff.role)}</td><td style="${td}">${rs(c.gross)}</td><td style="${td}">${c.workDays}</td><td style="${td}">${dd(present(c))}</td><td style="${td}">${dd(c.absent)}</td><td style="${td}">${dd(clUsed(c))}</td><td style="${td}">${dd(c.unpaid)}</td><td style="${td}">${rs(c.gross / dim)}</td><td style="${td}">${c.deduction ? rs(c.deduction) : '—'}</td><td style="${td}">${ba ? (ba > 0 ? '+' : '−') + rs(Math.abs(ba)) : '—'}</td><td style="${td};font-weight:bold">${rs(c.net)}</td><td style="${td};width:70px">${r.status === 'Paid' ? 'Paid ' + esc(dmy(r.pay && r.pay.paidOn)) : ''}</td></tr>`; }).join('')}
+      <tr><td style="${td};font-weight:bold;text-align:right" colspan="3">Total (${R.length} staff)</td><td style="${td};font-weight:bold">${rs(tot('gross'))}</td><td style="${td}" colspan="6"></td><td style="${td};font-weight:bold">${rs(tot('deduction'))}</td><td style="${td}"></td><td style="${td};font-weight:bold;font-size:13px">${rs(tot('net'))}</td><td style="${td}"></td></tr></table>
+      <div style="display:flex;justify-content:space-between;margin-top:34px;font-size:12px"><span>Prepared by (Manager) ______________</span><span>Checked by ______________</span><span>Approved by (Chairman) ______________</span></div></body></html>`;
+  }
+  window.mgSheetPdf = () => { const doc = sheetDoc();
+    if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') { SNMSISFiles.printHtml('Salary ' + ymName(YM), doc); return toast('Printer me "Save as PDF" chuniye, phir PDF share kijiye.'); }
+    const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups to print.'); w.document.write(doc.replace('</body>', '<script>window.onload=()=>window.print()<\/script></body>')); w.document.close(); };
+  window.mgSheetCsv = () => { const R = sheetRows(), q = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const L = [['Sr.', 'Name', 'Designation', 'Monthly Salary', 'Working Days', 'Present', 'Absent', 'CL', 'Cut Days', 'Deduction', 'Bonus', 'Advance', 'Net Payable', 'Status'].join(',')];
+    R.forEach(r => { const c = r.calc; L.push([r.regNo || '', q(r.staff.name), q(r.staff.role), c.gross, c.workDays, present(c), c.absent, clUsed(c), c.unpaid, c.deduction, c.bonus || 0, c.advance || 0, c.net, r.status].join(',')); });
+    L.push(['', q('Total'), '', R.reduce((a, r) => a + r.calc.gross, 0), '', '', '', '', '', R.reduce((a, r) => a + r.calc.deduction, 0), '', '', R.reduce((a, r) => a + r.calc.net, 0), ''].join(','));
+    const txt = '﻿' + L.join('\r\n'), fn = 'Salary-' + YM + '.csv';
+    if (window.SNMSISFiles && typeof SNMSISFiles.saveCsv === 'function') return SNMSISFiles.saveCsv(fn, btoa(unescape(encodeURIComponent(txt))));
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv' })); a.download = fn; document.body.appendChild(a); a.click(); a.remove(); toast('Excel file downloaded.'); };
+  function waText() { const R = sheetRows();
+    return `*${SCH()}*\nStaff salary — ${ymName(YM)} (${D.workDays} working days)\n\n` + R.map(r => `${r.regNo ? r.regNo + '. ' : ''}${r.staff.name}: ${rs(r.calc.net)}${r.calc.absent ? ` (absent ${dd(r.calc.absent)}${r.calc.deduction ? ', cut ' + rs(r.calc.deduction) : ''})` : ''}`).join('\n')
+      + `\n\n*Total to pay: ${rs(R.reduce((a, r) => a + r.calc.net, 0))}*`; }
+  window.mgSheetWa = () => { const u = 'https://wa.me/?text=' + encodeURIComponent(waText()); const w = window.open(u, '_blank'); if (!w) location.href = u; };
+  window.mgSheetPic = async () => { const R = sheetRows(), W = 1100, rh = 34, H = 120 + (R.length + 2) * rh + 30, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const X = [14, 60, 340, 450, 520, 600, 670, 730, 820, 930]; const hd = ['Sr.', 'Name', 'Salary', 'W.D.', 'Present', 'Absent', 'CL', 'Cut ₹', 'Bonus/Adv', 'Net pay'];
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.fillStyle = '#0F5132'; x.font = 'bold 24px Arial'; x.fillText(SCH(), 14, 36); x.font = '17px Arial'; x.fillStyle = '#333'; x.fillText('Staff salary — ' + ymName(YM) + ' · ' + D.workDays + ' working days', 14, 64);
+    let y = 84; x.fillStyle = '#0F5132'; x.fillRect(0, y, W, rh); x.fillStyle = '#fff'; x.font = 'bold 15px Arial'; hd.forEach((h, i) => x.fillText(h, X[i], y + 22)); y += rh;
+    R.forEach((r, n) => { const cc = r.calc, ba = bonAdv(cc); if (n % 2) { x.fillStyle = '#F2F7F3'; x.fillRect(0, y, W, rh); } x.font = '15px Arial'; x.fillStyle = '#111';
+      [String(r.regNo || '—'), r.staff.name.slice(0, 30), rs(cc.gross), String(cc.workDays), dd(present(cc)), dd(cc.absent), dd(clUsed(cc)), cc.deduction ? '−' + rs(cc.deduction) : '—', ba ? (ba > 0 ? '+' : '−') + rs(Math.abs(ba)) : '—', rs(cc.net)].forEach((v, i) => { x.font = (i === 9 ? 'bold ' : '') + '15px Arial'; x.fillStyle = i === 7 && cc.deduction ? '#b42318' : '#111'; x.fillText(v, X[i], y + 22); }); y += rh; });
+    x.fillStyle = '#E3F4EA'; x.fillRect(0, y, W, rh); x.fillStyle = '#0F5132'; x.font = 'bold 16px Arial'; x.fillText('Total (' + R.length + ')', X[1], y + 23); x.fillText(rs(R.reduce((a, r) => a + r.calc.gross, 0)), X[2], y + 23); x.fillText(rs(R.reduce((a, r) => a + r.calc.net, 0)), X[9], y + 23);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png')), file = new File([blob], 'Salary-' + YM + '.png', { type: 'image/png' });
+    try { if (navigator.canShare && navigator.canShare({ files: [file] })) return await navigator.share({ files: [file], title: 'Salary ' + ymName(YM) }); } catch (e) { if (e && e.name === 'AbortError') return; }
+    if (window.SNMSISFiles) { toast('App me picture share nahi hoti — PDF bana raha hoon.'); return mgSheetPdf(); }
+    const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); toast('Picture downloaded — WhatsApp me attach kijiye.'); };
   function segs() { const R = D.rows, paid = R.filter(r => r.status === 'Paid');
     return `<div class="seg">${[['table', '📋 Month sheet'], ['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
   // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
@@ -170,12 +224,9 @@
       ${rowH('Cut for absence', '− ' + rs(c.deduction))}${c.advance ? rowH('Advance recovered', '− ' + rs(c.advance)) : ''}${c.autoBonus ? rowH('Full attendance bonus', '+ ' + rs(c.autoBonus)) : ''}${c.bonus - (c.autoBonus || 0) ? rowH('Bonus / other', '+ ' + rs(c.bonus - (c.autoBonus || 0))) : ''}
       <tr><td style="padding:8px"><b>Net paid</b></td><td style="padding:8px;text-align:right"><b style="font-size:16px">${rs(c.net)}</b></td></tr></table>
       ${p.paidOn ? `<p style="font-size:12px">Paid on ${esc(dmy(p.paidOn))} by ${esc(p.mode)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</p>` : ''}<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Manager ______________</span></div></div>`; }
-  function printHTML(title, body) { const w = window.open('', '_blank'); if (!w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Printing works from a computer or the phone browser: maakit.in/school/manager.php' : 'Allow pop-ups to print.'); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}<script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
+  function printHTML(title, body) { if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') { SNMSISFiles.printHtml(title, `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}</body></html>`); return toast('Printer me "Save as PDF" chuniye, phir PDF share kijiye.'); } const w = window.open('', '_blank'); if (!w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Printing works from a computer or the phone browser: maakit.in/school/manager.php' : 'Allow pop-ups to print.'); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}<script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
   window.mgSlip = id => { const r = row(id); if (r) printHTML('Salary slip', slipHTML(r)); };
-  window.mgRegister = () => { const R = D.rows.filter(r => r.status !== 'Not set'), td = 'style="border:1px solid #999;padding:5px;font-size:12px"';
-    printHTML('Salary register', `<h2 style="font-family:Arial;margin:0">${esc(D.school || 'SN Mishra Singapore International School')} — Salary register ${esc(ymName(YM))}</h2><table style="border-collapse:collapse;width:100%;font-family:Arial;margin-top:10px"><tr>${['Name', 'Job', 'Salary', 'Working days', 'Present', 'Absent', 'CL', 'Cut', 'Advance', 'Bonus', 'Net', 'Status', 'Paid on', 'Sign'].map(h => `<th ${td}>${h}</th>`).join('')}</tr>
-      ${R.map(r => `<tr><td ${td}>${esc(r.staff.name)}</td><td ${td}>${esc(r.staff.role)}</td><td ${td}>${rs(r.calc.gross)}</td><td ${td}>${r.calc.workDays}</td><td ${td}>${dd(present(r.calc))}</td><td ${td}>${dd(r.calc.absent)}</td><td ${td}>${dd(clUsed(r.calc))}</td><td ${td}>${rs(r.calc.deduction)}</td><td ${td}>${rs(r.calc.advance)}</td><td ${td}>${rs(r.calc.bonus)}</td><td ${td}><b>${rs(r.calc.net)}</b></td><td ${td}>${esc(r.status)}</td><td ${td}>${esc(r.pay ? dmy(r.pay.paidOn) : '')}</td><td ${td} style="width:90px"></td></tr>`).join('')}
-      <tr><td ${td} colspan="10"><b>Total</b></td><td ${td}><b>${rs(R.reduce((a, r) => a + r.calc.net, 0))}</b></td><td ${td} colspan="3"></td></tr></table><div style="display:flex;justify-content:space-between;margin-top:30px;font-family:Arial;font-size:12px"><span>Manager ______________</span><span>Chairman ______________</span></div>`); };
+  window.mgRegister = () => mgSheetPdf();   // Print register = the same A4 salary sheet (17 Nov 2026)
   // Chairman: Manager's name and PIN
   window.mgManager = () => sheet(`<h3>Manager login</h3><p class="mut">Only you (Chairman) can set the Manager's name and reset the Manager's PIN.</p>
       <div class="f"><label>Manager's name</label><input id="mN" maxlength="40" value="${esc(NAMES.manager && NAMES.manager !== 'Manager' ? NAMES.manager : '')}"></div><button class="btn full f" onclick="mgManagerName()">Save name</button>
