@@ -69,6 +69,12 @@ try {
     $sj = array_column((array)($one['subjects'] ?? []), null, 's');
     pc($c === 200 && ($sj['Synthetic English']['full'] ?? 0) >= 2 && ($sj['Synthetic Maths']['full'] ?? -1) === 0 && in_array('PRX', $sj['Synthetic Maths']['teachers'] ?? [], true) && ($one['extra'] ?? 0) >= 1, 'marks status ' . substr(json_encode($one), 0, 300));
     [$c] = prq('status', $F, null, '&ses=2026-27&exam=Term-1'); pc($c === 403, 'parents cannot open marks status');
+    // Class teacher corrects any subject of her own class (owner, 18 Nov 2026) — PRT is class teacher of 1st, Maths is PRX's
+    [$c, $d] = prq('marks', $T, null, '&ses=2026-27&exam=Term-1&cls=1st'); pc($c === 200 && in_array('Synthetic Maths', $d['mySubjects'], true) && in_array('Synthetic English', $d['mySubjects'], true), 'class teacher sees every subject of her class');
+    [$c, $d] = prq('marks', $T2, null, '&ses=2026-27&exam=Term-1&cls=1st'); pc($c === 200 && $d['mySubjects'] === ['Synthetic Maths'], 'subject teacher still sees only own subject');
+    [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Synthetic Maths', 'rows' => ['pr-s1' => ['pt' => '9', 'nb' => '5', 'sea' => '5', 'te' => '70']]]); pc($c === 200, 'class teacher saves another teacher\'s subject');
+    [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Not In Timetable', 'rows' => []]); pc($c === 403, 'class teacher only for subjects of the class');
+    pc((int)$db->query("SELECT COUNT(*) FROM sch_log WHERE x LIKE 'Term-1 marks saved: Class 1st Synthetic Maths%by the class teacher'")->fetchColumn() >= 1, 'class teacher correction logged');
     [$c, , $raw] = prq('load', $P, null, '', 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null);
     pc($c === 200 && $recs !== 'null' && !str_contains($recs, 'prcMarks') && !str_contains($recs, 'Synthetic remark') && !str_contains($recs, 'base64'), 'legacy sync hides progress reports and photos');
     echo "Progress Report: old cards kept exactly (never overwritten), photos by student, old ERP mark limits, teacher scoping, co-scholastic checks and sync privacy passed\n";

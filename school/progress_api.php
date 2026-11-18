@@ -55,7 +55,18 @@ $rows = function (string $k, string $prefix) use ($db): array {
     $st = $db->prepare('SELECT r, d FROM sch_records WHERE k=? AND r LIKE ? AND deleted=0'); $st->execute([$k, prc_like($prefix)]); $o = [];
     foreach ($st as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $o[(string)$row['r']] = $d; } return $o;
 };
-$teachesSubject = function (string $cls, string $subj) use ($role, $tid): bool { return $role === 'principal' || ($role === 'teacher' && sch_teaches($tid, $cls, $subj)); };
+// Marks: the subject teacher, the Principal — and (owner, 18 Nov 2026: "class teachers ko access de do marks sahi karne ka,
+// pura apne class ka") the CLASS TEACHER for every subject of their own class (subjects of that class in the timetable
+// allocation). Who saved last is kept on the record (`by`) and in the log, so the subject teacher can see a correction.
+$teachesSubject = function (string $cls, string $subj) use ($role, $tid): bool {
+    if ($role === 'principal') return true;
+    if ($role !== 'teacher' || $tid === '') return false;
+    if (sch_teaches($tid, $cls, $subj)) return true;
+    $ct = false; foreach ((array)sch_rec_get('classes', 'main') as $c) if (($c['c'] ?? '') === $cls && ($c['ct'] ?? '') === $tid) { $ct = true; break; }
+    if (!$ct) return false;
+    foreach ((array)sch_rec_get('alloc', 'main') as $al) if (($al['c'] ?? '') === $cls && ($al['s'] ?? '') === $subj) return true;
+    return false;
+};
 // Co-scholastic / remark / attendance: only the class teacher set in Classes (ct) or the Principal — owner, 16 Nov 2026.
 // (sch_in_class also lets every subject teacher of the class in, which let any of them overwrite the class teacher's grades.)
 $classTeacher = function (string $cls) use ($role, $tid): bool {
@@ -112,7 +123,7 @@ case 'marks': {
     }
     $subj = prc_txt($in['subject'] ?? '', 40);
     if ($subj === '') throw new InvalidArgumentException('Choose the subject.');
-    if (!$teachesSubject($cls, $subj)) sch_fail('Only the teacher of this subject or the Principal can enter these marks.', 403);
+    if (!$teachesSubject($cls, $subj)) sch_fail('Only the teacher of this subject, the class teacher of this class or the Principal can enter these marks.', 403);
     $students = reg_students(); $clean = [];
     foreach ((array)($in['rows'] ?? []) as $sid => $m) {
         if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls || !empty($students[$sid]['inactive'])) throw new InvalidArgumentException('A student in the list is not in class ' . $cls . '.');
@@ -126,7 +137,8 @@ case 'marks': {
         $clean[$sid] = $r;
     }
     sch_rec_put('prcMarks', "$ses|$exam|$cls|$subj", ['subject' => $subj, 'rows' => $clean, 'by' => $u['label'] ?? $uid, 'at' => sch_now_ms()], $uid);
-    sch_log($u, 'Progress Report', "$exam marks saved: Class $cls $subj (" . count($clean) . ' students)');
+    $asCT = $role === 'teacher' && !sch_teaches($tid, $cls, $subj);
+    sch_log($u, 'Progress Report', "$exam marks saved: Class $cls $subj (" . count($clean) . ' students)' . ($asCT ? ' — by the class teacher' : ''));
     sch_json(['ok' => true]);
 }
 // Marks Status (owner, 16 Nov 2026: "kaise pata chalega kitne class ka marks entry ho gaya hai").
