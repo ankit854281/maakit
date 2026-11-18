@@ -20,6 +20,7 @@ declare(strict_types=1);
 require __DIR__ . '/inc.php';
 require_once __DIR__ . '/homework_lib.php';
 require_once __DIR__ . '/academics_lib.php';
+require_once __DIR__ . '/seed_lib.php';   // one-time owner data changes (sch_seed_*)
 
 $a = (string)($_GET['a'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -189,6 +190,7 @@ case 'logout': {
 case 'load': {
     $u = sch_auth();
     if (in_array($u['role'], SCH_NO_LOAD, true)) sch_fail('Not allowed.', 403);
+    try { sch_seed_ritu_ukg(); } catch (Throwable $e) { error_log('seed ritu-ukg: ' . $e->getMessage()); }
     $days = max(7, min(400, (int)($_GET['days'] ?? 60)));
     $from = date('Y-m-d', time() - $days * 86400);
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE deleted=0 AND (dkey IS NULL OR dkey >= ?)');
@@ -204,6 +206,7 @@ case 'load': {
 // ------------------------------------------------------------
 case 'since': {
     if (in_array(sch_auth()['role'], SCH_NO_LOAD, true)) sch_fail('Not allowed.', 403);
+    try { sch_seed_ritu_ukg(); } catch (Throwable $e) { error_log('seed ritu-ukg: ' . $e->getMessage()); }
     $v = (int)($_GET['v'] ?? 0) - 5000;          // 5 second peeche se — ek saath hue badlaav chhootein nahi
     $l = (int)($_GET['l'] ?? 0);
     $st = $db->prepare('SELECT k, r, d, ver, deleted FROM sch_records WHERE ver > ? ORDER BY ver LIMIT 2000');
