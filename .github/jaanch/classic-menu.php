@@ -14,7 +14,7 @@ $mods = reg_modules(); $tabs = ['dashboard', 'students', 'billing', 'receipts', 
 foreach ($m as [, $label, $t]) {
     if ($t === '') continue;
     [$k, $v] = explode(':', $t);
-    $ok = $k === 'g' ? (in_array($v, ['card', 'final', 'sheet', 'sheetfinal', 'entry', 'extra'], true) && str_contains($js, "if (t[0] === 'g')")) : ($k === 'a' ? (str_contains($app, "['attendance','fa-") && str_contains($old, "$v: '")) : ($k === 'q' ? (str_contains($app, "['feereports','fa-") && str_contains($rep, "\n  $v: {")) : ($k === 'm' ? (str_contains($app, "['stumaster','fa-") && in_array($v, ['add', 'list', 'search'], true)) : ($k === 'r' ? str_contains($app, "['oldreports','fa-") : ($k === 'o' ? isset($mods[$v]) : ($k === 'f' ? in_array($v, $tabs, true) : (bool)preg_match("/\\['" . preg_quote($v, '/') . "','fa-/", $app)))))));
+    $ok = $k === 'g' ? (in_array($v, ['card', 'final', 'sheet', 'sheetfinal', 'entry', 'extra', 'status'], true) && str_contains($js, "if (t[0] === 'g')")) : ($k === 'a' ? (str_contains($app, "['attendance','fa-") && str_contains($old, "$v: '")) : ($k === 'q' ? (str_contains($app, "['feereports','fa-") && str_contains($rep, "\n  $v: {")) : ($k === 'm' ? (str_contains($app, "['stumaster','fa-") && in_array($v, ['add', 'list', 'search'], true)) : ($k === 'r' ? str_contains($app, "['oldreports','fa-") : ($k === 'o' ? isset($mods[$v]) : ($k === 'f' ? in_array($v, $tabs, true) : (bool)preg_match("/\\['" . preg_quote($v, '/') . "', ?'fa-/", $app)))))));
     if (!$ok) $bad[] = "$label → $t";
 }
 if ($bad) throw new RuntimeException('Classic menu points at screens that do not exist: ' . implode('; ', $bad));
