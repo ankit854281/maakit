@@ -104,7 +104,18 @@ function clGo(t, label) {
   if (t[0] === 'a') return go('attendance', { am: v });
   if (t[0] === 'g') { const [tab, exam] = { card: ['card'], final: ['card', 'Final'], sheet: ['sheet'], sheetfinal: ['sheet', 'Final'], entry: ['entry'], extra: ['extra'], status: ['status'] }[v] || ['card']; return go('progress', exam ? { tab, exam } : { tab }); }
 }
-function clGroupToggle(g) { CL_OPEN = CL_OPEN === g ? '' : g; render(); }
+// Owner, 18 Nov 2026: "tag pe click kar raha hu to subhead open ho raha hai but page upar le jaa raha hai" — opening a menu
+// group used to redraw the whole page (render), so the menu and the page jumped to the top and open frames reloaded.
+// Now only the menu list is redrawn; the menu keeps its scroll and the opened group stays in view.
+function clGroupToggle(g) {
+  CL_OPEN = CL_OPEN === g ? '' : g;
+  const box = document.getElementById('cl-menu'), side = document.getElementById('sidebar');
+  if (!box) return render();
+  const st = side ? side.scrollTop : 0, wy = window.scrollY;
+  box.innerHTML = clMenuHtml();
+  if (side) side.scrollTop = st; if (Math.abs(window.scrollY - wy) > 1) window.scrollTo(0, wy);
+  const li = CL_OPEN && box.querySelector('li.active'); if (li && li.scrollIntoView) li.scrollIntoView({ block: 'nearest' });
+}
 function clSearch(v) { CL_Q = v; const box = document.getElementById('cl-menu'); if (box) box.innerHTML = clMenuHtml(); }
 function clMenuHtml() {
   const q = CL_Q.trim().toLowerCase();

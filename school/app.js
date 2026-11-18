@@ -593,7 +593,11 @@ function render() {
   // Old-ERP look for office roles (school/classic.js): same menu, names and colours as the old ERP.
   const classic = typeof classicOn === 'function' && classicOn();
   document.documentElement.classList.toggle('classic', classic);
-  if (classic) { root.innerHTML = classicShell(body, name, roleName) + (PROF && canProfile() ? vProfileWindow() : ''); setNet(netState); return; }
+  if (classic) {   // keep the left menu's own scroll (and the page's) when the screen is redrawn — 18 Nov 2026
+    const sb = document.getElementById('sidebar'), st = sb ? sb.scrollTop : 0, wy = window.scrollY;
+    root.innerHTML = classicShell(body, name, roleName) + (PROF && canProfile() ? vProfileWindow() : ''); setNet(netState);
+    const nb = document.getElementById('sidebar'); if (nb && st) nb.scrollTop = st; if (Math.abs(window.scrollY - wy) > 1) window.scrollTo(0, wy);
+    return; }
   const menu = g => g.items.length === 1
     ? `<button onclick="go('${g.items[0][0]}')" class="mn ${g === cur ? 'on' : ''}"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}</button>`
     : `<div class="dd"><button onclick="ddToggle(this)" class="mn ${g === cur ? 'on' : ''}" aria-haspopup="true"><i class="fa-solid ${g.ic}"></i>${esc(g.name)}<i class="fa-solid fa-chevron-down mn-cv"></i></button>
