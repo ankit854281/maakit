@@ -126,6 +126,32 @@ sl_check(sch_rec_get('salStaff', 't:RT')['monthly'] === 5500 && sch_rec_get('sal
     && sch_rec_get('salStaff', 't:PJ') === null, 'only not-set salaries filled; a set salary is never changed');
 [, $j] = $s('import', [], $tok['M']); sl_check($j['count'] === 0, 'import twice = nothing new');
 sl_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Salary' AND x LIKE 'Salaries filled from the September 2026 salary sheet%'")->fetchColumn() === 1, 'import logged');
+// ---- Part payment, Online + Cash (owner, 18 Nov 2026) ----
+[, $j] = $s('sheet', null, $tok['M'], $q); $sd = $row($j, 't:SD'); $rt = $row($j, 't:RT');
+sl_check($sd['status'] === 'Due' && $sd['balance'] === $sd['calc']['net'] && $sd['paidAmt'] === 0, 'SD due, nothing paid');
+$net = $sd['calc']['net'];
+[$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:SD', 'online' => $net, 'cash' => 1, 'date' => date('Y-m-d')], $tok['M']); sl_check($c === 400, 'more than pending refused');
+[$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:SD', 'online' => 0, 'cash' => 0, 'date' => date('Y-m-d')], $tok['M']); sl_check($c === 400, 'zero amount refused');
+[$c] = $s('pay', ['ym' => '2026-09', 'id' => 't:SD', 'online' => 1000, 'cash' => 500, 'date' => date('Y-m-d')], $tok['CH']); sl_check($c === 403, 'Chairman cannot pay');
+[$c, $j] = $s('pay', ['ym' => '2026-09', 'id' => 't:SD', 'online' => 1000, 'cash' => 500, 'date' => date('Y-m-d'), 'ref' => 'UPI77'], $tok['M']);
+sl_check($c === 200 && $j['row']['status'] === 'Part paid' && $j['row']['paidAmt'] === 1500 && $j['row']['balance'] === $net - 1500 && $j['row']['paidOnline'] === 1000 && $j['row']['paidCash'] === 500 && $j['paid'][0]['pending'] === $net - 1500, 'part paid: ' . json_encode($j['row']['status']));
+[$c] = $s('adjust', ['ym' => '2026-09', 'id' => 't:SD', 'bonus' => 100], $tok['M']); sl_check($c === 200, 'part-paid month can still be adjusted');
+[, $j] = $s('sheet', null, $tok['M'], $q); sl_check($row($j, 't:SD')['balance'] === $net + 100 - 1500, 'balance follows the adjusted net: ' . json_encode([$net, $row($j, 't:SD')['calc'], $row($j, 't:SD')['balance']]));
+[$c, $j] = $s('paymany', ['ym' => '2026-09', 'date' => date('Y-m-d'), 'items' => [['id' => 't:SD', 'online' => 0, 'cash' => $net + 100 - 1500], ['id' => 't:RT', 'online' => 1000, 'cash' => 0]]], $tok['M']);
+sl_check($c === 200 && count($j['paid']) === 2 && $j['paid'][0]['pending'] === 0 && $j['paid'][1]['pending'] === $rt['calc']['net'] - 1000, 'pay many: ' . json_encode($j));
+[, $j] = $s('sheet', null, $tok['M'], $q); $sdr = $row($j, 't:SD'); $rtr = $row($j, 't:RT');
+sl_check($sdr['status'] === 'Paid' && count($sdr['payments']) === 3 && $sdr['paidCash'] === $net + 100 - 1000 && $sdr['pay']['mode'] === 'Online + Cash' && $rtr['status'] === 'Part paid', 'SD fully paid in 3 parts, RT part paid');
+$put('staffAtt', '2026-09-23', ['absent' => ['SD']]);
+[, $j] = $s('sheet', null, $tok['M'], $q); sl_check($row($j, 't:SD')['calc']['net'] === $net + 100, 'fully paid month is frozen');
+[$c] = $s('paymany', ['ym' => '2026-09', 'date' => date('Y-m-d'), 'items' => [['id' => 't:RT', 'online' => 1, 'cash' => 0], ['id' => 't:SD', 'online' => 1, 'cash' => 0]]], $tok['M']);
+sl_check($c === 400, 'one bad line stops the whole batch');
+[, $j] = $s('sheet', null, $tok['M'], $q); sl_check($row($j, 't:RT')['paidAmt'] === 1000, 'nothing from the refused batch was saved');
+[, $j] = $s('summary', null, $tok['CH']); $sep = array_values(array_filter($j['months'], fn($m) => $m['ym'] === '2026-09'))[0] ?? null;
+sl_check($sep === null || $sep['paidAmt'] >= 1000, 'summary counts part payments');
+[$c] = $s('unpay', ['ym' => '2026-09', 'id' => 't:RT', 'reason' => 'Wrong person'], $tok['M']); sl_check($c === 200, 'part paid month can be reopened');
+[, $j] = $s('sheet', null, $tok['M'], $q); sl_check($row($j, 't:RT')['status'] === 'Due' && $row($j, 't:RT')['paidAmt'] === 0, 'reopened part payment cancelled');
+sl_check(count(sch_rec_get('salMonth', '2026-09|t:RT')['reopened']['was']['payments']) === 1, 'cancelled payment kept in the record');
+sl_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE k='Salary' AND x LIKE 'PART PAID %'")->fetchColumn() >= 2, 'part payments logged');
 // Manager PIN: only the Chairman sets / resets it
 [$c] = $api('setpin', ['uid' => 'manager', 'pin' => '1234'], $tok['P']); sl_check($c === 403, 'Principal cannot reset the Manager PIN');
 $pdo->exec("DELETE FROM sch_users WHERE uid='manager'");

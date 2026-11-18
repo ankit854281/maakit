@@ -63,22 +63,23 @@
   // Owner, 17 Nov 2026: "proper working days, present, absent, CL ye sab add kariye, chairman sir ko show kare kitna salary dena hai pure month ka"
   const clUsed = c => Math.max(0, (+c.absent || 0) - (+c.unpaid || 0)), present = c => Math.max(0, (+c.workDays || 0) - (+c.absent || 0));
   function card(r) {
-    const s = r.staff, c = r.calc, st = r.status === 'Not set' ? 'Not' : r.status, can = D.can.edit, id = s.id;
+    const s = r.staff, c = r.calc, st = r.status === 'Not set' ? 'Not' : r.status === 'Part paid' ? 'Part' : r.status, can = D.can.edit, id = s.id, open = r.status === 'Due' || r.status === 'Part paid';
     return `<div class="st"><div class="h"><div><b>${esc(s.name)}<span class="tag ${st}">${r.status === 'Not set' ? 'Salary not set' : esc(r.status)}</span></b><small>${esc(s.role)}${s.teaching ? '' : ' · other staff'}</small></div>
       <div class="net"><small class="mut">Net pay</small><b>${r.status === 'Not set' ? '—' : rs(c.net)}</b></div></div>
       ${r.status === 'Not set' ? '' : `<div class="pills"><span class="pl">Salary ${rs(c.gross)}</span><span class="pl">Working days ${c.workDays}</span><span class="pl g">Present ${dd(present(c))}</span><span class="pl ${c.absent ? 'r' : ''}">Absent ${dd(c.absent)}</span><span class="pl">CL used ${dd(clUsed(c))} / ${dd(c.paidLeave)}</span><span class="pl">${esc(why(c))}</span>
         ${c.deduction ? `<span class="pl r">Cut ${rs(c.deduction)} (${dd(c.unpaid)} day${c.unpaid == 1 ? '' : 's'})</span>` : ''}${c.workedOnly ? '<span class="pl r">More than 4 leave — paid for days worked</span>' : ''}
         ${c.advance ? `<span class="pl r">Advance −${rs(c.advance)}</span>` : ''}${c.autoBonus ? `<span class="pl g">Full attendance +${rs(c.autoBonus)}</span>` : ''}${c.bonus - (c.autoBonus || 0) ? `<span class="pl g">Bonus +${rs(c.bonus - (c.autoBonus || 0))}</span>` : ''}${c.note ? `<span class="pl y">${esc(c.note)}</span>` : ''}</div>`}
-      ${r.pay ? `<p class="mut" style="margin:6px 0 0">Paid ${esc(dmy(r.pay.paidOn))} by ${esc(r.pay.mode)}${r.pay.ref ? ' (' + esc(r.pay.ref) + ')' : ''} · ${esc(r.pay.by || '')}</p>` : ''}
-      <div class="acts">${r.status === 'Paid' ? `<button class="btn l" onclick="mgSlip('${id}')">Salary slip</button>${can ? `<button class="btn l" onclick="mgUnpay('${id}')">Reopen</button>` : ''}` : ''}
-        ${can && r.status === 'Due' ? `<button class="btn go" onclick="mgPay('${id}')">Pay ${rs(c.net)}</button><button class="btn l" onclick="mgAdj('${id}')">Adjust</button>` : ''}
+      ${(r.payments || []).length ? `<div class="pays">${r.payments.map(p => `<span>${esc(dmy(p.date))} · <b>${esc(p.mode)}</b> ${rs(p.amt)}${p.how && p.how !== p.mode ? ' (' + esc(p.how) + ')' : ''}${p.ref ? ' · ' + esc(p.ref) : ''}</span>`).join('')}</div>` : ''}
+      ${r.status === 'Part paid' ? `<p class="bal">Paid ${rs(r.paidAmt)} · <b>Balance ${rs(Math.max(0, r.balance))} stays pending</b></p>` : ''}
+      <div class="acts">${r.status === 'Paid' ? `<button class="btn l" onclick="mgSlip('${id}')">Salary slip</button>` : ''}${can && (r.payments || []).length ? `<button class="btn l" onclick="mgUnpay('${id}')">Reopen</button>` : ''}
+        ${can && open ? `<button class="btn go" onclick="mgPay('${id}')">Pay ${rs(Math.max(0, r.balance))}</button><button class="btn l" onclick="mgAdj('${id}')">Adjust</button>` : ''}
         ${can && r.status !== 'Paid' ? `<button class="btn l" onclick="mgStaff('${id}')">${r.status === 'Not set' ? 'Set salary' : 'Edit salary'}</button>` : ''}</div></div>`;
   }
   function kpis(set, paid, sum) {
     return `<div class="kp"><div class="k"><span>Total salary</span><b>${rs(sum('gross'))}</b><small>${set.length} staff with salary set</small></div>
         <div class="k r"><span>Cut for absence</span><b>${rs(sum('deduction'))}</b><small>advance ${rs(sum('advance'))}</small></div>
         <div class="k g"><span>Net to pay · full month</span><b>${rs(sum('net'))}</b><small>bonus ${rs(sum('bonus'))}</small></div>
-        <div class="k y"><span>Paid</span><b>${paid.length} / ${set.length}</b><small>${rs(paid.reduce((a, r) => a + r.calc.net, 0))} paid</small></div></div>`;
+        <div class="k y"><span>Paid</span><b>${rs(set.reduce((a, r) => a + (r.paidAmt || 0), 0))}</b><small>${paid.length} / ${set.length} full · pending ${rs(set.reduce((a, r) => a + Math.max(0, r.balance || 0), 0))}</small></div></div>`;
   }
   // 📋 Month sheet: one line per staff — Working days, Present, Absent, CL, cut, net — and the month total (Chairman opens here).
   // Owner, 17 Nov 2026: "formatting aur share ya download karne ka option nahi diya, proper dekh bhi nahi raha" —
@@ -92,7 +93,7 @@
   function monthTable() {
     const R = sheetRows(), ns = D.rows.filter(r => r.status === 'Not set'), tot = k => R.reduce((a, r) => a + (+r.calc[k] || 0), 0);
     const line = (r, i) => { const c = r.calc, ba = bonAdv(c);
-      return `<tr class="${i % 2 ? 'z' : ''}"><td class="sr">${r.regNo || '—'}</td><td class="nm"><b>${esc(r.staff.name)}</b><small>${esc(r.staff.role)}${r.status === 'Paid' ? ' · <span style="color:#14532d">Paid</span>' : ''}</small></td>
+      return `<tr class="${i % 2 ? 'z' : ''}"><td class="sr">${r.regNo || '—'}</td><td class="nm"><b>${esc(r.staff.name)}</b><small>${esc(r.staff.role)}${r.status === 'Paid' ? ' · <span style="color:#14532d">Paid</span>' : r.status === 'Part paid' ? ` · <span style="color:#9a6700">Paid ${rs(r.paidAmt)}, ${rs(r.balance)} pending</span>` : ''}</small></td>
         <td>${rs(c.gross)}</td><td>${c.workDays}</td><td>${dd(present(c))}</td><td class="${c.absent ? 'ab' : ''}">${dd(c.absent)}</td><td>${dd(clUsed(c))}</td><td>${dd(c.unpaid)}</td>
         <td class="ab">${c.deduction ? '−' + rs(c.deduction) : '—'}</td><td>${ba ? (ba > 0 ? '+' : '−') + rs(Math.abs(ba)) : '—'}</td><td class="np">${rs(c.net)}</td></tr>`; };
     return `<style>.ms{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:720px;width:100%}.ms th,.ms td{border-bottom:1px solid #e3ebe6;padding:7px 6px;text-align:center;white-space:nowrap;background:#fff}
@@ -175,9 +176,9 @@
     if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') return SNMSISFiles.printHtml('Salary ' + ymName(YM), doc);
     const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups to print.'); w.document.write(doc.replace('</body>', '<script>window.onload=()=>window.print()<\/script></body>')); w.document.close(); };
   window.mgSheetCsv = () => { const R = sheetRows(), q = v => '"' + String(v).replace(/"/g, '""') + '"';
-    const L = [['Sr.', 'Name', 'Designation', 'Monthly Salary', 'Working Days', 'Present', 'Absent', 'CL', 'Cut Days', 'Deduction', 'Bonus', 'Advance', 'Net Payable', 'Status'].join(',')];
-    R.forEach(r => { const c = r.calc; L.push([r.regNo || '', q(r.staff.name), q(r.staff.role), c.gross, c.workDays, present(c), c.absent, clUsed(c), c.unpaid, c.deduction, c.bonus || 0, c.advance || 0, c.net, r.status].join(',')); });
-    L.push(['', q('Total'), '', R.reduce((a, r) => a + r.calc.gross, 0), '', '', '', '', '', R.reduce((a, r) => a + r.calc.deduction, 0), '', '', R.reduce((a, r) => a + r.calc.net, 0), ''].join(','));
+    const L = [['Sr.', 'Name', 'Designation', 'Monthly Salary', 'Working Days', 'Present', 'Absent', 'CL', 'Cut Days', 'Deduction', 'Bonus', 'Advance', 'Net Payable', 'Paid Online', 'Paid Cash', 'Pending', 'Status'].join(',')];
+    R.forEach(r => { const c = r.calc; L.push([r.regNo || '', q(r.staff.name), q(r.staff.role), c.gross, c.workDays, present(c), c.absent, clUsed(c), c.unpaid, c.deduction, c.bonus || 0, c.advance || 0, c.net, r.paidOnline || 0, r.paidCash || 0, Math.max(0, r.balance || 0), r.status].join(',')); });
+    L.push(['', q('Total'), '', R.reduce((a, r) => a + r.calc.gross, 0), '', '', '', '', '', R.reduce((a, r) => a + r.calc.deduction, 0), '', '', R.reduce((a, r) => a + r.calc.net, 0), R.reduce((a, r) => a + (r.paidOnline || 0), 0), R.reduce((a, r) => a + (r.paidCash || 0), 0), R.reduce((a, r) => a + Math.max(0, r.balance || 0), 0), ''].join(','));
     const txt = '﻿' + L.join('\r\n'), fn = 'Salary-' + YM + '.csv';
     if (window.SNMSISFiles && typeof SNMSISFiles.saveCsv === 'function') return SNMSISFiles.saveCsv(fn, btoa(unescape(encodeURIComponent(txt))));
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv' })); a.download = fn; document.body.appendChild(a); a.click(); a.remove(); toast('Excel file downloaded.'); };
@@ -189,7 +190,7 @@
     const c = sheetCanvas(), bin = atob(c.toDataURL('image/png').split(',')[1]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     try { await giveFile(u, 'Salary-' + YM + '.png', 'image/png'); } catch (e) { toast('Picture nahi bani: ' + e.message); } };
   function segs() { const R = D.rows, paid = R.filter(r => r.status === 'Paid');
-    return `<div class="seg">${[['table', '📋 Month sheet'], ['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
+    return `<div class="seg">${[['table', '📋 Month sheet'], ...(D.can.edit ? [['paynow', '💸 Pay salary']] : []), ['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due' || r.status === 'Part paid').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
   // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
   // Fee Receipt = feecollect.php (the one place fees are taken), Cash Book + Tour fee = cashdesk.php — same login (tk=sal).
   const SECS = [['sal', 'Salary'], ['fee', 'Fee Receipt'], ['cash', 'Cash Book'], ['tour', 'Tour fee']];
@@ -209,7 +210,8 @@
     if (VIEW === 'att') return frame(segs() + `<iframe src="staffatt.php?embed=1&tk=sal&ym=${YM}" title="Staff attendance"></iframe><p class="mut">Attendance here drives the salary by itself.</p>`);
     const R = D.rows, set = R.filter(r => r.status !== 'Not set'), paid = R.filter(r => r.status === 'Paid'), sum = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
     if (VIEW === 'table') return frame(kpis(set, paid, sum) + segs() + monthTable());
-    const list = VIEW === 'due' ? R.filter(r => r.status === 'Due') : VIEW === 'paid' ? paid : VIEW === 'notset' ? R.filter(r => r.status === 'Not set') : R;
+    if (VIEW === 'paynow' && D.can.edit) return frame(kpis(set, paid, sum) + segs() + payNow());
+    const list = VIEW === 'due' ? R.filter(r => r.status === 'Due' || r.status === 'Part paid') : VIEW === 'paid' ? paid : VIEW === 'notset' ? R.filter(r => r.status === 'Not set') : R;
     const tch = list.filter(r => r.staff.teaching), oth = list.filter(r => !r.staff.teaching);
     frame(kpis(set, paid, sum) + `
       ${segs()}
@@ -243,12 +245,77 @@
       ${c.autoBonus ? `<p class="mut">Full-attendance bonus ${rs(c.autoBonus)} is added by itself.</p>` : ''}
       <button class="btn go full f" onclick="mgAdjSave('${id}')">Save</button><button class="btn l full f" onclick="mgClose()">Cancel</button>`); };
   window.mgAdjSave = async id => { try { await sal('adjust', { ym: YM, id, manualAbsent: $('aA').value.trim(), advance: $('aV').value.trim(), bonus: $('aB').value.trim(), note: $('aN').value.trim() }); after('Saved.'); } catch (e) { toast(e.message); } };
-  window.mgPay = id => { const r = row(id);
-    sheet(`<h3>Pay ${esc(r.staff.name)}</h3><p style="font-size:22px;margin:4px 0"><b>${rs(r.calc.net)}</b></p><p class="mut">${esc(ymName(YM))} · ${esc(why(r.calc))}</p>
-      <div class="two"><div class="f"><label>Paid by</label><select id="pM">${D.modes.map(m => `<option>${esc(m)}</option>`).join('')}</select></div><div class="f"><label>Paid on</label><input id="pD" type="date" value="${D.today}" max="${D.today}"></div></div>
-      <div class="f"><label>Ref. / cheque / UPI no. (optional)</label><input id="pR" maxlength="60"></div>
-      <button class="btn go full f" onclick="mgPaySave('${id}')">Mark paid</button><button class="btn l full f" onclick="mgClose()">Cancel</button>`); };
-  window.mgPaySave = async id => { try { await sal('pay', { ym: YM, id, mode: $('pM').value, ref: $('pR').value.trim(), date: $('pD').value }); await after('Marked paid.'); mgSlip(id); } catch (e) { toast(e.message); } };
+  // Pay one staff member — Online and Cash boxes (owner, 18 Nov 2026). Tick = the whole pending amount (less what the other box
+  // has); change it to pay less — the rest stays pending on this month. Both ticked = split.
+  window.mgPay = id => { const r = row(id), bal = Math.max(0, r.balance);
+    sheet(`<h3>Pay ${esc(r.staff.name)}</h3><p class="mut" style="margin:0">${esc(ymName(YM))} · net ${rs(r.calc.net)}${r.paidAmt ? ' · already paid ' + rs(r.paidAmt) : ''}</p><p style="font-size:22px;margin:6px 0">Pending <b>${rs(bal)}</b></p>
+      ${['on', 'ca'].map(k => `<div class="pm"><label><input type="checkbox" id="x${k}" onchange="mgOne('${k}',${bal})"> ${k === 'on' ? 'Online' : 'Cash'}</label><input id="a${k}" type="number" min="0" inputmode="numeric" placeholder="₹ amount" oninput="mgOneSum(${bal})"></div>`).join('')}
+      <p id="oneMsg" class="bal" style="margin-top:8px"></p>
+      <div class="two"><div class="f"><label>Paid on</label><input id="pD" type="date" value="${D.today}" max="${D.today}"></div><div class="f"><label>Ref. / UPI no. (optional)</label><input id="pR" maxlength="60"></div></div>
+      <button class="btn go full f" id="oneBtn" onclick="mgPaySave('${id}')">Pay now</button><button class="btn l full f" onclick="mgClose()">Cancel</button>`); mgOneSum(bal); };
+  const amt = id => { const v = $(id) && $(id).value.trim(); return v === '' || v == null ? 0 : +v; };
+  window.mgOne = (k, bal) => { const o = k === 'on' ? 'ca' : 'on';
+    $('a' + k).value = $('x' + k).checked ? Math.max(0, bal - ($('x' + o).checked ? amt('a' + o) : 0)) : ''; mgOneSum(bal); };
+  window.mgOneSum = bal => { const on = amt('aon'), ca = amt('aca'), t = on + ca, m = $('oneMsg'); if (!m) return;
+    if ($('aon').value) $('xon').checked = true; if ($('aca').value) $('xca').checked = true;
+    const bad = t > bal || on < 0 || ca < 0 || on % 1 || ca % 1;
+    m.innerHTML = bad ? '<span style="color:#b42318">Amount is more than pending (or not whole rupees).</span>' : !t ? 'Tick Online or Cash and write the amount.' : `Paying <b>${rs(t)}</b>${on && ca ? ` (Online ${rs(on)} + Cash ${rs(ca)})` : ''} · ${t < bal ? `Balance <b>${rs(bal - t)}</b> stays pending` : 'full salary paid'}`;
+    $('oneBtn').disabled = bad || (!t && bal > 0); };
+  window.mgPaySave = async id => { try { const r = await sal('pay', { ym: YM, id, online: amt('aon'), cash: amt('aca'), ref: $('pR').value.trim(), date: $('pD').value });
+      const p = r.paid[0]; await after(p.pending ? `Paid ${rs(p.online + p.cash)} — ${rs(p.pending)} pending.` : 'Full salary paid.'); if (!p.pending) mgSlip(id); } catch (e) { toast(e.message); } };
+  // 💸 Pay salary — everyone at once (owner's approved design, 18 Nov 2026): one payment date on top; per staff Online / Cash
+  // checkbox + amount; "Full salary Online / Cash" fill everyone; live Online total, Cash total, Total paying now, Pending after this.
+  let PN = {};                                              // id → {on, ca} amounts typed (kept while switching views)
+  const payRows = () => D.rows.filter(r => (r.status === 'Due' || r.status === 'Part paid') && r.balance > 0);
+  function payNow() {
+    const R = payRows();
+    if (!R.length) return `<div class="card">Nothing pending for ${esc(ymName(YM))}. ✓</div>`;
+    return `<div class="card"><h3 style="margin:0 0 6px;color:#0F5132">💸 Pay salary — ${esc(ymName(YM))}</h3>
+      <div class="two"><div class="f" style="margin-top:0"><label>Payment date</label><input id="pnD" type="date" value="${PN._d || D.today}" max="${D.today}" onchange="PNSET('_d',this.value)"></div><div class="f" style="margin-top:0"><label>Ref. (optional, for all)</label><input id="pnR" maxlength="60" value="${esc(PN._r || '')}" oninput="PNSET('_r',this.value)"></div></div>
+      <div class="acts"><button class="btn" onclick="mgPnAll('on')">Full salary Online</button><button class="btn" onclick="mgPnAll('ca')">Full salary Cash</button><button class="btn l" onclick="mgPnAll('')">Clear all</button></div>
+      <p class="mut" style="margin:6px 0 0">Tick Online or Cash — the whole pending amount fills in; change it to pay less, the rest stays pending. Tick both to split.</p></div>
+      ${R.map(r => { const id = r.staff.id, v = PN[id] || {}, bal = r.balance, t = (+v.on || 0) + (+v.ca || 0);
+        return `<div class="st pn" id="pn-${id}"><div class="h"><div><b>${esc(r.staff.name)}${r.status === 'Part paid' ? '<span class="tag Part">Part paid</span>' : ''}</b><small>${esc(r.staff.role)}${r.paidAmt ? ' · paid ' + rs(r.paidAmt) + ' of ' + rs(r.calc.net) : ''}</small></div><div class="net"><small class="mut">Pending</small><b>${rs(bal)}</b></div></div>
+          <div class="two">${['on', 'ca'].map(k => `<div class="pm"><label><input type="checkbox" ${v[k] !== undefined && v[k] !== '' ? 'checked' : ''} onchange="mgPnTick('${id}','${k}',this.checked)"> ${k === 'on' ? 'Online' : 'Cash'}</label><input type="number" min="0" inputmode="numeric" placeholder="₹" value="${v[k] ?? ''}" oninput="mgPnAmt('${id}','${k}',this.value)"></div>`).join('')}</div>
+          <p class="bal" id="pnm-${id}">${pnMsg(bal, t)}</p></div>`; }).join('')}
+      <div class="pnbar" id="pnBar">${pnBar()}</div>`;
+  }
+  const pnMsg = (bal, t) => t > bal ? '<span style="color:#b42318">Amount is more than pending</span>' : !t ? '<span class="mut">Not paying now</span>' : t < bal ? `Balance <b>${rs(bal - t)}</b> stays pending · <span class="tag Part">Partly paid</span>` : '<span style="color:#14532d">Full salary</span>';
+  function pnTotals() { let on = 0, ca = 0, pend = 0, bad = 0, n = 0;
+    payRows().forEach(r => { const v = PN[r.staff.id] || {}, a = +v.on || 0, b = +v.ca || 0; on += a; ca += b; if (a + b > r.balance || a % 1 || b % 1) bad++; if (a + b) n++; pend += Math.max(0, r.balance - a - b); });
+    return { on, ca, pend, bad, n }; }
+  function pnBar() { const t = pnTotals();
+    return `<div class="pnt"><span>Online<b>${rs(t.on)}</b></span><span>Cash<b>${rs(t.ca)}</b></span><span>Pending after this<b>${rs(t.pend)}</b></span><span class="big">Total paying now<b>${rs(t.on + t.ca)}</b></span></div>
+      <button class="btn go full" ${t.bad || !t.n ? 'disabled' : ''} onclick="mgPnPay()">${t.bad ? 'Fix the red amounts first' : t.n ? `Pay now — ${t.n} staff, ${rs(t.on + t.ca)}` : 'Tick Online / Cash to pay'}</button>`; }
+  function pnRefresh(id) { const r = row(id); if (r && $('pnm-' + id)) { const v = PN[id] || {}; $('pnm-' + id).innerHTML = pnMsg(r.balance, (+v.on || 0) + (+v.ca || 0)); } if ($('pnBar')) $('pnBar').innerHTML = pnBar(); }
+  window.PNSET = (k, v) => { PN[k] = v; };
+  window.mgPnTick = (id, k, on) => { const r = row(id), v = PN[id] = PN[id] || {}, o = k === 'on' ? 'ca' : 'on';
+    if (on) v[k] = Math.max(0, r.balance - (+v[o] || 0)); else delete v[k];
+    const box = $('pn-' + id); if (box) box.querySelectorAll('.pm input[type=number]')[k === 'on' ? 0 : 1].value = v[k] ?? ''; pnRefresh(id); };
+  window.mgPnAmt = (id, k, val) => { const v = PN[id] = PN[id] || {}; if (val === '') delete v[k]; else v[k] = +val;
+    const box = $('pn-' + id); if (box) box.querySelectorAll('.pm input[type=checkbox]')[k === 'on' ? 0 : 1].checked = val !== ''; pnRefresh(id); };
+  window.mgPnAll = k => { const d = PN._d, rf = PN._r; PN = { _d: d, _r: rf }; if (k) payRows().forEach(r => { PN[r.staff.id] = { [k]: r.balance }; }); draw(); };
+  window.mgPnPay = async () => { const t = pnTotals(); if (t.bad || !t.n) return;
+    const items = payRows().map(r => ({ id: r.staff.id, online: +(PN[r.staff.id] || {}).on || 0, cash: +(PN[r.staff.id] || {}).ca || 0 })).filter(x => x.online + x.cash > 0);
+    const date = $('pnD').value || D.today;
+    if (!confirm(`Pay ${items.length} staff on ${dmy(date)}?\nOnline ${rs(t.on)} + Cash ${rs(t.ca)} = ${rs(t.on + t.ca)}\nPending after this: ${rs(t.pend)}`)) return;
+    try { const r = await sal('paymany', { ym: YM, date, items, ref: (PN._r || '').trim() }); PN = {}; D = null; await load(); pnDone(r); } catch (e) { toast(e.message); } };
+  let PNLAST = null;
+  function pnDone(r) { PNLAST = r; const P = r.paid, on = P.reduce((a, x) => a + x.online, 0), ca = P.reduce((a, x) => a + x.cash, 0);
+    sheet(`<h3>✅ Salary paid — ${esc(dmy(r.date))}</h3><p class="mut" style="margin:0 0 8px">${esc(ymName(YM))} · ${P.length} staff</p>
+      <div style="max-height:52vh;overflow:auto"><table class="pnr"><tr><th>Name</th><th>Online</th><th>Cash</th><th>Pending</th></tr>${P.map(x => `<tr><td>${esc(x.name)}</td><td>${x.online ? rs(x.online) : '—'}</td><td>${x.cash ? rs(x.cash) : '—'}</td><td style="${x.pending ? 'color:#9a6700;font-weight:bold' : 'color:#14532d'}">${x.pending ? rs(x.pending) : 'Full'}</td></tr>`).join('')}
+      <tr class="t"><td>Total</td><td>${rs(on)}</td><td>${rs(ca)}</td><td>${rs(P.reduce((a, x) => a + x.pending, 0))}</td></tr></table></div>
+      <div class="acts"><button class="btn" onclick="mgPnPrint()">🖨 Print / PDF</button><button class="btn" style="background:#25D366" onclick="mgPnWa()">WhatsApp</button><button class="btn l" onclick="mgClose()">Close</button></div>`); }
+  window.mgPnWa = () => { const r = PNLAST; if (!r) return; const P = r.paid;
+    const t = `*${SCH()}*\nSalary paid on ${dmy(r.date)} — ${ymName(YM)}\n\n` + P.map(x => `${x.name}: ${[x.online ? 'Online ' + rs(x.online) : '', x.cash ? 'Cash ' + rs(x.cash) : ''].filter(Boolean).join(' + ')}${x.pending ? ' · pending ' + rs(x.pending) : ''}`).join('\n')
+      + `\n\n*Online ${rs(P.reduce((a, x) => a + x.online, 0))} + Cash ${rs(P.reduce((a, x) => a + x.cash, 0))} = ${rs(P.reduce((a, x) => a + x.online + x.cash, 0))}*`;
+    const u = 'https://wa.me/?text=' + encodeURIComponent(t); const w = window.open(u, '_blank'); if (!w) location.href = u; };
+  window.mgPnPrint = () => { const r = PNLAST; if (!r) return; const P = r.paid, td = 'border:1px solid #888;padding:6px;font-size:12px';
+    printHTML('Salary paid ' + r.date, `<div style="font-family:Arial,sans-serif"><div style="text-align:center"><b style="font-size:17px">${esc(SCH())}, Bhadohi</b><div>Salary paid on ${esc(dmy(r.date))} — ${esc(ymName(YM))}</div></div>
+      <table style="border-collapse:collapse;width:100%;margin-top:10px"><tr><th style="${td}">Name</th><th style="${td}">Online</th><th style="${td}">Cash</th><th style="${td}">Pending</th><th style="${td}">Signature</th></tr>
+      ${P.map(x => `<tr><td style="${td}">${esc(x.name)}</td><td style="${td};text-align:right">${x.online ? rs(x.online) : '—'}</td><td style="${td};text-align:right">${x.cash ? rs(x.cash) : '—'}</td><td style="${td};text-align:right">${x.pending ? rs(x.pending) : 'Full'}</td><td style="${td};width:110px"></td></tr>`).join('')}
+      <tr><td style="${td}"><b>Total</b></td><td style="${td};text-align:right"><b>${rs(P.reduce((a, x) => a + x.online, 0))}</b></td><td style="${td};text-align:right"><b>${rs(P.reduce((a, x) => a + x.cash, 0))}</b></td><td style="${td};text-align:right"><b>${rs(P.reduce((a, x) => a + x.pending, 0))}</b></td><td style="${td}"></td></tr></table>
+      <div style="display:flex;justify-content:space-between;margin-top:30px;font-size:12px"><span>Manager ______________</span><span>Chairman ______________</span></div></div>`); };
   // September 2026 Excel salaries (salary_api.php importplan / import) — preview first, then only "not set" staff get it.
   window.mgImport = async () => { let P; try { P = await sal('importplan'); } catch (e) { return toast(e.message); }
     const lab = { set: ['Will be filled', '#198754'], same: ['Already same', '#6c757d'], keep: ['Already set — not changed', '#b45309'], notfound: ['Not found in ERP — set by hand', '#dc3545'], many: ['More than one match — set by hand', '#dc3545'] };
@@ -257,14 +324,14 @@
       <div style="max-height:55vh;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">${P.rows.map(r => `<tr style="border-bottom:1px solid #e5e7eb"><td style="padding:6px 4px">${esc(r.sheet)}${r.erpName ? `<br><small class="mut">ERP: ${esc(r.erpName)}</small>` : ''}</td><td style="padding:6px 4px;text-align:right"><b>${rs(r.monthly)}</b>${r.action === 'keep' ? `<br><small class="mut">now ${rs(r.current)}</small>` : ''}</td><td style="padding:6px 4px;color:${lab[r.action][1]};font-size:12px">${lab[r.action][0]}</td></tr>`).join('')}</table></div>
       ${P.can && n ? `<button class="btn go full f" onclick="mgImportSave()">Fill ${n} salar${n === 1 ? 'y' : 'ies'}</button>` : `<p class="mut">${P.can ? 'Nothing to fill.' : 'Only the Manager can fill salaries.'}</p>`}<button class="btn l full f" onclick="mgClose()">Close</button>`); };
   window.mgImportSave = async () => { try { const r = await sal('import', {}); after(r.count + ' salaries filled. Check the names marked red by hand.'); } catch (e) { toast(e.message); } };
-  window.mgUnpay = async id => { const reason = prompt('Why reopen this paid salary? (kept in the record)'); if (!reason) return;
+  window.mgUnpay = async id => { const reason = prompt('Reopen = the payments of this month are cancelled and it is worked out again. Why? (kept in the record)'); if (!reason) return;
     try { await sal('unpay', { ym: YM, id, reason }); after('Reopened.'); } catch (e) { toast(e.message); } };
   function slipHTML(r) { const c = r.calc, p = r.pay || {}, rowH = (a, b) => `<tr><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb">${a}</td><td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right">${b}</td></tr>`;
     return `<div style="border:1.5px solid #0F5132;border-radius:14px;padding:16px;margin-bottom:16px;page-break-inside:avoid;font-family:Arial,sans-serif"><div style="display:flex;justify-content:space-between"><b style="font-size:16px">${esc(D.school || 'SN Mishra Singapore International School')}, Bhadohi</b><span>SALARY SLIP — ${esc(ymName(YM))}</span></div>
       <p style="margin:8px 0"><b>${esc(r.staff.name)}</b> · ${esc(r.staff.role)}</p><table style="width:100%;border-collapse:collapse;font-size:13px">${rowH('Monthly salary', rs(c.gross))}${rowH('Working days', c.workDays)}${rowH('Present days', dd(present(c)))}${rowH('Absent days', dd(c.absent))}${rowH('CL (paid leave) used', dd(clUsed(c)) + ' of ' + dd(c.paidLeave))}
       ${rowH('Cut for absence', '− ' + rs(c.deduction))}${c.advance ? rowH('Advance recovered', '− ' + rs(c.advance)) : ''}${c.autoBonus ? rowH('Full attendance bonus', '+ ' + rs(c.autoBonus)) : ''}${c.bonus - (c.autoBonus || 0) ? rowH('Bonus / other', '+ ' + rs(c.bonus - (c.autoBonus || 0))) : ''}
       <tr><td style="padding:8px"><b>Net paid</b></td><td style="padding:8px;text-align:right"><b style="font-size:16px">${rs(c.net)}</b></td></tr></table>
-      ${p.paidOn ? `<p style="font-size:12px">Paid on ${esc(dmy(p.paidOn))} by ${esc(p.mode)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</p>` : ''}<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Manager ______________</span></div></div>`; }
+      ${(r.payments || []).length ? `<p style="font-size:12px">${r.payments.map(x => `Paid ${esc(dmy(x.date))} · ${esc(x.mode)} ${rs(x.amt)}${x.ref ? ' (' + esc(x.ref) + ')' : ''}`).join('<br>')}</p>` : p.paidOn ? `<p style="font-size:12px">Paid on ${esc(dmy(p.paidOn))} by ${esc(p.mode)}${p.ref ? ' (' + esc(p.ref) + ')' : ''}</p>` : ''}<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:12px"><span>Received by ______________</span><span>Manager ______________</span></div></div>`; }
   function printHTML(title, body) { if (window.SNMSISFiles && typeof SNMSISFiles.printHtml === 'function') { SNMSISFiles.printHtml(title, `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}</body></html>`); return toast('Printer me "Save as PDF" chuniye, phir PDF share kijiye.'); } const w = window.open('', '_blank'); if (!w) return toast(/; wv\)/.test(navigator.userAgent) ? 'Printing works from a computer or the phone browser: maakit.in/school/manager.php' : 'Allow pop-ups to print.'); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="margin:20px">${body}<script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); }
   window.mgSlip = id => { const r = row(id); if (r) printHTML('Salary slip', slipHTML(r)); };
   window.mgRegister = () => mgSheetPrint();   // Print register = the same A4 salary sheet (17 Nov 2026)

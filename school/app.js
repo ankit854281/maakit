@@ -3331,7 +3331,7 @@ function vSalary() {
   const rows = SAL.rows, set = rows.filter(r => r.status !== 'Not set'), paid = rows.filter(r => r.status === 'Paid');
   const tot = k => set.reduce((a, r) => a + (+r.calc[k] || 0), 0);
   const months = []; for (let i = -3; i <= 1; i++) months.push(ymAdd(todayISO().slice(0, 7), i));
-  const statusPill = r => r.status === 'Paid' ? '<span class="pill bg-emerald-100 text-emerald-800">Paid</span>' : r.status === 'Due' ? '<span class="pill bg-amber-100 text-amber-800">Due</span>' : '<span class="pill bg-slate-100 text-slate-600">Salary not set</span>';
+  const statusPill = r => r.status === 'Paid' ? '<span class="pill bg-emerald-100 text-emerald-800">Paid</span>' : r.status === 'Due' ? '<span class="pill bg-amber-100 text-amber-800">Due</span>' : r.status === 'Part paid' ? `<span class="pill bg-amber-100 text-amber-800">Part paid ${rs(r.paidAmt)} · ${rs(r.balance)} pending</span>` : '<span class="pill bg-slate-100 text-slate-600">Salary not set</span>';
   const card = r => { const s = r.staff, c = r.calc, open = SALOPEN === s.id, id = s.id.replace(/[^a-z0-9]/gi, '');
     const why = c.manual ? 'entered by office' : c.auto && c.auto.nonTeaching ? `from Staff Attendance${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}` : c.auto ? `${dd(c.auto.absent)} absent without leave${c.auto.half ? ', ' + c.auto.half + ' half day' : ''}${c.auto.leave ? ', ' + c.auto.leave + ' leave' : ''}` : 'enter days';
     return `<div class="card ${s.active ? '' : 'opacity-60'}"><div class="flex flex-wrap items-start justify-between gap-2">

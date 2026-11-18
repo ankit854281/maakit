@@ -124,7 +124,9 @@ function sal_sheet(string $ym, ?string $onlyId = null): array {
     foreach (sal_staff_list() as $id => $s) {
         if ($onlyId !== null && $id !== $onlyId) continue;
         $m = $saved[$ym . '|' . $id] ?? [];
-        if (($m['status'] ?? '') === 'Paid') { $rows[] = ['staff' => $s, 'calc' => $m['calc'], 'status' => 'Paid', 'pay' => array_intersect_key($m, array_flip(['paidOn', 'mode', 'ref', 'by', 'at']))]; continue; }
+        $pays = sal_payments($m); $pd = array_sum(array_column($pays, 'amt'));
+        if (($m['status'] ?? '') === 'Paid') { $rows[] = ['staff' => $s, 'calc' => $m['calc'], 'status' => 'Paid', 'pay' => array_intersect_key($m, array_flip(['paidOn', 'mode', 'ref', 'by', 'at'])),
+            'payments' => $pays, 'paidAmt' => $pd, 'balance' => 0] + sal_pay_split($pays); continue; }
         if (!$s['active'] && $s['until'] === '' && !$m) continue;   // left with a "worked till" date: shown up to that month
         if ($s['until'] !== '' && $ym > substr($s['until'], 0, 7) && !$m) continue;   // left the school (staffatt_api.php `until`)
         if ($s['from'] !== '' && $ym < substr($s['from'], 0, 7) && !$m) continue;     // joined later (salStaff `from`, 17 Nov 2026)
@@ -132,7 +134,9 @@ function sal_sheet(string $ym, ?string $onlyId = null): array {
         // Owner, 17 Nov 2026 ("4 se zyada chhutti wala niyam rakhna hai"): a former teacher kept as a staff entry (role Teacher,
         // e.g. Amisha Pandey) follows the teacher rules too — more-than-4-leave and full-attendance bonus.
         if ($auto !== null && $s['tid'] === null && preg_match('/teacher/i', (string)$s['role'])) unset($auto['nonTeaching']);
-        $rows[] = ['staff' => $s, 'calc' => sal_calc($s, $m, $work, $auto), 'status' => $s['monthly'] === null ? 'Not set' : 'Due', 'pay' => null];
+        $c = sal_calc($s, $m, $work, $auto);
+        $rows[] = ['staff' => $s, 'calc' => $c, 'status' => $s['monthly'] === null ? 'Not set' : ($pd > 0 ? 'Part paid' : 'Due'), 'pay' => null,
+                   'payments' => $pays, 'paidAmt' => $pd, 'balance' => $s['monthly'] === null ? 0 : (int)$c['net'] - $pd] + sal_pay_split($pays);
     }
     // Owner, 17 Nov 2026: "register Sr. No ke according" — staff in the teacher register's order first (regNo 1…20), others after
     $ord = sal_reg_order(sal_staff_list()); $pos = 0;
@@ -291,4 +295,27 @@ function sal_seed_oct_staff(string $uid = 'system'): void {
     }
     sch_rec_put('salSeed', 'oct-2026-staff', ['at' => sch_now_ms(), 'done' => $done], $uid);
     if ($done) sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Salary', 'October 2026 register staff added for October: ' . implode('; ', $done));
+}
+
+// ============================================================
+// Part payment, Online + Cash (owner, 18 Nov 2026 — design he approved: "har staff ke saamne Online aur Cash ke checkbox,
+// amount ka box; jitna amount daalenge utna pay hoga, baaki salary pending rahegi"). salMonth.payments =
+// [{amt, mode: 'Online'|'Cash', how, date, ref, by, at}]. While something is still pending the month is 'Part paid' and the
+// salary keeps following attendance (balance = net − paid). When the paid total reaches the net, the month becomes 'Paid' and
+// its numbers freeze exactly as before. A month paid the old way (one `mode`, no list) reads as one payment of the net.
+// ============================================================
+function sal_pay_mode(string $how): string { return $how === 'Cash' ? 'Cash' : 'Online'; }   // Bank transfer / UPI / Cheque = Online
+
+function sal_payments(array $m): array {
+    if (isset($m['payments']) && is_array($m['payments'])) return array_values(array_filter($m['payments'], 'is_array'));
+    if (($m['status'] ?? '') === 'Paid') {
+        $how = (string)($m['mode'] ?? '');
+        return [['amt' => (int)($m['calc']['net'] ?? 0), 'mode' => sal_pay_mode($how), 'how' => $how, 'date' => (string)($m['paidOn'] ?? ''), 'ref' => (string)($m['ref'] ?? ''), 'by' => (string)($m['by'] ?? ''), 'at' => $m['at'] ?? null]];
+    }
+    return [];
+}
+
+function sal_pay_split(array $pays): array {
+    $o = 0; $c = 0; foreach ($pays as $p) { if (($p['mode'] ?? '') === 'Cash') $c += (int)$p['amt']; else $o += (int)$p['amt']; }
+    return ['paidOnline' => $o, 'paidCash' => $c];
 }

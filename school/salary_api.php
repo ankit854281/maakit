@@ -6,7 +6,9 @@
 //   POST ?a=staff  {id?, name, role, monthly, paidLeave, active}   sirf Manager
 //        (teacher ke liye id = "t:<tid>"; naya non-teaching staff: id khaali)
 //   POST ?a=adjust {ym, id, advance, bonus, manualAbsent, note}    sirf Manager
-//   POST ?a=pay    {ym, id, mode, ref, date}                       sirf Manager
+//   POST ?a=pay    {ym, id, date, online, cash, ref}               sirf Manager — Online + Cash, poora ya thoda (baaki pending)
+//                  (purana {mode} bhi chalta hai = poora baaki ek mode me)
+//   POST ?a=paymany {ym, date, items:[{id, online, cash}], ref}    sirf Manager — sab staff ek saath
 //   POST ?a=unpay  {ym, id, reason}                                sirf Manager
 //   GET  ?a=mine                  Teacher — sirf apni paid salary slips
 //   GET  ?a=summary               Manager / Chairman — 6 mahine ka jod
@@ -57,7 +59,8 @@ case 'summary': {                      // Admin dashboard: last 6 months, totals
         $paid = array_filter($rows, fn($r) => $r['status'] === 'Paid');
         $out[] = ['ym' => $ym, 'staff' => count($rows), 'gross' => array_sum(array_map(fn($r) => (int)$r['calc']['gross'], $rows)),
                   'net' => array_sum(array_map(fn($r) => (int)$r['calc']['net'], $rows)), 'cut' => array_sum(array_map(fn($r) => (int)$r['calc']['deduction'], $rows)),
-                  'paid' => count($paid), 'paidAmt' => array_sum(array_map(fn($r) => (int)$r['calc']['net'], $paid))];
+                  'paid' => count($paid), 'paidAmt' => array_sum(array_map(fn($r) => (int)($r['paidAmt'] ?? 0), $rows)),   // part payments count too
+                  'pending' => array_sum(array_map(fn($r) => max(0, (int)($r['balance'] ?? 0)), $rows))];
     }
     sch_json(['ok' => true, 'months' => $out]);
 }
@@ -130,35 +133,67 @@ case 'adjust': {
         $d = ['advance' => sal_rupees($in['advance'] ?? 0, 0, 500000, 'Advance'), 'bonus' => sal_rupees($in['bonus'] ?? 0, 0, 500000, 'Bonus'),
               'manualAbsent' => ($ma === '' || $ma === null) ? null : (float)$ma, 'note' => sal_text($in['note'] ?? '', 200), 'status' => 'Draft', 'by' => $u['label'], 'at' => sch_now_ms()];
     } catch (InvalidArgumentException $e) { sch_fail($e->getMessage()); }
+    if (sal_payments($old)) { $d['payments'] = sal_payments($old); $d['status'] = 'Part paid'; }   // keep part payments already made
+    if (isset($old['reopened'])) $d['reopened'] = $old['reopened'];
     sch_rec_put('salMonth', $key, $d, sch_uid_of($u));
     sch_log($u, 'Salary', "{$s['name']} $ym: advance ₹{$d['advance']}, bonus ₹{$d['bonus']}" . ($d['manualAbsent'] !== null ? ", absent days set to {$d['manualAbsent']}" : ''));
     sch_json(['ok' => true, 'row' => sal_sheet($ym, $id)['rows'][0] ?? null]);
 }
 
-case 'pay': {
+case 'pay':                            // one staff member: {ym, id, date, online, cash, ref} — or the old {mode} = whole balance in that mode
+case 'paymany': {                      // many at once: {ym, date, items:[{id, online, cash}], ref}
     if ($method !== 'POST') sch_fail('POST only', 405);
     $u = sch_auth(); sal_need($u, ['manager']);
-    $ym = sal_ym_in($in); $id = (string)($in['id'] ?? ''); $s = sal_find($id);
-    $mode = (string)($in['mode'] ?? ''); if (!in_array($mode, SAL_MODES, true)) sch_fail('Choose how the salary was paid.');
-    $ref = sal_text($in['ref'] ?? '', 60);
+    $ym = sal_ym_in($in); $ref = sal_text($in['ref'] ?? '', 60);
     $date = (string)($in['date'] ?? date('Y-m-d'));
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d') || $date < date('Y-m-d', strtotime('-200 days'))) sch_fail('Choose a valid payment date.');
-    $key = $ym . '|' . $id;
+    $items = $a === 'pay' ? [['id' => (string)($in['id'] ?? ''), 'online' => $in['online'] ?? null, 'cash' => $in['cash'] ?? null, 'mode' => $in['mode'] ?? null]] : (is_array($in['items'] ?? null) ? $in['items'] : []);
+    if (!$items || count($items) > 200) sch_fail('Choose who is being paid.');
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
-    $old = sch_rec_get('salMonth', $key) ?? [];
-    if (($old['status'] ?? '') === 'Paid') { $db->rollBack(); sch_fail('This salary is already marked paid.'); }
-    $row = sal_sheet($ym, $id)['rows'][0] ?? null;
-    if (!$row || $s['monthly'] === null) { $db->rollBack(); sch_fail('Set the monthly salary first.'); }
-    $c = $row['calc'];
-    if ($c['net'] < 0) { $db->rollBack(); sch_fail('Net salary is below zero. Check the advance.'); }
-    $d = $old + ['advance' => 0, 'bonus' => 0, 'manualAbsent' => null, 'note' => ''];
-    $d = array_merge($d, ['status' => 'Paid', 'calc' => $c, 'paidOn' => $date, 'mode' => $mode, 'ref' => $ref, 'by' => $u['label'], 'at' => sch_now_ms(),
-                          'name' => $s['name'], 'role' => $s['role']]);
-    sch_rec_put('salMonth', $key, $d, sch_uid_of($u));
-    sch_log($u, 'Salary', "PAID {$s['name']} for $ym: ₹" . number_format($c['net']) . " by $mode" . ($ref !== '' ? " ($ref)" : '') . " (gross ₹" . number_format($c['gross']) . ", cut ₹{$c['deduction']}, advance ₹{$c['advance']}, bonus ₹{$c['bonus']})");
+    $out = []; $logs = [];
+    foreach ($items as $it) {
+        $id = (string)($it['id'] ?? ''); $all = sal_staff_list();
+        if (!isset($all[$id])) { $db->rollBack(); sch_fail('Staff member not found.'); }
+        $s = $all[$id]; $key = $ym . '|' . $id;
+        $old = sch_rec_get('salMonth', $key) ?? [];
+        if (($old['status'] ?? '') === 'Paid') { $db->rollBack(); sch_fail("{$s['name']}: this salary is already fully paid."); }
+        $row = sal_sheet($ym, $id)['rows'][0] ?? null;
+        if (!$row || $s['monthly'] === null) { $db->rollBack(); sch_fail("{$s['name']}: set the monthly salary first."); }
+        $c = $row['calc'];
+        if ($c['net'] < 0) { $db->rollBack(); sch_fail("{$s['name']}: net salary is below zero. Check the advance."); }
+        $pays = sal_payments($old); $paid = array_sum(array_column($pays, 'amt')); $bal = (int)$c['net'] - $paid;
+        $legacy = isset($it['mode']) && $it['mode'] !== null && $it['mode'] !== '';
+        try {
+            if ($legacy) {
+                if (!in_array((string)$it['mode'], SAL_MODES, true)) throw new InvalidArgumentException('Choose how the salary was paid.');
+                $add = $bal > 0 ? [[sal_pay_mode((string)$it['mode']), $bal, (string)$it['mode']]] : [];
+            } else {
+                $on = sal_rupees($it['online'] ?? 0, 0, 500000, 'Online amount'); $ca = sal_rupees($it['cash'] ?? 0, 0, 500000, 'Cash amount');
+                if ($on + $ca === 0 && $bal > 0) throw new InvalidArgumentException("{$s['name']}: write the amount (Online or Cash).");
+                if ($on + $ca > max(0, $bal)) throw new InvalidArgumentException("{$s['name']}: amount is more than pending (₹" . number_format(max(0, $bal)) . ').');
+                $add = array_values(array_filter([['Online', $on, 'Online'], ['Cash', $ca, 'Cash']], fn($x) => $x[1] > 0));
+            }
+        } catch (InvalidArgumentException $e) { $db->rollBack(); sch_fail($e->getMessage()); }
+        foreach ($add as [$mode, $amt, $how]) $pays[] = ['amt' => $amt, 'mode' => $mode, 'how' => $how, 'date' => $date, 'ref' => $ref, 'by' => $u['label'], 'at' => sch_now_ms()];
+        $paid = array_sum(array_column($pays, 'amt')); $left = (int)$c['net'] - $paid;
+        $d = $old + ['advance' => 0, 'bonus' => 0, 'manualAbsent' => null, 'note' => ''];
+        $d['payments'] = $pays; $d['name'] = $s['name']; $d['role'] = $s['role'];
+        $now = implode(' + ', array_map(fn($x) => $x[0] . ' ₹' . number_format($x[1]), $add)) ?: 'nothing new';
+        if ($left <= 0) {                // fully paid → freeze the numbers, exactly as before
+            $modes = array_values(array_unique(array_column($pays, 'mode')));
+            $d = array_merge($d, ['status' => 'Paid', 'calc' => $c, 'paidOn' => $date, 'mode' => $legacy && count($pays) === 1 ? (string)$it['mode'] : implode(' + ', $modes), 'ref' => $ref, 'by' => $u['label'], 'at' => sch_now_ms()]);
+            $logs[] = "PAID {$s['name']} for $ym: $now — full ₹" . number_format($c['net']) . " paid (gross ₹" . number_format($c['gross']) . ", cut ₹{$c['deduction']}, advance ₹{$c['advance']}, bonus ₹{$c['bonus']})";
+        } else {
+            $d['status'] = 'Part paid';
+            $logs[] = "PART PAID {$s['name']} for $ym: $now — paid ₹" . number_format($paid) . " of ₹" . number_format($c['net']) . ", ₹" . number_format($left) . ' pending';
+        }
+        sch_rec_put('salMonth', $key, $d, sch_uid_of($u));
+        $out[] = ['id' => $id, 'name' => $s['name'], 'online' => array_sum(array_map(fn($x) => $x[0] === 'Online' ? $x[1] : 0, $add)), 'cash' => array_sum(array_map(fn($x) => $x[0] === 'Cash' ? $x[1] : 0, $add)), 'pending' => max(0, $left), 'net' => (int)$c['net']];
+    }
+    foreach ($logs as $l) sch_log($u, 'Salary', $l . ($ref !== '' ? " (ref $ref)" : '') . " on $date");
     $db->commit();
-    sch_json(['ok' => true, 'row' => sal_sheet($ym, $id)['rows'][0]]);
+    sch_json(['ok' => true, 'date' => $date, 'paid' => $out, 'row' => $a === 'pay' ? (sal_sheet($ym, $items[0]['id'])['rows'][0] ?? null) : null]);
 }
 
 case 'unpay': {
@@ -167,11 +202,14 @@ case 'unpay': {
     $ym = sal_ym_in($in); $id = (string)($in['id'] ?? ''); $key = $ym . '|' . $id;
     $reason = sal_text($in['reason'] ?? '', 200); if ($reason === '') sch_fail('Write why it is being reopened.');
     $old = sch_rec_get('salMonth', $key);
-    if (!$old || ($old['status'] ?? '') !== 'Paid') sch_fail('This salary is not marked paid.');
+    if (!$old || !sal_payments($old)) sch_fail('Nothing has been paid for this month.');
+    // Reopen = the payments of this month are cancelled (kept under `reopened.was` with the reason) and the month is worked out again.
+    $was = array_intersect_key($old, array_flip(['calc', 'paidOn', 'mode', 'ref', 'by', 'status'])); $was['payments'] = sal_payments($old);
     $d = ['advance' => $old['advance'] ?? 0, 'bonus' => $old['bonus'] ?? 0, 'manualAbsent' => $old['manualAbsent'] ?? null, 'note' => $old['note'] ?? '',
-          'status' => 'Draft', 'reopened' => ['reason' => $reason, 'by' => $u['label'], 'at' => sch_now_ms(), 'was' => array_intersect_key($old, array_flip(['calc', 'paidOn', 'mode', 'ref', 'by']))]];
+          'status' => 'Draft', 'reopened' => ['reason' => $reason, 'by' => $u['label'], 'at' => sch_now_ms(), 'was' => $was]];
     sch_rec_put('salMonth', $key, $d, sch_uid_of($u));
-    sch_log($u, 'Salary', 'REOPENED ' . ($old['name'] ?? $id) . " $ym (was ₹" . number_format((int)($old['calc']['net'] ?? 0)) . " paid on " . ($old['paidOn'] ?? '') . "): $reason");
+    $pdSum = array_sum(array_column($was['payments'], 'amt'));
+    sch_log($u, 'Salary', 'REOPENED ' . ($old['name'] ?? $id) . " $ym (was ₹" . number_format(($old['status'] ?? '') === 'Paid' ? (int)($old['calc']['net'] ?? 0) : $pdSum) . (($old['status'] ?? '') === 'Paid' ? " paid on " . ($old['paidOn'] ?? '') : ' part paid') . "): $reason");
     sch_json(['ok' => true]);
 }
 
