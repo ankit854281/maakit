@@ -41,7 +41,7 @@ switch ($a) {
 
 case 'sheet': {
     $u = sch_auth(); sal_need($u, ['manager', 'chairman']);
-    try { sch_seed_ritu_ukg(); } catch (Throwable $e) { error_log('seed ritu-ukg: ' . $e->getMessage()); }
+    sch_seeds();
     $ym = (string)($_GET['ym'] ?? date('Y-m'));
     if (!sal_ym_ok($ym)) sch_fail('Choose a month.');
     sal_seed_oct_register('system');   // October 2026 register: closed school days opened for staff (salary_lib.php)

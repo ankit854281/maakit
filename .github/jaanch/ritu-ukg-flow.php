@@ -42,4 +42,17 @@ sch_seed_ritu_ukg(); ru_check(array_column(sch_rec_get('classes', 'main'), 'ct',
 $pdo->exec("DELETE FROM sch_records");
 $put('settings', 'main', []); $put('teacher', 'RI', ['name' => "Ritu Ma'am", 'role' => 'PG']); $put('classes', 'main', [['c' => 'UKG', 'ct' => 'RA']]);
 sch_seed_ritu_ukg(); ru_check(array_column(sch_rec_get('classes', 'main'), 'ct', 'c')['UKG'] === 'RI' && sch_rec_get('teacher', 'RI')['role'] === 'PG', 'active Ritu used as she is');
-echo "Ritu UKG flow: OK\n";
+
+// 5) Ankit Tripathi Sir → new teacher, Class 8th class teacher, salary entry from November (not set), old 8th teacher stays
+$pdo->exec("DELETE FROM sch_records");
+$put('settings', 'main', ['school' => 'T']); $put('teacher', 'AT', ['name' => 'Atul Pal', 'role' => 'Maths']); $put('teacher', 'T1', ['name' => 'X Y']);
+$put('classes', 'main', [['c' => '8th', 'ct' => 'AT'], ['c' => '9th', 'ct' => 'T1']]);
+sch_seeds();
+$c = array_column(sch_rec_get('classes', 'main'), 'ct', 'c');
+ru_check($c['8th'] === 'T2' && $c['9th'] === 'T1' && sch_rec_get('teacher', 'T2')['name'] === 'Ankit Tripathi Sir' && sch_rec_get('teacher', 'AT') !== null, '8th → Ankit Tripathi Sir: ' . json_encode($c));
+$ss = sch_rec_get('salStaff', 't:T2'); ru_check($ss['monthly'] === null && $ss['from'] === '2026-11-01' && $ss['active'] === true, 'salary from November, not set');
+require_once __DIR__ . '/../../school/salary_lib.php';
+ru_check(!array_filter(sal_sheet('2026-10')['rows'], fn($r) => $r['staff']['id'] === 't:T2') && array_filter(sal_sheet('2026-11')['rows'], fn($r) => $r['staff']['id'] === 't:T2'), 'not in October salary, in November');
+ru_check((int)$pdo->query("SELECT COUNT(*) FROM sch_log WHERE x LIKE '%8th class teacher: Atul Pal → Ankit Tripathi Sir%'")->fetchColumn() === 1, 'Ankit logged');
+sch_seeds(); ru_check(count(sal_rows('teacher')) === 3, 'not added twice');
+echo "Ritu UKG + Ankit 8th flow: OK\n";
