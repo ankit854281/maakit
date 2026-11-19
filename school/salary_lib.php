@@ -265,6 +265,28 @@ function sal_seed_joined_nov(string $uid = 'system'): void {
     if ($done) sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Salary', 'Not in the October 2026 teacher register — working from November 2026: ' . implode(', ', $done));
 }
 
+// Owner, 19 Nov 2026: "Kartikey Sir 23 Oct absent the, add please" (after "oct month me Kartikey Sir ki salary kyu nahi bana").
+// Kartikey Sir taught in October but was not matched in the October register, so sal_seed_joined_nov set his
+// "Working from" to November. One time (flag salSeed/kartikey-oct-2026): that seeded from = 2026-11-01 is cleared (a
+// different "Working from" set by the Manager is left alone) and 23 Oct is added as absent — only if 23 Oct is a working
+// day and his October salary is not already fully Paid. Nothing else of his is touched.
+function sal_seed_kartikey_oct(string $uid = 'system'): void {
+    if (date('Y-m-d') < '2026-11-01' || sch_rec_get('salSeed', 'kartikey-oct-2026')) return;
+    $list = sal_staff_list(); if (count(sal_reg_order($list)) < 10) return;   // only the real school, never a test database
+    $id = sal_reg_match('Kartikey', $list); if ($id === null) return;
+    $set = sal_rows('salStaff'); $d = $set[$id] ?? []; $did = [];
+    if (($d['from'] ?? '') === '2026-11-01') { $d['from'] = ''; sch_rec_put('salStaff', $id, $d, $uid); $did[] = 'working from October'; }
+    $dt = '2026-10-23'; $paid = ((sch_rec_get('salMonth', '2026-10|' . $id) ?? [])['status'] ?? '') === 'Paid';
+    if (!$paid && in_array($dt, sal_workdays('2026-10', sal_rows('cal')), true)) {
+        if (str_starts_with($id, 't:')) { $t = substr($id, 2); $sa = sch_rec_get('staffAtt', $dt) ?? []; $abs = (array)($sa['absent'] ?? []);
+            if (!in_array($t, $abs, true)) { $abs[] = $t; $sa['absent'] = array_values($abs); $sa['from'] = (object)(array)($sa['from'] ?? []); sch_rec_put('staffAtt', $dt, $sa, $uid); $did[] = '23 Oct absent'; } }
+        else { $na = sch_rec_get('salAtt', $dt) ?? []; $a = (array)($na['a'] ?? []);
+            if (!in_array($id, $a, true)) { $a[] = $id; $na['a'] = array_values($a); sch_rec_put('salAtt', $dt, $na, $uid); $did[] = '23 Oct absent'; } }
+    }
+    sch_rec_put('salSeed', 'kartikey-oct-2026', ['at' => sch_now_ms(), 'id' => $id, 'done' => $did, 'octPaid' => $paid], $uid);
+    sch_log(['uid' => $uid, 'role' => 'system', 'label' => 'System'], 'Salary', (string)$list[$id]['name'] . ' October 2026: ' . ($did ? implode(', ', $did) : 'nothing changed') . ($paid ? ' (October already paid — attendance not changed)' : ''));
+}
+
 // Owner, 17 Nov 2026: "4 Brijesh Yadav Sir, 10 Amisha Pandey, 12 Shiva Rai, 17 Akash Tiwari, 18 Deepshikha — oct month ki salary
 // add nahi hai". One time (flag salSeed/oct-2026-staff): every name in the October register is made to appear in October —
 // a teacher who left (settings.leftTeachers) gets "worked till 31 Oct"; a name found nowhere in the ERP gets a staff entry

@@ -82,7 +82,7 @@ switch ($a) {
 case 'month': {
     $ym = sa_ym((string)($_GET['ym'] ?? date('Y-m')));
     if ($role !== 'chairman') sa_seed_former('system');
-    if ($role !== 'chairman' || $ym === '2026-10') { sal_seed_oct_register('system'); sal_seed_joined_nov('system'); sal_seed_oct_staff('system'); }   // October register days the ERP had closed (salary_lib.php)
+    if ($role !== 'chairman' || $ym === '2026-10') { sal_seed_oct_register('system'); sal_seed_joined_nov('system'); sal_seed_kartikey_oct('system'); sal_seed_oct_staff('system'); }   // October register days the ERP had closed (salary_lib.php)
     $cal = sal_rows('cal'); $work = array_flip(sal_workdays($ym, $cal)); $n = (int)date('t', strtotime($ym . '-01')); $today = date('Y-m-d');
     $hol = []; foreach ($cal as $e) if (($e['type'] ?? '') === 'Holiday' && !empty($e['date'])) { $d = (string)$e['date']; $to = (string)(($e['to'] ?? '') ?: $d); for ($i = 0; $d <= $to && $i < 400; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $hol[$d] = (string)($e['title'] ?? 'Holiday'); }
     $days = []; $open = sal_rows('salOpen', $ym . '-');

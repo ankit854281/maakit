@@ -46,6 +46,7 @@ case 'sheet': {
     if (!sal_ym_ok($ym)) sch_fail('Choose a month.');
     sal_seed_oct_register('system');   // October 2026 register: closed school days opened for staff (salary_lib.php)
     sal_seed_joined_nov('system');     // teachers not in the October register: working from November (salary_lib.php)
+    sal_seed_kartikey_oct('system');   // Kartikey Sir: in October, 23 Oct absent (salary_lib.php)
     sal_seed_oct_staff('system');      // October register people who left / were missing: in October with Sep salary (salary_lib.php)
     $m = $u['role'] === 'manager';
     sch_json(['ok' => true, 'can' => ['staff' => $m, 'unpay' => $m, 'edit' => $m], 'me' => $u['label'], 'modes' => SAL_MODES, 'today' => date('Y-m-d'),
