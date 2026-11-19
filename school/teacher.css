@@ -668,3 +668,22 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .co-svp{cursor:pointer}.co-svp b{display:block;font-size:13.5px}.co-svp small{color:var(--muted);font-size:11.5px}
 .co-tb{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.5px}.co-tb th,.co-tb td{border-bottom:1px solid #EEF1F6;padding:6px 4px;text-align:left}.co-tb td.ok{color:#16A34A;font-weight:700}.co-tb td.bad{color:#DC2626;font-weight:700}
 .co-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.co-kpi>div{background:#F8FAFC;border-radius:10px;padding:8px;text-align:center}.co-kpi b{display:block;font-size:18px;color:#4F46E5}.co-kpi small{font-size:10.5px;color:var(--muted)}
+
+/* Smart Classroom (teacher-smart.js, 19 Nov 2026) — one open bell, auto topic, homework to check */
+.sd-top small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.sd-ring{--p:0;flex:0 0 52px;width:52px;height:52px;border-radius:50%;background:conic-gradient(var(--a) calc(var(--p)*1%),var(--tint) 0);display:flex;align-items:center;justify-content:center}
+.sd-ring span{width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--a)}
+.sd-line{cursor:pointer;padding:10px 12px}.sd-line.todo{border-left:4px solid #E59A1C}.sd-line.ok{opacity:.85}
+.sd-line .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.sd-open{border:2px solid var(--soft)}
+.sd-note{display:block;font-size:11px;color:var(--a);margin:4px 0 0}
+.chips.sd-tops{margin:4px 0}.chips.sd-tops .chip{min-height:30px;padding:4px 10px;font-size:11.5px;background:#fff;border-color:var(--soft);color:var(--a)}
+.sd-rep{display:block;width:100%;text-align:left;margin:2px 0 6px;font-size:11.5px;white-space:normal}
+.sd-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}.sd-meta label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.sd-meta .inp.mini{width:70px}.sd-meta .inp.mini.date{width:150px}.sd-meta .chips{margin:0}
+.chip.warn{background:#FFF8EC;border-color:#F6D9A8;color:#9a5b00}.chip.on{outline:0}
+.sd-todo h3{margin-bottom:8px}.sd-todo.ok b{color:var(--ok)}
+.sd-ti{display:block;width:100%;text-align:left;border:1px solid #E6EBF3;background:#fff;border-radius:12px;padding:8px 10px;margin-top:6px;font:inherit;cursor:pointer}
+.sd-ti b{display:block;font-size:13px}.sd-ti span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.sd-ti.on{border-color:var(--a);background:var(--tint)}
+.sd-badge{font-style:normal;background:#E59A1C;color:#fff;border-radius:99px;padding:0 6px;font-size:11px;margin-left:4px}

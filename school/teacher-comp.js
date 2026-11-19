@@ -283,8 +283,11 @@ async function festStoryOpen(i) {
 
 // ---------------------------------------------------------------- "Naya kya hai" helper (owner, 6 Nov 2026: a friendly bot that tells everyone about new changes)
 // When you ship something teachers must learn, bump NEWS_VER and rewrite NEWS — every user sees it once, and again from ☰.
-const NEWS_VER = '2026-11-19-calls';
-const NEWS = { title: 'Parent Calls — PTM, function, absent bachche', steps: [
+const NEWS_VER = '2026-11-19-smart';
+const NEWS = { title: 'Smart Classroom + Parent Calls', steps: [
+  ['📒', 'Diary ab chhota', 'Classroom mein ek time par ek hi bell khulti hai. Save karte hi agli bell apne aap khulti hai. Upar dikhta hai: aaj kitni bell likhi, aur pichhle din jo khaali hain.'],
+  ['✨', 'Topic apne aap', 'Topic khud bhar jaata hai — is hafte ka lesson plan, kal ka topic, ya agla chapter. Galat ho to badal dijiye. Homework time apne aap 15 minute.'],
+  ['📚', 'Homework check', 'Check work kholte hi “Homework to check” list: jo homework aaj (ya pichhle 7 din mein) check hona tha. “All homework done” dabaiye, phir jisne nahi kiya uske NAAM par tap (dobara tap = Half).'],
   ['📞', 'Kahan hai?', 'Connect → “📞 Calls” (ya Today par “Parent calls today” card) → “Open Parent Calls”.'],
   ['👨‍👩‍👧', 'PTM / function ki calling', 'Principal Sir (ya class teacher apni class ke liye) “＋ New calling list” banate hain — PTM, function, exam, holiday. Har parent ka naam list mein aa jaata hai, upar “What to say” likha hota hai.'],
   ['📅', 'Absent bachchon ki calling', '“Attendance calls” mein app khud dikhata hai: 3+ din lagatar absent, 2 din, 1 din, aur jinki is mahine 75% se kam haziri hai. Leave (L) wale bachche absent nahi gine jaate.'],

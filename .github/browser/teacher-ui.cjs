@@ -330,6 +330,7 @@ const path = require('node:path');
     await page.evaluate(() => { SHEET = null; setLang('en'); go('diary', { date: todayISO(), bell: 0 }); });
     await page.locator('#b0-t').waitFor();
     assert.match(await page.locator('.attl').first().innerText(), /present|not marked/, 'class attendance shown small on the diary card');
+    await page.locator('.fld:has(#b0-h) .chips.phr button').filter({ hasText: 'Q no.' }).click();   // Smart Classroom (19 Nov 2026): Q no. opens on tap
     const qn = page.locator('#b0-h').locator('xpath=..').locator('.qn button');
     for (const n of ['6', '7', '8', '9']) await qn.filter({ hasText: new RegExp('^' + n + '$') }).click();
     assert.match(await page.locator('#b0-h').inputValue(), /Q\. 6–9/);
@@ -709,6 +710,19 @@ const path = require('node:path');
       go('coord'); const home = document.querySelectorAll('.co-task').length; go('coord', { m: 'cc' }); const kids = document.querySelectorAll('.co-kid').length, pts = document.querySelectorAll('.co-kid .co-pts button').length;
       go('coord', { m: 'rd' }); const rd = document.querySelectorAll('.co-rd').length; go('coord', { m: 'sv' }); const sv = document.querySelectorAll('.co-svp').length; ME = keep; go('pdash'); return { home, kids, pts, rd, sv }; });
     if (r.home !== 5 || r.kids < 3 || r.pts !== r.kids * 6 || !r.rd || r.sv < 20) throw new Error('coordinator screens: ' + JSON.stringify(r));
+  });
+  // Smart Classroom (owner, 19 Nov 2026: "homework / CW / check — smart aur smooth"): one open bell, topic filled, homework to check, tap name
+  await run('36-Smart-classroom', async () => {
+    await page.evaluate(() => { SHEET = null; store.set('ta_mode', 'teacher'); setLang('en'); go('diary', { date: addDays(todayISO(), -1) }); });
+    await page.locator('.seg').first().waitFor(); await pause();
+    assert.ok(await page.locator('.sd-open').count() <= 1, 'only one bell form is open');
+    await page.evaluate(() => { let due = addDays(todayISO(), -1); while (!isWorkDay(due, '9th')) due = addDays(due, -1); const d = addDays(due, -1);   // a past due day: step 19 already checked today
+      put('diary', d + '|' + me() + '|5', { cls: '9th', subj: 'Social Science', topic: 'Smart test topic', hw: 'Smart test homework', hwMinutes: 15, hwDate: due, at: Date.now(), extra: true }); Object.keys(CHK).forEach(k => delete CHK[k]); DRAFT.chk = null; go('diary', { m: 'check' }); });
+    await page.locator('.sd-todo .sd-ti').first().waitFor();
+    assert.match(await page.locator('.sd-todo').innerText(), /Smart test homework/);
+    await page.getByRole('button', { name: 'All homework done' }).click();
+    await page.locator('.chk-row:not(.ab) .n').first().click();
+    assert.match(await page.locator('.chk-row:not(.ab)').first().getAttribute('class'), /h-not/, 'tapping the name after "done" marks not done');
   });
   await browser.close();
   if (failures.length) {
