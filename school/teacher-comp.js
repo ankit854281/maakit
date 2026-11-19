@@ -283,19 +283,15 @@ async function festStoryOpen(i) {
 
 // ---------------------------------------------------------------- "Naya kya hai" helper (owner, 6 Nov 2026: a friendly bot that tells everyone about new changes)
 // When you ship something teachers must learn, bump NEWS_VER and rewrite NEWS — every user sees it once, and again from ☰.
-const NEWS_VER = '2026-11-06-coord';
-const NEWS = { title: 'Diwali Competition + Certificate', steps: [
-  ['📋', 'Pehle haziri lagaiye', 'Jo bachche absent / leave hain woh team banate waqt list mein nahi aayenge.'],
-  ['🪔', 'Home par “Competition” card', '“+ Team banao” dabaiye. Rangoli ya Diya chuniye, phir apni class ka group.'],
-  ['👫', 'Team banaiye', 'Team ka naam likhiye (jaise Roshni), bachchon par tap kijiye, Save. Akele bachche ke liye “+ Single child”.'],
-  ['📷', '2 photo lagaiye', 'Bada box 🎨 = rangoli / diya ki photo. Chhota box 👫 = team ke bachchon ki photo. Dono certificate par aayengi, aur bachchon ki attendance wali photo neeche gol mein.'],
-  ['🥇', 'Result', 'Jeetne wali team par 🥇 🥈 🥉 dabaiye. Baaki sab ko “Participation” certificate apne aap milega.'],
-  ['🎓', 'Certificate', '🎓 dabaiye — team ka ek, aur har bachche ka alag certificate. Screenshot ya Share karke parents ko bhejiye.'],
-  ['💬', 'Parent ko message', 'Certificate ke neeche taiyaar message hai — Copy karke usi bachche ke parent ko WhatsApp par bhejiye.'],
-  ['✨', 'WhatsApp Status', '“Story photo banao” + caption copy → WhatsApp → Status.'],
-  ['📅', 'Activity Calendar (naya)', 'Home par 📅 card ya ☰ → Activity Calendar: har din ki activity har class ke liye, syllabus se judi. 🤖 “Kaise karein?” poora tarika batata hai.'],
-  ['👩‍💼', 'Coordinator (naya)', 'Coordinator aapki copy jaanch kar report bhejengi — Home par dikhegi. 👍 “Dekh liya” ya ✋ “Sahmat nahi” dabaiye. Kabhi aapko “🔍 Dobara jaanch” milegi — 2 minute ka kaam.'],
-  ['🎉', 'Tyohar wishes', 'Home par 🪔 Tyohar card: Dhanteras / Diwali ki story photo aur wish message — Status aur parents group ke liye.']] };
+const NEWS_VER = '2026-11-19-calls';
+const NEWS = { title: 'Parent Calls — PTM, function, absent bachche', steps: [
+  ['📞', 'Kahan hai?', 'Connect → “📞 Calls” (ya Today par “Parent calls today” card) → “Open Parent Calls”.'],
+  ['👨‍👩‍👧', 'PTM / function ki calling', 'Principal Sir (ya class teacher apni class ke liye) “＋ New calling list” banate hain — PTM, function, exam, holiday. Har parent ka naam list mein aa jaata hai, upar “What to say” likha hota hai.'],
+  ['📅', 'Absent bachchon ki calling', '“Attendance calls” mein app khud dikhata hai: 3+ din lagatar absent, 2 din, 1 din, aur jinki is mahine 75% se kam haziri hai. Leave (L) wale bachche absent nahi gine jaate.'],
+  ['✅', 'Call ke baad 2 tap', '📞 dabaiye — call ke baad result box apne aap khulega: Talked / No answer → “Will come / Not coming” ya absent ka reason + kab aayega.'],
+  ['😊', 'Feedback mark kijiye', 'Parent kaisa laga: 😊 Happy · 😐 Normal · 😟 Complaint. Complaint par parent ki baat zaroor likhiye — Principal Sir report mein padhte hain.'],
+  ['🔁', 'Call again', '“No answer” → parent kal ki “Call again today” list mein apne aap aa jaata hai. Aap khud bhi date chun sakte hain.'],
+  ['📊', 'Report', 'Har list ka class-wise report: kitne call hue, kitne aayenge, PTM mein kaun aaya, saari complaints. Har call bachche ki report mein bhi dikhti hai.']] };
 function newsOpen() {
   let o = $('nwBox'); if (o) o.remove(); o = document.createElement('div'); o.id = 'nwBox'; o.className = 'nw';
   o.innerHTML = `<div class="nw-in"><div class="nw-bot"><span class="nw-face">🤖</span><div class="nw-bub"><b>Namaste ${esc(myName().split(' ')[0])} ji! 👋</b><br>Main Maakit Mitra hoon. App mein naya aaya hai: <b>${esc(NEWS.title)}</b>. Aise use kijiye 👇</div></div>

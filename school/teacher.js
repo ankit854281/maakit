@@ -1571,8 +1571,9 @@ function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() 
 function feeCls() { return isFeeCaller() ? (S.classes || []).map(k => k.c) : myCT(); }
 function vConn() {
   const ct = feeCls(), m = P.m || (ct.length ? 'fee' : 'msg');
-  const items = [...(ct.length ? [['fee', 'Fee calls'], ['tour', '🚌 Tour calls']] : []), ['msg', 'Messages'], ['chat', 'Parents'], ['staff', 'Staff chat' + (scUnread() ? ' · ' + scUnread() : '')]];
-  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'tour' && ct.length ? vTourCall(ct) : m === 'chat' ? vChat() : m === 'staff' ? vStaff() : vMsg());
+  const pc = typeof pcCan === 'function' && pcCan();   // Parent calls — PTM / event / attendance (teacher-calls.js, 19 Nov 2026)
+  const items = [...(ct.length ? [['fee', 'Fee calls'], ['tour', '🚌 Tour calls']] : []), ...(pc ? [['calls', '📞 Calls']] : []), ['msg', 'Messages'], ['chat', 'Parents'], ['staff', 'Staff chat' + (scUnread() ? ' · ' + scUnread() : '')]];
+  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'tour' && ct.length ? vTourCall(ct) : m === 'calls' && pc ? vCalls() : m === 'chat' ? vChat() : m === 'staff' ? vStaff() : vMsg());
 }
 // ---- tour calls (13 Nov 2026, owner: "teachers me tour calling" + "tour wale me tag") ----
 // Class teacher (or the fee caller) calls parents about the tour and tags each child; the Manager's Tour fee list shows the tags.
