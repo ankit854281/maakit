@@ -53,7 +53,121 @@ function sch_seed_ankit_8th(): void {
     sch_seed_class_teacher('ankit-8th-2026-11', 'Ankit Tripathi', 'Ankit Tripathi Sir', 'Class 8th Class Teacher', '8th', '2026-11', '18 Nov 2026');
 }
 
+// ============================================================
+// LKG Half Yearly 2026-27 marks from the class register (owner, 19 Nov 2026: "Ye marks add dijiye please" — two photos of
+// the LKG register: Hindi, English, Math, EVS, Drawing; Pre test, Copy, SEA, hf for 30 children). Saved as Term-1 (the
+// Half Yearly) like the 5th-class register. Register Pre test is out of 20 → halved to the card's 10 (same as 5th);
+// Copy → Notebook /5, SEA /5, hf → Term Exam /80, Ab → AB, blank stays blank.
+// Safe: a child already having ANY mark in a subject keeps it (nothing typed by a teacher is overwritten); children are
+// matched by name inside LKG (exact words first, then the only close match); register names that are not found or
+// match more than one child (two "Shivansh Rai") are skipped and named in the Activity Log for the class teacher.
+// ============================================================
+const SCH_LKG_HY_SUBJ = ['Hindi', 'English', 'Math', 'EVS', 'Drawing'];
+const SCH_LKG_HY = [
+    [1, 'Abhinav Rai', [[8, 5, 5, 61], [8, 5, 5, 73], [8, 5, 5, 'AB'], [7, 5, 5, 79], [5, 5, 5, 65]]],
+    [2, 'Ananya Pandey', [[6, 5, 5, 67], [8, 5, 5, 75], [10, 5, 5, 67], [9, 5, 5, 80], [7, 5, 5, 65]]],
+    [3, 'Ansh Prajapati', [[8, 5, 5, 75], [8, 5, 5, 76], [10, 5, 5, 71], [8, 5, 5, 80], [8, 5, 5, 70]]],
+    [4, 'Arushi Chauhan', [[8, 5, 5, 77], [7, 5, 5, 77], [10, 5, 5, 77], [7, 5, 5, 78], [6, 5, 5, 65]]],
+    [5, 'Arnay Rai', [[6, 5, 5, 70], [7, 5, 5, 75], [5, 5, 5, 57], [6, 5, 5, 'AB'], [5, 5, 5, 60]]],
+    [6, 'Divas Arya', [[8, 5, 5, 78], [8, 5, 5, 66], [8, 5, 5, 55], [5, 5, 5, 'AB'], [7, 5, 5, 'AB']]],
+    [7, 'Kritika', [[7, 5, 5, 75], [6, 5, 5, 76], [9, 5, 5, 80], [5, 5, 5, 'AB'], [9, 5, 5, 65]]],
+    [8, 'Ruhi Yadav', [[7, 5, 5, 64], [8, 5, 5, 80], [7, 5, 5, 63], [5, 5, 5, 80], [6, 5, 5, 70]]],
+    [9, 'Nikki Gautam', [[7, 5, 5, 80], [10, 5, 5, 80], [10, 5, 5, 80], [7, 5, 5, 'AB'], [5, 5, 5, 70]]],
+    [10, 'Manshvi Raghuvanshi', [[9, 5, 5, 80], [9, 5, 5, 80], [10, 5, 5, 80], [9, 5, 5, 80], [7, 5, 5, 55]]],
+    [11, 'Shiva Saroj', [[12, 5, 5, 75], [14, 5, 5, 75], [5, 5, 5, 65], [7, 5, 5, 80], [9, 5, 5, 70]]],
+    [12, 'Parth Pandey', [[9, 5, 5, 77], [9, 5, 5, 77], [9, 5, 5, 74], [9, 5, 5, 'AB'], [7, 5, 5, 70]]],
+    [13, 'Rishabh Pal', [[6, 5, 5, 75], [7, 5, 5, 74], [4, 5, 5, 65], [5, 5, 5, 66], [8, 5, 5, 65]]],
+    [14, 'Suyam Tiwari', [[16, 5, 5, 80], [9, 5, 5, 79], [9, 5, 5, 80], [9, 5, 5, 80], [9, 5, 5, 70]]],
+    [15, 'Shivansh Rai', [[7, 5, 5, 65], [7, 5, 5, 62], [10, 5, 5, 55], [4, 5, 5, 'AB'], [6, 5, 5, 60]]],
+    [16, 'Shreyam Bind', [[4, 5, 5, 'AB'], [8, 5, 5, 'AB'], [8, 5, 5, 'AB'], [6, 5, 5, 'AB'], [7, 5, 5, 'AB']]],
+    [17, 'Yansh Pasi', [[8, 5, 5, 77], [10, 5, 5, 80], [9, 5, 5, 80], [8, 5, 5, 80], [8, 5, 5, 55]]],
+    [18, 'Ananya Tiwari', [[7, 5, 5, 'AB'], [7, 5, 5, 'AB'], [5, 5, 5, 59], [5, 5, 5, 46], [5, 5, 5, 55]]],
+    [19, 'Vaishnavi Bind', [[10, 5, 5, 'AB'], [7, 5, 5, 'AB'], [8, 5, 5, 'AB'], [12, 5, 5, 'AB'], [7, 5, 5, 'AB']]],
+    [20, 'Diksha Kumari', [[7, 5, 5, 75], [8, 5, 5, 80], [10, 5, 5, 78], [7, 5, 5, 80], [6, 5, 5, 70]]],
+    [21, 'Ananya Maurya', [[7, 5, 5, 77], [9, 5, 5, 'AB'], [9, 5, 5, 55], [7, 5, 5, 43], [7, 5, 5, 70]]],
+    [22, 'Pragya Sharma', [[8, 5, 5, 77], [8, 5, 5, 77], [8, 5, 5, 75], [8, 5, 5, 62], [5, 5, 5, 70]]],
+    [23, 'Shivansh Singh', [[11, 5, 5, 75], [13, 5, 5, 77], [9, 5, 5, 66], [6, 5, 5, 61], [8, 5, 5, 70]]],
+    [24, 'Siddharth Arya', [[6, 5, 5, 76], [9, 5, 5, 76], [8, 5, 5, 59], [7, 5, 5, 38], [9, 5, 5, 60]]],
+    [25, 'Arnav Sharma', [[7, 5, 5, 72], [8, 5, 5, 72], [6, 5, 5, 75], [7, 5, 5, 'AB'], [7, 5, 5, 70]]],
+    [26, 'Parishu Saroj', [[11, 5, 5, 67], [7, 5, 5, 76], [7, 5, 5, 64], [10, 5, 5, 61], [6, 5, 5, 55]]],
+    [27, 'Samarth Jaiswal', [[7, 5, 5, ''], [8, 5, 5, 80], [8, 5, 5, 65], [8, 5, 5, 47], [8, 5, 5, 55]]],
+    [28, 'Shivansh Rai', [[7, 5, 5, 65], [12, 5, 5, 77], [7, 5, 5, 65], [7, 5, 5, 'AB'], [7, 5, 5, 60]]],
+    [29, 'Kritika Rai', [[5, 5, 5, 72], [12, 5, 5, 70], [6, 5, 5, 75], [6, 5, 5, 'AB'], [5, 5, 5, 70]]],
+    [30, 'Kavya', [[6, 5, 5, 71], [13, 5, 5, 77], [7, 5, 5, 59], [6, 5, 5, 'AB'], [6, 5, 5, 'AB']]],
+];
+const SCH_LKG_HY_CHECK = [
+    '5|EVS' => 'hf: number struck, red Ab written',
+    '6|EVS' => 'hf: number struck, red Ab written',
+    '7|EVS' => 'hf: number struck, red Ab written',
+    '9|EVS' => 'hf: "46" and red Ab both written',
+    '12|EVS' => 'hf: "79" and red Ab both written',
+    '13|EVS' => 'hf: 66 or 68',
+    '18|EVS' => 'hf: 46 written over red Ab',
+    '24|Math' => 'hf: 59 or 51',
+    '27|Hindi' => 'hf blank in register'
+];
+function sch_seed_lkg_hy_subject(string $reg, array $alloc): string {
+    $k = fn($s) => preg_replace('/[^a-z]/', '', strtolower($s));
+    $syn = ['math' => ['math', 'maths', 'mathematics', 'mathsandmental', 'numbers'], 'evs' => ['evs', 'environmentalstudies', 'environment', 'environmentalscience', 'science'],
+            'drawing' => ['drawing', 'art', 'artcraft', 'artandcraft', 'drawingcolouring', 'drawingandcolouring'], 'hindi' => ['hindi'], 'english' => ['english']][$k($reg)] ?? [$k($reg)];
+    foreach ($alloc as $s) if (in_array($k($s), $syn, true)) return $s;
+    foreach ($alloc as $s) foreach ($syn as $x) if (str_starts_with($k($s), $x)) return $s;
+    return $reg;
+}
+function sch_seed_lkg_hy(): void {
+    $flag = 'lkg-halfyearly-2026-27';
+    if (sch_rec_get('salSeed', $flag)) return;
+    $kids = array_filter(sal_rows('student'), fn($s) => ($s['cls'] ?? '') === 'LKG');
+    if (count($kids) < 5) return;                                   // LKG children not in the ERP yet — try on a later load
+    $ses = '2026-27'; $exam = 'Term-1';
+    $alloc = []; foreach ((array)sch_rec_get('alloc', 'main') as $al) if (($al['c'] ?? '') === 'LKG' && ($al['s'] ?? '') !== '' && !in_array($al['s'], $alloc, true)) $alloc[] = (string)$al['s'];
+    $subj = array_map(fn($s) => sch_seed_lkg_hy_subject($s, $alloc), SCH_LKG_HY_SUBJ);
+    // match register names → LKG children
+    $nameCount = array_count_values(array_map(fn($r) => strtolower(trim($r[1])), SCH_LKG_HY));
+    $words = fn($n) => (function ($w) { sort($w); return implode(' ', $w); })(sal_name_words($n));
+    $claimed = []; $match = []; $skip = [];
+    foreach (SCH_LKG_HY as [$n, $name]) {                              // pass 1: same words exactly
+        if ($nameCount[strtolower(trim($name))] > 1) { $skip[$n] = "$n. $name (two children with this name in the register)"; continue; }
+        $hit = array_keys(array_filter($kids, fn($s) => $words((string)($s['name'] ?? '')) === $words($name)));
+        if (count($hit) === 1 && !isset($claimed[$hit[0]])) { $match[$n] = $hit[0]; $claimed[$hit[0]] = 1; }
+        elseif (count($hit) > 1) $skip[$n] = "$n. $name (more than one child of this name in the ERP)";
+    }
+    foreach (SCH_LKG_HY as [$n, $name]) {                              // pass 2: the only close match among children left
+        if (isset($match[$n]) || isset($skip[$n])) continue;
+        $hit = array_keys(array_filter($kids, fn($s, $id) => !isset($claimed[$id]) && sal_name_same((string)($s['name'] ?? ''), $name), ARRAY_FILTER_USE_BOTH));
+        if (!$hit) {                                                     // pass 3: first name spelt a little differently (Suyam / Swayam), rest the same
+            $rw = sal_name_words($name);
+            $hit = array_keys(array_filter($kids, function ($s, $id) use ($claimed, $rw) {
+                if (isset($claimed[$id])) return false; $kw = sal_name_words((string)($s['name'] ?? ''));
+                if (!$kw || !$rw || levenshtein($kw[0], $rw[0]) > 2 || min(strlen($kw[0]), strlen($rw[0])) < 4) return false;
+                $a = array_slice($kw, 1); $b = array_slice($rw, 1); return !array_diff($a, $b) || !array_diff($b, $a);
+            }, ARRAY_FILTER_USE_BOTH));
+        }
+        if (count($hit) === 1) { $match[$n] = $hit[0]; $claimed[$hit[0]] = 1; } else $skip[$n] = "$n. $name (" . (count($hit) ? 'more than one close name' : 'not found in ERP LKG') . ')';
+    }
+    $half = fn($v) => $v === 'AB' || $v === '' ? $v : round($v / 2, 2) + 0;
+    $filled = 0; $kept = 0; $kidsDone = [];
+    foreach (SCH_LKG_HY_SUBJ as $i => $reg) {
+        $key = "$ses|$exam|LKG|{$subj[$i]}"; $rec = sch_rec_get('prcMarks', $key) ?? ['subject' => $subj[$i], 'rows' => []];
+        $rows = (array)($rec['rows'] ?? []); $changed = false;
+        foreach (SCH_LKG_HY as [$n, $name, $m]) {
+            if (!isset($match[$n])) continue; $sid = $match[$n];
+            $old = (array)($rows[$sid] ?? []);
+            if (array_filter($old, fn($x) => (string)$x !== '')) { $kept++; continue; }
+            [$pt, $cp, $sea, $hf] = $m[$i];
+            $rows[$sid] = ['pt' => $half($pt), 'nb' => $cp, 'sea' => $sea, 'te' => $hf]; $filled++; $changed = true; $kidsDone[$sid] = 1;
+        }
+        if ($changed) sch_rec_put('prcMarks', $key, ['subject' => $subj[$i], 'rows' => $rows, 'by' => 'System (LKG register, owner 19 Nov 2026)', 'at' => sch_now_ms()], 'system');
+    }
+    $checks = []; foreach (SCH_LKG_HY_CHECK as $k => $t) { [$n, $s] = explode('|', $k); $nm = ''; foreach (SCH_LKG_HY as $r) if ($r[0] === (int)$n) $nm = $r[1]; $checks[] = "$n. $nm $s — $t"; }
+    sch_rec_put('salSeed', $flag, ['at' => sch_now_ms(), 'matched' => $match, 'skipped' => array_values($skip), 'filled' => $filled, 'kept' => $kept, 'subjects' => $subj], 'system');
+    $sys = ['uid' => 'system', 'role' => 'system', 'label' => 'System'];          // log lines are cut at 1000 characters — one line per part
+    sch_log($sys, 'Progress Report', 'LKG Half Yearly (Term-1) marks from the register: ' . count($kidsDone) . ' children, ' . $filled . ' subject entries filled (' . implode(', ', $subj) . ')' . ($kept ? "; $kept already entered — kept" : ''));
+    foreach (array_chunk(array_values($skip), 8) as $part) sch_log($sys, 'Progress Report', 'LKG Half Yearly — NOT entered, fill by hand: ' . implode('; ', $part));
+    sch_log($sys, 'Progress Report', 'LKG Half Yearly — please check against the register: ' . implode('; ', $checks));
+}
+
 // Every one-time change, in order (called from api.php load / since and salary_api.php sheet).
 function sch_seeds(): void {
-    foreach (['sch_seed_ritu_ukg', 'sch_seed_ankit_8th'] as $f) { try { $f(); } catch (Throwable $e) { error_log("$f: " . $e->getMessage()); } }
+    foreach (['sch_seed_ritu_ukg', 'sch_seed_ankit_8th', 'sch_seed_lkg_hy'] as $f) { try { $f(); } catch (Throwable $e) { error_log("$f: " . $e->getMessage()); } }
 }
