@@ -100,7 +100,7 @@ function coCC(A, P0) {
   return `<div class="card"><h3>📒 Aaj ki copy check</h3><p class="mut" style="margin:0">App ne baari se chuna: <b>Class ${esc(pr.cls)} · ${esc(pr.subj)} · ${esc(T(pr.tid).name)}</b>${pr.last ? ` (pichhli baar ${esc(fmtDate(pr.last))})` : ' (pehli baar)'}</p>
       <button class="btn s l" style="margin-top:6px" onclick="DRAFT.cc.skip++;DRAFT.cc.kids={};render()">Yeh class abhi nahi mil rahi → agli</button>
       <button class="btn s l" style="margin-top:6px" onclick="coMitra('cc')">🤖 Kaise karein?</button></div>
-    ${kids.map((s, i) => { const k = D.kids[s.id] || (D.kids[s.id] = { p: {} }); return `<div class="card co-kid"><div class="co-kh"><b>${i + 1}. ${esc(s.name)}</b><button class="btn s ${k.photo ? 'l' : 'w'}" onclick="coShot('${s.id}')">${k.photo ? '📷 Photo ✓' : '📷 Photo (zaroori)'}</button></div>
+    ${kids.map((s, i) => { const k = D.kids[s.id] || (D.kids[s.id] = { p: {} }); return `<div class="card co-kid" id="cok_${esc(s.id)}"><div class="co-kh"><b>${i + 1}. ${esc(s.name)}</b><button class="btn s ${k.photo ? 'l' : 'w'}" onclick="coShot('${s.id}')">${k.photo ? '📷 Photo ✓' : '📷 Photo (zaroori)'}</button></div>
       ${k.photo ? `<img class="co-ph" src="${k.photo}" alt="">` : ''}<div class="co-pts">${CO_PTS.map(([pk, pl]) => `<button class="${k.p[pk] === 1 ? 'y' : k.p[pk] === 0 ? 'n' : ''}" onclick="coTap('${s.id}','${pk}')">${k.p[pk] === 1 ? '✓' : k.p[pk] === 0 ? '✕' : '○'} ${pl}</button>`).join('')}</div></div>`; }).join('')}
     <div class="card"><div class="fld">⭐ Kya achha tha (zaroori)<input id="ccG" class="inp" maxlength="200" value="${esc(D.good)}" oninput="DRAFT.cc.good=this.value" placeholder="jaise: likhai saaf hai, sab copy check hui hain"></div>
       <div class="fld">Sudhaar (ek line)<input id="ccR" class="inp" maxlength="300" value="${esc(D.remark)}" oninput="DRAFT.cc.remark=this.value" placeholder="jaise: galti ke neeche sahi uttar likhwayein"></div>
@@ -115,8 +115,12 @@ function coShrink(f, m, lim) { return new Promise((ok, bad) => { const img = new
 async function coShotGot(i) { const f = i.files && i.files[0]; if (!f || !CO_SHOT) return; try { DRAFT.cc.kids[CO_SHOT].photo = await coShrink(f, 900, 360000); render(); } catch (e) { toast(e.message); } }
 async function coCCSave(cls, subj, tid) {
   const D = DRAFT.cc, kids = coKids(cls).map(s => ({ sid: s.id, k: D.kids[s.id] || { p: {} } }));
-  const miss = kids.find(x => CO_PTS.some(([k]) => x.k.p[k] === undefined)); if (miss) return toast('Har copy ki 6 baaton par ✓ ya ✕ lagaiye.');
-  const noPh = kids.find(x => !x.k.photo); if (noPh) return toast('Har copy ki photo zaroori hai — saboot ke liye.');
+  // Owner, 17 Nov 2026 ("photo lagi hai phir bhi 'Har copy ki photo zaroori hai' aa raha hai"): the check covers all 5 copies,
+  // so the message now names WHICH child is missing and scrolls to that card with a red outline for 2.5 s.
+  const nm = x => { const i = kids.indexOf(x), st = studentById(x.sid); return (i + 1) + '. ' + (st ? st.name : 'Bachcha'); };
+  const jump = x => { const el = document.getElementById('cok_' + x.sid); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.outline = '3px solid #e53935'; setTimeout(() => { el.style.outline = ''; }, 2500); } };
+  const miss = kids.find(x => CO_PTS.some(([k]) => x.k.p[k] === undefined)); if (miss) { jump(miss); return toast(nm(miss) + ' — 6 baaton par ✓ ya ✕ lagaiye.'); }
+  const noPh = kids.find(x => !x.k.photo); if (noPh) { jump(noPh); return toast(nm(noPh) + ' ki copy ki photo baaki hai — saboot ke liye.'); }
   if (!String(D.good).trim()) return toast('“Kya achha tha” likhiye.');
   try { const r = await api('teacher_api.php?a=coord', { op: 'cc', cls, subj, tid, kids: kids.map(x => ({ sid: x.sid, p: x.k.p })), good: D.good, remark: D.remark });
     toast('Photo bhej rahe hain…'); for (let i = 0; i < kids.length; i++) await api('teacher_api.php?a=coord', { op: 'ccphoto', id: r.cc.id, i, data: kids[i].k.photo });
