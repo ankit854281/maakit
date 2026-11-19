@@ -93,7 +93,9 @@ case 'month': {
         for ($d = max((string)$l['from'], $ym . '-01'), $i = 0; $d <= min((string)$l['to'], $ym . '-31') && $i < 40; $i++, $d = date('Y-m-d', strtotime($d . ' +1 day'))) $att['t:' . $l['tid']][$d] = 'L';
     }
     foreach (sal_rows('salAtt', $ym) as $d => $r) { foreach ((array)($r['a'] ?? []) as $x) $att[$x][$d] = 'A'; foreach ((array)($r['h'] ?? []) as $x) $att[$x][$d] = 'H'; }
-    sch_json(['ok' => true, 'ym' => $ym, 'staff' => sa_staff($ym), 'days' => $days, 'att' => (object)$att, 'can' => $role !== 'chairman', 'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')]);
+    // Which dates were actually marked (Chairman app daily report, 19 Nov 2026): teachers = a staffAtt record exists, others = a salAtt record.
+    $marked = ['t' => array_map('strval', array_keys(sal_rows('staffAtt', $ym))), 'x' => array_map('strval', array_keys(sal_rows('salAtt', $ym)))];
+    sch_json(['ok' => true, 'ym' => $ym, 'staff' => sa_staff($ym), 'days' => $days, 'att' => (object)$att, 'marked' => $marked, 'can' => $role !== 'chairman', 'school' => (string)((sch_rec_get('settings', 'main') ?? [])['school'] ?? '')]);
 }
 case 'save': {
     if ($method !== 'POST') sch_fail('POST only', 405);

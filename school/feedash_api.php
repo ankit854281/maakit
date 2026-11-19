@@ -175,7 +175,9 @@ case 'school': {
     }
     $emp = []; foreach (reg_rows('employee') as $r) $emp[] = ['name' => (string)($r['name'] ?? ''), 'designation' => (string)($r['designation'] ?? ''), 'department' => (string)($r['department'] ?? ''), 'category' => (string)($r['category'] ?? ''),
         'mobile' => (string)($r['mobile'] ?? ''), 'doj' => (string)($r['doj'] ?? ''), 'qualification' => (string)($r['qualification'] ?? ''), 'experience' => (string)($r['experience'] ?? ''), 'status' => (string)($r['status'] ?? 'Active')];
-    sch_json(['ok' => true, 'today' => date('Y-m-d'), 'start' => $start, 'session' => (string)($set['session'] ?? ''), 'cutoff' => (string)($set['attendanceCutoff'] ?? '09:30'),
+    // Coordinators (tchCoord c|<tid>) — the Chairman app's daily report lists them right after the Principal (19 Nov 2026)
+    $coords = []; foreach ($db->query("SELECT r FROM sch_records WHERE k='tchCoord' AND deleted=0 AND r LIKE 'c|%'") as $x) $coords[] = substr((string)$x['r'], 2);
+    sch_json(['ok' => true, 'today' => date('Y-m-d'), 'start' => $start, 'coords' => $coords, 'session' => (string)($set['session'] ?? ''), 'cutoff' => (string)($set['attendanceCutoff'] ?? '09:30'),
         'classes' => array_values((array)(sch_rec_get('classes', 'main') ?? [])), 'teachers' => (object)$teachers, 'alloc' => array_values((array)(sch_rec_get('alloc', 'main') ?? [])),
         'exams' => array_values((array)(sch_rec_get('exams', 'main') ?? [])), 'students' => $students, 'inactive' => $inactive, 'att' => (object)$att, 'staffAtt' => (object)$staff, 'syl' => (object)$syl,
         'marks' => (object)$marks, 'leaves' => $leaves, 'old' => $old, 'employees' => $emp, 'cal' => $cal]);

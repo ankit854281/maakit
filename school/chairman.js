@@ -637,6 +637,7 @@ function share() {
   S.share = `*SN Mishra Singapore International School*\nFee summary · ${dmy(D.today)}${S.tag !== null ? '\nTag: ' + S.tag : ''}${S.cls ? '\nClass: ' + S.cls : ''}\n\n` +
     `Today: ${rs(td.total)} (${td.n} receipts)\n${MN[m]} received: ${rs(c.total)} (Fee ${rs(c.fee + c.mixed)} + Transport ${rs(c.tr)})\n${MN[m]} expected: ${rs(p.exp)} · received ${rs(p.got)} · pending ${rs(p.due)} (${p.pend.length} students)\n\n` +
     `Session fee: ${rs(t.annual)}\nCollected: ${rs(t.paid)} (${pct(t.paid, t.paid + t.dueNow)}%)\nDue till now: ${rs(t.dueNow)} (${t.def.length} students)\nOverall dues: ${rs(t.yearBal)}`;
+  const dt = S.tab === 0 ? dayText() : ''; if (dt) S.share = S.share.replace('\n\n', '\n\n' + dt + '\n\n');
   sheet('share');
 }
 function copyShare() { (navigator.clipboard ? navigator.clipboard.writeText(S.share) : Promise.reject()).then(() => toast('Copied.')).catch(() => { const r = document.createRange(); r.selectNodeContents($('shareT')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected — copy it.'); }); }
@@ -1045,6 +1046,120 @@ function pie(id, labels, data, colors, mid, sub, h) {
 const legend = (labels, data, colors, fmt) => `<div class="lg">${labels.map((l, i) => `<span><i style="background:${colors[i]}"></i>${esc(l)} <b>${fmt ? fmt(data[i]) : data[i]}</b></span>`).join('')}</div>`;
 const pieCard = (title, pieHtml, leg, onclick) => `<button class="pc" ${onclick ? `onclick="${onclick}"` : 'tabindex="-1"'}><h4>${esc(title)}</h4>${pieHtml}${leg}</button>`;
 
+// ---------------------------------------------------------------- Daily report (owner, 19 Nov 2026)
+// "Sir open karen vaise he attendance show ho — class-wise total / present / absent, phir Principal, Coordinator,
+// Class 10, 9 … ke class teacher, phir staff, phir fee — jo date diye uss date ka sab list."
+// One date for the whole report (S.dd, default today). Students from SC.att, teachers + staff from
+// staffatt_api.php?a=month (cached per month in SM), fee from D.receipts of that date.
+let SM = {};
+function loadSM(ym) { if (SM[ym]) return; SM[ym] = 'busy'; api('staffatt_api.php?a=month&ym=' + ym).then(d => { SM[ym] = d; render(); }).catch(e => { SM[ym] = { err: e.message }; render(); }); }
+const dDay = () => S.dd || D.today;
+function setDay(v) { if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return; if (v > D.today) v = D.today; S.dd = v; S.dOpen = ''; render(); }
+function dayStep(n) { setDay(addDays(dDay(), n)); }
+function dayHol(d) {
+  if (new Date(d + 'T00:00:00').getDay() === 0) return 'Sunday';
+  const h = (SC.cal || []).find(e => e.type === 'Holiday' && e.date && d >= e.date && d <= (e.to || e.date));
+  return h ? (h.title || 'Holiday') : '';
+}
+function dayStu(d) {
+  const tdy = SC.att[d] || {}, rows = SC.cls.filter(c => (SC.byCls[c] || []).length).slice().reverse().map(c => {
+    const n = SC.byCls[c].length, a = tdy[c]; return { c, n, m: !!a, ab: a ? a.length : 0, pr: a ? n - a.length : 0, abs: a || [] }; });
+  const M = rows.filter(r => r.m);
+  return { rows, tot: sum(rows, r => r.n), pr: sum(M, r => r.pr), ab: sum(M, r => r.ab), nm: sum(rows.filter(r => !r.m), r => r.n), mc: M.length, mt: sum(M, r => r.n) };
+}
+// Principal first, then Vice Principal, Coordinators, class teachers from the highest class down, then other teachers
+function stRank(s) {
+  const tid = s.id.startsWith('t:') ? s.id.slice(2) : null, r = s.role || '';
+  if (/principal/i.test(r) && !/vice/i.test(r)) return [0, 0];
+  if (/vice/i.test(r)) return [1, 0];
+  if (/coord/i.test(r) || (tid && (SC.coords || []).includes(tid))) return [2, 0];
+  const cc = tid ? (SC.classes || []).filter(c => c.ct === tid).map(c => CLASSES.indexOf(c.c)) : [];
+  if (cc.length) return [3, -Math.max(...cc)];
+  return [s.teaching ? 4 : 5, 0];
+}
+function stTag(s) {
+  const tid = s.id.startsWith('t:') ? s.id.slice(2) : null, out = [];
+  if (tid && (SC.coords || []).includes(tid) && !/coord/i.test(s.role || '')) out.push('Coordinator');
+  const cc = tid ? (SC.classes || []).filter(c => c.ct === tid).map(c => c.c) : [];
+  if (cc.length) out.push('Class teacher · ' + cc.join(', '));
+  return [s.role || (s.teaching ? 'Teacher' : 'Staff'), ...out].filter((v, i, a) => v && a.indexOf(v) === i).join(' · ');
+}
+function dayStaff(d) {
+  const M = SM[d.slice(0, 7)];
+  if (!M || M === 'busy' || M.err) return M;
+  const day = (M.days || []).find(x => x.date === d) || {}, hol = day.kind && day.kind !== 'work' ? (day.title || 'Holiday') : '';
+  const mk = M.marked || { t: [], x: [] }, list = M.staff.filter(s => !s.until || s.until >= d).map(s => {
+    const v = ((M.att[s.id] || {})[d]) || '', marked = (s.teaching ? mk.t : mk.x).includes(d);
+    const st = v === 'A' ? 'ab' : v === 'H' ? 'half' : v === 'L' ? 'leave' : hol ? 'hol' : marked ? 'pr' : 'nm';
+    return { ...s, st, rank: stRank(s) };
+  }).sort((a, b) => a.rank[0] - b.rank[0] || a.rank[1] - b.rank[1] || a.name.localeCompare(b.name));
+  const lead = list.filter(s => s.teaching || s.rank[0] < 3), other = list.filter(s => !lead.includes(s));
+  const cnt = L => ({ n: L.length, pr: L.filter(s => s.st === 'pr').length, ab: L.filter(s => s.st === 'ab').length, half: L.filter(s => s.st === 'half').length, leave: L.filter(s => s.st === 'leave').length, nm: L.filter(s => s.st === 'nm').length });
+  return { hol, lead, other, cl: cnt(lead), co: cnt(other) };
+}
+const ST_L = { pr: 'Present', ab: 'Absent', half: 'Half day', leave: 'On leave', hol: 'Holiday', nm: 'Not marked' };
+const stPill = st => `<span class="pill p-${st}">${ST_L[st]}</span>`;
+function staffRows(L) {
+  if (!L.length) return '<p class="empty">Nobody in this list.</p>';
+  return `<div class="dlist">${L.map(s => `<div class="drow"><div class="av2">${esc(s.name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s+/i, '').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div><div class="t"><b>${esc(s.name)}</b><small>${esc(stTag(s))}</small></div>${stPill(s.st)}</div>`).join('')}</div>`;
+}
+const cntLine = c => `<div class="mini"><span><b>${c.n}</b>Total</span><span class="ok"><b>${c.pr}</b>Present</span><span class="bad"><b>${c.ab}</b>Absent</span>${c.half ? `<span class="am"><b>${c.half}</b>Half day</span>` : ''}${c.leave ? `<span class="am"><b>${c.leave}</b>Leave</span>` : ''}${c.nm ? `<span><b>${c.nm}</b>Not marked</span>` : ''}</div>`;
+function dayFee(d) {
+  const ok = D.receipts.filter(r => r.date === d && r.status !== 'Cancelled').sort((a, b) => String(a.no).localeCompare(String(b.no), 'en', { numeric: true }));
+  const cx = D.receipts.filter(r => r.date === d && r.status === 'Cancelled'), modes = {};
+  ok.forEach(r => { const m = r.mode || 'Cash'; modes[m] = (modes[m] || 0) + r.received; });
+  return { ok, cx, c: cashIn(ok), modes, disc: sum(ok, r => r.discount) };
+}
+function dailyBody() {
+  const d = dDay(), isT = d === D.today, nice = new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  let h = `<h5 class="sh">Daily report</h5><div class="dbar"><button aria-label="Previous day" onclick="dayStep(-1)">‹</button><label><input type="date" value="${d}" max="${D.today}" onchange="setDay(this.value)"><span><b>${isT ? 'Today' : esc(nice.split(',')[0])}</b><small>${esc(isT ? nice : nice.slice(nice.indexOf(',') + 2))}</small></span></label><button aria-label="Next day" ${isT ? 'disabled' : ''} onclick="dayStep(1)">›</button>${isT ? '' : `<button class="tdy" onclick="setDay('${D.today}')">Today</button>`}</div>`;
+  const F = dayFee(d);
+  if (!SC) { loadSchool(); return h + card('Attendance', '<p class="empty">Loading attendance…</p>') + feeDay(F, d); }
+  if (SC.err) return h + card('Attendance', `<p class="empty">${esc(SC.err)}</p><button class="cta" onclick="SC=null;render()">Try again</button>`) + feeDay(F, d);
+  loadSM(d.slice(0, 7));
+  const A = dayStu(d), hol = dayHol(d), T = dayStaff(d), tOk = T && T !== 'busy' && !T.err;
+  // the four headline tiles
+  h += `<div class="kp k4">${k('Students present', A.mc ? `${A.pr}<em>/${A.mt}</em>` : '—', A.mc ? `${pc(ratio(A.pr, A.mt))} · ${A.ab} absent` : hol || 'not marked yet', 'ok', "document.getElementById('dS').scrollIntoView({behavior:'smooth'})")}
+    ${k('Teachers present', tOk ? `${T.cl.pr + T.cl.half}<em>/${T.cl.n}</em>` : '—', tOk ? (T.hol || `${T.cl.ab} absent${T.cl.leave ? ' · ' + T.cl.leave + ' leave' : ''}${T.cl.nm ? ' · ' + T.cl.nm + ' not marked' : ''}`) : 'loading…', 'ac', "document.getElementById('dT').scrollIntoView({behavior:'smooth'})")}
+    ${k('Staff present', tOk ? `${T.co.pr + T.co.half}<em>/${T.co.n}</em>` : '—', tOk ? (T.hol || `${T.co.ab} absent${T.co.nm ? ' · ' + T.co.nm + ' not marked' : ''}`) : 'loading…', '', "document.getElementById('dX').scrollIntoView({behavior:'smooth'})")}
+    ${k('Fee collected', rsS(F.c.total), `${F.ok.length} receipt${F.ok.length === 1 ? '' : 's'}`, 'ok', "document.getElementById('dF').scrollIntoView({behavior:'smooth'})")}</div>`;
+  // 1. students, class-wise, Class 10 first
+  const sBody = hol && !A.mc ? `<p class="empty">${esc(hol)} — school closed.</p>` : `<div class="mini"><span><b>${A.tot}</b>Total students</span><span class="ok"><b>${A.pr}</b>Present</span><span class="bad"><b>${A.ab}</b>Absent</span>${A.nm ? `<span><b>${A.nm}</b>Not marked</span>` : ''}</div>
+    <div class="tw"><table class="tbl dtb"><tr><th>Class</th><th>Teacher</th><th>Total</th><th>Present</th><th>Absent</th><th>%</th></tr>
+    ${A.rows.map(r => `<tr class="${r.m ? '' : 'nm'}${S.dOpen === r.c ? ' hl' : ''}" onclick="S.dOpen=S.dOpen==='${esc(r.c)}'?'':'${esc(r.c)}';render()" style="cursor:pointer"><td><b>${esc(r.c)}</b></td><td class="l">${esc(tName(SC.ct[r.c]) || '—')}</td><td>${r.n}</td>${r.m ? `<td class="grn">${r.pr}</td><td class="${r.ab ? 'red' : ''}">${r.ab}</td><td>${pc(ratio(r.pr, r.n))}</td>` : '<td colspan="3" class="mut">Not marked</td>'}</tr>
+      ${S.dOpen === r.c ? `<tr class="hl"><td colspan="6" class="l">${!r.m ? 'Attendance not marked for this class.' : r.abs.length ? '<b>Absent:</b> ' + r.abs.map(id => `<a class="lnk" onclick="event.stopPropagation();openStu('${esc(id)}')">${esc((SC.stu[id] || {}).name || id)}</a>`).join(', ') : 'Everyone present.'}</td></tr>` : ''}`).join('')}
+    <tr class="tot"><td>Total</td><td></td><td>${A.tot}</td><td class="grn">${A.pr}</td><td class="red">${A.ab}</td><td>${A.mc ? pc(ratio(A.pr, A.mt)) : '—'}</td></tr></table></div><p class="note">Tap a class to see who is absent.</p>`;
+  h += `<div id="dS"></div>` + card('Student attendance · class-wise', sBody);
+  // 2. teachers (Principal, Coordinator, class teachers 10 → PG, others)  3. other staff
+  const wait = T === 'busy' || !T ? '<p class="empty">Loading…</p>' : `<p class="empty">${esc(T.err)}</p>`;
+  h += `<div id="dT" style="height:12px"></div>` + card('Teachers attendance', tOk ? (T.hol ? `<p class="note" style="margin-top:0">${esc(T.hol)}</p>` : cntLine(T.cl)) + staffRows(T.lead) : wait);
+  h += `<div id="dX" style="height:12px"></div>` + card('Staff attendance · drivers, office & others', tOk ? (T.hol ? `<p class="note" style="margin-top:0">${esc(T.hol)}</p>` : cntLine(T.co)) + staffRows(T.other) : wait);
+  return h + feeDay(F, d);
+}
+function feeDay(F, d) {
+  const md = Object.entries(F.modes);
+  const body = !D.money ? '<p class="empty">Fee figures are not open for this login.</p>' : `<div class="mini"><span class="ok"><b>${rs(F.c.total)}</b>Received</span><span><b>${rs(F.c.fee + F.c.mixed)}</b>Fee</span><span><b>${rs(F.c.tr)}</b>Transport</span>${F.disc ? `<span class="am"><b>${rs(F.disc)}</b>Discount</span>` : ''}</div>
+    ${md.length ? `<div class="chips2">${md.map(([m, v]) => `<span>${esc(m)} <b>${rs(v)}</b></span>`).join('')}</div>` : ''}
+    ${F.ok.length ? `<div class="tw"><table class="tbl dtb"><tr><th>Receipt</th><th>Student</th><th>Mode</th><th>Amount</th></tr>
+      ${F.ok.map(r => `<tr onclick="openStu('${esc(r.sid)}')" style="cursor:pointer"><td>${esc(r.no)}</td><td class="l"><b>${esc(r.name)}</b><br><small class="mut">Class ${esc(r.cls + (r.section ? '-' + r.section : ''))}${r.months ? ' · ' + esc(r.months) : ''}</small></td><td>${esc(r.mode || 'Cash')}</td><td><b>${rs(r.received)}</b></td></tr>`).join('')}
+      <tr class="tot"><td>Total</td><td>${F.ok.length} receipts</td><td></td><td>${rs(F.c.total)}</td></tr></table></div>` : `<p class="empty">No fee received on ${dmy(d)}.</p>`}
+    ${F.cx.length ? `<p class="note red">${F.cx.length} receipt${F.cx.length > 1 ? 's' : ''} cancelled on this date: ${F.cx.map(r => esc(r.no) + ' (' + esc(r.name) + ', ' + rs(r.received) + ')').join(', ')}</p>` : ''}`;
+  return `<div id="dF" style="height:12px"></div>` + card('Fee received · ' + dmy(d), body) + '<div style="height:6px"></div>';
+}
+// WhatsApp text of the daily report (added on top of the fee summary)
+function dayText() {
+  if (!SC || SC.err) return '';
+  const d = dDay(), A = dayStu(d), T = dayStaff(d), F = dayFee(d), hol = dayHol(d);
+  let t = `*Daily report · ${dmy(d)}*\n\nStudents: ${A.mc ? `${A.pr} present, ${A.ab} absent of ${A.mt}` : hol || 'attendance not marked'}${A.nm && A.mc ? ` (${A.nm} not marked)` : ''}\n`;
+  A.rows.filter(r => r.m).forEach(r => { t += `  ${r.c}: ${r.pr}/${r.n}${r.ab ? ' · absent ' + r.ab : ''}\n`; });
+  if (T && T !== 'busy' && !T.err) {
+    const ab = L => L.filter(s => s.st === 'ab' || s.st === 'half' || s.st === 'leave').map(s => s.name + ' (' + ST_L[s.st] + ')').join(', ');
+    t += `\nTeachers: ${T.cl.pr + T.cl.half}/${T.cl.n} present${ab(T.lead) ? '\n  ' + ab(T.lead) : ''}\nStaff: ${T.co.pr + T.co.half}/${T.co.n} present${ab(T.other) ? '\n  ' + ab(T.other) : ''}\n`;
+  }
+  if (D.money) t += `\nFee on ${dmy(d)}: ${rs(F.c.total)} (${F.ok.length} receipts)`;
+  return t;
+}
+
 // ---------------------------------------------------------------- Home
 function homeBody() {
   const t = D.t, thought = THOUGHTS[Math.floor(new Date(D.today + 'T00:00:00').getTime() / 864e5) % THOUGHTS.length];
@@ -1065,6 +1180,7 @@ function homeBody() {
     const sy = Object.values(SC.syl), sd = sum(sy, y => y.chapters.filter(c => c.done).length), st = sum(sy, y => y.chapters.length);
     pies.push(pieCard('Syllabus', pie('hSyl', ['Done', 'Left'], [sd, st - sd], [P.indigo, P.grey], pc(ratio(sd, st)), 'completed'), legend(['Chapters done', 'Left'], [sd, st - sd], [P.indigo, P.grey]), "goTo('school','syl')"));
   } else pies.push(`<div class="pc"><h4>School</h4><p class="empty">${SC && SC.err ? esc(SC.err) : 'Loading attendance, results and syllabus…'}</p></div>`);
+  html += dailyBody();
   html += `<h5 class="sh">At a glance</h5><div class="pg">${pies.join('')}</div>`;
   const QA = [['stu', 'Students', 'setTab(1)'], ['school', 'Attendance', "goTo('school','att')"], ['t_rep', 'Results', "goTo('school','res')"], ['t_month', 'Exams & events', "goTo('school','exams')"],
     ['t_over', 'Syllabus', "goTo('school','syl')"], ['t_dues', 'Fee collection', "goTo('sum')"], ['t_call', 'Call diary', "S.cmode='diary';goTo('calls')"], ['phone', 'Messages', "S.cmode='msg';goTo('calls')"],
