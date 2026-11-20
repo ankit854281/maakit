@@ -27,7 +27,10 @@
   // ---------- one class: every child's subjects, totals, grace, rank ----------
   function build(d) {
     const bySub = {}; Object.values(d.marks || {}).forEach(m => { bySub[m.subject] = m.rows || {}; });
-    const subs = d.subjects.filter(s => bySub[s] && Object.keys(bySub[s]).length);
+    // every subject that has marks — the timetable order first, then subjects with marks that are not in the timetable
+    // (owner, 20 Nov 2026: "class 9th me hindi ka marks show nahi kar raha" — Hindi had marks but no timetable entry)
+    const order = [...d.subjects, ...Object.keys(bySub).filter(s => !d.subjects.includes(s)).sort()];
+    const subs = order.filter(s => bySub[s] && Object.keys(bySub[s]).length);
     const kids = d.students.map(st => {
       let tot = 0, max = 0, gTot = 0; const rows = [];
       subs.forEach(s => { const m = (bySub[s] || {})[st.id]; if (!m) { rows.push({ s, none: true }); return; }
