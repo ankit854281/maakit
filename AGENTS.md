@@ -1231,3 +1231,8 @@ papers only from photos the owner sends.
     deleted. Public page school/verify-cert.php?c=HY26-XXXXXXX shows only name, class, rank, %, exam (no photo/phone).
     QR drawn with vendor/qrcode.js. Test added to .github/jaanch/progress-flow.php.
   • "⭐ Our Stars poster (all classes)" button on the Rankers tab: A3 portrait canvas, every class's rankers in podium order with photos.
+
+- 2026-11-20 (Claude): Slip v4 (owner: "attendance ka graph, co-scholastic bhi graph me, Principal ka message English me, professional look").
+  Principal's letter is now English (letterOf). Bottom of the slip is three cards: Remark · Attendance (ring with %, present/absent/
+  working days) · Co-Scholastic (bar per area, A/B/C) — both always shown, "Not entered yet" / "–" when empty. Poppins (fonts/) for
+  the slip body, Georgia for school/child names and the letter. One slip per A4 page in print.

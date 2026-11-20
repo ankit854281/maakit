@@ -99,12 +99,18 @@
     if (+ex.days > 0 && +ex.present === +ex.days) B.push(['📅', 'Full Attendance']);
     return B.slice(0, 6);
   }
+  // Principal's letter — in English (owner, 20 Nov 2026: "pradhanacharya ka message english me kardo"), written for each child.
+  const ORDN = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
   function letterOf(D, k) {
     const rm = remarkOf(D, k), first = k.st.name.split(/\s+/)[0], fa = (k.st.father || '').trim();
     const strong = (rm.strong || k.rows.filter(r => !r.none && !r.ab && r.t >= 81).map(r => r.s)).slice(0, 2), weak = (rm.weak || []).slice(0, 2);
-    return `आदरणीय <b>${esc(fa ? fa + ' जी' : 'अभिभावक')}</b>, आपके बच्चे <b>${esc(first)}</b> ने अर्धवार्षिक परीक्षा में <b>${k.pct != null ? k.pct + '%' : '—'}</b> अंक प्राप्त किए हैं${k.rank && k.rank * 2 <= D.ranked.length ? ` और कक्षा में <b>${['', 'पहला', 'दूसरा', 'तीसरा', 'चौथा', 'पाँचवाँ', 'छठा'][k.rank] || k.rank + 'वाँ'} स्थान</b> पाया है` : ''}। ` +
-      (strong.length ? `<b>${esc(strong.join(', '))}</b> में ${esc(first)} का प्रदर्शन विशेष रूप से अच्छा रहा। ` : '') +
-      (weak.length ? `<b>${esc(weak.join(', '))}</b> में थोड़े और अभ्यास से परिणाम और बेहतर होगा। ` : 'इसी तरह मेहनत करते रहें। ') + `आपके सहयोग के लिए हार्दिक धन्यवाद।<em>— प्रधानाचार्य</em>`;
+    const and = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
+    const p = k.pct || 0, top = k.rank && k.rank * 2 <= D.ranked.length;
+    const open = p >= 85 ? 'we are delighted to share that' : p >= 60 ? 'we are pleased to share that' : 'we would like to share that';
+    return `Dear <b>${esc(fa ? 'Mr. ' + fa : 'Parent')}</b>, ${open} <b>${esc(first)}</b> has scored <b>${k.pct != null ? k.pct + '%' : '—'}</b> in the Half-Yearly Examination${top ? ` and secured the <b>${ORDN(k.rank)} position</b> in the class` : ''}. ` +
+      (strong.length ? `${esc(first)}'s work in <b>${esc(and(strong))}</b> has been particularly impressive. ` : '') +
+      (weak.length ? `With a little more practice in <b>${esc(and(weak))}</b>, the results will be even better. ` : `We encourage ${esc(first)} to keep up the same effort. `) +
+      `Thank you for your continued support.<em>— Principal</em>`;
   }
   function posLine(D, k) {
     // Only for the upper half: a weak child's parents should not see their child at the bottom of a line (kind, not hidden — rank is in the box).
@@ -123,12 +129,24 @@
     const nx = t => BANDS.find(([m]) => m > t);
     const chips = R.map(r => { const b = nx(r.t); return b ? `<span>${esc(r.s)}: ${r.t} → <b>${b[0]}+</b> <em>${b[1]}</em></span>` : `<span>${esc(r.s)}: <em>keep ${r.t >= 100 ? '100' : '91+'} ✓</em></span>`; });
     const ob = k.pct != null ? nx(k.pct) : null;
-    return `<div class="tgt"><b>🎯 Target for the Final Exam <small>· फाइनल परीक्षा का लक्ष्य — अगले ग्रेड के लिए इतने अंक</small></b><div>${chips.join('')}${ob ? `<span>Overall: ${k.pct}% → <b>${ob[0]}%</b> <em>${ob[1]}</em></span>` : ''}</div></div>`;
+    return `<div class="tgt"><b>🎯 Target for the Final Exam <small>· marks needed in each subject for the next grade</small></b><div>${chips.join('')}${ob ? `<span>Overall: ${k.pct}% → <b>${ob[0]}%</b> <em>${ob[1]}</em></span>` : ''}</div></div>`;
+  }
+  // Attendance and co-scholastic as graphs (owner, 20 Nov 2026: "attendance ka bhi graph, co-scholastic bhi graph me") — always shown,
+  // "Not entered yet" when the class teacher has not filled them.
+  function attCard(ex) {
+    const d = +ex.days || 0, pr = +ex.present || 0, p = d ? Math.round(pr * 100 / d) : null, col = p == null ? '#C5CDD8' : p >= 90 ? '#1E7A43' : p >= 75 ? '#E0A100' : '#C0392B', a = (p || 0) * 3.6;
+    return `<div class="card att"><h5>Attendance</h5><div class="attw"><div class="ring2" style="background:conic-gradient(${col} ${a}deg,#E6EAF0 ${a}deg)"><div><b>${p == null ? '—' : p + '%'}</b></div></div>
+      <div class="attx">${d ? `<span><b>${pr}</b> present</span><span><b>${d - pr}</b> absent</span><span>of <b>${d}</b> working days</span>` : '<span class="mut">Not entered yet</span>'}</div></div></div>`;
+  }
+  const CO = [['art', 'Art Education'], ['work', 'Work Education'], ['health', 'Health & PE'], ['disc', 'Discipline']], COW = { A: 100, B: 66, C: 33 }, COC = { A: '#1E7A43', B: '#2D6CDF', C: '#E0A100' };
+  function cosCard(ex) {
+    return `<div class="card cos"><h5>Co-Scholastic</h5>${CO.map(([kk, l]) => { const g = String(ex[kk] || '').toUpperCase();
+      return `<div class="cr"><span>${l}</span><div class="cb"><i style="width:${COW[g] || 0}%;background:${COC[g] || '#C5CDD8'}"></i></div><em style="background:${COC[g] || '#C5CDD8'}">${g || '–'}</em></div>`; }).join('')}
+      <small>A = Outstanding · B = Very Good · C = Good</small></div>`;
   }
   function slipHtml(D, k) {
     const st = k.st, ex = D.extra[st.id] || {}, rm = remarkOf(D, k), fail = k.rows.some(r => !r.none && !r.ab && r.t + r.g < PASS);
     const strong = rm.strong || k.rows.filter(r => !r.none && !r.ab && r.t >= 81).map(r => r.s).slice(0, 2), weak = rm.weak || [];
-    const cos = [['art', 'Art'], ['work', 'Work Ed.'], ['health', 'Health & PE'], ['disc', 'Discipline']].filter(([kk]) => ex[kk]);
     return `<div class="slip"><div class="shd"><img src="img/snmsis-logo.png" alt=""><div><b>${SCHOOL.toUpperCase()}</b><span>${PLACE}</span></div><i>HALF-YEARLY EXAMINATION ${SESL}<br><em>PROGRESS SLIP</em></i></div>
       <div class="stu"><div class="ph" data-sid="${esc(st.id)}">${PH[st.id] ? `<img src="${PH[st.id]}" alt="">` : `<span>${esc(st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}</div>
         <div class="who"><b>${esc(st.name)}</b><span>Class <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b> · Adm. No. <b>${esc(st.adm || '—')}</b></span><span>Father: <b>${esc(st.father || '—')}</b>${st.mother ? ' · Mother: <b>' + esc(st.mother) + '</b>' : ''}</span></div>
@@ -142,9 +160,11 @@
       <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${k.gTot ? '+' + k.gTot : '—'}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td colspan="3" style="text-align:left">Result: <b class="${fail ? 'red' : 'gr'}">${fail ? 'Needs improvement' : 'Pass'}</b></td></tr></table>
       ${targetHtml(k)}
       ${posLine(D, k)}
-      <div class="low"><div class="rmk"><b>${rm.auto ? 'Remark' : 'Class teacher\'s remark'}</b><p>${esc(rm.text)}</p>
-        ${strong.length || weak.length ? `<div class="sw">${strong.length ? `<span class="ok">★ Strong: ${esc(strong.join(', '))}</span>` : ''}${weak.length ? `<span class="wk">✎ Practise more: ${esc(weak.join(', '))}</span>` : ''}</div>` : ''}</div>
-        <div class="side">${cos.length ? `<div><b>Co-scholastic</b>${cos.map(([kk, l]) => `<span>${l} <em>${esc(ex[kk])}</em></span>`).join('')}</div>` : ''}${ex.days ? `<div><b>Attendance</b><span>${esc(ex.present || '—')} / ${esc(ex.days)} days</span></div>` : ''}</div></div>
+      <div class="low3">
+        <div class="card rmk"><h5>${rm.auto ? 'Remark' : 'Class Teacher\'s Remark'}</h5><p>${esc(rm.text)}</p></div>
+        ${attCard(ex)}
+        ${cosCard(ex)}
+      </div>
       <p class="gn">${k.gTot ? `Grace (+${k.gTot}) is given only to reach the pass mark (${PASS}) and shown separately; total, % and rank are on the real marks. ` : ''}The bar shows the child's marks; the thin line is the class average. The full report card will be given with the final result.</p>
       <div class="foot"><div><i>Class Teacher${D.ct ? ' (' + esc(D.ct) + ')' : ''}</i></div><div><i>Parent's Signature</i></div><div><i>Principal</i></div></div></div>`;
   }
@@ -154,7 +174,7 @@
   }
   function slips(D) {
     const kids = D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name));
-    $('out').innerHTML = `<div class="pan np"><b>${kids.length} slips</b> · class ${esc(CLS)} · ${D.subs.length} subjects · ${D.kids.filter(k => k.gTot).length} child(ren) with grace. "Print all slips" prints every slip (about 2 on a page).</div>` +
+    $('out').innerHTML = `<div class="pan np"><b>${kids.length} slips</b> · class ${esc(CLS)} · ${D.subs.length} subjects · ${D.kids.filter(k => k.gTot).length} child(ren) with grace. "Print all slips" prints every slip (one slip per A4 page).</div>` +
       kids.map((k, i) => slipHtml(D, k) + `<div class="slipbar">${(k.st.phone || '').replace(/\D/g, '').slice(-10).length === 10 ? `<a class="btn g" target="_blank" rel="noopener" href="https://wa.me/91${(k.st.phone || '').replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(slipText(D, k))}">WhatsApp to parent</a>` : ''}<button class="btn l" data-p="${i}">Print this slip</button></div>`).join('');
     (async () => { const ids = kids.map(k => k.st.id).filter(id => D.withPhoto.includes(id) && PH[id] === undefined);
       const q = [...ids]; await Promise.all(Array.from({ length: 4 }, async () => { while (q.length) { const id = q.shift(); await photo(id);

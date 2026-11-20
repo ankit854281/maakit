@@ -11,6 +11,10 @@ $v = (string)@filemtime(__DIR__ . '/results.js');
 <style>
 @font-face{font-family:'NotoDeva';src:url('../smartsarathi/assets/fonts/noto-deva-400.woff2') format('woff2');font-weight:400;unicode-range:U+0900-097F,U+1CD0-1CFF,U+200C-200D,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF}
 @font-face{font-family:'NotoDeva';src:url('../smartsarathi/assets/fonts/noto-deva-700.woff2') format('woff2');font-weight:700;unicode-range:U+0900-097F,U+1CD0-1CFF,U+200C-200D,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:'Poppins';src:url('fonts/poppins-latin-400-normal.woff2') format('woff2');font-weight:400}
+@font-face{font-family:'Poppins';src:url('fonts/poppins-latin-500-normal.woff2') format('woff2');font-weight:500}
+@font-face{font-family:'Poppins';src:url('fonts/poppins-latin-600-normal.woff2') format('woff2');font-weight:600}
+@font-face{font-family:'Poppins';src:url('fonts/poppins-latin-700-normal.woff2') format('woff2');font-weight:700}
 body{margin:0;font-family:Arial,'NotoDeva',Helvetica,sans-serif;background:#f4f6f9;color:#1d2733;font-size:14px}
 .wrap{max-width:1000px;margin:0 auto;padding:14px}.np{}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.top h1{font-size:21px;margin:0;color:#17324D}.top a{color:#17324D;font-size:13px}
@@ -67,12 +71,34 @@ table.m tr.t td.s:before{display:none}table.m tr.t td{background:linear-gradient
 .rmk{border-radius:0 10px 10px 0}.side div{background:#fff}
 .foot div i{border-top:1.5px solid #14294A;color:#14294A}
 
+/* ---- slip v4 — professional finish (owner, 20 Nov 2026: "more attractive best professional look") ---- */
+.slip{font-family:Poppins,Arial,'NotoDeva',sans-serif;font-size:12.5px;color:#1f2a37}
+.shd div b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:20px;letter-spacing:1px}.shd div span{letter-spacing:.3px}
+.who>b{font-family:Georgia,serif;font-size:23px}.who span{color:#4a5565}
+.letter{font-family:Georgia,'Times New Roman',serif;font-size:13.5px;line-height:1.6;color:#3a3226}.letter b{font-family:Georgia,serif}.letter em{font-family:Georgia,serif;font-style:italic}
+.badges span{font-weight:600;font-size:11px;letter-spacing:.2px}
+table.m{font-size:12px}table.m th{font-weight:600;letter-spacing:.3px;text-transform:uppercase;font-size:10.5px;padding:6px 4px}table.m td{padding:5px}
+table.m td.s{font-weight:600}
+.tgt{background:linear-gradient(95deg,#EEF4FD,#F8FBFF)}.tgt>b{font-weight:600}
+.pos b{font-weight:600}
+.low3{display:grid;grid-template-columns:1.35fr 1fr 1.25fr;gap:10px;margin-top:10px}
+.card{background:#fff;border:1px solid #E1E6EE;border-radius:12px;padding:9px 12px;box-shadow:0 1px 3px rgba(20,41,74,.06)}
+.card h5{margin:0 0 7px;font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#14294A;padding-bottom:4px;border-bottom:2px solid;border-image:linear-gradient(90deg,#D9B45A,transparent) 1}
+.card.rmk{background:linear-gradient(180deg,#FFFCF3,#fff);border-left:4px solid #D9B45A;border-radius:12px}.card.rmk p{margin:0;font-size:12.5px;line-height:1.55;color:#333}
+.attw{display:flex;align-items:center;gap:12px}.ring2{flex:0 0 74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center}.ring2 div{width:56px;height:56px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}.ring2 b{font-size:16px;color:#14294A}
+.attx{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:#4a5565}.attx b{color:#14294A}
+.cr{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:11px}.cr span{flex:0 0 92px;color:#4a5565}.cb{flex:1;height:8px;background:#EEF1F5;border-radius:4px;overflow:hidden}.cb i{display:block;height:100%;border-radius:4px}
+.cr em{flex:0 0 20px;height:18px;border-radius:5px;color:#fff;font-style:normal;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center}
+.cos small{display:block;margin-top:4px;font-size:9.5px;color:#8a94a3}
+.gn{font-size:10px;color:#7b8594}
+.foot{margin-top:18px}.foot div i{font-weight:500;font-size:11.5px;letter-spacing:.3px}
+
 .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;font-size:12px}.foot div{text-align:center;min-width:140px}.foot div i{display:block;border-top:1px solid #333;margin-top:28px;font-style:normal;padding-top:2px}
 .sum{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:13px}.sum b{font-size:15px}
 .gn{font-size:11px;color:#555;margin-top:6px}
 .slipbar{display:flex;gap:6px;margin:-6px 0 14px}.slipbar .btn{padding:6px 10px;font-size:12.5px}
 .certs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}.cert{background:#fff;border:1px solid #dfe4ea;border-radius:6px;padding:10px}.cert img{width:100%;display:block;border:1px solid #e3e7ee;cursor:zoom-in}.cert h4{margin:0 0 6px}
-@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff}.np,.slipbar{display:none!important}.wrap{max-width:none;padding:0}.slip{margin:0 0 6mm;border-width:1.5px}@page{size:A4;margin:8mm}}
+@media print{.slip{page-break-after:always;box-shadow:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff}.np,.slipbar{display:none!important}.wrap{max-width:none;padding:0}.slip{margin:0 0 6mm;border-width:1.5px}@page{size:A4;margin:8mm}}
 </style></head><body><div class="wrap">
 <div class="top np"><h1>Half-Yearly · Marks Slip &amp; Rankers</h1><a href="index.php" target="_top">← ERP</a></div>
 <div class="pan np" id="bar"><div class="msg">Opening…</div></div>
