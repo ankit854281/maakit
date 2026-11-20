@@ -1244,3 +1244,10 @@ papers only from photos the owner sends.
   • "Instructions from the Principal" box at the bottom of every slip — lines in INSTR at the top of results.js.
   • Certificate v4: deep emerald frame with guilloche wave pattern + guilloche rosette, metal by rank (1st gold, 2nd silver,
     3rd bronze) for laurel, photo ring, seal, borders and the foil "CERTIFICATE" title (METAL/PAL in results.js).
+
+- 2026-11-20 (Claude): Certificate v5 + slip polish (owner: "colour combination match nahi — 10/12 wala kaam karo").
+  Certificate = ONE palette matching the crest: royal navy + gold foil + ivory (no emerald/maroon). Split layout: navy honour panel
+  (crest, session, photo in gold laurel, RANK HOLDER ribbon, class, gold guilloche aura, Scan-to-verify QR) | ivory citation
+  (school, gold-foil CERTIFICATE, name in script, "for securing the FIRST RANK in Class X", %, proud parents, 3 signatures, date +
+  certificate no.). Rank seal sits on the gold seam; only the seal is gold/silver/bronze by rank. Slip: badges and the target heading
+  use navy/gold icon chips instead of emoji (prints the same everywhere); slip scales to fit one A4 page in print (zoom .86).
