@@ -177,6 +177,7 @@
     if (!CUR) return; const name = 'Demand-bill-' + CUR.kids[0].name.replace(/\W+/g, '-') + '.png';
     // Inside the school's Android apps (Chairman 1.1+, Salary 1.2+): the app's own bridge sends the picture to the share sheet (20 Nov 2026)
     if (window.SNMSISFiles && typeof SNMSISFiles.shareFile === 'function') { SNMSISFiles.shareFile(name, CUR._canvas.toDataURL('image/png').split(',')[1], 'image/png'); return; }
+    if (window.SNMSISFiles && typeof SNMSISFiles.shareImage === 'function') { SNMSISFiles.shareImage(name, CUR._canvas.toDataURL('image/png').split(',')[1]); return; }   // Teacher app
     const blob = await new Promise(r => CUR._canvas.toBlob(r, 'image/png')); const file = new File([blob], name, { type: 'image/png' });
     try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Fee demand bill', text: waText(CUR) }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     if (/; wv\)/.test(navigator.userAgent)) return alert('This app is an old version — picture sharing needs the new app. Download it again from maakit.in/school/downloads (uninstall the old one first), or use "WhatsApp message" for now.');

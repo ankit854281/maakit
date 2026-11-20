@@ -1669,6 +1669,8 @@ function billText(c, k) {
     `\n\nKindly deposit the fee at the school office at the earliest. Please ignore if already paid.\nकृपया ${mon} तक की बकाया फ़ीस ${rs(k.due)} जल्द से जल्द विद्यालय कार्यालय में जमा करें। यदि जमा कर दी है तो कृपया ध्यान न दें।\n\n— ${myName()}, Class Teacher`;
 }
 function feeBill(c, sid) {
+  // The school's picture demand bill (same as the Chairman app, siblings together) — owner, 20 Nov 2026; the old text bill stays as the fallback
+  if (window.DemandBill && !feeBill.text) return DemandBill.open(sid, store.get('sch_token'));
   const k = FEE[c].children.find(x => x.sid === sid), t = billText(c, k);
   SHEET = () => `<h2>Fee demand bill · ${esc(k.name)}</h2><pre class="bill" data-notr>${esc(t.replace(/\*/g, ''))}</pre>
     <div class="btns">${k.phone ? `<a class="btn wa" target="_blank" rel="noopener" href="${wa(k.phone, t)}">${ic('wa')} Send on WhatsApp</a>` : '<span class="mut">No phone saved.</span>'}<button class="btn w" onclick="feeBillPrint(${jsq(c)},${jsq(sid)})">${ic('print')} Print</button></div>

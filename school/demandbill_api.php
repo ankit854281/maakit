@@ -22,7 +22,12 @@ require __DIR__ . '/feereports_lib.php';
 $a = (string)($_GET['a'] ?? 'list');
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
 $u = sch_auth(); $role = (string)$u['role'];
-if (!in_array($role, ['chairman', 'manager', 'principal', 'accountant'], true)) sch_fail('Demand bills are open for the Chairman, Manager, Principal and Accountant.', 403);
+if (!in_array($role, ['chairman', 'manager', 'principal', 'accountant', 'teacher'], true)) sch_fail('Demand bills are open for the Chairman, Manager, Principal, Accountant and teachers who call parents.', 403);
+// Teachers (owner, 20 Nov 2026: "teachers ke app me bhi add kar dijiye kyoki vo call karte hain"): only ONE child's bill (a=bill) —
+// the class teacher for a child of his / her class, the school's fee caller (settings.feeCallers, default Rati Ma'am) for any child.
+$tid = (string)($u['tid'] ?? '');
+$feeCaller = function () use ($tid): bool { $L = (sch_rec_get('settings', 'main') ?? [])['feeCallers'] ?? null; return is_array($L) ? in_array($tid, $L, true) : sch_default_fee_caller($tid); };
+if ($role === 'teacher' && $a !== 'bill') sch_fail('Teachers open one child\'s demand bill from Fee calls.', 403);
 
 const DB_MN = [4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December', 1 => 'January', 2 => 'February', 3 => 'March'];
 function db_ord(int $m): int { return ($m + 8) % 12; }
@@ -94,6 +99,8 @@ case 'bill': {
     $sid = (string)($_GET['sid'] ?? ''); $me = null; $single = ($_GET['mode'] ?? '') === 'single';
     foreach ($rows as $r) if ($r['sid'] === $sid) $me = $r;
     if (!$me) sch_fail('No fee card for this child in ' . $ses . '.');
+    if ($role === 'teacher' && !$feeCaller()) { $ok = false; foreach ((array)sch_rec_get('classes', 'main') as $c) if (($c['c'] ?? '') === $me['cls'] && ($c['ct'] ?? '') === $tid) $ok = true;
+        if (!$ok) sch_fail('Only the class teacher of class ' . $me['cls'] . ' (or the school\'s fee caller) can open this bill.', 403); }
     $kids = array_map('db_bill', $single ? [$me] : db_family($me, $rows));
     sch_log($u, 'Demand bill', 'Opened demand bill of ' . $me['name'] . ' (' . $me['cls'] . ')' . (count($kids) > 1 ? ' with ' . (count($kids) - 1) . ' sibling(s)' : ''));
     sch_json(db_head($set, $ses, $D) + ['kids' => $kids]);

@@ -63,4 +63,10 @@ dbc($j['kids'][1]['name'] === 'Riya Tiwari' && $j['kids'][1]['total']['oldDue'] 
 [$c, $j] = dbh('/school/demandbill_api.php?a=bill&sid=db3&mode=single', $CH); $h3 = null; foreach ($j['kids'][0]['heads'] ?? [] as $h) if ($h['m'] === 'April' && $h['name'] === 'Tuition Fee') $h3 = $h;
 dbc($c === 200 && $h3 && $h3['paid'] === 0 && $h3['conc'] === $h3['amt'] - $h3['due'], 'discount-only receipt = concession, not paid: ' . json_encode($h3 ?? $j));
 [$c] = dbh('/school/demandbill_api.php?a=bulk', $K); dbc($c === 403, 'teacher cannot print bulk demand bills');
+// Teachers who call (20 Nov 2026): class teacher → own class's child; fee caller (Rati Ma'am) → any child
+$put('classes', 'main', [['c' => 'PG', 'ct' => 'K'], ['c' => '1st', 'ct' => 'X']]);
+[$c, $j] = dbh('/school/demandbill_api.php?a=bill&sid=db1', $K); dbc($c === 200 && count($j['kids']) === 2, 'class teacher opens the sibling bill of his class child');
+[$c] = dbh('/school/demandbill_api.php?a=bill&sid=db3', $K); dbc($c === 403, 'class teacher cannot open another class child');
+$put('teacher', 'RT', ['name' => "Rati Ma'am"]); $pin('t:RT', 'teacher', 'RT', '4545'); $RT = $login(['role' => 'teacher', 'tid' => 'RT', 'pin' => '4545']);
+[$c] = dbh('/school/demandbill_api.php?a=bill&sid=db3', $RT); dbc($c === 200, "Rati Ma'am (fee caller) opens any child's bill");
 echo "Demand bill flow: OK\n";

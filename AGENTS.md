@@ -1191,3 +1191,8 @@ papers only from photos the owner sends.
 - A WebView cannot share files. `school/android` (Chairman wrapper) now has the Salary app's `SNMSISFiles.shareFile(name, base64, mime)` bridge (PNG / PDF → cache/share → FileProvider `${applicationId}.files` → Android share sheet), `res/xml/share_paths.xml`, `androidx.core`, `android.useAndroidX=true`, versionCode 2 / 1.1. `demandbill.js share()` uses the bridge when present (Chairman 1.1+, Salary 1.2+); an old APK gets a message to install the new app (or use "WhatsApp message").
 - Debug signing is made on each CI run, so phones must UNINSTALL the old Chairman app before installing 1.1 (then log in again).
 - Same-domain download: `school/downloads/snmsis-chairman.apk` (copied from the release on 20 Nov 2026) → https://maakit.in/school/downloads/snmsis-chairman.apk
+
+### Demand bill in the Teacher App (20 Nov 2026, owner: "ye demand bill teachers ke app me bhi add kar dijiye kyoki vo call karte hain to vo bhi share kar paye")
+- teacher.php loads `demandbill.js`; Connect → Fee calls → the bill button (`feeBill`) now opens the picture bill (`DemandBill.open`, siblings together, Sibling / Single switch, Share picture / WhatsApp message). The old text bill is kept as the fallback (`feeBill.text = true`).
+- `demandbill_api.php` allows role `teacher` for `a=bill` only: the class teacher of the child's class, or the school's fee caller (`settings.feeCallers`, default Rati Ma'am via `sch_default_fee_caller`) for any child; `list` / `bulk` stay 403 for teachers.
+- Teacher APK already has `SNMSISFiles.shareImage(name, base64)`; `demandbill.js share()` uses it (no new APK needed). Test: demandbill-flow.php.
