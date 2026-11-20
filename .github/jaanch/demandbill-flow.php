@@ -51,4 +51,11 @@ if ($nov) dbc($k['total']['nowFee'] === 500 && $k['total']['nowTr'] === 500 && $
 dbc($k['total']['received'] === 900 && $k['total']['due'] === 1600, 'cash received 900, session due 1600: ' . json_encode($k['total']));
 dbc($j['kids'][1]['name'] === 'Riya Tiwari' && $j['kids'][1]['total']['oldDue'] === 200, 'sibling with old due');
 [$c] = dbh('/school/demandbill_api.php?a=bill&sid=nope', $CH); dbc($c === 400, 'unknown child');
+// ERP Demand Bill page (20 Nov 2026): single, upto month, bulk sibling-wise / single
+[$c, $j] = dbh('/school/demandbill_api.php?a=bill&sid=db1&mode=single', $CH); dbc($c === 200 && count($j['kids']) === 1, 'single bill = only that child');
+[$c, $j] = dbh('/school/demandbill_api.php?a=bill&sid=db1&upto=4', $CH); dbc($c === 200 && $j['upto'] === 'April' && $j['uptoYear'] === '2026' && $j['kids'][0]['total']['nowTr'] === 0, 'upto April: transport (July) not payable yet: ' . json_encode($j['kids'][0]['total'] ?? $j));
+[$c, $j] = dbh('/school/demandbill_api.php?a=bulk&due=0', $CH); dbc($c === 200 && count($j['bills']) === 2, 'all classes sibling-wise: Raghav + Riya one family, Other Child alone: ' . count($j['bills'] ?? []));
+[$c, $j] = dbh('/school/demandbill_api.php?a=bulk&mode=single&due=0', $CH); dbc($c === 200 && count($j['bills']) === 3, 'all classes single: 3 bills');
+[$c, $j] = dbh('/school/demandbill_api.php?a=bulk&cls=3rd&due=0', $M); dbc($c === 200 && count($j['bills']) === 1 && count($j['bills'][0]) === 2, 'class 3rd sibling-wise brings the PG brother along');
+[$c] = dbh('/school/demandbill_api.php?a=bulk', $K); dbc($c === 403, 'teacher cannot print bulk demand bills');
 echo "Demand bill flow: OK\n";

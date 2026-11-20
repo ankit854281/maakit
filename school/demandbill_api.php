@@ -28,7 +28,9 @@ const DB_MN = [4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August'
 function db_ord(int $m): int { return ($m + 8) % 12; }
 function db_tr(string $h): bool { return (bool)preg_match('/^(Transport|Hostel)$/i', $h); }
 function db_phone(string $p): string { $p = preg_replace('/\D/', '', $p); return strlen($p) >= 10 ? substr($p, -10) : ''; }
-function db_upto(): int { return db_ord((int)date('n')); }   // bills are "payable till this month"
+// bills are "payable till this month" — or till the month chosen on the ERP Demand Bill page (?upto=1..12, 20 Nov 2026)
+$DB_UPTO = (int)($_GET['upto'] ?? 0); if ($DB_UPTO < 1 || $DB_UPTO > 12) $DB_UPTO = (int)date('n');
+function db_upto(): int { return db_ord($GLOBALS['DB_UPTO']); }
 
 /** One child's bill: heads with paid / concession / due, totals, receipts. */
 function db_bill(array $r): array {
@@ -56,6 +58,19 @@ function db_bill(array $r): array {
             'receipts' => array_map(fn($x) => ['no' => $x['no'], 'date' => $x['date'], 'amt' => round($x['received']), 'lines' => array_map(fn($l) => ['head' => str_replace(['Tution', 'Sefety'], ['Tuition', 'Safety'], $l['head']), 'months' => $l['months'], 'amt' => round($l['amt'])], $x['lines'])], $r['receipts'])];
 }
 
+/** The child + brothers / sisters: same 10-digit father, mother or own mobile number. */
+function db_family(array $me, array $rows): array {
+    $ph = array_filter([db_phone($me['fatherMobile']), db_phone($me['phone']), db_phone($me['motherMobile'])]); $out = [$me];
+    if ($ph) foreach ($rows as $r) if ($r['sid'] !== $me['sid'] && array_intersect($ph, array_filter([db_phone($r['fatherMobile']), db_phone($r['phone']), db_phone($r['motherMobile'])]))) $out[] = $r;
+    return $out;
+}
+function db_cls_ord(string $c): int { $i = array_search($c, ['PG', 'LKG', 'UKG', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'], true); return $i === false ? 99 : $i; }
+function db_head(array $set, string $ses, array $D): array {
+    $m = $GLOBALS['DB_UPTO']; $y = (int)substr($ses, 0, 4) + ($m < 4 ? 1 : 0);
+    return ['ok' => true, 'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School'), 'ses' => $ses, 'upto' => DB_MN[$m], 'uptoYear' => (string)$y,
+            'date' => date('d-m-Y'), 'live' => $D['live'], 'asOn' => $D['asOn']];
+}
+
 $set = sch_rec_get('settings', 'main') ?? []; $ses = ofc_ses((string)($set['session'] ?? ''));
 if ($ses === '') sch_fail('The school session is not set (ERP → Settings).');
 $D = fr_dues($db, $ses);
@@ -65,20 +80,36 @@ try {
 switch ($a) {
 case 'list': {
     $out = [];
-    foreach ($rows as $r) { $b = db_bill($r); $out[] = ['sid' => $r['sid'], 'name' => $r['name'], 'adm' => $r['adm'], 'cls' => $r['cls'], 'father' => $r['father'], 'mobile' => db_phone($r['fatherMobile'] ?: $r['phone']), 'due' => $b['total']['now']]; }
+    foreach ($rows as $r) { $b = db_bill($r); $out[] = ['sid' => $r['sid'], 'name' => $r['name'], 'adm' => $r['adm'], 'cls' => $r['cls'], 'section' => (string)$r['section'], 'father' => $r['father'], 'mobile' => db_phone($r['fatherMobile'] ?: $r['phone']), 'due' => $b['total']['now']]; }
     usort($out, fn($x, $y) => $y['due'] <=> $x['due'] ?: strcmp($x['name'], $y['name']));
     sch_json(['ok' => true, 'ses' => $ses, 'upto' => DB_MN[(int)date('n')], 'rows' => $out]);
 }
 case 'bill': {
-    $sid = (string)($_GET['sid'] ?? ''); $me = null;
+    // mode=single → only this child; default (sibling) → this child + brothers/sisters with the same mobile number
+    $sid = (string)($_GET['sid'] ?? ''); $me = null; $single = ($_GET['mode'] ?? '') === 'single';
     foreach ($rows as $r) if ($r['sid'] === $sid) $me = $r;
     if (!$me) sch_fail('No fee card for this child in ' . $ses . '.');
-    $ph = array_filter([db_phone($me['fatherMobile']), db_phone($me['phone']), db_phone($me['motherMobile'])]);
-    $kids = [db_bill($me)];
-    if ($ph) foreach ($rows as $r) if ($r['sid'] !== $sid && array_intersect($ph, array_filter([db_phone($r['fatherMobile']), db_phone($r['phone']), db_phone($r['motherMobile'])]))) $kids[] = db_bill($r);
+    $kids = array_map('db_bill', $single ? [$me] : db_family($me, $rows));
     sch_log($u, 'Demand bill', 'Opened demand bill of ' . $me['name'] . ' (' . $me['cls'] . ')' . (count($kids) > 1 ? ' with ' . (count($kids) - 1) . ' sibling(s)' : ''));
-    sch_json(['ok' => true, 'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School'), 'ses' => $ses, 'upto' => DB_MN[(int)date('n')], 'uptoYear' => date('Y'),
-              'date' => date('d-m-Y'), 'live' => $D['live'], 'asOn' => $D['asOn'], 'kids' => $kids]);
+    sch_json(db_head($set, $ses, $D) + ['kids' => $kids]);
+}
+case 'bulk': {
+    // ERP → Fee Report → Demand Bill (20 Nov 2026): every child of a class (or the whole school) at once, single or sibling-wise.
+    // Sibling-wise: one bill per family — the family is printed once, under the first of its children met in the chosen class.
+    $cls = (string)($_GET['cls'] ?? ''); $sec = (string)($_GET['section'] ?? ''); $single = ($_GET['mode'] ?? '') === 'single'; $dueOnly = ($_GET['due'] ?? '') === '1';
+    $pick = array_values(array_filter($rows, fn($r) => ($cls === '' || $r['cls'] === $cls) && ($sec === '' || strcasecmp((string)$r['section'], $sec) === 0)));
+    usort($pick, fn($x, $y) => db_cls_ord($x['cls']) <=> db_cls_ord($y['cls']) ?: strcmp((string)$x['section'], (string)$y['section']) ?: strcasecmp($x['name'], $y['name']));
+    $done = []; $bills = [];
+    foreach ($pick as $r) {
+        if (isset($done[$r['sid']])) continue;
+        $fam = $single ? [$r] : db_family($r, $rows); foreach ($fam as $f) $done[$f['sid']] = true;
+        $kids = array_map('db_bill', $fam);
+        if ($dueOnly && array_sum(array_map(fn($k) => $k['total']['now'], $kids)) <= 0) continue;
+        $bills[] = $kids;
+    }
+    if (count($bills) > 400) sch_fail('Too many bills at once (' . count($bills) . '). Choose one class.');
+    sch_log($u, 'Demand bill', 'Printed ' . count($bills) . ' demand bill(s) — ' . ($cls === '' ? 'all classes' : 'class ' . $cls . ($sec !== '' ? '-' . $sec : '')) . ($single ? ', single' : ', sibling-wise'));
+    sch_json(db_head($set, $ses, $D) + ['bills' => $bills]);
 }
 default: sch_fail('Unknown action.');
 }
