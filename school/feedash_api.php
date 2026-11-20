@@ -34,6 +34,11 @@ if (!in_array($role, ['principal', 'chairman', 'accountant', 'reception'], true)
 $money = $role !== 'reception';
 
 /** "Generated()Company()" -> ['Company', 'Generated']. Fee tags win by how specific they are. */
+function fd_rows(PDO $db, string $k): array {
+    $q = $db->prepare('SELECT r, d FROM sch_records WHERE k=? AND deleted=0'); $q->execute([$k]); $o = [];
+    foreach ($q as $x) { $d = json_decode((string)$x['d'], true); if (is_array($d)) $o[(string)$x['r']] = $d; }
+    return $o;
+}
 function fd_split_tag(string $raw): array {
     preg_match_all('/([^()]+)\(\s*\)/', $raw, $m); $parts = array_values(array_filter(array_map('trim', $m[1] ?: [trim($raw)])));
     $isPen = fn($t) => (bool)preg_match('/\bPEN\b|^Generated$/i', $t);
@@ -79,7 +84,9 @@ case 'data': {
     usort($msgs, fn($x, $y) => ($y['at'] ?? 0) <=> ($x['at'] ?? 0));
     sch_json(['ok' => true, 'ses' => $ses, 'sessions' => $sessions, 'today' => date('Y-m-d'), 'role' => $role, 'money' => $money,
         'canCall' => in_array($role, ['principal', 'accountant', 'reception'], true), 'outcomes' => ['Promised to pay', 'Not answered', 'Switched off', 'Call back later', 'Will visit school', 'Already paid', 'Wrong number'],
-        'school' => (string)($set['school'] ?? ''), 'live' => $dues['live'], 'asOn' => $dues['asOn'], 'dues' => $dues['rows'], 'receipts' => $rc, 'calls' => array_slice($calls, 0, 4000), 'msgs' => array_slice($msgs, 0, 3000)]);
+        'school' => (string)($set['school'] ?? ''), 'live' => $dues['live'], 'asOn' => $dues['asOn'], 'dues' => $dues['rows'], 'receipts' => $rc, 'calls' => array_slice($calls, 0, 4000), 'msgs' => array_slice($msgs, 0, 3000),
+        // Chairman calls (20 Nov 2026): the Principal's daily pick of 3 families (chPick, r = date) and children marked "fee not updated" (chBad, r = sid)
+        'picks' => fd_rows($db, 'chPick'), 'bad' => fd_rows($db, 'chBad')]);
 }
 case 'setTag': {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
@@ -94,6 +101,38 @@ case 'setTag': {
     sch_rec_put('fdTag', $sid, $rec, sch_uid_of($u));
     sch_log($u, 'Fee Tag', 'Tag of ' . ($s['name'] ?? $sid) . ': ' . ($tag !== '' ? $tag : '(none)') . ($rec['fixed'] ? ' · fixed ₹' . number_format($rec['fixed'] / 100, 2) . '/month' : ''));
     sch_json(['ok' => true, 'tag' => $rec]);
+}
+case 'chPick': {
+    // Principal picks today's families for the Chairman to call (owner, 20 Nov 2026: "jin three parents ka name select karke du
+    // vo fir dobara list me na aaye — daily teen bachcho ka name"). {date, fams:[[sid,…],…]} — up to 3 families a day; a date can be re-saved.
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
+    if ($role !== 'principal') sch_fail('Only the Principal picks the Chairman\'s calls.', 403);
+    $in = json_decode((string)file_get_contents('php://input', false, null, 0, 20000), true); if (!is_array($in)) sch_fail('Bad request.');
+    $date = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date < date('Y-m-d', strtotime('-1 day'))) sch_fail('Choose today or a later date.');
+    $fams = []; $seen = [];
+    foreach (array_slice((array)($in['fams'] ?? []), 0, 10) as $f) {
+        $ids = array_values(array_filter(array_map('strval', array_slice((array)$f, 0, 8)), fn($x) => !isset($seen[$x]) && (bool)sch_rec_get('student', $x)));
+        if (!$ids) continue; foreach ($ids as $x) $seen[$x] = true; $fams[] = $ids; if (count($fams) === 3) break;
+    }
+    if (!$fams) { sch_rec_del('chPick', $date, sch_uid_of($u)); sch_log($u, 'Chairman calls', 'Cleared the pick of ' . $date); sch_json(['ok' => true, 'pick' => null]); }
+    $rec = ['date' => $date, 'fams' => $fams, 'by' => $u['label'] ?? 'Principal', 'at' => sch_now_ms()];
+    sch_rec_put('chPick', $date, $rec, sch_uid_of($u));
+    $names = array_map(fn($f) => (sch_rec_get('student', $f[0])['name'] ?? $f[0]), $fams);
+    sch_log($u, 'Chairman calls', 'Families for ' . $date . ': ' . implode(', ', $names));
+    sch_json(['ok' => true, 'pick' => $rec]);
+}
+case 'chBad': {
+    // Principal marks a child "fee not updated properly" (or clears it) — kept out of the Chairman's calls until fixed.
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
+    if ($role !== 'principal') sch_fail('Only the Principal can mark this.', 403);
+    $in = json_decode((string)file_get_contents('php://input', false, null, 0, 20000), true); if (!is_array($in)) sch_fail('Bad request.');
+    $sid = (string)($in['sid'] ?? ''); $s = sch_rec_get('student', $sid); if (!$s) sch_fail('Student not found.');
+    if (empty($in['on'])) { sch_rec_del('chBad', $sid, sch_uid_of($u)); sch_log($u, 'Chairman calls', 'Fee fixed / unmarked: ' . ($s['name'] ?? $sid)); sch_json(['ok' => true, 'bad' => null]); }
+    $note = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['note'] ?? ''))), 0, 200);
+    $rec = ['sid' => $sid, 'note' => $note, 'by' => $u['label'] ?? 'Principal', 'at' => sch_now_ms(), 'date' => date('Y-m-d')];
+    sch_rec_put('chBad', $sid, $rec, sch_uid_of($u));
+    sch_log($u, 'Chairman calls', 'Fee not updated: ' . ($s['name'] ?? $sid) . ($note !== '' ? ' — ' . $note : ''));
+    sch_json(['ok' => true, 'bad' => $rec]);
 }
 case 'msgLog': {
     // The app opens WhatsApp with the message for each parent; this keeps a record of who was sent what, and when.

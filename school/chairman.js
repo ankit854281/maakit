@@ -1032,7 +1032,7 @@ function goTo(n, sub) {
   S.prof = null; S.room = null; S.q = ''; S.sheet = null;
   if (n === 'school') { S.tab = sub === 'teach' ? 4 : 2; S.sv = sub || 'classes'; }
   else if (n === 'students') S.tab = 1;
-  else { S.tab = 3; S.fs = { month: 'month', dues: 'dues', calls: 'calls' }[n] || 'sum'; }
+  else { S.tab = 3; S.fs = { month: 'month', dues: 'dues', calls: 'calls', my: 'my' }[n] || 'sum'; }
   render(); const sc = $('sc'); if (sc) sc.scrollTop = 0;
 }
 const segs = (key, list, cls) => `<div class="seg ${cls || ''}">${list.map(([v, l]) => `<button class="${(S[key] || list[0][0]) === v ? 'on' : ''}" onclick="S.${key}='${v}';MQ=null;render()">${l}</button>`).join('')}</div>`;
@@ -1198,6 +1198,8 @@ function homeBody() {
     const nx = SC.exams.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).find(e => (e.to || e.date) >= SC.today);
     if (nx) A.push(['', `${nx.name} ${nx.date <= SC.today ? 'is running' : 'in ' + Math.round((new Date(nx.date) - new Date(SC.today)) / 864e5) + ' days'}`, dmy(nx.date) + (nx.to ? ' to ' + dmy(nx.to) : ''), "goTo('school','exams')"]);
   }
+  { const TP = pickFams(D.today); if (TP.length) A.unshift(['', `Today's calls: ${TP.length} famil${TP.length > 1 ? 'ies' : 'y'}`, TP.map(K => K[0].father || K[0].name).join(', '), "S.mv='today';goTo('my')"]);
+    else if (isP()) A.unshift(['warn', "Pick today's 3 families for the Chairman", 'Fees → Chairman calls', "S.mv='pick';goTo('my')"]); }
   const L = callLists(t.def);
   if (L.broken.length) A.push(['bad', `${L.broken.length} fee promises broken`, rsS(sum(L.broken, x => x.dueNow)) + ' due', "S.list='broken';S.cmode='calls';goTo('calls')"]);
   if (L.today.length) A.push(['', `${L.today.length} parents to call today`, 'they gave today’s date', "S.list='today';S.cmode='calls';goTo('calls')"]);
@@ -1427,48 +1429,95 @@ function staffBody() {
 // Staff salary (12 Nov 2026): salary only for the Chairman and the Manager. "Open Salary app" carries this login over
 // (manager.php?from=ch — no second PIN). The Manager's name and PIN are set right here (only the Chairman can).
 // Fee demand bill (13 Nov 2026): any child → the 12 Nov bill design as a picture to share with the parent (demandbill.js)
-// ---- Chairman's own calls (owner, 20 Nov 2026: "chairman sir calling ke har class 3 bachcho ka name chahiye jinhe vo khud call
-// karenge — usme unka pura student detail aur sibling ke sath pura hisab ho"). Every class: the 3 families with the biggest dues
-// (family = same 10-digit mobile, siblings in any class), a family is listed once, under the first class it is met in (PG → 12th).
-// Each child: details, fee / transport due till now, unpaid months, last receipt, last call; family total; Call (saves what was
-// discussed, as every call here), Sibling demand bill, profile.
-function myPick() {
-  const fam = {}; D.all.forEach(x => { const k = x.phoneNo || x.sid; (fam[k] = fam[k] || []).push(x); });
-  const fd = k => sum(fam[k], x => x.dueNow), used = new Set(), out = [];
-  CLASSES.forEach(c => {
-    const C = D.all.filter(x => x.cls === c && x.dueNow > 0).map(x => x.phoneNo || x.sid).filter((k, i, a) => a.indexOf(k) === i && fd(k) >= 500).sort((a, b) => fd(b) - fd(a));
-    const L = []; for (const k of C) { if (used.has(k)) continue; used.add(k); L.push({ k, kids: fam[k].slice().sort((a, b) => (a.cls === c ? -1 : 0) - (b.cls === c ? -1 : 0) || CLASSES.indexOf(a.cls) - CLASSES.indexOf(b.cls)), due: fd(k) }); if (L.length === 3) break; }
-    if (L.length) out.push({ c, L });
-  });
-  return out;
-}
+// ---- Chairman's own calls (owner, 20 Nov 2026). First version: 3 biggest families per class. Changed the same day ("jinko mai
+// select karke save kardu unka record fee not update proper me show hone lage, aur jin three parents ka name select karke du vo
+// fir dobara list me naa aye — aise daily teen bachcho ka name dunga, usi se vo baat karenge"):
+//  • the PRINCIPAL picks up to 3 families a day (feedash_api.php?a=chPick, record chPick r=date) — the Chairman sees only those;
+//  • a family once picked never comes back in the pick list; • a child marked "fee not updated" (a=chBad, record chBad r=sid)
+//    goes to its own list and his family stays out of the pick list until the Principal clears it.
+// Family = same 10-digit mobile (siblings in any class). Numbers = the Fee Control Room's.
+let PSEL = null;
+function famMap() { const f = {}; D.all.forEach(x => { const k = x.phoneNo || x.sid; (f[k] = f[k] || []).push(x); }); Object.values(f).forEach(L => L.sort((p, q) => CLASSES.indexOf(p.cls) - CLASSES.indexOf(q.cls))); return f; }
+const famKey = sid => { const x = D.all.find(z => z.sid === sid); return x ? (x.phoneNo || x.sid) : sid; };
+const isP = () => D.role === 'principal';
 function kidDue(x) { let f = 0, t = 0; x.mon.forEach((y, i) => { if (i <= D.idx) { f += Math.max(0, y.fd - y.fp); t += Math.max(0, y.td - y.tp); } }); return { f: f + x.old, t }; }
+function famCard(kids, n, opt) {
+  opt = opt || {}; const a = kids[0], due = sum(kids, x => x.dueNow), called = kids.some(x => x.last && x.last.date >= (opt.since || D.today));
+  return `<section class="card myc"><div class="mych"><span class="myn">${n}</span><div><b>${esc(a.father || a.name)}</b><small>${kids.length > 1 ? kids.length + ' children' : '1 child'}${a.phoneNo ? ' · ' + esc(a.phoneNo) : ''}</small></div><em>${rs(due)}</em></div>
+    ${called ? `<p class="note grn" style="margin:0 0 6px">✓ Called${opt.since ? ' on ' + dmy(kids.map(x => x.last && x.last.date || '').sort().pop()) : ' today'} · ${esc((kids.find(x => x.last) || {}).last.outcome || '')}</p>` : ''}
+    ${kids.map(x => { const d = kidDue(x), bad = D.bad && D.bad[x.sid]; return `<div class="myk${bad ? ' bad' : ''}">
+      <div class="mykh" onclick="openStu('${esc(x.sid)}')"><b>${esc(x.name)}</b><span>Class ${esc(x.cls)}${x.section ? '-' + esc(x.section) : ''}${x.adm ? ' · Adm ' + esc(x.adm) : ''}</span></div>
+      ${bad ? '<p class="note red" style="margin:-4px 0 6px">⚠ Fee not updated properly</p>' : ''}
+      <div class="dlx" onclick="openStu('${esc(x.sid)}')"><div><span>Father</span><b>${esc(x.father || '—')}</b></div><div><span>Mother</span><b>${esc(x.mother || '—')}</b></div>
+        <div><span>Mobile</span><b>${esc([x.fatherMobile || x.phone, x.motherMobile].filter(Boolean).join(', ') || '—')}</b></div><div><span>Tag</span><b>${esc(x.tagName)}</b></div>
+        <div><span>Fee due</span><b class="red">${rs(d.f)}</b></div><div><span>Transport due</span><b class="red">${rs(d.t)}</b></div>
+        <div><span>Unpaid months</span><b>${esc(x.unpaid.join(', ') || (x.old ? 'old dues' : '—'))}</b></div><div><span>Old due</span><b>${x.old ? rs(x.old) : '—'}</b></div>
+        <div><span>Last paid</span><b>${x.lastPaid ? dmy(x.lastPaid.date) + ' · ' + rs(x.lastPaid.amt) : 'Nothing this session'}</b></div>
+        <div><span>Last call</span><b>${x.last ? dmy(x.last.date) + ' · ' + esc(x.last.outcome) + (x.promise ? ' · date ' + dmy(x.promise) : '') : 'Not called yet'}</b></div></div>
+      <div class="myt"><span>Payable till now</span><b>${rs(x.dueNow)}</b></div>
+      ${isP() && !opt.noMark ? `<button class="mybad" onclick="markBad('${esc(x.sid)}',${bad ? 0 : 1})">${bad ? '✓ Fee is fixed now — remove mark' : '⚠ Fee not updated properly'}</button>` : ''}</div>`; }).join('')}
+    <div class="myf"><span>Family total${kids.length > 1 ? ' (' + kids.length + ' children)' : ''}</span><b>${rs(due)}</b></div>
+    <div class="mya">${a.phoneNo ? `<a class="cta" href="tel:+91${a.phoneNo}" onclick="callNow('${esc(a.sid)}')">${ic('phone', 16)} Call</a>` : '<span class="note">No mobile number</span>'}
+      <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get('sch_token'))">📄 Demand bill</button>
+      <button class="cta lt" onclick="noteCall('${esc(a.sid)}')">✍ Note</button></div></section>`;
+}
+function pickFams(date) {   // families of a saved day, with today's siblings
+  const P = (D.picks || {})[date]; if (!P) return []; const F = famMap();
+  return P.fams.map(ids => { const k = famKey(ids[0]); return F[k] || ids.map(id => D.all.find(z => z.sid === id)).filter(Boolean); }).filter(L => L.length);
+}
 function myCalls() {
-  const P = myPick(), fams = sum(P, g => g.L.length), tot = sum(P, g => sum(g.L, f => f.due)), done = P.reduce((n, g) => n + g.L.filter(f => f.kids.some(x => x.last && x.last.date === D.today)).length, 0);
-  let h = `<div class="kp">${k('Families to call', String(fams), `3 per class · ${P.length} classes`, 'ac')}${k('Their dues', rsS(tot), done ? `${done} called today` : 'not called today yet', 'bad')}</div>
-    <p class="note" style="margin:8px 2px 4px">Every class: the 3 families with the biggest fee due (brothers / sisters with the same mobile counted together). Call → write what was discussed → it is saved. "Demand bill" = the sibling bill to send on WhatsApp.</p>`;
-  P.forEach(g => {
-    h += `<h5 class="sh" style="margin-top:14px">Class ${esc(g.c)}</h5>`;
-    g.L.forEach((f, i) => {
-      const a = f.kids[0], called = f.kids.some(x => x.last && x.last.date === D.today);
-      h += `<section class="card myc"><div class="mych"><span class="myn">${i + 1}</span><div><b>${esc(a.father || a.name)}</b><small>${f.kids.length > 1 ? f.kids.length + ' children' : '1 child'}${a.phoneNo ? ' · ' + esc(a.phoneNo) : ''}</small></div><em>${rs(f.due)}</em></div>
-        ${called ? '<p class="note grn" style="margin:0 0 6px">✓ Called today</p>' : ''}
-        ${f.kids.map(x => { const d = kidDue(x); return `<div class="myk" onclick="openStu('${esc(x.sid)}')">
-          <div class="mykh"><b>${esc(x.name)}</b><span>Class ${esc(x.cls)}${x.section ? '-' + esc(x.section) : ''}${x.adm ? ' · Adm ' + esc(x.adm) : ''}</span></div>
-          <div class="dlx"><div><span>Father</span><b>${esc(x.father || '—')}</b></div><div><span>Mother</span><b>${esc(x.mother || '—')}</b></div>
-            <div><span>Mobile</span><b>${esc([x.fatherMobile || x.phone, x.motherMobile].filter(Boolean).join(', ') || '—')}</b></div><div><span>Tag</span><b>${esc(x.tagName)}</b></div>
-            <div><span>Fee due</span><b class="red">${rs(d.f)}</b></div><div><span>Transport due</span><b class="red">${rs(d.t)}</b></div>
-            <div><span>Unpaid months</span><b>${esc(x.unpaid.join(', ') || (x.old ? 'old dues' : '—'))}</b></div><div><span>Old due</span><b>${x.old ? rs(x.old) : '—'}</b></div>
-            <div><span>Last paid</span><b>${x.lastPaid ? dmy(x.lastPaid.date) + ' · ' + rs(x.lastPaid.amt) : 'Nothing this session'}</b></div>
-            <div><span>Last call</span><b>${x.last ? dmy(x.last.date) + ' · ' + esc(x.last.outcome) + (x.promise ? ' · date ' + dmy(x.promise) : '') : 'Not called yet'}</b></div></div>
-          <div class="myt"><span>Payable till now</span><b>${rs(x.dueNow)}</b></div></div>`; }).join('')}
-        <div class="myf"><span>Family total${f.kids.length > 1 ? ' (' + f.kids.length + ' children)' : ''}</span><b>${rs(f.due)}</b></div>
-        <div class="mya">${a.phoneNo ? `<a class="cta" href="tel:+91${a.phoneNo}" onclick="callNow('${esc(a.sid)}')">${ic('phone', 16)} Call</a>` : '<span class="note">No mobile number</span>'}
-          <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get('sch_token'))">📄 Demand bill</button>
-          <button class="cta lt" onclick="noteCall('${esc(a.sid)}')">✍ Note</button></div></section>`;
-    });
-  });
-  return P.length ? h : card('Chairman calls', '<p class="empty">No family with fee due.</p>');
+  if (!PSEL) { PSEL = new Set(pickFams(D.today).map(L => L[0].phoneNo || L[0].sid)); }
+  const badN = Object.keys(D.bad || {}).length, views = isP() ? [['today', "Today's 3"], ['pick', 'Pick families'], ['bad', 'Fee not updated · ' + badN], ['hist', 'Earlier days']] : [['today', "Today's calls"], ['hist', 'Earlier days'], ['bad', 'Fee not updated · ' + badN]];
+  const mv = views.some(v => v[0] === S.mv) ? S.mv : 'today';
+  return `<div class="chips">${views.map(([v, l]) => `<button class="chip${mv === v ? ' on' : ''}" onclick="S.mv='${v}';render()">${esc(l)}</button>`).join('')}</div>` + ({ today: myToday, pick: myPickView, bad: myBad, hist: myHist }[mv])();
+}
+function myToday() {
+  const L = pickFams(D.today), P = (D.picks || {})[D.today];
+  if (!L.length) return card("Today's calls", `<p class="empty">${isP() ? 'You have not picked today\'s families yet.' : 'Today\'s 3 families are not given yet.'}</p>${isP() ? `<button class="cta" onclick="S.mv='pick';render()">Pick today's families</button>` : ''}`);
+  return `<p class="note" style="margin:6px 2px">${L.length} famil${L.length > 1 ? 'ies' : 'y'} for ${dmy(D.today)} · picked by ${esc(P.by || 'Principal')}. Call → write what was discussed → Save.</p>` + L.map((K, i) => famCard(K, i + 1)).join('');
+}
+function myPickView() {
+  const F = famMap(), used = new Set(), bad = new Set();
+  Object.entries(D.picks || {}).forEach(([d, P]) => { if (d !== D.today) P.fams.forEach(ids => used.add(famKey(ids[0]))); });
+  Object.keys(D.bad || {}).forEach(sid => bad.add(famKey(sid)));
+  const q = (S.pq || '').toLowerCase().trim();
+  let C = Object.entries(F).filter(([k, L]) => !used.has(k) && !bad.has(k) && sum(L, x => x.dueNow) >= 500)
+    .filter(([k, L]) => !q || L.some(x => (x.name + ' ' + x.father + ' ' + x.cls + ' ' + (x.phoneNo || '')).toLowerCase().includes(q)))
+    .sort((p, r) => (PSEL.has(r[0]) - PSEL.has(p[0])) || sum(r[1], x => x.dueNow) - sum(p[1], x => x.dueNow));
+  const shown = C.slice(0, 60);
+  return `<div class="card"><div class="pkb"><b>${PSEL.size}/3 selected</b><button class="cta" style="height:40px;width:auto;padding:0 18px" ${PSEL.size ? '' : 'disabled'} onclick="savePick()">Save today's ${PSEL.size || ''}</button></div>
+      <p class="note" style="margin:6px 0 8px">Tick up to 3 families → Save. The Chairman's app shows only these today. A family once picked does not come in this list again. "Fee not updated" puts a child in its own list.</p>
+      <label class="sbox" style="background:var(--bg)">${ic('search', 16)}<input id="pq" value="${esc(S.pq || '')}" placeholder="Search name, father, class or mobile" oninput="S.pq=this.value;render();refocus('pq')"></label></div>
+    <p class="note" style="margin:8px 2px">${C.length} families with fee due (not picked before) · biggest dues first${C.length > 60 ? ' · showing 60, search for others' : ''}</p>
+    ${shown.map(([k, L]) => { const on = PSEL.has(k); return `<div class="card pkr${on ? ' on' : ''}">
+      <button class="pkc" onclick="togPick('${esc(k)}')" aria-label="Select">${on ? '✓' : ''}</button>
+      <div class="pkt" onclick="togPick('${esc(k)}')"><b>${esc(L[0].father || L[0].name)}</b><small>${L.map(x => esc(x.name) + ' (' + esc(x.cls) + ')').join(', ')}</small>
+        <small>${L[0].last ? 'Last call ' + dmy(L[0].last.date) + ': ' + esc(L[0].last.outcome) : 'Not called yet'}${L[0].lastPaid ? ' · paid ' + dmy(L[0].lastPaid.date) : ' · nothing paid this session'}</small></div>
+      <div class="pkd"><b>${rs(sum(L, x => x.dueNow))}</b>${L.map(x => `<button onclick="markBad('${esc(x.sid)}',1)" title="${esc(x.name)}">⚠ ${esc(x.name.split(' ')[0])}</button>`).join('')}</div></div>`; }).join('') || '<p class="empty">Nobody left.</p>'}`;
+}
+function togPick(k) { if (PSEL.has(k)) PSEL.delete(k); else { if (PSEL.size >= 3) return toast('Only 3 families a day. Untick one first.'); PSEL.add(k); } render(); }
+async function savePick() {
+  const F = famMap(), fams = [...PSEL].map(k => (F[k] || []).map(x => x.sid)).filter(L => L.length);
+  try { const d = await api('feedash_api.php?a=chPick', { date: D.today, fams }); D.picks = D.picks || {}; if (d.pick) D.picks[D.today] = d.pick; else delete D.picks[D.today]; S.mv = 'today'; toast("Saved — the Chairman's app shows these " + fams.length + ' today.'); render(); }
+  catch (e) { toast(e.message); }
+}
+async function markBad(sid, on) {
+  try { const d = await api('feedash_api.php?a=chBad', { sid, on: on ? 1 : 0, note: '' }); D.bad = D.bad || {}; if (d.bad) D.bad[sid] = d.bad; else delete D.bad[sid];
+    if (on) { const k = famKey(sid); PSEL.delete(k); } toast(on ? 'Marked: fee not updated properly.' : 'Mark removed.'); render(); }
+  catch (e) { toast(e.message); }
+}
+function myBad() {
+  const B = Object.values(D.bad || {}).sort((a, b) => (b.at || 0) - (a.at || 0));
+  if (!B.length) return card('Fee not updated', '<p class="empty">No child is marked.</p>');
+  return `<p class="note" style="margin:6px 2px">${B.length} child${B.length > 1 ? 'ren' : ''} whose fee record is not updated properly. They stay out of the calls until ${isP() ? 'you remove the mark' : 'the Principal fixes them'}.</p>` +
+    card('Fee not updated · ' + B.length, `<div class="ppl">${B.map(b => { const x = D.all.find(z => z.sid === b.sid); if (!x) return ''; return `<div class="p"><div class="ava" onclick="openStu('${esc(x.sid)}')">${esc(x.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div>
+      <div class="t" onclick="openStu('${esc(x.sid)}')" style="cursor:pointer"><b>${esc(x.name)}</b><small>${esc(x.cls)} · ${esc(x.father || '')} · ${esc(x.phoneNo || '')}</small><small>Marked ${dmy(b.date)} by ${esc(b.by || '')}${b.note ? ' · ' + esc(b.note) : ''}</small></div>
+      <div class="r"><b>${rs(x.dueNow)}</b>${isP() ? `<div class="acts"><button class="mybad sm" onclick="markBad('${esc(x.sid)}',0)">✓ Fixed</button></div>` : ''}</div></div>`; }).join('')}</div>`);
+}
+function myHist() {
+  const days = Object.keys(D.picks || {}).filter(d => d < D.today).sort().reverse();
+  if (!days.length) return card('Earlier days', '<p class="empty">No earlier day yet.</p>');
+  return days.map(d => { const L = pickFams(d); return `<h5 class="sh" style="margin-top:12px">${dmy(d)} · ${L.length} famil${L.length > 1 ? 'ies' : 'y'}</h5>` + L.map((K, i) => famCard(K, i + 1, { since: d, noMark: true })).join(''); }).join('');
 }
 function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get('sch_token'), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {
