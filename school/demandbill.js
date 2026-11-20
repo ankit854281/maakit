@@ -143,7 +143,7 @@
       (B.kids.length > 1 ? `\n\n*Family total: ${rs(fam)}*` : '') + `\n\nKripya jaldi se jaldi school office me jama karein aur receipt zaroor lein. Dhanyavaad 🙏`;
   }
   // ---------------- sheet ----------------
-  let CUR = null, URL_ = null;
+  let CUR = null, URL_ = null, OPEN = null;
   function sheet(html) {
     let el = document.getElementById('dbSheet'); if (!el) { el = document.createElement('div'); el.id = 'dbSheet'; document.body.appendChild(el); }
     el.innerHTML = `<div class="db-bg" onclick="if(event.target===this)DemandBill.close()"><div class="db-in">${html}</div></div>`;
@@ -158,12 +158,15 @@
   #dbSheet .db-sum{font-size:13px;color:#445;margin:6px 0}#dbSheet .db-msg{padding:20px;text-align:center;color:#445}
   .db-pick{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eef1f4;background:#fff;padding:10px 4px;font:inherit;cursor:pointer}.db-pick b{display:block;font-size:14px}.db-pick small{color:#667;font-size:12px}.db-pick em{float:right;font-style:normal;font-weight:700;color:#B30000}`;
   document.head.appendChild(st);
-  async function open(sid, tok) {
+  async function open(sid, tok, mode) {
+    // mode 'single' = only this child; default = sibling bill (brothers / sisters with the same mobile in one bill)
+    OPEN = { sid, tok, mode: mode === 'single' ? 'single' : 'sib' };
     sheet('<div class="db-msg">Making the demand bill…</div>');
-    try { CUR = await get('demandbill_api.php?a=bill&sid=' + encodeURIComponent(sid), tok); } catch (e) { return sheet(`<div class="db-msg">${esc(e.message)}</div><button class="l" style="width:100%" onclick="DemandBill.close()">Close</button>`); }
+    try { CUR = await get('demandbill_api.php?a=bill&sid=' + encodeURIComponent(sid) + (OPEN.mode === 'single' ? '&mode=single' : ''), tok); } catch (e) { return sheet(`<div class="db-msg">${esc(e.message)}</div><button class="l" style="width:100%" onclick="DemandBill.close()">Close</button>`); }
     const c = draw(CUR); URL_ = c.toDataURL('image/png'); CUR._canvas = c;
     const fam = CUR.kids.reduce((a, k) => a + k.total.now, 0), wv = /; wv\)/.test(navigator.userAgent);
     sheet(`<div class="db-top"><b>Demand bill · ${esc(CUR.kids[0].name)}</b><button class="l" onclick="DemandBill.close()">Close</button></div>
+      <div class="db-acts"><button class="${OPEN.mode === 'sib' ? 'y' : 'l'}" onclick="DemandBill.mode('sib')">👨‍👩‍👧 Sibling bill</button><button class="${OPEN.mode === 'single' ? 'y' : 'l'}" onclick="DemandBill.mode('single')">👤 Single bill</button></div>
       <p class="db-sum">${CUR.kids.length > 1 ? CUR.kids.length + ' children (same mobile) · ' : ''}Payable till ${esc(CUR.upto)}: <b>${rs(fam)}</b></p>
       <div class="db-acts"><button class="g" onclick="DemandBill.share()">📤 Share bill picture</button><a class="db-b y" target="_blank" href="https://wa.me/${(CUR.kids[0].mobile.match(/\d{10}/) || [''])[0] ? '91' + CUR.kids[0].mobile.match(/\d{10}/)[0] : ''}?text=${encodeURIComponent(waText(CUR))}">💬 WhatsApp message</a>
         ${wv ? '' : '<button class="l" onclick="DemandBill.download()">⬇ Download picture</button><button class="l" onclick="DemandBill.print()">🖨 Print</button>'}</div>
@@ -191,5 +194,5 @@
       <p class="db-sum">Session ${esc(LIST.ses)} · amount = payable till ${esc(LIST.upto)} · highest first</p><div id="dbList"></div>`;
     DemandBill._f = draw2; draw2('');
   }
-  window.DemandBill = { open, share, download, print, picker, close: () => { const el = document.getElementById('dbSheet'); if (el) el.innerHTML = ''; }, draw, waText };
+  window.DemandBill = { open, mode: m => OPEN && open(OPEN.sid, OPEN.tok, m), share, download, print, picker, close: () => { const el = document.getElementById('dbSheet'); if (el) el.innerHTML = ''; }, draw, waText };
 })();
