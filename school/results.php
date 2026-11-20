@@ -105,6 +105,29 @@ table.m td.s{font-weight:600}
 .badges span i{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 3px;box-sizing:border-box;border-radius:10px;background:linear-gradient(135deg,#14294A,#1F4A8A);color:#F6E3A1;font-size:10px;font-weight:700;font-style:normal}
 .tgt h5{margin:0 0 6px;font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#14294A}.tgt h5 small{font-weight:400;letter-spacing:.2px;text-transform:none;color:#5a6b80;font-size:10.5px}
 .letter:before{content:"\201C";font-family:Georgia,serif;font-size:44px;line-height:1;top:2px;color:#D9B45A}
+
+/* ---- half-page slip (2 per A4) ---- */
+.hs{width:200mm;height:139mm;box-sizing:border-box;border:1.2px solid #D9B45A;border-radius:8px;padding:0 4mm 2.5mm;overflow:hidden;font-family:Poppins,Arial,sans-serif;font-size:10px;color:#1f2a37;background:#fff;position:relative;page-break-inside:avoid}
+.hs:before{content:"";position:absolute;inset:30mm 0 0;background:url(img/snmsis-logo.png) no-repeat center 40%/62mm;opacity:.04}.hs>*{position:relative}
+.hh{display:flex;align-items:center;gap:8px;margin:0 -4mm 2mm;padding:2mm 4mm;color:#fff;background:linear-gradient(120deg,#0E1F3D,#1F4A8A 70%,#14294A);border-bottom:2px solid #D9B45A}
+.hh img{width:9mm;height:9mm;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #D9B45A}.hh div{flex:1}.hh div b{display:block;font:700 13px Georgia,serif;letter-spacing:.6px}.hh div span{font-size:8px;color:#DDE6F0}
+.hh i{font-style:normal;text-align:right;font-size:7.5px;font-weight:700;color:#F6E3A1;line-height:1.3}.hh i em{display:block;font-style:normal;font-size:9.5px;color:#14294A;background:linear-gradient(90deg,#D9B45A,#F6E3A1);border-radius:8px;padding:1px 8px;margin-top:2px;letter-spacing:1.5px}
+.hi{display:flex;align-items:center;gap:7px;background:linear-gradient(95deg,#F2F6FC,#FFF9EA);border:1px solid #E8DFC6;border-radius:7px;padding:1.4mm 2.5mm;margin-bottom:1.8mm}
+.hp{flex:0 0 12mm;height:12mm;border-radius:50%;overflow:hidden;border:2px solid #fff;box-shadow:0 0 0 2px #D9B45A;background:#E9EEF5;display:flex;align-items:center;justify-content:center}.hp img{width:100%;height:100%;object-fit:cover}.hp span{font:700 14px Georgia,serif;color:#14294A}
+.hw{flex:1;display:flex;flex-direction:column;gap:1px;font-size:9.5px;color:#4a5565}.hw>b{font:700 16px Georgia,serif;color:#14294A}
+.hr{flex:0 0 12.5mm;height:12.5mm;border-radius:50%;display:flex;align-items:center;justify-content:center}.hr div{width:9.8mm;height:9.8mm;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}.hr b{font-size:9.5px;color:#14294A}.hr small{font-size:7px;font-weight:700;color:#555}
+.hk{flex:0 0 13mm;text-align:center;border:1.5px solid #D9B45A;border-radius:6px;padding:1px 0;background:#fff;line-height:1.1}.hk b{display:block;font-size:15px;color:#7A1F2B}.hk small{font-size:7px;color:#555}
+.hb{display:grid;grid-template-columns:1.18fr 1fr;gap:2.5mm}
+table.ht{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #C9D3E0;border-radius:6px;overflow:hidden;font-size:10px}table.ht th{background:#14294A;color:#fff;font-size:8.5px;font-weight:600;padding:3px 2px;line-height:1.15}table.ht th small{color:#F6E3A1}
+table.ht td{padding:3.2px 3px;text-align:center;border-bottom:1px solid #E4EAF2}table.ht tr:nth-child(odd) td{background:#F7F9FC}table.ht td.s{text-align:left;font-weight:600;color:#14294A}table.ht tr.t td{background:#FCEBB6!important;font-weight:700}
+table.ht .gb{font-size:9px;padding:0 5px;min-width:20px}
+.htg{margin-top:2mm;background:#EEF4FD;border:1px solid #C8DCF5;border-radius:6px;padding:1.6mm 2.2mm;font-size:9.2px;line-height:1.35}.htg b{color:#1F4A8A}
+.hl{font:9.8px/1.42 Georgia,serif;color:#3a3226;background:linear-gradient(90deg,#FFF6E0,#FFFDF7);border-left:3px solid #7A1F2B;border-radius:6px;padding:1.4mm 2mm}.hl em{display:block;text-align:right;font-style:italic;color:#7A1F2B;font-weight:700}
+.hbd{display:flex;flex-wrap:wrap;gap:3px;margin:1.4mm 0}.hbd span{display:inline-flex;align-items:center;gap:3px;border:1px solid #E2CF95;border-radius:9px;padding:1px 7px 1px 1px;font-size:8.3px;font-weight:600;color:#14294A;background:#fff}.hbd i{display:inline-flex;align-items:center;justify-content:center;min-width:12px;height:12px;padding:0 2px;border-radius:6px;background:#14294A;color:#F6E3A1;font-size:6.5px;font-style:normal}
+.hc{border:1px solid #E1E6EE;border-radius:6px;padding:1.4mm 2.2mm;font-size:9px}.hc>b{display:block;font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:#14294A;margin-bottom:1px}.hc div{display:flex;align-items:center;gap:5px;margin:2.5px 0}.hc span{flex:0 0 22mm;color:#4a5565}.hc u{flex:1;height:6px;background:#EEF1F5;border-radius:3px;overflow:hidden}.hc u i{display:block;height:100%}.hc em{flex:0 0 12px;height:11px;border-radius:3px;color:#fff;font-style:normal;font-weight:700;font-size:7.5px;text-align:center;line-height:11px}
+.hm{margin-top:1.8mm;font-size:9.2px;line-height:1.35;background:#FFFCF3;border-left:3px solid #D9B45A;border-radius:0 6px 6px 0;padding:1mm 2mm}
+.hn{margin-top:2.4mm;font-size:8.4px;line-height:1.35;color:#4a5565;border-top:1px dashed #D6DEEA;padding-top:1mm}.hn b{color:#14294A}
+.hf{position:absolute;left:4mm;right:4mm;bottom:3mm;display:flex;justify-content:space-between;font-size:9px;color:#14294A}.hf span{border-top:1px solid #14294A;padding-top:1px;min-width:38mm;text-align:center}
 @media print{.slip{page-break-after:always;box-shadow:none;zoom:.86}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff}.np,.slipbar{display:none!important}.wrap{max-width:none;padding:0}.slip{margin:0 0 6mm;border-width:1.5px}@page{size:A4;margin:8mm}}
 </style></head><body><div class="wrap">
 <div class="top np"><h1>Half-Yearly · Marks Slip &amp; Rankers</h1><a href="index.php" target="_top">← ERP</a></div>

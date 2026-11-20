@@ -1279,3 +1279,8 @@ papers only from photos the owner sends.
   progress_api a=marks GET now also returns `att` {sid: {days, present}} counted from studAtt (session start → today; holidays have
   no studAtt; leave counts as absent) and `attFrom`. results.js uses it when the class teacher has not typed days/present
   (Co-Scholastic entry wins); the card says "from daily attendance". Test in progress-flow.php.
+
+- 2026-11-20 (Claude): Half-page marks slip — 2 per A4 (owner: "A4 ke half page pe arrange nahi ho sakta"). New button
+  "🖨 Print 2 per A4 (half page)" on the slips tab → printHalf(): slipHalf() compact two-column layout (200×139 mm card: header,
+  child + % ring + rank/grade + attendance ring, marks table + target | English letter, badges, co-scholastic bars, remark;
+  Principal's instructions; signatures). CSS .hs/.hh/.hi/.hb… in results.php. The 1-per-A4 print stays as "Print all slips (1 per A4)".

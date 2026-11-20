@@ -69,11 +69,12 @@
   function bar() {
     $('bar').innerHTML = `<div class="row"><b>Class</b><select id="cls">${CLASSES.map(c => `<option ${c === CLS ? 'selected' : ''}>${c}</option>`).join('')}</select>
       <div class="tabs"><button class="${TAB === 'slip' ? 'on' : ''}" data-t="slip">Marks slips</button><button class="${TAB === 'rank' ? 'on' : ''}" data-t="rank">Rankers' certificates</button></div>
-      ${TAB === 'slip' ? '<button class="btn y" id="pall">🖨 Print all slips</button>' : ''}</div>
+      ${TAB === 'slip' ? '<button class="btn y" id="pall">🖨 Print all slips (1 per A4)</button><button class="btn y" id="phalf">🖨 Print 2 per A4 (half page)</button>' : ''}</div>
       <p class="note">Half-Yearly ${SESL}: Pre. Test 10 + Notebook 5 + SEA 5 + Term Exam 80 = 100 per subject. Grace: a subject from ${PASS - GRACE_MAX} to ${PASS - 1} gets grace up to ${PASS} (pass) — added to the Term Exam marks on the slip and not shown; saved marks and rank stay on the real marks.</p>`;
     $('cls').onchange = e => { CLS = e.target.value; location.hash = 'cls=' + encodeURIComponent(CLS); draw(); };
     document.querySelectorAll('[data-t]').forEach(b => { b.onclick = () => { TAB = b.dataset.t; draw(); }; });
     if ($('pall')) $('pall').onclick = () => window.print();
+    if ($('phalf')) $('phalf').onclick = async () => { try { const D = await load(CLS); printHalf(D, D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name))); } catch (e) { alert(e.message); } };
   }
   async function draw() {
     bar(); $('out').innerHTML = '<div class="pan msg">Opening class ' + esc(CLS) + '…</div>';
@@ -178,6 +179,38 @@
       <div class="instr"><h5>Instructions from the Principal</h5><ol>${INSTR.map(t => `<li>${esc(t)}</li>`).join('')}</ol></div>
       <p class="gn">The bar shows the child's marks; the thin line is the class average. The full report card will be given with the final result.</p>
       <div class="foot"><div><i>Class Teacher${D.ct ? ' (' + esc(D.ct) + ')' : ''}</i></div><div><i>Parent's Signature</i></div><div><i>Principal</i></div></div></div>`;
+  }
+  // Half-page slip — two on one A4 (owner, 20 Nov 2026: "A4 ke half page pe arrange nahi ho sakta"). Same content in a compact
+  // two-column layout: marks + target on the left; letter, badges, attendance, co-scholastic, remark on the right.
+  function slipHalf(D, k) {
+    const st = k.st, ex = D.extra[st.id] || {}, rm = remarkOf(D, k), fail = k.rows.some(r => !r.none && !r.ab && r.t + r.g < PASS), top = k.rank && k.rank * 2 <= D.ranked.length;
+    const d = +ex.days || 0, pr = +ex.present || 0, ap = d ? Math.round(pr * 100 / d) : null, acol = ap == null ? '#C5CDD8' : ap >= 90 ? '#1E7A43' : ap >= 75 ? '#E0A100' : '#C0392B';
+    const pc = k.pct || 0, pcol = GCOL[grade(pc)] || '#14294A', B = badgesOf(D, k);
+    const nx = t => BANDS.find(([m]) => m > t);
+    return `<div class="hs"><div class="hh"><img src="img/snmsis-logo.png" alt=""><div><b>${SCHOOL.toUpperCase()}</b><span>${PLACE}</span></div><i>HALF-YEARLY EXAMINATION ${SESL}<em>PROGRESS SLIP</em></i></div>
+      <div class="hi"><div class="hp">${PH[st.id] ? `<img src="${PH[st.id]}" alt="">` : `<span>${esc(st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}</div>
+        <div class="hw"><b>${esc(st.name)}</b><span>Class <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b> · Adm. No. <b>${esc(st.adm || '—')}</b></span><span>Father: <b>${esc(st.father || '—')}</b>${st.mother ? ' · Mother: <b>' + esc(st.mother) + '</b>' : ''}</span></div>
+        <div class="hr" style="background:conic-gradient(${pcol} ${pc * 3.6}deg,#E6EAF0 ${pc * 3.6}deg)"><div><b>${k.pct != null ? k.pct + '%' : '—'}</b><small>${k.pct != null ? grade(k.pct) : ''}</small></div></div>
+        ${top ? `<div class="hk"><small>Rank</small><b>${k.rank}</b><small>of ${D.ranked.length}</small></div>` : `<div class="hk"><small>Grade</small><b>${k.pct != null ? grade(k.pct) : '—'}</b><small>${fail ? 'Keep trying' : 'Passed'}</small></div>`}
+        <div class="hr" style="background:conic-gradient(${acol} ${(ap || 0) * 3.6}deg,#E6EAF0 ${(ap || 0) * 3.6}deg)"><div><b>${ap == null ? '—' : ap + '%'}</b><small>${d ? pr + '/' + d : 'Attend.'}</small></div></div></div>
+      <div class="hb"><div>
+        <table class="ht"><tr><th style="text-align:left">Subject</th><th>PT<br><small>10</small></th><th>NB<br><small>5</small></th><th>SEA<br><small>5</small></th><th>Term<br><small>80</small></th><th>Total<br><small>100</small></th><th>Grade</th><th>Class avg</th></tr>
+        ${k.rows.map(r => { if (r.none) return `<tr><td class="s">${esc(r.s)}</td><td colspan="7" class="mut">Not entered</td></tr>`; const g = r.ab ? '' : grade(r.t);
+          return `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${badge(g)}</td><td>${(D.stat[r.s] || {}).avg ?? ''}</td></tr>`; }).join('')}
+        <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td><b class="${fail ? 'red' : 'gr'}">${fail ? 'Improve' : 'Pass'}</b></td></tr></table>
+        <div class="htg"><b>Target for the Final Exam:</b> ${k.rows.filter(r => !r.none && !r.ab).map(r => { const b2 = nx(r.t); return b2 ? `${esc(r.s)} <b>${b2[0]}+</b>` : `${esc(r.s)} <b>keep 91+</b>`; }).join(' · ')}</div>
+      </div><div>
+        <div class="hl">${letterOf(D, k)}</div>
+        ${B.length ? `<div class="hbd">${B.map(([i, l]) => `<span><i>${i}</i>${esc(l)}</span>`).join('')}</div>` : ''}
+        <div class="hc"><b>Co-Scholastic</b>${CO.map(([kk, l]) => { const g = String(ex[kk] || '').toUpperCase(); return `<div><span>${l}</span><u><i style="width:${COW[g] || 0}%;background:${COC[g] || '#C5CDD8'}"></i></u><em style="background:${COC[g] || '#C5CDD8'}">${g || '–'}</em></div>`; }).join('')}</div>
+        <div class="hm"><b>${rm.auto ? 'Remark' : "Class Teacher's Remark"}:</b> ${esc(rm.text)}</div>
+      </div></div>
+      <div class="hn"><b>Instructions from the Principal:</b> ${INSTR.map((t, i) => `${i + 1}. ${esc(t)}`).join(' ')}</div>
+      <div class="hf"><span>Class Teacher${D.ct ? ' (' + esc(D.ct) + ')' : ''}</span><span>Parent's Signature</span><span>Principal</span></div></div>`;
+  }
+  function printHalf(D, kids) {
+    const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.');
+    w.document.write(`<!doctype html><html><head><title>Marks slips — 2 per A4</title>${document.querySelector('style').outerHTML}<style>@page{size:A4 portrait;margin:5mm}body{background:#fff;margin:0}.hs{margin:0 auto 4mm}.hs:nth-child(2n){margin-bottom:0;page-break-after:always}</style></head><body>${kids.map(k => slipHalf(D, k)).join('')}<script>setTimeout(print,700)<\/script></body></html>`); w.document.close();
   }
   function slipText(D, k) {
     return `*${SCHOOL}*\nHalf-Yearly ${SESL} · Marks\n*${k.st.name}* (Class ${k.st.cls})\n\n` + k.rows.filter(r => !r.none).map(r => `${r.s}: ${r.ab ? 'AB' : r.t + '/100'} — ${r.ab ? '-' : grade(r.t)}`).join('\n') +
