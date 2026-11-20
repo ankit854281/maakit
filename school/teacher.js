@@ -338,9 +338,9 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord, hwshare: (typeof vHwShare === 'function' ? vHwShare : vHome) };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord', 'hwshare'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
@@ -1566,8 +1566,10 @@ let CHAT = null;
 const rs = p => '₹' + (Math.round((p || 0) / 100)).toLocaleString('en-IN');
 function uuid4() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); const h = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); return h.slice(0, 8) + '-' + h.slice(8, 12) + '-4' + h.slice(13, 16) + '-a' + h.slice(17, 20) + '-' + h.slice(20, 32); }
 function myClasses() { return [...new Set([...myCT(), ...allocList().map(a => a.c)])].filter(c => className().includes(c)); }
-// Fee calling: class teacher → own class; the school's fee caller (settings.feeCallers, default Adarsh Sir 'AD') → every class
-function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() && (Array.isArray(L) ? L.includes(me()) : (me() === 'AD' || /adarsh/i.test(((S.teachers || {})[me()] || {}).name || ''))); }
+// Fee calling: class teacher → own class; the school's fee caller (settings.feeCallers; not saved → Rati Ma'am 'RT' from 20 Nov 2026, was Adarsh Sir) → every class
+const isRati = t => t === 'RT' || /\brati\b/i.test(((S.teachers || {})[t] || {}).name || '');
+function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() && (Array.isArray(L) ? L.includes(me()) : isRati(me())); }
+function isHwSharer() { const L = (S.settings || {}).hwSharers; return !isP() && (Array.isArray(L) ? L.includes(me()) : isRati(me())); }
 function feeCls() { return isFeeCaller() ? (S.classes || []).map(k => k.c) : myCT(); }
 function vConn() {
   const ct = feeCls(), m = P.m || (ct.length ? 'fee' : 'msg');

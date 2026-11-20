@@ -26,7 +26,7 @@
 //  child report of the Teacher App like any other parent contact.
 //
 //  Who: Principal + Reception (fee-calling desk) call every class; a class teacher calls own
-//  class; the school's fee caller (settings.feeCallers, default Adarsh Sir) calls every class.
+//  class; the school's fee caller (settings.feeCallers, default Rati Ma'am from 20 Nov 2026 — sch_default_fee_caller) calls every class.
 //  Chairman and Accountant only view. Attendance comes only from saved studAtt (a holiday has no
 //  studAtt, so it never breaks or counts in a streak). Leave ('L') = parent already informed → not
 //  counted as absent and it ends the streak.
@@ -101,7 +101,7 @@ if ($method === 'POST') {
 }
 $CL = pc_classes();
 $fcList = (sch_rec_get('settings', 'main') ?? [])['feeCallers'] ?? null;
-$caller = $role === 'teacher' && (is_array($fcList) ? in_array($tid, $fcList, true) : ($tid === 'AD' || stripos(sch_teacher_name($tid), 'adarsh') !== false));
+$caller = $role === 'teacher' && (is_array($fcList) ? in_array($tid, $fcList, true) : sch_default_fee_caller($tid));
 $allCls = in_array($role, ['principal', 'reception', 'chairman', 'accountant'], true) || $caller;
 $myCls = $allCls ? $CL : array_filter($CL, fn($ct) => $ct === $tid);          // teacher: classes where he/she is class teacher
 $canCall = fn(string $c): bool => isset($myCls[$c]) && !in_array($role, ['chairman', 'accountant'], true);

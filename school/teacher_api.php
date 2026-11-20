@@ -112,10 +112,10 @@ if ($method === 'POST') {
 }
 $canClass = fn(string $cls): bool => $role === 'principal' || ($role === 'teacher' && tch_is_ct($tid, $cls));
 // Fee calling for the whole school (owner, 13 Nov 2026: "Akash Sir wala fee calling Adarsh Sir ko — app me do"):
-// teachers in settings.feeCallers (default Adarsh Dubey Sir, 'AD') call the parents of EVERY class from the Teacher App.
-// No list saved → any teacher whose name has "Adarsh" (his id may be AD, AD2 … depending on how he was added).
+// teachers in settings.feeCallers call the parents of EVERY class from the Teacher App. No list saved → sch_default_fee_caller():
+// Rati Ma'am from 20 Nov 2026 (owner: "jo Adarsh Sir ko diya tha vo sab Rati Ma'am me kardo, final hai"; was Adarsh Sir).
 $fcList = (sch_rec_get('settings', 'main') ?? [])['feeCallers'] ?? null;
-$feeCaller = $role === 'teacher' && (is_array($fcList) ? in_array($tid, $fcList, true) : ($tid === 'AD' || stripos(sch_teacher_name($tid), 'adarsh') !== false));
+$feeCaller = $role === 'teacher' && (is_array($fcList) ? in_array($tid, $fcList, true) : sch_default_fee_caller($tid));
 $canSee = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cls);
 
 switch ($a) {
@@ -315,6 +315,39 @@ case 'attstats': {
     sch_json(['ok' => true, 'from' => $start, 'days' => $days, 'monthDays' => $month, 'per' => (object)$per]);
 }
 
+case 'hwall': {
+    // Homework sharing (owner, 20 Nov 2026: "PG to 10 sab homework sharing to class group on WhatsApp — teachers CW/HW fill karein,
+    // class ke according bankar Rati Ma'am ke paas aaye taaki vo share kar payen"). GET &date= → every diary entry of that day,
+    // PG–10th, with class work and homework, plus which classes were already shared. Rati Ma'am (sch_hw_sharer) + Principal + Chairman.
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    if (!($role === 'principal' || $role === 'chairman' || ($role === 'teacher' && sch_hw_sharer($tid)))) sch_fail('Homework sharing is for Rati Ma\'am and the Principal.', 403);
+    $date = (string)($_GET['date'] ?? date('Y-m-d')); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d')) sch_fail('Choose a date (not in the future).');
+    $SHOW = ['PG', 'LKG', 'UKG', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+    $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='diary' AND deleted=0 AND r LIKE ?"); $q->execute([$date . '|%']); $out = [];
+    foreach ($q as $row) { $e = json_decode((string)$row['d'], true); if (!is_array($e)) continue; $p = explode('|', (string)$row['r']);
+        $cls = (string)($e['cls'] ?? ''); if (!in_array($cls, $SHOW, true)) continue;
+        $cw = trim((string)($e['classwork'] ?? '')); if ($cw === '') $cw = trim((string)($e['topic'] ?? '')); $hw = trim((string)($e['hw'] ?? ''));
+        if ($cw === '' && $hw === '') continue;
+        $out[] = ['cls' => $cls, 'subj' => (string)($e['subj'] ?? ''), 'cw' => $cw, 'hw' => $hw, 'hwDate' => (string)($e['hwDate'] ?? ''), 'teacher' => sch_teacher_name($p[1] ?? ''), 'bell' => (int)($p[2] ?? 0)]; }
+    usort($out, fn($x, $y) => [array_search($x['cls'], $SHOW, true), $x['bell']] <=> [array_search($y['cls'], $SHOW, true), $y['bell']]);
+    $sh = []; $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchHwShare' AND deleted=0 AND r LIKE ?"); $q->execute([$date . '|%']);
+    foreach ($q as $row) { $d = json_decode((string)$row['d'], true); $sh[substr((string)$row['r'], 11)] = is_array($d) ? $d : []; }
+    $cls = array_values(array_filter(array_map(fn($c) => (string)($c['c'] ?? ''), (array)(sch_rec_get('classes', 'main') ?? [])), fn($c) => in_array($c, $SHOW, true)));
+    usort($cls, fn($x, $y) => array_search($x, $SHOW, true) <=> array_search($y, $SHOW, true));
+    sch_json(['ok' => true, 'date' => $date, 'items' => $out, 'classes' => $cls, 'shared' => (object)$sh]);
+}
+case 'hwshared': {
+    // Rati Ma'am marks a class's homework message as sent to the class WhatsApp group (kind tchHwShare, r = date|cls).
+    if ($method !== 'POST') sch_fail('POST only', 405);
+    if (!($role === 'principal' || ($role === 'teacher' && sch_hw_sharer($tid)))) sch_fail('Homework sharing is for Rati Ma\'am and the Principal.', 403);
+    $date = (string)($in['date'] ?? ''); $cls = (string)($in['cls'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > date('Y-m-d') || !in_array($cls, array_map(fn($c) => (string)($c['c'] ?? ''), (array)(sch_rec_get('classes', 'main') ?? [])), true)) sch_fail('Choose the date and class.');
+    if (empty($in['on'])) { sch_rec_del('tchHwShare', $date . '|' . $cls, $uid); sch_json(['ok' => true, 'shared' => null]); }
+    $rec = ['by' => $u['label'] ?? $uid, 'at' => sch_now_ms()];
+    sch_rec_put('tchHwShare', $date . '|' . $cls, $rec, $uid);
+    sch_log($u, 'Homework', 'Homework of class ' . $cls . ' (' . $date . ') shared on the class WhatsApp group');
+    sch_json(['ok' => true, 'shared' => $rec]);
+}
 case 'fees': {
     // Owner, 5 Nov 2026: the CLASS TEACHER calls the parents of their own class about fees, with amounts.
     // Other teachers never see fees. Amounts are paise, exactly as the Chairman app's calling list.

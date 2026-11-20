@@ -667,7 +667,7 @@ function vLogin() {
       <button onclick="saveFirstPin()" class="btn btn-p w-full py-3">Save my PIN</button>
       <button onclick="forceLogout()" class="btn btn-l w-full">Cancel</button>`);
   const tOpts = STATUS.teachers.map(t => `<option value="${esc(t.tid)}">${esc(t.name)}</option>`).join('');
-  const STAFF = ['principal', 'chairman', 'accountant', 'reception'], isStaff = STAFF.includes(loginRole), off = STATUS.office || { accountant: 'Akash Tiwari', reception: 'Adarsh Dubey' };
+  const STAFF = ['principal', 'chairman', 'accountant', 'reception'], isStaff = STAFF.includes(loginRole), off = STATUS.office || { accountant: 'Akash Tiwari', reception: "Rati Ma'am" };
   const roles = [['teacher', 'Teacher'], ['student', 'Student'], ['parent', 'Parent'], ['principal', 'Staff']];
   // Data Entry and Manager have their own pages (own PIN login) — choosing them here opens that page (12 Nov 2026)
   const staffSel = `<div><label class="lbl">Who are you?</label><select id="lg-staff" class="inp" onchange="if(this.value==='dataentry')location.href='dataentry.php';else if(this.value==='manager')location.href='manager.php';else{loginRole=this.value;render()}">${[['principal', 'Principal'], ['chairman', 'Chairman'], ['accountant', esc(off.accountant) + ' — Accountant'], ['reception', esc(off.reception) + ' — Fee Calling'], ['dataentry', esc(off.dataentry || 'Shubh Upadhyay') + ' — Data Entry'], ['manager', esc(off.manager && off.manager !== 'Manager' ? off.manager + ' — ' : '') + 'Manager (Salary app)']]
@@ -1641,10 +1641,10 @@ function vSettings() {
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Principal</b> (you) ${pinBadge('principal')}</span><button onclick="changeMyPin()" class="btn btn-sm btn-l">Change my PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Chairman</b> ${pinBadge('chairman')}</span><button onclick="setPin('chairman','Chairman')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Accountant</b> ${esc(S.settings.accountantName || 'Akash Tiwari')} ${pinBadge('accountant')}</span><button onclick="setPin('accountant','the Accountant')" class="btn btn-sm btn-l">Set PIN</button></div>
-        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Fee Calling (Reception)</b> ${esc(S.settings.receptionName || 'Adarsh Dubey')} ${pinBadge('reception')}</span><button onclick="setPin('reception','Reception')" class="btn btn-sm btn-l">Set PIN</button></div>
+        <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Fee Calling (Reception)</b> ${esc(S.settings.receptionName || "Rati Ma'am")} ${pinBadge('reception')}</span><button onclick="setPin('reception','Reception')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="flex items-center justify-between gap-2"><span class="text-sm"><b>Data Entry</b> ${esc(S.settings.dataentryName || 'Shubh Upadhyay')} ${pinBadge('dataentry')} · <a href="dataentry.php" target="_blank" class="underline">open page</a> · <a href="https://github.com/ankit854281/maakit/releases/download/dataentry-android-v1/snmsis-dataentry.apk" class="underline">Android app</a></span><button onclick="setPin('dataentry','Data Entry')" class="btn btn-sm btn-l">Set PIN</button></div>
         <div class="grid grid-cols-2 gap-2"><div><label class="lbl">Accountant's name</label><input id="se-acct" class="inp" value="${esc(S.settings.accountantName || 'Akash Tiwari')}"></div>
-          <div><label class="lbl">Fee calling (Reception) name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || 'Adarsh Dubey')}"></div>
+          <div><label class="lbl">Fee calling (Reception) name</label><input id="se-recp" class="inp" value="${esc(S.settings.receptionName || "Rati Ma'am")}"></div>
           <div><label class="lbl">Data Entry name</label><input id="se-dent" class="inp" value="${esc(S.settings.dataentryName || 'Shubh Upadhyay')}"></div></div>
         <button onclick="saveOfficeNames()" class="btn btn-sm btn-l">Save names</button>
         <p class="text-xs text-slate-500">PINs are 4–8 digits and stored only in coded (hashed) form. Everyone except the Principal starts with PIN 1234 and must choose their own at first login. Nobody can see a PIN after it is set; if someone forgets, press Set PIN and type 1234 to reset it.</p></div>
@@ -1670,7 +1670,7 @@ function saveSchool() {
   log('Settings', 'School settings updated'); toast('Saved'); render();
 }
 function saveOfficeNames() {
-  const a = document.getElementById('se-acct').value.trim() || 'Akash Tiwari', r = document.getElementById('se-recp').value.trim() || 'Adarsh Dubey';
+  const a = document.getElementById('se-acct').value.trim() || 'Akash Tiwari', r = document.getElementById('se-recp').value.trim() || "Rati Ma'am";
   const de = (document.getElementById('se-dent') || {}).value; S.settings.dataentryName = (de || '').trim() || 'Shubh Upadhyay';
   S.settings.accountantName = a; S.settings.receptionName = r; log('Settings', `Office staff: Accountant ${a}, Reception ${r}, Data Entry ${S.settings.dataentryName}`); toast('Saved'); render();
 }

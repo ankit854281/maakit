@@ -139,7 +139,7 @@ function sch_user_label(array $u): string {
     if ($u['role'] === 'accountant' || $u['role'] === 'reception') {
         $s = sch_rec_get('settings', 'main') ?? [];
         $n = trim((string)($s[$u['role'] . 'Name'] ?? ''));
-        return ($n !== '' ? $n : ($u['role'] === 'accountant' ? 'Akash Tiwari' : 'Adarsh Dubey')) . ($u['role'] === 'accountant' ? ' (Accountant)' : ' (Fee Calling)');
+        return ($n !== '' ? $n : ($u['role'] === 'accountant' ? 'Akash Tiwari' : "Rati Ma'am")) . ($u['role'] === 'accountant' ? ' (Accountant)' : ' (Fee Calling)');
     }
     if ($u['role'] === 'student') {
         $s = sch_rec_get('student', (string)$u['tid']);
@@ -252,3 +252,11 @@ function sch_in_class(string $tid, string $cls): bool {
 }
 
 function sch_diary_signed(string $date,string $tid):bool{$q=sch_db()->prepare("SELECT 1 FROM sch_records WHERE k='signed' AND r=? AND deleted=0");$q->execute([$date.'|'.$tid]);return (bool)$q->fetchColumn();}
+
+/** The school's fee caller / homework sharer when settings.feeCallers / hwSharers are not saved (owner, 20 Nov 2026:
+ *  "jo Adarsh Sir ko diya tha vo sab Rati Ma'am me kardo, final hai"): Rati Ma'am — id RT or a teacher named "Rati". */
+function sch_default_fee_caller(string $tid): bool { return $tid === 'RT' || (bool)preg_match('/\brati\b/i', sch_teacher_name($tid)); }
+function sch_hw_sharer(string $tid): bool {
+    $L = (sch_rec_get('settings', 'main') ?? [])['hwSharers'] ?? null;
+    return is_array($L) ? in_array($tid, $L, true) : sch_default_fee_caller($tid);
+}

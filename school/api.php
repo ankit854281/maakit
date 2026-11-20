@@ -55,13 +55,14 @@ case 'status': {
     usort($teachers, fn($x, $y) => strcmp($x['name'], $y['name']));
         // Owner, 13 Nov 2026: fee calling (the Reception login) is now done by Adarsh Dubey Sir — Shiva Rai Ma'am left in Oct.
     $set0 = sch_rec_get('settings', 'main') ?? [];
-    if (in_array(trim((string)($set0['receptionName'] ?? '')), ['', 'Shiva Rai', "Shiva Rai Ma'am"], true) && !empty($set0['school'])) {
-        $set0['receptionName'] = 'Adarsh Dubey'; sch_rec_put('settings', 'main', $set0, 'system');
-        sch_log(['label' => 'System', 'role' => 'system'], 'Settings', 'Fee calling (Reception login) handed over to Adarsh Dubey (owner, 13 Nov 2026)');
+    // Owner, 20 Nov 2026: "jo Adarsh Sir ko diya tha vo sab Rati Ma'am me kardo, final hai" — the Fee Calling login is Rati Ma'am's now.
+    if (in_array(trim((string)($set0['receptionName'] ?? '')), ['', 'Shiva Rai', "Shiva Rai Ma'am", 'Adarsh Dubey', 'Adarsh Dubey Sir'], true) && !empty($set0['school'])) {
+        $set0['receptionName'] = "Rati Ma'am"; sch_rec_put('settings', 'main', $set0, 'system');
+        sch_log(['label' => 'System', 'role' => 'system'], 'Settings', "Fee calling (Reception login) handed over to Rati Ma'am (owner, 20 Nov 2026)");
     }
     $set = sch_rec_get('settings', 'main');
     sch_json(['ok' => true, 'setup' => $hasP === 0, 'teachers' => $teachers,
-              'office' => ['accountant' => trim((string)($set['accountantName'] ?? '')) ?: 'Akash Tiwari', 'reception' => trim((string)($set['receptionName'] ?? '')) ?: 'Adarsh Dubey', 'dataentry' => trim((string)($set['dataentryName'] ?? '')) ?: 'Shubh Upadhyay', 'manager' => trim((string)($set['managerName'] ?? '')) ?: 'Manager'],
+              'office' => ['accountant' => trim((string)($set['accountantName'] ?? '')) ?: 'Akash Tiwari', 'reception' => trim((string)($set['receptionName'] ?? '')) ?: "Rati Ma'am", 'dataentry' => trim((string)($set['dataentryName'] ?? '')) ?: 'Shubh Upadhyay', 'manager' => trim((string)($set['managerName'] ?? '')) ?: 'Manager'],
               'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School')]);
 }
 
