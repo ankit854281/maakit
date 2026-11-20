@@ -87,6 +87,34 @@
   }
   function ring(p) { const pp = Math.max(0, Math.min(100, p || 0)), col = GCOL[grade(pp)] || '#17324D', a = pp * 3.6;
     return `<div class="ring" style="background:conic-gradient(${col} ${a}deg,#E6EAF0 ${a}deg)"><div><b>${p != null ? Math.round(p) + '%' : '—'}</b><small>${p != null ? grade(p) : ''}</small></div></div>`; }
+  // Parents' "nowhere else" touches (owner, 20 Nov 2026: "jo parents ko lage aisa kahi nahi mil raha"): the Principal's letter in
+  // Hindi written for this child, achievement badges, the child's place on a line of the whole class, and (certificate) proud parents.
+  function badgesOf(D, k) {
+    const B = [], R = k.rows.filter(r => !r.none && !r.ab), ex = D.extra[k.st.id] || {};
+    if (k.rank === 1) B.push(['🏆', 'Class Topper']); else if (k.rank && k.rank <= 3) B.push(['🥇', 'Top 3 in class']);
+    R.forEach(r => { if (r.t >= 100) B.push(['🎯', 'Perfect score · ' + r.s]); });
+    R.filter(r => r.t > 0 && r.t === (D.stat[r.s] || {}).max && !(k.rank === 1 && R.length < 2)).slice(0, 2).forEach(r => B.push(['⭐', 'Highest in ' + r.s]));
+    if (R.length && R.every(r => r.vals[1] === 5)) B.push(['📒', 'Neat Notebook Star']);
+    if (R.length >= 3 && R.every(r => /^A/.test(grade(r.t)))) B.push(['💎', 'All-round A grade']);
+    if (+ex.days > 0 && +ex.present === +ex.days) B.push(['📅', 'Full Attendance']);
+    return B.slice(0, 6);
+  }
+  function letterOf(D, k) {
+    const rm = remarkOf(D, k), first = k.st.name.split(/\s+/)[0], fa = (k.st.father || '').trim();
+    const strong = (rm.strong || k.rows.filter(r => !r.none && !r.ab && r.t >= 81).map(r => r.s)).slice(0, 2), weak = (rm.weak || []).slice(0, 2);
+    return `आदरणीय <b>${esc(fa ? fa + ' जी' : 'अभिभावक')}</b>, आपके बच्चे <b>${esc(first)}</b> ने अर्धवार्षिक परीक्षा में <b>${k.pct != null ? k.pct + '%' : '—'}</b> अंक प्राप्त किए हैं${k.rank && k.rank * 2 <= D.ranked.length ? ` और कक्षा में <b>${['', 'पहला', 'दूसरा', 'तीसरा', 'चौथा', 'पाँचवाँ', 'छठा'][k.rank] || k.rank + 'वाँ'} स्थान</b> पाया है` : ''}। ` +
+      (strong.length ? `<b>${esc(strong.join(', '))}</b> में ${esc(first)} का प्रदर्शन विशेष रूप से अच्छा रहा। ` : '') +
+      (weak.length ? `<b>${esc(weak.join(', '))}</b> में थोड़े और अभ्यास से परिणाम और बेहतर होगा। ` : 'इसी तरह मेहनत करते रहें। ') + `आपके सहयोग के लिए हार्दिक धन्यवाद।<em>— प्रधानाचार्य</em>`;
+  }
+  function posLine(D, k) {
+    // Only for the upper half: a weak child's parents should not see their child at the bottom of a line (kind, not hidden — rank is in the box).
+    if (!k.rank || D.ranked.length < 3 || k.rank * 2 > D.ranked.length) return '';
+    const P = D.ranked.map(x => x.pct), lo = Math.min(...P), hi = Math.max(...P), sp = Math.max(1, hi - lo), at = p => 3 + (p - lo) / sp * 94;
+    const top = Math.max(1, Math.ceil(k.rank * 100 / D.ranked.length));
+    return `<div class="pos"><b>Where ${esc(k.st.name.split(/\s+/)[0])} stands in the class</b> — each dot is one child of the class (no names)
+      <div class="ln">${D.ranked.filter(x => x !== k).map(x => `<i style="left:${at(x.pct)}%"></i>`).join('')}<b style="left:${at(k.pct)}%"></b><u style="left:${Math.min(88, Math.max(12, at(k.pct)))}%">Top ${top}% of the class</u></div>
+      <div class="sc"><span>${lo}%</span><span>${hi}%</span></div></div>`;
+  }
   function slipHtml(D, k) {
     const st = k.st, ex = D.extra[st.id] || {}, rm = remarkOf(D, k), fail = k.rows.some(r => !r.none && !r.ab && r.t + r.g < PASS);
     const strong = rm.strong || k.rows.filter(r => !r.none && !r.ab && r.t >= 81).map(r => r.s).slice(0, 2), weak = rm.weak || [];
@@ -95,11 +123,14 @@
       <div class="stu"><div class="ph" data-sid="${esc(st.id)}">${PH[st.id] ? `<img src="${PH[st.id]}" alt="">` : `<span>${esc(st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}</div>
         <div class="who"><b>${esc(st.name)}</b><span>Class <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b> · Adm. No. <b>${esc(st.adm || '—')}</b></span><span>Father: <b>${esc(st.father || '—')}</b>${st.mother ? ' · Mother: <b>' + esc(st.mother) + '</b>' : ''}</span></div>
         ${ring(k.pct)}<div class="rk"><small>Rank in class</small><b>${k.rank ? k.rank : '—'}</b><small>of ${D.n}</small></div></div>
+      <div class="letter">${letterOf(D, k)}</div>
+      ${(() => { const B = badgesOf(D, k); return B.length ? `<div class="badges">${B.map(([i, l]) => `<span><i>${i}</i>${esc(l)}</span>`).join('')}</div>` : ''; })()}
       <table class="m"><tr><th style="text-align:left">Subject</th>${PARTS.map(([, l, m]) => `<th>${l.replace('Term Exam', 'Term')}<br><small>${m}</small></th>`).join('')}<th>Total<br><small>100</small></th><th>Grace</th><th>Grade</th><th>Class<br>avg</th><th>Highest</th><th style="width:22%">Child vs class</th></tr>
       ${k.rows.map(r => { if (r.none) return `<tr><td class="s">${esc(r.s)}</td><td colspan="10" class="mut">Not entered</td></tr>`; const S = D.stat[r.s] || { avg: 0, max: 0 }, g = r.ab ? '' : grade(r.t + r.g);
         return `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t + r.g < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${r.g ? `<span class="gr">+${r.g}</span>` : '—'}</td><td>${badge(g)}</td><td>${S.avg}</td><td>${S.max}</td>
           <td class="bars"><div class="bar"><i style="width:${r.ab ? 0 : Math.min(100, r.t)}%;background:${GCOL[g] || '#17324D'}"></i><u style="left:${Math.min(100, S.avg)}%"></u></div></td></tr>`; }).join('')}
       <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${k.gTot ? '+' + k.gTot : '—'}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td colspan="3" style="text-align:left">Result: <b class="${fail ? 'red' : 'gr'}">${fail ? 'Needs improvement' : 'Pass'}</b></td></tr></table>
+      ${posLine(D, k)}
       <div class="low"><div class="rmk"><b>${rm.auto ? 'Remark' : 'Class teacher\'s remark'}</b><p>${esc(rm.text)}</p>
         ${strong.length || weak.length ? `<div class="sw">${strong.length ? `<span class="ok">★ Strong: ${esc(strong.join(', '))}</span>` : ''}${weak.length ? `<span class="wk">✎ Practise more: ${esc(weak.join(', '))}</span>` : ''}</div>` : ''}</div>
         <div class="side">${cos.length ? `<div><b>Co-scholastic</b>${cos.map(([kk, l]) => `<span>${l} <em>${esc(ex[kk])}</em></span>`).join('')}</div>` : ''}${ex.days ? `<div><b>Attendance</b><span>${esc(ex.present || '—')} / ${esc(ex.days)} days</span></div>` : ''}</div></div>
@@ -208,16 +239,17 @@
     x.font = `112px ${SF}`; let nm = k.st.name; while (x.measureText(nm).width > 780 && nm.length > 4) nm = nm.slice(0, -1);
     T(nm, tx, 700, `112px ${SF}`, NAVY);
     x.fillStyle = gold(x, tx - 360, 0, tx + 360, 0); x.fillRect(tx - 360, 722, 720, 3);
-    T(`${k.st.father ? 'Ward of Shri ' + k.st.father + '  ·  ' : ''}Class ${k.st.cls}${k.st.section ? '-' + k.st.section : ''}  ·  Adm. No. ${k.st.adm || '—'}`, tx, 770, `26px Georgia, serif`, '#3d352a');
-    T(`has secured the ${ORD[k.rank]} RANK in the class`, tx, 840, `700 36px Georgia, serif`, MAROON);
-    T(`in the Half-Yearly Examination ${SESL} with ${k.pct}% marks`, tx, 890, `28px Georgia, serif`, '#3d352a');
-    T('and is honoured for outstanding academic achievement.', tx, 938, `italic 28px Georgia, serif`, '#3d352a');
+    T(`Class ${k.st.cls}${k.st.section ? '-' + k.st.section : ''}  ·  Adm. No. ${k.st.adm || '—'}`, tx, 768, `26px Georgia, serif`, '#3d352a');
+    if (k.st.father || k.st.mother) T('Proud parents: ' + [k.st.father ? 'Shri ' + k.st.father : '', k.st.mother ? 'Smt. ' + k.st.mother : ''].filter(Boolean).join(' & '), tx, 808, `italic 600 24px Georgia, serif`, '#8C6A1E');
+    T(`has secured the ${ORD[k.rank]} RANK in the class`, tx, 858, `700 36px Georgia, serif`, MAROON);
+    T(`in the Half-Yearly Examination ${SESL} with ${k.pct}% marks`, tx, 902, `28px Georgia, serif`, '#3d352a');
+    T('and is honoured for outstanding academic achievement.', tx, 944, `italic 28px Georgia, serif`, '#3d352a');
     // signatures
     const sy = 1080; x.strokeStyle = NAVY; x.lineWidth = 2;
     [[tx - 520, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 520, 'Chairman', '']].forEach(([cx, l, v]) => {
       x.beginPath(); x.moveTo(cx - 150, sy); x.lineTo(cx + 150, sy); x.stroke(); if (v) T(v, cx, sy - 14, `40px ${SF}`, NAVY);
       T(l.toUpperCase(), cx, sy + 34, `700 20px Georgia, serif`, '#5b5040', 'center', 3); });
-    T('Date: ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), tx, 1000, `italic 22px Georgia, serif`, '#5b5040');
+    T('Date: ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), tx, 1004, `italic 22px Georgia, serif`, '#5b5040');
     // certificate number (same child + exam + rank → same number) and the Principal's saved signature (Teacher App → Mera sign)
     let hsh = 0; for (const ch of 'HY|' + SES + '|' + k.st.id + '|' + k.rank) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
     T('Certificate No. SNMSIS/HY' + SES.slice(2, 4) + '/' + hsh.toString(36).toUpperCase().padStart(7, '0').slice(-7), W / 2, H - 92, `600 16px Georgia, serif`, '#7a6a50', 'center', 1);
