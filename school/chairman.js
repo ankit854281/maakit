@@ -179,7 +179,7 @@ function render() {
       <div class="strip"><label class="sbox">${ic('search', 16)}<input id="q" value="${esc(S.q)}" placeholder="Search any student — name, father, mobile, adm. no" oninput="S.q=this.value;render();refocus('q')"></label>
         ${S.tab === 3 || S.tab === 5 ? `<button class="tagb" onclick="sheet('filter')">${esc(S.tag === null ? 'All tags' : S.tag)}${S.cls ? ' · ' + esc(S.cls) : ''} ${ic('down', 12)}</button>` : ''}</div></div>
     <div class="scroll" id="sc"><div class="pagebg" style="background:${TH[S.tab].page}"></div><div class="body">${body}</div></div>
-    ${S.tab === 0 && !S.q ? `<button class="cartbar" onclick="share()">${ic('share', 18)}<b>Share today's summary</b><em>WhatsApp</em></button>` : ''}
+    ${S.tab === 0 && !S.q && D.role !== 'manager' ? `<button class="cartbar" onclick="share()">${ic('share', 18)}<b>Share today's summary</b><em>WhatsApp</em></button>` : ''}
     ${S.sheet ? `<div class="ov" onclick="sheet(null)"></div><div class="sheet" role="dialog"><div class="grab"></div>${sheetBody()}</div>` : ''}`;
   requestAnimationFrame(drawCharts);
 }
@@ -1201,8 +1201,8 @@ function homeBody() {
     const nx = SC.exams.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).find(e => (e.to || e.date) >= SC.today);
     if (nx) A.push(['', `${nx.name} ${nx.date <= SC.today ? 'is running' : 'in ' + Math.round((new Date(nx.date) - new Date(SC.today)) / 864e5) + ' days'}`, dmy(nx.date) + (nx.to ? ' to ' + dmy(nx.to) : ''), "goTo('school','exams')"]);
   }
-  { const TP = pickFams(D.today); if (TP.length) A.unshift(['', `Today's calls: ${TP.length} famil${TP.length > 1 ? 'ies' : 'y'}`, TP.map(K => K[0].father || K[0].name).join(', '), "S.mv='today';goTo('my')"]);
-    else if (isP()) A.unshift(['warn', "Pick today's 3 families for the Chairman", 'Fees → Chairman calls', "S.mv='pick';goTo('my')"]); }
+  { const TP = pickFams(D.today); if (TP.length) A.unshift(['', `Today's calls: ${TP.length} famil${TP.length > 1 ? 'ies' : 'y'} · ${new Set(TP.map(x => x.c)).size} classes`, TP.slice(0, 6).map(x => x.c + ': ' + (x.kids[0].father || x.kids[0].name)).join(', ') + (TP.length > 6 ? '…' : ''), "S.mv='today';goTo('my')"]);
+    else if (isP()) A.unshift(['warn', "Pick today's families for the Chairman (3 per class)", 'Chairman calls → Pick families', "S.mv='pick';goTo('my')"]); }
   const L = callLists(t.def);
   if (L.broken.length) A.push(['bad', `${L.broken.length} fee promises broken`, rsS(sum(L.broken, x => x.dueNow)) + ' due', "S.list='broken';S.cmode='calls';goTo('calls')"]);
   if (L.today.length) A.push(['', `${L.today.length} parents to call today`, 'they gave today’s date', "S.list='today';S.cmode='calls';goTo('calls')"]);
@@ -1464,49 +1464,65 @@ function famCard(kids, n, opt) {
       <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get(TKEY))">📄 Demand bill</button>
       <button class="cta lt" onclick="noteCall('${esc(a.sid)}')">✍ Note</button></div></section>`;
 }
-function pickFams(date) {   // families of a saved day, with today's siblings
+function pickFams(date) {   // [{c, kids}] of a saved day (kids = the whole family as it is today, siblings in any class)
   const P = (D.picks || {})[date]; if (!P) return []; const F = famMap();
-  return P.fams.map(ids => { const k = famKey(ids[0]); return F[k] || ids.map(id => D.all.find(z => z.sid === id)).filter(Boolean); }).filter(L => L.length);
+  return P.fams.map(f => { const ids = Array.isArray(f) ? f : f.ids || [], k = famKey(ids[0]), kids = F[k] || ids.map(id => D.all.find(z => z.sid === id)).filter(Boolean);
+    return { c: (!Array.isArray(f) && f.c) || (kids[0] || {}).cls || '', kids }; }).filter(x => x.kids.length)
+    .sort((a, b) => CLASSES.indexOf(a.c) - CLASSES.indexOf(b.c));
+}
+function byClassCards(L, opt) {   // class headers, 3 family cards under each
+  let h = '', cur = null, n = 0;
+  L.forEach(x => { if (x.c !== cur) { cur = x.c; n = 0; h += `<h5 class="sh" style="margin-top:14px">Class ${esc(x.c)}</h5>`; } n++; h += famCard(x.kids, n, opt); });
+  return h;
 }
 function myCalls() {
-  if (!PSEL) { PSEL = new Set(pickFams(D.today).map(L => L[0].phoneNo || L[0].sid)); }
-  const badN = Object.keys(D.bad || {}).length, views = isP() ? [['today', "Today's 3"], ['pick', 'Pick families'], ['bad', 'Fee not updated · ' + badN], ['hist', 'Earlier days']] : [['today', "Today's calls"], ['hist', 'Earlier days'], ['bad', 'Fee not updated · ' + badN]];
+  if (!PSEL) { PSEL = new Map(pickFams(D.today).map(x => [x.kids[0].phoneNo || x.kids[0].sid, x.c])); }
+  const badN = Object.keys(D.bad || {}).length, views = isP() ? [['today', "Today's list"], ['pick', 'Pick families'], ['bad', 'Fee not updated · ' + badN], ['hist', 'Earlier days']] : [['today', "Today's calls"], ['hist', 'Earlier days'], ['bad', 'Fee not updated · ' + badN]];
   const mv = views.some(v => v[0] === S.mv) ? S.mv : 'today';
   return `<div class="chips">${views.map(([v, l]) => `<button class="chip${mv === v ? ' on' : ''}" onclick="S.mv='${v}';render()">${esc(l)}</button>`).join('')}</div>` + ({ today: myToday, pick: myPickView, bad: myBad, hist: myHist }[mv])();
 }
 function myToday() {
   const L = pickFams(D.today), P = (D.picks || {})[D.today];
-  if (!L.length) return card("Today's calls", `<p class="empty">${isP() ? 'You have not picked today\'s families yet.' : 'Today\'s 3 families are not given yet.'}</p>${isP() ? `<button class="cta" onclick="S.mv='pick';render()">Pick today's families</button>` : ''}`);
-  return `<p class="note" style="margin:6px 2px">${L.length} famil${L.length > 1 ? 'ies' : 'y'} for ${dmy(D.today)} · picked by ${esc(P.by || 'Principal')}. Call → write what was discussed → Save.</p>` + L.map((K, i) => famCard(K, i + 1)).join('');
+  if (!L.length) return card("Today's calls", `<p class="empty">${isP() ? 'You have not picked today\'s families yet.' : 'Today\'s families are not given yet.'}</p>${isP() ? `<button class="cta" onclick="S.mv='pick';render()">Pick today's families</button>` : ''}`);
+  const cls = [...new Set(L.map(x => x.c))];
+  return `<p class="note" style="margin:6px 2px">${L.length} families · ${cls.length} class${cls.length > 1 ? 'es' : ''} · ${dmy(D.today)} · picked by ${esc(P.by || 'Manager')}. Brothers / sisters come with each family. Call → write what was discussed → Save.</p>` + byClassCards(L);
 }
 function myPickView() {
   const F = famMap(), used = new Set(), bad = new Set();
-  Object.entries(D.picks || {}).forEach(([d, P]) => { if (d !== D.today) P.fams.forEach(ids => used.add(famKey(ids[0]))); });
+  Object.entries(D.picks || {}).forEach(([d, P]) => { if (d !== D.today) P.fams.forEach(f => used.add(famKey((Array.isArray(f) ? f : f.ids || [])[0]))); });
   Object.keys(D.bad || {}).forEach(sid => bad.add(famKey(sid)));
+  const ok = ([k, L]) => !used.has(k) && !bad.has(k) && sum(L, x => x.dueNow) >= 500;
+  const CL = CLASSES.filter(c => D.all.some(x => x.cls === c)), cnt = c => [...PSEL.values()].filter(v => v === c).length;
+  const pc = CL.includes(S.pc) ? S.pc : CL[0];
   const q = (S.pq || '').toLowerCase().trim();
-  let C = Object.entries(F).filter(([k, L]) => !used.has(k) && !bad.has(k) && sum(L, x => x.dueNow) >= 500)
-    .filter(([k, L]) => !q || L.some(x => (x.name + ' ' + x.father + ' ' + x.cls + ' ' + (x.phoneNo || '')).toLowerCase().includes(q)))
-    .sort((p, r) => (PSEL.has(r[0]) - PSEL.has(p[0])) || sum(r[1], x => x.dueNow) - sum(p[1], x => x.dueNow));
-  const shown = C.slice(0, 60);
-  return `<div class="card"><div class="pkb"><b>${PSEL.size}/3 selected</b><button class="cta" style="height:40px;width:auto;padding:0 18px" ${PSEL.size ? '' : 'disabled'} onclick="savePick()">Save today's ${PSEL.size || ''}</button></div>
-      <p class="note" style="margin:6px 0 8px">Tick up to 3 families → Save. The Chairman's app shows only these today. A family once picked does not come in this list again. "Fee not updated" puts a child in its own list.</p>
-      <label class="sbox" style="background:var(--bg)">${ic('search', 16)}<input id="pq" value="${esc(S.pq || '')}" placeholder="Search name, father, class or mobile" oninput="S.pq=this.value;render();refocus('pq')"></label></div>
-    <p class="note" style="margin:8px 2px">${C.length} families with fee due (not picked before) · biggest dues first${C.length > 60 ? ' · showing 60, search for others' : ''}</p>
-    ${shown.map(([k, L]) => { const on = PSEL.has(k); return `<div class="card pkr${on ? ' on' : ''}">
-      <button class="pkc" onclick="togPick('${esc(k)}')" aria-label="Select">${on ? '✓' : ''}</button>
-      <div class="pkt" onclick="togPick('${esc(k)}')"><b>${esc(L[0].father || L[0].name)}</b><small>${L.map(x => esc(x.name) + ' (' + esc(x.cls) + ')').join(', ')}</small>
+  const C = Object.entries(F).filter(e => e[1].some(x => x.cls === pc) && (PSEL.get(e[0]) === pc || (!PSEL.has(e[0]) && ok(e))))
+    .filter(([k, L]) => !q || L.some(x => (x.name + ' ' + x.father + ' ' + (x.phoneNo || '')).toLowerCase().includes(q)))
+    .sort((p, r) => ((PSEL.get(r[0]) === pc) - (PSEL.get(p[0]) === pc)) || sum(r[1], x => x.dueNow) - sum(p[1], x => x.dueNow));
+  const total = PSEL.size, done = CL.filter(c => cnt(c) > 0).length;
+  return `<div class="card"><div class="pkb"><b>${total} families · ${done}/${CL.length} classes</b><button class="cta" style="height:40px;width:auto;padding:0 18px" ${total ? '' : 'disabled'} onclick="savePick()">Save today's list</button></div>
+      <p class="note" style="margin:6px 0 8px">Choose a class → tick up to 3 families → next class … → Save once. Brothers / sisters (same mobile) come with the family. A family picked on another day does not come again. "⚠" = fee not updated properly.</p>
+      <div class="pkcl">${CL.map(c => `<button class="${c === pc ? 'on' : ''}${cnt(c) === 3 ? ' full' : ''}" onclick="S.pc='${c}';render()">${esc(c)}<small>${cnt(c)}/3</small></button>`).join('')}</div>
+      <label class="sbox" style="background:var(--bg);margin-top:10px">${ic('search', 16)}<input id="pq" value="${esc(S.pq || '')}" placeholder="Search in class ${esc(pc)} — name, father, mobile" oninput="S.pq=this.value;render();refocus('pq')"></label></div>
+    <h5 class="sh" style="margin-top:12px">Class ${esc(pc)} · ${cnt(pc)}/3 picked · ${C.length} families with fee due</h5>
+    ${C.slice(0, 60).map(([k, L]) => { const on = PSEL.get(k) === pc; return `<div class="card pkr${on ? ' on' : ''}">
+      <button class="pkc" onclick="togPick('${esc(k)}','${esc(pc)}')" aria-label="Select">${on ? '✓' : ''}</button>
+      <div class="pkt" onclick="togPick('${esc(k)}','${esc(pc)}')"><b>${esc(L[0].father || L[0].name)}</b><small>${L.map(x => `${x.cls === pc ? '<b>' : ''}${esc(x.name)} (${esc(x.cls)}) ${rs(x.dueNow)}${x.cls === pc ? '</b>' : ''}`).join(' · ')}</small>
         <small>${L[0].last ? 'Last call ' + dmy(L[0].last.date) + ': ' + esc(L[0].last.outcome) : 'Not called yet'}${L[0].lastPaid ? ' · paid ' + dmy(L[0].lastPaid.date) : ' · nothing paid this session'}</small></div>
-      <div class="pkd"><b>${rs(sum(L, x => x.dueNow))}</b>${L.map(x => `<button onclick="markBad('${esc(x.sid)}',1)" title="${esc(x.name)}">⚠ ${esc(x.name.split(' ')[0])}</button>`).join('')}</div></div>`; }).join('') || '<p class="empty">Nobody left.</p>'}`;
+      <div class="pkd"><b>${rs(sum(L, x => x.dueNow))}</b>${L.map(x => `<button onclick="markBad('${esc(x.sid)}',1)" title="Fee not updated: ${esc(x.name)}">⚠ ${esc(x.name.split(' ')[0])}</button>`).join('')}</div></div>`; }).join('') || '<p class="empty">Nobody left in this class.</p>'}`;
 }
-function togPick(k) { if (PSEL.has(k)) PSEL.delete(k); else { if (PSEL.size >= 3) return toast('Only 3 families a day. Untick one first.'); PSEL.add(k); } render(); }
+function togPick(k, c) {
+  if (PSEL.get(k) === c) PSEL.delete(k);
+  else { if ([...PSEL.values()].filter(v => v === c).length >= 3) return toast('3 families already picked in class ' + c + '. Untick one first.'); PSEL.set(k, c); }
+  render();
+}
 async function savePick() {
-  const F = famMap(), fams = [...PSEL].map(k => (F[k] || []).map(x => x.sid)).filter(L => L.length);
-  try { const d = await api('feedash_api.php?a=chPick', { date: D.today, fams }); D.picks = D.picks || {}; if (d.pick) D.picks[D.today] = d.pick; else delete D.picks[D.today]; S.mv = 'today'; toast("Saved — the Chairman's app shows these " + fams.length + ' today.'); render(); }
+  const F = famMap(), fams = [...PSEL].map(([k, c]) => ({ c, ids: (F[k] || []).map(x => x.sid) })).filter(f => f.ids.length);
+  try { const d = await api('feedash_api.php?a=chPick', { date: D.today, fams }); D.picks = D.picks || {}; if (d.pick) D.picks[D.today] = d.pick; else delete D.picks[D.today]; S.mv = 'today'; toast("Saved — the Chairman's app shows these " + fams.length + ' families today.'); render(); }
   catch (e) { toast(e.message); }
 }
 async function markBad(sid, on) {
   try { const d = await api('feedash_api.php?a=chBad', { sid, on: on ? 1 : 0, note: '' }); D.bad = D.bad || {}; if (d.bad) D.bad[sid] = d.bad; else delete D.bad[sid];
-    if (on) { const k = famKey(sid); PSEL.delete(k); } toast(on ? 'Marked: fee not updated properly.' : 'Mark removed.'); render(); }
+    if (on && PSEL) { PSEL.delete(famKey(sid)); } toast(on ? 'Marked: fee not updated properly.' : 'Mark removed.'); render(); }
   catch (e) { toast(e.message); }
 }
 function myBad() {
@@ -1520,7 +1536,7 @@ function myBad() {
 function myHist() {
   const days = Object.keys(D.picks || {}).filter(d => d < D.today).sort().reverse();
   if (!days.length) return card('Earlier days', '<p class="empty">No earlier day yet.</p>');
-  return days.map(d => { const L = pickFams(d); return `<h5 class="sh" style="margin-top:12px">${dmy(d)} · ${L.length} famil${L.length > 1 ? 'ies' : 'y'}</h5>` + L.map((K, i) => famCard(K, i + 1, { since: d, noMark: true })).join(''); }).join('');
+  return days.map(d => { const L = pickFams(d); return `<h4 style="margin:16px 2px 0">${dmy(d)} · ${L.length} famil${L.length > 1 ? 'ies' : 'y'}</h4>` + byClassCards(L, { since: d, noMark: true }); }).join('');
 }
 function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get(TKEY), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {

@@ -104,20 +104,27 @@ case 'setTag': {
 }
 case 'chPick': {
     // Principal picks today's families for the Chairman to call (owner, 20 Nov 2026: "jin three parents ka name select karke du
-    // vo fir dobara list me na aaye — daily teen bachcho ka name"). {date, fams:[[sid,…],…]} — up to 3 families a day; a date can be re-saved.
+    // vo fir dobara list me na aaye — daily teen bachcho ka name"). {date, fams:[{c, ids:[sid…]}]} — up to 3 families per class a day; a date can be re-saved.
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
     if ($role !== 'manager') sch_fail('Only the Manager picks the Chairman\'s calls.', 403);   // owner, 20 Nov 2026: Principal → Manager
     $in = json_decode((string)file_get_contents('php://input', false, null, 0, 20000), true); if (!is_array($in)) sch_fail('Bad request.');
     $date = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date < date('Y-m-d', strtotime('-1 day'))) sch_fail('Choose today or a later date.');
-    $fams = []; $seen = [];
-    foreach (array_slice((array)($in['fams'] ?? []), 0, 10) as $f) {
-        $ids = array_values(array_filter(array_map('strval', array_slice((array)$f, 0, 8)), fn($x) => !isset($seen[$x]) && (bool)sch_rec_get('student', $x)));
-        if (!$ids) continue; foreach ($ids as $x) $seen[$x] = true; $fams[] = $ids; if (count($fams) === 3) break;
+    // 3 families PER CLASS (owner, 20 Nov 2026: "unko class ke according chahiye 3, lekin usme sibling ho"): fams = [{c: class, ids: [sid…]}]
+    // (a plain [sid…] is still read, class = the first child's). Max 3 a class, a child only once, at most 60 families.
+    $fams = []; $seen = []; $perCls = [];
+    foreach (array_slice((array)($in['fams'] ?? []), 0, 80) as $f) {
+        $f = (array)$f; $raw = isset($f['ids']) ? (array)$f['ids'] : $f;
+        $ids = array_values(array_filter(array_map('strval', array_slice($raw, 0, 8)), fn($x) => !isset($seen[$x]) && (bool)sch_rec_get('student', $x)));
+        if (!$ids) continue;
+        $c = (string)($f['c'] ?? '') ?: (string)((sch_rec_get('student', $ids[0]) ?? [])['cls'] ?? '');
+        if (($perCls[$c] ?? 0) >= 3) continue;
+        foreach ($ids as $x) $seen[$x] = true; $perCls[$c] = ($perCls[$c] ?? 0) + 1; $fams[] = ['c' => $c, 'ids' => $ids];
+        if (count($fams) >= 60) break;
     }
     if (!$fams) { sch_rec_del('chPick', $date, sch_uid_of($u)); sch_log($u, 'Chairman calls', 'Cleared the pick of ' . $date); sch_json(['ok' => true, 'pick' => null]); }
     $rec = ['date' => $date, 'fams' => $fams, 'by' => $u['label'] ?? 'Manager', 'at' => sch_now_ms()];
     sch_rec_put('chPick', $date, $rec, sch_uid_of($u));
-    $names = array_map(fn($f) => (sch_rec_get('student', $f[0])['name'] ?? $f[0]), $fams);
+    $names = array_map(fn($f) => $f['c'] . ': ' . (sch_rec_get('student', $f['ids'][0])['name'] ?? $f['ids'][0]), $fams);
     sch_log($u, 'Chairman calls', 'Families for ' . $date . ': ' . implode(', ', $names));
     sch_json(['ok' => true, 'pick' => $rec]);
 }

@@ -278,3 +278,5 @@ details.rc{border:1px solid var(--line);border-radius:12px;padding:8px 10px;marg
 .pkc{flex:0 0 28px;height:28px;border-radius:8px;border:2px solid var(--a);background:#fff;color:#fff;font-weight:700;cursor:pointer}.pkr.on .pkc{background:var(--a)}
 .pkt{flex:1;min-width:0;cursor:pointer}.pkt b{display:block;font-size:14px}.pkt small{display:block;font-size:11.5px;color:var(--muted);line-height:1.4}
 .pkd{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}.pkd b{color:var(--bad);font-size:14px}.pkd button{border:0;background:#FDECEC;color:var(--bad);border-radius:8px;font:inherit;font-size:10.5px;padding:3px 6px;cursor:pointer}
+.pkcl{display:flex;flex-wrap:wrap;gap:6px}.pkcl button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;min-width:50px}
+.pkcl button small{font-size:10px;font-weight:500;color:var(--muted)}.pkcl button.on{border-color:var(--a);background:var(--tint);color:var(--a)}.pkcl button.full small{color:var(--ok);font-weight:700}

@@ -84,7 +84,8 @@ try {
     $raw = json_encode($d['employees']); fd(str_contains($raw, 'Synthetic Staff') && !str_contains($raw, 'SYN-AADHAR') && !str_contains($raw, 'SYNPAN') && !str_contains($raw, '4321'), 'staff register without ID / bank');
     // Chairman calls (20 Nov 2026): Manager picks up to 3 families a day (owner moved it from the Principal), marks "fee not updated"; Chairman only reads
     [$c] = fdreq('feedash_api.php?a=chPick', $C, ['date' => date('Y-m-d'), 'fams' => [['fd-s1']]]); fd($c === 403, 'chairman cannot pick');
-    [$c, $d] = fdreq('feedash_api.php?a=chPick', $M, ['date' => date('Y-m-d'), 'fams' => [['fd-s1'], ['fd-s2'], ['nope'], ['fd-s1']]]); fd($c === 200 && $d['pick']['fams'] === [['fd-s1'], ['fd-s2']], 'pick: unknown child and repeat dropped ' . json_encode($d));
+    [$c, $d] = fdreq('feedash_api.php?a=chPick', $M, ['date' => date('Y-m-d'), 'fams' => [['fd-s1'], ['fd-s2'], ['nope'], ['fd-s1']]]); fd($c === 200 && count($d['pick']['fams']) === 2 && $d['pick']['fams'][0]['ids'] === ['fd-s1'] && $d['pick']['fams'][0]['c'] === '2nd', 'pick: unknown child and repeat dropped, class kept ' . json_encode($d));
+    [$c, $d] = fdreq('feedash_api.php?a=chPick', $M, ['date' => date('Y-m-d'), 'fams' => [['c' => 'X', 'ids' => ['fd-s1']], ['c' => 'X', 'ids' => ['fd-s2']], ['c' => 'X', 'ids' => ['fd-s1']]]]); fd($c === 200 && count($d['pick']['fams']) === 2, 'per-class pick');
     [$c] = fdreq('feedash_api.php?a=chPick', $M, ['date' => '2020-01-01', 'fams' => [['fd-s1']]]); fd($c === 400, 'no pick for an old date');
     [$c, $d] = fdreq('feedash_api.php?a=chBad', $M, ['sid' => 'fd-s2', 'on' => 1, 'note' => 'card wrong']); fd($c === 200 && $d['bad']['note'] === 'card wrong', 'mark fee not updated');
     [$c] = fdreq('feedash_api.php?a=chBad', $C, ['sid' => 'fd-s2', 'on' => 0]); fd($c === 403, 'chairman cannot clear the mark');
