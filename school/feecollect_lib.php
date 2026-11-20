@@ -111,6 +111,15 @@ function ofc_match_next(array $L, array $next): array {
     $L['matched'] = ['to' => $target, 'was' => $cur, 'at' => sch_now_ms()];
     return [$L, $log];
 }
+/** Owner, 20 Nov 2026: "jinka fee mai ab new software par bana raha hu, unka 'fee not updated' doubt auto fixed ho jaye".
+ *  Any fee work on a child here (receipt, discount, added fee, discount edit / take-back) clears the Chairman-calls mark
+ *  (chBad, feedash_api.php) — the child comes back to the Manager's pick list. Logged once. */
+function ofc_clear_doubt(string $sid, array $u, string $what): void {
+    $b = sch_rec_get('chBad', $sid); if (!$b) return;
+    $uid = sch_uid_of($u); sch_rec_del('chBad', $sid, $uid);
+    $s = sch_rec_get('student', $sid);
+    sch_log($u, 'Chairman calls', 'Fee updated in the new ERP (' . $what . ') — "fee not updated" mark cleared: ' . ($s['name'] ?? $sid));
+}
 function ofc_adj_log(string $ses, string $sid, array $e, string $uid): void {
     sch_rec_put('ofcAdj', $ses . '|' . $sid . '|' . sch_now_ms() . bin2hex(random_bytes(2)), $e + ['ses' => $ses, 'sid' => $sid, 'at' => sch_now_ms()], $uid);
 }

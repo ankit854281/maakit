@@ -129,6 +129,7 @@ case 'collect': {
     sch_rec_put('ofcRcpt', $ses . '|' . $no, $r, $uid);
     sch_rec_put('ofcReq', $nonce, ['receipt' => $r], $uid);
     sch_log($u, 'ofcRcpt', 'Fee Receipt ' . $no . ' · ' . $L['name'] . ' · ₹' . number_format($p['received'] / 100, 2) . ' ' . $mode);
+    ofc_clear_doubt($sid, $u, 'receipt ' . $no);
     $db->commit();
     sch_json(['ok' => true, 'receipt' => $r]);
 }
@@ -239,6 +240,7 @@ case 'addFee': {
         $L['heads'][] = ['i' => $i, 'm' => $m, 'name' => $name, 'amt' => $x, 'paid' => 0, 'na' => false, 'add' => ['type' => $type, 'by' => $u['label'] ?? $uid, 'at' => sch_now_ms()]];
         sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
         ofc_adj_log($ses, $sid, ['act' => 'add', 'type' => $type, 'i' => $i, 'm' => $m, 'name' => $name, 'amt' => $x, 'remark' => $remark, 'by' => $u['label'] ?? $uid], $uid);
+        if ($one) ofc_clear_doubt($sid, $u, 'added ' . $type);
         $added++;
     }
     if (!$added) throw new InvalidArgumentException('Nothing was added: ' . implode(', ', array_slice($skipped, 0, 5)));
@@ -277,6 +279,7 @@ case 'discMany': {
     $res = ['heads' => count($log), 'total' => $sum];
     sch_rec_put('ofcReq', $nonce, ['res' => $res], $uid);
     sch_log($u, 'ofcLed', 'Fee discount (head wise) ₹' . number_format($sum / 100, 2) . ' on ' . count($log) . ' head(s) · ' . $L['name'] . ' · ' . $remark);
+    ofc_clear_doubt($sid, $u, 'head-wise discount');
     $db->commit(); sch_json(['ok' => true] + $res);
 }
 case 'editDisc': {
@@ -300,6 +303,7 @@ case 'editDisc': {
     ofc_adj_log($ses, $sid, ['act' => 'undisc', 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $disc, 'remark' => 'Edit: ' . $reason, 'by' => $u['label'] ?? $uid], $uid);
     if ($new > 0) ofc_adj_log($ses, $sid, ['act' => 'disc', 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $new, 'remark' => 'Edit: ' . $reason, 'by' => $u['label'] ?? $uid], $uid);
     sch_log($u, 'ofcLed', 'Fee discount edited ' . $label . ' ₹' . number_format($disc / 100, 2) . ' → ₹' . number_format($new / 100, 2) . ' · ' . $L['name'] . ' · ' . $reason);
+    ofc_clear_doubt($sid, $u, 'discount edited');
     $db->commit(); sch_json(['ok' => true, 'ledger' => $L]);
 }
 case 'dropFee':
@@ -342,6 +346,7 @@ case 'undoDisc': {
     sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
     ofc_adj_log($ses, $sid, ['act' => $a === 'dropFee' ? 'drop' : ($a === 'discount' ? 'disc' : 'undisc'), 'i' => $i, 'm' => $h['m'], 'name' => $h['name'], 'amt' => $amt, 'remark' => $reason, 'by' => $u['label'] ?? $uid], $uid);
     sch_log($u, 'ofcLed', ['dropFee' => 'Removed added fee ', 'discount' => 'Fee discount ', 'undoDisc' => 'Discount taken back '][$a] . $label . ' ₹' . number_format($amt / 100, 2) . ' · ' . $L['name'] . ' · ' . $reason);
+    ofc_clear_doubt($sid, $u, $a);
     $db->commit(); sch_json(['ok' => true, 'ledger' => $L]);
 }
 default: sch_fail('Unknown action.', 404);

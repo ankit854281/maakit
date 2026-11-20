@@ -1586,7 +1586,7 @@ async function shareList(date) {
 function myBad() {
   const B = Object.values(D.bad || {}).sort((a, b) => (b.at || 0) - (a.at || 0));
   if (!B.length) return card('Fee not updated', '<p class="empty">No child is marked.</p>');
-  return `<p class="note" style="margin:6px 2px">${B.length} child${B.length > 1 ? 'ren' : ''} whose fee record is not updated properly. They stay out of the calls until ${isP() ? 'you remove the mark' : 'the Principal fixes them'}.</p>` +
+  return `<p class="note" style="margin:6px 2px">${B.length} child${B.length > 1 ? 'ren' : ''} whose fee record is not updated properly. They stay out of the calls until their fee is updated in the new ERP (receipt, discount or added fee — the mark then goes by itself)${isP() ? ' or you press ✓ Fixed' : ''}.</p>` +
     card('Fee not updated · ' + B.length, `<div class="ppl">${B.map(b => { const x = D.all.find(z => z.sid === b.sid); if (!x) return ''; return `<div class="p"><div class="ava" onclick="openStu('${esc(x.sid)}')">${esc(x.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div>
       <div class="t" onclick="openStu('${esc(x.sid)}')" style="cursor:pointer"><b>${esc(x.name)}</b><small>${esc(x.cls)} · ${esc(x.father || '')} · ${esc(x.phoneNo || '')}</small><small>Marked ${dmy(b.date)} by ${esc(b.by || '')}${b.note ? ' · ' + esc(b.note) : ''}</small></div>
       <div class="r"><b>${rs(x.dueNow)}</b>${isP() ? `<div class="acts"><button class="mybad sm" onclick="markBad('${esc(x.sid)}',0)">✓ Fixed</button></div>` : ''}</div></div>`; }).join('')}</div>`);

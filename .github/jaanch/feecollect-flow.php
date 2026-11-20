@@ -27,7 +27,7 @@ $db = sch_db();
 $oldSettings = sch_rec_get('settings', 'main');
 $P = fctok('principal', 'principal'); $A = fctok('accountant', 'accountant'); $R = fctok('reception', 'reception');
 $n = fn() => bin2hex(random_bytes(16));
-$clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND r LIKE 'oldfeecard|%') OR (k='student' AND r IN ('fc-s1','fc-s2','fc-s3'))"); };
+$clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND r LIKE 'oldfeecard|%') OR (k='student' AND r IN ('fc-s1','fc-s2','fc-s3')) OR (k='chBad' AND r LIKE 'fc-s%')"); };
 try {
     $clean();
     sch_rec_put('settings', 'main', ['session' => '2026-27', 'sessionStart' => '2026-04-01', 'school' => 'Synthetic Fee School', 'place' => 'Test'], 'principal');
@@ -136,6 +136,9 @@ try {
     fc($after1['oldDue'] === $before1['oldDue'] && $after2['oldDue'] === $before2['oldDue'], 'nobody\'s 2026-27 old due changes when 2025-26 starts ' . json_encode([$before1['oldDue'], $after1['oldDue'], $before2['oldDue'], $after2['oldDue']]));
     fc($after1['prev']['ses'] === '2025-26' && $after1['prev']['live'] === true, 'ledger tells the previous session is open');
     [$c] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s1'], 'type' => 'Old Due', 'm' => 4, 'nonce' => $n()]); fc($c === 400, 'Old Due is not moved once 2025-26 is open');
+    // "Fee not updated" doubt (Chairman calls) clears itself when the child's fee is worked on here (20 Nov 2026)
+    sch_rec_put('chBad', 'fc-s1', ['sid' => 'fc-s1', 'note' => '', 'by' => 'Manager', 'at' => 1, 'date' => date('Y-m-d')], 'manager');
+    [$c] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s1'], 'type' => 'Book', 'm' => 11, 'amt' => '150', 'nonce' => $n()]); fc($c === 200 && !sch_rec_get('chBad', 'fc-s1'), 'fee updated here clears the fee-not-updated mark');
     echo "Fee Receipt: start, numbering from the old ERP, Upto Month maths, late fee and discount, balance and old-due checks, deposit bank, idempotency, cancel, new admission and one-place-to-collect passed, plus Old Due on the card, Add Other Fee (single and bulk) and head-wise discount\n";
 } finally {
     $clean();
