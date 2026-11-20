@@ -46,16 +46,17 @@
         const v2 = g ? vals.map((v, i) => i === 3 ? (typeof v === 'number' ? v : 0) + g : v) : vals;
         tot += t + g; rtot += t; max += 100; gTot += g; rows.push({ s, vals: v2, t: n2(t + g), real: n2(t), g: 0, gh: g, ab: allAb });
       });
-      const pct = max ? n2(tot * 100 / max) : null, rpct = max ? n2(rtot * 100 / max) : null, done = rows.filter(r => !r.none).length;
-      return { st, rows, tot: n2(tot), max, gTot, pct, rpct, done };
+      // % to ONE decimal everywhere (owner, 20 Nov 2026: "actual 43.4% hai, upar 43% dikh raha") — rank uses the unrounded real ratio
+      const pct = max ? Math.round(tot * 1000 / max) / 10 : null, rpct = max ? Math.round(rtot * 1000 / max) / 10 : null, rraw = max ? rtot / max : null, done = rows.filter(r => !r.none).length;
+      return { st, rows, tot: n2(tot), max, gTot, pct, rpct, rraw, done };
     });
     // class average and highest per subject (real marks, absent excluded) — for the slip's comparison column and bar
     const stat = {}; subs.forEach(sb => { const v = kids.map(k => k.rows.find(r => r.s === sb)).filter(r => r && !r.none && !r.ab).map(r => r.t);
       stat[sb] = { avg: v.length ? n2(v.reduce((a, b) => a + b, 0) / v.length) : 0, max: v.length ? Math.max(...v) : 0 }; });
     const extra = (d.extra && d.extra.rows) || {};
     const full = Math.max(0, ...kids.map(k => k.done));
-    const ranked = kids.filter(k => k.pct != null && k.done === full && full > 0).sort((a, b) => b.rpct - a.rpct || b.pct - a.pct);
-    let last = null, r = 0; ranked.forEach((k, i) => { if (last === null || k.rpct < last) { r = i + 1; last = k.rpct; } k.rank = r; });
+    const ranked = kids.filter(k => k.pct != null && k.done === full && full > 0).sort((a, b) => b.rraw - a.rraw || b.pct - a.pct);
+    let last = null, r = 0; ranked.forEach((k, i) => { if (last === null || k.rraw < last - 1e-9) { r = i + 1; last = k.rraw; } k.rank = r; });
     return { subs, kids, ranked, full, n: kids.length, stat, extra, withPhoto: d.withPhoto || [] };
   }
   async function load(c) {
@@ -93,7 +94,7 @@
     return { text: open + (strong.length ? ` Strong in ${strong.join(' and ')}.` : '') + (weak.length ? ` More practice in ${weak.join(' and ')} will help.` : ' Keep it up!'), auto: true, strong, weak };
   }
   function ring(p) { const pp = Math.max(0, Math.min(100, p || 0)), col = GCOL[grade(pp)] || '#17324D', a = pp * 3.6;
-    return `<div class="ring" style="background:conic-gradient(${col} ${a}deg,#E6EAF0 ${a}deg)"><div><b>${p != null ? Math.round(p) + '%' : '—'}</b><small>${p != null ? grade(p) : ''}</small></div></div>`; }
+    return `<div class="ring" style="background:conic-gradient(${col} ${a}deg,#E6EAF0 ${a}deg)"><div><b>${p != null ? p + '%' : '—'}</b><small>${p != null ? grade(p) : ''}</small></div></div>`; }
   // Parents' "nowhere else" touches (owner, 20 Nov 2026: "jo parents ko lage aisa kahi nahi mil raha"): the Principal's letter in
   // Hindi written for this child, achievement badges, the child's place on a line of the whole class, and (certificate) proud parents.
   function badgesOf(D, k) {
@@ -157,7 +158,7 @@
     return `<div class="slip"><div class="shd"><img src="img/snmsis-logo.png" alt=""><div><b>${SCHOOL.toUpperCase()}</b><span>${PLACE}</span></div><i>HALF-YEARLY EXAMINATION ${SESL}<br><em>PROGRESS SLIP</em></i></div>
       <div class="stu"><div class="ph" data-sid="${esc(st.id)}">${PH[st.id] ? `<img src="${PH[st.id]}" alt="">` : `<span>${esc(st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}</div>
         <div class="who"><b>${esc(st.name)}</b><span>Class <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b> · Adm. No. <b>${esc(st.adm || '—')}</b></span><span>Father: <b>${esc(st.father || '—')}</b>${st.mother ? ' · Mother: <b>' + esc(st.mother) + '</b>' : ''}</span></div>
-        ${ring(k.pct)}<div class="rk"><small>Rank in class</small><b>${k.rank ? k.rank : '—'}</b><small>of ${D.n}</small></div></div>
+        ${ring(k.pct)}${k.rank && k.rank * 2 <= D.ranked.length ? `<div class="rk"><small>Rank in class</small><b>${k.rank}</b><small>of ${D.ranked.length}</small></div>` : `<div class="rk"><small>Overall grade</small><b>${k.pct != null ? grade(k.pct) : '—'}</b><small>${fail ? 'Keep trying' : 'Passed'}</small></div>`}</div>
       <div class="letter">${letterOf(D, k)}</div>
       ${(() => { const B = badgesOf(D, k); return B.length ? `<div class="badges">${B.map(([i, l]) => `<span><i>${i}</i>${esc(l)}</span>`).join('')}</div>` : ''; })()}
       <table class="m"><tr><th style="text-align:left">Subject</th>${PARTS.map(([, l, m]) => `<th>${l.replace('Term Exam', 'Term')}<br><small>${m}</small></th>`).join('')}<th>Total<br><small>100</small></th><th>Grade</th><th>Class<br>avg</th><th>Highest</th><th style="width:22%">Child vs class</th></tr>
@@ -197,7 +198,7 @@
   // ---- certificate design v2 (owner, 20 Nov 2026: "education symbol, student ki image badi, flower jaisa kuchh — attractive")
   let FONTS = null;
   function fonts() {
-    if (!FONTS) FONTS = Promise.all([['GreatVibes', 'fonts/great-vibes.woff2', '400'], ['Poppins', 'fonts/poppins-latin-400-normal.woff2', '400'], ['Poppins', 'fonts/poppins-latin-600-normal.woff2', '600'], ['Poppins', 'fonts/poppins-latin-700-normal.woff2', '700'], ['NotoDevaC', '../smartsarathi/assets/fonts/noto-deva-700.woff2', '700']]
+    if (!FONTS) FONTS = Promise.all([['GreatVibes', 'fonts/great-vibes.woff2', '400'], ['Poppins', 'fonts/poppins-latin-400-normal.woff2', '400'], ['Poppins', 'fonts/poppins-latin-600-normal.woff2', '600'], ['Poppins', 'fonts/poppins-latin-700-normal.woff2', '700']]
       .map(([f, u, w]) => window.FontFace ? new FontFace(f, `url(${u})`, { weight: w }).load().then(x => document.fonts.add(x)).catch(() => {}) : 0));
     return FONTS;
   }
@@ -252,7 +253,7 @@
   // blue guilloche border with gold rules, crest + school name on top, a blue "Certificate of Merit" ribbon, a gold medal on blue/red
   // straps (left), the child's photo in a frame wearing a graduation cap (right), the traditional wording ("ward of Shri … & Smt. …,
   // a student of Class …, has secured the FIRST POSITION …"), three signatures, date, certificate no. and Scan-to-verify QR.
-  const EBLUE = '#1A3E8C', EBLUE2 = '#0F2A66', ERED = '#C62828';
+  let EBLUE = '#1A3E8C', EBLUE2 = '#0F2A66'; const ERED = '#C62828';
   // middle (paper) colour of the certificate — owner, 20 Nov 2026: "bich ka color kyu nahi badal rahe"
   const PAPERS = { cream: ['#FFFEFA', '#F6EEDB'], white: ['#FFFFFF', '#F3F5F9'], sky: ['#F7FBFF', '#DCEBFF'], lemon: ['#FFFDF0', '#FFF0B8'], mint: ['#FAFFFC', '#DDF3E6'] };
   let PAPER = (() => { try { return localStorage.getItem('sch_cert_paper') || 'cream'; } catch (e) { return 'cream'; } })();
@@ -282,7 +283,7 @@
     x.restore();
   }
   async function certMerit(k, D) {
-    await fonts();
+    await fonts(); [EBLUE, EBLUE2] = MPAL[CV];
     const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const INK = '#2A2F3A', MUTE = '#5E5646', GD = '#9A7425', tx = W / 2;
     const T = (t, X, Y, f, col, al, sp) => { x.font = f; x.fillStyle = col || INK; x.textAlign = al || 'center'; if ('letterSpacing' in x) x.letterSpacing = (sp || 0) + 'px'; x.fillText(String(t), X, Y); if ('letterSpacing' in x) x.letterSpacing = '0px'; };
@@ -361,9 +362,9 @@
     return c;
   }
   // ===== Three more certificate designs (owner, 20 Nov 2026: "format, colour, design sab change karo") — the owner picks one.
-  //  1 Portrait Royal  · 2 Colourful Achievement  · 3 Indian Prashasti Patra (bilingual)  · 4 Certificate of Merit (v6)
-  const CDESIGNS = [['royal', 'Design 1 · Portrait Royal'], ['bright', 'Design 2 · Colourful'], ['prashasti', 'Design 3 · Prashasti Patra'], ['merit', 'Design 4 · Merit (blue)']];
-  let CDESIGN = (() => { try { return localStorage.getItem('sch_cert_design') || 'royal'; } catch (e) { return 'royal'; } })();
+  //  Colourful trophy (owner's favourite) · Portrait Royal · Certificate of Merit (v6). Prashasti Patra was dropped by the owner.
+  const CDESIGNS = [['auto', '★ Har certificate alag (Auto)'], ['bright', 'Sab Colourful trophy'], ['royal', 'Sab Portrait Royal'], ['merit', 'Sab Merit']];
+  let CDESIGN = (() => { try { const v = localStorage.getItem('sch_cert_design'); return ['auto', 'bright', 'royal', 'merit'].includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   function kit(x, W, H) {
     const T = (t, X, Y, f, col, al, sp) => { x.font = f; x.fillStyle = col; x.textAlign = al || 'center'; if ('letterSpacing' in x) x.letterSpacing = (sp || 0) + 'px'; x.fillText(String(t), X, Y); if ('letterSpacing' in x) x.letterSpacing = '0px'; };
     const fit = (t, f, w) => { x.font = f; let s2 = t; while (x.measureText(s2).width > w && s2.length > 4) s2 = s2.slice(0, -2) + '…'; return s2; };
@@ -392,8 +393,8 @@
   // ---- Design 1: Portrait Royal — A4 portrait, royal blue page, ivory card, gold frame, big photo in a laurel, red rank ribbon
   async function certRoyal(k, D) {
     await fonts(); const W = 1240, H = 1754, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), K = kit(x, W, H), cx = W / 2;
-    const BL = '#0F2A66', RED = '#B71C1C', INK = '#2A2F3A', MU = '#5E5646'; PAL = METAL[k.rank] || GOLD; const M = PAL; PAL = GOLD;
-    const g0 = x.createLinearGradient(0, 0, W, H); g0.addColorStop(0, '#0B1F4D'); g0.addColorStop(.5, '#1A3E8C'); g0.addColorStop(1, '#0B1F4D'); x.fillStyle = g0; x.fillRect(0, 0, W, H);
+    const RP = RPAL[CV], BL = RP[2], RED = '#B71C1C', INK = '#2A2F3A', MU = '#5E5646'; PAL = METAL[k.rank] || GOLD; const M = PAL; PAL = GOLD;
+    const g0 = x.createLinearGradient(0, 0, W, H); g0.addColorStop(0, RP[0]); g0.addColorStop(.5, RP[1]); g0.addColorStop(1, RP[0]); x.fillStyle = g0; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 4; i++) guilloche(x, [0, W, 0, W][i], [0, 0, H, H][i], 260, 37, 223, GOLD[1], .22, 1);
     // ivory card
     const m = 70; x.save(); x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 30; const pg = x.createRadialGradient(cx, H * .45, 100, cx, H * .45, 900); pg.addColorStop(0, '#FFFEF8'); pg.addColorStop(1, '#F5EAD0'); x.fillStyle = pg; x.fillRect(m, m, W - 2 * m, H - 2 * m); x.restore();
@@ -437,24 +438,24 @@
   }
   async function certBright(k, D) {
     await fonts(); const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), K = kit(x, W, H);
-    const NV = '#13235B', OR = '#F57C00', INK = '#2E3440', MU = '#5F6B7A';
+    const BP = BPAL[CV], NV = BP.nv, OR = BP.acc, INK = '#2E3440', MU = '#5F6B7A';
     x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H);
     const wave = (pts, col) => { x.fillStyle = col; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i += 3) x.bezierCurveTo(...pts[i], ...pts[i + 1], ...pts[i + 2]); x.closePath(); x.fill(); };
     // top-left waves
-    wave([[0, 0], [520, 0], [420, 120], [300, 160], [180, 260], [80, 360], [0, 420]], '#1A3E8C');
-    wave([[0, 0], [380, 0], [300, 90], [200, 120], [120, 200], [60, 260], [0, 300]], '#2E7DD7');
-    wave([[0, 0], [240, 0], [190, 60], [120, 80], [70, 130], [30, 170], [0, 190]], '#FFC107');
+    wave([[0, 0], [520, 0], [420, 120], [300, 160], [180, 260], [80, 360], [0, 420]], BP.d);
+    wave([[0, 0], [380, 0], [300, 90], [200, 120], [120, 200], [60, 260], [0, 300]], BP.m);
+    wave([[0, 0], [240, 0], [190, 60], [120, 80], [70, 130], [30, 170], [0, 190]], BP.a);
     // bottom-right waves
-    wave([[W, H], [W - 560, H], [W - 450, H - 130], [W - 320, H - 170], [W - 190, H - 280], [W - 80, H - 380], [W, H - 440]], '#1A3E8C');
-    wave([[W, H], [W - 400, H], [W - 320, H - 95], [W - 210, H - 125], [W - 130, H - 210], [W - 60, H - 270], [W, H - 310]], '#FF8F00');
-    wave([[W, H], [W - 250, H], [W - 200, H - 60], [W - 130, H - 85], [W - 75, H - 135], [W - 30, H - 175], [W, H - 195]], '#FFC107');
+    wave([[W, H], [W - 560, H], [W - 450, H - 130], [W - 320, H - 170], [W - 190, H - 280], [W - 80, H - 380], [W, H - 440]], BP.d);
+    wave([[W, H], [W - 400, H], [W - 320, H - 95], [W - 210, H - 125], [W - 130, H - 210], [W - 60, H - 270], [W, H - 310]], BP.b);
+    wave([[W, H], [W - 250, H], [W - 200, H - 60], [W - 130, H - 85], [W - 75, H - 135], [W - 30, H - 175], [W, H - 195]], BP.a);
     // confetti
-    let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; const CC = ['#FFC107', '#FF7043', '#26A69A', '#42A5F5', '#AB47BC', '#EC407A'];
+    let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; const CC = [BP.a, '#FF7043', '#26A69A', '#42A5F5', '#AB47BC', '#EC407A'];
     for (let i = 0; i < 90; i++) { const px = rnd() * W, py = rnd() * H; if (px > 160 && px < W - 160 && py > 110 && py < H - 110) continue; x.save(); x.translate(px, py); x.rotate(rnd() * 6); x.fillStyle = CC[i % 6]; x.globalAlpha = .85; i % 3 ? x.fillRect(-7, -3, 14, 6) : (star(x, 0, 0, 9, CC[i % 6])); x.restore(); }
-    x.lineWidth = 3; x.strokeStyle = '#1A3E8C'; x.strokeRect(36, 36, W - 72, H - 72);
+    x.lineWidth = 3; x.strokeStyle = BP.d; x.strokeRect(36, 36, W - 72, H - 72);
     const logo = await loadImg('img/snmsis-logo.png');
     // header
-    if (logo) { x.save(); x.beginPath(); x.arc(W / 2, 128, 60, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 5; x.strokeStyle = '#FFC107'; x.stroke(); x.clip(); x.drawImage(logo, W / 2 - 55, 73, 110, 110); x.restore(); }
+    if (logo) { x.save(); x.beginPath(); x.arc(W / 2, 128, 60, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 5; x.strokeStyle = BP.a; x.stroke(); x.clip(); x.drawImage(logo, W / 2 - 55, 73, 110, 110); x.restore(); }
     K.T(SCHOOL.toUpperCase(), W / 2, 238, `700 40px Poppins, Arial, sans-serif`, NV, 'center', 1); K.T(PLACE + '  ·  Session ' + SESL, W / 2, 274, `500 22px Poppins, Arial, sans-serif`, MU);
     K.T('CERTIFICATE', W / 2 - 150, 384, `700 96px Poppins, Arial, sans-serif`, NV, 'center', 6);
     K.T('OF ACHIEVEMENT', W / 2 - 150, 432, `600 30px Poppins, Arial, sans-serif`, OR, 'center', 12);
@@ -468,62 +469,28 @@
     K.T(`in the Half-Yearly Examination ${SESL} with ${k.rpct}% marks.`, tx, yy + 106, `500 25px Poppins, Arial, sans-serif`, INK);
     K.T('Keep shining and keep learning!', tx, yy + 150, `italic 600 24px Georgia, serif`, '#26A69A');
     // right: photo above trophy
-    const rx = W - 380; x.beginPath(); x.arc(rx, 400, 128, 0, 7); x.fillStyle = '#FFC107'; x.fill(); x.beginPath(); x.arc(rx, 400, 116, 0, 7); x.fillStyle = '#fff'; x.fill();
+    const rx = W - 380; x.beginPath(); x.arc(rx, 400, 128, 0, 7); x.fillStyle = BP.a; x.fill(); x.beginPath(); x.arc(rx, 400, 116, 0, 7); x.fillStyle = '#fff'; x.fill();
     await K.pic(k, rx, 400, 108, false, 0, '#E8F1FD', NV);
     trophy(x, rx, 700, 150, METAL[k.rank] || GOLD, k.rank, K.T);
     await K.sigs(D, [[tx - 440, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 440, 'Chairman', '']], 1010, NV, MU, 250);
-    K.qr(D, k, W - 470, 940, 92, NV, '#FFC107', MU);
+    K.qr(D, k, W - 470, 940, 92, NV, BP.a, MU);
     K.T(`Date: ${K.dt()}   ·   Certificate No. ${K.certNo(D, k)}`, tx, H - 90, `500 16px Poppins, Arial, sans-serif`, MU);
     return c;
   }
-  // ---- Design 3: Prashasti Patra — Indian ceremonial: deep maroon border with gold mandala corners, saffron-ivory centre,
-  // bilingual heading "प्रशस्ति पत्र / CERTIFICATE OF MERIT", photo in an arch (jharokha) frame, mandala rank medallion
-  function mandala(x, cx, cy, R, col, col2) { x.save(); x.translate(cx, cy);
-    for (let ring = 0; ring < 3; ring++) { const n = [16, 12, 8][ring], r = R * [1, .72, .46][ring]; x.fillStyle = ring % 2 ? col2 : col;
-      for (let i = 0; i < n; i++) { x.save(); x.rotate(i * Math.PI * 2 / n); x.beginPath(); x.moveTo(0, -r * .35); x.quadraticCurveTo(r * .2, -r * .7, 0, -r); x.quadraticCurveTo(-r * .2, -r * .7, 0, -r * .35); x.fill(); x.restore(); } }
-    x.beginPath(); x.arc(0, 0, R * .22, 0, 7); x.fillStyle = col; x.fill(); x.beginPath(); x.arc(0, 0, R * .12, 0, 7); x.fillStyle = col2; x.fill(); x.restore(); }
-  async function certPrashasti(k, D) {
-    await fonts(); const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), K = kit(x, W, H), cx = W / 2;
-    const MR = '#6D1022', MR2 = '#8E1B32', SAF = '#E65100', INK = '#3A2A1E', MU = '#6B5440', DEV = 'NotoDevaC, "Noto Sans Devanagari", sans-serif';
-    x.fillStyle = MR; x.fillRect(0, 0, W, H);
-    // gold zig band on maroon
-    x.save(); x.strokeStyle = GOLD[1]; x.lineWidth = 2; x.globalAlpha = .7; for (const [x0, y0, len, v] of [[0, 30, W, 0], [0, H - 30, W, 0], [30, 0, H, 1], [W - 30, 0, H, 1]]) { x.beginPath(); for (let t = 0; t <= len; t += 16) { const o = (t / 16) % 2 ? 8 : -8; v ? (t ? x.lineTo(x0 + o, t) : x.moveTo(x0 + o, t)) : (t ? x.lineTo(t, y0 + o) : x.moveTo(t, y0 + o)); } x.stroke(); } x.restore();
-    const m = 62, pg = x.createRadialGradient(cx, H / 2, 80, cx, H / 2, 900); pg.addColorStop(0, '#FFFCF2'); pg.addColorStop(1, '#F8E7C4'); x.fillStyle = pg; x.fillRect(m, m, W - 2 * m, H - 2 * m);
-    x.lineWidth = 6; x.strokeStyle = gold(x, 0, 0, W, H); x.strokeRect(m + 10, m + 10, W - 2 * m - 20, H - 2 * m - 20); x.lineWidth = 2; x.strokeStyle = MR2; x.strokeRect(m + 22, m + 22, W - 2 * m - 44, H - 2 * m - 44);
-    [[m + 22, m + 22], [W - m - 22, m + 22], [m + 22, H - m - 22], [W - m - 22, H - m - 22]].forEach(([a, b2]) => mandala(x, a, b2, 95, GOLD[3], MR2));
-    mandala(x, cx, H / 2 + 40, 330, 'rgba(184,144,47,.07)', 'rgba(109,16,34,.05)');
-    const logo = await loadImg('img/snmsis-logo.png');
-    if (logo) { x.save(); x.beginPath(); x.arc(cx, 140, 58, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 5; x.strokeStyle = gold(x, cx - 58, 82, cx + 58, 198); x.stroke(); x.clip(); x.drawImage(logo, cx - 53, 87, 106, 106); x.restore(); }
-    K.T(SCHOOL.toUpperCase(), cx, 246, `700 40px Georgia, serif`, MR, 'center', 2); K.T(PLACE + '  ·  सत्र / Session ' + SESL, cx, 282, `italic 23px Georgia, ${DEV}`, MU);
-    K.T('प्रशस्ति पत्र', cx, 372, `700 76px ${DEV}`, SAF);
-    K.T('CERTIFICATE OF MERIT', cx, 424, `700 30px Georgia, serif`, MR, 'center', 10);
-    x.fillStyle = gold(x, cx - 300, 0, cx + 300, 0); x.fillRect(cx - 300, 444, 600, 2);
-    // arch (jharokha) photo frame on the left
-    const ax = 330, ay = 640, aw = 230, ah = 300; const arch = (pad) => { x.beginPath(); x.moveTo(ax - aw / 2 - pad, ay + ah / 2 + pad); x.lineTo(ax - aw / 2 - pad, ay - ah / 2 + aw / 2); x.arc(ax, ay - ah / 2 + aw / 2, aw / 2 + pad, Math.PI, 0); x.lineTo(ax + aw / 2 + pad, ay + ah / 2 + pad); x.closePath(); };
-    arch(16); x.fillStyle = gold(x, ax - aw, ay - ah, ax + aw, ay + ah); x.fill(); arch(6); x.fillStyle = MR; x.fill();
-    const ph = await loadImg(await photo(k.st.id)); x.save(); arch(0); x.clip();
-    if (ph) { const sc = Math.max(aw / ph.width, ah / ph.height); x.drawImage(ph, ax - ph.width * sc / 2, ay - ph.height * sc / 2, ph.width * sc, ph.height * sc); }
-    else { x.fillStyle = '#FBEFD6'; x.fillRect(ax - aw / 2, ay - ah / 2, aw, ah); K.T(k.st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(), ax, ay + 40, `700 92px Georgia, serif`, MR); }
-    x.restore();
-    // rank medallion on the right
-    const M = METAL[k.rank] || GOLD, rx = W - 330, ryy = 640; PAL = M; mandala(x, rx, ryy, 150, M[3], M[1]); x.beginPath(); x.arc(rx, ryy, 92, 0, 7); x.fillStyle = gold(x, rx - 92, ryy - 92, rx + 92, ryy + 92); x.fill(); PAL = GOLD;
-    x.beginPath(); x.arc(rx, ryy, 78, 0, 7); x.fillStyle = MR; x.fill(); x.lineWidth = 3; x.strokeStyle = M[2]; x.stroke();
-    K.T(String(k.rank), rx - 10, ryy + 26, `700 70px Georgia, serif`, M[2]); K.T(['', 'ST', 'ND', 'RD'][k.rank] || 'TH', rx + 28, ryy - 4, `700 22px Georgia, serif`, M[2]); K.T('RANK', rx, ryy + 52, `700 15px Georgia, serif`, M[2], 'center', 3);
-    K.T(['', 'प्रथम स्थान', 'द्वितीय स्थान', 'तृतीय स्थान'][k.rank] || '', rx, ryy + 200, `700 30px ${DEV}`, SAF);
-    // citation
-    K.T('This is to certify that', cx, 506, `italic 28px Georgia, serif`, MU);
-    K.T(K.fit(k.st.name, `108px ${SF}`, 760), cx, 604, `108px ${SF}`, MR); x.fillStyle = gold(x, cx - 330, 0, cx + 330, 0); x.fillRect(cx - 330, 628, 660, 3);
-    const par = K.parents(k); let yy = 676; if (par) { K.T(K.fit('ward of ' + par + ',', `26px Georgia, serif`, 780), cx, yy, `26px Georgia, serif`, INK); yy += 38; }
-    K.T(`a student of Class ${k.st.cls}${k.st.section ? '-' + k.st.section : ''} (Adm. No. ${k.st.adm || '—'}),`, cx, yy, `26px Georgia, serif`, INK);
-    K.mixed([['has secured the ', MR], [`${ORD[k.rank]} POSITION`, SAF], [' in the class', MR]], cx, yy + 54, `700 34px Georgia, serif`);
-    K.T(`in the Half-Yearly Examination ${SESL} with ${k.rpct}% marks.`, cx, yy + 100, `27px Georgia, serif`, INK);
-    K.T('हार्दिक बधाई एवं उज्ज्वल भविष्य की शुभकामनाएँ', cx, yy + 148, `700 26px ${DEV}`, SAF);
-    await K.sigs(D, [[cx - 470, 'Class Teacher', D.ct], [cx, 'Principal', ''], [cx + 470, 'Chairman', '']], 1036, MR, MU, 260);
-    K.qr(D, k, W - 262, 930, 92, MR, GOLD[3], MU);
-    K.T(`Date: ${K.dt()}   ·   Certificate No. ${K.certNo(D, k)}`, cx, H - 104, `600 16px Georgia, serif`, MU, 'center', 1);
-    return c;
+  // "Har certificate alag design aur rang" (owner, 20 Nov 2026: "colourful trophy wala best; design 3 mat do; sab certificate alag
+  // design aur colour ke"): AUTO — 1st rank = Colourful trophy, 2nd = Portrait Royal, 3rd = Merit; the colour set turns with the
+  // class (and the child's place in the list), so no two certificates of a class — or of neighbouring classes — look the same.
+  const BPAL = [{ d: '#1A3E8C', m: '#2E7DD7', a: '#FFC107', b: '#FF8F00', nv: '#13235B', acc: '#F57C00' }, { d: '#5B2A86', m: '#9C4DCC', a: '#F8BBD0', b: '#EC407A', nv: '#3B1A5A', acc: '#D81B60' },
+    { d: '#0B6E4F', m: '#26A69A', a: '#D4E157', b: '#FFB300', nv: '#0B4436', acc: '#00897B' }, { d: '#B71C1C', m: '#E64A19', a: '#FFCA28', b: '#FB8C00', nv: '#7F1D1D', acc: '#E65100' }];
+  const RPAL = [['#0B1F4D', '#1A3E8C', '#0F2A66'], ['#3E0A14', '#7A1830', '#5A1020'], ['#05281F', '#0E5A45', '#0B3D2E'], ['#1E0F40', '#4A2582', '#2E1660']];
+  const MPAL = [['#1A3E8C', '#0F2A66'], ['#00796B', '#004D40'], ['#4A2582', '#2E1660'], ['#8E1B32', '#5A1020']];
+  let CV = 0;
+  async function certCanvas(k, D, i) {
+    CV = (Math.max(0, CLASSES.indexOf(k.st.cls)) + (i || 0)) % 4;
+    const d = CDESIGN === 'auto' ? (k.rank === 1 ? 'bright' : k.rank === 2 ? 'royal' : 'merit') : CDESIGN;
+    return d === 'bright' ? certBright(k, D) : d === 'merit' ? certMerit(k, D) : certRoyal(k, D);
   }
-  async function certCanvas(k, D) { return CDESIGN === 'bright' ? certBright(k, D) : CDESIGN === 'prashasti' ? certPrashasti(k, D) : CDESIGN === 'merit' ? certMerit(k, D) : certRoyal(k, D); }
+  const certIsPortrait = k => (CDESIGN === 'auto' ? (k.rank === 2 ? 'royal' : '') : CDESIGN) === 'royal';
   async function rankers(D) {
     const top = D.ranked.filter(k => k.rank <= 3);
     if (!top.length) { $('out').innerHTML = '<div class="pan msg">No child has every subject entered yet — rankers come when all marks of the class are in.</div>'; return; }
@@ -533,8 +500,8 @@
     document.querySelectorAll('[data-cd]').forEach(b => { b.onclick = () => { CDESIGN = b.dataset.cd; try { localStorage.setItem('sch_cert_design', CDESIGN); } catch (e) {} rankers(D); }; });
     if (!D.certs) { try { D.certs = (await get(`progress_api.php?a=certs&ses=${SES}&cls=${encodeURIComponent(CLS)}`)).certs || {}; } catch (e) { D.certs = {}; } }
     const urls = [];
-    for (const k of top) {
-      const c = await certCanvas(k, D), url = c.toDataURL('image/jpeg', 0.92); urls.push(url);
+    for (const [i, k] of top.entries()) {
+      const c = await certCanvas(k, D, i), url = c.toDataURL('image/jpeg', 0.92); urls.push([url, certIsPortrait(k)]);
       const d = document.createElement('div'); d.className = 'cert';
       d.innerHTML = `<h4>${k.rank}${['', 'st', 'nd', 'rd'][k.rank]} · ${esc(k.st.name)} · ${k.pct}%</h4><img src="${url}" alt="Certificate"><div class="row" style="margin-top:8px"><button class="btn g" data-s>Share</button><a class="btn l" download="Certificate-${esc(k.st.name.replace(/\W+/g, '-'))}.jpg" href="${url}">Download</a></div>`;
       d.querySelector('[data-s]').onclick = () => share(c, 'Certificate-' + k.st.name.replace(/\W+/g, '-') + '.png', `${k.st.name} — ${ORD[k.rank]} position, Class ${k.st.cls}, Half-Yearly ${SESL}`);
@@ -542,7 +509,7 @@
       $('cl').appendChild(d);
     }
     $('cprint').onclick = () => { const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.');
-      w.document.write(`<!doctype html><html><head><title>Certificates</title><style>@page{size:A4 ${CDESIGN === 'royal' ? 'portrait' : 'landscape'};margin:0}body{margin:0}img{width:100%;display:block;page-break-after:always}</style></head><body>${urls.map(u => `<img src="${u}">`).join('')}<script>setTimeout(print,600)<\/script></body></html>`); w.document.close(); };
+      w.document.write(`<!doctype html><html><head><title>Certificates</title><style>@page{size:A4 landscape;margin:0}@page port{size:A4 portrait;margin:0}body{margin:0}img{width:100%;display:block;page-break-after:always}img.p{page:port;width:auto;height:100vh;margin:0 auto}</style></head><body>${urls.map(([u, pt]) => `<img class="${pt ? 'p' : ''}" src="${u}">`).join('')}<script>setTimeout(print,600)<\/script></body></html>`); w.document.close(); };
   }
   // ---------- "Our Stars" poster (owner, 20 Nov 2026): every class's 1st/2nd/3rd with photos on one A3-style poster for the
   // school gate, WhatsApp and Facebook. Classes without complete marks are left out.

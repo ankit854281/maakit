@@ -272,9 +272,9 @@ case 'certs': {
         $tot[$sid] = ($tot[$sid] ?? 0) + $t; $max[$sid] = ($max[$sid] ?? 0) + 100; $done[$sid] = ($done[$sid] ?? 0) + 1;
     }
     $full = $done ? max($done) : 0; $pct = [];
-    foreach ($done as $sid => $n) if ($n === $full) $pct[$sid] = round($tot[$sid] * 100 / $max[$sid], 2);
+    foreach ($done as $sid => $n) if ($n === $full) $pct[$sid] = $tot[$sid] / $max[$sid];   // rank on the unrounded ratio, % shown to one decimal (as results.js)
     arsort($pct); $rank = 0; $i = 0; $last = null; $out = []; $codes = [];
-    foreach ($pct as $sid => $p) { $i++; if ($last === null || $p < $last) { $rank = $i; $last = $p; } if ($rank > 3) break;
+    foreach ($pct as $sid => $raw) { $i++; if ($last === null || $raw < $last - 1e-9) { $rank = $i; $last = $raw; } if ($rank > 3) break; $p = round($raw * 100, 1);
         $h = 0; foreach (str_split('HY|' . $ses . '|' . $sid . '|' . $rank) as $ch) $h = ($h * 31 + ord($ch)) & 0xFFFFFFFF;
         $code = 'HY' . substr($ses, 2, 2) . '-' . substr(str_pad(strtoupper(base_convert((string)$h, 10, 36)), 7, '0', STR_PAD_LEFT), -7);
         $st = $students[$sid];

@@ -1267,3 +1267,10 @@ papers only from photos the owner sends.
   switches to portrait), bright (Design 2, colourful waves + trophy), prashasti (Design 3, maroon/gold mandala, "प्रशस्ति पत्र",
   NotoDevaC font), merit (Design 4, v6 blue). Shared helpers in kit(). Paper-colour option (PAPERS, sch_cert_paper) is for merit only.
   Default is 'royal' until the owner picks — then set CDESIGN's default.
+
+- 2026-11-20 (Claude): Owner picked the Colourful trophy design, dropped Prashasti Patra (code removed), and asked for every
+  certificate to look different. Default CDESIGN 'auto': 1st = Colourful trophy, 2nd = Portrait Royal, 3rd = Merit; colour set
+  (BPAL/RPAL/MPAL) turns with the class index + the child's place in the list (CV). Picker: Auto / all Colourful / all Royal /
+  all Merit. Print-all mixes landscape and portrait pages (@page port). Slip fixes: % shown to ONE decimal everywhere (ring was
+  rounding 43.4 → 43); rank box only for the upper half — the lower half sees "Overall grade" instead of "Rank 8 of 8"; "of N"
+  now counts ranked children. progress_api a=certs ranks on the unrounded ratio and shows % to one decimal (same as results.js).
