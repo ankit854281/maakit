@@ -92,7 +92,7 @@ async function submitFee() {
   if (total > LD.totals.balance) { F.paid = '0'; F.discount = '0'; F.late = '0'; F.total = '0'; render(); return toast('not received negative amount-2'); }
   if (F.mode !== 'Cash' && !F.depositBank) return toast('Select Deposit Bank Name First');
   if (F.mode !== 'Cash' && !F.depositDate) return toast('Enter Bank Deposit Date');
-  if (LD.oldDue > 0) return toast('Firstly Paid Old Due Amount — use "Add Old Due to the card" first.');
+  if (LD.oldDue > 0) return toast(LD.prev && LD.prev.live ? 'Session ' + LD.prev.ses + ' fee ' + R(LD.oldDue) + ' is pending — take it in session ' + LD.prev.ses + ' first.' : 'Firstly Paid Old Due Amount — use "Add Old Due to the card" first.');
   if (F.paid === '' || !total) return toast('Select Month');
   if (isNaN(parseFloat(F.paid))) return toast('Please Check Amount');
   const alloc = heads().filter(h => F.npaid[h.i] > 0).map(h => ({ i: h.i, amt: R(F.npaid[h.i]) }));
@@ -239,7 +239,8 @@ function detailsHtml() {
 }
 function adjHtml() {
   const H = heads(), mo = (id, on) => `<select id="${id}">${MORDER.map(m => opt(String(m), ST.months[m], m === on)).join('')}</select>`;
-  return `${LD.oldDue > 0 ? `<div class="fr-box"><b class="fr-red">Old Fee ${R(LD.oldDue)} is not on the fee card.</b> Like the old ERP, no receipt can be made until it is paid ("Firstly Paid Old Due Amount"). Add it to the card as the head "Old Due" (April), then collect it like any other fee. <button onclick="moveOldDue()">Add Old Due to the card</button></div>` : ''}
+  return `${LD.oldDue > 0 ? (LD.prev && LD.prev.live ? `<div class="fr-box"><b class="fr-red">Session ${esc(LD.prev.ses)} fee ${R(LD.oldDue)} is still pending.</b> No ${esc(ST.ses)} fee can be taken until it is paid. Take it in session ${esc(LD.prev.ses)}: <button onclick="boot('${esc(LD.prev.ses)}')">Open ${esc(LD.prev.ses)} for this child</button></div>`
+    : `<div class="fr-box"><b class="fr-red">Old Fee ${R(LD.oldDue)} is not on the fee card.</b> Like the old ERP, no receipt can be made until it is paid ("Firstly Paid Old Due Amount"). Add it to the card as the head "Old Due" (April), then collect it like any other fee. <button onclick="moveOldDue()">Add Old Due to the card</button></div>`) : ''}
   <h4 class="fr-red">Add Other Fee</h4><table class="fr-form"><tr><td>Fee Type</td><td><select id="afType">${ST.feeTypes.map(t => opt(t, t)).join('')}</select></td><td>Month</td><td>${mo('afMonth', 4)}</td></tr>
     <tr><td>Amount</td><td><input id="afAmt" autocomplete="off" placeholder="Old Due: blank = all"></td><td>Remark</td><td><input id="afRemark" autocomplete="off"></td></tr>
     <tr><td colspan="4" style="text-align:center"><button onclick="addFee([SEL.sid])">Add Fee</button></td></tr></table>

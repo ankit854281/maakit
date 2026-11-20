@@ -66,7 +66,10 @@ case 'ledger': {
     if ($card) unset($card['months']);   // the live heads come from the ledger once a session is started
     $t = $L ? ofc_totals($L) : null;
     $ph = sch_rec_get('phoStu', $sid); $photo = $ph ? (string)((sch_rec_get('phoImg', (string)$ph['img']) ?? [])['data'] ?? '') : '';
-    sch_json(['ok' => true, 'photo' => $photo, 'ledger' => $L, 'totals' => $t, 'oldDue' => $L ? ofc_old_due($ses, $sid, $L) : null, 'receipts' => $rcpts($ses, $sid), 'card' => $card, 'adj' => ofc_adj_list($ses, $sid),
+    // Previous session (owner, 20 Nov 2026: "old session ka fee old session me update ho, new ka new me — old pending ho to show kare aur new ka fee na le")
+    $ps = ofc_prev($ses); $pl = sch_rec_get('ofcLed', $ps . '|' . $sid);
+    $prev = ['ses' => $ps, 'live' => (bool)ofc_live($ps), 'due' => $pl ? max(0, ofc_totals($pl)['balance']) : 0];
+    sch_json(['ok' => true, 'photo' => $photo, 'ledger' => $L, 'totals' => $t, 'prev' => $prev, 'oldDue' => $L ? ofc_old_due($ses, $sid, $L) : null, 'receipts' => $rcpts($ses, $sid), 'card' => $card, 'adj' => ofc_adj_list($ses, $sid),
         'cardMonths' => $L ? null : ((ofc_cards($ses)[$sid] ?? [])['months'] ?? null)]);
 }
 case 'today': {
@@ -216,6 +219,7 @@ case 'addFee': {
         if (!$L) { if ($one) throw new InvalidArgumentException('This child has no fee card for ' . $ses . '.'); $skipped[] = $sid . ' (no fee card)'; continue; }
         $x = $amt;
         if ($type === 'Old Due') {
+            if (ofc_live(ofc_prev($ses))) { if ($one) throw new InvalidArgumentException('Session ' . ofc_prev($ses) . ' is open in Fee Receipt — take the old fee in that session (choose ' . ofc_prev($ses) . ' at the top), not on this card.'); $skipped[] = $L['name'] . ' (take it in ' . ofc_prev($ses) . ')'; continue; }
             $od = ofc_old_due($ses, $sid, $L); $x = $amt ?: $od;
             if ($od <= 0 || $x > $od) { $why = $od <= 0 ? 'has no old due' : 'old due is only ' . number_format($od / 100, 2); if ($one) throw new InvalidArgumentException('This child ' . $why . '.'); $skipped[] = $L['name'] . ' (' . $why . ')'; continue; }
             $L['oldMoved'] = (int)($L['oldMoved'] ?? 0) + $x;

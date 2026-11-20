@@ -25,7 +25,7 @@
     return j;
   }
   const nonce = () => { const a = new Uint8Array(16); crypto.getRandomValues(a); return [...a].map(x => x.toString(16).padStart(2, '0')).join(''); };
-  const frame = h => { $('q').innerHTML = h; };
+  const frame = h => { const old = ST && ST.sessions && ST.ses !== ST.sessions[0]; $('q').innerHTML = (old ? `<div class="card" style="background:#FFF4D6;border:1px solid #F2C14E"><b>Old session ${esc(ST.ses)}</b> — fee taken here goes to ${esc(ST.ses)}. <button class="btn s" onclick="fqSes('${esc(ST.sessions[0])}','${esc(SID || '')}')">Back to ${esc(ST.sessions[0])}</button></div>` : '') + h; };
   const sheet = h => { $('sh').innerHTML = h ? `<div class="sheet" onclick="if(event.target===this)fqClose()"><div class="in">${h}</div></div>` : ''; };
   window.fqClose = () => sheet('');
 
@@ -45,11 +45,12 @@
   const lateP = () => Math.max(0, Math.round((parseFloat(LATE) || 0) * 100));
 
   // ---------- views ----------
-  async function boot() {
+  async function boot(ses, sid) {   // ses: another session (old session fee, 20 Nov 2026); sid: open that child right away
     if (!TOK()) return frame('<div class="card">Please log in again.</div>');
-    try { ST = await api('state'); } catch (e) { return frame(`<div class="card red">${esc(e.message)}</div>`); }
-    loadToday(); draw();
+    try { ST = await api('state', null, ses ? '&ses=' + encodeURIComponent(ses) : ''); } catch (e) { return frame(`<div class="card red">${esc(e.message)}</div>`); }
+    loadToday(); if (sid) return fqOpen(sid); draw();
   }
+  window.fqSes = (ses, sid) => { SID = ''; LD = null; boot(ses, sid); };
   async function loadToday() { try { TODAY = await api('today', null, '&ses=' + encodeURIComponent(ST.ses)); if (!SID) draw(); } catch (e) { TODAY = null; } }
   function draw() {
     if (!ST) return;
@@ -92,6 +93,7 @@
     const last = (LD.receipts || []).filter(r => r.status !== 'Cancelled').slice(-1)[0];
     let html = top + `<div class="kp"><div><span>Total fee</span><b>${rs(t.net)}</b></div><div><span>Paid</span><b class="grn">${rs(t.received)}</b></div><div><span>Due</span><b class="${t.balance > 0 ? 'red' : 'grn'}">${rs(t.balance)}</b></div></div>
       ${last ? `<p class="mut" style="margin:0">Last paid ${rs(last.received)} on ${dmy(last.date)} (${esc(last.no)})</p>` : ''}</div>`;
+    if (old > 0 && LD.prev && LD.prev.live) return frame(html + `<div class="card"><p class="warn"><b class="red">Session ${esc(LD.prev.ses)} fee ${rs(old)} is still pending.</b> No ${esc(ST.ses)} fee can be taken until it is paid. Take it in session ${esc(LD.prev.ses)}.</p><button class="btn y full" onclick="fqSes('${esc(LD.prev.ses)}','${esc(SID)}')">Take ${esc(LD.prev.ses)} fee ${rs(old)}</button></div>`);
     if (old > 0) return frame(html + `<div class="card"><p class="warn"><b class="red">Old due ${rs(old)} is not on the fee card.</b> Like the old ERP, it must be paid first. Put it on the card (April, "Old Due"), then collect it here like any fee.</p><button class="btn y full" onclick="fqOldDue()">Add old due ${rs(old)} to the card</button></div>`);
     if (t.balance <= 0) return frame(html + `<div class="card ok"><div class="tick">✅</div><b>All fees paid for ${esc(ST.ses)}.</b></div>`);
     // month boxes
