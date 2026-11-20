@@ -1284,3 +1284,5 @@ papers only from photos the owner sends.
   "🖨 Print 2 per A4 (half page)" on the slips tab → printHalf(): slipHalf() compact two-column layout (200×139 mm card: header,
   child + % ring + rank/grade + attendance ring, marks table + target | English letter, badges, co-scholastic bars, remark;
   Principal's instructions; signatures). CSS .hs/.hh/.hi/.hb… in results.php. The 1-per-A4 print stays as "Print all slips (1 per A4)".
+  • Half-page slip keeps every graph (owner: "graph ye baaki sab hata doge kya"): % ring, "Child vs class" bar column, class
+    position dot line (upper half only), Attendance ring card beside the Co-Scholastic bars.

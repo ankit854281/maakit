@@ -128,6 +128,10 @@ table.ht .gb{font-size:9px;padding:0 5px;min-width:20px}
 .hm{margin-top:1.8mm;font-size:9.2px;line-height:1.35;background:#FFFCF3;border-left:3px solid #D9B45A;border-radius:0 6px 6px 0;padding:1mm 2mm}
 .hn{margin-top:2.4mm;font-size:8.4px;line-height:1.35;color:#4a5565;border-top:1px dashed #D6DEEA;padding-top:1mm}.hn b{color:#14294A}
 .hf{position:absolute;left:4mm;right:4mm;bottom:3mm;display:flex;justify-content:space-between;font-size:9px;color:#14294A}.hf span{border-top:1px solid #14294A;padding-top:1px;min-width:38mm;text-align:center}
+.hbar{padding:2px 4px!important}.hbar div{position:relative;height:7px;background:#EEF1F5;border-radius:4px}.hbar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}.hbar u{position:absolute;top:-2px;width:2px;height:11px;background:#14294A}
+.hpos{margin:1.6mm 0 0;font-size:8.5px}.hpos .ln{height:20px;margin:2px 8px 0}.hpos .ln u{font-size:8.5px;bottom:8px}.hpos .sc{font-size:7.5px}
+.hcw{display:grid;grid-template-columns:31mm 1fr;gap:1.6mm}.ha{border:1px solid #E1E6EE;border-radius:6px;padding:1.2mm 1.6mm;font-size:8.3px;color:#4a5565;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1px}.ha>b{font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:#14294A}.ha span{line-height:1.3}.ha span b{color:#14294A}
+.hcw .hc span{flex-basis:19mm}
 @media print{.slip{page-break-after:always;box-shadow:none;zoom:.86}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff}.np,.slipbar{display:none!important}.wrap{max-width:none;padding:0}.slip{margin:0 0 6mm;border-width:1.5px}@page{size:A4;margin:8mm}}
 </style></head><body><div class="wrap">
 <div class="top np"><h1>Half-Yearly · Marks Slip &amp; Rankers</h1><a href="index.php" target="_top">← ERP</a></div>

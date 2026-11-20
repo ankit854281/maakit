@@ -192,17 +192,19 @@
         <div class="hw"><b>${esc(st.name)}</b><span>Class <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b> · Adm. No. <b>${esc(st.adm || '—')}</b></span><span>Father: <b>${esc(st.father || '—')}</b>${st.mother ? ' · Mother: <b>' + esc(st.mother) + '</b>' : ''}</span></div>
         <div class="hr" style="background:conic-gradient(${pcol} ${pc * 3.6}deg,#E6EAF0 ${pc * 3.6}deg)"><div><b>${k.pct != null ? k.pct + '%' : '—'}</b><small>${k.pct != null ? grade(k.pct) : ''}</small></div></div>
         ${top ? `<div class="hk"><small>Rank</small><b>${k.rank}</b><small>of ${D.ranked.length}</small></div>` : `<div class="hk"><small>Grade</small><b>${k.pct != null ? grade(k.pct) : '—'}</b><small>${fail ? 'Keep trying' : 'Passed'}</small></div>`}
-        <div class="hr" style="background:conic-gradient(${acol} ${(ap || 0) * 3.6}deg,#E6EAF0 ${(ap || 0) * 3.6}deg)"><div><b>${ap == null ? '—' : ap + '%'}</b><small>${d ? pr + '/' + d : 'Attend.'}</small></div></div></div>
+</div>
       <div class="hb"><div>
-        <table class="ht"><tr><th style="text-align:left">Subject</th><th>PT<br><small>10</small></th><th>NB<br><small>5</small></th><th>SEA<br><small>5</small></th><th>Term<br><small>80</small></th><th>Total<br><small>100</small></th><th>Grade</th><th>Class avg</th></tr>
-        ${k.rows.map(r => { if (r.none) return `<tr><td class="s">${esc(r.s)}</td><td colspan="7" class="mut">Not entered</td></tr>`; const g = r.ab ? '' : grade(r.t);
-          return `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${badge(g)}</td><td>${(D.stat[r.s] || {}).avg ?? ''}</td></tr>`; }).join('')}
-        <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td><b class="${fail ? 'red' : 'gr'}">${fail ? 'Improve' : 'Pass'}</b></td></tr></table>
+        <table class="ht"><tr><th style="text-align:left">Subject</th><th>PT<br><small>10</small></th><th>NB<br><small>5</small></th><th>SEA<br><small>5</small></th><th>Term<br><small>80</small></th><th>Total<br><small>100</small></th><th>Grade</th><th>Class avg</th><th style="width:22%">Child vs class</th></tr>
+        ${k.rows.map(r => { if (r.none) return `<tr><td class="s">${esc(r.s)}</td><td colspan="8" class="mut">Not entered</td></tr>`; const g = r.ab ? '' : grade(r.t), S = D.stat[r.s] || { avg: 0 };
+          return `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${badge(g)}</td><td>${S.avg}</td><td class="hbar"><div><i style="width:${r.ab ? 0 : Math.min(100, r.t)}%;background:${GCOL[g] || '#17324D'}"></i><u style="left:${Math.min(100, S.avg)}%"></u></div></td></tr>`; }).join('')}
+        <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td colspan="2" style="text-align:left">Result: <b class="${fail ? 'red' : 'gr'}">${fail ? 'Needs improvement' : 'Pass'}</b></td></tr></table>
         <div class="htg"><b>Target for the Final Exam:</b> ${k.rows.filter(r => !r.none && !r.ab).map(r => { const b2 = nx(r.t); return b2 ? `${esc(r.s)} <b>${b2[0]}+</b>` : `${esc(r.s)} <b>keep 91+</b>`; }).join(' · ')}</div>
+        ${posLine(D, k).replace('class="pos"', 'class="pos hpos"')}
       </div><div>
         <div class="hl">${letterOf(D, k)}</div>
         ${B.length ? `<div class="hbd">${B.map(([i, l]) => `<span><i>${i}</i>${esc(l)}</span>`).join('')}</div>` : ''}
-        <div class="hc"><b>Co-Scholastic</b>${CO.map(([kk, l]) => { const g = String(ex[kk] || '').toUpperCase(); return `<div><span>${l}</span><u><i style="width:${COW[g] || 0}%;background:${COC[g] || '#C5CDD8'}"></i></u><em style="background:${COC[g] || '#C5CDD8'}">${g || '–'}</em></div>`; }).join('')}</div>
+        <div class="hcw"><div class="ha"><b>Attendance</b><div class="hr" style="background:conic-gradient(${acol} ${(ap || 0) * 3.6}deg,#E6EAF0 ${(ap || 0) * 3.6}deg)"><div><b>${ap == null ? '—' : ap + '%'}</b></div></div><span>${d ? `<b>${pr}</b> present<br><b>${d - pr}</b> absent<br>of <b>${d}</b> days` : 'Not entered yet'}</span></div>
+        <div class="hc"><b>Co-Scholastic</b>${CO.map(([kk, l]) => { const g = String(ex[kk] || '').toUpperCase(); return `<div><span>${l}</span><u><i style="width:${COW[g] || 0}%;background:${COC[g] || '#C5CDD8'}"></i></u><em style="background:${COC[g] || '#C5CDD8'}">${g || '–'}</em></div>`; }).join('')}</div></div>
         <div class="hm"><b>${rm.auto ? 'Remark' : "Class Teacher's Remark"}:</b> ${esc(rm.text)}</div>
       </div></div>
       <div class="hn"><b>Instructions from the Principal:</b> ${INSTR.map((t, i) => `${i + 1}. ${esc(t)}`).join(' ')}</div>
