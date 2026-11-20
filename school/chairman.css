@@ -265,3 +265,10 @@ details.rc{border:1px solid var(--line);border-radius:12px;padding:8px 10px;marg
 .pill{flex:0 0 auto;font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;background:#EFEFF3;color:var(--muted)}
 .pill.p-pr{background:#DDF4E8;color:#14915A}.pill.p-ab{background:#FADBE7;color:#C81F64}.pill.p-half,.pill.p-leave{background:#FFF0D6;color:#B36B00}.pill.p-hol{background:#E0E2FF;color:#4338CA}
 .chips2{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.chips2 span{font-size:11.5px;background:var(--tint);color:var(--a);border-radius:999px;padding:5px 10px}.chips2 b{font-weight:600}
+/* Chairman calls — 3 families per class (20 Nov 2026) */
+.myc{margin-top:10px}.mych{display:flex;align-items:center;gap:10px;margin-bottom:8px}.mych div{flex:1;min-width:0}.mych b{display:block;font-size:15px;font-weight:600}.mych small{font-size:11.5px;color:var(--muted)}
+.mych em{font-style:normal;font-size:17px;font-weight:600;color:var(--bad)}.myn{flex:0 0 30px;height:30px;border-radius:50%;background:var(--tint);color:var(--a);display:flex;align-items:center;justify-content:center;font-weight:600}
+.myk{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px;cursor:pointer}.mykh{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.mykh b{font-size:14px}.mykh span{font-size:11.5px;color:var(--muted);text-align:right}
+.myt{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px}.myt b{color:var(--bad)}
+.myf{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:10px 12px;border-radius:12px;background:#FDECEC;color:var(--bad);font-size:13px}.myf b{font-size:17px}
+.mya{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}.mya .cta{height:42px;font-size:13px;text-decoration:none}

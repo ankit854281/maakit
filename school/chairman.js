@@ -1411,8 +1411,8 @@ const sylList = R => `<div class="sl">${R.map(r => { const p = ratio(r.done, r.t
 
 // ---------------------------------------------------------------- Fees and Staff tabs
 function feesBody() {
-  const fs = S.fs || 'sum', nav = segs('fs', [['sum', 'Summary'], ['month', 'Month'], ['dues', 'Dues'], ['bill', 'Demand bill'], ['calls', 'Calls & messages']], 'sm');
-  return nav + '<div style="height:12px"></div>' + ({ sum: overview, month: monthBody, dues: duesBody, bill: billCard, calls: callBody }[fs])();
+  const fs = S.fs || 'sum', nav = segs('fs', [['sum', 'Summary'], ['my', 'Chairman calls'], ['month', 'Month'], ['dues', 'Dues'], ['bill', 'Demand bill'], ['calls', 'Calls & messages']], 'sm');
+  return nav + '<div style="height:12px"></div>' + ({ sum: overview, my: myCalls, month: monthBody, dues: duesBody, bill: billCard, calls: callBody }[fs])();
 }
 function staffBody() {
   const w = needSchool(); if (w) return w;
@@ -1427,6 +1427,49 @@ function staffBody() {
 // Staff salary (12 Nov 2026): salary only for the Chairman and the Manager. "Open Salary app" carries this login over
 // (manager.php?from=ch — no second PIN). The Manager's name and PIN are set right here (only the Chairman can).
 // Fee demand bill (13 Nov 2026): any child → the 12 Nov bill design as a picture to share with the parent (demandbill.js)
+// ---- Chairman's own calls (owner, 20 Nov 2026: "chairman sir calling ke har class 3 bachcho ka name chahiye jinhe vo khud call
+// karenge — usme unka pura student detail aur sibling ke sath pura hisab ho"). Every class: the 3 families with the biggest dues
+// (family = same 10-digit mobile, siblings in any class), a family is listed once, under the first class it is met in (PG → 12th).
+// Each child: details, fee / transport due till now, unpaid months, last receipt, last call; family total; Call (saves what was
+// discussed, as every call here), Sibling demand bill, profile.
+function myPick() {
+  const fam = {}; D.all.forEach(x => { const k = x.phoneNo || x.sid; (fam[k] = fam[k] || []).push(x); });
+  const fd = k => sum(fam[k], x => x.dueNow), used = new Set(), out = [];
+  CLASSES.forEach(c => {
+    const C = D.all.filter(x => x.cls === c && x.dueNow > 0).map(x => x.phoneNo || x.sid).filter((k, i, a) => a.indexOf(k) === i && fd(k) >= 500).sort((a, b) => fd(b) - fd(a));
+    const L = []; for (const k of C) { if (used.has(k)) continue; used.add(k); L.push({ k, kids: fam[k].slice().sort((a, b) => (a.cls === c ? -1 : 0) - (b.cls === c ? -1 : 0) || CLASSES.indexOf(a.cls) - CLASSES.indexOf(b.cls)), due: fd(k) }); if (L.length === 3) break; }
+    if (L.length) out.push({ c, L });
+  });
+  return out;
+}
+function kidDue(x) { let f = 0, t = 0; x.mon.forEach((y, i) => { if (i <= D.idx) { f += Math.max(0, y.fd - y.fp); t += Math.max(0, y.td - y.tp); } }); return { f: f + x.old, t }; }
+function myCalls() {
+  const P = myPick(), fams = sum(P, g => g.L.length), tot = sum(P, g => sum(g.L, f => f.due)), done = P.reduce((n, g) => n + g.L.filter(f => f.kids.some(x => x.last && x.last.date === D.today)).length, 0);
+  let h = `<div class="kp">${k('Families to call', String(fams), `3 per class · ${P.length} classes`, 'ac')}${k('Their dues', rsS(tot), done ? `${done} called today` : 'not called today yet', 'bad')}</div>
+    <p class="note" style="margin:8px 2px 4px">Every class: the 3 families with the biggest fee due (brothers / sisters with the same mobile counted together). Call → write what was discussed → it is saved. "Demand bill" = the sibling bill to send on WhatsApp.</p>`;
+  P.forEach(g => {
+    h += `<h5 class="sh" style="margin-top:14px">Class ${esc(g.c)}</h5>`;
+    g.L.forEach((f, i) => {
+      const a = f.kids[0], called = f.kids.some(x => x.last && x.last.date === D.today);
+      h += `<section class="card myc"><div class="mych"><span class="myn">${i + 1}</span><div><b>${esc(a.father || a.name)}</b><small>${f.kids.length > 1 ? f.kids.length + ' children' : '1 child'}${a.phoneNo ? ' · ' + esc(a.phoneNo) : ''}</small></div><em>${rs(f.due)}</em></div>
+        ${called ? '<p class="note grn" style="margin:0 0 6px">✓ Called today</p>' : ''}
+        ${f.kids.map(x => { const d = kidDue(x); return `<div class="myk" onclick="openStu('${esc(x.sid)}')">
+          <div class="mykh"><b>${esc(x.name)}</b><span>Class ${esc(x.cls)}${x.section ? '-' + esc(x.section) : ''}${x.adm ? ' · Adm ' + esc(x.adm) : ''}</span></div>
+          <div class="dlx"><div><span>Father</span><b>${esc(x.father || '—')}</b></div><div><span>Mother</span><b>${esc(x.mother || '—')}</b></div>
+            <div><span>Mobile</span><b>${esc([x.fatherMobile || x.phone, x.motherMobile].filter(Boolean).join(', ') || '—')}</b></div><div><span>Tag</span><b>${esc(x.tagName)}</b></div>
+            <div><span>Fee due</span><b class="red">${rs(d.f)}</b></div><div><span>Transport due</span><b class="red">${rs(d.t)}</b></div>
+            <div><span>Unpaid months</span><b>${esc(x.unpaid.join(', ') || (x.old ? 'old dues' : '—'))}</b></div><div><span>Old due</span><b>${x.old ? rs(x.old) : '—'}</b></div>
+            <div><span>Last paid</span><b>${x.lastPaid ? dmy(x.lastPaid.date) + ' · ' + rs(x.lastPaid.amt) : 'Nothing this session'}</b></div>
+            <div><span>Last call</span><b>${x.last ? dmy(x.last.date) + ' · ' + esc(x.last.outcome) + (x.promise ? ' · date ' + dmy(x.promise) : '') : 'Not called yet'}</b></div></div>
+          <div class="myt"><span>Payable till now</span><b>${rs(x.dueNow)}</b></div></div>`; }).join('')}
+        <div class="myf"><span>Family total${f.kids.length > 1 ? ' (' + f.kids.length + ' children)' : ''}</span><b>${rs(f.due)}</b></div>
+        <div class="mya">${a.phoneNo ? `<a class="cta" href="tel:+91${a.phoneNo}" onclick="callNow('${esc(a.sid)}')">${ic('phone', 16)} Call</a>` : '<span class="note">No mobile number</span>'}
+          <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get('sch_token'))">📄 Demand bill</button>
+          <button class="cta lt" onclick="noteCall('${esc(a.sid)}')">✍ Note</button></div></section>`;
+    });
+  });
+  return P.length ? h : card('Chairman calls', '<p class="empty">No family with fee due.</p>');
+}
 function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get('sch_token'), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {
   const nm = (window.MGR_NAME || '');
