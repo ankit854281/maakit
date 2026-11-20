@@ -98,6 +98,9 @@ table.m td.s{font-weight:600}
 .gn{font-size:11px;color:#555;margin-top:6px}
 .slipbar{display:flex;gap:6px;margin:-6px 0 14px}.slipbar .btn{padding:6px 10px;font-size:12.5px}
 .certs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}.cert{background:#fff;border:1px solid #dfe4ea;border-radius:6px;padding:10px}.cert img{width:100%;display:block;border:1px solid #e3e7ee;cursor:zoom-in}.cert h4{margin:0 0 6px}
+.instr{margin-top:10px;border:1px solid #D6DEEA;border-radius:12px;padding:8px 14px 6px;background:linear-gradient(180deg,#F7F9FD,#fff)}
+.instr h5{margin:0 0 4px;font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#14294A}
+.instr ol{margin:0;padding-left:18px;columns:2;column-gap:26px;font-size:11px;line-height:1.55;color:#3d4756}.instr li{break-inside:avoid}.instr li::marker{color:#B8902F;font-weight:700}
 @media print{.slip{page-break-after:always;box-shadow:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff}.np,.slipbar{display:none!important}.wrap{max-width:none;padding:0}.slip{margin:0 0 6mm;border-width:1.5px}@page{size:A4;margin:8mm}}
 </style></head><body><div class="wrap">
 <div class="top np"><h1>Half-Yearly · Marks Slip &amp; Rankers</h1><a href="index.php" target="_top">← ERP</a></div>

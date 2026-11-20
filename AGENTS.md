@@ -1236,3 +1236,11 @@ papers only from photos the owner sends.
   Principal's letter is now English (letterOf). Bottom of the slip is three cards: Remark · Attendance (ring with %, present/absent/
   working days) · Co-Scholastic (bar per area, A/B/C) — both always shown, "Not entered yet" / "–" when empty. Poppins (fonts/) for
   the slip body, Georgia for school/child names and the letter. One slip per A4 page in print.
+
+- 2026-11-20 (Claude): Results v5 (owner: "grace do but show nahi; Principal ka instruction niche; certificate colour unique").
+  • Grace is still given (28–32 → 33) but HIDDEN: added to the Term Exam marks on the slip (parts still add up), no Grace column/note,
+    WhatsApp text without grace. Saved marks unchanged; RANK uses the real marks (k.rpct) so it matches progress_api a=certs.
+    Certificate % = real %. Staff-only bar notes still say how many children got grace.
+  • "Instructions from the Principal" box at the bottom of every slip — lines in INSTR at the top of results.js.
+  • Certificate v4: deep emerald frame with guilloche wave pattern + guilloche rosette, metal by rank (1st gold, 2nd silver,
+    3rd bronze) for laurel, photo ring, seal, borders and the foil "CERTIFICATE" title (METAL/PAL in results.js).
