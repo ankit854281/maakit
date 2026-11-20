@@ -275,7 +275,11 @@ case 'certs': {
     $ses = prc_ses((string)($_GET['ses'] ?? '')); $cls = (string)($_GET['cls'] ?? '');
     if ($ses === '' || !in_array($cls, PRC_CLASSES, true)) throw new InvalidArgumentException('Choose the session and the class.');
     $students = reg_students(); $tot = []; $max = []; $done = [];
-    foreach ($rows('prcMarks', "$ses|Term-1|$cls|") as $m) foreach ((array)($m['rows'] ?? []) as $sid => $r) {
+    // same subjects as results.js: a combined name ("Hindi/Sanskrit") is left out when its parts have their own marks
+    $allM = []; foreach ($rows('prcMarks', "$ses|Term-1|$cls|") as $m) $allM[(string)($m['subject'] ?? '')] = $m;
+    $names = array_keys(array_filter($allM, function ($m) { foreach ((array)($m['rows'] ?? []) as $r) foreach (PRC_PARTS as [$k]) if ((((array)$r)[$k] ?? '') !== '') return true; return false; }));
+    $allM = array_filter($allM, function ($m, $nm) use ($names) { $pp = array_values(array_filter(array_map('trim', explode('/', (string)$nm)))); return !(count($pp) > 1 && !array_diff($pp, $names)); }, ARRAY_FILTER_USE_BOTH);
+    foreach ($allM as $m) foreach ((array)($m['rows'] ?? []) as $sid => $r) {
         if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls || !empty($students[$sid]['inactive'])) continue;
         $has = false; $t = 0.0; foreach (PRC_PARTS as [$k]) { $v = ((array)$r)[$k] ?? ''; if ($v !== '' && $v !== null) $has = true; if (is_int($v) || is_float($v)) $t += $v; }
         if (!$has) continue;

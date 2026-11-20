@@ -23,18 +23,29 @@
     if (r.status === 401) throw Error('Please log in to the ERP first, then open this page again.');
     if (!r.ok || !j || !j.ok) throw Error((j && j.error) || 'Server problem. Please try again.'); return j;
   }
-  const grade = p => p >= 91 ? 'A1' : p >= 81 ? 'A2' : p >= 71 ? 'B1' : p >= 61 ? 'B2' : p >= 51 ? 'C1' : p >= 41 ? 'C2' : p >= 33 ? 'D' : 'E';
+  // old ERP 9-point scale exactly (E1 21–32.99, E2 0–20.99)
+  const grade = p => p >= 91 ? 'A1' : p >= 81 ? 'A2' : p >= 71 ? 'B1' : p >= 61 ? 'B2' : p >= 51 ? 'C1' : p >= 41 ? 'C2' : p >= 33 ? 'D' : p >= 21 ? 'E1' : 'E2';
   const n2 = v => Math.round(v * 100) / 100;
   let CLS = (location.hash.match(/cls=([^&]+)/) || [])[1] || '1st', TAB = 'slip', DATA = {}, PH = {};
   CLS = decodeURIComponent(CLS);
 
+  const SUBORDER = [/^english$/i, /^hindi$/i, /^math(s|ematics)$/i, /^computer$/i, /^evs$/i, /^science$/i, /^sanskrit$/i, /^social science$/i, /^(g\.?k\.?|gk\/drawing|general knowledge)$/i, /^drawing$/i, /^moral science$/i];
+  const subName = s2 => /^gk\s*\/\s*drawing$/i.test(s2) ? 'G.K.' : s2;
   // ---------- one class: every child's subjects, totals, grace, rank ----------
   function build(d) {
     const bySub = {}; Object.values(d.marks || {}).forEach(m => { bySub[m.subject] = m.rows || {}; });
     // every subject that has marks — the timetable order first, then subjects with marks that are not in the timetable
     // (owner, 20 Nov 2026: "class 9th me hindi ka marks show nahi kar raha" — Hindi had marks but no timetable entry)
-    const order = [...d.subjects, ...Object.keys(bySub).filter(s => !d.subjects.includes(s)).sort()];
-    const subs = order.filter(s => bySub[s] && Object.keys(bySub[s]).length);
+    // Subjects as the old ERP card shows them (owner, 20 Nov 2026: "sabhi class me subject ka bug, Sanskrit/GK"): every subject with
+    // marks; a combined timetable name ("Hindi/Sanskrit") is dropped when its parts are entered separately (8th had both → counted
+    // twice); old-ERP order English · Hindi · Maths · Computer · EVS · Science · Sanskrit · Social Science · G.K.; "GK/Drawing" → "G.K."
+    const has = s2 => bySub[s2] && Object.values(bySub[s2]).some(m => PARTS.some(([kk]) => m[kk] !== '' && m[kk] != null));
+    let raw = Object.keys(bySub).filter(has);
+    raw = raw.filter(s2 => { const pp = s2.split('/').map(x => x.trim()).filter(Boolean); return !(pp.length > 1 && pp.every(x => raw.includes(x))); });
+    const pos = s2 => { const i = SUBORDER.findIndex(rx => rx.test(s2)); return i < 0 ? 100 + (d.subjects.indexOf(s2) < 0 ? 50 : d.subjects.indexOf(s2)) : i; };
+    raw.sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
+    const NAME = {}; raw.forEach(s2 => { NAME[s2] = subName(s2); }); Object.keys(NAME).forEach(s2 => { bySub[NAME[s2]] = bySub[s2]; });
+    const subs = raw.map(s2 => NAME[s2]);
     const kids = d.students.map(st => {
       let tot = 0, rtot = 0, max = 0, gTot = 0; const rows = [];
       subs.forEach(s => { const m = (bySub[s] || {})[st.id]; if (!m) { rows.push({ s, none: true }); return; }
@@ -74,7 +85,7 @@
     $('cls').onchange = e => { CLS = e.target.value; location.hash = 'cls=' + encodeURIComponent(CLS); draw(); };
     document.querySelectorAll('[data-t]').forEach(b => { b.onclick = () => { TAB = b.dataset.t; draw(); }; });
     if ($('pall')) $('pall').onclick = () => window.print();
-    if ($('phalf')) $('phalf').onclick = async () => { try { const D = await load(CLS); printHalf(D, D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name))); } catch (e) { alert(e.message); } };
+    if ($('phalf')) $('phalf').onclick = async () => { try { const D = await load(CLS); printHalf(D, D.kids.filter(k => k.done > 0).sort((a, b) => a.st.name.localeCompare(b.st.name))); } catch (e) { alert(e.message); } };
   }
   async function draw() {
     bar(); $('out').innerHTML = '<div class="pan msg">Opening class ' + esc(CLS) + '…</div>';
@@ -86,7 +97,7 @@
   // Slip v2 (owner, 20 Nov 2026: "apne hisab se banakar dekhiye and slip bhi"): photo, % ring with grade, rank, every subject with
   // grade badge + class average + highest + a bar (child vs class), strengths / needs practice, teacher's remark (or one written
   // from the marks), co-scholastic grades and attendance when the class teacher filled them.
-  const GCOL = { A1: '#1E7A43', A2: '#2E9E5B', B1: '#2D6CDF', B2: '#4F8BEA', C1: '#C98A00', C2: '#E0A100', D: '#E07B00', E: '#C0392B' };
+  const GCOL = { A1: '#1E7A43', A2: '#2E9E5B', B1: '#2D6CDF', B2: '#4F8BEA', C1: '#C98A00', C2: '#E0A100', D: '#E07B00', E1: '#C0392B', E2: '#A31515' };
   const badge = g => g ? `<span class="gb" style="background:${GCOL[g] || '#777'}">${g}</span>` : '—';
   function remarkOf(D, k) {
     const ex = D.extra[k.st.id] || {}; if ((ex.remark || '').trim()) return { text: ex.remark.trim(), auto: false };
@@ -221,8 +232,9 @@
       `\n\nTotal: ${k.tot}/${k.max} · ${k.pct != null ? k.pct + '%' : '-'}${k.rank ? ' · Rank ' + k.rank + ' of ' + D.n : ''}\nThe full report card will be given with the final result.`;
   }
   function slips(D) {
-    const kids = D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name));
-    $('out').innerHTML = `<div class="pan np"><b>${kids.length} slips</b> · class ${esc(CLS)} · ${D.subs.length} subjects · ${D.kids.filter(k => k.gTot).length} child(ren) given grace (added to Term marks on the slip, not shown). "Print all slips" prints every slip (one slip per A4 page).</div>` +
+    // children with no marks at all get no slip (new admission / absent) — named in the note instead of printing blank slips
+    const kids = D.kids.filter(k => k.done > 0).sort((a, b) => a.st.name.localeCompare(b.st.name)), none = D.kids.filter(k => k.done === 0);
+    $('out').innerHTML = `<div class="pan np"><b>${kids.length} slips</b> · class ${esc(CLS)} · ${D.subs.length} subjects · ${D.kids.filter(k => k.gTot).length} child(ren) given grace (added to Term marks on the slip, not shown). "Print all slips" prints every slip (one slip per A4 page).${none.length ? `<br><b style="color:#B30000">No marks yet (no slip):</b> ${none.map(k => esc(k.st.name)).join(', ')}` : ''}${(() => { const miss = kids.filter(k => k.rows.some(r => r.none)); return miss.length ? `<br><b style="color:#B36B00">Some subjects not entered:</b> ${miss.map(k => esc(k.st.name) + ' (' + k.rows.filter(r => r.none).map(r => esc(r.s)).join(', ') + ')').join('; ')}` : ''; })()}</div>` +
       kids.map((k, i) => slipHtml(D, k) + `<div class="slipbar">${(k.st.phone || '').replace(/\D/g, '').slice(-10).length === 10 ? `<a class="btn g" target="_blank" rel="noopener" href="https://wa.me/91${(k.st.phone || '').replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(slipText(D, k))}">WhatsApp to parent</a>` : ''}<button class="btn l" data-p="${i}">Print this slip</button></div>`).join('');
     (async () => { const ids = kids.map(k => k.st.id).filter(id => D.withPhoto.includes(id) && PH[id] === undefined);
       const q = [...ids]; await Promise.all(Array.from({ length: 4 }, async () => { while (q.length) { const id = q.shift(); await photo(id);

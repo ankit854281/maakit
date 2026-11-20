@@ -75,6 +75,10 @@ try {
     [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Synthetic Maths', 'rows' => ['pr-s1' => ['pt' => '9', 'nb' => '5', 'sea' => '5', 'te' => '70']]]); pc($c === 200, 'class teacher saves another teacher\'s subject');
     [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Not In Timetable', 'rows' => []]); pc($c === 403, 'class teacher only for subjects of the class');
     pc((int)$db->query("SELECT COUNT(*) FROM sch_log WHERE x LIKE 'Term-1 marks saved: Class 1st Synthetic Maths%by the class teacher'")->fetchColumn() >= 1, 'class teacher correction logged');
+    // A combined timetable name is not counted twice for the rank when its parts have their own marks (8th: Hindi, Sanskrit and Hindi/Sanskrit)
+    sch_rec_put('prcMarks', '2026-27|Term-1|1st|Synthetic English/Synthetic Maths', ['subject' => 'Synthetic English/Synthetic Maths', 'rows' => ['pr-s2' => ['pt' => 10, 'nb' => 5, 'sea' => 5, 'te' => 80]]], 'principal');
+    [$c, $d] = prq('certs', $P, null, '&ses=2026-27&cls=1st'); pc($c === 200 && ($d['certs']['pr-s1']['rank'] ?? 0) === 1 && !isset($d['certs']['pr-s2']), 'combined subject left out of the rank ' . json_encode($d));
+    $db->exec("DELETE FROM sch_records WHERE k='prcMarks' AND r='2026-27|Term-1|1st|Synthetic English/Synthetic Maths'");
     // Attendance on the slip comes from the daily class attendance (studAtt) — owner, 20 Nov 2026
     sch_rec_put('studAtt', '2026-10-05|1st', ['absent' => ['pr-s2']], 'principal'); sch_rec_put('studAtt', '2026-10-06|1st', ['absent' => []], 'principal');
     [$c, $d] = prq('marks', $P, null, '&ses=2026-27&exam=Term-1&cls=1st');

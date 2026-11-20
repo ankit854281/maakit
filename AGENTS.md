@@ -1296,3 +1296,11 @@ papers only from photos the owner sends.
   class index — every landscape design is used across the school. rosette() takes an optional centre colour.
   Slip on phones/narrow screens: the slip keeps its 968px layout and is scaled to fit (CSS var --sz set by fitSlips()), so the
   "Child vs class" graphs and co-scholastic card are no longer cut off on the right (owner saw it on 9th). Print unaffected.
+
+- 2026-11-20 (Claude): Marks slip — final check on live data, all classes (owner: "sabhi class me subject aur graph ka bug, Sanskrit/GK").
+  • Subjects: every subject with marks; a combined timetable name ("Hindi/Sanskrit") is DROPPED when its parts have their own marks
+    (8th had Hindi + Sanskrit + Hindi/Sanskrit → 900 instead of 800); old-ERP order (English, Hindi, Maths, Computer, EVS, Science,
+    Sanskrit, Social Science, G.K.); "GK/Drawing" shown as "G.K." like the old card. progress_api a=certs uses the same rule.
+  • Grades: old ERP scale E1 (21–32.99) / E2 (0–20.99) instead of plain E.
+  • Children with no marks at all get no slip; the page names them and the children with some subjects not entered.
+  • Graph cut-off on phones fixed earlier (fitSlips). Live check found data gaps only (listed to the owner).
