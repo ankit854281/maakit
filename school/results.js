@@ -232,7 +232,7 @@
     [[-1, 0], [1, 3]].forEach(([s2, ci]) => { x.fillStyle = PAL[ci]; x.beginPath(); x.moveTo(s2 * r * .25, r * .5); x.lineTo(s2 * r * .75, r * 1.65); x.lineTo(s2 * r * .5, r * 1.45); x.lineTo(s2 * r * .3, r * 1.75); x.lineTo(s2 * -r * .05, r * .6); x.closePath(); x.fill(); });
     // serrated edge
     x.beginPath(); for (let i = 0; i < 72; i++) { const a = i * Math.PI / 36, rr = i % 2 ? r : r * .9; x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } x.closePath(); x.fillStyle = gold(x, -r, -r, r, r); x.fill();
-    x.beginPath(); x.arc(0, 0, r * .78, 0, 7); x.fillStyle = '#13254B'; x.fill();
+    x.beginPath(); x.arc(0, 0, r * .78, 0, 7); x.fillStyle = ROSINK; x.fill();
     x.beginPath(); x.arc(0, 0, r * .72, 0, 7); x.lineWidth = 3; x.strokeStyle = PAL[2]; x.stroke();
     x.fillStyle = PAL[2]; x.textAlign = 'center';
     x.font = `700 ${r * .62}px Georgia, serif`; x.fillText(String(rank), -r * .08, r * .12);
@@ -251,10 +251,15 @@
   // matches the school crest — royal navy + gold foil + ivory, nothing else. Split layout: a navy honour panel on the left
   // (crest, the child's photo in a gold laurel, RANK HOLDER ribbon, gold guilloche aura, Scan-to-verify QR), the citation on ivory
   // on the right. The rank seal sits on the gold seam between them; only the seal's metal changes (1st gold, 2nd silver, 3rd bronze).
+  // Certificate colour themes (owner, 20 Nov 2026: "colour combination achha nahi") — same layout, the owner picks the colour.
+  const THEMES = { navy: { p0: '#0E1C3C', p1: '#1E3C72', ink: '#13254B', n: 'Royal Blue & Gold' }, maroon: { p0: '#3E0A14', p1: '#7A1830', ink: '#5A1020', n: 'Maroon & Gold' },
+    purple: { p0: '#1E0F40', p1: '#4A2582', ink: '#2E1660', n: 'Royal Purple & Gold' }, emerald: { p0: '#05281F', p1: '#0E5A45', ink: '#0B3D2E', n: 'Emerald & Gold' },
+    black: { p0: '#0B0B0B', p1: '#2B2B2B', ink: '#1A1A1A', n: 'Black & Gold' } };
+  let CTHEME = (() => { try { return localStorage.getItem('sch_cert_theme') || 'navy'; } catch (e) { return 'navy'; } })(), ROSINK = '#13254B';
   async function certCanvas(k, D) {
     await fonts();
     const W = 1754, H = 1240, PW = 560, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-    const NAVY = '#13254B', NAVY2 = '#1E3C72', INK = '#2A2F3A', MUTE = '#6B5E48', GD = '#9A7425';
+    const TH = THEMES[CTHEME] || THEMES.navy, NAVY = TH.ink, NAVY2 = TH.p1, INK = '#2A2F3A', MUTE = '#6B5E48', GD = '#9A7425';
     const T = (t, X, Y, f, col, al, sp) => { x.font = f; x.fillStyle = col || INK; x.textAlign = al || 'center'; if ('letterSpacing' in x) x.letterSpacing = (sp || 0) + 'px'; x.fillText(String(t), X, Y); if ('letterSpacing' in x) x.letterSpacing = '0px'; };
     const fit = (t, f, w) => { x.font = f; let s2 = t; while (x.measureText(s2).width > w && s2.length > 4) s2 = s2.slice(0, -2) + '…'; return s2; };
     PAL = GOLD;
@@ -266,7 +271,7 @@
     x.lineWidth = 5; x.strokeStyle = gold(x, PW, 0, W, H); x.strokeRect(PW + 34, 34, W - PW - 68, H - 68); x.lineWidth = 1.5; x.strokeRect(PW + 48, 48, W - PW - 96, H - 96);
     [[PW + 60, 60, 0], [W - 60, 60, Math.PI / 2], [W - 60, H - 60, Math.PI], [PW + 60, H - 60, -Math.PI / 2]].forEach(([cx, cy, r]) => corner(x, cx, cy, r, GOLD[3]));
     // left honour panel
-    const pg = x.createLinearGradient(0, 0, PW, H); pg.addColorStop(0, '#0E1C3C'); pg.addColorStop(.55, NAVY2); pg.addColorStop(1, '#0E1C3C'); x.fillStyle = pg; x.fillRect(0, 0, PW, H);
+    const pg = x.createLinearGradient(0, 0, PW, H); pg.addColorStop(0, TH.p0); pg.addColorStop(.55, NAVY2); pg.addColorStop(1, TH.p0); x.fillStyle = pg; x.fillRect(0, 0, PW, H);
     x.save(); x.beginPath(); x.rect(0, 0, PW, H); x.clip();
     for (let i = 0; i < 3; i++) guilloche(x, PW / 2, 520, 230 - i * 24, 31 + i * 4, 199 - i * 28, GOLD[1], .16, 1);
     x.globalAlpha = .07; x.strokeStyle = GOLD[2]; x.lineWidth = 1; for (let i = -H; i < PW; i += 22) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + H, H); x.stroke(); } x.restore();
@@ -318,7 +323,7 @@
     T('in recognition of outstanding academic achievement.', tx, 828, `italic 28px Georgia, serif`, INK);
     if (k.st.father || k.st.mother) T(fit('Proud parents: ' + [k.st.father ? 'Shri ' + k.st.father : '', k.st.mother ? 'Smt. ' + k.st.mother : ''].filter(Boolean).join(' & '), `italic 600 24px Georgia, serif`, tw), tx, 884, `italic 600 24px Georgia, serif`, GD);
     // rank seal on the seam
-    PAL = METAL[k.rank] || GOLD; rosette(x, PW, 905, 92, k.rank); PAL = GOLD;
+    PAL = METAL[k.rank] || GOLD; ROSINK = NAVY; rosette(x, PW, 905, 92, k.rank); PAL = GOLD;
     // signatures
     const sy = 1046, sg = [[tx - 380, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 380, 'Chairman', '']];
     x.strokeStyle = NAVY; x.lineWidth = 1.5;
@@ -333,8 +338,10 @@
   async function rankers(D) {
     const top = D.ranked.filter(k => k.rank <= 3);
     if (!top.length) { $('out').innerHTML = '<div class="pan msg">No child has every subject entered yet — rankers come when all marks of the class are in.</div>'; return; }
-    $('out').innerHTML = `<div class="pan np"><b>Class ${esc(CLS)} rankers</b> · on the real marks (no grace) · ${D.full} subjects each. <button class="btn y" id="cprint">🖨 Print all certificates</button> <button class="btn" id="stars">⭐ Our Stars poster (all classes)</button></div><div id="sp"></div><div class="certs" id="cl"></div>`;
+    $('out').innerHTML = `<div class="pan np"><b>Class ${esc(CLS)} rankers</b> · on the real marks (no grace) · ${D.full} subjects each. <button class="btn y" id="cprint">🖨 Print all certificates</button> <button class="btn" id="stars">⭐ Our Stars poster (all classes)</button>
+      <div class="row" style="margin-top:8px"><b>Certificate colour:</b>${Object.entries(THEMES).map(([kk, t]) => `<button class="btn ${kk === CTHEME ? '' : 'l'}" data-th="${kk}" style="padding:6px 10px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:${t.p1};box-shadow:0 0 0 2px #D9B45A"></span>${esc(t.n)}</button>`).join('')}</div></div><div id="sp"></div><div class="certs" id="cl"></div>`;
     $('stars').onclick = () => starsPoster();
+    document.querySelectorAll('[data-th]').forEach(b => { b.onclick = () => { CTHEME = b.dataset.th; try { localStorage.setItem('sch_cert_theme', CTHEME); } catch (e) {} rankers(D); }; });
     if (!D.certs) { try { D.certs = (await get(`progress_api.php?a=certs&ses=${SES}&cls=${encodeURIComponent(CLS)}`)).certs || {}; } catch (e) { D.certs = {}; } }
     const urls = [];
     for (const k of top) {

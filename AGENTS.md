@@ -1251,3 +1251,7 @@ papers only from photos the owner sends.
   (school, gold-foil CERTIFICATE, name in script, "for securing the FIRST RANK in Class X", %, proud parents, 3 signatures, date +
   certificate no.). Rank seal sits on the gold seam; only the seal is gold/silver/bronze by rank. Slip: badges and the target heading
   use navy/gold icon chips instead of emoji (prints the same everywhere); slip scales to fit one A4 page in print (zoom .86).
+
+- 2026-11-20 (Claude): Certificate colour themes (owner: "colour combination achha nahi"). THEMES in results.js — Royal Blue, Maroon,
+  Royal Purple, Emerald, Black (each with gold). "Certificate colour" buttons on the Rankers tab; choice saved per device in
+  localStorage sch_cert_theme (default navy until the owner picks one — then change the default in CTHEME).
