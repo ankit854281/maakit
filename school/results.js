@@ -42,10 +42,14 @@
       const pct = max ? n2(tot * 100 / max) : null, done = rows.filter(r => !r.none).length;
       return { st, rows, tot: n2(tot), max, gTot, pct, done };
     });
+    // class average and highest per subject (real marks, absent excluded) — for the slip's comparison column and bar
+    const stat = {}; subs.forEach(sb => { const v = kids.map(k => k.rows.find(r => r.s === sb)).filter(r => r && !r.none && !r.ab).map(r => r.t);
+      stat[sb] = { avg: v.length ? n2(v.reduce((a, b) => a + b, 0) / v.length) : 0, max: v.length ? Math.max(...v) : 0 }; });
+    const extra = (d.extra && d.extra.rows) || {};
     const full = Math.max(0, ...kids.map(k => k.done));
     const ranked = kids.filter(k => k.pct != null && k.done === full && full > 0).sort((a, b) => b.pct - a.pct);
     let last = null, r = 0; ranked.forEach((k, i) => { if (last === null || k.pct < last) { r = i + 1; last = k.pct; } k.rank = r; });
-    return { subs, kids, ranked, full, n: kids.length };
+    return { subs, kids, ranked, full, n: kids.length, stat, extra, withPhoto: d.withPhoto || [] };
   }
   async function load(c) {
     if (DATA[c]) return DATA[c];
@@ -68,16 +72,38 @@
     if (TAB === 'slip') slips(D); else rankers(D);
   }
   // ---------- slips ----------
+  // Slip v2 (owner, 20 Nov 2026: "apne hisab se banakar dekhiye and slip bhi"): photo, % ring with grade, rank, every subject with
+  // grade badge + class average + highest + a bar (child vs class), strengths / needs practice, teacher's remark (or one written
+  // from the marks), co-scholastic grades and attendance when the class teacher filled them.
+  const GCOL = { A1: '#1E7A43', A2: '#2E9E5B', B1: '#2D6CDF', B2: '#4F8BEA', C1: '#C98A00', C2: '#E0A100', D: '#E07B00', E: '#C0392B' };
+  const badge = g => g ? `<span class="gb" style="background:${GCOL[g] || '#777'}">${g}</span>` : '—';
+  function remarkOf(D, k) {
+    const ex = D.extra[k.st.id] || {}; if ((ex.remark || '').trim()) return { text: ex.remark.trim(), auto: false };
+    const R = k.rows.filter(r => !r.none && !r.ab), first = k.st.name.split(/\s+/)[0];
+    const strong = R.filter(r => r.t >= 81 || r.t >= D.stat[r.s].avg + 12).sort((a, b) => b.t - a.t).slice(0, 2).map(r => r.s);
+    const weak = R.filter(r => r.t + r.g < 50 || r.t <= D.stat[r.s].avg - 12).sort((a, b) => a.t - b.t).slice(0, 2).map(r => r.s);
+    const p = k.pct || 0, open = p >= 85 ? `${first} has done excellent work this term.` : p >= 70 ? `${first} has done very good work this term.` : p >= 55 ? `${first} has done good work this term.` : p >= 40 ? `${first} is making progress.` : `${first} needs regular support at home and in school.`;
+    return { text: open + (strong.length ? ` Strong in ${strong.join(' and ')}.` : '') + (weak.length ? ` More practice in ${weak.join(' and ')} will help.` : ' Keep it up!'), auto: true, strong, weak };
+  }
+  function ring(p) { const pp = Math.max(0, Math.min(100, p || 0)), col = GCOL[grade(pp)] || '#17324D', a = pp * 3.6;
+    return `<div class="ring" style="background:conic-gradient(${col} ${a}deg,#E6EAF0 ${a}deg)"><div><b>${p != null ? Math.round(p) + '%' : '—'}</b><small>${p != null ? grade(p) : ''}</small></div></div>`; }
   function slipHtml(D, k) {
-    const st = k.st, rk = k.rank ? k.rank + ' of ' + D.n : '—';
-    return `<div class="slip"><div class="sh"><b>${SCHOOL.toUpperCase()}</b><span>${PLACE}</span><br><i>HALF-YEARLY EXAMINATION ${SESL} · MARKS SLIP</i></div>
-      <div class="info"><div>Name: <b>${esc(st.name)}</b></div><div>Class: <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b></div><div>Father: <b>${esc(st.father || '—')}</b></div><div>Adm. No.: <b>${esc(st.adm || '—')}</b></div></div>
-      <table class="m"><tr><th style="text-align:left">Subject</th>${PARTS.map(([, l, m]) => `<th>${l}<br>(${m})</th>`).join('')}<th>Total<br>(100)</th><th>Grace</th><th>Grade</th></tr>
-      ${k.rows.map(r => r.none ? `<tr><td class="s">${esc(r.s)}</td><td colspan="7">Not entered</td></tr>` : `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t + r.g < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${r.g ? `<span class="gr">+${r.g}</span>` : '—'}</td><td>${r.ab ? '—' : grade(r.t + r.g)}</td></tr>`).join('')}
-      <tr class="t"><td class="s">Total</td><td colspan="4"></td><td>${k.tot} / ${k.max}</td><td>${k.gTot ? '+' + k.gTot : '—'}</td><td>${k.pct != null ? grade(k.pct) : '—'}</td></tr></table>
-      <div class="sum"><span>Percentage: <b>${k.pct != null ? k.pct + '%' : '—'}</b></span><span>Rank in class: <b>${rk}</b></span><span>Result: <b>${k.rows.some(r => !r.none && !r.ab && r.t + r.g < PASS) ? '<span class="red">Needs improvement</span>' : 'Pass'}</b></span></div>
-      ${k.gTot ? `<p class="gn">Grace marks (+${k.gTot}) are given only to reach the pass mark (${PASS}) and are shown separately; total, percentage and rank are on the real marks.</p>` : ''}
-      <p class="gn">The full report card will be given with the final result.</p>
+    const st = k.st, ex = D.extra[st.id] || {}, rm = remarkOf(D, k), fail = k.rows.some(r => !r.none && !r.ab && r.t + r.g < PASS);
+    const strong = rm.strong || k.rows.filter(r => !r.none && !r.ab && r.t >= 81).map(r => r.s).slice(0, 2), weak = rm.weak || [];
+    const cos = [['art', 'Art'], ['work', 'Work Ed.'], ['health', 'Health & PE'], ['disc', 'Discipline']].filter(([kk]) => ex[kk]);
+    return `<div class="slip"><div class="shd"><img src="img/snmsis-logo.png" alt=""><div><b>${SCHOOL.toUpperCase()}</b><span>${PLACE}</span></div><i>HALF-YEARLY EXAMINATION ${SESL}<br><em>PROGRESS SLIP</em></i></div>
+      <div class="stu"><div class="ph" data-sid="${esc(st.id)}">${PH[st.id] ? `<img src="${PH[st.id]}" alt="">` : `<span>${esc(st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>`}</div>
+        <div class="who"><b>${esc(st.name)}</b><span>Class <b>${esc(st.cls)}${st.section ? '-' + esc(st.section) : ''}</b> · Adm. No. <b>${esc(st.adm || '—')}</b></span><span>Father: <b>${esc(st.father || '—')}</b>${st.mother ? ' · Mother: <b>' + esc(st.mother) + '</b>' : ''}</span></div>
+        ${ring(k.pct)}<div class="rk"><small>Rank in class</small><b>${k.rank ? k.rank : '—'}</b><small>of ${D.n}</small></div></div>
+      <table class="m"><tr><th style="text-align:left">Subject</th>${PARTS.map(([, l, m]) => `<th>${l.replace('Term Exam', 'Term')}<br><small>${m}</small></th>`).join('')}<th>Total<br><small>100</small></th><th>Grace</th><th>Grade</th><th>Class<br>avg</th><th>Highest</th><th style="width:22%">Child vs class</th></tr>
+      ${k.rows.map(r => { if (r.none) return `<tr><td class="s">${esc(r.s)}</td><td colspan="10" class="mut">Not entered</td></tr>`; const S = D.stat[r.s] || { avg: 0, max: 0 }, g = r.ab ? '' : grade(r.t + r.g);
+        return `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t + r.g < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${r.g ? `<span class="gr">+${r.g}</span>` : '—'}</td><td>${badge(g)}</td><td>${S.avg}</td><td>${S.max}</td>
+          <td class="bars"><div class="bar"><i style="width:${r.ab ? 0 : Math.min(100, r.t)}%;background:${GCOL[g] || '#17324D'}"></i><u style="left:${Math.min(100, S.avg)}%"></u></div></td></tr>`; }).join('')}
+      <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${k.gTot ? '+' + k.gTot : '—'}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td colspan="3" style="text-align:left">Result: <b class="${fail ? 'red' : 'gr'}">${fail ? 'Needs improvement' : 'Pass'}</b></td></tr></table>
+      <div class="low"><div class="rmk"><b>${rm.auto ? 'Remark' : 'Class teacher\'s remark'}</b><p>${esc(rm.text)}</p>
+        ${strong.length || weak.length ? `<div class="sw">${strong.length ? `<span class="ok">★ Strong: ${esc(strong.join(', '))}</span>` : ''}${weak.length ? `<span class="wk">✎ Practise more: ${esc(weak.join(', '))}</span>` : ''}</div>` : ''}</div>
+        <div class="side">${cos.length ? `<div><b>Co-scholastic</b>${cos.map(([kk, l]) => `<span>${l} <em>${esc(ex[kk])}</em></span>`).join('')}</div>` : ''}${ex.days ? `<div><b>Attendance</b><span>${esc(ex.present || '—')} / ${esc(ex.days)} days</span></div>` : ''}</div></div>
+      <p class="gn">${k.gTot ? `Grace (+${k.gTot}) is given only to reach the pass mark (${PASS}) and shown separately; total, % and rank are on the real marks. ` : ''}The bar shows the child's marks; the thin line is the class average. The full report card will be given with the final result.</p>
       <div class="foot"><div><i>Class Teacher${D.ct ? ' (' + esc(D.ct) + ')' : ''}</i></div><div><i>Parent's Signature</i></div><div><i>Principal</i></div></div></div>`;
   }
   function slipText(D, k) {
@@ -88,6 +114,9 @@
     const kids = D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name));
     $('out').innerHTML = `<div class="pan np"><b>${kids.length} slips</b> · class ${esc(CLS)} · ${D.subs.length} subjects · ${D.kids.filter(k => k.gTot).length} child(ren) with grace. "Print all slips" prints every slip (about 2 on a page).</div>` +
       kids.map((k, i) => slipHtml(D, k) + `<div class="slipbar">${(k.st.phone || '').replace(/\D/g, '').slice(-10).length === 10 ? `<a class="btn g" target="_blank" rel="noopener" href="https://wa.me/91${(k.st.phone || '').replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(slipText(D, k))}">WhatsApp to parent</a>` : ''}<button class="btn l" data-p="${i}">Print this slip</button></div>`).join('');
+    (async () => { const ids = kids.map(k => k.st.id).filter(id => D.withPhoto.includes(id) && PH[id] === undefined);
+      const q = [...ids]; await Promise.all(Array.from({ length: 4 }, async () => { while (q.length) { const id = q.shift(); await photo(id);
+        if (PH[id]) document.querySelectorAll(`.ph[data-sid="${id}"]`).forEach(e => { e.innerHTML = `<img src="${PH[id]}" alt="">`; }); } })); })();
     document.querySelectorAll('[data-p]').forEach(b => { b.onclick = () => { const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.');
       w.document.write(`<!doctype html><html><head><title>Marks slip</title>${document.querySelector('style').outerHTML}</head><body>${slipHtml(D, kids[+b.dataset.p])}<script>print()<\/script></body></html>`); w.document.close(); }; });
   }
@@ -135,6 +164,8 @@
   function corner(x, cx, cy, rot, col) { x.save(); x.translate(cx, cy); x.rotate(rot); x.strokeStyle = col; x.lineWidth = 3;
     x.beginPath(); x.moveTo(0, 70); x.lineTo(0, 0); x.lineTo(70, 0); x.stroke(); x.beginPath(); x.moveTo(14, 56); x.lineTo(14, 14); x.lineTo(56, 14); x.stroke();
     x.beginPath(); x.arc(14, 14, 9, 0, 7); x.fillStyle = col; x.fill(); x.beginPath(); x.moveTo(30, 30); x.quadraticCurveTo(60, 22, 90, 34); x.moveTo(30, 30); x.quadraticCurveTo(22, 60, 34, 90); x.stroke(); x.restore(); }
+  let SIGNS = null;
+  async function signs() { if (SIGNS) return SIGNS; try { SIGNS = (await get('teacher_api.php?a=comp&sg=1')).signs || {}; } catch (e) { SIGNS = {}; } return SIGNS; }
   async function certCanvas(k, D) {
     await fonts();
     const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
@@ -187,6 +218,10 @@
       x.beginPath(); x.moveTo(cx - 150, sy); x.lineTo(cx + 150, sy); x.stroke(); if (v) T(v, cx, sy - 14, `40px ${SF}`, NAVY);
       T(l.toUpperCase(), cx, sy + 34, `700 20px Georgia, serif`, '#5b5040', 'center', 3); });
     T('Date: ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), tx, 1000, `italic 22px Georgia, serif`, '#5b5040');
+    // certificate number (same child + exam + rank → same number) and the Principal's saved signature (Teacher App → Mera sign)
+    let hsh = 0; for (const ch of 'HY|' + SES + '|' + k.st.id + '|' + k.rank) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
+    T('Certificate No. SNMSIS/HY' + SES.slice(2, 4) + '/' + hsh.toString(36).toUpperCase().padStart(7, '0').slice(-7), W / 2, H - 92, `600 16px Georgia, serif`, '#7a6a50', 'center', 1);
+    const sgn = await signs(); if (sgn.P) { const im = await loadImg(sgn.P); if (im) { const h2 = 70, w2 = im.width * h2 / im.height; x.drawImage(im, tx - w2 / 2, sy - h2 - 4, w2, h2); } }
     return c;
   }
   async function rankers(D) {
