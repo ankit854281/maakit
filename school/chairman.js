@@ -1439,7 +1439,19 @@ function staffBody() {
 //  • a family once picked never comes back in the pick list; • a child marked "fee not updated" (a=chBad, record chBad r=sid)
 //    goes to its own list and his family stays out of the pick list until the Principal clears it.
 // Family = same 10-digit mobile (siblings in any class). Numbers = the Fee Control Room's.
-let PSEL = null;
+let PSEL = null, BILLIMG = {}, BILLDATA = {}, BILLQ = false;
+async function fillBills() {   // draws each family's sibling demand bill (demandbill.js) into its card, one after another
+  if (BILLQ || !window.DemandBill) return; BILLQ = true;
+  try {
+    for (const el of [...document.querySelectorAll('.mybill')]) {
+      const sid = el.dataset.sid; if (BILLIMG[sid]) { if (!el.querySelector('img')) el.innerHTML = `<img src="${BILLIMG[sid]}" alt="Demand bill">`; continue; }
+      try { const r = await fetch('demandbill_api.php?a=bill&sid=' + encodeURIComponent(sid), { cache: 'no-store', headers: { 'X-School-Token': store.get(TKEY) || '' } }); const j = await r.json();
+        if (!j.ok) throw Error(j.error || 'No bill'); BILLDATA[sid] = j; BILLIMG[sid] = DemandBill.draw(j).toDataURL('image/jpeg', 0.85); }
+      catch (e) { el.innerHTML = `<span>${esc(e.message)}</span>`; continue; }
+      document.querySelectorAll(`.mybill[data-sid="${sid}"]`).forEach(x => { x.innerHTML = `<img src="${BILLIMG[sid]}" alt="Demand bill">`; });
+    }
+  } finally { BILLQ = false; }
+}
 function famMap() { const f = {}; D.all.forEach(x => { const k = x.phoneNo || x.sid; (f[k] = f[k] || []).push(x); }); Object.values(f).forEach(L => L.sort((p, q) => CLASSES.indexOf(p.cls) - CLASSES.indexOf(q.cls))); return f; }
 const famKey = sid => { const x = D.all.find(z => z.sid === sid); return x ? (x.phoneNo || x.sid) : sid; };
 const isP = () => D.role === 'manager';   // owner, 20 Nov 2026: "jo principal me add kiya hai vo manager me kardo" — the Manager picks and marks
@@ -1460,6 +1472,7 @@ function famCard(kids, n, opt) {
       <div class="myt"><span>Payable till now</span><b>${rs(x.dueNow)}</b></div>
       ${isP() && !opt.noMark ? `<button class="mybad" onclick="markBad('${esc(x.sid)}',${bad ? 0 : 1})">${bad ? '✓ Fee is fixed now — remove mark' : '⚠ Fee not updated properly'}</button>` : ''}</div>`; }).join('')}
     <div class="myf"><span>Family total${kids.length > 1 ? ' (' + kids.length + ' children)' : ''}</span><b>${rs(due)}</b></div>
+    ${opt.bill === false ? '' : `<div class="mybill" data-sid="${esc(a.sid)}" onclick="DemandBill.open('${esc(a.sid)}', store.get(TKEY))">${BILLIMG[a.sid] ? `<img src="${BILLIMG[a.sid]}" alt="Demand bill">` : '<span>Making the demand bill…</span>'}</div>`}
     <div class="mya">${a.phoneNo ? `<a class="cta" href="tel:+91${a.phoneNo}" onclick="callNow('${esc(a.sid)}')">${ic('phone', 16)} Call</a>` : '<span class="note">No mobile number</span>'}
       <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get(TKEY))">📄 Demand bill</button>
       <button class="cta lt" onclick="noteCall('${esc(a.sid)}')">✍ Note</button></div></section>`;
@@ -1485,14 +1498,16 @@ function myToday() {
   const L = pickFams(D.today), P = (D.picks || {})[D.today];
   if (!L.length) return card("Today's calls", `<p class="empty">${isP() ? 'You have not picked today\'s families yet.' : 'Today\'s families are not given yet.'}</p>${isP() ? `<button class="cta" onclick="S.mv='pick';render()">Pick today's families</button>` : ''}`);
   const cls = [...new Set(L.map(x => x.c))];
-  return `<p class="note" style="margin:6px 2px">${L.length} families · ${cls.length} class${cls.length > 1 ? 'es' : ''} · ${dmy(D.today)} · picked by ${esc(P.by || 'Manager')}. Brothers / sisters come with each family. Call → write what was discussed → Save.</p>` + byClassCards(L);
+  setTimeout(fillBills, 60);
+  return `<p class="note" style="margin:6px 2px">${L.length} families · ${cls.length} class${cls.length > 1 ? 'es' : ''} · ${dmy(D.today)} · picked by ${esc(P.by || 'Manager')}. Brothers / sisters come with each family. Call → write what was discussed → Save.</p>
+    <div class="mya" style="grid-template-columns:1fr 1fr;margin:8px 0 4px"><button class="cta" onclick="shareList('${D.today}')">📤 Share list (picture)</button><a class="cta lt" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(listText(L, D.today))}">💬 WhatsApp list</a></div>` + byClassCards(L);
 }
 function myPickView() {
   const F = famMap(), used = new Set(), bad = new Set();
   Object.entries(D.picks || {}).forEach(([d, P]) => { if (d !== D.today) P.fams.forEach(f => used.add(famKey((Array.isArray(f) ? f : f.ids || [])[0]))); });
   Object.keys(D.bad || {}).forEach(sid => bad.add(famKey(sid)));
   const ok = ([k, L]) => !used.has(k) && !bad.has(k) && sum(L, x => x.dueNow) >= 500;
-  const CL = CLASSES.filter(c => D.all.some(x => x.cls === c)), cnt = c => [...PSEL.values()].filter(v => v === c).length;
+  const CL = CLASSES.filter(c => D.all.some(x => x.cls === c)), cnt = c => pickCount(c, F);
   const pc = CL.includes(S.pc) ? S.pc : CL[0];
   const q = (S.pq || '').toLowerCase().trim();
   const C = Object.entries(F).filter(e => e[1].some(x => x.cls === pc) && (PSEL.get(e[0]) === pc || (!PSEL.has(e[0]) && ok(e))))
@@ -1506,14 +1521,19 @@ function myPickView() {
     <h5 class="sh" style="margin-top:12px">Class ${esc(pc)} · ${cnt(pc)}/3 picked · ${C.length} families with fee due</h5>
     ${C.slice(0, 60).map(([k, L]) => { const on = PSEL.get(k) === pc; return `<div class="card pkr${on ? ' on' : ''}">
       <button class="pkc" onclick="togPick('${esc(k)}','${esc(pc)}')" aria-label="Select">${on ? '✓' : ''}</button>
-      <div class="pkt" onclick="togPick('${esc(k)}','${esc(pc)}')"><b>${esc(L[0].father || L[0].name)}</b><small>${L.map(x => `${x.cls === pc ? '<b>' : ''}${esc(x.name)} (${esc(x.cls)}) ${rs(x.dueNow)}${x.cls === pc ? '</b>' : ''}`).join(' · ')}</small>
+      <div class="pkt" onclick="togPick('${esc(k)}','${esc(pc)}')"><b>${esc(L[0].father || L[0].name)}</b>${PSEL.has(k) && PSEL.get(k) !== pc ? `<small class="grn">picked in ${esc(PSEL.get(k))}</small>` : ''}<small>${L.map(x => `${x.cls === pc ? '<b>' : ''}${esc(x.name)} (${esc(x.cls)}) ${rs(x.dueNow)}${x.cls === pc ? '</b>' : ''}`).join(' · ')}</small>
         <small>${L[0].last ? 'Last call ' + dmy(L[0].last.date) + ': ' + esc(L[0].last.outcome) : 'Not called yet'}${L[0].lastPaid ? ' · paid ' + dmy(L[0].lastPaid.date) : ' · nothing paid this session'}</small></div>
       <div class="pkd"><b>${rs(sum(L, x => x.dueNow))}</b>${L.map(x => `<button onclick="markBad('${esc(x.sid)}',1)" title="Fee not updated: ${esc(x.name)}">⚠ ${esc(x.name.split(' ')[0])}</button>`).join('')}</div></div>`; }).join('') || '<p class="empty">Nobody left in this class.</p>'}`;
 }
+// A picked family counts in EVERY class it has a child in (owner, 20 Nov 2026: "PG me pick karu to jis bhi class me vo parents se related
+// bachche hain, usme count karle"). Max 3 per class, counted that way.
+function pickCount(c, F) { F = F || famMap(); return [...PSEL.keys()].filter(k => (F[k] || []).some(x => x.cls === c)).length; }
 function togPick(k, c) {
-  if (PSEL.get(k) === c) PSEL.delete(k);
-  else { if ([...PSEL.values()].filter(v => v === c).length >= 3) return toast('3 families already picked in class ' + c + '. Untick one first.'); PSEL.set(k, c); }
-  render();
+  if (PSEL.get(k) === c) { PSEL.delete(k); return render(); }
+  if (PSEL.has(k)) return toast('This family is already picked under class ' + PSEL.get(k) + '.');
+  const F = famMap(), full = [...new Set((F[k] || []).map(x => x.cls))].filter(cl => pickCount(cl, F) >= 3);
+  if (full.length) return toast('Class ' + full.join(', ') + ' already has 3 families (this family has a child there). Untick one first.');
+  PSEL.set(k, c); render();
 }
 async function savePick() {
   const F = famMap(), fams = [...PSEL].map(([k, c]) => ({ c, ids: (F[k] || []).map(x => x.sid) })).filter(f => f.ids.length);
@@ -1524,6 +1544,44 @@ async function markBad(sid, on) {
   try { const d = await api('feedash_api.php?a=chBad', { sid, on: on ? 1 : 0, note: '' }); D.bad = D.bad || {}; if (d.bad) D.bad[sid] = d.bad; else delete D.bad[sid];
     if (on && PSEL) { PSEL.delete(famKey(sid)); } toast(on ? 'Marked: fee not updated properly.' : 'Mark removed.'); render(); }
   catch (e) { toast(e.message); }
+}
+// ---- the day's list to send to the Chairman (owner, 20 Nov 2026: "list bhi bane jise mai chairman sir ko share kar pau")
+function listText(L, date) {
+  let t = `*Chairman calls · ${dmy(date)}*\n${L.length} families\n`, cur = '';
+  L.forEach((x, i) => { if (x.c !== cur) { cur = x.c; t += `\n*Class ${x.c}*\n`; }
+    const a = x.kids[0]; t += `${L.filter(y => y.c === x.c).indexOf(x) + 1}. ${a.father || a.name}${a.phoneNo ? ' · ' + a.phoneNo : ''}\n   ` + x.kids.map(k => `${k.name} (${k.cls}) ${rs(k.dueNow)}`).join(', ') + `\n   Total: ${rs(sum(x.kids, k => k.dueNow))}\n`; });
+  return t + `\nGrand total: ${rs(sum(L, x => sum(x.kids, k => k.dueNow)))}`;
+}
+function listCanvas(L, date) {
+  const W = 1240, P = 48, rowsH = L.reduce((h, x) => h + 64 + 26 * Math.max(0, x.kids.length - 1), 0) + new Set(L.map(x => x.c)).size * 54;
+  const H = Math.max(600, 260 + rowsH + new Set(L.map(x => x.c)).size * 30 + 140), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  const T = (t, x, y, f, col, al) => { g.font = f; g.fillStyle = col || '#111'; g.textAlign = al || 'left'; g.fillText(String(t), x, y); };
+  const fit = (t, max, f) => { g.font = f; t = String(t); while (t.length > 3 && g.measureText(t).width > max) t = t.slice(0, -2); return t; };
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.fillStyle = '#17324D'; g.fillRect(0, 0, W, 150);
+  T((D.school || 'SN Mishra Singapore International School').toUpperCase(), W / 2, 62, 'bold 36px Arial', '#fff', 'center');
+  T('Chairman calls · ' + dmy(date) + ' · ' + L.length + ' families', W / 2, 112, '26px Arial', '#DDE6F0', 'center');
+  let y = 200, cur = '', n = 0;
+  L.forEach(x => {
+    if (x.c !== cur) { if (cur) y += 30; cur = x.c; n = 0; g.fillStyle = '#EEF2F6'; g.fillRect(P, y - 34, W - 2 * P, 46); T('Class ' + x.c, P + 14, y - 3, 'bold 26px Arial', '#17324D'); y += 54; }
+    n++; const a = x.kids[0], tot = sum(x.kids, k => k.dueNow);
+    T(n + '.', P + 6, y, 'bold 24px Arial'); T(fit((a.father || a.name) + (a.phoneNo ? '  ·  ' + a.phoneNo : ''), 760, 'bold 24px Arial'), P + 50, y, 'bold 24px Arial');
+    T(rs(tot), W - P - 10, y, 'bold 26px Arial', '#B30000', 'right');
+    x.kids.forEach((k, i) => T(fit(`${k.name} (Class ${k.cls}) — ${rs(k.dueNow)}`, 900, '21px Arial'), P + 50, y + 28 + i * 26, '21px Arial', '#444'));
+    y += 64 + 26 * Math.max(0, x.kids.length - 1);
+    g.strokeStyle = '#E1E6EC'; g.beginPath(); g.moveTo(P, y - 30); g.lineTo(W - P, y - 30); g.stroke();
+  });
+  g.fillStyle = '#FDECEC'; g.fillRect(P, y, W - 2 * P, 70); T('Grand total', P + 18, y + 45, 'bold 26px Arial', '#B30000'); T(rs(sum(L, x => sum(x.kids, k => k.dueNow))), W - P - 18, y + 46, 'bold 30px Arial', '#B30000', 'right');
+  return c;
+}
+async function shareList(date) {
+  const L = pickFams(date); if (!L.length) return toast('No list for this day.');
+  const c = listCanvas(L, date), name = 'Chairman-calls-' + date + '.png', b64 = c.toDataURL('image/png').split(',')[1];
+  if (window.SNMSISFiles && typeof SNMSISFiles.shareFile === 'function') return SNMSISFiles.shareFile(name, b64, 'image/png');
+  if (window.SNMSISFiles && typeof SNMSISFiles.shareImage === 'function') return SNMSISFiles.shareImage(name, b64);
+  try { const blob = await new Promise(r => c.toBlob(r, 'image/png')), file = new File([blob], name, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) return await navigator.share({ files: [file], title: 'Chairman calls', text: listText(L, date) }); } catch (e) { if (e && e.name === 'AbortError') return; }
+  if (/; wv\)/.test(navigator.userAgent)) return toast('Picture sharing needs the new app — use "WhatsApp list".');
+  const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = name; document.body.appendChild(a); a.click(); a.remove(); toast('Picture downloaded — attach it in WhatsApp.');
 }
 function myBad() {
   const B = Object.values(D.bad || {}).sort((a, b) => (b.at || 0) - (a.at || 0));
@@ -1536,7 +1594,7 @@ function myBad() {
 function myHist() {
   const days = Object.keys(D.picks || {}).filter(d => d < D.today).sort().reverse();
   if (!days.length) return card('Earlier days', '<p class="empty">No earlier day yet.</p>');
-  return days.map(d => { const L = pickFams(d); return `<h4 style="margin:16px 2px 0">${dmy(d)} · ${L.length} famil${L.length > 1 ? 'ies' : 'y'}</h4>` + byClassCards(L, { since: d, noMark: true }); }).join('');
+  return days.map(d => { const L = pickFams(d); return `<h4 style="margin:16px 2px 0">${dmy(d)} · ${L.length} famil${L.length > 1 ? 'ies' : 'y'} <button class="chip" onclick="shareList('${d}')">📤 Share list</button></h4>` + byClassCards(L, { since: d, noMark: true, bill: false }); }).join('');
 }
 function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get(TKEY), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {
