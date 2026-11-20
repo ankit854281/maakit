@@ -33,16 +33,18 @@
     ix.forEach(i => { const r = runs[runs.length - 1]; if (r && i === r[1] + 1) r[1] = i; else runs.push([i, i]); });
     return runs.map(([p, q]) => p === q ? M3[ORD[p]] : M3[ORD[p]] + '–' + M3[ORD[q]]).join(', ');
   }
-  function lines(k) {   // heads till the bill month: one line per fee head + kind (fully discounted / payable), with fee, discount, payable
+  function lines(k) {   // only what is to be paid till the bill month, one line per fee head; fully discounted heads stay out (shown as the child's discount)
     const g = {}, order = [];
-    k.heads.filter(h => h.now && (h.due > 0 || h.conc > 0)).forEach(h => {
-      const free = h.due <= 0, key = h.name + (free ? '|free' : '|due');
-      if (!g[key]) { g[key] = { name: h.name, tr: h.tr, free, ms: [], fee: 0, disc: 0, amt: 0 }; order.push(key); }
-      const o = g[key]; o.ms.push(h.m); o.fee += h.amt - h.paid; o.disc += h.conc; o.amt += h.due; });
-    const L = order.map(n => g[n]).sort((p, q) => p.tr - q.tr);
-    if (k.total.oldDue > 0) L.unshift({ name: 'Previous balance (old due)', ms: [], fee: k.total.oldDue, disc: 0, amt: k.total.oldDue });
+    k.heads.filter(h => h.now && h.due > 0).forEach(h => {
+      if (!g[h.name]) { g[h.name] = { name: h.name, tr: h.tr, ms: [], amt: 0 }; order.push(h.name); }
+      g[h.name].ms.push(h.m); g[h.name].amt += h.due; });
+    const isMonthly = n => /tuition|tution|transport|hostel/i.test(n);
+    const L = order.map(n => g[n]).map(l => ({ ...l, when: !isMonthly(l.name) && l.ms.every(m => m === 'April') ? 'Annual' : monthsLabel(l.ms) }))
+      .sort((p, q) => isMonthly(q.name) - isMonthly(p.name) || p.tr - q.tr);
+    if (k.total.oldDue > 0) L.unshift({ name: 'Previous balance (old due)', ms: [], when: '', amt: k.total.oldDue });
     return L;
   }
+  const discOf = k => k.heads.filter(h => h.now).reduce((s, h) => s + (h.conc || 0), 0);   // discount on the heads till the bill month
   function draw(B) {
     const W = 1240, P = 48, kids = B.kids, fam = kids.reduce((s, k) => s + k.total.now, 0), RH = 35;
     const LS = kids.map(lines), rows = LS.reduce((s, L) => s + Math.max(1, L.length) + 1, 0);
@@ -71,33 +73,29 @@
       if (l2) { T(l2, P + half + 20, y, '21px Arial', '#555'); T(': ' + fit(v2, half - 170, 'bold 21px Arial'), P + half + 160, y, 'bold 21px Arial', '#111'); }
       y += 34; });
     y += 10;
-    // table: S.No | Student / Class | Fee Head | Month(s) | Fee | Discount | Payable
-    const C = [P, P + 58, P + 290, P + 590, P + 780, P + 910, P + 1030, W - P], num = v => v ? Math.round(v).toLocaleString('en-IN') : '—';
+    // table: S.No | Student / Class | Fee Head | Month(s) | Amount
+    const C = [P, P + 70, P + 380, P + 760, W - P], num = v => Math.round(v || 0).toLocaleString('en-IN');
     rect(P, y, W - 2 * P, RH + 4, NAVY);
-    ['S.No', 'Student / Class', 'Fee Head', 'Month(s)', 'Fee', 'Discount', 'Payable'].forEach((h, i) => T(h, i >= 4 ? C[i + 1] - 10 : C[i] + 8, y + 28, 'bold 19px Arial', '#fff', i >= 4 ? 'right' : 'left'));
+    ['S.No', 'Student / Class', 'Fee Head', 'Month(s)', 'Amount (₹)'].forEach((h, i) => T(h, i === 4 ? C[4] - 12 : C[i] + 10, y + 26, 'bold 20px Arial', '#fff', i === 4 ? 'right' : 'left'));
     y += RH + 4; let sn = 0, famDisc = 0;
     kids.forEach((k, ki) => {
-      const L = LS[ki].length ? LS[ki] : [{ name: 'No fee due', ms: [], fee: 0, disc: 0, amt: 0 }], top = y;
-      let tf = 0, td = 0;
+      const L = LS[ki].length ? LS[ki] : [{ name: 'No fee due', when: '', amt: 0 }], top = y, dc = discOf(k);
+      famDisc += dc;
       L.forEach((l, li) => {
-        if (li % 2) rect(C[2], y, C[7] - C[2], RH, '#f6f8fa');
-        if (li === 0) { sn++; T(sn, C[0] + 20, y + 24, 'bold 19px Arial', '#111'); T(fit(k.name, C[2] - C[1] - 16, 'bold 19px Arial'), C[1] + 8, y + 24, 'bold 19px Arial', '#111'); }
-        if (li === 1) T(fit('Class ' + k.cls + (k.section ? '-' + k.section : '') + ' · Adm ' + k.adm, C[2] - C[1] - 16, '17px Arial'), C[1] + 8, y + 24, '17px Arial', '#555');
-        T(fit(l.name, C[3] - C[2] - 16, '19px Arial'), C[2] + 8, y + 24, l.tr ? 'bold 19px Arial' : '19px Arial', l.tr ? '#0b4f9c' : '#111');
-        T(fit(monthsLabel(l.ms), C[4] - C[3] - 16, '19px Arial'), C[3] + 8, y + 24, '19px Arial', '#333');
-        T(num(l.fee), C[5] - 10, y + 24, '19px Arial', '#111', 'right');
-        T(l.disc ? '− ' + num(l.disc) : '—', C[6] - 10, y + 24, '19px Arial', l.disc ? GREEN : '#aaa', 'right');
-        T(num(l.amt), C[7] - 10, y + 24, 'bold 19px Arial', l.amt ? '#111' : '#aaa', 'right');
-        tf += l.fee; td += l.disc; line(C[2], y + RH, C[7], y + RH, '#e1e6ec'); y += RH;
+        if (li % 2) rect(C[2], y, C[4] - C[2], RH, '#f6f8fa');
+        if (li === 0) { sn++; T(sn, C[0] + 24, y + 24, 'bold 20px Arial', '#111'); T(fit(k.name, C[2] - C[1] - 20, 'bold 20px Arial'), C[1] + 10, y + 24, 'bold 20px Arial', '#111'); }
+        if (li === 1) T(fit('Class ' + k.cls + (k.section ? '-' + k.section : '') + ' · Adm ' + k.adm, C[2] - C[1] - 20, '18px Arial'), C[1] + 10, y + 24, '18px Arial', '#555');
+        T(fit(l.name, C[3] - C[2] - 20, '20px Arial'), C[2] + 10, y + 24, l.tr ? 'bold 20px Arial' : '20px Arial', l.tr ? '#0b4f9c' : '#111');
+        T(fit(l.when, C[4] - C[3] - 180, '20px Arial'), C[3] + 10, y + 24, '20px Arial', '#333');
+        T(num(l.amt), C[4] - 12, y + 24, '20px Arial', '#111', 'right');
+        line(C[2], y + RH, C[4], y + RH, '#e1e6ec'); y += RH;
       });
-      famDisc += td;
-      if (L.length < 2) T(fit('Class ' + k.cls + (k.section ? '-' + k.section : ''), C[2] - C[1] - 16, '17px Arial'), C[1] + 8, y + 24, '17px Arial', '#555');
-      rect(C[2], y, C[7] - C[2], RH, '#FFF8E6');
-      T('Total of ' + k.name.split(' ')[0] + (k.total.paid > 0 ? ' (paid ₹' + Math.round(k.total.paid).toLocaleString('en-IN') + ')' : ''), C[2] + 8, y + 24, 'bold 19px Arial', '#5a3d00');
-      T(num(tf), C[5] - 10, y + 24, 'bold 19px Arial', '#5a3d00', 'right'); T(td ? '− ' + num(td) : '—', C[6] - 10, y + 24, 'bold 19px Arial', td ? GREEN : '#aaa', 'right');
-      T(num(k.total.now), C[7] - 10, y + 24, 'bold 20px Arial', '#5a3d00', 'right');
+      if (L.length < 2) { T(fit('Class ' + k.cls + (k.section ? '-' + k.section : ''), C[2] - C[1] - 20, '18px Arial'), C[1] + 10, y + 24, '18px Arial', '#555'); }
+      rect(C[2], y, C[4] - C[2], RH, '#FFF8E6');
+      T('Total of ' + k.name.split(' ')[0] + (dc > 0 ? '   (Discount ₹' + num(dc) + ')' : ''), C[2] + 10, y + 24, 'bold 20px Arial', '#5a3d00');
+      T(num(k.total.now), C[4] - 12, y + 24, 'bold 21px Arial', '#5a3d00', 'right');
       y += RH;
-      [C[0], C[1], C[2], C[7]].forEach(cx => line(cx, top, cx, y, '#9aa5b1')); [C[3], C[4], C[5], C[6]].forEach(cx => line(cx, top, cx, y, '#d5dbe2'));
+      [C[0], C[1], C[2], C[4]].forEach(cx => line(cx, top, cx, y, '#9aa5b1')); line(C[3], top, C[3], y, '#d5dbe2');
       line(P, y, W - P, y, '#9aa5b1', 1.5);
     });
     // grand total
