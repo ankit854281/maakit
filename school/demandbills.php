@@ -7,7 +7,7 @@ header('Cache-Control: no-store');
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'; object-src 'none'");
 $v = (string)@filemtime(__DIR__ . '/demandbills.js') . (string)@filemtime(__DIR__ . '/demandbill.js');
 ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-<title>Demand Bill · SN Mishra SIS</title>
+<title>Sibling Demand Bill · SN Mishra SIS</title>
 <style>
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;color:#1d2733;font-size:14px}
 .wrap{max-width:1100px;margin:0 auto;padding:14px}
@@ -33,7 +33,7 @@ select,input[type=text]{width:100%;box-sizing:border-box;font:inherit;padding:7p
 .zoom{position:fixed;inset:0;background:rgba(10,20,35,.75);z-index:50;overflow:auto;padding:20px;display:flex;justify-content:center;align-items:flex-start}.zoom img{max-width:820px;width:100%}
 @media(max-width:700px){.grid{grid-template-columns:1fr}}
 </style></head><body><div class="wrap">
-<div class="top"><h1>Demand Bill</h1><a href="index.php" target="_top">← ERP</a></div>
+<div class="top"><h1>Sibling Demand Bill</h1><a href="index.php" target="_top">← ERP</a></div>
 <div class="pan" id="form"><div class="msg">Opening…</div></div>
 <div id="out"></div>
 </div>
