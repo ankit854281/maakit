@@ -119,7 +119,17 @@ case 'marks': {
         $mine = array_values(array_filter($subs, fn($x) => $teachesSubject($cls, $x)));
         $kids = array_values(array_filter(reg_students(), fn($x) => $x['cls'] === $cls && empty($x['inactive']))); usort($kids, fn($x, $y) => strcmp($x['name'], $y['name']));
         $photoIds = []; foreach ($kids as $k) if (sch_rec_get('phoStu', $k['id'])) $photoIds[] = $k['id'];
-        sch_json(['ok' => true, 'subjects' => $subs, 'mySubjects' => $mine, 'classTeacher' => $classTeacher($cls), 'students' => $kids, 'withPhoto' => $photoIds, 'marks' => $rows('prcMarks', "$ses|$exam|$cls|"), 'extra' => sch_rec_get('prcExtra', "$ses|$exam|$cls") ?? ['rows' => []],
+        // Attendance from the daily class attendance (studAtt) for this session — owner, 20 Nov 2026: "attendance nahi show ho raha,
+        // link kariye". results.js uses it when the class teacher has not typed days/present in Co-Scholastic. Holidays have no studAtt.
+        $y0 = (int)substr($ses, 0, 4); $set = sch_rec_get('settings', 'main') ?: []; $from = (string)($set['sessionStart'] ?? '');
+        if (!preg_match('/^' . $y0 . '-\d{2}-\d{2}$/', $from)) $from = $y0 . '-04-01';
+        $to = min(date('Y-m-d'), ($y0 + 1) . '-03-31');
+        $aq = $db->prepare("SELECT r, d FROM sch_records WHERE k='studAtt' AND deleted=0 AND dkey >= ? AND dkey <= ? AND r LIKE ?"); $aq->execute([$from, $to, '%|' . prc_like($cls)]);
+        $attDays = 0; $absent = [];
+        foreach ($aq as $row) { [, $c] = array_pad(explode('|', (string)$row['r'], 2), 2, ''); if ($c !== $cls) continue; $d = json_decode((string)$row['d'], true); if (!is_array($d)) continue;
+            $attDays++; foreach ((array)($d['absent'] ?? []) as $sid) { $sid = (string)$sid; $absent[$sid] = ($absent[$sid] ?? 0) + 1; } }
+        $att = []; if ($attDays) foreach ($kids as $kd) $att[$kd['id']] = ['days' => $attDays, 'present' => max(0, $attDays - ($absent[$kd['id']] ?? 0))];
+        sch_json(['ok' => true, 'subjects' => $subs, 'mySubjects' => $mine, 'classTeacher' => $classTeacher($cls), 'students' => $kids, 'withPhoto' => $photoIds, 'att' => (object)$att, 'attFrom' => $from, 'marks' => $rows('prcMarks', "$ses|$exam|$cls|"), 'extra' => sch_rec_get('prcExtra', "$ses|$exam|$cls") ?? ['rows' => []],
             'other' => $exam === 'Term-2' ? ['marks' => $rows('prcMarks', "$ses|Term-1|$cls|"), 'extra' => sch_rec_get('prcExtra', "$ses|Term-1|$cls") ?? ['rows' => []]] : null]);
     }
     $subj = prc_txt($in['subject'] ?? '', 40);

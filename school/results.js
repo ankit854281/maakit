@@ -54,6 +54,8 @@
     const stat = {}; subs.forEach(sb => { const v = kids.map(k => k.rows.find(r => r.s === sb)).filter(r => r && !r.none && !r.ab).map(r => r.t);
       stat[sb] = { avg: v.length ? n2(v.reduce((a, b) => a + b, 0) / v.length) : 0, max: v.length ? Math.max(...v) : 0 }; });
     const extra = (d.extra && d.extra.rows) || {};
+    // attendance linked to the daily class attendance (progress_api `att`) when the class teacher has not typed it (owner, 20 Nov 2026)
+    Object.entries(d.att || {}).forEach(([sid, a]) => { const ex = extra[sid] || (extra[sid] = {}); if (!(+ex.days) && a && +a.days) { ex.days = String(a.days); ex.present = String(a.present); ex.attAuto = 1; } });
     const full = Math.max(0, ...kids.map(k => k.done));
     const ranked = kids.filter(k => k.pct != null && k.done === full && full > 0).sort((a, b) => b.rraw - a.rraw || b.pct - a.pct);
     let last = null, r = 0; ranked.forEach((k, i) => { if (last === null || k.rraw < last - 1e-9) { r = i + 1; last = k.rraw; } k.rank = r; });
@@ -144,7 +146,7 @@
   function attCard(ex) {
     const d = +ex.days || 0, pr = +ex.present || 0, p = d ? Math.round(pr * 100 / d) : null, col = p == null ? '#C5CDD8' : p >= 90 ? '#1E7A43' : p >= 75 ? '#E0A100' : '#C0392B', a = (p || 0) * 3.6;
     return `<div class="card att"><h5>Attendance</h5><div class="attw"><div class="ring2" style="background:conic-gradient(${col} ${a}deg,#E6EAF0 ${a}deg)"><div><b>${p == null ? '—' : p + '%'}</b></div></div>
-      <div class="attx">${d ? `<span><b>${pr}</b> present</span><span><b>${d - pr}</b> absent</span><span>of <b>${d}</b> working days</span>` : '<span class="mut">Not entered yet</span>'}</div></div></div>`;
+      <div class="attx">${d ? `<span><b>${pr}</b> present</span><span><b>${d - pr}</b> absent</span><span>of <b>${d}</b> working days</span>${ex.attAuto ? '<span class="mut" style="font-size:10px">from daily attendance</span>' : ''}` : '<span class="mut">Not entered yet</span>'}</div></div></div>`;
   }
   const CO = [['art', 'Art Education'], ['work', 'Work Education'], ['health', 'Health & PE'], ['disc', 'Discipline']], COW = { A: 100, B: 66, C: 33 }, COC = { A: '#1E7A43', B: '#2D6CDF', C: '#E0A100' };
   function cosCard(ex) {

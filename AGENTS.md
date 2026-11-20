@@ -1274,3 +1274,8 @@ papers only from photos the owner sends.
   all Merit. Print-all mixes landscape and portrait pages (@page port). Slip fixes: % shown to ONE decimal everywhere (ring was
   rounding 43.4 → 43); rank box only for the upper half — the lower half sees "Overall grade" instead of "Rank 8 of 8"; "of N"
   now counts ranked children. progress_api a=certs ranks on the unrounded ratio and shows % to one decimal (same as results.js).
+
+- 2026-11-20 (Claude): Slip attendance linked to the daily class attendance (owner: "attendance nahi show ho raha, link kariye").
+  progress_api a=marks GET now also returns `att` {sid: {days, present}} counted from studAtt (session start → today; holidays have
+  no studAtt; leave counts as absent) and `attFrom`. results.js uses it when the class teacher has not typed days/present
+  (Co-Scholastic entry wins); the card says "from daily attendance". Test in progress-flow.php.

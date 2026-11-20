@@ -75,6 +75,11 @@ try {
     [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Synthetic Maths', 'rows' => ['pr-s1' => ['pt' => '9', 'nb' => '5', 'sea' => '5', 'te' => '70']]]); pc($c === 200, 'class teacher saves another teacher\'s subject');
     [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Not In Timetable', 'rows' => []]); pc($c === 403, 'class teacher only for subjects of the class');
     pc((int)$db->query("SELECT COUNT(*) FROM sch_log WHERE x LIKE 'Term-1 marks saved: Class 1st Synthetic Maths%by the class teacher'")->fetchColumn() >= 1, 'class teacher correction logged');
+    // Attendance on the slip comes from the daily class attendance (studAtt) — owner, 20 Nov 2026
+    sch_rec_put('studAtt', '2026-10-05|1st', ['absent' => ['pr-s2']], 'principal'); sch_rec_put('studAtt', '2026-10-06|1st', ['absent' => []], 'principal');
+    [$c, $d] = prq('marks', $P, null, '&ses=2026-27&exam=Term-1&cls=1st');
+    pc($c === 200 && ($d['att']['pr-s1']['days'] ?? 0) === 2 && ($d['att']['pr-s1']['present'] ?? 0) === 2 && ($d['att']['pr-s2']['present'] ?? -1) === 1, 'attendance from daily records ' . json_encode($d['att'] ?? null));
+    $db->exec("DELETE FROM sch_records WHERE k='studAtt' AND r IN ('2026-10-05|1st','2026-10-06|1st')");
     // Rankers' certificate numbers + public "Scan to verify" (owner, 20 Nov 2026): the server works out the rank (s1 has both subjects, s2 only one)
     [$c, $d] = prq('certs', $P, null, '&ses=2026-27&cls=1st'); $ce = $d['certs'] ?? [];
     pc($c === 200 && ($ce['pr-s1']['rank'] ?? 0) === 1 && !isset($ce['pr-s2']) && preg_match('/^HY26-[0-9A-Z]{7}$/', $ce['pr-s1']['code'] ?? ''), 'certificate numbers ' . json_encode($d));
