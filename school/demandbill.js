@@ -13,64 +13,108 @@
     if (!r.ok || !j || !j.ok) throw Error((j && j.error) || 'Server problem. Please try again.'); return j;
   }
   // ---------------- drawing ----------------
+  // Compact one-page demand bill (owner, 20 Nov 2026: "aise demand bill banta hai? sahi karo" — the 12 Nov long
+  // month-by-month sheet is replaced). Only what is payable till the chosen month, one line per fee head with its months
+  // ("Tuition Fee · Jul–Nov · ₹3,000"), each child's subtotal, the family total in figures and words, note and signs.
+  const M3 = { April: 'Apr', May: 'May', June: 'Jun', July: 'Jul', August: 'Aug', September: 'Sep', October: 'Oct', November: 'Nov', December: 'Dec', January: 'Jan', February: 'Feb', March: 'Mar' };
+  const ORD = ['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March'];
+  function words(n) {
+    n = Math.round(+n || 0); if (!n) return 'Zero';
+    const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const t = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const two = x => x < 20 ? a[x] : t[Math.floor(x / 10)] + (x % 10 ? ' ' + a[x % 10] : '');
+    const three = x => (x >= 100 ? a[Math.floor(x / 100)] + ' Hundred' + (x % 100 ? ' ' : '') : '') + (x % 100 ? two(x % 100) : '');
+    let out = []; const cr = Math.floor(n / 1e7); n %= 1e7; const la = Math.floor(n / 1e5); n %= 1e5; const th = Math.floor(n / 1e3); n %= 1e3;
+    if (cr) out.push(three(cr) + ' Crore'); if (la) out.push(two(la) + ' Lakh'); if (th) out.push(two(th) + ' Thousand'); if (n) out.push(three(n));
+    return out.join(' ');
+  }
+  function monthsLabel(ms) {   // ['July','August',…] → 'Jul–Nov' (runs joined with commas)
+    const ix = ms.map(m => ORD.indexOf(m)).filter(i => i >= 0).sort((p, q) => p - q), runs = [];
+    ix.forEach(i => { const r = runs[runs.length - 1]; if (r && i === r[1] + 1) r[1] = i; else runs.push([i, i]); });
+    return runs.map(([p, q]) => p === q ? M3[ORD[p]] : M3[ORD[p]] + '–' + M3[ORD[q]]).join(', ');
+  }
+  function lines(k) {   // heads till the bill month: one line per fee head + kind (fully discounted / payable), with fee, discount, payable
+    const g = {}, order = [];
+    k.heads.filter(h => h.now && (h.due > 0 || h.conc > 0)).forEach(h => {
+      const free = h.due <= 0, key = h.name + (free ? '|free' : '|due');
+      if (!g[key]) { g[key] = { name: h.name, tr: h.tr, free, ms: [], fee: 0, disc: 0, amt: 0 }; order.push(key); }
+      const o = g[key]; o.ms.push(h.m); o.fee += h.amt - h.paid; o.disc += h.conc; o.amt += h.due; });
+    const L = order.map(n => g[n]).sort((p, q) => p.tr - q.tr);
+    if (k.total.oldDue > 0) L.unshift({ name: 'Previous balance (old due)', ms: [], fee: k.total.oldDue, disc: 0, amt: k.total.oldDue });
+    return L;
+  }
   function draw(B) {
-    const W = 1080, P = 36, RH = 34, kids = B.kids, fam = kids.reduce((a, k) => a + k.total.now, 0);
-    let H = 190 + (kids.length > 1 ? 96 : 0) + 120;
-    kids.forEach(k => { H += 230 + 150 + 44 + k.heads.length * RH + 2 * RH + 50 + 40 + Math.max(1, k.receipts.length) * 30 + 50; });
+    const W = 1240, P = 48, kids = B.kids, fam = kids.reduce((s, k) => s + k.total.now, 0), RH = 35;
+    const LS = kids.map(lines), rows = LS.reduce((s, L) => s + Math.max(1, L.length) + 1, 0);
+    const H = Math.max(1754, 840 + rows * RH);   // A4 (1240 × 1754) unless the family is very big
     const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const T = (t, X, Y, f, col, al) => { x.font = f; x.fillStyle = col || '#111'; x.textAlign = al || 'left'; x.fillText(String(t), X, Y); };
-    const fit = (t, max, f) => { x.font = f; t = String(t); while (t.length > 3 && x.measureText(t).width > max) t = t.slice(0, -2); return t; };
-    const box = (X, Y, w, h, bg, bd, r) => { x.beginPath(); x.roundRect ? x.roundRect(X, Y, w, h, r || 10) : x.rect(X, Y, w, h); x.fillStyle = bg; x.fill(); if (bd) { x.strokeStyle = bd; x.lineWidth = 2; x.stroke(); } };
+    const fit = (t, max, f) => { x.font = f; t = String(t); if (x.measureText(t).width <= max) return t; while (t.length > 3 && x.measureText(t + '…').width > max) t = t.slice(0, -1); return t + '…'; };
+    const line = (x1, y1, x2, y2, col, w) => { x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.strokeStyle = col || '#9aa5b1'; x.lineWidth = w || 1; x.stroke(); };
+    const rect = (X, Y, w, h, bg, bd) => { if (bg) { x.fillStyle = bg; x.fillRect(X, Y, w, h); } if (bd) { x.strokeStyle = bd; x.lineWidth = 1.5; x.strokeRect(X, Y, w, h); } };
     x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    rect(24, 24, W - 48, H - 48, null, NAVY); x.lineWidth = 1; rect(30, 30, W - 60, H - 60, null, '#c9d2dc');
     // header
-    x.fillStyle = NAVY; x.fillRect(0, 0, W, 170);
-    T((B.school || 'SN Mishra Singapore International School').toUpperCase(), W / 2, 62, 'bold 36px Arial', '#fff', 'center');
-    T('Jagannathpur, Bhadohi (U.P.)', W / 2, 98, '22px Arial', '#DDE6F0', 'center');
-    box(W / 2 - 250, 116, 500, 40, GOLD, null, 20); T('FEE DEMAND BILL · Session ' + B.ses, W / 2, 144, 'bold 22px Arial', '#1b1b1b', 'center');
-    let y = 205; T('Bill date: ' + B.date, P, y, '20px Arial', '#333'); T('Payable till: ' + B.upto + ' ' + B.uptoYear, W - P, y, 'bold 20px Arial', '#333', 'right'); y += 20;
-    if (kids.length > 1) { box(P, y, W - 2 * P, 76, '#FFF1F0', RED, 14); T('FAMILY TOTAL — ' + kids.length + ' children (same mobile number)', P + 20, y + 32, 'bold 22px Arial', '#333'); T('Payable till ' + B.upto + ': ' + rs(fam), P + 20, y + 62, 'bold 26px Arial', RED); y += 96; }
+    let y = 92;
+    T((B.school || 'SN Mishra Singapore International School').toUpperCase(), W / 2, y, 'bold 40px Arial', NAVY, 'center'); y += 36;
+    T('Jagannathpur, Bhadohi (U.P.)', W / 2, y, '22px Arial', '#444', 'center'); y += 26;
+    line(P, y, W - P, y, NAVY, 2); y += 46;
+    rect(W / 2 - 190, y - 32, 380, 46, NAVY); T('FEE DEMAND BILL', W / 2, y, 'bold 26px Arial', '#fff', 'center'); y += 50;
+    // details
+    const k0 = kids[0], half = (W - 2 * P) / 2, det = [
+      ['Session', B.ses.replace(/^(20\d\d)-(\d\d)$/, '$1-20$2'), 'Bill Date', B.date],
+      ["Father's Name", k0.father || '—', 'Payable till', B.upto + ' ' + B.uptoYear],
+      ["Mother's Name", k0.mother || '—', 'Mobile No.', k0.mobile || '—'],
+      ['Transport', k0.transport && k0.transport !== 'No' ? k0.transport : 'No', '', '']];
+    det.forEach(([l1, v1, l2, v2]) => {
+      T(l1, P + 4, y, '21px Arial', '#555'); T(': ' + fit(v1, l2 ? half - 190 : W - 2 * P - 190, 'bold 21px Arial'), P + 170, y, 'bold 21px Arial', '#111');
+      if (l2) { T(l2, P + half + 20, y, '21px Arial', '#555'); T(': ' + fit(v2, half - 170, 'bold 21px Arial'), P + half + 160, y, 'bold 21px Arial', '#111'); }
+      y += 34; });
+    y += 10;
+    // table: S.No | Student / Class | Fee Head | Month(s) | Fee | Discount | Payable
+    const C = [P, P + 58, P + 290, P + 590, P + 780, P + 910, P + 1030, W - P], num = v => v ? Math.round(v).toLocaleString('en-IN') : '—';
+    rect(P, y, W - 2 * P, RH + 4, NAVY);
+    ['S.No', 'Student / Class', 'Fee Head', 'Month(s)', 'Fee', 'Discount', 'Payable'].forEach((h, i) => T(h, i >= 4 ? C[i + 1] - 10 : C[i] + 8, y + 28, 'bold 19px Arial', '#fff', i >= 4 ? 'right' : 'left'));
+    y += RH + 4; let sn = 0, famDisc = 0;
     kids.forEach((k, ki) => {
-      y += 14; x.fillStyle = NAVY; x.fillRect(P, y, W - 2 * P, 4); y += 40;
-      T((kids.length > 1 ? (ki + 1) + '. ' : '') + k.name, P, y, 'bold 32px Arial', NAVY); T('Class ' + k.cls + (k.section ? ' / ' + k.section : '') + ' · Scholar No ' + k.adm, W - P, y, 'bold 22px Arial', '#333', 'right'); y += 36;
-      const info = [['Father', k.father], ['Mother', k.mother], ['Mobile', k.mobile], ['Transport', k.transport], ['Address', k.address || '—']];
-      info.forEach(([a, b], i) => { const cx = i % 2 ? W / 2 + 10 : P, cy = y + Math.floor(i / 2) * 30; T(a + ':', cx, cy, 'bold 20px Arial', '#555'); T(fit(b || '—', i === 4 ? W - 2 * P - 110 : W / 2 - 140, '20px Arial'), cx + 110, cy, '20px Arial', '#111'); });
-      y += 100;
-      // summary boxes
-      const t = k.total, S = [['Session fee', rs(t.fee), '#fff', '#9aa3b8', '#111'], ['Paid', rs(t.paid), '#fff', '#9aa3b8', GREEN], ['Concession', rs(t.conc), '#fff', '#9aa3b8', GREEN],
-        ['School fee due', rs(t.nowFee), FEEBG, GOLD, '#8a5a00'], ['Transport due', rs(t.nowTr), '#E3F1FF', '#2b7bd0', '#0b4f9c'], ['PAYABLE TILL ' + B.upto.toUpperCase().slice(0, 3), rs(t.now), '#FFF3D6', RED, RED]];
-      const bw = (W - 2 * P - 5 * 10) / 6; S.forEach(([l, v, bg, bd, col], i) => { const bx = P + i * (bw + 10); box(bx, y, bw, 100, bg, bd, 12); T(l, bx + bw / 2, y + 34, (i === 5 ? 'bold ' : '') + '16px Arial', '#444', 'center'); T(v, bx + bw / 2, y + 76, 'bold ' + (i === 5 ? 28 : 24) + 'px Arial', col, 'center'); });
-      y += 130;
-      // table
-      const col = [P, P + 170, P + 500, P + 630, P + 770, P + 888], hd = ['Month', 'Fee head', 'Fee', 'Paid', 'Concession', 'Due'];   // right-aligned figures end at col + 120 (last = W − P − 2)
-      x.fillStyle = NAVY; x.fillRect(P, y, W - 2 * P, 40); hd.forEach((h, i) => T(h, i < 2 ? col[i] + 10 : col[i] + 120, y + 27, 'bold 18px Arial', '#fff', i < 2 ? 'left' : 'right')); y += 40;
-      let lastM = '', cutDone = false; const nowDue = k.total.now;
-      k.heads.forEach((h, i) => {
-        if (!h.now && !cutDone) { x.fillStyle = '#FFF3D6'; x.fillRect(P, y, W - 2 * P, RH); x.fillStyle = GOLD; x.fillRect(P, y, W - 2 * P, 2); x.fillRect(P, y + RH - 2, W - 2 * P, 2); T('Total due till ' + B.upto + ' (payable now)', col[5] - 20, y + 23, 'bold 18px Arial', RED, 'right'); T(rs(nowDue), col[5] + 120, y + 23, 'bold 18px Arial', RED, 'right'); y += RH; cutDone = true; }
-        x.fillStyle = h.tr ? TRBG : FEEBG; x.fillRect(col[1], y, W - P - col[1], RH); x.fillStyle = '#F6F7FB'; x.fillRect(P, y, col[1] - P, RH);
-        x.strokeStyle = '#E1E5EE'; x.lineWidth = 1; x.beginPath(); x.moveTo(P, y + RH); x.lineTo(W - P, y + RH); x.stroke();
-        const g = h.now ? '#111' : '#888';
-        if (h.m !== lastM) { T(h.m + (h.now ? '' : ' (aage)'), col[0] + 10, y + 23, 'bold 17px Arial', g); lastM = h.m; }
-        T(h.name, col[1] + 10, y + 23, (h.tr ? 'bold ' : '') + '17px Arial', h.tr ? '#0b4f9c' : g);
-        T(h.amt.toLocaleString('en-IN'), col[2] + 120, y + 23, '17px Arial', g, 'right'); T(h.paid ? h.paid.toLocaleString('en-IN') : '—', col[3] + 120, y + 23, '17px Arial', h.paid ? g : '#aaa', 'right');
-        T(h.conc ? h.conc.toLocaleString('en-IN') : '—', col[4] + 120, y + 23, '17px Arial', h.conc ? GREEN : '#aaa', 'right'); T(h.due ? h.due.toLocaleString('en-IN') : '—', col[5] + 120, y + 23, (h.due && h.now ? 'bold ' : '') + '17px Arial', h.due ? (h.now ? RED : '#a05050') : '#aaa', 'right');
-        y += RH;
+      const L = LS[ki].length ? LS[ki] : [{ name: 'No fee due', ms: [], fee: 0, disc: 0, amt: 0 }], top = y;
+      let tf = 0, td = 0;
+      L.forEach((l, li) => {
+        if (li % 2) rect(C[2], y, C[7] - C[2], RH, '#f6f8fa');
+        if (li === 0) { sn++; T(sn, C[0] + 20, y + 24, 'bold 19px Arial', '#111'); T(fit(k.name, C[2] - C[1] - 16, 'bold 19px Arial'), C[1] + 8, y + 24, 'bold 19px Arial', '#111'); }
+        if (li === 1) T(fit('Class ' + k.cls + (k.section ? '-' + k.section : '') + ' · Adm ' + k.adm, C[2] - C[1] - 16, '17px Arial'), C[1] + 8, y + 24, '17px Arial', '#555');
+        T(fit(l.name, C[3] - C[2] - 16, '19px Arial'), C[2] + 8, y + 24, l.tr ? 'bold 19px Arial' : '19px Arial', l.tr ? '#0b4f9c' : '#111');
+        T(fit(monthsLabel(l.ms), C[4] - C[3] - 16, '19px Arial'), C[3] + 8, y + 24, '19px Arial', '#333');
+        T(num(l.fee), C[5] - 10, y + 24, '19px Arial', '#111', 'right');
+        T(l.disc ? '− ' + num(l.disc) : '—', C[6] - 10, y + 24, '19px Arial', l.disc ? GREEN : '#aaa', 'right');
+        T(num(l.amt), C[7] - 10, y + 24, 'bold 19px Arial', l.amt ? '#111' : '#aaa', 'right');
+        tf += l.fee; td += l.disc; line(C[2], y + RH, C[7], y + RH, '#e1e6ec'); y += RH;
       });
-      if (!cutDone) { x.fillStyle = '#FFF3D6'; x.fillRect(P, y, W - 2 * P, RH); T('Total due till ' + B.upto + ' (payable now)', col[5] - 20, y + 23, 'bold 18px Arial', RED, 'right'); T(rs(nowDue), col[5] + 120, y + 23, 'bold 18px Arial', RED, 'right'); y += RH; }
-      x.fillStyle = '#EEF1F8'; x.fillRect(P, y, W - 2 * P, RH); T('Session total' + (t.oldDue ? ' (incl. old due ' + rs(t.oldDue) + ')' : ''), col[1] + 10, y + 23, 'bold 17px Arial', '#111');
-      [[2, t.fee], [3, t.paid], [4, t.conc], [5, t.due]].forEach(([i, v]) => T(Math.round(v).toLocaleString('en-IN'), col[i] + 120, y + 23, 'bold 17px Arial', '#111', 'right')); y += RH + 30;
-      // receipts
-      T('Payment history (receipts)', P, y, 'bold 22px Arial', NAVY); y += 14;
-      if (!k.receipts.length) { y += 26; T('No payment received in this session.', P + 10, y, 'bold 18px Arial', RED); y += 10; }
-      k.receipts.forEach(r => { y += 30; T('Receipt ' + r.no + ' · ' + dmy(r.date), P + 10, y, '18px Arial', '#333'); T(fit(r.lines.map(l => l.head + ' (' + l.months.replace(/,/g, ', ') + ')').join(' · '), 560, '16px Arial'), P + 300, y, '16px Arial', '#555'); T(rs(r.amt), W - P, y, 'bold 18px Arial', '#111', 'right'); });
-      y += 30;
+      famDisc += td;
+      if (L.length < 2) T(fit('Class ' + k.cls + (k.section ? '-' + k.section : ''), C[2] - C[1] - 16, '17px Arial'), C[1] + 8, y + 24, '17px Arial', '#555');
+      rect(C[2], y, C[7] - C[2], RH, '#FFF8E6');
+      T('Total of ' + k.name.split(' ')[0] + (k.total.paid > 0 ? ' (paid ₹' + Math.round(k.total.paid).toLocaleString('en-IN') + ')' : ''), C[2] + 8, y + 24, 'bold 19px Arial', '#5a3d00');
+      T(num(tf), C[5] - 10, y + 24, 'bold 19px Arial', '#5a3d00', 'right'); T(td ? '− ' + num(td) : '—', C[6] - 10, y + 24, 'bold 19px Arial', td ? GREEN : '#aaa', 'right');
+      T(num(k.total.now), C[7] - 10, y + 24, 'bold 20px Arial', '#5a3d00', 'right');
+      y += RH;
+      [C[0], C[1], C[2], C[7]].forEach(cx => line(cx, top, cx, y, '#9aa5b1')); [C[3], C[4], C[5], C[6]].forEach(cx => line(cx, top, cx, y, '#d5dbe2'));
+      line(P, y, W - P, y, '#9aa5b1', 1.5);
     });
-    y += 10; box(P, y, W - 2 * P, 70, '#F6F7FB', NAVY, 12);
-    T('Kripya ' + rs(fam) + ' (' + B.upto + ' tak ka baaki) jaldi se jaldi school office me jama karein aur receipt zaroor lein.', W / 2, y + 30, 'bold 19px Arial', '#111', 'center');
-    T('Kisi bhi galti ke liye school office se sampark karein.', W / 2, y + 56, '17px Arial', '#444', 'center'); y += 110;
-    T('Accountant ____________', P + 20, y, '18px Arial', '#333'); T('Principal ____________', W - P - 20, y, '18px Arial', '#333', 'right');
-    y += 40; T('Data as per school fee record' + (B.live ? '' : ' (old ERP copy ' + B.asOn + ')') + ' · Powered by Maakit', W / 2, y, '15px Arial', '#888', 'center');
-    const out = document.createElement('canvas'); out.width = W; out.height = Math.min(H, y + 24); out.getContext('2d').drawImage(c, 0, 0);   // trim the spare space at the bottom
-    return out;
+    // grand total
+    y += 24; rect(P, y, W - 2 * P, 96, '#FDECEC', RED);
+    T(kids.length > 1 ? 'TOTAL PAYABLE (' + kids.length + ' children) till ' + B.upto + ' ' + B.uptoYear : 'TOTAL PAYABLE till ' + B.upto + ' ' + B.uptoYear, P + 20, y + 40, 'bold 24px Arial', RED);
+    T('₹ ' + Math.round(fam).toLocaleString('en-IN'), W - P - 20, y + 44, 'bold 38px Arial', RED, 'right');
+    T(fit('Rupees ' + words(fam) + ' Only' + (famDisc ? '   ·   Discount given: ₹' + Math.round(famDisc).toLocaleString('en-IN') : ''), W - 2 * P - 40, 'italic 19px Arial'), P + 20, y + 78, 'italic 19px Arial', '#333');
+    y += 130;
+    // note + signs
+    T('Note:', P, y, 'bold 20px Arial', '#111'); y += 30;
+    ['Kripya upar likhi rashi jald se jald school office mein jama karein aur receipt avashya lein.', 'Agar fee jama kar di hai to is bill ko anadekha karein. Kisi bhi jaankari ke liye school office se sampark karein.']
+      .forEach(t => { T(fit(t, W - 2 * P, '19px Arial'), P, y, '19px Arial', '#333'); y += 28; });
+    const sy = Math.max(y + 90, H - 120);
+    line(P, sy, P + 260, sy, '#333'); line(W - P - 260, sy, W - P, sy, '#333');
+    T('Accountant', P + 130, sy + 28, '20px Arial', '#333', 'center'); T('Principal', W - P - 130, sy + 28, '20px Arial', '#333', 'center');
+    T('Computer generated bill · ' + (B.school || 'SN Mishra Singapore International School'), W / 2, H - 46, '16px Arial', '#888', 'center');
+    return c;
   }
   function waText(B) {
     const fam = B.kids.reduce((a, k) => a + k.total.now, 0);
