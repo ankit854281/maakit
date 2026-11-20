@@ -1289,3 +1289,10 @@ papers only from photos the owner sends.
 
 - 2026-11-20 (Claude): Certificates — no Chairman signature (Class Teacher + Principal only) and landscape only (owner). Auto:
   1st = Colourful, 2nd = Merit, 3rd = Colourful in the next colour set. Portrait Royal removed from the picker (code kept, unused).
+
+- 2026-11-20 (Claude): "Jitna certificate banaya sab use karo" — restored v3 Classic gold laurel (certClassic), v4 Emerald
+  guilloche (certEmerald) and v5 Split honour panel (certSplit, colour set SPLITTH by CV) from git history, all without the
+  Chairman signature. Auto: a class's 1st certificate = Colourful trophy; 2nd/3rd turn through Merit, Classic, Emerald, Split by
+  class index — every landscape design is used across the school. rosette() takes an optional centre colour.
+  Slip on phones/narrow screens: the slip keeps its 968px layout and is scaled to fit (CSS var --sz set by fitSlips()), so the
+  "Child vs class" graphs and co-scholastic card are no longer cut off on the right (owner saw it on 9th). Print unaffected.
