@@ -1190,3 +1190,4 @@ papers only from photos the owner sends.
 ### Chairman APK 1.1 — share the demand bill picture (20 Nov 2026, owner: "chairman sir ke app me demand bill share bill picture work nahi ho raha")
 - A WebView cannot share files. `school/android` (Chairman wrapper) now has the Salary app's `SNMSISFiles.shareFile(name, base64, mime)` bridge (PNG / PDF → cache/share → FileProvider `${applicationId}.files` → Android share sheet), `res/xml/share_paths.xml`, `androidx.core`, `android.useAndroidX=true`, versionCode 2 / 1.1. `demandbill.js share()` uses the bridge when present (Chairman 1.1+, Salary 1.2+); an old APK gets a message to install the new app (or use "WhatsApp message").
 - Debug signing is made on each CI run, so phones must UNINSTALL the old Chairman app before installing 1.1 (then log in again).
+- Same-domain download: `school/downloads/snmsis-chairman.apk` (copied from the release on 20 Nov 2026) → https://maakit.in/school/downloads/snmsis-chairman.apk
