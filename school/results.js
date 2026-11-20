@@ -232,7 +232,7 @@
     [[-1, 0], [1, 3]].forEach(([s2, ci]) => { x.fillStyle = PAL[ci]; x.beginPath(); x.moveTo(s2 * r * .25, r * .5); x.lineTo(s2 * r * .75, r * 1.65); x.lineTo(s2 * r * .5, r * 1.45); x.lineTo(s2 * r * .3, r * 1.75); x.lineTo(s2 * -r * .05, r * .6); x.closePath(); x.fill(); });
     // serrated edge
     x.beginPath(); for (let i = 0; i < 72; i++) { const a = i * Math.PI / 36, rr = i % 2 ? r : r * .9; x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } x.closePath(); x.fillStyle = gold(x, -r, -r, r, r); x.fill();
-    x.beginPath(); x.arc(0, 0, r * .78, 0, 7); x.fillStyle = ROSINK; x.fill();
+    x.beginPath(); x.arc(0, 0, r * .78, 0, 7); x.fillStyle = '#13254B'; x.fill();
     x.beginPath(); x.arc(0, 0, r * .72, 0, 7); x.lineWidth = 3; x.strokeStyle = PAL[2]; x.stroke();
     x.fillStyle = PAL[2]; x.textAlign = 'center';
     x.font = `700 ${r * .62}px Georgia, serif`; x.fillText(String(rank), -r * .08, r * .12);
@@ -247,101 +247,121 @@
     x.beginPath(); x.arc(14, 14, 9, 0, 7); x.fillStyle = col; x.fill(); x.beginPath(); x.moveTo(30, 30); x.quadraticCurveTo(60, 22, 90, 34); x.moveTo(30, 30); x.quadraticCurveTo(22, 60, 34, 90); x.stroke(); x.restore(); }
   let SIGNS = null;
   async function signs() { if (SIGNS) return SIGNS; try { SIGNS = (await get('teacher_api.php?a=comp&sg=1')).signs || {}; } catch (e) { SIGNS = {}; } return SIGNS; }
-  // ---- certificate v5 (owner, 20 Nov 2026: "colour aur combination match nahi ho raha — 10/12 wala kaam"): ONE palette that
-  // matches the school crest — royal navy + gold foil + ivory, nothing else. Split layout: a navy honour panel on the left
-  // (crest, the child's photo in a gold laurel, RANK HOLDER ribbon, gold guilloche aura, Scan-to-verify QR), the citation on ivory
-  // on the right. The rank seal sits on the gold seam between them; only the seal's metal changes (1st gold, 2nd silver, 3rd bronze).
-  // Certificate colour themes (owner, 20 Nov 2026: "colour combination achha nahi") — same layout, the owner picks the colour.
-  const THEMES = { navy: { p0: '#0E1C3C', p1: '#1E3C72', ink: '#13254B', n: 'Royal Blue & Gold' }, maroon: { p0: '#3E0A14', p1: '#7A1830', ink: '#5A1020', n: 'Maroon & Gold' },
-    purple: { p0: '#1E0F40', p1: '#4A2582', ink: '#2E1660', n: 'Royal Purple & Gold' }, emerald: { p0: '#05281F', p1: '#0E5A45', ink: '#0B3D2E', n: 'Emerald & Gold' },
-    black: { p0: '#0B0B0B', p1: '#2B2B2B', ink: '#1A1A1A', n: 'Black & Gold' } };
-  let CTHEME = (() => { try { return localStorage.getItem('sch_cert_theme') || 'navy'; } catch (e) { return 'navy'; } })(), ROSINK = '#13254B';
+  // ---- certificate v6 (owner, 20 Nov 2026: none of the colours — "educational certificate jaisa feel nahi"). A classic Indian school
+  // CERTIFICATE OF MERIT: cream paper with a faint pattern of school symbols (books, pencils, caps, atoms, globes, ABC/123), a royal
+  // blue guilloche border with gold rules, crest + school name on top, a blue "Certificate of Merit" ribbon, a gold medal on blue/red
+  // straps (left), the child's photo in a frame wearing a graduation cap (right), the traditional wording ("ward of Shri … & Smt. …,
+  // a student of Class …, has secured the FIRST POSITION …"), three signatures, date, certificate no. and Scan-to-verify QR.
+  const EBLUE = '#1A3E8C', EBLUE2 = '#0F2A66', ERED = '#C62828';
+  function icoCap(x, cx, cy, s2, col, fill) { x.save(); x.translate(cx, cy); x.fillStyle = col; x.strokeStyle = col; x.lineWidth = Math.max(1.5, s2 * .04);
+    x.beginPath(); x.moveTo(-s2 * .32, s2 * .05); x.lineTo(-s2 * .32, s2 * .32); x.quadraticCurveTo(0, s2 * .48, s2 * .32, s2 * .32); x.lineTo(s2 * .32, s2 * .05); fill ? x.fill() : x.stroke();
+    x.beginPath(); x.moveTo(0, -s2 * .34); x.lineTo(s2 * .62, 0); x.lineTo(0, s2 * .3); x.lineTo(-s2 * .62, 0); x.closePath(); fill ? x.fill() : x.stroke();
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(s2 * .5, s2 * .1); x.lineTo(s2 * .5, s2 * .46); x.stroke(); x.beginPath(); x.arc(s2 * .5, s2 * .5, s2 * .06, 0, 7); x.fill(); x.restore(); }
+  function icoBook(x, cx, cy, s2, col) { x.save(); x.translate(cx, cy); x.strokeStyle = col; x.lineWidth = Math.max(1.5, s2 * .04);
+    [-1, 1].forEach(d => { x.beginPath(); x.moveTo(0, s2 * .3); x.quadraticCurveTo(d * s2 * .3, s2 * .16, d * s2 * .62, s2 * .3); x.lineTo(d * s2 * .62, -s2 * .28); x.quadraticCurveTo(d * s2 * .3, -s2 * .42, 0, -s2 * .28); x.closePath(); x.stroke();
+      for (let i = 0; i < 3; i++) { x.beginPath(); x.moveTo(d * s2 * .12, -s2 * .16 + i * s2 * .13); x.lineTo(d * s2 * .5, -s2 * .14 + i * s2 * .13); x.stroke(); } }); x.restore(); }
+  function icoPencil(x, cx, cy, s2, col) { x.save(); x.translate(cx, cy); x.rotate(-Math.PI / 4); x.strokeStyle = col; x.lineWidth = Math.max(1.5, s2 * .04);
+    x.strokeRect(-s2 * .4, -s2 * .09, s2 * .62, s2 * .18); x.beginPath(); x.moveTo(s2 * .22, -s2 * .09); x.lineTo(s2 * .45, 0); x.lineTo(s2 * .22, s2 * .09); x.stroke(); x.beginPath(); x.moveTo(-s2 * .28, -s2 * .09); x.lineTo(-s2 * .28, s2 * .09); x.stroke(); x.restore(); }
+  function icoAtom(x, cx, cy, s2, col) { x.save(); x.translate(cx, cy); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = Math.max(1.5, s2 * .035);
+    for (let i = 0; i < 3; i++) { x.save(); x.rotate(i * Math.PI / 3); x.beginPath(); x.ellipse(0, 0, s2 * .5, s2 * .18, 0, 0, 7); x.stroke(); x.restore(); } x.beginPath(); x.arc(0, 0, s2 * .07, 0, 7); x.fill(); x.restore(); }
+  function icoGlobe(x, cx, cy, s2, col) { x.save(); x.translate(cx, cy); x.strokeStyle = col; x.lineWidth = Math.max(1.5, s2 * .035);
+    x.beginPath(); x.arc(0, 0, s2 * .42, 0, 7); x.stroke(); x.beginPath(); x.ellipse(0, 0, s2 * .18, s2 * .42, 0, 0, 7); x.stroke();
+    [-.2, 0, .2].forEach(t => { const w = Math.sqrt(.42 * .42 - t * t) * s2; x.beginPath(); x.moveTo(-w, t * s2); x.lineTo(w, t * s2); x.stroke(); }); x.restore(); }
+  function icoBulb(x, cx, cy, s2, col) { x.save(); x.translate(cx, cy); x.strokeStyle = col; x.lineWidth = Math.max(1.5, s2 * .035);
+    x.beginPath(); x.arc(0, -s2 * .1, s2 * .3, Math.PI * .8, Math.PI * 2.2); x.lineTo(s2 * .13, s2 * .28); x.lineTo(-s2 * .13, s2 * .28); x.closePath(); x.stroke();
+    x.beginPath(); x.moveTo(-s2 * .12, s2 * .36); x.lineTo(s2 * .12, s2 * .36); x.moveTo(-s2 * .08, s2 * .44); x.lineTo(s2 * .08, s2 * .44); x.stroke(); x.restore(); }
+  function icoText(x, cx, cy, s2, col, t) { x.save(); x.fillStyle = col; x.font = `700 ${s2 * .42}px Georgia, serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, cx, cy); x.restore(); }
+  function eduPattern(x, W, H, col, alpha) {
+    const ic = [icoBook, icoPencil, icoCap, icoAtom, (a, b, c2, d, e) => icoText(a, b, c2, d, e, 'ABC'), icoGlobe, icoBulb, (a, b, c2, d, e) => icoText(a, b, c2, d, e, '123'), (a, b, c2, d, e) => icoText(a, b, c2, d, e, 'π')];
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    x.save(); x.globalAlpha = alpha; let n = 0;
+    for (let yy = 70; yy < H; yy += 120) for (let xx = 70 + ((yy / 120) % 2) * 60; xx < W; xx += 125) { const f = ic[n++ % ic.length]; f(x, xx + (rnd() - .5) * 30, yy + (rnd() - .5) * 26, 54, col); }
+    x.restore();
+  }
   async function certCanvas(k, D) {
     await fonts();
-    const W = 1754, H = 1240, PW = 560, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-    const TH = THEMES[CTHEME] || THEMES.navy, NAVY = TH.ink, NAVY2 = TH.p1, INK = '#2A2F3A', MUTE = '#6B5E48', GD = '#9A7425';
+    const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const INK = '#2A2F3A', MUTE = '#5E5646', GD = '#9A7425', tx = W / 2;
     const T = (t, X, Y, f, col, al, sp) => { x.font = f; x.fillStyle = col || INK; x.textAlign = al || 'center'; if ('letterSpacing' in x) x.letterSpacing = (sp || 0) + 'px'; x.fillText(String(t), X, Y); if ('letterSpacing' in x) x.letterSpacing = '0px'; };
     const fit = (t, f, w) => { x.font = f; let s2 = t; while (x.measureText(s2).width > w && s2.length > 4) s2 = s2.slice(0, -2) + '…'; return s2; };
+    const mixed = (parts, Y, f) => { x.font = f; const ws = parts.map(([t]) => x.measureText(t).width), tot = ws.reduce((a2, b2) => a2 + b2, 0); let X = tx - tot / 2; parts.forEach(([t, col], i) => { T(t, X, Y, f, col, 'left'); X += ws[i]; }); };
     PAL = GOLD;
-    // ivory paper
-    const bg = x.createRadialGradient(W * .64, H / 2, 80, W * .64, H / 2, W * .62); bg.addColorStop(0, '#FFFEF9'); bg.addColorStop(1, '#F4EBD5'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+    // paper + school-symbol pattern, kept light in the middle so the words stay clear
+    const bg = x.createRadialGradient(tx, H / 2, 60, tx, H / 2, W * .65); bg.addColorStop(0, '#FFFEFA'); bg.addColorStop(1, '#F6EEDB'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+    eduPattern(x, W, H, EBLUE, .075);
+    const veil = x.createRadialGradient(tx, H / 2 + 20, 120, tx, H / 2 + 20, 720); veil.addColorStop(0, 'rgba(255,254,250,.93)'); veil.addColorStop(.75, 'rgba(255,254,250,.55)'); veil.addColorStop(1, 'rgba(255,254,250,0)'); x.fillStyle = veil; x.fillRect(0, 0, W, H);
     const logo = await loadImg('img/snmsis-logo.png');
-    if (logo) { x.save(); x.globalAlpha = .045; x.drawImage(logo, (PW + W) / 2 - 300, H / 2 - 270, 600, 600); x.restore(); }
-    // right frame: double gold line + corner ornaments
-    x.lineWidth = 5; x.strokeStyle = gold(x, PW, 0, W, H); x.strokeRect(PW + 34, 34, W - PW - 68, H - 68); x.lineWidth = 1.5; x.strokeRect(PW + 48, 48, W - PW - 96, H - 96);
-    [[PW + 60, 60, 0], [W - 60, 60, Math.PI / 2], [W - 60, H - 60, Math.PI], [PW + 60, H - 60, -Math.PI / 2]].forEach(([cx, cy, r]) => corner(x, cx, cy, r, GOLD[3]));
-    // left honour panel
-    const pg = x.createLinearGradient(0, 0, PW, H); pg.addColorStop(0, TH.p0); pg.addColorStop(.55, NAVY2); pg.addColorStop(1, TH.p0); x.fillStyle = pg; x.fillRect(0, 0, PW, H);
-    x.save(); x.beginPath(); x.rect(0, 0, PW, H); x.clip();
-    for (let i = 0; i < 3; i++) guilloche(x, PW / 2, 520, 230 - i * 24, 31 + i * 4, 199 - i * 28, GOLD[1], .16, 1);
-    x.globalAlpha = .07; x.strokeStyle = GOLD[2]; x.lineWidth = 1; for (let i = -H; i < PW; i += 22) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + H, H); x.stroke(); } x.restore();
-    x.lineWidth = 2; x.strokeStyle = gold(x, 0, 0, PW, H); x.strokeRect(22, 22, PW - 44, H - 44);
-    // gold seam
-    x.fillStyle = gold(x, PW - 6, 0, PW + 6, H); x.fillRect(PW - 7, 0, 14, H); x.fillStyle = NAVY; x.fillRect(PW + 7, 0, 3, H);
-    // crest
-    if (logo) { x.save(); x.beginPath(); x.arc(PW / 2, 128, 62, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 5; x.strokeStyle = gold(x, PW / 2 - 62, 66, PW / 2 + 62, 190); x.stroke(); x.clip(); x.drawImage(logo, PW / 2 - 57, 71, 114, 114); x.restore(); }
-    T('SESSION ' + SESL, PW / 2, 232, `700 20px Georgia, serif`, GOLD[2], 'center', 5);
-    // photo in a gold laurel
-    const px = PW / 2, py = 500, pr = 138;
-    laurel(x, px, py + 12, pr + 60, -1, GOLD[1]); laurel(x, px, py + 12, pr + 60, 1, GOLD[1]);
-    x.beginPath(); x.arc(px, py, pr + 14, 0, 7); x.fillStyle = gold(x, px - pr, py - pr, px + pr, py + pr); x.fill(); x.beginPath(); x.arc(px, py, pr + 4, 0, 7); x.fillStyle = NAVY; x.fill();
+    if (logo) { x.save(); x.globalAlpha = .05; x.drawImage(logo, tx - 280, H / 2 - 230, 560, 560); x.restore(); }
+    // border: blue guilloche band, gold rules, corner ornaments
+    x.fillStyle = EBLUE; x.fillRect(0, 0, W, 40); x.fillRect(0, H - 40, W, 40); x.fillRect(0, 0, 40, H); x.fillRect(W - 40, 0, 40, H);
+    waveBand(x, 0, 0, W, 40, false, '#BFD0F2'); waveBand(x, 0, H - 40, W, 40, false, '#BFD0F2'); waveBand(x, 0, 40, H - 80, 40, true, '#BFD0F2'); waveBand(x, W - 40, 40, H - 80, 40, true, '#BFD0F2');
+    x.lineWidth = 6; x.strokeStyle = gold(x, 0, 0, W, H); x.strokeRect(52, 52, W - 104, H - 104); x.lineWidth = 2; x.strokeStyle = EBLUE; x.strokeRect(64, 64, W - 128, H - 128);
+    [[76, 76, 0], [W - 76, 76, Math.PI / 2], [W - 76, H - 76, Math.PI], [76, H - 76, -Math.PI / 2]].forEach(([cx, cy, r]) => corner(x, cx, cy, r, GOLD[3]));
+    // crest + school
+    if (logo) { x.save(); x.beginPath(); x.arc(tx, 140, 62, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 5; x.strokeStyle = gold(x, tx - 62, 78, tx + 62, 202); x.stroke(); x.clip(); x.drawImage(logo, tx - 57, 83, 114, 114); x.restore(); }
+    T(SCHOOL.toUpperCase(), tx, 258, `700 44px Georgia, serif`, EBLUE2, 'center', 2);
+    T(PLACE + '   ·   Session ' + SESL, tx, 296, `italic 24px Georgia, serif`, MUTE);
+    // "Certificate of Merit" ribbon
+    const bw = 700, by = 322, bh = 66;
+    x.fillStyle = EBLUE2; [[-1], [1]].forEach(([d]) => { x.beginPath(); x.moveTo(tx + d * (bw / 2 - 20), by + 14); x.lineTo(tx + d * (bw / 2 + 60), by + 14); x.lineTo(tx + d * (bw / 2 + 36), by + 14 + bh / 2); x.lineTo(tx + d * (bw / 2 + 60), by + 14 + bh); x.lineTo(tx + d * (bw / 2 - 20), by + 14 + bh); x.closePath(); x.fill(); });
+    x.fillStyle = EBLUE; x.fillRect(tx - bw / 2, by, bw, bh); x.lineWidth = 2; x.strokeStyle = GOLD[1]; x.strokeRect(tx - bw / 2 + 8, by + 7, bw - 16, bh - 14);
+    T('CERTIFICATE OF MERIT', tx, by + 46, `700 38px Georgia, serif`, '#F6E3A1', 'center', 6);
+    T('Academic Excellence Award  ·  Half-Yearly Examination', tx, 432, `italic 600 24px Georgia, serif`, GD, 'center', 1);
+    // citation
+    T('This is to certify that', tx, 494, `italic 30px Georgia, serif`, MUTE);
+    const nm = fit(k.st.name, `112px ${SF}`, 820); T(nm, tx, 596, `112px ${SF}`, EBLUE2);
+    x.fillStyle = gold(x, tx - 360, 0, tx + 360, 0); x.fillRect(tx - 360, 620, 720, 3);
+    const par = [k.st.father ? 'Shri ' + k.st.father : '', k.st.mother ? 'Smt. ' + k.st.mother : ''].filter(Boolean).join(' & ');
+    let yy = 674; if (par) { T(fit('ward of ' + par + ',', `27px Georgia, serif`, 860), tx, yy, `27px Georgia, serif`, INK); yy += 40; }
+    T(`a student of Class ${k.st.cls}${k.st.section ? '-' + k.st.section : ''} (Adm. No. ${k.st.adm || '—'}),`, tx, yy, `27px Georgia, serif`, INK);
+    mixed([['has secured the ', EBLUE2], [`${ORD[k.rank]} POSITION`, ERED], [' in the class', EBLUE2]], yy + 56, `700 38px Georgia, serif`);
+    T(`in the Half-Yearly Examination ${SESL} with ${k.rpct}% marks.`, tx, yy + 104, `28px Georgia, serif`, INK);
+    T('We are proud of this achievement and wish a very bright future ahead.', tx, yy + 148, `italic 26px Georgia, serif`, MUTE);
+    // left: gold medal on blue / red straps
+    const mx = 285, my = 640, mr = 96, M = METAL[k.rank] || GOLD;
+    [[-1, EBLUE], [1, ERED]].forEach(([d, col]) => { x.fillStyle = col; x.beginPath(); x.moveTo(mx + d * 18, my - mr + 10); x.lineTo(mx + d * 100, my - 270); x.lineTo(mx + d * 30, my - 270); x.lineTo(mx - d * 40, my - mr + 4); x.closePath(); x.fill(); });
+    x.fillStyle = gold(x, mx - 24, 0, mx + 24, 0); x.fillRect(mx - 30, my - mr - 18, 60, 22);
+    PAL = M; x.beginPath(); x.arc(mx, my, mr, 0, 7); x.fillStyle = gold(x, mx - mr, my - mr, mx + mr, my + mr); x.fill();
+    x.beginPath(); x.arc(mx, my, mr * .8, 0, 7); x.lineWidth = 3; x.strokeStyle = M[0]; x.stroke(); x.beginPath(); x.arc(mx, my, mr * .74, 0, 7); x.strokeStyle = M[2]; x.lineWidth = 1.5; x.stroke();
+    x.beginPath(); x.arc(mx, my, mr * .68, 0, 7); x.fillStyle = EBLUE2; x.fill(); x.lineWidth = 3; x.strokeStyle = M[2]; x.stroke();
+    for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * .36; star(x, mx + Math.cos(a) * mr * .5, my + Math.sin(a) * mr * .5 + 2, mr * .07, M[2]); }
+    T(String(k.rank), mx - 10, my + 30, `700 66px Georgia, serif`, M[2]); T(['', 'ST', 'ND', 'RD'][k.rank] || 'TH', mx + 26, my + 2, `700 22px Georgia, serif`, M[2]);
+    T('RANK', mx, my + 54, `700 14px Georgia, serif`, M[2], 'center', 3); PAL = GOLD;
+    // right: photo frame with a graduation cap
+    const fx = W - 285, fy = 625, fw = 228, fh = 270;
+    x.save(); x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 16; x.shadowOffsetY = 6; x.fillStyle = '#fff'; x.fillRect(fx - fw / 2 - 14, fy - fh / 2 - 14, fw + 28, fh + 28); x.restore();
+    x.lineWidth = 6; x.strokeStyle = gold(x, fx - fw / 2, fy - fh / 2, fx + fw / 2, fy + fh / 2); x.strokeRect(fx - fw / 2 - 8, fy - fh / 2 - 8, fw + 16, fh + 16);
     const ph = await loadImg(await photo(k.st.id));
-    x.save(); x.beginPath(); x.arc(px, py, pr, 0, 7); x.clip();
-    if (ph) { const sc = Math.max(2 * pr / ph.width, 2 * pr / ph.height); x.drawImage(ph, px - ph.width * sc / 2, py - ph.height * sc / 2, ph.width * sc, ph.height * sc); }
-    else { const ig = x.createLinearGradient(0, py - pr, 0, py + pr); ig.addColorStop(0, '#F7F1E1'); ig.addColorStop(1, '#E9DDBF'); x.fillStyle = ig; x.fillRect(px - pr, py - pr, 2 * pr, 2 * pr); T(k.st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(), px, py + 36, `700 104px Georgia, serif`, NAVY); }
+    x.save(); x.beginPath(); x.rect(fx - fw / 2, fy - fh / 2, fw, fh); x.clip();
+    if (ph) { const sc = Math.max(fw / ph.width, fh / ph.height); x.drawImage(ph, fx - ph.width * sc / 2, fy - ph.height * sc / 2, ph.width * sc, ph.height * sc); }
+    else { const ig = x.createLinearGradient(0, fy - fh / 2, 0, fy + fh / 2); ig.addColorStop(0, '#EEF3FC'); ig.addColorStop(1, '#D9E3F5'); x.fillStyle = ig; x.fillRect(fx - fw / 2, fy - fh / 2, fw, fh); T(k.st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(), fx, fy + 34, `700 96px Georgia, serif`, EBLUE2); }
     x.restore();
-    // RANK HOLDER ribbon (gold foil, navy text)
-    const ry = py + pr + 70, rw = 300; x.fillStyle = gold(x, px - rw / 2, 0, px + rw / 2, 0); x.beginPath(); x.moveTo(px - rw / 2, ry); x.lineTo(px + rw / 2, ry); x.lineTo(px + rw / 2 - 18, ry + 28); x.lineTo(px + rw / 2, ry + 56); x.lineTo(px - rw / 2, ry + 56); x.lineTo(px - rw / 2 + 18, ry + 28); x.closePath(); x.fill();
-    T('RANK HOLDER', px, ry + 38, `700 24px Georgia, serif`, NAVY, 'center', 4);
-    T(`Class ${k.st.cls}${k.st.section ? ' - ' + k.st.section : ''}`, px, ry + 108, `italic 30px Georgia, serif`, '#F6E3A1');
-    // Scan to verify (bottom of the panel)
+    x.save(); x.translate(fx - fw / 2 + 10, fy - fh / 2 - 6); x.rotate(-.32); icoCap(x, 0, 0, 150, '#14171F', true); x.restore();
+    x.fillStyle = EBLUE; x.fillRect(fx - 120, fy + fh / 2 + 26, 240, 44); x.lineWidth = 2; x.strokeStyle = GOLD[1]; x.strokeRect(fx - 114, fy + fh / 2 + 31, 228, 34);
+    T('RANK HOLDER', fx, fy + fh / 2 + 56, `700 20px Georgia, serif`, '#F6E3A1', 'center', 3);
+    // signatures + QR
+    const sy = 1022; x.strokeStyle = EBLUE2; x.lineWidth = 1.5;
+    [[tx - 470, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 470, 'Chairman', '']].forEach(([cx, l, v]) => { x.beginPath(); x.moveTo(cx - 140, sy); x.lineTo(cx + 140, sy); x.stroke();
+      if (v) T(fit(v, `40px ${SF}`, 270), cx, sy - 12, `40px ${SF}`, EBLUE2); T(l.toUpperCase(), cx, sy + 32, `700 18px Georgia, serif`, MUTE, 'center', 3); });
+    const sgn = await signs(); if (sgn.P) { const im = await loadImg(sgn.P); if (im) { const h2 = 66, w2 = im.width * h2 / im.height; x.drawImage(im, tx - w2 / 2, sy - h2 - 4, w2, h2); } }
     const cert = (D.certs || {})[k.st.id];
     if (cert && window.qrcode) { try {
       const q = qrcode(0, 'M'); q.addData(new URL('verify-cert.php?c=' + cert.code, location.href).href); q.make();
-      const nM = q.getModuleCount(), sz = 116, cell = sz / nM, qx = PW / 2 - sz / 2, qy = H - 228;
-      x.fillStyle = '#fff'; x.fillRect(qx - 9, qy - 9, sz + 18, sz + 18); x.lineWidth = 3; x.strokeStyle = GOLD[1]; x.strokeRect(qx - 9, qy - 9, sz + 18, sz + 18);
-      x.fillStyle = NAVY; for (let r = 0; r < nM; r++) for (let cc = 0; cc < nM; cc++) if (q.isDark(r, cc)) x.fillRect(qx + cc * cell, qy + r * cell, cell + .4, cell + .4);
-      T('SCAN TO VERIFY', PW / 2, qy + sz + 40, `700 16px Georgia, serif`, GOLD[2], 'center', 3);
+      const nM = q.getModuleCount(), sz = 104, cell = sz / nM, qx = W - 214, qy = 916;
+      x.fillStyle = '#fff'; x.fillRect(qx - 8, qy - 8, sz + 16, sz + 16); x.lineWidth = 2; x.strokeStyle = GOLD[3]; x.strokeRect(qx - 8, qy - 8, sz + 16, sz + 16);
+      x.fillStyle = EBLUE2; for (let r = 0; r < nM; r++) for (let cc = 0; cc < nM; cc++) if (q.isDark(r, cc)) x.fillRect(qx + cc * cell, qy + r * cell, cell + .4, cell + .4);
+      T('SCAN TO VERIFY', qx + sz / 2, qy + sz + 30, `700 13px Georgia, serif`, MUTE, 'center', 2);
     } catch (e) {} }
-    // citation (right)
-    const tx = (PW + W) / 2 + 10, tw = W - PW - 200;
-    { let fs = 40; x.font = `700 ${fs}px Georgia, serif`; while (fs > 26 && x.measureText(SCHOOL.toUpperCase()).width + SCHOOL.length * 2 > 860) { fs--; x.font = `700 ${fs}px Georgia, serif`; } T(SCHOOL.toUpperCase(), tx, 150, `700 ${fs}px Georgia, serif`, NAVY, 'center', 2); }
-    T(PLACE, tx, 190, `italic 24px Georgia, serif`, MUTE);
-    x.fillStyle = gold(x, tx - 260, 0, tx + 260, 0); x.fillRect(tx - 260, 214, 520, 2); x.save(); x.translate(tx, 215); x.rotate(Math.PI / 4); x.fillRect(-7, -7, 14, 14); x.restore();
-    x.font = `700 104px Georgia, serif`; x.textAlign = 'center'; if ('letterSpacing' in x) x.letterSpacing = '16px';
-    x.fillStyle = gold(x, tx - 420, 260, tx + 420, 360); x.fillText('CERTIFICATE', tx + 8, 345); x.lineWidth = 1.2; x.strokeStyle = GOLD[0]; x.strokeText('CERTIFICATE', tx + 8, 345); if ('letterSpacing' in x) x.letterSpacing = '0px';
-    T('OF ACADEMIC EXCELLENCE', tx, 398, `700 26px Georgia, serif`, NAVY, 'center', 9);
-    x.fillStyle = GOLD[3]; x.fillRect(tx - 390, 389, 70, 2); x.fillRect(tx + 320, 389, 70, 2);
-    T('This certificate is proudly presented to', tx, 478, `italic 30px Georgia, serif`, MUTE);
-    let nm = fit(k.st.name, `118px ${SF}`, tw - 40); T(nm, tx, 596, `118px ${SF}`, NAVY);
-    x.fillStyle = gold(x, tx - 380, 0, tx + 380, 0); x.fillRect(tx - 380, 622, 760, 3);
-    T(`Admission No. ${k.st.adm || '—'}`, tx, 664, `24px Georgia, serif`, MUTE, 'center', 1);
-    x.font = `700 36px Georgia, serif`; const a1 = 'for securing the ', a2 = `${ORD[k.rank]} RANK`, a3 = ` in Class ${k.st.cls}`;
-    const w1 = x.measureText(a1).width, w2 = x.measureText(a2).width, w3 = x.measureText(a3).width, sx = tx - (w1 + w2 + w3) / 2;
-    T(a1, sx, 738, `700 36px Georgia, serif`, NAVY, 'left'); T(a2, sx + w1, 738, `700 36px Georgia, serif`, GD, 'left'); T(a3, sx + w1 + w2, 738, `700 36px Georgia, serif`, NAVY, 'left');
-    T(`in the Half-Yearly Examination ${SESL} with ${k.rpct}% marks,`, tx, 786, `28px Georgia, serif`, INK);
-    T('in recognition of outstanding academic achievement.', tx, 828, `italic 28px Georgia, serif`, INK);
-    if (k.st.father || k.st.mother) T(fit('Proud parents: ' + [k.st.father ? 'Shri ' + k.st.father : '', k.st.mother ? 'Smt. ' + k.st.mother : ''].filter(Boolean).join(' & '), `italic 600 24px Georgia, serif`, tw), tx, 884, `italic 600 24px Georgia, serif`, GD);
-    // rank seal on the seam
-    PAL = METAL[k.rank] || GOLD; ROSINK = NAVY; rosette(x, PW, 905, 92, k.rank); PAL = GOLD;
-    // signatures
-    const sy = 1046, sg = [[tx - 380, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 380, 'Chairman', '']];
-    x.strokeStyle = NAVY; x.lineWidth = 1.5;
-    sg.forEach(([cx, l, v]) => { x.beginPath(); x.moveTo(cx - 135, sy); x.lineTo(cx + 135, sy); x.stroke(); if (v) T(fit(v, `40px ${SF}`, 260), cx, sy - 12, `40px ${SF}`, NAVY);
-      T(l.toUpperCase(), cx, sy + 32, `700 18px Georgia, serif`, MUTE, 'center', 3); });
-    const sgn = await signs(); if (sgn.P) { const im = await loadImg(sgn.P); if (im) { const h2 = 66, w2 = im.width * h2 / im.height; x.drawImage(im, tx - w2 / 2, sy - h2 - 4, w2, h2); } }
     let hsh = 0; for (const ch of 'HY|' + SES + '|' + k.st.id + '|' + k.rank) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
     const dt = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-    T(`Date: ${dt}     ·     Certificate No. ${cert ? cert.no : 'SNMSIS/HY' + SES.slice(2, 4) + '/' + hsh.toString(36).toUpperCase().padStart(7, '0').slice(-7)}`, tx, H - 82, `600 17px Georgia, serif`, MUTE, 'center', 1);
+    T(`Date: ${dt}   ·   Place: Bhadohi   ·   Certificate No. ${cert ? cert.no : 'SNMSIS/HY' + SES.slice(2, 4) + '/' + hsh.toString(36).toUpperCase().padStart(7, '0').slice(-7)}`, tx, H - 96, `600 17px Georgia, serif`, MUTE, 'center', 1);
     return c;
   }
   async function rankers(D) {
     const top = D.ranked.filter(k => k.rank <= 3);
     if (!top.length) { $('out').innerHTML = '<div class="pan msg">No child has every subject entered yet — rankers come when all marks of the class are in.</div>'; return; }
-    $('out').innerHTML = `<div class="pan np"><b>Class ${esc(CLS)} rankers</b> · on the real marks (no grace) · ${D.full} subjects each. <button class="btn y" id="cprint">🖨 Print all certificates</button> <button class="btn" id="stars">⭐ Our Stars poster (all classes)</button>
-      <div class="row" style="margin-top:8px"><b>Certificate colour:</b>${Object.entries(THEMES).map(([kk, t]) => `<button class="btn ${kk === CTHEME ? '' : 'l'}" data-th="${kk}" style="padding:6px 10px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:${t.p1};box-shadow:0 0 0 2px #D9B45A"></span>${esc(t.n)}</button>`).join('')}</div></div><div id="sp"></div><div class="certs" id="cl"></div>`;
+    $('out').innerHTML = `<div class="pan np"><b>Class ${esc(CLS)} rankers</b> · on the real marks (no grace) · ${D.full} subjects each. <button class="btn y" id="cprint">🖨 Print all certificates</button> <button class="btn" id="stars">⭐ Our Stars poster (all classes)</button></div><div id="sp"></div><div class="certs" id="cl"></div>`;
     $('stars').onclick = () => starsPoster();
-    document.querySelectorAll('[data-th]').forEach(b => { b.onclick = () => { CTHEME = b.dataset.th; try { localStorage.setItem('sch_cert_theme', CTHEME); } catch (e) {} rankers(D); }; });
     if (!D.certs) { try { D.certs = (await get(`progress_api.php?a=certs&ses=${SES}&cls=${encodeURIComponent(CLS)}`)).certs || {}; } catch (e) { D.certs = {}; } }
     const urls = [];
     for (const k of top) {

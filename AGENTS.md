@@ -1255,3 +1255,9 @@ papers only from photos the owner sends.
 - 2026-11-20 (Claude): Certificate colour themes (owner: "colour combination achha nahi"). THEMES in results.js — Royal Blue, Maroon,
   Royal Purple, Emerald, Black (each with gold). "Certificate colour" buttons on the Rankers tab; choice saved per device in
   localStorage sch_cert_theme (default navy until the owner picks one — then change the default in CTHEME).
+
+- 2026-11-20 (Claude): Certificate v6 (owner: none of the colour themes — "educational certificate jaisa feel nahi"). Classic Indian
+  school CERTIFICATE OF MERIT: cream paper with a faint pattern of school symbols (book, pencil, cap, atom, globe, bulb, ABC/123/π),
+  royal-blue guilloche border + gold rules, crest + school name, blue ribbon heading, gold/silver/bronze medal on blue-red straps,
+  photo frame wearing a graduation cap, traditional wording ("ward of Shri … & Smt. …, a student of Class …, has secured the FIRST
+  POSITION …"), signatures, date/place/certificate no., Scan-to-verify QR. Colour picker removed (THEMES gone).
