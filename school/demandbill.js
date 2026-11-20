@@ -33,22 +33,36 @@
     ix.forEach(i => { const r = runs[runs.length - 1]; if (r && i === r[1] + 1) r[1] = i; else runs.push([i, i]); });
     return runs.map(([p, q]) => p === q ? M3[ORD[p]] : M3[ORD[p]] + '–' + M3[ORD[q]]).join(', ');
   }
-  function lines(k) {   // only what is to be paid till the bill month, one line per fee head; fully discounted heads stay out (shown as the child's discount)
-    const g = {}, order = [];
-    k.heads.filter(h => h.now && h.due > 0).forEach(h => {
-      if (!g[h.name]) { g[h.name] = { name: h.name, tr: h.tr, ms: [], amt: 0 }; order.push(h.name); }
-      g[h.name].ms.push(h.m); g[h.name].amt += h.due; });
-    const isMonthly = n => /tuition|tution|transport|hostel/i.test(n);
-    const L = order.map(n => g[n]).map(l => ({ ...l, when: !isMonthly(l.name) && l.ms.every(m => m === 'April') ? 'Annual' : monthsLabel(l.ms) }))
-      .sort((p, q) => isMonthly(q.name) - isMonthly(p.name) || p.tr - q.tr);
-    if (k.total.oldDue > 0) L.unshift({ name: 'Previous balance (old due)', ms: [], when: '', amt: k.total.oldDue });
-    return L;
+  // Rows of one child (owner, 20 Nov 2026): 1) Activity charges = every one-time head still to pay, added up (Digital + Health +
+  // Exam + Sports = 4,500), 2) monthly heads (Tuition, then Transport) with "Jul–Nov · 5 months × 600", a discount inside the
+  // billed months shown right under its fee as a minus row, 3) everything discounted BEFORE the billed months (April–June,
+  // admission) is not in the table — it goes to the "Discount" box under the total.
+  const isMonthly = n => /tuition|tution|transport|hostel/i.test(n);
+  function rate(G) { const a = G.map(h => h.amt); return a.every(v => v === a[0]) ? a[0] : 0; }
+  function lines(k) {
+    const H = k.heads.filter(h => h.now), rows = [], below = [];
+    const mon = H.filter(h => isMonthly(h.name)), payM = mon.filter(h => h.due > 0).map(h => ORD.indexOf(h.m));
+    const start = payM.length ? Math.min(...payM) : 12;   // first billed month
+    if (k.total.oldDue > 0) rows.push({ name: 'Previous balance (old due)', when: '', amt: k.total.oldDue });
+    const one = H.filter(h => !isMonthly(h.name) && h.due > 0);
+    if (one.length) rows.push({ name: 'Activity Charges', sub: one.map(h => h.name.replace(/\s*Fee$/i, '').replace(/Digital Class Room/i, 'Digital').replace(/Health And Sa?f?e?t?y|Health And Sefety/i, 'Health') + ' ' + Math.round(h.due).toLocaleString('en-IN')).join(' + '), when: 'Annual', amt: one.reduce((s, h) => s + h.due, 0) });
+    H.filter(h => !isMonthly(h.name) && h.due <= 0 && h.conc > 0).forEach(h => below.push({ name: h.name, when: '', amt: h.conc }));
+    const names = []; mon.forEach(h => { if (!names.includes(h.name)) names.push(h.name); });
+    names.sort((p, q) => /transport|hostel/i.test(p) - /transport|hostel/i.test(q)).forEach(n => {
+      const G = mon.filter(h => h.name === n), early = G.filter(h => ORD.indexOf(h.m) < start && h.conc > 0 && h.due <= 0), billed = G.filter(h => !early.includes(h) && (h.due > 0 || h.conc > 0));
+      if (early.length) { const r = rate(early); below.push({ name: n, when: monthsLabel(early.map(h => h.m)) + (r ? ' (' + early.length + ' month' + (early.length > 1 ? 's' : '') + ' × ' + r.toLocaleString('en-IN') + ')' : ''), amt: early.reduce((s, h) => s + h.conc, 0) }); }
+      if (billed.length) {
+        const r = rate(billed), fee = billed.reduce((s, h) => s + h.amt - h.paid, 0), dc = billed.reduce((s, h) => s + h.conc, 0), tr = /transport|hostel/i.test(n);
+        rows.push({ name: tr ? n.replace(/^Transport$/i, 'Transport Fee') : n, tr, when: monthsLabel(billed.map(h => h.m)) + (r ? ' · ' + billed.length + ' month' + (billed.length > 1 ? 's' : '') + ' × ' + r.toLocaleString('en-IN') : ''), amt: fee });
+        if (dc > 0) rows.push({ name: 'Less: Discount on ' + (tr ? 'transport' : n.replace(/Tution/i, 'Tuition').toLowerCase()), when: '', amt: -dc, disc: true });
+      }
+    });
+    return { rows, below };
   }
-  const discOf = k => k.heads.filter(h => h.now).reduce((s, h) => s + (h.conc || 0), 0);   // discount on the heads till the bill month
   function draw(B) {
-    const W = 1240, P = 48, kids = B.kids, fam = kids.reduce((s, k) => s + k.total.now, 0), RH = 35;
-    const LS = kids.map(lines), rows = LS.reduce((s, L) => s + Math.max(1, L.length) + 1, 0);
-    const H = Math.max(1754, 840 + rows * RH);   // A4 (1240 × 1754) unless the family is very big
+    const W = 1240, P = 48, kids = B.kids, fam = kids.reduce((s, k) => s + k.total.now, 0), RH = 36;
+    const LS = kids.map(lines), rows = LS.reduce((s, L) => s + Math.max(1, L.rows.length) + 1 + L.rows.filter(r => r.sub).length * 0.6, 0);
+    const nb = LS.filter(L => L.below.length).length, H = Math.max(1754, 900 + rows * RH + (nb ? 80 + nb * 34 : 0));
     const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const T = (t, X, Y, f, col, al) => { x.font = f; x.fillStyle = col || '#111'; x.textAlign = al || 'left'; x.fillText(String(t), X, Y); };
     const fit = (t, max, f) => { x.font = f; t = String(t); if (x.measureText(t).width <= max) return t; while (t.length > 3 && x.measureText(t + '…').width > max) t = t.slice(0, -1); return t + '…'; };
@@ -74,36 +88,45 @@
       y += 34; });
     y += 10;
     // table: S.No | Student / Class | Fee Head | Month(s) | Amount
-    const C = [P, P + 70, P + 380, P + 760, W - P], num = v => Math.round(v || 0).toLocaleString('en-IN');
+    const C = [P, P + 64, P + 330, P + 790, W - P], num = v => (v < 0 ? '− ' : '') + Math.round(Math.abs(v || 0)).toLocaleString('en-IN');
     rect(P, y, W - 2 * P, RH + 4, NAVY);
     ['S.No', 'Student / Class', 'Fee Head', 'Month(s)', 'Amount (₹)'].forEach((h, i) => T(h, i === 4 ? C[4] - 12 : C[i] + 10, y + 26, 'bold 20px Arial', '#fff', i === 4 ? 'right' : 'left'));
-    y += RH + 4; let sn = 0, famDisc = 0;
+    y += RH + 4; let sn = 0;
     kids.forEach((k, ki) => {
-      const L = LS[ki].length ? LS[ki] : [{ name: 'No fee due', when: '', amt: 0 }], top = y, dc = discOf(k);
-      famDisc += dc;
+      const L = LS[ki].rows.length ? LS[ki].rows : [{ name: 'No fee due', when: '', amt: 0 }], top = y;
       L.forEach((l, li) => {
-        if (li % 2) rect(C[2], y, C[4] - C[2], RH, '#f6f8fa');
-        if (li === 0) { sn++; T(sn, C[0] + 24, y + 24, 'bold 20px Arial', '#111'); T(fit(k.name, C[2] - C[1] - 20, 'bold 20px Arial'), C[1] + 10, y + 24, 'bold 20px Arial', '#111'); }
-        if (li === 1) T(fit('Class ' + k.cls + (k.section ? '-' + k.section : '') + ' · Adm ' + k.adm, C[2] - C[1] - 20, '18px Arial'), C[1] + 10, y + 24, '18px Arial', '#555');
-        T(fit(l.name, C[3] - C[2] - 20, '20px Arial'), C[2] + 10, y + 24, l.tr ? 'bold 20px Arial' : '20px Arial', l.tr ? '#0b4f9c' : '#111');
-        T(fit(l.when, C[4] - C[3] - 180, '20px Arial'), C[3] + 10, y + 24, '20px Arial', '#333');
-        T(num(l.amt), C[4] - 12, y + 24, '20px Arial', '#111', 'right');
-        line(C[2], y + RH, C[4], y + RH, '#e1e6ec'); y += RH;
+        const h = l.sub ? RH + 22 : RH;
+        if (l.disc) rect(C[2], y, C[4] - C[2], h, '#EAF6EE'); else if (li % 2) rect(C[2], y, C[4] - C[2], h, '#f6f8fa');
+        if (li === 0) { sn++; T(sn, C[0] + 22, y + 25, 'bold 20px Arial', '#111'); T(fit(k.name, C[2] - C[1] - 20, 'bold 20px Arial'), C[1] + 10, y + 25, 'bold 20px Arial', '#111'); T(fit('Class ' + k.cls + (k.section ? '-' + k.section : '') + ' · Adm ' + k.adm, C[2] - C[1] - 20, '17px Arial'), C[1] + 10, y + 50, '17px Arial', '#555'); }
+        T(fit(l.name, C[3] - C[2] - 20, l.tr || l.name === 'Activity Charges' ? 'bold 20px Arial' : '20px Arial'), C[2] + 10, y + 25, l.tr || l.name === 'Activity Charges' ? 'bold 20px Arial' : '20px Arial', l.disc ? GREEN : l.tr ? '#0b4f9c' : '#111');
+        if (l.sub) T(fit('(' + l.sub + ')', C[3] - C[2] - 16, '16px Arial'), C[2] + 10, y + 48, '16px Arial', '#555');
+        T(fit(l.when, C[4] - C[3] - 100, '18px Arial'), C[3] + 10, y + 25, '18px Arial', '#333');
+        T(num(l.amt), C[4] - 12, y + 25, l.name === 'Activity Charges' ? 'bold 20px Arial' : '20px Arial', l.disc ? GREEN : '#111', 'right');
+        line(C[2], y + h, C[4], y + h, '#e1e6ec'); y += h;
       });
-      if (L.length < 2) { T(fit('Class ' + k.cls + (k.section ? '-' + k.section : ''), C[2] - C[1] - 20, '18px Arial'), C[1] + 10, y + 24, '18px Arial', '#555'); }
+      if (y - top < 2 * RH) y = top + 2 * RH - RH;   // room for the class line
       rect(C[2], y, C[4] - C[2], RH, '#FFF8E6');
-      T('Total of ' + k.name.split(' ')[0] + (dc > 0 ? '   (Discount ₹' + num(dc) + ')' : ''), C[2] + 10, y + 24, 'bold 20px Arial', '#5a3d00');
-      T(num(k.total.now), C[4] - 12, y + 24, 'bold 21px Arial', '#5a3d00', 'right');
+      T('Total of ' + k.name.split(' ')[0], C[2] + 10, y + 25, 'bold 20px Arial', '#5a3d00');
+      T(num(k.total.now), C[4] - 12, y + 25, 'bold 21px Arial', '#5a3d00', 'right');
       y += RH;
       [C[0], C[1], C[2], C[4]].forEach(cx => line(cx, top, cx, y, '#9aa5b1')); line(C[3], top, C[3], y, '#d5dbe2');
       line(P, y, W - P, y, '#9aa5b1', 1.5);
     });
     // grand total
-    y += 24; rect(P, y, W - 2 * P, 96, '#FDECEC', RED);
+    y += 22; rect(P, y, W - 2 * P, 92, '#FDECEC', RED);
     T(kids.length > 1 ? 'TOTAL PAYABLE (' + kids.length + ' children) till ' + B.upto + ' ' + B.uptoYear : 'TOTAL PAYABLE till ' + B.upto + ' ' + B.uptoYear, P + 20, y + 40, 'bold 24px Arial', RED);
     T('₹ ' + Math.round(fam).toLocaleString('en-IN'), W - P - 20, y + 44, 'bold 38px Arial', RED, 'right');
-    T(fit('Rupees ' + words(fam) + ' Only' + (famDisc ? '   ·   Discount given: ₹' + Math.round(famDisc).toLocaleString('en-IN') : ''), W - 2 * P - 40, 'italic 19px Arial'), P + 20, y + 78, 'italic 19px Arial', '#333');
-    y += 130;
+    T(fit('Rupees ' + words(fam) + ' Only', W - 2 * P - 40, 'italic 19px Arial'), P + 20, y + 76, 'italic 19px Arial', '#333');
+    y += 120;
+    // discount given before the billed months (April–June, admission …) — not to be paid
+    if (nb) {
+      T('Discount given (not to be paid)', P, y, 'bold 21px Arial', GREEN); y += 12;
+      kids.forEach((k, ki) => { const D = LS[ki].below; if (!D.length) return; y += 32;
+        const tot = D.reduce((s, d) => s + d.amt, 0), txt = D.map(d => d.name.replace(/Tution/i, 'Tuition') + (d.when ? ' ' + d.when : '') + ' ₹' + Math.round(d.amt).toLocaleString('en-IN')).join('  ·  ');
+        T(k.name.split(' ')[0] + ':', P + 10, y, 'bold 19px Arial', '#111'); T(fit(txt, W - 2 * P - 330, '19px Arial'), P + 150, y, '19px Arial', '#333');
+        T('₹ ' + Math.round(tot).toLocaleString('en-IN'), W - P - 12, y, 'bold 19px Arial', GREEN, 'right'); });
+      y += 44;
+    }
     // note + signs
     T('Note:', P, y, 'bold 20px Arial', '#111'); y += 30;
     ['Kripya upar likhi rashi jald se jald school office mein jama karein aur receipt avashya lein.', 'Agar fee jama kar di hai to is bill ko anadekha karein. Kisi bhi jaankari ke liye school office se sampark karein.']
