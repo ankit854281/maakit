@@ -1286,3 +1286,6 @@ papers only from photos the owner sends.
   Principal's instructions; signatures). CSS .hs/.hh/.hi/.hb… in results.php. The 1-per-A4 print stays as "Print all slips (1 per A4)".
   • Half-page slip keeps every graph (owner: "graph ye baaki sab hata doge kya"): % ring, "Child vs class" bar column, class
     position dot line (upper half only), Attendance ring card beside the Co-Scholastic bars.
+
+- 2026-11-20 (Claude): Certificates — no Chairman signature (Class Teacher + Principal only) and landscape only (owner). Auto:
+  1st = Colourful, 2nd = Merit, 3rd = Colourful in the next colour set. Portrait Royal removed from the picker (code kept, unused).

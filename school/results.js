@@ -382,9 +382,9 @@
     T('RANK HOLDER', fx, fy + fh / 2 + 56, `700 20px Georgia, serif`, '#F6E3A1', 'center', 3);
     // signatures + QR
     const sy = 1022; x.strokeStyle = EBLUE2; x.lineWidth = 1.5;
-    [[tx - 470, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 470, 'Chairman', '']].forEach(([cx, l, v]) => { x.beginPath(); x.moveTo(cx - 140, sy); x.lineTo(cx + 140, sy); x.stroke();
+    [[tx - 380, 'Class Teacher', D.ct], [tx + 380, 'Principal', '']].forEach(([cx, l, v]) => { x.beginPath(); x.moveTo(cx - 140, sy); x.lineTo(cx + 140, sy); x.stroke();
       if (v) T(fit(v, `40px ${SF}`, 270), cx, sy - 12, `40px ${SF}`, EBLUE2); T(l.toUpperCase(), cx, sy + 32, `700 18px Georgia, serif`, MUTE, 'center', 3); });
-    const sgn = await signs(); if (sgn.P) { const im = await loadImg(sgn.P); if (im) { const h2 = 66, w2 = im.width * h2 / im.height; x.drawImage(im, tx - w2 / 2, sy - h2 - 4, w2, h2); } }
+    const sgn = await signs(); if (sgn.P) { const im = await loadImg(sgn.P); if (im) { const h2 = 66, w2 = im.width * h2 / im.height; x.drawImage(im, tx + 380 - w2 / 2, sy - h2 - 4, w2, h2); } }
     const cert = (D.certs || {})[k.st.id];
     if (cert && window.qrcode) { try {
       const q = qrcode(0, 'M'); q.addData(new URL('verify-cert.php?c=' + cert.code, location.href).href); q.make();
@@ -400,8 +400,8 @@
   }
   // ===== Three more certificate designs (owner, 20 Nov 2026: "format, colour, design sab change karo") — the owner picks one.
   //  Colourful trophy (owner's favourite) · Portrait Royal · Certificate of Merit (v6). Prashasti Patra was dropped by the owner.
-  const CDESIGNS = [['auto', '★ Har certificate alag (Auto)'], ['bright', 'Sab Colourful trophy'], ['royal', 'Sab Portrait Royal'], ['merit', 'Sab Merit']];
-  let CDESIGN = (() => { try { const v = localStorage.getItem('sch_cert_design'); return ['auto', 'bright', 'royal', 'merit'].includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
+  const CDESIGNS = [['auto', '★ Har certificate alag (Auto)'], ['bright', 'Sab Colourful trophy'], ['merit', 'Sab Merit']];
+  let CDESIGN = (() => { try { const v = localStorage.getItem('sch_cert_design'); return ['auto', 'bright', 'merit'].includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   function kit(x, W, H) {
     const T = (t, X, Y, f, col, al, sp) => { x.font = f; x.fillStyle = col; x.textAlign = al || 'center'; if ('letterSpacing' in x) x.letterSpacing = (sp || 0) + 'px'; x.fillText(String(t), X, Y); if ('letterSpacing' in x) x.letterSpacing = '0px'; };
     const fit = (t, f, w) => { x.font = f; let s2 = t; while (x.measureText(s2).width > w && s2.length > 4) s2 = s2.slice(0, -2) + '…'; return s2; };
@@ -457,7 +457,7 @@
     K.T(`Class ${k.st.cls}${k.st.section ? '-' + k.st.section : ''}  ·  Adm. No. ${k.st.adm || '—'}`, cx, yy, `26px Georgia, serif`, INK);
     K.T(`for outstanding performance in the Half-Yearly Examination ${SESL}`, cx, yy + 50, `28px Georgia, serif`, INK);
     K.mixed([['securing ', BL], [`${k.rpct}% marks`, RED], [' and the ', BL], [`${ORD[k.rank]} position`, RED], [' in the class.', BL]], cx, yy + 94, `700 30px Georgia, serif`);
-    await K.sigs(D, [[cx - 370, 'Class Teacher', D.ct], [cx, 'Principal', ''], [cx + 370, 'Chairman', '']], 1466, BL, MU, 240);
+    await K.sigs(D, [[cx - 300, 'Class Teacher', D.ct], [cx + 300, 'Principal', '']], 1466, BL, MU, 240);
     K.qr(D, k, 236, 1536, 70, BL, GOLD[3], MU);
     K.T(`Date: ${K.dt()}`, W - m - 110, 1600, `600 16px Georgia, serif`, MU, 'right', 1);
     K.T(`Certificate No. ${K.certNo(D, k)}`, W - m - 110, 1628, `600 16px Georgia, serif`, MU, 'right', 1);
@@ -509,7 +509,7 @@
     const rx = W - 380; x.beginPath(); x.arc(rx, 400, 128, 0, 7); x.fillStyle = BP.a; x.fill(); x.beginPath(); x.arc(rx, 400, 116, 0, 7); x.fillStyle = '#fff'; x.fill();
     await K.pic(k, rx, 400, 108, false, 0, '#E8F1FD', NV);
     trophy(x, rx, 700, 150, METAL[k.rank] || GOLD, k.rank, K.T);
-    await K.sigs(D, [[tx - 440, 'Class Teacher', D.ct], [tx, 'Principal', ''], [tx + 440, 'Chairman', '']], 1010, NV, MU, 250);
+    await K.sigs(D, [[tx - 330, 'Class Teacher', D.ct], [tx + 330, 'Principal', '']], 1010, NV, MU, 260);
     K.qr(D, k, W - 470, 940, 92, NV, BP.a, MU);
     K.T(`Date: ${K.dt()}   ·   Certificate No. ${K.certNo(D, k)}`, tx, H - 90, `500 16px Poppins, Arial, sans-serif`, MU);
     return c;
@@ -524,10 +524,11 @@
   let CV = 0;
   async function certCanvas(k, D, i) {
     CV = (Math.max(0, CLASSES.indexOf(k.st.cls)) + (i || 0)) % 4;
-    const d = CDESIGN === 'auto' ? (k.rank === 1 ? 'bright' : k.rank === 2 ? 'royal' : 'merit') : CDESIGN;
+    // landscape only and no Chairman signature (owner, 20 Nov 2026): 1st Colourful, 2nd Merit, 3rd Colourful in another colour set
+    const d = CDESIGN === 'auto' ? (k.rank === 2 ? 'merit' : 'bright') : CDESIGN;
     return d === 'bright' ? certBright(k, D) : d === 'merit' ? certMerit(k, D) : certRoyal(k, D);
   }
-  const certIsPortrait = k => (CDESIGN === 'auto' ? (k.rank === 2 ? 'royal' : '') : CDESIGN) === 'royal';
+  const certIsPortrait = k => CDESIGN === 'royal';
   async function rankers(D) {
     const top = D.ranked.filter(k => k.rank <= 3);
     if (!top.length) { $('out').innerHTML = '<div class="pan msg">No child has every subject entered yet — rankers come when all marks of the class are in.</div>'; return; }
