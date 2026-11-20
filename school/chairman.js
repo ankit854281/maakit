@@ -78,6 +78,8 @@ const IC = {
 };
 const ic = (k, s) => `<svg class="i" width="${s || 18}" height="${s || 18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
 
+// ?tk=sal: opened inside the Salary app (Manager) — use that app's login (sal_token), no welcome story (20 Nov 2026)
+const TKEY = /[?&]tk=sal/.test(location.search) ? 'sal_token' : 'sch_token', EMBED = /[?&]embed=1/.test(location.search);
 let D = null, CH = [], PLAN = [], BUSY = false, INTRO = null, INST = null, LOGIN = null;
 const S = { tab: 0, tag: null, cls: '', m: 0, q: '', sort: 'due', list: 'today', sheet: null, open: '', share: '', cmode: 'calls', aud: 'zero', tpl: 'zero', lang: 'hi', skipSent: true, mtext: null };
 let MQ = null;   // WhatsApp sending queue {list:[sid], i, kind, sent:n}
@@ -92,7 +94,7 @@ const sum = (a, f) => a.reduce((t, x) => t + (f(x) || 0), 0);
 const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
 function toast(t) { const el = $('toast'); el.textContent = t; clearTimeout(toast.t); toast.t = setTimeout(() => { el.textContent = ''; }, 4500); }
 async function api(path, body) {
-  const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get('sch_token') || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get(TKEY) || '' }, ...(body ? { body: JSON.stringify(body) } : {}) });
   let d; try { d = await r.json(); } catch (e) { throw Object.assign(Error('The server did not answer properly. Please try again.'), { code: r.status }); }
   if (!r.ok || !d.ok) throw Object.assign(Error(d.error || 'Could not complete this.'), { code: r.status });
   return d;
@@ -172,8 +174,8 @@ function render() {
   const tabs = TH.map((th, i) => `<button class="tab${i === S.tab ? ' on' : ''}" role="tab" aria-selected="${i === S.tab}" onclick="setTab(${i})">${ill(th.icon)}<span>${th.name}</span></button>`).join('');
   const body = pageBody();
   $('app').innerHTML = `<div class="head">${layers}
-      <div class="loc"><img class="logo" src="${LOGO}" alt=""><div class="w"><small>${greet}</small><b>${D.role === 'principal' ? 'Principal Sir' : 'Chairman Sir'}</b><button class="sesb" onclick="sheet('ses')">Session ${esc(longSes(D.ses))} ${ic('down', 11)}</button></div><button class="av mn" aria-label="Menu" onclick="sheet('me')">${ic('menu', 18)}</button></div>
-      <div class="tabs" role="tablist"><span class="fold" style="transform:translateX(${S.tab * 100}%)"></span>${tabs}</div>
+      <div class="loc"><img class="logo" src="${LOGO}" alt=""><div class="w"><small>${greet}</small><b>${D.role === 'principal' ? 'Principal Sir' : D.role === 'manager' ? 'Manager · Chairman calls' : 'Chairman Sir'}</b><button class="sesb" onclick="sheet('ses')">Session ${esc(longSes(D.ses))} ${ic('down', 11)}</button></div><button class="av mn" aria-label="Menu" onclick="sheet('me')">${ic('menu', 18)}</button></div>
+      <div class="tabs" role="tablist"${D.role === 'manager' ? ' style="display:none"' : ''}><span class="fold" style="transform:translateX(${S.tab * 100}%)"></span>${tabs}</div>
       <div class="strip"><label class="sbox">${ic('search', 16)}<input id="q" value="${esc(S.q)}" placeholder="Search any student — name, father, mobile, adm. no" oninput="S.q=this.value;render();refocus('q')"></label>
         ${S.tab === 3 || S.tab === 5 ? `<button class="tagb" onclick="sheet('filter')">${esc(S.tag === null ? 'All tags' : S.tag)}${S.cls ? ' · ' + esc(S.cls) : ''} ${ic('down', 12)}</button>` : ''}</div></div>
     <div class="scroll" id="sc"><div class="pagebg" style="background:${TH[S.tab].page}"></div><div class="body">${body}</div></div>
@@ -668,11 +670,11 @@ function loginView() {
       <p class="err">${esc(L.msg || '')}</p>${installBox()}</div>`;
 }
 async function login() {
-  try { const d = await api('api.php?a=login', { role: store.get('ch_role') || 'chairman', pin: $('lgPin').value }); store.set('sch_token', d.token); if (d.mustChange) { LOGIN = { step: 'new' }; return loginView(); } $('app').innerHTML = '<div class="load"><i></i>Opening…</div>'; load(); }
+  try { const d = await api('api.php?a=login', { role: store.get('ch_role') || 'chairman', pin: $('lgPin').value }); store.set(TKEY, d.token); if (d.mustChange) { LOGIN = { step: 'new' }; return loginView(); } $('app').innerHTML = '<div class="load"><i></i>Opening…</div>'; load(); }
   catch (e) { LOGIN = { msg: e.message }; loginView(); }
 }
 async function setPin() { try { await api('api.php?a=setpin', { old: $('lgOld').value, pin: $('lgNew').value }); toast('PIN saved.'); load(); } catch (e) { LOGIN = { step: 'new', msg: e.message }; loginView(); } }
-async function logout() { try { await api('api.php?a=logout', {}); } catch (e) {} try { localStorage.removeItem('sch_token'); } catch (e) {} D = null; LOGIN = {}; S.sheet = null; render(); }
+async function logout() { try { await api('api.php?a=logout', {}); } catch (e) {} try { localStorage.removeItem(TKEY); } catch (e) {} D = null; LOGIN = {}; S.sheet = null; render(); }
 
 // ---------------------------------------------------------------- the 20-second welcome (story style, like the Smart Sarathi customer welcome)
 // 1 logo · 2 SNMSIS in many languages · 3 Welcome, Chairman Sir + thought · 4 the school today, counting up · 5 the promise.
@@ -1023,6 +1025,7 @@ function repSchool(T, K) {
 
 // ================================================================ App structure (Nov 2026): Home · Students · Classes · Fees · Staff · Reports
 function pageBody() {
+  if (D.role === 'manager' && !S.prof) return myCalls();
   if (S.prof) return profileBody();
   if (S.q.trim()) return searchBody();
   if (S.tab === 2 && S.room) return roomBody();
@@ -1319,7 +1322,7 @@ function profileBody() {
     <section class="pf"><div class="pfh">${avatar(sid, name, true)}<div><h2>${esc(name)}</h2><p>Class ${esc(cls)}${sec ? '-' + esc(sec) : ''}${(f.rollno || (x && x.adm)) ? ' · Adm ' + esc(f.rollno || x.adm) : ''}</p><p>${esc(f.fname || (x && x.father) || (s2 && s2.father) || '')}</p>
       <div>${x && x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ''}${x && x.zero && x.dueNow > 0 ? '<span class="tag brk">₹0 paid</span>' : ''}${x && x.broken ? '<span class="tag brk">Promise broken</span>' : ''}${lr ? `<span class="tag">${esc(lr.grade)}</span>` : ''}</div></div></div>
       <div class="pp">${pies.join('')}</div>
-      <div class="pa">${phone ? `<a href="tel:+91${phone}" onclick="callNow('${esc(sid)}')">${ic('phone', 18)}<span>Call</span></a><a target="_blank" rel="noopener" href="https://wa.me/91${phone}${x ? '?text=' + encodeURIComponent(remind(x)) : ''}" ${x ? `onclick="logMsg(['${esc(sid)}'],'Fee reminder',remind(D.all.find(z=>z.sid==='${esc(sid)}')))"` : ''}>${ic('wa', 18)}<span>WhatsApp</span></a>` : ''}<button onclick="noteCall('${esc(sid)}')">${ic('note', 18)}<span>Write call</span></button><button onclick="DemandBill.open('${esc(sid)}',store.get('sch_token'))">${ic('share', 18)}<span>Demand bill</span></button>${D.role === 'principal' ? `<a href="stumaster.php" target="_blank" rel="noopener">${ic('share', 18)}<span>Edit</span></a>` : ''}</div></section>
+      <div class="pa">${phone ? `<a href="tel:+91${phone}" onclick="callNow('${esc(sid)}')">${ic('phone', 18)}<span>Call</span></a><a target="_blank" rel="noopener" href="https://wa.me/91${phone}${x ? '?text=' + encodeURIComponent(remind(x)) : ''}" ${x ? `onclick="logMsg(['${esc(sid)}'],'Fee reminder',remind(D.all.find(z=>z.sid==='${esc(sid)}')))"` : ''}>${ic('wa', 18)}<span>WhatsApp</span></a>` : ''}<button onclick="noteCall('${esc(sid)}')">${ic('note', 18)}<span>Write call</span></button><button onclick="DemandBill.open('${esc(sid)}',store.get(TKEY))">${ic('share', 18)}<span>Demand bill</span></button>${D.role === 'principal' ? `<a href="stumaster.php" target="_blank" rel="noopener">${ic('share', 18)}<span>Edit</span></a>` : ''}</div></section>
     ${segs('ptab', [['over', 'Profile'], ['fee', 'Fees'], ['att', 'Attendance'], ['res', 'Results'], ['calls', 'Calls']], 'sticky')}
     <div style="height:12px"></div>${body}`;
 }
@@ -1439,7 +1442,7 @@ function staffBody() {
 let PSEL = null;
 function famMap() { const f = {}; D.all.forEach(x => { const k = x.phoneNo || x.sid; (f[k] = f[k] || []).push(x); }); Object.values(f).forEach(L => L.sort((p, q) => CLASSES.indexOf(p.cls) - CLASSES.indexOf(q.cls))); return f; }
 const famKey = sid => { const x = D.all.find(z => z.sid === sid); return x ? (x.phoneNo || x.sid) : sid; };
-const isP = () => D.role === 'principal';
+const isP = () => D.role === 'manager';   // owner, 20 Nov 2026: "jo principal me add kiya hai vo manager me kardo" — the Manager picks and marks
 function kidDue(x) { let f = 0, t = 0; x.mon.forEach((y, i) => { if (i <= D.idx) { f += Math.max(0, y.fd - y.fp); t += Math.max(0, y.td - y.tp); } }); return { f: f + x.old, t }; }
 function famCard(kids, n, opt) {
   opt = opt || {}; const a = kids[0], due = sum(kids, x => x.dueNow), called = kids.some(x => x.last && x.last.date >= (opt.since || D.today));
@@ -1458,7 +1461,7 @@ function famCard(kids, n, opt) {
       ${isP() && !opt.noMark ? `<button class="mybad" onclick="markBad('${esc(x.sid)}',${bad ? 0 : 1})">${bad ? '✓ Fee is fixed now — remove mark' : '⚠ Fee not updated properly'}</button>` : ''}</div>`; }).join('')}
     <div class="myf"><span>Family total${kids.length > 1 ? ' (' + kids.length + ' children)' : ''}</span><b>${rs(due)}</b></div>
     <div class="mya">${a.phoneNo ? `<a class="cta" href="tel:+91${a.phoneNo}" onclick="callNow('${esc(a.sid)}')">${ic('phone', 16)} Call</a>` : '<span class="note">No mobile number</span>'}
-      <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get('sch_token'))">📄 Demand bill</button>
+      <button class="cta lt" onclick="DemandBill.open('${esc(a.sid)}', store.get(TKEY))">📄 Demand bill</button>
       <button class="cta lt" onclick="noteCall('${esc(a.sid)}')">✍ Note</button></div></section>`;
 }
 function pickFams(date) {   // families of a saved day, with today's siblings
@@ -1519,7 +1522,7 @@ function myHist() {
   if (!days.length) return card('Earlier days', '<p class="empty">No earlier day yet.</p>');
   return days.map(d => { const L = pickFams(d); return `<h5 class="sh" style="margin-top:12px">${dmy(d)} · ${L.length} famil${L.length > 1 ? 'ies' : 'y'}</h5>` + L.map((K, i) => famCard(K, i + 1, { since: d, noMark: true })).join(''); }).join('');
 }
-function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get('sch_token'), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
+function billCard() { setTimeout(() => window.DemandBill && DemandBill.picker(store.get(TKEY), 'billPick'), 30); return card('📄 Fee demand bill for parents', '<p class="note" style="margin-top:0">Search a child → the demand bill (month-wise fee, paid, concession, transport, receipts, siblings) → share the picture or a WhatsApp message.</p><div id="billPick"></div>'); }
 function salCard() {
   const nm = (window.MGR_NAME || '');
   setTimeout(salSum, 30);
@@ -1566,5 +1569,5 @@ function staffRegister(ym) {
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('chairman-sw.js').catch(() => {});
 $('app').innerHTML = '<div class="load"><i></i>Opening…</div>';
-playIntro(false);
+if (!EMBED) playIntro(false);
 load();

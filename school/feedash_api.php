@@ -30,7 +30,7 @@ require __DIR__ . '/feereports_lib.php';
 $a = (string)($_GET['a'] ?? 'data');
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
 $u = sch_auth(); $role = (string)$u['role'];
-if (!in_array($role, ['principal', 'chairman', 'accountant', 'reception'], true)) sch_fail('Fee Control Room is open for the Principal, Chairman, Accountant and Reception.', 403);
+if (!in_array($role, ['principal', 'chairman', 'accountant', 'reception', 'manager'], true)) sch_fail('Fee Control Room is open for the Principal, Chairman, Accountant, Reception and Manager.', 403);   // manager: Chairman calls (20 Nov 2026)
 $money = $role !== 'reception';
 
 /** "Generated()Company()" -> ['Company', 'Generated']. Fee tags win by how specific they are. */
@@ -106,7 +106,7 @@ case 'chPick': {
     // Principal picks today's families for the Chairman to call (owner, 20 Nov 2026: "jin three parents ka name select karke du
     // vo fir dobara list me na aaye — daily teen bachcho ka name"). {date, fams:[[sid,…],…]} — up to 3 families a day; a date can be re-saved.
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
-    if ($role !== 'principal') sch_fail('Only the Principal picks the Chairman\'s calls.', 403);
+    if ($role !== 'manager') sch_fail('Only the Manager picks the Chairman\'s calls.', 403);   // owner, 20 Nov 2026: Principal → Manager
     $in = json_decode((string)file_get_contents('php://input', false, null, 0, 20000), true); if (!is_array($in)) sch_fail('Bad request.');
     $date = (string)($in['date'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date < date('Y-m-d', strtotime('-1 day'))) sch_fail('Choose today or a later date.');
     $fams = []; $seen = [];
@@ -115,7 +115,7 @@ case 'chPick': {
         if (!$ids) continue; foreach ($ids as $x) $seen[$x] = true; $fams[] = $ids; if (count($fams) === 3) break;
     }
     if (!$fams) { sch_rec_del('chPick', $date, sch_uid_of($u)); sch_log($u, 'Chairman calls', 'Cleared the pick of ' . $date); sch_json(['ok' => true, 'pick' => null]); }
-    $rec = ['date' => $date, 'fams' => $fams, 'by' => $u['label'] ?? 'Principal', 'at' => sch_now_ms()];
+    $rec = ['date' => $date, 'fams' => $fams, 'by' => $u['label'] ?? 'Manager', 'at' => sch_now_ms()];
     sch_rec_put('chPick', $date, $rec, sch_uid_of($u));
     $names = array_map(fn($f) => (sch_rec_get('student', $f[0])['name'] ?? $f[0]), $fams);
     sch_log($u, 'Chairman calls', 'Families for ' . $date . ': ' . implode(', ', $names));
@@ -124,7 +124,7 @@ case 'chPick': {
 case 'chBad': {
     // Principal marks a child "fee not updated properly" (or clears it) — kept out of the Chairman's calls until fixed.
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
-    if ($role !== 'principal') sch_fail('Only the Principal can mark this.', 403);
+    if ($role !== 'manager') sch_fail('Only the Manager can mark this.', 403);
     $in = json_decode((string)file_get_contents('php://input', false, null, 0, 20000), true); if (!is_array($in)) sch_fail('Bad request.');
     $sid = (string)($in['sid'] ?? ''); $s = sch_rec_get('student', $sid); if (!$s) sch_fail('Student not found.');
     if (empty($in['on'])) { sch_rec_del('chBad', $sid, sch_uid_of($u)); sch_log($u, 'Chairman calls', 'Fee fixed / unmarked: ' . ($s['name'] ?? $sid)); sch_json(['ok' => true, 'bad' => null]); }

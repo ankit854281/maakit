@@ -24,7 +24,7 @@ function fdreq($path, $token, $body = null) {
 }
 $db = sch_db();
 $oldSettings = sch_rec_get('settings', 'main');
-$C = fdtok('chairman', 'chairman'); $P = fdtok('principal', 'principal'); $R = fdtok('reception', 'reception'); $T = fdtok('fd-teacher', 'teacher');
+$C = fdtok('chairman', 'chairman'); $P = fdtok('principal', 'principal'); $R = fdtok('reception', 'reception'); $T = fdtok('fd-teacher', 'teacher'); $M = fdtok('manager', 'manager');
 $clean = function () use ($db) { $db->exec("DELETE FROM sch_records WHERE k LIKE 'ofc%' OR (k='regRow' AND (r LIKE 'oldfeecard|%' OR r LIKE 'oldreceipt|fd%')) OR (k='student' AND r IN ('fd-s1','fd-s2')) OR (k='acctCall' AND d LIKE '%fd-s1%') OR (k='regRow' AND r LIKE 'oldrcptdet|fd%') OR (k='fdTag' AND r IN ('fd-s1','fd-s2')) OR (k='fdMsg' AND d LIKE '%fd-s%') OR (k='regRow' AND (r LIKE 'oldmarks|fd%' OR r LIKE 'employee|fd%')) OR (k='studAtt' AND r='2026-04-02|2nd') OR (k='chBad' AND r IN ('fd-s1','fd-s2')) OR (k='chPick' AND d LIKE '%fd-s%')"); };
 try {
     $clean();
@@ -82,14 +82,16 @@ try {
     $o = array_values(array_filter($d['old'], fn($r) => $r['sid'] === 'fd-s1'));
     fd(count($o) === 1 && (float)$o[0]['pct'] === 88.0 && $o[0]['att'] === '170/180' && array_keys($o[0]['subs']['English']) === ['Term-1 Total (100)'], 'old report card, subject totals only ' . json_encode($o));
     $raw = json_encode($d['employees']); fd(str_contains($raw, 'Synthetic Staff') && !str_contains($raw, 'SYN-AADHAR') && !str_contains($raw, 'SYNPAN') && !str_contains($raw, '4321'), 'staff register without ID / bank');
-    // Chairman calls (20 Nov 2026): Principal picks up to 3 families a day, marks "fee not updated"; Chairman only reads
+    // Chairman calls (20 Nov 2026): Manager picks up to 3 families a day (owner moved it from the Principal), marks "fee not updated"; Chairman only reads
     [$c] = fdreq('feedash_api.php?a=chPick', $C, ['date' => date('Y-m-d'), 'fams' => [['fd-s1']]]); fd($c === 403, 'chairman cannot pick');
-    [$c, $d] = fdreq('feedash_api.php?a=chPick', $P, ['date' => date('Y-m-d'), 'fams' => [['fd-s1'], ['fd-s2'], ['nope'], ['fd-s1']]]); fd($c === 200 && $d['pick']['fams'] === [['fd-s1'], ['fd-s2']], 'pick: unknown child and repeat dropped ' . json_encode($d));
-    [$c] = fdreq('feedash_api.php?a=chPick', $P, ['date' => '2020-01-01', 'fams' => [['fd-s1']]]); fd($c === 400, 'no pick for an old date');
-    [$c, $d] = fdreq('feedash_api.php?a=chBad', $P, ['sid' => 'fd-s2', 'on' => 1, 'note' => 'card wrong']); fd($c === 200 && $d['bad']['note'] === 'card wrong', 'mark fee not updated');
+    [$c, $d] = fdreq('feedash_api.php?a=chPick', $M, ['date' => date('Y-m-d'), 'fams' => [['fd-s1'], ['fd-s2'], ['nope'], ['fd-s1']]]); fd($c === 200 && $d['pick']['fams'] === [['fd-s1'], ['fd-s2']], 'pick: unknown child and repeat dropped ' . json_encode($d));
+    [$c] = fdreq('feedash_api.php?a=chPick', $M, ['date' => '2020-01-01', 'fams' => [['fd-s1']]]); fd($c === 400, 'no pick for an old date');
+    [$c, $d] = fdreq('feedash_api.php?a=chBad', $M, ['sid' => 'fd-s2', 'on' => 1, 'note' => 'card wrong']); fd($c === 200 && $d['bad']['note'] === 'card wrong', 'mark fee not updated');
     [$c] = fdreq('feedash_api.php?a=chBad', $C, ['sid' => 'fd-s2', 'on' => 0]); fd($c === 403, 'chairman cannot clear the mark');
     [$c, $d] = fdreq('feedash_api.php?a=data', $C); fd($c === 200 && isset($d['picks'][date('Y-m-d')]) && isset($d['bad']['fd-s2']), 'chairman sees the pick and the mark');
-    [$c, $d] = fdreq('feedash_api.php?a=chBad', $P, ['sid' => 'fd-s2', 'on' => 0]); fd($c === 200 && $d['bad'] === null, 'mark cleared');
+    [$c, $d] = fdreq('feedash_api.php?a=chBad', $M, ['sid' => 'fd-s2', 'on' => 0]); fd($c === 200 && $d['bad'] === null, 'mark cleared');
+    [$c] = fdreq('feedash_api.php?a=chPick', $P, ['date' => date('Y-m-d'), 'fams' => [['fd-s1']]]); fd($c === 403, 'principal no longer picks');
+    [$c, $d] = fdreq('feedash_api.php?a=data', $M); fd($c === 200 && $d['money'] === true, 'manager opens the data for the calls screen');
     echo "Fee Control Room: roles, Reception without money, dues from the fee card, today's receipt with transport split, tags with fixed plan, the call log, the message log, calls written with what was discussed and the School tab data passed\n";
 } finally {
     $clean();

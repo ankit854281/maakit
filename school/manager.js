@@ -193,7 +193,7 @@
     return `<div class="seg">${[['table', '📋 Month sheet'], ...(D.can.edit ? [['paynow', '💸 Pay salary']] : []), ['all', 'All ' + R.length], ['due', 'To pay ' + R.filter(r => r.status === 'Due' || r.status === 'Part paid').length], ['paid', 'Paid ' + paid.length], ['notset', 'Salary not set ' + R.filter(r => r.status === 'Not set').length], ['att', 'Staff attendance'], ['bill', '📄 Fee demand bill']].map(([k, l]) => `<button class="${VIEW === k ? 'on' : ''}" onclick="mgView('${k}')">${l}</button>`).join('')}</div>`; }
   // Sections (owner, 13 Nov 2026: "manager app me fee receipt, expense entry, opening aur tour ka fee lene ka format"):
   // Fee Receipt = feecollect.php (the one place fees are taken), Cash Book + Tour fee = cashdesk.php — same login (tk=sal).
-  const SECS = [['sal', 'Salary'], ['fee', 'Fee Receipt'], ['cash', 'Cash Book'], ['tour', 'Tour fee']];
+  const SECS = [['sal', 'Salary'], ['fee', 'Fee Receipt'], ['cash', 'Cash Book'], ['tour', 'Tour fee'], ['calls', '📞 Chairman calls']];   // calls: owner 20 Nov 2026 — the Manager picks the Chairman's 3 families a day
   window.mgFeeFull = () => { store.set('mg_feefull', store.get('mg_feefull') === '1' ? '0' : '1'); draw(); };
   window.mgSec = k => { SEC = k; store.set('mg_sec', k); draw(); };
   const secBar = () => `<div class="seg" style="margin-bottom:12px">${SECS.map(([k, l]) => `<button class="${SEC === k ? 'on' : ''}" onclick="mgSec('${k}')">${l}</button>`).join('')}</div>`;
@@ -202,7 +202,7 @@
     if (SEC !== 'sal') {
       // Fee (13 Nov 2026, owner: "manager app se fee lena thoda smart banaiye"): Quick Fee (feequick.php) first; the full ERP form stays one tap away.
       const full = SEC === 'fee' && store.get('mg_feefull') === '1';
-      const src = { fee: full ? 'feecollect.php?embed=1&tk=sal' : 'feequick.php?embed=1&tk=sal', cash: 'cashdesk.php?embed=1&tk=sal&tab=day', tour: 'cashdesk.php?embed=1&tk=sal&tab=tour' }[SEC];
+      const src = { fee: full ? 'feecollect.php?embed=1&tk=sal' : 'feequick.php?embed=1&tk=sal', cash: 'cashdesk.php?embed=1&tk=sal&tab=day', tour: 'cashdesk.php?embed=1&tk=sal&tab=tour', calls: 'chairman.php?embed=1&tk=sal' }[SEC];
       return frame(`<iframe src="${src}" title="${SEC}" style="height:82vh"></iframe>${SEC === 'fee' ? `<p class="mut">${full ? 'Full Fee Receipt form (same as the ERP). Turn the phone sideways.' : 'Quick Fee — same receipts and numbers as the ERP Fee Receipt.'} <a href="#" onclick="mgFeeFull();return false">${full ? '‹ Back to Quick Fee' : 'Open the full form (discount, add fee, cancel) ›'}</a></p>` : ''}`);
     }
     if (!D) return load();
