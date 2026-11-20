@@ -12,7 +12,10 @@ import android.view.Gravity;
 import android.view.View;
 import android.webkit.*;
 import android.widget.*;
+import androidx.core.content.FileProvider;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
@@ -122,6 +125,34 @@ public class MainActivity extends Activity {
     // The native save bridge is only exposed to school-origin pages; Android's
     // document picker controls the destination. It never accepts a filesystem path.
     public final class Reports {
+        // Owner, 20 Nov 2026: "chairman sir ke app me demand bill share bill picture work nahi ho raha" — a WebView cannot
+        // share files, so the bill picture (demandbill.js) comes here and goes to Android's share sheet (WhatsApp …). PNG / PDF only.
+        @JavascriptInterface public void shareFile(String filename, String encoded, String mime) {
+            if (encoded == null || encoded.length() > 14_000_000) return;
+            final String type = "application/pdf".equals(mime) ? "application/pdf" : "image/png", ext = type.equals("application/pdf") ? ".pdf" : ".png";
+            runOnUiThread(() -> {
+                if (!trusted(Uri.parse(web.getUrl() == null ? "" : web.getUrl()))) return;
+                try {
+                    byte[] bytes = Base64.decode(encoded, Base64.DEFAULT);
+                    if (bytes.length > 10_485_760) { toast("This file is too large."); return; }
+                    String safe = (filename == null ? "SNMSIS" + ext : filename).replaceAll("[^a-zA-Z0-9._-]", "_");
+                    if (!safe.endsWith(ext)) safe += ext;
+                    if (safe.length() > 90) safe = "SNMSIS" + ext;
+                    File dir = new File(getCacheDir(), "share");
+                    if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create share cache");
+                    File f = new File(dir, safe);
+                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(f)) { out.write(bytes); }
+                    Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", f);
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType(type);
+                    send.putExtra(Intent.EXTRA_STREAM, uri);
+                    send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(send, type.equals("application/pdf") ? "Share PDF" : "Share picture"));
+                } catch (IOException | IllegalArgumentException | android.content.ActivityNotFoundException e) {
+                    toast("Could not share the file.");
+                }
+            });
+        }
         @JavascriptInterface public void saveCsv(String filename, String encoded) {
             if (encoded == null || encoded.length() > 7_000_000) return;
             runOnUiThread(() -> {
