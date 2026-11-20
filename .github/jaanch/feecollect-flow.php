@@ -125,6 +125,17 @@ try {
     // One place to take fees: Fee Desk refuses a started session; Fee Receipt rows never reach legacy sync
     [$c, $d] = freq('pay', $A, ['sid' => 'fc-s1', 'amt' => '100', 'mode' => 'Cash'], '', 'office_api.php'); fc($c === 409, 'Fee Desk refuses a started session ' . json_encode($d));
     [$c, , $raw] = freq('load', $P, null, '', 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null); fc($c === 200 && $recs !== 'null' && !str_contains($recs, 'ofc') && !str_contains($recs, '1-382'), 'legacy sync hides Fee Receipt records');
+    // An older session started after 2026-27 (20 Nov 2026): 2025-26 cards are older copies → pending matched to the 2026-27 card's old fee
+    $c25 = fn($sid, $old) => ['session' => '2025-26', 'oldId' => $old, 'liveId' => $sid, 'name' => 'Synthetic', 'cls' => 'UKG', 'section' => 'A', 'scholar' => '24504 /', 'scheme' => 'Regular-01-1',
+        'months' => $months, 'oldFee' => '0', 'transferFee' => '0', 'nextReceipt' => '1-700', 'asOn' => '22-10-2026'];
+    sch_rec_put('regRow', 'oldfeecard|d1', $c25('fc-s1', '801'), 'principal'); sch_rec_put('regRow', 'oldfeecard|d2', $c25('fc-s2', '802'), 'principal');
+    [, $before1] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); [, $before2] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s2');
+    [$c, $d] = freq('start', $P, ['ses' => '2025-26']); fc($c === 200 && $d['match']['next'] === '2026-27' && $d['match']['children'] === 2, 'older session preview shows the match ' . json_encode($d['match'] ?? $d));
+    [$c, $d] = freq('start', $P, ['ses' => '2025-26', 'apply' => true, 'confirm' => 'START', 'from' => date('Y-m-d')]); fc($c === 200 && !empty($d['applied']), 'start 2025-26');
+    [, $after1] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s1'); [, $after2] = freq('ledger', $A, null, '&ses=2026-27&sid=fc-s2');
+    fc($after1['oldDue'] === $before1['oldDue'] && $after2['oldDue'] === $before2['oldDue'], 'nobody\'s 2026-27 old due changes when 2025-26 starts ' . json_encode([$before1['oldDue'], $after1['oldDue'], $before2['oldDue'], $after2['oldDue']]));
+    fc($after1['prev']['ses'] === '2025-26' && $after1['prev']['live'] === true, 'ledger tells the previous session is open');
+    [$c] = freq('addFee', $A, ['ses' => '2026-27', 'sids' => ['fc-s1'], 'type' => 'Old Due', 'm' => 4, 'nonce' => $n()]); fc($c === 400, 'Old Due is not moved once 2025-26 is open');
     echo "Fee Receipt: start, numbering from the old ERP, Upto Month maths, late fee and discount, balance and old-due checks, deposit bank, idempotency, cancel, new admission and one-place-to-collect passed, plus Old Due on the card, Add Other Fee (single and bulk) and head-wise discount\n";
 } finally {
     $clean();

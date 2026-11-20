@@ -184,6 +184,7 @@ function startBox() {
   if (!START) return `<div class="fr-box"><b>Fees for ${esc(ST.ses)} are still taken in the old ERP.</b> When the old ERP stops taking fees, start this session here: every child's fee card is copied from the Old ERP Fee Card and receipt numbers continue from the old ERP. <button onclick="startPreview()">Check before starting</button></div>`;
   return `<div class="fr-box"><b>Start Fee Receipt for ${esc(ST.ses)}</b>
     <p>${START.create} fee cards will be copied (${START.already} already here). ${START.skipped.length} not copied: ${esc(START.skipped.slice(0, 8).join(', '))}${START.skipped.length > 8 ? '…' : ''}.</p>
+    ${START.match ? `<p><b>Matched to ${esc(START.match.next)}:</b> ${START.match.children} children's pending is set to the figure on their ${esc(START.match.next)} card (the old ERP's newer copy) — ${R(START.match.lowered)} written off, ${R(START.match.raised)} added. Nobody's pending changes from what ${esc(START.match.next)} shows today.</p>` : ''}
     <p>First receipt number here: <b>${esc(START.firstNo || '')}</b>. The cards were copied from the old ERP on <b>${esc(START.copiedOn || '?')}</b> — any fee taken in the old ERP after that day is NOT on them. Copy the cards again first if the old ERP took fees after that day.</p>
     <label>First date fees are taken here <input type="date" id="stFrom" value="${esc(ST.today)}"></label> <label>Type START <input id="stConfirm" autocomplete="off" style="width:90px"></label> <button onclick="startApply()">Start</button></div>`;
 }

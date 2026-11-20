@@ -93,6 +93,24 @@ function ofc_old_due(string $ses, string $sid, array $L, int $depth = 0): int {
     $base = $p ? max(0, ofc_totals($p)['balance']) + ofc_old_due($ps, $sid, $p, $depth + 1) : max(0, (int)($L['oldFee'] ?? 0));
     return max(0, $base - (int)($L['oldMoved'] ?? 0));
 }
+/** Owner, 20 Nov 2026 ("fee update karna hai — old session ka fee old session me"): when an OLDER session is started while the
+ *  next one is already live, its cards are older copies (2025-26 copied 22-10, 2026-27 on 11-11). So the old session's pending
+ *  (its balance + its own old fee) is set to what the next session's card says is pending from before ($next['oldFee'], the old
+ *  ERP's newest figure). Less: the extra is written off on the unpaid heads (latest month first), then on its old fee. More: added
+ *  to its old fee. Returns [ledger, list of changes]. */
+function ofc_match_next(array $L, array $next): array {
+    $target = max(0, (int)($next['oldFee'] ?? 0)); $cur = max(0, ofc_totals($L)['balance']) + max(0, (int)($L['oldFee'] ?? 0)); $diff = $cur - $target; $log = [];
+    if ($diff === 0) return [$L, $log];
+    if ($diff > 0) {
+        $idx = array_keys($L['heads']); usort($idx, fn($a, $b) => (($L['heads'][$b]['m'] + 8) % 12) <=> (($L['heads'][$a]['m'] + 8) % 12));
+        foreach ($idx as $k) { if ($diff <= 0) break; $h = $L['heads'][$k]; if (!empty($h['na'])) continue; $room = $h['amt'] - $h['paid']; if ($room <= 0) continue;
+            $x = min($room, $diff); $L['heads'][$k]['paid'] += $x; $L['heads'][$k]['disc'] = (int)($h['disc'] ?? 0) + $x; $L['heads'][$k]['match'] = (int)($h['match'] ?? 0) + $x; $diff -= $x;
+            $log[] = ['act' => 'disc', 'i' => $h['i'], 'm' => $h['m'], 'name' => $h['name'], 'amt' => $x]; }
+        if ($diff > 0) { $L['oldFee'] = max(0, (int)($L['oldFee'] ?? 0) - $diff); $log[] = ['act' => 'oldFee', 'amt' => -$diff]; }
+    } else { $L['oldFee'] = (int)($L['oldFee'] ?? 0) - $diff; $log[] = ['act' => 'oldFee', 'amt' => -$diff]; }
+    $L['matched'] = ['to' => $target, 'was' => $cur, 'at' => sch_now_ms()];
+    return [$L, $log];
+}
 function ofc_adj_log(string $ses, string $sid, array $e, string $uid): void {
     sch_rec_put('ofcAdj', $ses . '|' . $sid . '|' . sch_now_ms() . bin2hex(random_bytes(2)), $e + ['ses' => $ses, 'sid' => $sid, 'at' => sch_now_ms()], $uid);
 }

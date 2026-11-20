@@ -164,12 +164,22 @@ case 'start': {
     }
     [$prefix, $next] = ofc_next_from_cards($cards);
     $live = ofc_live($ses);
-    $preview = ['ok' => true, 'ses' => $ses, 'create' => count($make), 'already' => $have, 'skipped' => $skipped, 'firstNo' => $live ? null : ($next ? $prefix . $next : $prefix . '1'), 'copiedOn' => $oldest, 'live' => $live];
+    // An older session started after the next one (owner, 20 Nov 2026): match each child's pending to the next session's card
+    $nx = (int)substr($ses, 0, 4) + 1; $nses = $nx . '-' . substr((string)($nx + 1), 2); $match = ofc_live($nses) ? $nses : '';
+    $mUp = 0; $mDown = 0; $mN = 0;
+    if ($match !== '') foreach ($make as $sid => $L) { $NL = sch_rec_get('ofcLed', $match . '|' . $sid); if (!$NL) continue;
+        [$L2] = ofc_match_next($L, $NL); $d = (max(0, ofc_totals($L)['balance']) + (int)($L['oldFee'] ?? 0)) - (max(0, ofc_totals($L2)['balance']) + (int)($L2['oldFee'] ?? 0));
+        if ($d !== 0) { $mN++; if ($d > 0) $mDown += $d; else $mUp -= $d; } }
+    $preview = ['ok' => true, 'ses' => $ses, 'create' => count($make), 'already' => $have, 'skipped' => $skipped, 'firstNo' => $live ? null : ($next ? $prefix . $next : $prefix . '1'), 'copiedOn' => $oldest, 'live' => $live,
+        'match' => $match === '' ? null : ['next' => $match, 'children' => $mN, 'lowered' => $mDown, 'raised' => $mUp]];
     if (($in['apply'] ?? false) !== true) sch_json($preview);
     if (($in['confirm'] ?? '') !== 'START') throw new InvalidArgumentException('Type START to confirm.');
     $from = (string)($in['from'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)) throw new InvalidArgumentException('Choose the first date fees are taken here.');
     $lock();
-    foreach ($make as $sid => $L) if (!sch_rec_get('ofcLed', $ses . '|' . $sid)) sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
+    foreach ($make as $sid => $L) { if (sch_rec_get('ofcLed', $ses . '|' . $sid)) continue;
+        if ($match !== '' && ($NL = sch_rec_get('ofcLed', $match . '|' . $sid))) { [$L, $chg] = ofc_match_next($L, $NL);
+            foreach ($chg as $e) ofc_adj_log($ses, $sid, $e + ['remark' => 'Matched to the old ERP figure on the ' . $match . ' card (copied later)', 'by' => $u['label'] ?? $uid], $uid); }
+        sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid); }
     if (!$live) {
         if (!sch_rec_get('ofcSeq', $ses)) sch_rec_put('ofcSeq', $ses, ['prefix' => $prefix, 'n' => max(0, $next - 1)], $uid);
         $cfg = ofc_cfg(); $cfg['sessions'][$ses] = ['from' => $from, 'by' => $u['label'] ?? $uid, 'at' => sch_now_ms(), 'firstNo' => $prefix . max(1, $next)];
