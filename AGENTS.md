@@ -1261,3 +1261,9 @@ papers only from photos the owner sends.
   royal-blue guilloche border + gold rules, crest + school name, blue ribbon heading, gold/silver/bronze medal on blue-red straps,
   photo frame wearing a graduation cap, traditional wording ("ward of Shri … & Smt. …, a student of Class …, has secured the FIRST
   POSITION …"), signatures, date/place/certificate no., Scan-to-verify QR. Colour picker removed (THEMES gone).
+
+- 2026-11-20 (Claude): Certificate — owner asked to change "format, colour, design sab". Four designs now, picked on the Rankers
+  tab ("Certificate design" buttons, saved per device in localStorage sch_cert_design): royal (Design 1, A4 PORTRAIT — print-all
+  switches to portrait), bright (Design 2, colourful waves + trophy), prashasti (Design 3, maroon/gold mandala, "प्रशस्ति पत्र",
+  NotoDevaC font), merit (Design 4, v6 blue). Shared helpers in kit(). Paper-colour option (PAPERS, sch_cert_paper) is for merit only.
+  Default is 'royal' until the owner picks — then set CDESIGN's default.
