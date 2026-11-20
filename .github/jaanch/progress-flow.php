@@ -75,6 +75,17 @@ try {
     [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Synthetic Maths', 'rows' => ['pr-s1' => ['pt' => '9', 'nb' => '5', 'sea' => '5', 'te' => '70']]]); pc($c === 200, 'class teacher saves another teacher\'s subject');
     [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Not In Timetable', 'rows' => []]); pc($c === 403, 'class teacher only for subjects of the class');
     pc((int)$db->query("SELECT COUNT(*) FROM sch_log WHERE x LIKE 'Term-1 marks saved: Class 1st Synthetic Maths%by the class teacher'")->fetchColumn() >= 1, 'class teacher correction logged');
+    // Rankers' certificate numbers + public "Scan to verify" (owner, 20 Nov 2026): the server works out the rank (s1 has both subjects, s2 only one)
+    [$c, $d] = prq('certs', $P, null, '&ses=2026-27&cls=1st'); $ce = $d['certs'] ?? [];
+    pc($c === 200 && ($ce['pr-s1']['rank'] ?? 0) === 1 && !isset($ce['pr-s2']) && preg_match('/^HY26-[0-9A-Z]{7}$/', $ce['pr-s1']['code'] ?? ''), 'certificate numbers ' . json_encode($d));
+    [$c] = prq('certs', $F, null, '&ses=2026-27&cls=1st'); pc($c === 403, 'parents cannot make certificate numbers');
+    $vg = function ($code) { $h = curl_init('http://127.0.0.1:8099/school/verify-cert.php?c=' . urlencode($code)); curl_setopt_array($h, [CURLOPT_RETURNTRANSFER => true, CURLOPT_PROXY => '']); $r = (string)curl_exec($h); curl_close($h); return $r; };
+    $vp = $vg($ce['pr-s1']['code']); pc(str_contains($vp, 'Genuine certificate') && str_contains($vp, 'Synthetic Progress One') && str_contains($vp, '68.5%') && !str_contains($vp, 'Warning'), 'verify page shows the certificate');
+    pc(str_contains($vg('HY26-ZZZZZZZ'), 'Not verified') && str_contains($vg('<script>'), 'Not verified'), 'verify page refuses unknown numbers');
+    // marks change (s2 now has Maths too and tops the class) → s1's old 1st-rank certificate number is withdrawn
+    [$c] = prq('marks', $T, ['ses' => '2026-27', 'exam' => 'Term-1', 'cls' => '1st', 'subject' => 'Synthetic Maths', 'rows' => ['pr-s1' => ['pt' => '9', 'nb' => '5', 'sea' => '5', 'te' => '70'], 'pr-s2' => ['pt' => '10', 'nb' => '5', 'sea' => '5', 'te' => '80']]]);
+    [$c, $d] = prq('certs', $P, null, '&ses=2026-27&cls=1st'); $ce2 = $d['certs'] ?? [];
+    pc(($ce2['pr-s2']['rank'] ?? 0) === 1 && ($ce2['pr-s1']['rank'] ?? 0) === 2 && str_contains($vg($ce['pr-s1']['code']), 'Not verified'), 'a certificate whose rank changed is withdrawn ' . json_encode($ce2));
     [$c, , $raw] = prq('load', $P, null, '', 'api.php'); $recs = json_encode((json_decode($raw, true) ?? [])['records'] ?? null);
     pc($c === 200 && $recs !== 'null' && !str_contains($recs, 'prcMarks') && !str_contains($recs, 'Synthetic remark') && !str_contains($recs, 'base64'), 'legacy sync hides progress reports and photos');
     echo "Progress Report: old cards kept exactly (never overwritten), photos by student, old ERP mark limits, teacher scoping, co-scholastic checks and sync privacy passed\n";

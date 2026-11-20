@@ -1222,3 +1222,12 @@ papers only from photos the owner sends.
   Perfect score, Highest in subject, Neat Notebook Star, All-round A, Full Attendance; max 6), (3) "Where X stands in the class" dot line
   with "Top N%" — shown ONLY for the upper half of the class on purpose (and the letter names the rank only for them), so weak children's
   parents don't see their child at the bottom. Certificate gained "Proud parents: Shri … & Smt. …".
+
+- 2026-11-20 (Claude): Results v4 (owner: "target box, QR verify, Stars poster karo; color aur design pe bhi jao").
+  • Slip design v3 (results.php CSS): gradient header with gold stripe, logo watermark, cream student strip, navy table header +
+    zebra rows, letter with maroon bar. New "🎯 Target for the Final Exam" box: per subject the marks for the NEXT grade band.
+  • Certificate QR "Scan to verify": progress_api.php?a=certs&ses=&cls= — the SERVER works out 1st/2nd/3rd from saved Term-1 marks
+    (same rule as results.js) and keeps prcCert <code> (+ prcCertIdx 'ses|cls'); a certificate whose child is no longer a ranker is
+    deleted. Public page school/verify-cert.php?c=HY26-XXXXXXX shows only name, class, rank, %, exam (no photo/phone).
+    QR drawn with vendor/qrcode.js. Test added to .github/jaanch/progress-flow.php.
+  • "⭐ Our Stars poster (all classes)" button on the Rankers tab: A3 portrait canvas, every class's rankers in podium order with photos.

@@ -43,6 +43,30 @@ td.bars{padding:4px 8px}.bar{position:relative;height:10px;background:#EEF1F5;bo
 .pos{margin:6px 0 4px;font-size:11.5px}.pos .ln{position:relative;height:28px;margin:4px 10px 0;border-bottom:2px solid #C9D2DC}.pos .ln i{position:absolute;bottom:-5px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#AEB8C4}.pos .ln b{position:absolute;bottom:-9px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#E0A100;border:2px solid #14294A}.pos .ln u{position:absolute;bottom:10px;transform:translateX(-50%);text-decoration:none;font-weight:bold;color:#7A1F2B;white-space:nowrap}
 .pos .sc{display:flex;justify-content:space-between;margin:2px 4px 0;color:#888;font-size:10px}
 
+/* ---- slip v3 colours & design (owner, 20 Nov 2026: "color and design pe bhi jao") ---- */
+.slip{position:relative;overflow:hidden;border:1.5px solid #D9B45A;border-radius:14px;padding:0 18px 14px;box-shadow:0 3px 14px rgba(20,41,74,.12);background:#fff}
+.slip:before{content:"";position:absolute;inset:150px 0 0;background:url(img/snmsis-logo.png) no-repeat center 45%/330px;opacity:.045;pointer-events:none}
+.slip>*{position:relative}
+.shd{margin:0 -18px 12px;padding:12px 18px 14px;border-bottom:0;background:radial-gradient(circle at 92% -20%,rgba(246,227,161,.28) 0 90px,transparent 91px),radial-gradient(circle at 78% 130%,rgba(255,255,255,.08) 0 70px,transparent 71px),linear-gradient(120deg,#0E1F3D,#1F4A8A 68%,#14294A)}
+.shd:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#8C6A1E,#F6E3A1,#D9B45A,#8C6A1E)}
+.shd img{width:58px;height:58px;box-shadow:0 0 0 3px #D9B45A}.shd div b{font-size:19px;letter-spacing:.8px}
+.shd i em{display:inline-block;margin-top:3px;background:linear-gradient(90deg,#D9B45A,#F6E3A1);color:#14294A;padding:3px 12px;border-radius:12px;font-size:13px;letter-spacing:2.5px}
+.stu{background:linear-gradient(95deg,#F2F6FC 0%,#FFF9EA 100%);border:1px solid #E8DFC6;border-radius:12px;padding:10px 12px}
+.ph{flex-basis:84px;height:84px;border:3px solid #fff;box-shadow:0 0 0 3px #D9B45A,0 3px 8px rgba(0,0,0,.15)}.who>b{font-size:21px;letter-spacing:.2px}
+.ring{box-shadow:0 2px 6px rgba(0,0,0,.08)}.rk{background:#fff;border-color:#D9B45A;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.letter{border:0;border-left:5px solid #7A1F2B;border-radius:10px;background:linear-gradient(90deg,#FFF6E0,#FFFDF7);box-shadow:inset 0 0 0 1px #F0E2BC;padding:8px 14px 6px 40px}
+.letter:before{content:"✒";position:absolute;left:12px;top:7px;font-size:18px;color:#7A1F2B}
+.badges span{background:linear-gradient(180deg,#FFF8DC,#FBE7A6);border-color:#D9A520;box-shadow:0 1px 2px rgba(140,106,30,.25)}
+table.m{border-collapse:separate;border-spacing:0;border:1px solid #C9D3E0;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.85)}
+table.m th,table.m td{border:0;border-bottom:1px solid #E4EAF2;border-right:1px solid #EEF2F7}table.m th{background:#14294A;color:#fff;font-size:11.5px;font-weight:bold}table.m th small{color:#F6E3A1}
+table.m tr:nth-child(odd) td{background:#F7F9FC}table.m td.s{font-weight:bold;color:#14294A}table.m td.s:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#D9B45A;margin-right:6px;vertical-align:1px}
+table.m tr.t td.s:before{display:none}table.m tr.t td{background:linear-gradient(180deg,#FFF6DA,#FCEBB6)!important;border-bottom:0;color:#14294A}
+.tgt{margin:8px 0 2px;border-radius:10px;background:linear-gradient(95deg,#EAF3FF,#F5FAFF);border:1px solid #C8DCF5;padding:7px 12px}
+.tgt>b{display:block;font-size:12.5px;color:#14294A;margin-bottom:5px}.tgt>b small{font-weight:normal;color:#5a6b80;font-family:'NotoDeva',Arial,sans-serif}
+.tgt div{display:flex;flex-wrap:wrap;gap:6px}.tgt span{background:#fff;border:1px solid #BFD3EE;border-radius:8px;padding:3px 9px;font-size:11.5px;color:#1d2733}.tgt span b{color:#1F4A8A}.tgt span em{font-style:normal;font-weight:bold;color:#1E7A43}
+.rmk{border-radius:0 10px 10px 0}.side div{background:#fff}
+.foot div i{border-top:1.5px solid #14294A;color:#14294A}
+
 .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;font-size:12px}.foot div{text-align:center;min-width:140px}.foot div i{display:block;border-top:1px solid #333;margin-top:28px;font-style:normal;padding-top:2px}
 .sum{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:13px}.sum b{font-size:15px}
 .gn{font-size:11px;color:#555;margin-top:6px}
@@ -54,5 +78,6 @@ td.bars{padding:4px 8px}.bar{position:relative;height:10px;background:#EEF1F5;bo
 <div class="pan np" id="bar"><div class="msg">Opening…</div></div>
 <div id="out"></div>
 </div>
+<script src="vendor/qrcode.js"></script>
 <script src="results.js?v=<?= htmlspecialchars($v) ?>"></script>
 </body></html>

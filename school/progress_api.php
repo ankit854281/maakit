@@ -19,6 +19,7 @@
 //   POST ?a=marks {ses,exam,cls,subject,rows} save one subject's marks (teacher of that subject / Principal)
 //   GET  ?a=status&ses=&exam=              Marks Status: every class × subject, how many children are filled
 //   POST ?a=extra {ses,exam,cls,rows}      co-scholastic, remark, attendance (class teacher / Principal)
+//   GET  ?a=certs&ses=&cls=                rankers' certificate numbers (server works out the rank) → prcCert, for verify-cert.php
 //   POST ?a=import {kind,…,apply}          Principal: old ERP cards or photos; never overwrites
 //
 //  Kinds: prcOld 'ses|exam|cls|n', prcStyle 'ses|exam', prcMarks 'ses|exam|cls|subject',
@@ -255,6 +256,36 @@ case 'import': {
         sch_json(['ok' => true, 'applied' => $apply, 'toAdd' => $add, 'unchanged' => $same, 'linked' => $linked, 'notInErp' => count(array_filter($skipped)), 'total' => count($photos)]);
     }
     throw new InvalidArgumentException('This file is not a progress report or photo file from the old ERP.');
+}
+case 'certs': {
+    // Rankers' certificate numbers for "Scan to verify" (owner, 20 Nov 2026). The SERVER works out the 1st/2nd/3rd from the saved
+    // Half-Yearly marks (same rule as results.js: real marks, no grace, only children with every subject entered) and keeps one
+    // prcCert record per certificate; verify-cert.php (public) shows it. Certificates of children who are no longer rankers are removed.
+    if (!$readCards) sch_fail('Not open for this login.', 403);
+    $ses = prc_ses((string)($_GET['ses'] ?? '')); $cls = (string)($_GET['cls'] ?? '');
+    if ($ses === '' || !in_array($cls, PRC_CLASSES, true)) throw new InvalidArgumentException('Choose the session and the class.');
+    $students = reg_students(); $tot = []; $max = []; $done = [];
+    foreach ($rows('prcMarks', "$ses|Term-1|$cls|") as $m) foreach ((array)($m['rows'] ?? []) as $sid => $r) {
+        if (!isset($students[$sid]) || $students[$sid]['cls'] !== $cls || !empty($students[$sid]['inactive'])) continue;
+        $has = false; $t = 0.0; foreach (PRC_PARTS as [$k]) { $v = ((array)$r)[$k] ?? ''; if ($v !== '' && $v !== null) $has = true; if (is_int($v) || is_float($v)) $t += $v; }
+        if (!$has) continue;
+        $tot[$sid] = ($tot[$sid] ?? 0) + $t; $max[$sid] = ($max[$sid] ?? 0) + 100; $done[$sid] = ($done[$sid] ?? 0) + 1;
+    }
+    $full = $done ? max($done) : 0; $pct = [];
+    foreach ($done as $sid => $n) if ($n === $full) $pct[$sid] = round($tot[$sid] * 100 / $max[$sid], 2);
+    arsort($pct); $rank = 0; $i = 0; $last = null; $out = []; $codes = [];
+    foreach ($pct as $sid => $p) { $i++; if ($last === null || $p < $last) { $rank = $i; $last = $p; } if ($rank > 3) break;
+        $h = 0; foreach (str_split('HY|' . $ses . '|' . $sid . '|' . $rank) as $ch) $h = ($h * 31 + ord($ch)) & 0xFFFFFFFF;
+        $code = 'HY' . substr($ses, 2, 2) . '-' . substr(str_pad(strtoupper(base_convert((string)$h, 10, 36)), 7, '0', STR_PAD_LEFT), -7);
+        $st = $students[$sid];
+        $d = ['no' => 'SNMSIS/' . str_replace('-', '/', $code), 'sid' => $sid, 'name' => $st['name'], 'cls' => $cls, 'section' => (string)($st['section'] ?? ''), 'rank' => $rank, 'pct' => $p, 'ses' => $ses, 'exam' => 'Half-Yearly Examination'];
+        $old = sch_rec_get('prcCert', $code); if (!$old || array_diff_assoc(array_map('strval', $d), array_map('strval', array_intersect_key($old, $d)))) sch_rec_put('prcCert', $code, $d + ['at' => date('Y-m-d')], $uid);
+        $out[$sid] = ['code' => $code, 'no' => $d['no'], 'rank' => $rank]; $codes[] = $code;
+    }
+    $idx = sch_rec_get('prcCertIdx', "$ses|$cls") ?? ['codes' => []];
+    foreach (array_diff((array)$idx['codes'], $codes) as $gone) sch_rec_del('prcCert', (string)$gone, $uid);
+    if (array_values((array)$idx['codes']) !== $codes) sch_rec_put('prcCertIdx', "$ses|$cls", ['codes' => $codes], $uid);
+    sch_json(['ok' => true, 'certs' => $out]);
 }
 default: sch_fail('Unknown action.', 404);
 }

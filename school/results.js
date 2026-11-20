@@ -115,6 +115,16 @@
       <div class="ln">${D.ranked.filter(x => x !== k).map(x => `<i style="left:${at(x.pct)}%"></i>`).join('')}<b style="left:${at(k.pct)}%"></b><u style="left:${Math.min(88, Math.max(12, at(k.pct)))}%">Top ${top}% of the class</u></div>
       <div class="sc"><span>${lo}%</span><span>${hi}%</span></div></div>`;
   }
+  // "Final exam ka target" (owner, 20 Nov 2026): for every subject, the marks that reach the NEXT grade in the final —
+  // parents see exactly what to work on at home. A1 subjects: "keep it 91+".
+  const BANDS = [[33, 'D'], [41, 'C2'], [51, 'C1'], [61, 'B2'], [71, 'B1'], [81, 'A2'], [91, 'A1']];
+  function targetHtml(k) {
+    const R = k.rows.filter(r => !r.none && !r.ab); if (!R.length) return '';
+    const nx = t => BANDS.find(([m]) => m > t);
+    const chips = R.map(r => { const b = nx(r.t); return b ? `<span>${esc(r.s)}: ${r.t} → <b>${b[0]}+</b> <em>${b[1]}</em></span>` : `<span>${esc(r.s)}: <em>keep ${r.t >= 100 ? '100' : '91+'} ✓</em></span>`; });
+    const ob = k.pct != null ? nx(k.pct) : null;
+    return `<div class="tgt"><b>🎯 Target for the Final Exam <small>· फाइनल परीक्षा का लक्ष्य — अगले ग्रेड के लिए इतने अंक</small></b><div>${chips.join('')}${ob ? `<span>Overall: ${k.pct}% → <b>${ob[0]}%</b> <em>${ob[1]}</em></span>` : ''}</div></div>`;
+  }
   function slipHtml(D, k) {
     const st = k.st, ex = D.extra[st.id] || {}, rm = remarkOf(D, k), fail = k.rows.some(r => !r.none && !r.ab && r.t + r.g < PASS);
     const strong = rm.strong || k.rows.filter(r => !r.none && !r.ab && r.t >= 81).map(r => r.s).slice(0, 2), weak = rm.weak || [];
@@ -130,6 +140,7 @@
         return `<tr><td class="s">${esc(r.s)}</td>${r.vals.map(v => `<td>${v === '' || v == null ? '—' : esc(v)}</td>`).join('')}<td><b class="${r.t + r.g < PASS ? 'red' : ''}">${r.ab ? 'AB' : r.t}</b></td><td>${r.g ? `<span class="gr">+${r.g}</span>` : '—'}</td><td>${badge(g)}</td><td>${S.avg}</td><td>${S.max}</td>
           <td class="bars"><div class="bar"><i style="width:${r.ab ? 0 : Math.min(100, r.t)}%;background:${GCOL[g] || '#17324D'}"></i><u style="left:${Math.min(100, S.avg)}%"></u></div></td></tr>`; }).join('')}
       <tr class="t"><td class="s">Grand total</td><td colspan="4"></td><td>${k.tot}/${k.max}</td><td>${k.gTot ? '+' + k.gTot : '—'}</td><td>${badge(k.pct != null ? grade(k.pct) : '')}</td><td colspan="3" style="text-align:left">Result: <b class="${fail ? 'red' : 'gr'}">${fail ? 'Needs improvement' : 'Pass'}</b></td></tr></table>
+      ${targetHtml(k)}
       ${posLine(D, k)}
       <div class="low"><div class="rmk"><b>${rm.auto ? 'Remark' : 'Class teacher\'s remark'}</b><p>${esc(rm.text)}</p>
         ${strong.length || weak.length ? `<div class="sw">${strong.length ? `<span class="ok">★ Strong: ${esc(strong.join(', '))}</span>` : ''}${weak.length ? `<span class="wk">✎ Practise more: ${esc(weak.join(', '))}</span>` : ''}</div>` : ''}</div>
@@ -252,14 +263,25 @@
     T('Date: ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), tx, 1004, `italic 22px Georgia, serif`, '#5b5040');
     // certificate number (same child + exam + rank → same number) and the Principal's saved signature (Teacher App → Mera sign)
     let hsh = 0; for (const ch of 'HY|' + SES + '|' + k.st.id + '|' + k.rank) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
-    T('Certificate No. SNMSIS/HY' + SES.slice(2, 4) + '/' + hsh.toString(36).toUpperCase().padStart(7, '0').slice(-7), W / 2, H - 92, `600 16px Georgia, serif`, '#7a6a50', 'center', 1);
+    const cert = (D.certs || {})[k.st.id];
+    T('Certificate No. ' + (cert ? cert.no : 'SNMSIS/HY' + SES.slice(2, 4) + '/' + hsh.toString(36).toUpperCase().padStart(7, '0').slice(-7)), W / 2, H - 92, `600 16px Georgia, serif`, '#7a6a50', 'center', 1);
+    // "Scan to verify" QR (owner, 20 Nov 2026) — only when the server has this certificate in its records (progress_api a=certs)
+    if (cert && window.qrcode) { try {
+      const q = qrcode(0, 'M'); q.addData(new URL('verify-cert.php?c=' + cert.code, location.href).href); q.make();
+      const nM = q.getModuleCount(), sz = 112, cell = sz / nM, qx = W - 222, qy = 918;
+      x.fillStyle = '#fff'; x.fillRect(qx - 8, qy - 8, sz + 16, sz + 16); x.lineWidth = 2; x.strokeStyle = GOLD[3]; x.strokeRect(qx - 8, qy - 8, sz + 16, sz + 16);
+      x.fillStyle = NAVY; for (let r = 0; r < nM; r++) for (let cc = 0; cc < nM; cc++) if (q.isDark(r, cc)) x.fillRect(qx + cc * cell, qy + r * cell, cell + .4, cell + .4);
+      T('SCAN TO VERIFY', qx + sz / 2, qy + sz + 30, `700 14px Georgia, serif`, '#5b5040', 'center', 2);
+    } catch (e) {} }
     const sgn = await signs(); if (sgn.P) { const im = await loadImg(sgn.P); if (im) { const h2 = 70, w2 = im.width * h2 / im.height; x.drawImage(im, tx - w2 / 2, sy - h2 - 4, w2, h2); } }
     return c;
   }
   async function rankers(D) {
     const top = D.ranked.filter(k => k.rank <= 3);
     if (!top.length) { $('out').innerHTML = '<div class="pan msg">No child has every subject entered yet — rankers come when all marks of the class are in.</div>'; return; }
-    $('out').innerHTML = `<div class="pan np"><b>Class ${esc(CLS)} rankers</b> · on the real marks (no grace) · ${D.full} subjects each. <button class="btn y" id="cprint">🖨 Print all certificates</button></div><div class="certs" id="cl"></div>`;
+    $('out').innerHTML = `<div class="pan np"><b>Class ${esc(CLS)} rankers</b> · on the real marks (no grace) · ${D.full} subjects each. <button class="btn y" id="cprint">🖨 Print all certificates</button> <button class="btn" id="stars">⭐ Our Stars poster (all classes)</button></div><div id="sp"></div><div class="certs" id="cl"></div>`;
+    $('stars').onclick = () => starsPoster();
+    if (!D.certs) { try { D.certs = (await get(`progress_api.php?a=certs&ses=${SES}&cls=${encodeURIComponent(CLS)}`)).certs || {}; } catch (e) { D.certs = {}; } }
     const urls = [];
     for (const k of top) {
       const c = await certCanvas(k, D), url = c.toDataURL('image/jpeg', 0.92); urls.push(url);
@@ -271,6 +293,65 @@
     }
     $('cprint').onclick = () => { const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.');
       w.document.write(`<!doctype html><html><head><title>Certificates</title><style>@page{size:A4 landscape;margin:0}body{margin:0}img{width:100%;display:block;page-break-after:always}</style></head><body>${urls.map(u => `<img src="${u}">`).join('')}<script>setTimeout(print,600)<\/script></body></html>`); w.document.close(); };
+  }
+  // ---------- "Our Stars" poster (owner, 20 Nov 2026): every class's 1st/2nd/3rd with photos on one A3-style poster for the
+  // school gate, WhatsApp and Facebook. Classes without complete marks are left out.
+  function wrap2(x, t, w) { const W2 = t.split(/\s+/); let a = '', b = ''; for (const wd of W2) { if (!b && x.measureText((a + ' ' + wd).trim()).width <= w) a = (a + ' ' + wd).trim(); else b = (b + ' ' + wd).trim(); }
+    while (b && x.measureText(b).width > w && b.length > 3) b = b.slice(0, -2) + '…'; return [a, b]; }
+  async function starsPoster() {
+    const box = $('sp'); box.innerHTML = '<div class="pan msg">Making the poster — opening every class…</div>';
+    const groups = [];
+    for (const c of CLASSES) { try { const D2 = await load(c); const top = D2.ranked.filter(k => k.rank <= 3).slice(0, 4); if (top.length) groups.push([c, top]); } catch (e) {} }
+    if (!groups.length) { box.innerHTML = '<div class="pan msg">No class has all its marks yet.</div>'; return; }
+    const all = groups.flatMap(g => g[1]); const q = all.map(k => k.st.id); await Promise.all(Array.from({ length: 4 }, async () => { while (q.length) await photo(q.shift()); }));
+    await fonts();
+    const W = 1754, H = 2480, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const T = (t, X, Y, f, col, al, sp) => { x.font = f; x.fillStyle = col; x.textAlign = al || 'center'; if ('letterSpacing' in x) x.letterSpacing = (sp || 0) + 'px'; x.fillText(String(t), X, Y); if ('letterSpacing' in x) x.letterSpacing = '0px'; };
+    const NAVY = '#14294A', MAROON = '#7A1F2B';
+    const bg = x.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#0B1A36'); bg.addColorStop(.55, '#1B3D73'); bg.addColorStop(1, '#0E1F3D'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 140; i++) { x.globalAlpha = .15 + rnd() * .5; star(x, rnd() * W, rnd() * 560, 3 + rnd() * 7, i % 3 ? '#F6E3A1' : '#fff'); } x.globalAlpha = 1;
+    x.lineWidth = 6; x.strokeStyle = gold(x, 0, 0, W, H); x.strokeRect(34, 34, W - 68, H - 68); x.lineWidth = 2; x.strokeRect(50, 50, W - 100, H - 100);
+    const logo = await loadImg('img/snmsis-logo.png');
+    if (logo) { x.save(); x.beginPath(); x.arc(W / 2, 160, 80, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 6; x.strokeStyle = GOLD[1]; x.stroke(); x.clip(); x.drawImage(logo, W / 2 - 74, 86, 148, 148); x.restore(); }
+    T(SCHOOL.toUpperCase(), W / 2, 300, `700 46px Georgia, serif`, '#fff', 'center', 2);
+    T(PLACE, W / 2, 342, `italic 26px Georgia, serif`, '#DDE6F0');
+    x.font = `700 150px Georgia, serif`; x.fillStyle = gold(x, W / 2 - 520, 360, W / 2 + 520, 500); x.textAlign = 'center'; if ('letterSpacing' in x) x.letterSpacing = '18px'; x.fillText('OUR STARS', W / 2, 500); if ('letterSpacing' in x) x.letterSpacing = '0px';
+    T(`Half-Yearly Examination ${SESL}  ·  Class Rank Holders`, W / 2, 556, `italic 32px Georgia, serif`, '#F6E3A1');
+    const cols = 3, gx = 30, mx = 80, rows = Math.ceil(groups.length / cols), top0 = 610, avail = H - 170 - top0;
+    const cw = (W - 2 * mx - gx * (cols - 1)) / cols, ch = Math.min(470, (avail - gx * (rows - 1)) / rows);
+    for (let gi = 0; gi < groups.length; gi++) {
+      const [cl, kids] = groups[gi], col = gi % cols, row = Math.floor(gi / cols);
+      const lastRow = row === rows - 1, inRow = lastRow ? groups.length - row * cols : cols, off = (cols - inRow) * (cw + gx) / 2;
+      const X0 = mx + off + col * (cw + gx), Y0 = top0 + row * (ch + gx);
+      x.save(); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 18; x.fillStyle = '#FFFDF6'; x.beginPath(); x.roundRect(X0, Y0, cw, ch, 22); x.fill(); x.restore();
+      x.lineWidth = 3; x.strokeStyle = GOLD[1]; x.beginPath(); x.roundRect(X0 + 8, Y0 + 8, cw - 16, ch - 16, 16); x.stroke();
+      const rw2 = 230; x.fillStyle = MAROON; x.beginPath(); x.moveTo(X0 + cw / 2 - rw2 / 2, Y0 - 4); x.lineTo(X0 + cw / 2 + rw2 / 2, Y0 - 4); x.lineTo(X0 + cw / 2 + rw2 / 2 - 16, Y0 + 24); x.lineTo(X0 + cw / 2 + rw2 / 2, Y0 + 52); x.lineTo(X0 + cw / 2 - rw2 / 2, Y0 + 52); x.lineTo(X0 + cw / 2 - rw2 / 2 + 16, Y0 + 24); x.closePath(); x.fill();
+      T('CLASS ' + cl.toUpperCase(), X0 + cw / 2, Y0 + 35, `700 26px Georgia, serif`, '#F6E3A1', 'center', 3);
+      // podium order: 2nd · 1st · 3rd, the 1st a little bigger and higher; the whole group centred in the card
+      const ord = kids.length === 3 && kids[0].rank === 1 ? [kids[1], kids[0], kids[2]] : kids;
+      const n = ord.length, slot = (cw - 24) / n, r = Math.min(n === 3 ? 66 : 60, slot / 2 - 17, (ch - 200) / 2.3), body = 2 * r * 1.12 + 110, top = Y0 + 62 + Math.max(0, (ch - 62 - body) / 2);
+      for (let i = 0; i < n; i++) {
+        const k = ord[i], big = k.rank === 1 && n === 3, rr = big ? r * 1.12 : r, cx = X0 + 12 + slot * (i + .5), cy = top + r * 1.12 + (big ? -10 : 8), m = MEDAL[k.rank] || MEDAL[3];
+        const g2 = x.createLinearGradient(cx - rr, cy - rr, cx + rr, cy + rr); g2.addColorStop(0, m[0]); g2.addColorStop(1, m[1]);
+        x.beginPath(); x.arc(cx, cy, rr + 8, 0, 7); x.fillStyle = g2; x.fill(); x.beginPath(); x.arc(cx, cy, rr + 2, 0, 7); x.fillStyle = '#fff'; x.fill();
+        const ph = await loadImg(PH[k.st.id]); x.save(); x.beginPath(); x.arc(cx, cy, rr, 0, 7); x.clip();
+        if (ph) { const sc = Math.max(2 * rr / ph.width, 2 * rr / ph.height); x.drawImage(ph, cx - ph.width * sc / 2, cy - ph.height * sc / 2, ph.width * sc, ph.height * sc); }
+        else { x.fillStyle = '#E9EEF5'; x.fillRect(cx - rr, cy - rr, 2 * rr, 2 * rr); T(k.st.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(), cx, cy + rr * .3, `700 ${rr * .8}px Georgia, serif`, NAVY); }
+        x.restore();
+        x.beginPath(); x.arc(cx + rr * .72, cy + rr * .72, 22, 0, 7); x.fillStyle = MAROON; x.fill(); x.lineWidth = 3; x.strokeStyle = m[0]; x.stroke();
+        T(k.rank + ['', 'st', 'nd', 'rd'][k.rank], cx + rr * .72, cy + rr * .72 + 7, `700 18px Georgia, serif`, '#fff');
+        x.font = `700 22px Georgia, serif`; const [l1, l2] = wrap2(x, k.st.name, slot - 10);
+        const ny = top + 2 * r * 1.12 + 50; T(l1, cx, ny, `700 22px Georgia, serif`, NAVY); if (l2) T(l2, cx, ny + 26, `700 22px Georgia, serif`, NAVY);
+        T(k.pct + '%', cx, ny + (l2 ? 58 : 32), `700 22px Georgia, serif`, MAROON);
+      }
+    }
+    T('Congratulations to all our rank holders!', W / 2, H - 112, `italic 700 38px Georgia, serif`, '#F6E3A1');
+    T(SCHOOL + '  ·  ' + PLACE, W / 2, H - 70, `22px Georgia, serif`, '#DDE6F0');
+    const url = c.toDataURL('image/jpeg', .92);
+    box.innerHTML = `<div class="pan"><b>⭐ Our Stars — ${all.length} rank holders, ${groups.length} classes</b><div class="row" style="margin:8px 0"><button class="btn g" id="sps">Share</button><a class="btn l" download="Our-Stars-${SES}.jpg" href="${url}">Download</a><button class="btn l" id="spp">🖨 Print</button></div><img src="${url}" alt="Our Stars poster" style="width:100%;max-width:520px;display:block;border:1px solid #dfe4ea"></div>`;
+    $('sps').onclick = () => share(c, `Our-Stars-${SES}.png`, `Our Stars — Half-Yearly ${SESL}`);
+    $('spp').onclick = () => { const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.'); w.document.write(`<!doctype html><html><head><title>Our Stars</title><style>@page{size:A3 portrait;margin:0}body{margin:0}img{width:100%;display:block}</style></head><body><img src="${url}"><script>setTimeout(print,600)<\/script></body></html>`); w.document.close(); };
   }
   async function share(c, name, text) {
     const b64 = c.toDataURL('image/png').split(',')[1];
