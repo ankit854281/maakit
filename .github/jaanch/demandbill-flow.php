@@ -35,6 +35,9 @@ $put('regRow', 'oldfeecard|db2', ['session' => '2026-27', 'oldId' => '2', 'liveI
 $put('regRow', 'oldfeecard|db3', ['session' => '2026-27', 'oldId' => '3', 'liveId' => 'db3', 'name' => 'Other Child', 'cls' => '1st', 'section' => 'A', 'oldFee' => '0', 'transferFee' => '0', 'asOn' => '11-11-2026', 'months' => [$hd, ['April'], ['', '', 'Tution Fee', '700', '700', '0', '', 'Paid']]]);
 $put('regRow', 'oldreceipt|db1r', ['session' => '2026-27', 'receiptNo' => '1-179', 'date' => '01-08-2026', 'student' => 'db1', 'scholarNo' => '24554', 'name' => 'Raghav Tiwari', 'cls' => 'PG', 'section' => 'A', 'months' => 'July', 'total' => 90000, 'discount' => 0, 'lateFee' => 0, 'received' => 90000, 'mode' => 'Cash', 'status' => 'Cleared']);
 $put('regRow', 'oldrcptdet|db1r', ['session' => '2026-27', 'receiptNo' => '1-179', 'lines' => [['1', 'Tution Fee', 'July', '400'], ['2', 'Transport', 'July', '500']]]);
+// a discount-only receipt (old ERP 1-253: Net 7800, Discount 7800, Paid 0) — its lines are concession, not money
+$put('regRow', 'oldreceipt|db3r', ['session' => '2026-27', 'receiptNo' => '1-253', 'date' => '28-09-2026', 'student' => 'db3', 'scholarNo' => '24531', 'name' => 'Other Child', 'cls' => '1st', 'section' => 'A', 'months' => 'April', 'total' => 60000, 'discount' => 60000, 'lateFee' => 0, 'received' => 0, 'mode' => 'Cash', 'status' => 'Cleared']);
+$put('regRow', 'oldrcptdet|db3r', ['session' => '2026-27', 'receiptNo' => '1-253', 'lines' => [['1', 'Tution Fee', 'April', '600']]]);
 $pin = fn($uid, $role, $tid, $p) => $pdo->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,0)')->execute([$uid, $role, $tid, password_hash($p, PASSWORD_DEFAULT)]);
 $pin('chairman', 'chairman', null, '6666'); $pin('manager', 'manager', null, '9191'); $pin('t:K', 'teacher', 'K', '7777');
 $CH = $login(['role' => 'chairman', 'pin' => '6666']); $M = $login(['role' => 'manager', 'pin' => '9191']); $K = $login(['role' => 'teacher', 'tid' => 'K', 'pin' => '7777']);
@@ -57,5 +60,7 @@ dbc($j['kids'][1]['name'] === 'Riya Tiwari' && $j['kids'][1]['total']['oldDue'] 
 [$c, $j] = dbh('/school/demandbill_api.php?a=bulk&due=0', $CH); dbc($c === 200 && count($j['bills']) === 2, 'all classes sibling-wise: Raghav + Riya one family, Other Child alone: ' . count($j['bills'] ?? []));
 [$c, $j] = dbh('/school/demandbill_api.php?a=bulk&mode=single&due=0', $CH); dbc($c === 200 && count($j['bills']) === 3, 'all classes single: 3 bills');
 [$c, $j] = dbh('/school/demandbill_api.php?a=bulk&cls=3rd&due=0', $M); dbc($c === 200 && count($j['bills']) === 1 && count($j['bills'][0]) === 2, 'class 3rd sibling-wise brings the PG brother along');
+[$c, $j] = dbh('/school/demandbill_api.php?a=bill&sid=db3&mode=single', $CH); $h3 = null; foreach ($j['kids'][0]['heads'] ?? [] as $h) if ($h['m'] === 'April' && $h['name'] === 'Tuition Fee') $h3 = $h;
+dbc($c === 200 && $h3 && $h3['paid'] === 0 && $h3['conc'] === $h3['amt'] - $h3['due'], 'discount-only receipt = concession, not paid: ' . json_encode($h3 ?? $j));
 [$c] = dbh('/school/demandbill_api.php?a=bulk', $K); dbc($c === 403, 'teacher cannot print bulk demand bills');
 echo "Demand bill flow: OK\n";

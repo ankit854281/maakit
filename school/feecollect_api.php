@@ -12,7 +12,7 @@
 //   POST ?a=addFee  {ses,sids[],m,type,amt,remark,nonce}  Add Other Fee / Old Due (one child or a class)   Accountant / Principal
 //   POST ?a=dropFee {ses,sid,i,reason}                    remove an added head nothing was paid on            Principal
 //   POST ?a=discount {ses,sid,i,amt,reason}               Fee Discount (Head Wise)                            Principal
-//   POST ?a=undoDisc {ses,sid,i,reason}                   take a head-wise discount back                      Principal
+//   POST ?a=undoDisc {ses,sid,i,reason[,old:1]}           take a head-wise discount back (old:1 = one the old ERP gave) Principal
 //   POST ?a=discMany {ses,sid,items[{i,amt}],remark,nonce} Fee Discount (Head Wise) page: many heads at once   Principal
 //   POST ?a=editDisc {ses,sid,i,amt,reason}               Fee Discount › Edit: set a discount to a new amount  Principal
 // ============================================================
@@ -311,6 +311,16 @@ case 'undoDisc': {
         if (!empty($h['na'])) throw new InvalidArgumentException($label . ' is not active for this child.');
         if ($amt > $h['amt'] - $h['paid']) throw new InvalidArgumentException('Discount is more than the balance of ' . $label . ' (' . number_format(($h['amt'] - $h['paid']) / 100, 2) . ').');
         $L['heads'][$k]['paid'] += $amt; $L['heads'][$k]['disc'] = $disc + $amt;
+    } elseif ($disc <= 0 && !empty($in['old'])) {
+        // Take back a discount the OLD ERP gave (its fee card "Fee Discount" table), owner 20 Nov 2026: "jo act ka total 4500
+        // hai vo teeno bachcho ka lagega". Only the amount the old card lists for this head + month, once (oldUndo).
+        if (!empty($h['oldUndo'])) throw new InvalidArgumentException('The old ERP discount of ' . $label . ' was already taken back.');
+        $T = (array)((ofc_cards($ses)[$sid] ?? [])['tables']['Fee Discount'] ?? []); $old = 0;
+        foreach (array_slice($T, 1) as $row) { $row = array_map('strval', (array)$row);
+            if (count($row) >= 6 && trim($row[3] ?? '') === OFC_MONTHS[$h['m']] && strcasecmp(trim($row[4] ?? ''), trim((string)$h['name'])) === 0) $old += (int)round((float)str_replace(',', '', $row[5]) * 100); }
+        if ($old <= 0) throw new InvalidArgumentException($label . ' has no old ERP discount.');
+        if ($old > $h['paid']) throw new InvalidArgumentException('The old ERP discount of ' . $label . ' is more than what is settled on it.');
+        $L['heads'][$k]['paid'] = $h['paid'] - $old; $L['heads'][$k]['oldUndo'] = $old; $amt = $old;
     } else {
         if ($disc <= 0) throw new InvalidArgumentException($label . ' has no discount given here.');
         $L['heads'][$k]['paid'] = max(0, $h['paid'] - $disc); $L['heads'][$k]['disc'] = 0; $amt = $disc;

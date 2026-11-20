@@ -35,10 +35,15 @@ function db_upto(): int { return db_ord($GLOBALS['DB_UPTO']); }
 /** One child's bill: heads with paid / concession / due, totals, receipts. */
 function db_bill(array $r): array {
     $NUM = array_flip(DB_MN); $P = [];
-    foreach ($r['receipts'] as $x) foreach ($x['lines'] as $l) {
-        $ms = array_values(array_filter(array_map(fn($m) => $NUM[trim($m)] ?? null, explode(',', (string)$l['months']))));
-        if (!$ms) continue;
-        foreach ($ms as $m) { $k = $l['head'] . '|' . $m; $P[$k] = ($P[$k] ?? 0) + $l['amt'] / count($ms); }
+    foreach ($r['receipts'] as $x) {
+        // A receipt's lines can be money AND discount: old ERP receipt 1-253 = Net 7800, Discount 7800, Paid 0 ("july me admison
+        // hua tha", owner 20 Nov 2026: "vo jama nahi 7800 discount hai"). Only the money part counts as Paid, spread over its lines.
+        $lt = array_sum(array_map(fn($l) => (float)$l['amt'], $x['lines'])); $share = $lt > 0 ? max(0, min(1, (float)$x['received'] / $lt)) : 0;
+        foreach ($x['lines'] as $l) {
+            $ms = array_values(array_filter(array_map(fn($m) => $NUM[trim($m)] ?? null, explode(',', (string)$l['months']))));
+            if (!$ms) continue;
+            foreach ($ms as $m) { $k = $l['head'] . '|' . $m; $P[$k] = ($P[$k] ?? 0) + $l['amt'] * $share / count($ms); }
+        }
     }
     $up = db_upto(); $heads = []; $t = ['fee' => 0, 'paid' => 0, 'conc' => 0, 'due' => 0, 'nowFee' => 0, 'nowTr' => 0];
     usort($r['heads'], fn($x, $y) => db_ord($x['m']) <=> db_ord($y['m']));
