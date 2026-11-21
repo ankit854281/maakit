@@ -1164,6 +1164,7 @@ function dayText() {
 }
 
 // ---------------------------------------------------------------- Home
+let PTMR;
 function homeBody() {
   const t = D.t, thought = THOUGHTS[Math.floor(new Date(D.today + 'T00:00:00').getTime() / 864e5) % THOUGHTS.length];
   const mon = cashIn(inMonth(D.rc, D.today.slice(0, 7))), today = cashIn(D.rc.filter(r => r.date === D.today));
@@ -1185,7 +1186,9 @@ function homeBody() {
   } else pies.push(`<div class="pc"><h4>School</h4><p class="empty">${SC && SC.err ? esc(SC.err) : 'Loading attendance, results and syllabus…'}</p></div>`);
   html += dailyBody();
   html += `<h5 class="sh">At a glance</h5><div class="pg">${pies.join('')}</div>`;
-  const QA = [['stu', 'Students', 'setTab(1)'], ['school', 'Attendance', "goTo('school','att')"], ['t_rep', 'Results', "goTo('school','res')"], ['t_month', 'Exams & events', "goTo('school','exams')"],
+  // PTM Desk (owner, 21 Nov 2026): today's parents, fee promises and open complaints — loaded once, opens ptm.php
+  if (PTMR === undefined) { PTMR = null; api('ptm_api.php?a=report').then(d => { PTMR = d; try { render(); } catch (e) {} }).catch(() => { PTMR = { err: 1 }; }); }
+  const QA = [['stu', 'Students', 'setTab(1)'], ['t_rep', 'PTM Desk', "location.href='ptm.php#report'"], ['school', 'Attendance', "goTo('school','att')"], ['t_rep', 'Results', "goTo('school','res')"], ['t_month', 'Exams & events', "goTo('school','exams')"],
     ['t_over', 'Syllabus', "goTo('school','syl')"], ['t_dues', 'Fee collection', "goTo('sum')"], ['t_call', 'Call diary', "S.cmode='diary';goTo('calls')"], ['phone', 'Messages', "S.cmode='msg';goTo('calls')"],
     ['staff', 'Teachers & staff', 'setTab(4)'], ['t_rep', 'Reports', 'setTab(5)']];
   html += `<h5 class="sh">Quick open</h5><div class="qa">${QA.map(([i, l, f]) => `<button onclick="${f}">${ill(i)}<span>${l}</span></button>`).join('')}</div>`;
@@ -1203,6 +1206,9 @@ function homeBody() {
   }
   { const TP = pickFams(D.today); if (TP.length) A.unshift(['', `Today's calls: ${TP.length} famil${TP.length > 1 ? 'ies' : 'y'} · ${new Set(TP.map(x => x.c)).size} classes`, TP.slice(0, 6).map(x => x.c + ': ' + (x.kids[0].father || x.kids[0].name)).join(', ') + (TP.length > 6 ? '…' : ''), "S.mv='today';goTo('my')"]);
     else if (isP()) A.unshift(['warn', "Pick today's families for the Chairman (3 per class)", 'Chairman calls → Pick families', "S.mv='pick';goTo('my')"]); }
+  if (PTMR && !PTMR.err) { const oc = (PTMR.complaints || []).filter(v => v.cmp && v.cmp.status !== 'Resolved');
+    if ((PTMR.visits || []).length) A.unshift(['', `PTM today: ${PTMR.visits.length} parents came`, `${PTMR.visits.filter(v => v.promise).length} fee promises · ${oc.length} complaints open`, "location.href='ptm.php#report'"]);
+    else if (oc.length) A.unshift(['bad', `${oc.length} parent complaint${oc.length > 1 ? 's' : ''} open`, oc.slice(0, 3).map(v => v.name).join(', '), "location.href='ptm.php#cmp'"]); }
   const L = callLists(t.def);
   if (L.broken.length) A.push(['bad', `${L.broken.length} fee promises broken`, rsS(sum(L.broken, x => x.dueNow)) + ' due', "S.list='broken';S.cmode='calls';goTo('calls')"]);
   if (L.today.length) A.push(['', `${L.today.length} parents to call today`, 'they gave today’s date', "S.list='today';S.cmode='calls';goTo('calls')"]);

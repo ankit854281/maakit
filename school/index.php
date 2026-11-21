@@ -41,5 +41,6 @@ $v = static fn(string $f): string => (string)(@filemtime(__DIR__ . '/' . $f) ?: 
 <script src="calls-erp.js?v=<?= $v('calls-erp.js') ?>"></script>
 <script src="demandbills-erp.js?v=<?= $v('demandbills-erp.js') ?>"></script>
 <script src="results-erp.js?v=<?= $v('results-erp.js') ?>"></script>
+<script src="ptm-erp.js?v=<?= $v('ptm-erp.js') ?>"></script>
 <script src="followup-app.js?v=<?php echo (string)filemtime(__DIR__.'/followup-app.js'); ?>"></script></body>
 </html>

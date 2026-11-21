@@ -1304,3 +1304,16 @@ papers only from photos the owner sends.
   • Grades: old ERP scale E1 (21–32.99) / E2 (0–20.99) instead of plain E.
   • Children with no marks at all get no slip; the page names them and the children with some subjects not entered.
   • Graph cut-off on phones fixed earlier (fitSlips). Live check found data gaps only (listed to the owner).
+
+- 2026-11-21 (Claude): PTM Desk (owner: "parents aa rahe hain — entry, feedback, complaint; Pawan Bhalla Sir naam note karein, fee
+  dekhein, result ke hisaab se suggestion ke saath baat karein aur fill karein; slip class me teachers dikha rahe hain").
+  • school/ptm.php + ptm.js + ptm_api.php. Pick class → child: parent name/mobile, brothers/sisters (same mobile), Half-Yearly
+    result (% , rank, weak/strong/AB subjects, notebook), attendance, fee due till this month (same rule as the Chairman app) and
+    auto talking points in Hinglish. One save: came (time), slip shown, fee paid today / promise date + amount, mood (4 smileys),
+    topics, feedback note, complaint (category, due date, status). Option marks brothers/sisters as came too.
+  • Tabs: Parents · Aaj ki report (counts, fee promises, mood, feedback, who did not come with WhatsApp/Call, print) ·
+    Shikayatein (open complaints of any day; Resolve with action — desk, Principal, Chairman).
+  • Access: Principal, Reception, Chairman (report + resolve) and the desk teacher — tid PW (Pawan Bhalla Sir) or settings.ptmDesk.
+    Records ptmVisit 'date|sid' (excluded from legacy sync in inc.php). Teacher App: Home card for PW (teacher-ptm.js);
+    ERP: Event/PTM → "PTM Desk (parents)" (ptm-erp.js); Chairman app: quick open + "PTM today" in Needs attention.
+  • Test: .github/jaanch/ptm-flow.php.
