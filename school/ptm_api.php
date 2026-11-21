@@ -12,6 +12,7 @@
 //   POST ?a=visit {date,sid,…}       save / update the visit of one child (also marks siblings as came, if asked)
 //   GET  ?a=report&date=             the day: every visit, counts per class, who did not come; complaints still open (any day)
 //   POST ?a=resolve {key,status,action}   close a complaint (Principal, Chairman, the desk)
+//   POST ?a=sent {date,sid,how}      the result card / thank-you was sent to the parent on WhatsApp
 //
 //  Who: Principal, Reception, Chairman (report + resolve) and the desk teacher — Pawan Bhalla Sir (tid PW, or a teacher whose
 //  name has "Pawan"), or the teachers listed in settings.ptmDesk. Records: ptmVisit 'date|sid' (kept out of the legacy sync).
@@ -102,7 +103,7 @@ case 'visit': {
     elseif (!empty($in['clearComplaint'])) $cmp = null;
     $d = ['sid' => $sid, 'name' => $all[$sid]['name'], 'cls' => $all[$sid]['cls'], 'date' => $date, 'at' => $old['at'] ?? date('H:i'), 'by' => (string)$u['label'],
         'parent' => ptm_txt($in['parent'] ?? '', 80), 'phone' => sch_phone10((string)($in['phone'] ?? '')), 'slip' => !empty($in['slip']), 'paid' => $paid > 0 ? round($paid) : 0, 'promise' => $promise,
-        'pamt' => (int)preg_replace('/\D/', '', (string)($in['pamt'] ?? '')), 'mood' => $mood, 'tags' => $tags, 'note' => ptm_txt($in['note'] ?? '', 800), 'cmp' => $cmp, 'with' => $old['with'] ?? ''];
+        'pamt' => (int)preg_replace('/\D/', '', (string)($in['pamt'] ?? '')), 'mood' => $mood, 'tags' => $tags, 'note' => ptm_txt($in['note'] ?? '', 800), 'cmp' => $cmp, 'with' => $old['with'] ?? '', 'sent' => $old['sent'] ?? null];
     sch_rec_put('ptmVisit', $key, $d, $uid);
     $also = [];
     if (!empty($in['siblings'])) { $p = sch_phone10($all[$sid]['phone']);
@@ -111,6 +112,14 @@ case 'visit': {
                 'slip' => false, 'paid' => 0, 'promise' => '', 'pamt' => 0, 'mood' => 0, 'tags' => [], 'note' => '', 'cmp' => null, 'with' => $all[$sid]['name']], $uid); $also[] = $x['name']; } } }
     sch_log($u, 'ptmVisit', 'PTM visit saved: ' . $all[$sid]['name'] . ' (' . $all[$sid]['cls'] . ')' . ($cmp && $cText !== '' ? ' with a complaint' : ''));
     sch_json(['ok' => true, 'visit' => $d, 'also' => $also]);
+}
+case 'sent': {
+    // the result card / thank-you message was sent to the parent on WhatsApp from the desk (owner, 21 Nov 2026)
+    if (!$desk) sch_fail('Only the PTM desk can do this.', 403);
+    $key = ptm_date($in['date'] ?? '') . '|' . (string)($in['sid'] ?? ''); $v = sch_rec_get('ptmVisit', $key);
+    if (!$v) throw new InvalidArgumentException('Save the visit first.');
+    $v['sent'] = ['at' => date('H:i'), 'how' => in_array($in['how'] ?? '', ['msg', 'card'], true) ? $in['how'] : 'msg', 'by' => (string)$u['label']];
+    sch_rec_put('ptmVisit', $key, $v, $uid); sch_json(['ok' => true, 'visit' => $v]);
 }
 case 'report': {
     $date = ptm_date($_GET['date'] ?? ''); $V = $visits($date . '|'); $all = reg_students(); $per = [];

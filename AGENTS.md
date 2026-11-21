@@ -1320,3 +1320,7 @@ papers only from photos the owner sends.
   • 21 Nov (owner: "professional pattern se likhiye"): PTM Desk wording is professional English throughout (labels, talking
     points, report, complaints, WhatsApp follow-up). Topics: Academics, Teacher, Homework, Behaviour, Fee, Transport, Cleanliness,
     Meals, Other (PTM_OLD maps the first-day Hinglish topics Padhai/Bus/Safai/Khana).
+  • After "Save visit" the desk shows a ready, editable professional thank-you message (result per subject with grades, overall,
+    rank only for the upper half, attendance, final-exam targets, advice given, fee paid / committed date) → "Send message on
+    WhatsApp" (wa.me to the parent) and "Share result card" (1080px PNG card drawn in ptm.js, same grace rule as the slip; app
+    bridges SNMSISFiles.shareImage/shareFile, Web Share, else download). POST ptm_api a=sent records it; the report counts it.
