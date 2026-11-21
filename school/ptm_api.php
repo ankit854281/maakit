@@ -40,7 +40,8 @@ if ($method === 'POST') { $in = json_decode((string)file_get_contents('php://inp
 function ptm_date($v): string { $v = (string)$v; return preg_match('/^20\d\d-\d\d-\d\d$/', $v) ? $v : date('Y-m-d'); }
 function ptm_txt($v, int $n = 300): string { return mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)$v)), 0, $n); }
 function ptm_ses(string $date): string { $y = (int)substr($date, 0, 4); if ((int)substr($date, 5, 2) < 4) $y--; return $y . '-' . substr((string)($y + 1), 2); }
-const PTM_TAGS = ['Padhai', 'Teacher', 'Homework', 'Behaviour', 'Fee', 'Bus', 'Safai', 'Khana', 'Other'];
+const PTM_TAGS = ['Academics', 'Teacher', 'Homework', 'Behaviour', 'Fee', 'Transport', 'Cleanliness', 'Meals', 'Other'];
+const PTM_OLD = ['Padhai' => 'Academics', 'Bus' => 'Transport', 'Safai' => 'Cleanliness', 'Khana' => 'Meals'];   // first-day Hinglish topics
 $visits = function (string $prefix) use ($db): array {
     $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='ptmVisit' AND deleted=0 AND r LIKE ?"); $q->execute([str_replace(['%', '_'], ['\\%', '\\_'], $prefix) . '%']); $o = [];
     foreach ($q as $x) { $d = json_decode((string)$x['d'], true); if (is_array($d)) $o[(string)$x['r']] = $d; } return $o;
@@ -90,13 +91,13 @@ case 'visit': {
     $date = ptm_date($in['date'] ?? ''); $sid = (string)($in['sid'] ?? ''); $all = reg_students();
     if (!isset($all[$sid]) || !empty($all[$sid]['inactive'])) throw new InvalidArgumentException('Choose a child of the school.');
     $key = $date . '|' . $sid; $old = sch_rec_get('ptmVisit', $key) ?? [];
-    $tags = array_values(array_intersect(PTM_TAGS, array_map('strval', (array)($in['tags'] ?? []))));
+    $tags = array_values(array_intersect(PTM_TAGS, array_map(fn($t) => PTM_OLD[(string)$t] ?? (string)$t, (array)($in['tags'] ?? []))));
     $promise = (string)($in['promise'] ?? ''); if ($promise !== '' && !preg_match('/^20\d\d-\d\d-\d\d$/', $promise)) $promise = '';
     $mood = (int)($in['mood'] ?? 0); if ($mood < 0 || $mood > 4) $mood = 0;
     $paid = (float)preg_replace('/[^\d.]/', '', (string)($in['paid'] ?? ''));
     $cText = ptm_txt($in['complaint'] ?? '', 800);
     $cmp = $old['cmp'] ?? null;
-    if ($cText !== '') $cmp = ['text' => $cText, 'cat' => in_array((string)($in['cat'] ?? ''), PTM_TAGS, true) ? (string)$in['cat'] : ($tags[0] ?? 'Other'), 'status' => ($cmp['status'] ?? '') === 'Resolved' && ($cmp['text'] ?? '') === $cText ? 'Resolved' : 'Open',
+    if ($cText !== '') $cmp = ['text' => $cText, 'cat' => in_array(PTM_OLD[(string)($in['cat'] ?? '')] ?? (string)($in['cat'] ?? ''), PTM_TAGS, true) ? (PTM_OLD[(string)$in['cat']] ?? (string)$in['cat']) : ($tags[0] ?? 'Other'), 'status' => ($cmp['status'] ?? '') === 'Resolved' && ($cmp['text'] ?? '') === $cText ? 'Resolved' : 'Open',
         'action' => (string)($cmp['action'] ?? ''), 'due' => preg_match('/^20\d\d-\d\d-\d\d$/', (string)($in['cdue'] ?? '')) ? (string)$in['cdue'] : (string)($cmp['due'] ?? ''), 'at' => $cmp['at'] ?? date('Y-m-d H:i')];
     elseif (!empty($in['clearComplaint'])) $cmp = null;
     $d = ['sid' => $sid, 'name' => $all[$sid]['name'], 'cls' => $all[$sid]['cls'], 'date' => $date, 'at' => $old['at'] ?? date('H:i'), 'by' => (string)$u['label'],

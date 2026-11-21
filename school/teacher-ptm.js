@@ -7,6 +7,6 @@ if (typeof vHome === 'function') {
     try { if (!S || !ME || (typeof pMode === 'function' && pMode())) return html;
       const L = (S.settings || {}).ptmDesk, mine = Array.isArray(L) ? L.includes(me()) : me() === 'PW';
       if (!mine) return html;
-      return `<div class="card lpb-home"><div class="row"><div><b>👪 PTM Desk — parents</b><small>Parent ka naam, result par baat, fee, feedback aur shikayat — ek jagah.</small></div><button class="btn go" onclick="location.href='ptm.php'">Open</button></div></div>` + html;
+      return `<div class="card lpb-home"><div class="row"><div><b>👪 PTM Desk</b><small>Record parent visits, result discussion, fee, feedback and complaints.</small></div><button class="btn go" onclick="location.href='ptm.php'">Open</button></div></div>` + html;
     } catch (e) { return html; } };
 }

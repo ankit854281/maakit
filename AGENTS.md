@@ -1317,3 +1317,6 @@ papers only from photos the owner sends.
     Records ptmVisit 'date|sid' (excluded from legacy sync in inc.php). Teacher App: Home card for PW (teacher-ptm.js);
     ERP: Event/PTM → "PTM Desk (parents)" (ptm-erp.js); Chairman app: quick open + "PTM today" in Needs attention.
   • Test: .github/jaanch/ptm-flow.php.
+  • 21 Nov (owner: "professional pattern se likhiye"): PTM Desk wording is professional English throughout (labels, talking
+    points, report, complaints, WhatsApp follow-up). Topics: Academics, Teacher, Homework, Behaviour, Fee, Transport, Cleanliness,
+    Meals, Other (PTM_OLD maps the first-day Hinglish topics Padhai/Bus/Safai/Khana).

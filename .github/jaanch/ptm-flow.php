@@ -37,7 +37,7 @@ try {
     tc(($k['pt-s1']['res']['pct'] ?? null) == 26 && ($k['pt-s3']['res']['rank'] ?? 0) === 1 && ($k['pt-s1']['res']['nbLow'] ?? 0) === 2, 'result summary ' . json_encode($k['pt-s1']['res'] ?? null));
     tc(count($k['pt-s1']['sib']) === 1 && $k['pt-s1']['sib'][0]['id'] === 'pt-s2', 'brother/sister by the parent mobile');
     [$c, $d] = tq('visit', $PW, ['date' => $date, 'sid' => 'pt-s1', 'parent' => 'Synthetic Father', 'phone' => '9811155555', 'slip' => true, 'promise' => $date, 'pamt' => '1500', 'mood' => 3, 'tags' => ['Padhai', 'Nope'], 'note' => 'Maths practice', 'complaint' => 'Synthetic complaint', 'cat' => 'Bus', 'siblings' => true]);
-    tc($c === 200 && $d['visit']['tags'] === ['Padhai'] && $d['visit']['cmp']['status'] === 'Open' && $d['also'] === ['Synthetic Ptm Two'], 'visit saved with complaint and sibling ' . json_encode($d));
+    tc($c === 200 && $d['visit']['tags'] === ['Academics'] && $d['visit']['cmp']['status'] === 'Open' && $d['visit']['cmp']['cat'] === 'Transport' && $d['also'] === ['Synthetic Ptm Two'], 'visit saved with complaint and sibling ' . json_encode($d));
     tc((bool)sch_rec_get('ptmVisit', "$date|pt-s2"), 'sibling marked as came');
     [$c] = tq('visit', $C, ['date' => $date, 'sid' => 'pt-s3']); tc($c === 403, 'Chairman reads, the desk writes');
     [$c, $d] = tq('report', $C, null, '&date=' . $date);

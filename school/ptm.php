@@ -4,7 +4,7 @@ header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-store');
 header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'; object-src 'none'");
 $v = (string)@filemtime(__DIR__ . '/ptm.js');
-?><!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#14294A">
+?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#14294A">
 <title>PTM Desk · SN Mishra SIS</title>
 <style>
 @font-face{font-family:'Poppins';src:url('fonts/poppins-latin-400-normal.woff2') format('woff2');font-weight:400}
@@ -49,7 +49,7 @@ a.ic{display:inline-block;text-decoration:none;font-weight:700;border-radius:8px
 @media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}}
 </style></head><body>
 <div class="top"><div class="r"><img src="img/snmsis-logo.png" alt=""><b>PTM Desk</b><input type="date" id="dt"><a href="index.php" target="_top">ERP</a></div>
-<div class="tabs"><button data-t="desk" class="on">👪 Parents</button><button data-t="report">📋 Aaj ki report</button><button data-t="cmp">⚠️ Shikayatein</button></div></div>
-<div class="wrap" id="app"><div class="msg">Khul raha hai…</div></div>
+<div class="tabs"><button data-t="desk" class="on">👪 Parents</button><button data-t="report">📋 Report</button><button data-t="cmp">⚠️ Complaints</button></div></div>
+<div class="wrap" id="app"><div class="msg">Opening…</div></div>
 <script src="ptm.js?v=<?= htmlspecialchars($v) ?>"></script>
 </body></html>
