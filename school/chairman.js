@@ -892,6 +892,7 @@ function schAtt() {
   return `<div class="chips months" style="margin:0 -14px 12px">${months.map(m => `<button class="chip${m === ym ? ' on' : ''}" onclick="S.am='${m}';render()">${M3(+m.slice(5, 7))}<small>${m.slice(0, 4)}</small></button>`).join('')}</div>
     <div class="kp"><div class="k big"><span>Present today</span><b>${tR.length ? pc(ratio(tP, tT)) : '—'}</b><small>${tR.length ? `${tP} of ${tT} students · ${tR.length} of ${R.length} classes marked` : 'No class has marked attendance today yet'}</small></div>
       ${k(MN[+ym.slice(5, 7)] + ' average', pc(ratio(pres, tot)), days.length + ' school days marked', tone(ratio(pres, tot)))}${k('Below 75%', String(low.length), 'students this month', low.length ? 'bad' : 'ok')}</div>
+    ${absCard(ym)}
     ${days.length ? card('Daily attendance · ' + MN[+ym.slice(5, 7)], canvas('attDay', 190)) + card('Class average · ' + MN[+ym.slice(5, 7)], canvas('attCls', 210)) : card('Attendance · ' + MN[+ym.slice(5, 7)], `<p class="empty">No attendance marked in ${MN[+ym.slice(5, 7)]} yet.</p><p class="note">Class teachers mark it in the school app → Attendance (one tap per absent child). It shows here the same minute. So far ${SC.dates.length} day${SC.dates.length === 1 ? '' : 's'} marked this session.</p>`)}
     ${card('Class-wise · ' + MN[+ym.slice(5, 7)], `<div class="tw"><table class="tbl"><tr><th>Class</th><th>Students</th><th>Days marked</th><th>Average</th><th>Today</th><th>Class teacher</th></tr>${R.map(r => `<tr onclick="openRoom('${esc(r.c)}')" style="cursor:pointer"><td>${esc(r.c)}</td><td>${r.n}</td><td>${r.days}</td><td class="${r.pct != null && r.pct < 75 ? 'red' : ''}">${pc(r.pct)}</td><td>${tdy[r.c] ? pc(ratio(r.n - tdy[r.c].length, r.n)) : '—'}</td><td>${esc(r.ct)}</td></tr>`).join('')}
       <tr class="tot"><td>School</td><td>${sum(R, r => r.n)}</td><td>${days.length}</td><td>${pc(ratio(pres, tot))}</td><td>${tR.length ? pc(ratio(tP, tT)) : '—'}</td><td></td></tr></table></div>`)}
@@ -899,6 +900,74 @@ function schAtt() {
     ${low.length ? card('Below 75% in ' + MN[+ym.slice(5, 7)] + ' · ' + low.length, `<div class="tw"><table class="tbl"><tr><th>Student</th><th>Class</th><th>Present</th><th>Absent</th><th>%</th></tr>${low.map(o => `<tr onclick="openStu('${esc(o.s.id)}')" style="cursor:pointer"><td>${esc(o.s.name)}</td><td>${esc(o.s.cls)}</td><td>${o.a.pres}</td><td>${o.a.ab}</td><td class="red">${pc(o.a.pct)}</td></tr>`).join('')}</table></div>`) : ''}
     ${ocR.length ? card('Last session ' + longSes(os) + ' · from old ERP report cards', `<div class="tw"><table class="tbl"><tr><th>Class (then)</th><th>Students</th><th>Attendance</th></tr>${ocR.map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td class="${r[2] < 75 ? 'red' : ''}">${pc(r[2])}</td></tr>`).join('')}<tr class="tot"><td>School</td><td>${O.length}</td><td>${pc(ratio(sum(O, o => o.a.p), sum(O, o => o.a.t)))}</td></tr></table></div>
       ${oLow.length ? `<p class="note">${oLow.length} children were below 75% last session${oLow.length ? ': ' + oLow.slice(0, 12).map(o => esc(o.r.name) + ' ' + o.a.pct + '%').join(', ') + (oLow.length > 12 ? '…' : '') : ''}.</p>` : ''}`) : ''}`;
+}
+// ---- Absent list: pick a day → WhatsApp text, or a PDF to share / download ----
+function absDays() { return SC.dates.filter(d => d <= SC.today).slice().sort().reverse(); }
+function absPick() { const D2 = absDays(); return S.ad && D2.includes(S.ad) ? S.ad : D2[0] || ''; }
+function absList(d) {
+  const day = SC.att[d] || {}, L = [], miss = [];
+  SC.cls.filter(c => (SC.byCls[c] || []).length).forEach(c => {
+    if (!day[c]) return miss.push(c);
+    const kids = (SC.byCls[c] || []).filter(s => day[c].includes(s.id)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    L.push({ c, n: SC.byCls[c].length, kids });
+  });
+  return { L, miss, tot: sum(L, x => x.kids.length), str: sum(L, x => x.n) };
+}
+function absText(d) {
+  const A = absList(d); let t = `*${D.school || 'SN Mishra Singapore International School'}*\n*Absent list · ${dmy(d)}*\nTotal absent: ${A.tot} of ${A.str}\n`;
+  A.L.forEach(x => { t += `\n*Class ${x.c}* — ${x.kids.length ? x.kids.length + ' absent' : 'all present'}\n`; x.kids.forEach((s, i) => { t += `${i + 1}. ${s.name}${s.father ? ' (F: ' + s.father + ')' : ''}${s.phone ? ' · ' + s.phone : ''}\n`; }); });
+  if (A.miss.length) t += `\nNot marked: ${A.miss.join(', ')}`;
+  return t;
+}
+function absCard(ym) {
+  const D2 = absDays(); if (!D2.length) return '';
+  const d = absPick(), A = absList(d);
+  return card('Absent list · ' + dmy(d) + ' · ' + A.tot, `<select class="selx" onchange="S.ad=this.value;render()">${D2.slice(0, 60).map(x => `<option value="${x}" ${x === d ? 'selected' : ''}>${dmy(x)}${x === SC.today ? ' (today)' : ''}</option>`).join('')}</select>
+    <div class="mya" style="grid-template-columns:1fr 1fr;margin:8px 0 10px"><button class="cta" onclick="absPdf('${d}')">📄 Share / download PDF</button><a class="cta lt" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(absText(d))}">💬 WhatsApp list</a></div>
+    ${A.tot ? `<div class="tw"><table class="tbl"><tr><th>Class</th><th>Student</th><th>Father</th><th>Mobile</th></tr>${A.L.filter(x => x.kids.length).map(x => x.kids.map((s, i) => `<tr onclick="openStu('${esc(s.id)}')" style="cursor:pointer"><td>${i ? '' : esc(x.c) + ' · ' + x.kids.length}</td><td>${esc(s.name)}</td><td>${esc(s.father)}</td><td>${esc(s.phone)}</td></tr>`).join('')).join('')}</table></div>` : '<p class="empty">Nobody absent in the classes marked.</p>'}
+    ${A.miss.length ? `<p class="note">Not marked this day: ${esc(A.miss.join(', '))}</p>` : ''}`);
+}
+function absPages(d) {
+  const A = absList(d), W = 1240, H = 1754, P = 60, pages = []; let g, y, c;
+  const T = (t, x, yy, f, col, al) => { g.font = f; g.fillStyle = col || '#111'; g.textAlign = al || 'left'; g.fillText(String(t == null ? '' : t), x, yy); };
+  const fit = (t, max, f) => { g.font = f; t = String(t || ''); while (t.length > 3 && g.measureText(t).width > max) t = t.slice(0, -2); return t; };
+  const page = () => { c = document.createElement('canvas'); c.width = W; c.height = H; g = c.getContext('2d'); pages.push(c); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    if (pages.length === 1) { g.fillStyle = '#17324D'; g.fillRect(0, 0, W, 170); T((D.school || 'SN Mishra Singapore International School').toUpperCase(), W / 2, 70, 'bold 38px Arial', '#fff', 'center');
+      T('Absent list · ' + dmy(d), W / 2, 122, 'bold 30px Arial', '#FFD166', 'center'); T(`Total absent ${A.tot} of ${A.str} students · ${A.L.length} classes marked`, W / 2, 158, '22px Arial', '#DDE6F0', 'center'); y = 230; }
+    else { T('Absent list · ' + dmy(d) + ' (continued)', P, 70, 'bold 26px Arial', '#17324D'); y = 120; } };
+  const need = h => { if (y + h > H - 90) page(); };
+  page();
+  A.L.forEach(x => {
+    need(110); g.fillStyle = x.kids.length ? '#EEF2F6' : '#EAF7EE'; g.fillRect(P, y - 36, W - 2 * P, 50);
+    T('Class ' + x.c, P + 16, y - 3, 'bold 26px Arial', '#17324D'); T(x.kids.length ? x.kids.length + ' absent of ' + x.n : 'All ' + x.n + ' present', W - P - 16, y - 3, 'bold 24px Arial', x.kids.length ? '#B30000' : '#1E7B3A', 'right'); y += 52;
+    x.kids.forEach((s, i) => { need(46); T((i + 1) + '.', P + 10, y, 'bold 23px Arial'); T(fit(s.name, 420, 'bold 23px Arial'), P + 56, y, 'bold 23px Arial');
+      T(fit(s.father ? 'F: ' + s.father : '', 380, '22px Arial'), P + 500, y, '22px Arial', '#444'); T(s.phone || '', W - P - 10, y, '22px Arial', '#444', 'right');
+      g.strokeStyle = '#E1E6EC'; g.beginPath(); g.moveTo(P, y + 14); g.lineTo(W - P, y + 14); g.stroke(); y += 44; });
+    y += 24;
+  });
+  if (A.miss.length) { need(60); T(fit('Not marked: ' + A.miss.join(', '), W - 2 * P, 'italic 22px Arial'), P, y, 'italic 22px Arial', '#8A5A00'); }
+  pages.forEach((p, i) => { g = p.getContext('2d'); T('Page ' + (i + 1) + ' of ' + pages.length + ' · printed ' + dmy(SC.today), W / 2, H - 40, '18px Arial', '#888', 'center'); });
+  return pages;
+}
+function jpgPdf(pages) { // minimal PDF: one JPEG per A4 page
+  const bin = pages.map(p => atob(p.toDataURL('image/jpeg', .9).split(',')[1])), o = [], n = pages.length; let s = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
+  const add = t => { o.push(s.length); s += (o.length) + ' 0 obj\n' + t + '\nendobj\n'; };
+  add('<< /Type /Catalog /Pages 2 0 R >>');
+  add('<< /Type /Pages /Count ' + n + ' /Kids [' + pages.map((_, i) => (3 + i * 3) + ' 0 R').join(' ') + '] >>');
+  pages.forEach((p, i) => { const b = 3 + i * 3, cmd = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + (b + 1) + ' 0 R >> >> /Contents ' + (b + 2) + ' 0 R >>');
+    add('<< /Type /XObject /Subtype /Image /Width ' + p.width + ' /Height ' + p.height + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + bin[i].length + ' >>\nstream\n' + bin[i] + '\nendstream');
+    add('<< /Length ' + cmd.length + ' >>\nstream\n' + cmd + '\nendstream'); });
+  const x = s.length; s += 'xref\n0 ' + (o.length + 1) + '\n0000000000 65535 f \n' + o.map(v => String(v).padStart(10, '0') + ' 00000 n \n').join('') + 'trailer\n<< /Size ' + (o.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + x + '\n%%EOF';
+  return btoa(s);
+}
+async function absPdf(d) {
+  const pages = absPages(d), name = 'Absent-list-' + d + '.pdf', b64 = jpgPdf(pages);
+  if (window.SNMSISFiles && typeof SNMSISFiles.shareFile === 'function') return SNMSISFiles.shareFile(name, b64, 'application/pdf');
+  const bytes = Uint8Array.from(atob(b64), ch => ch.charCodeAt(0)), blob = new Blob([bytes], { type: 'application/pdf' });
+  if (window.SNMSISFiles && typeof SNMSISFiles.shareImage === 'function') return SNMSISFiles.shareImage('Absent-list-' + d + '.png', pages[0].toDataURL('image/png').split(',')[1]);
+  try { const file = new File([blob], name, { type: 'application/pdf' }); if (navigator.canShare && navigator.canShare({ files: [file] })) return await navigator.share({ files: [file], title: 'Absent list ' + dmy(d) }); } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); toast('PDF downloaded — attach it in WhatsApp.');
 }
 function resPick() {
   const key = S.rx && SC.exs.includes(S.rx) ? S.rx : (SC.exs.find(x => /final|annual/i.test(x)) || SC.exs[0] || '');

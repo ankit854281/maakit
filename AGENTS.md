@@ -1324,3 +1324,9 @@ papers only from photos the owner sends.
     rank only for the upper half, attendance, final-exam targets, advice given, fee paid / committed date) → "Send message on
     WhatsApp" (wa.me to the parent) and "Share result card" (1080px PNG card drawn in ptm.js, same grace rule as the slip; app
     bridges SNMSISFiles.shareImage/shareFile, Web Share, else download). POST ptm_api a=sent records it; the report counts it.
+
+### Absent list → PDF / WhatsApp from the Chairman app (22 Nov 2026, owner: "Attendance absent list kaise share pdf download hoga" → "App se")
+- `chairman.js` School → Attendance tab now has an **Absent list** card (`absCard`) above the graphs: a date picker (marked days, newest first, default latest), class-wise absent names with father and mobile, and "not marked" classes.
+- **📄 Share / download PDF** (`absPdf`): `absPages` draws A4 pages (1240×1754, auto page breaks), `jpgPdf` wraps them as a small hand-built PDF (one JPEG per page, no library). Order: `SNMSISFiles.shareFile(name, b64, 'application/pdf')` (the APK's bridge already accepts PDF) → `shareImage` (first page picture) → `navigator.share` → download.
+- **💬 WhatsApp list**: `absText(d)` as a wa.me text.
+- Data comes only from `SC.att[date][cls]` (absent ids) — nothing new is saved.
