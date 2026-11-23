@@ -1345,3 +1345,7 @@ papers only from photos the owner sends.
 - `teacher_api.php?a=fees` children now also carry `paid` (paise, all receipts this session from `ff_snapshot`) and `rcpts` (newest 8: no, date, amount paise).
 - Teacher App Connect → Fee calls: each row shows "Jama ₹…" under the due; the call-result sheet has `feePaidBox(k)` (Jama, Baaki till today, old due, receipt list).
 - `demandbill.js` sheet: new **💰 Fee account — kitna jama, kitna baaki** panel (`acct(B)`) above the bill, per child: session fee, concession, Jama, old due, Dena hai till <month>, Poore saal ka baaki, receipts with heads and months. Data is the same `a=bill` response (rupees) — no new API. Shows in every app that opens the demand bill.
+
+### Class list — % only, one A4 page (23 Nov 2026, owner: "marks slip class ke according banao means ek page me aa jaye" + "bas percentage ho, name details ho")
+- results.php → Marks slips → **🖨 Class list — % only (1 page)** (`classList(D)` in results.js): pop-up page with school header, class, students, class average, class teacher, then S.No · Student name · Father's name · Adm. No. · Percentage (A–Z, below 33% in red, "No marks" when nothing entered), Class Teacher / Principal sign lines.
+- Percentage = `k.pct`, the same as the slip (grace inside, not shown). Row height and font follow the class size, and an onload script sets `--z` (print zoom) so the page never spills to a second sheet — checked with 30, 48, 70 and 90 children.

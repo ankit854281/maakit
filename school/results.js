@@ -80,12 +80,36 @@
   function bar() {
     $('bar').innerHTML = `<div class="row"><b>Class</b><select id="cls">${CLASSES.map(c => `<option ${c === CLS ? 'selected' : ''}>${c}</option>`).join('')}</select>
       <div class="tabs"><button class="${TAB === 'slip' ? 'on' : ''}" data-t="slip">Marks slips</button><button class="${TAB === 'rank' ? 'on' : ''}" data-t="rank">Rankers' certificates</button></div>
-      ${TAB === 'slip' ? '<button class="btn y" id="pall">🖨 Print all slips (1 per A4)</button><button class="btn y" id="phalf">🖨 Print 2 per A4 (half page)</button>' : ''}</div>
+      ${TAB === 'slip' ? '<button class="btn y" id="pall">🖨 Print all slips (1 per A4)</button><button class="btn y" id="phalf">🖨 Print 2 per A4 (half page)</button><button class="btn y" id="plist">🖨 Class list — % only (1 page)</button>' : ''}</div>
       <p class="note">Half-Yearly ${SESL}: Pre. Test 10 + Notebook 5 + SEA 5 + Term Exam 80 = 100 per subject. Grace: a subject from ${PASS - GRACE_MAX} to ${PASS - 1} gets grace up to ${PASS} (pass) — added to the Term Exam marks on the slip and not shown; saved marks and rank stay on the real marks.</p>`;
     $('cls').onchange = e => { CLS = e.target.value; location.hash = 'cls=' + encodeURIComponent(CLS); draw(); };
     document.querySelectorAll('[data-t]').forEach(b => { b.onclick = () => { TAB = b.dataset.t; draw(); }; });
     if ($('pall')) $('pall').onclick = () => window.print();
     if ($('phalf')) $('phalf').onclick = async () => { try { const D = await load(CLS); printHalf(D, D.kids.filter(k => k.done > 0).sort((a, b) => a.st.name.localeCompare(b.st.name))); } catch (e) { alert(e.message); } };
+    if ($('plist')) $('plist').onclick = async () => { try { classList(await load(CLS)); } catch (e) { alert(e.message); } };
+  }
+  // Whole class on ONE A4 page — name details + percentage only (owner, 23 Nov 2026: "marks slip class ke according banao
+  // means ek page me aa jaye" / "bas percentage ho, name details ho"). Same % as the slips (grace included, not shown).
+  function classList(D) {
+    const K = D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name)), n = K.length || 1, done = K.filter(k => k.pct != null);
+    const avg = done.length ? Math.round(done.reduce((s, k) => s + k.pct, 0) * 10 / done.length) / 10 : null;
+    const rowMm = Math.min(9, Math.max(4.2, 232 / n)), fs = Math.min(13, Math.max(8, rowMm * 1.55));
+    const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.');
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Class ${esc(CLS)} — Half-Yearly %</title><style>
+      @page{size:A4 portrait;margin:9mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}
+      body{margin:0;font-family:Poppins,Arial,sans-serif;color:#14243a}.pg{width:192mm;margin:0 auto}
+      .hd{text-align:center;border-bottom:2.5px solid #17324D;padding-bottom:2.5mm;margin-bottom:3mm}.hd h1{margin:0;font-size:19px;letter-spacing:.5px;color:#17324D}.hd p{margin:1mm 0 0;font-size:11.5px;color:#455}
+      .hd h2{margin:2mm 0 0;font-size:15px;color:#B8860B}.kp{display:flex;justify-content:space-between;font-size:11.5px;margin:0 0 2.5mm}.kp b{color:#17324D}
+      table{width:100%;border-collapse:collapse;font-size:${fs}px}th{background:#17324D;color:#fff;padding:1.4mm 2mm;text-align:left;font-size:${Math.min(12, fs)}px}
+      @media print{.pg{zoom:var(--z,1)}}td{height:${rowMm}mm;line-height:1.1;padding:0 2mm;border-bottom:1px solid #dde3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62mm}tr:nth-child(even) td{background:#F5F8FB}
+      td.c,th.c{text-align:center}td.p{text-align:right;font-weight:700}td.lo{color:#B30000}.ft{display:flex;justify-content:space-between;margin-top:9mm;font-size:11.5px}.ft span{border-top:1px solid #333;padding-top:1mm;min-width:45mm;text-align:center}
+      @media screen{body{background:#eef1f5;padding:10px}.pg{background:#fff;padding:9mm;box-shadow:0 2px 10px rgba(0,0,0,.12);width:210mm}}</style></head><body><div class="pg">
+      <div class="hd"><h1>${esc(SCHOOL.toUpperCase())}</h1><p>${esc(PLACE)}</p><h2>Half-Yearly Examination ${esc(SESL)} · Class ${esc(CLS)}</h2></div>
+      <div class="kp"><span>Students: <b>${K.length}</b></span><span>Class average: <b>${avg != null ? avg + '%' : '—'}</b></span><span>Class teacher: <b>${esc(D.ct || '—')}</b></span></div>
+      <table><tr><th class="c">S.No</th><th>Student name</th><th>Father's name</th><th class="c">Adm. No.</th><th class="c" style="text-align:right">Percentage</th></tr>
+      ${K.map((k, i) => `<tr><td class="c">${i + 1}</td><td><b>${esc(k.st.name)}</b></td><td>${esc(k.st.father || '—')}</td><td class="c">${esc(k.st.adm || '—')}</td><td class="p${k.pct != null && k.pct < PASS ? ' lo' : ''}">${k.pct != null ? k.pct + '%' : 'No marks'}</td></tr>`).join('')}</table>
+      <div class="ft"><span>Class Teacher</span><span>Principal</span></div></div><script>onload=()=>{const g=document.querySelector('.pg'),H=278*96/25.4,W=192*96/25.4,sv=g.getAttribute('style')||'';g.style.cssText='width:192mm;padding:0;box-shadow:none';const z=Math.min(1,H/g.scrollHeight,W/g.scrollWidth);g.style.cssText=sv;document.documentElement.style.setProperty('--z',z);setTimeout(print,300)}<\/script></body></html>`);
+    w.document.close();
   }
   async function draw() {
     bar(); $('out').innerHTML = '<div class="pan msg">Opening class ' + esc(CLS) + '…</div>';
