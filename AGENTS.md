@@ -1336,3 +1336,7 @@ papers only from photos the owner sends.
 - So Palak Ma'am gets, for every class: Connect → Fee calls (+ demand bill), Tour calls, Parent calls (PTM / event / absent), and the "📞 Fee calling — all classes" Home card.
 - Homework share stays **Rati Ma'am only**: `sch_hw_sharer()` / `isHwSharer()` use the Rati-only rule.
 - Test: feecaller-flow.php (Palak opens fees + calls_api; homework share 403 for her).
+
+### Demand bill zoom (23 Nov 2026, owner: "calling me demand bill bahut achha diya hai but zoom nahi ho raha hai")
+- The APK WebView has no page zoom, so `demandbill.js` has its own full-screen viewer `DemandBill.zoom()`: tap the bill picture or "🔍 Zoom bill" → pinch with two fingers, double-tap to zoom in/out, drag to move, buttons − / Fit / + / ✕ Close (mouse wheel on a computer). Pointer events on `#dbZoom` (`touch-action:none`); the image has `pointer-events:none` + `draggable=false` — without that the browser's native image drag cancels the drag after one move.
+- Works everywhere `demandbill.js` is loaded: Teacher App fee calls, Chairman app, Salary app (Chairman calls), Sibling Demand Bill page. `DemandBill.close()` also closes the viewer.

@@ -157,7 +157,37 @@
   #dbSheet .g{background:#22C55E;color:#fff}#dbSheet .y{background:#F2C14E;color:#1d1d1d}#dbSheet .l{background:#eef1f5;color:#17324D}#dbSheet .full{grid-column:1/-1}
   #dbSheet .db-sum{font-size:13px;color:#445;margin:6px 0}#dbSheet .db-msg{padding:20px;text-align:center;color:#445}
   .db-pick{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eef1f4;background:#fff;padding:10px 4px;font:inherit;cursor:pointer}.db-pick b{display:block;font-size:14px}.db-pick small{color:#667;font-size:12px}.db-pick em{float:right;font-style:normal;font-weight:700;color:#B30000}`;
+  st.textContent += `#dbZoom{position:fixed;inset:0;z-index:9500;background:#0b1320;touch-action:none;overflow:hidden;user-select:none}
+  #dbZoom img{position:absolute;left:0;top:0;pointer-events:none;-webkit-user-drag:none;transform-origin:0 0;max-width:none;will-change:transform}
+  #dbZoom .zb{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;padding:12px 10px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.7))}
+  #dbZoom .zb button{font:inherit;font-size:15px;font-weight:700;border:0;border-radius:99px;padding:11px 16px;background:#fff;color:#17324D;min-width:52px}#dbZoom .zb .x{background:#F2C14E}
+  #dbZoom .zh{position:absolute;top:10px;left:0;right:0;text-align:center;color:#cfd8e3;font-size:12px}`;
   document.head.appendChild(st);
+  // ---------------- zoom viewer: pinch / double-tap / drag / + − (the app's WebView has no page zoom) ----------------
+  function zoom() {
+    if (!URL_) return; let el = document.getElementById('dbZoom'); if (el) el.remove();
+    el = document.createElement('div'); el.id = 'dbZoom';
+    el.innerHTML = `<div class="zh">Do ungli se bada karein · double-tap = zoom · ungli se khiskayein</div><img src="${URL_}" alt="Fee demand bill" draggable="false"><div class="zb"><button data-z="-">−</button><button data-z="fit">Fit</button><button data-z="+">+</button><button class="x" data-z="close">✕ Close</button></div>`;
+    document.body.appendChild(el);
+    const img = el.querySelector('img'); let sc = 1, fit = 1, x = 0, y = 0; const P = new Map(); let pinch = null, lastTap = 0, drag = null;
+    const apply = () => { const W = el.clientWidth, H = el.clientHeight, w = img.naturalWidth * sc, h = img.naturalHeight * sc;
+      x = w <= W ? (W - w) / 2 : Math.min(0, Math.max(W - w, x)); y = h <= H ? (H - h) / 2 : Math.min(0, Math.max(H - h, y));
+      img.style.transform = `translate(${x}px,${y}px) scale(${sc})`; };
+    const zoomAt = (ns, cx, cy) => { ns = Math.max(fit, Math.min(fit * 6, ns)); x = cx - (cx - x) * ns / sc; y = cy - (cy - y) * ns / sc; sc = ns; apply(); };
+    const doFit = () => { fit = Math.min(el.clientWidth / img.naturalWidth, el.clientHeight / img.naturalHeight); sc = fit; x = y = 0; apply(); };
+    if (img.complete && img.naturalWidth) doFit(); else img.onload = doFit;
+    el.querySelector('.zb').addEventListener('click', e => { const z = e.target.dataset.z, W = el.clientWidth / 2, H = el.clientHeight / 2;
+      if (z === '+') zoomAt(sc * 1.5, W, H); else if (z === '-') zoomAt(sc / 1.5, W, H); else if (z === 'fit') doFit(); else if (z === 'close') el.remove(); });
+    el.addEventListener('pointerdown', e => { if (e.target.closest('.zb')) return; el.setPointerCapture(e.pointerId); P.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (P.size === 2) { const [a, b] = [...P.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: sc }; drag = null; }
+      else if (P.size === 1) { const now = Date.now(); if (now - lastTap < 300) { sc > fit * 1.05 ? doFit() : zoomAt(fit * 2.5, e.clientX, e.clientY); lastTap = 0; } else lastTap = now; drag = { x: e.clientX, y: e.clientY }; } });
+    el.addEventListener('pointermove', e => { if (!P.has(e.pointerId)) return; P.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && P.size === 2) { const [a, b] = [...P.values()]; zoomAt(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2); }
+      else if (drag) { x += e.clientX - drag.x; y += e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY }; apply(); } });
+    const up = e => { P.delete(e.pointerId); if (P.size < 2) pinch = null; if (P.size === 1) { const [a] = [...P.values()]; drag = { x: a.x, y: a.y }; } else if (!P.size) drag = null; };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', e => { e.preventDefault(); zoomAt(sc * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX, e.clientY); }, { passive: false });
+  }
   async function open(sid, tok, mode) {
     // mode 'single' = only this child; default = sibling bill (brothers / sisters with the same mobile in one bill)
     OPEN = { sid, tok, mode: mode === 'single' ? 'single' : 'sib' };
@@ -170,7 +200,8 @@
       <p class="db-sum">${CUR.kids.length > 1 ? CUR.kids.length + ' children (same mobile) · ' : ''}Payable till ${esc(CUR.upto)}: <b>${rs(fam)}</b></p>
       <div class="db-acts"><button class="g" onclick="DemandBill.share()">📤 Share bill picture</button><a class="db-b y" target="_blank" href="https://wa.me/${(CUR.kids[0].mobile.match(/\d{10}/) || [''])[0] ? '91' + CUR.kids[0].mobile.match(/\d{10}/)[0] : ''}?text=${encodeURIComponent(waText(CUR))}">💬 WhatsApp message</a>
         ${wv ? '' : '<button class="l" onclick="DemandBill.download()">⬇ Download picture</button><button class="l" onclick="DemandBill.print()">🖨 Print</button>'}</div>
-      <img src="${URL_}" alt="Fee demand bill">
+      <button class="l full" style="width:100%;margin-bottom:8px" onclick="DemandBill.zoom()">🔍 Zoom bill (bada karke dekhiye)</button>
+      <img src="${URL_}" alt="Fee demand bill" onclick="DemandBill.zoom()" style="cursor:zoom-in">
       <p class="db-sum">Share bill picture: choose WhatsApp and the parent. WhatsApp message: opens the parent's number with the amounts written.</p>`);
   }
   async function share() {
@@ -197,5 +228,5 @@
       <p class="db-sum">Session ${esc(LIST.ses)} · amount = payable till ${esc(LIST.upto)} · highest first</p><div id="dbList"></div>`;
     DemandBill._f = draw2; draw2('');
   }
-  window.DemandBill = { open, mode: m => OPEN && open(OPEN.sid, OPEN.tok, m), share, download, print, picker, close: () => { const el = document.getElementById('dbSheet'); if (el) el.innerHTML = ''; }, draw, waText };
+  window.DemandBill = { open, zoom, mode: m => OPEN && open(OPEN.sid, OPEN.tok, m), share, download, print, picker, close: () => { const el = document.getElementById('dbSheet'); if (el) el.innerHTML = ''; const z = document.getElementById('dbZoom'); if (z) z.remove(); }, draw, waText };
 })();
