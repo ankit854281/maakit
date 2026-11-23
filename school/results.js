@@ -91,7 +91,7 @@
   // Whole class on ONE A4 page — name details + percentage only (owner, 23 Nov 2026: "marks slip class ke according banao
   // means ek page me aa jaye" / "bas percentage ho, name details ho"). Same % as the slips (grace included, not shown).
   function classList(D) {
-    const K = D.kids.slice().sort((a, b) => a.st.name.localeCompare(b.st.name)), n = K.length || 1, done = K.filter(k => k.pct != null);
+    const K = D.kids.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1) || a.st.name.localeCompare(b.st.name)), n = K.length || 1, done = K.filter(k => k.pct != null);
     const avg = done.length ? Math.round(done.reduce((s, k) => s + k.pct, 0) * 10 / done.length) / 10 : null;
     const rowMm = Math.min(9, Math.max(4.2, 232 / n)), fs = Math.min(13, Math.max(8, rowMm * 1.55));
     const w = window.open('', '_blank'); if (!w) return alert('Allow pop-ups to print.');
@@ -106,7 +106,7 @@
       @media screen{body{background:#eef1f5;padding:10px}.pg{background:#fff;padding:9mm;box-shadow:0 2px 10px rgba(0,0,0,.12);width:210mm}}</style></head><body><div class="pg">
       <div class="hd"><h1>${esc(SCHOOL.toUpperCase())}</h1><p>${esc(PLACE)}</p><h2>Half-Yearly Examination ${esc(SESL)} · Class ${esc(CLS)}</h2></div>
       <div class="kp"><span>Students: <b>${K.length}</b></span><span>Class average: <b>${avg != null ? avg + '%' : '—'}</b></span><span>Class teacher: <b>${esc(D.ct || '—')}</b></span></div>
-      <table><tr><th class="c">S.No</th><th>Student name</th><th>Father's name</th><th class="c">Adm. No.</th><th class="c" style="text-align:right">Percentage</th></tr>
+      <table><tr><th class="c">No.</th><th>Student name</th><th>Father's name</th><th class="c">Adm. No.</th><th class="c" style="text-align:right">Percentage</th></tr>
       ${K.map((k, i) => `<tr><td class="c">${i + 1}</td><td><b>${esc(k.st.name)}</b></td><td>${esc(k.st.father || '—')}</td><td class="c">${esc(k.st.adm || '—')}</td><td class="p${k.pct != null && k.pct < PASS ? ' lo' : ''}">${k.pct != null ? k.pct + '%' : 'No marks'}</td></tr>`).join('')}</table>
       <div class="ft"><span>Class Teacher</span><span>Principal</span></div></div><script>onload=()=>{const g=document.querySelector('.pg'),H=278*96/25.4,W=192*96/25.4,sv=g.getAttribute('style')||'';g.style.cssText='width:192mm;padding:0;box-shadow:none';const z=Math.min(1,H/g.scrollHeight,W/g.scrollWidth);g.style.cssText=sv;document.documentElement.style.setProperty('--z',z);setTimeout(print,300)}<\/script></body></html>`);
     w.document.close();
