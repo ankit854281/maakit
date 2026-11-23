@@ -1568,7 +1568,8 @@ function uuid4() { if (window.crypto && crypto.randomUUID) return crypto.randomU
 function myClasses() { return [...new Set([...myCT(), ...allocList().map(a => a.c)])].filter(c => className().includes(c)); }
 // Fee calling: class teacher → own class; the school's fee caller (settings.feeCallers; not saved → Rati Ma'am 'RT' from 20 Nov 2026, was Adarsh Sir) → every class
 const isRati = t => t === 'RT' || /\brati\b/i.test(((S.teachers || {})[t] || {}).name || '');
-function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() && (Array.isArray(L) ? L.includes(me()) : isRati(me())); }
+const isPalak = t => /\bpalak\b/i.test(((S.teachers || {})[t] || {}).name || ''); // owner 23 Nov 2026: Palak Ma'am calls too
+function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() && (Array.isArray(L) ? L.includes(me()) : isRati(me()) || isPalak(me())); }
 function isHwSharer() { const L = (S.settings || {}).hwSharers; return !isP() && (Array.isArray(L) ? L.includes(me()) : isRati(me())); }
 function feeCls() { return isFeeCaller() ? (S.classes || []).map(k => k.c) : myCT(); }
 function vConn() {

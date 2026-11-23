@@ -12,7 +12,7 @@ function fch(string $path, $body, ?string $tok): array { $c = curl_init('http://
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 $put = fn($k, $r, $d) => sch_rec_put($k, $r, $d, 'principal');
 $put('settings', 'main', ['school' => 'FC School', 'session' => '2026-27', 'sessionStart' => '2026-04-01']);
-$put('teacher', 'AD', ['name' => 'Adarsh Dubey Sir']); $put('teacher', 'K', ['name' => 'Kartikey Sir']); $put('teacher', 'RT', ['name' => "Rati Ma'am"]); $put('teacher', 'RA2', ['name' => 'Rati Mishra']); $put('teacher', 'MA', ['name' => 'Mamta']); $put('teacher', 'AR', ['name' => 'Aarati Devi']);
+$put('teacher', 'AD', ['name' => 'Adarsh Dubey Sir']); $put('teacher', 'K', ['name' => 'Kartikey Sir']); $put('teacher', 'RT', ['name' => "Rati Ma'am"]); $put('teacher', 'RA2', ['name' => 'Rati Mishra']); $put('teacher', 'MA', ['name' => 'Mamta']); $put('teacher', 'AR', ['name' => 'Aarati Devi']); $put('teacher', 'PS9', ['name' => "Palak Srivastava Ma'am"]);
 $put('classes', 'main', [['c' => '9th', 'ct' => 'K'], ['c' => '10th', 'ct' => 'MA']]);
 $put('student', 'f1', ['id' => 'f1', 'name' => 'Aman', 'cls' => '10th', 'phone' => '9839100011']);
 $pin = fn($uid, $tid, $p) => $pdo->prepare('INSERT INTO sch_users (uid, role, tid, pin_hash, must_change) VALUES (?,?,?,?,0)')->execute([$uid, 'teacher', $tid, password_hash($p, PASSWORD_DEFAULT)]);
@@ -26,6 +26,9 @@ $pin('t:AD', 'AD', '1111'); $pin('t:K', 'K', '2222'); $pin('t:RA2', 'RA2', '3333
 [$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $j['token']); fcc($c === 200, 'Rati found by name even when her id is not RT');
 [, $j] = fch('/school/api.php?a=login', ['role' => 'teacher', 'tid' => 'AR', 'pin' => '5555'], null);
 [$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $j['token']); fcc($c === 403, '"Aarati" is not Rati');
+$pin('t:PS9', 'PS9', '6666'); [, $j] = fch('/school/api.php?a=login', ['role' => 'teacher', 'tid' => 'PS9', 'pin' => '6666'], null); $PS = $j['token'];
+[$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $PS); fcc($c === 200, "Palak Ma'am also calls every class (owner 23 Nov 2026)");
+[$c] = fch('/school/calls_api.php?a=state', null, $PS); fcc($c !== 403, "Palak Ma'am opens parent calls");
 // Homework share
 $put('classes', 'main', [['c' => '9th', 'ct' => 'K'], ['c' => '10th', 'ct' => 'MA'], ['c' => '11th', 'ct' => 'K']]);
 $d0 = date('Y-m-d');
@@ -34,6 +37,7 @@ $put('diary', "$d0|MA|2", ['cls' => '10th', 'subj' => 'Science', 'topic' => 'Lig
 $put('diary', "$d0|K|3", ['cls' => '11th', 'subj' => 'Physics', 'classwork' => 'Units', 'hw' => 'Read ch 1']);
 [$c, $j] = fch('/school/teacher_api.php?a=hwall&date=' . $d0, null, $RT); fcc($c === 200 && count($j['items']) === 2 && $j['items'][0]['cls'] === '9th' && $j['items'][1]['cw'] === 'Light' && $j['classes'] === ['9th', '10th'], 'hwall: PG–10th only, class work falls back to topic ' . json_encode($j));
 [$c] = fch('/school/teacher_api.php?a=hwall&date=' . $d0, null, $K); fcc($c === 403, 'other teachers cannot open homework share');
+[$c] = fch('/school/teacher_api.php?a=hwall&date=' . $d0, null, $PS); fcc($c === 403, "homework share stays Rati Ma'am only, not Palak Ma'am");
 [$c, $j] = fch('/school/teacher_api.php?a=hwshared', ['date' => $d0, 'cls' => '9th', 'on' => 1], $RT); fcc($c === 200 && !empty($j['shared']['at']), 'mark shared');
 [$c, $j] = fch('/school/teacher_api.php?a=hwall&date=' . $d0, null, $RT); fcc(isset($j['shared']['9th']), 'shared mark comes back');
 [$c] = fch('/school/teacher_api.php?a=fees&cls=10th', null, $K); fcc($c === 403, 'another class teacher cannot open 10th');

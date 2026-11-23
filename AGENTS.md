@@ -1330,3 +1330,9 @@ papers only from photos the owner sends.
 - **📄 Share / download PDF** (`absPdf`): `absPages` draws A4 pages (1240×1754, auto page breaks), `jpgPdf` wraps them as a small hand-built PDF (one JPEG per page, no library). Order: `SNMSISFiles.shareFile(name, b64, 'application/pdf')` (the APK's bridge already accepts PDF) → `shareImage` (first page picture) → `navigator.share` → download.
 - **💬 WhatsApp list**: `absText(d)` as a wa.me text.
 - Data comes only from `SC.att[date][cls]` (absent ids) — nothing new is saved.
+
+### Palak Ma'am gets calling (23 Nov 2026, owner: "palak maam ke app me calling ka features add kariye")
+- Default fee caller (when `settings.feeCallers` is not saved — it is not, on live) is now **Rati Ma'am OR Palak Srivastava Ma'am** (teacher name has the word "Palak"). `inc.php`: `sch_is_rati()` (old rule) + `sch_default_fee_caller()` = Rati or Palak; teacher.js `isPalak()`, `isFeeCaller()` = Rati or Palak.
+- So Palak Ma'am gets, for every class: Connect → Fee calls (+ demand bill), Tour calls, Parent calls (PTM / event / absent), and the "📞 Fee calling — all classes" Home card.
+- Homework share stays **Rati Ma'am only**: `sch_hw_sharer()` / `isHwSharer()` use the Rati-only rule.
+- Test: feecaller-flow.php (Palak opens fees + calls_api; homework share 403 for her).
