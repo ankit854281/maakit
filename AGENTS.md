@@ -1340,3 +1340,8 @@ papers only from photos the owner sends.
 ### Demand bill zoom (23 Nov 2026, owner: "calling me demand bill bahut achha diya hai but zoom nahi ho raha hai")
 - The APK WebView has no page zoom, so `demandbill.js` has its own full-screen viewer `DemandBill.zoom()`: tap the bill picture or "🔍 Zoom bill" → pinch with two fingers, double-tap to zoom in/out, drag to move, buttons − / Fit / + / ✕ Close (mouse wheel on a computer). Pointer events on `#dbZoom` (`touch-action:none`); the image has `pointer-events:none` + `draggable=false` — without that the browser's native image drag cancels the drag after one move.
 - Works everywhere `demandbill.js` is loaded: Teacher App fee calls, Chairman app, Salary app (Chairman calls), Sibling Demand Bill page. `DemandBill.close()` also closes the viewer.
+
+### Paid / receipts shown while calling (23 Nov 2026, owner: "parents puchh lete kitna paid kiye kitna jama hai — vo bhi show kare to baat karne ke liye easy rahega")
+- `teacher_api.php?a=fees` children now also carry `paid` (paise, all receipts this session from `ff_snapshot`) and `rcpts` (newest 8: no, date, amount paise).
+- Teacher App Connect → Fee calls: each row shows "Jama ₹…" under the due; the call-result sheet has `feePaidBox(k)` (Jama, Baaki till today, old due, receipt list).
+- `demandbill.js` sheet: new **💰 Fee account — kitna jama, kitna baaki** panel (`acct(B)`) above the bill, per child: session fee, concession, Jama, old due, Dena hai till <month>, Poore saal ka baaki, receipts with heads and months. Data is the same `a=bill` response (rupees) — no new API. Shows in every app that opens the demand bill.

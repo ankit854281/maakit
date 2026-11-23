@@ -157,12 +157,25 @@
   #dbSheet .g{background:#22C55E;color:#fff}#dbSheet .y{background:#F2C14E;color:#1d1d1d}#dbSheet .l{background:#eef1f5;color:#17324D}#dbSheet .full{grid-column:1/-1}
   #dbSheet .db-sum{font-size:13px;color:#445;margin:6px 0}#dbSheet .db-msg{padding:20px;text-align:center;color:#445}
   .db-pick{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eef1f4;background:#fff;padding:10px 4px;font:inherit;cursor:pointer}.db-pick b{display:block;font-size:14px}.db-pick small{color:#667;font-size:12px}.db-pick em{float:right;font-style:normal;font-weight:700;color:#B30000}`;
-  st.textContent += `#dbZoom{position:fixed;inset:0;z-index:9500;background:#0b1320;touch-action:none;overflow:hidden;user-select:none}
+  st.textContent += `#dbSheet .db-acct{background:#F4FAF6;border:1px solid #D3EBDA;border-radius:14px;padding:8px 12px;margin:8px 0;font-size:13.5px}#dbSheet .db-acct summary{font-weight:700;color:#17324D;cursor:pointer;padding:3px 0}
+  #dbSheet .db-kid{padding:6px 0;border-top:1px solid #E1EFE5}#dbSheet .db-kid:first-of-type{border-top:0}#dbSheet .db-kn{font-weight:700;color:#17324D;margin:2px 0 4px}
+  #dbSheet .db-r{display:flex;justify-content:space-between;gap:10px;padding:2px 0}#dbSheet .db-r small{display:block;color:#667;font-size:11.5px}#dbSheet .db-rc{margin-top:5px;padding-top:5px;border-top:1px dashed #CFE3D5}
+  #dbZoom{position:fixed;inset:0;z-index:9500;background:#0b1320;touch-action:none;overflow:hidden;user-select:none}
   #dbZoom img{position:absolute;left:0;top:0;pointer-events:none;-webkit-user-drag:none;transform-origin:0 0;max-width:none;will-change:transform}
   #dbZoom .zb{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;padding:12px 10px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.7))}
   #dbZoom .zb button{font:inherit;font-size:15px;font-weight:700;border:0;border-radius:99px;padding:11px 16px;background:#fff;color:#17324D;min-width:52px}#dbZoom .zb .x{background:#F2C14E}
   #dbZoom .zh{position:absolute;top:10px;left:0;right:0;text-align:center;color:#cfd8e3;font-size:12px}`;
   document.head.appendChild(st);
+  // ---------------- account summary: what was paid, concession, what is left (owner, 23 Nov 2026: "parents puchh lete
+  // kitna paid kiye kitna jama hai — vo bhi show kare to baat karne ke liye easy rahega") ----------------
+  function acct(B) {
+    const row = (a, b, col) => `<div class="db-r"><span>${a}</span><b${col ? ` style="color:${col}"` : ''}>${b}</b></div>`;
+    return `<details class="db-acct" open><summary>💰 Fee account — kitna jama, kitna baaki</summary>${B.kids.map(k => { const t = k.total || {}, R = k.receipts || [];
+      return `<div class="db-kid">${B.kids.length > 1 ? `<div class="db-kn">${esc(k.name)} · Class ${esc(k.cls)}</div>` : ''}
+        ${row('Session fee (full year)', rs(t.fee))}${t.conc ? row('Concession / discount', '− ' + rs(t.conc)) : ''}${row('Jama (paid)', rs(t.paid), GREEN)}
+        ${t.oldDue ? row('Old session due', rs(t.oldDue), RED) : ''}${row('Dena hai till ' + esc(B.upto), rs(t.now), RED)}${row('Poore saal ka baaki', rs(t.due))}
+        ${R.length ? `<div class="db-rc">${R.slice().reverse().map(r => `<div class="db-r"><span>${esc(dmy(r.date))} · Rcpt ${esc(r.no)}<small>${esc((r.lines || []).map(l => l.head + (l.months ? ' (' + l.months + ')' : '')).join(', '))}</small></span><b>${rs(r.amt)}</b></div>`).join('')}</div>` : '<div class="db-r"><span style="color:#667">No receipt this session yet.</span></div>'}</div>`; }).join('')}</details>`;
+  }
   // ---------------- zoom viewer: pinch / double-tap / drag / + − (the app's WebView has no page zoom) ----------------
   function zoom() {
     if (!URL_) return; let el = document.getElementById('dbZoom'); if (el) el.remove();
@@ -200,6 +213,7 @@
       <p class="db-sum">${CUR.kids.length > 1 ? CUR.kids.length + ' children (same mobile) · ' : ''}Payable till ${esc(CUR.upto)}: <b>${rs(fam)}</b></p>
       <div class="db-acts"><button class="g" onclick="DemandBill.share()">📤 Share bill picture</button><a class="db-b y" target="_blank" href="https://wa.me/${(CUR.kids[0].mobile.match(/\d{10}/) || [''])[0] ? '91' + CUR.kids[0].mobile.match(/\d{10}/)[0] : ''}?text=${encodeURIComponent(waText(CUR))}">💬 WhatsApp message</a>
         ${wv ? '' : '<button class="l" onclick="DemandBill.download()">⬇ Download picture</button><button class="l" onclick="DemandBill.print()">🖨 Print</button>'}</div>
+      ${acct(CUR)}
       <button class="l full" style="width:100%;margin-bottom:8px" onclick="DemandBill.zoom()">🔍 Zoom bill (bada karke dekhiye)</button>
       <img src="${URL_}" alt="Fee demand bill" onclick="DemandBill.zoom()" style="cursor:zoom-in">
       <p class="db-sum">Share bill picture: choose WhatsApp and the parent. WhatsApp message: opens the parent's number with the amounts written.</p>`);

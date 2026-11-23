@@ -359,7 +359,10 @@ case 'fees': {
         $last = end($x['receipts']) ?: null;
         $kids[] = ['sid' => $sid, 'name' => $x['name'], 'father' => $x['father'], 'phone' => $x['phone'], 'tag' => $x['tag'], 'due' => (int)$x['due'],
                    'overallDue' => $x['overallDue'] === null ? null : (int)$x['overallDue'], 'oldDue' => (int)$x['oldDue'], 'asOn' => $x['asOn'],
-                   'last' => $last ? ['no' => (string)$last['no'], 'date' => (string)$last['date'], 'amount' => (int)round($last['received'] * 100)] : null];
+                   'last' => $last ? ['no' => (string)$last['no'], 'date' => (string)$last['date'], 'amount' => (int)round($last['received'] * 100)] : null,
+                   // owner 23 Nov 2026: "parents puchh lete kitna paid kiye kitna jama hai" — paid this session + receipts (newest first)
+                   'paid' => (int)round(array_sum(array_map(fn($r) => (float)$r['received'], $x['receipts'])) * 100),
+                   'rcpts' => array_map(fn($r) => ['no' => (string)$r['no'], 'date' => (string)$r['date'], 'amount' => (int)round($r['received'] * 100)], array_slice(array_reverse($x['receipts']), 0, 8))];
         $ids[$sid] = true;
     }
     $promises = []; foreach (ff_rows('acctPromise') as $pr) if (($pr['session'] ?? '') === $session && isset($ids[$pr['sid'] ?? ''])) $promises[$pr['sid']] = ['date' => $pr['promise'], 'amount' => (int)$pr['amount']];

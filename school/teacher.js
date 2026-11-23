@@ -1638,16 +1638,26 @@ function vFee(ct) {
     <div class="fee-list">${list.map(k => { const l = last(k.sid), p = pr(k.sid), pic = ph[k.sid];
       return `<div class="fee-row"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}</span>
         <div class="n"><b>${esc(k.name)}</b><small>${k.father ? esc(k.father) + ' · ' : ''}${k.tag ? `<span class="pill">${esc(k.tag)}</span> ` : ''}${p ? `Will pay ${esc(fmtDate(p.date))}${p.amount ? ' · ' + rs(p.amount) : ''}` : l ? `${esc(l.outcome)} · ${esc(fmtDate(l.date))}` : 'Not called yet'}</small></div>
-        <div class="amt ${k.due > 0 ? 'bad' : 'ok'}">${k.due > 0 ? rs(k.due) : 'Paid'}</div>
+        <div class="amt ${k.due > 0 ? 'bad' : 'ok'}">${k.due > 0 ? rs(k.due) : 'Paid'}${k.paid != null ? `<small style="display:block;font-size:11px;font-weight:600;color:#1D6B2F">Jama ${rs(k.paid)}</small>` : ''}</div>
         <div class="acts">${k.phone ? `<a class="ib" href="tel:+91${esc(k.phone)}" aria-label="Call ${esc(k.name)}" onclick="feeDialed(${jsq(c)},${jsq(k.sid)})">${ic('phone')}</a>` : ''}<button class="ib" aria-label="Call result for ${esc(k.name)}" onclick="feeResult(${jsq(c)},${jsq(k.sid)})">${ic('check')}</button><button class="ib" aria-label="Demand bill for ${esc(k.name)}" onclick="feeBill(${jsq(c)},${jsq(k.sid)})">${ic('bill')}</button></div></div>`; }).join('') || '<div class="empty">Nobody in this list.</div>'}</div>
     <p class="mut">Calls you save here are seen by the Principal, Chairman Sir and the office in the same calling list.</p>`;
+}
+// Paid so far + receipts, so the caller can answer "kitna jama kiya" during the call (owner, 23 Nov 2026)
+function feePaidBox(k) {
+  if (k.paid == null) return '';
+  const R = k.rcpts || [];
+  return `<div style="background:#EEF8F0;border:1px solid #CFE8D6;border-radius:12px;padding:9px 11px;margin:8px 0;font-size:13px">
+    <div style="display:flex;justify-content:space-between;gap:8px"><span>Jama (this session)</span><b style="color:#1D6B2F">${rs(k.paid)}</b></div>
+    <div style="display:flex;justify-content:space-between;gap:8px"><span>Baaki (till today)</span><b style="color:#B30000">${rs(k.due)}</b></div>${k.oldDue ? `<div style="display:flex;justify-content:space-between;gap:8px"><span>Old session due (in baaki)</span><b>${rs(k.oldDue)}</b></div>` : ''}
+    ${R.length ? `<div style="margin-top:6px;border-top:1px dashed #CFE8D6;padding-top:6px">${R.map(r => `<div style="display:flex;justify-content:space-between;gap:8px;color:#334"><span>${esc(fmtDate(r.date))} · Rcpt ${esc(r.no)}</span><b>${rs(r.amount)}</b></div>`).join('')}</div>` : '<div style="color:#667;margin-top:4px">No receipt this session yet.</div>'}
+    <div style="color:#667;margin-top:4px">Month-wise details: tap the 🧾 demand bill.</div></div>`;
 }
 function feeDialed(c, sid) { setTimeout(() => feeResult(c, sid), 1200); }
 function feeResult(c, sid) {
   const k = FEE[c].children.find(x => x.sid === sid), outs = FEE[c].outcomes, max = addDays(todayISO(), 7);
   DRAFT.fee = { c, sid, out: DRAFT.fee && DRAFT.fee.sid === sid ? DRAFT.fee.out : '' };
   SHEET = () => { const o = DRAFT.fee.out, need = ['Promised to pay', 'Call back later', 'Will visit school'].includes(o);
-    return `<h2>Call result · ${esc(k.name)}</h2><p class="mut" style="margin:0">Fee due till today: <b>${rs(k.due)}</b>${k.phone ? ' · ' + esc(k.phone) : ''}</p>
+    return `<h2>Call result · ${esc(k.name)}</h2><p class="mut" style="margin:0">Fee due till today: <b>${rs(k.due)}</b>${k.phone ? ' · ' + esc(k.phone) : ''}</p>${feePaidBox(k)}
     <div class="chips">${outs.map(x => `<button type="button" class="chip ${o === x ? 'on' : ''}" onclick="DRAFT.fee.out=${jsq(x)};render()">${esc(x)}</button>`).join('')}</div>
     ${need ? `<div class="fld">${o === 'Promised to pay' ? 'Will pay on' : o === 'Will visit school' ? 'Will visit on' : 'Call again on'}<input id="fcD" type="date" class="inp" min="${todayISO()}" max="${max}" value="${addDays(todayISO(), 2)}"></div>` : ''}
     ${o === 'Promised to pay' ? `<div class="fld">Amount (₹)<input id="fcA" class="inp" inputmode="numeric" value="${Math.round(k.due / 100)}"></div>` : ''}
