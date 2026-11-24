@@ -24,7 +24,7 @@ h3{margin:12px 0 2px;font-size:14px;color:#17324D;border-left:4px solid #E0A100;
 .big{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.big div{border:1px solid #dfe5ec;border-radius:8px;padding:6px 8px}.big span{display:block;font-size:11px;color:#556}.big b{font-size:15px}.red{color:#B30000}.grn{color:#1D6B2F}
 .sign{display:flex;justify-content:space-between;margin-top:26px;font-size:12px}.sign span{border-top:1px solid #333;padding-top:3px;min-width:150px;text-align:center}
 .msg{max-width:820px;margin:20px auto;text-align:center;color:#455}
-@media print{body{background:#fff}.bar,#list{display:none!important}.pg{box-shadow:none;margin:0;padding:0;max-width:none}h3{break-after:avoid}table{break-inside:auto}tr{break-inside:avoid}}
+@media print{body{background:#fff}.bar,#list{display:none!important}.pg{box-shadow:none;margin:0;padding:0;max-width:none}.pg.pb{break-before:page}h3{break-after:avoid}table{break-inside:auto}tr{break-inside:avoid}}
 </style></head><body>
 <div class="bar"><input id="q" placeholder="Search child — name, class, father, mobile, adm. no." autocomplete="off"><button class="y" id="pr" style="display:none">🖨 Print / Save PDF</button><button id="sh" style="display:none">📤 Share</button></div>
 <div id="list" style="max-width:820px;margin:0 auto"></div>
