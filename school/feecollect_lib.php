@@ -193,3 +193,32 @@ function ofc_price(array $L, array $alloc, int $late, int $discount, int $oldDue
     if ($received < 0) throw new InvalidArgumentException('Please Check Amount');
     return ['total' => $total, 'late' => $late, 'discount' => $discount, 'received' => $received];
 }
+
+/**
+ * Write ONE receipt (caller has the lock + transaction and has priced it with ofc_price()). Used by Fee Receipt
+ * (feecollect_api.php collect) and by online payment (feepay_lib.php, 24 Nov 2026) so both make the same receipt:
+ * same series per session, ledger heads paid, log line, "fee not updated" doubt cleared.
+ * $pay = date, mode, bank, cheque, chequeDate, depositBank, depositDate, remark, followupDate, followupRemark [, online]
+ */
+function ofc_write_receipt(array $u, string $uid, string $ses, string $sid, array $L, array $alloc, array $p, array $pay): array {
+    $tz = new DateTimeZone('Asia/Kolkata');
+    $before = ofc_totals($L);
+    foreach ($L['heads'] as &$h) foreach ($alloc as $x) if ($x['i'] === $h['i']) $h['paid'] += $x['amt'];
+    unset($h);
+    $after = ofc_totals($L);
+    $seq = sch_rec_get('ofcSeq', $ses) ?? ['prefix' => '1-', 'n' => 0]; $seq['n']++;
+    $no = $seq['prefix'] . $seq['n'];
+    if (sch_rec_get('ofcRcpt', $ses . '|' . $no)) throw new RuntimeException('Receipt number ' . $no . ' is already used. Nothing was saved; please tell the Principal.');
+    $r = ['session' => $ses, 'no' => $no, 'n' => $seq['n'], 'sid' => $sid, 'date' => $pay['date'], 'time' => (new DateTimeImmutable('now', $tz))->format('h:i:s A'),
+        'name' => $L['name'], 'cls' => $L['cls'], 'section' => $L['section'], 'adm' => $L['adm'], 'father' => $L['father'], 'mother' => $L['mother'], 'scheme' => $L['scheme'],
+        'alloc' => $alloc, 'lines' => ofc_print_lines($alloc, $L['heads']), 'total' => $p['total'], 'late' => $p['late'], 'discount' => $p['discount'], 'received' => $p['received'],
+        'balanceBefore' => $before['balance'], 'balanceAfter' => $after['balance'], 'mode' => $pay['mode'], 'bank' => $pay['bank'] ?? '', 'cheque' => $pay['cheque'] ?? '', 'chequeDate' => $pay['chequeDate'] ?? '',
+        'depositBank' => $pay['depositBank'] ?? '', 'depositDate' => $pay['depositDate'] ?? '', 'remark' => $pay['remark'] ?? '', 'followupDate' => $pay['followupDate'] ?? '', 'followupRemark' => $pay['followupRemark'] ?? '',
+        'status' => 'Cleared', 'by' => $u['label'] ?? $uid, 'uid' => $uid, 'at' => sch_now_ms()] + (isset($pay['online']) ? ['online' => $pay['online']] : []);
+    sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
+    sch_rec_put('ofcSeq', $ses, $seq, $uid);
+    sch_rec_put('ofcRcpt', $ses . '|' . $no, $r, $uid);
+    sch_log($u, 'ofcRcpt', 'Fee Receipt ' . $no . ' · ' . $L['name'] . ' · ₹' . number_format($p['received'] / 100, 2) . ' ' . $pay['mode']);
+    ofc_clear_doubt($sid, $u, 'receipt ' . $no);
+    return $r;
+}

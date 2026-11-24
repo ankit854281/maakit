@@ -6,7 +6,7 @@
 //  siblings (same mobile number) with a family total. Drawn on the phone by demandbill.js (share as a picture).
 //
 //   GET ?a=list                 every active child: name, class, father, mobile, due till this month (for search)
-//   GET ?a=bill&sid=            one child's bill (+ siblings), session = the school's current session
+//   GET ?a=bill&sid=            one child's bill (+ siblings), session = the school's current session (+ pay: online pay link for the QR)
 //
 //  Numbers come from fr_dues() (feereports_lib.php) — the Fee Receipt ledger once the session is started there,
 //  otherwise the copied old ERP fee card, exactly like Fee Reports. Paid per head = the receipt lines of that head
@@ -18,6 +18,7 @@ require __DIR__ . '/inc.php';
 require __DIR__ . '/registers_lib.php';
 require __DIR__ . '/feecollect_lib.php';
 require __DIR__ . '/feereports_lib.php';
+require __DIR__ . '/feepay_lib.php';
 
 $a = (string)($_GET['a'] ?? 'list');
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
@@ -85,6 +86,10 @@ $set = sch_rec_get('settings', 'main') ?? []; $ses = ofc_ses((string)($set['sess
 if ($ses === '') sch_fail('The school session is not set (ERP → Settings).');
 $D = fr_dues($db, $ses);
 $rows = array_values(array_filter($D['rows'], fn($r) => !in_array($r['status'], ['TC', 'Deactive'], true)));
+// Online payment QR on the bill (24 Nov 2026, owner: "demand bill me QR — pay karte he fee update, receipt bhi bankar chala jaye"):
+// a signed pay.php link for the children on the bill, only when the school's Razorpay keys are set and the session is taken here.
+$PAYON = fp_ready() && ofc_live($ses);
+function db_pay(array $kids, string $ses): string { return $GLOBALS['PAYON'] ? fp_url(fp_token($ses, array_column($kids, 'sid'), $GLOBALS['DB_UPTO'])) : ''; }
 
 try {
 switch ($a) {
@@ -103,7 +108,7 @@ case 'bill': {
         if (!$ok) sch_fail('Only the class teacher of class ' . $me['cls'] . ' (or the school\'s fee caller) can open this bill.', 403); }
     $kids = array_map('db_bill', $single ? [$me] : db_family($me, $rows));
     sch_log($u, 'Demand bill', 'Opened demand bill of ' . $me['name'] . ' (' . $me['cls'] . ')' . (count($kids) > 1 ? ' with ' . (count($kids) - 1) . ' sibling(s)' : ''));
-    sch_json(db_head($set, $ses, $D) + ['kids' => $kids]);
+    sch_json(db_head($set, $ses, $D) + ['kids' => $kids, 'pay' => db_pay($kids, $ses)]);
 }
 case 'bulk': {
     // ERP → Fee Report → Demand Bill (20 Nov 2026): every child of a class (or the whole school) at once, single or sibling-wise.
@@ -121,7 +126,7 @@ case 'bulk': {
     }
     if (count($bills) > 400) sch_fail('Too many bills at once (' . count($bills) . '). Choose one class.');
     sch_log($u, 'Demand bill', 'Printed ' . count($bills) . ' demand bill(s) — ' . ($cls === '' ? 'all classes' : 'class ' . $cls . ($sec !== '' ? '-' . $sec : '')) . ($single ? ', single' : ', sibling-wise'));
-    sch_json(db_head($set, $ses, $D) + ['bills' => $bills]);
+    sch_json(db_head($set, $ses, $D) + ['bills' => $bills, 'pays' => array_map(fn($k) => db_pay($k, $ses), $bills)]);
 }
 default: sch_fail('Unknown action.');
 }

@@ -75,6 +75,14 @@ define('MAAKIT_NUMBER_SHOW', '84293 93903');
 // define('CS_RAZORPAY_KEY_ID', 'rzp_live_...');
 // define('CS_RAZORPAY_KEY_SECRET', 'private');
 // define('CS_RAZORPAY_WEBHOOK_SECRET', 'private');   // Razorpay > Webhooks: /coaching/webhook.php, event payment.captured
+
+// ---- School fee online payment (school/pay.php, 24 Nov 2026) ----
+// SCHOOL ka apna Razorpay account (school ke PAN / bank par) — Maakit ka nahi. Ye keys set hote hi har demand bill par
+// "Scan & Pay" QR aa jata hai; parent pay kare to fee apne aap update hoti hai aur receipt ban jaati hai.
+// define('SCHOOL_RZP_KEY_ID', 'rzp_live_...');
+// define('SCHOOL_RZP_KEY_SECRET', 'private');
+// define('SCHOOL_RZP_WEBHOOK_SECRET', 'private');   // Razorpay > Webhooks: /school/pay_webhook.php, events payment.captured + order.paid
+// define('SCHOOL_PAY_BANK', 'HDFC BANK-3039');       // Fee Receipt ka deposit bank jisme Razorpay paisa bhejta hai (khali = jis bank me "Online" mode hai)
 // Home page ke Google Play / App Store button sirf tab dikhte hain jab ye link ho:
 // define('APP_PLAY_URL', 'https://play.google.com/store/apps/details?id=...');
 // define('APP_STORE_URL', 'https://apps.apple.com/in/app/...');

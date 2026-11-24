@@ -8,6 +8,17 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const dmy = d => d ? d.split('-').reverse().join('-') : '';
   const NAVY = '#17324D', GOLD = '#E0A100', RED = '#B30000', FEEBG = '#FFF8E6', TRBG = '#D8EBFF', GREEN = '#1D6B2F';
+  // Online pay QR (24 Nov 2026, owner: "demand bill me QR — pay karte he fee update, receipt bhi bankar chala jaye"):
+  // B.pay = signed school/pay.php link from demandbill_api.php (only when the school's Razorpay keys are set).
+  // vendor/qrcode.js is loaded here once, so every page that loads demandbill.js gets it.
+  if (typeof window.qrcode !== 'function' && document.currentScript) { const q = document.createElement('script'); q.src = new URL('vendor/qrcode.js', document.currentScript.src).href; document.head.appendChild(q); }
+  function drawQr(x, url, X, Y, size) {
+    if (typeof window.qrcode !== 'function') return false;
+    const q = qrcode(0, 'M'); q.addData(url); q.make(); const n = q.getModuleCount(), quiet = 3, cell = size / (n + 2 * quiet);
+    x.fillStyle = '#fff'; x.fillRect(X, Y, size, size); x.fillStyle = '#000';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) x.fillRect(X + (c + quiet) * cell, Y + (r + quiet) * cell, Math.ceil(cell), Math.ceil(cell));
+    return true;
+  }
   async function get(path, tok) {
     const r = await fetch(path, { cache: 'no-store', headers: { 'X-School-Token': tok || '' } }); let j = null; try { j = await r.json(); } catch (e) {}
     if (!r.ok || !j || !j.ok) throw Error((j && j.error) || 'Server problem. Please try again.'); return j;
@@ -62,7 +73,7 @@
   function draw(B) {
     const W = 1240, P = 48, kids = B.kids, fam = kids.reduce((s, k) => s + k.total.now, 0), RH = 36;
     const LS = kids.map(lines), rows = LS.reduce((s, L) => s + Math.max(1, L.rows.length) + 1 + L.rows.filter(r => r.sub).length * 0.6, 0);
-    const nb = LS.filter(L => L.below.length).length, H = Math.max(1754, 900 + rows * RH + (nb ? 80 + nb * 34 : 0));
+    const nb = LS.filter(L => L.below.length).length, PAY = B.pay && fam > 0, H = Math.max(1754, 900 + rows * RH + (nb ? 80 + nb * 34 : 0) + (PAY ? 300 : 0));
     const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const T = (t, X, Y, f, col, al) => { x.font = f; x.fillStyle = col || '#111'; x.textAlign = al || 'left'; x.fillText(String(t), X, Y); };
     const fit = (t, max, f) => { x.font = f; t = String(t); if (x.measureText(t).width <= max) return t; while (t.length > 3 && x.measureText(t + '…').width > max) t = t.slice(0, -1); return t + '…'; };
@@ -118,6 +129,18 @@
     T('₹ ' + Math.round(fam).toLocaleString('en-IN'), W - P - 20, y + 44, 'bold 38px Arial', RED, 'right');
     T(fit('Rupees ' + words(fam) + ' Only', W - 2 * P - 40, 'italic 19px Arial'), P + 20, y + 76, 'italic 19px Arial', '#333');
     y += 120;
+    // online pay QR — scan with any UPI app's scanner / phone camera → school/pay.php → fee updated + receipt at once
+    if (PAY) {
+      const S = 250; rect(P, y - 6, W - 2 * P, S + 24, '#F0F7FF', '#0b4f9c');
+      if (!drawQr(x, B.pay, P + 14, y + 6, S)) T('QR', P + 14 + S / 2, y + S / 2, 'bold 40px Arial', '#999', 'center');
+      const tx = P + S + 44; let ty = y + 44;
+      T('SCAN & PAY ONLINE', tx, ty, 'bold 30px Arial', '#0b4f9c'); ty += 40;
+      T('UPI (GPay / PhonePe / Paytm) · Debit / Credit Card · Net Banking', tx, ty, '20px Arial', '#333'); ty += 36;
+      T('QR scan karke ₹ ' + Math.round(fam).toLocaleString('en-IN') + ' jama karein — fee turant update', tx, ty, 'bold 21px Arial', '#111'); ty += 30;
+      T('hogi aur receipt usi samay phone par mil jayegi.', tx, ty, 'bold 21px Arial', '#111'); ty += 36;
+      T(fit('Ya link kholein: ' + B.pay.replace(/^https?:\/\//, ''), W - P - 20 - tx, '16px Arial'), tx, ty, '16px Arial', '#555');
+      y += S + 50;
+    }
     // discount given before the billed months (April–June, admission …) — not to be paid
     if (nb) {
       T('Discount given (not to be paid)', P, y, 'bold 21px Arial', GREEN); y += 12;
@@ -129,7 +152,7 @@
     }
     // note + signs
     T('Note:', P, y, 'bold 20px Arial', '#111'); y += 30;
-    ['Kripya upar likhi rashi jald se jald school office mein jama karein aur receipt avashya lein.', 'Agar fee jama kar di hai to is bill ko anadekha karein. Kisi bhi jaankari ke liye school office se sampark karein.']
+    [PAY ? 'Kripya upar likhi rashi QR se online ya school office mein jald se jald jama karein aur receipt avashya lein.' : 'Kripya upar likhi rashi jald se jald school office mein jama karein aur receipt avashya lein.', 'Agar fee jama kar di hai to is bill ko anadekha karein. Kisi bhi jaankari ke liye school office se sampark karein.']
       .forEach(t => { T(fit(t, W - 2 * P, '19px Arial'), P, y, '19px Arial', '#333'); y += 28; });
     const sy = Math.max(y + 90, H - 120);
     line(P, sy, P + 260, sy, '#333'); line(W - P - 260, sy, W - P, sy, '#333');
@@ -140,7 +163,7 @@
   function waText(B) {
     const fam = B.kids.reduce((a, k) => a + k.total.now, 0);
     return `*FEE DEMAND BILL*\n${B.school}\nSession ${B.ses} · Date ${B.date}\n\n` + B.kids.map(k => `*${k.name}* (Class ${k.cls})\nSchool fee due: ${rs(k.total.nowFee)}\nTransport due: ${rs(k.total.nowTr)}\n*Payable till ${B.upto}: ${rs(k.total.now)}*`).join('\n\n') +
-      (B.kids.length > 1 ? `\n\n*Family total: ${rs(fam)}*` : '') + `\n\nKripya jaldi se jaldi school office me jama karein aur receipt zaroor lein. Dhanyavaad 🙏`;
+      (B.kids.length > 1 ? `\n\n*Family total: ${rs(fam)}*` : '') + (B.pay && fam > 0 ? `\n\n*Online pay karein (UPI / Card):*\n${B.pay}\nPay karte hi fee update hogi aur receipt turant milegi.` : '') + `\n\nKripya jaldi se jaldi${B.pay && fam > 0 ? ' online ya' : ''} school office me jama karein aur receipt zaroor lein. Dhanyavaad 🙏`;
   }
   // ---------------- sheet ----------------
   let CUR = null, URL_ = null, OPEN = null;
@@ -213,6 +236,7 @@
       <p class="db-sum">${CUR.kids.length > 1 ? CUR.kids.length + ' children (same mobile) · ' : ''}Payable till ${esc(CUR.upto)}: <b>${rs(fam)}</b></p>
       <div class="db-acts"><button class="g" onclick="DemandBill.share()">📤 Share bill picture</button><a class="db-b y" target="_blank" href="https://wa.me/${(CUR.kids[0].mobile.match(/\d{10}/) || [''])[0] ? '91' + CUR.kids[0].mobile.match(/\d{10}/)[0] : ''}?text=${encodeURIComponent(waText(CUR))}">💬 WhatsApp message</a>
         ${wv ? '' : '<button class="l" onclick="DemandBill.download()">⬇ Download picture</button><button class="l" onclick="DemandBill.print()">🖨 Print</button>'}</div>
+      ${CUR.pay && fam > 0 ? `<a class="db-b l full" style="display:block;margin-bottom:8px" target="_blank" rel="noopener" href="${esc(CUR.pay)}">💳 Online pay page (QR wala link) kholiye</a>` : ''}
       ${acct(CUR)}
       <button class="l full" style="width:100%;margin-bottom:8px" onclick="DemandBill.zoom()">🔍 Zoom bill (bada karke dekhiye)</button>
       <img src="${URL_}" alt="Fee demand bill" onclick="DemandBill.zoom()" style="cursor:zoom-in">

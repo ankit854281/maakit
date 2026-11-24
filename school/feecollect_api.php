@@ -111,25 +111,9 @@ case 'collect': {
     if ($prior) { $db->commit(); sch_json(['ok' => true, 'receipt' => $prior['receipt'], 'repeat' => true]); }
     $L = sch_rec_get('ofcLed', $ses . '|' . $sid); if (!$L) throw new InvalidArgumentException('This child has no fee card in the new ERP for ' . $ses . '.');
     $p = ofc_price($L, $alloc, $late, $disc, ofc_old_due($ses, $sid, $L));
-    $before = ofc_totals($L);
-    foreach ($L['heads'] as &$h) foreach ($alloc as $x) if ($x['i'] === $h['i']) $h['paid'] += $x['amt'];
-    unset($h);
-    $after = ofc_totals($L);
-    $seq = sch_rec_get('ofcSeq', $ses) ?? ['prefix' => '1-', 'n' => 0]; $seq['n']++;
-    $no = $seq['prefix'] . $seq['n'];
-    if (sch_rec_get('ofcRcpt', $ses . '|' . $no)) throw new RuntimeException('Receipt number ' . $no . ' is already used. Nothing was saved; please tell the Principal.');
-    $r = ['session' => $ses, 'no' => $no, 'n' => $seq['n'], 'sid' => $sid, 'date' => $date, 'time' => (new DateTimeImmutable('now', $tz))->format('h:i:s A'),
-        'name' => $L['name'], 'cls' => $L['cls'], 'section' => $L['section'], 'adm' => $L['adm'], 'father' => $L['father'], 'mother' => $L['mother'], 'scheme' => $L['scheme'],
-        'alloc' => $alloc, 'lines' => ofc_print_lines($alloc, $L['heads']), 'total' => $p['total'], 'late' => $p['late'], 'discount' => $p['discount'], 'received' => $p['received'],
-        'balanceBefore' => $before['balance'], 'balanceAfter' => $after['balance'], 'mode' => $mode, 'bank' => $bank, 'cheque' => $cheque, 'chequeDate' => $chequeDate,
-        'depositBank' => $depBank, 'depositDate' => $depDate, 'remark' => $txt('remark', 300), 'followupDate' => $txt('followupDate', 10), 'followupRemark' => $txt('followupRemark', 300),
-        'status' => 'Cleared', 'by' => $u['label'] ?? $uid, 'uid' => $uid, 'at' => sch_now_ms()];
-    sch_rec_put('ofcLed', $ses . '|' . $sid, $L, $uid);
-    sch_rec_put('ofcSeq', $ses, $seq, $uid);
-    sch_rec_put('ofcRcpt', $ses . '|' . $no, $r, $uid);
+    $r = ofc_write_receipt($u, $uid, $ses, $sid, $L, $alloc, $p, ['date' => $date, 'mode' => $mode, 'bank' => $bank, 'cheque' => $cheque, 'chequeDate' => $chequeDate,
+        'depositBank' => $depBank, 'depositDate' => $depDate, 'remark' => $txt('remark', 300), 'followupDate' => $txt('followupDate', 10), 'followupRemark' => $txt('followupRemark', 300)]);
     sch_rec_put('ofcReq', $nonce, ['receipt' => $r], $uid);
-    sch_log($u, 'ofcRcpt', 'Fee Receipt ' . $no . ' · ' . $L['name'] . ' · ₹' . number_format($p['received'] / 100, 2) . ' ' . $mode);
-    ofc_clear_doubt($sid, $u, 'receipt ' . $no);
     $db->commit();
     sch_json(['ok' => true, 'receipt' => $r]);
 }

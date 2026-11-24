@@ -58,7 +58,7 @@
     const mode = F.mode === 'single' ? 'single' : 'sib';
     try {
       if (F.sid) { const B = await get(`demandbill_api.php?a=bill&sid=${encodeURIComponent(F.sid)}&mode=${mode}&upto=${F.upto}`); BILLS = [{ ...B, kids: B.kids }]; }
-      else { const R = await get(`demandbill_api.php?a=bulk&cls=${encodeURIComponent(F.cls)}&section=${encodeURIComponent(F.sec)}&mode=${mode}&upto=${F.upto}&due=${F.due ? 1 : 0}`); BILLS = R.bills.map(kids => ({ ...R, bills: undefined, kids })); }
+      else { const R = await get(`demandbill_api.php?a=bulk&cls=${encodeURIComponent(F.cls)}&section=${encodeURIComponent(F.sec)}&mode=${mode}&upto=${F.upto}&due=${F.due ? 1 : 0}`); BILLS = R.bills.map((kids, i) => ({ ...R, bills: undefined, pays: undefined, kids, pay: (R.pays || [])[i] || '' })); }
     } catch (e) { $('out').innerHTML = `<div class="pan msg">${esc(e.message)}</div>`; return; }
     show();
   }
