@@ -104,8 +104,8 @@ function setRec(k, r, d) {
     case 'settings': S.settings = d || {}; break;
     case 'classes': S.classes = d || []; break;
     case 'teacher': S.teachers[r] = d; break;
-    case 'alloc': S.alloc = d || []; break;
-    case 'grid': S.grid = d; break;
+    case 'alloc': S.alloc = d || []; allocSync(); break;
+    case 'grid': S.grid = d; allocSync(); break;
     case 'exams': S.exams = d || []; break;
     case 'student': { const i = S.students.findIndex(x => x.id === r); if (i >= 0) S.students[i] = d; else S.students.push(d); break; }
     case 'staffAtt': S.staffAtt[r] = d; break;
@@ -257,6 +257,14 @@ function T(tid) { return S.teachers[tid] || { name: ((S.settings || {}).leftTeac
 function className() { return (S.classes || []).map(k => k.c); }
 function myName() { const n = (T(me()).name || ME.label || '').replace(/\s*\(.*\)/, ''); return n; }
 function myCT() { return isP() ? className() : (S.classes || []).filter(k => k.ct === me()).map(k => k.c); }
+// A subject placed in the timetable grid counts as taught even when its saved weekly count `n` is 0 (owner, 24 Nov 2026:
+// "kuchh subject me class nahi show ho raha — English me Seema Ma'am me 3rd class"): a bell put through "+ Another subject or
+// teacher" or the old ERP timetable could leave n = 0, and every n > 0 filter then hid that class + subject from the teacher.
+function allocSync() {
+  if (!S || !Array.isArray(S.alloc) || !S.grid) return; const cnt = {};
+  Object.values(S.grid).forEach(days => (days || []).forEach(row => (row || []).forEach(i => { if (i >= 0) cnt[i] = (cnt[i] || 0) + 1; })));
+  S.alloc.forEach((a, i) => { if (a && cnt[i] && (+a.n || 0) < cnt[i]) a.n = cnt[i]; });
+}
 function myAllocs() { return S.alloc.filter(a => a.t === me() && (+a.n || 0) > 0); }
 function allocList() { return isP() ? S.alloc.filter(a => (+a.n || 0) > 0) : myAllocs(); }
 function studentsOf(c) { return S.students.filter(s => s && s.cls === c).sort((a, b) => String(a.name).localeCompare(String(b.name))); }
@@ -338,6 +346,7 @@ function diaryPending(days) {
 function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
+  allocSync();
   const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord, hwshare: (typeof vHwShare === 'function' ? vHwShare : vHome), support: (typeof vSupport === 'function' ? vSupport : vHome) };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
   if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord', 'hwshare', 'support'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
