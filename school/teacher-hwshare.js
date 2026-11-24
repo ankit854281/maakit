@@ -4,7 +4,7 @@
 // Teachers keep writing the diary as before. Rati Ma'am (settings.hwSharers; not saved → Rati, teacher id RT) gets one ready
 // message per class, PG–10th — every subject's class work and homework — with "Share on WhatsApp" (then it is marked ✓ Shared)
 // and Copy. Classes nobody has filled yet are listed. Data: teacher_api.php?a=hwall / hwshared (kind tchHwShare).
-let HWS = {}, HWB = false;
+let HWSH = {}, HWSHB = false;
 const hwFmt = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 function hwMsg(c, L, date) {
   return `*${(S.settings && S.settings.school) || 'SN Mishra Singapore International School'}*\n*Class ${c} — Class work & Homework*\n${hwFmt(date)}\n\n` +
@@ -12,12 +12,12 @@ function hwMsg(c, L, date) {
     `\n\nKripya bachchon ka homework roz check karein. 🙏`;
 }
 async function hwLoad(date, force) {
-  if (HWS[date] && !force) return; if (HWB) return; HWB = true;
-  try { HWS[date] = await api('teacher_api.php?a=hwall&date=' + date); } catch (e) { HWS[date] = { err: e.message }; }
-  HWB = false; render();
+  if (HWSH[date] && !force) return; if (HWSHB) return; HWSHB = true;
+  try { HWSH[date] = await api('teacher_api.php?a=hwall&date=' + date); } catch (e) { HWSH[date] = { err: e.message }; }
+  HWSHB = false; render();
 }
 function vHwShare() {
-  const date = P.date || todayISO(), D = HWS[date];
+  const date = P.date || todayISO(), D = HWSH[date];
   const top = `<div class="card"><div class="row"><div><b>📤 Homework share · PG to 10th</b><small>One message per class with every subject's class work and homework — send it to the class WhatsApp group.</small></div></div>
     <div class="row" style="margin-top:8px"><input type="date" class="inp" value="${date}" max="${todayISO()}" onchange="go('hwshare',{date:this.value})"><button class="btn l s" onclick="hwLoad('${date}',true)">↻ Refresh</button></div></div>`;
   if (!D) { hwLoad(date); return top + '<div class="card">Opening…</div>'; }
@@ -34,7 +34,7 @@ function vHwShare() {
   return h;
 }
 async function hwMark(date, c, on) {
-  try { const d = await api('teacher_api.php?a=hwshared', { date, cls: c, on: on ? 1 : 0 }); if (HWS[date] && !HWS[date].err) { if (d.shared) HWS[date].shared[c] = d.shared; else delete HWS[date].shared[c]; } setTimeout(render, 400); }
+  try { const d = await api('teacher_api.php?a=hwshared', { date, cls: c, on: on ? 1 : 0 }); if (HWSH[date] && !HWSH[date].err) { if (d.shared) HWSH[date].shared[c] = d.shared; else delete HWSH[date].shared[c]; } setTimeout(render, 400); }
   catch (e) { toast(e.message); }
 }
 function hwCopy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Copied — paste it in the class group.')).catch(() => toast('Copy did not work on this phone — use Share on WhatsApp.')); }

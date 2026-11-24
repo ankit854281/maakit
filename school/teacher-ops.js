@@ -126,9 +126,9 @@ function xSyl(date) {
   const A = S.alloc.filter(a => (+a.n || 0) > 0 && !/\(optional\)/i.test(a.s) && S.teachers[a.t]), up = upcomingTags()[0]; XR.syl = {};
   const tiles = A.map(a => { const y = S.syl[sylKey(a.c, a.s)] || { chapters: [] }, n = y.chapters.length, d = y.chapters.filter(c => c.done).length, ex = up ? y.chapters.filter(c => (c.ex || []).includes(up.id)).length : 1;
     if (!n || !ex) XR.syl[a.t] = (XR.syl[a.t] ? XR.syl[a.t].replace(/ — Principal$/, ', ') : `Namaste ${T(a.t).name}, Planner → Syllabus mein ye baaki hai: `) + `Class ${a.c} ${a.s} (${!n ? 'chapters' : (up ? up.l : 'exam') + ' ke chapter tick'})` + ' — Principal';
-    return { st: !n ? 'no' : !ex ? 'warn' : 'ok', b: a.c + ' · ' + a.s, small: T(a.t).name, line: !n ? '✕ chapters not added' : `${d}/${n} done${up ? ' · ' + (ex ? ex + ' for ' + up.l : up.l + ' not ticked') : ''}` }; })
+    return { st: !n ? 'no' : !ex ? 'warn' : 'ok', b: a.c + ' · ' + a.s, small: T(a.t).name, line: !n ? '✕ chapters not added' : `${d}/${n} done${up ? ' · ' + (ex ? ex + ' for ' + up.l : up.l + ' not ticked') : ''}${y.sub ? ' · ✓ submitted ' + fmtDate(new Date(y.sub.at).toISOString().slice(0, 10)) : ' · not submitted'}`, sub: !!y.sub }; })
     .sort((x, y) => ({ no: 0, warn: 1, ok: 2 })[x.st] - ({ no: 0, warn: 1, ok: 2 })[y.st]);
-  return xPage('syl', date, { nav: false, title: 'Class + subject', tiles, kpis: [['Syllabus set up', tiles.filter(t => t.st !== 'no').length, tiles.length, 'chapters added'], [up ? up.l + ' chapters' : 'Exam chapters', tiles.filter(t => t.st === 'ok').length, tiles.length, 'ticked']],
+  return xPage('syl', date, { nav: false, title: 'Class + subject', tiles, kpis: [['Syllabus set up', tiles.filter(t => t.st !== 'no').length, tiles.length, 'chapters added'], [up ? up.l + ' chapters' : 'Exam chapters', tiles.filter(t => t.st === 'ok').length, tiles.length, 'ticked'], ['Submitted', tiles.filter(t => t.sub).length, tiles.length, 'by the teacher']],
     remind: p => Object.keys(XR.syl).length + ' teacher(s)', note: 'Red = chapters not added, yellow = chapters added but the next exam is not ticked, green = ready.', empty: 'No subjects in the timetable.' });
 }
 // ---------------------------------------------------------------- 2. Staff & arrangement
