@@ -102,6 +102,7 @@ const path = require('node:path');
   });
   await run('07-Plan-And-Syllabus', async () => {
     await page.locator('.tabs button.tab').filter({ hasText: 'Plan' }).click();
+    await page.locator('.hubt').filter({ hasText: 'Lesson plan' }).click();        // Planner opens on the Syllabus Hub (24 Nov 2026)
     await page.getByRole('button', { name: 'Auto fill from syllabus' }).click();
     assert.ok((await page.locator('#lpT').inputValue()).length);
     await page.getByRole('button', { name: /Send to Principal/ }).click();
