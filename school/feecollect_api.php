@@ -4,6 +4,8 @@
 //
 //   GET  ?a=state&ses=2026-27          sessions, students, who may do what, next receipt no
 //   GET  ?a=ledger&ses=&sid=           one child: heads, totals, old due, receipts, old card
+//   GET  ?a=statement&sid=[&from=2024-25]   one child, every session from `from` to the current one: month-wise heads, paid,
+//                                       discount, due, receipts, old due (Chairman / Principal / office — read only)
 //   GET  ?a=today&ses=&date=           receipts of one day (Quick Fee in the Manager app)
 //   POST ?a=collect {ses,sid,alloc[{i,amt}],late,discount,mode,…,nonce}   Accountant / Principal
 //   POST ?a=cancel  {ses,no,reason,nonce}                                  Principal
@@ -71,6 +73,29 @@ case 'ledger': {
     $prev = ['ses' => $ps, 'live' => (bool)ofc_live($ps), 'due' => $pl ? max(0, ofc_totals($pl)['balance']) : 0];
     sch_json(['ok' => true, 'photo' => $photo, 'ledger' => $L, 'totals' => $t, 'prev' => $prev, 'oldDue' => $L ? ofc_old_due($ses, $sid, $L) : null, 'receipts' => $rcpts($ses, $sid), 'card' => $card, 'adj' => ofc_adj_list($ses, $sid),
         'cardMonths' => $L ? null : ((ofc_cards($ses)[$sid] ?? [])['months'] ?? null)]);
+}
+case 'statement': {
+    // Full fee statement of one child (owner, 24 Nov 2026: "Astha Tiwari class 10 ka fee pura detail 2024 session se aaj tak bana kar
+    // do, Chairman Sir ko dena hai — aur ye session pura March tak"). Read only. A session not started in the new ERP is read from
+    // the old ERP fee card (same as Fee Receipt shows). Amounts in paise; head 'paid' includes its discount ('disc').
+    $sid = (string)($_GET['sid'] ?? ''); if ($sid === '') sch_fail('Choose the student.');
+    $stu = reg_students()[$sid] ?? null; if (!$stu) sch_fail('Student not found.');
+    $cur = ofc_ses(reg_session()) ?: '2026-27'; $from = ofc_ses((string)($_GET['from'] ?? '2024-25')) ?: '2024-25';
+    $out = [];
+    for ($y = (int)substr($from, 0, 4); $y <= (int)substr($cur, 0, 4); $y++) {
+        $sx = $y . '-' . substr((string)($y + 1), 2);
+        $L = sch_rec_get('ofcLed', $sx . '|' . $sid); $src = 'live';
+        if (!$L) { $c = ofc_cards($sx)[$sid] ?? null; if ($c) { $L = ofc_ledger_from_card($sx, $sid, $c, $stu); $src = 'card'; } }
+        if (!$L) { $out[] = ['ses' => $sx, 'none' => true]; continue; }
+        $R = array_values(array_filter($rcpts($sx, $sid), fn($r) => ($r['status'] ?? '') !== 'Cancelled'));
+        $out[] = ['ses' => $sx, 'src' => $src, 'from' => (string)($L['from'] ?? ''), 'cls' => (string)($L['cls'] ?? ''), 'section' => (string)($L['section'] ?? ''), 'scheme' => (string)($L['scheme'] ?? ''),
+            'oldFee' => (int)($L['oldFee'] ?? 0), 'oldDue' => $src === 'live' ? ofc_old_due($sx, $sid, $L) : (int)($L['oldFee'] ?? 0),
+            'heads' => array_values(array_map(fn($h) => ['m' => (int)$h['m'], 'name' => (string)$h['name'], 'amt' => (int)$h['amt'], 'paid' => (int)$h['paid'], 'disc' => (int)($h['disc'] ?? 0), 'na' => !empty($h['na'])], (array)$L['heads'])),
+            'receipts' => array_map(fn($r) => ['no' => (string)$r['no'], 'date' => (string)$r['date'], 'total' => (int)($r['received'] ?? $r['total'] ?? 0), 'mode' => (string)($r['mode'] ?? ''), 'lines' => $r['lines'] ?? []], $R)];
+    }
+    $set = sch_rec_get('settings', 'main') ?? [];
+    sch_json(['ok' => true, 'student' => ['id' => $sid, 'name' => (string)($stu['name'] ?? ''), 'cls' => (string)($stu['cls'] ?? ''), 'section' => (string)($stu['section'] ?? ''), 'father' => (string)($stu['father'] ?? ''), 'mother' => (string)($stu['mother'] ?? ''), 'adm' => (string)($stu['adm'] ?? ''), 'phone' => (string)($stu['phone'] ?? '')],
+        'sessions' => $out, 'current' => $cur, 'today' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Kolkata')))->format('Y-m-d'), 'school' => (string)($set['school'] ?? 'SN Mishra Singapore International School')]);
 }
 case 'today': {
     // Quick Fee (Manager app, 13 Nov 2026): today's receipts for the "Aaj ki fee" box.
