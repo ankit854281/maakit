@@ -10,7 +10,7 @@
 // ============================================================================
 'use strict';
 (function () {
-  const GROUP = ['Meri padhai', [['study', {}, 'book', 'Meri Exam Taiyari', 'Complex Analysis · Integral Equations']]];
+  const GROUP = ['Meri padhai', [['study', {}, 'book', 'Meri Exam Taiyari', 'Real Analysis · Hydrodynamics · Complex Analysis · Integral Equations']]];
   function studyOn() {
     try { return !!(S && ME && ME.role === 'teacher' && /a+stha/i.test(myName() || '')); } catch (e) { return false; }
   }
@@ -28,9 +28,12 @@
 
   function daysTo(iso) { const t = new Date(todayISO() + 'T00:00:00'), d = new Date(iso + 'T00:00:00'); return Math.round((d - t) / 864e5); }
   function card() {
+    const ra = daysTo('2026-11-25'), hy = daysTo('2026-11-28');
+    if (hy < 0) return '';
+    const left = (n, nm) => n > 0 ? `${nm}: <b>${n} din baaki</b>` : n === 0 ? `${nm}: <b>aaj exam hai — all the best!</b>` : `${nm}: ho gaya ✓`;
     return `<div class="card study-card" style="background:linear-gradient(120deg,#6d28d9,#c026d3);color:#fff;border:0">
       <h3 style="color:#fff;margin:0 0 4px">📚 Meri Exam Taiyari</h3>
-      <div style="font-size:14px;line-height:1.6">Complex Analysis (MC0103T)<br>Integral Equations &amp; Calculus of Variations (MC0104T)</div>
+      <div style="font-size:14px;line-height:1.6">${left(ra, 'Real Analysis (25 Nov)')}<br>${left(hy, 'Hydrodynamics (28 Nov)')}<br>Complex Analysis · Integral Equations (MC0103T, MC0104T)</div>
       <button class="btn full" style="margin-top:10px;background:#fff;color:#6d28d9;font-weight:800" onclick="openStudy()">Ebook kholiye →</button></div>`;
   }
   const _render = render;
