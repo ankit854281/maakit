@@ -211,7 +211,7 @@ function vSyl(list) {
   const cnt = id => X.ex.filter(e => (e || []).includes(id)).length;
   const row = (ch, i, sr) => { if (f && !(X.ex[i] || []).includes(f)) return ''; const tx = chapRec(key, ch.n);
     return `<div class="syr ${ch.done ? 'dn' : ''}"><label class="syd" aria-label="Finished"><input type="checkbox" ${ch.done ? 'checked' : ''} onchange="sylTick(${jsq(key)},${i},this.checked)"></label>
-      <button type="button" class="syn" onclick="chapEdit(${jsq(key)},${i})"><b>${sr}. ${esc(ch.n)}</b><small>${ch.pf || ch.pt ? 'Page ' + esc(ch.pf || '?') + (ch.pt ? '–' + esc(ch.pt) : '') : 'pages —'}${ch.done ? ' · finished ' + esc(fmtDate(ch.done)) : ''}</small></button>
+      <button type="button" class="syn" onclick="chapEdit(${jsq(key)},${i})" aria-label="Edit chapter ${esc(ch.n)}"><b>${sr}. ${esc(ch.n)} <span style="font-size:11px;font-weight:600;color:#4F46E5;white-space:nowrap">✏️ Edit</span></b><small>${ch.pf || ch.pt ? 'Page ' + esc(ch.pf || '?') + (ch.pt ? '–' + esc(ch.pt) : '') : 'pages —'}${ch.done ? ' · finished ' + esc(fmtDate(ch.done)) : ''}</small></button>
       <button type="button" class="txb ${tx ? 'on' : ''}" onclick="chapOpen(${jsq(key)},${i})" aria-label="Chapter text">${tx ? '📄 ' + (tx.words > 999 ? Math.round(tx.words / 100) / 10 + 'k' : tx.words) : '📄 +'}</button>
       <div class="syx">${tags.map(t => `<button type="button" class="exb ${(X.ex[i] || []).includes(t.id) ? 'on' : ''}" onclick="sylExTap(${i},'${esc(t.id)}')">${esc(t.l)}</button>`).join('')}</div></div>`; };
   const groups = books.map(b => { const idx = y.chapters.map((ch, i) => [ch, i]).filter(([ch]) => (ch.book || '') === b); let sr = 0;
@@ -227,7 +227,7 @@ function vSyl(list) {
     <div class="card"><h3>Chapters <small>${done}/${y.chapters.length} finished · ${withText} with text</small></h3>
       ${y.chapters.length ? `<div class="chips exf"><button class="chip ${!f ? 'on' : ''}" onclick="go('plan',{m:'syl',key:${jsq(key)},past:${showPast ? 1 : 0}})">All <b>${y.chapters.length}</b></button>${tags.map(t => `<button class="chip ${f === t.id ? 'on' : ''}" onclick="go('plan',{m:'syl',key:${jsq(key)},f:'${esc(t.id)}',past:${showPast ? 1 : 0}})">${esc(t.l)} <b>${cnt(t.id)}</b></button>`).join('')}
         <button class="chip ghost" onclick="go('plan',{m:'syl',key:${jsq(key)},f:${jsq(f)},past:${showPast ? 0 : 1}})">${showPast ? 'Hide past exams' : 'Past exams'}</button></div>
-        <p class="mut hint">Tick ✓ when a chapter is finished. Tap an exam (${esc(tags.slice(0, 3).map(t => t.l).join(', '))}) on a chapter if it comes in that exam, then press Save. Tap a chapter name to change it or its pages.</p>` : ''}
+        <p class="mut hint">Tick ✓ when a chapter is finished. Tap an exam (${esc(tags.slice(0, 3).map(t => t.l).join(', '))}) on a chapter if it comes in that exam, then press Save. <b>Galat likha hai? Chapter ke ✏️ Edit pe tap karke naam, book, page badliye ya chapter hataiye.</b></p>` : ''}
       ${groups || (y.chapters.length ? '<div class="empty">No chapter is ticked for this exam yet.</div>' : '<div class="empty">No chapters yet. Add the book below.</div>')}
       ${X.changed ? `<div class="sticky"><button class="btn go full" onclick="sylExSave(${jsq(key)})">Save exam chapters · ${X.changed} change(s)</button></div>` : ''}
       ${share && !X.changed ? `<a class="btn wa full" style="margin-top:8px" target="_blank" rel="noopener" href="${wa('', share)}">${ic('wa')} Send ${esc(examLabel(f))} syllabus to the class parents' group</a>` : ''}</div>
