@@ -32,9 +32,34 @@ if (typeof vSyl === 'function') {
   const _vsyl = vSyl;
   vSyl = function (list) {
     const html = _vsyl.apply(this, arguments), key = list.some(a => sylKey(a.c, a.s) === P.key) ? P.key : sylKey(list[0].c, list[0].s);
-    const at = html.indexOf('<div class="card"><h3>Photo of the contents page');
-    return at > 0 ? html.slice(0, at) + sylSubCard(key) + html.slice(at) : html + sylSubCard(key);
+    let out = html; const sel = DRAFT.sylSelect, others = list.filter(a => sylKey(a.c, a.s) !== key);
+    // chapters added under the wrong class / subject → move them (owner, 24 Nov 2026: "galat class me entry ho jaa raha hai, edit ka option do")
+    if (sel && sel.key === key && others.length) {
+      const mark = 'Remove all chapters of this book</button></div>', i = out.indexOf(mark);
+      if (i > 0) out = out.slice(0, i + mark.length) + `<div class="sylmv"><b>Wrong class or subject? Move these chapters to:</b>
+        <select id="sylMvTo" class="inp">${others.map(a => `<option value="${esc(sylKey(a.c, a.s))}">Class ${esc(a.c)} — ${esc(a.s)}</option>`).join('')}</select>
+        <div class="btns"><button type="button" class="btn s go" onclick="sylMove(${jsq(key)},false)">Move selected</button><button type="button" class="btn s l" onclick="sylMove(${jsq(key)},true)">Move whole book</button></div></div>` + out.slice(i + mark.length);
+    }
+    const at = out.indexOf('<div class="card"><h3>Photo of the contents page');
+    return at > 0 ? out.slice(0, at) + sylSubCard(key) + out.slice(at) : out + sylSubCard(key);
   };
+}
+function sylMove(key, all) {
+  const sel = DRAFT.sylSelect, to = ($('sylMvTo') || {}).value; if (!sel || sel.key !== key || !to || to === key) return;
+  const src = sylCopy(key), dst = sylCopy(to);
+  const ids = src.chapters.flatMap((ch, i) => (ch.book || '') === sel.book && (all || sel.ids.has(i)) ? [i] : []);
+  if (!ids.length) return toast('Tick the chapters to move first.');
+  const [tc, ts] = to.split('|');
+  if (!confirm(`Move ${ids.length} chapter(s) to Class ${tc} — ${ts}?`)) return;
+  let moved = 0, same = 0;
+  ids.forEach(i => { const ch = src.chapters[i]; if (dst.chapters.some(x => x.n.toLowerCase() === ch.n.toLowerCase() && (x.book || '') === (ch.book || ''))) { same++; return; } const c2 = Object.assign({}, ch); delete c2.ex; dst.chapters.push(c2); moved++; });
+  src.chapters = src.chapters.filter((_, i) => !ids.includes(i));
+  delete src.sub; delete dst.sub;   // both lists changed → the teacher submits them again
+  put('syl', to, dst, 'Syllabus', `${to.replace('|', ' ')}: ${moved} chapter(s) moved in from ${key.replace('|', ' ')} — Teacher App`);
+  put('syl', key, src, 'Syllabus', `${key.replace('|', ' ')}: ${ids.length} chapter(s) moved to ${to.replace('|', ' ')} (wrong class / subject) — Teacher App`);
+  DRAFT.sylSelect = null; DRAFT.sx = null; DRAFT.sb = null;
+  toast(`${moved} chapter(s) moved to Class ${tc} — ${ts}${same ? ` (${same} were already there)` : ''}. Tick their exams there.`);
+  go('plan', { m: 'syl', key: to });
 }
 if (typeof vHome === 'function') {
   const _vhs = vHome;
@@ -55,5 +80,6 @@ if (typeof vPdash === 'function') {
     return `<div class="card lpb-home"><div class="row"><div><b>📤 Homework of all classes</b><small>Class work + homework the teachers wrote today, class by class — read it or send it to the class WhatsApp groups.</small></div><button class="btn go" onclick="go('hwshare')">Open</button></div></div>` + html;
   };
 }
-(function () { const st = document.createElement('style'); st.textContent = `.sylsub.ok{border:2px solid #22C55E33;background:#F2FBF5}
+(function () { const st = document.createElement('style'); st.textContent = `.sylmv{margin-top:10px;padding:10px;border:1px dashed #c9d2dc;border-radius:12px;background:#F8FAFC}.sylmv b{display:block;font-size:13px;margin-bottom:6px}.sylmv .btns{margin-top:8px}
+  .sylsub.ok{border:2px solid #22C55E33;background:#F2FBF5}
   .sylrow{display:flex;justify-content:space-between;gap:8px;width:100%;border:0;border-top:1px solid #eef1f4;background:none;padding:8px 2px;font:inherit;text-align:left;cursor:pointer}.sylrow span{font-weight:600;font-size:13.5px}.sylrow small{font-size:12px;color:#556;white-space:nowrap}`; document.head.appendChild(st); })();
