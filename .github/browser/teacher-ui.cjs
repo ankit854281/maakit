@@ -111,7 +111,7 @@ const path = require('node:path');
     await page.getByText('The French Revolution').first().waitFor();
   });
   await run('08-Notes', async () => {
-    await page.locator('.tabs button.tab').filter({ hasText: 'Planner' }).click(); await page.locator('.seg button').filter({ hasText: 'Notes' }).click();   // Notes live inside Planner
+    await page.locator('.tabs button.tab').filter({ hasText: 'Planner' }).click(); await page.locator('.hubt').filter({ hasText: 'Notes' }).click();   // Notes live inside Planner (Syllabus Hub tile)
     await page.getByRole('button', { name: /New notes from book photos/ }).click();
     await page.locator('#nC').fill('CI Chapter Note');
     await page.locator('#nB').fill('This note is created only in a CI test database.');
