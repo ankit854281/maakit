@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integral Equations and Calculus of Variations (MC0104T) — Exam Study Guide</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+</head>
+<body data-book="integral-equations">
+
+<div class="top"><a class="back" href="index.html">← Books</a><b>Integral Equations &amp; Calculus of Variations</b><span class="prog" id="prog"></span></div>
+
+<div class="hero">
+  <h1>📘 Integral Equations &amp; Calculus of Variations</h1>
+  <p>PG Mathematics, Semester I · Course Code MC0104T · 4 credits · 25 Internal + 75 External. Sirf syllabus ke Units I–IV ke topics.</p>
+</div>
+
+<nav class="units">
+  <a href="#guide">How to use</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#books">Books</a><a href="#formula">Formula sheet</a>
+</nav>
+
+<div class="wrap">
+
+<div class="card sheet" id="guide">
+  <h3>How to use this guide</h3>
+  <p>Har topic isi order mein likha hai, jo answer sheet mein likhna hai:</p>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Pehle idea samjhiye (aasaan bhasha).</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Exam mein aise hi likhiye.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem / Method</span>Statement ya method, word-to-word.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Key steps. Copy par poora likhne ka abhyas kariye.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>Poora hal.</div>
+  <h4>Study plan (8 din)</h4>
+  <div class="tbl"><table>
+    <tr><th>Din</th><th>Topics</th></tr>
+    <tr><td>1 – 2</td><td>Unit I: types of integral equations, ODE → integral equation, kernels, eigenvalues, Fredholm solution methods</td></tr>
+    <tr><td>3 – 4</td><td>Unit II: successive approximations, resolvent kernel, Volterra → differential equation</td></tr>
+    <tr><td>5 – 6</td><td>Unit III: Euler equation, higher derivatives, several variables, parametric form, invariance</td></tr>
+    <tr><td>7</td><td>Unit IV: several dependent variables, isoperimetric problems, moving boundaries, Jacobi &amp; Legendre</td></tr>
+    <tr><td>8</td><td>Formula sheet + saare theorem / method statements ek baar</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================================================== UNIT I -->
+<div class="unit-h" id="u1"><h2>Unit I — Integral Equations: types, kernels, eigenvalues, Fredholm solution</h2><p>Introduction and types · conversion of differential to integral equations · kernels, L₂-kernels and L₂-functions · eigenvalues and eigenfunctions · homogeneous and non-homogeneous Fredholm equations of first and second kind.</p></div>
+
+<div class="card" data-id="1.1">
+  <h3 class="topic">1.1 Introduction and types of integral equations</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Integral equation mein unknown function integral ke andar hota hai. Limits fix hon to Fredholm, upper limit variable ho to Volterra.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>
+  <ul><li><b>Fredholm, first kind:</b> \(f(x)=\int_a^b K(x,t)\,\varphi(t)\,dt\)</li>
+  <li><b>Fredholm, second kind:</b> \(\varphi(x)=f(x)+\lambda\int_a^b K(x,t)\,\varphi(t)\,dt\)</li>
+  <li><b>Volterra, first kind:</b> \(f(x)=\int_a^x K(x,t)\,\varphi(t)\,dt\)</li>
+  <li><b>Volterra, second kind:</b> \(\varphi(x)=f(x)+\lambda\int_a^x K(x,t)\,\varphi(t)\,dt\)</li></ul>
+  Homogeneous: \(f\equiv0\). Linear: \(\varphi\) appears only to the first power.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\varphi(x)=x+\int_0^1 xt\,\varphi(t)\,dt\) is a linear Fredholm equation of the second kind with \(K(x,t)=xt\), \(f(x)=x\), \(\lambda=1\).</div>
+</div>
+
+<div class="card" data-id="1.2">
+  <h3 class="topic">1.2 Conversion of differential equations to integral equations</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Do baar integrate karo, aur initial conditions andar aa jaati hain. Volterra equation ban jaati hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>For \(y''+p(x)y=g(x)\), \(y(0)=y_0,\ y'(0)=y_1\):
+  $$y(x)=F(x)+\int_0^x (t-x)\,p(t)\,y(t)\,dt,\qquad F(x)=y_0+y_1x+\int_0^x (x-t)\,g(t)\,dt.$$
+  This is a Volterra equation of the second kind with \(\lambda=1\) and kernel \(K(x,t)=(t-x)p(t)\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Integrate once: \(y'(x)=y_1+\int_0^x (g-py)\,dt\). Integrate again: \(y(x)=y_0+y_1x+\int_0^x (x-t)(g(t)-p(t)y(t))\,dt\). Split the integrand and collect the \(y\)-part.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Take \(y''+y=0\), \(y(0)=1,\ y'(0)=0\). Then \(p=1,\ g=0\), so \(y(x)=1+\int_0^x (t-x)\,y(t)\,dt\).</div>
+</div>
+
+<div class="card" data-id="1.3">
+  <h3 class="topic">1.3 Types of kernels: symmetric, degenerate, Hermitian</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Kernel \(K(x,t)\) integral equation ka dil hai. Uska type batata hai ki method kaunsa lagega.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>
+  <ul><li><b>Symmetric:</b> \(K(x,t)=K(t,x)\) (real case).</li>
+  <li><b>Hermitian:</b> \(K(x,t)=\overline{K(t,x)}\).</li>
+  <li><b>Degenerate (separable):</b> \(K(x,t)=\sum_{i=1}^n a_i(x)\,b_i(t)\) with finitely many terms.</li></ul></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(K(x,t)=x^2+xt\) is degenerate: \(a_1=x^2,\ b_1=1,\ a_2=x,\ b_2=t\). \(K(x,t)=e^{x-t}\) is not symmetric, but \(\min(x,t)\) is symmetric.</div>
+</div>
+
+<div class="card" data-id="1.4">
+  <h3 class="topic">1.4 L₂-kernels and L₂-functions</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>L₂ = square-integrable. Energy finite ho to integral equation ka theory sahi chalta hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(\varphi\) is an L₂-function on \([a,b]\) if \(\displaystyle\int_a^b|\varphi|^2dx<\infty\). \(K\) is an L₂-kernel if \(\displaystyle\iint_{[a,b]^2}|K(x,t)|^2\,dx\,dt<\infty\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If \(K\) is an L₂-kernel and \(\varphi\in L_2\), then \(\psi(x)=\int_a^b K(x,t)\varphi(t)\,dt\) is in \(L_2\) (Cauchy–Schwarz gives \(|\psi(x)|^2\le\int|K(x,t)|^2dt\cdot\int|\varphi|^2\)).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(K(x,t)=xt\) on \([0,1]^2\): \(\iint x^2t^2=\tfrac19<\infty\), so it is an L₂-kernel.</div>
+</div>
+
+<div class="card" data-id="1.5">
+  <h3 class="topic">1.5 Eigenvalues and eigenfunctions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Homogeneous equation \(\varphi=\lambda\int K\varphi\) ka non-zero hal sirf kuch khaas \(\lambda\) par milta hai. Wo \(\lambda\) eigenvalue, hal eigenfunction.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(\lambda\) is an eigenvalue and \(\varphi\neq0\) an eigenfunction if \(\varphi(x)=\lambda\int_a^b K(x,t)\varphi(t)\,dt\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>For a degenerate kernel, the equation reduces to a finite linear system \(c=\lambda Ac\). Non-zero \(c\) exists iff \(\det(I-\lambda A)=0\). These \(\lambda\) are the eigenvalues.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(K(x,t)=xt\) on \([0,1]\): \(\varphi=\lambda\int_0^1 xt\varphi\,dt=\lambda c\,x\) with \(c=\int_0^1t\varphi\,dt\). Then \(c=\lambda c\cdot\tfrac13\), so \(\lambda=3\) (with \(c\ne0\)). Eigenfunction \(\varphi=x\).</div>
+</div>
+
+<div class="card" data-id="1.6">
+  <h3 class="topic">1.6 Fredholm equations of the second kind with degenerate kernel</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Degenerate kernel ho to integral equation ek simple algebra problem ban jaati hai.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Method</span>Let \(K=\sum a_i(x)b_i(t)\). Write \(\varphi=f+\lambda\sum_i c_i a_i\), with \(c_i=\int_a^b b_i\varphi\,dt\). Let \(\beta_{ij}=\int_a^b b_i a_j\,dt\) and \(\gamma_i=\int_a^b b_i f\,dt\). Then \(c_i-\lambda\sum_j\beta_{ij}c_j=\gamma_i\), a linear system. Solve for \(c\), then get \(\varphi\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Solve \(\varphi(x)=x+\lambda\int_0^1 xt\,\varphi(t)\,dt\), \(\lambda\neq3\). Here \(c=\int_0^1 t\varphi\,dt\). Then \(c=\int_0^1 t\cdot t\,dt+\lambda c\int_0^1 t^2dt=\tfrac13+\tfrac{\lambda}{3}c\), so \(c=\dfrac1{3-\lambda}\). Hence \(\varphi(x)=x+\dfrac{\lambda x}{3-\lambda}=\dfrac{3x}{3-\lambda}\).</div>
+</div>
+
+<div class="card" data-id="1.7">
+  <h3 class="topic">1.7 Homogeneous and non-homogeneous equations of the first kind</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>First kind mein unknown function sirf integral ke andar hai (koi \(\varphi\) bahar nahi). Ise seedha second kind mein badalna mushkil hota hai.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Method</span>If \(K(x,x)\neq0\), differentiate the equation with respect to \(x\) to get a second-kind equation. For Volterra \(f(x)=\int_a^x K\varphi\,dt\) with \(K(x,x)\neq0\), this gives \(\varphi(x)=\dfrac1{K(x,x)}\big[f'(x)-\int_a^x K_x\varphi\,dt\big]\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\displaystyle x=\int_0^x \varphi(t)\,dt\): differentiate: \(\varphi(x)=1\). Check: \(\int_0^x1\,dt=x\). ✓</div>
+</div>
+
+<!-- ===================================================== UNIT II -->
+<div class="unit-h" id="u2"><h2>Unit II — Successive approximations, Resolvent kernel, Volterra to ODE</h2><p>Successive approximations and substitution for Fredholm and Volterra · Neumann series · resolvent kernel and reciprocal functions · Volterra solution of Fredholm equation · reduction of Volterra equations to differential equations.</p></div>
+
+<div class="card" data-id="2.1">
+  <h3 class="topic">2.1 Successive approximations for Fredholm equations</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Pehle guess \(\varphi_0=f\) lo, phir bar-bar equation mein daalo. Ho sakta hai ki sequence hal ki taraf jaaye.</div>
+  <div class="box b-def"><span class="lbl">📖 Method</span>\(\varphi_0=f,\qquad \varphi_{n+1}(x)=f(x)+\lambda\int_a^b K(x,t)\varphi_n(t)\,dt.\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If \(|K(x,t)|\le M\) on \([a,b]^2\) and \(|\lambda|<\dfrac1{M(b-a)}\), the sequence converges uniformly to the unique solution.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>\(|\varphi_{n+1}-\varphi_n|\le (|\lambda|M(b-a))^n\,\sup|f|\). The geometric series converges, so the sequence is Cauchy; the limit solves the equation.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\varphi(x)=x+\lambda\int_0^1 xt\varphi(t)dt\). Start \(\varphi_0=x\). Then \(\varphi_1=x+\lambda\int_0^1 xt\cdot t\,dt=x+\dfrac{\lambda x}{3}\). The next step gives \(x+\lambda x\big(\tfrac13+\tfrac{\lambda}{9}\big)\), which matches \(\dfrac{3x}{3-\lambda}\) when expanded.</div>
+</div>
+
+<div class="card" data-id="2.2">
+  <h3 class="topic">2.2 Successive substitution (Neumann series)</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Same idea, bas ek series ki shakl mein likhte hain: \(\varphi=f+\lambda Kf+\lambda^2K^2f+\cdots\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>With \(K_1=K\) and \(K_{n+1}(x,t)=\int_a^b K(x,z)K_n(z,t)\,dz\), the solution is \(\varphi=f+\sum_{n\ge1}\lambda^n\int_a^b K_n(x,t)f(t)\,dt\), convergent for small \(|\lambda|\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>For \(K=xt\) on \([0,1]\): \(K_2=\int_0^1 xz\cdot zt\,dz=\dfrac{xt}{3}\), and in general \(K_n=\dfrac{xt}{3^{n-1}}\). So \(\sum_{n\ge1}\lambda^nK_n=xt\cdot\dfrac{\lambda}{1-\lambda/3}=\dfrac{3\lambda xt}{3-\lambda}\).</div>
+</div>
+
+<div class="card" data-id="2.3">
+  <h3 class="topic">2.3 Successive approximations for Volterra equations</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Volterra mein upper limit \(x\) hai, isliye convergence bina \(\lambda\) ki chhoti value ke bhi hoti hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>For \(\varphi(x)=f(x)+\lambda\int_a^x K(x,t)\varphi(t)dt\) with \(K\) bounded and continuous, successive approximations converge for every \(\lambda\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Bound \(|\varphi_{n+1}-\varphi_n|\le \dfrac{(M|\lambda|(x-a))^{n}}{n!}\cdot\) const (induction). The factorial makes the series converge for all \(\lambda\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\varphi(x)=1+\int_0^x\varphi(t)dt\): \(\varphi_0=1,\ \varphi_1=1+x,\ \varphi_2=1+x+x^2/2\), converging to \(e^x\).</div>
+</div>
+
+<div class="card" data-id="2.4">
+  <h3 class="topic">2.4 Resolvent kernel and reciprocal functions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Resolvent kernel ek hi baar mein poora solution dene wala "jaadui" kernel hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(R(x,t;\lambda)=\sum_{n\ge1}\lambda^{\,n-1}K_n(x,t)\). Reciprocal functions: \(\Gamma(x,t;\lambda)=\dfrac{R(x,t;\lambda)}{\lambda}\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>The solution of \(\varphi=f+\lambda\int K\varphi\) is \(\varphi(x)=f(x)+\lambda\int_a^b R(x,t;\lambda)f(t)\,dt\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Substitute the Neumann series of 2.2 and collect the terms: \(\varphi=f+\lambda\int\big(\sum\lambda^{n-1}K_n\big)f\,dt\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>For \(K=xt\): \(R=\dfrac{3xt}{3-\lambda}\), so \(\varphi=f+\dfrac{3\lambda}{3-\lambda}\,x\int_0^1 t f(t)dt\). With \(f=x\): \(\varphi=x+\dfrac{\lambda x}{3-\lambda}=\dfrac{3x}{3-\lambda}\). ✓</div>
+</div>
+
+<div class="card" data-id="2.5">
+  <h3 class="topic">2.5 Volterra solution of Fredholm equations of the second kind</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Agar kernel \(t>x\) ke liye zero ho, to Fredholm ki upper limit \(x\) ho jaati hai, aur wo Volterra ban jaata hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If \(K(x,t)=0\) for \(t>x\), then \(\displaystyle\int_a^bK\varphi\,dt=\int_a^xK\varphi\,dt\), so the Fredholm equation is a Volterra equation with the same solution method.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\varphi(x)=f(x)+\lambda\int_0^1 H(x-t)\varphi(t)dt\), where \(H\) is 1 for \(t\le x\) and 0 otherwise, reduces to \(\varphi=f+\lambda\int_0^x\varphi\,dt\).</div>
+</div>
+
+<div class="card" data-id="2.6">
+  <h3 class="topic">2.6 Reduction of Volterra equations to differential equations</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Kernel \((x-t)\) ka ya polynomial in \((x-t)\) ka Volterra ko differentiate karke ODE bana sakte hain.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If \(\varphi(x)=f(x)+\displaystyle\int_a^x (x-t)\varphi(t)\,dt\), then \(\varphi''=f''+\varphi\), with \(\varphi(a)=f(a)\), \(\varphi'(a)=f'(a)\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>\(\varphi'=f'+\int_a^x\varphi\,dt\) (the boundary term vanishes since \(x-x=0\)). Differentiate again: \(\varphi''=f''+\varphi\). The initial conditions come from setting \(x=a\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\varphi(x)=1+\displaystyle\int_0^x (x-t)\varphi(t)\,dt\). Then \(\varphi''=\varphi\), \(\varphi(0)=1,\ \varphi'(0)=0\). Solution \(\varphi=\cosh x\).</div>
+</div>
+
+<!-- ===================================================== UNIT III -->
+<div class="unit-h" id="u3"><h2>Unit III — Calculus of Variations: Euler equation and its forms</h2><p>Fixed-boundary variational problems · extremals · Euler equation · higher derivatives · several independent variables · parametric form · invariance.</p></div>
+
+<div class="card" data-id="3.1">
+  <h3 class="topic">3.1 Variational problems with fixed boundaries, extremals, Euler equation</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Functional = function ka function (jaise length, time). Extremal = jo curve functional ko max/min kare. Uska test Euler equation hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(J[y]=\displaystyle\int_{x_0}^{x_1}F(x,y,y')\,dx\), with \(y(x_0)=y_0,\ y(x_1)=y_1\) fixed. Extremal: \(y\) with \(\delta J=0\) for all admissible variations \(\eta\), \(\eta(x_0)=\eta(x_1)=0\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Euler equation</span>
+  $$F_y-\frac{d}{dx}F_{y'}=0.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Take \(y+\varepsilon\eta\). Then \(\dfrac{dJ}{d\varepsilon}\big|_0=\displaystyle\int(F_y\eta+F_{y'}\eta')\,dx=0\). Integrate the second term by parts; the boundary term vanishes since \(\eta(x_0)=\eta(x_1)=0\). Then \(\int(F_y-\tfrac d{dx}F_{y'})\eta\,dx=0\) for all \(\eta\), so the bracket is zero (fundamental lemma).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Shortest path: \(F=\sqrt{1+y'^2}\). \(F_y=0\), \(F_{y'}=\dfrac{y'}{\sqrt{1+y'^2}}\). Euler gives \(F_{y'}=\) const, so \(y'\) is const and \(y\) is a straight line.</div>
+</div>
+
+<div class="card" data-id="3.2">
+  <h3 class="topic">3.2 Functionals dependent on higher-order derivatives</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>\(y''\) bhi function mein ho to Euler equation mein ek term aur jud jaata hai, sign alternate karke.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(J[y]=\displaystyle\int F(x,y,y',y'')\,dx\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Euler–Poisson equation</span>
+  $$F_y-\frac{d}{dx}F_{y'}+\frac{d^2}{dx^2}F_{y''}=0.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Same as 3.1 with \(\eta''\) term. Integrate by parts twice; each time the boundary terms vanish if \(\eta\) and \(\eta'\) vanish at the ends.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(F=y''^2\): \(F_y=0,\ F_{y'}=0,\ F_{y''}=2y''\). Equation: \(\dfrac{d^2}{dx^2}(2y'')=0\), so \(y''''=0\): \(y\) is a cubic.</div>
+</div>
+
+<div class="card" data-id="3.3">
+  <h3 class="topic">3.3 Functionals dependent on more than one independent variable</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Do variables \(x,y\) hon to double integral, aur Euler equation mein har variable ke liye derivative.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(J[u]=\displaystyle\iint_R F(x,y,u,u_x,u_y)\,dx\,dy\), \(u\) fixed on the boundary of \(R\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Euler–Ostrogradsky equation</span>
+  $$F_u-\frac{\partial}{\partial x}F_{u_x}-\frac{\partial}{\partial y}F_{u_y}=0.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Vary \(u\) by \(\varepsilon\eta\), differentiate under the integral, and apply Green's theorem (divergence form) with \(\eta=0\) on the boundary.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(F=u_x^2+u_y^2\): \(F_u=0\), \(F_{u_x}=2u_x\), \(F_{u_y}=2u_y\). Equation: \(u_{xx}+u_{yy}=0\) (Laplace).</div>
+</div>
+
+<div class="card" data-id="3.4">
+  <h3 class="topic">3.4 Variational problems in parametric form</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Curve ko parameter \(t\) se likhte hain: \((x(t),y(t))\). Tab \(x\) bhi variable ban jaata hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(J=\displaystyle\int_{t_0}^{t_1}F(x,y,\dot x,\dot y)\,dt\), with \(\dot x=dx/dt\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>
+  $$F_x-\frac{d}{dt}F_{\dot x}=0,\qquad F_y-\frac{d}{dt}F_{\dot y}=0.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Vary \(x\) and \(y\) separately, the same way as 3.1. Two Euler equations result, one for each coordinate.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(J=\displaystyle\int\sqrt{\dot x^2+\dot y^2}\,dt\) (arc length). The Euler equations give straight lines.</div>
+</div>
+
+<div class="card" data-id="3.5">
+  <h3 class="topic">3.5 Invariance of Euler's equation</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Parameter badalne se curve nahi badalti, to Euler equation ka result bhi nahi badalna chahiye.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If \(F(x,y,\dot x,\dot y)\) is homogeneous of degree 1 in \((\dot x,\dot y)\), the Euler equations in parametric form are invariant under change of parameter. They reduce to the usual Euler equation in \(y(x)\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Under \(t=\phi(s)\), \(\dot x\,dt=x'(s)\,ds\). Homogeneity makes \(F\,dt\) unchanged in form. The Euler expression transforms as a vector, so it vanishes in one parametrisation iff in the other.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>With \(x=t\) (so \(\dot x=1\)) the parametric form \(\int\sqrt{\dot x^2+\dot y^2}dt\) becomes \(\int\sqrt{1+y'^2}dx\), giving the same straight lines.</div>
+</div>
+
+<!-- ===================================================== UNIT IV -->
+<div class="unit-h" id="u4"><h2>Unit IV — Several dependent variables, Isoperimetric problems, Moving boundaries, Jacobi and Legendre</h2><p>Functionals of several dependent variables · isoperimetric problems · Lagrange equation · moving boundaries and one-sided variations · Jacobi and Legendre conditions · applications.</p></div>
+
+<div class="card" data-id="4.1">
+  <h3 class="topic">4.1 Functionals dependent on several dependent variables</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Ek se zyada function (\(y_1,y_2,\ldots\)) ho to har function ke liye ek Euler equation.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(J=\displaystyle\int F(x,y_1,\dots,y_n,y_1',\dots,y_n')\,dx\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>
+  $$\frac{\partial F}{\partial y_i}-\frac{d}{dx}\frac{\partial F}{\partial y_i'}=0,\qquad i=1,\dots,n.$$</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(F=y_1'^2+y_2'^2+y_1y_2\): \(y_1''=\tfrac12y_2\), \(y_2''=\tfrac12y_1\).</div>
+</div>
+
+<div class="card" data-id="4.2">
+  <h3 class="topic">4.2 Isoperimetric problems</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Ek shart (constraint) ke saath optimise karna: jaise ek fixed length ki rassi se maximum area.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Minimise/maximise \(J=\int F\,dx\) subject to \(K=\int G\,dx=\text{const}\), with fixed endpoints.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>If \(y\) is an extremal, there is a constant \(\lambda\) such that \(y\) satisfies the Euler equation of \(H=F+\lambda G\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Maximise area \(\int y\,dx\) with length \(\int\sqrt{1+y'^2}dx=L\). With \(H=y+\lambda\sqrt{1+y'^2}\), the Euler equation gives \(\dfrac{\lambda y'}{\sqrt{1+y'^2}}=x+c\). Result: a circle \((x-a)^2+(y-b)^2=\lambda^2\).</div>
+</div>
+
+<div class="card" data-id="4.3">
+  <h3 class="topic">4.3 Lagrange equation (Euler equation with multiplier)</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Lagrange multiplier \(\lambda\) ek extra "price" hai jo constraint ke liye lagta hai. Iske saath Euler equation banta hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>For \(H=F+\lambda G\), the Lagrange (Euler–multiplier) equation is
+  $$H_y-\frac{d}{dx}H_{y'}=0,$$ together with the constraint \(\int G\,dx=\text{const}\). Solve for \(y\) and \(\lambda\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Extremise \(\int_0^1 y'^2\,dx\) with \(\int_0^1 y\,dx=1\), \(y(0)=y(1)=0\). Take \(H=y'^2+\lambda y\): \(\lambda-2y''=0\), so \(y=\tfrac{\lambda}{4}(x^2-x)\). The constraint \(\int_0^1 y\,dx=-\tfrac{\lambda}{24}=1\) gives \(\lambda=-24\). So \(y=6x(1-x)\). Check: \(\int_0^1(6x-6x^2)dx=3-2=1\). ✓</div>
+</div>
+
+<div class="card" data-id="4.4">
+  <h3 class="topic">4.4 Variational problems with moving boundaries, one-sided variations</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Endpoint ka x ya y free ho (curve par chalta ho), to wahan ek extra condition aati hai, jise transversality condition kehte hain.</div>
+  <div class="box b-thm"><span class="lbl">📜 Transversality</span>If the right endpoint is free to lie on the curve \(y=\psi(x)\) and \(x_1\) is free, then at \(x_1\):
+  $$F+(\psi'(x_1)-y'(x_1))\,F_{y'}=0.$$ If only \(y\) is free at a fixed \(x_1\), then \(F_{y'}=0\) there.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Allow the endpoint to move by \(\delta x_1\) and \(\delta y_1=\psi'\delta x_1\). The first variation has boundary term \(\big(F-y'F_{y'}\big)\delta x_1+F_{y'}\delta y_1\). Set it to zero for arbitrary \(\delta x_1\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Shortest path from \((0,0)\) to the vertical line \(x=1\) (free endpoint on it). With \(F=\sqrt{1+y'^2}\), the transversality condition at the free end gives \(F_{y'}=\dfrac{y'}{\sqrt{1+y'^2}}=0\), so \(y'=0\). The extremal is the horizontal line \(y=0\).</div>
+</div>
+
+<div class="card" data-id="4.5">
+  <h3 class="topic">4.5 Second variation, Legendre and Jacobi conditions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Extremal max hai ya min, yeh second variation batata hai. Legendre ek sign condition hai, Jacobi ek "conjugate point" condition.</div>
+  <div class="box b-thm"><span class="lbl">📜 Results</span>
+  <ul><li>Second variation: \(\delta^2J=\tfrac12\displaystyle\int\big(F_{y'y'}\eta'^2+2F_{yy'}\eta\eta'+F_{yy}\eta^2\big)dx\).</li>
+  <li><b>Legendre condition:</b> for a minimum, \(F_{y'y'}\ge0\) along the extremal (strict \(>0\) for strong result).</li>
+  <li><b>Jacobi condition:</b> the Jacobi equation \(\big(F_{y'y'}u'\big)'-\big(F_{yy}-(F_{yy'})'\big)u=0\) with \(u(x_0)=0\) has no zero in \((x_0,x_1]\).</li></ul></div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>Expand \(J[y+\varepsilon\eta]\) to second order in \(\varepsilon\). Integrate the cross term \(\eta\eta'\) by parts to get a quadratic form \(\int(P\eta'^2+Q\eta^2)\) with \(P=\tfrac12F_{y'y'}\). Positivity needs \(P\ge0\) (Legendre), and the Jacobi condition ensures positivity of the form.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(F=y'^2\): \(F_{y'y'}=2>0\), so Legendre holds. Jacobi: \((2u')'=0\), \(u=c_1x+c_2\), with \(u(0)=0\): \(u=cx\), which has no zero on \((0,1]\). So the extremal is a minimum.</div>
+</div>
+
+<div class="card" data-id="4.6">
+  <h3 class="topic">4.6 Applications: brachistochrone and geodesics</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Bead ko gravity mein sabse kam samay mein do points ke beech kaunsa raasta lega? Ye brachistochrone hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Setup</span>Time \(T=\displaystyle\int\sqrt{\dfrac{1+y'^2}{2gy}}\,dx\) (taking \(y\) measured downward from the start, with \(y=0\) at the start).</div>
+  <div class="box b-thm"><span class="lbl">📜 Result</span>The brachistochrone is a cycloid: \(x=a(\theta-\sin\theta)\), \(y=a(1-\cos\theta)\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working</span>\(F=\sqrt{(1+y'^2)/y}\) does not depend on \(x\), so the Beltrami identity \(y'F_{y'}-F=\) const holds. This gives \(y(1+y'^2)=\) const, whose solution is the cycloid.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Geodesic on a plane (\(F=\sqrt{1+y'^2}\)): the straight line, the shortest distance between two points.</div>
+</div>
+
+<!-- ===================================================== BOOKS & FORMULA -->
+<div class="unit-h" id="books"><h2>📚 Books (syllabus ke hisaab se)</h2></div>
+<div class="card sheet">
+  <ol>
+    <li>V.S. Verma, <i>Fundamentals of Integral Equations</i>, Neel Kamal Prakashan, Gorakhpur, 2018.</li>
+    <li>M.D. Raisinghania, <i>Integral Equations and Boundary Value Problems</i>, S. Chand.</li>
+    <li>J.N. Sharma &amp; R.K. Gupta, <i>Special Functions</i>, Krishna Prakashan Media, 2020.</li>
+    <li>Mukesh Kumar Singh, <i>Calculus of Variations</i>, Krishna Prakashan Media, 2020.</li>
+  </ol>
+  <p class="note">Ye ebook syllabus ke topics par bana hai. Exam ka format (marks, sections) university ke notice se confirm kar lijiye.</p>
+</div>
+
+<div class="unit-h" id="formula"><h2>📋 Formula &amp; Method Sheet</h2><p>Aakhri revision ke liye.</p></div>
+<div class="card sheet">
+  <div class="tbl"><table>
+    <tr><th>Topic</th><th>Key result</th></tr>
+    <tr><td>Volterra from ODE</td><td>\(y''+py=g\) ⇒ \(y=F+\int_0^x(t-x)p(t)y\,dt\)</td></tr>
+    <tr><td>Eigenvalue</td><td>\(\varphi=\lambda\int K\varphi\), non-zero \(\varphi\) exists only for special \(\lambda\)</td></tr>
+    <tr><td>Degenerate kernel</td><td>\(\varphi=f+\lambda\sum c_ia_i\), \(c_i=\int b_i\varphi\)</td></tr>
+    <tr><td>Resolvent</td><td>\(R=\sum\lambda^{n-1}K_n\), \(\varphi=f+\lambda\int Rf\)</td></tr>
+    <tr><td>Volterra ⇒ ODE</td><td>\(\varphi=f+\int(x-t)\varphi\) ⇒ \(\varphi''=f''+\varphi\)</td></tr>
+    <tr><td>Euler</td><td>\(F_y-\frac{d}{dx}F_{y'}=0\)</td></tr>
+    <tr><td>Euler–Poisson</td><td>\(F_y-\frac{d}{dx}F_{y'}+\frac{d^2}{dx^2}F_{y''}=0\)</td></tr>
+    <tr><td>Euler–Ostrogradsky</td><td>\(F_u-\partial_xF_{u_x}-\partial_yF_{u_y}=0\)</td></tr>
+    <tr><td>Parametric</td><td>\(F_x-\frac{d}{dt}F_{\dot x}=0\), \(F_y-\frac{d}{dt}F_{\dot y}=0\)</td></tr>
+    <tr><td>Isoperimetric</td><td>Euler of \(F+\lambda G\)</td></tr>
+    <tr><td>Legendre / Jacobi</td><td>\(F_{y'y'}\ge0\); no conjugate point in \((x_0,x_1]\)</td></tr>
+  </table></div>
+</div>
+
+<p class="foot">Maakit · S.N. Mishra Singapore International School · Exam study guide</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Complex Analysis (MC0103T) — Exam Study Guide</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+</head>
+<body data-book="complex-analysis">
+
+<div class="top"><a class="back" href="index.html">← Books</a><b>Complex Analysis</b><span class="prog" id="prog"></span></div>
+
+<div class="hero">
+  <h1>📘 Complex Analysis</h1>
+  <p>PG Mathematics, Semester I · Course Code MC0103T · 4 credits · 25 Internal + 75 External. Sirf syllabus ke Units I–IV ke topics.</p>
+</div>
+
+<nav class="units">
+  <a href="#guide">How to use</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#books">Books</a><a href="#formula">Formula sheet</a>
+</nav>
+
+<div class="wrap">
+
+<div class="card sheet" id="guide">
+  <h3>How to use this guide</h3>
+  <p>Har topic isi order mein likha hai, jo answer sheet mein likhna hai:</p>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Pehle idea samjhiye (aasaan bhasha).</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Exam mein aise hi likhiye.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Statement word-to-word yaad kariye.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Key steps. Poora proof copy par likhne ka abhyas kariye.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Solved example</span>Poora hal.</div>
+  <h4>Study plan (8 din)</h4>
+  <div class="tbl"><table>
+    <tr><th>Din</th><th>Topics</th></tr>
+    <tr><td>1 – 2</td><td>Unit I: analytic functions, branch of log, conformal maps, Möbius, cross ratio, half-plane / disk maps</td></tr>
+    <tr><td>3 – 4</td><td>Unit II: zeros, maximum & minimum modulus, Phragmén–Lindelöf, Hadamard, Schwarz, Borel–Carathéodory, FTA</td></tr>
+    <tr><td>5 – 6</td><td>Unit III: singularities, Laurent, meromorphic, argument principle, Rouché, Casorati–Weierstrass, Picard</td></tr>
+    <tr><td>7</td><td>Unit IV: Schwarz reflection, Mittag-Leffler, infinite products, Weierstrass & Hadamard factorization</td></tr>
+    <tr><td>8</td><td>Formula sheet + saare theorem statements ek baar</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================================================== UNIT I -->
+<div class="unit-h" id="u1"><h2>Unit I — Analytic functions, Conformal and Möbius maps</h2><p>Review of analytic functions · branch of logarithm · conformal mappings · Möbius transformations · group structure · fixed points · cross ratio · half-plane and disk maps · automorphisms.</p></div>
+
+<div class="card" data-id="1.1">
+  <h3 class="topic">1.1 Review of analytic functions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Analytic = complex-differentiable har point par. Iska test Cauchy–Riemann hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(f=u+iv\) is analytic in a domain \(D\) if \(f'(z)\) exists at every point of \(D\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (Cauchy–Riemann)</span>If \(f\) is analytic, then \(u_x=v_y,\ u_y=-v_x\). Conversely, if these hold and the partials are continuous, \(f\) is analytic, and \(f'=u_x+iv_x\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Take the limit of \(\dfrac{f(z+h)-f(z)}{h}\) first along real \(h\), then along imaginary \(h=ik\). Comparing the two gives the CR equations. Both \(u\) and \(v\) are harmonic: \(u_{xx}+u_{yy}=0\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(f=z^2=(x^2-y^2)+i(2xy)\): \(u_x=2x=v_y,\ u_y=-2y=-v_x\). CR holds, \(f'=2x+i\cdot2y=2z\).</div>
+</div>
+
+<div class="card" data-id="1.2">
+  <h3 class="topic">1.2 Branch of logarithm</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>\(\log z\) ek nahi, anant values deta hai, kyunki argument \(2\pi\) ke gunjon se badalta hai. Ek single-valued analytic shaakha (branch) chahiye.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(\log z=\ln|z|+i\,\arg z,\quad \arg z=\theta+2k\pi\). Principal branch: \(\operatorname{Log}z=\ln|z|+i\operatorname{Arg}z\), \(-\pi<\operatorname{Arg}z\le\pi\). A branch of \(\log\) on a domain is an analytic single-valued choice of \(\log z\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>\(\operatorname{Log}\) is analytic on \(\mathbb C\setminus(-\infty,0]\), and \(\dfrac{d}{dz}\operatorname{Log}z=\dfrac1z\). The branch cut is the negative real axis.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>On the cut plane \(\operatorname{Arg}\) is continuous, so \(\operatorname{Log}\) is continuous. Its derivative follows by \(\operatorname{Log}\circ\exp=\mathrm{id}\) with \(e^{w}\) having derivative \(e^{w}\neq 0\): \(\operatorname{Log}'(z)=1/z\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\operatorname{Log}(-1+i)=\ln\sqrt2+i\dfrac{3\pi}{4}\), because \(\operatorname{Arg}(-1+i)=3\pi/4\).</div>
+</div>
+
+<div class="card" data-id="1.3">
+  <h3 class="topic">1.3 Conformal mappings</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Conformal = angle sahi rahe. Chhota sa daayra bhi map hokar chhota daayra hi banta hai, bas shape nahi badalta.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(f\) is conformal at \(z_0\) if it is analytic at \(z_0\) and \(f'(z_0)\neq0\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>A conformal map preserves angles between curves through \(z_0\) (both magnitude and orientation).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>For a smooth curve \(z(t)\) through \(z_0\), the image tangent is \(\dfrac{d}{dt}f(z(t))=f'(z_0)z'(t)\). Multiplying by the same nonzero \(f'(z_0)\) rotates and scales both tangents by the same amount, so the angle between them is unchanged.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(f=e^z\) is conformal everywhere, since \(f'=e^z\neq0\).</div>
+</div>
+
+<div class="card" data-id="1.4">
+  <h3 class="topic">1.4 Möbius transformations</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>\(\dfrac{az+b}{cz+d}\) — ek hi tarah ka rational map jo line aur circle ko line aur circle mein badalta hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(w=T(z)=\dfrac{az+b}{cz+d}\), with \(ad-bc\neq0\). Special cases: translation \(z+b\), rotation-magnification \(az\), inversion \(1/z\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>A Möbius map is a bijection of the extended plane \(\hat{\mathbb C}\), is conformal, and maps every circle or straight line onto a circle or straight line.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Write \(T=\) translation \(\circ\) inversion \(\circ\) magnification \(\circ\) translation. Each piece maps circles/lines to circles/lines, and \(ad-bc\neq0\) keeps it invertible. Inversion \(1/z\) sends \(|z-a|=r\) to a circle as well.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(T(z)=\dfrac{z-1}{z+1}\): \(T(0)=-1,\ T(1)=0,\ T(\infty)=1\). The unit circle \(|z|=1\) goes to the imaginary axis.</div>
+</div>
+
+<div class="card" data-id="1.5">
+  <h3 class="topic">1.5 Group structure of Möbius transformations</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Do Möbius maps ko jodo (composition) to bhi Möbius hi banta hai. Inverse bhi Möbius hai. Isliye sab mil kar group banate hain.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Group: set with an associative operation, an identity and inverses. Here the operation is composition \(T_2\circ T_1\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>All Möbius transformations form a group under composition. Matrix \(M_T=\begin{pmatrix}a&b\\c&d\end{pmatrix}\) gives \(M_{T_2\circ T_1}=M_{T_2}M_{T_1}\) up to a nonzero scalar.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Composition: multiply matrices, \(\det(M_2M_1)=\det M_2\det M_1\neq0\), so the product is again Möbius. Identity: \(z\mapsto z\) (\(I\)). Inverse of \(T\): \(T^{-1}(w)=\dfrac{dw-b}{-cw+a}\), matrix \(\begin{pmatrix}d&-b\\-c&a\end{pmatrix}\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(T(z)=\dfrac{2z+1}{z+2}\). Then \(T^{-1}(w)=\dfrac{2w-1}{-w+2}\). Check: \(T(T^{-1}(w))=w\).</div>
+</div>
+
+<div class="card" data-id="1.6">
+  <h3 class="topic">1.6 Fixed points of Möbius maps</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Fixed point = jo point apni jagah par hi rahe, \(T(z)=z\).</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(z_0\) is a fixed point of \(T\) if \(T(z_0)=z_0\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(c\neq0\), \(T\) has at most two fixed points in \(\hat{\mathbb C}\). If \(T\) has three fixed points, \(T\) is the identity.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>\(T(z)=z\) gives \(cz^2+(d-a)z-b=0\). A nonzero quadratic has at most two roots. If it has three roots, every coefficient is zero: \(c=0,\ b=0,\ a=d\), so \(T=\) identity.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(T(z)=\dfrac{2z+1}{z+2}\): \(z(z+2)=2z+1\Rightarrow z^2-1=0\Rightarrow z=\pm1\).</div>
+</div>
+
+<div class="card" data-id="1.7">
+  <h3 class="topic">1.7 Cross ratio and its invariance</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Chaar points ka ek number jo Möbius map ke baad bhi nahi badalta. Points ek circle par hain ya nahi, ye isi se pata chalta hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\((z_1,z_2;z_3,z_4)=\dfrac{(z_1-z_3)(z_2-z_4)}{(z_1-z_4)(z_2-z_3)}\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>For every Möbius \(T\), \((Tz_1,Tz_2;Tz_3,Tz_4)=(z_1,z_2;z_3,z_4)\). Four distinct points lie on one circle or line iff their cross ratio is real.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Check it for \(T(z)=az+b\), \(z\mapsto 1/z\), and combine them. For \(T(z)=az+b\), each difference \(z_i-z_j\) is multiplied by \(a\), so the factors of \(a^2\) cancel in the ratio. The real-cross-ratio part follows from the circle criterion.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Points \(z_1=1,\ z_2=-1,\ z_3=i,\ z_4=-i\). Numerator \((z_1-z_3)(z_2-z_4)=(1-i)(-1+i)=2i\); denominator \((z_1-z_4)(z_2-z_3)=(1+i)(-1-i)=-2i\). So the cross ratio is \(-1\), which is real: the four points lie on one circle (the unit circle).</div>
+</div>
+
+<div class="card" data-id="1.8">
+  <h3 class="topic">1.8 Conformal maps of half planes onto the disk</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Upper half-plane ko unit disk mein badalna. \(|z-i|\) aur \(|z+i|\) ka comparison hi pura khel hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Upper half plane \(H=\{\operatorname{Im}z>0\}\), unit disk \(D=\{|w|<1\}\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>\(w=\dfrac{z-i}{z+i}\) maps \(H\) conformally onto \(D\), with \(i\mapsto0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>\(|z-i|^2-|z+i|^2=-4\operatorname{Im}z\). So \(|w|<1\iff |z-i|<|z+i|\iff \operatorname{Im}z>0\). The map is Möbius (\(ad-bc=2i\neq0\)), so it is a bijection \(H\to D\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(z=2i\in H\): \(w=\dfrac{2i-i}{2i+i}=\dfrac{i}{3i}=\dfrac13\), and \(|1/3|<1\). ✓</div>
+</div>
+
+<div class="card" data-id="1.9">
+  <h3 class="topic">1.9 Automorphisms of the unit disk and upper half plane</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Automorphism = same domain par wapas hi map (apne aap par). Disk ke liye ek parameter \(a\) (inside), half-plane ke liye sirf real coefficients.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>An automorphism of a domain is a conformal bijection of the domain onto itself.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(a) Automorphisms of \(D\) are \(f(z)=e^{i\theta}\dfrac{z-a}{1-\bar a z}\), \(|a|<1\). (b) Automorphisms of \(H\) are \(f(z)=\dfrac{\alpha z+\beta}{\gamma z+\delta}\) with \(\alpha,\beta,\gamma,\delta\in\mathbb R\), \(\alpha\delta-\beta\gamma>0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>(a) \(\varphi_a(z)=\dfrac{z-a}{1-\bar a z}\) sends \(a\mapsto0\) and \(|z|=1\mapsto|w|=1\), so it is an automorphism. If \(g\) fixes \(0\), Schwarz gives \(|g|\le1\) and the same for \(g^{-1}\), so \(g=e^{i\theta}z\). Compose. (b) Transfer via \(w=\dfrac{z-i}{z+i}\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Find the automorphism of \(D\) with \(f(1/2)=0\): \(f(z)=\dfrac{z-1/2}{1-z/2}\) (take \(\theta=0\)).</div>
+</div>
+
+<!-- ===================================================== UNIT II -->
+<div class="unit-h" id="u2"><h2>Unit II — Zeros, Modulus Theorems and Schwarz Lemma</h2><p>Zeros of analytic functions · maximum and minimum modulus · Phragmén–Lindelöf · Hadamard three lines and three circles · Schwarz and Schwarz–Pick · Borel–Carathéodory · Fundamental theorem of algebra.</p></div>
+
+<div class="card" data-id="2.1">
+  <h3 class="topic">2.1 Zeros of analytic functions</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Zero ki "order" batati hai ki wo kitni baar zero hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(f\) has a zero of order \(m\) at \(z_0\) if \(f(z)=(z-z_0)^m g(z)\) with \(g\) analytic and \(g(z_0)\neq0\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\not\equiv0\) is analytic in a domain, its zeros are isolated (no accumulation point inside the domain).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Taylor-expand \(f\) at \(z_0\). If all coefficients vanish, \(f\equiv0\) near \(z_0\), then on the domain by connectedness. Otherwise \(f=(z-z_0)^m g\) with \(g(z_0)\ne0\), and \(g\) is nonzero near \(z_0\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\sin z\) has zeros \(k\pi\), each of order 1. \(z^2(z-1)^3\) has a zero of order 2 at 0 and order 3 at 1.</div>
+</div>
+
+<div class="card" data-id="2.2">
+  <h3 class="topic">2.2 Maximum modulus theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Analytic function ka |f| andar kabhi max nahi hota, sirf boundary par. Andar max mile to function constant hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(|f|\) has a local maximum at \(z_0\in D\) if \(|f(z)|\le|f(z_0)|\) for \(z\) near \(z_0\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is analytic in a domain \(D\) and \(|f|\) has a local maximum in \(D\), then \(f\) is constant. Hence for bounded \(D\) and \(f\) continuous on \(\bar D\), \(\max_{\bar D}|f|\) is attained on \(\partial D\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Mean value property: \(f(z_0)=\dfrac1{2\pi}\int_0^{2\pi}f(z_0+re^{it})\,dt\). So \(|f(z_0)|\le\) average of \(|f|\) on the circle. Equality with a max forces \(|f|\) constant on the circle, so \(f\) is constant on small circles, hence on \(D\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>On \(|z|\le1\), \(f=z^2+1\): \(\max|f|\) is attained on \(|z|=1\), where \(|f|\le2\) and \(=2\) at \(z=\pm1\).</div>
+</div>
+
+<div class="card" data-id="2.3">
+  <h3 class="topic">2.3 Minimum modulus theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Agar function kahin zero nahi, to |f| ka min boundary par hoga. Max modulus ko \(1/f\) par lagao.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be analytic and nonvanishing in a bounded domain \(D\), continuous on \(\bar D\). Then \(\min_{\bar D}|f|\) is attained on \(\partial D\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>\(g=1/f\) is analytic in \(D\) (since \(f\ne0\)) and continuous on \(\bar D\). Max modulus gives \(\max|g|\) on \(\partial D\). Since \(|f|=1/|g|\), \(\min|f|\) is on \(\partial D\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(f=z+2\) on \(|z|\le1\) has no zero. Min of \(|z+2|\) is at \(z=-1\), value \(1\), on the boundary. ✓</div>
+</div>
+
+<div class="card" data-id="2.4">
+  <h3 class="topic">2.4 Phragmén–Lindelöf theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Max modulus unbounded domain (sector/half-plane) ke liye bhi chale, agar function bahut tez na badhe. Ye us ka "growth" wala version hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (sector form)</span>Let \(f\) be analytic in the sector \(S=\{0<\arg z<\pi/\alpha\}\), continuous on \(\bar S\), with \(|f|\le M\) on \(\partial S\). If \(|f(z)|\le A e^{B|z|^{\beta}}\) in \(S\) for some \(\beta<\alpha\), then \(|f|\le M\) throughout \(S\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Consider \(g(z)=f(z)\exp\!\big(-\varepsilon(\,z^{\alpha}\!\cdot\!\text{const})\big)\) with \(\beta<\alpha\) and small \(\varepsilon\). \(|g|\) is bounded on \(\partial S\) by \(M\), and goes to 0 at infinity inside \(S\) because \(\beta<\alpha\). Maximum modulus on a large truncated sector gives \(|g|\le M\), then \(\varepsilon\to0\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>For the half-plane \(\operatorname{Re}z>0\) (so \(\alpha=1\)), if \(f\) is bounded on the boundary and grows slower than \(e^{B|z|^\beta}\) for \(\beta<1\), then \(f\) is bounded by the same constant inside.</div>
+</div>
+
+<div class="card" data-id="2.5">
+  <h3 class="topic">2.5 Hadamard three lines theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Strip ke andar \(|f|\) boundaries ke do bounds ka "geometric mean" se chhota rahta hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be analytic and bounded in the strip \(a\le\operatorname{Re}z\le b\), with \(|f|\le M_1\) on \(\operatorname{Re}z=a\) and \(|f|\le M_2\) on \(\operatorname{Re}z=b\). Then for \(a\le x\le b\):
+  $$|f(z)|\le M_1^{\frac{b-x}{b-a}}\,M_2^{\frac{x-a}{b-a}}.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Reduce to \(M_1=M_2=1\) by a suitable \(e^{\alpha z+\beta}\) factor. Then apply Phragmén–Lindelöf / maximum modulus on the strip with \(|f|\le1\) on both lines; the function \(\exp(\varepsilon\cdot\text{something})\) handles the bounded-strip case. Limit \(\varepsilon\to0\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(|f|\le1\) on \(\operatorname{Re}z=0\) and \(|f|\le e\) on \(\operatorname{Re}z=1\). At \(\operatorname{Re}z=\tfrac12\): \(|f|\le 1^{1/2}e^{1/2}=\sqrt e\).</div>
+</div>
+
+<div class="card" data-id="2.6">
+  <h3 class="topic">2.6 Hadamard three circles theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>\(M(r)=\max_{|z|=r}|f|\). Agar \(\log r\) ke saath \(\log M(r)\) ko plot karein to wo convex (neeche ki taraf moda) hota hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(M(r)=\max_{|z|=r}|f(z)|\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>For \(0<r_1<r<r_2\) (with \(f\) analytic in the annulus \(r_1\le|z|\le r_2\)):
+  $$\log\frac{r_2}{r_1}\,\log M(r)\le \log\frac{r_2}{r}\,\log M(r_1)+\log\frac{r}{r_1}\,\log M(r_2).$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Change variable \(w=\log z\). Then the annulus becomes a strip \(\log r_1\le\operatorname{Re}w\le\log r_2\). Apply the three-lines theorem to \(f(e^w)\) with \(M_1=M(r_1)\), \(M_2=M(r_2)\). Take logs.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>For \(f(z)=z^2\): \(M(r)=r^2\), so \(\log M(r)=2\log r\), which is linear in \(\log r\). Equality holds in the convexity inequality.</div>
+</div>
+
+<div class="card" data-id="2.7">
+  <h3 class="topic">2.7 Schwarz lemma and its applications</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Disk ko disk mein map kiya, aur 0 zero hai, to \(|f(z)|\le|z|\). Rotation ke alawa koi aur map nahi.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f:D\to D\) be analytic with \(f(0)=0\). Then \(|f(z)|\le|z|\) and \(|f'(0)|\le1\). If equality holds at some \(z\ne0\) or \(|f'(0)|=1\), then \(f(z)=\lambda z\) with \(|\lambda|=1\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>\(g(z)=f(z)/z\) is analytic (removable at 0) with \(g(0)=f'(0)\). On \(|z|=r\), \(|g|\le 1/r\). Let \(r\to1\): \(|g|\le1\) on \(D\). So \(|f(z)|\le|z|\), \(|f'(0)|\le1\). If equality, \(g\) attains max inside, so \(g\) is a constant \(\lambda\), \(|\lambda|=1\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Let \(f:D\to D\), \(f(0)=0\). Then \(|f(1/2)|\le1/2\). For example \(f(z)=z/2\) maps \(D\) into \(D\) and gives \(|f(1/2)|=1/4\le1/2\). ✓</div>
+</div>
+
+<div class="card" data-id="2.8">
+  <h3 class="topic">2.8 Borel–Carathéodory theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Agar real part bounded hai, to poora function bhi bounded hai (aur bound \(f(0)\) se judaa hai).</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(A(r)=\max_{|z|=r}\operatorname{Re}f(z)\), \(M(r)=\max_{|z|=r}|f(z)|\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is analytic on \(|z|\le R\) and \(0<r<R\):
+  $$M(r)\le\frac{2r}{R-r}A(R)+\frac{R+r}{R-r}\,|f(0)|.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Assume \(f(0)=0\) first (subtract the constant, which only changes the second term). Use the Poisson/Schwarz formula for \(\operatorname{Re}f\) on \(|z|=R\), together with \(|\dfrac{z+\zeta}{...}|\) estimates, to bound \(|f(z)|\) by \(\dfrac{2r}{R-r}\) times the max of \(\operatorname{Re}f\). Add back \(f(0)\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>If \(\operatorname{Re}f\le 1\) on \(|z|\le2\) and \(f(0)=0\), then on \(|z|=1\): \(M(1)\le \dfrac{2}{1}\cdot1+0=2\).</div>
+</div>
+
+<div class="card" data-id="2.9">
+  <h3 class="topic">2.9 Schwarz–Pick lemma</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Schwarz ka version kisi bhi point par. Derivative ki bound us point ke "distance from edge" par depend karti hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f:D\to D\) is analytic, then for every \(z\in D\):
+  $$|f'(z)|\le\frac{1-|f(z)|^2}{1-|z|^2}.$$ Equality at one point means \(f\) is an automorphism of \(D\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Let \(\varphi_a(z)=\dfrac{z-a}{1-\bar az}\), \(a=z\). Then \(g=\varphi_{f(z)}\circ f\circ\varphi_{a}^{-1}\) fixes 0 and maps \(D\to D\). Schwarz gives \(|g'(0)|\le1\). Chain rule and \(\varphi'_a\) formula give the inequality.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>At \(z=0\): \(|f'(0)|\le1-|f(0)|^2\). If \(f(0)=0\), this gives \(|f'(0)|\le1\), the usual Schwarz bound.</div>
+</div>
+
+<div class="card" data-id="2.10">
+  <h3 class="topic">2.10 Fundamental theorem of algebra</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Har non-constant polynomial ka kam se kam ek complex root hota hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Every non-constant polynomial \(p(z)\) with complex coefficients has a root in \(\mathbb C\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Suppose \(p(z)\neq0\) everywhere. Then \(g=1/p\) is entire. Since \(|p(z)|\to\infty\) as \(|z|\to\infty\), \(g\to0\), so \(g\) is bounded. By Liouville's theorem \(g\) is constant, so \(p\) is constant. Contradiction. (Alternative: minimum modulus theorem on a big disk.)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(p(z)=z^2+1\) has roots \(\pm i\). A polynomial of degree \(n\) has exactly \(n\) roots counted with multiplicity.</div>
+</div>
+
+<!-- ===================================================== UNIT III -->
+<div class="unit-h" id="u3"><h2>Unit III — Singularities, Laurent Series, Argument Principle</h2><p>Classification of singularities · Riemann removable theorem · Laurent series · singularity at infinity · meromorphic functions · argument principle · Rouché · Casorati–Weierstrass · Picard's little theorem.</p></div>
+
+<div class="card" data-id="3.1">
+  <h3 class="topic">3.1 Classification of singularities</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Singularity = wo point jahan function analytic nahi. Teen type: removable (theek ho sakta hai), pole (\(\infty\) par jata hai), essential (kuch bhi).</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(z_0\) is an isolated singularity if \(f\) is analytic in a punctured disk \(0<|z-z_0|<r\). It is:
+  <ul><li><b>removable</b> if \(\lim_{z\to z_0}f(z)\) exists (finite);</li><li><b>a pole of order \(m\)</b> if \(\lim_{z\to z_0}(z-z_0)^mf(z)\) exists and is nonzero;</li><li><b>essential</b> otherwise.</li></ul></div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\dfrac{\sin z}{z}\): removable at 0 (value 1). \(\dfrac{1}{z^3}\): pole of order 3. \(e^{1/z}\): essential at 0.</div>
+</div>
+
+<div class="card" data-id="3.2">
+  <h3 class="topic">3.2 Riemann's removable singularity theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is analytic and bounded in a punctured disk around \(z_0\), then \(z_0\) is a removable singularity.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Let \(g(z)=(z-z_0)^2f(z)\), \(g(z_0)=0\). Then \(\dfrac{g(z)-g(z_0)}{z-z_0}=(z-z_0)f(z)\to0\), so \(g\) is complex-differentiable at \(z_0\) with \(g'(z_0)=0\). So \(g\) is analytic with a zero of order \(\ge2\), i.e. \(g=(z-z_0)^2h\). Then \(f=h\) near \(z_0\), which extends analytically.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\dfrac{\sin z}{z}\) is bounded near 0, so 0 is removable.</div>
+</div>
+
+<div class="card" data-id="3.3">
+  <h3 class="topic">3.3 Laurent series</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Taylor series ka generalisation jo negative powers bhi allow karti hai, annulus (ring) ke andar.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is analytic in \(r<|z-a|<R\), then
+  $$f(z)=\sum_{n=-\infty}^{\infty}a_n(z-a)^n,\qquad a_n=\frac1{2\pi i}\oint_{|\zeta-a|=\rho}\frac{f(\zeta)}{(\zeta-a)^{n+1}}\,d\zeta,$$
+  with \(r<\rho<R\) (the value does not depend on \(\rho\)). The part with negative powers is the principal part.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Cauchy's integral formula on the annulus: \(f(z)=\dfrac1{2\pi i}\oint_{C_R}\dfrac{f(\zeta)}{\zeta-z}d\zeta-\dfrac1{2\pi i}\oint_{C_r}\dfrac{f(\zeta)}{\zeta-z}d\zeta\). Expand each kernel as a geometric series in the right direction (\(|z-a|/|\zeta-a|<1\) for the outer, the reverse for the inner). Collect terms.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\dfrac1{z(z-1)}\) on \(0<|z|<1\): \(=-\dfrac1z\cdot\dfrac1{1-z}=-\dfrac1z-1-z-\cdots\). Principal part \(-1/z\): simple pole at 0.</div>
+</div>
+
+<div class="card" data-id="3.4">
+  <h3 class="topic">3.4 Illustrations of singularities through Laurent series</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Laurent series ko dekh kar hi type pata chal jata hai: koi negative power nahi = removable; limited = pole; infinite = essential.</div>
+  <div class="box b-thm"><span class="lbl">📜 Rule</span>Principal part finite with \(a_{-m}\neq0\) ⇔ pole of order \(m\). Infinitely many negative powers ⇔ essential singularity.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(e^{1/z}=\sum_{n\ge0}\dfrac{1}{n!}z^{-n}\) has infinitely many negative powers, so 0 is essential. \(\dfrac{\sin z}{z^4}=\dfrac{z-z^3/6+\cdots}{z^4}=\dfrac1{z^3}-\dfrac1{6z}+\cdots\). The most negative power is \(z^{-3}\), so 0 is a pole of order 3.</div>
+</div>
+
+<div class="card" data-id="3.5">
+  <h3 class="topic">3.5 Isolated singularity at infinity</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>\(\infty\) ko bhi ek point maan kar, \(w=1/z\) se dekhte hain.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>If \(f\) is analytic for \(|z|>R\), then \(\infty\) is an isolated singularity of \(f\). Its type is the type of \(g(w)=f(1/w)\) at \(w=0\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(f(z)=z^2\): \(g(w)=1/w^2\), pole of order 2 at \(w=0\), so \(f\) has a pole of order 2 at \(\infty\). \(f=e^z\): essential at \(\infty\).</div>
+</div>
+
+<div class="card" data-id="3.6">
+  <h3 class="topic">3.6 Meromorphic functions</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Meromorphic = sirf poles allowed, koi essential singularity nahi. Ek ratio of two analytic functions jaisa.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(f\) is meromorphic in \(D\) if it is analytic in \(D\) except at isolated poles.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\tan z=\dfrac{\sin z}{\cos z}\) is meromorphic on \(\mathbb C\), with poles at \((2k+1)\dfrac\pi2\). \(\Gamma(z)\) is meromorphic with poles at \(0,-1,-2,\ldots\).</div>
+</div>
+
+<div class="card" data-id="3.7">
+  <h3 class="topic">3.7 Argument principle</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>\(f'/f\) ka contour integral batata hai ki contour ke andar kitne zero hain minus kitne pole.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be meromorphic inside and on a simple closed contour \(C\), with no zeros or poles on \(C\). Then
+  $$\frac1{2\pi i}\oint_C\frac{f'(z)}{f(z)}\,dz=N-P,$$ where \(N\) = number of zeros and \(P\) = number of poles inside \(C\), counted with multiplicity.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Near a zero of order \(m\): \(f=(z-z_0)^mg\), so \(\dfrac{f'}{f}=\dfrac m{z-z_0}+\dfrac{g'}{g}\), residue \(m\). Near a pole of order \(p\): residue \(-p\). Sum residues with the residue theorem.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(f=\dfrac{z^2-1}{z}\) on \(|z|=2\): zeros \(\pm1\) (N=2), pole at 0 (P=1). Integral gives \(2\pi i\cdot(2-1)\).</div>
+</div>
+
+<div class="card" data-id="3.8">
+  <h3 class="topic">3.8 Rouché's theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Agar ek function contour par dusre se chhota hai, to dono ke zero bhi bhar barabar honge.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f,g\) are analytic inside and on a simple closed contour \(C\), and \(|g(z)|<|f(z)|\) on \(C\), then \(f\) and \(f+g\) have the same number of zeros inside \(C\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>For \(t\in[0,1]\), \(|tg|<|f|\) on \(C\), so \(f+tg\) has no zero on \(C\). The number of zeros, \(\dfrac1{2\pi i}\oint\dfrac{f'+tg'}{f+tg}dz\), is an integer that changes continuously in \(t\), so it stays constant. Set \(t=0\) and \(t=1\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(z^4-5z+1\): on \(|z|=1\), \(|z^4+1|\le2<5=|5z|\). So \(z^4-5z+1\) has the same zeros in \(|z|<1\) as \(-5z\), which is one zero. Exactly one root inside the unit circle.</div>
+</div>
+
+<div class="card" data-id="3.9">
+  <h3 class="topic">3.9 Essential singularities and the Casorati–Weierstrass theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Essential singularity ke paas function kisi bhi value ke bahut paas pahunch jaata hai.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(z_0\) is an essential singularity of \(f\), then for every \(w\in\mathbb C\) and every \(\varepsilon>0\) and \(\delta>0\), there is \(z\) with \(0<|z-z_0|<\delta\) and \(|f(z)-w|<\varepsilon\). (The image of every punctured neighbourhood is dense.)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Suppose not: for some \(w,\varepsilon,\delta\), \(|f(z)-w|\ge\varepsilon\) on the punctured disk. Then \(g=\dfrac1{f-w}\) is analytic and bounded there, so \(g\) has a removable singularity at \(z_0\). Then \(f=w+1/g\) has a removable singularity or a pole at \(z_0\), a contradiction.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(e^{1/z}\) at 0 takes every value except 0 infinitely often near 0.</div>
+</div>
+
+<div class="card" data-id="3.10">
+  <h3 class="topic">3.10 Picard's little theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Poore complex plane par non-constant entire function zyaada se zyaada ek value nahi chhodta.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>A non-constant entire function takes every complex value with at most one exception.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (idea)</span>Uses the modular function and the fact that a non-constant entire function that omits two values would give a holomorphic covering of the punctured plane. The full proof is long; for exam, state it and give the example.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(e^z\) omits only the value 0. \(\sin z\) omits no value at all, so it is consistent with the theorem (at most one exception).</div>
+</div>
+
+<!-- ===================================================== UNIT IV -->
+<div class="unit-h" id="u4"><h2>Unit IV — Reflection, Mittag-Leffler, Infinite Products, Factorization</h2><p>Schwarz reflection · Mittag-Leffler theorem · infinite products of complex numbers and analytic functions · Weierstrass factorization · Hadamard factorization.</p></div>
+
+<div class="card" data-id="4.1">
+  <h3 class="topic">4.1 Schwarz reflection principle</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Agar function real axis par real value leta hai, to usko "mirror" karke poori plane par bada sakte hain.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be analytic in the upper half-plane \(H\), continuous on \(H\cup I\) (\(I\) an interval of the real axis), with \(f\) real on \(I\). Then \(F(z)=f(z)\) for \(\operatorname{Im}z\ge0\), \(F(z)=\overline{f(\bar z)}\) for \(\operatorname{Im}z<0\), is analytic in \(H\cup I\cup\bar H\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>\(F\) is continuous (since \(f\) is real on \(I\)). Use Morera's theorem: integrals of \(F\) around triangles straddling \(I\) vanish by symmetry, so \(F\) is analytic.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(f(z)=z^2\) real on \(\mathbb R\). The reflection gives \(F=z^2\) on the whole plane.</div>
+</div>
+
+<div class="card" data-id="4.2">
+  <h3 class="topic">4.2 Mittag-Leffler theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Har pole ka "principal part" de do, aur ek function bana do jiske wahi poles ho.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(\{a_n\}\) be distinct points with no finite accumulation point, and \(P_n(z)\) the principal part of a Laurent expansion at \(a_n\). Then there exists a meromorphic function \(f\) whose principal parts at \(a_n\) are exactly \(P_n\), and \(f\) is analytic elsewhere.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Subtract suitable polynomials \(\pi_n\) from each \(P_n\) so the series \(\sum (P_n-\pi_n)\) converges uniformly on compact sets away from the poles. Its sum has the required poles.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\pi\cot\pi z=\dfrac1z+\sum_{n\ne0}\Big(\dfrac1{z-n}+\dfrac1n\Big)\): poles at every integer, residue 1 each.</div>
+</div>
+
+<div class="card" data-id="4.3">
+  <h3 class="topic">4.3 Infinite products of complex numbers</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Infinite product \(\prod(1+a_n)\) ko partial products ke limit se define karte hain, aur limit zero nahi hona chahiye.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(\prod_{n}(1+a_n)\) converges if partial products \(P_N\to P\ne0\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(\sum|a_n|<\infty\), then \(\prod(1+a_n)\) converges. It is zero iff some factor \(1+a_n=0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Use \(|e^{x}-1|\le e^{|x|}-1\) and \(1+a\le e^{a}\): \(\prod(1+a_n)\) and \(\sum a_n\) behave alike. With \(\sum|a_n|<\infty\), partial products form a Cauchy sequence, and the limit is nonzero unless a factor vanishes.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\prod_{n\ge1}\Big(1+\dfrac1{n^2}\Big)\) converges, because \(\sum\dfrac1{n^2}\) converges. (Its value is \(\dfrac{\sinh\pi}{\pi}\).)</div>
+</div>
+
+<div class="card" data-id="4.4">
+  <h3 class="topic">4.4 Infinite products of analytic functions</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Products of functions bhi analytic rehte hain agar uniformly converge karein. Zeros ka set = har factor ke zeros ka union.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(\sum|f_n(z)-1|\) converges uniformly on compact sets, then \(\prod f_n\) converges uniformly on compact sets to an analytic function. Its zeros are the union of zeros of the \(f_n\), with multiplicity.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Same estimate as 4.3 applied uniformly. Uniform limit of analytic functions is analytic (Weierstrass). A product is zero only when a factor is zero (on the compact set, the partial products converge to a nonzero limit away from the zeros).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\sin\pi z=\pi z\prod_{n\ge1}\Big(1-\dfrac{z^2}{n^2}\Big)\). Zeros: \(0,\pm1,\pm2,\ldots\).</div>
+</div>
+
+<div class="card" data-id="4.5">
+  <h3 class="topic">4.5 Weierstrass factorization theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Har entire function ko uske zeros se bana sakte hain, aur ek exponential factor \(e^{g(z)}\).</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Primary factors: \(E_p(z)=(1-z)\exp\!\Big(z+\dfrac{z^2}2+\cdots+\dfrac{z^p}p\Big)\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be entire with zeros \(a_n\neq0\) (with multiplicity) and a zero of order \(m\ge0\) at 0. Then
+  $$f(z)=z^m e^{g(z)}\prod_n E_{p_n}\!\Big(\frac{z}{a_n}\Big),$$ with \(g\) entire and \(p_n\) chosen so that the product converges.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Form \(\prod E_{p_n}(z/a_n)\), which has the same zeros as \(f\) (with \(z^m\)). Then \(f/\text{(product)}\) is zero-free entire, so it equals \(e^{g}\) with \(g\) entire (take a logarithm).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>For \(\sin\pi z\) the zeros are \(\pm n\). Pair them: \(E_1(z/n)E_1(-z/n)=(1-z^2/n^2)\), since the exponential parts cancel. So \(\sin\pi z=\pi z\prod_{n\ge1}(1-z^2/n^2)\) with \(g=0\).</div>
+</div>
+
+<div class="card" data-id="4.6">
+  <h3 class="topic">4.6 Hadamard factorization theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-easy"><span class="lbl">💡 Concept</span>Agar entire function ka growth limited ho (finite order), to \(g\) ek polynomial ban jaata hai.</div>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>Order \(\rho\) of \(f\): \(\rho=\limsup_{r\to\infty}\dfrac{\log\log M(r)}{\log r}\), with \(M(r)=\max_{|z|=r}|f|\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is entire of finite order \(\rho\), then \(f=z^m e^{Q(z)}\prod E_p(z/a_n)\) with \(Q\) a polynomial of degree \(\le\rho\), and \(p=\lfloor\rho\rfloor\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (key steps)</span>Start from Weierstrass's form. Growth bound \(|f|\le e^{r^{\rho+\varepsilon}}\) plus the estimate \(\log|E_p(z)|\) bound give \(\operatorname{Re}g(z)=O(|z|^{\rho+\varepsilon})\). A harmonic/ Borel–Carathéodory argument shows \(g\) is a polynomial of degree \(\le\rho\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\sin\pi z\) has order 1, so \(Q\) has degree \(\le1\); indeed \(Q=0\) and \(p=1\).</div>
+</div>
+
+<!-- ===================================================== BOOKS & FORMULA -->
+<div class="unit-h" id="books"><h2>📚 Books (syllabus ke hisaab se)</h2></div>
+<div class="card sheet">
+  <ol>
+    <li>J.W. Brown & R.V. Churchill, <i>Complex Variables and Applications</i>, 8th Edition, 2013.</li>
+    <li>L.V. Ahlfors, <i>Complex Analysis</i>, McGraw Hill, Indian Edition, 2017.</li>
+    <li>J. Bak & D.J. Newman, <i>Complex Analysis</i>, Springer, 2010.</li>
+    <li>S. Ponnusamy, <i>Foundations of Complex Analysis</i>, Narosa, 2013.</li>
+    <li>D.C. Ullrich, <i>Complex Made Simple</i>, AMS, 2008.</li>
+  </ol>
+  <p class="note">Ye ebook syllabus ke topics par bana hai. Exam ka format (marks, sections) university ke notice se confirm kar lijiye.</p>
+</div>
+
+<div class="unit-h" id="formula"><h2>📋 Formula & Theorem Sheet</h2><p>Aakhri revision ke liye.</p></div>
+<div class="card sheet">
+  <div class="tbl"><table>
+    <tr><th>Topic</th><th>Key result</th></tr>
+    <tr><td>Cross ratio</td><td>\((z_1,z_2;z_3,z_4)=\dfrac{(z_1-z_3)(z_2-z_4)}{(z_1-z_4)(z_2-z_3)}\), Möbius invariant</td></tr>
+    <tr><td>Half plane → disk</td><td>\(w=\dfrac{z-i}{z+i}\)</td></tr>
+    <tr><td>Disk automorphism</td><td>\(e^{i\theta}\dfrac{z-a}{1-\bar az}\), \(|a|<1\)</td></tr>
+    <tr><td>Maximum modulus</td><td>interior max ⇒ constant</td></tr>
+    <tr><td>Schwarz</td><td>\(|f(z)|\le|z|\), \(|f'(0)|\le1\)</td></tr>
+    <tr><td>Three lines</td><td>\(|f|\le M_1^{(b-x)/(b-a)}M_2^{(x-a)/(b-a)}\)</td></tr>
+    <tr><td>Laurent coefficient</td><td>\(a_n=\dfrac1{2\pi i}\oint\dfrac{f}{(\zeta-a)^{n+1}}d\zeta\)</td></tr>
+    <tr><td>Argument principle</td><td>\(\dfrac1{2\pi i}\oint\dfrac{f'}{f}=N-P\)</td></tr>
+    <tr><td>Rouché</td><td>\(|g|<|f|\) on \(C\) ⇒ same zeros of \(f\) and \(f+g\)</td></tr>
+    <tr><td>Casorati–Weierstrass</td><td>essential ⇒ image of punctured disk dense</td></tr>
+    <tr><td>Reflection</td><td>\(F(\bar z)=\overline{F(z)}\) across real axis</td></tr>
+    <tr><td>Weierstrass factorization</td><td>\(f=z^me^{g}\prod E_{p_n}(z/a_n)\)</td></tr>
+  </table></div>
+</div>
+
+<p class="foot">Maakit · S.N. Mishra Singapore International School · Exam study guide</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>
