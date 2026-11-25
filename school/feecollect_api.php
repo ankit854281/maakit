@@ -118,7 +118,12 @@ case 'collect': {
     $tz = new DateTimeZone('Asia/Kolkata'); $today = (new DateTimeImmutable('now', $tz))->format('Y-m-d');
     $date = (string)($in['date'] ?? $today);
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date > $today) throw new InvalidArgumentException('Choose a date that is not in the future.');
-    if ($date < $live['from']) throw new InvalidArgumentException('This session is taken in the new ERP from ' . $live['from'] . '. Older dates belong to the old ERP.');
+    // Old ERP is closed (licence ended 15 Nov 2026): the Principal may enter a back-dated receipt, back to 1 April of the session (owner, 25 Nov 2026)
+    if ($date < $live['from']) {
+        $sesStart = substr($ses, 0, 4) . '-04-01';
+        if (!$isP) throw new InvalidArgumentException('This session is taken in the new ERP from ' . $live['from'] . '. Only the Principal can enter a receipt dated before that.');
+        if ($date < $sesStart) throw new InvalidArgumentException('Choose a date inside session ' . $ses . ' (from ' . $sesStart . ').');
+    }
     $mode = (string)($in['mode'] ?? 'Cash'); if (!in_array($mode, OFC_MODES, true)) throw new InvalidArgumentException('Choose the Payment Mode.');
     $txt = fn($k, $n = 120) => mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in[$k] ?? ''))), 0, $n);
     $bank = $txt('bank'); $cheque = $txt('cheque', 40); $chequeDate = $txt('chequeDate', 10); $depBank = $txt('depositBank', 60); $depDate = $txt('depositDate', 10);

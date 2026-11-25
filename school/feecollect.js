@@ -218,7 +218,7 @@ function formHtml() {
   const inp = (k, extra) => `<input value="${esc(F[k])}" oninput="F.${k}=this.value;${extra || ''}" autocomplete="off">`;
   return `<table class="fr-form">
     <tr><td>Upto Month</td><td><select onchange="F.upto=this.value;fcalcu();render()">${opt('No', 'No', F.upto === 'No')}${opt('All', 'All', F.upto === 'All')}${MORDER.map(m => opt(String(m), ST.months[m], F.upto === String(m))).join('')}</select></td><td>Apply Fee</td><td><input value="${esc(F.apply)}" readonly></td></tr>
-    <tr><td>Date</td><td><input type="date" value="${esc(F.date)}" max="${esc(ST.today)}" min="${esc(ST.live.from)}" onchange="F.date=this.value"></td><td>Receipt No</td><td><b>${esc(ST.next)}</b></td></tr>
+    <tr><td>Date</td><td><input type="date" value="${esc(F.date)}" max="${esc(ST.today)}" min="${esc(ST.isPrincipal ? String(ST.ses).slice(0, 4) + '-04-01' : ST.live.from)}" onchange="F.date=this.value"></td><td>Receipt No</td><td><b>${esc(ST.next)}</b></td></tr>
     <tr><td>Total Fee</td><td><input id="fTotal" value="${esc(F.total)}" oninput="F.total=this.value;calcfee();rerenderKeep('fTotal')" autocomplete="off"></td><td class="fr-red">Late Fee</td><td><input id="fLate" value="${esc(F.late)}" oninput="F.late=this.value;calcudis();rerenderKeep('fLate')" autocomplete="off"></td></tr>
     <tr><td>Discount</td><td><input id="fDisc" value="${esc(F.discount)}" oninput="F.discount=this.value;calcudis();rerenderKeep('fDisc')" autocomplete="off"></td><td>Currently Received</td><td><input value="${esc(F.paid)}" readonly></td></tr>
     <tr><td>Remark</td><td><textarea oninput="F.remark=this.value">${esc(F.remark)}</textarea></td><td></td><td></td></tr>
