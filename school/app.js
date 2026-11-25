@@ -4067,6 +4067,9 @@ NAV.teacher.push(['tapp','fa-mobile-screen','Teacher App']); NAV.principal.push(
 VIEWS.tapp=()=>'<div class="card"><h3 class="h3">Teacher App</h3><p class="text-sm">Phone par ye link kholiye, apna naam chuniye aur PIN daaliye. Browser se Add to Home screen bhi kar sakte hain.</p><p class="mt-2 flex flex-wrap gap-2"><a class="btn btn-p" href="teacher.php" target="_blank" rel="noopener">Open Teacher App</a><a class="btn btn-l" href="downloads/snmsis-teacher.apk" target="_blank" rel="noopener">Download Android APK</a></p><p class="text-xs text-slate-500 mt-2">'+esc(location.origin+location.pathname.replace(/[^/]*$/,''))+'teacher.php</p></div>';
 // Fee Calling Report (owner, 25 Nov 2026): every saved fee call with date, result, promise date, remark, caller and payment after the call.
 for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['callreport','fa-phone','Fee Calling Report']);
+// Fee Reminder Slip (owner, 25 Nov 2026): printable reminder slips for every family with fee due + list of slips given.
+for (const role of ['principal','chairman','accountant','reception']) NAV[role].push(['feeslip','fa-receipt','Fee Reminder Slip']);
+VIEWS.feeslip=()=>'<iframe class="edu-iframe" title="Fee Reminder Slip" src="feeslip.php"></iframe>';
 VIEWS.callreport=()=>'<iframe class="edu-iframe" title="Fee Calling Report" src="callreport.php"></iframe>';
 VIEWS.feedash=()=>'<iframe class="edu-iframe" title="Fee Control Room" src="feedash.php?embed=1&session='+encodeURIComponent(viewSession())+(P&&P.tab?'&tab='+encodeURIComponent(P.tab):'')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
 VIEWS.feereports=()=>'<iframe class="edu-iframe" title="Fee Reports" src="feereports.php?embed=1&r='+encodeURIComponent(P&&P.r?P.r:'fee1')+(typeof classicOn==='function'&&classicOn()?'&look=classic':'')+'"></iframe>';
