@@ -614,6 +614,7 @@ function sheetBody() {
     <button class="opt" onclick="S.sheet=null;playIntro(true)">Play the welcome again</button>
     <button class="opt" onclick="toggleIntro()">Welcome on every open <small>${store.get('ch_intro') === 'day' ? 'Once a day' : 'Every time'}</small></button>
     <a class="opt" href="feedash.php" target="_blank" rel="noopener">Office Fee Control Room <small>full tables</small></a>
+    <a class="opt" href="callreport.php" target="_blank" rel="noopener">Fee Calling Report <small>date, remark, promise</small></a>
     <div style="height:12px"></div><button class="cta dn" onclick="logout()">Log out</button>`;
   return '';
 }
