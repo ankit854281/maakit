@@ -826,6 +826,10 @@ case 'coord': {
     // Records: tchCoord  c|<tid> assignment · cc|<id> copy check · cp|<id>|<i> its photos · vf|<id> re-check task ·
     //          dc|<date>|<tid> diary marks · rd|<YYYY-MM>|<cls> reading levels · ws|<id> worksheet · sv|<date> thought.
     $rows = []; foreach ($db->query("SELECT r, d FROM sch_records WHERE k='tchCoord' AND deleted=0 AND r NOT LIKE 'cp|%'") as $row) { $d = json_decode((string)$row['d'], true); if (is_array($d)) $rows[(string)$row['r']] = $d; }
+    // Owner, 25 Nov 2026: Rati Ma'am is the school's Coordinator for every class unless the Principal sets her classes himself
+    $hasRati = false; foreach ($rows as $r0 => $d0) if (str_starts_with($r0, 'c|') && sch_is_rati(substr($r0, 2))) $hasRati = true;
+    if (!$hasRati) { $rtid = null; foreach ($db->query("SELECT r FROM sch_records WHERE k='teacher' AND deleted=0") as $t0) if (sch_is_rati((string)$t0['r'])) { $rtid = (string)$t0['r']; break; }
+        if ($rtid !== null && $rtid !== 'P') $rows["c|$rtid"] = ['tid' => $rtid, 'classes' => array_values(array_column((array)sch_rec_get('classes', 'main'), 'c')), 'at' => 0, 'auto' => true]; }
     $me = $role === 'teacher' ? $tid : 'P'; $myC = $rows["c|$me"] ?? null; $isCo = $role === 'teacher' && $myC;
     $coCls = fn(string $cls): bool => $role === 'principal' || ($isCo && in_array($cls, (array)$myC['classes'], true));
     if ($method === 'GET') {

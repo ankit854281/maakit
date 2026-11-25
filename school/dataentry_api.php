@@ -27,6 +27,7 @@ $a = (string)($_GET['a'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try { $db = sch_db(); } catch (Throwable $e) { sch_fail('Server is not reachable right now. Please try again in a few minutes.', 503); }
 $u = sch_auth(); $role = (string)$u['role']; $uid = sch_uid_of($u);
+if (sch_office_teacher($u)) $role = 'dataentry';   // Rati Ma'am from the Teacher App (owner, 25 Nov 2026)
 if (!in_array($role, ['dataentry', 'principal'], true)) sch_fail('This page is for Data Entry and the Principal.', 403);
 
 function de_date(string $d): string {

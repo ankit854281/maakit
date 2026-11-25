@@ -26,7 +26,7 @@
         <p class="mut f">First time: PIN 1234 — then choose your own. Forgot it? Ask the Principal to reset it (ERP → Settings → Logins).</p>${/; wv\)/.test(navigator.userAgent) ? '' : '<p class="mut f"><a href="https://github.com/ankit854281/maakit/releases/download/dataentry-android-v1/snmsis-dataentry.apk">⬇ Download the SNMSIS Data Entry app (Android)</a></p>'}`}</div>`;
   }
   window.deLogin = async () => {
-    try { const r = await api('api.php?a=login', { role: 'dataentry', pin: $('pin').value.trim() }); store.set('sch_token', r.token); MUST = !!r.mustChange; if (MUST) { window._old = $('pin').value.trim(); return loginView(); } draw(); }
+    try { const r = await api('api.php?a=login', { role: 'dataentry', pin: $('pin').value.trim() }); store.set('sch_token', r.token); store.set('de_from', null); MUST = !!r.mustChange; if (MUST) { window._old = $('pin').value.trim(); return loginView(); } draw(); }
     catch (e) { toast(e.message); }
   };
   window.deNewPin = async () => { const n = $('nPin').value.trim(); if (!/^\d{4,8}$/.test(n) || n === '1234') return toast('PIN must be 4–8 digits and not 1234.');
@@ -34,7 +34,7 @@
   window.deLogout = async () => { try { await api('api.php?a=logout', {}); } catch (e) {} store.set('sch_token', null); DAY = null; draw(); };
   // ---------- frame ----------
   function frame(body) {
-    $('app').innerHTML = `<div class="top"><div><b>Data Entry</b><small>${esc(ME)} · ${esc(fmt(DATE))}</small></div><button onclick="deLogout()">Log out</button></div>
+    $('app').innerHTML = `<div class="top"><div><b>Data Entry</b><small>${esc(ME)} · ${esc(fmt(DATE))}</small></div>${store.get('de_from') === 'teacher' ? `<button onclick="location.href='teacher.php'">← Teacher App</button>` : `<button onclick="deLogout()">Log out</button>`}</div>
       <div class="tabs">${[['att', 'Student attendance'], ['staff', 'Staff attendance'], ['hw', 'Homework'], ['kit', 'Diary & Kit']].map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" onclick="deTab('${k}')">${l}</button>`).join('')}</div><div class="pg">${body}</div>`;
   }
   window.deTab = k => { if (TAB === 'kit' && k !== 'kit' && kitN() && !confirm('Leave without saving the ticks?')) return; TAB = k; CLS = null; KC = null; KCH = {}; if (k === 'kit') KIT = null; draw(); };

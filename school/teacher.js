@@ -355,7 +355,7 @@ function render() {
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
   const dot = { att: dueAtt, diary: dueDiary, conn: scUnread(), prin: pm ? prinPendingCount() : 0 }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
-  $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b>${isP() ? `<div class="mode-sw" role="group" aria-label="Mode"><button class="${pm ? '' : 'on'}" onclick="setMode('teacher')">Teacher</button><button class="${pm ? 'on' : ''}" onclick="setMode('principal')">Principal</button></div>` : ''}</div>
+  $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b>${isP() ? `<div class="mode-sw" role="group" aria-label="Mode"><button class="${pm ? '' : 'on'}" onclick="setMode('teacher')">Teacher</button><button class="${pm ? 'on' : ''}" onclick="setMode('principal')">Principal</button></div>` : raSwitch()}</div>
       <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
     <div class="tabs${pm ? ' t' + tabs.length : ''}">${tabs.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') || (k === 'home' && TAB === 'board' && !pm) ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
@@ -1835,6 +1835,15 @@ setInterval(() => { if (S && store.get('sch_token') && !document.hidden && !(TAB
 // Cross-check of one day: attendance of every class, diary of every bell that is over, daily check of every class,
 // homework checks. Each teacher with something pending gets a ready message: send it in the app (Staff chat, kept as a
 // record) or on WhatsApp. "Remind everyone" sends each pending teacher their own list in the app.
+// Owner, 25 Nov 2026: "teacher app se he maam ka sabhi work … jaise principal sir ka switch" — Rati Ma'am does Teacher,
+// Coordinator, Fee Calling (Reception) and Data Entry from this one login. Data Entry opens dataentry.php with the same login.
+function raOn() { const t = me(); return !!ME && ME.role === 'teacher' && (t === 'RT' || /\brati\b/i.test(((S && S.teachers || {})[t] || {}).name || '')); }
+function raSwitch() {
+  if (!raOn()) return '';
+  const cur = TAB === 'coord' ? 'co' : TAB === 'conn' && (P.m || 'fee') === 'fee' ? 'fee' : 't';
+  const b = (k, l, js) => `<button class="${cur === k ? 'on' : ''}" onclick="${js}">${l}</button>`;
+  return `<div class="mode-sw" role="group" aria-label="Mode">${b('t', 'Teacher', "go('home')")}${b('co', 'Coordinator', "go('coord')")}${b('fee', 'Fee Calling', "go('conn',{m:'fee'})")}${b('de', 'Data Entry', "store.set('de_from','teacher');location.href='dataentry.php'")}</div>`;
+}
 function pMode() { return isP() && store.get('ta_mode') === 'principal'; }
 function setMode(m) { store.set('ta_mode', m); go(m === 'principal' ? 'pdash' : 'home'); }
 const XC = {};

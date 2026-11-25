@@ -259,6 +259,9 @@ function sch_is_rati(string $tid): bool { return $tid === 'RT' || (bool)preg_mat
 // Owner, 23 Nov 2026: "palak maam ke app me calling ka features add kariye" — Palak Srivastava Ma'am also calls every class
 // (fee calls, tour calls, parent calls). Homework sharing stays Rati Ma'am only (sch_hw_sharer).
 function sch_default_fee_caller(string $tid): bool { return sch_is_rati($tid) || (bool)preg_match('/\bpalak\b/i', sch_teacher_name($tid)); }
+// Owner, 25 Nov 2026: "teacher app se he maam ka sabhi work" — Rati Ma'am is Coordinator + Reception/Fee Calling + Data Entry,
+// all from her one Teacher App login (switch at the top). Data Entry / Staff attendance / Fee Control Room accept her teacher login.
+function sch_office_teacher(array $u): bool { return ($u['role'] ?? '') === 'teacher' && sch_is_rati((string)($u['tid'] ?? '')); }
 function sch_hw_sharer(string $tid): bool {
     $L = (sch_rec_get('settings', 'main') ?? [])['hwSharers'] ?? null;
     return is_array($L) ? in_array($tid, $L, true) : sch_is_rati($tid);
