@@ -51,9 +51,9 @@ vDiaryWrite = function () {
   const top = bells.length ? `<div class="card sd-top"><div class="row"><div><b>${date === t ? 'Today' : esc(fmtDate(date))}: ${done} / ${bells.length} bells written</b><small>${done === bells.length ? 'All done for the day 👍' : 'Tap a bell to write. After Save the next one opens.'}</small></div><div class="sd-ring" style="--p:${Math.round(100 * done / bells.length)}"><span>${done}/${bells.length}</span></div></div>
       ${old.length ? `<div class="chips" style="margin-top:8px"><span class="mut" style="align-self:center">Still empty:</span>${old.map(x => `<button class="chip warn" onclick="go('diary',{date:'${x.d}'})">${esc(fmtDate(x.d))} · ${x.n}</button>`).join('')}</div>` : ''}</div>` : '';
   return `<div class="row"><button class="btn s w" onclick="go('diary',{date:'${addDays(date, -1)}'})">${ic('back')}</button><input type="date" class="inp" style="flex:1" value="${date}" max="${addDays(t, 7)}" onchange="go('diary',{date:this.value})"><button class="btn s w" onclick="go('diary',{date:'${addDays(date, 1)}'})">${ic('next')}</button></div>
-    ${signed ? '<div class="ban inf">The Principal has signed this diary. Ask the Principal before changing it.</div>' : ''}${top}
-    ${bells.length ? bells.map(b => b.bell === open ? sdCard(date, b, signed) : sdLine(date, b)).join('') : `<div class="card empty">${dayIdx(date) < 0 ? 'Sunday — no classes.' : holidayOn(date) ? 'Holiday: ' + esc(holidayOn(date).title) : 'No bells for you on this day.'}</div>`}
-    ${dayIdx(date) >= 0 && !holidayOn(date) && !signed ? `<button class="btn w full" onclick="addPeriod('${date}')">+ Add a period (substitution / not in timetable)</button>` : ''}
+    ${signed ? '<div class="ban inf">The Principal has signed this day. Bells already written are locked; bells not written yet can still be saved.</div>' : ''}${top}
+    ${bells.length ? bells.map(b => b.bell === open ? sdCard(date, b, signed && !!diaryEntry(date, b.bell)) : sdLine(date, b)).join('') : `<div class="card empty">${dayIdx(date) < 0 ? 'Sunday — no classes.' : holidayOn(date) ? 'Holiday: ' + esc(holidayOn(date).title) : 'No bells for you on this day.'}</div>`}
+    ${dayIdx(date) >= 0 && !holidayOn(date) ? `<button class="btn w full" onclick="addPeriod('${date}')">+ Add a period (substitution / not in timetable)</button>` : ''}
     ${ct.map(c => hwShare(date, c)).join('')}`;
 };
 function sdBellBox(b) { return `<div class="bell ${b.arr ? 'arr' : ''}"><b>${BELLS[b.bell].n.replace(/\D/g, '')}</b>${t12(BELLS[b.bell].s).replace(' ', '')}</div>`; }

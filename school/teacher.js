@@ -126,6 +126,7 @@ function delRec(k, r) {
   else if (k === 'notice') S.notices = S.notices.filter(x => x.id !== r);
   else if (k === 'cal') S.cal = S.cal.filter(x => x.id !== r);
   else if (k === 'teacher') delete S.teachers[r];
+  else if (k === 'signed') { if (S.signed[p[0]]) delete S.signed[p[0]][p[1]]; }
   else if (k === 'clsHol') { if (S.clsHol[p[0]]) delete S.clsHol[p[0]][p[1]]; }
   else if (k === 'studAtt') { if (S.studAtt[p[0]]) delete S.studAtt[p[0]][p[1]]; }
 }

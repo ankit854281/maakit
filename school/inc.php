@@ -13,7 +13,7 @@ date_default_timezone_set('Asia/Kolkata');
 const SCH_KINDS = ['settings','classes','teacher','alloc','grid','exams','student','staffAtt','studAtt',
                    'diary','signed','syl','marks','leave','notice','behav','speak','lplan','cal','fees'];
 const SCH_DATE_KINDS = ['staffAtt','studAtt','diary','signed','behav','clsHol'];   // clsHol = class holiday (teacher_api.php)
-const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal'];
+const SCH_DELETABLE  = ['student','notice','teacher','behav','speak','cal','signed'];   // signed: Principal can un-sign a diary day (25 Nov 2026)
 const SCH_SESSION_DAYS = 30;
 const SCH_NO_LOAD = ['parent', 'student', 'accountant', 'reception', 'dataentry', 'manager'];   // inhe poore school ka data nahi milta
 const SCH_MAX_RECORD = 400000;          // ek record max ~400 KB (timetable grid ke liye kaafi)
@@ -216,7 +216,8 @@ function sch_can_write(array $u, string $k, string $r, $d, bool $isDelete): bool
             $old = sch_rec_get('lplan', $r);
             return $old === null || ($old['status'] ?? '') !== 'Approved';
         case 'diary':
-            return count($p) === 3 && $p[1] === $tid && preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[0]) && ctype_digit($p[2]) && !sch_diary_signed($p[0],$tid);
+            // Owner, 25 Nov 2026: a signed day locks only the bells already written; a bell not written yet can still be saved.
+            return count($p) === 3 && $p[1] === $tid && preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[0]) && ctype_digit($p[2]) && (!sch_diary_signed($p[0],$tid) || sch_rec_get('diary', $r) === null);
         case 'studAtt':
             if (count($p) !== 2) return false;
             static $classes = null; $classes ??= (array)sch_rec_get('classes', 'main');

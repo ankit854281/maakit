@@ -82,7 +82,7 @@ function xDiaryT(t, date) {
     ${b.map(x => { const e = ((S.diary[date] || {})[t] || {})[x.bell], over = bellOver(date, x.bell);
       return `<div class="help-i ${e ? '' : over ? 'miss' : ''}"><b>${esc(BELLS[x.bell].n)} bell · Class ${esc(x.cls)} · ${esc(String(x.subj).replace(/\s*\(optional\)/i, ''))}${x.arr ? ' · arrangement' : ''}</b>
         <p>${e ? `<b>Topic:</b> ${esc(e.topic)}${e.classwork ? '<br><b>CW:</b> ' + esc(e.classwork) : ''}${e.hw ? '<br><b>HW:</b> ' + esc(e.hw) + (e.hwMinutes ? ' (' + e.hwMinutes + ' min)' : '') : '<br>No homework'}` : over ? '✕ Not filled' : 'Bell not over yet'}</p></div>`; }).join('')}
-    <div class="btns">${!sg ? `<button class="btn go" onclick="xSign(${jsq(t)},'${date}');closeSheet()">✍ Sign diary</button>` : ''}${XR.diary && XR.diary[t] ? `<button class="btn w" onclick="xRemind(${jsq(t)},${jsq(XR.diary[t])})">${ic('chat')} Remind</button>` : ''}</div>`;
+    <div class="btns">${!sg ? `<button class="btn go" onclick="xSign(${jsq(t)},'${date}');closeSheet()">✍ Sign diary</button>` : `<button class="btn w" onclick="xUnsign(${jsq(t)},'${date}');closeSheet()">↺ Un-sign (teacher can edit again)</button>`}${XR.diary && XR.diary[t] ? `<button class="btn w" onclick="xRemind(${jsq(t)},${jsq(XR.diary[t])})">${ic('chat')} Remind</button>` : ''}</div>`;
   render();
 }
 function xHw(date) {
@@ -261,6 +261,7 @@ document.addEventListener('focusin', e => {
   el.insertAdjacentHTML('afterend', `<div class="chips sug-c">${list.map(x => `<button type="button" class="chip">${esc(x)}</button>`).join('')}</div>`);
   el.nextElementSibling.querySelectorAll('button').forEach(b => { b.onmousedown = ev => ev.preventDefault(); b.onclick = () => { el.value = b.textContent; el.dispatchEvent(new Event('input', { bubbles: true })); }; });
 });
+function xUnsign(t, date) { putDel('signed', date + '|' + t, 'Diary', `Un-signed the diary of ${T(t).name} for ${date} so it can be corrected — Teacher App`); toast('Un-signed — the teacher can edit this day again.'); render(); }
 function xSign(t, date) { put('signed', date + '|' + t, { at: Date.now(), by: myName() }, 'Diary', `Signed the diary of ${T(t).name} for ${date} — Teacher App`); toast('Diary signed.'); render(); }
 
 // Teachers — one tile per teacher (owner, 5 Nov 2026: the long list was hard to read). Today's work only; weekly / one-time
