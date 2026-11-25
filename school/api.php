@@ -238,7 +238,7 @@ case 'sync': {
     $logs = is_array($in['log'] ?? null) ? array_slice($in['log'], 0, 100) : [];
     if (count($put) > 3000 || count($del) > 500) sch_fail('Too many changes at once.');
 
-    $done = []; $rejected = [];
+    $done = []; $rejected = []; $warn = [];
     $db->beginTransaction();
     $db->query("SELECT uid FROM sch_users WHERE uid='principal' FOR UPDATE")->fetch();
     $putObj = isset($inObj->put) && is_array($inObj->put) ? $inObj->put : [];
@@ -254,7 +254,11 @@ case 'sync': {
             foreach (['status','feedback','decidedAt'] as $field) { unset($content[$field], $incoming[$field]); }
             if ($u['role'] !== 'principal' || $content != $incoming) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>'Open Daily Teaching to revise this daily plan.']; continue; }
         }
-        if ($k === 'diary') { try { tool_hw_guard($k,$r,$d,(string)((sch_rec_get('settings','main')??[])['session']??'')); } catch (InvalidArgumentException $e) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } }
+        // Owner, 25 Nov 2026 ("homework kyu nahi save ho raha — timer ke vajah se?"): the 45-minute daily homework limit of a class
+        // and older homework without a time estimate no longer REFUSE the diary (the teacher's whole entry was thrown away);
+        // the entry is saved and the teacher gets the limit as a warning. A bad homework date is still refused.
+        if ($k === 'diary') { try { tool_hw_guard($k,$r,$d,(string)((sch_rec_get('settings','main')??[])['session']??'')); }
+            catch (InvalidArgumentException $e) { if (str_contains($e->getMessage(), 'valid homework date')) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } $warn[] = $e->getMessage(); } }
         // Leave policy (12 Nov 2026): a teacher's NEW leave request is stamped, marked on time / late and,
         // when on time and short, approved by itself (leavepolicy_lib.php). The arrangement then fills the bells.
         if ($k === 'leave' && $u['role'] === 'teacher' && sch_rec_get('leave', $r) === null) {
@@ -279,7 +283,7 @@ case 'sync': {
         sch_log($u, $k, $x);
     }
     $db->commit();
-    sch_json(['ok' => true, 'now' => sch_now_ms(), 'done' => $done, 'rejected' => $rejected]);
+    sch_json(['ok' => true, 'now' => sch_now_ms(), 'done' => $done, 'rejected' => $rejected, 'warn' => array_values(array_unique($warn))]);
 }
 
 // ------------------------------------------------------------

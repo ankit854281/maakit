@@ -210,6 +210,7 @@ async function flush() {
     const sig = x => x.k + '|' + x.r + '|' + (x.del ? '-' : JSON.stringify(x.d)), sent = new Set(batch.map(sig));
     QUEUE = QUEUE.filter(x => !sent.has(sig(x))); LOGQ = LOGQ.slice(logs.length); saveQueue();
     NET = 'ok';
+    if (res.warn && res.warn.length && !(res.rejected && res.rejected.length)) toast('Saved ✓ — note: ' + res.warn.join(' ').replace('Shorten this task or choose another day.', 'Homework thoda kam rakhein.'));
     if (res.rejected && res.rejected.length) {
       toast(res.rejected.map(x => x.error || 'Not allowed for your login: ' + x.k).filter((v, i, a) => a.indexOf(v) === i).join(' '));
       setTimeout(load, 1200);              // show the server's copy again, not the refused change
