@@ -1840,9 +1840,9 @@ setInterval(() => { if (S && store.get('sch_token') && !document.hidden && !(TAB
 function raOn() { const t = me(); return !!ME && ME.role === 'teacher' && (t === 'RT' || /\brati\b/i.test(((S && S.teachers || {})[t] || {}).name || '')); }
 function raSwitch() {
   if (!raOn()) return '';
-  const cur = TAB === 'coord' ? 'co' : TAB === 'conn' && (P.m || 'fee') === 'fee' ? 'fee' : 't';
+  const cur = TAB === 'coord' ? 'co' : TAB === 'hwshare' ? 'hw' : TAB === 'conn' && (P.m || 'fee') === 'fee' ? 'fee' : 't';
   const b = (k, l, js) => `<button class="${cur === k ? 'on' : ''}" onclick="${js}">${l}</button>`;
-  return `<div class="mode-sw" role="group" aria-label="Mode">${b('t', 'Teacher', "go('home')")}${b('co', 'Coordinator', "go('coord')")}${b('fee', 'Fee Calling', "go('conn',{m:'fee'})")}${b('de', 'Data Entry', "store.set('de_from','teacher');location.href='dataentry.php'")}</div>`;
+  return `<div class="mode-sw" role="group" aria-label="Mode">${b('t', 'Teacher', "go('home')")}${b('co', 'Coordinator', "go('coord')")}${b('hw', 'Homework', "go('hwshare')")}${b('fee', 'Fee Calling', "go('conn',{m:'fee'})")}${b('de', 'Data Entry', "store.set('de_from','teacher');location.href='dataentry.php'")}</div>`;
 }
 function pMode() { return isP() && store.get('ta_mode') === 'principal'; }
 function setMode(m) { store.set('ta_mode', m); go(m === 'principal' ? 'pdash' : 'home'); }
