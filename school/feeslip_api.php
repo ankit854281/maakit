@@ -6,7 +6,9 @@
 //   GET  ?a=list                   every child with fee due till now (same figures as Fee Calling — ff_snapshot),
 //                                  plus when a slip was last given to each child
 //   POST ?a=give {sids:[], due:{sid:paise}, mode:'print'|'whatsapp'}   mark slips as given today
-//   GET  ?a=given&from=&to=        slips given in a date range (who, when, due on the slip, by whom)
+//   GET  ?a=given&from=&to=        slips given in a date range (who, when, due on the slip, by whom, returned or not)
+//   POST ?a=back {sid, promise, amount, note}   the tear-off part came back with the parent's date → saved on the slip
+//                                  (ret) AND as a fee call 'Promised to pay' (acctCall) so Promise dates / follow-ups use it
 //  Records: acctSlip  <session>|<date>|<sid>  ('acct' prefix — never in the normal load). Read-only on fees.
 //  Open for: Principal, Chairman, Manager, Accountant, Reception and the Teacher App fee callers (Rati / Palak Ma'am).
 // ============================================================================
@@ -63,6 +65,32 @@ if ($a === 'give' && $method === 'POST') {
             'father' => (string)($st['father'] ?? ''), 'phone' => sch_phone10((string)($st['phone'] ?? ''))], $uid); $n++; }
     sch_log($u, 'Fee Reminder Slip', "$n slip" . ($n === 1 ? '' : 's') . ' given (' . $mode . ')');
     sch_json(['ok' => true, 'given' => $n, 'date' => $date]);
+}
+if ($a === 'back' && $method === 'POST') {
+    // Owner, 25 Nov 2026: the child brings back the slip's tear-off part with the date the parent wrote → that date goes
+    // into the same fee-call record (acctCall, 'Promised to pay') as Fee Calling, so Promise dates / follow-ups pick it up.
+    $sid = (string)($in['sid'] ?? ''); $st = $sid !== '' ? sch_rec_get('student', $sid) : null; if (!$st) sch_fail('Student not found.');
+    $promise = (string)($in['promise'] ?? ''); $today = date('Y-m-d');
+    $pd = DateTimeImmutable::createFromFormat('!Y-m-d', $promise);
+    if (!$pd || $pd->format('Y-m-d') !== $promise || $promise < $today || $promise > date('Y-m-d', strtotime('+60 days'))) sch_fail('Write the date the parent gave (today to the next 60 days).');
+    $amt = trim((string)($in['amount'] ?? '')); $paise = 0;
+    if ($amt !== '') { if (!preg_match('/^\d{1,7}(\.\d{1,2})?$/', $amt)) sch_fail('Write the amount in rupees.'); $paise = (int)round((float)$amt * 100); }
+    $note = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string)($in['note'] ?? ''))), 0, 300);
+    $mine = []; foreach ($slips() as $d) if ((string)$d['sid'] === $sid) $mine[] = $d;
+    if (!$mine) sch_fail('No slip was given to this child in ' . $ses . '.');
+    usort($mine, fn($x, $y) => strcmp((string)$y['date'], (string)$x['date'])); $slip = $mine[0];
+    $fam = sch_phone10((string)($st['phone'] ?? '')); $sids = [$sid];
+    if ($fam !== '') foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
+        $x = json_decode((string)$row['d'], true); if ((string)$row['r'] !== $sid && is_array($x) && empty($x['inactive']) && sch_phone10((string)($x['phone'] ?? '')) === $fam) $sids[] = (string)$row['r']; }
+    $now = sch_now_ms(); $id = bin2hex(random_bytes(12));
+    $call = ['id' => $id, 'sid' => $sid, 'sids' => $sids, 'fam' => $fam ?: 'sid:' . $sid, 'session' => $ses, 'outcome' => 'Promised to pay', 'promise' => $promise, 'amount' => $paise,
+        'note' => trim('Fee slip returned (given ' . $slip['date'] . ')' . ($note !== '' ? ': ' . $note : '')), 'by' => $u['label'] . ' (Fee Slip)', 'uid' => $uid,
+        'at' => $now, 'date' => $today, 'startedAt' => $now, 'startedDate' => $today, 'completedAt' => $now, 'completedDate' => $today, 'initiated' => false, 'via' => 'slip'];
+    sch_rec_put('acctCall', $id, $call, $uid);
+    $slip['ret'] = ['date' => $today, 'promise' => $promise, 'amount' => $paise, 'note' => $note, 'by' => (string)$u['label'], 'call' => $id];
+    sch_rec_put('acctSlip', $ses . '|' . $slip['date'] . '|' . $sid, $slip, $uid);
+    sch_log($u, 'Fee Reminder Slip', 'Slip returned for ' . ($st['name'] ?? $sid) . ': parent will pay on ' . $promise . ($paise ? ' (₹' . round($paise / 100) . ')' : ''));
+    sch_json(['ok' => true, 'slip' => $slip]);
 }
 if ($a === 'given' && $method === 'GET') {
     $re = '/^\d{4}-\d{2}-\d{2}$/';

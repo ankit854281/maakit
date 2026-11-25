@@ -14,7 +14,9 @@
   const TODAY = iso(new Date());
   const INFRAME = window.top !== window;
   let D = null, G = null, TAB = 'slip', SEL = new Set(), PAYBY = add(TODAY, 7), GF = TODAY, GT = TODAY;
-  const F = { cls: '', min: '', given: 'all', group: 'family', q: '' };
+  const F = { cls: '', min: '', given: 'all', group: 'family', q: '', notag: true };   // notag: Company / FD families get no slip (owner, 25 Nov 2026)
+  const TAGGED = r => /\b(Company|FD)\b/i.test(r.tag || '');
+  let GQ = '', BACK = null;
 
   function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { t.style.display = 'none'; }, 3500); }
   async function api(path, body) {
@@ -39,7 +41,7 @@
   // ---- families ----
   function groups() {
     const q = F.q.trim().toLowerCase(), min = Math.max(0, Number(F.min) || 0) * 100, cut = F.given === 'week' ? add(TODAY, -6) : '';
-    const rows = D.rows.filter(r => (!F.cls || r.cls === F.cls) && r.due >= Math.max(min, 1)
+    const rows = D.rows.filter(r => (!F.cls || r.cls === F.cls) && r.due >= Math.max(min, 1) && !(F.notag && TAGGED(r))
       && (F.given === 'all' || (F.given === 'never' ? !r.last : !r.last || r.last < cut))
       && (!q || (r.name + ' ' + r.father + ' ' + r.phone + ' ' + r.adm).toLowerCase().includes(q)));
     const m = new Map();
@@ -63,6 +65,7 @@
       <div class="bar"><select id="fCls"><option value="">All classes</option>${uniq(D.rows.map(r => r.cls)).map(c => `<option ${c === F.cls ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
         <select id="fGiven">${[['all', 'Everyone with due'], ['week', 'No slip in last 7 days'], ['never', 'Never given a slip']].map(([k, l]) => `<option value="${k}" ${F.given === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
         <select id="fGroup"><option value="family" ${F.group === 'family' ? 'selected' : ''}>One slip per family (siblings together)</option><option value="child" ${F.group === 'child' ? 'selected' : ''}>One slip per child</option></select>
+        <label style="display:flex;align-items:center;gap:4px;color:#17202a"><input type="checkbox" id="fTag" ${F.notag ? 'checked' : ''}> Company / FD tag wale hatao (${D.rows.filter(TAGGED).length})</label>
         <label>Due above ₹</label><input id="fMin" type="number" min="0" inputmode="numeric" value="${esc(F.min)}" style="width:90px">
         <label>Pay by</label><input id="fPay" type="date" value="${PAYBY}" min="${TODAY}">
         <input id="fQ" placeholder="Search name, father, mobile, adm no." value="${esc(F.q)}" style="flex:1;min-width:160px"></div>
@@ -72,7 +75,7 @@
       <div class="wrap"><div class="card">${L.length ? `<table><tr><th><input type="checkbox" id="ca" ${chosen.length === L.length ? 'checked' : ''}></th><th>Student(s)</th><th>Class</th><th>Father</th><th>Mobile</th><th>Due till now</th><th>Last slip</th><th></th></tr>
         ${L.map(g => `<tr><td><input type="checkbox" data-k="${esc(g.key)}" ${SEL.has(g.key) ? 'checked' : ''}></td><td>${g.kids.map(r => `<b>${esc(r.name)}</b>${r.adm ? ` <span class="mut">(${esc(r.adm)})</span>` : ''}`).join('<br>')}</td>
           <td class="n">${g.kids.map(r => esc(r.cls + (r.section ? ' ' + r.section : ''))).join('<br>')}</td><td>${esc(g.kids[0].father)}</td><td class="n">${g.kids[0].phone ? `<a href="tel:${esc(g.kids[0].phone)}">${esc(g.kids[0].phone)}</a>` : '<span class="mut">—</span>'}</td>
-          <td class="n"><b>${rs(g.due)}</b>${g.kids.length > 1 ? `<div class="mut">${g.kids.map(r => rs(r.due)).join(' + ')}</div>` : ''}</td>
+          <td class="n"><b>${rs(g.due)}</b>${g.kids.some(TAGGED) ? ` <span class="pill s">${esc(g.kids.find(TAGGED).tag)}</span>` : ''}${g.kids.length > 1 ? `<div class="mut">${g.kids.map(r => rs(r.due)).join(' + ')}</div>` : ''}</td>
           <td class="n">${g.last ? `<span class="pill ${g.last === TODAY ? 'g' : 's'}">${dmy(g.last)}</span>` : '<span class="mut">Never</span>'}</td>
           <td>${g.kids[0].phone ? `<button class="btn wa" data-wa="${esc(g.key)}" style="padding:6px 9px">WhatsApp</button>` : ''}</td></tr>`).join('')}</table>` : '<div class="empty">No child with fee due for these filters.</div>'}</div></div>`;
     bindCommon();
@@ -80,6 +83,7 @@
     $('fGiven').onchange = e => { F.given = e.target.value; reselect(); };
     $('fGroup').onchange = e => { F.group = e.target.value; reselect(); };
     $('fMin').onchange = e => { F.min = e.target.value; reselect(); };
+    $('fTag').onchange = e => { F.notag = e.target.checked; reselect(); };
     $('fPay').onchange = e => { if (e.target.value) PAYBY = e.target.value; };
     $('fQ').oninput = e => { F.q = e.target.value; clearTimeout(window._qt); window._qt = setTimeout(() => { reselect(); const el = $('fQ'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 350); };
     document.querySelectorAll('[data-k]').forEach(c => c.onchange = () => { c.checked ? SEL.add(c.dataset.k) : SEL.delete(c.dataset.k); draw(); });
@@ -132,29 +136,55 @@
   // ---- given list ----
   function drawGiven(head, tab) {
     const quick = [['Today', TODAY, TODAY], ['Yesterday', add(TODAY, -1), add(TODAY, -1)], ['7 days', add(TODAY, -6), TODAY], ['This month', TODAY.slice(0, 8) + '01', TODAY]];
-    const R = G ? G.rows : [], fam = new Set(R.map(r => r.phone ? 'p:' + r.phone : 's:' + r.sid)).size, by = {};
+    const q = GQ.trim().toLowerCase(), R = G ? G.rows.filter(r => !q || (r.name + ' ' + r.father + ' ' + r.phone).toLowerCase().includes(q)) : [], fam = new Set(R.map(r => r.phone ? 'p:' + r.phone : 's:' + r.sid)).size, by = {};
     R.forEach(r => { by[r.by] = (by[r.by] || 0) + 1; });
     $('app').innerHTML = head + `<div class="tabs" style="padding-top:12px">${tab('slip', 'Make slips')}${tab('given', 'Slips given — list')}</div>
       <div class="bar">${quick.map(([l, f, t]) => `<button class="q ${GF === f && GT === t ? 'on' : ''}" data-f="${f}" data-t="${t}">${l}</button>`).join('')}
         <label>From</label><input type="date" id="gF" value="${GF}" max="${TODAY}"><label>To</label><input type="date" id="gT" value="${GT}" max="${TODAY}">
+        <input id="gQ" placeholder="Search name, father, mobile" value="${esc(GQ)}" style="flex:1;min-width:150px">
         <button class="btn" id="gx">⬇ Excel</button><button class="btn" id="gp">🖨 Print list</button></div>
       <div class="kp"><div><span>Children given a slip</span><b>${R.length}</b></div><div><span>Families</span><b>${fam}</b></div>
-        <div><span>Due on these slips</span><b>${rs(R.reduce((n, r) => n + (r.due || 0), 0))}</b></div><div><span>Printed / WhatsApp</span><b>${R.filter(r => r.mode !== 'whatsapp').length} / ${R.filter(r => r.mode === 'whatsapp').length}</b></div></div>
+        <div><span>Due on these slips</span><b>${rs(R.reduce((n, r) => n + (r.due || 0), 0))}</b></div><div><span>Printed / WhatsApp</span><b>${R.filter(r => r.mode !== 'whatsapp').length} / ${R.filter(r => r.mode === 'whatsapp').length}</b></div>
+        <div><span>Slip wapas aayi</span><b style="color:#166534">${R.filter(r => r.ret).length}</b></div><div><span>Abhi wapas nahi aayi</span><b style="color:#991B1B">${R.filter(r => !r.ret && r.mode !== 'whatsapp').length}</b></div></div>
       ${Object.keys(by).length ? `<p class="mut" style="padding:0 12px">Given by: ${Object.entries(by).map(([k, n]) => esc(k) + ' — ' + n).join(' · ')}</p>` : ''}
-      <div class="wrap"><div class="card" id="glist">${!G ? '<div class="empty">Opening…</div>' : R.length ? `<table><tr><th>#</th><th>Date</th><th>Student</th><th>Class</th><th>Father</th><th>Mobile</th><th>Due on slip</th><th>How</th><th>Given by</th></tr>
-        ${R.map((r, i) => `<tr><td>${i + 1}</td><td class="n">${dmy(r.date)}</td><td><b>${esc(r.name)}</b></td><td class="n">${esc(r.cls + (r.section ? ' ' + r.section : ''))}</td><td>${esc(r.father)}</td><td class="n">${esc(r.phone)}</td><td class="n">${rs(r.due)}</td><td>${r.mode === 'whatsapp' ? 'WhatsApp' : 'Printed slip'}</td><td>${esc(r.by)}</td></tr>`).join('')}</table>` : '<div class="empty">No slip given on these dates.</div>'}</div></div>`;
+      <div class="wrap"><div class="card" id="glist">${!G ? '<div class="empty">Opening…</div>' : R.length ? `<table><tr><th>#</th><th>Date</th><th>Student</th><th>Class</th><th>Father</th><th>Mobile</th><th>Due on slip</th><th>How</th><th>Given by</th><th>Slip wapas / parent ki date</th></tr>
+        ${R.map((r, i) => `<tr><td>${i + 1}</td><td class="n">${dmy(r.date)}</td><td><b>${esc(r.name)}</b></td><td class="n">${esc(r.cls + (r.section ? ' ' + r.section : ''))}</td><td>${esc(r.father)}</td><td class="n">${esc(r.phone)}</td><td class="n">${rs(r.due)}</td><td>${r.mode === 'whatsapp' ? 'WhatsApp' : 'Printed slip'}</td><td>${esc(r.by)}</td>
+          <td>${r.ret ? `<span class="pill g">↩ ${dmy(r.ret.promise)} tak${r.ret.amount ? ' · ' + rs(r.ret.amount) : ''}</span>${r.ret.note ? `<div class="mut">${esc(r.ret.note)}</div>` : ''}` : `<button class="btn go" data-back="${i}" style="padding:6px 9px">↩ Wapas aayi</button>`}</td></tr>`).join('')}</table>` : '<div class="empty">No slip given on these dates.</div>'}</div></div>`;
     bindCommon();
     document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { GF = b.dataset.f; GT = b.dataset.t; G = null; loadGiven(); draw(); });
+    $('gQ').oninput = e => { GQ = e.target.value; clearTimeout(window._gq); window._gq = setTimeout(() => { draw(); const el = $('gQ'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 350); };
+    document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => { BACK = R[+b.dataset.back]; backSheet(); });
     $('gF').onchange = e => { if (e.target.value) { GF = e.target.value; G = null; loadGiven(); } };
     $('gT').onchange = e => { if (e.target.value) { GT = e.target.value; G = null; loadGiven(); } };
     $('gx').onclick = () => {
       const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-      const lines = [['Date', 'Student', 'Class', 'Section', 'Father', 'Mobile', 'Due on slip', 'How', 'Given by'].map(q).join(',')]
-        .concat(R.map(r => [dmy(r.date), r.name, r.cls, r.section, r.father, r.phone, Math.round((r.due || 0) / 100), r.mode === 'whatsapp' ? 'WhatsApp' : 'Printed slip', r.by].map(q).join(',')));
+      const lines = [['Date', 'Student', 'Class', 'Section', 'Father', 'Mobile', 'Due on slip', 'How', 'Given by', 'Slip returned', 'Parent will pay on', 'Amount promised', 'Remark'].map(q).join(',')]
+        .concat(R.map(r => [dmy(r.date), r.name, r.cls, r.section, r.father, r.phone, Math.round((r.due || 0) / 100), r.mode === 'whatsapp' ? 'WhatsApp' : 'Printed slip', r.by, r.ret ? dmy(r.ret.date) : '', r.ret ? dmy(r.ret.promise) : '', r.ret && r.ret.amount ? Math.round(r.ret.amount / 100) : '', r.ret ? r.ret.note : ''].map(q).join(',')));
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
       a.download = 'fee-slips-given-' + GF + '-to-' + GT + '.csv'; document.body.appendChild(a); a.click(); a.remove();
     };
     $('gp').onclick = () => { $('print').innerHTML = `<h2 style="text-align:center;margin:0">${esc(D.school)}</h2><p style="text-align:center;margin:4px 0 10px">Fee reminder slips given · ${dmy(GF)} to ${dmy(GT)} · ${R.length} children, ${fam} families</p>` + $('glist').innerHTML; setTimeout(() => window.print(), 100); };
+  }
+  // ---- slip came back: parent's date → Promise dates / fee-call follow-up ----
+  function backSheet() {
+    const r = BACK; if (!r) return;
+    let el = $('backSheet'); if (!el) { el = document.createElement('div'); el.id = 'backSheet'; document.body.appendChild(el); }
+    el.innerHTML = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8;display:flex;align-items:center;justify-content:center;padding:12px">
+      <div style="background:#fff;border-radius:12px;padding:16px;max-width:420px;width:100%">
+        <h3 style="margin:0 0 4px">↩ Slip wapas aayi</h3><p class="mut" style="margin:0 0 10px">${esc(r.name)} · Class ${esc(r.cls)} · slip ${dmy(r.date)} · due ${rs(r.due)}</p>
+        <label class="mut">Parent ne kis date tak fees dene ko likha?</label><input id="bD" type="date" min="${TODAY}" max="${add(TODAY, 60)}" style="width:100%;padding:9px;margin:4px 0 10px;border:1px solid #c9d2dc;border-radius:8px">
+        <label class="mut">Kitni fees (₹) — likha ho to</label><input id="bA" type="number" inputmode="decimal" min="0" style="width:100%;padding:9px;margin:4px 0 10px;border:1px solid #c9d2dc;border-radius:8px">
+        <label class="mut">Remark (zaroori nahi)</label><input id="bN" maxlength="300" style="width:100%;padding:9px;margin:4px 0 12px;border:1px solid #c9d2dc;border-radius:8px">
+        <p class="mut" style="margin:0 0 10px">Ye date Fee Calling ki Promise dates me jayegi. Us din tak fees na aayi to ye bachcha calling list me aa jayega.</p>
+        <div style="display:flex;gap:8px"><button class="btn gr" id="bS" style="flex:1">Save</button><button class="btn" id="bC">Cancel</button></div></div></div>`;
+    $('bC').onclick = () => { BACK = null; el.innerHTML = ''; };
+    $('bS').onclick = async () => {
+      const promise = $('bD').value; if (!promise) return toast('Parent ki di hui date chuniye.');
+      $('bS').disabled = true;
+      try { const j = await api('feeslip_api.php?a=back', { sid: r.sid, promise, amount: $('bA').value.trim(), note: $('bN').value.trim() });
+        G.rows.forEach(x => { if (x.sid === r.sid && x.date === j.slip.date) x.ret = j.slip.ret; }); BACK = null; el.innerHTML = ''; toast('Saved — date Promise dates me chali gayi.'); draw(); }
+      catch (e) { $('bS').disabled = false; toast(e.message); }
+    };
   }
   load();
 })();
