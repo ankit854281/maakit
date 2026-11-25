@@ -167,7 +167,58 @@ function sch_seed_lkg_hy(): void {
     sch_log($sys, 'Progress Report', 'LKG Half Yearly — please check against the register: ' . implode('; ', $checks));
 }
 
+// ============================================================
+// Mamta Ma'am's Hindi + Sanskrit syllabus 2026-27 from her register (owner, 23 Nov 2026: "Ye syllabus add karige mamta maam
+// ka hindi or sanskrit" — 9 photos: Hindi 6th–10th with Vyakaran, Sanskrit 6th–8th; re-done 25 Nov 2026 "mamta maam ka
+// syllabus add nahi kyu kiya" — the 23 Nov push never reached GitHub). Chapters go into `syl` with `book` and `ex` (exam ids)
+// like the Teacher App's Planner → Syllabus. Register sections → exams: UT-1 → ut1+hy, UT-2 → ut2+hy, H.Y → hy,
+// UT-3 → ut3+ann, UT-4 → ut4+ann, Annual → ann; 6th Vyakaran note says Annual = 14 to 27, so its UT-3 is ut3 only.
+// Key = class|subject of Mamta's timetable subject (exact, else a combined one like "Hindi/Sanskrit"). A chapter already
+// there (same name + book) keeps its done date and only gains the exam tags; nothing is removed. Runs once (salSeed flag).
+const SCH_MAMTA_SYL_JSON = <<<'JSON'
+{"10th|Hindi": [["क्षितिज", [["ut1", ["नेताजी का चश्मा (गद्य)", "सूरदास के पद (पद्य)"]], ["ut2", ["बालगोबिन भगत (गद्य)", "राम-लक्ष्मण-परशुराम संवाद (पद्य)"]], ["hy", ["लखनवी अंदाज़ (गद्य)", "आत्मकथ्य (पद्य)"]], ["ut3", ["उत्साह, अट नहीं रही है (पद्य)", "यह दंतुरित मुस्कान (पद्य)", "एक कहानी यह भी (गद्य)"]], ["ut4", ["नौबतखाने में इबादत (गद्य)", "संस्कृति (गद्य)", "संगतकार (पद्य)"]]]], ["कृतिका", [["hy", ["माता का अँचल"]], ["ann", ["साना-साना हाथ जोड़ि", "मैं क्यों लिखता हूँ?"]]]], ["व्याकरण", [["ut1", ["अलंकार", "रचना के आधार पर वाक्य भेद"]], ["ut2", ["वाच्य तथा वाच्य परिवर्तन", "पद-परिचय"]], ["hy", ["संवाद-लेखन", "ई-मेल लेखन", "स्ववृत्त-लेखन"]], ["ut3", ["विज्ञापन-लेखन", "संदेश लेखन"]], ["ut4", ["पत्र-लेखन", "निबंध: साइबर सुरक्षा: जागरूकता ही समाधान", "निबंध: स्वस्थ जीवन शैली", "निबंध: एक यादगार पारिवारिक अवकाश"]]]]], "9th|Hindi": [["हिंदी पाठ्यपुस्तक", [["ut1", ["दो बैलों की कथा (गद्य)", "रैदास के पद (पद्य)"]], ["ut2", ["क्या लिखूँ? (गद्य)", "राम-लक्ष्मण-परशुराम संवाद (पद्य)"]], ["hy", ["संवदीन / संवाधीन (गद्य)", "भारती, जय विजय करे! (पद्य)"]], ["ut3", ["ऐसी भी बातें होती हैं (गद्य)", "झाँसी की रानी (पद्य)"]], ["ut4", ["आखिरी चट्टान तक (गद्य)", "घर की याद (पद्य)"]], ["ann", ["रीढ़ की हड्डी (गद्य)", "मैं और मेरा देश (गद्य)"]]]], ["व्याकरण", [["ut1", ["उपसर्ग, प्रत्यय", "समास"]], ["ut2", ["अर्थ की दृष्टि से वाक्य भेद", "अलंकार"]], ["ann", ["अनुच्छेद-लेखन", "पत्र-लेखन", "लघु कथा", "सूचना-लेखन", "ई-मेल लेखन"]]]]], "8th|Hindi": [["हिंदी पाठ्यपुस्तक", [["ut1", ["किसको नमन करूँ मैं", "पूस की रात"]], ["ut2", ["बड़ा मीठा लगा", "मांडले जेल से"]], ["hy", ["रहीम के दोहे", "शास्त्री जी", "अकबरी लोटा"]], ["ut3", ["अँधेर नगरी चौपट राजा", "मुक्ति की आकांक्षा"]], ["ut4", ["किसान के बेटे", "दो कविताएँ"]], ["ann", ["हिमालय की बेटियाँ", "शहीदों की मजारों पर", "नेता जी सुभाषचंद्र बोस"]]]], ["व्याकरण", [["ut1", ["भाषा, बोली, लिपि, व्याकरण", "वर्ण-विचार", "शब्द-विचार"]], ["ut2", ["संधि", "समास", "उपसर्ग"]], ["hy", ["प्रत्यय", "शब्द-भंडार", "संज्ञा", "लिंग", "वचन", "निबंध: मेरे प्रिय नेता लालबहादुर शास्त्री", "निबंध: परिश्रम का महत्व", "निबंध: मेले का दृश्य"]], ["ut3", ["कारक", "सर्वनाम", "विशेषण", "क्रिया"]], ["ut4", ["काल", "वाच्य", "अव्यय"]], ["ann", ["विराम-चिह्न", "मुहावरे", "अलंकार", "पत्र-लेखन", "निबंध-लेखन"]]]]], "7th|Hindi": [["हिंदी पाठ्यपुस्तक", [["ut1", ["माँ! कह एक कहानी", "चतुर तोता"]], ["ut2", ["शिक्षाप्रद दोहे", "भाग्य विधाता कौन"]], ["hy", ["हार की खुशी", "सुदामा चरित"]], ["ut3", ["मनभावन सावन", "संगीत स्वामी हरिदास"]], ["ut4", ["ग्राम शोभा", "शिक्षा के लिए मेरा संघर्ष"]], ["ann", ["सूर्य की शक्ति और स्वास्थ्य", "प्रशंसा का चक्कर", "मीरा के पद"]]]], ["व्याकरण", [["ut1", ["भाषा, बोली, लिपि और व्याकरण", "वर्ण-विचार", "शब्द-विचार"]], ["ut2", ["संधि", "समास", "उपसर्ग-प्रत्यय"]], ["hy", ["शब्द-भंडार", "संज्ञा", "लिंग", "वचन", "निबंध: मेरी माता", "निबंध: सच्ची मित्रता", "निबंध: परिश्रम का महत्व"]], ["ut3", ["कारक", "सर्वनाम", "विशेषण"]], ["ut4", ["क्रिया", "काल", "अव्यय"]], ["ann", ["विराम-चिह्न", "मुहावरे", "पत्र-लेखन", "निबंध"]]]]], "6th|Hindi": [["हिंदी पाठ्यपुस्तक", [["ut1", ["मातृभूमि", "किक"]], ["ut2", ["बादल चले गए वे", "हार की जीत"]], ["hy", ["कबीरदास के दोहे", "पहली बूँद", "जलाओ दीये"]], ["ut3", ["कत्थक नृत्य", "मेरे तो गिरधर गोपाल"]], ["ut4", ["नमक का दरोगा", "हल्दी घाटी का युद्ध"]], ["ann", ["अविस्मरणीय यात्रा", "धरती से सितारों तक", "मैं और मेरा देश"]]]], ["व्याकरण", [["ut1", ["भाषा, बोली, लिपि और व्याकरण", "वर्ण-विचार", "शब्द-विचार"]], ["ut2", ["संधि", "समास", "उपसर्ग-प्रत्यय"]], ["hy", ["शब्द-भंडार", "संज्ञा", "लिंग", "वचन", "निबंध: मेरी मातृभूमि", "निबंध: वर्षा ऋतु", "निबंध: परोपकार"]], ["ut3", ["कारक", "सर्वनाम", "विशेषण"]], ["ut4", ["क्रिया", "काल", "अव्यय"]], ["ann", ["विराम-चिह्न", "मुहावरे एवं लोकोक्तियाँ", "अपठित गद्यांश", "अपठित पद्यांश", "पत्र-लेखन", "निबंध-लेखन"]]]]], "8th|Sanskrit": [["संस्कृत", [["ut1", ["वन्दना", "स्वर्ग यात्रा", "चतुरः वानरः"]], ["ut2", ["मतिः एव बलात् गरीयसी", "ईश्वरभक्तः अमात्यः"]], ["hy", ["शठे शाठ्यं समाचरेत्", "सप्त भगिन्यः", "रक्तदानम्"]], ["ut3", ["उपदेशो हि मूर्खाणाम्", "नीतिश्लोकाः"]], ["ut4", ["व्यायामः", "सत्यप्रिया धेनुः"]], ["ann", ["कल्पना चावला", "विद्यालयस्य क्रीडा-दिवसः", "सुभाषितानि", "परिशिष्टम्"]]]]], "7th|Sanskrit": [["संस्कृत", [["ut1", ["वन्दना", "अभ्यासस्य महत्त्वम्", "सूर्यः"]], ["ut2", ["आयुर्वेदः", "अस्माकं देशः"]], ["hy", ["बिलस्य वाणी न कदापि मे श्रुता", "दुर्जनः परिहर्तव्यः", "होलिकोत्सवः"]], ["ut3", ["साइना नेहवालः", "महाराणा प्रतापः"]], ["ut4", ["महापुरुषौ", "श्रीकृष्णः"]], ["ann", ["गीतामृतम्", "सर्वोत्तमाः वृक्षाः", "गौतम बुद्धः", "परिशिष्टम्"]]]]], "6th|Sanskrit": [["संस्कृत", [["ut1", ["वन्दना", "संस्कृत व्याकरणम्", "प्रभातवेला"]], ["ut2", ["भारतवर्षम्", "मम दिनचर्या"]], ["hy", ["एकलव्यस्य गुरुदक्षिणा", "मातुः आदेशः"]], ["ut3", ["हिमालयः", "वीर सुभाषः"]], ["ut4", ["सुभाषितानि", "प्रदूषणम्"]], ["ann", ["ऋतुराज-वसन्तः", "नीतिश्लोकाः", "नृपस्य गजः", "परिशिष्टम्"]]]]]}
+JSON;
+function sch_seed_mamta_syl(): void {
+    $flag = 'mamta-syllabus-2026-27';
+    if (sch_rec_get('salSeed', $flag)) return;
+    $alloc = (array)sch_rec_get('alloc', 'main');
+    if (!$alloc) return;
+    $tid = null;
+    foreach (sal_rows('teacher') as $k => $t) if (sal_name_same((string)($t['name'] ?? ''), 'Mamta')) { $tid = (string)$k; break; }
+    $tid ??= 'MA';
+    $map = ['ut1' => ['ut1', 'hy'], 'ut2' => ['ut2', 'hy'], 'hy' => ['hy'], 'ut3' => ['ut3', 'ann'], 'ut4' => ['ut4', 'ann'], 'ann' => ['ann']];
+    $done = [];
+    foreach (json_decode(SCH_MAMTA_SYL_JSON, true) as $key => $books) {
+        [$cls, $sub] = explode('|', $key);
+        $subs = []; $any = [];
+        foreach ($alloc as $a) if (($a['c'] ?? '') === $cls) { $any[] = (string)($a['s'] ?? ''); if (($a['t'] ?? '') === $tid) $subs[] = (string)($a['s'] ?? ''); }
+        $pick = null;
+        foreach ([$subs, $any] as $list) {
+            if ($pick === null) foreach ($list as $s) if (strcasecmp($s, $sub) === 0) { $pick = $s; break; }
+            if ($pick === null) foreach ($list as $s) if (in_array(strtolower($sub), array_map('trim', explode('/', strtolower($s))), true)) { $pick = $s; break; }
+        }
+        $pick ??= $sub;
+        $r = "$cls|$pick";
+        $y = sch_rec_get('syl', $r); if (!is_array($y)) $y = ['chapters' => [], 'targetCount' => '', 'targetDate' => ''];
+        $y['chapters'] = array_values((array)($y['chapters'] ?? []));
+        $add = 0; $upd = 0;
+        foreach ($books as [$book, $parts]) foreach ($parts as [$sec, $names]) foreach ($names as $n) {
+            $ex = ($key === '6th|Hindi' && $book === 'व्याकरण' && $sec === 'ut3') ? ['ut3'] : $map[$sec];
+            $hit = false;
+            foreach ($y['chapters'] as &$ch) if (mb_strtolower(trim((string)($ch['n'] ?? ''))) === mb_strtolower($n) && (string)($ch['book'] ?? '') === $book) {
+                $ch['ex'] = array_values(array_unique(array_merge((array)($ch['ex'] ?? []), $ex))); $hit = true; $upd++; break;
+            }
+            unset($ch);
+            if (!$hit) { $y['chapters'][] = ['n' => $n, 'done' => null, 'topics' => [], 'book' => $book, 'ex' => $ex]; $add++; }
+        }
+        sch_rec_put('syl', $r, $y, 'system');
+        $done[] = "$cls $pick: $add added" . ($upd ? ", $upd updated" : '');
+    }
+    sch_rec_put('salSeed', $flag, ['at' => sch_now_ms(), 'tid' => $tid, 'done' => $done], 'system');
+    sch_log(['uid' => 'system', 'role' => 'system', 'label' => 'System'], 'Syllabus', "Mamta Ma'am's Hindi/Sanskrit syllabus from her register (owner 23 Nov 2026): " . implode('; ', $done));
+}
+
 // Every one-time change, in order (called from api.php load / since and salary_api.php sheet).
 function sch_seeds(): void {
-    foreach (['sch_seed_ritu_ukg', 'sch_seed_ankit_8th', 'sch_seed_lkg_hy'] as $f) { try { $f(); } catch (Throwable $e) { error_log("$f: " . $e->getMessage()); } }
+    foreach (['sch_seed_ritu_ukg', 'sch_seed_ankit_8th', 'sch_seed_lkg_hy', 'sch_seed_mamta_syl'] as $f) { try { $f(); } catch (Throwable $e) { error_log("$f: " . $e->getMessage()); } }
 }
