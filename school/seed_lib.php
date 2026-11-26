@@ -218,7 +218,228 @@ function sch_seed_mamta_syl(): void {
     sch_log(['uid' => 'system', 'role' => 'system', 'label' => 'System'], 'Syllabus', "Mamta Ma'am's Hindi/Sanskrit syllabus from her register (owner 23 Nov 2026): " . implode('; ', $done));
 }
 
+// Middle-school textbook records for session 2026-27. Chapter headings are index data; topics are teaching summaries.
+const SCH_MIDDLE_SYLLABUS_JSON = <<<'JSON'
+{
+  "6th|maths": [
+    {"n":"Number System","book":"R.S. Aggarwal Mathematics","bookChapter":1,"topics":["Place value and numeration","Comparing and rounding numbers"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Mathematical Patterns","book":"R.S. Aggarwal Mathematics","bookChapter":2,"topics":["Patterns in sequences","Figurate numbers"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Whole Numbers","book":"R.S. Aggarwal Mathematics","bookChapter":3,"topics":["Number line","Properties of whole-number operations"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Prime Time","book":"R.S. Aggarwal Mathematics","bookChapter":4,"topics":["Factors and multiples","Prime factorisation","HCF and LCM"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Number Play","book":"R.S. Aggarwal Mathematics","bookChapter":5,"topics":["Digit patterns","Number puzzles"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Integers","book":"R.S. Aggarwal Mathematics","bookChapter":6,"topics":["Positive and negative numbers","Addition and subtraction on a number line"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Fractions","book":"R.S. Aggarwal Mathematics","bookChapter":7,"topics":["Equivalent fractions","Comparison and operations"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Decimals","book":"R.S. Aggarwal Mathematics","bookChapter":8,"topics":["Decimal place value","Comparing and calculating with decimals"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Lines and Angles","book":"R.S. Aggarwal Mathematics","bookChapter":9,"topics":["Lines, rays and segments","Classifying and measuring angles"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Constructions","book":"R.S. Aggarwal Mathematics","bookChapter":10,"topics":["Compass and ruler constructions","Geometric figures"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Symmetry","book":"R.S. Aggarwal Mathematics","bookChapter":11,"topics":["Lines of symmetry","Symmetric shapes"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Perimeter and Area","book":"R.S. Aggarwal Mathematics","bookChapter":12,"topics":["Boundary length","Area of rectangles and compound figures"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"},
+    {"n":"Data Handling","book":"R.S. Aggarwal Mathematics","bookChapter":13,"topics":["Organising data","Reading and drawing graphs"],"sourceUrl":"https://www.stjohnsranchi.org/images/Syllabus/6/Syllabus%20Class%20VI%20%282025-26%29.pdf"}
+  ],
+  "6th|science": [
+    {"n":"The Wonderful World of Science","book":"NCERT Curiosity","bookChapter":1,"pf":"1","pt":"8","topics":["Asking testable questions","Observation and investigation"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu101.pdf"},
+    {"n":"Diversity in the Living World","book":"NCERT Curiosity","bookChapter":2,"pf":"9","pt":"34","topics":["Grouping plants and animals","Habitats and adaptation"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu102.pdf"},
+    {"n":"Mindful Eating: A Path to a Healthy Body","book":"NCERT Curiosity","bookChapter":3,"pf":"35","pt":"60","topics":["Food groups and nutrients","Balanced and varied diets"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu103.pdf"},
+    {"n":"Exploring Magnets","book":"NCERT Curiosity","bookChapter":4,"pf":"61","pt":"78","topics":["Magnetic materials","Magnetic poles and direction"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu104.pdf"},
+    {"n":"Measurement of Length and Motion","book":"NCERT Curiosity","bookChapter":5,"pf":"79","pt":"100","topics":["Standard units and measurement","Types of motion"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu105.pdf"},
+    {"n":"Materials Around Us","book":"NCERT Curiosity","bookChapter":6,"pf":"101","pt":"122","topics":["Grouping by physical properties","Solubility and transparency"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu106.pdf","aliases":["Material Around Us"]},
+    {"n":"Temperature and its Measurement","book":"NCERT Curiosity","bookChapter":7,"pf":"123","pt":"142","topics":["Temperature scales","Clinical and laboratory thermometers"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu107.pdf"},
+    {"n":"A Journey through States of Water","book":"NCERT Curiosity","bookChapter":8,"pf":"143","pt":"162","topics":["Changes of state","Evaporation, condensation and the water cycle"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu108.pdf"},
+    {"n":"Methods of Separation in Everyday Life","book":"NCERT Curiosity","bookChapter":9,"pf":"163","pt":"182","topics":["Sieving and filtration","Settling and decanting","Evaporation"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu109.pdf"},
+    {"n":"Living Creatures: Exploring their Characteristics","book":"NCERT Curiosity","bookChapter":10,"pf":"183","pt":"206","topics":["Features of living things","Germination, growth and life cycles"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu110.pdf"},
+    {"n":"Nature’s Treasures","book":"NCERT Curiosity","bookChapter":11,"pf":"207","pt":"230","topics":["Air, water and soil","Natural resources and conservation"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu111.pdf"},
+    {"n":"Beyond Earth","book":"NCERT Curiosity","bookChapter":12,"pf":"231","topics":["Stars and constellations","The Solar System"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/fecu112.pdf","aliases":["Beyond the Earth"]}
+  ],
+  "7th|maths": [
+    {"n":"Large Numbers Around Us","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":1,"topics":["Place value","Comparing and estimating large numbers"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Large Number Around Us"]},
+    {"n":"Arithmetic Expressions","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":2,"topics":["Operations with brackets","Order of operations"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Decimal Numbers — A Peek Beyond the Point","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":3,"topics":["Decimal place value","Comparing and representing decimals"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Decimals","A Peek Beyond the Point","Decimals Numbers — A Peek Beyond the Point"]},
+    {"n":"Expressions Using Letter Numbers","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":4,"topics":["Variables and terms","Writing and simplifying expressions"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Parallel and Intersecting Lines","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":5,"topics":["Angle pairs","Parallel lines and transversals"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Number Play","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":6,"topics":["Number patterns","Digit puzzles"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Triangles and Their Constructions","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":7,"topics":["Triangle properties","Constructing triangles from given measurements"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Triangles and Their Construction","A Tale of Three Intersecting Lines"]},
+    {"n":"Working with Fractions","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":8,"topics":["Fraction operations","Fraction word problems"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Congruence (Geometric Twins)","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":1,"topics":["Matching sides and angles","Triangle congruence"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Congruence","Geometric Twins"]},
+    {"n":"Operations on Integers","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":2,"topics":["Adding, subtracting, multiplying and dividing integers","Sign rules"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Operations on Integer","Operations with Integers"]},
+    {"n":"HCF and LCM","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":3,"topics":["Factorisation","Common factors and common multiples"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Finding Common Ground"]},
+    {"n":"Multiplication and Division of Decimals","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":4,"topics":["Decimal products and quotients","Place-value reasoning"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf","aliases":["Another Peek Beyond the Point"]},
+    {"n":"Connecting the Dots","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":5,"topics":["Locating points","Reading and making graphs"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Constructions and Tilings","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":6,"topics":["Geometric construction","Tessellations"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"},
+    {"n":"Finding the Unknown","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":7,"topics":["Identifying the unknown","Solving simple equations"],"sourceUrl":"https://www.apsvijaynagar.com/pdf/CLASS-VII-ANNUAL-SYLLABUS-2026-27.pdf"}
+  ],
+  "7th|science": [
+    {"n":"The Ever-Evolving World of Science","book":"NCERT Curiosity","bookChapter":1,"pf":"1","pt":"6","topics":["Scientific evidence and inquiry","How explanations change"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu101.pdf"},
+    {"n":"Exploring Substances: Acidic, Basic, and Neutral","book":"NCERT Curiosity","bookChapter":2,"pf":"7","pt":"22","topics":["Acids and bases","Indicators","Neutralisation"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu102.pdf","aliases":["Substances: Acidic, Basic and Neutral"]},
+    {"n":"Electricity: Circuits and their Components","book":"NCERT Curiosity","bookChapter":3,"pf":"23","pt":"40","topics":["Cells and circuit symbols","Open and closed circuits","Conductors and insulators"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu103.pdf"},
+    {"n":"The World of Metals and Non-metals","book":"NCERT Curiosity","bookChapter":4,"pf":"41","pt":"56","topics":["Physical properties of metals and non-metals","Reactions and uses"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu104.pdf"},
+    {"n":"Changes Around Us: Physical and Chemical","book":"NCERT Curiosity","bookChapter":5,"pf":"57","pt":"72","topics":["Separating physical and chemical changes","Rusting and combustion"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu105.pdf"},
+    {"n":"Adolescence: A Stage of Growth and Change","book":"NCERT Curiosity","bookChapter":6,"pf":"73","pt":"88","topics":["Changes during adolescence","Nutrition, hygiene and well-being"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu106.pdf"},
+    {"n":"Heat Transfer in Nature","book":"NCERT Curiosity","bookChapter":7,"pf":"89","pt":"104","topics":["Conduction, convection and radiation","Heat transfer in daily life"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu107.pdf"},
+    {"n":"Measurement of Time and Motion","book":"NCERT Curiosity","bookChapter":8,"pf":"105","pt":"120","topics":["Time measurement","Speed and distance–time graphs"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu108.pdf"},
+    {"n":"Life Processes in Animals","book":"NCERT Curiosity","bookChapter":9,"pf":"121","pt":"136","topics":["Nutrition, digestion and respiration","Movement of substances in the body"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu109.pdf"},
+    {"n":"Life Processes in Plants","book":"NCERT Curiosity","bookChapter":10,"pf":"137","pt":"152","topics":["Photosynthesis and respiration","Transport of water and nutrients"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu110.pdf"},
+    {"n":"Light: Shadows and Reflections","book":"NCERT Curiosity","bookChapter":11,"pf":"153","pt":"168","topics":["Straight-line travel of light","Shadows and mirror reflections"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu111.pdf","aliases":["Light: Shadows and Reflection"]},
+    {"n":"Earth, Moon, and the Sun","book":"NCERT Curiosity","bookChapter":12,"pf":"169","topics":["Earth’s rotation and revolution","Moon phases and eclipses"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/gecu112.pdf","aliases":["The Earth, The Moon and the Sun","The Earth, Moon and the Sun"]}
+  ],
+  "8th|maths": [
+    {"n":"Squares and Square Roots","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":1,"topics":["Square numbers","Methods for finding square roots"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Cubes and Cube Roots","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":2,"topics":["Cube numbers","Prime factorisation for cube roots"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Exponents","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":3,"topics":["Laws of powers","Standard form"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/","aliases":["Power Play"]},
+    {"n":"The Story of Numbers","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":4,"topics":["Numerals and place value","Comparing numeral systems"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/","aliases":["A Story of Numbers"]},
+    {"n":"Quadrilaterals","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":5,"topics":["Angle sums","Properties of common quadrilaterals"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Number Play","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":6,"topics":["Divisibility tests","Number patterns"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Operations on Algebraic Expressions","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":7,"topics":["Combining terms","Multiplying expressions","Algebraic identities"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/","aliases":["Operations on Algebraic Expression","We Distribute, Yet Things Multiply"]},
+    {"n":"Proportional Reasoning (Ratio and Proportion)","book":"R.S. Aggarwal Mathematics — Book 1","bookChapter":8,"topics":["Equivalent ratios","Solving proportions"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/","aliases":["Proportional Reasoning 1"]},
+    {"n":"Fractions in Disguise","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":1,"topics":["Fractions, decimals and percentages","Comparing representations"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"The Baudhayana–Pythagoras Theorem","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":2,"topics":["Right triangles","Finding a missing side"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Proportional Reasoning — 2","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":3,"topics":["Direct and inverse variation","Applying proportions"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Exploring Some Geometric Themes","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":4,"topics":["Angle and line relationships","Geometric reasoning"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Tales by Dots and Lines","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":5,"topics":["Recognising dot and line patterns","Explaining geometric relationships"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"},
+    {"n":"Topics in Algebra","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":6,"topics":["Representing patterns with algebra","Working with expressions"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/","aliases":["Algebra Play"]},
+    {"n":"Area","book":"R.S. Aggarwal Mathematics — Book 2","bookChapter":7,"topics":["Area of polygons","Breaking compound shapes into simpler figures"],"sourceUrl":"https://www.thestudypath.com/class-8/rs-aggarwal-solutions/"}
+  ],
+  "8th|science": [
+    {"n":"Exploring the Investigative World of Science","book":"NCERT Curiosity","bookChapter":1,"pf":"1","pt":"7","topics":["Planning investigations","Comparing observations and explanations"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu101.pdf"},
+    {"n":"The Invisible Living World: Beyond Our Naked Eye","book":"NCERT Curiosity","bookChapter":2,"pf":"8","pt":"27","topics":["Microscopes and cells","Microorganisms in food, health and the environment"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu102.pdf"},
+    {"n":"Health: The Ultimate Treasure","book":"NCERT Curiosity","bookChapter":3,"pf":"28","pt":"45","topics":["Factors influencing health","Patterns of disease and prevention"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu103.pdf"},
+    {"n":"Electricity: Magnetic and Heating Effects","book":"NCERT Curiosity","bookChapter":4,"pf":"46","pt":"61","topics":["Magnetic effect of current","Electromagnets","Heating effect"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu104.pdf"},
+    {"n":"Exploring Forces","book":"NCERT Curiosity","bookChapter":5,"pf":"62","pt":"79","topics":["Contact and non-contact forces","Effects of force on motion and shape"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu105.pdf"},
+    {"n":"Pressure, Winds, Storms, and Cyclones","book":"NCERT Curiosity","bookChapter":6,"pf":"80","pt":"97","topics":["Pressure in fluids","Wind and storm formation","Cyclone safety"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu106.pdf"},
+    {"n":"Particulate Nature of Matter","book":"NCERT Curiosity","bookChapter":7,"pf":"98","pt":"115","topics":["Particle model","Spacing and movement in solids, liquids and gases"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu107.pdf"},
+    {"n":"Nature of Matter: Elements, Compounds, and Mixtures","book":"NCERT Curiosity","bookChapter":8,"pf":"116","pt":"133","topics":["Classification of materials","Distinguishing mixtures and compounds"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu108.pdf","aliases":["Elements, Compounds and Mixtures"]},
+    {"n":"The Amazing World of Solutes, Solvents, and Solutions","book":"NCERT Curiosity","bookChapter":9,"pf":"134","pt":"151","topics":["Dissolving and solubility","Saturated solutions","Factors affecting solubility"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu109.pdf"},
+    {"n":"Light: Mirrors and Lenses","book":"NCERT Curiosity","bookChapter":10,"pf":"152","pt":"169","topics":["Images in curved mirrors","Converging and diverging lenses"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu110.pdf"},
+    {"n":"Keeping Time with the Skies","book":"NCERT Curiosity","bookChapter":11,"pf":"170","pt":"189","topics":["Cycles in the sky","Timekeeping using astronomical observations"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu111.pdf"},
+    {"n":"How Nature Works in Harmony","book":"NCERT Curiosity","bookChapter":12,"pf":"190","pt":"209","topics":["Interactions in ecosystems","Interdependence and ecological balance"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu112.pdf"},
+    {"n":"Our Home: Earth, a Unique Life Sustaining Planet","book":"NCERT Curiosity","bookChapter":13,"pf":"210","topics":["Conditions supporting life","Earth’s resources and threats to habitability"],"sourceUrl":"https://ncert.nic.in/textbook/pdf/hecu113.pdf"}
+  ]
+}
+JSON;
+
+function sch_middle_syl_name(string $value): string {
+    $value = preg_replace('/^\s*(?:ch(?:apter)?\.?\s*\d+\s*[:.\-–]?\s*|\d+\s*[.\-–:)]+\s*)/iu', '', $value);
+    return preg_replace('/[^a-z0-9]+/', '', strtolower($value));
+}
+
+function sch_middle_syl_book_matches(string $book, string $subject): bool {
+    $book = sch_middle_syl_name($book);
+    return $subject === 'science'
+        ? str_contains($book, 'curiosity')
+        : (str_contains($book, 'aggarwal') || str_contains($book, 'agarwal') || str_contains($book, 'agrawal'));
+}
+
+// Ignore books or editions that conflict with the current records. Match by heading without renaming
+// existing rows because chapter text and older teaching records can reference a chapter by that heading.
+function sch_middle_syl_merge(array $current, array $reference, string $subject): ?array {
+    $chapters = array_values((array)($current['chapters'] ?? []));
+    $matches = [];
+    $refByName = [];
+    foreach ($reference as $i => $row) {
+        foreach (array_merge([$row['n']], $row['aliases'] ?? []) as $name) {
+            $refByName[sch_middle_syl_name($name)] = $i;
+        }
+    }
+
+    foreach ($chapters as $i => $row) {
+        $name = sch_middle_syl_name((string)($row['n'] ?? ''));
+        $book = trim((string)($row['book'] ?? ''));
+        if ($book !== '' && !sch_middle_syl_book_matches($book, $subject)
+            && !in_array(sch_middle_syl_name($book), ['book1', 'book2', 'part1', 'part2', 'mainbook'], true)) return null;
+        if (!isset($refByName[$name])) return null;
+        $ref = $refByName[$name];
+        if (isset($matches[$ref])) return null;
+        if (preg_match('/(?:book|part)\s*[-:]?\s*([12])\b/i', $book, $part)
+            && !str_ends_with($reference[$ref]['book'], 'Book ' . $part[1])) return null;
+        $matches[$ref] = $i;
+    }
+
+    // Bookless Science rows may be from a different publisher. Require corroborating headings
+    // before attaching NCERT pages to an existing syllabus without an identifiable book.
+    if ($subject === 'science' && count($chapters) === 1
+        && !sch_middle_syl_book_matches((string)($chapters[0]['book'] ?? ''), $subject)) return null;
+
+    $updated = [];
+    foreach ($reference as $i => $row) {
+        unset($row['aliases']);
+        $existing = isset($matches[$i]) ? $chapters[$matches[$i]] : ['done' => null];
+        foreach ($row as $field => $value) {
+            if (empty($existing[$field])) $existing[$field] = $value;
+        }
+        $updated[] = $existing;
+    }
+    $current['chapters'] = $updated;
+    if (empty($current['targetCount'])) $current['targetCount'] = (string)count($reference);
+    $current['targetDate'] ??= '';
+    return $current;
+}
+
+function sch_seed_middle_syllabus(): void {
+    if (date('Y-m-d') < '2026-04-01' || date('Y-m-d') >= '2027-04-01') return;
+    $flag = 'middle-maths-science-2026-27';
+    $previous = sch_rec_get('salSeed', $flag);
+    $reference = json_decode(SCH_MIDDLE_SYLLABUS_JSON, true, 512, JSON_THROW_ON_ERROR);
+    if (count($previous['subjects'] ?? []) === count($reference)) return;
+
+    $aliases = ['mathematics' => 'maths', 'maths' => 'maths', 'math' => 'maths', 'science' => 'science', 'generalscience' => 'science'];
+    $subjects = [];
+    foreach ((array)sch_rec_get('alloc', 'main') as $period) {
+        $class = (string)($period['c'] ?? '');
+        $name = trim((string)($period['s'] ?? ''));
+        $label = sch_middle_syl_name($name);
+        $kind = $aliases[$label] ?? '';
+        $key = "$class|$kind";
+        if (!isset($reference[$key]) || isset($previous['subjects'][$key])) continue;
+        $subjects[$key][$name] = true;
+    }
+    if (!$subjects) return;
+
+    $db = sch_db();
+    $db->beginTransaction();
+    try {
+        // Lock the import marker first, including the first request, so two devices cannot both seed.
+        $marker = $db->prepare("INSERT INTO sch_records (k,r,d,deleted,ver,by_uid,updated_at)
+            VALUES ('salSeed', ?, '{}', 0, 0, 'system', NOW()) ON DUPLICATE KEY UPDATE r=VALUES(r)");
+        $marker->execute([$flag]);
+        $lock = $db->prepare('SELECT d FROM sch_records WHERE k=? AND r=? AND deleted=0 FOR UPDATE');
+        $lock->execute(['salSeed', $flag]);
+        $state = json_decode((string)$lock->fetchColumn(), true, 512, JSON_THROW_ON_ERROR)['subjects'] ?? [];
+        $log = [];
+        foreach ($subjects as $key => $names) {
+            if (isset($state[$key])) continue;
+            [$class, $kind] = explode('|', $key, 2);
+            if (count($names) !== 1) {
+                $log[] = "$class $kind: skipped, multiple timetable labels";
+                $state[$key] = 'multiple timetable labels';
+                continue;
+            }
+            $name = array_key_first($names);
+            $record = "$class|$name";
+            $lock->execute(['syl', $record]);
+            $stored = $lock->fetchColumn();
+            $current = $stored === false ? [] : json_decode((string)$stored, true, 512, JSON_THROW_ON_ERROR);
+            $merged = sch_middle_syl_merge($current, $reference[$key], $kind);
+            if ($merged === null) {
+                $log[] = "$class $name: skipped, saved chapters or edition do not match";
+                $state[$key] = 'saved chapters or edition do not match';
+                continue;
+            }
+            if ($merged !== $current) sch_rec_put('syl', $record, $merged, 'system');
+            $n = count($merged['chapters']);
+            $state[$key] = $n;
+            $log[] = "$class $name: $n chapter records";
+        }
+        if ($log) {
+            sch_rec_put('salSeed', $flag, ['at' => sch_now_ms(), 'subjects' => $state], 'system');
+            sch_log(['uid' => 'system', 'role' => 'system', 'label' => 'System'], 'Syllabus', '2026-27 textbook import: ' . implode('; ', $log));
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        throw $e;
+    }
+}
+
 // Every one-time change, in order (called from api.php load / since and salary_api.php sheet).
 function sch_seeds(): void {
-    foreach (['sch_seed_ritu_ukg', 'sch_seed_ankit_8th', 'sch_seed_lkg_hy', 'sch_seed_mamta_syl'] as $f) { try { $f(); } catch (Throwable $e) { error_log("$f: " . $e->getMessage()); } }
+    foreach (['sch_seed_ritu_ukg', 'sch_seed_ankit_8th', 'sch_seed_lkg_hy', 'sch_seed_mamta_syl', 'sch_seed_middle_syllabus'] as $f) { try { $f(); } catch (Throwable $e) { error_log("$f: " . $e->getMessage()); } }
 }
