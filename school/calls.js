@@ -304,5 +304,6 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden && ST && $('sheet').hidden) { if (V.s === 'list') fetchList(true); load(true); } });
   try { history.replaceState({ pc: V }, ''); } catch (e) {}
   const q = new URLSearchParams(location.search); if (q.get('cp')) V = { s: 'list', cp: q.get('cp'), cls: q.get('c') || '' };
+  else if (q.get('view') === 'again') V = { s: 'again' };
   load();
 })();

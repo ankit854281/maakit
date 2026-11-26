@@ -12,10 +12,16 @@ let PCS = null;   // calls_api.php?a=state, refreshed when older than 2 minutes
 function pcCan() { return S && ME && (isP() || myCT().length > 0 || (typeof isFeeCaller === 'function' && isFeeCaller())); }
 function pcNeed(force) {
   if (!pcCan()) return null;
+  if (!force && PCS?.loading) return PCS;
   if (PCS && !force && (PCS.loading || Date.now() - PCS.at < 120000)) return PCS;
-  const was = PCS; PCS = Object.assign({}, was || {}, { loading: true, at: Date.now() });
-  api('calls_api.php?a=state').then(r => { PCS = Object.assign(r, { at: Date.now() }); softRender(); })
-    .catch(e => { PCS = { err: e.message, at: Date.now() }; });
+  const token = store.get('sch_token');
+  const request = PCS = Object.assign({}, PCS || {}, { loading: true, at: Date.now() });
+  const received = data => {
+    if (token !== store.get('sch_token') || PCS !== request) return;
+    PCS = Object.assign(data, { at: Date.now() });
+    softRender();
+  };
+  api('calls_api.php?a=state').then(received).catch(e => received({ err: e.message }));
   return PCS;
 }
 function pcOpen(q) { location.href = 'calls.php?from=t' + (q || ''); }

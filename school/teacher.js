@@ -143,7 +143,7 @@ async function api(path, body) {
   try { r = await fetch(path, { method: body ? 'POST' : 'GET', cache: 'no-store', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get('sch_token') || '' }, ...(body ? { body: JSON.stringify(body) } : {}) }); }
   catch (e) { const er = new Error('No internet. Please check the connection and try again.'); er.net = true; throw er; }
   try { j = await r.json(); } catch (e) {}
-  if (r.status === 401 && !/a=login/.test(path)) { store.set('sch_token', null); S = null; LOGIN = { msg: 'Please log in again.' }; render(); }
+  if (r.status === 401 && !/a=login/.test(path)) { teacherVoiceStop(); teacherVoiceReply = null; resetTeacherConnect(); store.set('sch_token', null); S = null; LOGIN = { msg: 'Please log in again.' }; render(); }
   if (!r.ok || !j || !j.ok) { const er = new Error((j && j.error) || 'Server problem. Please try again.'); er.code = r.status; er.noAi = !!(j && j.noAi); throw er; }
   return j;
 }
@@ -361,7 +361,7 @@ function diaryPending(days) {
 }
 
 // ---------------------------------------------------------------- shell
-function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
+function go(tab, p) { if ($('tv-command')) teacherVoiceStop(); TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = null; LASTTAB = null; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; }
 function render() {
   if (!S) return loginView();
   allocSync();
@@ -374,10 +374,11 @@ function render() {
   const dueDiary = myBells(todayISO()).filter(b => bellOver(todayISO(), b.bell) && !diaryEntry(todayISO(), b.bell)).length;
   const dot = { att: dueAtt, diary: dueDiary, conn: scUnread(), prin: pm ? prinPendingCount() : 0 }, sc0 = document.querySelector('.scroll'), y0 = sc0 ? sc0.scrollTop : 0, rg0 = document.querySelector('.reg'), rx0 = rg0 ? rg0.scrollLeft : 0, anim = TAB !== LASTTAB; LASTTAB = TAB;
   $('app').innerHTML = `<div class="head"><div class="loc"><div class="w"><small>${esc(S.settings.school || 'SN Mishra Singapore International School')}</small><b>${esc(greet())}, ${esc(myName())}</b>${isP() ? `<div class="mode-sw" role="group" aria-label="Mode"><button class="${pm ? '' : 'on'}" onclick="setMode('teacher')">Teacher</button><button class="${pm ? 'on' : ''}" onclick="setMode('principal')">Principal</button></div>` : raSwitch()}</div>
-      <button id="net" class="net" onclick="flush();refresh()"></button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
+      <button id="net" class="net" onclick="flush();refresh()"></button><button class="tv-open" onclick="teacherVoiceOpen()" aria-label="Voice assistant" title="Voice assistant">🎙</button><button class="lang" onclick="langCycle()" aria-label="Language">${window.langShort ? langShort() : 'EN'}</button><button class="av" onclick="openMe()" aria-label="My account">${teacherPhoto() ? `<img class="teacher-avatar-img" src="${esc(teacherPhoto())}" alt="">` : esc(initials)}</button></div>
     <div class="tabs${pm ? ' t' + tabs.length : ''}">${tabs.map(([k, l, i]) => `<button class="tab ${TAB === k || (k === 'plan' && TAB === 'notes') || (k === 'home' && TAB === 'board' && !pm) ? 'on' : ''}" onclick="go('${k}')">${dot[k] ? `<span class="dot">${dot[k]}</span>` : ''}${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="scroll"><div class="body${anim ? ' anim' : ''}">${OFFLINE_COPY ? `<div class="ban warn offline-copy"><div><b>No internet — showing the copy saved on ${esc(fmtTime(OFFLINE_COPY))}.</b><br>You can mark attendance and write the diary. Everything is sent when the internet is back.</div></div>` : ''}${body}</div></div>${SHEET ? `<div class="shade" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>${SHEET()}</div>` : ''}`;
-  keepRestore(); scScroll(); if (typeof afterRender === 'function') afterRender();
+  keepRestore(); const connectSearch = $('tc-search'); if (connectSearch) teacherConnectFilter(connectSearch);
+  scScroll(); if (typeof afterRender === 'function') afterRender();
   if (!anim) { const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = y0; const rg = document.querySelector('.reg'); if (rg) rg.scrollLeft = rx0; }
   setNet();
 }
@@ -387,7 +388,11 @@ let LASTTAB = null;
 // put back after each render. A successful save clears only the fields it saved. (Owner: teachers lost typed marks.)
 let KEEP = {};
 function keepKey() { return 'ta_keep_' + (ME ? ME.role + ME.tid : ''); }
-function keepCtx() { return [TAB, P.date || '', P.c || '', P.exam || '', P.s || '', P.m || '', P.key || '', P.w || ''].join('|'); }
+function keepCtx() {
+  const parts = [TAB, P.date || '', P.c || '', P.exam || '', P.s || '', P.m || '', P.key || '', P.w || ''];
+  if (TAB === 'conn' && (P.sid || P.room)) parts.push(P.sid || P.room);
+  return parts.join('|');
+}
 function keepLoad() { try { KEEP = JSON.parse(store.get(keepKey()) || '{}') || {}; } catch (e) { KEEP = {}; } }
 function keepSave() { const ks = Object.keys(KEEP); ks.slice(0, Math.max(0, ks.length - 25)).forEach(k => delete KEEP[k]); store.set(keepKey(), JSON.stringify(KEEP)); }
 function keepNote(el) {
@@ -409,7 +414,7 @@ document.addEventListener('input', e => keepNote(e.target));
 document.addEventListener('change', e => keepNote(e.target));
 function softRender() { const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ((DRAFT.chk && DRAFT.chk.changed) || (DRAFT.att && DRAFT.att.changed) || (DRAFT.kit && DRAFT.kit.changed) || (DRAFT.rec && DRAFT.rec.changed) || (DRAFT.reg && Object.keys(DRAFT.reg.days).length) || DRAFT.note || SHEET) return; render(); }
 function greet() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
-function closeSheet() { SHEET = null; render(); }
+function closeSheet() { if ($('tv-command')) teacherVoiceStop(); SHEET = null; render(); }
 function seg(items, cur, fn) { return `<div class="seg">${items.map(([k, l]) => `<button class="${k === cur ? 'on' : ''}" onclick="${fn}(${jsq(k)})">${l}</button>`).join('')}</div>`; }
 function sel(id, items, cur, onch) { return `<select id="${id}" class="inp" onchange="${onch}">${items.map(([v, l]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`; }
 const DRAFT = {};
@@ -1600,10 +1605,10 @@ function isFeeCaller() { const L = (S.settings || {}).feeCallers; return !isP() 
 function isHwSharer() { const L = (S.settings || {}).hwSharers; return !isP() && (Array.isArray(L) ? L.includes(me()) : isRati(me())); }
 function feeCls() { return isFeeCaller() ? (S.classes || []).map(k => k.c) : myCT(); }
 function vConn() {
-  const ct = feeCls(), m = P.m || (ct.length ? 'fee' : 'msg');
+  const ct = feeCls(), m = P.m || 'desk';
   const pc = typeof pcCan === 'function' && pcCan();   // Parent calls — PTM / event / attendance (teacher-calls.js, 19 Nov 2026)
-  const items = [...(ct.length ? [['fee', 'Fee calls'], ['tour', '🚌 Tour calls']] : []), ...(pc ? [['calls', '📞 Calls']] : []), ['msg', 'Messages'], ['chat', 'Parents'], ['staff', 'Staff chat' + (scUnread() ? ' · ' + scUnread() : '')]];
-  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'fee' && ct.length ? vFee(ct) : m === 'tour' && ct.length ? vTourCall(ct) : m === 'calls' && pc ? vCalls() : m === 'chat' ? vChat() : m === 'staff' ? vStaff() : vMsg());
+  const items = [['desk', 'Overview'], ...(ct.length ? [['fee', 'Fee calls'], ['tour', '🚌 Tour calls']] : []), ...(pc ? [['calls', '📞 Calls']] : []), ['msg', 'Messages'], ['chat', 'Parents'], ['staff', 'Staff chat' + (scUnread() ? ' · ' + scUnread() : '')]];
+  return seg(items, m, `(k=>go('conn',{m:k}))`) + (m === 'desk' ? teacherConnectDesk() : m === 'fee' && ct.length ? vFee(ct) : m === 'tour' && ct.length ? vTourCall(ct) : m === 'calls' && pc ? vCalls() : m === 'chat' ? vChat() : m === 'staff' ? vStaff() : vMsg());
 }
 // ---- tour calls (13 Nov 2026, owner: "teachers me tour calling" + "tour wale me tag") ----
 // Class teacher (or the fee caller) calls parents about the tour and tags each child; the Manager's Tour fee list shows the tags.
@@ -1612,7 +1617,7 @@ const TTAGS = [['going', '✅ Going · pay later'], ['no', '❌ Not going'], ['t
 function tourState(k) { return k.paid ? 'paid' : k.jp ? 'jp' : k.tag ? k.tag.tag || 'none' : k.book ? 'going' : 'none'; }
 function vTourCall(ct) {
   const c = ct.includes(P.c) ? P.c : ct[0];
-  if (!TOURC[c]) { TOURC[c] = { loading: true }; api('teacher_api.php?a=tours&cls=' + encodeURIComponent(c)).then(r => { TOURC[c] = r; render(); }).catch(e => { TOURC[c] = { err: e.message }; render(); }); }
+  if (!TOURC[c]) teacherConnectLoad('teacher_api.php?a=tours&cls=' + encodeURIComponent(c), () => TOURC[c], data => { TOURC[c] = data; });
   const D = TOURC[c], pick = ct.length > 1 ? `<div class="fld">Class${sel('tcC', ct.map(x => [x, 'Class ' + x]), c, "go('conn',{m:'tour',c:this.value})")}</div>` : '';
   if (D.loading) return pick + '<div class="load"><i></i></div>';
   if (D.err) return pick + `<div class="card">${esc(D.err)} <button class="btn s l" onclick="delete TOURC['${esc(c)}'];render()">Try again</button></div>`;
@@ -1645,7 +1650,7 @@ async function tourTagSave(c, tid, sid, tag) {
 // ---- fee calls ----
 function vFee(ct) {
   const c = ct.includes(P.c) ? P.c : ct[0];
-  if (!FEE[c]) { FEE[c] = { loading: true }; api('teacher_api.php?a=fees&cls=' + encodeURIComponent(c)).then(r => { FEE[c] = r; render(); }).catch(e => { FEE[c] = { err: e.message }; render(); }); }
+  if (!FEE[c]) teacherConnectLoad('teacher_api.php?a=fees&cls=' + encodeURIComponent(c), () => FEE[c], data => { FEE[c] = data; });
   const F = FEE[c], pick = ct.length > 1 ? `<div class="fld">Class${sel('feeC', ct.map(x => [x, 'Class ' + x]), c, "go('conn',{m:'fee',c:this.value})")}</div>` : '';
   if (F.loading) return pick + '<div class="load"><i></i></div>';
   if (F.err) return pick + `<div class="card">${esc(F.err)} <button class="btn s l" onclick="delete FEE['${esc(c)}'];render()">Try again</button></div>`;
@@ -1657,14 +1662,18 @@ function vFee(ct) {
   const due = kids.filter(k => k.due > 0), total = due.reduce((n, k) => n + k.due, 0);
   const promised = kids.filter(k => pr(k.sid) && k.due > 0), calledToday = F.calls.filter(x => x.date === today).length;
   const notCalled = due.filter(k => { const l = last(k.sid); return !l || l.date < week; });
-  const list = (f === 'due' ? due : f === 'prom' ? promised : f === 'new' ? notCalled : kids).slice().sort((a, b) => b.due - a.due);
+  const followDates = new Map(kids.map(k => [k.sid, teacherConnectFeeFollowup(k, last(k.sid), F.promises, today)]));
+  const follow = kids.filter(k => followDates.get(k.sid)).sort((a, b) => followDates.get(a.sid).localeCompare(followDates.get(b.sid)) || b.due - a.due);
+  const list = f === 'follow' ? follow : (f === 'due' ? due : f === 'prom' ? promised : f === 'new' ? notCalled : kids).slice().sort((a, b) => b.due - a.due);
   return pick + `<div class="card fee-sum"><div class="row"><div><small>Class ${esc(c)} · fee due till today</small><b>${rs(total)}</b></div><span class="pill bad">${due.length} with dues</span></div>
       <div class="kp3"><div><b>${promised.length}</b><span>payment dates</span></div><div><b>${notCalled.length}</b><span>not called this week</span></div><div><b>${calledToday}</b><span>calls today</span></div></div>
       ${kids.some(k => k.asOn) ? `<p class="mut" style="margin:6px 0 0">Fee figures copied from the old ERP on ${esc(kids.find(k => k.asOn).asOn)}.</p>` : ''}</div>
-    <div class="chips">${[['due', 'With dues', due.length], ['new', 'Not called', notCalled.length], ['prom', 'Payment date', promised.length], ['all', 'All', kids.length]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="go('conn',{m:'fee',c:${jsq(c)},f:'${k}'})">${l} <b>${n}</b></button>`).join('')}</div>
+    <div class="chips">${[['due', 'With dues', due.length], ['follow', 'Due follow-ups', follow.length], ['new', 'Not called', notCalled.length], ['prom', 'Payment date', promised.length], ['all', 'All', kids.length]].map(([k, l, n]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="go('conn',{m:'fee',c:${jsq(c)},f:'${k}'})">${l} <b>${n}</b></button>`).join('')}</div>
+    ${teacherConnectSearch('Search student or parent')}
     <div class="fee-list">${list.map(k => { const l = last(k.sid), p = pr(k.sid), pic = ph[k.sid];
-      return `<div class="fee-row"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}</span>
-        <div class="n"><b>${esc(k.name)}</b><small>${k.father ? esc(k.father) + ' · ' : ''}${k.tag ? `<span class="pill">${esc(k.tag)}</span> ` : ''}${p ? `Will pay ${esc(fmtDate(p.date))}${p.amount ? ' · ' + rs(p.amount) : ''}` : l ? `${esc(l.outcome)} · ${esc(fmtDate(l.date))}` : 'Not called yet'}</small></div>
+      const next = followDates.get(k.sid);
+      return `<div class="fee-row" data-tc-query="${esc([k.name, k.father, k.phone].filter(Boolean).join(' ').toLocaleLowerCase())}"><span class="ph sm">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(k.name))}</i>`}</span>
+        <div class="n"><b>${esc(k.name)}</b><small>${k.father ? esc(k.father) + ' · ' : ''}${k.tag ? `<span class="pill">${esc(k.tag)}</span> ` : ''}${p ? `Will pay ${esc(fmtDate(p.date))}${p.amount ? ' · ' + rs(p.amount) : ''}` : l ? `${esc(l.outcome)} · ${esc(fmtDate(l.date))}` : 'Not called yet'}</small>${f === 'follow' ? `<small class="tc-due">${next < today ? 'Overdue' : 'Due today'} · ${esc(fmtDate(next))}</small>` : ''}</div>
         <div class="amt ${k.due > 0 ? 'bad' : 'ok'}">${k.due > 0 ? rs(k.due) : 'Paid'}${k.paid != null ? `<small style="display:block;font-size:11px;font-weight:600;color:#1D6B2F">Jama ${rs(k.paid)}</small>` : ''}</div>
         <div class="acts">${k.phone ? `<a class="ib" href="tel:+91${esc(k.phone)}" aria-label="Call ${esc(k.name)}" onclick="feeDialed(${jsq(c)},${jsq(k.sid)})">${ic('phone')}</a>` : ''}<button class="ib" aria-label="Call result for ${esc(k.name)}" onclick="feeResult(${jsq(c)},${jsq(k.sid)})">${ic('check')}</button><button class="ib" aria-label="Demand bill for ${esc(k.name)}" onclick="feeBill(${jsq(c)},${jsq(k.sid)})">${ic('bill')}</button></div></div>`; }).join('') || '<div class="empty">Nobody in this list.</div>'}</div>
     <p class="mut">Calls you save here are seen by the Principal, Chairman Sir and the office in the same calling list.</p>${isFeeCaller() ? `<a class="btn l full" style="text-decoration:none;text-align:center;display:block;margin-top:8px" href="callreport.php">📊 Fee Calling Report — date, remark, promise</a><a class="btn l full" style="text-decoration:none;text-align:center;display:block;margin-top:8px" href="feeslip.php">🧾 Fee Reminder Slip — print + list</a>` : ''}`;
@@ -1748,7 +1757,7 @@ function vMsg() {
     : t === 'praise' ? `<div class="chips">${PRAISE.map(x => `<button type="button" class="chip ${D.o.why === x ? 'on' : ''}" onclick="DRAFT.msg.o.why=${jsq(x)};render()">${esc(x)}</button>`).join('')}</div>`
     : t === 'fee' ? (isCT ? '<p class="mut" style="margin:0">The due amount is added for each child from the fee records when you are the class teacher.</p>' : '<p class="mut" style="margin:0">Only the class teacher can send fee reminders.</p>')
     : `<div class="fld">Message<textarea class="inp" rows="3" maxlength="600" oninput="DRAFT.msg.o.note=this.value" placeholder="Write your message">${esc(D.o.note || '')}</textarea></div>`;
-  if (t === 'fee' && isCT && !FEE[c]) { FEE[c] = { loading: true }; api('teacher_api.php?a=fees&cls=' + encodeURIComponent(c)).then(r => { FEE[c] = r; render(); }).catch(e => { FEE[c] = { err: e.message }; }); }
+  if (t === 'fee' && isCT && !FEE[c]) teacherConnectLoad('teacher_api.php?a=fees&cls=' + encodeURIComponent(c), () => FEE[c], data => { FEE[c] = data; }, softRender);
   const feeOf = id => { const k = FEE[c] && FEE[c].children && FEE[c].children.find(x => x.sid === id); return k && k.due > 0 ? rs(k.due) : ''; };
   const canSend = !(t === 'fee' && !isCT);
   return `${cls.length > 1 ? `<div class="fld">Class${sel('msgC', cls.map(x => [x, 'Class ' + x]), c, "DRAFT.msg=null;go('conn',{m:'msg',c:this.value,t:" + jsq(t) + "})")}</div>` : ''}
@@ -1763,21 +1772,27 @@ function vMsg() {
 // ---- chat (Smart Studio's private teacher–parent conversations) ----
 function vChat() {
   if (isP()) return '<div class="card"><h3>Chat</h3><p class="mut">The Principal reads every teacher–parent conversation in the web ERP → Smart Studio.</p></div>';
-  if (!CHAT) { CHAT = { loading: true }; api('studio_api.php?a=state').then(r => { CHAT = r; render(); }).catch(e => { CHAT = { err: e.message }; render(); }); }
+  if (!CHAT) teacherConnectLoad('studio_api.php?a=state', () => CHAT, data => { CHAT = data; });
   if (CHAT.loading) return '<div class="load"><i></i></div>';
   if (CHAT.err) return `<div class="card">${esc(CHAT.err)} <button class="btn s l" onclick="CHAT=null;render()">Try again</button></div>`;
   const mine = CHAT.messages.filter(m => m.tid === me()), kids = myClasses().flatMap(c => studentsOf(c));
   const sid = P.sid && kids.some(k => k.id === P.sid) ? P.sid : null;
   const quiet = `<div class="ban inf"><div>Parents' messages after 4:30 PM reach you at 8:00 AM, so your evenings stay free. Your personal number is never shown.</div></div>`;
   if (!sid) {
-    const last = {}; mine.forEach(m => { if (!last[m.sid] || m.at > last[m.sid].at) last[m.sid] = m; });
-    const withMsg = kids.filter(k => last[k.id]).sort((a, b) => last[b.id].at - last[a.id].at), rest = kids.filter(k => !last[k.id]);
-    return quiet + `<div class="card"><h3>Conversations <small>${withMsg.length}</small></h3>${withMsg.map(k => { const m = last[k.id];
-        return `<div class="li" onclick="go('conn',{m:'chat',sid:${jsq(k.id)}})"><span class="ph sm"><i>${esc(initials(k.name))}</i></span><div class="t"><b>${esc(k.name)} <small class="mut">· Class ${esc(k.cls)}</small></b><span>${m.sender.startsWith('p:') ? '' : 'You: '}${esc(m.text.slice(0, 60))}</span></div><small class="mut">${esc(fmtTime(m.at))}</small></div>`; }).join('') || '<div class="empty">No conversations yet.</div>'}</div>
+    const inbox = teacherConnectParentInbox(kids, mine), needsReply = inbox.filter(row => row.awaiting);
+    const awaiting = P.f === 'reply', visible = awaiting ? needsReply : inbox;
+    const active = new Set(inbox.map(row => row.kid.id)), rest = kids.filter(k => !active.has(k.id));
+    return quiet + `<div class="card tc-inbox"><h3>Parent inbox</h3><div class="chips">
+      <button type="button" class="chip ${awaiting ? '' : 'on'}" onclick="go('conn',{m:'chat'})">All ${inbox.length}</button>
+      <button type="button" class="chip ${awaiting ? 'on' : ''}" onclick="go('conn',{m:'chat',f:'reply'})">Needs reply ${needsReply.length}</button></div>
+      ${teacherConnectSearch('Search by student or class')}
+      <div>${visible.map(({ kid: k, message: m, awaiting: open }) => `<button type="button" class="li tc-inbox-row" data-tc-query="${esc((k.name + ' class ' + k.cls).toLocaleLowerCase())}" onclick="go('conn',{m:'chat',sid:${jsq(k.id)},f:${jsq(P.f)}})">
+      <span class="ph sm"><i>${esc(initials(k.name))}</i></span><span class="t"><b>${esc(k.name)} <small class="mut">· Class ${esc(k.cls)}</small></b><span>${open ? '' : 'You: '}${esc(m.text.slice(0, 60))}</span></span>
+      <small class="mut">${open ? 'Needs reply · ' : ''}${esc(fmtTime(m.at))}</small></button>`).join('') || '<div class="empty">No conversations in this view.</div>'}</div></div>
       <div class="card"><h3>Start a conversation</h3><div class="fld">Child${sel('chK', [['', '— choose a child —'], ...rest.map(k => [k.id, k.name + ' · Class ' + k.cls])], '', "if(this.value)go('conn',{m:'chat',sid:this.value})")}</div></div>`;
   }
   const k = kids.find(x => x.id === sid), th = mine.filter(m => m.sid === sid).sort((a, b) => a.at - b.at);
-  return `<button class="btn s w" style="align-self:flex-start" onclick="go('conn',{m:'chat'})">${ic('back')} All conversations</button>${quiet}
+  return `<button class="btn s w" style="align-self:flex-start" onclick="go('conn',{m:'chat',f:${jsq(P.f)}})">${ic('back')} All conversations</button>${quiet}
     <div class="card"><h3>${esc(k.name)} <small>Class ${esc(k.cls)}</small></h3><div class="thread">${th.map(m => `<div class="bub ${m.sender.startsWith('p:') ? 'in' : 'out'}"><p>${esc(m.text)}</p><small>${esc(m.from)} · ${esc(fmtTime(m.at))}</small></div>`).join('') || '<div class="empty">No messages yet. Say hello to the parent.</div>'}</div>
       <div class="chips" style="margin-top:8px">${['Your child did well today. 👏', 'Please check the homework diary today.', 'Kindly meet me in school tomorrow.'].map(x => `<button type="button" class="chip" onclick="$('chT').value=${jsq(x)};keepNote($('chT'))">${esc(x)}</button>`).join('')}</div>
       <div class="send"><textarea id="chT" data-keep class="inp" rows="2" maxlength="2000" placeholder="Write to the parent"></textarea><button class="btn go" onclick="chatSend(${jsq(sid)})">Send</button></div></div>`;
@@ -1801,13 +1816,15 @@ function scName(tid) { return tid === 'P' ? 'Principal' : (T(tid).name || tid); 
 function scDm(a, b) { return 'dm|' + [a, b].sort().join('|'); }
 function scRoomName(room) { if (room === 'all') return 'Staff room'; const [, a, b] = room.split('|'); return a === scMe() ? scName(b) : b === scMe() ? scName(a) : scName(a) + ' ↔ ' + scName(b); }
 async function scLoad(room) {
+  const token = store.get('sch_token');
   try {
     const old = room ? SCR[room] : null, since = old && old.length ? old[old.length - 1].at : 0;
     const r = await api('teacher_api.php?a=staffchat' + (room ? '&room=' + encodeURIComponent(room) + '&since=' + since : ''));
+    if (token !== store.get('sch_token')) return;
     SC = { me: r.me, rooms: r.rooms };
     if (room) { SCR[room] = (old || []).concat(r.messages.filter(m => !(old || []).some(x => x.id === m.id))); if (SCR[room].length) scMark(room, SCR[room][SCR[room].length - 1].at); }
     return r;
-  } catch (e) { if (!SC) SC = { err: e.message }; }
+  } catch (e) { if (!SC && token === store.get('sch_token')) SC = { err: e.message }; }
 }
 function vStaff() {
   const room = P.room || null;
@@ -1858,7 +1875,7 @@ setInterval(() => { if (S && store.get('sch_token') && !document.hidden && !(TAB
 function raOn() { const t = me(); return !!ME && ME.role === 'teacher' && (t === 'RT' || /\brati\b/i.test(((S && S.teachers || {})[t] || {}).name || '')); }
 function raSwitch() {
   if (!raOn()) return '';
-  const cur = TAB === 'coord' ? 'co' : TAB === 'hwshare' ? 'hw' : TAB === 'conn' && (P.m || 'fee') === 'fee' ? 'fee' : 't';
+  const cur = TAB === 'coord' ? 'co' : TAB === 'hwshare' ? 'hw' : TAB === 'conn' && P.m === 'fee' ? 'fee' : 't';
   const b = (k, l, js) => `<button class="${cur === k ? 'on' : ''}" onclick="${js}">${l}</button>`;
   return `<div class="mode-sw" role="group" aria-label="Mode">${b('t', 'Teacher', "go('home')")}${b('co', 'Coordinator', "go('coord')")}${b('hw', 'Homework', "go('hwshare')")}${b('fee', 'Fee Calling', "go('conn',{m:'fee'})")}${b('de', 'Data Entry', "store.set('de_from','teacher');location.href='dataentry.php'")}</div>`;
 }
@@ -1997,6 +2014,7 @@ async function logout() {
   if (QUEUE.length && !confirm(QUEUE.length + ' change(s) are not sent yet (no internet). Log out anyway? They will be lost.')) return;
   try { await api('api.php?a=logout', {}); } catch (e) {}
   closeTeacherWelcome(); WELCOME_SHOWN = false;
+  teacherVoiceStop(); teacherVoiceReply = null; resetTeacherConnect();
   IDB.del(cacheKey()); store.set(keepKey(), null); KEEP = {};
   store.set(qKey(), null); store.set('sch_token', null); S = null; ME = null; SHEET = null; LOGIN = {}; QUEUE = []; LOGQ = []; render();
 }

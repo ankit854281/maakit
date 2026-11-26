@@ -687,3 +687,19 @@ a.btn.wa.sent{background:#E7F7EC;color:var(--ok)}
 .sd-ti b{display:block;font-size:13px}.sd-ti span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
 .sd-ti.on{border-color:var(--a);background:var(--tint)}
 .sd-badge{font-style:normal;background:#E59A1C;color:#fff;border-radius:99px;padding:0 6px;font-size:11px;margin-left:4px}
+
+/* Voice assistant and Connect work lists */
+.tv-open { flex: 0 0 auto; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid #ffffff8c; border-radius: 12px; color: #fff; background: #15356a5c; font-size: 17px; cursor: pointer; }
+.tv-open:focus-visible, .tc-link:focus-visible, .tc-inbox-row:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.tv-listen { align-self: end; }
+.tc-desk { display: grid; gap: 8px; }
+.tc-desk h2, .tc-desk p { margin: 0; }
+.tc-link { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 12px; text-align: left; border: 1px solid var(--soft); border-radius: 12px; background: var(--tint); color: #17243e; cursor: pointer; }
+.tc-link small { display: block; margin-top: 2px; color: #46546d; font-size: 12px; }
+.tc-number { padding: 4px 9px; border-radius: 20px; font-weight: 800; color: #1e40af; background: #fff; }
+.tc-inbox [data-tc-search] { margin: 8px 0; }
+.tc-inbox-row { width: 100%; padding-inline: 0; border: 0; border-bottom: 1px solid #e4eaf0; color: inherit; font: inherit; text-align: left; background: transparent; cursor: pointer; }
+[data-tc-query][hidden] { display: none !important; }
+.tc-due { color: #a12620 !important; font-weight: 700; }
+
+.loc .w { min-width: 0; }

@@ -10,6 +10,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
@@ -19,6 +21,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import androidx.core.content.FileProvider;
+import androidx.webkit.JavaScriptReplyProxy;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+import java.util.ArrayList;
+import java.util.Locale;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
@@ -30,6 +39,11 @@ public class MainActivity extends Activity {
     private boolean failed;
     private ValueCallback<Uri[]> photoCallback;
     private Uri cameraPhoto;
+    private static final int VOICE_REQUEST = 102;
+    private TextToSpeech speech;
+    private boolean speechReady;
+    private JavaScriptReplyProxy voiceReply;
+    private int voiceId;
 
     private static boolean trusted(Uri uri) {
         return uri != null && "https".equals(uri.getScheme())
@@ -75,6 +89,7 @@ public class MainActivity extends Activity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         WebView.setWebContentsDebuggingEnabled(false);
         web.addJavascriptInterface(new Reports(), "SNMSISFiles");
+        attachVoice();
 
         // The WebView may not read local files itself. Android's document picker and
         // camera hand a scoped content Uri back to the HTML file input instead.
@@ -166,6 +181,74 @@ public class MainActivity extends Activity {
         if (state == null || web.restoreState(state) == null) web.loadUrl(HOME);
     }
 
+    private boolean teacherPage(String url) {
+        Uri uri = Uri.parse(url == null ? "" : url);
+        return trusted(uri) && "/school/teacher.php".equals(uri.getPath());
+    }
+
+    private void attachVoice() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
+        speech = new TextToSpeech(this, status -> speechReady = status == TextToSpeech.SUCCESS);
+        WebViewCompat.addWebMessageListener(web, "SNMSISTeacherVoice",
+            java.util.Collections.singleton("https://maakit.in"), (view, message, origin, isMainFrame, reply) -> {
+                if (!isMainFrame || !teacherPage(view.getUrl())) return;
+                String data = message.getData();
+                if (data == null || data.length() > 2048) return;
+                try {
+                    JSONObject request = new JSONObject(data);
+                    String locale = request.optString("lang");
+                    if (!locale.equals("hi-IN") && !locale.equals("en-IN")) return;
+                    if ("speak".equals(request.optString("action"))) {
+                        String text = request.optString("text");
+                        if (!text.isEmpty() && text.length() <= 400) speakReply(text, locale);
+                    } else if ("listen".equals(request.optString("action")) && request.optInt("id") > 0) {
+                        startVoice(request.optInt("id"), locale, reply);
+                    }
+                } catch (JSONException ignored) {
+                    // Ignore messages that do not use the voice bridge protocol.
+                }
+            });
+    }
+
+    private void speakReply(String text, String locale) {
+        if (!speechReady || speech == null
+                || speech.setLanguage(Locale.forLanguageTag(locale)) < TextToSpeech.LANG_AVAILABLE
+                || speech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "teacher-reply") == TextToSpeech.ERROR) {
+            toast(text);
+        }
+    }
+
+    private void startVoice(int id, String locale, JavaScriptReplyProxy reply) {
+        if (voiceReply != null) {
+            voiceRespond(reply, id, "", "Finish the current voice request and try again.");
+            return;
+        }
+        if (speech != null) speech.stop();
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, locale.equals("hi-IN") ? "अपना कमांड बोलें" : "Speak a command");
+        try {
+            voiceReply = reply;
+            voiceId = id;
+            startActivityForResult(intent, VOICE_REQUEST);
+        } catch (android.content.ActivityNotFoundException e) {
+            voiceReply = null;
+            voiceRespond(reply, id, "", "Voice recognition is unavailable on this phone. Type the command instead.");
+        }
+    }
+
+    private void voiceRespond(JavaScriptReplyProxy reply, int id, String text, String error) {
+        if (reply == null || !teacherPage(web.getUrl())) return;
+        try {
+            JSONObject result = new JSONObject().put("id", id).put("text", text).put("error", error);
+            reply.postMessage(result.toString());
+        } catch (JSONException | IllegalStateException ignored) {
+            // The page may have closed while recognition was active.
+        }
+    }
+
     private void showError() {
         failed = true;
         progress.setVisibility(View.GONE);
@@ -230,6 +313,16 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode,resultCode,data);
+        if (requestCode == VOICE_REQUEST) {
+            JavaScriptReplyProxy reply = voiceReply;
+            voiceReply = null;
+            ArrayList<String> matches = resultCode == RESULT_OK && data != null
+                ? data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) : null;
+            String text = matches == null || matches.isEmpty() || matches.get(0) == null ? "" : matches.get(0);
+            voiceRespond(reply, voiceId, text.substring(0, Math.min(text.length(), 150)),
+                text.isEmpty() ? "No speech detected. Try again or type the command." : "");
+            return;
+        }
         if (requestCode == 101) {
             ValueCallback<Uri[]> callback = photoCallback;
             photoCallback = null;
@@ -276,6 +369,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         if (photoCallback != null) { photoCallback.onReceiveValue(null); photoCallback = null; }
+        voiceReply = null;
+        if (speech != null) { speech.shutdown(); speech = null; }
         web.removeJavascriptInterface("SNMSISFiles");
         web.destroy();
         report = null;
