@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Complex Analysis (MC0103T) — All Theorems with Proofs + Important Questions</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+</head>
+<body data-book="ca-thm" class="qpaper">
+
+<div class="top"><a class="back" href="index.html">← Books</a><b>CA — Theorems + Paper</b><span class="prog" id="prog"></span></div>
+
+<div class="hero">
+  <h1>📜 Complex Analysis — Saare Theorems + Paper me kya aayega</h1>
+  <p>MC0103T · Units I–IV · Har theorem: exact statement + poora proof (exam me jaisa likhna hai). Neeche important questions solution ke saath.</p>
+</div>
+
+<nav class="units">
+  <a href="#imp">Paper me kya aayega</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#sa">Short answers</a><a href="#prob">Solved problems</a>
+</nav>
+
+<div class="wrap">
+
+<div class="card">
+  <div class="box b-warn"><span class="lbl">⚠️ Dhyan dein</span>Asli paper kisi ko pehle se pata nahi hota. "Paper me kya aayega" wali list syllabus aur M.Sc. papers ke aam pattern se bani hai — yeh <b>sabse zyada aane wale</b> sawaal hain, guarantee nahi. Statements standard books (Conway, Ahlfors, Ponnusamy) wale hain.</div>
+</div>
+
+<!-- ===================== IMPORTANT ===================== -->
+<div class="unit-h" id="imp"><h2>🎯 Paper me kya aayega (most expected)</h2><p>Aaj raat pehle 🔥 wale padhiye, phir ⭐ wale.</p></div>
+<div class="card sheet">
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Sawaal</th><th>Chance</th><th>Kahan</th></tr>
+    <tr><td>1</td><td>State and prove Schwarz lemma. Deduce the automorphisms of the unit disk.</td><td>🔥🔥</td><td>T2.4, T2.6</td></tr>
+    <tr><td>2</td><td>State and prove the Maximum modulus theorem (and Minimum modulus).</td><td>🔥🔥</td><td>T2.2, T2.3</td></tr>
+    <tr><td>3</td><td>State and prove Laurent's theorem.</td><td>🔥🔥</td><td>T3.2</td></tr>
+    <tr><td>4</td><td>State and prove Rouché's theorem; find number of zeros of a polynomial in a disk/annulus.</td><td>🔥🔥</td><td>T3.5, P4</td></tr>
+    <tr><td>5</td><td>State and prove the Argument principle.</td><td>🔥</td><td>T3.4</td></tr>
+    <tr><td>6</td><td>Casorati–Weierstrass theorem (proof); statement of Picard's theorem.</td><td>🔥</td><td>T3.6, T3.7</td></tr>
+    <tr><td>7</td><td>Cross ratio is invariant under Möbius maps; real iff points are concyclic. Find a Möbius map sending 3 given points to 3 given points.</td><td>🔥🔥</td><td>T1.4, T1.5, P1</td></tr>
+    <tr><td>8</td><td>Möbius maps of the upper half plane onto the unit disk.</td><td>🔥</td><td>T1.7</td></tr>
+    <tr><td>9</td><td>Hadamard three circles theorem (proof).</td><td>🔥</td><td>T2.7</td></tr>
+    <tr><td>10</td><td>Borel–Carathéodory theorem (proof).</td><td>⭐</td><td>T2.9</td></tr>
+    <tr><td>11</td><td>Schwarz reflection principle (proof).</td><td>🔥</td><td>T4.1</td></tr>
+    <tr><td>12</td><td>Mittag-Leffler theorem (proof).</td><td>🔥</td><td>T4.2</td></tr>
+    <tr><td>13</td><td>Weierstrass factorization theorem (proof); \(|1-E_p(z)|\le|z|^{p+1}\).</td><td>🔥</td><td>T4.4, T4.5</td></tr>
+    <tr><td>14</td><td>Hadamard factorization theorem (statement), order of an entire function.</td><td>⭐</td><td>T4.6</td></tr>
+    <tr><td>15</td><td>Phragmén–Lindelöf / Hadamard three lines theorem.</td><td>⭐</td><td>T2.8, T2.10</td></tr>
+    <tr><td>16</td><td>Laurent series of a given function in given regions; nature of singularities.</td><td>🔥🔥</td><td>P2, P3</td></tr>
+    <tr><td>17</td><td>Zeros of analytic functions are isolated; Fundamental theorem of algebra.</td><td>⭐</td><td>T2.1, T2.11</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================== UNIT I ===================== -->
+<div class="unit-h" id="u1"><h2>Unit I — Analytic functions, Conformal and Möbius maps</h2></div>
+
+<div class="card" data-id="T1.1">
+  <h3 class="topic">T1.1 Analytic map with non-zero derivative is conformal</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>A map \(f\) is <b>conformal at \(z_0\)</b> if it preserves the angle between any two smooth curves through \(z_0\), both in magnitude and sense.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is analytic in a region \(G\), \(z_0\in G\) and \(f'(z_0)\ne0\), then \(f\) is conformal at \(z_0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(\gamma:[a,b]\to G\) be a smooth curve with \(\gamma(t_0)=z_0\), \(\gamma'(t_0)\ne0\). The image curve is \(\sigma=f\circ\gamma\). By the chain rule
+  $$\sigma'(t_0)=f'(z_0)\,\gamma'(t_0)\ne0 .$$
+  Hence \(\arg\sigma'(t_0)=\arg f'(z_0)+\arg\gamma'(t_0)\) (mod \(2\pi\)). So the tangent of <b>every</b> curve through \(z_0\) is rotated by the same angle \(\arg f'(z_0)\).<br>
+  If \(\gamma_1,\gamma_2\) are two curves through \(z_0\), the angle between their images is
+  $$\arg\sigma_2'(t_0)-\arg\sigma_1'(t_0)=\arg\gamma_2'(t_0)-\arg\gamma_1'(t_0),$$
+  the same as the angle between \(\gamma_1,\gamma_2\), with the same sense. Hence \(f\) is conformal at \(z_0\). Also lengths are magnified by the factor \(|f'(z_0)|\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.2">
+  <h3 class="topic">T1.2 Existence of a branch of logarithm</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>If \(G\) is open and \(g:G\to\mathbb C\) is continuous with \(e^{g(z)}=z\) for all \(z\in G\), then \(g\) is a <b>branch of \(\log z\)</b> on \(G\). The principal branch: \(\operatorname{Log} z=\ln|z|+i\operatorname{Arg}z\), \(-\pi\lt\operatorname{Arg}z\lt\pi\), on \(\mathbb C\setminus(-\infty,0]\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(a) A branch of \(\log z\) on \(G\) is analytic and \(g'(z)=1/z\).<br>(b) If \(G\) is simply connected and \(f\) is analytic and never zero on \(G\), then there is an analytic \(g\) on \(G\) with \(e^{g}=f\) (a branch of \(\log f\)).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (a) \(g\) is one-one (since \(e^{g(z)}=z\)). For \(h\to0\), put \(k=g(z+h)-g(z)\to0\) (continuity) and \(k\ne0\). Then
+  $$\frac{g(z+h)-g(z)}{h}=\frac{k}{e^{g(z)+k}-e^{g(z)}}\to\frac1{e^{g(z)}}=\frac1z .$$
+  (b) \(f'/f\) is analytic on \(G\). Since \(G\) is simply connected, \(f'/f\) has a primitive \(g_1\): \(g_1'=f'/f\). Then
+  $$\frac{d}{dz}\big(f e^{-g_1}\big)=e^{-g_1}(f'-f g_1')=0,$$
+  so \(f e^{-g_1}=c\ne0\) is constant. Choose \(c_1\) with \(e^{c_1}=c\); then \(g=g_1+c_1\) satisfies \(e^{g}=f\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.3">
+  <h3 class="topic">T1.3 Möbius maps: group, decomposition, fixed points</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(S(z)=\dfrac{az+b}{cz+d}\), \(ad-bc\ne0\), is a <b>Möbius (bilinear/linear fractional) transformation</b> on \(\hat{\mathbb C}=\mathbb C\cup\{\infty\}\), with \(S(-d/c)=\infty\), \(S(\infty)=a/c\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(i) The Möbius maps form a group under composition.<br>(ii) Every Möbius map is a composition of translations, dilations/rotations and the inversion \(1/z\).<br>(iii) A Möbius map other than the identity has at most two fixed points in \(\hat{\mathbb C}\).<br>(iv) A Möbius map is uniquely determined by the images of three distinct points.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (i) Associate \(S\) with the matrix \(\begin{pmatrix}a&b\\c&d\end{pmatrix}\). A direct computation shows that \(S_1\circ S_2\) corresponds to the product of the matrices, whose determinant \((a_1d_1-b_1c_1)(a_2d_2-b_2c_2)\ne0\); so the composition is Möbius (closure). Composition of maps is associative. The identity \(z=\dfrac{1z+0}{0z+1}\) is Möbius. Solving \(w=\dfrac{az+b}{cz+d}\) for \(z\): \(z=S^{-1}(w)=\dfrac{dw-b}{-cw+a}\), with determinant \(ad-bc\ne0\). Hence a group.<br>
+  (ii) If \(c=0\): \(S(z)=\frac ad z+\frac bd\) = dilation/rotation followed by translation. If \(c\ne0\):
+  $$S(z)=\frac ac-\frac{ad-bc}{c^2}\cdot\frac{1}{z+d/c}.$$
+  So \(S=S_4\circ S_3\circ S_2\circ S_1\) with \(S_1=z+\frac dc\), \(S_2=\frac1z\), \(S_3=-\frac{ad-bc}{c^2}z\), \(S_4=z+\frac ac\).<br>
+  (iii) \(S(z)=z\Rightarrow cz^2+(d-a)z-b=0\). If \(c\ne0\), this quadratic has at most 2 roots (and \(\infty\) is not fixed). If \(c=0\), \(\infty\) is fixed and the linear equation \((d-a)z=b\) has at most one root unless \(a=d,\ b=0\), i.e. \(S=\) identity.<br>
+  (iv) If \(S,T\) agree at three distinct points, \(T^{-1}\circ S\) has three fixed points, so by (iii) \(T^{-1}S=I\), i.e. \(S=T\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.4">
+  <h3 class="topic">T1.4 Invariance of cross ratio</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>For distinct \(z_2,z_3,z_4\), the <b>cross ratio</b> \((z_1,z_2,z_3,z_4)\) is the image of \(z_1\) under the unique Möbius map \(T\) with \(T z_2=1,\ Tz_3=0,\ Tz_4=\infty\):
+  $$(z_1,z_2,z_3,z_4)=\frac{(z_1-z_3)(z_2-z_4)}{(z_1-z_4)(z_2-z_3)} .$$</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(z_2,z_3,z_4\) are distinct and \(S\) is any Möbius map, then \((Sz_1,Sz_2,Sz_3,Sz_4)=(z_1,z_2,z_3,z_4)\) for every \(z_1\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(T z=(z,z_2,z_3,z_4)\); so \(Tz_2=1,\ Tz_3=0,\ Tz_4=\infty\). Put \(M=T\circ S^{-1}\), a Möbius map. Then
+  $$M(Sz_2)=Tz_2=1,\quad M(Sz_3)=0,\quad M(Sz_4)=\infty .$$
+  The map \(z\mapsto(z,Sz_2,Sz_3,Sz_4)\) also sends \(Sz_2,Sz_3,Sz_4\) to \(1,0,\infty\). By uniqueness (T1.3 (iv)), \(M(z)=(z,Sz_2,Sz_3,Sz_4)\) for all \(z\). Put \(z=Sz_1\):
+  $$(Sz_1,Sz_2,Sz_3,Sz_4)=M(Sz_1)=T(S^{-1}Sz_1)=Tz_1=(z_1,z_2,z_3,z_4).\ \blacksquare$$
+  <b>Use:</b> the Möbius map with \(z_k\mapsto w_k\) (k=1,2,3) is found from \((w,w_1,w_2,w_3)=(z,z_1,z_2,z_3)\).</div>
+</div>
+
+<div class="card" data-id="T1.5">
+  <h3 class="topic">T1.5 Cross ratio real ⇔ points on a circle; circles map to circles</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(a) Let \(z_1,z_2,z_3,z_4\) be distinct. Then \((z_1,z_2,z_3,z_4)\) is real iff the four points lie on a circle or a straight line.<br>(b) A Möbius map takes circles (lines counted as circles through \(\infty\)) onto circles.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (a) Let \(S z=(z,z_2,z_3,z_4)=\dfrac{az+b}{cz+d}\). We show \(S^{-1}(\mathbb R)\) is a circle or line; it contains \(z_2,z_3,z_4\) (images \(1,0,\infty\)), so it is THE circle through \(z_2,z_3,z_4\), and \(z_1\) lies on it iff \(Sz_1\in\mathbb R\).<br>
+  \(S z\) real \(\iff S z=\overline{S z}\iff \dfrac{az+b}{cz+d}=\dfrac{\bar a\bar z+\bar b}{\bar c\bar z+\bar d}\iff (a\bar c-\bar a c)|z|^2+(a\bar d-\bar b c)z+(b\bar c-\bar a d)\bar z+(b\bar d-\bar b d)=0.\)<br>
+  If \(a\bar c\) is real the \(|z|^2\) term vanishes and this is a straight line \(\operatorname{Im}(\alpha z-\beta)=0\) with \(\alpha=a\bar d-\bar bc\ne0\). If \(a\bar c\) is not real, divide by \(a\bar c-\bar ac\) (purely imaginary): the equation becomes \(|z-\gamma|=\lambda\) with \(\gamma=\dfrac{\bar a d-b\bar c}{\bar a c-a\bar c}\), \(\lambda=\left|\dfrac{ad-bc}{c\bar a-\bar c a}\right|>0\) — a circle.<br>
+  (b) Let \(\Gamma\) be a circle and \(z_2,z_3,z_4\in\Gamma\). For a Möbius \(S\), \(z\in\Gamma\iff(z,z_2,z_3,z_4)\in\mathbb R\iff(Sz,Sz_2,Sz_3,Sz_4)\in\mathbb R\) (T1.4) \(\iff Sz\) lies on the circle through \(Sz_2,Sz_3,Sz_4\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.6">
+  <h3 class="topic">T1.6 Symmetry principle and orientation principle</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(z,z^*\) are <b>symmetric</b> w.r.t. the circle \(\Gamma\) through \(z_2,z_3,z_4\) if \((z^*,z_2,z_3,z_4)=\overline{(z,z_2,z_3,z_4)}\). For \(\Gamma=\{|z-a|=R\}\): \(z^*=a+\dfrac{R^2}{\bar z-\bar a}\). For the real line: \(z^*=\bar z\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (Symmetry principle)</span>If a Möbius map \(T\) takes \(\Gamma_1\) onto \(\Gamma_2\), then any pair of points symmetric w.r.t. \(\Gamma_1\) is mapped onto a pair symmetric w.r.t. \(\Gamma_2\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Let \(z_2,z_3,z_4\in\Gamma_1\); then \(Tz_2,Tz_3,Tz_4\in\Gamma_2\). Using T1.4 twice:
+  $$(Tz^*,Tz_2,Tz_3,Tz_4)=(z^*,z_2,z_3,z_4)=\overline{(z,z_2,z_3,z_4)}=\overline{(Tz,Tz_2,Tz_3,Tz_4)} .$$
+  So \(Tz^*\) and \(Tz\) are symmetric w.r.t. \(\Gamma_2\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.7">
+  <h3 class="topic">T1.7 Möbius maps of upper half plane onto the unit disk</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Every Möbius map of the upper half plane \(H=\{\operatorname{Im}z>0\}\) onto \(D=\{|w|\lt1\}\) is of the form
+  $$w=e^{i\theta}\,\frac{z-\alpha}{z-\bar\alpha},\qquad \operatorname{Im}\alpha>0,\ \theta\in\mathbb R .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(T\) map \(H\) onto \(D\); then it maps the boundary \(\mathbb R\cup\{\infty\}\) onto \(|w|=1\). Let \(\alpha\in H\) be the point with \(T(\alpha)=0\). The points \(\alpha,\bar\alpha\) are symmetric in \(\mathbb R\); \(0,\infty\) are symmetric in \(|w|=1\). By the symmetry principle (T1.6), \(T(\bar\alpha)=\infty\). So
+  $$T(z)=k\,\frac{z-\alpha}{z-\bar\alpha}.$$
+  For real \(x\), \(|x-\alpha|=|x-\bar\alpha|\) and \(|T(x)|=1\) give \(|k|=1\), i.e. \(k=e^{i\theta}\).<br>
+  Conversely, the real axis is the perpendicular bisector of the segment joining \(\alpha\) and \(\bar\alpha\); a point \(z\) with \(\operatorname{Im}z>0\) lies on the same side as \(\alpha\), so \(|z-\alpha|\lt|z-\bar\alpha|\), i.e. \(|w|\lt1\). Hence such maps take \(H\) onto \(D\). \(\blacksquare\)<br>
+  <b>Special case:</b> \(\alpha=i,\theta=0\): \(w=\dfrac{z-i}{z+i}\).</div>
+</div>
+
+<!-- ===================== UNIT II ===================== -->
+<div class="unit-h" id="u2"><h2>Unit II — Zeros, Modulus theorems, Schwarz lemma</h2></div>
+
+<div class="card" data-id="T2.1">
+  <h3 class="topic">T2.1 Zeros of an analytic function are isolated</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be analytic in a region \(G\), not identically zero. If \(f(a)=0\), there is a unique integer \(m\ge1\) and an analytic \(g\) with \(g(a)\ne0\) such that \(f(z)=(z-a)^m g(z)\). Consequently the zeros of \(f\) are isolated (Identity theorem: if \(f=0\) on a set with a limit point in \(G\), then \(f\equiv0\)).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(A=\{z\in G: f^{(n)}(z)=0\ \forall n\ge0\}\). \(A\) is closed (each \(f^{(n)}\) is continuous). \(A\) is open: if \(z_0\in A\), the Taylor series of \(f\) about \(z_0\) is identically 0, so \(f\equiv0\) on a disk about \(z_0\), which lies in \(A\). As \(G\) is connected, \(A=\emptyset\) or \(A=G\). Since \(f\not\equiv0\), \(A=\emptyset\).<br>
+  So at a zero \(a\) there is a least \(m\ge1\) with \(f^{(m)}(a)\ne0\). In a disk \(|z-a|\lt R\):
+  $$f(z)=\sum_{n\ge m}a_n(z-a)^n=(z-a)^m\sum_{k\ge0}a_{m+k}(z-a)^k=(z-a)^mg(z),$$
+  \(g(a)=a_m=f^{(m)}(a)/m!\ne0\). Define \(g=f/(z-a)^m\) outside the disk; \(g\) is analytic on \(G\). By continuity \(g\ne0\) on some disk \(|z-a|\lt\delta\), so \(f(z)\ne0\) for \(0\lt|z-a|\lt\delta\): the zero \(a\) is isolated. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.2">
+  <h3 class="topic">T2.2 Maximum modulus theorem</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(First form) If \(f\) is analytic in a region \(G\) and \(a\in G\) with \(|f(a)|\ge|f(z)|\) for all \(z\in G\), then \(f\) is constant.<br>(Second form) If \(G\) is bounded, \(f\) is continuous on \(\bar G\) and analytic in \(G\), then \(\max\{|f(z)|:z\in\bar G\}\) is attained on \(\partial G\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>First form.</b> Let \(M=|f(a)|\). Choose \(\bar B(a;r)\subset G\). By Cauchy's integral formula (Gauss mean value theorem)
+  $$f(a)=\frac1{2\pi}\int_0^{2\pi}f(a+re^{it})\,dt .$$
+  Hence \(M=|f(a)|\le\dfrac1{2\pi}\displaystyle\int_0^{2\pi}|f(a+re^{it})|\,dt\le M\), so
+  $$\int_0^{2\pi}\big(M-|f(a+re^{it})|\big)dt=0 .$$
+  The integrand is continuous and \(\ge0\), so it is identically 0: \(|f|=M\) on every circle \(|z-a|=r\) (for all small \(r\)), i.e. \(|f|\) is constant on a disk \(B(a;R)\).<br>
+  If \(|f|=M\) is constant on a disk, \(f\) is constant there: if \(M=0\) clear; otherwise \(u^2+v^2=M^2\) gives \(uu_x+vv_x=0,\ uu_y+vv_y=0\); with Cauchy–Riemann \(u_x=v_y,\ u_y=-v_x\) we get \(uu_x-vu_y=0,\ uu_y+vu_x=0\) ⇒ \((u^2+v^2)u_x=0=(u^2+v^2)u_y\) ⇒ \(u_x=u_y=0\), similarly \(v_x=v_y=0\). So \(f\) is constant on \(B(a;R)\).<br>
+  By the identity theorem (T2.1) applied to \(f-f(a)\), \(f\) is constant on the whole region \(G\).<br>
+  <b>Second form.</b> \(\bar G\) is compact, so \(|f|\) attains its max at some \(a\in\bar G\). If \(a\in G\), by the first form \(f\) is constant on the component of \(G\) containing \(a\), and then by continuity the same value is attained on the boundary of that component, which is in \(\partial G\). So the max is attained on \(\partial G\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.3">
+  <h3 class="topic">T2.3 Minimum modulus theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) is analytic and non-constant in a region \(G\) and \(f(z)\ne0\) in \(G\), then \(|f|\) cannot attain its minimum in \(G\). (If \(G\) bounded, \(f\) continuous on \(\bar G\), never zero, the minimum of \(|f|\) on \(\bar G\) is attained on \(\partial G\).)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Since \(f\ne0\) in \(G\), \(g=1/f\) is analytic in \(G\) and non-constant. If \(|f|\) had a minimum at \(a\in G\), i.e. \(|f(a)|\le|f(z)|\), then \(|g(a)|\ge|g(z)|\) for all \(z\in G\); by the maximum modulus theorem \(g\), hence \(f\), is constant — contradiction. \(\blacksquare\)<br><b>Note:</b> the condition \(f\ne0\) is needed: \(f(z)=z\) on \(|z|\lt1\) has min \(|f(0)|=0\) inside.</div>
+</div>
+
+<div class="card" data-id="T2.4">
+  <h3 class="topic">T2.4 Schwarz lemma</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(D=\{z:|z|\lt1\}\) and let \(f\) be analytic in \(D\) with (a) \(|f(z)|\le1\) for \(z\in D\), (b) \(f(0)=0\). Then \(|f'(0)|\le1\) and \(|f(z)|\le|z|\) for all \(z\in D\). Moreover, if \(|f'(0)|=1\) or \(|f(z)|=|z|\) for some \(z\ne0\), then there is a constant \(c\), \(|c|=1\), with \(f(z)=cz\) for all \(z\in D\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Define \(g(z)=\dfrac{f(z)}{z}\) for \(z\ne0\) and \(g(0)=f'(0)\). Since \(f(0)=0\), \(f(z)=\sum_{n\ge1}a_nz^n\) and \(g(z)=\sum_{n\ge1}a_nz^{n-1}\), so \(g\) is analytic in \(D\).<br>
+  Fix \(0\lt r\lt1\). On \(|z|=r\): \(|g(z)|=\dfrac{|f(z)|}{r}\le\dfrac1r\). By the maximum modulus theorem, \(|g(z)|\le\dfrac1r\) for \(|z|\le r\). Let \(r\to1^-\): \(|g(z)|\le1\) for all \(z\in D\). Hence
+  $$|f(z)|\le|z|\quad\text{and}\quad|f'(0)|=|g(0)|\le1 .$$
+  If \(|f(z_0)|=|z_0|\) for some \(z_0\ne0\), or \(|f'(0)|=1\), then \(|g|\) attains its maximum value 1 at an interior point of \(D\). By the maximum modulus theorem \(g\equiv c\) with \(|c|=1\), so \(f(z)=cz\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.5">
+  <h3 class="topic">T2.5 The maps \(\varphi_a\) and Schwarz–Pick lemma</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Lemma</span>For \(|a|\lt1\), \(\varphi_a(z)=\dfrac{z-a}{1-\bar az}\) is a one-one map of \(D\) onto \(D\), \(\varphi_a^{-1}=\varphi_{-a}\), \(\varphi_a(a)=0\), \(\varphi_a'(0)=1-|a|^2\), \(\varphi_a'(a)=\dfrac1{1-|a|^2}\).<br>
+  <i>Proof:</i> For \(|z|=1\): \(|1-\bar az|=|\bar z-\bar a|=|z-a|\) (since \(z\bar z=1\)), so \(|\varphi_a(z)|=1\). \(\varphi_a\) is analytic on \(|z|\lt1/|a|\), so by max modulus \(|\varphi_a|\lt1\) on \(D\) (non-constant). Direct check: \(\varphi_{-a}(\varphi_a(z))=z\), so onto. \(\varphi_a'(z)=\dfrac{1-|a|^2}{(1-\bar az)^2}\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (Schwarz–Pick)</span>If \(f:D\to D\) is analytic, then for \(a\in D\), \(f(a)=\alpha\):
+  $$|f'(a)|\le\frac{1-|f(a)|^2}{1-|a|^2}.$$ Equality holds iff \(f(z)=\varphi_{-\alpha}(c\varphi_a(z))\) with \(|c|=1\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Put \(g=\varphi_\alpha\circ f\circ\varphi_{-a}\). Then \(g:D\to D\) is analytic and \(g(0)=\varphi_\alpha(f(a))=\varphi_\alpha(\alpha)=0\). By Schwarz lemma \(|g'(0)|\le1\). By chain rule
+  $$g'(0)=\varphi_\alpha'(\alpha)\,f'(a)\,\varphi_{-a}'(0)=\frac{1}{1-|\alpha|^2}\,f'(a)\,(1-|a|^2).$$
+  So \(|f'(a)|\le\dfrac{1-|\alpha|^2}{1-|a|^2}\). Equality ⇔ \(|g'(0)|=1\) ⇔ \(g(z)=cz\) ⇔ \(f=\varphi_{-\alpha}\circ(c\varphi_a)\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.6">
+  <h3 class="topic">T2.6 Automorphisms of the unit disk (application of Schwarz lemma)</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f:D\to D\) be analytic, one-one and onto, with \(f(a)=0\). Then there is \(c\), \(|c|=1\), such that
+  $$f(z)=c\,\varphi_a(z)=c\,\frac{z-a}{1-\bar az}.$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(g=f^{-1}:D\to D\) (analytic, as inverse of a one-one analytic map). Put \(F=f\circ\varphi_{-a}\); then \(F:D\to D\) is analytic, one-one, onto, and \(F(0)=f(a)=0\). By Schwarz lemma \(|F(z)|\le|z|\). The inverse \(F^{-1}=\varphi_a\circ g\) also maps \(D\) onto \(D\) with \(F^{-1}(0)=0\), so again \(|F^{-1}(w)|\le|w|\). Put \(w=F(z)\): \(|z|\le|F(z)|\). Hence \(|F(z)|=|z|\) for all \(z\), and by the equality case of Schwarz lemma \(F(z)=cz\), \(|c|=1\). Therefore \(f(\varphi_{-a}(z))=cz\); replace \(z\) by \(\varphi_a(z)\): \(f(z)=c\varphi_a(z)\). \(\blacksquare\)<br>
+  <b>Corollary:</b> the automorphisms of \(D\) with \(f(0)=0\) are exactly the rotations \(f(z)=cz\).</div>
+</div>
+
+<div class="card" data-id="T2.7">
+  <h3 class="topic">T2.7 Hadamard three circles theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(0\lt R_1\lt R_2\lt\infty\) and let \(f\) be analytic on the annulus \(R_1\le|z|\le R_2\) (non-zero function). For \(R_1\le r\le R_2\) let \(M(r)=\max_{|z|=r}|f(z)|\). Then for \(R_1\le r\le R_2\):
+  $$\log M(r)\le\frac{\log R_2-\log r}{\log R_2-\log R_1}\log M(R_1)+\frac{\log r-\log R_1}{\log R_2-\log R_1}\log M(R_2),$$
+  i.e. \(\log M(r)\) is a convex function of \(\log r\). Equivalently \(M(r)^{\log(R_2/R_1)}\le M(R_1)^{\log(R_2/r)}M(R_2)^{\log(r/R_1)}\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(\alpha\) be any real number. Consider \(h(z)=|z|^\alpha|f(z)|\). Locally \(z^\alpha\) has an analytic branch and \(h=|z^\alpha f(z)|\) is the modulus of an analytic function; hence \(h\) cannot have a strict interior maximum unless it is locally constant, and the maximum of \(h\) on the closed annulus is attained on the boundary circles:
+  $$r^\alpha M(r)\le\max\{R_1^\alpha M(R_1),\ R_2^\alpha M(R_2)\}.$$
+  Choose \(\alpha\) so that both are equal: \(R_1^\alpha M(R_1)=R_2^\alpha M(R_2)\), i.e.
+  $$\alpha=\frac{\log M(R_1)-\log M(R_2)}{\log R_2-\log R_1}.$$
+  Then \(r^\alpha M(r)\le R_1^\alpha M(R_1)\), so \(\log M(r)\le\log M(R_1)+\alpha(\log R_1-\log r)\). Substituting \(\alpha\):
+  $$\log M(r)\le\log M(R_1)-\frac{(\log r-\log R_1)(\log M(R_1)-\log M(R_2))}{\log R_2-\log R_1},$$
+  which rearranges to the stated inequality (coefficients of \(\log M(R_1)\) and \(\log M(R_2)\) are \(\frac{\log R_2-\log r}{\log R_2-\log R_1}\) and \(\frac{\log r-\log R_1}{\log R_2-\log R_1}\)). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.8">
+  <h3 class="topic">T2.8 Hadamard three lines theorem</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(S=\{x+iy: a\lt x\lt b\}\) and let \(f\) be continuous and bounded on \(\bar S\), analytic in \(S\). Let \(M(x)=\sup_y|f(x+iy)|\). Then
+  $$M(x)^{\,b-a}\le M(a)^{\,b-x}\,M(b)^{\,x-a},\qquad a\lt x\lt b,$$
+  i.e. \(\log M(x)\) is a convex function of \(x\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Assume \(M(a),M(b)>0\) (if one is 0, replace it by \(\varepsilon>0\) and let \(\varepsilon\to0\)). Define
+  $$g(z)=f(z)\,M(a)^{\frac{z-b}{b-a}}\,M(b)^{\frac{a-z}{b-a}}\qquad(M^{w}=e^{w\log M}).$$
+  Since \(|M^{w}|=M^{\operatorname{Re}w}\): \(|g(z)|=|f(z)|\,M(a)^{\frac{x-b}{b-a}}M(b)^{\frac{a-x}{b-a}}\). On \(x=a\): \(|g|=|f|/M(a)\le1\); on \(x=b\): \(|g|=|f|/M(b)\le1\). Also \(g\) is bounded on \(\bar S\), say \(|g|\le B\).<br>
+  For \(\varepsilon>0\) put \(g_\varepsilon(z)=g(z)e^{\varepsilon z^2}\); \(|e^{\varepsilon z^2}|=e^{\varepsilon(x^2-y^2)}\). Let \(c=\max(|a|,|b|)\). On \(x=a\) or \(x=b\): \(|g_\varepsilon|\le e^{\varepsilon c^2}\). On \(|y|=Y\): \(|g_\varepsilon|\le Be^{\varepsilon(c^2-Y^2)}\le e^{\varepsilon c^2}\) for \(Y\) large. Apply the maximum modulus theorem on the rectangle \(a\le x\le b,\ |y|\le Y\): \(|g_\varepsilon(z)|\le e^{\varepsilon c^2}\) inside. Letting \(Y\to\infty\) then \(\varepsilon\to0\): \(|g(z)|\le1\) on \(S\). Therefore
+  $$|f(x+iy)|\le M(a)^{\frac{b-x}{b-a}}M(b)^{\frac{x-a}{b-a}},$$ and taking sup over \(y\) gives the result. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.9">
+  <h3 class="topic">T2.9 Borel–Carathéodory theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be analytic on \(|z|\le R\). Let \(M(r)=\max_{|z|=r}|f(z)|\), \(A(r)=\max_{|z|=r}\operatorname{Re}f(z)\). Then for \(0\lt r\lt R\):
+  $$M(r)\le\frac{2r}{R-r}\,A(R)+\frac{R+r}{R-r}\,|f(0)| .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Case 1: \(f(0)=0\).</b> If \(f\) is constant, \(f\equiv0\) and the result is trivial. Otherwise \(A=A(R)>0\): indeed \(\operatorname{Re}f\) is harmonic with \(\operatorname{Re}f(0)=0\) equal to its mean over \(|z|=R\), so it takes positive values there. On \(|z|\le R\) we have \(\operatorname{Re}f\le A\) (max principle for harmonic functions). Define
+  $$g(z)=\frac{f(z)}{2A-f(z)} .$$
+  \(\operatorname{Re}(2A-f)\ge2A-A=A>0\), so \(g\) is analytic on \(|z|\le R\), and \(g(0)=0\). Also
+  $$|2A-f|^2-|f|^2=4A^2-4A\operatorname{Re}f\ge0\ \Rightarrow\ |g|\le1 .$$
+  Apply Schwarz lemma to \(g(Rz)\) on \(D\): \(|g(z)|\le\dfrac{|z|}{R}\). Solving, \(f=\dfrac{2Ag}{1+g}\), so on \(|z|=r\):
+  $$|f(z)|\le\frac{2A|g|}{1-|g|}\le\frac{2A\,r/R}{1-r/R}=\frac{2r}{R-r}A(R).$$
+  <b>Case 2 (general).</b> Apply Case 1 to \(F=f-f(0)\): \(\max_{|z|=R}\operatorname{Re}F\le A(R)+|f(0)|\). So
+  $$M(r)\le|f(0)|+\frac{2r}{R-r}\big(A(R)+|f(0)|\big)=\frac{2r}{R-r}A(R)+\frac{R+r}{R-r}|f(0)| .\ \blacksquare$$</div>
+</div>
+
+<div class="card" data-id="T2.10">
+  <h3 class="topic">T2.10 Phragmén–Lindelöf theorem (strip form)</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(S=\{z: |\operatorname{Im}z|\lt\pi/2\}\), \(f\) continuous on \(\bar S\), analytic in \(S\), with \(|f|\le M\) on \(\partial S\). Suppose there are constants \(A\lt\infty\) and \(\alpha\lt1\) with
+  $$|f(x+iy)|\le\exp\big(A\,e^{\alpha|x|}\big)\quad(z\in S).$$ Then \(|f(z)|\le M\) for all \(z\in S\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Choose \(\beta\) with \(\alpha\lt\beta\lt1\). For \(\varepsilon>0\) define \(h_\varepsilon(z)=f(z)\exp(-\varepsilon\cosh\beta z)\). For \(z=x+iy\in\bar S\):
+  $$\operatorname{Re}\cosh\beta z=\cosh\beta x\cos\beta y\ge\delta\cosh\beta x,\quad\delta=\cos\tfrac{\beta\pi}{2}>0 .$$
+  So \(|h_\varepsilon(z)|\le|f(z)|\le M\) on \(\partial S\), and inside
+  $$|h_\varepsilon(z)|\le\exp\big(Ae^{\alpha|x|}-\varepsilon\delta\cosh\beta x\big)\to0\ \text{ as }|x|\to\infty,$$ because \(\beta>\alpha\). Hence for \(X\) large \(|h_\varepsilon|\le M\) on the vertical sides \(x=\pm X\) of the rectangle \(R_X=\{|x|\le X,|y|\le\pi/2\}\), and \(\le M\) on the horizontal sides. By max modulus \(|h_\varepsilon|\le M\) in \(R_X\), hence in \(S\). Letting \(\varepsilon\to0\): \(|f(z)|\le M\). \(\blacksquare\)<br>
+  <b>Idea (yaad rakhne ke liye):</b> unbounded region me max modulus seedha nahi lagta; ek "damping factor" se multiply karke bounded rectangle par lagate hain, phir \(\varepsilon\to0\).</div>
+</div>
+
+<div class="card" data-id="T2.11">
+  <h3 class="topic">T2.11 Liouville's theorem and Fundamental theorem of algebra</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(Liouville) A bounded entire function is constant.<br>(FTA) Every non-constant polynomial \(p(z)\) has a zero in \(\mathbb C\); hence a polynomial of degree \(n\) has exactly \(n\) zeros counted with multiplicity.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Liouville:</b> If \(|f|\le M\), Cauchy's estimate on \(|z-a|=R\) gives \(|f'(a)|\le M/R\to0\) as \(R\to\infty\). So \(f'\equiv0\), \(f\) constant.<br>
+  <b>FTA:</b> Let \(p(z)=a_nz^n+\dots+a_0\), \(n\ge1\), \(a_n\ne0\), and suppose \(p(z)\ne0\) for all \(z\). Then \(f=1/p\) is entire. Since \(|p(z)|=|z|^n|a_n+a_{n-1}/z+\dots+a_0/z^n|\to\infty\) as \(|z|\to\infty\), \(f(z)\to0\); so \(f\) is bounded (continuous on a large disk, small outside). By Liouville \(f\), hence \(p\), is constant — contradiction. So \(p(z_1)=0\); then \(p(z)=(z-z_1)p_1(z)\), \(\deg p_1=n-1\), and induction gives \(n\) zeros. \(\blacksquare\)</div>
+</div>
+
+<!-- ===================== UNIT III ===================== -->
+<div class="unit-h" id="u3"><h2>Unit III — Singularities, Laurent series, Argument principle</h2></div>
+
+<div class="card" data-id="T3.1">
+  <h3 class="topic">T3.1 Riemann's removable singularity theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(a\) is an <b>isolated singularity</b> of \(f\) if \(f\) is analytic in \(0\lt|z-a|\lt R\) but not at \(a\). It is <b>removable</b> if there is an analytic \(g\) on \(|z-a|\lt R\) with \(g=f\) for \(0\lt|z-a|\lt R\); a <b>pole</b> if \(|f(z)|\to\infty\) as \(z\to a\); <b>essential</b> otherwise.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) has an isolated singularity at \(a\), then \(a\) is removable iff \(\displaystyle\lim_{z\to a}(z-a)f(z)=0\). (In particular, if \(f\) is bounded near \(a\).)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  If removable, \(f\to g(a)\) so \((z-a)f(z)\to0\).<br>
+  Conversely, suppose \((z-a)f(z)\to0\). Define \(h(z)=(z-a)^2f(z)\) for \(z\ne a\), \(h(a)=0\). Then
+  $$\frac{h(z)-h(a)}{z-a}=(z-a)f(z)\to0,$$ so \(h\) is differentiable at \(a\) with \(h'(a)=0\); \(h\) is analytic in the punctured disk, hence analytic on \(B(a;R)\). Its Taylor series: \(h(z)=\sum_{n\ge2}c_n(z-a)^n\) (since \(h(a)=h'(a)=0\)). So \(h(z)=(z-a)^2g(z)\), \(g(z)=\sum_{n\ge2}c_n(z-a)^{n-2}\) analytic, and \(g=f\) for \(z\ne a\). Hence \(a\) is removable. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.2">
+  <h3 class="topic">T3.2 Laurent's theorem</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be analytic in the annulus \(\operatorname{ann}(a;R_1,R_2)=\{R_1\lt|z-a|\lt R_2\}\). Then
+  $$f(z)=\sum_{n=-\infty}^{\infty}a_n(z-a)^n,$$
+  the series converging absolutely and uniformly on every closed sub-annulus \(r_1\le|z-a|\le r_2\) (\(R_1\lt r_1\lt r_2\lt R_2\)), where
+  $$a_n=\frac1{2\pi i}\oint_{|\zeta-a|=r}\frac{f(\zeta)}{(\zeta-a)^{n+1}}\,d\zeta\qquad(R_1\lt r\lt R_2),$$ and the coefficients are unique.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Step 1 (coefficients independent of \(r\)).</b> \(f(\zeta)/(\zeta-a)^{n+1}\) is analytic in the annulus; the circles \(|\zeta-a|=r\) and \(|\zeta-a|=r'\) are homotopic there, so by Cauchy's theorem the integrals are equal.<br>
+  <b>Step 2 (Cauchy formula for annulus).</b> Fix \(z\) and choose \(R_1\lt r_1\lt|z-a|\lt r_2\lt R_2\). Let \(\gamma_1:|\zeta-a|=r_1\), \(\gamma_2:|\zeta-a|=r_2\) (anticlockwise). Applying Cauchy's integral formula to the cycle \(\gamma_2-\gamma_1\) (winding number 1 about \(z\), 0 about points outside the annulus):
+  $$f(z)=\frac1{2\pi i}\oint_{\gamma_2}\frac{f(\zeta)}{\zeta-z}d\zeta-\frac1{2\pi i}\oint_{\gamma_1}\frac{f(\zeta)}{\zeta-z}d\zeta .$$
+  <b>Step 3 (outer integral).</b> On \(\gamma_2\), \(|z-a|\lt|\zeta-a|\):
+  $$\frac1{\zeta-z}=\frac1{(\zeta-a)\big(1-\frac{z-a}{\zeta-a}\big)}=\sum_{n=0}^\infty\frac{(z-a)^n}{(\zeta-a)^{n+1}},$$ uniformly convergent in \(\zeta\in\gamma_2\) (ratio \(|z-a|/r_2\lt1\)). Integrating termwise: first integral \(=\sum_{n\ge0}a_n(z-a)^n\).<br>
+  <b>Step 4 (inner integral).</b> On \(\gamma_1\), \(|\zeta-a|\lt|z-a|\):
+  $$-\frac1{\zeta-z}=\frac1{(z-a)\big(1-\frac{\zeta-a}{z-a}\big)}=\sum_{n=1}^\infty\frac{(\zeta-a)^{n-1}}{(z-a)^{n}},$$ uniformly in \(\zeta\in\gamma_1\). So the second term \(=\sum_{n\ge1}\Big(\frac1{2\pi i}\oint_{\gamma_1}f(\zeta)(\zeta-a)^{n-1}d\zeta\Big)(z-a)^{-n}=\sum_{n\ge1}a_{-n}(z-a)^{-n}\).<br>
+  Adding, \(f(z)=\sum_{-\infty}^{\infty}a_n(z-a)^n\). The two series are a power series in \((z-a)\) with radius \(\ge R_2\) and a power series in \(1/(z-a)\) converging for \(|z-a|>R_1\), so convergence is absolute and uniform on closed sub-annuli.<br>
+  <b>Step 5 (uniqueness).</b> If \(f=\sum b_n(z-a)^n\) on the annulus (uniformly on \(|z-a|=r\)), multiply by \((z-a)^{-k-1}\) and integrate termwise on \(|z-a|=r\): since \(\oint(z-a)^{m}dz=2\pi i\) for \(m=-1\) and 0 otherwise, we get \(\oint f(z)(z-a)^{-k-1}dz=2\pi i\,b_k\), i.e. \(b_k=a_k\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.3">
+  <h3 class="topic">T3.3 Nature of singularity from Laurent series; singularity at ∞; meromorphic ⇒ rational</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f=\sum_{-\infty}^\infty a_n(z-a)^n\) in \(0\lt|z-a|\lt R\). Then \(a\) is<br>(a) removable iff \(a_n=0\) for all \(n\le-1\);<br>(b) a pole of order \(m\) iff \(a_{-m}\ne0\) and \(a_n=0\) for \(n\le-(m+1)\);<br>(c) essential iff \(a_n\ne0\) for infinitely many negative \(n\).<br>
+  <b>At ∞:</b> \(f\) has a removable singularity / pole / essential singularity at \(\infty\) according as \(f(1/z)\) has one at 0. An entire function with a pole of order \(m\) at \(\infty\) is a polynomial of degree \(m\). A function meromorphic on \(\hat{\mathbb C}\) is rational.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (a) If no negative terms, the series is a power series: removable. Conversely if removable, \(f\) is bounded near \(a\), \(|f|\le M\); then \(|a_{-n}|=\left|\frac1{2\pi i}\oint_{|z-a|=r}f(z)(z-a)^{n-1}dz\right|\le Mr^n\to0\) as \(r\to0\), so \(a_{-n}=0\).<br>
+  (b) \(a\) is a pole of order \(m\) iff \((z-a)^mf(z)\) has a removable singularity with non-zero value at \(a\); its Laurent series is \(\sum a_n(z-a)^{n+m}\). By (a) this happens iff \(a_n=0\) for \(n+m\le-1\) and the constant term \(a_{-m}\ne0\).<br>
+  (c) follows from (a), (b) by elimination.<br>
+  <b>Entire with pole at ∞:</b> \(f(z)=\sum_{n\ge0}a_nz^n\) for all \(z\), so \(f(1/z)=\sum a_nz^{-n}\); a pole of order \(m\) at 0 means \(a_n=0\) for \(n>m\), \(a_m\ne0\): a polynomial of degree \(m\).<br>
+  <b>Meromorphic on \(\hat{\mathbb C}\) ⇒ rational:</b> poles are isolated and \(\hat{\mathbb C}\) is compact, so there are finitely many poles \(b_1,\dots,b_k\) in \(\mathbb C\) (and possibly \(\infty\)). Let \(P_j\) be the principal part at \(b_j\) (a polynomial in \(1/(z-b_j)\)) and \(Q\) the principal part at \(\infty\) (a polynomial). Then \(g=f-\sum P_j-Q\) is entire and bounded at \(\infty\) (removable), so by Liouville \(g\) is constant. Hence \(f\) is rational. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.4">
+  <h3 class="topic">T3.4 Argument principle</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be meromorphic in a region \(G\) with zeros \(z_1,\dots,z_n\) and poles \(p_1,\dots,p_m\) (repeated according to multiplicity) inside a simple closed rectifiable curve \(\gamma\subset G\) (with \(\gamma\approx0\) in \(G\)), and no zeros or poles on \(\gamma\). Then
+  $$\frac1{2\pi i}\oint_\gamma\frac{f'(z)}{f(z)}\,dz=N-P,$$ where \(N\) = number of zeros and \(P\) = number of poles inside \(\gamma\). (Also \(=\frac1{2\pi}\Delta_\gamma\arg f(z)\), the change of argument.)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Repeatedly factor out zeros and poles:
+  $$f(z)=\frac{\prod_{k=1}^{n}(z-z_k)}{\prod_{j=1}^{m}(z-p_j)}\,g(z),$$ where \(g\) is analytic and never zero inside and on \(\gamma\) (in a neighbourhood). Taking the logarithmic derivative (valid where \(f\ne0,\infty\)):
+  $$\frac{f'(z)}{f(z)}=\sum_{k=1}^n\frac1{z-z_k}-\sum_{j=1}^m\frac1{z-p_j}+\frac{g'(z)}{g(z)} .$$
+  \(g'/g\) is analytic inside and on \(\gamma\), so \(\oint_\gamma g'/g=0\) (Cauchy). And \(\frac1{2\pi i}\oint_\gamma\frac{dz}{z-c}=1\) for \(c\) inside \(\gamma\). Therefore
+  $$\frac1{2\pi i}\oint_\gamma\frac{f'}{f}dz=n-m=N-P.$$
+  Finally, \(\frac{f'}{f}=\frac{d}{dz}\log f\), so the integral equals \(\frac1{2\pi i}[\log|f|+i\arg f]_\gamma=\frac1{2\pi}\Delta_\gamma\arg f\) (\(\log|f|\) returns to its value). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.5">
+  <h3 class="topic">T3.5 Rouché's theorem</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f,g\) be analytic inside and on a simple closed contour \(\gamma\), and suppose \(|g(z)|\lt|f(z)|\) on \(\gamma\). Then \(f\) and \(f+g\) have the same number of zeros inside \(\gamma\) (counted with multiplicity).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  On \(\gamma\), \(|f|>|g|\ge0\), so \(f\ne0\) on \(\gamma\). For \(0\le t\le1\) put \(F_t=f+tg\). On \(\gamma\):
+  $$|F_t(z)|\ge|f(z)|-t|g(z)|\ge|f(z)|-|g(z)|>0,$$ so no \(F_t\) vanishes on \(\gamma\). By the argument principle the number of zeros of \(F_t\) inside \(\gamma\) is
+  $$N(t)=\frac1{2\pi i}\oint_\gamma\frac{f'(z)+tg'(z)}{f(z)+tg(z)}\,dz .$$
+  The integrand is a continuous function of \((t,z)\in[0,1]\times\gamma\) (denominator bounded away from 0 on this compact set), so \(N(t)\) is continuous in \(t\). But \(N(t)\) is an integer for every \(t\). A continuous integer-valued function on \([0,1]\) is constant. Hence \(N(0)=N(1)\): \(f\) and \(f+g\) have the same number of zeros inside \(\gamma\). \(\blacksquare\)<br>
+  <b>Use:</b> f = "badi" term choose kijiye jo \(\gamma\) par baaki sab terms se bada ho (problem P4 dekhiye).</div>
+</div>
+
+<div class="card" data-id="T3.6">
+  <h3 class="topic">T3.6 Casorati–Weierstrass theorem</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(f\) has an essential singularity at \(z=a\), then for every \(\delta>0\), \(f\big(\{0\lt|z-a|\lt\delta\}\big)\) is dense in \(\mathbb C\). (Equivalently: for every \(w\in\mathbb C\) there is a sequence \(z_n\to a\) with \(f(z_n)\to w\).)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Suppose not. Then there are \(\delta>0\), \(w\in\mathbb C\), \(\varepsilon>0\) with
+  $$|f(z)-w|\ge\varepsilon\quad\text{for }0\lt|z-a|\lt\delta .$$
+  Define \(g(z)=\dfrac1{f(z)-w}\). Then \(g\) is analytic in the punctured disk and \(|g|\le1/\varepsilon\). By Riemann's theorem (T3.1), \(a\) is a removable singularity of \(g\).<br>
+  If \(g(a)\ne0\), then \(f(z)=w+1/g(z)\) is analytic at \(a\): removable singularity of \(f\).<br>
+  If \(g(a)=0\) with a zero of order \(m\), then \(f=w+1/g\) has a pole of order \(m\) at \(a\).<br>
+  Either way \(a\) is not essential — contradiction. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.7">
+  <h3 class="topic">T3.7 Picard's theorems (statements)</h3>
+  <span class="chance ch-m">⭐ Medium (statement)</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span><b>Picard's little theorem:</b> A non-constant entire function omits at most one complex value.<br><b>Picard's great theorem:</b> In every neighbourhood of an essential singularity, \(f\) takes every complex value infinitely often, with at most one exception.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(e^z\) is entire, non-constant, and omits only the value 0 — so "at most one" cannot be improved. \(e^{1/z}\) near \(z=0\): \(e^{1/z}=w\) (\(w\ne0\)) has solutions \(z=1/(\log|w|+i\arg w+2k\pi i)\to0\) as \(k\to\infty\), infinitely many in every neighbourhood; only \(w=0\) is omitted.</div>
+</div>
+
+<!-- ===================== UNIT IV ===================== -->
+<div class="unit-h" id="u4"><h2>Unit IV — Reflection, Mittag-Leffler, Infinite products, Factorization</h2></div>
+
+<div class="card" data-id="T4.1">
+  <h3 class="topic">T4.1 Schwarz reflection principle</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(G\) be a region symmetric about the real axis (\(z\in G\Rightarrow\bar z\in G\)). Let \(G_+=\{z\in G:\operatorname{Im}z>0\}\), \(G_0=G\cap\mathbb R\), \(G_-=\{z\in G:\operatorname{Im}z\lt0\}\). If \(f:G_+\cup G_0\to\mathbb C\) is continuous, analytic in \(G_+\) and real on \(G_0\), then
+  $$F(z)=\begin{cases}f(z),& z\in G_+\cup G_0\\ \overline{f(\bar z)},& z\in G_-\end{cases}$$ is analytic on \(G\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>(1) \(F\) is analytic on \(G_-\).</b> For \(z_0\in G_-\), \(\bar z_0\in G_+\) and near \(\bar z_0\), \(f(\zeta)=\sum a_n(\zeta-\bar z_0)^n\). Then for \(z\) near \(z_0\):
+  $$F(z)=\overline{f(\bar z)}=\overline{\sum a_n(\bar z-\bar z_0)^n}=\sum\bar a_n(z-z_0)^n,$$ a power series. So \(F\) is analytic in \(G_-\).<br>
+  <b>(2) \(F\) is continuous on \(G\).</b> On \(G_0\), \(f\) is real, so \(\overline{f(\bar x)}=f(x)\); with continuity of \(f\) on \(G_+\cup G_0\) this shows \(F\) is continuous across \(G_0\).<br>
+  <b>(3) Morera.</b> Let \(x_0\in G_0\) and \(B=B(x_0;R)\subset G\). It is enough to show \(\int_T F=0\) for every triangle \(T\subset B\). If \(T\) lies in \(\bar G_+\cap B\) with one side on the real axis, let \(T_\varepsilon\) be the triangle obtained by moving that side up to \(\operatorname{Im}z=\varepsilon\); \(\int_{T_\varepsilon}F=0\) by Cauchy (Goursat) since \(T_\varepsilon\subset G_+\). As \(\varepsilon\to0\), uniform continuity of \(F\) on compact sets gives \(\int_TF=\lim\int_{T_\varepsilon}F=0\). Same in the lower half. A general triangle meeting the real axis is split by the axis into triangles (and quadrilaterals = two triangles) each of the above type, so \(\int_TF=0\). By Morera's theorem \(F\) is analytic in \(B\). Hence \(F\) is analytic on \(G\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T4.2">
+  <h3 class="topic">T4.2 Mittag-Leffler theorem</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(\{a_n\}\) be a sequence of distinct complex numbers with \(|a_1|\le|a_2|\le\dots\), \(|a_n|\to\infty\), and let \(P_n(z)\) be polynomials without constant term. Then there is a function \(f\), meromorphic in \(\mathbb C\), whose poles are exactly the points \(a_n\), with principal part \(P_n\!\left(\dfrac1{z-a_n}\right)\) at \(a_n\). The most general such function is
+  $$f(z)=\sum_n\left[P_n\!\left(\frac1{z-a_n}\right)-Q_n(z)\right]+g(z),$$ with \(Q_n\) suitable polynomials and \(g\) entire.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  If \(a_1=0\) take its term separately (no correction); so assume \(a_n\ne0\). The function \(h_n(z)=P_n\!\left(\frac1{z-a_n}\right)\) is analytic in \(|z|\lt|a_n|\), so its Taylor series about 0 converges uniformly on \(|z|\le|a_n|/2\). Choose a partial sum \(Q_n(z)\) (a polynomial) with
+  $$|h_n(z)-Q_n(z)|\lt2^{-n}\quad\text{for }|z|\le\tfrac{|a_n|}{2}.$$
+  Claim: \(f=\sum_n(h_n-Q_n)\) is meromorphic with the required poles. Fix \(R>0\). Since \(|a_n|\to\infty\), there is \(N\) with \(|a_n|\ge2R\) for \(n>N\). For \(|z|\le R\) and \(n>N\): \(|z|\le|a_n|/2\), so \(|h_n-Q_n|\lt2^{-n}\). By the Weierstrass M-test, \(\sum_{n>N}(h_n-Q_n)\) converges uniformly on \(|z|\le R\) to an analytic function. The finite sum \(\sum_{n\le N}(h_n-Q_n)\) is meromorphic in \(|z|\lt R\) with poles exactly the \(a_n\) (\(n\le N\)) there and principal parts \(h_n\). As \(R\) is arbitrary, \(f\) is meromorphic in \(\mathbb C\) with the given poles and principal parts.<br>
+  If \(F\) is another such function, \(F-f\) has only removable singularities, so \(F=f+g\), \(g\) entire. \(\blacksquare\)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\pi\cot\pi z=\dfrac1z+\displaystyle\sum_{n\ne0}\left(\frac1{z-n}+\frac1n\right)\): poles at integers with principal part \(\frac1{z-n}\), correction \(Q_n=-\frac1n\).</div>
+</div>
+
+<div class="card" data-id="T4.3">
+  <h3 class="topic">T4.3 Convergence of infinite products</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(\prod_{n=1}^\infty(1+u_n)\) <b>converges</b> if at most finitely many factors are 0 and, after removing them, the partial products tend to a <b>non-zero</b> limit. It converges <b>absolutely</b> if \(\prod(1+|u_n|)\) converges.</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(a) If \(\operatorname{Re}u_n>-1\), then \(\prod(1+u_n)\) converges iff \(\sum\log(1+u_n)\) converges (principal log).<br>(b) If \(\sum|u_n|\lt\infty\), then \(\prod(1+u_n)\) converges (absolutely).<br>(c) If \(u_n\) are analytic on \(G\) and \(\sum|u_n(z)|\) converges uniformly on compact subsets of \(G\), then \(f=\prod(1+u_n(z))\) converges uniformly on compacta to an analytic function, and \(f(z)=0\) iff some \(1+u_n(z)=0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (a) Let \(p_n=\prod_{k\le n}(1+u_k)\), \(s_n=\sum_{k\le n}\log(1+u_k)\); \(p_n=e^{s_n}\). If \(s_n\to s\), then \(p_n\to e^s\ne0\). Conversely if \(p_n\to p\ne0\), one shows \(s_n\) converges: \(s_n=\log p_n+2\pi ik_n\) with integers \(k_n\); \(s_{n+1}-s_n=\log(1+u_{n+1})\to0\) (since \(u_n\to0\)), and \(\log p_{n+1}-\log p_n\to0\) for a branch near \(p\), so \(k_{n+1}-k_n\to0\); being integers, \(k_n\) is eventually constant and \(s_n\) converges.<br>
+  (b) Since \(u_n\to0\), \(|u_n|\le\frac12\) for \(n\ge N\). For \(|u|\le\frac12\):
+  $$|\log(1+u)|=\Big|u-\frac{u^2}{2}+\frac{u^3}{3}-\dots\Big|\le|u|\big(1+|u|+|u|^2+\dots\big)=\frac{|u|}{1-|u|}\le2|u| .$$ So \(\sum_{n\ge N}|\log(1+u_n)|\le2\sum|u_n|\lt\infty\), and by (a) the product converges.<br>
+  (c) On a compact \(K\), the same estimate gives uniform convergence of \(\sum_{n\ge N}\log(1+u_n(z))\) to an analytic \(S(z)\) (Weierstrass M-test), hence \(\prod_{n\ge N}(1+u_n)=e^{S}\ne0\) uniformly; multiplying by the finitely many first factors gives the result. \(\blacksquare\)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\prod_{n\ge2}\left(1-\frac1{n^2}\right)\): \(\sum\frac1{n^2}\lt\infty\) so it converges; partial product \(=\frac{N+1}{2N}\to\frac12\).</div>
+</div>
+
+<div class="card" data-id="T4.4">
+  <h3 class="topic">T4.4 Weierstrass elementary factors</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definition</span>\(E_0(z)=1-z\), \(E_p(z)=(1-z)\exp\!\left(z+\dfrac{z^2}{2}+\dots+\dfrac{z^p}{p}\right)\), \(p\ge1\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Lemma</span>For \(|z|\le1\) and \(p\ge0\): \(|1-E_p(z)|\le|z|^{p+1}\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  For \(p=0\) it is an equality. Let \(p\ge1\). Differentiating,
+  $$E_p'(z)=-z^p\exp\!\left(z+\frac{z^2}2+\dots+\frac{z^p}p\right).$$
+  So \(-E_p'(z)\) has a zero of order \(p\) at 0 and, expanding the exponential, its Taylor coefficients are all \(\ge0\). Since \(1-E_p(0)=0\), integrating: \(1-E_p(z)=\sum_{n\ge p+1}b_nz^n\) with \(b_n\ge0\). Put \(\varphi(z)=\dfrac{1-E_p(z)}{z^{p+1}}=\sum_{n\ge p+1}b_nz^{n-p-1}\). For \(|z|\le1\):
+  $$|\varphi(z)|\le\sum b_n|z|^{n-p-1}\le\sum b_n=\varphi(1)=1-E_p(1)=1 .$$
+  Hence \(|1-E_p(z)|\le|z|^{p+1}\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T4.5">
+  <h3 class="topic">T4.5 Weierstrass factorization theorem</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(f\) be an entire function, not identically zero, with a zero of order \(m\ge0\) at \(z=0\), and let \(\{a_n\}\) be its other zeros (repeated by multiplicity, \(|a_n|\to\infty\)). Then there exist an entire function \(g\) and integers \(p_n\ge0\) such that
+  $$f(z)=z^m e^{g(z)}\prod_{n=1}^\infty E_{p_n}\!\left(\frac{z}{a_n}\right).$$
+  (Conversely, for any sequence \(a_n\to\infty\) such a product defines an entire function with exactly these zeros.)</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Step 1 (product converges).</b> Take \(p_n=n-1\). Fix \(R>0\). Since \(|a_n|\to\infty\), there is \(N\) with \(|a_n|\ge2R\) for \(n>N\). For \(|z|\le R\), \(n>N\): \(|z/a_n|\le\frac12\), so by T4.4
+  $$\Big|1-E_{p_n}\!\Big(\frac z{a_n}\Big)\Big|\le\Big|\frac z{a_n}\Big|^{n}\le\Big(\frac12\Big)^{n}.$$
+  So \(\sum_n|1-E_{p_n}(z/a_n)|\) converges uniformly on \(|z|\le R\). By T4.3(c), \(P(z)=\prod E_{p_n}(z/a_n)\) is entire, and its zeros are exactly the \(a_n\) (with multiplicity), because \(E_p(w)=0\) only at \(w=1\).<br>
+  <b>Step 2.</b> Then \(h(z)=\dfrac{f(z)}{z^mP(z)}\) has only removable singularities, so it is entire and never zero.<br>
+  <b>Step 3.</b> \(\mathbb C\) is simply connected and \(h\ne0\), so by T1.2(b) \(h=e^{g}\) for some entire \(g\). Hence \(f(z)=z^me^{g(z)}P(z)\). \(\blacksquare\)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\sin\pi z=\pi z\displaystyle\prod_{n=1}^\infty\left(1-\frac{z^2}{n^2}\right)\) (here \(p_n=1\) suffices since \(\sum1/n^2\lt\infty\), and pairing \(\pm n\) cancels the exponentials).</div>
+</div>
+
+<div class="card" data-id="T4.6">
+  <h3 class="topic">T4.6 Order, genus and Hadamard factorization theorem (statement)</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><b>Order</b> of an entire \(f\): \(\lambda=\limsup_{r\to\infty}\dfrac{\log\log M(r)}{\log r}\), \(M(r)=\max_{|z|=r}|f|\).<br><b>Rank</b> of zeros \(\{a_n\}\): least integer \(p\) with \(\sum|a_n|^{-(p+1)}\lt\infty\). The product \(\prod E_p(z/a_n)\) is then the <b>canonical product</b>.<br><b>Genus</b> \(\mu\) of \(f=z^me^{g}\prod E_p(z/a_n)\) (canonical form, \(g\) polynomial): \(\mu=\max(p,\deg g)\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (Hadamard)</span>If \(f\) is entire of finite order \(\lambda\), then \(f\) has finite genus \(\mu\le\lambda\), i.e.
+  $$f(z)=z^m e^{g(z)}\prod_n E_p\!\left(\frac z{a_n}\right),$$ where \(g\) is a polynomial of degree \(\le\lambda\) and \(p\le\lambda\).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(\sin z\): \(M(r)\approx e^r/2\), so \(\lambda=1\). Zeros \(n\pi\): \(\sum1/|n\pi|\) diverges, \(\sum1/(n\pi)^2\) converges ⇒ rank \(p=1\). Hadamard: \(\sin z=z e^{az+b}\prod_{n\ne0}(1-\frac z{n\pi})e^{z/n\pi}\); comparing (oddness, \(\sin z/z\to1\)) gives \(a=b=0\).<br>Also: \(e^{z}\) has order 1, \(e^{z^2}\) order 2, \(e^{e^z}\) infinite order, polynomials order 0.</div>
+</div>
+
+<!-- ===================== SHORT ANSWERS ===================== -->
+<div class="unit-h" id="sa"><h2>✏️ Short answer questions (Section A type)</h2><p>2–3 line answers — aise hi likhiye.</p></div>
+<div class="card">
+  <p class="q">1. Find the fixed points of \(w=\dfrac{z-1}{z+1}\). <span class="marks">3</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(z=\frac{z-1}{z+1}\Rightarrow z^2+z=z-1\Rightarrow z^2=-1\Rightarrow z=\pm i\).</div></details>
+  <p class="q">2. Find the image of the real axis and the upper half plane under \(w=\dfrac{z-i}{z+i}\). <span class="marks">3</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>For real \(x\), \(|x-i|=|x+i|\) ⇒ \(|w|=1\): real axis → unit circle. \(z=i\mapsto0\), so the upper half plane → \(|w|\lt1\).</div></details>
+  <p class="q">3. Nature of singularity at \(z=0\): (a) \(\frac{\sin z}{z}\) (b) \(e^{1/z}\) (c) \(\frac{1}{z^2(z-1)}\) (d) \(\frac{1-\cos z}{z^3}\). <span class="marks">3</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>(a) \(1-\frac{z^2}{6}+\dots\): removable. (b) \(\sum\frac1{n!z^n}\): infinitely many negative powers ⇒ essential. (c) pole of order 2. (d) \(\frac{1-\cos z}{z^3}=\frac1{2z}-\frac{z}{24}+\dots\): simple pole.</div></details>
+  <p class="q">4. Order of the zero of \(z-\sin z\) at \(z=0\). <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(z-\sin z=\frac{z^3}{6}-\frac{z^5}{120}+\dots\) ⇒ zero of order 3.</div></details>
+  <p class="q">5. Define cross ratio and show \((z_1,1,0,\infty)=z_1\). <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\((z_1,z_2,z_3,z_4)=\frac{(z_1-z_3)(z_2-z_4)}{(z_1-z_4)(z_2-z_3)}\). With \(z_2=1,z_3=0,z_4=\infty\) (cancel the factors with \(z_4\)): \(\frac{(z_1-0)}{(1-0)}=z_1\).</div></details>
+  <p class="q">6. State Schwarz lemma / Rouché's theorem / Casorati–Weierstrass theorem / Picard's little theorem. <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>Statements T2.4, T3.5, T3.6, T3.7 word-to-word.</div></details>
+  <p class="q">7. Is \(f(z)=\bar z\) conformal? <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>No. It preserves magnitude of angles but reverses their sense (reflection) — it is isogonal, not conformal; it is not analytic.</div></details>
+  <p class="q">8. Define a meromorphic function; give an example which is not rational. <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>Analytic in a region except for poles. \(\tan z=\frac{\sin z}{\cos z}\) (infinitely many poles, so not rational; it has an essential singularity at \(\infty\)).</div></details>
+  <p class="q">9. Write the Weierstrass elementary factor \(E_p(z)\) and the product for \(\sin\pi z\). <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(E_p(z)=(1-z)e^{z+z^2/2+\dots+z^p/p}\); \(\sin\pi z=\pi z\prod_{n\ge1}(1-z^2/n^2)\).</div></details>
+  <p class="q">10. Find the order of \(e^{z^2}\) and of \(\cos\sqrt z\). <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(M(r)=e^{r^2}\) ⇒ \(\log\log M=2\log r\) ⇒ order 2. \(\cos\sqrt z=\sum\frac{(-1)^nz^n}{(2n)!}\) is entire, \(M(r)\approx\frac12e^{\sqrt r}\) ⇒ order \(\frac12\).</div></details>
+</div>
+
+<!-- ===================== PROBLEMS ===================== -->
+<div class="unit-h" id="prob"><h2>🧮 Solved problems (zaroor aate hain)</h2></div>
+<div class="card">
+  <p class="q">P1. Find the Möbius transformation which maps \(z=1,i,-1\) onto \(w=0,1,\infty\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Since \(-1\mapsto\infty\) and \(1\mapsto0\): \(w=k\dfrac{z-1}{z+1}\). \(z=i\mapsto1\): \(1=k\dfrac{i-1}{i+1}=k\cdot\dfrac{(i-1)(1-i)}{2}=k\cdot\dfrac{2i}{2}=ki\Rightarrow k=-i\).
+  $$w=-i\,\frac{z-1}{z+1}=\frac{i(1-z)}{1+z}.$$
+  Check: \(z=i\): \(\frac{i(1-i)}{1+i}=\frac{i(1-i)^2}{2}=\frac{i(-2i)}{2}=1\) ✓. (It maps the unit circle onto the real axis and \(|z|\lt1\) onto the upper half plane: \(z=0\mapsto i\).)</div></details>
+
+  <p class="q">P2. Expand \(f(z)=\dfrac{1}{(z-1)(z-2)}\) in Laurent series in (i) \(|z|\lt1\), (ii) \(1\lt|z|\lt2\), (iii) \(|z|>2\), (iv) \(0\lt|z-1|\lt1\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Partial fractions: \(f(z)=\dfrac1{z-2}-\dfrac1{z-1}\).<br>
+  (i) \(|z|\lt1\): \(\frac1{z-2}=-\frac12\cdot\frac1{1-z/2}=-\sum\frac{z^n}{2^{n+1}}\); \(-\frac1{z-1}=\frac1{1-z}=\sum z^n\).
+  $$f=\sum_{n=0}^\infty\Big(1-\frac1{2^{n+1}}\Big)z^n .$$
+  (ii) \(1\lt|z|\lt2\): \(-\frac1{z-1}=-\frac1z\cdot\frac1{1-1/z}=-\sum_{n\ge1}\frac1{z^n}\).
+  $$f=-\sum_{n=0}^\infty\frac{z^n}{2^{n+1}}-\sum_{n=1}^\infty\frac1{z^n}.$$
+  (iii) \(|z|>2\): \(\frac1{z-2}=\frac1z\cdot\frac1{1-2/z}=\sum_{n\ge1}\frac{2^{n-1}}{z^n}\).
+  $$f=\sum_{n=1}^\infty\frac{2^{n-1}-1}{z^n}=\frac1{z^2}+\frac3{z^3}+\frac7{z^4}+\dots$$
+  (iv) Put \(u=z-1\), \(0\lt|u|\lt1\): \(\frac1{z-2}=\frac1{u-1}=-\sum u^n\).
+  $$f=-\frac1{z-1}-\sum_{n=0}^\infty(z-1)^n .$$ (simple pole at \(z=1\), residue \(-1\).)</div></details>
+
+  <p class="q">P3. Find the Laurent series of \(e^{1/z}\) and \(z^2\sin\frac1z\) about \(z=0\) and state the nature of singularity. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>\(e^{1/z}=1+\frac1z+\frac1{2!z^2}+\dots\) (\(|z|>0\)); \(z^2\sin\frac1z=z-\frac1{3!z}+\frac1{5!z^3}-\dots\). Both have infinitely many negative powers ⇒ essential singularity at 0.</div></details>
+
+  <p class="q">P4. Using Rouché's theorem, find the number of zeros of \(z^4-6z+3\) in \(|z|\lt1\) and in \(1\lt|z|\lt2\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>On \(|z|=1\):</b> take \(f=-6z\), \(g=z^4+3\). \(|f|=6\), \(|g|\le1+3=4\lt6\). So \(z^4-6z+3\) has as many zeros in \(|z|\lt1\) as \(-6z\), i.e. <b>1</b>.<br>
+  <b>On \(|z|=2\):</b> take \(f=z^4\), \(g=-6z+3\). \(|f|=16\), \(|g|\le12+3=15\lt16\). So there are <b>4</b> zeros in \(|z|\lt2\).<br>
+  No zero on \(|z|=1\) (since \(|z^4-6z+3|\ge6-4>0\)). Hence the number in \(1\lt|z|\lt2\) is \(4-1=\mathbf 3\).</div></details>
+
+  <p class="q">P5. Show that all roots of \(z^7-5z^3+12=0\) lie between the circles \(|z|=1\) and \(|z|=2\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  On \(|z|=1\): \(f=12\), \(g=z^7-5z^3\), \(|g|\le1+5=6\lt12\) ⇒ same zeros as constant 12 ⇒ <b>no</b> zero in \(|z|\lt1\) (and none on \(|z|=1\)).<br>
+  On \(|z|=2\): \(f=z^7\), \(|f|=128\); \(g=-5z^3+12\), \(|g|\le40+12=52\lt128\) ⇒ all <b>7</b> zeros in \(|z|\lt2\). Hence all 7 roots lie in \(1\lt|z|\lt2\).</div></details>
+
+  <p class="q">P6. If \(f\) is analytic in \(|z|\lt1\), \(|f|\le1\), \(f(0)=0\), show \(|f(1/2)|\le\frac12\) and find all such \(f\) with \(|f'(0)|=1\). <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>By Schwarz lemma \(|f(z)|\le|z|\), so \(|f(1/2)|\le\frac12\). \(|f'(0)|=1\) ⇒ \(f(z)=e^{i\theta}z\).</div></details>
+
+  <p class="q">P7. Find the Möbius map of \(|z|\lt1\) onto \(|w|\lt1\) with \(f(\frac12)=0\) and \(f'(\frac12)>0\). <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>By T2.6, \(f(z)=c\dfrac{z-\frac12}{1-\frac12z}=c\dfrac{2z-1}{2-z}\). \(f'(z)=c\dfrac{2(2-z)+(2z-1)}{(2-z)^2}=\dfrac{3c}{(2-z)^2}\); \(f'(\frac12)=\frac{3c}{9/4}=\frac{4c}{3}>0\) ⇒ \(c=1\). \(\;f(z)=\dfrac{2z-1}{2-z}\).</div></details>
+</div>
+
+<div class="card sheet">
+  <h3>Kal subah (last 1 ghanta)</h3>
+  <ol>
+    <li>Upar ki "Paper me kya aayega" table ke 🔥🔥 wale theorems ke <b>statements</b> ek baar bol kar padhiye.</li>
+    <li>Proof ka <b>Step 1, Step 2…</b> headings yaad rakhiye — exam me headings se poora proof nikal aata hai.</li>
+    <li>P2 (Laurent) aur P4 (Rouché) jaise ek-ek sawaal haath se kariye.</li>
+  </ol>
+</div>
+
+<p class="foot">Maakit · S.N. Mishra Singapore International School · Exam study guide</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>

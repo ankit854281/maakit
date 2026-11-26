@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integral Equations &amp; Calculus of Variations (MC0104T) — All Theorems + Important Questions</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/auto-render.min.js"></script>
+<link rel="stylesheet" href="padhai.css">
+</head>
+<body data-book="ie-thm" class="qpaper">
+
+<div class="top"><a class="back" href="index.html">← Books</a><b>IE &amp; CV — Theorems + Paper</b><span class="prog" id="prog"></span></div>
+
+<div class="hero">
+  <h1>📜 Integral Equations &amp; Calculus of Variations — Saare Theorems + Paper me kya aayega</h1>
+  <p>MC0104T · Units I–IV · Har theorem/derivation: exact statement + poora proof. Neeche important questions solution ke saath.</p>
+</div>
+
+<nav class="units">
+  <a href="#imp">Paper me kya aayega</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#sa">Short answers</a><a href="#prob">Solved problems</a>
+</nav>
+
+<div class="wrap">
+
+<div class="card">
+  <div class="box b-warn"><span class="lbl">⚠️ Dhyan dein</span>Asli paper kisi ko pehle se pata nahi hota. "Paper me kya aayega" wali list syllabus aur M.Sc. papers ke aam pattern se bani hai — <b>sabse zyada aane wale</b> sawaal, guarantee nahi. Is subject me <b>numerical sawaal</b> (solve the integral equation, find extremal) bahut aate hain — P1–P10 zaroor kariye.</div>
+</div>
+
+<!-- ===================== IMPORTANT ===================== -->
+<div class="unit-h" id="imp"><h2>🎯 Paper me kya aayega (most expected)</h2><p>Aaj raat pehle 🔥 wale padhiye, phir ⭐ wale.</p></div>
+<div class="card sheet">
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Sawaal</th><th>Chance</th><th>Kahan</th></tr>
+    <tr><td>1</td><td>Convert an initial value problem into a Volterra integral equation (and BVP into Fredholm, Green's kernel).</td><td>🔥🔥</td><td>T1.1, T1.2, P1, P2</td></tr>
+    <tr><td>2</td><td>Solve a Fredholm equation with degenerate (separable) kernel; find eigenvalues and eigenfunctions.</td><td>🔥🔥</td><td>T1.3, P3, P4</td></tr>
+    <tr><td>3</td><td>Eigenvalues of a symmetric (Hermitian) kernel are real; eigenfunctions of distinct eigenvalues are orthogonal.</td><td>🔥🔥</td><td>T1.4</td></tr>
+    <tr><td>4</td><td>Method of successive approximations / Neumann series for Fredholm equations; condition \(|\lambda|B\lt1\).</td><td>🔥</td><td>T2.1</td></tr>
+    <tr><td>5</td><td>Volterra equation: Neumann series converges for all \(\lambda\); iterated kernels and resolvent kernel.</td><td>🔥🔥</td><td>T2.2, T2.3, P5, P6</td></tr>
+    <tr><td>6</td><td>Reduce a Volterra equation to a differential equation and solve.</td><td>🔥</td><td>T2.5, P7</td></tr>
+    <tr><td>7</td><td>Fundamental lemma of calculus of variations; derive Euler–Lagrange equation.</td><td>🔥🔥</td><td>T3.1, T3.2</td></tr>
+    <tr><td>8</td><td>Special cases of Euler equation (\(F\) free of \(x\): \(F-y'F_{y'}=c\)); brachistochrone, minimal surface of revolution, geodesics.</td><td>🔥🔥</td><td>T3.3, P8, P9</td></tr>
+    <tr><td>9</td><td>Euler–Poisson equation (higher derivatives); Ostrogradsky equation (several independent variables).</td><td>🔥</td><td>T3.4, T3.5</td></tr>
+    <tr><td>10</td><td>Parametric form; invariance of Euler's equation.</td><td>⭐</td><td>T3.6, T3.7</td></tr>
+    <tr><td>11</td><td>Isoperimetric problem (Lagrange multiplier); find the curve of given length enclosing maximum area.</td><td>🔥🔥</td><td>T4.2, P10</td></tr>
+    <tr><td>12</td><td>Variable end points: transversality conditions.</td><td>🔥</td><td>T4.4</td></tr>
+    <tr><td>13</td><td>Second variation; Legendre and Jacobi conditions.</td><td>🔥</td><td>T4.5</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================== UNIT I ===================== -->
+<div class="unit-h" id="u1"><h2>Unit I — Types, kernels, eigenvalues, degenerate kernels</h2></div>
+
+<div class="card" data-id="D1">
+  <h3 class="topic">Definitions (Section A me aate hain)</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span>
+  <b>Fredholm equation of the 1st kind:</b> \(f(x)=\lambda\int_a^bK(x,t)y(t)\,dt\).<br>
+  <b>Fredholm equation of the 2nd kind:</b> \(y(x)=f(x)+\lambda\int_a^bK(x,t)y(t)\,dt\) (homogeneous if \(f\equiv0\)).<br>
+  <b>Volterra equations:</b> same with upper limit \(x\): \(y(x)=f(x)+\lambda\int_a^xK(x,t)y(t)\,dt\).<br>
+  <b>Symmetric kernel:</b> \(K(x,t)=K(t,x)\). <b>Hermitian:</b> \(K(x,t)=\overline{K(t,x)}\).<br>
+  <b>Degenerate (separable) kernel:</b> \(K(x,t)=\sum_{i=1}^na_i(x)b_i(t)\).<br>
+  <b>\(L_2\)-function:</b> \(\int_a^b|f|^2dx\lt\infty\). <b>\(L_2\)-kernel:</b> \(B^2=\int_a^b\!\int_a^b|K(x,t)|^2dx\,dt\lt\infty\).<br>
+  <b>Eigenvalue:</b> a value \(\lambda\) for which \(y=\lambda\int K y\) has a non-trivial solution \(y\) (an eigenfunction). (Note: some books call \(1/\lambda\) the eigenvalue; for integral equations \(\lambda\) is the "characteristic value".)</div>
+</div>
+
+<div class="card" data-id="T1.1">
+  <h3 class="topic">T1.1 Initial value problem ⇒ Volterra integral equation</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>The IVP \(y''+A(x)y'+B(x)y=F(x)\), \(y(a)=y_0\), \(y'(a)=y_0'\) is equivalent to the Volterra equation of the 2nd kind for \(u=y''\):
+  $$u(x)=f(x)-\int_a^xK(x,t)u(t)\,dt,$$
+  $$K(x,t)=A(x)+B(x)(x-t),\qquad f(x)=F(x)-y_0'A(x)-\big(y_0+(x-a)y_0'\big)B(x).$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Put \(y''(x)=u(x)\). Integrating from \(a\) to \(x\): \(y'(x)=y_0'+\int_a^xu(t)\,dt\). Integrating again and using \(\int_a^x\!\int_a^su(t)\,dt\,ds=\int_a^x(x-t)u(t)\,dt\) (interchange order):
+  $$y(x)=y_0+(x-a)y_0'+\int_a^x(x-t)u(t)\,dt .$$
+  Substitute in the ODE:
+  $$u(x)+A(x)\Big[y_0'+\int_a^xu\,dt\Big]+B(x)\Big[y_0+(x-a)y_0'+\int_a^x(x-t)u\,dt\Big]=F(x),$$
+  i.e. \(u(x)+\int_a^x\big[A(x)+B(x)(x-t)\big]u(t)\,dt=F(x)-y_0'A(x)-\big(y_0+(x-a)y_0'\big)B(x)\). Conversely, every continuous solution \(u\) gives \(y\) by the two integrations, satisfying the IVP. \(\blacksquare\)<br>
+  <b>Formula used:</b> \(\displaystyle\int_a^x\!\!\int_a^{x}\!\!\cdots\!\int_a^x u\,(dt)^n=\frac1{(n-1)!}\int_a^x(x-t)^{n-1}u(t)\,dt\).</div>
+</div>
+
+<div class="card" data-id="T1.2">
+  <h3 class="topic">T1.2 Boundary value problem ⇒ Fredholm equation (Green's kernel)</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>The BVP \(y''+\lambda y=0\), \(y(0)=0\), \(y(l)=0\) is equivalent to
+  $$y(x)=\lambda\int_0^lK(x,t)y(t)\,dt,\qquad K(x,t)=\begin{cases}\dfrac{t(l-x)}{l},&0\le t\le x\\[2mm]\dfrac{x(l-t)}{l},&x\le t\le l\end{cases}$$ (a symmetric kernel).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  From \(y''=-\lambda y\), integrating twice from 0 (as in T1.1) with \(y(0)=0\):
+  $$y(x)=xy'(0)-\lambda\int_0^x(x-t)y(t)\,dt .$$
+  Put \(x=l\), use \(y(l)=0\): \(y'(0)=\dfrac{\lambda}{l}\int_0^l(l-t)y(t)\,dt\). Hence
+  $$y(x)=\lambda\int_0^l\frac{x(l-t)}{l}y(t)\,dt-\lambda\int_0^x(x-t)y(t)\,dt .$$
+  Split the first integral at \(t=x\). For \(0\le t\le x\) the combined kernel is \(\dfrac{x(l-t)}{l}-(x-t)=\dfrac{xl-xt-xl+tl}{l}=\dfrac{t(l-x)}{l}\); for \(x\le t\le l\) it is \(\dfrac{x(l-t)}{l}\). This gives the stated \(K\). Clearly \(K(x,t)=K(t,x)\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.3">
+  <h3 class="topic">T1.3 Fredholm equation with degenerate kernel (method + Fredholm alternative)</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(K(x,t)=\sum_{i=1}^na_i(x)b_i(t)\) (the \(a_i\) linearly independent, the \(b_i\) linearly independent). The equation \(y(x)=f(x)+\lambda\int_a^bK(x,t)y(t)\,dt\) reduces to the linear system
+  $$(I-\lambda A)\,C=F,\quad A=(\alpha_{ij}),\ \alpha_{ij}=\int_a^bb_i(t)a_j(t)\,dt,\ \ F_i=\int_a^bb_i(t)f(t)\,dt,$$ and \(y=f+\lambda\sum c_ia_i\). Let \(D(\lambda)=\det(I-\lambda A)\).<br>
+  (i) If \(D(\lambda)\ne0\): unique solution for every \(f\).<br>
+  (ii) The eigenvalues are exactly the roots of \(D(\lambda)=0\) (at most \(n\)); for such \(\lambda\) the homogeneous equation has non-trivial solutions, and the non-homogeneous equation is solvable iff \(f\) is orthogonal to every solution of the transposed homogeneous equation \(z(x)=\lambda\int_a^bK(t,x)z(t)\,dt\) (Fredholm alternative).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Substituting \(K\):
+  $$y(x)=f(x)+\lambda\sum_{j=1}^na_j(x)\int_a^bb_j(t)y(t)\,dt=f(x)+\lambda\sum_jc_ja_j(x),\qquad c_j=\int_a^bb_j(t)y(t)\,dt .$$
+  Multiply by \(b_i(x)\) and integrate over \([a,b]\):
+  $$c_i=F_i+\lambda\sum_{j=1}^n\alpha_{ij}c_j\quad(i=1,\dots,n),\ \text{ i.e. }(I-\lambda A)C=F .$$
+  Conversely, if \(C\) solves the system, \(y=f+\lambda\sum c_ja_j\) satisfies the equation (the computation reverses). So the integral equation is equivalent to an \(n\times n\) linear system.<br>
+  (i) \(D(\lambda)\ne0\) ⇒ unique \(C=(I-\lambda A)^{-1}F\) ⇒ unique \(y\).<br>
+  (ii) For \(f=0\), \(F=0\): a non-zero \(C\) exists iff \(D(\lambda)=0\); then \(y=\lambda\sum c_ja_j\not\equiv0\) since the \(a_j\) are independent. \(D\) is a polynomial of degree \(\le n\), so at most \(n\) eigenvalues. For \(D(\lambda)=0\) the system \((I-\lambda A)C=F\) is solvable iff \(F\) is orthogonal to the null space of \((I-\lambda A)^{T}\), which corresponds to the solutions of the transposed equation; this is the condition \(\int fz=0\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.4">
+  <h3 class="topic">T1.4 Symmetric kernel: eigenvalues real, eigenfunctions orthogonal</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(K\) be a real symmetric (or Hermitian) continuous kernel, not identically zero. Then<br>(a) eigenfunctions belonging to distinct eigenvalues are orthogonal on \([a,b]\);<br>(b) all eigenvalues are real.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (a) Let \(y_1=\lambda_1\int K(x,t)y_1(t)dt\), \(y_2=\lambda_2\int K(x,t)y_2(t)dt\), \(\lambda_1\ne\lambda_2\). Multiply the first by \(\lambda_2y_2(x)\), the second by \(\lambda_1y_1(x)\), and integrate over \(x\):
+  $$\lambda_2\int y_1y_2\,dx=\lambda_1\lambda_2\iint K(x,t)y_1(t)y_2(x)\,dt\,dx,\qquad \lambda_1\int y_1y_2\,dx=\lambda_1\lambda_2\iint K(x,t)y_2(t)y_1(x)\,dt\,dx .$$
+  In the second double integral interchange the names \(x\leftrightarrow t\) and use \(K(t,x)=K(x,t)\): it equals the first. Subtracting: \((\lambda_2-\lambda_1)\int_a^by_1y_2\,dx=0\), so \(\int_a^by_1(x)y_2(x)\,dx=0\).<br>
+  (b) Let \(\lambda=\alpha+i\beta\) be an eigenvalue with eigenfunction \(y=u+iv\not\equiv0\). Taking complex conjugates in \(y=\lambda\int Ky\) (K real): \(\bar y=\bar\lambda\int K\bar y\). So \(\bar\lambda\) is an eigenvalue with eigenfunction \(\bar y\). If \(\beta\ne0\), \(\lambda\ne\bar\lambda\), and by (a) (the proof did not need reality)
+  $$\int_a^by\,\bar y\,dx=\int_a^b|y|^2dx=0\ \Rightarrow\ y\equiv0,$$ a contradiction. So \(\beta=0\): \(\lambda\) is real. (For Hermitian \(K\) the same proof works with \(\int y_1\bar y_2\).) \(\blacksquare\)</div>
+</div>
+
+<!-- ===================== UNIT II ===================== -->
+<div class="unit-h" id="u2"><h2>Unit II — Successive approximations, Resolvent kernel, Volterra ⇒ ODE</h2></div>
+
+<div class="card" data-id="T2.1">
+  <h3 class="topic">T2.1 Neumann series for Fredholm equations of the 2nd kind</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Iterated kernels</span>\(K_1=K\), \(K_n(x,t)=\int_a^bK(x,s)K_{n-1}(s,t)\,ds\). <b>Resolvent kernel:</b> \(R(x,t;\lambda)=\sum_{n=1}^\infty\lambda^{n-1}K_n(x,t)\).</div>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(K\) be an \(L_2\)-kernel with \(B^2=\iint|K|^2\,dx\,dt\) and \(A(x)^2=\int_a^b|K(x,t)|^2dt\le C^2\), and \(f\in L_2\). If \(|\lambda|\lt1/B\), the equation \(y=f+\lambda\int_a^bKy\) has a unique \(L_2\) solution, given by the uniformly convergent series
+  $$y(x)=f(x)+\sum_{n=1}^\infty\lambda^n\int_a^bK_n(x,t)f(t)\,dt=f(x)+\lambda\int_a^bR(x,t;\lambda)f(t)\,dt .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Successive approximations:</b> \(y_0=f\), \(y_n=f+\lambda\int Ky_{n-1}\). Then \(y_n=f+\sum_{k=1}^n\lambda^k\varphi_k\) with \(\varphi_k(x)=\int K_k(x,t)f(t)dt\), and \(\varphi_k=\int K(x,s)\varphi_{k-1}(s)ds\), \(\varphi_0=f\).<br>
+  <b>Estimates:</b> by Cauchy–Schwarz, \(|\varphi_k(x)|^2\le A(x)^2\|\varphi_{k-1}\|^2\). Integrating, \(\|\varphi_k\|\le B\|\varphi_{k-1}\|\), so \(\|\varphi_{k}\|\le B^k\|f\|\) and
+  $$|\varphi_k(x)|\le A(x)B^{k-1}\|f\|\le C\,B^{k-1}\|f\| .$$
+  Hence \(\sum|\lambda|^k|\varphi_k(x)|\le C\|f\|\,|\lambda|\sum(|\lambda|B)^{k-1}\lt\infty\) when \(|\lambda|B\lt1\): the series converges absolutely and uniformly (M-test) to \(y\).<br>
+  <b>It is a solution:</b> \(f+\lambda\int K y=f+\lambda\int K\big(f+\sum\lambda^k\varphi_k\big)=f+\sum_{k\ge0}\lambda^{k+1}\varphi_{k+1}=y\) (termwise integration allowed by uniform convergence).<br>
+  <b>Uniqueness:</b> if \(y,\tilde y\) are two solutions, \(w=y-\tilde y\) satisfies \(w=\lambda\int Kw\), so \(\|w\|\le|\lambda|B\|w\|\); since \(|\lambda|B\lt1\), \(\|w\|=0\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.2">
+  <h3 class="topic">T2.2 Volterra equation: unique solution for every \(\lambda\)</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(K(x,t)\) be continuous on \(a\le t\le x\le b\), \(|K|\le M\), and \(f\) continuous, \(|f|\le N\). Then for <b>every</b> \(\lambda\), the Volterra equation \(y(x)=f(x)+\lambda\int_a^xK(x,t)y(t)\,dt\) has a unique continuous solution
+  $$y(x)=f(x)+\lambda\int_a^xR(x,t;\lambda)f(t)\,dt,\quad R=\sum_{n\ge1}\lambda^{n-1}K_n,\ K_{n+1}(x,t)=\int_t^xK(x,s)K_n(s,t)\,ds .$$ Hence a Volterra equation (with continuous kernel) has <b>no eigenvalues</b>.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Claim:</b> \(|K_n(x,t)|\le\dfrac{M^n(x-t)^{n-1}}{(n-1)!}\). True for \(n=1\). If true for \(n\):
+  $$|K_{n+1}(x,t)|\le\int_t^xM\cdot\frac{M^n(s-t)^{n-1}}{(n-1)!}\,ds=\frac{M^{n+1}(x-t)^n}{n!}.$$
+  So \(\sum_n|\lambda|^{n-1}|K_n|\le M\sum\dfrac{(|\lambda|M(b-a))^{n-1}}{(n-1)!}=Me^{|\lambda|M(b-a)}\lt\infty\) for every \(\lambda\): the resolvent series converges uniformly. As in T2.1 the successive approximations \(y_n=f+\sum_{k\le n}\lambda^k\int K_kf\) converge uniformly, and the limit is a solution.<br>
+  <b>Uniqueness:</b> let \(w\) solve \(w=\lambda\int_a^xKw\), \(|w|\le W\). Then \(|w(x)|\le|\lambda|MW(x-a)\), and by induction \(|w(x)|\le W\dfrac{(|\lambda|M(x-a))^n}{n!}\to0\). So \(w\equiv0\). In particular the homogeneous equation has only the trivial solution: no eigenvalues. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.3">
+  <h3 class="topic">T2.3 Integral equation of the resolvent kernel; reciprocal functions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>The resolvent kernel satisfies
+  $$R(x,t;\lambda)=K(x,t)+\lambda\int_a^bK(x,s)R(s,t;\lambda)\,ds\quad\big(=K(x,t)+\lambda\int_a^bR(x,s;\lambda)K(s,t)\,ds\big),$$ (Volterra case: limits \(t\) to \(x\)). Equivalently, \(k=\lambda K\) and \(\bar k=-\lambda R\) are <b>reciprocal functions</b> (Volterra): \(k(x,t)+\bar k(x,t)=\int k(x,s)\bar k(s,t)\,ds\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Using \(K_{n+1}(x,t)=\int K(x,s)K_n(s,t)\,ds\) and uniform convergence:
+  $$\lambda\int K(x,s)R(s,t)\,ds=\sum_{n\ge1}\lambda^n\int K(x,s)K_n(s,t)\,ds=\sum_{n\ge1}\lambda^nK_{n+1}(x,t)=R(x,t)-K(x,t).$$
+  (The second form uses \(K_{n+1}(x,t)=\int K_n(x,s)K(s,t)\,ds\), which follows from associativity of the iterations.)<br>
+  Reciprocal form: with \(k=\lambda K\), \(\bar k=-\lambda R\): \(k+\bar k=\lambda(K-R)=-\lambda^2\int KR\,ds=\int(\lambda K)(-\lambda R)\,ds=\int k\bar k\,ds\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T2.4">
+  <h3 class="topic">T2.4 Volterra-type solution of Fredholm equations (Fredholm's resolvent as a ratio)</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem (statement)</span>For a continuous kernel, the resolvent of the Fredholm equation extends to a meromorphic function of \(\lambda\):
+  $$R(x,t;\lambda)=\frac{D(x,t;\lambda)}{D(\lambda)},$$ where \(D(\lambda)\) (Fredholm determinant) and \(D(x,t;\lambda)\) (first minor) are entire functions of \(\lambda\):
+  $$D(\lambda)=1+\sum_{n\ge1}\frac{(-\lambda)^n}{n!}\int\!\!\cdots\!\!\int\det\big[K(t_i,t_j)\big]_{n\times n}dt_1\cdots dt_n .$$ For \(D(\lambda)\ne0\) the unique solution is \(y=f+\lambda\int R f\); the zeros of \(D(\lambda)\) are the eigenvalues.</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(K=xt\) on \([0,1]\): \(D(\lambda)=1-\lambda\int_0^1t^2dt=1-\frac\lambda3\), \(D(x,t;\lambda)=xt\), so \(R=\dfrac{xt}{1-\lambda/3}=\dfrac{3xt}{3-\lambda}\) (matches P5). Eigenvalue \(\lambda=3\).</div>
+</div>
+
+<div class="card" data-id="T2.5">
+  <h3 class="topic">T2.5 Reduction of a Volterra equation to a differential equation</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Method / Leibniz rule</span>
+  $$\frac{d}{dx}\int_{a}^{x}G(x,t)\,dt=G(x,x)+\int_a^x\frac{\partial G}{\partial x}(x,t)\,dt .$$
+  Differentiate the Volterra equation repeatedly until the integral disappears; the initial conditions come from putting \(x=a\) in the equation and its derivatives.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Working (standard case)</span>
+  For \(y(x)=f(x)+\lambda\int_a^x(x-t)y(t)\,dt\):<br>
+  \(y'(x)=f'(x)+\lambda\big[(x-x)y(x)\big]+\lambda\int_a^xy(t)\,dt=f'(x)+\lambda\int_a^xy\,dt\),<br>
+  \(y''(x)=f''(x)+\lambda y(x)\).<br>
+  Initial conditions: \(y(a)=f(a)\), \(y'(a)=f'(a)\). So the equation is equivalent to the IVP \(y''-\lambda y=f''\), \(y(a)=f(a)\), \(y'(a)=f'(a)\). (This is the converse of T1.1.)</div>
+</div>
+
+<!-- ===================== UNIT III ===================== -->
+<div class="unit-h" id="u3"><h2>Unit III — Calculus of Variations: Euler equation and its forms</h2></div>
+
+<div class="card" data-id="D3">
+  <h3 class="topic">Definitions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><b>Functional:</b> a rule assigning a real number to each function of a class, e.g. \(J[y]=\int_{x_0}^{x_1}F(x,y,y')\,dx\).<br><b>Variation:</b> \(\delta y=\varepsilon\eta(x)\); <b>first variation</b> \(\delta J=\varepsilon\frac{d}{d\varepsilon}J[y+\varepsilon\eta]\big|_{\varepsilon=0}\).<br><b>Extremal:</b> a solution of the Euler equation. <b>Strong/weak extremum:</b> compared with curves close in \(y\) only / close in both \(y\) and \(y'\).</div>
+</div>
+
+<div class="card" data-id="T3.1">
+  <h3 class="topic">T3.1 Fundamental lemma of the calculus of variations</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Lemma</span>If \(M(x)\) is continuous on \([x_0,x_1]\) and \(\displaystyle\int_{x_0}^{x_1}M(x)\eta(x)\,dx=0\) for every \(\eta\in C^1[x_0,x_1]\) with \(\eta(x_0)=\eta(x_1)=0\), then \(M(x)\equiv0\) on \([x_0,x_1]\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Suppose \(M(c)\ne0\) for some \(c\in(x_0,x_1)\), say \(M(c)>0\). By continuity \(M>0\) on some \([c_1,c_2]\subset(x_0,x_1)\) containing \(c\). Define
+  $$\eta(x)=\begin{cases}(x-c_1)^2(c_2-x)^2,&c_1\le x\le c_2\\0,&\text{otherwise}\end{cases}$$
+  \(\eta\in C^1\) (it and its derivative vanish at \(c_1,c_2\)), \(\eta(x_0)=\eta(x_1)=0\), and \(\eta>0\) on \((c_1,c_2)\). Then \(\int_{x_0}^{x_1}M\eta\,dx=\int_{c_1}^{c_2}M\eta\,dx>0\), a contradiction. So \(M=0\) on \((x_0,x_1)\), and by continuity on \([x_0,x_1]\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.2">
+  <h3 class="topic">T3.2 Euler–Lagrange equation (fixed end points)</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(y\in C^2\) gives an extremum of \(J[y]=\int_{x_0}^{x_1}F(x,y,y')\,dx\) among curves with \(y(x_0)=y_0\), \(y(x_1)=y_1\) (\(F\) having continuous second partial derivatives), then \(y\) satisfies
+  $$\frac{\partial F}{\partial y}-\frac{d}{dx}\left(\frac{\partial F}{\partial y'}\right)=0 .$$ Expanded: \(F_y-F_{xy'}-y'F_{yy'}-y''F_{y'y'}=0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Let \(\eta\in C^1\), \(\eta(x_0)=\eta(x_1)=0\), and consider the admissible curves \(y+\varepsilon\eta\). Then \(\Phi(\varepsilon)=J[y+\varepsilon\eta]\) has an extremum at \(\varepsilon=0\), so \(\Phi'(0)=0\):
+  $$\Phi'(0)=\int_{x_0}^{x_1}\big(F_y\,\eta+F_{y'}\,\eta'\big)\,dx=0 .$$
+  Integrate the second term by parts:
+  $$\int_{x_0}^{x_1}F_{y'}\eta'\,dx=\Big[F_{y'}\eta\Big]_{x_0}^{x_1}-\int_{x_0}^{x_1}\eta\,\frac{d}{dx}F_{y'}\,dx=-\int_{x_0}^{x_1}\eta\,\frac{d}{dx}F_{y'}\,dx,$$ since \(\eta(x_0)=\eta(x_1)=0\). Therefore
+  $$\int_{x_0}^{x_1}\Big(F_y-\frac{d}{dx}F_{y'}\Big)\eta\,dx=0\quad\text{for all such }\eta .$$
+  The bracket is continuous, so by the fundamental lemma (T3.1) \(F_y-\frac{d}{dx}F_{y'}=0\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.3">
+  <h3 class="topic">T3.3 Special cases of the Euler equation</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>(i) \(F=F(x,y')\) (no \(y\)): \(F_{y'}=c\) (first integral).<br>(ii) \(F=F(y,y')\) (no \(x\)): \(F-y'F_{y'}=c\) (Beltrami identity).<br>(iii) \(F=F(x,y)\) (no \(y'\)): \(F_y=0\), an algebraic equation (no arbitrary constants; generally no solution through both end points).<br>(iv) \(F=F(y')\): extremals are straight lines \(y=c_1x+c_2\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  (i) \(F_y=0\) ⇒ \(\frac{d}{dx}F_{y'}=0\) ⇒ \(F_{y'}=c\).<br>
+  (ii) Along any \(C^2\) curve,
+  $$\frac{d}{dx}\big(F-y'F_{y'}\big)=F_x+F_yy'+F_{y'}y''-y''F_{y'}-y'\frac{d}{dx}F_{y'}=F_x+y'\Big(F_y-\frac{d}{dx}F_{y'}\Big).$$
+  If \(F_x=0\) and \(y\) is an extremal, the right side is 0, so \(F-y'F_{y'}=c\).<br>
+  (iii) \(F_{y'}=0\) ⇒ Euler equation is just \(F_y(x,y)=0\).<br>
+  (iv) Euler: \(F_{y'y'}\,y''=0\). If \(F_{y'y'}\ne0\), \(y''=0\) ⇒ straight line. (If \(F_{y'y'}(k)=0\) at some root, \(y'=k\) again gives lines.) \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.4">
+  <h3 class="topic">T3.4 Functionals with higher derivatives — Euler–Poisson equation</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>For \(J=\int_{x_0}^{x_1}F(x,y,y',\dots,y^{(n)})\,dx\) with \(y,y',\dots,y^{(n-1)}\) prescribed at both ends, an extremal satisfies
+  $$F_y-\frac{d}{dx}F_{y'}+\frac{d^2}{dx^2}F_{y''}-\dots+(-1)^n\frac{d^n}{dx^n}F_{y^{(n)}}=0,$$ an ODE of order \(2n\) (needs \(2n\) boundary conditions).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Take \(y+\varepsilon\eta\) with \(\eta,\eta',\dots,\eta^{(n-1)}\) zero at both ends. Then
+  $$0=\Phi'(0)=\int_{x_0}^{x_1}\big(F_y\eta+F_{y'}\eta'+F_{y''}\eta''+\dots+F_{y^{(n)}}\eta^{(n)}\big)dx .$$
+  Integrate the term \(F_{y^{(k)}}\eta^{(k)}\) by parts \(k\) times; each boundary term contains some \(\eta^{(j)}\), \(j\le k-1\le n-1\), at the end points and vanishes:
+  $$\int F_{y^{(k)}}\eta^{(k)}dx=(-1)^k\int\eta\,\frac{d^k}{dx^k}F_{y^{(k)}}\,dx .$$
+  So \(\int\eta\sum_{k=0}^n(-1)^k\frac{d^k}{dx^k}F_{y^{(k)}}\,dx=0\) for all such \(\eta\), and the fundamental lemma (valid for this class of \(\eta\) — use \(\eta=(x-c_1)^{2n}(c_2-x)^{2n}\)) gives the result. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T3.5">
+  <h3 class="topic">T3.5 Several independent variables — Ostrogradsky equation</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(u(x,y)\) extremizes \(J[u]=\iint_DF(x,y,u,u_x,u_y)\,dx\,dy\) with \(u\) prescribed on the boundary \(C\) of \(D\), then
+  $$F_u-\frac{\partial}{\partial x}F_{u_x}-\frac{\partial}{\partial y}F_{u_y}=0 .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Take \(u+\varepsilon\eta\), \(\eta=0\) on \(C\). Then
+  $$0=\Phi'(0)=\iint_D\big(F_u\eta+F_{u_x}\eta_x+F_{u_y}\eta_y\big)\,dx\,dy .$$
+  Since \(F_{u_x}\eta_x=\frac{\partial}{\partial x}(F_{u_x}\eta)-\eta\frac{\partial}{\partial x}F_{u_x}\) (similarly for \(y\)), and by Green's theorem
+  $$\iint_D\Big[\frac{\partial}{\partial x}(F_{u_x}\eta)+\frac{\partial}{\partial y}(F_{u_y}\eta)\Big]dx\,dy=\oint_C\eta\,(F_{u_x}dy-F_{u_y}dx)=0\ (\eta=0\text{ on }C),$$
+  we get \(\iint_D\big(F_u-\partial_xF_{u_x}-\partial_yF_{u_y}\big)\eta\,dx\,dy=0\) for all such \(\eta\). The 2-D fundamental lemma gives the equation. \(\blacksquare\)<br>
+  <b>Example:</b> \(F=u_x^2+u_y^2\) ⇒ \(-2u_{xx}-2u_{yy}=0\) ⇒ Laplace equation \(u_{xx}+u_{yy}=0\) (Dirichlet principle).</div>
+</div>
+
+<div class="card" data-id="T3.6">
+  <h3 class="topic">T3.6 Variational problems in parametric form</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>For \(J=\int_{t_0}^{t_1}G(x,y,\dot x,\dot y)\,dt\) to be independent of the parametrization, \(G\) must be positively homogeneous of degree 1 in \((\dot x,\dot y)\): \(G(x,y,k\dot x,k\dot y)=kG(x,y,\dot x,\dot y)\), \(k>0\). The extremals satisfy
+  $$G_x-\frac{d}{dt}G_{\dot x}=0,\qquad G_y-\frac{d}{dt}G_{\dot y}=0,$$ and these two equations are <b>not independent</b>: \(\dot x\big(G_x-\frac{d}{dt}G_{\dot x}\big)+\dot y\big(G_y-\frac{d}{dt}G_{\dot y}\big)\equiv0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Homogeneity:</b> if \(t=t(\tau)\), \(t'>0\), then \(\int G(x,y,x_\tau,y_\tau)d\tau=\int G(x,y,\dot x t',\dot y t')\frac{dt}{t'}\), which equals \(\int G(x,y,\dot x,\dot y)dt\) for all reparametrizations iff \(G(\cdot,k\dot x,k\dot y)=kG\).<br>
+  <b>Euler equations</b> follow as in T3.2, applied to each of \(x(t),y(t)\) (T4.1).<br>
+  <b>Dependence:</b> by Euler's theorem on homogeneous functions \(G=\dot xG_{\dot x}+\dot yG_{\dot y}\). Differentiate w.r.t. \(t\):
+  $$\frac{dG}{dt}=\ddot xG_{\dot x}+\dot x\frac{d}{dt}G_{\dot x}+\ddot yG_{\dot y}+\dot y\frac{d}{dt}G_{\dot y}.$$ Also directly \(\frac{dG}{dt}=G_x\dot x+G_y\dot y+G_{\dot x}\ddot x+G_{\dot y}\ddot y\). Subtracting:
+  $$\dot x\Big(G_x-\frac{d}{dt}G_{\dot x}\Big)+\dot y\Big(G_y-\frac{d}{dt}G_{\dot y}\Big)=0 .\ \blacksquare$$
+  Link with \(y=y(x)\): \(G=\dot x\,F\!\big(x,y,\dot y/\dot x\big)\).</div>
+</div>
+
+<div class="card" data-id="T3.7">
+  <h3 class="topic">T3.7 Invariance of Euler's equation</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Under a change of variables \(x=x(u,v)\), \(y=y(u,v)\) with Jacobian \(\dfrac{\partial(x,y)}{\partial(u,v)}\ne0\), the functional becomes \(\tilde J[v]=\int\tilde F(u,v,v')\,du\) with
+  $$\tilde F(u,v,v')=F\Big(x(u,v),\,y(u,v),\,\frac{y_u+y_vv'}{x_u+x_vv'}\Big)\,(x_u+x_vv'),$$ and \(y(x)\) is an extremal of \(J\) iff \(v(u)\) is an extremal of \(\tilde J\). In fact
+  $$\tilde F_v-\frac{d}{du}\tilde F_{v'}=\Big(F_y-\frac{d}{dx}F_{y'}\Big)\frac{\partial(x,y)}{\partial(u,v)} .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Reason (proof idea)</span>
+  Since \(dx=(x_u+x_vv')\,du\) and \(y'=\dfrac{dy}{dx}=\dfrac{y_u+y_vv'}{x_u+x_vv'}\), the value of the integral is the same in both coordinates: \(\tilde J[v]=J[y]\). A one-parameter family of nearby curves in the \((x,y)\)-plane corresponds to one in the \((u,v)\)-plane, so \(\delta J=0\iff\delta\tilde J=0\). Writing \(\delta\tilde J=\int(\tilde F_v-\frac{d}{du}\tilde F_{v'})\delta v\,du\) and \(\delta J=\int(F_y-\frac{d}{dx}F_{y'})\delta y\,dx\) with \(\delta y\,dx\) expressed through \(\delta v\,du\) gives the Jacobian factor. As the Jacobian \(\ne0\), one Euler expression vanishes iff the other does. \(\blacksquare\)<br>
+  <b>Use:</b> Euler equation ko polar coordinates me seedha likh sakte hain: \(J=\int F(\theta,r,r')\,d\theta\) ka Euler equation \(F_r-\frac{d}{d\theta}F_{r'}=0\).</div>
+</div>
+
+<!-- ===================== UNIT IV ===================== -->
+<div class="unit-h" id="u4"><h2>Unit IV — Several dependent variables, Isoperimetric, Moving boundaries, Legendre &amp; Jacobi</h2></div>
+
+<div class="card" data-id="T4.1">
+  <h3 class="topic">T4.1 Several dependent variables</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(y_1,\dots,y_n\) extremize \(J=\int_{x_0}^{x_1}F(x,y_1,\dots,y_n,y_1',\dots,y_n')\,dx\) with fixed end values, then
+  $$F_{y_i}-\frac{d}{dx}F_{y_i'}=0,\qquad i=1,\dots,n .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Vary only \(y_i\): \(y_i+\varepsilon\eta_i\), the others fixed, \(\eta_i(x_0)=\eta_i(x_1)=0\). Then \(J\) as a function of \(\varepsilon\) has an extremum at 0; exactly as in T3.2, \(\int(F_{y_i}-\frac{d}{dx}F_{y_i'})\eta_i\,dx=0\) for all \(\eta_i\), and the fundamental lemma gives the \(i\)-th equation. Do this for each \(i\). \(\blacksquare\)<br>
+  <b>Example:</b> \(F=\sqrt{1+y'^2+z'^2}\) (arc length in space): \(\frac{y'}{\sqrt{\cdot}}=c_1,\ \frac{z'}{\sqrt{\cdot}}=c_2\) ⇒ \(y',z'\) constant ⇒ straight line.</div>
+</div>
+
+<div class="card" data-id="T4.2">
+  <h3 class="topic">T4.2 Isoperimetric problems (Euler's rule with multiplier)</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(y\) extremizes \(J=\int_{x_0}^{x_1}F(x,y,y')\,dx\) subject to \(y(x_0)=y_0,\ y(x_1)=y_1\) and the constraint \(K[y]=\int_{x_0}^{x_1}G(x,y,y')\,dx=L\) (constant), and \(y\) is <b>not</b> an extremal of \(K\), then there is a constant \(\lambda\) such that \(y\) satisfies the Euler equation of \(H=F+\lambda G\):
+  $$H_y-\frac{d}{dx}H_{y'}=0 .$$ The solution contains \(c_1,c_2,\lambda\), found from the two end conditions and \(K=L\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  A one-parameter variation \(y+\varepsilon\eta\) would in general change \(K\), so use a two-parameter family
+  $$Y=y+\varepsilon_1\eta_1+\varepsilon_2\eta_2,\quad\eta_i(x_0)=\eta_i(x_1)=0 .$$
+  Put \(\Phi(\varepsilon_1,\varepsilon_2)=J[Y]\), \(\Psi(\varepsilon_1,\varepsilon_2)=K[Y]\). Then \(\Phi\) has an extremum at \((0,0)\) subject to \(\Psi=L\). As \(y\) is not an extremal of \(K\), \(\eta_2\) can be chosen with \(\dfrac{\partial\Psi}{\partial\varepsilon_2}(0,0)=\int\big(G_y-\frac{d}{dx}G_{y'}\big)\eta_2\,dx\ne0\). By the Lagrange multiplier rule for functions of two variables there is \(\lambda\) with
+  $$\frac{\partial}{\partial\varepsilon_i}(\Phi+\lambda\Psi)\Big|_{(0,0)}=0,\quad i=1,2 .$$
+  As in T3.2 (integration by parts), the case \(i=1\) reads \(\int_{x_0}^{x_1}\big(H_y-\frac{d}{dx}H_{y'}\big)\eta_1\,dx=0\) with \(H=F+\lambda G\). Here \(\lambda\) is fixed by \(\eta_2\) and does not depend on \(\eta_1\), which is arbitrary; by the fundamental lemma \(H_y-\frac{d}{dx}H_{y'}=0\). \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T4.3">
+  <h3 class="topic">T4.3 Constraint of the form \(\varphi(x,y,z)=0\) (geodesics) — Lagrange multiplier function</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>If \(y(x),z(x)\) extremize \(\int F(x,y,z,y',z')\,dx\) on the surface \(\varphi(x,y,z)=0\) (with \(\varphi_y,\varphi_z\) not both 0), then there is a function \(\lambda(x)\) such that, with \(H=F+\lambda(x)\varphi\):
+  $$H_y-\frac{d}{dx}H_{y'}=0,\qquad H_z-\frac{d}{dx}H_{z'}=0 .$$</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof (outline)</span>Admissible variations \(\delta y,\delta z\) are related by \(\varphi_y\delta y+\varphi_z\delta z=0\). First variation: \(\int\big[(F_y-\frac d{dx}F_{y'})\delta y+(F_z-\frac d{dx}F_{z'})\delta z\big]dx=0\). Say \(\varphi_z\ne0\); define \(\lambda(x)\) by \(F_z-\frac d{dx}F_{z'}+\lambda\varphi_z=0\). Adding \(\lambda(\varphi_y\delta y+\varphi_z\delta z)=0\) to the integrand eliminates \(\delta z\), leaving \(\int(F_y-\frac d{dx}F_{y'}+\lambda\varphi_y)\delta y\,dx=0\) with \(\delta y\) arbitrary ⇒ the first equation. \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T4.4">
+  <h3 class="topic">T4.4 Moving (variable) boundaries — transversality condition</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(J=\int_{x_0}^{x_1}F(x,y,y')\,dx\), the left end fixed and the right end \((x_1,y_1)\) free to move on the curve \(y=\varphi(x)\). An extremizing curve satisfies the Euler equation and the <b>transversality condition</b>
+  $$\Big[F+(\varphi'-y')F_{y'}\Big]_{x=x_1}=0 .$$
+  Special cases: end on a vertical line \(x=x_1\) (\(y_1\) free): \(F_{y'}\big|_{x_1}=0\). End on a horizontal line \(y=y_1\) (\(x_1\) free): \(\big(F-y'F_{y'}\big)\big|_{x_1}=0\). For \(F=f(x,y)\sqrt{1+y'^2}\): transversality ⇔ the extremal meets \(y=\varphi(x)\) <b>orthogonally</b>.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  Since the extremum is also an extremum among curves with the same end points, the Euler equation holds. Now compare with a neighbouring extremal \(y+\delta y\) ending at \((x_1+\delta x_1,\ y_1+\delta y_1)\). To first order
+  $$\Delta J=\int_{x_1}^{x_1+\delta x_1}F\,dx+\int_{x_0}^{x_1}\big[F(x,y+\delta y,y'+\delta y')-F(x,y,y')\big]dx\approx F\big|_{x_1}\delta x_1+\int_{x_0}^{x_1}(F_y\delta y+F_{y'}\delta y')\,dx .$$
+  Integrating by parts and using the Euler equation, the integral becomes \(\big[F_{y'}\delta y\big]_{x_1}\) (\(\delta y(x_0)=0\)). At the end, \(\delta y(x_1)\approx\delta y_1-y'(x_1)\delta x_1\). Hence
+  $$\delta J=\Big[(F-y'F_{y'})\delta x_1+F_{y'}\delta y_1\Big]_{x_1}=0 .$$
+  On the curve \(y=\varphi(x)\): \(\delta y_1=\varphi'(x_1)\delta x_1\), so \(\big[F-y'F_{y'}+\varphi'F_{y'}\big]_{x_1}\delta x_1=0\) for arbitrary \(\delta x_1\) ⇒ transversality.<br>
+  <b>Orthogonality:</b> for \(F=f\sqrt{1+y'^2}\): \(F_{y'}=\frac{fy'}{\sqrt{1+y'^2}}\); condition \(f\sqrt{1+y'^2}+(\varphi'-y')\frac{fy'}{\sqrt{1+y'^2}}=0\) ⇒ \(\frac{f(1+\varphi'y')}{\sqrt{1+y'^2}}=0\) ⇒ \(y'\varphi'=-1\) (if \(f\ne0\)). \(\blacksquare\)</div>
+  <div class="box b-def"><span class="lbl">📖 One-sided variations</span>If the admissible curves must lie on one side of a boundary curve (e.g. \(y\ge\varphi(x)\)), only variations \(\delta y\ge0\) near contact points are allowed; then only \(\delta J\ge0\) (not \(=0\)) is necessary there. The extremizing curve consists of arcs of extremals and arcs of the boundary; at a junction point, for \(F=f\sqrt{1+y'^2}\) type functionals, the extremal meets the boundary <b>tangentially</b>.</div>
+</div>
+
+<div class="card" data-id="T4.5">
+  <h3 class="topic">T4.5 Second variation; Legendre and Jacobi conditions</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Along an extremal \(y\) of \(J=\int_a^bF(x,y,y')dx\) (fixed ends), the second variation is
+  $$\delta^2J=\frac{\varepsilon^2}{2}\int_a^b\big(P\,\eta'^2+Q\,\eta^2\big)dx,\qquad P=F_{y'y'},\quad Q=F_{yy}-\frac{d}{dx}F_{yy'} .$$
+  (a) <b>Legendre (necessary):</b> for a minimum, \(F_{y'y'}\ge0\) along the extremal (\(\le0\) for a maximum).<br>
+  (b) <b>Jacobi equation:</b> \(\dfrac{d}{dx}(Pu')-Qu=0\). A point \(\tilde a\ne a\) is <b>conjugate</b> to \(a\) if a non-trivial solution with \(u(a)=0\) also vanishes at \(\tilde a\). <b>Jacobi (necessary):</b> for a minimum (with \(P>0\)) there is no point conjugate to \(a\) in \((a,b)\).<br>
+  (c) <b>Sufficient (weak minimum):</b> \(y\) extremal, \(P>0\) on \([a,b]\) (strengthened Legendre), and no point conjugate to \(a\) in \((a,b]\) (strengthened Jacobi).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  <b>Second variation.</b> By Taylor's theorem
+  $$J[y+\varepsilon\eta]-J[y]=\varepsilon\!\int(F_y\eta+F_{y'}\eta')+\frac{\varepsilon^2}{2}\int\big(F_{yy}\eta^2+2F_{yy'}\eta\eta'+F_{y'y'}\eta'^2\big)+o(\varepsilon^2).$$
+  The first term is 0 on an extremal. Since \(2\eta\eta'=(\eta^2)'\), integration by parts gives \(\int2F_{yy'}\eta\eta'dx=-\int\eta^2\frac{d}{dx}F_{yy'}dx\) (\(\eta=0\) at ends). This gives the formula for \(\delta^2J\). For a minimum, \(\delta^2J\ge0\) for all \(\eta\).<br>
+  <b>Legendre.</b> Suppose \(P(c)\lt0\) at some \(c\). Take \(\eta\) a narrow "tent" of height \(h\) on \([c-\sigma,c+\sigma]\) with \(|\eta'|=h/\sigma\): then \(\int P\eta'^2\approx P(c)\cdot\frac{h^2}{\sigma^2}\cdot2\sigma=\frac{2P(c)h^2}{\sigma}\) while \(|\int Q\eta^2|\le\max|Q|\,h^2\cdot2\sigma\). For \(\sigma\) small the first term dominates and \(\delta^2J\lt0\) — contradiction (smooth the tent to make \(\eta\in C^1\)). Hence \(P\ge0\).<br>
+  <b>Jacobi equation</b> is the Euler equation of the "accessory" functional \(\int(Pu'^2+Qu^2)dx\): its Euler equation is \(2Qu-\frac{d}{dx}(2Pu')=0\). If \(u\) solves it with \(u(a)=u(\tilde a)=0\), then (integrating by parts) \(\int_a^{\tilde a}(Pu'^2+Qu^2)dx=[Puu']_a^{\tilde a}=0\); extending \(u\) by 0 on \([\tilde a,b]\) gives \(\delta^2J=0\) with a corner, and a small rounding makes \(\delta^2J\lt0\) when \(\tilde a\lt b\). So no conjugate point can lie in \((a,b)\) for a minimum. \(\blacksquare\)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(J=\int_0^b(y'^2-y^2)dx\), \(y(0)=y(b)=0\): \(P=2>0\), \(Q=-2\). Jacobi: \(2u''+2u=0\), \(u(0)=0\) ⇒ \(u=\sin x\), next zero at \(x=\pi\). So \(y=0\) gives a minimum if \(b\lt\pi\), but not if \(b>\pi\).</div>
+</div>
+
+<!-- ===================== SHORT ANSWERS ===================== -->
+<div class="unit-h" id="sa"><h2>✏️ Short answer questions (Section A type)</h2></div>
+<div class="card">
+  <p class="q">1. Classify: (a) \(y(x)=x+\int_0^1xt\,y(t)dt\) (b) \(\sin x=\int_0^xe^{x-t}y(t)dt\) (c) \(y(x)=1+\int_0^x(x-t)y(t)dt\). <span class="marks">3</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>(a) Fredholm, 2nd kind, non-homogeneous, degenerate symmetric kernel. (b) Volterra, 1st kind. (c) Volterra, 2nd kind, non-homogeneous.</div></details>
+  <p class="q">2. Show that \(y=1\) is a solution of \(y(x)=e^x-\int_0^xe^{x-t}y(t)\,dt\). <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>RHS \(=e^x-e^x\int_0^xe^{-t}dt=e^x-e^x(1-e^{-x})=1\) ✓.</div></details>
+  <p class="q">3. Find the iterated kernels of \(K(x,t)=e^{x-t}\) for the Volterra equation on \([0,x]\). <span class="marks">3</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(K_2=\int_t^xe^{x-s}e^{s-t}ds=e^{x-t}(x-t)\); by induction \(K_n=e^{x-t}\dfrac{(x-t)^{n-1}}{(n-1)!}\).</div></details>
+  <p class="q">4. State the fundamental lemma of calculus of variations. <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>T3.1 statement.</div></details>
+  <p class="q">5. Find the extremals of \(\int_{x_0}^{x_1}\dfrac{\sqrt{1+y'^2}}{x}\,dx\). <span class="marks">3</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>No \(y\): \(F_{y'}=\dfrac{y'}{x\sqrt{1+y'^2}}=c\) ⇒ \(y'^2(1-c^2x^2)=c^2x^2\) ⇒ \(y'=\dfrac{cx}{\sqrt{1-c^2x^2}}\) ⇒ \(y=-\frac1c\sqrt{1-c^2x^2}+c_2\), i.e. \((y-c_2)^2+x^2=1/c^2\): circles with centres on the \(y\)-axis.</div></details>
+  <p class="q">6. Write the Euler–Poisson equation for \(\int(y''^2)\,dx\) and solve. <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(\frac{d^2}{dx^2}(2y'')=0\) ⇒ \(y^{(4)}=0\) ⇒ \(y=c_1x^3+c_2x^2+c_3x+c_4\).</div></details>
+  <p class="q">7. Write the transversality condition for the shortest distance from a point to a curve. <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>\(F=\sqrt{1+y'^2}\): \(1+\varphi'y'=0\) — the straight line meets the curve orthogonally (T4.4).</div></details>
+  <p class="q">8. State Legendre's condition and check it for \(\int\sqrt{1+y'^2}\,dx\). <span class="marks">2</span></p>
+  <details><summary><b>Answer</b></summary><div class="box b-sol"><span class="lbl">Answer</span>Minimum needs \(F_{y'y'}\ge0\). Here \(F_{y'y'}=(1+y'^2)^{-3/2}>0\) ⇒ straight lines give a minimum of length.</div></details>
+</div>
+
+<!-- ===================== PROBLEMS ===================== -->
+<div class="unit-h" id="prob"><h2>🧮 Solved problems (zaroor aate hain)</h2></div>
+<div class="card">
+
+  <p class="q">P1. Convert \(y''+xy=1\), \(y(0)=0\), \(y'(0)=1\) into a Volterra integral equation. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  <b>Method A (in \(u=y''\)):</b> \(y'=1+\int_0^xu\,dt\), \(y=x+\int_0^x(x-t)u(t)dt\). Substitute: \(u+x\big[x+\int_0^x(x-t)u\,dt\big]=1\):
+  $$u(x)=1-x^2-\int_0^xx(x-t)\,u(t)\,dt .$$
+  <b>Method B (in \(y\)):</b> integrate \(y''=1-xy\) twice: \(y'=1+x-\int_0^xty(t)dt\);
+  $$y(x)=x+\frac{x^2}{2}-\int_0^x(x-t)\,t\,y(t)\,dt .$$ (Both are correct; Method B is common in books.)</div></details>
+
+  <p class="q">P2. Convert \(y''+\lambda y=0\), \(y(0)=0,\ y(1)=0\) into a Fredholm equation. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>By T1.2 with \(l=1\): \(y(x)=\lambda\int_0^1K(x,t)y(t)dt\), \(K=t(1-x)\) for \(t\le x\), \(K=x(1-t)\) for \(t\ge x\). (Write the full derivation of T1.2.)</div></details>
+
+  <p class="q">P3. Solve \(y(x)=x+\lambda\int_0^1(xt^2+x^2t)\,y(t)\,dt\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(y=x+\lambda(c_1x+c_2x^2)\), \(c_1=\int_0^1t^2y\,dt\), \(c_2=\int_0^1ty\,dt\).<br>
+  Moments: \(\int_0^1t^3=\frac14,\ \int_0^1t^4=\frac15,\ \int_0^1t^2=\frac13\).<br>
+  \(c_1=\int t^2\big(t+\lambda c_1t+\lambda c_2t^2\big)=\frac14+\frac{\lambda c_1}{4}+\frac{\lambda c_2}{5}\)<br>
+  \(c_2=\int t\big(t+\lambda c_1t+\lambda c_2t^2\big)=\frac13+\frac{\lambda c_1}{3}+\frac{\lambda c_2}{4}\)<br>
+  System: \(\big(1-\frac\lambda4\big)c_1-\frac\lambda5c_2=\frac14\), \(\ -\frac\lambda3c_1+\big(1-\frac\lambda4\big)c_2=\frac13\).<br>
+  \(D(\lambda)=\big(1-\frac\lambda4\big)^2-\frac{\lambda^2}{15}=\dfrac{240-120\lambda-\lambda^2}{240}\).<br>
+  Cramer: numerator for \(c_1\) \(=\frac14\big(1-\frac\lambda4\big)+\frac\lambda{15}=\frac14-\frac\lambda{16}+\frac\lambda{15}=\frac{60+\lambda}{240}\). So \(c_1=\dfrac{60+\lambda}{240-120\lambda-\lambda^2}\).<br>
+  \(c_2=\dfrac{\frac13(1-\frac\lambda4)+\frac\lambda{12}}{D}=\dfrac{\frac13}{D}=\dfrac{80}{240-120\lambda-\lambda^2}\).<br>
+  $$y(x)=x+\lambda\,\frac{(60+\lambda)x+80x^2}{240-120\lambda-\lambda^2},$$ valid when \(\lambda^2+120\lambda-240\ne0\), i.e. \(\lambda\ne-60\pm\sqrt{3840}=-60\pm16\sqrt{15}\) (these are the eigenvalues).</div></details>
+
+  <p class="q">P4. Find the eigenvalues and eigenfunctions of \(y(x)=\lambda\int_0^{2\pi}\sin(x+t)\,y(t)\,dt\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(\sin(x+t)=\sin x\cos t+\cos x\sin t\). So \(y=\lambda(c_1\sin x+c_2\cos x)\), \(c_1=\int_0^{2\pi}y\cos t\,dt\), \(c_2=\int_0^{2\pi}y\sin t\,dt\).<br>
+  Using \(\int_0^{2\pi}\sin t\cos t=0,\ \int\cos^2t=\int\sin^2t=\pi\): \(c_1=\lambda\pi c_2\), \(c_2=\lambda\pi c_1\).<br>
+  Non-trivial ⇔ \(\begin{vmatrix}1&-\lambda\pi\\-\lambda\pi&1\end{vmatrix}=1-\lambda^2\pi^2=0\) ⇒ \(\lambda=\pm\dfrac1\pi\).<br>
+  \(\lambda=\frac1\pi\): \(c_1=c_2\) ⇒ \(y=c(\sin x+\cos x)\). \(\quad\lambda=-\frac1\pi\): \(c_1=-c_2\) ⇒ \(y=c(\sin x-\cos x)\).<br>
+  (Check T1.4: kernel symmetric, eigenvalues real, and \(\int_0^{2\pi}(\sin x+\cos x)(\sin x-\cos x)dx=\int(\sin^2x-\cos^2x)=0\) ✓ orthogonal.)</div></details>
+
+  <p class="q">P5. Find the resolvent kernel of \(K(x,t)=xt\) on \([0,1]\) and solve \(y(x)=f(x)+\lambda\int_0^1xt\,y(t)dt\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(K_2=\int_0^1xs\cdot st\,ds=\frac{xt}{3}\), \(K_n=\dfrac{xt}{3^{n-1}}\).
+  $$R(x,t;\lambda)=\sum_{n\ge1}\lambda^{n-1}\frac{xt}{3^{n-1}}=\frac{xt}{1-\lambda/3}=\frac{3xt}{3-\lambda},\quad|\lambda|\lt3 ,$$ and the formula continues to all \(\lambda\ne3\).
+  $$y(x)=f(x)+\frac{3\lambda x}{3-\lambda}\int_0^1t\,f(t)\,dt .$$ E.g. \(f(x)=x\): \(y=x+\frac{3\lambda x}{3-\lambda}\cdot\frac13=\dfrac{3x}{3-\lambda}\).</div></details>
+
+  <p class="q">P6. Using the resolvent kernel, solve \(y(x)=f(x)+\lambda\int_0^xe^{x-t}y(t)\,dt\); in particular for \(f=e^x\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(K_n=e^{x-t}\frac{(x-t)^{n-1}}{(n-1)!}\) (Short Q3). So
+  $$R=e^{x-t}\sum_{n\ge1}\frac{(\lambda(x-t))^{n-1}}{(n-1)!}=e^{x-t}e^{\lambda(x-t)}=e^{(1+\lambda)(x-t)} .$$
+  \(y(x)=f(x)+\lambda\int_0^xe^{(1+\lambda)(x-t)}f(t)\,dt\). For \(f=e^x\):
+  $$y=e^x+\lambda e^{(1+\lambda)x}\int_0^xe^{-\lambda t}dt=e^x+e^{(1+\lambda)x}(1-e^{-\lambda x})=e^{(1+\lambda)x}.$$
+  Check: \(e^{(1+\lambda)x}-\lambda\int_0^xe^{x-t}e^{(1+\lambda)t}dt=e^{(1+\lambda)x}-e^x(e^{\lambda x}-1)=e^x\) ✓.</div></details>
+
+  <p class="q">P7. Solve \(y(x)=1+\int_0^x(x-t)\,y(t)\,dt\) by reducing to an ODE. <span class="marks">3</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>\(y'=\int_0^xy\,dt\), \(y''=y\); \(y(0)=1\), \(y'(0)=0\). So \(y=\cosh x\).</div></details>
+
+  <p class="q">P8. Find the extremal of \(\int_0^{\pi/2}(y'^2-y^2+2xy)\,dx\), \(y(0)=0\), \(y(\pi/2)=0\). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(F_y=-2y+2x\), \(F_{y'}=2y'\). Euler: \(-2y+2x-2y''=0\) ⇒ \(y''+y=x\).<br>
+  \(y=c_1\cos x+c_2\sin x+x\). \(y(0)=0\Rightarrow c_1=0\). \(y(\pi/2)=0\Rightarrow c_2+\frac\pi2=0\).
+  $$y=x-\frac\pi2\sin x .$$</div></details>
+
+  <p class="q">P9. Brachistochrone: find the curve of quickest descent from \((0,0)\) to \((x_1,y_1)\) under gravity. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Take \(y\) downward. Energy: \(\frac12v^2=gy\Rightarrow v=\sqrt{2gy}\). Time
+  $$T=\int\frac{ds}{v}=\frac1{\sqrt{2g}}\int_0^{x_1}\frac{\sqrt{1+y'^2}}{\sqrt y}\,dx .$$
+  \(F\) has no \(x\), so (T3.3) \(F-y'F_{y'}=c\):
+  $$\frac{\sqrt{1+y'^2}}{\sqrt y}-\frac{y'^2}{\sqrt y\sqrt{1+y'^2}}=\frac{1}{\sqrt y\sqrt{1+y'^2}}=c\ \Rightarrow\ y(1+y'^2)=\frac1{c^2}=2a .$$
+  Put \(y=a(1-\cos\theta)\). Then \(y'^2=\frac{2a-y}{y}=\frac{1+\cos\theta}{1-\cos\theta}\), \(y'=\frac{\sin\theta}{1-\cos\theta}\), and \(dx=\frac{dy}{y'}=a(1-\cos\theta)\,d\theta\). With \(x=0\) at \(\theta=0\):
+  $$x=a(\theta-\sin\theta),\qquad y=a(1-\cos\theta)$$ — a <b>cycloid</b>; \(a\) is fixed by passing through \((x_1,y_1)\).</div></details>
+
+  <p class="q">P10. Find the curve of given length \(L\) through \((-a,0),(a,0)\) which encloses the maximum area with the \(x\)-axis (isoperimetric). <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  Maximize \(\int_{-a}^ay\,dx\) subject to \(\int_{-a}^a\sqrt{1+y'^2}\,dx=L\). By T4.2, \(H=y+\lambda\sqrt{1+y'^2}\). No \(x\): \(H-y'H_{y'}=c_1\):
+  $$y+\lambda\sqrt{1+y'^2}-\frac{\lambda y'^2}{\sqrt{1+y'^2}}=c_1\ \Rightarrow\ y+\frac{\lambda}{\sqrt{1+y'^2}}=c_1 .$$
+  So \((c_1-y)^2(1+y'^2)=\lambda^2\), \(y'=\pm\frac{\sqrt{\lambda^2-(y-c_1)^2}}{y-c_1}\), \(\frac{(y-c_1)dy}{\sqrt{\lambda^2-(y-c_1)^2}}=\pm dx\) ⇒ \(-\sqrt{\lambda^2-(y-c_1)^2}=\pm(x-c_2)\):
+  $$(x-c_2)^2+(y-c_1)^2=\lambda^2,$$ an arc of a <b>circle</b>. By symmetry \(c_2=0\); \(c_1\) and \(\lambda\) are found from \(y(\pm a)=0\) and length \(L\).</div></details>
+
+  <p class="q">P11. Find the surface of revolution of minimum area (minimal surface) generated by a curve through two given points. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>
+  \(S=2\pi\int y\sqrt{1+y'^2}\,dx\). No \(x\): \(y\sqrt{1+y'^2}-\frac{yy'^2}{\sqrt{1+y'^2}}=\frac{y}{\sqrt{1+y'^2}}=c_1\) ⇒ \(y'=\frac{\sqrt{y^2-c_1^2}}{c_1}\) ⇒ \(\cosh^{-1}\frac{y}{c_1}=\frac{x-c_2}{c_1}\):
+  $$y=c_1\cosh\frac{x-c_2}{c_1}$$ — a <b>catenary</b> (surface = catenoid).</div></details>
+
+  <p class="q">P12. Show that the geodesics on a right circular cylinder \(x^2+y^2=a^2\) are helices. <span class="marks">7½</span></p>
+  <details><summary><b>Solution</b></summary><div class="box b-sol"><span class="lbl">Solution</span>Use \(x=a\cos\theta,\ y=a\sin\theta,\ z=z(\theta)\). \(ds^2=a^2d\theta^2+dz^2\), so \(L=\int\sqrt{a^2+z'^2}\,d\theta\). \(F\) has no \(z\): \(F_{z'}=\frac{z'}{\sqrt{a^2+z'^2}}=c\) ⇒ \(z'=\) constant ⇒ \(z=c_1\theta+c_2\): a <b>circular helix</b> (straight line on the unrolled cylinder). (Invariance of Euler's equation, T3.7, lets us use \(\theta\) directly.)</div></details>
+</div>
+
+<div class="card sheet">
+  <h3>Kal subah (last 1 ghanta)</h3>
+  <ol>
+    <li>Formulas yaad: Euler \(F_y-\frac d{dx}F_{y'}=0\); \(F-y'F_{y'}=c\); Euler–Poisson; Ostrogradsky; transversality \(F+(\varphi'-y')F_{y'}=0\); \(R=\sum\lambda^{n-1}K_n\).</li>
+    <li>P3/P4 (degenerate kernel) aur P6 (resolvent) ek baar haath se kariye — numericals me marks pakke hain.</li>
+    <li>Theorems T1.4, T2.2, T3.2, T4.2, T4.4 ke steps ki headings yaad rakhiye.</li>
+  </ol>
+</div>
+
+<p class="foot">Maakit · S.N. Mishra Singapore International School · Exam study guide</p>
+</div>
+<script src="padhai.js"></script>
+</body>
+</html>
