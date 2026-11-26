@@ -12,6 +12,9 @@
 //   POST ?a=sent {date,type,sid,subj,on}  Duty teacher / Principal: a parent message was sent on WhatsApp (type abs | hw)
 //   POST ?a=bug {screen,msg,err,ver}  any staff login: "🐞 Problem batao" — what went wrong, on which screen
 //   GET  ?a=bugs                     Principal / Chairman: the last 60 days' problem reports
+//   GET  ?a=sentlist&date=           parent messages marked sent that day (any staff; used by Report & Message screens)
+//   GET  ?a=hwsum                    homework checks of MY classes (teacher: classes he teaches; Principal/Chairman: all):
+//                                    last check date per class|subject, 30-day "not done" counts per child, today's checks
 //   POST ?a=bugdone {id,on}           Principal: mark a report as fixed / open again
 //
 //  Kinds (all start with "tch" so they never reach the legacy load/sync):
@@ -92,11 +95,37 @@ case 'hwnot': {
     sch_json(['ok' => true, 'date' => $date, 'items' => $items, 'sent' => (object)$sent]);
 }
 
+case 'sentlist': {
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $date = du_date($_GET['date'] ?? date('Y-m-d')); $sent = [];
+    foreach (du_rows($db, 'tchSent', $date . '|') as $r => $d) $sent[substr($r, 11)] = ['by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
+    sch_json(['ok' => true, 'date' => $date, 'sent' => (object)$sent]);
+}
+
+case 'hwsum': {
+    // Owner, 27 Nov 2026: "jo homework assign kiya gaya tha vohi show ho … jo homework nahi kiya bas usko tick kar ho jaye".
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $today = date('Y-m-d'); $from = date('Y-m-d', strtotime('-30 days'));
+    $mine = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cls);
+    $last = []; $miss = []; $todayRecs = [];
+    $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchChk' AND deleted=0 AND r >= ?"); $q->execute([$from]);
+    foreach ($q as $row) {
+        [$d0, $c0, $s0] = array_pad(explode('|', (string)$row['r'], 3), 3, ''); if (!$mine($c0)) continue;
+        $cs = "$c0|$s0"; if (!isset($last[$cs]) || $d0 > $last[$cs]) $last[$cs] = $d0;
+        $d = json_decode((string)$row['d'], true) ?: [];
+        foreach ((array)($d['rows'] ?? []) as $sid => $x) if (($x['hw'] ?? '') === 'not') $miss[$cs][(string)$sid] = ($miss[$cs][(string)$sid] ?? 0) + 1;
+        if ($d0 === $today) $todayRecs[$cs] = ['hw' => (string)($d['hw'] ?? ''), 'rows' => (object)($d['rows'] ?? []), 'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
+    }
+    sch_json(['ok' => true, 'today' => $today, 'last' => (object)$last, 'miss' => (object)array_map(fn($m) => (object)$m, $miss), 'checks' => (object)$todayRecs]);
+}
+
 case 'sent': {
     if ($method !== 'POST') sch_fail('POST only', 405);
-    if (!$duty) sch_fail('Only the Duty teacher and the Principal mark messages.', 403);
     $date = du_date($in['date'] ?? ''); $type = (string)($in['type'] ?? ''); $sid = du_txt($in['sid'] ?? '', 40); $subj = du_txt($in['subj'] ?? '', 60);
-    if (!in_array($type, ['abs', 'hw'], true) || $sid === '' || sch_rec_get('student', $sid) === null) sch_fail('Choose the child.');
+    $stu = $sid === '' ? null : sch_rec_get('student', $sid);
+    if (!in_array($type, ['abs', 'abs3', 'low', 'hw', 'hw3'], true) || $stu === null) sch_fail('Choose the child.');
+    // Duty teacher / Principal: any child. A teacher: children of a class he teaches or is class teacher of (owner, 27 Nov 2026).
+    if (!$duty && !($role === 'teacher' && sch_in_class($tid, (string)($stu['cls'] ?? '')))) sch_fail('You can mark messages only for your own classes.', 403);
     $key = "$date|$type|$sid|$subj";
     if (empty($in['on'])) { sch_rec_del('tchSent', $key, $uid); sch_json(['ok' => true, 'sent' => null]); }
     $rec = ['by' => (string)($u['label'] ?? $uid), 'at' => sch_now_ms()];

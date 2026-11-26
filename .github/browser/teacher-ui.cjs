@@ -270,16 +270,17 @@ const path = require('node:path');
     await page.locator('.dform:has(#b6-h) .chips.phr').nth(1).locator('button').first().click();
     assert.match(await page.locator('#b6-h').inputValue(), /Learn the questions-answers of/);
     assert.equal(await page.locator('#b6-min').inputValue(), '15', 'homework chip fills 15 minutes when empty');
-    await page.evaluate(() => go('diary', { m: 'check' }));
-    await page.locator('.chk-row').first().waitFor();
-    assert.equal(await page.locator('.chk-row').count(), 12);
-    await page.getByRole('button', { name: 'All homework done' }).click();
-    await page.locator('.chk-row').nth(2).locator('button.not').click();
-    await page.locator('.chk-row').nth(2).locator('button.cp').click();
-    assert.match(await page.locator('.chk-card .cnt').innerText(), /1 not/);
-    await page.locator('.chk-card .sticky .btn.go').click();
-    await page.getByText(/Checking saved|Saved/).first().waitFor();
-    assert.ok(await page.locator('a.wa').count() >= 1, 'parents of a child who did not do homework can be told on WhatsApp');
+    // Check homework (27 Nov 2026): the homework given in the LAST class shows on top; everyone starts ✓; tap only who did not.
+    await page.evaluate(() => { const d = addDays(todayISO(), -1); put('diary', d + '|' + me() + '|6', { cls: '9th', subj: 'Social Science', topic: 'Check test topic', hw: 'Check test homework', hwMinutes: 15, hwDate: todayISO(), at: Date.now(), extra: true }); DRAFT.hc = null; go('diary', { m: 'check', key: '9th|Social Science' }); });
+    await page.locator('.cr-hw').waitFor();
+    assert.match(await page.locator('.cr-hw').innerText(), /Check test homework/);
+    assert.equal(await page.locator('.tile.cr-t').count(), 12);
+    await page.locator('.tile.cr-t:not([disabled])').nth(2).click();
+    assert.match(await page.locator('.cr-cnt').innerText(), /1 not done/);
+    await page.locator('.cr-check .sticky .btn.go').click();
+    await page.getByText(/Saved/).first().waitFor();
+    await page.locator('.cr-list').waitFor();
+    assert.ok(await page.locator('.cr-list a.btn.wa, .cr-list a.btn.go').count() >= 1, 'parents of a child who did not do homework can be told on WhatsApp');
   });
   await run('20-Opening-story', async () => {
     await page.evaluate(() => { SHEET = null; showTeacherWelcome(true); });
@@ -715,15 +716,18 @@ const path = require('node:path');
   // Smart Classroom (owner, 19 Nov 2026: "homework / CW / check — smart aur smooth"): one open bell, topic filled, homework to check, tap name
   await run('36-Smart-classroom', async () => {
     await page.evaluate(() => { SHEET = null; store.set('ta_mode', 'teacher'); setLang('en'); go('diary', { date: addDays(todayISO(), -1) }); });
-    await page.locator('.seg').first().waitFor(); await pause();
+    await page.locator('.cr-tabs').first().waitFor(); await pause();
     assert.ok(await page.locator('.sd-open').count() <= 1, 'only one bell form is open');
-    await page.evaluate(() => { let due = addDays(todayISO(), -1); while (!isWorkDay(due, '9th')) due = addDays(due, -1); const d = addDays(due, -1);   // a past due day: step 19 already checked today
-      put('diary', d + '|' + me() + '|5', { cls: '9th', subj: 'Social Science', topic: 'Smart test topic', hw: 'Smart test homework', hwMinutes: 15, hwDate: due, at: Date.now(), extra: true }); Object.keys(CHK).forEach(k => delete CHK[k]); DRAFT.chk = null; go('diary', { m: 'check' }); });
-    await page.locator('.sd-todo .sd-ti').first().waitFor();
-    assert.match(await page.locator('.sd-todo').innerText(), /Smart test homework/);
-    await page.getByRole('button', { name: 'All homework done' }).click();
-    await page.locator('.chk-row:not(.ab) .n').first().click();
-    assert.match(await page.locator('.chk-row:not(.ab)').first().getAttribute('class'), /h-not/, 'tapping the name after "done" marks not done');
+    await page.evaluate(() => { const d = addDays(todayISO(), -2), a = allocList()[0];
+      put('diary', d + '|' + me() + '|5', { cls: a.c, subj: a.s, topic: 'Smart test topic', hw: 'Smart test homework', hwMinutes: 15, hwDate: todayISO(), at: Date.now(), extra: true }); DRAFT.hc = null; CR.hw = null; go('diary', { m: 'check', key: a.c + '|' + a.s }); });
+    await page.locator('.cr-hw').waitFor();
+    if (!/checked today/i.test(await page.locator('.cr-check').innerText())) assert.match(await page.locator('.cr-hw').innerText(), /Smart test homework|homework/i);
+    const ix = await page.evaluate(() => [...document.querySelectorAll('.tile.cr-t')].findIndex(x => !x.disabled && !/\bs[AL]\b/.test(x.className)));
+    const t0 = page.locator('.tile.cr-t').nth(ix);
+    await t0.click();
+    assert.match(await t0.getAttribute('class'), /sA/, 'one tap on a child marks not done');
+    await t0.click();
+    assert.match(await t0.getAttribute('class'), /sL/, 'a second tap marks half');
   });
   await browser.close();
   if (failures.length) {

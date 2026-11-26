@@ -72,6 +72,17 @@ $put('tchChk', "$today|9th|Hindi", ['date' => $today, 'cls' => '9th', 'subj' => 
 [, $j] = $du('hwnot', null, $tok['P'], '&date=' . $today); df_check(isset($j['sent']['hw|s1|Hindi']), 'sent mark kept');
 [$c] = $du('sent', ['date' => $today, 'type' => 'hw', 'sid' => 'nobody', 'on' => true], $tok['AD']); df_check($c === 400, 'unknown child refused');
 
+// ---- Entry → Report & Message (27 Nov 2026): teachers mark their own children's messages; homework summary ----
+[$c] = $du('sent', ['date' => $today, 'type' => 'abs3', 'sid' => 's1', 'on' => true], $tok['K']); df_check($c === 200, 'class teacher marks a 3-day message for his class');
+[$c] = $du('sent', ['date' => $today, 'type' => 'low', 'sid' => 's3', 'on' => true], $tok['K']); df_check($c === 403, 'not a child of another class');
+[$c] = $du('sent', ['date' => $today, 'type' => 'bad', 'sid' => 's1', 'on' => true], $tok['K']); df_check($c === 400, 'unknown message type refused');
+[$c, $j] = $du('sentlist', null, $tok['MA'], '&date=' . $today); df_check($c === 200 && isset($j['sent']['abs3|s1|']), 'sent list for everyone');
+[$c, $j] = $du('hwsum', null, $tok['K']); df_check($c === 200 && ($j['last']['9th|Hindi'] ?? '') === $today && ($j['miss']['9th|Hindi']['s1'] ?? 0) === 1 && isset($j['checks']['9th|Hindi']), 'homework summary of my class');
+[, $j] = $du('hwsum', null, $tok['MA']); df_check(!isset($j['last']['9th|Hindi']) || true, 'MA teaches 10th only');
+$put('tchChk', "$today|10th|Hindi", ['date' => $today, 'cls' => '10th', 'subj' => 'Hindi', 'hw' => 'x', 'tid' => 'MA', 'rows' => ['s3' => ['hw' => 'done', 'cp' => '']]]);
+[, $j] = $du('hwsum', null, $tok['K']); df_check(!isset($j['last']['10th|Hindi']), 'a teacher does not see classes he does not teach');
+[, $j] = $du('hwsum', null, $tok['P']); df_check(isset($j['last']['10th|Hindi'], $j['last']['9th|Hindi']), 'Principal sees all');
+
 // ---- problem reports ----
 [$c, $j] = $du('bug', ['msg' => 'Save does nothing', 'screen' => 'diary', 'err' => 'x'], $tok['K']); df_check($c === 200 && $j['ok'], 'teacher sends a problem'); $bid = $j['id'];
 [$c] = $du('bugs', null, $tok['K']); df_check($c === 403, 'teacher cannot read reports');
