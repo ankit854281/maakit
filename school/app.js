@@ -397,9 +397,25 @@ function absentAt(date, t, b) { const f = absentFrom(date, t); return f !== null
 function busyAt(date, x, b) { const d = dayIdx(date); const q = d < 0 ? null : teacherAt(x, d, b); return !!q && !examBlocks(date, q.c); }
 // One day's arrangement. load = arrangement bells each teacher already did this month (fair sharing).
 // The Principal can fix a substitute for a bell: staffAtt[date].subs['absentTid|bell'] = tid, or '-' for "nobody".
+// Wing rule (owner, 27 Nov 2026: "1st to 5th ke teacher 6 to 10 ka class nahi le sakte, fir bhi arrangement lag jata hai").
+// Wing 0 = PG/LKG/UKG, 1 = 1st–5th, 2 = 6th–10th. A teacher's wings = classes they teach in the timetable. A teacher takes an
+// arrangement only in their own wing or a lower one (a 6–10 teacher may take 1–5, a 1–5 teacher never takes 6–10). A teacher
+// with no class in the timetable (Sports / Duty teacher) may take any class. Order: same wing first, then the Duty teacher,
+// then a teacher of a higher wing. Same rule in teacher.js and academics_schedule.php — change all three together.
+function clsWing(c) { const s = String(c || '').trim().toUpperCase(); if (/^(PG|PRE|NUR|LKG|UKG)/.test(s)) return 0; const n = parseInt(s, 10); return n > 0 ? (n <= 5 ? 1 : 2) : null; }
+function wingMap() {
+  const placed = new Set(), W = {};
+  Object.values(S.grid || {}).forEach(w => (w || []).forEach(day => (day || []).forEach(i => { if (i !== null && i !== '' && +i >= 0) placed.add(+i); })));
+  (S.alloc || []).forEach((a, i) => { if (!a || !a.t || !((+a.n || 0) > 0 || placed.has(i))) return; const k = clsWing(a.c); if (k !== null) (W[a.t] = W[a.t] || new Set()).add(k); });
+  return W;
+}
+function isDutyT(x) { const L = (S.settings || {}).dutyTeachers; return Array.isArray(L) ? L.includes(x) : /\badarsh\b/i.test(((S.teachers || {})[x] || {}).name || ''); }
+function wingOk(W, x, cls) { const ws = W[x], cw = clsWing(cls); return !ws || !ws.size || cw === null || Math.max(...ws) >= cw; }
+function wingScore(W, x, cls) { const ws = W[x], cw = clsWing(cls); if (ws && ws.size && cw !== null) return ws.has(cw) ? 20 : 4; return isDutyT(x) ? 12 : 0; }
 function arrangementBase(date, load) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const absent = staffAbsent(date), ov = (S.staffAtt[date] && S.staffAtt[date].subs) || {}, extra = {}, need = [];
+  const W = wingMap();
   absent.forEach(t => BELLS.forEach((b, i) => {
     if (!absentAt(date, t, i)) return;
     const a = teacherAt(t, d, i); if (!a || examBlocks(date, a.c)) return;
@@ -407,9 +423,9 @@ function arrangementBase(date, load) {
   }));
   const taken = i => need.filter(n => n.bell === i && n.sub).map(n => n.sub);
   const canTake = (x, n) => x !== n.absent && !absentAt(date, x, n.bell) && !busyAt(date, x, n.bell) && !taken(n.bell).includes(x)
-    && (!S.teachers[x].bells || S.teachers[x].bells.includes(n.bell));
+    && (!S.teachers[x].bells || S.teachers[x].bells.includes(n.bell)) && wingOk(W, x, n.cls);
   const dayLoad = x => BELLS.filter((_, j) => busyAt(date, x, j)).length;
-  const score = (x, n) => { let s = 0;
+  const score = (x, n) => { let s = wingScore(W, x, n.cls);
     if (S.alloc.some(q => q.t === x && q.s === n.subj)) s += 5;          // same subject
     if (S.alloc.some(q => q.t === x && q.c === n.cls)) s += 2;           // knows the class
     s -= (extra[x] || 0) * 3 + (load[x] || 0) * 0.8 + dayLoad(x) * 0.3;   // share the work fairly

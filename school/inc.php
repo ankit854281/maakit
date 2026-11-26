@@ -222,7 +222,8 @@ function sch_can_write(array $u, string $k, string $r, $d, bool $isDelete): bool
             if (count($p) !== 2) return false;
             static $classes = null; $classes ??= (array)sch_rec_get('classes', 'main');
             foreach ($classes as $c) if (($c['c'] ?? '') === $p[1] && ($c['ct'] ?? '') === $tid) return true;
-            return false;
+            // Owner, 27 Nov 2026: the Duty (sports) teacher marks TODAY's attendance of a class whose class teacher is absent.
+            return $p[0] === date('Y-m-d') && sch_is_duty($tid) && sch_ct_absent($p[0], $p[1]);
         case 'syl':
             return sch_teaches($tid, $p[0] ?? '', $p[1] ?? '');
         case 'marks':
@@ -263,6 +264,25 @@ function sch_default_fee_caller(string $tid): bool { return sch_is_rati($tid) ||
 // Owner, 25 Nov 2026: "teacher app se he maam ka sabhi work" — Rati Ma'am is Coordinator + Reception/Fee Calling + Data Entry,
 // all from her one Teacher App login (switch at the top). Data Entry / Staff attendance / Fee Control Room accept her teacher login.
 function sch_office_teacher(array $u): bool { return ($u['role'] ?? '') === 'teacher' && sch_is_rati((string)($u['tid'] ?? '')); }
+/** Duty teacher (owner, 27 Nov 2026: "sport teacher free rahte hain — absent teacher ki class ki attendance, arrangement bell,
+ *  absent bachchon aur homework na karne walon ko message"): settings.dutyTeachers; not saved → Adarsh Dubey Sir (name "Adarsh"). */
+function sch_is_duty(string $tid): bool {
+    if ($tid === '') return false;
+    $L = (sch_rec_get('settings', 'main') ?? [])['dutyTeachers'] ?? null;
+    return is_array($L) ? in_array($tid, $L, true) : (bool)preg_match('/\badarsh\b/i', sch_teacher_name($tid));
+}
+/** The class teacher of $cls is absent on $date (Staff Attendance or an approved leave). */
+function sch_ct_absent(string $date, string $cls): bool {
+    $ct = '';
+    foreach ((array)sch_rec_get('classes', 'main') as $c) if (($c['c'] ?? '') === $cls) { $ct = (string)($c['ct'] ?? ''); break; }
+    if ($ct === '') return false;
+    $sa = sch_rec_get('staffAtt', $date) ?? [];
+    if (in_array($ct, (array)($sa['absent'] ?? []), true)) return true;
+    $q = sch_db()->query("SELECT d FROM sch_records WHERE k='leave' AND deleted=0");
+    foreach ($q as $row) { $l = json_decode((string)$row['d'], true);
+        if (is_array($l) && ($l['tid'] ?? '') === $ct && ($l['status'] ?? '') === 'Approved' && ($l['from'] ?? '') <= $date && ($l['to'] ?? '') >= $date) return true; }
+    return false;
+}
 function sch_hw_sharer(string $tid): bool {
     $L = (sch_rec_get('settings', 'main') ?? [])['hwSharers'] ?? null;
     return is_array($L) ? in_array($tid, $L, true) : sch_is_rati($tid);

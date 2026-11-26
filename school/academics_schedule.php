@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Same timetable/arrangement rules as app.js. No new assignment store.
-function ac_schedule_data(): array {return ['classes'=>sch_rec_get('classes','main')??[],'grid'=>sch_rec_get('grid','main')??[],'alloc'=>sch_rec_get('alloc','main')??[],'teachers'=>ac_rows('teacher'),'staff'=>ac_rows('staffAtt'),'leave'=>ac_rows('leave'),'calendar'=>ac_rows('cal'),'exams'=>sch_rec_get('exams','main')??[]];}
+function ac_schedule_data(): array {return ['classes'=>sch_rec_get('classes','main')??[],'grid'=>sch_rec_get('grid','main')??[],'alloc'=>sch_rec_get('alloc','main')??[],'teachers'=>ac_rows('teacher'),'staff'=>ac_rows('staffAtt'),'leave'=>ac_rows('leave'),'calendar'=>ac_rows('cal'),'exams'=>sch_rec_get('exams','main')??[],'settings'=>sch_rec_get('settings','main')??[]];}
 // A nonempty grid can still be partial. Explicit -1 is the timetable's Self Study slot.
 function ac_timetable_ready(array $data): bool {
     $classes=array_unique(array_merge(array_column($data['classes']??[],'c'),array_column($data['alloc'],'c')));
@@ -32,16 +32,26 @@ function ac_regular(string $date,array $data): array {
     if(!ac_school_day($date,$data))return [];$dow=(int)(new DateTimeImmutable($date))->format('N')-1;$out=[];
     foreach($data['grid'] as $cls=>$week){if(!ac_school_day($date,$data,(string)$cls))continue;foreach($week[$dow]??[] as $bell=>$idx)if(is_numeric($idx)&&(int)$idx>=0&&isset($data['alloc'][(int)$idx])){$a=$data['alloc'][(int)$idx];$out[]=['bell'=>(int)$bell,'cls'=>(string)$a['c'],'subj'=>(string)$a['s'],'tid'=>(string)$a['t'],'arr'=>false];}}return $out;
 }
+// Wing rule (owner, 27 Nov 2026) — same as app.js / teacher.js clsWing, wingMap, wingOk, wingScore. Change all three together.
+function ac_cls_wing(string $c): ?int {$s=strtoupper(trim($c));if(preg_match('/^(PG|PRE|NUR|LKG|UKG)/',$s))return 0;$n=(int)$s;return $n>0?($n<=5?1:2):null;}
+function ac_wings(array $data): array {
+    $placed=[];foreach((array)$data['grid'] as $week)foreach((array)$week as $day)foreach((array)$day as $idx)if(is_numeric($idx)&&(int)$idx>=0)$placed[(int)$idx]=true;
+    $w=[];foreach((array)$data['alloc'] as $i=>$a){$t=(string)($a['t']??'');if($t===''||!((float)($a['n']??0)>0||isset($placed[$i])))continue;$k=ac_cls_wing((string)($a['c']??''));if($k!==null)$w[$t][$k]=true;}
+    return $w;
+}
+function ac_wing_ok(array $W,string $tid,string $cls): bool {$cw=ac_cls_wing($cls);if(empty($W[$tid])||$cw===null)return true;return max(array_keys($W[$tid]))>=$cw;}
+function ac_wing_score(array $W,string $tid,string $cls,array $data): float {$cw=ac_cls_wing($cls);if(!empty($W[$tid])&&$cw!==null)return isset($W[$tid][$cw])?20:4;return ac_is_duty($tid,$data)?12:0;}
+function ac_is_duty(string $tid,array $data): bool {$L=($data['settings']??[])['dutyTeachers']??null;return is_array($L)?in_array($tid,$L,true):(bool)preg_match('/\badarsh\b/i',(string)($data['teachers'][$tid]['name']??''));}
 function ac_arrange(string $date,array $data,array $load=[]): array {
-    $regular=ac_regular($date,$data);$staff=$data['staff'][$date]??[];$absent=$staff['absent']??[];
+    $regular=ac_regular($date,$data);$W=ac_wings($data);$staff=$data['staff'][$date]??[];$absent=$staff['absent']??[];
     foreach($data['leave'] as $l)if(($l['status']??'')==='Approved'&&($l['from']??'')<=$date&&($l['to']??'')>=$date&&!in_array($l['tid'],$absent,true))$absent[]=$l['tid'];
     $absent=array_values(array_unique($absent));sort($absent,SORT_STRING);
     $need=[];foreach($absent as $tid)foreach(range(0,6) as $bell)foreach($regular as $b)if($b['bell']===$bell&&($b['tid']===$tid&&($from=ac_absent_from($date,$tid,$data))!==null&&$b['bell']>=$from))$need[]=$b+['absent'=>$tid,'sub'=>null,'manual'=>false];
     $extra=[];
     $busy=function(string $tid,int $bell)use($regular){foreach($regular as $b)if($b['tid']===$tid&&$b['bell']===$bell)return true;return false;};
-    $can=function(string $tid,array $n)use($date,$data,$busy,&$need){$from=ac_absent_from($date,$tid,$data);if($tid===$n['absent']||($from!==null&&$n['bell']>=$from)||$busy($tid,$n['bell']))return false;foreach($need as $other)if($other['bell']===$n['bell']&&$other['sub']===$tid)return false;$bells=$data['teachers'][$tid]['bells']??null;return $bells===null||in_array($n['bell'],$bells,true);};
+    $can=function(string $tid,array $n)use($date,$data,$busy,&$need,$W){$from=ac_absent_from($date,$tid,$data);if($tid===$n['absent']||($from!==null&&$n['bell']>=$from)||$busy($tid,$n['bell']))return false;foreach($need as $other)if($other['bell']===$n['bell']&&$other['sub']===$tid)return false;$bells=$data['teachers'][$tid]['bells']??null;return ($bells===null||in_array($n['bell'],$bells,true))&&ac_wing_ok($W,(string)$tid,(string)$n['cls']);};
     foreach($need as &$n){$override=$staff['subs'][$n['absent'].'|'.$n['bell']]??null;if($override==='-')$n['manual']=true;elseif($override&&isset($data['teachers'][$override])&&$can($override,$n)){$n['sub']=$override;$n['manual']=true;$extra[$override]=($extra[$override]??0)+1;}}unset($n);
-    foreach($need as &$n){if($n['manual'])continue;$pool=[];foreach(array_keys($data['teachers']) as $tid){if(!$can((string)$tid,$n))continue;$score=0;$same=false;$knows=false;foreach($data['alloc'] as $a)if($a['t']===$tid){if($a['s']===$n['subj'])$same=true;if($a['c']===$n['cls'])$knows=true;}$score+=($same?5:0)+($knows?2:0);$dayLoad=count(array_filter($regular,fn($b)=>$b['tid']===$tid));$score-=($extra[$tid]??0)*3+($load[$tid]??0)*.8+$dayLoad*.3;if($tid==='P')$score-=4;if(in_array($tid,['RI','SH','MO'],true))$score-=10;$pool[]=['tid'=>$tid,'score'=>$score];}usort($pool,fn($a,$b)=>($b['score']<=>$a['score'])?:strcmp((string)$a['tid'],(string)$b['tid']));if($pool){$n['sub']=$pool[0]['tid'];$extra[$n['sub']]=($extra[$n['sub']]??0)+1;}}unset($n);
+    foreach($need as &$n){if($n['manual'])continue;$pool=[];foreach(array_keys($data['teachers']) as $tid){if(!$can((string)$tid,$n))continue;$score=ac_wing_score($W,(string)$tid,(string)$n['cls'],$data);$same=false;$knows=false;foreach($data['alloc'] as $a)if($a['t']===$tid){if($a['s']===$n['subj'])$same=true;if($a['c']===$n['cls'])$knows=true;}$score+=($same?5:0)+($knows?2:0);$dayLoad=count(array_filter($regular,fn($b)=>$b['tid']===$tid));$score-=($extra[$tid]??0)*3+($load[$tid]??0)*.8+$dayLoad*.3;if($tid==='P')$score-=4;if(in_array($tid,['RI','SH','MO'],true))$score-=10;$pool[]=['tid'=>$tid,'score'=>$score];}usort($pool,fn($a,$b)=>($b['score']<=>$a['score'])?:strcmp((string)$a['tid'],(string)$b['tid']));if($pool){$n['sub']=$pool[0]['tid'];$extra[$n['sub']]=($extra[$n['sub']]??0)+1;}}unset($n);
     return $need;
 }
 function ac_bells(string $date,array $data): array {

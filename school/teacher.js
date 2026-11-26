@@ -297,14 +297,30 @@ function absentFrom(date, t) {
 function absentAt(date, t, b) { const f = absentFrom(date, t); return f !== null && b >= f; }
 function busyAt(date, x, b) { const d = dayIdx(date); const q = d < 0 ? null : teacherAt(x, d, b); return !!q && !examBlocks(date, q.c) && !actBlocks(date, q.c, b); }
 // Arrangement: copied from app.js (arrangementBase / monthLoad) so a substitute sees the bells given to them. Change both together.
+// Wing rule (owner, 27 Nov 2026: "1st to 5th ke teacher 6 to 10 ka class nahi le sakte, fir bhi arrangement lag jata hai").
+// Wing 0 = PG/LKG/UKG, 1 = 1st–5th, 2 = 6th–10th. A teacher's wings = classes they teach in the timetable. A teacher takes an
+// arrangement only in their own wing or a lower one (a 6–10 teacher may take 1–5, a 1–5 teacher never takes 6–10). A teacher
+// with no class in the timetable (Sports / Duty teacher) may take any class. Order: same wing first, then the Duty teacher,
+// then a teacher of a higher wing. Same rule in app.js and academics_schedule.php — change all three together.
+function clsWing(c) { const s = String(c || '').trim().toUpperCase(); if (/^(PG|PRE|NUR|LKG|UKG)/.test(s)) return 0; const n = parseInt(s, 10); return n > 0 ? (n <= 5 ? 1 : 2) : null; }
+function wingMap() {
+  const placed = new Set(), W = {};
+  Object.values(S.grid || {}).forEach(w => (w || []).forEach(day => (day || []).forEach(i => { if (i !== null && i !== '' && +i >= 0) placed.add(+i); })));
+  (S.alloc || []).forEach((a, i) => { if (!a || !a.t || !((+a.n || 0) > 0 || placed.has(i))) return; const k = clsWing(a.c); if (k !== null) (W[a.t] = W[a.t] || new Set()).add(k); });
+  return W;
+}
+function isDutyT(x) { const L = (S.settings || {}).dutyTeachers; return Array.isArray(L) ? L.includes(x) : /\badarsh\b/i.test(((S.teachers || {})[x] || {}).name || ''); }
+function wingOk(W, x, cls) { const ws = W[x], cw = clsWing(cls); return !ws || !ws.size || cw === null || Math.max(...ws) >= cw; }
+function wingScore(W, x, cls) { const ws = W[x], cw = clsWing(cls); if (ws && ws.size && cw !== null) return ws.has(cw) ? 20 : 4; return isDutyT(x) ? 12 : 0; }
 function arrangementBase(date, load) {
   const d = dayIdx(date); if (d < 0 || !S.grid || holidayOn(date)) return [];
   const absent = staffAbsent(date), ov = (S.staffAtt[date] && S.staffAtt[date].subs) || {}, extra = {}, need = [];
+  const W = wingMap();
   absent.forEach(t => BELLS.forEach((b, i) => { if (!absentAt(date, t, i)) return; const a = teacherAt(t, d, i); if (!a || examBlocks(date, a.c) || actBlocks(date, a.c, i)) return; need.push({ bell: i, cls: a.c, subj: a.s, absent: t }); }));
   const taken = i => need.filter(n => n.bell === i && n.sub).map(n => n.sub);
-  const canTake = (x, n) => x !== n.absent && !absentAt(date, x, n.bell) && !busyAt(date, x, n.bell) && !taken(n.bell).includes(x) && (!S.teachers[x].bells || S.teachers[x].bells.includes(n.bell));
+  const canTake = (x, n) => x !== n.absent && !absentAt(date, x, n.bell) && !busyAt(date, x, n.bell) && !taken(n.bell).includes(x) && (!S.teachers[x].bells || S.teachers[x].bells.includes(n.bell)) && wingOk(W, x, n.cls);
   const dayLoad = x => BELLS.filter((_, j) => busyAt(date, x, j)).length;
-  const score = (x, n) => { let s = 0; if (S.alloc.some(q => q.t === x && q.s === n.subj)) s += 5; if (S.alloc.some(q => q.t === x && q.c === n.cls)) s += 2;
+  const score = (x, n) => { let s = wingScore(W, x, n.cls); if (S.alloc.some(q => q.t === x && q.s === n.subj)) s += 5; if (S.alloc.some(q => q.t === x && q.c === n.cls)) s += 2;
     s -= (extra[x] || 0) * 3 + (load[x] || 0) * 0.8 + dayLoad(x) * 0.3; if (x === 'P') s -= 4; if (['RI', 'SH', 'MO'].includes(x)) s -= 10; return s; };
   need.forEach(n => { const w = ov[n.absent + '|' + n.bell]; n.sub = null; n.manual = false; if (w === '-') n.manual = true; else if (w && S.teachers[w] && canTake(w, n)) { n.sub = w; n.manual = true; extra[w] = (extra[w] || 0) + 1; } });
   need.forEach(n => { if (n.manual) return; const pool = Object.keys(S.teachers).filter(x => canTake(x, n)).sort((x, y) => score(y, n) - score(x, n) || (x < y ? -1 : x > y ? 1 : 0)); n.sub = pool[0] || null; if (n.sub) extra[n.sub] = (extra[n.sub] || 0) + 1; });
@@ -349,9 +365,9 @@ function go(tab, p) { TAB = tab; P = p || {}; store.set('ta_tab', tab); SHEET = 
 function render() {
   if (!S) return loginView();
   allocSync();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord, hwshare: (typeof vHwShare === 'function' ? vHwShare : vHome), support: (typeof vSupport === 'function' ? vSupport : vHome) };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord, hwshare: (typeof vHwShare === 'function' ? vHwShare : vHome), support: (typeof vSupport === 'function' ? vSupport : vHome), duty: (typeof vDuty === 'function' ? vDuty : vHome), bugs: (typeof vBugs === 'function' ? vBugs : vHome) };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord', 'hwshare', 'support'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord', 'hwshare', 'support', 'duty', 'bugs'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);

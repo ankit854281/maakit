@@ -240,7 +240,8 @@ case 'photos': {
     // Small photos of one class for the attendance cards. Thumbnails (112 px JPEG) are made once with GD and kept
     // as kind phoThumb keyed by the image hash ('pho' prefix: never in legacy load/sync). No GD: the original is sent.
     $cls = (string)($_GET['cls'] ?? '');
-    if ($cls === '' || !$canSee($cls)) sch_fail('You can see only your own classes.', 403);
+    // Owner, 27 Nov 2026: the Duty teacher marking attendance of a class whose class teacher is absent today sees its photos too.
+    if ($cls === '' || !($canSee($cls) || ($role === 'teacher' && sch_is_duty($tid) && sch_ct_absent(date('Y-m-d'), $cls)))) sch_fail('You can see only your own classes.', 403);
     $out = [];
     foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) {
         $s = json_decode((string)$row['d'], true); if (!is_array($s) || ($s['cls'] ?? '') !== $cls) continue;

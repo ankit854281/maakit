@@ -28,7 +28,11 @@ function cwTodayCard() {
   const d = todayISO(); if (dayIdx(d) < 0 || holidayOn(d)) return '';
   const bells = myBells(d), arr = bells.filter(b => b.arr), parts = [];
   if (arr.length) parts.push(`<h4 class="cwh">🔁 Arrangement today <small>${arr.length} period${arr.length > 1 ? 's' : ''}</small></h4>` + arr.map(b => { const w = cwWhatToTeach(b.cls, b.subj, b.for), e = diaryEntry(d, b.bell);
-    return `<div class="cwr"><div><b>${esc(BELLS[b.bell].n)} bell · Class ${esc(b.cls)} · ${esc(b.subj)}</b><small>For ${esc((S.teachers[b.for] || {}).name || b.for || 'absent teacher')}${e ? ' · ✓ diary written' : ''}</small>
+    // Owner, 27 Nov 2026 ("arrangement bell na samajh aane ke wajah se random class chal raha hai"): the slip says WHEN (bell time),
+    // whether it is running now, and has "✅ I am in the class" (duty_api.php ?a=reach) so the Duty teacher sees who reached.
+    const B = BELLS[b.bell] || {}, nm = nowMin(), st = B.s ? toMin(B.s) : 0, en = B.e ? toMin(B.e) : 0, now = nm >= st && nm < en, soon = nm >= st - 10 && nm < st, rc = typeof dutyReached === 'function' ? dutyReached(d, b.bell, b.cls) : null;
+    return `<div class="cwr${now ? ' cw-now' : soon ? ' cw-soon' : ''}"><div><b>🔔 ${esc(B.n || '')} bell · ${B.s ? esc(t12(B.s)) + '–' + esc(t12(B.e)) : ''}</b><b>Class ${esc(b.cls)} · ${esc(b.subj)}</b>${now ? '<span class="pill bad">Now — go to Class ' + esc(b.cls) + '</span>' : soon ? '<span class="pill warn">Starts soon</span>' : ''}<small>In place of ${esc((S.teachers[b.for] || {}).name || b.for || 'absent teacher')}${e ? ' · ✓ diary written' : ''}${rc ? ' · ✅ reached class' : ''}</small>
+      ${typeof dutyReachBtn === 'function' && nm >= st - 10 && nm < en + 30 ? dutyReachBtn(d, b.bell, b.cls, rc) : ''}
       ${w ? `<p>📖 <b>Teach:</b> ${esc(w.topic)} <span class="mut">(${esc(w.src)})</span><br>✍️ <b>Class work:</b> Notes and questions on ${esc(w.topic.replace(/^Revision: /, ''))}<br>🏠 <b>Homework:</b> Read it again and write 5 question-answers</p>` : '<p class="mut">No syllabus yet for this class + subject — revise the last lesson.</p>'}</div>
       <button class="btn s ${e ? 'l' : 'go'}" onclick="go('diary',{date:'${d}'})">${e ? 'Open' : 'Write diary'}</button></div>`; }).join(''));
   const chk = []; allocList().forEach(a => { const due = dueHomework(d, a.c, a.s); if (due.length) chk.push({ a, n: due.length }); });

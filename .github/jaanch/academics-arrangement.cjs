@@ -31,6 +31,35 @@ for(const scenario of ['full','half','manual','leave','holiday','exam','empty-wi
   assert.deepEqual(normalize(actual),normalize(expected),scenario+' '+date);count++;
  }
 }
+// Wing rule (owner, 27 Nov 2026): a 1st–5th teacher never gets a 6th–10th class; a 6th–10th teacher may take 1st–5th;
+// the Duty (sports) teacher with no class may take any class and comes before a senior-wing teacher.
+{
+ const wAlloc=[{c:'6th',s:'Maths',t:'S6'},{c:'3rd',s:'EVS',t:'J3'},{c:'7th',s:'Science',t:'S7'},{c:'2nd',s:'Hindi',t:'J2'}];
+ const row=i=>Array.from({length:6},()=>[i,-1,-1,-1,-1,-1,-1]);
+ const wGrid={'6th':row(0),'3rd':row(1),'7th':Array.from({length:6},()=>[-1,2,-1,-1,-1,-1,-1]),'2nd':Array.from({length:6},()=>[-1,-1,3,-1,-1,-1,-1])};
+ const check=(absent,teachers,expectSub,label)=>{
+  const date='2026-10-20',staff={[date]:{absent,from:{},subs:{}}},state={teachers,alloc:wAlloc,grid:wGrid,staffAtt:staff,leaves:[],cal:[],exams:[],settings:{}};
+  context.fixture=state;vm.runInContext('S=fixture;CLASS_NAMES=Object.keys(S.grid)',context);
+  const js=JSON.parse(vm.runInContext(`JSON.stringify(arrangementBase('${date}',{}))`,context)).filter(x=>x.bell===0);
+  const data={grid:wGrid,alloc:wAlloc,teachers:Object.fromEntries(Object.entries(teachers).sort()),staff,leave:[],calendar:[],exams:[],settings:{}};
+  const run=spawnSync(process.argv[2]||'php',[path.join(__dirname,'academics-arrangement-driver.inc')],{input:JSON.stringify({date,data}),encoding:'utf8'});
+  assert.equal(run.status,0,run.stderr||run.stdout);const php=JSON.parse(run.stdout).filter(b=>b.arr&&b.bell===0);
+  for(const [cls,sub] of Object.entries(expectSub)){
+   const j=js.find(x=>x.cls===cls);assert.ok(j,label+': JS slip for '+cls);assert.equal(j.sub,sub,label+' JS '+cls);
+   const p=php.find(x=>x.cls===cls);if(sub===null)assert.equal(p,undefined,label+' PHP '+cls);else assert.equal(p&&p.tid,sub,label+' PHP '+cls);
+  }
+  count++;
+ };
+ // 6th teacher absent at bell 0: only the 1st–5th teachers J2 (free at bell 0) is free → nobody (junior never takes senior).
+ check(['S6'],{S6:{},J3:{},J2:{},S7:{}},{'6th':'S7'},'6th absent, 7th teacher free');
+ check(['S6','S7'],{S6:{},J3:{},J2:{},S7:{}},{'6th':null},'6th absent, only a 1st–5th teacher free');
+ // 3rd teacher absent: 1st–5th J2 first, then the Duty teacher, then a senior.
+ check(['J3'],{S6:{},J3:{},J2:{},S7:{},AD:{name:'Adarsh Dubey Sir'}},{'3rd':'J2'},'3rd absent, same wing free');
+ check(['J3','J2'],{S6:{},J3:{},J2:{},S7:{},AD:{name:'Adarsh Dubey Sir'}},{'3rd':'AD'},'3rd absent, Duty teacher before senior');
+ check(['J3','J2'],{S6:{},J3:{},J2:{},S7:{}},{'3rd':'S7'},'3rd absent, a senior may take it');
+ // Duty teacher may take a senior class too.
+ check(['S6','S7'],{S6:{},J3:{},J2:{},S7:{},AD:{name:'Adarsh Dubey Sir'}},{'6th':'AD'},'6th absent, Duty teacher');
+}
 // A daily plan, even with zero days, must be rejected before reading the obsolete form.
 const submit=src.slice(src.indexOf('function lpSubmit('),src.indexOf('function vLessonPlans('));
 const guard=vm.createContext({document:{getElementById(){throw Error('Obsolete form read');}},toast(){},S:{lplan:{}},U:{tid:'RI'},lpKey:(...a)=>a.join('|')});vm.runInContext(submit,guard);
