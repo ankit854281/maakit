@@ -276,7 +276,7 @@ const path = require('node:path');
     assert.match(await page.locator('.cr-hw').innerText(), /Check test homework/);
     assert.equal(await page.locator('.tile.cr-t').count(), 12);
     await page.locator('.tile.cr-t:not([disabled])').nth(2).click();
-    assert.match(await page.locator('.cr-cnt').innerText(), /1 not done/);
+    assert.match(await page.locator('.cr-cnt .t-red').innerText(), /^\s*1\s*Not done/i);
     await page.locator('.cr-check .sticky .btn.go').click();
     await page.getByText(/Saved/).first().waitFor();
     await page.locator('.cr-list').waitFor();

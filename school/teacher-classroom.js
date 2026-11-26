@@ -33,18 +33,31 @@ async function crMark(date, type, sid, subj) {
 }
 function crRoll(c, s) { const i = studentsOf(c).findIndex(x => x.id === s.id); return s.rollno || (i + 1); }
 function crSign() { return `— ${myName()}, ${(S.settings && S.settings.school) || ''}`; }
-// One row = child + why + WhatsApp + ✓ sent. items: [{s, c, why, text, subj}]
-function crMsgList(date, type, items, emptyTxt) {
-  if (!items.length) return `<div class="card"><p class="mut" style="margin:0">${emptyTxt}</p></div>`;
-  const unsent = items.filter(x => x.s.phone && !crSent(date, type, x.s.id, x.subj));
-  const nx = unsent[0];
+// ---- shared look (27 Nov 2026, owner: "make more improve in design and format") ----
+// tabs = one segmented bar in the tab colour; stats = coloured count cards (red / amber / violet / green);
+// lists = avatar, name, coloured reason pill, round WhatsApp button, a sent-progress bar and "Send next" at the bottom.
+function crTabs(items, cur, js) {
+  return `<div class="cr-tabs" role="tablist">${items.map(([k, i, l, badge]) => `<button role="tab" aria-selected="${k === cur}" class="${k === cur ? 'on' : ''}" onclick="${js(k)}">${ic(i)}<span>${l}</span>${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div>`;
+}
+function crStats(items, cur, js) {
+  return `<div class="cr-sum">${items.map(([k, l, n, tone, sub]) => `<button class="t-${tone} ${k === cur ? 'on' : ''}" onclick="${js(k)}"><b>${n}</b><span>${l}</span>${sub ? `<small>${sub}</small>` : ''}</button>`).join('')}</div>`;
+}
+function crEmpty(icon, title, sub) { return `<div class="card cr-empty"><div class="ei">${icon}</div><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>`; }
+function crHead(title, sub) { return `<div class="cr-head"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>`; }
+function crAva(s) { const ph = needPhotos(s.cls || ''), pic = ph && ph[s.id]; return `<span class="cr-av">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : esc(initials(s.name))}</span>`; }
+// One row = child + why + WhatsApp + ✓ sent. items: [{s, c, why, tone, text, subj}]
+function crMsgList(date, type, items, emptyTitle, emptySub) {
+  if (!items.length) return crEmpty('🎉', emptyTitle, emptySub);
+  const withPhone = items.filter(x => x.s.phone), sent = withPhone.filter(x => crSent(date, type, x.s.id, x.subj)), unsent = withPhone.filter(x => !crSent(date, type, x.s.id, x.subj));
+  const nx = unsent[0], pct = withPhone.length ? Math.round(sent.length / withPhone.length * 100) : 100;
   return `<div class="card cr-list">
-    <div class="cr-lh"><b>${items.length} ${items.length > 1 ? 'children' : 'child'}</b><span class="pill ${unsent.length ? 'warn' : 'ok'}">${unsent.length ? unsent.length + ' message' + (unsent.length > 1 ? 's' : '') + ' to send' : '✓ all sent'}</span></div>
-    ${nx ? `<a class="btn go full" target="_blank" rel="noopener" href="${wa(nx.s.phone, nx.text)}" onclick="crMark('${date}','${type}',${jsq(nx.s.id)},${jsq(nx.subj || '')})">${ic('wa')} Send next — ${esc(nx.s.name)}</a>` : ''}
+    <div class="cr-prog"><div><b>${sent.length}/${withPhone.length}</b> parents told</div><span class="pill ${unsent.length ? 'warn' : 'ok'}">${unsent.length ? unsent.length + ' left' : '✓ all sent'}</span></div>
+    <div class="cr-bar"><i style="width:${pct}%"></i></div>
     ${items.map(x => { const ok = crSent(date, type, x.s.id, x.subj);
-      return `<div class="cr-row ${ok ? 'sent' : ''}"><div class="n"><b>${esc(x.s.name)}</b><small>Class ${esc(x.c)} · Roll ${esc(crRoll(x.c, x.s))}${x.subj ? ' · ' + esc(x.subj) : ''}</small><small class="why">${x.why}</small></div>
-        ${x.s.phone ? `<a class="btn s ${ok ? 'l' : 'wa'}" target="_blank" rel="noopener" href="${wa(x.s.phone, x.text)}" onclick="crMark('${date}','${type}',${jsq(x.s.id)},${jsq(x.subj || '')})">${ok ? '✓ Sent' : ic('wa') + ' Send'}</a>` : '<small class="mut">No mobile</small>'}</div>`; }).join('')}
-    <p class="mut" style="font-size:11px;margin:8px 0 0">Each message goes to the parent alone — never to the class group.</p></div>`;
+      return `<div class="cr-row ${ok ? 'sent' : ''}">${crAva(x.s)}<div class="n"><b>${esc(x.s.name)}</b><small>Class ${esc(x.c)} · Roll ${esc(crRoll(x.c, x.s))}${x.subj ? ' · ' + esc(x.subj) : ''}</small><span class="cr-why t-${x.tone || 'red'}">${x.why}</span></div>
+        ${x.s.phone ? (ok ? `<a class="cr-sentb" target="_blank" rel="noopener" href="${wa(x.s.phone, x.text)}" onclick="crMark('${date}','${type}',${jsq(x.s.id)},${jsq(x.subj || '')})" aria-label="Send again">✓ Sent</a>` : `<a class="cr-wab" target="_blank" rel="noopener" href="${wa(x.s.phone, x.text)}" onclick="crMark('${date}','${type}',${jsq(x.s.id)},${jsq(x.subj || '')})" aria-label="WhatsApp ${esc(x.s.name)}'s parent">${ic('wa')}</a>`) : '<small class="mut">No mobile</small>'}</div>`; }).join('')}
+    ${nx ? `<div class="cr-next"><a class="btn wa full" target="_blank" rel="noopener" href="${wa(nx.s.phone, nx.text)}" onclick="crMark('${date}','${type}',${jsq(nx.s.id)},${jsq(nx.subj || '')})">${ic('wa')} Send next · ${esc(nx.s.name)} <small>(${sent.length + 1}/${withPhone.length})</small></a></div>` : ''}
+    <p class="cr-foot">🔒 Each message goes to the parent alone — never to the class group.</p></div>`;
 }
 
 // ---------------------------------------------------------------- ATTENDANCE
@@ -71,25 +84,24 @@ function crAttText(kind, s, c, x) {
 function crDays(ds) { return ds.slice().reverse().map(d => fmtDate(d).replace(/^\w+,?\s*/, '')).join(', '); }
 function vAttRep(c) {
   needStats(c); const D = crAttData(c), f = ['today', 'abs3', 'low'].includes(P.f) ? P.f : 'today', date = D.t;
-  const chips = [['today', 'Today absent', D.today ? D.today.length : '—'], ['abs3', '3 days in a row', D.d3.length === 3 ? D.three.length : '—'], ['low', 'Below 75%', D.low.length]];
-  const head = `<div class="cr-sum">${chips.map(([k, l, n]) => `<button class="${k === f ? 'on' : ''} ${k}" onclick="go('att',{c:${jsq(c)},m:'rep',f:'${k}'})"><b>${n}</b><span>${l}</span></button>`).join('')}</div>`;
+  const head = crHead('Class ' + esc(c) + ' · ' + D.list.length + ' students', esc(fmtLong(date))) + crStats([['today', 'Absent today', D.today ? D.today.length : '—', 'red'], ['abs3', '3 days in a row', D.d3.length === 3 ? D.three.length : '—', 'amber'], ['low', 'Below 75%', D.low.length, 'violet']], f, k => `go('att',{c:${jsq(c)},m:'rep',f:'${k}'})`);
   if (f === 'today') {
-    if (!D.today) return head + `<div class="ban warn"><div><b>Today's attendance is not marked yet.</b><br><button class="btn s go" style="margin-top:6px" onclick="go('att',{c:${jsq(c)},m:'day'})">Mark attendance</button></div></div>`;
-    return head + crMsgList(date, 'abs', D.today.map(s => ({ s, c, why: ((D.a.st || {})[s.id] === 'L' ? 'On leave today' : 'Absent today'), text: crAttText('abs', s, c, {}) })), `Everyone is present today in Class ${esc(c)} 👍`);
+    if (!D.today) return head + `<div class="card cr-empty"><div class="ei">🕘</div><b>Today's attendance is not marked yet</b><small>Mark it first — this list fills by itself.</small><button class="btn go" style="margin-top:10px" onclick="go('att',{c:${jsq(c)},m:'day'})">Mark attendance</button></div>`;
+    return head + crMsgList(date, 'abs', D.today.map(s => { const lv = (D.a.st || {})[s.id] === 'L'; return { s, c, why: lv ? 'On leave today' : 'Absent today', tone: lv ? 'violet' : 'red', text: crAttText('abs', s, c, {}) }; }), `Everyone is present in Class ${esc(c)} today`, 'Nothing to send.');
   }
   if (f === 'abs3') {
-    if (D.d3.length < 3) return head + `<div class="card"><p class="mut" style="margin:0">Attendance of 3 days is needed for this list (found ${D.d3.length}).</p></div>`;
+    if (D.d3.length < 3) return head + crEmpty('📅', 'Need 3 days of attendance', `Found ${D.d3.length} marked day(s) so far.`);
     const days = crDays(D.d3);
-    return head + `<p class="mut" style="margin:0 0 6px">Last 3 marked days: ${esc(days)}</p>` + crMsgList(date, 'abs3', D.three.map(s => ({ s, c, why: 'Absent on all 3 days', text: crAttText('abs3', s, c, { days }) })), 'No child was absent on all of the last 3 days 👍');
+    return head + `<p class="cr-note">Last 3 marked days: <b>${esc(days)}</b></p>` + crMsgList(date, 'abs3', D.three.map(s => ({ s, c, why: 'Absent all 3 days', tone: 'amber', text: crAttText('abs3', s, c, { days }) })), 'No child missed all of the last 3 days', 'Nothing to send.');
   }
   const st = STATS[c] || {};
   if (st.loading && !st.days) return head + '<div class="load"><i></i></div>';
-  return head + `<p class="mut" style="margin:0 0 6px">Session attendance over ${st.days || 0} school day(s).${/^(9th|10th)$/i.test(c) ? ' <b>CBSE counts attendance up to 1 January for the board exam.</b>' : ''}</p>` +
-    crMsgList(date, 'low', D.low.map(([s, p]) => ({ s, c, why: `<span class="lowp">${p}%</span> attendance`, text: crAttText('low', s, c, { p }) })), 'Every child is at 75% or above 👍');
+  return head + `<p class="cr-note">Session attendance over <b>${st.days || 0}</b> school day(s).${/^(9th|10th)$/i.test(c) ? ' <b class="cbse">CBSE counts attendance up to 1 January for the board exam.</b>' : ''}</p>` +
+    crMsgList(date, 'low', D.low.map(([s, p]) => ({ s, c, why: `${p}% attendance`, tone: 'violet', text: crAttText('low', s, c, { p }) })), 'Every child is at 75% or above', 'Nothing to send.');
 }
 function vAttMore(c) {
-  const T2 = [['kit', 'bill', 'Daily check', 'Diary · ID · book · dress'], ['stu', 'list', 'Students', "Each child's full report"], ['bulk', 'check', 'Levels', 'Reading, writing — whole class'], ['cal', 'note', 'Calendar', 'Month view, back days'], ['reg', 'print', 'Register', 'Monthly attendance register']];
-  return `<div class="cr-more">${T2.map(([m, i, l, x]) => `<button onclick="DRAFT.att=null;DRAFT.reg=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:'${m}'})">${ic(i)}<b>${l}</b><small>${x}</small></button>`).join('')}</div>`;
+  const T2 = [['kit', 'bill', 'Daily check', 'Diary · ID · book · dress', 'blue'], ['stu', 'list', 'Students', "Each child's full report", 'green'], ['bulk', 'check', 'Levels', 'Reading, writing — whole class', 'amber'], ['cal', 'note', 'Calendar', 'Month view, back days', 'violet'], ['reg', 'print', 'Register', 'Monthly attendance register', 'red']];
+  return `<div class="cr-more">${T2.map(([m, i, l, x, tone]) => `<button onclick="DRAFT.att=null;DRAFT.reg=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:'${m}'})"><span class="mi t-${tone}">${ic(i)}</span><b>${l}</b><small>${x}</small></button>`).join('')}</div>`;
 }
 if (typeof vAtt === 'function') {
   const _vAttCR = vAtt;
@@ -102,11 +114,12 @@ if (typeof vAtt === 'function') {
       const m = P.m || 'day', cur = m === 'rep' ? 'rep' : (m === 'more' || CR_MORE.includes(m)) ? 'more' : 'day';
       needStats(c);
       const pick = all.length > 1 ? `<div class="fld">Class${sel('attC', all.map(x => [x, 'Class ' + x + (allowed.includes(x) ? ' · class teacher' : '')]), c, "DRAFT.att=null;DRAFT.reg=null;DRAFT.rec=null;go('att',{c:this.value,m:'" + (cur === 'more' ? 'day' : cur) + "'})")}</div>` : '';
-      const tabs = `<div class="cr-tabs">${[['day', '✅', 'Entry'], ['rep', '📊', 'Report & Message'], ['more', '⋯', 'More']].map(([k, i, l]) => `<button class="${k === cur ? 'on' : ''}" onclick="DRAFT.att=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:'${k}'})"><span>${i}</span>${l}</button>`).join('')}</div>`;
+      const D0 = crAttData(c), todo = (D0.today ? D0.today.filter(s => s.phone && !crSent(D0.t, 'abs', s.id, '')).length : 0);
+      const tabs = crTabs([['day', 'check', 'Entry'], ['rep', 'wa', 'Report & Message', todo || ''], ['more', 'list', 'More']], cur, k => `DRAFT.att=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:'${k}'})`);
       // the attendance report card stays on top of Entry and the More screens, as before (not on Levels or one child's page)
       const rep = (cur === 'day' || (CR_MORE.includes(m) && m !== 'bulk' && !(m === 'stu' && P.sid))) ? attReport(c) : '';
       const body = m === 'rep' ? vAttRep(c) : m === 'more' ? vAttMore(c) : rep + (m === 'bulk' ? vBulk(c) : m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : m === 'stu' ? (P.sid ? vStuReport(c, P.sid) : vStudents(c)) : vAttDay(c));
-      const back = CR_MORE.includes(m) ? `<button class="chip" style="margin:0 0 8px" onclick="go('att',{c:${jsq(c)},m:'more'})">← More</button>` : '';
+      const back = CR_MORE.includes(m) ? `<button class="cr-back" onclick="go('att',{c:${jsq(c)},m:'more'})">${ic('back')} More</button>` : '';
       return pick + tabs + back + body;
     } catch (e) { console.error(e); return _vAttCR.apply(this, arguments); }
   };
@@ -140,20 +153,20 @@ function vHwCheck() {
   if (!list.length) return '<div class="card empty">No subjects are given to you yet. The Principal sets them in the timetable.</div>';
   if (H.loading && !H.last) return '<div class="load"><i></i></div>';
   const pend = list.filter(x => x.pending), key = list.some(x => x.k === P.key) ? P.key : (pend[0] || list[0]).k, cur = list.find(x => x.k === key), t = todayISO();
-  const top = `<div class="card cr-todo"><h3 style="margin:0 0 6px">📚 Homework to check ${pend.length ? `<span class="pill warn">${pend.length}</span>` : '<span class="pill ok">✓ all checked</span>'}</h3>
-    <div class="cr-cs">${list.map(x => `<button class="${x.k === key ? 'on' : ''} ${x.pending ? 'p' : x.checkedToday ? 'd' : ''}" onclick="DRAFT.hc=null;go('diary',{m:'check',key:${jsq(x.k)}})"><b>Class ${esc(x.c)} · ${esc(x.s)}</b><small>${x.pending ? 'Given ' + esc(fmtDate(x.L.date)) + ' — to check' : x.checkedToday ? '✓ Checked today' : x.L ? '✓ Checked' : 'No homework given'}</small></button>`).join('')}</div></div>`;
+  const top = crHead(pend.length ? `📚 ${pend.length} homework to check` : '✅ All homework checked', 'Tap a class to check its last homework') +
+    `<div class="cr-cs">${list.map(x => `<button class="${x.k === key ? 'on' : ''} ${x.pending ? 'p' : x.checkedToday ? 'd' : 'n'}" onclick="DRAFT.hc=null;go('diary',{m:'check',key:${jsq(x.k)}})"><i></i><b>${esc(x.c)} · ${esc(x.s)}</b><small>${x.pending ? 'Given ' + esc(fmtDate(x.L.date).replace(/^\w+,?\s*/, '')) : x.checkedToday ? 'Checked today' : x.L ? 'Checked' : 'No homework'}</small></button>`).join('')}</div>`;
   const c = cur.c, sb = cur.s, kids = studentsOf(c), att = attOf(t, c), ab = new Set((att && att.absent) || []);
-  if (!cur.L && !cur.checkedToday) return top + `<div class="card"><p class="mut" style="margin:0">No homework was given in the last classes of Class ${esc(c)} ${esc(sb)} (3 weeks). Write it in the Diary — it comes here for the next class.</p></div>`;
+  if (!cur.L && !cur.checkedToday) return top + crEmpty('📝', `No homework given in Class ${esc(c)} ${esc(sb)}`, 'Write it in the Diary — it comes here for the next class.');
   const prev = ((H.checks || {})[key] || {});
   if (!DRAFT.hc || DRAFT.hc.k !== key) { const rows = {}; kids.forEach(s => { const o = (prev.rows || {})[s.id]; rows[s.id] = ab.has(s.id) ? '' : (o && o.hw) || 'done'; }); DRAFT.hc = { k: key, rows, changed: false }; }
   const R = DRAFT.hc.rows, n = h => kids.filter(s => !ab.has(s.id) && R[s.id] === h).length, ph = needPhotos(c), miss = (H.miss || {})[key] || {};
   const hwTxt = cur.L ? cur.L.hw : prev.hw || '';
   return top + `<div class="card cr-check">
-    <div class="cr-hw"><small>${cur.L ? 'Homework given on ' + esc(fmtLong(cur.L.date)) + (cur.L.tid && cur.L.tid !== me() ? ' by ' + esc(T(cur.L.tid).name) : '') : 'Homework'}</small><b>${esc(hwTxt || '—')}</b></div>
+    <div class="cr-hw"><div class="tag">Class ${esc(c)} · ${esc(sb)}</div><small>${cur.L ? 'Homework of the last class · ' + esc(fmtLong(cur.L.date)) + (cur.L.tid && cur.L.tid !== me() ? ' · by ' + esc(T(cur.L.tid).name) : '') : 'Homework'}</small><b>${esc(hwTxt || '—')}</b></div>
     ${cur.checkedToday && !cur.pending ? `<div class="ban inf" style="margin:8px 0"><div>Checked today${prev.by ? ' by ' + esc(prev.by) : ''}. You can correct it and Submit again.</div></div>` : ''}
-    <div class="cr-cnt"><span class="pill ok">${n('done')} done</span><span class="pill bad">${n('not')} not done</span><span class="pill warn">${n('half')} half</span>${ab.size ? `<span class="pill">${kids.filter(s => ab.has(s.id)).length} absent</span>` : ''}</div>
+    <div class="cr-cnt"><div class="t-green"><b>${n('done')}</b>Done</div><div class="t-red"><b>${n('not')}</b>Not done</div><div class="t-amber"><b>${n('half')}</b>Half</div><div class="t-grey"><b>${kids.filter(s => ab.has(s.id)).length}</b>Absent</div></div>
     <div class="quick"><input id="hcQ" class="inp" inputmode="numeric" placeholder="Not done — roll no. e.g. 3, 7, 12" onkeydown="if(event.key==='Enter')crHcQuick()"><button class="btn s" onclick="crHcQuick()">Mark</button></div>
-    <p class="mut hint">Everyone starts ✓ Done. Tap a child who did NOT do it (tap again = half, again = done).</p>
+    <p class="cr-hint">👆 Everyone starts <b>✓ Done</b>. Tap a child who did <b>not</b> do it · tap again = half.</p>
     <div class="tiles">${kids.map((s, i) => { const v = ab.has(s.id) ? 'ab' : R[s.id], pic = ph[s.id], m = miss[s.id] || 0;
       return `<button type="button" class="tile cr-t ${v === 'not' ? 'sA' : v === 'half' ? 'sL' : v === 'ab' ? 'cr-ab' : ''}" ${v === 'ab' ? 'disabled' : ''} onclick="crHcTap(${jsq(s.id)})"><span class="ph">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(s.name))}</i>`}<em class="badge">${v === 'not' ? '✗' : v === 'half' ? '½' : v === 'ab' ? 'A' : '✓'}</em></span>
         <b>${esc(s.name)}</b><small>Roll ${esc(s.rollno || i + 1)}${m ? ` · <span class="lowp">${m}× not done</span>` : ''}</small></button>`; }).join('')}</div>
@@ -184,19 +197,18 @@ function vHwRep() {
   mine.forEach(x => { const ch = (H.checks || {})[x.k]; if (ch) Object.entries(ch.rows || {}).forEach(([sid, r]) => { const s = studentById(sid); if (s && (r.hw === 'not' || r.hw === 'half')) today.push({ s, c: x.c, subj: x.s, hw: r.hw, task: ch.hw }); });
     Object.entries((H.miss || {})[x.k] || {}).forEach(([sid, n]) => { const s = studentById(sid); if (s && n >= 3) x3.push({ s, c: x.c, subj: x.s, n }); }); });
   const pct = mine.map(x => { const ch = (H.checks || {})[x.k], last = (H.last || {})[x.k]; return { x, ch, last }; });
-  const chips = [['today', 'Not done today', today.length], ['x3', '3+ times (30 days)', x3.length], ['pct', 'Class-wise', mine.length]];
-  const head = `<div class="cr-sum">${chips.map(([k, l, n]) => `<button class="${k === f ? 'on' : ''}" onclick="go('diary',{m:'rep',f:'${k}'})"><b>${n}</b><span>${l}</span></button>`).join('')}</div>`;
-  if (f === 'today') return head + crMsgList(t, 'hw', today.map(y => ({ s: y.s, c: y.c, subj: y.subj, why: (y.hw === 'half' ? 'Half done' : 'Not done') + (y.task ? ': “' + esc(y.task.slice(0, 60)) + '”' : ''), text: msgText('hw', y.s, y.c, { subj: y.subj, note: y.task, date: t }) })), 'Nobody is marked “not done” today. Check homework first — the list fills from it.');
-  if (f === 'x3') return head + crMsgList(t, 'hw3', x3.sort((a, b) => b.n - a.n).map(y => ({ s: y.s, c: y.c, subj: y.subj, why: `<span class="lowp">${y.n} times</span> homework not done in 30 days`,
-    text: `Dear Parent,\n${y.s.name} (Class ${y.c}) did not complete the ${y.subj} homework ${y.n} times in the last 30 days. Kindly check the homework at home every day and meet the teacher if needed.\n${y.s.name} ने पिछले 30 दिनों में ${y.n} बार ${y.subj} का गृहकार्य पूरा नहीं किया। कृपया रोज़ घर पर गृहकार्य देखें और ज़रूरत हो तो शिक्षक से मिलें।\n${crSign()}` })), 'No child has missed homework 3 or more times in 30 days 👍');
+  const head = crHead('Homework report', esc(fmtLong(t))) + crStats([['today', 'Not done today', today.length, 'red'], ['x3', '3+ times in 30 days', x3.length, 'amber'], ['pct', 'Class-wise', mine.length, 'green']], f, k => `go('diary',{m:'rep',f:'${k}'})`);
+  if (f === 'today') return head + crMsgList(t, 'hw', today.map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: y.hw === 'half' ? 'amber' : 'red', why: (y.hw === 'half' ? 'Half done' : 'Not done') + (y.task ? ' · ' + esc(y.task.slice(0, 50)) : ''), text: msgText('hw', y.s, y.c, { subj: y.subj, note: y.task, date: t }) })), 'Nobody is marked “not done” today', 'Check homework first — this list fills from it.');
+  if (f === 'x3') return head + crMsgList(t, 'hw3', x3.sort((a, b) => b.n - a.n).map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: 'amber', why: `${y.n} times not done in 30 days`,
+    text: `Dear Parent,\n${y.s.name} (Class ${y.c}) did not complete the ${y.subj} homework ${y.n} times in the last 30 days. Kindly check the homework at home every day and meet the teacher if needed.\n${y.s.name} ने पिछले 30 दिनों में ${y.n} बार ${y.subj} का गृहकार्य पूरा नहीं किया। कृपया रोज़ घर पर गृहकार्य देखें और ज़रूरत हो तो शिक्षक से मिलें।\n${crSign()}` })), 'No child missed homework 3+ times', 'Nothing to send.');
   return head + `<div class="card">${pct.map(({ x, ch, last }) => { const rows = ch ? Object.values(ch.rows || {}) : [], d = rows.filter(r => r.hw === 'done').length, tot = rows.filter(r => r.hw).length, p = tot ? Math.round(d / tot * 100) : null;
-    return `<div class="cr-row"><div class="n"><b>Class ${esc(x.c)} · ${esc(x.s)}</b><small>${ch ? `Today: ${d}/${tot} did it` : last ? 'Last checked ' + esc(fmtDate(last)) : 'Not checked in 30 days'}</small></div>${p !== null ? `<div class="ring sm" style="--p:${p}"><span>${p}%</span></div>` : `<button class="btn s go" onclick="DRAFT.hc=null;go('diary',{m:'check',key:${jsq(x.k)}})">Check</button>`}</div>`; }).join('')}</div>`;
+    return `<div class="cr-row"><div class="n"><b>Class ${esc(x.c)} · ${esc(x.s)}</b><small>${ch ? `Today: ${d} of ${tot} did it` : last ? 'Last checked ' + esc(fmtDate(last)) : 'Not checked in 30 days'}</small>${p !== null ? `<div class="cr-bar sm"><i class="${p < 60 ? 'lo' : p < 85 ? 'mid' : ''}" style="width:${p}%"></i></div>` : ''}</div>${p !== null ? `<b class="cr-pct ${p < 60 ? 'lo' : p < 85 ? 'mid' : ''}">${p}%</b>` : `<button class="btn s go" onclick="DRAFT.hc=null;go('diary',{m:'check',key:${jsq(x.k)}})">Check</button>`}</div>`; }).join('')}</div>`;
 }
 if (typeof vDiary === 'function') {
   vDiary = function () {
     const m = ['check', 'rep'].includes(P.m) ? P.m : 'write', d = P.date || todayISO();
     const n = (() => { try { return crHwState().filter(x => x.pending).length; } catch (e) { return 0; } })();
-    const tabs = `<div class="cr-tabs">${[['write', '✍️', 'Diary'], ['check', '✅', 'Check homework' + (n ? ` <em class="sd-badge">${n}</em>` : '')], ['rep', '📊', 'Report & Message']].map(([k, i, l]) => `<button class="${k === m ? 'on' : ''}" onclick="DRAFT.hc=null;go('diary',{m:'${k}',date:'${d}'})"><span>${i}</span>${l}</button>`).join('')}</div>`;
+    const tabs = crTabs([['write', 'book', 'Diary'], ['check', 'check', 'Check HW', n || ''], ['rep', 'wa', 'Report & Message']], m, k => `DRAFT.hc=null;go('diary',{m:'${k}',date:'${d}'})`);
     return tabs + (m === 'check' ? vHwCheck() : m === 'rep' ? vHwRep() : vDiaryWrite());
   };
 }
@@ -243,18 +255,46 @@ if (typeof sdCard === 'function') {
 
 (function () {
   const st = document.createElement('style');
-  st.textContent = `.cr-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 12px}.cr-tabs button{border:0;border-radius:14px;padding:10px 4px;background:#fff;box-shadow:0 1px 0 #E6EBF3;font:600 12.5px/1.2 inherit;color:#445;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
-  .cr-tabs button span{font-size:18px}.cr-tabs button.on{background:var(--a,#17324D);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.15)}.cr-tabs .sd-badge{font-style:normal}
-  .cr-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 10px}.cr-sum button{border:1.5px solid #E6EBF3;background:#fff;border-radius:14px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
-  .cr-sum b{font-size:22px;color:#17324D}.cr-sum span{font-size:11.5px;color:#556;text-align:center}.cr-sum button.on{border-color:var(--a,#17324D);background:var(--tint,#EEF2F5)}
-  .cr-list .cr-lh{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px}.cr-list .btn.full{margin:0 0 8px}
-  .cr-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid #EEF1F4}.cr-row .n{min-width:0}.cr-row .n small{display:block;color:#667;font-size:12px}.cr-row .why{color:#334}.cr-row.sent{opacity:.65}
-  .cr-more{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cr-more button{border:1.5px solid #E6EBF3;background:#fff;border-radius:16px;padding:14px 10px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px}.cr-more b{font-size:14px}.cr-more small{color:#667;font-size:11.5px}
-  .cr-cs{display:flex;flex-direction:column;gap:6px}.cr-cs button{border:1.5px solid #E6EBF3;background:#fff;border-radius:12px;padding:8px 10px;text-align:left;cursor:pointer}.cr-cs button.p{border-color:#F2C14E}.cr-cs button.on{border-color:var(--a,#17324D);background:var(--tint,#EEF2F5)}
-  .cr-cs b{display:block;font-size:13px}.cr-cs small{color:#667;font-size:11.5px}.cr-cs button.d small{color:#12805C}
-  .cr-hw{background:#FFF8E6;border:1.5px solid #F2C14E;border-radius:14px;padding:10px 12px}.cr-hw small{display:block;color:#7A5B00;font-size:11.5px;margin-bottom:3px}.cr-hw b{font-size:15px;line-height:1.35}
-  .cr-cnt{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px}.tile.cr-ab{opacity:.45}.tile.cr-t .badge{background:var(--ok)}.tile.cr-t.sA .badge{background:var(--bad)}.tile.cr-t.sL .badge{background:#B45309}
-  .cr-quick{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #E6EBF3}.cr-quick small{color:#556;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ring.sm{width:44px;height:44px}`;
+  st.textContent = `
+  .cr-tabs{display:flex;gap:4px;background:#fff;border-radius:16px;padding:4px;margin:0 0 12px;box-shadow:0 2px 12px rgba(16,40,36,.06)}
+  .cr-tabs button{flex:1;position:relative;border:0;background:transparent;border-radius:12px;min-height:54px;padding:7px 4px 6px;font:600 11.5px/1.15 inherit;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:background .18s,color .18s;text-align:center}
+  .cr-tabs button svg.i{width:19px;height:19px;flex-shrink:0}.cr-tabs button.on{background:var(--a);color:#fff;box-shadow:0 4px 12px var(--hshadow)}
+  .cr-tabs button em{position:absolute;top:4px;right:calc(50% - 22px);min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font:700 10px/17px inherit;font-style:normal;padding:0 4px}
+  .cr-head{display:flex;flex-direction:column;margin:2px 2px 8px}.cr-head b{font-size:15px;color:var(--ink)}.cr-head small{font-size:11.5px;color:var(--muted)}
+  .cr-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+  .cr-sum button{position:relative;border:2px solid transparent;border-radius:16px;padding:12px 6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .12s}
+  .cr-sum button:active{transform:scale(.97)}.cr-sum b{font-size:26px;line-height:1.05;font-weight:800}.cr-sum span{font-size:11px;font-weight:600;text-align:center;line-height:1.2}
+  .cr-sum button.on{box-shadow:0 6px 16px rgba(0,0,0,.08)}.cr-sum button.on::after{content:'';position:absolute;bottom:-7px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:currentColor;border-bottom:0}
+  .t-red{background:#FDE8EF;color:#B4234F}.t-red.on{border-color:#E8799B}.t-amber{background:#FFF4E2;color:#A15C07}.t-amber.on{border-color:#F2B45A}
+  .t-violet{background:#F1EAFE;color:#6D28D9}.t-violet.on{border-color:#B79AF5}.t-green{background:#E7F7EC;color:#15803D}.t-green.on{border-color:#7BCB97}
+  .t-blue{background:#E6F1FD;color:#1D5FB8}.t-grey{background:#F1F4F3;color:#5B6763}
+  .cr-note{font-size:12px;color:var(--muted);margin:0 2px 8px}.cr-note .cbse{display:block;color:#6D28D9;margin-top:2px}
+  .cr-list{padding:12px 14px}.cr-prog{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted)}.cr-prog b{font-size:16px;color:var(--ink)}
+  .cr-bar{height:6px;border-radius:3px;background:#EEF2F1;overflow:hidden;margin:6px 0 4px}.cr-bar i{display:block;height:100%;border-radius:3px;background:var(--ok);transition:width .3s}
+  .cr-bar.sm{height:5px;margin:5px 0 0;max-width:180px}.cr-bar i.mid{background:#E59A1A}.cr-bar i.lo{background:var(--bad)}
+  .cr-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.cr-row:first-of-type{border-top:0}
+  .cr-row .n{flex:1;min-width:0}.cr-row .n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cr-row .n small{display:block;color:var(--faint);font-size:11px;margin-top:1px}
+  .cr-why{display:inline-block;margin-top:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cr-row.sent .n,.cr-row.sent .cr-av{opacity:.55}
+  .cr-av{width:40px;height:40px;flex-shrink:0;border-radius:50%;background:var(--tint);color:var(--a);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.cr-av img{width:100%;height:100%;object-fit:cover}
+  .cr-wab{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(37,211,102,.35)}.cr-wab svg.i{width:20px;height:20px}
+  .cr-sentb{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--ok);background:var(--okbg);padding:6px 10px;border-radius:999px;text-decoration:none}
+  .cr-next{position:sticky;bottom:8px;margin-top:10px}.cr-next .btn{box-shadow:0 8px 20px rgba(37,211,102,.35);min-height:48px}.cr-next small{opacity:.85;font-weight:600}
+  .cr-foot{font-size:11px;color:var(--faint);margin:10px 0 0;text-align:center}
+  .cr-empty{text-align:center;padding:26px 16px}.cr-empty .ei{font-size:34px;margin-bottom:6px}.cr-empty b{display:block;font-size:14.5px}.cr-empty small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+  .cr-more{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cr-more button{border:0;background:#fff;border-radius:16px;padding:14px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;box-shadow:0 2px 12px rgba(16,40,36,.06)}
+  .cr-more .mi{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}.cr-more .mi svg.i{width:20px;height:20px}.cr-more b{font-size:14px;color:var(--ink)}.cr-more small{color:var(--muted);font-size:11.5px;line-height:1.3}
+  .cr-back{display:inline-flex;align-items:center;gap:4px;border:0;background:#fff;color:var(--a);font-weight:600;font-size:12.5px;border-radius:999px;padding:6px 12px 6px 8px;margin:0 0 10px;box-shadow:0 2px 8px rgba(16,40,36,.06);cursor:pointer}.cr-back svg.i{width:15px;height:15px}
+  .cr-cs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 -2px 4px;scrollbar-width:none}.cr-cs::-webkit-scrollbar{display:none}
+  .cr-cs button{flex:0 0 auto;min-width:132px;border:2px solid transparent;background:#fff;border-radius:14px;padding:9px 12px 9px 26px;text-align:left;cursor:pointer;position:relative;box-shadow:0 2px 10px rgba(16,40,36,.06)}
+  .cr-cs button i{position:absolute;left:11px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--faint)}.cr-cs button.p i{background:#F59E0B;box-shadow:0 0 0 3px #FFF1D6}.cr-cs button.d i{background:var(--ok)}
+  .cr-cs button.on{border-color:var(--a)}.cr-cs b{display:block;font-size:13px;color:var(--ink);white-space:nowrap}.cr-cs small{color:var(--muted);font-size:11px}.cr-cs button.p small{color:#A15C07;font-weight:600}.cr-cs button.d small{color:var(--ok)}
+  .cr-check{padding:12px}.cr-hw{position:relative;background:linear-gradient(#FFFCF2,#FFFCF2) padding-box;border:1.5px solid #F2D58A;border-left:6px solid #F2B230;border-radius:14px;padding:12px 12px 12px 14px}
+  .cr-hw .tag{display:inline-block;font-size:10.5px;font-weight:700;color:#7A5200;background:#FCE7B2;border-radius:999px;padding:2px 8px;margin-bottom:6px}.cr-hw small{display:block;color:#8A6A1F;font-size:11.5px;margin-bottom:4px}.cr-hw b{display:block;font-size:16px;line-height:1.35;color:#2B2410}
+  .cr-cnt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}.cr-cnt div{border-radius:12px;padding:7px 2px;text-align:center;font-size:10.5px;font-weight:600}.cr-cnt b{display:block;font-size:19px;font-weight:800;line-height:1.1}
+  .cr-hint{font-size:12px;color:var(--muted);margin:6px 2px 10px}
+  .tile.cr-ab{opacity:.4}.tile.cr-t .badge{background:var(--ok)}.tile.cr-t.sA .badge{background:var(--bad)}.tile.cr-t.sL{background:#FFF4E2;border-color:#F2B45A}.tile.cr-t.sL .badge{background:#D97706}
+  .cr-pct{font-size:18px;font-weight:800;color:var(--ok)}.cr-pct.mid{color:#C27803}.cr-pct.lo{color:var(--bad)}
+  .cr-quick{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.cr-quick small{color:var(--muted);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`;
   document.head.appendChild(st);
 })();
