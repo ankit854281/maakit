@@ -261,12 +261,66 @@ if (typeof vDiary === 'function') {
   };
 }
 
+
+// ---------------------------------------------------------------- MY DAY (27 Nov 2026)
+// owner: "advance aur best improvement karo". The teacher's whole day in ONE card on Home, in bell order, instead of five
+// screens: morning attendance (class teacher), each bell with its three jobs in place — ① check the last homework,
+// ② diary, ③ homework given — and the evening share. One button per row = the next thing to do. Replaces the
+// "Aaj ke kaam" card (teacher-classwork.js cwTodayCard), which showed a part of this.
+function crMyDay() {
+  const d = todayISO(); if (!S || !ME || isP() || dayIdx(d) < 0 || holidayOn(d)) return '';
+  const bells = myBells(d), ct = myCT().filter(c => isWorkDay(d, c) && studentsOf(c).length), nm = nowMin(), H = crNeedHw();
+  const hs = {}; try { crHwState().forEach(x => { hs[x.k] = x; }); } catch (e) {}
+  if (!bells.length && !ct.length) return '';
+  let done = 0, total = 0; const rows = [];
+  ct.forEach(c => { const a = attOf(d, c); total++; if (a) done++;
+    const ab = a ? (a.absent || []).map(id => studentById(id)).filter(Boolean) : [], un = ab.filter(s => s.phone && !crSent(d, 'abs', s.id, '')).length;
+    rows.push(`<div class="md-row ${a ? 'ok' : 'todo'}"><span class="md-t"><b>☀️</b>Morning</span><div class="md-n"><b>Class ${esc(c)} attendance</b><small>${a ? `✓ ${studentsOf(c).length - ab.length}/${studentsOf(c).length} present${ab.length ? ' · ' + ab.length + ' absent' : ''}` : 'Not marked yet'}</small></div>
+      ${!a ? `<button class="btn s go" onclick="go('att',{c:${jsq(c)},m:'day'})">Mark</button>` : un ? `<button class="btn s wa" onclick="go('att',{c:${jsq(c)},m:'rep',f:'today'})">${ic('wa')} ${un}</button>` : '<span class="md-ok">✓</span>'}</div>`); });
+  const seenCS = new Set();   // the last homework is checked once — in the first bell of that class + subject today
+  bells.forEach(b => { const B = BELLS[b.bell] || {}, st = toMin(B.s || '00:00'), en = toMin(B.e || '00:00'), now = nm >= st && nm < en, over = nm >= en, e = diaryEntry(d, b.bell), k0 = sylKey(b.cls, b.subj), first = !seenCS.has(k0); seenCS.add(k0); const x = first ? hs[k0] : null;
+    const chk = x && x.pending, chkd = x && x.checkedToday; if (x && (chk || chkd)) { total++; if (chkd && !chk) done++; } total++; if (e) done++;
+    const pl = !e ? crPlan(d, b) : null;
+    const act = chk ? `<button class="btn s go" onclick="DRAFT.hc=null;go('diary',{m:'check',key:${jsq(sylKey(b.cls, b.subj))}})">① Check HW</button>`
+      : !e && (over || now) && pl && !optOf(d, b) ? `<button class="btn s go" onclick="crQuickSave('${d}',${b.bell})">② Save diary</button>`
+      : !e && (over || now) ? `<button class="btn s go" onclick="go('diary',{date:'${d}',bell:${b.bell}})">② Write diary</button>`
+      : e ? '<span class="md-ok">✓</span>' : `<button class="btn s l" onclick="go('diary',{date:'${d}',bell:${b.bell}})">Open</button>`;
+    rows.push(`<div class="md-row ${now ? 'now' : ''} ${e && !chk ? 'ok' : ''}"><span class="md-t"><b>${esc(String(B.n || '').replace(/\D/g, ''))}</b>${esc(t12(B.s || '00:00').replace(' ', ''))}</span>
+      <div class="md-n"><b>Class ${esc(b.cls)} · ${esc(b.subj)}${b.arr ? ' <i class="md-arr">arrangement</i>' : ''}${now ? ' <i class="md-now">NOW</i>' : ''}</b>
+        <div class="md-steps"><span class="${chk ? 'p' : chkd || (x && !x.pending && x.L) ? 'd' : 'z'}">① ${chk ? 'Check: ' + esc(x.L.hw.slice(0, 22)) : chkd ? 'Checked' : x && x.L ? 'Checked' : 'No HW due'}</span><span class="${e ? 'd' : over || now ? 'p' : 'z'}">② ${e ? 'Diary ✓' : over || now ? 'Diary' : 'Later'}</span><span class="${e && e.hw ? 'd' : 'z'}">③ ${e && e.hw ? 'HW: ' + esc(e.hw.slice(0, 20)) : pl && pl.smart ? 'Next: ' + esc(pl.hw.slice(0, 20)) : 'HW'}</span></div></div>${act}</div>`); });
+  const G = crGiven(d), canShare = G.share.length && nm >= toMin('12:00');
+  if (G.share.length || G.catchL.length) { total++; const evDone = G.catchL.length ? G.catchL.every(y => !y.s.phone || crSent(d, 'catch', y.s.id, '')) : true; if (evDone && canShare) done++;
+    rows.push(`<div class="md-row ${canShare ? '' : 'later'}"><span class="md-t"><b>🌙</b>Evening</span><div class="md-n"><b>Share today's work</b><small>${G.share.length} class group message${G.share.length !== 1 ? 's' : ''} ready${G.catchL.length ? ' · ' + G.catchL.length + ' absent child catch-up' : ''}</small></div>
+      <button class="btn s ${canShare ? 'wa' : 'l'}" onclick="go('diary',{m:'rep',f:'share'})">${ic('wa')} Share</button></div>`); }
+  const pct = total ? Math.round(done / total * 100) : 100;
+  return `<div class="card md"><div class="md-h"><div><b>📅 My day</b><small>${esc(fmtLong(d))} · ${done} of ${total} done</small></div><div class="ring sm" style="--p:${pct}"><span>${pct}%</span></div></div>
+    <div class="md-list">${rows.join('')}</div><p class="md-key">① check last homework · ② diary · ③ homework given</p></div>`;
+}
+if (typeof cwTodayCard === 'function') cwTodayCard = function () { try { return crMyDay(); } catch (e) { console.error(e); return ''; } };
+
 // ---------------------------------------------------------------- DIARY: pre-filled, one-tap "Save as planned"
+// Smart homework (owner, 27 Nov 2026: "advance aur best"): the next homework continues the last one of this class + subject —
+// "Exercise 1.1 Q1 to Q5" → "Exercise 1.1 Q6 to Q10" (same size, same words). No question range in the last homework → a plain
+// line from the topic. Works for Q / Que / Question / प्रश्न with to, -, –, se.
+function crNextHw(hw) {
+  const m = String(hw || '').match(/^(.*?)((?:\bQ(?:ue(?:stion)?s?)?|\bprashn|प्रश्न)\.?\s*(?:no\.?\s*)?)(\d{1,3})(\s*(?:to|-|–|—|se|से)\s*)((?:Q(?:ue(?:stion)?s?)?\.?\s*)?)(\d{1,3})(.*)$/i);
+  if (!m) return null; const a = +m[3], b = +m[6]; if (!(b >= a) || b - a > 40) return null;
+  const n = b - a + 1; return m[1] + m[2] + (b + 1) + m[4] + m[5] + (b + n) + m[7];
+}
+function crLastHwBefore(date, c, s) {
+  for (let i = 1; i <= 21; i++) { const d = addDays(date, -i), day = S.diary[d]; if (!day) continue; let hw = '';
+    Object.values(day).forEach(byB => Object.values(byB || {}).forEach(e => { if (!hw && e && e.cls === c && e.subj === s && String(e.hw || '').trim()) hw = String(e.hw).trim(); }));
+    if (hw) return hw; }
+  return '';
+}
 function crPlan(date, b) {     // topic from the lesson plan / yesterday / syllabus (same as the open card), CW + HW from it
   let tops = []; try { tops = (sdTopics(date, b) || {}).out || []; } catch (e) {}
   const topic = tops[0] ? String(tops[0][2]).trim() : ''; if (!topic) return null;
-  const tp = topic.replace(/^Revision:\s*/i, '');
-  return { topic, cw: `Explained “${tp}” with examples; questions done in the class copy.`, hw: `Read “${tp}” again and write the question-answers in the homework copy.` };
+  const tp = topic.replace(/^Revision:\s*/i, ''), next = crNextHw(crLastHwBefore(date, b.cls, b.subj));
+  // a double period: homework already written in an earlier bell of this class + subject today → no second homework
+  const twice = Object.entries((S.diary[date] || {})[me()] || {}).some(([bl, e]) => +bl !== b.bell && e && e.cls === b.cls && e.subj === b.subj && String(e.hw || '').trim());
+  if (twice) return { topic, smart: false, cw: `Explained “${tp}” with examples; questions done in the class copy.`, hw: '' };
+  return { topic, smart: !!next, cw: `Explained “${tp}” with examples; questions done in the class copy.`, hw: next || `Read “${tp}” again and write the question-answers in the homework copy.` };
 }
 async function crQuickSave(date, bell) {
   const b = myBells(date).find(x => x.bell === bell); if (!b) return; const pl = crPlan(date, b);
@@ -351,6 +405,15 @@ if (typeof sdCard === 'function') {
   .cr-row .n small.arrp{display:inline-block;margin:0 0 0 4px;vertical-align:1px}.arrp{font-size:10px;font-weight:600;color:#6D28D9;background:#F1EAFE;border-radius:999px;padding:1px 6px}
   .cr-share{padding:12px 14px}.cr-sh{padding:8px 0;border-top:1px solid var(--line)}.cr-sh b{display:block;font-size:13px}.cr-sh small{display:flex;gap:6px;font-size:12px;color:#445;margin-top:3px}.cr-sh small i{font-style:normal;font-weight:700;font-size:10px;color:#1D5FB8;background:#E6F1FD;border-radius:6px;padding:1px 5px;height:16px}.cr-sh small i.h{color:#A15C07;background:#FFF4E2}
   .cr-gb{min-height:40px;margin-top:8px;font-size:13px}
+  .md{padding:12px 12px 8px;border:2px solid var(--soft)}.md-h{display:flex;justify-content:space-between;align-items:center;margin:0 2px 6px}.md-h b{font-size:15px}.md-h small{display:block;color:var(--muted);font-size:11.5px}
+  .md-row{display:flex;align-items:center;gap:9px;padding:9px 6px;border-top:1px solid var(--line);border-radius:10px}.md-row:first-child{border-top:0}.md-row.now{background:#FFF7E8;border:1.5px solid #F5C063}.md-row.later{opacity:.6}
+  .md-t{width:44px;flex-shrink:0;text-align:center;font-size:9.5px;color:var(--muted);line-height:1.2}.md-t b{display:block;font-size:15px;color:var(--a)}
+  .md-n{flex:1;min-width:0}.md-n>b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.md-n small{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
+  .md-steps{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}.md-steps span{font-size:10px;font-weight:600;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+  .md-steps .d{background:var(--okbg);color:var(--ok)}.md-steps .p{background:#FFF1D6;color:#A15C07}.md-steps .z{background:#F1F4F3;color:#8A9692}
+  .md-ok{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:var(--okbg);color:var(--ok);font-weight:800;display:flex;align-items:center;justify-content:center}
+  .md-arr,.md-now{font-style:normal;font-size:9.5px;font-weight:700;border-radius:999px;padding:1px 6px;vertical-align:1px}.md-arr{background:#F1EAFE;color:#6D28D9}.md-now{background:#F04438;color:#fff}
+  .md-key{font-size:10.5px;color:var(--faint);margin:6px 2px 0;text-align:center}
   .cr-quick{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.cr-quick small{color:var(--muted);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`;
   document.head.appendChild(st);
 })();
