@@ -19,7 +19,7 @@
 </div>
 
 <nav class="units">
-  <a href="#imp">Paper me kya aayega</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#sa">Short answers</a><a href="#prob">Solved problems</a>
+  <a href="#imp">Paper me kya aayega</a><a href="#defs">Definitions</a><a href="#eqs">Equations</a><a href="#apps">Applications</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#sa">Short answers</a><a href="#prob">Solved problems</a>
 </nav>
 
 <div class="wrap">
@@ -35,6 +35,9 @@
     <tr><th>#</th><th>Sawaal</th><th>Chance</th><th>Kahan</th></tr>
     <tr><td>1</td><td>Convert an initial value problem into a Volterra integral equation (and BVP into Fredholm, Green's kernel).</td><td>🔥🔥</td><td>T1.1, T1.2, P1, P2</td></tr>
     <tr><td>2</td><td>Solve a Fredholm equation with degenerate (separable) kernel; find eigenvalues and eigenfunctions.</td><td>🔥🔥</td><td>T1.3, P3, P4</td></tr>
+    <tr><td>2a</td><td>Fredholm equations of the first kind (homogeneous / non-homogeneous); condition for solution.</td><td>🔥</td><td>T1.5</td></tr>
+    <tr><td>2b</td><td>Definitions: kinds of integral equations, singular, integro-differential, kernels; Abel's problem.</td><td>🔥</td><td>Definitions, AP1</td></tr>
+    <tr><td>2c</td><td>Applications: Hamilton's principle, Fermat/Snell, geodesics on sphere, hanging chain.</td><td>🔥</td><td>AP3–AP5</td></tr>
     <tr><td>3</td><td>Eigenvalues of a symmetric (Hermitian) kernel are real; eigenfunctions of distinct eigenvalues are orthogonal.</td><td>🔥🔥</td><td>T1.4</td></tr>
     <tr><td>4</td><td>Method of successive approximations / Neumann series for Fredholm equations; condition \(|\lambda|B\lt1\).</td><td>🔥</td><td>T2.1</td></tr>
     <tr><td>5</td><td>Volterra equation: Neumann series converges for all \(\lambda\); iterated kernels and resolvent kernel.</td><td>🔥🔥</td><td>T2.2, T2.3, P5, P6</td></tr>
@@ -47,6 +50,168 @@
     <tr><td>12</td><td>Variable end points: transversality conditions.</td><td>🔥</td><td>T4.4</td></tr>
     <tr><td>13</td><td>Second variation; Legendre and Jacobi conditions.</td><td>🔥</td><td>T4.5</td></tr>
   </table></div>
+</div>
+
+<!-- ===================== DEFINITIONS ===================== -->
+<div class="unit-h" id="defs"><h2>📖 Saari Definitions (Units I–IV)</h2><p>Section A me seedhe poochhi jaati hain — word-to-word yaad kariye.</p></div>
+<div class="card" data-id="DEF1">
+  <h3 class="topic">Integral equations — definitions</h3>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><ol>
+  <li><b>Integral equation:</b> an equation in which the unknown function \(y(x)\) appears under an integral sign.</li>
+  <li><b>Kernel:</b> the known function \(K(x,t)\) in the integral.</li>
+  <li><b>Linear integral equation:</b> the unknown appears linearly; <b>non-linear:</b> e.g. \(y(x)=f(x)+\lambda\int_a^bK(x,t)y^2(t)dt\).</li>
+  <li><b>Fredholm equation:</b> both limits constant. <b>Volterra equation:</b> upper limit variable (\(x\)).</li>
+  <li><b>First kind:</b> unknown only under the integral: \(f(x)=\lambda\int K(x,t)y(t)dt\). <b>Second kind:</b> \(y(x)=f(x)+\lambda\int K(x,t)y(t)dt\). <b>Third kind:</b> \(h(x)y(x)=f(x)+\lambda\int K(x,t)y(t)dt\) (\(h\) vanishes somewhere).</li>
+  <li><b>Homogeneous:</b> \(f(x)\equiv0\); otherwise <b>non-homogeneous</b>.</li>
+  <li><b>Singular integral equation:</b> one or both limits infinite, or the kernel becomes infinite in the range. E.g. Abel's equation \(f(x)=\int_0^x\frac{y(t)}{\sqrt{x-t}}dt\); \(f(x)=\int_0^\infty\sin(xt)y(t)dt\).</li>
+  <li><b>Integro-differential equation:</b> unknown appears both under the integral and as derivatives, e.g. \(y'(x)=f(x)+\int_0^xK(x,t)y(t)dt\).</li>
+  <li><b>Convolution (difference) kernel:</b> \(K(x,t)=k(x-t)\).</li>
+  <li><b>Symmetric kernel:</b> \(K(x,t)=K(t,x)\); <b>skew-symmetric:</b> \(K(x,t)=-K(t,x)\); <b>Hermitian:</b> \(K(x,t)=\overline{K(t,x)}\).</li>
+  <li><b>Separable / degenerate kernel:</b> \(K(x,t)=\sum_{i=1}^na_i(x)b_i(t)\) (finite sum).</li>
+  <li><b>\(L_2\)-function:</b> \(\int_a^b|f|^2dx\lt\infty\). <b>\(L_2\)-kernel:</b> \(\iint|K|^2dx\,dt\lt\infty\). <b>Norm:</b> \(\|f\|=\big(\int|f|^2\big)^{1/2}\).</li>
+  <li><b>Inner product, orthogonal, orthonormal:</b> \((f,g)=\int_a^bf\bar g\,dx\); orthogonal if \((f,g)=0\); orthonormal system: \((\varphi_i,\varphi_j)=\delta_{ij}\).</li>
+  <li><b>Eigenvalue (characteristic value):</b> \(\lambda\) for which \(y=\lambda\int Ky\) has a solution \(y\not\equiv0\); such \(y\) is an <b>eigenfunction</b>. The set of eigenvalues is the <b>spectrum</b>.</li>
+  <li><b>Iterated kernels:</b> \(K_1=K\), \(K_n(x,t)=\int K(x,s)K_{n-1}(s,t)ds\).</li>
+  <li><b>Resolvent (reciprocal) kernel:</b> \(R(x,t;\lambda)\) with \(y=f+\lambda\int R\,f\); \(R=\sum\lambda^{n-1}K_n\).</li>
+  <li><b>Reciprocal functions (Volterra):</b> \(k,\bar k\) with \(k+\bar k=\int k(x,s)\bar k(s,t)ds\).</li>
+  <li><b>Neumann series:</b> \(y=f+\sum_{n\ge1}\lambda^n\int K_nf\,dt\).</li>
+  <li><b>Fredholm determinant:</b> \(D(\lambda)\) in \(R=D(x,t;\lambda)/D(\lambda)\); its zeros are the eigenvalues.</li>
+  <li><b>Green's function</b> for \(Ly=0\), \(y(a)=y(b)=0\): \(G(x,t)\) continuous, satisfying \(LG=0\) for \(x\ne t\), the boundary conditions, and a jump \(-1\) (for \(L=-\frac{d^2}{dx^2}\)) in \(\partial G/\partial x\) at \(x=t\).</li>
+  </ol></div>
+</div>
+<div class="card" data-id="DEF2">
+  <h3 class="topic">Calculus of variations — definitions</h3>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><ol>
+  <li><b>Functional:</b> a rule assigning a real number \(J[y]\) to each function \(y\) of a class \(M\) (e.g. arc length \(\int\sqrt{1+y'^2}dx\)).</li>
+  <li><b>Linear functional:</b> \(J[\alpha y_1+\beta y_2]=\alpha J[y_1]+\beta J[y_2]\). <b>Continuous functional</b>: small change of \(y\) (and derivatives) ⇒ small change of \(J\).</li>
+  <li><b>Admissible curves:</b> \(C^1\) (or \(C^2\)) curves satisfying the boundary conditions.</li>
+  <li><b>Variation</b> of \(y\): \(\delta y=Y(x)-y(x)=\varepsilon\eta(x)\). <b>Increment:</b> \(\Delta J=J[y+\delta y]-J[y]\).</li>
+  <li><b>First variation:</b> the linear part of \(\Delta J\): \(\delta J=\varepsilon\frac{d}{d\varepsilon}J[y+\varepsilon\eta]\big|_0\). <b>Second variation:</b> \(\delta^2J=\frac{\varepsilon^2}{2}\frac{d^2}{d\varepsilon^2}J[y+\varepsilon\eta]\big|_0\).</li>
+  <li><b>\(\varepsilon\)-neighbourhood of order \(k\):</b> \(|Y-y|\lt\varepsilon,\dots,|Y^{(k)}-y^{(k)}|\lt\varepsilon\). <b>Strong extremum:</b> compared with all curves in a 0th-order neighbourhood; <b>weak extremum:</b> in a 1st-order neighbourhood (every strong extremum is weak).</li>
+  <li><b>Extremum (minimum/maximum):</b> \(J[Y]\ge J[y]\) (resp. \(\le\)) for all admissible \(Y\) near \(y\).</li>
+  <li><b>Stationary function / extremal:</b> a solution of the Euler equation (\(\delta J=0\)).</li>
+  <li><b>Geodesic:</b> curve of shortest length between two points on a surface.</li>
+  <li><b>Brachistochrone:</b> curve of quickest descent under gravity between two points (cycloid).</li>
+  <li><b>Isoperimetric problem:</b> extremize \(\int F\) subject to \(\int G=L\) (fixed); classical: closed curve of given perimeter enclosing maximum area (circle).</li>
+  <li><b>Moving / variable boundary problem:</b> an end point lies on a given curve, not fixed. <b>Natural boundary condition:</b> \(F_{y'}=0\) at a free end. <b>Transversality condition:</b> \(F+(\varphi'-y')F_{y'}=0\) at an end on \(y=\varphi(x)\).</li>
+  <li><b>One-sided variations:</b> admissible curves restricted to one side of a boundary, so only \(\delta y\ge0\) (or \(\le0\)) allowed there.</li>
+  <li><b>Conjugate point:</b> \(\tilde a\) is conjugate to \(a\) if a non-trivial solution of the Jacobi equation vanishes at \(a\) and \(\tilde a\).</li>
+  <li><b>Field of extremals:</b> a family of extremals covering a region simply (one through each point); <b>central field</b>: all pass through one point.</li>
+  <li><b>Corner / broken extremal:</b> extremal with a point where \(y'\) jumps.</li>
+  </ol></div>
+</div>
+
+<!-- ===================== EQUATIONS ===================== -->
+<div class="unit-h" id="eqs"><h2>🧮 Saari Equations &amp; Formulas</h2><p>Ek jagah — revision ke liye.</p></div>
+<div class="card sheet" data-id="EQ1">
+  <h3 class="topic">Integral equation forms</h3>
+  <div class="tbl"><table>
+    <tr><th>Naam</th><th>Equation</th></tr>
+    <tr><td>Fredholm 1st kind</td><td>\(f(x)=\lambda\int_a^bK(x,t)y(t)dt\)</td></tr>
+    <tr><td>Fredholm 2nd kind</td><td>\(y(x)=f(x)+\lambda\int_a^bK(x,t)y(t)dt\)</td></tr>
+    <tr><td>Fredholm homogeneous</td><td>\(y(x)=\lambda\int_a^bK(x,t)y(t)dt\)</td></tr>
+    <tr><td>Volterra 1st kind</td><td>\(f(x)=\lambda\int_a^xK(x,t)y(t)dt\)</td></tr>
+    <tr><td>Volterra 2nd kind</td><td>\(y(x)=f(x)+\lambda\int_a^xK(x,t)y(t)dt\)</td></tr>
+    <tr><td>Third kind</td><td>\(h(x)y(x)=f(x)+\lambda\int K(x,t)y(t)dt\)</td></tr>
+    <tr><td>Abel's equation</td><td>\(f(x)=\int_0^x\frac{y(t)}{(x-t)^\alpha}dt\), \(0\lt\alpha\lt1\)</td></tr>
+  </table></div>
+</div>
+<div class="card sheet" data-id="EQ2">
+  <h3 class="topic">Working formulas (Units I–II)</h3>
+  <div class="tbl"><table>
+    <tr><th>Naam</th><th>Formula</th></tr>
+    <tr><td>Leibniz rule</td><td>\(\frac{d}{dx}\int_{\alpha(x)}^{\beta(x)}F(x,t)dt=\int_\alpha^\beta F_x\,dt+F(x,\beta)\beta'-F(x,\alpha)\alpha'\)</td></tr>
+    <tr><td>Repeated integral</td><td>\(\underbrace{\int_a^x\!\cdots\!\int_a^x}_{n}y\,(dx)^n=\frac1{(n-1)!}\int_a^x(x-t)^{n-1}y(t)dt\)</td></tr>
+    <tr><td>IVP → Volterra</td><td>\(u+\int_a^x[A(x)+B(x)(x-t)]u\,dt=F-y_0'A-(y_0+(x-a)y_0')B\), \(u=y''\)</td></tr>
+    <tr><td>Green's kernel \(y''+\lambda y=0\), \(y(0)=y(l)=0\)</td><td>\(K=\frac{t(l-x)}l\ (t\le x)\), \(\frac{x(l-t)}l\ (t\ge x)\)</td></tr>
+    <tr><td>Degenerate kernel system</td><td>\((I-\lambda A)C=F\), \(\alpha_{ij}=\int b_ia_j\), \(F_i=\int b_if\), \(y=f+\lambda\sum c_ia_i\)</td></tr>
+    <tr><td>Eigenvalues (degenerate)</td><td>\(\det(I-\lambda A)=0\)</td></tr>
+    <tr><td>Iterated kernel (Fredholm)</td><td>\(K_n(x,t)=\int_a^bK(x,s)K_{n-1}(s,t)ds\)</td></tr>
+    <tr><td>Iterated kernel (Volterra)</td><td>\(K_n(x,t)=\int_t^xK(x,s)K_{n-1}(s,t)ds\)</td></tr>
+    <tr><td>Resolvent</td><td>\(R=\sum_{n\ge1}\lambda^{n-1}K_n\); \(R=K+\lambda\int K(x,s)R(s,t)ds\)</td></tr>
+    <tr><td>Solution by resolvent</td><td>\(y(x)=f(x)+\lambda\int R(x,t;\lambda)f(t)dt\)</td></tr>
+    <tr><td>Convergence (Fredholm)</td><td>\(|\lambda|\lt\frac1B\), \(B^2=\iint|K|^2dx\,dt\)</td></tr>
+    <tr><td>Volterra bound</td><td>\(|K_n|\le\frac{M^n(x-t)^{n-1}}{(n-1)!}\) — converges for all \(\lambda\)</td></tr>
+    <tr><td>Abel inversion</td><td>\(y(x)=\frac{\sin\alpha\pi}{\pi}\frac{d}{dx}\int_0^x\frac{f(t)}{(x-t)^{1-\alpha}}dt\)</td></tr>
+  </table></div>
+</div>
+<div class="card sheet" data-id="EQ3">
+  <h3 class="topic">Calculus of variations equations (Units III–IV)</h3>
+  <div class="tbl"><table>
+    <tr><th>Naam</th><th>Equation</th></tr>
+    <tr><td>Euler–Lagrange</td><td>\(F_y-\frac{d}{dx}F_{y'}=0\)</td></tr>
+    <tr><td>Expanded Euler</td><td>\(F_y-F_{xy'}-y'F_{yy'}-y''F_{y'y'}=0\)</td></tr>
+    <tr><td>\(F=F(x,y')\)</td><td>\(F_{y'}=c\)</td></tr>
+    <tr><td>\(F=F(y,y')\) (Beltrami)</td><td>\(F-y'F_{y'}=c\)</td></tr>
+    <tr><td>\(F=F(x,y)\)</td><td>\(F_y=0\)</td></tr>
+    <tr><td>\(F=F(y')\)</td><td>\(y=c_1x+c_2\)</td></tr>
+    <tr><td>Euler–Poisson</td><td>\(F_y-\frac{d}{dx}F_{y'}+\frac{d^2}{dx^2}F_{y''}-\dots+(-1)^n\frac{d^n}{dx^n}F_{y^{(n)}}=0\)</td></tr>
+    <tr><td>Several dependent variables</td><td>\(F_{y_i}-\frac{d}{dx}F_{y_i'}=0,\ i=1..n\)</td></tr>
+    <tr><td>Ostrogradsky (2 variables)</td><td>\(F_u-\partial_xF_{u_x}-\partial_yF_{u_y}=0\)</td></tr>
+    <tr><td>Ostrogradsky (with \(u_{xx}\) etc.)</td><td>\(F_u-\partial_xF_{u_x}-\partial_yF_{u_y}+\partial_{xx}F_{u_{xx}}+\partial_{xy}F_{u_{xy}}+\partial_{yy}F_{u_{yy}}=0\)</td></tr>
+    <tr><td>Parametric form</td><td>\(G_x-\frac d{dt}G_{\dot x}=0,\ G_y-\frac d{dt}G_{\dot y}=0\), \(G\) homogeneous of degree 1</td></tr>
+    <tr><td>Polar form</td><td>\(\int F(\theta,r,r')d\theta\): \(F_r-\frac{d}{d\theta}F_{r'}=0\)</td></tr>
+    <tr><td>Isoperimetric</td><td>\(H=F+\lambda G\): \(H_y-\frac d{dx}H_{y'}=0\)</td></tr>
+    <tr><td>Constraint \(\varphi(x,y,z)=0\)</td><td>\(H=F+\lambda(x)\varphi\), Euler for \(y\) and \(z\)</td></tr>
+    <tr><td>Transversality</td><td>\([F+(\varphi'-y')F_{y'}]_{x_1}=0\)</td></tr>
+    <tr><td>Free end on \(x=x_1\)</td><td>\(F_{y'}|_{x_1}=0\) (natural BC)</td></tr>
+    <tr><td>End on \(y=y_1\)</td><td>\((F-y'F_{y'})|_{x_1}=0\)</td></tr>
+    <tr><td>General end variation</td><td>\(\delta J=[(F-y'F_{y'})\delta x+F_{y'}\delta y]_{x_0}^{x_1}\)</td></tr>
+    <tr><td>Weierstrass–Erdmann corner conditions</td><td>\(F_{y'}\) and \(F-y'F_{y'}\) continuous at a corner</td></tr>
+    <tr><td>Second variation</td><td>\(\delta^2J=\frac{\varepsilon^2}2\int(P\eta'^2+Q\eta^2)dx\), \(P=F_{y'y'}\), \(Q=F_{yy}-\frac d{dx}F_{yy'}\)</td></tr>
+    <tr><td>Legendre condition</td><td>min: \(F_{y'y'}\ge0\); max: \(F_{y'y'}\le0\)</td></tr>
+    <tr><td>Jacobi equation</td><td>\(\frac d{dx}(Pu')-Qu=0\), \(u(a)=0,\ u'(a)=1\)</td></tr>
+    <tr><td>Weierstrass E-function (strong min)</td><td>\(E=F(x,y,p)-F(x,y,y')-(p-y')F_{y'}(x,y,y')\ge0\)</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================== APPLICATIONS ===================== -->
+<div class="unit-h" id="apps"><h2>🛠️ Applications</h2><p>Integral equations aur calculus of variations ke standard applications.</p></div>
+<div class="card" data-id="AP1">
+  <h3 class="topic">Abel's mechanical problem (tautochrone) — singular integral equation</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Problem</span>A particle slides without friction under gravity along a curve from height \(x\) to the lowest point. Find the curve if the time of descent \(T=f(x)\) is a given function of the starting height.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Formulation</span>Let \(s(\xi)\) be arc length measured from the bottom, \(\frac{ds}{d\xi}=y(\xi)\). Starting at height \(x\), at height \(\xi\) the speed is \(v=\sqrt{2g(x-\xi)}\). So
+  $$f(x)=T=\int_0^x\frac{y(\xi)\,d\xi}{\sqrt{2g(x-\xi)}}\ \Rightarrow\ \sqrt{2g}\,f(x)=\int_0^x\frac{y(\xi)}{\sqrt{x-\xi}}d\xi ,$$ Abel's integral equation (Volterra, 1st kind, singular, \(\alpha=\frac12\)). Its solution (inversion formula):
+  $$y(x)=\frac{\sqrt{2g}}{\pi}\frac{d}{dx}\int_0^x\frac{f(t)}{\sqrt{x-t}}dt .$$
+  <b>Tautochrone:</b> \(f(x)=T_0\) constant ⇒ \(\int_0^x\frac{T_0}{\sqrt{x-t}}dt=2T_0\sqrt x\) ⇒ \(y=\frac{\sqrt{2g}}{\pi}\cdot\frac{T_0}{\sqrt x}\), i.e. \(\frac{ds}{dx}=\frac{c}{\sqrt x}\) — the curve is a <b>cycloid</b>.</div>
+</div>
+<div class="card" data-id="AP2">
+  <h3 class="topic">BVP / Green's function and eigenvalue problems</h3>
+  <span class="chance ch-m">⭐ Medium</span>
+  <div class="box b-thm"><span class="lbl">📜 Application</span>A BVP \(-y''=\lambda y+h(x)\), \(y(0)=y(l)=0\) becomes \(y(x)=\int_0^lG(x,t)h(t)dt+\lambda\int_0^lG(x,t)y(t)dt\), \(G\) = kernel of T1.2. The eigenvalues of the symmetric kernel \(G\) are \(\lambda_n=\frac{n^2\pi^2}{l^2}\) with eigenfunctions \(\sin\frac{n\pi x}{l}\) (vibrating string modes) — real and orthogonal, as T1.4 says.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Check</span>\(y=\sin\frac{n\pi x}l\) satisfies \(y''+\frac{n^2\pi^2}{l^2}y=0\), \(y(0)=y(l)=0\), so by T1.2 it satisfies \(y=\lambda_n\int_0^lGy\,dt\). \(\int_0^l\sin\frac{m\pi x}l\sin\frac{n\pi x}l\,dx=0\) (\(m\ne n\)). \(\blacksquare\)</div>
+</div>
+<div class="card" data-id="AP3">
+  <h3 class="topic">Hamilton's principle ⇒ Lagrange's equations of motion</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Application</span>For a system with generalized coordinates \(q_1,\dots,q_n\), kinetic energy \(T\), potential \(V\), Lagrangian \(L=T-V\): the motion makes \(\int_{t_0}^{t_1}L\,dt\) stationary (Hamilton's principle). By T4.1:
+  $$\frac{d}{dt}\Big(\frac{\partial L}{\partial\dot q_i}\Big)-\frac{\partial L}{\partial q_i}=0,\quad i=1,\dots,n .$$
+  If \(L\) has no \(t\): \(\sum\dot q_iL_{\dot q_i}-L=T+V=\) const (energy conservation, Beltrami form).</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>Spring: \(L=\frac12m\dot x^2-\frac12kx^2\) ⇒ \(m\ddot x+kx=0\) (SHM). Pendulum: \(L=\frac12ml^2\dot\theta^2+mgl\cos\theta\) ⇒ \(\ddot\theta+\frac gl\sin\theta=0\).</div>
+</div>
+<div class="card" data-id="AP4">
+  <h3 class="topic">Fermat's principle ⇒ Snell's law; geodesics on a sphere</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Fermat / Snell</span>Light travels so that \(\int n(y)\,ds=\int n(y)\sqrt{1+y'^2}\,dx\) is stationary. No \(x\) ⇒ \(F-y'F_{y'}=c\):
+  $$\frac{n(y)}{\sqrt{1+y'^2}}=c .$$ If \(\varphi\) is the angle of the ray with the \(y\)-axis (normal to the layers \(y=\)const), \(\frac{1}{\sqrt{1+y'^2}}=\sin\varphi\), so \(n\sin\varphi=\) constant — <b>Snell's law</b>.</div>
+  <div class="box b-thm"><span class="lbl">📜 Geodesics on a sphere are great circles</span>On \(r=a\): \(ds^2=a^2(d\theta^2+\sin^2\theta\,d\phi^2)\). Take \(\phi=\phi(\theta)\): \(L=a\int\sqrt{1+\sin^2\theta\,\phi'^2}\,d\theta\). No \(\phi\) ⇒ \(F_{\phi'}=c\):
+  $$\frac{\sin^2\theta\,\phi'}{\sqrt{1+\sin^2\theta\,\phi'^2}}=c\ \Rightarrow\ \phi'=\frac{c}{\sin\theta\sqrt{\sin^2\theta-c^2}} .$$
+  With \(u=\cot\theta\): \(\phi=-\sin^{-1}\frac{c\cot\theta}{\sqrt{1-c^2}}+\phi_0\), i.e. \(\cot\theta=A\sin(\phi_0-\phi)\). Multiply by \(a\sin\theta\): \(z=A(x\sin\phi_0-y\cos\phi_0)\) — a plane through the centre. So geodesics are arcs of <b>great circles</b>.</div>
+</div>
+<div class="card" data-id="AP5">
+  <h3 class="topic">Other standard applications (results)</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-ex"><span class="lbl">✍️ List</span><ol>
+  <li>Shortest distance between two points in a plane: straight line (\(F=\sqrt{1+y'^2}\), \(F_{y'}=c\)).</li>
+  <li>Brachistochrone: cycloid (P9).</li>
+  <li>Minimal surface of revolution: catenary / catenoid (P11).</li>
+  <li>Dido's (isoperimetric) problem: circle (P10).</li>
+  <li>Geodesics on a cylinder: helices (P12); on a sphere: great circles (AP4); on a cone: straight lines on the developed cone.</li>
+  <li>Hanging chain of given length (catenary): minimize potential energy \(\int y\sqrt{1+y'^2}dx\) with \(\int\sqrt{1+y'^2}dx=L\) ⇒ \(H=(y+\lambda)\sqrt{1+y'^2}\) ⇒ \(y+\lambda=c\cosh\frac{x-b}{c}\).</li>
+  <li>Dirichlet principle: \(\iint(u_x^2+u_y^2)\) minimum ⇒ Laplace equation (T3.5).</li>
+  <li>Vibrating string: \(\iint\big(\frac12\rho u_t^2-\frac12Tu_x^2\big)dx\,dt\) ⇒ wave equation \(\rho u_{tt}=Tu_{xx}\).</li>
+  </ol></div>
 </div>
 
 <!-- ===================== UNIT I ===================== -->
@@ -120,6 +285,18 @@
   In the second double integral interchange the names \(x\leftrightarrow t\) and use \(K(t,x)=K(x,t)\): it equals the first. Subtracting: \((\lambda_2-\lambda_1)\int_a^by_1y_2\,dx=0\), so \(\int_a^by_1(x)y_2(x)\,dx=0\).<br>
   (b) Let \(\lambda=\alpha+i\beta\) be an eigenvalue with eigenfunction \(y=u+iv\not\equiv0\). Taking complex conjugates in \(y=\lambda\int Ky\) (K real): \(\bar y=\bar\lambda\int K\bar y\). So \(\bar\lambda\) is an eigenvalue with eigenfunction \(\bar y\). If \(\beta\ne0\), \(\lambda\ne\bar\lambda\), and by (a) (the proof did not need reality)
   $$\int_a^by\,\bar y\,dx=\int_a^b|y|^2dx=0\ \Rightarrow\ y\equiv0,$$ a contradiction. So \(\beta=0\): \(\lambda\) is real. (For Hermitian \(K\) the same proof works with \(\int y_1\bar y_2\).) \(\blacksquare\)</div>
+</div>
+
+<div class="card" data-id="T1.5">
+  <h3 class="topic">T1.5 Fredholm equations of the first kind (homogeneous &amp; non-homogeneous) with degenerate kernel</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Theorem</span>Let \(K(x,t)=\sum_{i=1}^na_i(x)b_i(t)\) with \(a_1,\dots,a_n\) linearly independent. Then the equation of the first kind
+  $$f(x)=\lambda\int_a^bK(x,t)y(t)\,dt\quad(\lambda\ne0)$$
+  (i) has a solution only if \(f\) is a linear combination \(f=\sum_{i=1}^nf_ia_i\);<br>(ii) when this holds, the solutions are exactly the \(y\) with \(\int_a^bb_i(t)y(t)\,dt=\frac{f_i}{\lambda}\) (\(i=1..n\)); the solution is <b>never unique</b>: any \(\psi\) with \(\int b_i\psi=0\) for all \(i\) may be added.<br>(iii) The homogeneous equation \(\int_a^bK(x,t)y(t)dt=0\) has infinitely many solutions: all \(y\) orthogonal to \(b_1,\dots,b_n\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>
+  \(\lambda\int Ky\,dt=\lambda\sum_ia_i(x)c_i\) with \(c_i=\int b_iy\,dt\). So the right side always lies in the span of \(a_1,\dots,a_n\); hence (i) is necessary. If \(f=\sum f_ia_i\), then by linear independence of the \(a_i\), \(f=\lambda\sum c_ia_i\iff c_i=f_i/\lambda\) for each \(i\), which is (ii). A particular solution: \(y_0=\sum d_jb_j\) with \(\sum_j\big(\int b_ib_j\big)d_j=f_i/\lambda\) (Gram matrix of the independent \(b_j\) is non-singular). Adding \(\psi\perp b_1..b_n\) does not change any \(c_i\); in \(L_2[a,b]\) (infinite-dimensional) such non-zero \(\psi\) always exist, giving (iii) and non-uniqueness. \(\blacksquare\)</div>
+  <div class="box b-ex"><span class="lbl">✍️ Example</span>\(x=\int_0^1xt\,y(t)\,dt\): need \(\int_0^1t\,y\,dt=1\). E.g. \(y=3t\) (\(\int3t^2=1\) ✓), or \(y=2\) (\(\int2t=1\) ✓). General: \(y=3t+\psi\), \(\int_0^1t\psi\,dt=0\). And \(x^2=\int_0^1xt\,y\,dt\) has <b>no</b> solution (\(x^2\) is not a multiple of \(x\)).</div>
+  <div class="box b-def"><span class="lbl">📖 Note (Volterra 1st kind)</span>\(f(x)=\int_a^xK(x,t)y(t)dt\) with \(K(x,x)\ne0\), \(f(a)=0\): differentiate (Leibniz) to get the 2nd kind equation \(y(x)=\frac{f'(x)}{K(x,x)}-\int_a^x\frac{K_x(x,t)}{K(x,x)}y(t)dt\).</div>
 </div>
 
 <!-- ===================== UNIT II ===================== -->

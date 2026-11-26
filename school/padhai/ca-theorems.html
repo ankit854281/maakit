@@ -19,7 +19,7 @@
 </div>
 
 <nav class="units">
-  <a href="#imp">Paper me kya aayega</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#sa">Short answers</a><a href="#prob">Solved problems</a>
+  <a href="#imp">Paper me kya aayega</a><a href="#defs">Definitions</a><a href="#eqs">Equations</a><a href="#apps">Applications</a><a href="#u1">Unit I</a><a href="#u2">Unit II</a><a href="#u3">Unit III</a><a href="#u4">Unit IV</a><a href="#sa">Short answers</a><a href="#prob">Solved problems</a>
 </nav>
 
 <div class="wrap">
@@ -50,7 +50,169 @@
     <tr><td>15</td><td>Phragmén–Lindelöf / Hadamard three lines theorem.</td><td>⭐</td><td>T2.8, T2.10</td></tr>
     <tr><td>16</td><td>Laurent series of a given function in given regions; nature of singularities.</td><td>🔥🔥</td><td>P2, P3</td></tr>
     <tr><td>17</td><td>Zeros of analytic functions are isolated; Fundamental theorem of algebra.</td><td>⭐</td><td>T2.1, T2.11</td></tr>
+    <tr><td>18</td><td>Applications of Schwarz lemma / Rouché (Hurwitz, FTA) / Mittag-Leffler (\(\sum1/n^2=\pi^2/6\)); classification of Möbius maps.</td><td>🔥</td><td>Applications, Definitions</td></tr>
   </table></div>
+</div>
+
+<!-- ===================== DEFINITIONS ===================== -->
+<div class="unit-h" id="defs"><h2>📖 Saari Definitions (Units I–IV)</h2><p>Section A me seedhe poochhi jaati hain — word-to-word yaad kariye.</p></div>
+<div class="card" data-id="DEF1">
+  <h3 class="topic">Unit I definitions</h3>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><ol>
+  <li><b>Analytic (holomorphic) function:</b> \(f\) is analytic in an open set \(G\) if \(f'(z)=\lim_{h\to0}\frac{f(z+h)-f(z)}{h}\) exists at every point of \(G\). Analytic at a point = analytic in some neighbourhood of it.</li>
+  <li><b>Entire function:</b> analytic in the whole plane \(\mathbb C\) (e.g. polynomials, \(e^z,\sin z\)).</li>
+  <li><b>Region (domain):</b> a non-empty open connected set. <b>Simply connected:</b> every closed curve in \(G\) is homotopic to a point (no holes).</li>
+  <li><b>Harmonic function:</b> \(u\in C^2\) with \(u_{xx}+u_{yy}=0\). \(v\) is a <b>harmonic conjugate</b> of \(u\) if \(u+iv\) is analytic.</li>
+  <li><b>Branch of logarithm:</b> a continuous \(g\) on \(G\) with \(e^{g(z)}=z\). <b>Principal branch:</b> \(\operatorname{Log}z=\ln|z|+i\operatorname{Arg}z\), \(-\pi\lt\operatorname{Arg}z\lt\pi\). <b>Branch point:</b> a point (here \(0,\infty\)) around which the function cannot be made single-valued; <b>branch cut:</b> the line removed (here \((-\infty,0]\)). <b>Principal power:</b> \(z^\alpha=e^{\alpha\operatorname{Log}z}\).</li>
+  <li><b>Conformal map:</b> preserves angles between curves in magnitude and sense. <b>Isogonal:</b> preserves magnitude but reverses sense (e.g. \(\bar z\)). <b>Critical point:</b> \(f'(z_0)=0\) (conformality fails).</li>
+  <li><b>Extended complex plane:</b> \(\hat{\mathbb C}=\mathbb C\cup\{\infty\}\) (Riemann sphere by stereographic projection).</li>
+  <li><b>Möbius (bilinear) transformation:</b> \(w=\frac{az+b}{cz+d}\), \(ad-bc\ne0\). Elementary maps: <b>translation</b> \(z+b\), <b>rotation</b> \(e^{i\theta}z\), <b>dilation (magnification)</b> \(rz\ (r>0)\), <b>inversion</b> \(1/z\).</li>
+  <li><b>Fixed (invariant) point:</b> \(T(z_0)=z_0\).</li>
+  <li><b>Classification of Möbius maps:</b> with two fixed points \(\alpha,\beta\): normal form \(\frac{w-\alpha}{w-\beta}=k\frac{z-\alpha}{z-\beta}\); <b>elliptic</b> if \(|k|=1\), <b>hyperbolic</b> if \(k>0\) real, <b>loxodromic</b> otherwise. With one fixed point \(\alpha\): <b>parabolic</b>, \(\frac1{w-\alpha}=\frac1{z-\alpha}+k\).</li>
+  <li><b>Cross ratio:</b> \((z_1,z_2,z_3,z_4)=\frac{(z_1-z_3)(z_2-z_4)}{(z_1-z_4)(z_2-z_3)}\) = image of \(z_1\) under the Möbius map sending \(z_2,z_3,z_4\) to \(1,0,\infty\).</li>
+  <li><b>Symmetric (inverse) points</b> w.r.t. circle \(|z-a|=R\): \(z^*=a+\frac{R^2}{\bar z-\bar a}\) (on the same ray from \(a\), \(|z-a||z^*-a|=R^2\)); w.r.t. a line: mirror images.</li>
+  <li><b>Automorphism</b> of a region \(G\): a one-one analytic map of \(G\) onto \(G\); they form a group \(\operatorname{Aut}(G)\).</li>
+  </ol></div>
+</div>
+<div class="card" data-id="DEF2">
+  <h3 class="topic">Unit II definitions</h3>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><ol>
+  <li><b>Zero of order \(m\):</b> \(f(a)=f'(a)=\dots=f^{(m-1)}(a)=0\ne f^{(m)}(a)\); equivalently \(f=(z-a)^mg\), \(g(a)\ne0\). <b>Simple zero:</b> \(m=1\).</li>
+  <li><b>Isolated zero:</b> a zero with a neighbourhood containing no other zero.</li>
+  <li><b>Maximum modulus on a circle:</b> \(M(r)=\max_{|z|=r}|f(z)|\); \(A(r)=\max_{|z|=r}\operatorname{Re}f(z)\).</li>
+  <li><b>Local maximum of \(|f|\):</b> \(|f(z)|\le|f(z_0)|\) for all \(z\) near \(z_0\).</li>
+  <li><b>Convex function:</b> \(\varphi(tx_1+(1-t)x_2)\le t\varphi(x_1)+(1-t)\varphi(x_2)\). (Three circles: \(\log M(r)\) convex in \(\log r\); three lines: \(\log M(x)\) convex in \(x\).)</li>
+  <li><b>Unit disk</b> \(D=\{|z|\lt1\}\); <b>strip</b> \(\{a\lt\operatorname{Re}z\lt b\}\); <b>annulus</b> \(\{R_1\lt|z-a|\lt R_2\}\).</li>
+  </ol></div>
+</div>
+<div class="card" data-id="DEF3">
+  <h3 class="topic">Unit III definitions</h3>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><ol>
+  <li><b>Singular point:</b> a point where \(f\) is not analytic but every neighbourhood has points of analyticity. <b>Isolated singularity:</b> \(f\) analytic in \(0\lt|z-a|\lt R\). <b>Non-isolated:</b> e.g. \(z=0\) for \(1/\sin(1/z)\) (poles at \(1/n\pi\to0\)).</li>
+  <li><b>Removable singularity:</b> \(\lim_{z\to a}f(z)\) exists finitely (no negative powers in Laurent series).</li>
+  <li><b>Pole of order \(m\):</b> \(\lim(z-a)^mf(z)\) finite and non-zero (Laurent series has finitely many negative powers, lowest \((z-a)^{-m}\)). <b>Simple pole:</b> \(m=1\).</li>
+  <li><b>Essential singularity:</b> infinitely many negative powers in the Laurent series (neither removable nor pole).</li>
+  <li><b>Principal part</b> of \(f\) at \(a\): \(\sum_{n=1}^\infty a_{-n}(z-a)^{-n}\). <b>Regular (analytic) part:</b> \(\sum_{n\ge0}a_n(z-a)^n\).</li>
+  <li><b>Residue:</b> \(\operatorname{Res}(f,a)=a_{-1}=\frac1{2\pi i}\oint f\,dz\).</li>
+  <li><b>Laurent series:</b> \(\sum_{n=-\infty}^\infty a_n(z-a)^n\) valid in an annulus.</li>
+  <li><b>Singularity at ∞:</b> nature of \(f(1/z)\) at \(z=0\). <b>Zero at ∞</b> of order \(m\): \(f(1/z)\) has a zero of order \(m\) at 0.</li>
+  <li><b>Meromorphic function:</b> analytic in \(G\) except for poles. <b>Rational function:</b> \(P/Q\), polynomials. <b>Transcendental entire function:</b> entire, not a polynomial (essential singularity at ∞).</li>
+  <li><b>Winding number:</b> \(n(\gamma;a)=\frac1{2\pi i}\oint_\gamma\frac{dz}{z-a}\).</li>
+  <li><b>Omitted (exceptional) value:</b> a value \(w\) with \(f(z)\ne w\) for all \(z\) (e.g. 0 for \(e^z\)); <b>Picard exceptional value</b>.</li>
+  </ol></div>
+</div>
+<div class="card" data-id="DEF4">
+  <h3 class="topic">Unit IV definitions</h3>
+  <div class="box b-def"><span class="lbl">📖 Definitions</span><ol>
+  <li><b>Analytic continuation:</b> \((g,G_2)\) is a direct continuation of \((f,G_1)\) if \(G_1\cap G_2\ne\emptyset\) and \(f=g\) on it.</li>
+  <li><b>Symmetric region:</b> \(z\in G\Rightarrow\bar z\in G\).</li>
+  <li><b>Convergent infinite product:</b> \(\prod(1+u_n)\) converges if at most finitely many factors vanish and the partial products of the rest tend to a <b>non-zero</b> limit. <b>Absolutely convergent:</b> \(\prod(1+|u_n|)\) converges (⇔ \(\sum|u_n|\lt\infty\)). If partial products \(\to0\) the product <b>diverges to zero</b>.</li>
+  <li><b>Elementary (primary) factors:</b> \(E_0(z)=1-z\), \(E_p(z)=(1-z)\exp(z+\frac{z^2}2+\dots+\frac{z^p}p)\).</li>
+  <li><b>Order</b> of entire \(f\): \(\lambda=\limsup_{r\to\infty}\frac{\log\log M(r)}{\log r}\); \(f\) has finite order \(\lambda\) iff \(|f(z)|\lt e^{|z|^{\lambda+\varepsilon}}\) for large \(|z|\), every \(\varepsilon>0\).</li>
+  <li><b>Exponent of convergence</b> of zeros \(\{a_n\}\): \(\rho_1=\inf\{\alpha:\sum|a_n|^{-\alpha}\lt\infty\}\). <b>Rank</b> \(p\): least integer with \(\sum|a_n|^{-(p+1)}\lt\infty\).</li>
+  <li><b>Canonical product:</b> \(\prod E_p(z/a_n)\) with \(p\) = rank. <b>Genus:</b> \(\mu=\max(p,\deg g)\) in \(f=z^me^{g}\prod E_p(z/a_n)\), \(g\) a polynomial.</li>
+  <li><b>Principal part data (Mittag-Leffler):</b> poles \(a_n\to\infty\) with prescribed principal parts \(P_n\big(\frac1{z-a_n}\big)\).</li>
+  </ol></div>
+</div>
+
+<!-- ===================== EQUATIONS ===================== -->
+<div class="unit-h" id="eqs"><h2>🧮 Saari Equations &amp; Formulas</h2><p>Ek jagah — revision ke liye.</p></div>
+<div class="card sheet" data-id="EQ1">
+  <h3 class="topic">Basic equations</h3>
+  <div class="tbl"><table>
+    <tr><th>Naam</th><th>Equation</th></tr>
+    <tr><td>Cauchy–Riemann (Cartesian)</td><td>\(u_x=v_y,\quad u_y=-v_x\); \(f'(z)=u_x+iv_x\)</td></tr>
+    <tr><td>Cauchy–Riemann (polar)</td><td>\(u_r=\frac1rv_\theta,\quad v_r=-\frac1ru_\theta\); \(f'=e^{-i\theta}(u_r+iv_r)\)</td></tr>
+    <tr><td>Laplace equation</td><td>\(\nabla^2u=u_{xx}+u_{yy}=0\) (polar: \(u_{rr}+\frac1ru_r+\frac1{r^2}u_{\theta\theta}=0\))</td></tr>
+    <tr><td>Cauchy integral formula</td><td>\(f^{(n)}(a)=\frac{n!}{2\pi i}\oint_\gamma\frac{f(z)}{(z-a)^{n+1}}dz\)</td></tr>
+    <tr><td>Cauchy estimate</td><td>\(|f^{(n)}(a)|\le\frac{n!M}{R^n}\), \(M=\max_{|z-a|=R}|f|\)</td></tr>
+    <tr><td>Gauss mean value</td><td>\(f(a)=\frac1{2\pi}\int_0^{2\pi}f(a+re^{i\theta})d\theta\)</td></tr>
+    <tr><td>Taylor series</td><td>\(f(z)=\sum_{n\ge0}\frac{f^{(n)}(a)}{n!}(z-a)^n\)</td></tr>
+    <tr><td>Laurent coefficients</td><td>\(a_n=\frac1{2\pi i}\oint\frac{f(\zeta)}{(\zeta-a)^{n+1}}d\zeta,\ n\in\mathbb Z\)</td></tr>
+    <tr><td>Logarithm</td><td>\(\log z=\ln|z|+i(\operatorname{Arg}z+2k\pi)\); \(\frac{d}{dz}\log z=\frac1z\)</td></tr>
+  </table></div>
+</div>
+<div class="card sheet" data-id="EQ2">
+  <h3 class="topic">Möbius / conformal map equations</h3>
+  <div class="tbl"><table>
+    <tr><th>Naam</th><th>Equation</th></tr>
+    <tr><td>Inverse map</td><td>\(z=\frac{dw-b}{-cw+a}\)</td></tr>
+    <tr><td>Fixed points</td><td>\(cz^2+(d-a)z-b=0\)</td></tr>
+    <tr><td>Map through 3 points</td><td>\((w,w_1,w_2,w_3)=(z,z_1,z_2,z_3)\)</td></tr>
+    <tr><td>Circle (general)</td><td>\(\alpha z\bar z+\bar\beta z+\beta\bar z+\gamma=0\), \(\alpha,\gamma\) real (\(\alpha=0\): line)</td></tr>
+    <tr><td>Upper half plane → disk</td><td>\(w=e^{i\theta}\frac{z-\alpha}{z-\bar\alpha}\), \(\operatorname{Im}\alpha>0\)</td></tr>
+    <tr><td>Disk → disk (automorphisms)</td><td>\(w=e^{i\theta}\frac{z-a}{1-\bar az}\), \(|a|\lt1\)</td></tr>
+    <tr><td>Half plane → half plane</td><td>\(w=\frac{az+b}{cz+d}\), \(a,b,c,d\) real, \(ad-bc>0\)</td></tr>
+    <tr><td>Disk \(|z|\lt1\) → upper half plane</td><td>\(w=i\frac{1+z}{1-z}\)</td></tr>
+    <tr><td>Disk \(|z|\lt R\) → \(|w|\lt1\)</td><td>\(w=e^{i\theta}\frac{R(z-a)}{R^2-\bar az}\), \(|a|\lt R\)</td></tr>
+    <tr><td>Other maps</td><td>\(w=e^z\): strip \(0\lt\operatorname{Im}z\lt\pi\) → upper half plane; \(w=z^2\): first quadrant → upper half plane; \(w=\frac12(z+\frac1z)\) (Joukowski): \(|z|=1\) → segment \([-1,1]\)</td></tr>
+    <tr><td>Magnification / rotation</td><td>\(|f'(z_0)|\) and \(\arg f'(z_0)\)</td></tr>
+  </table></div>
+</div>
+<div class="card sheet" data-id="EQ3">
+  <h3 class="topic">Inequalities and theorem formulas</h3>
+  <div class="tbl"><table>
+    <tr><th>Naam</th><th>Formula</th></tr>
+    <tr><td>Schwarz lemma</td><td>\(|f(z)|\le|z|,\ |f'(0)|\le1\)</td></tr>
+    <tr><td>Schwarz (radius R, bound M)</td><td>\(|f(z)|\le\frac{M|z|}{R}\), \(|f'(0)|\le\frac MR\)</td></tr>
+    <tr><td>Schwarz–Pick</td><td>\(|f'(z)|\le\frac{1-|f(z)|^2}{1-|z|^2}\); \(\left|\frac{f(z)-f(a)}{1-\overline{f(a)}f(z)}\right|\le\left|\frac{z-a}{1-\bar az}\right|\)</td></tr>
+    <tr><td>Three circles</td><td>\(M(r)^{\log(R_2/R_1)}\le M(R_1)^{\log(R_2/r)}M(R_2)^{\log(r/R_1)}\)</td></tr>
+    <tr><td>Three lines</td><td>\(M(x)^{b-a}\le M(a)^{b-x}M(b)^{x-a}\)</td></tr>
+    <tr><td>Borel–Carathéodory</td><td>\(M(r)\le\frac{2r}{R-r}A(R)+\frac{R+r}{R-r}|f(0)|\)</td></tr>
+    <tr><td>Argument principle</td><td>\(\frac1{2\pi i}\oint\frac{f'}{f}dz=N-P=\frac1{2\pi}\Delta_\gamma\arg f\)</td></tr>
+    <tr><td>Generalized argument principle</td><td>\(\frac1{2\pi i}\oint g\frac{f'}{f}dz=\sum g(z_k)-\sum g(p_j)\)</td></tr>
+    <tr><td>Rouché</td><td>\(|g|\lt|f|\) on \(\gamma\) ⇒ \(Z(f+g)=Z(f)\)</td></tr>
+    <tr><td>Residue at pole of order m</td><td>\(\operatorname{Res}=\frac1{(m-1)!}\lim_{z\to a}\frac{d^{m-1}}{dz^{m-1}}\big[(z-a)^mf(z)\big]\); simple pole \(\frac{p}{q}\): \(\frac{p(a)}{q'(a)}\)</td></tr>
+    <tr><td>Elementary factor bound</td><td>\(|1-E_p(z)|\le|z|^{p+1}\), \(|z|\le1\)</td></tr>
+    <tr><td>Weierstrass factorization</td><td>\(f=z^me^{g(z)}\prod E_{p_n}(z/a_n)\)</td></tr>
+    <tr><td>Hadamard</td><td>\(f=z^me^{Q(z)}\prod E_p(z/a_n)\), \(\deg Q\le\lambda\), \(p\le\lambda\)</td></tr>
+    <tr><td>Order</td><td>\(\lambda=\limsup\frac{\log\log M(r)}{\log r}\); also \(\lambda=\limsup_{n}\frac{n\log n}{\log(1/|a_n|)}\) for \(f=\sum a_nz^n\)</td></tr>
+  </table></div>
+</div>
+<div class="card sheet" data-id="EQ4">
+  <h3 class="topic">Important expansions (products &amp; partial fractions)</h3>
+  <div class="tbl"><table>
+    <tr><th>Function</th><th>Expansion</th></tr>
+    <tr><td>\(\sin\pi z\)</td><td>\(\pi z\prod_{n=1}^\infty\big(1-\frac{z^2}{n^2}\big)\)</td></tr>
+    <tr><td>\(\cos\pi z\)</td><td>\(\prod_{n=1}^\infty\big(1-\frac{4z^2}{(2n-1)^2}\big)\)</td></tr>
+    <tr><td>\(\pi\cot\pi z\)</td><td>\(\frac1z+\sum_{n=1}^\infty\frac{2z}{z^2-n^2}=\frac1z+\sum_{n\ne0}\big(\frac1{z-n}+\frac1n\big)\)</td></tr>
+    <tr><td>\(\frac{\pi^2}{\sin^2\pi z}\)</td><td>\(\sum_{n=-\infty}^\infty\frac1{(z-n)^2}\)</td></tr>
+    <tr><td>\(\frac{\pi}{\sin\pi z}\)</td><td>\(\frac1z+\sum_{n\ne0}(-1)^n\big(\frac1{z-n}+\frac1n\big)\)</td></tr>
+    <tr><td>\(e^{1/z}\)</td><td>\(\sum_{n\ge0}\frac1{n!z^n}\) (\(z\ne0\))</td></tr>
+  </table></div>
+</div>
+
+<!-- ===================== APPLICATIONS ===================== -->
+<div class="unit-h" id="apps"><h2>🛠️ Applications (syllabus ke "applications")</h2><p>Proof ke baad "Applications" poochhe jaate hain — ye sab yahan hain.</p></div>
+<div class="card" data-id="AP1">
+  <h3 class="topic">Applications of Schwarz lemma &amp; maximum modulus</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Application 1</span>Automorphisms of \(D\) are \(e^{i\theta}\frac{z-a}{1-\bar az}\) (T2.6); those fixing 0 are rotations.</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 2 (Schwarz for general disk)</span>If \(f\) is analytic in \(|z|\lt R\), \(|f|\le M\), \(f(0)=0\), then \(|f(z)|\le\frac{M}{R}|z|\) and \(|f'(0)|\le\frac MR\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Apply Schwarz lemma to \(g(z)=\frac1Mf(Rz)\), which maps \(D\) into \(\bar D\) with \(g(0)=0\): \(|g(z)|\le|z|\). Put \(z\to z/R\): \(\frac1M|f(z)|\le\frac{|z|}R\). Also \(g'(0)=\frac RMf'(0)\), \(|g'(0)|\le1\). \(\blacksquare\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 3</span>If \(f:D\to D\) analytic has two distinct fixed points, then \(f(z)=z\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Let \(f(a)=a,f(b)=b\), \(a\ne b\). \(g=\varphi_a\circ f\circ\varphi_{-a}\) maps \(D\to D\), \(g(0)=0\), and fixes \(c=\varphi_a(b)\ne0\). So \(|g(c)|=|c|\) ⇒ \(g(z)=\lambda z\), and \(g(c)=c\) ⇒ \(\lambda=1\). Hence \(g=\) identity, \(f=\) identity. \(\blacksquare\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 4 (max modulus)</span>(i) FTA (via minimum modulus): \(|p|\to\infty\), so \(|p|\) has a minimum on \(\mathbb C\) at some \(z_0\); if \(p(z_0)\ne0\), minimum modulus theorem forces \(p\) constant — so \(p(z_0)=0\).<br>(ii) A non-constant analytic function on a bounded region continuous up to the boundary with \(|f|=\)const on \(\partial G\) must have a zero in \(G\) (else min and max of \(|f|\) both on boundary ⇒ \(|f|\) constant).</div>
+</div>
+<div class="card" data-id="AP2">
+  <h3 class="topic">Applications of Rouché and Argument principle</h3>
+  <span class="chance ch-h">🔥🔥 Very high</span>
+  <div class="box b-thm"><span class="lbl">📜 Application 1 (FTA by Rouché)</span>A polynomial \(p(z)=a_nz^n+\dots+a_0\) (\(a_n\ne0\)) has exactly \(n\) zeros.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Let \(f=a_nz^n\), \(g=a_{n-1}z^{n-1}+\dots+a_0\). For \(|z|=R\) large, \(|g|\le\sum|a_k|R^k\lt|a_n|R^n=|f|\). By Rouché \(p=f+g\) has as many zeros in \(|z|\lt R\) as \(a_nz^n\), i.e. \(n\). For larger \(R\) the count is the same, so all \(n\) zeros lie in \(|z|\lt R\). \(\blacksquare\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 2 (Hurwitz's theorem)</span>If \(f_n\to f\) uniformly on compact subsets of \(G\), \(f\not\equiv0\), and \(\bar B(a;r)\subset G\) with \(f\ne0\) on \(|z-a|=r\), then for large \(n\), \(f_n\) and \(f\) have the same number of zeros in \(B(a;r)\). Corollary: limit of zero-free functions is zero-free or \(\equiv0\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Let \(\delta=\min_{|z-a|=r}|f|>0\). For large \(n\), \(|f_n-f|\lt\delta\le|f|\) on the circle. Rouché with \(f\) and \(g=f_n-f\): \(f+g=f_n\) has the same number of zeros as \(f\). \(\blacksquare\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 3</span>Counting zeros in a disk/annulus (P4, P5); location of roots in a half plane via change of argument along the imaginary axis and a large semicircle.</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 4 (open mapping)</span>A non-constant analytic function is an open map: near \(z_0\) with \(f(z_0)=w_0\) of multiplicity \(m\), every \(w\) near \(w_0\) is taken exactly \(m\) times (by the argument principle applied to \(f-w\)).</div>
+</div>
+<div class="card" data-id="AP3">
+  <h3 class="topic">Applications of Mittag-Leffler, Weierstrass and reflection</h3>
+  <span class="chance ch-h">🔥 High</span>
+  <div class="box b-thm"><span class="lbl">📜 Application 1</span>From \(\pi\cot\pi z=\frac1z+\sum_{n\ge1}\frac{2z}{z^2-n^2}\): \(\displaystyle\sum_{n=1}^\infty\frac1{n^2}=\frac{\pi^2}6\).</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Near \(z=0\): \(\pi\cot\pi z=\frac1z-\frac{\pi^2}{3}z+O(z^3)\). Right side: \(\frac1z-2z\sum\frac1{n^2}\cdot\frac1{1-z^2/n^2}=\frac1z-2z\sum\frac1{n^2}+O(z^3)\). Compare coefficients of \(z\): \(\frac{\pi^2}3=2\sum\frac1{n^2}\). \(\blacksquare\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 2 (Wallis product)</span>Put \(z=\frac12\) in \(\sin\pi z=\pi z\prod(1-\frac{z^2}{n^2})\): \(1=\frac\pi2\prod\frac{(2n-1)(2n+1)}{(2n)^2}\), so \(\displaystyle\frac\pi2=\prod_{n=1}^\infty\frac{(2n)^2}{(2n-1)(2n+1)}=\frac21\cdot\frac23\cdot\frac43\cdot\frac45\cdots\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 3</span>Every meromorphic function on \(\mathbb C\) is a quotient of two entire functions.</div>
+  <div class="box b-proof"><span class="lbl">✒️ Proof</span>Let \(h\) be entire with zeros exactly at the poles of \(f\), with the same orders (exists by Weierstrass). Then \(g=fh\) has only removable singularities, so \(g\) is entire and \(f=g/h\). \(\blacksquare\)</div>
+  <div class="box b-thm"><span class="lbl">📜 Application 4 (reflection)</span>If \(f\) is entire and real on the real axis, then \(f(\bar z)=\overline{f(z)}\) for all \(z\) (identity theorem applied to \(f(z)-\overline{f(\bar z)}\), which vanishes on \(\mathbb R\)). Reflection also gives analytic continuation across a line/circle: across \(|z|=1\) by \(F(z)=1/\overline{f(1/\bar z)}\) when \(|f|=1\) on the arc.</div>
 </div>
 
 <!-- ===================== UNIT I ===================== -->
