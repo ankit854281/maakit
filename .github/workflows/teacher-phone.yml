@@ -34,6 +34,7 @@ jobs:
           extensions: pdo_mysql, mysqli, gd, zip, mbstring
           coverage: none
       - name: Prepare synthetic CI database and local PHP server
+        id: prepare
         run: |
           for i in $(seq 1 30); do
             mysql -h 127.0.0.1 -uroot -pjaanch -e 'SELECT 1' >/dev/null 2>&1 && break
@@ -58,17 +59,25 @@ jobs:
       - name: Teacher API and permission checks
         run: |
           php .github/jaanch/teacher-flow.php
-          php .github/browser/teacher-ui-seed.php
+      - name: Seed browser test data
+        id: browser_seed
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        run: php .github/browser/teacher-ui-seed.php
       - name: Check the JavaScript files
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         run: |
+          node --check school/teacher-voice-connect.js
           node --check school/teacher.js
           node --check school/app.js
           node --check school/classic.js
       - name: Install Playwright only in CI
+        id: playwright
+        if: ${{ !cancelled() && steps.browser_seed.outcome == 'success' }}
         run: |
           npm install --prefix /tmp/teacher-playwright --no-audit --no-fund playwright@1.56.1
           /tmp/teacher-playwright/node_modules/.bin/playwright install --with-deps chromium
       - name: Mobile 390px browser checks and screenshots
+        if: ${{ !cancelled() && steps.playwright.outcome == 'success' }}
         run: node .github/browser/teacher-ui.cjs
       - name: Full school test suite
         if: always()
