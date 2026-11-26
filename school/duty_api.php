@@ -123,7 +123,7 @@ case 'sent': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $date = du_date($in['date'] ?? ''); $type = (string)($in['type'] ?? ''); $sid = du_txt($in['sid'] ?? '', 40); $subj = du_txt($in['subj'] ?? '', 60);
     $stu = $sid === '' ? null : sch_rec_get('student', $sid);
-    if (!in_array($type, ['abs', 'abs3', 'low', 'hw', 'hw3'], true) || $stu === null) sch_fail('Choose the child.');
+    if (!in_array($type, ['abs', 'abs3', 'low', 'hw', 'hw3', 'catch'], true) || $stu === null) sch_fail('Choose the child.');
     // Duty teacher / Principal: any child. A teacher: children of a class he teaches or is class teacher of (owner, 27 Nov 2026).
     if (!$duty && !($role === 'teacher' && sch_in_class($tid, (string)($stu['cls'] ?? '')))) sch_fail('You can mark messages only for your own classes.', 403);
     $key = "$date|$type|$sid|$subj";

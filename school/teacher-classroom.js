@@ -115,7 +115,7 @@ if (typeof vAtt === 'function') {
       needStats(c);
       const pick = all.length > 1 ? `<div class="fld">Class${sel('attC', all.map(x => [x, 'Class ' + x + (allowed.includes(x) ? ' · class teacher' : '')]), c, "DRAFT.att=null;DRAFT.reg=null;DRAFT.rec=null;go('att',{c:this.value,m:'" + (cur === 'more' ? 'day' : cur) + "'})")}</div>` : '';
       const D0 = crAttData(c), todo = (D0.today ? D0.today.filter(s => s.phone && !crSent(D0.t, 'abs', s.id, '')).length : 0);
-      const tabs = crTabs([['day', 'check', 'Entry'], ['rep', 'wa', 'Report & Message', todo || ''], ['more', 'list', 'More']], cur, k => `DRAFT.att=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:'${k}'})`);
+      const tabs = crTabs([['day', 'check', 'Entry'], ['rep', 'wa', 'Report & Share', todo || ''], ['more', 'list', 'More']], cur, k => `DRAFT.att=null;DRAFT.kit=null;go('att',{c:${jsq(c)},m:'${k}'})`);
       // the attendance report card stays on top of Entry and the More screens, as before (not on Levels or one child's page)
       const rep = (cur === 'day' || (CR_MORE.includes(m) && m !== 'bulk' && !(m === 'stu' && P.sid))) ? attReport(c) : '';
       const body = m === 'rep' ? vAttRep(c) : m === 'more' ? vAttMore(c) : rep + (m === 'bulk' ? vBulk(c) : m === 'reg' ? vRegister(c) : m === 'pending' ? vPending(c) : m === 'cal' ? vAttCal(c) : m === 'kit' ? vKit(c) : m === 'stu' ? (P.sid ? vStuReport(c, P.sid) : vStudents(c)) : vAttDay(c));
@@ -191,24 +191,72 @@ async function crHcSave(c, sb) {
   } catch (e) { toast(e.message); }
 }
 function vHwRep() {
-  const H = crNeedHw(), t = todayISO(), f = ['today', 'x3', 'pct'].includes(P.f) ? P.f : 'today', mine = crMyCS();
+  const H = crNeedHw(), t = todayISO(), mine = crMyCS();
+  if (!P.f) { const G0 = crGiven(t); P.f = G0.pending.length ? 'diary' : 'today'; }
+  const f = ['today', 'x3', 'pct'].includes(P.f) ? P.f : 'today';
   if (H.loading && !H.last) return '<div class="load"><i></i></div>';
   const today = [], x3 = [];
   mine.forEach(x => { const ch = (H.checks || {})[x.k]; if (ch) Object.entries(ch.rows || {}).forEach(([sid, r]) => { const s = studentById(sid); if (s && (r.hw === 'not' || r.hw === 'half')) today.push({ s, c: x.c, subj: x.s, hw: r.hw, task: ch.hw }); });
     Object.entries((H.miss || {})[x.k] || {}).forEach(([sid, n]) => { const s = studentById(sid); if (s && n >= 3) x3.push({ s, c: x.c, subj: x.s, n }); }); });
   const pct = mine.map(x => { const ch = (H.checks || {})[x.k], last = (H.last || {})[x.k]; return { x, ch, last }; });
-  const head = crHead('Homework report', esc(fmtLong(t))) + crStats([['today', 'Not done today', today.length, 'red'], ['x3', '3+ times in 30 days', x3.length, 'amber'], ['pct', 'Class-wise', mine.length, 'green']], f, k => `go('diary',{m:'rep',f:'${k}'})`);
+  const G = crGiven(t), fG = ['diary', 'share', 'catch'].includes(P.f);
+  if (fG) return crHead('Homework given today', esc(fmtLong(t))) + crGivenStats(G, P.f) + (P.f === 'share' ? crShareView(G) : P.f === 'catch' ? crCatchView(G) : crDiaryView(G)) + crCheckedStats(today, x3, mine, '');
+  const head = crHead('Homework checked', esc(fmtLong(t))) + crGivenStats(G, '') + crCheckedStats(today, x3, mine, f);
   if (f === 'today') return head + crMsgList(t, 'hw', today.map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: y.hw === 'half' ? 'amber' : 'red', why: (y.hw === 'half' ? 'Half done' : 'Not done') + (y.task ? ' · ' + esc(y.task.slice(0, 50)) : ''), text: msgText('hw', y.s, y.c, { subj: y.subj, note: y.task, date: t }) })), 'Nobody is marked “not done” today', 'Check homework first — this list fills from it.');
   if (f === 'x3') return head + crMsgList(t, 'hw3', x3.sort((a, b) => b.n - a.n).map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: 'amber', why: `${y.n} times not done in 30 days`,
     text: `Dear Parent,\n${y.s.name} (Class ${y.c}) did not complete the ${y.subj} homework ${y.n} times in the last 30 days. Kindly check the homework at home every day and meet the teacher if needed.\n${y.s.name} ने पिछले 30 दिनों में ${y.n} बार ${y.subj} का गृहकार्य पूरा नहीं किया। कृपया रोज़ घर पर गृहकार्य देखें और ज़रूरत हो तो शिक्षक से मिलें।\n${crSign()}` })), 'No child missed homework 3+ times', 'Nothing to send.');
   return head + `<div class="card">${pct.map(({ x, ch, last }) => { const rows = ch ? Object.values(ch.rows || {}) : [], d = rows.filter(r => r.hw === 'done').length, tot = rows.filter(r => r.hw).length, p = tot ? Math.round(d / tot * 100) : null;
     return `<div class="cr-row"><div class="n"><b>Class ${esc(x.c)} · ${esc(x.s)}</b><small>${ch ? `Today: ${d} of ${tot} did it` : last ? 'Last checked ' + esc(fmtDate(last)) : 'Not checked in 30 days'}</small>${p !== null ? `<div class="cr-bar sm"><i class="${p < 60 ? 'lo' : p < 85 ? 'mid' : ''}" style="width:${p}%"></i></div>` : ''}</div>${p !== null ? `<b class="cr-pct ${p < 60 ? 'lo' : p < 85 ? 'mid' : ''}">${p}%</b>` : `<button class="btn s go" onclick="DRAFT.hc=null;go('diary',{m:'check',key:${jsq(x.k)}})">Check</button>`}</div>`; }).join('')}</div>`;
 }
+
+// ---------------------------------------------------------------- HOMEWORK GIVEN: Entry → Report → Share (27 Nov 2026)
+// owner: "class work homework assign karne ka bhi features improve karna chahiye — entry, report, share jaisa".
+// Report & Share, first group: Diary (my bells today: written / not, with the homework given) · Class group (one message per
+// class with every subject's CW + HW of today — the class teacher gets the whole class, others their own subjects) ·
+// Absent catch-up (children absent today in a class I wrote a diary for → parent gets today's CW + HW; sent mark 'catch').
+function crGiven(date) {
+  const bells = myBells(date), written = [], pending = [];
+  bells.forEach(b => { const e = diaryEntry(date, b.bell); (e ? written : pending).push({ b, e }); });
+  const cls = [...new Set([...myCT().filter(c => isWorkDay(date, c)), ...written.map(x => x.e.cls)])].filter(c => className().includes(c));
+  const share = cls.map(c => { const ct = myCT().includes(c), items = [];
+    Object.entries(S.diary[date] || {}).forEach(([tid, byB]) => Object.values(byB || {}).forEach(e => { if (e && e.cls === c && (e.hw || e.classwork) && (ct || tid === me())) items.push(e); }));
+    return { c, ct, items }; }).filter(x => x.items.length);
+  const catchL = []; share.forEach(x => { const a = attOf(date, x.c); ((a && a.absent) || []).forEach(id => { const s = studentById(id); if (s) catchL.push({ s, c: x.c, items: x.items }); }); });
+  return { date, bells, written, pending, share, catchL };
+}
+function crGivenStats(G, cur) {
+  return `<p class="cr-grp">✍️ Homework given</p>` + crStats([['diary', 'Bells written', `${G.written.length}/${G.bells.length}`, G.pending.length ? 'red' : 'green'], ['share', 'Class groups', G.share.length, 'blue'], ['catch', 'Absent catch-up', G.catchL.length, 'violet']], cur, k => `go('diary',{m:'rep',f:'${k}'})`);
+}
+function crCheckedStats(today, x3, mine, cur) {
+  return `<p class="cr-grp">✅ Homework checked</p>` + crStats([['today', 'Not done today', today.length, 'red'], ['x3', '3+ times in 30 days', x3.length, 'amber'], ['pct', 'Class-wise', mine.length, 'green']], cur, k => `go('diary',{m:'rep',f:'${k}'})`);
+}
+function crDiaryView(G) {
+  if (!G.bells.length) return crEmpty('🌤️', 'No bells for you today', 'Nothing to write.');
+  const old = (typeof diaryPending === 'function' ? diaryPending(6) : []).filter(x => x.d !== G.date);
+  return `<div class="card cr-list">${G.bells.map(b => { const e = diaryEntry(G.date, b.bell), B = BELLS[b.bell] || {};
+    return `<div class="cr-row">${`<span class="cr-bell ${e ? 'ok' : ''}"><b>${esc(B.n.replace(/\D/g, ''))}</b>${esc(t12(B.s).replace(' ', ''))}</span>`}<div class="n"><b>Class ${esc(b.cls)} · ${esc(b.subj)}${b.arr ? ' <small class="arrp">arrangement</small>' : ''}</b>${e ? `<small>📖 ${esc(e.topic || '')}</small><span class="cr-why t-${e.hw ? 'green' : 'grey'}">${e.hw ? 'HW: ' + esc(e.hw.slice(0, 48)) : 'No homework'}</span>` : `<span class="cr-why t-red">Not written</span>`}</div>
+      <button class="btn s ${e ? 'l' : 'go'}" onclick="go('diary',{date:'${G.date}',bell:${b.bell}})">${e ? 'Edit' : 'Write'}</button></div>`; }).join('')}
+    ${old.length ? `<p class="cr-foot" style="text-align:left">Older days still empty: ${old.map(x => `<button class="chip warn" onclick="go('diary',{date:'${x.d}'})">${esc(fmtDate(x.d))} · ${x.n}</button>`).join(' ')}</p>` : ''}</div>`;
+}
+function crClassText(c, date, items, ct) {
+  return `*Class ${c} — ${fmtLong(date)}*\n` + items.map(e => `• *${e.subj}*${e.classwork ? '\n   CW: ' + e.classwork : ''}${e.hw ? '\n   HW: ' + e.hw : ''}${e.books ? '\n   Bring: ' + e.books : ''}`).join('\n') + `\n${crSign()}`;
+}
+function crShareView(G) {
+  if (!G.share.length) return crEmpty('📝', 'No class work or homework written today', 'Write the diary first — the class message builds itself.');
+  return G.share.map(x => `<div class="card cr-share"><div class="cr-prog"><div><b>Class ${esc(x.c)}</b> · ${x.items.length} subject${x.items.length > 1 ? 's' : ''}</div>${x.ct ? '<span class="pill">Class teacher · whole class</span>' : '<span class="pill">Your subjects</span>'}</div>
+    ${x.items.map(e => `<div class="cr-sh"><b>${esc(e.subj)}</b>${e.classwork ? `<small><i>CW</i>${esc(e.classwork)}</small>` : ''}${e.hw ? `<small><i class="h">HW</i>${esc(e.hw)}</small>` : ''}</div>`).join('')}
+    <a class="btn wa full cr-gb" target="_blank" rel="noopener" href="${wa('', crClassText(x.c, G.date, x.items, x.ct))}">${ic('wa')} Send to Class ${esc(x.c)} parents' group</a></div>`).join('') + `<p class="cr-foot">Only class work and homework go to the group — no child's name.</p>`;
+}
+function crCatchView(G) {
+  return crMsgList(G.date, 'catch', G.catchL.map(y => ({ s: y.s, c: y.c, tone: 'violet', why: 'Absent today · ' + y.items.length + ' subject' + (y.items.length > 1 ? 's' : ''),
+    text: `Dear Parent,\n${y.s.name} was absent today. Here is today's work of Class ${y.c} so that nothing is missed:\n` + y.items.map(e => `• ${e.subj}${e.classwork ? ' — CW: ' + e.classwork : ''}${e.hw ? ' — HW: ' + e.hw : ''}`).join('\n') + `\nआज ${y.s.name} अनुपस्थित था/थी। ऊपर आज का कक्षा कार्य और गृहकार्य है, कृपया घर पर पूरा करवाएँ।\n${crSign()}` })), 'No absent child in the classes you wrote today', 'Nothing to send.');
+}
+
 if (typeof vDiary === 'function') {
   vDiary = function () {
     const m = ['check', 'rep'].includes(P.m) ? P.m : 'write', d = P.date || todayISO();
     const n = (() => { try { return crHwState().filter(x => x.pending).length; } catch (e) { return 0; } })();
-    const tabs = crTabs([['write', 'book', 'Diary'], ['check', 'check', 'Check HW', n || ''], ['rep', 'wa', 'Report & Message']], m, k => `DRAFT.hc=null;go('diary',{m:'${k}',date:'${d}'})`);
+    const tabs = crTabs([['write', 'book', 'Diary'], ['check', 'check', 'Check HW', n || ''], ['rep', 'wa', 'Report & Share']], m, k => `DRAFT.hc=null;go('diary',{m:'${k}',date:'${d}'})`);
     return tabs + (m === 'check' ? vHwCheck() : m === 'rep' ? vHwRep() : vDiaryWrite());
   };
 }
@@ -256,14 +304,14 @@ if (typeof sdCard === 'function') {
 (function () {
   const st = document.createElement('style');
   st.textContent = `
-  .cr-tabs{display:flex;gap:4px;background:#fff;border-radius:16px;padding:4px;margin:0 0 12px;box-shadow:0 2px 12px rgba(16,40,36,.06)}
-  .cr-tabs button{flex:1;position:relative;border:0;background:transparent;border-radius:12px;min-height:54px;padding:7px 4px 6px;font:600 11.5px/1.15 inherit;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:background .18s,color .18s;text-align:center}
-  .cr-tabs button svg.i{width:19px;height:19px;flex-shrink:0}.cr-tabs button.on{background:var(--a);color:#fff;box-shadow:0 4px 12px var(--hshadow)}
-  .cr-tabs button em{position:absolute;top:4px;right:calc(50% - 22px);min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font:700 10px/17px inherit;font-style:normal;padding:0 4px}
+  .cr-tabs{display:flex;gap:3px;background:#fff;border-radius:14px;padding:3px;margin:0 0 10px;box-shadow:0 2px 12px rgba(16,40,36,.06)}
+  .cr-tabs button{flex:1;position:relative;border:0;background:transparent;border-radius:11px;min-height:40px;padding:5px 4px;font:600 11.5px/1.1 inherit;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:background .18s,color .18s;white-space:nowrap}
+  .cr-tabs button svg.i{width:15px;height:15px;flex-shrink:0}.cr-tabs button.on{background:var(--a);color:#fff;box-shadow:0 4px 12px var(--hshadow)}
+  .cr-tabs button em{position:static;margin-left:2px;min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;font:700 10px/17px inherit;font-style:normal;padding:0 4px}
   .cr-head{display:flex;flex-direction:column;margin:2px 2px 8px}.cr-head b{font-size:15px;color:var(--ink)}.cr-head small{font-size:11.5px;color:var(--muted)}
   .cr-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
-  .cr-sum button{position:relative;border:2px solid transparent;border-radius:16px;padding:12px 6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .12s}
-  .cr-sum button:active{transform:scale(.97)}.cr-sum b{font-size:26px;line-height:1.05;font-weight:800}.cr-sum span{font-size:11px;font-weight:600;text-align:center;line-height:1.2}
+  .cr-sum button{position:relative;border:2px solid transparent;border-radius:14px;padding:8px 4px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .12s}
+  .cr-sum button:active{transform:scale(.97)}.cr-sum b{font-size:20px;line-height:1.05;font-weight:800}.cr-sum span{font-size:10.5px;font-weight:600;text-align:center;line-height:1.2}
   .cr-sum button.on{box-shadow:0 6px 16px rgba(0,0,0,.08)}.cr-sum button.on::after{content:'';position:absolute;bottom:-7px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:currentColor;border-bottom:0}
   .t-red{background:#FDE8EF;color:#B4234F}.t-red.on{border-color:#E8799B}.t-amber{background:#FFF4E2;color:#A15C07}.t-amber.on{border-color:#F2B45A}
   .t-violet{background:#F1EAFE;color:#6D28D9}.t-violet.on{border-color:#B79AF5}.t-green{background:#E7F7EC;color:#15803D}.t-green.on{border-color:#7BCB97}
@@ -276,25 +324,33 @@ if (typeof sdCard === 'function') {
   .cr-row .n{flex:1;min-width:0}.cr-row .n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cr-row .n small{display:block;color:var(--faint);font-size:11px;margin-top:1px}
   .cr-why{display:inline-block;margin-top:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cr-row.sent .n,.cr-row.sent .cr-av{opacity:.55}
-  .cr-av{width:40px;height:40px;flex-shrink:0;border-radius:50%;background:var(--tint);color:var(--a);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.cr-av img{width:100%;height:100%;object-fit:cover}
-  .cr-wab{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(37,211,102,.35)}.cr-wab svg.i{width:20px;height:20px}
+  .cr-av{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:var(--tint);color:var(--a);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.cr-av img{width:100%;height:100%;object-fit:cover}
+  .cr-wab{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(37,211,102,.35)}.cr-wab svg.i{width:18px;height:18px}
   .cr-sentb{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--ok);background:var(--okbg);padding:6px 10px;border-radius:999px;text-decoration:none}
-  .cr-next{position:sticky;bottom:8px;margin-top:10px}.cr-next .btn{box-shadow:0 8px 20px rgba(37,211,102,.35);min-height:48px}.cr-next small{opacity:.85;font-weight:600}
+  .cr-next{position:sticky;bottom:8px;margin-top:10px}.cr-next .btn{box-shadow:0 6px 14px rgba(37,211,102,.3);min-height:40px;font-size:13px}.cr-next small{opacity:.85;font-weight:600}
   .cr-foot{font-size:11px;color:var(--faint);margin:10px 0 0;text-align:center}
   .cr-empty{text-align:center;padding:26px 16px}.cr-empty .ei{font-size:34px;margin-bottom:6px}.cr-empty b{display:block;font-size:14.5px}.cr-empty small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
-  .cr-more{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cr-more button{border:0;background:#fff;border-radius:16px;padding:14px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;box-shadow:0 2px 12px rgba(16,40,36,.06)}
-  .cr-more .mi{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}.cr-more .mi svg.i{width:20px;height:20px}.cr-more b{font-size:14px;color:var(--ink)}.cr-more small{color:var(--muted);font-size:11.5px;line-height:1.3}
+  .cr-more{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cr-more button{border:0;background:#fff;border-radius:14px;padding:11px 11px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;box-shadow:0 2px 12px rgba(16,40,36,.06)}
+  .cr-more .mi{width:32px;height:32px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}.cr-more .mi svg.i{width:20px;height:20px}.cr-more b{font-size:14px;color:var(--ink)}.cr-more small{color:var(--muted);font-size:11.5px;line-height:1.3}
   .cr-back{display:inline-flex;align-items:center;gap:4px;border:0;background:#fff;color:var(--a);font-weight:600;font-size:12.5px;border-radius:999px;padding:6px 12px 6px 8px;margin:0 0 10px;box-shadow:0 2px 8px rgba(16,40,36,.06);cursor:pointer}.cr-back svg.i{width:15px;height:15px}
   .cr-cs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 -2px 4px;scrollbar-width:none}.cr-cs::-webkit-scrollbar{display:none}
   .cr-cs button{flex:0 0 auto;min-width:132px;border:2px solid transparent;background:#fff;border-radius:14px;padding:9px 12px 9px 26px;text-align:left;cursor:pointer;position:relative;box-shadow:0 2px 10px rgba(16,40,36,.06)}
   .cr-cs button i{position:absolute;left:11px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--faint)}.cr-cs button.p i{background:#F59E0B;box-shadow:0 0 0 3px #FFF1D6}.cr-cs button.d i{background:var(--ok)}
   .cr-cs button.on{border-color:var(--a)}.cr-cs b{display:block;font-size:13px;color:var(--ink);white-space:nowrap}.cr-cs small{color:var(--muted);font-size:11px}.cr-cs button.p small{color:#A15C07;font-weight:600}.cr-cs button.d small{color:var(--ok)}
   .cr-check{padding:12px}.cr-hw{position:relative;background:linear-gradient(#FFFCF2,#FFFCF2) padding-box;border:1.5px solid #F2D58A;border-left:6px solid #F2B230;border-radius:14px;padding:12px 12px 12px 14px}
-  .cr-hw .tag{display:inline-block;font-size:10.5px;font-weight:700;color:#7A5200;background:#FCE7B2;border-radius:999px;padding:2px 8px;margin-bottom:6px}.cr-hw small{display:block;color:#8A6A1F;font-size:11.5px;margin-bottom:4px}.cr-hw b{display:block;font-size:16px;line-height:1.35;color:#2B2410}
-  .cr-cnt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}.cr-cnt div{border-radius:12px;padding:7px 2px;text-align:center;font-size:10.5px;font-weight:600}.cr-cnt b{display:block;font-size:19px;font-weight:800;line-height:1.1}
+  .cr-hw .tag{display:inline-block;font-size:10.5px;font-weight:700;color:#7A5200;background:#FCE7B2;border-radius:999px;padding:2px 8px;margin-bottom:6px}.cr-hw small{display:block;color:#8A6A1F;font-size:11.5px;margin-bottom:4px}.cr-hw b{display:block;font-size:15px;line-height:1.35;color:#2B2410}
+  .cr-cnt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}.cr-cnt div{border-radius:10px;padding:5px 2px;text-align:center;font-size:10.5px;font-weight:600}.cr-cnt b{display:block;font-size:17px;font-weight:800;line-height:1.1}
   .cr-hint{font-size:12px;color:var(--muted);margin:6px 2px 10px}
   .tile.cr-ab{opacity:.4}.tile.cr-t .badge{background:var(--ok)}.tile.cr-t.sA .badge{background:var(--bad)}.tile.cr-t.sL{background:#FFF4E2;border-color:#F2B45A}.tile.cr-t.sL .badge{background:#D97706}
   .cr-pct{font-size:18px;font-weight:800;color:var(--ok)}.cr-pct.mid{color:#C27803}.cr-pct.lo{color:var(--bad)}
+  .cr-check .tiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.cr-check .tile{padding:7px 2px 6px;border-radius:13px}.cr-check .tile .ph{width:42px;height:42px}.cr-check .tile b{font-size:11px}.cr-check .tile small{font-size:9.5px}
+  .cr-check .sticky .btn,.cr-check .btn.submit{min-height:42px;font-size:13.5px}.cr-check .quick .inp{min-height:38px}
+  .auto-fill{min-height:36px!important;font-size:12.5px!important}.dform .btn.go.full{min-height:42px}
+  .cr-grp{font-size:11.5px;font-weight:700;color:var(--muted);margin:4px 2px 6px;letter-spacing:.2px}
+  .cr-bell{width:42px;flex-shrink:0;text-align:center;border-radius:10px;background:var(--badbg);color:var(--bad);padding:4px 0;font-size:9.5px;line-height:1.2}.cr-bell b{display:block;font-size:14px}.cr-bell.ok{background:var(--okbg);color:var(--ok)}
+  .cr-row .n small.arrp{display:inline-block;margin:0 0 0 4px;vertical-align:1px}.arrp{font-size:10px;font-weight:600;color:#6D28D9;background:#F1EAFE;border-radius:999px;padding:1px 6px}
+  .cr-share{padding:12px 14px}.cr-sh{padding:8px 0;border-top:1px solid var(--line)}.cr-sh b{display:block;font-size:13px}.cr-sh small{display:flex;gap:6px;font-size:12px;color:#445;margin-top:3px}.cr-sh small i{font-style:normal;font-weight:700;font-size:10px;color:#1D5FB8;background:#E6F1FD;border-radius:6px;padding:1px 5px;height:16px}.cr-sh small i.h{color:#A15C07;background:#FFF4E2}
+  .cr-gb{min-height:40px;margin-top:8px;font-size:13px}
   .cr-quick{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.cr-quick small{color:var(--muted);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`;
   document.head.appendChild(st);
 })();

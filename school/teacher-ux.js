@@ -51,7 +51,7 @@
   let TS = null;
   document.addEventListener('touchstart', e => {
     if (!S || e.touches.length !== 1) { TS = null; return; }
-    const t = e.target; if (t.closest && t.closest('input,textarea,select,.qn,.reg,.bd-graph,.chips,.seg,.tiles,.calendar-grid,.hwb,.pick,.res,.weekbar')) { TS = null; return; }
+    const t = e.target; if (t.closest && t.closest('input,textarea,select,.qn,.reg,.bd-graph,.chips,.seg,.tiles,.calendar-grid,.hwb,.pick,.res,.weekbar,.cr-cs,.cr-tabs,.cr-sum,.cr-list,.cr-more,.cr-share,.dform')) { TS = null; return; }
     const sc = document.querySelector('.scroll'), sh = t.closest && t.closest('.sheet');
     TS = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now(), sheet: !!sh, top: sh ? sh.scrollTop : (sc ? sc.scrollTop : 0) };
   }, { passive: true });
@@ -60,7 +60,8 @@
     if (Date.now() - s.at > 800) return;
     if (s.sheet) { if (dy > 90 && Math.abs(dx) < 70 && s.top <= 0) closeSheet(); return; }
     if (SHEET) return;
-    if (Math.abs(dx) > 80 && Math.abs(dy) < 45) { const L = tabsNow(); let i = L.indexOf(tabOf(TAB)); if (i < 0) return; i += dx < 0 ? 1 : -1; if (i >= 0 && i < L.length) go(L[i]); return; }
+    if (Math.abs(dx) > 140 && Math.abs(dy) < 40 && Math.abs(dx) > 3 * Math.abs(dy)) {   // owner, 27 Nov 2026: "slider very fast" — only a long, clearly sideways swipe changes the tab
+      const L = tabsNow(); let i = L.indexOf(tabOf(TAB)); if (i < 0) return; i += dx < 0 ? 1 : -1; if (i >= 0 && i < L.length) go(L[i]); return; }
     if (dy > 120 && Math.abs(dx) < 60 && s.top <= 0) { toast('Getting the latest…'); flush(); refresh(); }
   }, { passive: true });
 

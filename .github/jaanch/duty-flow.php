@@ -75,6 +75,7 @@ $put('tchChk', "$today|9th|Hindi", ['date' => $today, 'cls' => '9th', 'subj' => 
 // ---- Entry → Report & Message (27 Nov 2026): teachers mark their own children's messages; homework summary ----
 [$c] = $du('sent', ['date' => $today, 'type' => 'abs3', 'sid' => 's1', 'on' => true], $tok['K']); df_check($c === 200, 'class teacher marks a 3-day message for his class');
 [$c] = $du('sent', ['date' => $today, 'type' => 'low', 'sid' => 's3', 'on' => true], $tok['K']); df_check($c === 403, 'not a child of another class');
+[$c] = $du('sent', ['date' => $today, 'type' => 'catch', 'sid' => 's1', 'on' => true], $tok['K']); df_check($c === 200, 'absent catch-up message mark');
 [$c] = $du('sent', ['date' => $today, 'type' => 'bad', 'sid' => 's1', 'on' => true], $tok['K']); df_check($c === 400, 'unknown message type refused');
 [$c, $j] = $du('sentlist', null, $tok['MA'], '&date=' . $today); df_check($c === 200 && isset($j['sent']['abs3|s1|']), 'sent list for everyone');
 [$c, $j] = $du('hwsum', null, $tok['K']); df_check($c === 200 && ($j['last']['9th|Hindi'] ?? '') === $today && ($j['miss']['9th|Hindi']['s1'] ?? 0) === 1 && isset($j['checks']['9th|Hindi']), 'homework summary of my class');
