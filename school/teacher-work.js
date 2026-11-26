@@ -95,7 +95,7 @@ function cwIdeas(id) {
   box.querySelectorAll('button').forEach((b, i) => { b.onmousedown = e => e.preventDefault(); b.onclick = () => {
     const el = $(id + '-h'); if (!el || el.value.includes(ideas[i])) return;
     el.value = (el.value.trim() ? el.value.trim() + ' ' : '') + ideas[i]; el.classList.remove('auto-filled'); void el.offsetWidth; el.classList.add('auto-filled'); keepNote(el);
-    if (!$(id + '-min').value) { $(id + '-min').value = 15; keepNote($(id + '-min')); toast('Homework time set to 15 minutes. Change it if needed.'); } }; });
+    if (!$(id + '-min').value) { $(id + '-min').value = 15; keepNote($(id + '-min')); } }; });
 }
 document.addEventListener('input', e => { const f = e.target && e.target.dataset && e.target.dataset.cwfor; if (f) cwIdeas(f); });
 function afterRender() { document.querySelectorAll('[data-cwfor]').forEach(el => { if (el.value.trim()) cwIdeas(el.dataset.cwfor); }); }

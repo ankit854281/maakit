@@ -258,7 +258,7 @@ case 'sync': {
         // and older homework without a time estimate no longer REFUSE the diary (the teacher's whole entry was thrown away);
         // the entry is saved and the teacher gets the limit as a warning. A bad homework date is still refused.
         if ($k === 'diary') { try { tool_hw_guard($k,$r,$d,(string)((sch_rec_get('settings','main')??[])['session']??'')); }
-            catch (InvalidArgumentException $e) { if (str_contains($e->getMessage(), 'valid homework date')) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } $warn[] = $e->getMessage(); } }
+            catch (InvalidArgumentException $e) { if (str_contains($e->getMessage(), 'valid homework date')) { $rejected[]=['k'=>$k,'r'=>$r,'error'=>$e->getMessage()]; continue; } } }   // owner 26 Nov 2026: "homework me timer hata do" — no time warning either
         // Leave policy (12 Nov 2026): a teacher's NEW leave request is stamped, marked on time / late and,
         // when on time and short, approved by itself (leavepolicy_lib.php). The arrangement then fills the bells.
         if ($k === 'leave' && $u['role'] === 'teacher' && sch_rec_get('leave', $r) === null) {

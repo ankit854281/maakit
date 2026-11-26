@@ -1157,7 +1157,7 @@ function vDiary() {
         <label class="lbl">Class work<input id="${id}-cw" class="inp" maxlength="500" value="${esc(e.classwork||'')}"></label>
         <label class="lbl">Books / copies to bring<input id="${id}-books" class="inp" maxlength="300" value="${esc(e.books||'')}"></label>
         <label class="lbl">Revision to revisit<input id="${id}-revision" class="inp" maxlength="400" value="${esc(e.revision||'')}"></label>
-        <div><label class="lbl">Homework · class total limited to 45 minutes</label><input id="${id}-h" class="inp" value="${esc(e.hw || '')}" placeholder="e.g. Ex 4.1 Q1–Q4"></div><div class="flex gap-2"><label class="lbl">Estimated minutes<input id="${id}-min" class="inp" type="number" min="1" max="45" value="${e.hwMinutes || ''}"></label><label class="lbl">Homework day<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"></label></div><label class="text-sm"><input id="${id}-verify" type="checkbox"> I confirm this was actually taught and I checked the homework.</label>
+        <div><label class="lbl">Homework</label><input id="${id}-h" class="inp" value="${esc(e.hw || '')}" placeholder="e.g. Ex 4.1 Q1–Q4"></div><div class="flex gap-2"><input id="${id}-min" type="hidden" value="${e.hwMinutes || 15}"><label class="lbl">Homework day<input id="${id}-date" class="inp" type="date" value="${esc(e.hwDate || date)}"></label></div><label class="text-sm"><input id="${id}-verify" type="checkbox"> I confirm this was actually taught and I checked the homework.</label>
         ${nx && !b.arr ? `<label class="flex items-center gap-2 text-sm"><input id="${id}-c" type="checkbox" class="w-4 h-4"> Chapter "<b>${esc(nx)}</b>" finished today</label>` : ''}
         <button onclick="diarySave('${date}',${b.bell})" class="btn btn-p w-full"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>`; }).join('')
       : `<div class="card text-sm text-slate-500">${dayIdx(date) < 0 ? 'Sunday — no classes.' : 'No bells for this day.'}</div>`}`;
@@ -1169,7 +1169,7 @@ function diarySave(date, bell) {
   if (S.signed[date]?.[tid]) return toast('This diary is signed. Ask the Principal before changing it.', 'a');
   if (!document.getElementById(id+'-verify').checked) return toast('Confirm the actual teaching first.', 'a');
   const hwMinutes=Number(document.getElementById(id+'-min').value), hwDate=document.getElementById(id+'-date').value;
-  if(hw && (!Number.isInteger(hwMinutes)||hwMinutes<1||hwMinutes>45||!hwDate)) return toast('Add homework minutes and date.', 'a');
+  if(hw && !hwDate) return toast('Add the homework date.', 'a');   // owner 26 Nov 2026: no homework timer
   S.diary[date] = S.diary[date] || {}; S.diary[date][tid] = S.diary[date][tid] || {};
   S.diary[date][tid][bell] = { cls: b.cls, subj: b.subj, topic, hw, classwork:document.getElementById(id+'-cw').value.trim().slice(0,500),books:document.getElementById(id+'-books').value.trim().slice(0,300),revision:document.getElementById(id+'-revision').value.trim().slice(0,400), hwMinutes:hw?hwMinutes:null, hwDate, arr: b.arr, at: Date.now() };
   log('Diary', `${BELLS[bell].n} bell, Class ${b.cls} ${b.subj}: "${topic}"` + (hw ? ` • HW: ${hw}` : ''));

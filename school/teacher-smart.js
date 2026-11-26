@@ -88,8 +88,7 @@ function sdCard(date, b, signed) {
       <div class="fld">Homework ${sdChips(id, 'h', nx)}<div id="${id}-idea" class="cw-ideas" data-key="${esc(sylKey(b.cls, b.subj))}" data-nx="${esc(nx || '')}"></div>
         ${lastHw && !e.hw ? `<button type="button" class="chip ghost sd-rep" onclick="sdRepeat('${id}',${jsq(lastHw)})">↻ Like last time: “${esc(lastHw.slice(0, 50))}${lastHw.length > 50 ? '…' : ''}”</button>` : ''}
         <textarea id="${id}-h" data-keep class="inp" rows="2" maxlength="500" placeholder="e.g. Ex 4.1 Q6–Q10 (leave empty = no homework)">${esc(e.hw || '')}</textarea>${suggestionBox(id + '-h', sylKey(b.cls, b.subj), 'homework')}</div>
-      <div class="sd-meta"><label>⏱ <input id="${id}-min" data-keep class="inp mini" type="number" inputmode="numeric" min="1" max="45" value="${e.hwMinutes || ''}" placeholder="15"> min</label>
-        <div class="chips">${[10, 15, 20, 30].map(m => `<button type="button" class="chip" onclick="diaryMin('${id}',${m})">${m}</button>`).join('')}</div></div>
+      <input id="${id}-min" type="hidden" value="${e.hwMinutes || 15}">
       <div class="sd-meta"><label>📅 Check on <input id="${id}-date" data-keep class="inp mini date" type="date" value="${esc(hwD)}"></label><button type="button" class="chip" onclick="$('${id}-date').value='${date}';keepNote($('${id}-date'))">Same day</button></div>
       <details class="more" ${e.books || e.revision ? 'open' : ''}><summary>More · books to bring, revision</summary>
         <div class="fld">Books / copies to bring<input id="${id}-books" data-keep class="inp" maxlength="300" value="${esc(e.books || '')}"></div>

@@ -1082,7 +1082,7 @@ function phraseAdd(id, kind, i, nx) {
   const text = PHRASES[kind][i][1].replace('{ch}', ch);
   if (el.value.includes(text)) return;
   el.value = (el.value.trim() ? el.value.trim() + ' ' : '') + text; el.classList.remove('auto-filled'); void el.offsetWidth; el.classList.add('auto-filled'); keepNote(el);
-  if (kind === 'h' && !$(id + '-min').value) { $(id + '-min').value = 15; keepNote($(id + '-min')); toast('Homework time set to 15 minutes. Change it if needed.'); }
+  if (kind === 'h' && !$(id + '-min').value) { $(id + '-min').value = 15; keepNote($(id + '-min')); }
 }
 function phraseNoHw(id) { ['h', 'min'].forEach(k => { const el = $(id + '-' + k); if (el) { el.value = ''; keepNote(el); } }); toast('No homework for this bell.'); }
 
