@@ -13,14 +13,16 @@
   const qs = new URLSearchParams(location.search);
   const INFRAME = window.top !== window;
   const TODAY = iso(new Date());
-  let FROM = qs.get('from') || add(TODAY, -6), TO = qs.get('to') || TODAY, D = null, TAB = 'all';
+  let BY = qs.get('by') === 'promise' ? 'promise' : 'call';   // owner 27 Nov 2026: report by call date OR by the date the family gave to pay
+  let FROM = qs.get('from') || (BY === 'promise' ? TODAY : add(TODAY, -6)), TO = qs.get('to') || TODAY, D = null, TAB = BY === 'promise' ? 'prom' : 'all';
+  const weekMon = () => { const d = new Date(TODAY + 'T12:00:00'); return add(TODAY, -((d.getDay() + 6) % 7)); };
   const F = { by: '', res: '', cls: '', q: '' };
 
   async function load() {
     $('app').innerHTML = '<div class="msg">Opening Fee Calling Report…</div>';
     if (!store.get('sch_token')) return noLogin('Please log in first.');
     try {
-      const r = await fetch('callreport_api.php?a=data&from=' + FROM + '&to=' + TO, { cache: 'no-store', headers: { 'X-School-Token': store.get('sch_token') || '' } });
+      const r = await fetch('callreport_api.php?a=data&from=' + FROM + '&to=' + TO + (BY === 'promise' ? '&by=promise' : ''), { cache: 'no-store', headers: { 'X-School-Token': store.get('sch_token') || '' } });
       const j = await r.json().catch(() => ({ ok: false, error: 'Server error.' }));
       if (r.status === 401) return noLogin(j.error || 'Please log in again.');
       if (!j.ok) return noLogin(j.error || 'Could not open the report.');
@@ -68,23 +70,32 @@
     const prom = R.filter(c => c.outcome === 'Promised to pay'), promAmt = prom.reduce((n, c) => n + c.amount, 0);
     const seen = new Set(); let paidAmt = 0; R.forEach(c => { const k = c.sids.slice().sort().join(','); if (seen.has(k)) return; seen.add(k); paidAmt += paidAfter(c).t; });
     const over = R.filter(c => status(c)[0] === 'Date passed').length;
-    const quick = [['Today', TODAY, TODAY], ['Yesterday', add(TODAY, -1), add(TODAY, -1)], ['7 days', add(TODAY, -6), TODAY], ['This month', TODAY.slice(0, 8) + '01', TODAY]];
+    const P = BY === 'promise';
+    const quick = P ? [['Aaj', TODAY, TODAY], ['Kal', add(TODAY, 1), add(TODAY, 1)], ['Beeta kal', add(TODAY, -1), add(TODAY, -1)], ['Is hafte', weekMon(), add(weekMon(), 6)], ['Date nikal gayi', add(TODAY, -60), add(TODAY, -1)]]
+      : [['Today', TODAY, TODAY], ['Yesterday', add(TODAY, -1), add(TODAY, -1)], ['7 days', add(TODAY, -6), TODAY], ['This month', TODAY.slice(0, 8) + '01', TODAY]];
+    const pf = R.filter(c => status(c)[1] === 'g' || status(c)[0] === 'Said already paid'), pp = R.filter(c => status(c)[1] === 'y' && /^Part/.test(status(c)[0])), notPaid = R.length - pf.length - pp.length;
+    const pAmt = R.reduce((n, c) => n + (c.amount || 0), 0);
     const tab = (k, l) => `<button class="q ${TAB === k ? 'on' : ''}" data-tab="${k}">${l}</button>`;
-    $('app').innerHTML = `<div class="top"><div><b>📞 Fee Calling Report</b><small>${esc(D.school)} · ${dmy(FROM)} to ${dmy(TO)}</small></div>
+    $('app').innerHTML = `<div class="top"><div><b>📞 Fee Calling Report</b><small>${esc(D.school)} · ${P ? 'Payment date' : 'Call date'} ${dmy(FROM)}${TO !== FROM ? ' to ' + dmy(TO) : ''}</small></div>
       <div class="noprint"><button id="xl">⬇ Excel</button> <button id="pr">🖨 Print</button> ${INFRAME ? '' : '<button id="bk">← Back</button>'}</div></div>
+      <div class="tabs noprint" style="padding-top:10px"><button class="q ${P ? '' : 'on'}" data-mode="call">📞 Call date ke hisaab se</button><button class="q ${P ? 'on' : ''}" data-mode="promise">💰 Payment date ke hisaab se (kis din dene ko bola)</button></div>
       <div class="bar">${quick.map(([l, f, t]) => `<button class="q ${FROM === f && TO === t ? 'on' : ''}" data-f="${f}" data-t="${t}">${l}</button>`).join('')}
-        <label>From</label><input type="date" id="fF" value="${FROM}" max="${TODAY}"><label>To</label><input type="date" id="fT" value="${TO}" max="${TODAY}">
+        <label>From</label><input type="date" id="fF" value="${FROM}" ${P ? '' : `max="${TODAY}"`}><label>To</label><input type="date" id="fT" value="${TO}" ${P ? '' : `max="${TODAY}"`}>
         <select id="fBy">${opts(uniq(D.calls.map(c => c.by)), F.by, 'All callers')}</select>
         <select id="fRes">${opts(uniq(D.calls.map(c => c.outcome)), F.res, 'All results')}</select>
         <select id="fCls">${opts(uniq(D.calls.map(c => stu(c.sid).cls)), F.cls, 'All classes')}</select>
         <input id="fQ" placeholder="Search name, father, mobile, remark" value="${esc(F.q)}" style="flex:1;min-width:170px"></div>
-      <div class="kp"><div><span>Calls</span><b>${R.length}</b></div><div><span>Families called</span><b>${fams}</b></div>
+      ${P ? `<div class="kp"><div><span>${FROM === TO ? dmy(FROM) + ' ko' : 'In dino'} payment karne ko bola</span><b>${R.length} famil${R.length === 1 ? 'y' : 'ies'}</b></div><div><span>Vaade ki rakam</span><b>${rs(pAmt)}</b></div>
+        <div><span>De diya</span><b style="color:#166534">${pf.length} · ${rs(paidAmt)}</b></div><div><span>Aadha diya</span><b style="color:#92400E">${pp.length}</b></div>
+        <div><span>Abhi nahi diya</span><b style="color:#991B1B">${notPaid}</b></div></div>`
+      : `<div class="kp"><div><span>Calls</span><b>${R.length}</b></div><div><span>Families called</span><b>${fams}</b></div>
         <div><span>Promised to pay</span><b>${prom.length} · ${rs(promAmt)}</b></div><div><span>Paid after the call</span><b style="color:#166534">${rs(paidAmt)}</b></div>
-        <div><span>Promise date passed</span><b style="color:#991B1B">${over}</b></div></div>
+        <div><span>Promise date passed</span><b style="color:#991B1B">${over}</b></div></div>`}
       <div class="tabs noprint">${tab('all', 'All calls')}${tab('prom', 'Promise dates')}${tab('by', 'By caller')}${tab('fam', 'Family-wise (last call)')}</div>
-      <div class="wrap"><div class="card">${R.length ? (TAB === 'prom' ? promTable(R) : TAB === 'by' ? byTable(R) : TAB === 'fam' ? famTable(R) : allTable(R)) : '<div class="empty">No calls saved for these dates / filters.</div>'}</div></div>`;
+      <div class="wrap"><div class="card">${R.length ? (TAB === 'prom' ? promTable(R) : TAB === 'by' ? byTable(R) : TAB === 'fam' ? famTable(R) : allTable(R)) : (P ? '<div class="empty">In dates par kisi family ne payment karne ko nahi bola.</div>' : '<div class="empty">No calls saved for these dates / filters.</div>')}</div></div>`;
     document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FROM = b.dataset.f; TO = b.dataset.t; load(); });
     document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; draw(); });
+    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (BY === b.dataset.mode) return; BY = b.dataset.mode; FROM = BY === 'promise' ? TODAY : add(TODAY, -6); TO = TODAY; TAB = BY === 'promise' ? 'prom' : 'all'; F.res = ''; load(); });
     $('fF').onchange = e => { if (e.target.value) { FROM = e.target.value; load(); } };
     $('fT').onchange = e => { if (e.target.value) { TO = e.target.value; load(); } };
     $('fBy').onchange = e => { F.by = e.target.value; draw(); };
