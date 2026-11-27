@@ -82,3 +82,33 @@
 @keyframes pop { 0% { transform: scale(.85); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); } }
 .pop { animation: pop .35s ease-out; }
 @media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+/* Battle Arena (27 Nov 2026): season rank, tiers, battles */
+.arena-card { position: relative; overflow: hidden; border-radius: 1.5rem; padding: 1.25rem; color: #fff;
+  background: radial-gradient(120% 90% at 100% 0, #3b2a7a 0, transparent 55%), radial-gradient(90% 80% at 0 100%, #0f5c4c 0, transparent 60%), #0B1F3A; }
+.arena-badge { display: grid; place-items: center; width: 4.25rem; height: 4.25rem; flex: none; border-radius: 1.25rem; font-size: 2.25rem;
+  background: var(--tier, #b87333); box-shadow: 0 0 0 3px #ffffff22, 0 10px 24px -8px var(--tier, #b87333); }
+.arena-stat { border-radius: 1rem; background: #ffffff14; padding: .6rem .4rem; text-align: center; }
+.arena-stat b { display: block; font-size: 1.15rem; line-height: 1.5rem; font-weight: 700; }
+.arena-stat span { display: block; font-size: 10.5px; line-height: 1.2; color: #ffffffb3; margin-top: .1rem; }
+.arena-bar { height: .5rem; border-radius: 99px; background: #ffffff22; overflow: hidden; }
+.arena-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--tier, #f2a93b), #fff); }
+.tier { display: inline-flex; align-items: center; gap: .25rem; border-radius: 99px; padding: .1rem .55rem; font-size: .72rem; font-weight: 700; white-space: nowrap;
+  color: #0B1F3A; background: color-mix(in srgb, var(--tier) 22%, #fff); border: 1px solid color-mix(in srgb, var(--tier) 55%, #fff); }
+.tier-bronze { --tier: #c07a3f; } .tier-silver { --tier: #8d9aa8; } .tier-gold { --tier: #f2a93b; } .tier-platinum { --tier: #1fb5a8; }
+.tier-diamond { --tier: #3aa7e8; } .tier-crown { --tier: #a45de8; } .tier-ace { --tier: #ef5350; } .tier-conqueror { --tier: #ff9800; }
+.arena-cta { display: flex; align-items: center; gap: .85rem; width: 100%; text-align: left; padding: 1rem; border-radius: 1.25rem; color: #fff; min-height: 5.5rem; }
+.arena-cta:not([disabled]):active { transform: scale(.98); }
+.arena-cta[disabled] { opacity: .55; }
+.arena-cta .ic { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; flex: none; border-radius: 1rem; background: #ffffff26; font-size: 1.75rem; }
+.arena-test { background: linear-gradient(135deg, #0f8a5f, #0b6b7a); }
+.arena-fight { background: linear-gradient(135deg, #c0352b, #7b1fa2); }
+.arena-alert { display: flex; align-items: center; gap: .75rem; border-radius: 1.25rem; padding: .85rem 1rem; background: #fff4e5; border: 2px solid #f2a93b; }
+.arena-row { display: flex; align-items: center; gap: .6rem; padding: .55rem 0; border-top: 1px solid #eef0f4; }
+.arena-row:first-child { border-top: 0; }
+.arena-row.me { background: #fff8ec; margin: 0 -.75rem; padding-left: .75rem; padding-right: .75rem; border-radius: .75rem; }
+.arena-pos { width: 1.75rem; flex: none; text-align: center; font-weight: 700; color: #607086; }
+.arena-res { border-radius: 99px; padding: .1rem .6rem; font-size: .72rem; font-weight: 800; letter-spacing: .03em; }
+.arena-res.win { background: #e6f6ee; color: #0f8a5f; } .arena-res.loss { background: #fdecea; color: #c0352b; }
+.arena-res.draw { background: #eef0f4; color: #475569; } .arena-res.wait, .arena-res.expired { background: #fff4e5; color: #9a5b00; }
+.arena-vs { font-size: 2.5rem; font-weight: 900; letter-spacing: .04em; }
+.arena-card h2, .arena-card h3 { color: #fff; }

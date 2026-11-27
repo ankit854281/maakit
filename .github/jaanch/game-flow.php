@@ -158,5 +158,111 @@ gf_check(!str_contains($raw, '"gameR"') && !str_contains($raw, '"gamePack"'), 'g
 [, $j] = $api('sync', ['put' => [['k' => 'gameR', 'r' => 'x', 'd' => ['sid' => 'g1']]]], $P);
 gf_check(count($j['rejected']) === 1, 'game record written through normal sync');
 
+// ================= BATTLE ARENA (27 Nov 2026) =================
+// Aaj ka Test (diary ke topic se, 4 round ki hadd se alag, ek class-din me ek baar), battle (dono ko wahi
+// sawaal, jeet/haar rounds se), season RP/tier/K-D, teacher report, aur sab ki seema.
+gf_check(gm_tier(0)['name'] === 'Bronze' && gm_tier(0)['div'] === 'V' && gm_tier(399)['div'] === 'I' && gm_tier(1000)['name'] === 'Gold' && gm_tier(9000)['name'] === 'Conqueror' && gm_tier(9000)['div'] === '', 'tier ladder wrong');
+$keyOf = function (array $it) use ($rec) {
+    if ($it['src'] === 'duel') return $rec('quizQ', $it['ref'])['ans'];
+    if ($it['src'] === 'pack') { [$pid, $i] = explode('#', $it['ref']); return $rec('gamePack', $pid)['qs'][(int)$i]['ans']; }
+    return $it['src'] === 'math' ? gm_math('7th', $it['ref'])['ans'] : gm_word($it['ref'], gm_band('7th'))['ans'];
+};
+$playAll = function (string $sid, string $rid, bool $right) use ($g, $tok, $rec, $keyOf) {
+    $last = null; $n = count($rec('gameR', $rid)['items']);
+    for ($k = 0; $k < $n; $k++) {
+        if ($k) $g('next', ['sid' => $sid, 'rid' => $rid], $tok[$sid]);
+        $it = $rec('gameR', $rid)['items'][$k];
+        [, $last] = $g('answer', ['sid' => $sid, 'rid' => $rid, 'choice' => $right ? $keyOf($it) : 9], $tok[$sid]);
+    }
+    return $last;
+};
+$tpid = 'p' . substr(hash('sha256', '7th|Social Science|' . mb_strtolower('Parliament')), 0, 16);
+$pdo->prepare("INSERT INTO sch_records (k,r,d,deleted,ver) VALUES ('gamePack',?,?,0,1)")->execute([$tpid, json_encode(['id' => $tpid, 'cls' => '7th', 'subj' => 'Social Science', 'topic' => 'Parliament',
+    'qs' => [['q' => 'Which house of Parliament is elected directly by the people?', 'opts' => ['Lok Sabha', 'Rajya Sabha', 'Vidhan Parishad', 'Gram Sabha'], 'ans' => 0, 'fun' => 'Lok = log (people) 👥', 'rule' => 'Lok Sabha members are elected by voters.', 'word' => ['parliament', 'संसद']],
+             ['q' => 'Who is the head of the Lok Sabha?', 'opts' => ['The Prime Minister', 'The Speaker', 'The President', 'The Chief Justice'], 'ans' => 1, 'fun' => 'The Speaker keeps the class quiet 🔔', 'rule' => 'The Speaker runs the Lok Sabha.', 'word' => ['speaker', 'अध्यक्ष']],
+             ['q' => 'Rajya Sabha is also called the…', 'opts' => ['Lower House', 'Upper House', 'Town Hall', 'People\'s House'], 'ans' => 1, 'fun' => 'Rajya = upar wala ghar 🏠', 'rule' => 'Rajya Sabha = Council of States (Upper House).', 'word' => ['council', 'परिषद']]],
+    'hidden' => [], 'flags' => (object)[], 'tried' => time(), 'made' => time()])]);
+[$c, $st] = $g('state', null, $tok['g1']);
+gf_check($c === 200 && $st['today']['date'] === null && $st['season']['tier']['name'] !== '' && $st['battle']['left'] === 3, 'arena state wrong before the diary');
+[$c] = $g('start', ['sid' => 'g1', 'mode' => 'today'], $tok['g1']);
+gf_check($c === 400, 'class test opened without a diary topic');
+$api('sync', ['put' => [['k' => 'diary', 'r' => date('Y-m-d') . '|K|3', 'd' => ['cls' => '7th', 'subj' => 'Social Science', 'topic' => 'Parliament', 'cw' => 'Notes', 'hw' => 'Q1 to Q3']]]], $K);
+[$c, $st] = $g('state', null, $tok['g1']);
+gf_check($st['today']['isToday'] === true && $st['today']['ready'] === 3 && $st['today']['topics'][0]['topic'] === 'Parliament' && $st['roundsLeft'] === 0, 'today topic not picked from the diary');
+[$c, $j, $raw] = $g('start', ['sid' => 'g1', 'mode' => 'today'], $tok['g1']);   // g1 already used all 4 rounds — the test is separate
+gf_check($c === 200 && $j['mode'] === 'today' && $j['n'] === 3 && !str_contains($raw, '"ans"'), 'class test did not start or leaked the answer');
+$R = $rec('gameR', $j['rid']);
+gf_check($R['tdate'] === date('Y-m-d') && count(array_filter($R['items'], fn($it) => str_starts_with($it['ref'], $tpid . '#'))) === 3, 'class test asked about something else');
+$last = $playAll('g1', $j['rid'], true);
+gf_check($last['summary']['right'] === 3 && $last['mode'] === 'today', 'class test not auto-checked');
+[$c] = $g('start', ['sid' => 'g1', 'mode' => 'today'], $tok['g1']);
+gf_check($c === 400, 'class test taken twice for the same class day');
+
+// ---- battle: g1 challenges g2; g2 must finish its open round first; same questions for both ----
+[$c] = $g('bstart', ['sid' => 'g1', 'opp' => 'g1'], $tok['g1']);
+gf_check($c === 400, 'battle against yourself');
+[$c, $op] = $g('bopp', null, $tok['g1'], '&sid=g1');
+gf_check($c === 200 && count($op['list']) === 2 && !in_array('g1', array_column($op['list'], 'id'), true), 'rival list wrong');
+[$c, $j, $raw] = $g('bstart', ['sid' => 'g1', 'opp' => 'g2'], $tok['g1']);
+gf_check($c === 200 && $j['mode'] === 'battle' && $j['n'] === 5 && $j['opp'] === 'Riya P.' && !str_contains($raw, '"ans"'), 'battle did not start');
+$bid = $j['bid']; $B = $rec('gameB', $bid);
+gf_check($B['a'] === 'g1' && $B['b'] === 'g2' && $B['rb'] === null && count(array_filter($B['items'], fn($it) => $it['src'] === 'pack')) === 3, 'battle record wrong');
+$last = $playAll('g1', $j['rid'], true);
+gf_check($last['battle']['state'] === 'wait' && $last['battle']['opp'] === 'Riya P.', 'challenger not told to wait');
+[$c] = $g('bplay', ['sid' => 'g3', 'bid' => $bid], $tok['g3']);
+gf_check($c === 403, 'someone else played a battle not sent to them');
+[$c, $st2] = $g('state', null, $tok['g2']);
+gf_check(count($st2['battle']['incoming']) === 1 && $st2['battle']['incoming'][0]['from'] === 'Aman G.', 'battle did not reach the rival');
+[$c] = $g('bplay', ['sid' => 'g2', 'bid' => $bid], $tok['g2']);
+gf_check($c === 400, 'rival played while another round was open');
+$open = null; foreach ($pdo->query("SELECT r FROM sch_records WHERE k='gameR' AND r LIKE 'g2|%'") as $row) { $x = $rec('gameR', $row['r']); foreach ($x['items'] as $it) if ($it['correct'] === null) $open = $row['r']; }
+for ($k = 0; $k < 5; $k++) { $x = $rec('gameR', $open); $i = null; foreach ($x['items'] as $n => $it) if ($it['correct'] === null) { $i = $n; break; } if ($i === null) break;
+    if (empty($x['items'][$i]['servedAt'])) $g('next', ['sid' => 'g2', 'rid' => $open], $tok['g2']); $g('answer', ['sid' => 'g2', 'rid' => $open, 'choice' => 9], $tok['g2']); }
+[$c, $j] = $g('bplay', ['sid' => 'g2', 'bid' => $bid], $tok['g2']);
+gf_check($c === 200 && $j['opp'] === 'Aman G.', 'rival could not play the battle');
+gf_check(array_column($rec('gameR', $j['rid'])['items'], 'ref') === array_column($B['items'], 'ref'), 'rival got different questions');
+[$c] = $g('bplay', ['sid' => 'g2', 'bid' => $bid], $tok['g2']);
+gf_check($c === 400, 'battle played twice');
+$last = $playAll('g2', $j['rid'], false);
+gf_check($last['battle']['state'] === 'loss' && $last['battle']['them']['right'] === 5 && $last['battle']['me']['right'] === 0, 'battle result wrong for the rival');
+[, $s1] = $g('state', null, $tok['g1']); [, $s2] = $g('state', null, $tok['g2']);
+gf_check($s1['season']['win'] === 1 && $s1['battle']['history'][0]['state'] === 'win' && $s2['season']['loss'] === 1, 'battle not counted in the season');
+gf_check($s1['season']['rp'] === $s1['season']['xp'] + 30 && $s1['season']['pos'] === 1 && $s1['rank'][0]['me'] === true && $s1['season']['kd'] > 0, 'RP or rank wrong');
+gf_check($s2['season']['rp'] === max(0, $s2['season']['xp'] - 10) && $s2['season']['wrong'] > 0, 'loser RP wrong');
+
+// ---- one battle per pair at a time; unanswered battle expires ----
+[$c, $j] = $g('bstart', ['sid' => 'g1', 'opp' => 'g3'], $tok['g1']);
+gf_check($c === 200, 'second battle did not start');
+$b3 = $j['bid']; $playAll('g1', $j['rid'], true);
+[$c, $j] = $g('bstart', ['sid' => 'g1', 'opp' => 'g3'], $tok['g1']);
+gf_check($c === 400 && str_contains($j['error'], 'already'), 'two battles with the same rival at once');
+$B3 = $rec('gameB', $b3); $B3['at'] = time() - 49 * 3600; $set('gameB', $b3, $B3);
+[$c] = $g('bplay', ['sid' => 'g3', 'bid' => $b3], $tok['g3']);
+gf_check($c === 400, 'expired battle could still be played');
+[, $s1] = $g('state', null, $tok['g1']);
+gf_check(in_array('expired', array_column($s1['battle']['history'], 'state'), true) && $s1['season']['win'] === 1, 'expired battle counted');
+
+// ---- without AI: a teacher-approved question on the same diary topic joins the class test ----
+$pdo->prepare("INSERT INTO sch_records (k,r,d,deleted,ver) VALUES ('quizQ','qT1',?,0,1)")->execute([json_encode(['id' => 'qT1', 'cls' => '7th', 'subj' => 'Social Science', 'topic' => 'parliament ', 'text' => 'How many houses does our Parliament have (with the President)?',
+    'opts' => ['Two houses', 'Five houses', 'One house', 'Ten houses'], 'ans' => 0, 'by' => 't:K', 'bySid' => null, 'status' => 'approved'])]);
+[, $st2] = $g('state', null, $tok['g2']);
+gf_check($st2['today']['ready'] === 4, 'teacher question did not join the class test');
+[$c, $j] = $g('start', ['sid' => 'g2', 'mode' => 'today'], $tok['g2']);
+gf_check($c === 200 && $j['n'] === 4 && in_array('duel', array_column($rec('gameR', $j['rid'])['items'], 'src'), true), 'class test left out the teacher question');
+$last = $playAll('g2', $j['rid'], true);
+gf_check($last['summary']['right'] === 4, 'teacher question in the class test not auto-checked');
+
+// ---- teacher report; students cannot open it; parent sees own child only ----
+[$c, $T] = $g('tarena', null, $K);
+gf_check($c === 200 && $T['cls'] === '7th' && count($T['rows']) === 3 && $T['topics'][0]['topic'] === 'Parliament', 'teacher arena report wrong');
+$g1row = array_values(array_filter($T['rows'], fn($r) => $r['name'] === 'Aman Gupta'))[0];
+gf_check($g1row['test']['right'] === 3 && $g1row['win'] === 1 && $T['rows'][0]['name'] === 'Aman Gupta', 'teacher report missed the test or the rank');
+[$c] = $g('tarena', null, $tok['g1']);
+gf_check($c === 403, 'student opened the teacher arena report');
+[$c] = $g('bopp', null, $PA, '&sid=g2');
+gf_check($c === 403, "parent opened another child's rivals");
+[, , $raw] = $api('load', null, $P);
+gf_check(!str_contains($raw, '"gameB"'), 'battle records leaked into normal load');
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
-echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema — sab theek\n";
+echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";

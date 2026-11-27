@@ -8,13 +8,20 @@
 //   POST ?a=answer  {sid, rid, choice} jawab + hasaane wali yaad
 //   POST ?a=next    {sid, rid}         agla sawaal (ghadi tabhi shuru hoti hai)
 //   POST ?a=flag    {sid, rid, i}      "ye sawaal galat hai" (AI wale sawaal)
+//   (27 Nov 2026) Battle Arena:
+//   mode "today" = Aaj ka Test — aakhri class ke diary topic ke sawaal, har class-din ek baar
+//   GET  ?a=bopp&sid=                  class ke saathi, kiske saath battle karein (RP paas wale pehle)
+//   POST ?a=bstart {sid, opp}          battle shuru: dono ko wahi 5 sawaal, pehle khud khelo
+//   POST ?a=bplay  {sid, bid}          aayi hui battle khelo
 // Teacher / Principal:
 //   GET  ?a=tpacks                     AI packs, report kiye gaye sawaal
 //   POST ?a=makepacks {cls?}           padhaye gaye topics ke packs abhi banao (AI)
 //   POST ?a=packfix {pid, i, action}   restore | remove
+//   GET  ?a=tarena&cls=                aaj ke test ke nateeje + class rank (sabhi bachche)
 //
 // Records (legacy sync se bahar, "game" prefix): gameR (round), gameMiss
-// (galat sawaal — wapas kab aaye), gamePack (AI topic pack), gameLock.
+// (galat sawaal — wapas kab aaye), gamePack (AI topic pack), gameLock,
+// gameB (battle: a, b, items, ra, rb — nateeja hamesha rounds se gina jaata hai).
 // ============================================================
 declare(strict_types=1);
 require __DIR__ . '/inc.php';
@@ -22,6 +29,7 @@ require_once __DIR__ . '/learning_lib.php';
 require __DIR__ . '/game_lib.php';
 
 const GM_ROUNDS_PER_DAY = 4;      // isse zyada nahi — dimaag ko neend me yaad pakka karne do
+const GM_LIMITED = ['daily', 'math', 'words', 'revenge'];   // sirf ye 4 ki hadd me; Aaj ka Test aur Battle alag
 const GM_SKIP_SUBJ = '/Games|PT|Library|Activity|Drawing|Craft|Rhymes|Play|Moral/i';
 
 function gm_rows(string $k, ?string $prefix = null): array {
@@ -44,11 +52,69 @@ function gm_taught(string $cls): array {
         foreach ((array)($y['chapters'] ?? []) as $ch) if (!empty($ch['done'])) $T[gm_pid($cls, $subj, $ch['n'])] = ['subj' => $subj, 'topic' => (string)$ch['n']]; }
     return $T;
 }
+// Aakhri class ka din (aaj, warna pichhle 3 din me jo aakhri ho) — diary me us din kya padhaya
+function gm_today_topics(string $cls): array {
+    $st = sch_db()->prepare("SELECT dkey, d FROM sch_records WHERE k='diary' AND deleted=0 AND dkey >= ? AND dkey <= ?");
+    $st->execute([date('Y-m-d', time() - 3 * 86400), date('Y-m-d')]);
+    $by = [];
+    foreach ($st as $row) { $e = json_decode((string)$row['d'], true);
+        if (is_array($e) && ($e['cls'] ?? '') === $cls && trim((string)($e['topic'] ?? '')) !== '' && !preg_match(GM_SKIP_SUBJ, (string)($e['subj'] ?? '')))
+            $by[(string)$row['dkey']][gm_pid($cls, $e['subj'], $e['topic'])] = ['subj' => $e['subj'], 'topic' => trim($e['topic'])]; }
+    if (!$by) return ['date' => null, 'topics' => []];
+    krsort($by); $date = (string)array_key_first($by);
+    return ['date' => $date, 'topics' => $by[$date]];
+}
+// Aaj ke test ke sawaal: har topic se 5 tak, baari-baari se, kul GM_TODAY_MAX.
+// AI pack ke saath teacher ke approve kiye Quiz Duel sawaal bhi (usi subject + topic ke) — AI na ho tab bhi test chale.
+function gm_today_items(array $topics, array $packs, string $seed, array $duelQ = []): array {
+    $lists = [];
+    foreach ($topics as $pid => $t) {
+        $ids = array_keys(array_filter($duelQ, fn($q) => mb_strtolower(trim((string)($q['subj'] ?? ''))) === mb_strtolower($t['subj']) && mb_strtolower(trim((string)($q['topic'] ?? ''))) === mb_strtolower($t['topic'])));
+        usort($ids, fn($x, $y) => strcmp(hash('md5', $seed . $x), hash('md5', $seed . $y)));
+        if ($ids) $lists[] = array_map(fn($id) => ['src' => 'duel', 'ref' => (string)$id], array_slice($ids, 0, 5));
+    }
+    foreach ($topics as $pid => $t) { $p = $packs[$pid] ?? null; if (!$p || empty($p['qs'])) continue;
+        $idx = []; foreach ((array)$p['qs'] as $i => $q) if (!in_array($i, (array)($p['hidden'] ?? []), true)) $idx[] = $i;
+        usort($idx, fn($x, $y) => strcmp(hash('md5', $seed . $pid . $x), hash('md5', $seed . $pid . $y)));
+        $lists[] = array_map(fn($i) => ['src' => 'pack', 'ref' => $pid . '#' . $i], array_slice($idx, 0, 5)); }
+    $out = [];
+    for ($k = 0; $k < 5; $k++) foreach ($lists as $l) if (isset($l[$k])) $out[] = $l[$k];
+    return array_slice($out, 0, GM_TODAY_MAX);
+}
+// Is mahine ki class ki saari jaankari: rounds, battles, har battle ka nateeja, har bachche ki jeet/haar
+function gm_arena(string $cls, int $now): array {
+    $ym = date('Y-m', $now);
+    $q = sch_db()->prepare("SELECT r, d FROM sch_records WHERE k='gameR' AND deleted=0 AND updated_at >= ?");
+    $q->execute([$ym . '-01']);
+    $R = []; foreach ($q as $row) { $x = json_decode((string)$row['d'], true); if (is_array($x) && ($x['cls'] ?? '') === $cls) $R[$row['r']] = $x; }
+    $B = array_filter(gm_rows('gameB'), fn($b) => ($b['cls'] ?? '') === $cls);
+    $res = []; $out = [];
+    foreach ($B as $id => $b) {
+        $ra = !empty($b['ra']) ? ($R[$b['ra']] ?? sch_rec_get('gameR', $b['ra'])) : null;
+        $rb = !empty($b['rb']) ? ($R[$b['rb']] ?? sch_rec_get('gameR', $b['rb'])) : null;
+        $x = gm_battle_result($b, $ra, $rb, $now); $out[$id] = $x;
+        if (is_array($x) && date('Y-m', (int)$b['at']) === $ym) {
+            $res[$b['a']][$x['a']] = ($res[$b['a']][$x['a']] ?? 0) + 1;
+            $res[$b['b']][$x['b']] = ($res[$b['b']][$x['b']] ?? 0) + 1;
+        }
+    }
+    return ['ym' => $ym, 'rounds' => $R, 'battles' => $B, 'bres' => $out, 'results' => $res];
+}
+// Class ke sabhi bachchon ka season record, RP ke hisaab se upar se neeche
+function gm_class_rank(array $students, string $cls, array $A, int $now): array {
+    $list = [];
+    foreach ($students as $id => $s) if (($s['cls'] ?? '') === $cls) $list[$id] = gm_season($A['rounds'], (string)$id, $A['ym'], $now, $A['results']) + ['id' => (string)$id, 'name' => (string)($s['name'] ?? '')];
+    uasort($list, fn($x, $y) => [$y['rp'], $y['kd'], $x['name']] <=> [$x['rp'], $x['kd'], $y['name']]);
+    return $list;
+}
+function gm_tier_pub(array $t): array { return ['name' => $t['name'], 'icon' => $t['icon'], 'div' => $t['div']]; }
+
 // AI se packs banao (sirf padhaye gaye topics, jinke pack nahi bane). $max = ek baar me kitne.
+// Aaj ki class ke topic sabse pehle, taaki "Aaj ka Test" jaldi taiyaar ho.
 function gm_make_packs(string $cls, int $max, string $uid): array {
     if (!gm_ai_ready()) return ['made' => 0, 'error' => 'AI is not connected'];
     $have = gm_rows('gamePack'); $made = 0; $fail = 0;
-    foreach (gm_taught($cls) as $pid => $t) {
+    foreach (gm_today_topics($cls)['topics'] + gm_taught($cls) as $pid => $t) {
         if ($made + $fail >= $max) break;
         if (isset($have[$pid]) && (!empty($have[$pid]['qs']) || time() - (int)($have[$pid]['tried'] ?? 0) < 6 * 3600)) continue;
         try { $qs = gm_ai_pack($cls, $t['subj'], $t['topic']); } catch (Throwable $e) { $qs = []; error_log('game pack: ' . $e->getMessage()); }
@@ -80,11 +146,25 @@ try {
     $students = gm_rows('student');
 
     // ================= TEACHER / PRINCIPAL =================
-    if (in_array($a, ['tpacks', 'makepacks', 'packfix'], true)) {
+    if (in_array($a, ['tpacks', 'makepacks', 'packfix', 'tarena'], true)) {
         if (!in_array($u['role'], ['teacher', 'principal'], true)) sch_fail('Teachers only.', 403);
         $myCls = $u['role'] === 'principal' ? array_values(array_unique(array_column($students, 'cls')))
                : array_values(array_unique(array_merge(array_column(array_filter((array)sch_rec_get('alloc', 'main'), fn($x) => ($x['t'] ?? '') === $u['tid']), 'c'),
                                                        array_column(array_filter((array)sch_rec_get('classes', 'main'), fn($x) => ($x['ct'] ?? '') === $u['tid']), 'c'))));
+        if ($a === 'tarena') {
+            sort($myCls);
+            $cls = (string)($_GET['cls'] ?? ($myCls[0] ?? ''));
+            if (!in_array($cls, $myCls, true)) sch_fail('Choose one of your classes.', 403);
+            $A = gm_arena($cls, $now); $td = gm_today_topics($cls);
+            $tests = [];
+            foreach ($A['rounds'] as $r) if (($r['mode'] ?? '') === 'today' && ($r['tdate'] ?? '') === $td['date']) {
+                $d = gm_round_detail($r, $now); $tests[(string)$r['sid']] = ['right' => $d['right'], 'n' => $d['n'], 'done' => $d['done']]; }
+            $rows = [];
+            foreach (gm_class_rank($students, $cls, $A, $now) as $id => $x)
+                $rows[] = ['name' => $x['name'], 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'acc' => $x['acc'], 'win' => $x['win'], 'loss' => $x['loss'], 'draw' => $x['draw'],
+                           'days' => $x['days'], 'test' => $tests[$id] ?? null];
+            sch_json(['ok' => true, 'classes' => $myCls, 'cls' => $cls, 'date' => $td['date'], 'topics' => array_values($td['topics']), 'month' => date('F Y', $now), 'rows' => $rows]);
+        }
         if ($a === 'tpacks') {
             $packs = array_values(array_filter(gm_rows('gamePack'), fn($p) => in_array($p['cls'], $myCls, true)));
             $taught = []; foreach ($myCls as $c) $taught[$c] = count(gm_taught($c));
@@ -123,6 +203,8 @@ try {
     $miss = sch_rec_get('gameMiss', $sid) ?? ['items' => []];
     $due = array_values(array_filter((array)$miss['items'], fn($m) => ($m['due'] ?? '9') <= $today));
     $todayRounds = array_filter($rounds, fn($r) => ($r['sid'] ?? '') === $sid && ($r['date'] ?? '') === $today);
+    $limited = array_filter($todayRounds, fn($r) => in_array($r['mode'] ?? 'daily', GM_LIMITED, true));
+    $short = fn(string $id): string => qz_short_name_gm((string)($students[$id]['name'] ?? '?'));
 
     if ($a === 'state') {
         $st = gm_stats($rounds, $sid, $now, $today);
@@ -141,9 +223,35 @@ try {
         $packs = array_filter(gm_rows('gamePack'), fn($p) => $p['cls'] === $cls && !empty($p['qs']));
         $chests = []; for ($n = 1; $n <= $st['chests']; $n++) $chests[] = gm_chest_reward($sid, $n);
         $resp = ['ok' => true, 'kid' => ['id' => $sid, 'name' => $me['name'], 'cls' => $cls], 'stats' => $st + ['levelName' => gm_level_name($st['level'])],
-            'stickers' => $chests, 'revengeDue' => count($due), 'roundsLeft' => max(0, GM_ROUNDS_PER_DAY - count($todayRounds)), 'words' => $band >= 2,
+            'stickers' => $chests, 'revengeDue' => count($due), 'roundsLeft' => max(0, GM_ROUNDS_PER_DAY - count($limited)), 'words' => $band >= 2,
             'mission' => ['right' => $classRight, 'target' => max(100, 25 * $classSize)], 'league' => $league,
             'topicPacks' => count($packs), 'aiReady' => gm_ai_ready(), 'seconds' => GM_SECONDS, 'open' => null];
+        // ---- Battle Arena: season rank, aaj ka test, battles ----
+        $A = gm_arena($cls, $now); $rank = gm_class_rank($students, $cls, $A, $now); $mine = $rank[$sid];
+        $pos = array_search($sid, array_keys($rank), true) + 1;
+        $resp['season'] = ['month' => date('F', $now), 'pos' => $pos, 'of' => count($rank), 'tier' => gm_tier_pub($mine['tier']), 'rpMin' => $mine['tier']['min'], 'rpNext' => $mine['tier']['next']]
+            + array_intersect_key($mine, array_flip(['rp', 'xp', 'right', 'wrong', 'kd', 'acc', 'speed', 'best', 'win', 'loss', 'draw']));
+        $resp['rank'] = [];
+        foreach (array_slice($rank, 0, 10, true) as $id => $x) if ($x['rp'] > 0 || $id === $sid)
+            $resp['rank'][] = ['pos' => count($resp['rank']) + 1, 'name' => $short((string)$id), 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'me' => $id === $sid];
+        if ($pos > 10) $resp['rank'][] = ['pos' => $pos, 'name' => $short($sid), 'rp' => $mine['rp'], 'tier' => gm_tier_pub($mine['tier']), 'kd' => $mine['kd'], 'me' => true];
+        $td = gm_today_topics($cls); $played = null;
+        foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today' && $td['date'] && ($r['tdate'] ?? '') === $td['date']) { $d = gm_round_detail($r, $now); $played = ['right' => $d['right'], 'n' => $d['n'], 'done' => $d['done']]; }
+        $resp['today'] = ['date' => $td['date'], 'isToday' => $td['date'] === $today, 'topics' => array_values($td['topics']),
+            'ready' => count(gm_today_items($td['topics'], $packs, 'x', array_filter(gm_rows('quizQ'), fn($q) => ($q['cls'] ?? '') === $cls && ($q['status'] ?? '') === 'approved' && ($q['bySid'] ?? null) !== $sid))), 'played' => $played];
+        $inc = []; $hist = []; $started = 0;
+        uasort($A['battles'], fn($x, $y) => (int)$y['at'] <=> (int)$x['at']);
+        foreach ($A['battles'] as $id => $b) {
+            if ($b['a'] !== $sid && $b['b'] !== $sid) continue;
+            $isA = $b['a'] === $sid; $opp = $isA ? $b['b'] : $b['a']; $x = $A['bres'][$id];
+            if ($isA && date('Y-m-d', (int)$b['at']) === $today) $started++;
+            if (!$isA && empty($b['rb']) && $x === 'wait') { $inc[] = ['bid' => $id, 'from' => $short($opp), 'tier' => gm_tier_pub(($rank[$opp] ?? $mine)['tier']), 'hoursLeft' => max(1, (int)ceil(((int)$b['at'] + GM_BATTLE_HOURS * 3600 - $now) / 3600))]; continue; }
+            if (count($hist) >= 8) continue;
+            $h = ['bid' => $id, 'opp' => $short($opp), 'state' => is_array($x) ? $x[$isA ? 'a' : 'b'] : $x];
+            if (is_array($x)) { $h['me'] = $x[$isA ? 'sa' : 'sb']['right']; $h['them'] = $x[$isA ? 'sb' : 'sa']['right']; $h['n'] = count($b['items']); }
+            $hist[] = $h;
+        }
+        $resp['battle'] = ['incoming' => $inc, 'history' => $hist, 'left' => max(0, GM_BATTLES_PER_DAY - $started), 'hours' => GM_BATTLE_HOURS];
         foreach ($todayRounds as $r) if (array_filter((array)$r['items'], fn($it) => $it['correct'] === null))
             $resp['open'] = ['rid' => $r['id'], 'mode' => $r['mode'], 'n' => count($r['items']), 'done' => count(array_filter((array)$r['items'], fn($it) => $it['correct'] !== null))];
         // Jawab bhej do, phir (agar ho sake) peeche se is class ke ek naye topic ka pack bana do
@@ -159,17 +267,48 @@ try {
         sch_json($resp);
     }
 
+    if ($a === 'bopp') {
+        $A = gm_arena($cls, $now); $rank = gm_class_rank($students, $cls, $A, $now); $myRp = $rank[$sid]['rp'];
+        $busy = []; foreach ($A['battles'] as $id => $b) if ($A['bres'][$id] === 'wait' && ($b['a'] === $sid || $b['b'] === $sid)) $busy[$b['a'] === $sid ? $b['b'] : $b['a']] = true;
+        $list = [];
+        foreach ($rank as $id => $x) if ($id !== $sid) $list[] = ['id' => (string)$id, 'name' => $short((string)$id), 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'busy' => isset($busy[$id]), 'gap' => abs($x['rp'] - $myRp)];
+        usort($list, fn($x, $y) => [$x['busy'], $x['gap'], $x['name']] <=> [$y['busy'], $y['gap'], $y['name']]);
+        sch_json(['ok' => true, 'list' => array_map(fn($x) => array_diff_key($x, ['gap' => 1]), $list)]);
+    }
+
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
     $packs = array_filter(gm_rows('gamePack'), fn($p) => $p['cls'] === $cls);
     $duelQ = array_filter(gm_rows('quizQ'), fn($q) => ($q['cls'] ?? '') === $cls && ($q['status'] ?? '') === 'approved' && ($q['bySid'] ?? null) !== $sid);
 
+    // Naya round banao (sawaal ka jawab server par hi rehta hai). $fb = gayab sawaal ki jagah maths ka seed.
+    $newRound = function (array $items, string $mode, array $extra, string $fb) use ($sid, $cls, $today, $now, $todayRounds, $packs, $duelQ, $uid): array {
+        $items = array_map(fn($it) => ['src' => $it['src'], 'ref' => $it['ref'], 'servedAt' => null, 'answeredAt' => null, 'choice' => null, 'correct' => null], $items);
+        $items[0]['servedAt'] = $now;
+        $q = gm_item_q($items[0], $cls, $packs, $duelQ);
+        if (!$q) { $items[0] = ['src' => 'math', 'ref' => $fb, 'servedAt' => $now, 'answeredAt' => null, 'choice' => null, 'correct' => null]; $q = gm_item_q($items[0], $cls, $packs, $duelQ); }
+        $rid = $sid . '|' . $today . '|' . (count($todayRounds) + 1);
+        sch_rec_put('gameR', $rid, ['id' => $rid, 'sid' => $sid, 'cls' => $cls, 'date' => $today, 'mode' => $mode, 'items' => $items] + $extra, $uid);
+        return ['ok' => true, 'rid' => $rid, 'mode' => $mode, 'q' => gm_public($q, $items[0]), 'i' => 0, 'n' => count($items), 'left' => GM_SECONDS];
+    };
+    $mustFinish = function () use ($todayRounds, $now) {
+        foreach ($todayRounds as $r) foreach ((array)$r['items'] as $it) if (gm_item_result($it, $now) === null) sch_fail('Finish the round you started first.');
+    };
+
     if ($a === 'start') {
         $mode = (string)($in['mode'] ?? 'daily');
-        if (!in_array($mode, ['daily', 'math', 'words', 'revenge'], true)) sch_fail('Choose a game.');
-        if (count($todayRounds) >= GM_ROUNDS_PER_DAY) sch_fail('That is ' . GM_ROUNDS_PER_DAY . ' rounds today — brilliant! Your brain stores it while you sleep. Come back tomorrow. 😴🧠');
-        foreach ($todayRounds as $r) foreach ((array)$r['items'] as $it) if (gm_item_result($it, $now) === null) sch_fail('Finish the round you started first.');
-        if ($mode === 'words' && $band < 2) sch_fail('Word games start from Class 3.');
+        if (!in_array($mode, ['daily', 'math', 'words', 'revenge', 'today'], true)) sch_fail('Choose a game.');
+        $mustFinish();
         $n = count($todayRounds) + 1; $seed = $sid . '|' . $today . '|' . $n; $items = [];
+        if ($mode === 'today') {
+            $td = gm_today_topics($cls);
+            if (!$td['date']) sch_fail('No class topic is in the diary yet. The test opens after your teacher fills today\'s diary.');
+            foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today' && ($r['tdate'] ?? '') === $td['date']) sch_fail('You have already taken the test for this class day. 👏 The next test comes with the next class.');
+            $items = gm_today_items($td['topics'], $packs, $seed, $duelQ);
+            if (!$items) sch_fail('Questions for today\'s class are still being made. Try again in a few minutes. ⏳');
+            sch_json($newRound($items, 'today', ['tdate' => $td['date']], $seed . '|x'));
+        }
+        if (count($limited) >= GM_ROUNDS_PER_DAY) sch_fail('That is ' . GM_ROUNDS_PER_DAY . ' rounds today — brilliant! Your brain stores it while you sleep. Come back tomorrow. 😴🧠');
+        if ($mode === 'words' && $band < 2) sch_fail('Word games start from Class 3.');
         if ($mode === 'revenge') {
             if (!$due) sch_fail('No revenge questions today — you have beaten them all! 💪');
             foreach (array_slice($due, 0, GM_ROUND) as $m) $items[] = ['src' => $m['src'], 'ref' => $m['ref']];
@@ -192,13 +331,39 @@ try {
             }
             $items = $pool;
         }
-        $items = array_map(fn($it) => $it + ['servedAt' => null, 'answeredAt' => null, 'choice' => null, 'correct' => null], $items);
-        $items[0]['servedAt'] = $now;
-        $q = gm_item_q($items[0], $cls, $packs, $duelQ);
-        if (!$q) { $items[0] = ['src' => 'math', 'ref' => $seed . '|x', 'servedAt' => $now, 'answeredAt' => null, 'choice' => null, 'correct' => null]; $q = gm_item_q($items[0], $cls, $packs, $duelQ); }
-        $rid = $sid . '|' . $today . '|' . $n;
-        sch_rec_put('gameR', $rid, ['id' => $rid, 'sid' => $sid, 'cls' => $cls, 'date' => $today, 'mode' => $mode, 'items' => $items], $uid);
-        sch_json(['ok' => true, 'rid' => $rid, 'q' => gm_public($q, $items[0]), 'i' => 0, 'n' => count($items), 'left' => GM_SECONDS]);
+        sch_json($newRound($items, $mode, [], $seed . '|x'));
+    }
+
+    // ---- Battle: dono ko wahi sawaal; pehle bhejne wala khelta hai, phir saamne wala ----
+    if ($a === 'bstart') {
+        $opp = (string)($in['opp'] ?? '');
+        if ($opp === $sid || !isset($students[$opp]) || ($students[$opp]['cls'] ?? '') !== $cls) sch_fail('Choose a classmate to battle.');
+        $mustFinish();
+        $A = gm_arena($cls, $now); $started = 0;
+        foreach ($A['battles'] as $id => $b) {
+            if ($b['a'] === $sid && date('Y-m-d', (int)$b['at']) === $today) $started++;
+            if ((($b['a'] === $sid && $b['b'] === $opp) || ($b['a'] === $opp && $b['b'] === $sid)) && $A['bres'][$id] === 'wait') sch_fail('You already have a battle going with ' . $short($opp) . '. Finish that one first.');
+        }
+        if ($started >= GM_BATTLES_PER_DAY) sch_fail('That is ' . GM_BATTLES_PER_DAY . ' battles today. ⚔️ Come back tomorrow — or play the battles sent to you.');
+        $bid = 'b' . substr(hash('sha256', $sid . '|' . $opp . '|' . $now . '|' . random_int(0, PHP_INT_MAX)), 0, 14);
+        $pk = []; foreach ($packs as $p) foreach ((array)($p['qs'] ?? []) as $i => $q) if (!in_array($i, (array)($p['hidden'] ?? []), true)) $pk[] = $p['id'] . '#' . $i;
+        usort($pk, fn($x, $y) => strcmp(hash('md5', $bid . $x), hash('md5', $bid . $y)));
+        $items = array_map(fn($ref) => ['src' => 'pack', 'ref' => $ref], array_slice($pk, 0, 3)); $i = 0;
+        while (count($items) < GM_ROUND) $items[] = ['src' => ($band >= 2 && $i % 2) ? 'word' : 'math', 'ref' => $bid . '|' . $i++];
+        $resp = $newRound($items, 'battle', ['bid' => $bid], $bid . '|x');
+        sch_rec_put('gameB', $bid, ['id' => $bid, 'cls' => $cls, 'a' => $sid, 'b' => $opp, 'at' => $now, 'items' => $items, 'ra' => $resp['rid'], 'rb' => null], $uid);
+        sch_log($u, 'Game Zone', $short($sid) . ' started a battle with ' . $short($opp));
+        sch_json($resp + ['bid' => $bid, 'opp' => $short($opp)]);
+    }
+    if ($a === 'bplay') {
+        $b = sch_rec_get('gameB', (string)($in['bid'] ?? ''));
+        if (!$b || ($b['b'] ?? '') !== $sid) sch_fail('This battle was not sent to you.', 403);
+        if (!empty($b['rb'])) sch_fail('You have already played this battle.');
+        if ($now > (int)$b['at'] + GM_BATTLE_HOURS * 3600) sch_fail('This battle has expired. Send a new one! ⚔️');
+        $mustFinish();
+        $resp = $newRound($b['items'], 'battle', ['bid' => $b['id']], $b['id'] . '|x');
+        $b['rb'] = $resp['rid']; sch_rec_put('gameB', $b['id'], $b, $uid);
+        sch_json($resp + ['bid' => $b['id'], 'opp' => $short($b['a'])]);
     }
 
     if ($a === 'answer' || $a === 'flag' || $a === 'next') {
@@ -250,7 +415,14 @@ try {
         $rounds[$rid] = $r; $after = gm_stats($rounds, $sid, $now, $today);
         $chest = $after['chests'] > $before['chests'] ? gm_chest_reward($sid, $after['chests']) : null;
         if ($next === null) sch_log($u, 'Game Zone', qz_short_name_gm((string)$me['name']) . ' finished a ' . $r['mode'] . ' round: ' . count(array_filter($r['items'], fn($x) => $x['correct'])) . ' of ' . count($r['items']));
-        sch_json(['ok' => true, 'correct' => (bool)$r['items'][$cur]['correct'], 'late' => $late, 'ans' => $q ? (int)$q['ans'] : -1,
+        $battle = null;
+        if ($next === null && ($r['mode'] ?? '') === 'battle' && ($b = sch_rec_get('gameB', (string)($r['bid'] ?? '')))) {
+            $isA = $b['a'] === $sid;
+            $x = gm_battle_result($b, $isA ? $r : (!empty($b['ra']) ? sch_rec_get('gameR', $b['ra']) : null), $isA ? (!empty($b['rb']) ? sch_rec_get('gameR', $b['rb']) : null) : $r, $now);
+            $battle = ['opp' => $short($isA ? $b['b'] : $b['a']), 'state' => is_array($x) ? $x[$isA ? 'a' : 'b'] : $x];
+            if (is_array($x)) { $battle['me'] = $x[$isA ? 'sa' : 'sb']; $battle['them'] = $x[$isA ? 'sb' : 'sa']; }
+        }
+        sch_json(['ok' => true, 'battle' => $battle, 'mode' => $r['mode'] ?? 'daily', 'correct' => (bool)$r['items'][$cur]['correct'], 'late' => $late, 'ans' => $q ? (int)$q['ans'] : -1,
             'fun' => $q['fun'] ?? '', 'rule' => $q['rule'] ?? '', 'word' => $q['word'] ?? null, 'combo' => $combo, 'flaggable' => $r['items'][$cur]['src'] === 'pack', 'i' => $cur,
             'xp' => $after['xp'] - $before['xp'], 'levelUp' => $after['level'] > $before['level'] ? gm_level_name($after['level']) : null, 'chest' => $chest,
             'more' => $next !== null,

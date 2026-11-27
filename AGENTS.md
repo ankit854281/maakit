@@ -1431,3 +1431,11 @@ papers only from photos the owner sends.
 - Homework and Notices open as chat bubbles on the wallpaper; other screens keep the real ERP nodes inside `.wa-page.fam-real-screen`. Bottom bar: Chats, Homework, Fees/Play, Progress, Updates.
 - Unread state is kept on the device only (`localStorage sn_wa_seen`). No data, API or permission rule changed.
 - CSS is appended at the end of `family.css`; rebuild assets with `prepare-assets.cjs`. `family-design.cjs` asserts the new classes.
+
+## 2026-11-27 — Game Zone: Battle Arena (class test, rank, K/D, battles)
+
+- **Today's Class Test** (`game_api.php` mode `today`): questions only from the topics in the latest class diary (today, else the last of the past 3 days). Sources: the AI pack for that topic and teacher-approved Quiz Duel questions with the same subject + topic, so it works without the AI key. Auto-checked, once per class day, outside the 4-rounds-a-day limit. Background pack making now does today's diary topics first.
+- **Season rank**: one season per month. RP = month XP + battles (win +30, draw +10, loss −10, never below 0). Tiers Bronze → Silver → Gold → Platinum → Diamond → Crown → Ace → Conqueror with divisions V–I (`GM_TIERS` in `game_lib.php`). K/D = right ÷ wrong; also accuracy, seconds per right answer, best combo. Nothing is stored; everything is counted from `gameR`/`gameB` records each time.
+- **Battle** (`bopp`, `bstart`, `bplay`; record `gameB`): both classmates get the same 5 questions; more right answers wins, a tie goes to the faster one. 3 battles started per day, one open battle per pair, the rival has 48 hours. Same class only.
+- Students see the top 10 by short name plus their own place. Teachers/Principal see every student's test score, tier, RP, K/D and W-L-D in the Quiz Duel page (`tarena`).
+- UI in `app.js` (`gArena`, `gRankCard`, `gBattleScreen`, `gBattleDone`, `gArenaTeacher`); styles `.arena-*` / `.tier-*` in `build/app.input.css`, rebuilt into `app.css` with Tailwind 3.4.17. Tests: `.github/jaanch/game-flow.php` Battle Arena block.

@@ -235,3 +235,60 @@ function gm_chest_reward(string $sid, int $n): array {
     $R = [['🦉', 'Wise Owl sticker'], ['🚀', 'Rocket sticker'], ['🏏', 'Sixer sticker'], ['🌟', 'Gold Star sticker'], ['🐯', 'Tiger sticker'], ['🎯', 'Bullseye sticker'], ['🧠', 'Big Brain sticker'], ['🦚', 'Peacock sticker'], ['⚡', 'Lightning sticker'], ['🏆', 'Trophy sticker']];
     return $R[hexdec(substr(hash('sha256', $sid . '|' . $n), 0, 6)) % count($R)];
 }
+
+// ---------------- BATTLE ARENA (27 Nov 2026) ----------------
+// Season = ek mahina. Rank Points (RP) = mahine ka XP + battle (jeet +30, barabar +10, haar −10).
+// Tier aur division (V se I) RP se. K/D = sahi ÷ galat. Sab records se gina jaata hai, kuch save nahi.
+const GM_TIERS = [[0, 'Bronze', '🥉'], [400, 'Silver', '🥈'], [1000, 'Gold', '🥇'], [1800, 'Platinum', '💠'], [2800, 'Diamond', '💎'], [4000, 'Crown', '👑'], [5500, 'Ace', '🦅'], [7000, 'Conqueror', '🔱']];
+const GM_BATTLE_WIN = 30, GM_BATTLE_DRAW = 10, GM_BATTLE_LOSS = 10;
+const GM_BATTLE_HOURS = 48;      // itne ghante me saamne wala na khele to battle khatam
+const GM_BATTLES_PER_DAY = 3;    // ek din me kitni battle shuru kar sakte hain
+const GM_TODAY_MAX = 10;         // aaj ke test me sawaal (har topic se 5 tak)
+
+function gm_tier(int $rp): array {
+    $i = 0; foreach (GM_TIERS as $k => $t) if ($rp >= $t[0]) $i = $k;
+    [$min, $name, $icon] = GM_TIERS[$i]; $next = GM_TIERS[$i + 1][0] ?? null; $div = '';
+    if ($next !== null) $div = ['V', 'IV', 'III', 'II', 'I'][min(4, intdiv(($rp - $min) * 5, $next - $min))];
+    return ['name' => $name, 'icon' => $icon, 'div' => $div, 'idx' => $i, 'min' => $min, 'next' => $next];
+}
+// Ek round ka hisaab: sahi, galat, sahi jawabon me laga samay (second), poora hua ya nahi
+function gm_round_detail(array $r, int $now, bool $closeOpen = false): array {
+    $right = 0; $wrong = 0; $secs = 0; $done = true; $best = 0; $combo = 0;
+    foreach ((array)$r['items'] as $it) {
+        $res = gm_item_result($it, $now);
+        if ($res === null && $closeOpen) $res = false;
+        if ($res === null) { $done = false; continue; }
+        if ($res) { $right++; $combo++; $best = max($best, $combo); $secs += max(0, (int)($it['answeredAt'] ?? 0) - (int)($it['servedAt'] ?? 0)); }
+        else { $wrong++; $combo = 0; }
+    }
+    return ['right' => $right, 'wrong' => $wrong, 'secs' => $secs, 'done' => $done, 'n' => count((array)$r['items']), 'best' => $best];
+}
+// Battle ka nateeja: 'wait' | 'expired' | ['a' => win|loss|draw, 'b' => ..., 'sa' => [...], 'sb' => [...]]
+function gm_battle_result(array $b, ?array $ra, ?array $rb, int $now) {
+    $over = $now > (int)$b['at'] + GM_BATTLE_HOURS * 3600;
+    if (!$rb) return $over ? 'expired' : 'wait';
+    $sa = $ra ? gm_round_detail($ra, $now, $over) : ['right' => 0, 'wrong' => count($b['items']), 'secs' => 0, 'done' => true, 'n' => count($b['items']), 'best' => 0];
+    $sb = gm_round_detail($rb, $now, $over);
+    if (!$sa['done'] || !$sb['done']) return 'wait';
+    $cmp = $sa['right'] <=> $sb['right'];
+    if ($cmp === 0 && $sa['right'] > 0) $cmp = $sb['secs'] <=> $sa['secs'];    // barabar sahi = jo tez, wo jeeta
+    $a = $cmp > 0 ? 'win' : ($cmp < 0 ? 'loss' : 'draw');
+    return ['a' => $a, 'b' => $a === 'win' ? 'loss' : ($a === 'loss' ? 'win' : 'draw'), 'sa' => $sa, 'sb' => $sb];
+}
+// Season (mahina $ym) ka record: XP, sahi/galat, K/D, accuracy, speed, battle W/L/D, RP aur tier
+// $rounds = sabhi rounds (kisi bhi bachche ke), $results = [sid => ['win'=>n,'loss'=>n,'draw'=>n]]
+function gm_season(array $rounds, string $sid, string $ym, int $now, array $results = []): array {
+    $xp = 0; $right = 0; $wrong = 0; $secs = 0; $best = 0; $days = [];
+    foreach ($rounds as $r) {
+        if (($r['sid'] ?? '') !== $sid || substr((string)($r['date'] ?? ''), 0, 7) !== $ym) continue;
+        $d = gm_round_detail($r, $now); $xp += gm_round_xp($r, $now);
+        $right += $d['right']; $wrong += $d['wrong']; $secs += $d['secs']; $best = max($best, $d['best']);
+        if ($d['right'] + $d['wrong'] > 0) $days[(string)$r['date']] = true;
+    }
+    $xp += 20 * count($days);
+    $w = (int)($results[$sid]['win'] ?? 0); $l = (int)($results[$sid]['loss'] ?? 0); $dr = (int)($results[$sid]['draw'] ?? 0);
+    $rp = max(0, $xp + GM_BATTLE_WIN * $w + GM_BATTLE_DRAW * $dr - GM_BATTLE_LOSS * $l);
+    return ['xp' => $xp, 'right' => $right, 'wrong' => $wrong, 'kd' => round($right / max(1, $wrong), 2),
+            'acc' => $right + $wrong ? (int)round($right * 100 / ($right + $wrong)) : 0, 'speed' => $right ? round($secs / $right, 1) : 0,
+            'best' => $best, 'win' => $w, 'loss' => $l, 'draw' => $dr, 'rp' => $rp, 'tier' => gm_tier($rp), 'days' => count($days)];
+}

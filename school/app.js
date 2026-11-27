@@ -2931,7 +2931,7 @@ function vQuizT() {
   const appr = QT.questions.filter(q => q.status === 'approved');
   const weak = appr.filter(q => q.n >= 3).map(q => ({ ...q, pct: Math.round(q.ok / q.n * 100) })).sort((a, b) => a.pct - b.pct).slice(0, 8);
   const ws = appr.filter(q => q.cls === c0 && q.subj === s0);
-  return head('Quiz Duel & Game Zone', 'Approve students\' questions, add your own, see which topics need reteaching, and print worksheets.') + gameTeacherCard() + `
+  return head('Quiz Duel & Game Zone', 'Approve students\' questions, add your own, see which topics need reteaching, and print worksheets.') + gArenaTeacher() + gameTeacherCard() + `
     <div class="card space-y-3"><h3 class="h3">Waiting for you (${pend.length})</h3>
       ${pend.length ? pend.map(q => `<div class="border border-line rounded-2xl p-4 space-y-2"><div class="flex flex-wrap justify-between gap-2 text-sm"><span><b>Class ${esc(q.cls)} · ${esc(q.subj)}</b> · ${esc(q.topic)}</span><span class="text-slate-500">by ${esc(q.author)}</span></div>
         <p class="font-medium">${esc(q.text)}</p>
@@ -3765,7 +3765,7 @@ function ruleStarter() {
 // ---------------------------------------------------------------- GAME ZONE (students + parents) — school/game_api.php
 // Short rounds, instant funny feedback, a rule and an English word after every answer,
 // combos, streaks, chests, spaced "revenge" rounds and a whole-class weekly mission.
-let GZ = null, GZBUSY = false, GP = null, GTIMER = null, GT = null;
+let GZ = null, GZBUSY = false, GP = null, GTIMER = null, GT = null, GBAT = null, GAR = null;
 async function gapi(a, body, q) {
   const url = 'game_api.php?a=' + a + (q ? '&' + new URLSearchParams(q) : '');
   const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
@@ -3793,20 +3793,27 @@ function gTimer() {
   }, 200);
 }
 async function gStart(mode) {
-  try { const r = await gapi('start', { sid: GZ.kid.id, mode }); GP = { rid: r.rid, q: r.q, i: r.i, n: r.n, deadline: Date.now() + r.left * 1000, combo: 0, right: 0, xp: 0 }; render(); window.scrollTo(0, 0); gTimer(); }
+  try { gBegin(await gapi('start', { sid: GZ.kid.id, mode })); }
   catch (e) { toast(e.message, 'a'); }
 }
+function gBegin(r) { GBAT = null; GP = { rid: r.rid, q: r.q, i: r.i, n: r.n, mode: r.mode, opp: r.opp || '', deadline: Date.now() + r.left * 1000, combo: 0, right: 0, xp: 0 }; render(); window.scrollTo(0, 0); gTimer(); }
+// Battle Arena: challenge a classmate (both get the same questions) or play a battle sent to you
+async function gBattle(opp) { try { gBegin(await gapi('bstart', { sid: GZ.kid.id, opp })); } catch (e) { toast(e.message, 'a'); } }
+async function gBattlePlay(bid) { try { gBegin(await gapi('bplay', { sid: GZ.kid.id, bid })); } catch (e) { toast(e.message, 'a'); GZ = null; loadGame(); } }
+async function gOpenBattle() { GBAT = { list: null }; render(); window.scrollTo(0, 0);
+  try { GBAT.list = (await gapi('bopp', null, { sid: GZ.kid.id })).list; } catch (e) { GBAT.error = e.message; } if (view === 'game') render(); }
+const gTier = t => `<span class="tier tier-${esc(t.name.toLowerCase())}">${t.icon} ${esc(t.name)}${t.div ? ' ' + t.div : ''}</span>`;
 async function gContinue() {
   try { const r = await gapi('next', { sid: GZ.kid.id, rid: GZ.open.rid });
     if (!r.q) { GZ = null; return loadGame(); }
-    GP = { rid: GZ.open.rid, q: r.q, i: r.i, n: r.n, deadline: Date.now() + r.left * 1000, combo: 0, right: 0, xp: 0 }; render(); window.scrollTo(0, 0); gTimer(); }
+    GP = { rid: GZ.open.rid, q: r.q, i: r.i, n: r.n, mode: GZ.open.mode, opp: '', deadline: Date.now() + r.left * 1000, combo: 0, right: 0, xp: 0 }; render(); window.scrollTo(0, 0); gTimer(); }
   catch (e) { toast(e.message, 'r'); }
 }
 async function gAnswer(choice) {
   if (!GP || GP.res || GP.busy) return; GP.busy = true; gStop();
   try {
     const r = await gapi('answer', { sid: GZ.kid.id, rid: GP.rid, choice });
-    GP.res = r; GP.chosen = choice; GP.combo = r.combo; GP.xp += r.xp; if (r.correct) GP.right++;
+    GP.res = r; GP.chosen = choice; GP.combo = r.combo; GP.xp += r.xp; if (r.correct) GP.right++; if (r.battle) GP.battle = r.battle;
     render();
     if (r.levelUp) setTimeout(() => toast('Level up! You are now a ' + r.levelUp + ' 🎉'), 400);
   } catch (e) { toast(e.message, 'r'); GP = null; GZ = null; loadGame(); }
@@ -3826,6 +3833,7 @@ async function gFlag() {
 }
 function gPlayCard() {
   const p = GP;
+  if (p.done && p.battle) return gBattleDone(p);
   if (p.done) {
     const great = p.right >= p.n - 1;
     return `<section class="game-card text-center space-y-3"><div class="text-6xl pop">${great ? '🏆' : p.right >= p.n / 2 ? '💪' : '🌱'}</div>
@@ -3836,6 +3844,7 @@ function gPlayCard() {
   const r = p.res, left = Math.max(0, Math.ceil((p.deadline - Date.now()) / 1000));
   if (r && r.chest) p.chest = r.chest;
   return `<section class="game-card space-y-4">
+    ${p.mode === 'battle' ? `<p class="text-sm font-semibold text-marigold">⚔️ Battle${p.opp ? ' vs ' + esc(p.opp) : ''} · same questions, fastest right answers win</p>` : p.mode === 'today' ? '<p class="text-sm font-semibold text-marigold">📝 Today\'s Class Test</p>' : ''}
     <div class="flex items-center justify-between gap-2 text-sm"><span class="text-white/70">${p.i + 1} / ${p.n} · ${esc(p.q.subj)}${p.q.topic ? ' · ' + esc(p.q.topic) : ''}</span>
       ${p.combo >= 2 ? `<span class="pill bg-marigold text-ink pop">🔥 Combo ×${p.combo}${p.combo >= 3 ? ' +5' : ''}</span>` : ''}</div>
     ${r ? '' : `<div class="flex items-center gap-3"><div class="flex-1 h-2 rounded-full bg-white/15 overflow-hidden"><div id="g-bar" class="h-2 bg-marigold" style="width:${left / GZ.seconds * 100}%"></div></div><b id="g-left" class="w-6 text-right">${left}</b></div>`}
@@ -3859,10 +3868,11 @@ function vGame() {
   if (!GZ) return `${kidSwitch()}<div class="card text-slate-500">Loading Game Zone…</div>`;
   if (GZ.error) return `${kidSwitch()}<div class="card">${esc(GZ.error)} <button onclick="GZ=null;loadGame()" class="btn btn-sm btn-l ml-2">Try again</button></div>`;
   if (GP) return gPlayCard();
+  if (GBAT) return gBattleScreen();
   const st = GZ.stats, m = GZ.mission, pct = Math.min(100, Math.round(m.right / m.target * 100));
   const tile = (mode, emoji, title, sub, on, cls) => `<button ${on ? '' : 'disabled'} onclick="${mode === 'duel' ? "go('quiz')" : `gStart('${mode}')`}" class="game-tile ${cls || ''} ${on ? '' : 'opacity-40'}"><span class="text-4xl">${emoji}</span><span class="font-semibold text-lg leading-tight">${title}</span><span class="text-sm opacity-80 leading-snug">${sub}</span></button>`;
   const noRounds = GZ.roundsLeft <= 0;
-  return `${kidSwitch()}
+  return `${kidSwitch()}${gArena()}
     <section class="game-card"><div class="flex items-center gap-4">
       <div class="avatar text-2xl">${st.level}</div>
       <div class="flex-1 min-w-0"><p class="text-white/70 text-sm">${esc(GZ.kid.name)} · Class ${esc(GZ.kid.cls)}</p><h2 class="text-2xl font-semibold leading-tight">${esc(st.levelName)}</h2>
@@ -3884,9 +3894,88 @@ function vGame() {
     <div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">Class ${esc(GZ.kid.cls)} mission this week</h3><span class="text-sm text-slate-500">${m.right} / ${m.target}</span></div>
       <div class="h-3 rounded-full bg-paper mt-3 overflow-hidden"><div class="h-3 bg-leaf" style="width:${pct}%"></div></div>
       <p class="text-sm text-slate-600 mt-2">${pct >= 100 ? '🎉 Mission complete! Your whole class did it together.' : 'Every right answer from anyone in your class counts. Do it together!'}</p></div>
-    ${GZ.league.length ? `<div class="card"><h3 class="h3">This week's top players</h3><ol class="mt-2 space-y-1">${GZ.league.map((b, i) => `<li class="flex justify-between gap-2 ${b.me ? 'font-semibold text-ink' : ''}"><span>${['🥇', '🥈', '🥉'][i] || (i + 1) + '.'} ${esc(b.name)}${b.me ? ' (you)' : ''}</span><span>${b.xp} XP</span></li>`).join('')}</ol>
-      <p class="text-xs text-slate-500 mt-2">A new week starts every Monday — anyone can top it.</p></div>` : ''}
+    ${gRankCard()}
     <div class="card"><h3 class="h3">My sticker book</h3>${GZ.stickers.length ? `<div class="flex flex-wrap gap-2 mt-2">${GZ.stickers.map(x => `<span title="${esc(x[1])}" class="text-3xl">${x[0]}</span>`).join('')}</div>` : `<p class="text-sm text-slate-500 mt-1">Get ${st.toChest} more right answers to open your first chest.</p>`}</div>`;
+}
+
+// ---------------------------------------------------------------- BATTLE ARENA (27 Nov 2026)
+// Season rank (Bronze → Conqueror), K/D, Today's Class Test and 1-vs-1 battles with the same questions.
+function gArena() {
+  const S = GZ.season; if (!S) return '';
+  const span = S.rpNext ? S.rpNext - S.rpMin : 1, pct = S.rpNext ? Math.min(100, Math.round((S.rp - S.rpMin) / span * 100)) : 100;
+  const T = GZ.today, B = GZ.battle, tn = S.tier.name.toLowerCase();
+  const topics = T.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ');
+  const tLabel = T.isToday ? "Today's Class Test" : T.date ? 'Class Test · ' + esc(fmtDate(T.date)) : "Today's Class Test";
+  let tSub, tOn = false;
+  if (T.played && T.played.done) tSub = `✅ Done: ${T.played.right} of ${T.played.n} right. The next test comes with the next class.`;
+  else if (T.played) tSub = 'You started this test. Continue it from the button above.';
+  else if (!T.date) tSub = 'Opens when your teacher fills the class diary.';
+  else if (!T.ready) tSub = `${topics} — questions are being made ⏳`;
+  else { tSub = `${topics} · ${T.ready} questions · checked instantly`; tOn = !GZ.open; }
+  return `${B.incoming.map(x => `<div class="arena-alert pop"><span class="text-3xl">⚔️</span><div class="flex-1 min-w-0"><p class="font-semibold text-ink">${esc(x.from)} challenged you!</p>
+      <p class="text-xs text-slate-600">${gTier(x.tier)} · ${x.hoursLeft} hour${x.hoursLeft > 1 ? 's' : ''} left</p></div>
+      <button onclick="gBattlePlay(${jsq(x.bid)})" class="btn btn-r" ${GZ.open ? 'disabled' : ''}>Fight</button></div>`).join('')}
+    <section class="arena-card tier-${esc(tn)}"><div class="flex items-center gap-4">
+      <div class="arena-badge">${S.tier.icon}</div>
+      <div class="flex-1 min-w-0"><p class="text-white/70 text-xs">${esc(S.month)} season · #${S.pos} of ${S.of} in class</p>
+        <h2 class="text-2xl font-extrabold leading-tight">${esc(S.tier.name)}${S.tier.div ? ' ' + S.tier.div : ''}</h2>
+        <div class="arena-bar mt-2"><i style="width:${pct}%"></i></div>
+        <p class="text-xs text-white/70 mt-1">${S.rp} RP${S.rpNext ? ` · ${S.rpNext - S.rp} RP to the next tier` : ' · top tier!'}</p></div></div>
+      <div class="grid grid-cols-4 gap-2 mt-4">
+        <div class="arena-stat"><b>${S.kd}</b><span>K/D<br>right ÷ wrong</span></div>
+        <div class="arena-stat"><b>${S.acc}%</b><span>accuracy</span></div>
+        <div class="arena-stat"><b>${S.win}-${S.loss}</b><span>battles<br>won-lost</span></div>
+        <div class="arena-stat"><b>${S.speed ? S.speed + 's' : '—'}</b><span>speed per<br>right answer</span></div></div></section>
+    <button ${tOn ? '' : 'disabled'} onclick="gStart('today')" class="arena-cta arena-test"><span class="ic">📝</span><span class="min-w-0"><b class="block text-lg leading-tight">${tLabel}</b><span class="block text-sm text-white/85 leading-snug">${tSub}</span></span></button>
+    <button ${GZ.open ? 'disabled' : ''} onclick="gOpenBattle()" class="arena-cta arena-fight"><span class="ic">⚔️</span><span class="min-w-0"><b class="block text-lg leading-tight">Battle a classmate</b><span class="block text-sm text-white/85 leading-snug">Same 5 questions for both · win +${30} RP · ${B.left} battle${B.left === 1 ? '' : 's'} left today</span></span></button>`;
+}
+function gRankCard() {
+  const R = GZ.rank || []; if (!R.length || !GZ.season) return '';
+  return `<div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">🏆 Class ${esc(GZ.kid.cls)} rank · ${esc(GZ.season.month)}</h3><span class="text-xs text-slate-500">RP · K/D</span></div>
+    <div class="mt-2">${R.map(x => `<div class="arena-row ${x.me ? 'me' : ''}"><span class="arena-pos">${['🥇', '🥈', '🥉'][x.pos - 1] || x.pos}</span>
+      <span class="flex-1 min-w-0 truncate ${x.me ? 'font-semibold text-ink' : ''}">${esc(x.name)}</span>${gTier(x.tier)}
+      <span class="w-12 text-right text-sm font-semibold">${x.rp}</span><span class="w-10 text-right text-xs text-slate-500">${x.kd}</span></div>`).join('')}</div>
+    <p class="text-xs text-slate-500 mt-2">A new season starts on the 1st of every month — everyone starts again from Bronze.</p></div>`;
+}
+function gBattleScreen() {
+  const B = GZ.battle, L = GBAT.list;
+  const resTxt = { win: 'WIN', loss: 'LOSS', draw: 'DRAW', wait: 'WAITING', expired: 'EXPIRED' };
+  const opp = !L ? '<p class="text-sm text-slate-500">Loading classmates…</p>' : GBAT.error ? `<p class="text-sm text-rose">${esc(GBAT.error)}</p>` : !L.length ? '<p class="text-sm text-slate-500">No classmates found.</p>' :
+    L.map(x => `<div class="arena-row"><span class="flex-1 min-w-0 truncate">${esc(x.name)}</span>${gTier(x.tier)}<span class="w-10 text-right text-xs text-slate-500">${x.kd}</span>
+      <button onclick="gBattle(${jsq(x.id)})" class="btn btn-sm ${x.busy ? 'btn-l' : 'btn-r'}" ${x.busy || !B.left ? 'disabled' : ''}>${x.busy ? 'In battle' : 'Challenge'}</button></div>`).join('');
+  return `${kidSwitch()}<button onclick="GBAT=null;render()" class="btn btn-l btn-sm">← Back to Game Zone</button>
+    <section class="arena-card text-center"><div class="text-5xl">⚔️</div><h2 class="text-2xl font-extrabold mt-1">Battle Arena</h2>
+      <p class="text-sm text-white/80 mt-1">You and your classmate get the same 5 questions. More right answers wins; if equal, the faster one wins.<br>Win +30 RP · Draw +10 RP · Loss −10 RP</p>
+      <p class="text-xs text-white/60 mt-2">${B.left} battle${B.left === 1 ? '' : 's'} left today · your classmate has ${B.hours} hours to reply</p></section>
+    ${B.incoming.length ? `<div class="card"><h3 class="h3">Sent to you</h3>${B.incoming.map(x => `<div class="arena-row"><span class="flex-1 min-w-0 truncate font-semibold">${esc(x.from)}</span>${gTier(x.tier)}<button onclick="gBattlePlay(${jsq(x.bid)})" class="btn btn-sm btn-r">Fight</button></div>`).join('')}</div>` : ''}
+    <div class="card"><h3 class="h3">Choose a rival</h3><p class="text-xs text-slate-500 mb-1">Closest in rank first · number = K/D</p>${opp}</div>
+    ${B.history.length ? `<div class="card"><h3 class="h3">My battles</h3>${B.history.map(h => `<div class="arena-row"><span class="flex-1 min-w-0 truncate">vs ${esc(h.opp)}</span>
+      ${h.n ? `<span class="text-sm font-semibold">${h.me} – ${h.them}</span>` : ''}<span class="arena-res ${esc(h.state)}">${resTxt[h.state] || esc(h.state)}</span></div>`).join('')}</div>` : ''}`;
+}
+function gBattleDone(p) {
+  const b = p.battle, back = '<button onclick="GP=null;GZ=null;loadGame()" class="btn bg-marigold text-ink w-full py-3">Back to Game Zone</button>';
+  if (b.state === 'wait') return `<section class="arena-card text-center space-y-3"><div class="text-6xl pop">⏳</div><h3 class="text-2xl font-extrabold">${p.right} of ${p.n} right</h3>
+    <p class="text-white/80">Your score is locked in. Now ${esc(b.opp)} plays the same questions — you will see who won in Game Zone. +${p.xp} XP</p>${back}</section>`;
+  const head = { win: ['🏆', 'VICTORY!', '+30 RP'], loss: ['🛡️', 'DEFEAT', '−10 RP · get them next time'], draw: ['🤝', 'DRAW', '+10 RP'] }[b.state] || ['⚔️', 'Battle over', ''];
+  const side = (name, x) => `<div class="arena-stat"><b>${x.right} / ${x.n}</b><span>${esc(name)}<br>${x.secs}s on right answers</span></div>`;
+  return `<section class="arena-card text-center space-y-3"><div class="text-6xl pop">${head[0]}</div><h3 class="arena-vs">${head[1]}</h3><p class="text-marigold font-semibold">${head[2]} · +${p.xp} XP</p>
+    <div class="grid grid-cols-2 gap-2">${side('You', b.me)}${side(b.opp, b.them)}</div>${back}</section>`;
+}
+
+// Teacher / Principal: today's class test results and the class rank (every student, full names)
+async function loadGAR(cls) { GAR = { busy: true, cls }; try { GAR = await gapi('tarena', null, cls ? { cls } : null); } catch (e) { GAR = { error: e.message }; } if (view === 'quizt') render(); }
+function gArenaTeacher() {
+  if (!GAR) { loadGAR(''); return '<div class="card text-slate-500">Loading Battle Arena…</div>'; }
+  if (GAR.busy) return '<div class="card text-slate-500">Loading Battle Arena…</div>';
+  if (GAR.error) return `<div class="card">${esc(GAR.error)}</div>`;
+  const took = GAR.rows.filter(r => r.test && r.test.done), avg = took.length ? Math.round(took.reduce((a, r) => a + r.test.right / r.test.n, 0) / took.length * 100) : 0;
+  return `<div class="card space-y-3"><div class="flex flex-wrap justify-between items-baseline gap-2"><h3 class="h3">⚔️ Battle Arena · Class test and rank</h3><span class="text-xs text-slate-500">${esc(GAR.month)} season</span></div>
+    ${GAR.classes.length > 1 ? `<div class="flex flex-wrap gap-2">${GAR.classes.map(c => `<button onclick="loadGAR(${jsq(c)})" class="chip ${c === GAR.cls ? 'chip-on' : ''}">${esc(c)}</button>`).join('')}</div>` : ''}
+    <p class="text-sm text-slate-600">${GAR.date ? `Test from the diary of <b>${esc(fmtDate(GAR.date))}</b>: ${GAR.topics.map(t => esc(t.subj) + ' — ' + esc(t.topic)).join(' · ') || '—'}.<br><b>${took.length} of ${GAR.rows.length}</b> students took it${took.length ? ` · average ${avg}%` : ''}.` : 'No diary topic in the last 3 days, so there is no class test yet.'}</p>
+    <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>#</th><th>Student</th><th>Test</th><th>Rank</th><th>RP</th><th>K/D</th><th>Battles W-L-D</th></tr></thead><tbody>
+    ${GAR.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${r.test ? (r.test.done ? `<b class="${r.test.right / r.test.n >= .6 ? 'text-leaf' : 'text-rose'}">${r.test.right}/${r.test.n}</b>` : 'started') : '<span class="text-slate-400">not taken</span>'}</td>
+      <td>${gTier(r.tier)}</td><td>${r.rp}</td><td>${r.kd}</td><td>${r.win}-${r.loss}-${r.draw}</td></tr>`).join('')}</tbody></table></div>
+    <p class="text-xs text-slate-500">Test questions come from the AI pack for the diary topic, and from questions you add below with the same topic as your diary. Students see only the top 10 by short name and their own place. Below 60% in the test is shown in red, so you know whom to help.</p></div>`;
 }
 
 // ---------------------------------------------------------------- GAME ZONE — teacher / principal card (inside Quiz Duel)
