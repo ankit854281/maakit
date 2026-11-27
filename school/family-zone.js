@@ -345,6 +345,54 @@ function tipTeacherCard() {
       <div class="flex gap-2 mt-2"><button class="btn btn-sm btn-g" onclick="fzDecide(${jsq(t.id)},'approved')">Approve</button><button class="btn btn-sm btn-l" onclick="fzDecide(${jsq(t.id)},'rejected')">Reject</button></div></div>`).join('') : '<p class="text-sm text-slate-500">Nothing waiting.</p>'}</div>`;
 }
 
+// ---------------------------------------------------------------- 7. PREMIUM HOME (owner, 27 Nov 2026: "better than the Teacher and Chairman apps")
+// Hero header with greeting and child switch, a "today at a glance" card, learning stories, quick actions, today's
+// lessons, class-test banner, coming-up timeline and the latest notice. The WhatsApp-style update list follows below.
+function fzGreet() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
+function fzDaysTo(iso) { return Math.round((new Date(iso + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 86400000); }
+let FZ_ANIM = true;
+function fzHome(kid, isParent, ctl) {
+  fzLoadExtra(kid); const anim = FZ_ANIM; if (anim) setTimeout(() => { FZ_ANIM = false; }, 900);
+  const today = todayISO(), at = pAtt(kid), sum = (PD.attSum || {})[kid.id] || { present: 0, total: 0 }, sp = sum.total ? Math.round(sum.present / sum.total * 100) : at.pct;
+  const hwT = PD.hw.filter(h => h.cls === kid.cls && h.date === today), hwN = hwT.filter(h => h.hw).length;
+  const g = FZG[kid.id] && !FZG[kid.id].error ? FZG[kid.id] : null;
+  const exam = examItems().filter(e => e.cls.includes(kid.cls) && e.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const up = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls))].filter(e => (e.to || e.date) >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  const nt = (PD.notices || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+  const nx = fzNextSchoolDay(kid), first = (n => n ? ((((PD.tt || {})[kid.cls] || [])[n.idx] || []).find(Boolean) || null) : null)(nx);
+  const name = (kid.name || '').split(' ')[0], ini = (kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('');
+  const attTxt = at.today ? (at.today.present ? 'Present' : 'Absent') : 'Not marked', attTone = at.today ? (at.today.present ? 'ok' : 'bad') : 'mut';
+  const QA = [['phw', '📘', 'Homework', '#2563eb'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['presults', '📊', 'Results', '#d6336c'], ['pcal', '📅', 'Calendar', '#0e9f9a'],
+    ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5']]
+    .filter(q => VIEWS[q[0]]);
+  const test = g && g.today && g.today.ready && !g.today.played;
+  return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
+    <section class="fh-hero"><i class="fh-glow a"></i><i class="fh-glow b"></i>
+      <div class="fh-top"><img src="img/chairman-512.png" alt="School logo"><div><b>SNMSIS</b><small>${isParent ? 'Parent' : 'Student'} · ${esc(S.settings.session || '')}</small></div><span class="fh-ctl">${ctl || ''}</span></div>
+      <p class="fh-hi">${fzGreet()},</p><h1>${esc(isParent ? name + '’s family' : name)}</h1>
+      <div class="fh-tags"><span>Class ${esc(kid.cls)}</span>${kid.ct ? `<span>Class teacher · ${esc(kid.ct)}</span>` : ''}<span>${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+      ${PD.kids.length > 1 ? `<div class="fh-kids fam-child">${PD.kids.map(k => `<button class="${k.id === kid.id ? 'on' : ''}" onclick="PKID='${esc(k.id)}';render()"><span>${esc((k.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span>${esc((k.name || '').split(' ')[0])} · ${esc(k.cls)}</button>`).join('')}</div>` : ''}
+    </section>
+    <section class="fh-glance">
+      <button onclick="go('presults')"><span class="fh-ring ${attTone}" style="--p:${sp == null ? 0 : sp}"><b>${sp == null ? '—' : sp + '%'}</b></span><b class="t-${attTone}">${attTxt}</b><small>attendance</small></button>
+      <button onclick="go('phw')"><span class="fh-num">${hwN}</span><b>${hwN === 1 ? 'Task' : 'Tasks'}</b><small>homework today</small></button>
+      <button onclick="go('game')"><span class="fh-num">${g && g.season ? g.season.tier.icon : '🎯'}</span><b>${g && g.season ? esc(g.season.tier.name) + (g.season.tier.div ? ' ' + g.season.tier.div : '') : 'Game Zone'}</b><small>${g && g.season ? '#' + g.season.pos + ' in class' : 'level'}</small></button>
+      <button onclick="go('pcal')"><span class="fh-num">${exam ? Math.max(0, fzDaysTo(exam.date)) : '—'}</span><b>${exam ? (fzDaysTo(exam.date) === 1 ? 'Day' : 'Days') : 'No exam'}</b><small>${exam ? 'to ' + esc(exam.title.split(':')[0]) : 'scheduled'}</small></button>
+    </section>
+    ${gyStatusRow(kid)}
+    ${test ? `<button class="fh-cta" onclick="go('game')"><span>📝</span><div><b>Today’s class test is ready</b><small>${g.today.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ')} · ${g.today.ready} questions</small></div><em>Start</em></button>` : ''}
+    <div class="fh-sec"><h3>Quick access</h3></div>
+    <section class="fh-grid">${QA.map(([k, e, l, c]) => `<button onclick="go('${k}')" style="--c:${c}"><span>${e}</span><b>${l}</b></button>`).join('')}</section>
+    <div class="fh-sec"><h3>Today in class</h3><button onclick="go('phw')">See all</button></div>
+    ${hwT.length ? `<section class="fh-rail">${hwT.map(h => `<button onclick="go('phw')" class="fh-lesson" style="--c:${fzColor(h.subj)}"><small>${esc(h.subj)}</small><b>${esc(h.topic || 'Class work')}</b>${h.hw ? `<p>📝 ${esc(h.hw)}</p>` : '<p class="mut">No homework</p>'}</button>`).join('')}</section>`
+      : `<div class="fh-empty">📖 Lessons appear here as soon as the teachers fill in today’s diary.</div>`}
+    ${nx ? `<button class="fh-next" onclick="go('ptmr')"><span>🎒</span><div><small>Next school day · ${esc(fmtDate(nx.date))}</small><b>${first ? 'First period: ' + esc(first.s) + ' at 9:00 AM' : 'Timetable, homework and bag checklist'}</b></div><em>›</em></button>` : ''}
+    ${up.length ? `<div class="fh-sec"><h3>Coming up</h3><button onclick="go('pcal')">Calendar</button></div><section class="fh-time">${up.map(e => { const d = new Date(e.date + 'T00:00:00'); return `<div><span class="${e.type === 'Holiday' ? 'hol' : e.type === 'Exam' ? 'exam' : e.type === 'PTM' ? 'ptm' : 'evt'}"><b>${d.getDate()}</b>${d.toLocaleDateString('en-IN', { month: 'short' })}</span><p><b>${esc(e.title)}</b><small>${esc(e.type || '')}${fzDaysTo(e.date) > 0 ? ' · in ' + fzDaysTo(e.date) + ' day' + (fzDaysTo(e.date) > 1 ? 's' : '') : ' · today'}</small></p></div>`; }).join('')}</section>` : ''}
+    ${nt ? `<button class="fh-notice" onclick="go('pnotices')"><small>📢 Latest notice · ${esc(fmtDate(String(nt.date || '')))}</small><b>${esc(nt.title || '')}</b>${nt.body ? `<p>${esc(String(nt.body).slice(0, 140))}${String(nt.body).length > 140 ? '…' : ''}</p>` : ''}</button>` : ''}
+    <div class="fh-sec"><h3>All updates</h3></div>
+  </div>`;
+}
+
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
   Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings });
@@ -365,5 +413,6 @@ window.FZ = {
     return (sp != null ? 'Attendance ' + sp + '% this session · ' : '') + got + ' badge' + (got === 1 ? '' : 's'); },
   calendar(kid) { const d = todayISO(); const n = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls))].filter(e => (e.to || e.date) >= d).sort((a, b) => a.date.localeCompare(b.date))[0]; return n ? n.title + ' · ' + fmtDate(n.date) : 'Holidays, exams and events'; },
   zone() { return '💡 ' + fzPick(GYAAN.tricks).t + ' · 📖 ' + fzPick(GYAAN.stories).t; },
-  status: gyStatusRow
+  status: gyStatusRow,
+  home: fzHome
 };

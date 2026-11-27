@@ -1457,3 +1457,8 @@ papers only from photos the owner sends.
 ## 2026-11-27 — Student app wording: professional English
 
 - Owner: use professional English for students. Game Zone: Review Round (was Revenge Round), Vocabulary Sprint (Word Bomb), Mental Maths (Maths Sprint), Quiz Duel, "Correct! / Excellent! / Not quite", "Remember", rewards and badges (not chests and stickers), level names Beginner → Legend. Family app: Learning Hub (was Gyaan Zone), Next school day, Achievements & record, Practice tab for students; story morals in English. Server messages in `game_api.php` and `tips_api.php` follow the same tone. Keep new student-facing text in this style.
+
+## 2026-11-27 — Family app: premium home + student login with the mobile number
+
+- Owner: the Family app must look better than the Teacher and Chairman apps. `fzHome()` in `family-zone.js` (live, no APK needed for changes) draws the home: indigo hero with greeting and child switch, "today at a glance" card (attendance ring, homework count, Game Zone level, days to the next exam), learning stories, class-test banner, quick-access grid, today's lessons rail, next school day, coming-up timeline, latest notice; the WhatsApp-style update list follows as "All updates". Styles `.fh-*` in `build/app.input.css`. The login art now uses the same indigo gradient.
+- Students log in with the **family mobile number + PIN** (admission number still works from a link). `api.php` login `role=student, phone`: one child → that child; several children → the PIN picks the child; if two children share the PIN the app shows "Which student is logging in?" (`choose`) — names appear only after a correct PIN; `sid` must belong to that number. Test: `game-flow.php` student-phone block.

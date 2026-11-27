@@ -116,6 +116,24 @@ case 'login': {
             $tid = sch_phone10((string)($in['phone'] ?? ''));
             $uid = 'p:' . $tid; $valid = $tid !== '' && (bool)sch_children($tid); break;
         case 'student':
+            // Owner, 27 Nov 2026: students log in with the family mobile number too (admission number still works).
+            // Brothers and sisters share a number: the PIN picks the child; if two children share the PIN, the app asks
+            // which child — names are shown only after a correct PIN.
+            $byPhone = sch_phone10((string)($in['phone'] ?? ''));
+            if ($byPhone !== '') {
+                $kids = sch_children($byPhone); $want = (string)($in['sid'] ?? ''); $tid = '';
+                if ($kids && $want !== '') { if (in_array($want, array_map('strval', array_column($kids, 'id')), true)) $tid = $want; }
+                elseif (count($kids) === 1) $tid = (string)$kids[0]['id'];
+                elseif ($kids) {
+                    $ok = [];
+                    foreach ($kids as $k) { $q = $db->prepare('SELECT pin_hash FROM sch_users WHERE uid=?'); $q->execute(['s:' . $k['id']]); $h = $q->fetchColumn();
+                        if (($h && password_verify($pin, (string)$h)) || (!$h && hash_equals(SCH_DEFAULT_PIN, $pin))) $ok[] = $k; }
+                    if (count($ok) > 1) sch_json(['ok' => true, 'choose' => array_map(fn($k) => ['sid' => (string)$k['id'], 'name' => (string)($k['name'] ?? ''), 'cls' => (string)($k['cls'] ?? '')], $ok)]);
+                    if ($ok) $tid = (string)$ok[0]['id'];
+                }
+                if ($tid === '') { $db->prepare('INSERT INTO sch_login_fail (ip) VALUES (?)')->execute([$ip]); sch_fail('Wrong mobile number or PIN. The first PIN is 1234.', 403); }
+                $uid = 's:' . $tid; $valid = true; break;
+            }
             $found = sch_students_by_adm(trim((string)($in['adm'] ?? '')));
             if (count($found) > 1) sch_fail('More than one student has this admission number. Please ask the school office.');
             $tid = $found ? (string)$found[0]['id'] : '';
@@ -137,7 +155,7 @@ case 'login': {
             if ($role === 'principal') sch_fail('This login is not set up yet.');
             $db->prepare('INSERT INTO sch_login_fail (ip) VALUES (?)')->execute([$ip]);
             sch_fail($role === 'parent' ? 'Wrong mobile number or PIN. The first PIN is 1234.'
-                   : ($role === 'student' ? 'Wrong admission number or PIN. The first PIN is 1234.' : 'Wrong PIN.'), 403);
+                   : ($role === 'student' ? (!empty($byPhone) ? 'Wrong mobile number or PIN. The first PIN is 1234.' : 'Wrong admission number or PIN. The first PIN is 1234.') : 'Wrong PIN.'), 403);
         }
     }
     if ($u['locked_until'] && strtotime((string)$u['locked_until']) > time()) sch_fail('Too many wrong PINs. Please wait 15 minutes.', 429);
@@ -152,7 +170,7 @@ case 'login': {
         $db->prepare('UPDATE sch_users SET fails=?, strikes=?, locked_until=? WHERE uid=?')
            ->execute([$f >= 5 ? 0 : $f, $strikes, $f >= 5 ? date('Y-m-d H:i:s', time() + 900) : null, $uid]);
         if ($strikes >= SCH_MAX_STRIKES) sch_fail('Too many wrong PINs. This login is now blocked until a new PIN is set.', 423);
-        sch_fail($f >= 5 ? 'Too many wrong PINs. Please wait 15 minutes.' : ($role === 'parent' ? 'Wrong mobile number or PIN.' : ($role === 'student' ? 'Wrong admission number or PIN.' : 'Wrong PIN.')), 403);
+        sch_fail($f >= 5 ? 'Too many wrong PINs. Please wait 15 minutes.' : ($role === 'parent' ? 'Wrong mobile number or PIN.' : ($role === 'student' ? (!empty($byPhone) ? 'Wrong mobile number or PIN.' : 'Wrong admission number or PIN.') : 'Wrong PIN.')), 403);
     }
     $db->prepare('UPDATE sch_users SET fails=0, strikes=0, locked_until=NULL WHERE uid=?')->execute([$uid]);
     if ($role === 'teacher') {

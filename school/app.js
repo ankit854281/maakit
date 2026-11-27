@@ -693,10 +693,12 @@ function vLogin() {
       <div class="seg">${roles.map(([r, l]) => `<button onclick="loginRole='${r}';render()" class="${loginRole === r || (r === 'principal' && isStaff) ? 'on' : ''}">${l}</button>`).join('')}</div>
       ${isStaff ? staffSel : ''}
       ${loginRole === 'teacher' ? (STATUS.teachers.length ? `<div><label class="lbl">Your name</label><select id="lg-t" class="inp">${tOpts}</select></div>` : '<p class="text-sm text-slate-500">The Principal must log in once first.</p>') : ''}
-      ${loginRole === 'student' ? `<div><label class="lbl">Admission number</label><input id="lg-adm" class="inp" autocomplete="off" placeholder="e.g. 92"></div>` : ''}
-      ${loginRole === 'parent' ? `<div><label class="lbl">Mobile number given to the school</label><input id="lg-ph" type="tel" inputmode="numeric" maxlength="13" class="inp" placeholder="98390 00000"></div>` : ''}
-      <div><label class="lbl">PIN</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin" onkeydown="if(event.key==='Enter')login()"></div>
+      ${LOGIN_PICK ? `<div class="space-y-2"><p class="text-sm font-semibold">Which student is logging in?</p>${LOGIN_PICK.list.map(k => `<button onclick="loginPick(${jsq(k.sid)})" class="fz-pick"><span>${esc((k.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span><b>${esc(k.name)}</b><small>Class ${esc(k.cls)}</small></button>`).join('')}<button onclick="LOGIN_PICK=null;render()" class="text-xs underline text-slate-500">Back</button></div>` : ''}
+      ${loginRole === 'student' && STUD_ADM && !LOGIN_PICK ? `<div><label class="lbl">Admission number</label><input id="lg-adm" class="inp" autocomplete="off" placeholder="e.g. 92"></div>` : ''}
+      ${(loginRole === 'parent' || (loginRole === 'student' && !STUD_ADM)) && !LOGIN_PICK ? `<div><label class="lbl">${loginRole === 'student' ? 'Family mobile number registered with the school' : 'Mobile number registered with the school'}</label><input id="lg-ph" type="tel" inputmode="numeric" maxlength="13" class="inp" placeholder="98390 00000"></div>` : ''}
+      ${LOGIN_PICK ? '' : `<div><label class="lbl">PIN</label><input id="lg-pin" type="password" inputmode="numeric" maxlength="8" class="inp pin" onkeydown="if(event.key==='Enter')login()"></div>
       <button onclick="login()" class="btn btn-p w-full py-3">Log in</button>
+      ${loginRole === 'student' ? `<button onclick="STUD_ADM=!STUD_ADM;render()" class="text-xs underline text-slate-500 w-full">${STUD_ADM ? 'Log in with the mobile number instead' : 'Log in with the admission number instead'}</button>` : ''}`}
       <p class="text-xs text-slate-500 text-center">${loginRole === 'principal' ? 'Forgot your PIN? <button onclick="STATUS.reset=true;render()" class="underline text-ink">Reset it with the update key</button>'
         : 'First time? Your PIN is <b>1234</b> — you will then choose your own. Forgot it? Ask the school office to reset it.'}</p>`);
 }
@@ -709,22 +711,28 @@ async function doSetup() {
   try { await api('setup', { key, pin }); loginRole = 'principal'; STATUS.reset = false; STATUS.setup = false; await doLogin('principal', null, pin); }
   catch (e) { toast(e.message, 'r'); } finally { busy = false; }
 }
+let STUD_ADM = false, LOGIN_PICK = null;   // student: mobile number by default (owner, 27 Nov 2026); pick a child if siblings share a PIN
+async function loginPick(sid) {
+  if (busy || !LOGIN_PICK) return; const L = LOGIN_PICK; busy = true;
+  try { await doLogin('student', null, L.pin, L.phone, '', sid); LOGIN_PICK = null; } catch (e) { toast(e.message, 'r'); LOGIN_PICK = null; render(); } finally { busy = false; }
+}
 async function login() {
   if (busy) return;
   const pin = document.getElementById('lg-pin').value.trim();
   const tid = loginRole === 'teacher' ? (document.getElementById('lg-t') || {}).value : null;
-  const phone = loginRole === 'parent' ? (document.getElementById('lg-ph') || {}).value || '' : '';
-  const adm = loginRole === 'student' ? ((document.getElementById('lg-adm') || {}).value || '').trim() : '';
-  if (loginRole === 'parent' && phone.replace(/\D/g, '').length < 10) return toast('Enter the 10-digit mobile number', 'a');
-  if (loginRole === 'student' && !adm) return toast('Enter your admission number', 'a');
+  const phone = loginRole === 'parent' || (loginRole === 'student' && !STUD_ADM) ? (document.getElementById('lg-ph') || {}).value || '' : '';
+  const adm = loginRole === 'student' && STUD_ADM ? ((document.getElementById('lg-adm') || {}).value || '').trim() : '';
+  if ((loginRole === 'parent' || (loginRole === 'student' && !STUD_ADM)) && phone.replace(/\D/g, '').length < 10) return toast('Enter the 10-digit mobile number', 'a');
+  if (loginRole === 'student' && STUD_ADM && !adm) return toast('Enter your admission number', 'a');
   if (!pin) return toast('Enter your PIN', 'a');
   busy = true;
   try { await doLogin(loginRole, tid, pin, phone, adm); } catch (e) { toast(e.message, 'r'); } finally { busy = false; }
 }
 let MUST = null;   // { role, old } while a 1234 user chooses their own PIN
-async function doLogin(role, tid, pin, phone, adm) {
-  const start = () => api('login', { role, tid, pin, phone, adm });
+async function doLogin(role, tid, pin, phone, adm, sid) {
+  const start = () => api('login', { role, tid, pin, phone, adm, sid });
   const res = await schoolCompleteOtp(await start(), data => api('verify_teacher_otp', data), start);
+  if (res.choose) { LOGIN_PICK = { list: res.choose, pin, phone }; render(); return; }
   TOKEN = res.token; tokenSet(TOKEN); try { localStorage.setItem('sch_role', res.me ? res.me.role : ''); } catch (e) {}
   if (res.mustChange) { MUST = { role: res.me.role, old: pin }; render(); return; }
   await finishLogin(res.me.role);

@@ -67,5 +67,5 @@
 .fam-signed-in .fam-language{display:none}
 .wa-page .chip{background:#F0F2F5!important;color:#54656F!important;border:0!important}.wa-page .chip.chip-on{background:#D9FDD3!important;color:#008069!important}
 /* login + intro in WhatsApp green */
-.fam-login-art{background:linear-gradient(160deg,#25D366,#008069)!important}.fam-start,.fam-login-form .btn,.fam-login-form button.btn-p{background:#1DAA61!important}
+.fam-login-art{background:linear-gradient(150deg,#1e1b4b 0%,#312e81 45%,#4338ca 75%,#0f766e 130%)!important}.fam-start,.fam-login-form .btn,.fam-login-form button.btn-p{background:#1DAA61!important}
 @media (prefers-reduced-motion:reduce){.wa-nav .pill{transition:none}}

@@ -295,5 +295,24 @@ $api('sync', ['put' => [['k' => 'grid', 'r' => 'main', 'd' => ['7th' => array_fi
 gf_check($c === 200 && $pd['tt']['7th'][0][0]['s'] === 'Social Science' && $pd['tt']['7th'][0][0]['t'] === 'Kartikey Sir' && $pd['tt']['7th'][0][1] === null && !isset($pd['tt']['9th']), 'parent timetable wrong or leaked another class');
 gf_check($pd['attSum']['g1']['total'] >= 1 && $pd['attSum']['g1']['present'] === $pd['attSum']['g1']['total'] && !isset($pd['attSum']['g2']), 'session attendance wrong or leaked');
 
+// ================= STUDENT LOGIN WITH THE FAMILY MOBILE NUMBER (27 Nov 2026) =================
+$api('sync', ['put' => [['k' => 'student', 'r' => 'g4', 'd' => ['id' => 'g4', 'adm' => 'g4', 'name' => 'Kavya Gupta', 'cls' => '3rd', 'phone' => '9839100001']],
+                       ['k' => 'student', 'r' => 'g5', 'd' => ['id' => 'g5', 'adm' => 'g5', 'name' => 'Vivaan Gupta', 'cls' => '1st', 'phone' => '9839100001']]]], $P);
+[$c, $j] = $api('login', ['role' => 'student', 'phone' => '98391 00001', 'pin' => '5555']);
+gf_check($c === 200 && !empty($j['token']) && $j['me']['tid'] === 'g1', 'student could not log in with the mobile number and own PIN');
+[$c, $j] = $api('login', ['role' => 'student', 'phone' => '9839100001', 'pin' => '1234']);
+gf_check($c === 200 && empty($j['token']) && count($j['choose']) === 2 && in_array('Kavya Gupta', array_column($j['choose'], 'name'), true) && !in_array('g1', array_column($j['choose'], 'sid'), true), 'siblings sharing the first PIN were not asked to choose');
+[$c, $j] = $api('login', ['role' => 'student', 'phone' => '9839100001', 'pin' => '1234', 'sid' => 'g5']);
+gf_check($c === 200 && !empty($j['token']) && $j['me']['tid'] === 'g5' && !empty($j['mustChange']), 'chosen sibling could not log in');
+[$c, $j] = $api('login', ['role' => 'student', 'phone' => '9839100001', 'pin' => '9999']);
+gf_check($c === 403 && empty($j['choose']), 'wrong PIN showed the children');
+[$c] = $api('login', ['role' => 'student', 'phone' => '9839100001', 'pin' => '5555', 'sid' => 'g2']);
+gf_check($c === 403, 'a child from another family was picked with this number');
+[$c] = $api('login', ['role' => 'student', 'phone' => '9000000000', 'pin' => '1234']);
+gf_check($c === 403, 'unknown number logged in');
+[$c, $j] = $api('login', ['role' => 'student', 'adm' => 'g2', 'pin' => '5555']);
+gf_check($c === 200 && $j['me']['tid'] === 'g2', 'admission-number login broke');
+$pdo->exec("DELETE FROM sch_login_fail");
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";
