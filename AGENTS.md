@@ -1448,3 +1448,8 @@ papers only from photos the owner sends.
 - `pdata` now also returns `tt` (the child's class week timetable: subject + teacher per bell) and `attSum` (whole-session present/total from 1 April).
 - `school/tips_api.php` (record `quizTip`, outside legacy sync): student posts a trick / formula / question (answer required) / fact, 3 a day; only a teacher of that class or the Principal approves; the class sees approved posts for 14 days with the student's short name. The teacher card sits on the Quiz Duel page.
 - `family-start.js` chat list has rows for Tomorrow, Calendar, My record, Gyaan Zone, Exam syllabus (shown only when `family-zone.js` is on the server), and Settings in the ⋮ menu. Tests: `family-design.cjs` Family Zone block; `game-flow.php` tricks + pdata block.
+
+## 2026-11-27 — Teacher App: class test & students' tricks (`teacher-arena.js`)
+
+- Teachers mostly use the Teacher App, so the class-test report and the students'-tricks check now live there too (TAB `arena`, Home card "🎯 Class test & students' tricks", also on the Principal dashboard).
+- Tricks tab: approve / "not now" (`tips_api.php`). Class test tab: took / average / below 60%, "help these children", not taken yet, class rank (`game_api.php?a=tarena`), and **Add a test question** for today's diary topic (`quiz_api.php?a=add`, goes straight into the class test, works without the AI key).
