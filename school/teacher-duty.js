@@ -107,12 +107,13 @@ function dutyData(date) {
 }
 function vDuty() {
   if (!isDutyMe()) return `<div class="card"><h3>Duty</h3><p class="mut">This page is for the Duty teacher and the Principal.</p></div>`;
-  const t = todayISO(), date = P.date && P.date <= t ? P.date : t, D = dutyData(date), m = ['arr', 'att', 'abs', 'hw'].includes(P.m) ? P.m : 'arr';
+  const t = todayISO(), date = P.date && P.date <= t ? P.date : t, D = dutyData(date), m = ['arr', 'att', 'abs', 'hw', 'chk'].includes(P.m) ? P.m : 'arr';
   const nav = `<div class="datebar"><button class="btn s w" onclick="go('duty',{m:'${m}',date:'${addDays(date, -1)}'})">${ic('back')}</button><label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="go('duty',{m:'${m}',date:this.value})"></label><button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="go('duty',{m:'${m}',date:'${addDays(date, 1)}'})">${ic('next')}</button></div>`;
   const n = x => x ? ` <span class="dot" style="position:static;display:inline-flex">${x}</span>` : '';
   const head = `<div class="card dutyhead"><h2 style="margin:0">🛡 Duty desk</h2><p class="mut" style="margin:4px 0 0">Arrangement bells, attendance of absent teachers' classes, and parent messages — all in one place.</p></div>` + nav +
-    seg([['arr', '🔁 Arrangement' + n(D.nArr)], ['att', '✅ Attendance' + n(D.nAtt)], ['abs', '🙋 Absent' + n(D.nAbs)], ['hw', '📕 Homework' + n(D.nHw)]], m, "(k=>go('duty',{m:k,date:'" + date + "'}))");
+    seg([['arr', '🔁 Arrangement' + n(D.nArr)], ['att', '✅ Attendance' + n(D.nAtt)], ['abs', '🙋 Absent' + n(D.nAbs)], ['hw', '📕 Homework' + n(D.nHw)], ['chk', '📚 HW check' + n(dutyHwCount())]], m, "(k=>go('duty',{m:k,date:'" + date + "'}))");
   if (!D.work) return head + '<div class="ban hol">No school on this day.</div>';
+  if (m === 'chk') return head + (date === t ? vDutyHw() : '<div class="card"><p class="mut" style="margin:0">The homework check report is for today. Go to Today.</p></div>');
   if (m === 'arr') {
     if (!D.arr.length) return head + `<div class="card"><p class="mut" style="margin:0">No teacher is absent — no arrangement ${date === t ? 'today' : 'on this day'}.</p></div>`;
     return head + `<div class="card">${D.arr.map(x => { const B = BELLS[x.bell] || {}, rc = D.R[x.bell + '|' + x.cls], now = D.today && D.nm >= toMin(B.s || '00:00') && D.nm < toMin(B.e || '00:00');
@@ -142,15 +143,61 @@ function vDuty() {
       return `<div class="cwr"><div><b>${esc(s.name)} · Class ${esc(x.cls)}</b><small>${esc(x.subj)} · ${x.hw === 'half' ? 'half done' : 'not done'} · checked by ${esc(x.teacher)}${ok ? ' · ✓ sent' : ''}</small></div>${s.phone ? `<a class="btn s ${ok ? 'l' : 'wa'}" target="_blank" rel="noopener" href="${wa(s.phone, txt)}" onclick="dutySent('${date}','hw',${jsq(x.sid)},${jsq(x.subj)})">${ok ? 'Again' : 'WhatsApp'}</a>` : '<small>No mobile</small>'}</div>`; }).join('')}</div>`
     : `<div class="card"><p class="mut" style="margin:0">No child is marked "homework not done" yet ${date === t ? 'today' : 'on this day'}. The list fills when subject teachers save Check work.</p></div>`);
 }
+
+// ---------- 📚 Homework check report — whole school, today (owner, 27 Nov 2026: "jo homework cross check ho jaa raha hai usko
+// report bhi show kare Adarsh Sir aur Principal Sir par, sabhi jin class ka homework check nahi hua hai vo bhi show kare").
+// For every class + subject in the timetable: the homework of its last class (crLastHw, any teacher's diary) and whether it is
+// checked (duty_api.php ?a=hwsum — the Duty teacher and the Principal get every class).
+//   done  = checked today (done / not done / half, who checked, names of children who did not do it)
+//   late  = homework due, its class today is already over, still not checked  → Remind (Staff chat)
+//   soon  = homework due, its class is later today
+//   next  = homework due, no class of that subject today (checked at the next class)
+function dutyHwBoard() {
+  if (typeof crNeedHw !== 'function' || typeof crLastHw !== 'function') return [];
+  const t = todayISO(), d = dayIdx(t), H = crNeedHw(), seen = new Set(), rows = [], order = className();
+  (S.alloc || []).forEach(a => { if (!a || !order.includes(a.c) || !((+a.n || 0) > 0)) return; const k = sylKey(a.c, a.s); if (seen.has(k)) return; seen.add(k);
+    const L = crLastHw(a.c, a.s), last = (H.last || {})[k] || '', rec = (H.checks || {})[k];
+    const bl = d >= 0 && isWorkDay(t, a.c) ? BELLS.map((_, b) => b).filter(b => { const x = cell(a.c, d, b); return x && x.s === a.s; }) : [];
+    const st = rec ? 'done' : (L && !(last > L.date)) ? (bl.length ? (bl.some(b => bellOver(t, b)) ? 'late' : 'soon') : 'next') : 'none';
+    rows.push({ c: a.c, s: a.s, t: a.t, k, L, rec, st, bell: bl[0] });
+  });
+  return rows.sort((x, y) => order.indexOf(x.c) - order.indexOf(y.c) || x.s.localeCompare(y.s));
+}
+function dutyHwCount() { try { return dutyHwBoard().filter(r => r.st === 'late').length; } catch (e) { return 0; } }
+function vDutyHw() {
+  const H = crNeedHw(); if (H.loading && !H.last) return '<div class="load"><i></i></div>';
+  const R = dutyHwBoard(), cnt = st => R.filter(r => r.st === st).length, f = ['done', 'late', 'wait'].includes(P.f) ? P.f : (cnt('late') ? 'late' : 'done');
+  const head = (typeof crStats === 'function' ? crStats([['done', 'Checked today', cnt('done'), 'green'], ['late', 'Not checked', cnt('late'), 'red'], ['wait', 'Class later / next day', cnt('soon') + cnt('next'), 'amber']], f, k => `go('duty',{m:'chk',f:'${k}'})`) : '') +
+    `<p class="cr-note">${R.filter(r => r.st !== 'none').length} class-subjects have homework to check · ${cnt('none')} gave no homework.</p>`;
+  const list = R.filter(r => f === 'wait' ? (r.st === 'soon' || r.st === 'next') : r.st === f);
+  if (!list.length) return head + (typeof crEmpty === 'function' ? crEmpty(f === 'late' ? '🎉' : '📚', f === 'late' ? 'Every due homework is checked' : f === 'done' ? 'No homework checked yet today' : 'Nothing waiting', f === 'done' ? 'Checks appear here as teachers Submit them.' : '') : '');
+  const byC = {}; list.forEach(r => (byC[r.c] = byC[r.c] || []).push(r));
+  return head + Object.keys(byC).map(c => `<div class="card cr-list"><div class="cr-prog"><div><b>Class ${esc(c)}</b></div><span class="pill">${byC[c].length} subject${byC[c].length > 1 ? 's' : ''}</span></div>${byC[c].map(r => {
+    const tn = T(r.t).name || r.t;
+    if (r.st === 'done') { const rows = Object.entries(r.rec.rows || {}), dn = rows.filter(([, x]) => x.hw === 'done').length, nt = rows.filter(([, x]) => x.hw === 'not'), hf = rows.filter(([, x]) => x.hw === 'half').length, tot = rows.filter(([, x]) => x.hw).length, p = tot ? Math.round(dn / tot * 100) : 0;
+      const names = nt.map(([sid]) => (studentById(sid) || {}).name).filter(Boolean);
+      return `<div class="cr-row"><div class="n"><b>${esc(r.s)}</b><small>${esc(tn)} · checked by ${esc(r.rec.by || '')}${r.rec.hw ? ' · “' + esc(r.rec.hw.slice(0, 40)) + '”' : ''}</small>
+        <span class="cr-why t-green">✓ ${dn} done</span> ${nt.length ? `<span class="cr-why t-red">✗ ${nt.length} not done</span>` : ''} ${hf ? `<span class="cr-why t-amber">½ ${hf}</span>` : ''}
+        ${names.length ? `<small class="why">Not done: ${esc(names.slice(0, 6).join(', '))}${names.length > 6 ? ' +' + (names.length - 6) : ''}</small>` : ''}<div class="cr-bar sm"><i class="${p < 60 ? 'lo' : p < 85 ? 'mid' : ''}" style="width:${p}%"></i></div></div><b class="cr-pct ${p < 60 ? 'lo' : p < 85 ? 'mid' : ''}">${p}%</b></div>`; }
+    const B = r.bell !== undefined ? BELLS[r.bell] : null, msg = `Namaste ${tn}, Class ${r.c} ${r.s} ka homework (${fmtDate(r.L.date)}: "${r.L.hw.slice(0, 80)}") abhi check nahi hua. Kripya Teacher App → Classroom → Check HW mein check karke Submit kar dijiye.`;
+    return `<div class="cr-row"><div class="n"><b>${esc(r.s)}</b><small>${esc(tn)} · given ${esc(fmtDate(r.L.date))}: “${esc(r.L.hw.slice(0, 40))}”</small>
+      <span class="cr-why t-${r.st === 'late' ? 'red' : r.st === 'soon' ? 'amber' : 'grey'}">${r.st === 'late' ? 'Not checked — class was today' : r.st === 'soon' ? 'Class later today' + (B ? ' · ' + esc(B.n) + ' bell ' + esc(t12(B.s)) : '') : 'No class today — next class'}</span></div>
+      ${r.st === 'late' ? `<button class="btn s go" onclick="dutyHwRemind(${jsq(r.t)},${jsq(msg)})">${ic('chat')} Remind</button>` : ''}</div>`; }).join('')}</div>`).join('');
+}
+async function dutyHwRemind(t, text) {
+  try { await api('teacher_api.php?a=staffchat', { room: scDm(isP() ? 'P' : me(), t), text }); toast('Reminder sent to ' + (T(t).name || t) + ' in Staff chat.'); }
+  catch (e) { toast(e.message); }
+}
+
 async function dutySent(date, type, sid, subj) {
   try { await api('duty_api.php?a=sent', { date, type, sid, subj, on: true }); const H = needHwNot(date); H.sent = Object.assign({}, H.sent, { [type + '|' + sid + '|' + subj]: { at: Date.now() } }); setTimeout(render, 600); } catch (e) { toast(e.message); }
 }
 function dutyCard() {
   if (!S || !ME || !isDutyMe() || isP()) return '';
   const t = todayISO(); if (!isWorkDay(t)) return '';
-  const D = dutyData(t), tot = D.nArr + D.nAtt + D.nAbs + D.nHw;
+  const D = dutyData(t), tot = D.nArr + D.nAtt + D.nAbs + D.nHw + dutyHwCount();
   return `<div class="card dutycard" onclick="go('duty')" style="cursor:pointer"><h3 style="margin:0 0 6px">🛡 Today's duty ${tot ? '<span class="pill bad">' + tot + ' to do</span>' : '<span class="pill ok">all done</span>'}</h3>
-    <div class="dgrid"><span><b>${D.arr.length}</b>Arrangement bells${D.nArr ? ' · ' + D.nArr + ' not reached' : ''}</span><span><b>${D.attC.length}</b>Classes to mark${D.nAtt ? ' · ' + D.nAtt + ' left' : ''}</span><span><b>${D.abs.length}</b>Absent children${D.nAbs ? ' · ' + D.nAbs + ' to message' : ''}</span><span><b>${(D.H.items || []).length}</b>Homework not done${D.nHw ? ' · ' + D.nHw + ' to message' : ''}</span></div>
+    <div class="dgrid"><span><b>${D.arr.length}</b>Arrangement bells${D.nArr ? ' · ' + D.nArr + ' not reached' : ''}</span><span><b>${D.attC.length}</b>Classes to mark${D.nAtt ? ' · ' + D.nAtt + ' left' : ''}</span><span><b>${D.abs.length}</b>Absent children${D.nAbs ? ' · ' + D.nAbs + ' to message' : ''}</span><span><b>${(D.H.items || []).length}</b>Homework not done${D.nHw ? ' · ' + D.nHw + ' to message' : ''}</span><span onclick="event.stopPropagation();go('duty',{m:'chk'})"><b>${dutyHwCount()}</b>Homework not checked</span></div>
     <button class="btn go full" style="margin-top:8px">Open Duty desk</button></div>`;
 }
 
@@ -199,6 +246,8 @@ if (typeof vPdash === 'function') {
     const B = needBugs(), open = (B.list || []).filter(b => !b.done).length, t = todayISO(), D = isWorkDay(t) ? dutyData(t) : null;
     const empty = D ? D.arr.filter(x => !x.sub).length : 0;
     return (open ? `<div class="card" onclick="go('bugs')" style="cursor:pointer;border:2px solid #F0443855"><h3 style="margin:0">🐞 ${open} problem${open > 1 ? 's' : ''} reported by teachers</h3><p class="mut" style="margin:4px 0 0">Tap to see what is not working.</p></div>` : '') +
+      (D ? (() => { const R = dutyHwBoard(), dn = R.filter(r => r.st === 'done').length, lt = R.filter(r => r.st === 'late').length, wt = R.filter(r => r.st === 'soon' || r.st === 'next').length;
+        return R.length ? `<div class="card" onclick="go('duty',{m:'chk'})" style="cursor:pointer;${lt ? 'border:2px solid #F0443855' : ''}"><h3 style="margin:0">📚 Homework check today</h3><p class="mut" style="margin:4px 0 0"><b style="color:#15803D">${dn} checked</b> · <b style="color:#B4234F">${lt} not checked</b> · ${wt} class later / next day</p></div>` : ''; })() : '') +
       (D && D.arr.length ? `<div class="card" onclick="go('duty')" style="cursor:pointer"><h3 style="margin:0">🛡 Duty desk — ${D.arr.length} arrangement bell${D.arr.length > 1 ? 's' : ''} today</h3><p class="mut" style="margin:4px 0 0">${empty ? '<b style="color:#B42318">' + empty + ' empty (nobody free in that wing)</b> · ' : ''}${D.nArr} not reached yet · ${D.nAtt} class attendance left</p></div>` : '') + _vpD.apply(this, arguments);
   };
 }

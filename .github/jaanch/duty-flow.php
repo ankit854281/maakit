@@ -83,6 +83,7 @@ $put('tchChk', "$today|9th|Hindi", ['date' => $today, 'cls' => '9th', 'subj' => 
 $put('tchChk', "$today|10th|Hindi", ['date' => $today, 'cls' => '10th', 'subj' => 'Hindi', 'hw' => 'x', 'tid' => 'MA', 'rows' => ['s3' => ['hw' => 'done', 'cp' => '']]]);
 [, $j] = $du('hwsum', null, $tok['K']); df_check(!isset($j['last']['10th|Hindi']), 'a teacher does not see classes he does not teach');
 [, $j] = $du('hwsum', null, $tok['P']); df_check(isset($j['last']['10th|Hindi'], $j['last']['9th|Hindi']), 'Principal sees all');
+[, $j] = $du('hwsum', null, $tok['AD']); df_check(isset($j['last']['10th|Hindi'], $j['last']['9th|Hindi']), 'Duty teacher sees every class (homework check report)');
 
 // ---- problem reports ----
 [$c, $j] = $du('bug', ['msg' => 'Save does nothing', 'screen' => 'diary', 'err' => 'x'], $tok['K']); df_check($c === 200 && $j['ok'], 'teacher sends a problem'); $bid = $j['id'];

@@ -106,7 +106,8 @@ case 'hwsum': {
     // Owner, 27 Nov 2026: "jo homework assign kiya gaya tha vohi show ho … jo homework nahi kiya bas usko tick kar ho jaye".
     if ($method !== 'GET') sch_fail('GET only', 405);
     $today = date('Y-m-d'); $from = date('Y-m-d', strtotime('-30 days'));
-    $mine = fn(string $cls): bool => $role !== 'teacher' || sch_in_class($tid, $cls);
+    // the Duty teacher (Adarsh Sir) sees every class like the Principal (owner, 27 Nov 2026: homework check report for Adarsh Sir + Principal)
+    $mine = fn(string $cls): bool => $role !== 'teacher' || $duty || sch_in_class($tid, $cls);
     $last = []; $miss = []; $todayRecs = [];
     $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchChk' AND deleted=0 AND r >= ?"); $q->execute([$from]);
     foreach ($q as $row) {
