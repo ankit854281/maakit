@@ -24,6 +24,7 @@ th{background:#F4F6F8;position:sticky;top:0;font-size:12px;color:#3d4b59;white-s
 td.n{white-space:nowrap}.mut{color:#6b7a89;font-size:12px}.note{max-width:280px;white-space:pre-wrap}
 .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
 .g{background:#DCFCE7;color:#166534}.r{background:#FEE2E2;color:#991B1B}.y{background:#FEF3C7;color:#92400E}.b{background:#DBEAFE;color:#1E40AF}.s{background:#E5E7EB;color:#374151}
+.sk-row .sk{cursor:pointer;border:2px solid transparent}.sk-row .sk.on{border-color:#17324D}.sk small{display:block;font-size:11.5px;color:#5b6b7b;margin-top:2px}.cb{color:#1E40AF}.cr{color:#991B1B}.cg{color:#166534}
 .empty{padding:24px;text-align:center;color:#6b7a89}.msg{padding:30px 16px;text-align:center}
 @media print{.top,.bar,.tabs,.noprint{display:none!important}body{background:#fff}.card{box-shadow:none}table{min-width:0}th{position:static}}
 </style></head><body>

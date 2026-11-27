@@ -13,7 +13,7 @@
   const qs = new URLSearchParams(location.search);
   const INFRAME = window.top !== window;
   const TODAY = iso(new Date());
-  let BY = qs.get('by') === 'promise' ? 'promise' : 'call';   // owner 27 Nov 2026: report by call date OR by the date the family gave to pay
+  let BY = qs.get('by') === 'promise' ? 'promise' : qs.get('by') === 'status' ? 'status' : 'call';   // owner 27 Nov 2026: report by call date OR by the date the family gave to pay
   let FROM = qs.get('from') || (BY === 'promise' ? TODAY : add(TODAY, -6)), TO = qs.get('to') || TODAY, D = null, TAB = BY === 'promise' ? 'prom' : 'all';
   const weekMon = () => { const d = new Date(TODAY + 'T12:00:00'); return add(TODAY, -((d.getDay() + 6) % 7)); };
   const F = { by: '', res: '', cls: '', q: '' };
@@ -21,6 +21,7 @@
   async function load() {
     $('app').innerHTML = '<div class="msg">Opening Fee Calling Report…</div>';
     if (!store.get('sch_token')) return noLogin('Please log in first.');
+    if (BY === 'status') return loadStatus();
     try {
       const r = await fetch('callreport_api.php?a=data&from=' + FROM + '&to=' + TO + (BY === 'promise' ? '&by=promise' : ''), { cache: 'no-store', headers: { 'X-School-Token': store.get('sch_token') || '' } });
       const j = await r.json().catch(() => ({ ok: false, error: 'Server error.' }));
@@ -78,7 +79,7 @@
     const tab = (k, l) => `<button class="q ${TAB === k ? 'on' : ''}" data-tab="${k}">${l}</button>`;
     $('app').innerHTML = `<div class="top"><div><b>📞 Fee Calling Report</b><small>${esc(D.school)} · ${P ? 'Payment date' : 'Call date'} ${dmy(FROM)}${TO !== FROM ? ' to ' + dmy(TO) : ''}</small></div>
       <div class="noprint"><button id="xl">⬇ Excel</button> <button id="pr">🖨 Print</button> ${INFRAME ? '' : '<button id="bk">← Back</button>'}</div></div>
-      <div class="tabs noprint" style="padding-top:10px"><button class="q ${P ? '' : 'on'}" data-mode="call">📞 Call date ke hisaab se</button><button class="q ${P ? 'on' : ''}" data-mode="promise">💰 Payment date ke hisaab se (kis din dene ko bola)</button></div>
+      <div class="tabs noprint" style="padding-top:10px"><button class="q ${P ? '' : 'on'}" data-mode="call">📞 Call date ke hisaab se</button><button class="q ${P ? 'on' : ''}" data-mode="promise">💰 Payment date ke hisaab se (kis din dene ko bola)</button><button class="q" data-mode="status">📊 Fee baaki — kiski kya sthiti</button></div>
       <div class="bar">${quick.map(([l, f, t]) => `<button class="q ${FROM === f && TO === t ? 'on' : ''}" data-f="${f}" data-t="${t}">${l}</button>`).join('')}
         <label>From</label><input type="date" id="fF" value="${FROM}" ${P ? '' : `max="${TODAY}"`}><label>To</label><input type="date" id="fT" value="${TO}" ${P ? '' : `max="${TODAY}"`}>
         <select id="fBy">${opts(uniq(D.calls.map(c => c.by)), F.by, 'All callers')}</select>
@@ -95,7 +96,7 @@
       <div class="wrap"><div class="card">${R.length ? (TAB === 'prom' ? promTable(R) : TAB === 'by' ? byTable(R) : TAB === 'fam' ? famTable(R) : allTable(R)) : (P ? '<div class="empty">In dates par kisi family ne payment karne ko nahi bola.</div>' : '<div class="empty">No calls saved for these dates / filters.</div>')}</div></div>`;
     document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FROM = b.dataset.f; TO = b.dataset.t; load(); });
     document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; draw(); });
-    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (BY === b.dataset.mode) return; BY = b.dataset.mode; FROM = BY === 'promise' ? TODAY : add(TODAY, -6); TO = TODAY; TAB = BY === 'promise' ? 'prom' : 'all'; F.res = ''; load(); });
+    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
     $('fF').onchange = e => { if (e.target.value) { FROM = e.target.value; load(); } };
     $('fT').onchange = e => { if (e.target.value) { TO = e.target.value; load(); } };
     $('fBy').onchange = e => { F.by = e.target.value; draw(); };
@@ -103,6 +104,53 @@
     $('fCls').onchange = e => { F.cls = e.target.value; draw(); };
     $('fQ').oninput = e => { F.q = e.target.value; clearTimeout(window._qt); window._qt = setTimeout(() => { draw(); const el = $('fQ'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 350); };
     $('xl').onclick = () => excel(R);
+    $('pr').onclick = () => print();
+    if ($('bk')) $('bk').onclick = () => { if (history.length > 1) history.back(); else location.href = 'index.php'; };
+  }
+
+  function setMode(m) { if (BY === m) return; BY = m; FROM = BY === 'promise' ? TODAY : add(TODAY, -6); TO = TODAY; TAB = BY === 'promise' ? 'prom' : 'all'; F.res = ''; load(); }
+  // ---------------------------------------------------------------- Status: every family with fee due (owner, 27 Nov 2026:
+  // "kitne jan ne date de diya hai aur kitne jan ka fee baaki hai but baat nahi hua hai") — callreport_api.php?a=status
+  let SD = null, ST = 'all';
+  const SLBL = { date: ['Date di — aane wali', 'b'], missed: ['Date nikal gayi, fee nahi aayi', 'r'], paid: ['Fee aayi / "de diya" bola', 'g'], talked: ['Baat hui, date nahi di', 'y'], noreach: ['Baat nahi hui (phone nahi uthaya / band)', 'r'], never: ['Kabhi call nahi hua', 's'] };
+  async function loadStatus() {
+    try {
+      const r = await fetch('callreport_api.php?a=status', { cache: 'no-store', headers: { 'X-School-Token': store.get('sch_token') || '' } });
+      const j = await r.json().catch(() => ({ ok: false, error: 'Server error.' }));
+      if (r.status === 401) return noLogin(j.error || 'Please log in again.');
+      if (!j.ok) return noLogin(j.error || 'Could not open the report.');
+      SD = j; drawStatus();
+    } catch (e) { noLogin('No internet connection. Please try again.'); }
+  }
+  function drawStatus() {
+    const L = SD.families, q = F.q.trim().toLowerCase(), cnt = k => L.filter(f => f.st === k), sum = a => a.reduce((n, f) => n + f.due, 0);
+    const talkedDate = cnt('date').length + cnt('missed').length + cnt('paid').length, notTalked = cnt('noreach').length + cnt('never').length;
+    const show = L.filter(f => (ST === 'all' || f.st === ST || (ST === 'nottalked' && (f.st === 'noreach' || f.st === 'never')) || (ST === 'gave' && (f.st === 'date' || f.st === 'missed')))
+      && (!F.cls || f.kids.some(k => k.cls === F.cls)) && (!q || (f.kids.map(k => k.name).join(' ') + ' ' + f.father + ' ' + f.phone).toLowerCase().includes(q)));
+    const card = (k, lbl, list, tone) => `<div class="sk ${ST === k ? 'on' : ''}" data-st="${k}"><span>${lbl}</span><b class="${tone || ''}">${list.length}</b><small>${rs(sum(list))} baaki</small></div>`;
+    const tabs = [['all', 'Sab'], ['gave', 'Date di'], ['missed', 'Date nikal gayi'], ['paid', 'Fee aayi'], ['talked', 'Baat hui, date nahi'], ['noreach', 'Phone nahi uthaya'], ['never', 'Call nahi hua']];
+    $('app').innerHTML = `<div class="top"><div><b>📞 Fee Calling Report</b><small>${esc(SD.school)} · Session ${esc(SD.session)} · aaj ${dmy(SD.today)} tak ki fee baaki</small></div>
+      <div class="noprint"><button id="xl">⬇ Excel</button> <button id="pr">🖨 Print</button> ${INFRAME ? '' : '<button id="bk">← Back</button>'}</div></div>
+      <div class="tabs noprint" style="padding-top:10px"><button class="q" data-mode="call">📞 Call date ke hisaab se</button><button class="q" data-mode="promise">💰 Payment date ke hisaab se</button><button class="q on" data-mode="status">📊 Fee baaki — kiski kya sthiti</button></div>
+      <div class="kp sk-row">${card('all', 'Fee baaki families', L)}${card('gave', 'Date de di', [...cnt('date'), ...cnt('missed')], 'cb')}${card('missed', 'Date nikal gayi, fee nahi', cnt('missed'), 'cr')}${card('paid', 'Call ke baad fee aayi', cnt('paid'), 'cg')}${card('nottalked', 'Baat nahi hui', [...cnt('noreach'), ...cnt('never')], 'cr')}</div>
+      <p class="mut" style="padding:0 14px;margin:0 0 6px">Baat hui: <b>${talkedDate + cnt('talked').length}</b> families (unme ${talkedDate} ne date di / fee di) · Baat nahi hui: <b>${notTalked}</b> (${cnt('noreach').length} ne phone nahi uthaya, ${cnt('never').length} ko call hi nahi hua)${SD.tagged.n ? ` · Company / FD: ${SD.tagged.n} bachche (${rs(SD.tagged.due)}) is list mein nahi` : ''}</p>
+      <div class="bar"><select id="fCls">${opts(uniq(L.flatMap(f => f.kids.map(k => k.cls))), F.cls, 'All classes')}</select><input id="fQ" placeholder="Search name, father, mobile" value="${esc(F.q)}" style="flex:1;min-width:170px"></div>
+      <div class="tabs noprint">${tabs.map(([k, l]) => `<button class="q ${ST === k ? 'on' : ''}" data-st="${k}">${l}</button>`).join('')}</div>
+      <div class="wrap"><div class="card">${show.length ? `<table><tr><th>#</th><th>Family (bachche)</th><th>Mobile</th><th>Fee baaki</th><th>Sthiti</th><th>Aakhri call</th><th>Date di</th><th>Remark</th><th>Kisne call kiya</th></tr>
+        ${show.map((f, i) => { const l = f.last, [t, k] = SLBL[f.st] || ['', 's'];
+          return `<tr><td>${i + 1}</td><td>${f.kids.map(c => `<b>${esc(c.name)}</b> <span class="mut">${esc(c.cls)}${c.section ? ' ' + esc(c.section) : ''}</span>`).join('<br>')}${f.father ? `<div class="mut">${esc(f.father)}</div>` : ''}</td>
+            <td class="n">${f.phone ? `<a href="tel:${esc(f.phone)}">${esc(f.phone)}</a>` : ''}</td><td class="n"><b>${rs(f.due)}</b>${f.paid ? `<div class="mut">call ke baad ${rs(f.paid)} aaye</div>` : ''}</td>
+            <td><span class="pill ${k}">${esc(t)}</span></td><td class="n">${l ? dmy(l.date) + '<div class="mut">' + esc(l.outcome) + '</div>' : '<span class="mut">—</span>'}</td>
+            <td class="n">${l && l.promise ? `<b>${dmy(l.promise)}</b>${l.amount ? '<div class="mut">' + rs(l.amount) + '</div>' : ''}` : '<span class="mut">—</span>'}</td>
+            <td class="note">${l ? esc(l.note) : ''}</td><td>${l ? esc(l.by) : ''}</td></tr>`; }).join('')}</table>` : '<div class="empty">Is list mein koi family nahi.</div>'}</div></div>`;
+    document.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { ST = b.dataset.st; drawStatus(); });
+    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+    $('fCls').onchange = e => { F.cls = e.target.value; drawStatus(); };
+    $('fQ').oninput = e => { F.q = e.target.value; clearTimeout(window._qt); window._qt = setTimeout(() => { drawStatus(); const el = $('fQ'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 350); };
+    $('xl').onclick = () => { const rows = [['Children', 'Classes', 'Father', 'Mobile', 'Fee due (Rs)', 'Status', 'Last call', 'Result', 'Date given', 'Amount promised', 'Remark', 'Called by']]
+        .concat(show.map(f => { const l = f.last || {}; return [f.kids.map(c => c.name).join(' / '), f.kids.map(c => c.cls).join(' / '), f.father, f.phone, Math.round(f.due / 100), (SLBL[f.st] || [''])[0], dmy(l.date || ''), l.outcome || '', dmy(l.promise || ''), l.amount ? Math.round(l.amount / 100) : '', l.note || '', l.by || '']; }));
+      const csv = '﻿' + rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'fee-baaki-status-' + SD.today + '.csv'; a.click(); };
     $('pr').onclick = () => print();
     if ($('bk')) $('bk').onclick = () => { if (history.length > 1) history.back(); else location.href = 'index.php'; };
   }
