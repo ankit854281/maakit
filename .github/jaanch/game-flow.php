@@ -295,6 +295,22 @@ $api('sync', ['put' => [['k' => 'grid', 'r' => 'main', 'd' => ['7th' => array_fi
 gf_check($c === 200 && $pd['tt']['7th'][0][0]['s'] === 'Social Science' && $pd['tt']['7th'][0][0]['t'] === 'Kartikey Sir' && $pd['tt']['7th'][0][1] === null && !isset($pd['tt']['9th']), 'parent timetable wrong or leaked another class');
 gf_check($pd['attSum']['g1']['total'] >= 1 && $pd['attSum']['g1']['present'] === $pd['attSum']['g1']['total'] && !isset($pd['attSum']['g2']), 'session attendance wrong or leaked');
 
+// ================= HALF-YEARLY RESULT, RANKERS, HOMEWORK + COPY CHECKS IN pdata (27 Nov 2026) =================
+$ses = '2026-27';
+$pmk = function (string $subj, array $rows) use ($pdo, $ses) { $pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('prcMarks',?,?,0,1)")->execute(["$ses|Term-1|7th|$subj", json_encode(['subject' => $subj, 'rows' => $rows])]); };
+$pmk('Maths', ['g1' => ['pt' => 9, 'nb' => 5, 'sea' => 5, 'te' => 70], 'g2' => ['pt' => 5, 'nb' => 3, 'sea' => 3, 'te' => 18], 'g3' => ['pt' => 8, 'nb' => 4, 'sea' => 4, 'te' => 60]]);
+$pmk('English', ['g1' => ['pt' => 8, 'nb' => 5, 'sea' => 4, 'te' => 66], 'g2' => ['pt' => 4, 'nb' => 3, 'sea' => 2, 'te' => 30], 'g3' => ['pt' => 9, 'nb' => 5, 'sea' => 5, 'te' => 71]]);
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchChk',?,?,0,1)")->execute([date('Y-m-d') . '|7th|Maths', json_encode(['date' => date('Y-m-d'), 'cls' => '7th', 'subj' => 'Maths', 'hw' => 'Ex 4.2', 'rows' => ['g1' => ['hw' => 'done', 'cp' => ''], 'g2' => ['hw' => 'not', 'cp' => '']], 'by' => 'Kartikey Sir'])]);
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchCopy',?,?,0,1)")->execute(['7th|Maths|Fractions', json_encode(['cls' => '7th', 'subj' => 'Maths', 'ch' => 'Fractions', 'rows' => ['g1' => 'ok', 'g2' => 'inc'], 'by' => 'Kartikey Sir', 'at' => 1])]);
+[$c, $pd] = $api('pdata', null, $PA);
+$t1 = array_values(array_filter($pd['term'], fn($t) => $t['sid'] === 'g1'))[0] ?? null;
+gf_check($t1 && $t1['exam'] === 'Half-Yearly' && $t1['pct'] == 86 && $t1['rank'] === 1 && $t1['of'] === 3 && count($t1['toppers']) === 1 && $t1['toppers'][0]['name'] === 'Aman Gupta', 'half-yearly result / rank / rankers wrong (rankers only from the upper half, as on the slip)');
+gf_check(!array_filter($pd['term'], fn($t) => $t['sid'] === 'g2'), "another family's result leaked");
+gf_check(count($pd['checks']['hw']) === 1 && $pd['checks']['hw'][0]['hw'] === 'done' && count($pd['checks']['copy']) === 1 && $pd['checks']['copy'][0]['st'] === 'ok', 'checks wrong or leaked');
+$PB = null; $pin('p:9839100002', 'parent', '9839100002', '3333'); [, $j] = $api('login', ['role' => 'parent', 'phone' => '9839100002', 'pin' => '3333']); $PB = $j['token'];
+[, $pd2] = $api('pdata', null, $PB); $t2 = $pd2['term'][0];
+gf_check($t2['sid'] === 'g2' && $t2['rank'] === null && (fn($m) => abs($m['t'] - 33) < 0.01 && $m['te'] == 22)(array_values(array_filter($t2['rows'], fn($r) => $r['s'] === 'Maths'))[0]), 'lower-half rank shown, or grace (29 → 33) not applied like the slip');
+
 // ================= STUDENT LOGIN WITH THE FAMILY MOBILE NUMBER (27 Nov 2026) =================
 $api('sync', ['put' => [['k' => 'student', 'r' => 'g4', 'd' => ['id' => 'g4', 'adm' => 'g4', 'name' => 'Kavya Gupta', 'cls' => '3rd', 'phone' => '9839100001']],
                        ['k' => 'student', 'r' => 'g5', 'd' => ['id' => 'g5', 'adm' => 'g5', 'name' => 'Vivaan Gupta', 'cls' => '1st', 'phone' => '9839100001']]]], $P);

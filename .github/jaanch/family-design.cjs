@@ -41,10 +41,15 @@ w.eval("gyOpen(0)");assert(w.document.querySelector('#gy-story .gy-body'),'statu
 w.eval("view='ptmr';render()");
 assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA Teacher')&&w.document.querySelectorAll('.fz-bag label').length===4,'tomorrow: bells with teacher + bag list (3 subjects + diary)');
 w.eval("view='pcal';render()");assert(w.document.querySelectorAll('.fz-day').length>=28,'month calendar');
-w.eval("view='prec';render()");assert(w.document.querySelectorAll('.fz-badges > div').length===12&&w.document.querySelector('.fam-real-screen').textContent.includes('18 of 20 days'),'record: badges + session attendance');
+w.eval("view='prec';render()");assert(w.document.querySelectorAll('.fz-badges > div').length===14&&w.document.querySelector('.fam-real-screen').textContent.includes('18 of 20 days'),'record: badges + session attendance');
 w.eval("view='pzone';FZTAB='stories';render()");assert(w.document.querySelectorAll('.fz-card').length===8,'Gyaan Zone stories');
 w.eval("view='pset';render()");assert(w.document.querySelector('.fz-week')&&w.document.querySelector('.fam-real-screen').textContent.includes('Larger text'),'settings: screen time + bigger text');
 w.eval("PKID='qa2';view='ptmr';render()");assert(w.document.querySelector('.fam-real-screen').textContent.includes('not shared'),'no timetable of another class leaks into the sibling');
+// Results + rankers + homework/copy checks (27 Nov 2026): home shows the class rank, never the game level
+w.eval("PD.term=[{sid:'qa1',exam:'Half-Yearly',cls:'5th',rows:[{s:'Maths',pt:9,nb:5,sea:5,te:72,t:91,ab:false}],tot:91,max:100,pct:91,rank:1,of:30,complete:true,toppers:[{rank:1,name:'QA Child One',pct:91},{rank:2,name:'QA Rival',pct:88}]}];PD.checks={hw:[{sid:'qa1',date:todayISO(),subj:'Maths',task:'Ex 4.2',hw:'not',cp:'',by:'QA Teacher'},{sid:'qa1',date:todayISO(),subj:'Hindi',task:'Path 3',hw:'done',cp:'',by:'QA Two'},{sid:'qa2',date:todayISO(),subj:'EVS',task:'QA SIBLING TASK',hw:'done',cp:'',by:'x'}],copy:[{sid:'qa1',subj:'Maths',ch:'Fractions',st:'inc',by:'QA Teacher',at:1}]};PKID='qa1';view='phome';render()");
+assert(w.document.querySelector('.fh-glance').textContent.includes('1st in class')&&!w.document.querySelector('.fh-glance').textContent.includes('Bronze'),'home glance shows the class rank, not the game level');
+w.eval("view='presults';render()");assert(w.document.querySelector('.fr-rankers').textContent.includes('QA Rival')&&w.document.querySelector('.fr-card').textContent.includes('91%'),'results: half-yearly card + rankers');
+w.eval("view='pchk';render()");const ck=w.document.querySelector('.fam-real-screen').textContent;assert(ck.includes('50%')&&ck.includes('Incomplete')&&!ck.includes('QA SIBLING TASK'),'checks: own child only, completion and copy status');
 w.eval("PKID='qa1';view='phome';render()");
 w.SNFamily.menu();assert(w.document.querySelector('#fam-menu').open);
 assert(w.document.querySelector('#fam-menu').textContent.includes('Game Zone'));

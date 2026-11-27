@@ -471,6 +471,56 @@ case 'pdata': {
                 $o[$c] = array_map(fn($day) => array_map(function ($i) use ($al, $teachers) { $a = is_int($i) && $i >= 0 ? ($al[$i] ?? null) : null;
                     return is_array($a) ? ['s' => (string)($a['s'] ?? ''), 't' => (string)($teachers[$a['t'] ?? '']['name'] ?? '')] : null; }, (array)$day), $g[$c]);
             return $o; })(),
+        // Owner, 27 Nov 2026: "rankers" — Half-Yearly / Annual marks entered in Marks Entry (progress_api.php, prcMarks), worked out
+        // exactly as the marks slip does (results.js): Pre. Test 10 + Notebook 5 + SEA 5 + Term Exam 80; grace 28–32 → 33 is added
+        // quietly; rank uses the real marks and only children with every subject entered. A child's rank is shown only in the upper
+        // half (as on the slip); the class's 1st, 2nd and 3rd (rankers) are shown to the class, as on the certificates.
+        'term' => (function () use ($get, $kids, $classes, $set) {
+            $y0 = preg_match('/^(\d{4})-/', (string)($set['session'] ?? ''), $m) ? (int)$m[1] : ((int)date('n') >= 4 ? (int)date('Y') : (int)date('Y') - 1);
+            $ses = $y0 . '-' . substr((string)($y0 + 1), 2); $all = $get('prcMarks'); $stu = $get('student'); $out = [];
+            foreach (['Term-1' => 'Half-Yearly', 'Term-2' => 'Annual'] as $ex => $label) foreach ($classes as $cls) {
+                $pre = "$ses|$ex|$cls|"; $bySub = [];
+                foreach ($all as $r => $d) if (str_starts_with((string)$r, $pre)) $bySub[(string)($d['subject'] ?? substr((string)$r, strlen($pre)))] = (array)($d['rows'] ?? []);
+                $has = function ($rows) { foreach ($rows as $x) foreach (['pt', 'nb', 'sea', 'te'] as $k) if (isset($x[$k]) && $x[$k] !== '' && $x[$k] !== null) return true; return false; };
+                $subs = array_values(array_filter(array_keys($bySub), fn($sb) => $has($bySub[$sb])));
+                $subs = array_values(array_filter($subs, function ($sb) use ($subs) { $pp = array_values(array_filter(array_map('trim', explode('/', $sb)))); return !(count($pp) > 1 && !array_diff($pp, $subs)); }));
+                if (!$subs) continue;
+                $kidsC = array_filter($stu, fn($x) => ($x['cls'] ?? '') === $cls && empty($x['inactive']));
+                $res = [];
+                foreach ($kidsC as $sid => $st) {
+                    $tot = 0; $rtot = 0; $max = 0; $done = 0; $rows = [];
+                    foreach ($subs as $sb) {
+                        $mk = $bySub[$sb][$sid] ?? null; $vals = $mk ? array_map(fn($k) => $mk[$k] ?? '', ['pt', 'nb', 'sea', 'te']) : [];
+                        if (!$mk || !array_filter($vals, fn($v) => $v !== '' && $v !== null)) { $rows[] = ['s' => $sb, 'none' => true]; continue; }
+                        $ab = !array_filter($vals, fn($v) => is_numeric($v)) && in_array('AB', $vals, true);
+                        $t = array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0, $vals)); $g = !$ab && $t < 33 && $t >= 28 ? (int)ceil(33 - $t) : 0;
+                        $tot += $t + $g; $rtot += $t; $max += 100; $done++;
+                        $rows[] = ['s' => preg_match('/^gk\s*\/\s*drawing$/i', $sb) ? 'G.K.' : $sb, 'pt' => $vals[0], 'nb' => $vals[1], 'sea' => $vals[2], 'te' => is_numeric($vals[3]) && $g ? (float)$vals[3] + $g : $vals[3], 't' => round($t + $g, 1), 'ab' => $ab];
+                    }
+                    $res[$sid] = ['rows' => $rows, 'tot' => round($tot, 1), 'max' => $max, 'pct' => $max ? round($tot * 1000 / $max) / 10 : null, 'rraw' => $max ? $rtot / $max : null, 'done' => $done, 'name' => (string)($st['name'] ?? '')];
+                }
+                $full = $res ? max(array_column($res, 'done')) : 0;
+                $ranked = array_filter($res, fn($x) => $x['pct'] !== null && $x['done'] === $full && $full > 0);
+                uasort($ranked, fn($a, $b) => [$b['rraw'], $b['pct']] <=> [$a['rraw'], $a['pct']]);
+                $rank = []; $last = null; $r = 0; $i = 0; foreach ($ranked as $sid => $x) { $i++; if ($last === null || $x['rraw'] < $last - 1e-9) { $r = $i; $last = $x['rraw']; } $rank[$sid] = $r; }
+                $n = count($ranked); $top = [];
+                foreach ($rank as $sid => $rk) if ($rk <= 3 && $rk * 2 <= $n) $top[] = ['rank' => $rk, 'name' => $res[$sid]['name'], 'pct' => $res[$sid]['pct']];
+                foreach ($kids as $k) if (($k['cls'] ?? '') === $cls && isset($res[$k['id']])) { $x = $res[$k['id']]; $rk = $rank[$k['id']] ?? null;
+                    $out[] = ['sid' => (string)$k['id'], 'exam' => $label, 'cls' => $cls, 'rows' => $x['rows'], 'tot' => $x['tot'], 'max' => $x['max'], 'pct' => $x['pct'],
+                              'rank' => $rk && $rk * 2 <= $n ? $rk : null, 'of' => $n, 'complete' => $x['done'] === $full, 'toppers' => $top]; }
+            }
+            return $out; })(),
+        // Owner, 27 Nov 2026: "all over copy homework checking" — every homework check (tchChk) and chapter copy check (tchCopy) of the children
+        'checks' => (function () use ($get, $kids, $classes, $set) { $start = preg_match('/^(\d{4})-/', (string)($set['session'] ?? ''), $m) ? $m[1] . '-04-01' : date('Y-m-d', time() - 365 * 86400);
+            $ids = array_map('strval', array_column($kids, 'id')); $hw = []; $cp = [];
+            foreach ($get('tchChk') as $r => $d) { if (($d['date'] ?? '') < $start || !in_array($d['cls'] ?? '', $classes, true)) continue;
+                foreach ((array)($d['rows'] ?? []) as $sid => $x) if (in_array((string)$sid, $ids, true) && (($x['hw'] ?? '') !== '' || ($x['cp'] ?? '') !== ''))
+                    $hw[] = ['sid' => (string)$sid, 'date' => (string)$d['date'], 'subj' => (string)($d['subj'] ?? ''), 'task' => (string)($d['hw'] ?? ''), 'hw' => (string)($x['hw'] ?? ''), 'cp' => (string)($x['cp'] ?? ''), 'by' => (string)($d['by'] ?? '')]; }
+            foreach ($get('tchCopy') as $r => $d) { if (!in_array($d['cls'] ?? '', $classes, true)) continue;
+                foreach ((array)($d['rows'] ?? []) as $sid => $v) if (in_array((string)$sid, $ids, true))
+                    $cp[] = ['sid' => (string)$sid, 'subj' => (string)($d['subj'] ?? ''), 'ch' => (string)($d['ch'] ?? ''), 'st' => (string)$v, 'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)]; }
+            usort($hw, fn($a, $b) => strcmp($b['date'], $a['date'])); usort($cp, fn($a, $b) => $b['at'] <=> $a['at']);
+            return ['hw' => $hw, 'copy' => $cp]; })(),
         // Owner, 27 Nov 2026: "all over record ... attendance percentage" — whole-session present/total per child
         'attSum' => (function () use ($get, $kids, $set) { $start = preg_match('/^(\d{4})-/', (string)($set['session'] ?? ''), $m) ? $m[1] . '-04-01' : date('Y-m-d', time() - 365 * 86400); $o = [];
             foreach ($kids as $k) $o[$k['id']] = ['present' => 0, 'total' => 0, 'from' => $start];

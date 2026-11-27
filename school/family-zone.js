@@ -100,8 +100,8 @@ function fzNextSchoolDay(kid) {
 function fzMonthAtt(kid, ym) { const r = PD.att.filter(a => a.sid === kid.id && a.date.slice(0, 7) === ym); const p = r.filter(x => x.present).length; return { p, n: r.length, pct: r.length ? Math.round(p / r.length * 100) : null }; }
 function fzStreak(kid) { const r = PD.att.filter(a => a.sid === kid.id).sort((a, b) => b.date.localeCompare(a.date)); let n = 0; for (const x of r) { if (!x.present) break; n++; } return n; }
 function fzExamPct(kid) {
-  return (S.exams || []).map(e => { const ms = PD.marks.filter(m => m.sid === kid.id && m.exam === e.id); let g = 0, mx = 0;
-    ms.forEach(m => { if (m.mark !== 'AB' && m.mark !== '' && m.max) { g += +m.mark; mx += +m.max; } }); return mx ? { name: e.name, pct: Math.round(g / mx * 1000) / 10, ms } : null; }).filter(Boolean);
+  return (PD.term || []).filter(t => t.sid === kid.id && t.pct != null).map(t => ({ name: t.exam, pct: t.pct })).concat((S.exams || []).map(e => { const ms = PD.marks.filter(m => m.sid === kid.id && m.exam === e.id); let g = 0, mx = 0;
+    ms.forEach(m => { if (m.mark !== 'AB' && m.mark !== '' && m.max) { g += +m.mark; mx += +m.max; } }); return mx ? { name: e.name, pct: Math.round(g / mx * 1000) / 10, ms } : null; }).filter(Boolean));
 }
 function fzBack(title, sub) { return `${kidSwitch()}${head(title, sub || '')}`; }
 
@@ -179,9 +179,11 @@ function fzBadges(kid) {
     ['📅', 'Regular star', '90% or more attendance this session', sum.total >= 20 && sum.present / sum.total >= .9],
     ['🔥', '10-day streak', 'Present 10 school days in a row', fzStreak(kid) >= 10],
     ['🏅', '80% club', '80% or more in an exam', ex.some(e => e.pct >= 80)],
+    ['👑', 'Class ranker', '1st, 2nd or 3rd in class in an exam', (PD.term || []).some(t => t.sid === kid.id && t.rank && t.rank <= 3)],
+    ['📒', 'Homework star', '95% or more homework done (10+ checks)', (k => k.hw.length >= 10 && k.pct >= 95)(fzChecks(kid))],
     ['📝', 'Test champion', 'Full marks in a class test', !!(g && g.today && g.today.played && g.today.played.done && g.today.played.right === g.today.played.n)],
     ['🎯', 'Challenge winner', 'Won a quiz challenge this month', !!(g && g.season && g.season.win > 0)],
-    ['🥇', 'Gold level', 'Reached Gold in the Game Zone', !!(g && g.season && ['Gold', 'Platinum', 'Diamond', 'Crown', 'Ace', 'Conqueror'].includes(g.season.tier.name))],
+    ['🥇', 'Gold level', 'Reached Gold level in the Game Zone', !!(g && g.season && ['Gold', 'Platinum', 'Diamond', 'Crown', 'Ace', 'Conqueror'].includes(g.season.tier.name))],
     ['🎮', '7-day player', 'Learned in the Game Zone 7 days in a row', !!(g && g.stats && g.stats.streak >= 7)],
     ['🎤', 'Confident speaker', 'Took part in 3 speaking activities', spk >= 3],
     ['👍', 'Good conduct', '10 or more good points from teachers', pts >= 10],
@@ -345,6 +347,45 @@ function tipTeacherCard() {
       <div class="flex gap-2 mt-2"><button class="btn btn-sm btn-g" onclick="fzDecide(${jsq(t.id)},'approved')">Approve</button><button class="btn btn-sm btn-l" onclick="fzDecide(${jsq(t.id)},'rejected')">Reject</button></div></div>`).join('') : '<p class="text-sm text-slate-500">Nothing waiting.</p>'}</div>`;
 }
 
+// ---------------------------------------------------------------- 6b. RESULTS, RANKERS, HOMEWORK & COPY CHECKS (owner, 27 Nov 2026)
+function fzTerm(kid) { const L = (PD.term || []).filter(t => t.sid === kid.id); return L.find(t => t.exam === 'Annual') || L.find(t => t.exam === 'Half-Yearly') || null; }
+const FZ_ORD = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] || 'th');
+function fzChecks(kid) {
+  const C = PD.checks || { hw: [], copy: [] }, hw = C.hw.filter(x => x.sid === kid.id && x.hw), cp = C.copy.filter(x => x.sid === kid.id);
+  const done = hw.filter(x => x.hw === 'done').length, half = hw.filter(x => x.hw === 'half').length, not = hw.filter(x => x.hw === 'not').length;
+  const bySub = {}; hw.forEach(x => { const b = bySub[x.subj] = bySub[x.subj] || { n: 0, d: 0, not: 0 }; b.n++; b.d += x.hw === 'done' ? 1 : x.hw === 'half' ? .5 : 0; if (x.hw === 'not') b.not++; });
+  return { hw, cp, done, half, not, pct: hw.length ? Math.round((done + half / 2) / hw.length * 100) : null, bySub, cpOk: cp.filter(x => x.st === 'ok').length, cpInc: cp.filter(x => x.st === 'inc').length };
+}
+function fzResultCard(kid) {
+  const T = fzTerm(kid); if (!T) return '';
+  const medal = r => ['🥇', '🥈', '🥉'][r - 1] || '🏅';
+  return `<section class="fr-card"><div class="fr-top"><div><small>${esc(T.exam)} examination · Class ${esc(T.cls)}</small><h2>${T.pct != null ? T.pct + '%' : '—'}</h2><p>Grade ${T.pct != null ? grade(T.pct) : '—'} · ${esc(String(T.tot))} / ${T.max}</p></div>
+      ${T.rank ? `<div class="fr-rank"><small>Rank in class</small><b>${T.rank}</b><small>of ${T.of}</small></div>` : `<div class="fr-rank"><small>Grade</small><b>${T.pct != null ? grade(T.pct) : '—'}</b><small>${T.complete ? 'well done' : 'marks pending'}</small></div>`}</div>
+    <div class="fr-tbl"><div class="fr-h"><span>Subject</span><span>PT</span><span>NB</span><span>SEA</span><span>Exam</span><span>Total</span></div>
+      ${T.rows.map(r => r.none ? `<div><span>${esc(r.s)}</span><span class="mut" style="grid-column:span 5">Marks not entered yet</span></div>` : `<div><span>${esc(r.s)}</span><span>${esc(String(r.pt))}</span><span>${esc(String(r.nb))}</span><span>${esc(String(r.sea))}</span><span>${esc(String(r.te))}</span><b class="${r.ab ? 'mut' : r.t >= 80 ? 'hi' : r.t < 33 ? 'lo' : ''}">${r.ab ? 'AB' : r.t}</b></div>`).join('')}</div>
+    <p class="fr-note">Pre-Test 10 + Notebook 5 + Subject Enrichment 5 + Term Exam 80 = 100 per subject.</p></section>
+  ${T.toppers.length ? `<section class="fr-rankers"><h3>🏆 Class ${esc(T.cls)} rankers · ${esc(T.exam)}</h3>${T.toppers.map(x => `<div class="r${x.rank}"><span>${medal(x.rank)}</span><b>${esc(x.name)}</b><em>${FZ_ORD(x.rank)}</em><strong>${x.pct}%</strong></div>`).join('')}</section>` : ''}`;
+}
+function fzChecksCard(kid, compact) {
+  const K = fzChecks(kid); if (!K.hw.length && !K.cp.length) return compact ? '' : '<div class="card text-sm text-slate-500">Homework and copy checks appear here once the teachers record them.</div>';
+  return `<button class="fc-card" onclick="go('pchk')"><div><small>Homework &amp; copy checks · this session</small><b>${K.pct != null ? K.pct + '% homework done' : 'Copy checks recorded'}</b>
+    <p>${K.hw.length} homework check${K.hw.length === 1 ? '' : 's'}${K.not ? ` · <span class="t-bad">${K.not} not done</span>` : ''} · ${K.cpOk} chapter cop${K.cpOk === 1 ? 'y' : 'ies'} complete${K.cpInc ? ` · <span class="t-bad">${K.cpInc} incomplete</span>` : ''}</p></div>
+    <span class="fh-ring ${K.pct == null ? 'mut' : K.pct >= 80 ? 'ok' : 'bad'}" style="--p:${K.pct || 0}"><b>${K.pct != null ? K.pct + '%' : '—'}</b></span></button>`;
+}
+function vPChecks() {
+  const kid = pKid(); if (!kid) return vPHome(); const K = fzChecks(kid);
+  const lab = { done: ['✅', 'Done'], half: ['🟡', 'Half done'], not: ['❌', 'Not done'] };
+  const cpBySub = {}; K.cp.forEach(x => (cpBySub[x.subj] = cpBySub[x.subj] || []).push(x));
+  return fzBack('Homework & copy checks', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · this session')
+    + `<div class="card"><div class="grid grid-cols-3 gap-2 text-center">
+      <div class="fz-mini"><b class="t-ok">${K.done}</b><span>done</span></div><div class="fz-mini"><b style="color:#b7791f">${K.half}</b><span>half done</span></div><div class="fz-mini"><b class="t-bad">${K.not}</b><span>not done</span></div></div>
+      ${K.pct != null ? `<p class="text-sm mt-3">Homework completion: <b>${K.pct}%</b> of ${K.hw.length} checks</p><div class="fz-meter mt-1"><i style="width:${K.pct}%;background:${K.pct >= 80 ? '#0f8a5f' : K.pct >= 60 ? '#f2a93b' : '#c0352b'}"></i></div>` : '<p class="text-sm text-slate-500 mt-2">No homework check recorded yet.</p>'}</div>`
+    + (Object.keys(K.bySub).length ? `<div class="card"><h3 class="h3">By subject</h3>${Object.entries(K.bySub).sort((a, b) => a[0].localeCompare(b[0])).map(([sb, b]) => { const p = Math.round(b.d / b.n * 100);
+      return `<div class="mt-3"><div class="flex justify-between text-sm"><span><span class="subj">${esc(sb)}</span></span><span>${p}% · ${b.n} check${b.n > 1 ? 's' : ''}${b.not ? ` · <span class="t-bad">${b.not} not done</span>` : ''}</span></div><div class="fz-meter mt-1"><i style="width:${p}%;background:${fzColor(sb)}"></i></div></div>`; }).join('')}</div>` : '')
+    + (Object.keys(cpBySub).length ? `<div class="card"><h3 class="h3">📒 Copy check by chapter</h3>${Object.entries(cpBySub).map(([sb, l]) => `<div class="mt-3"><span class="subj">${esc(sb)}</span>${l.map(x => `<div class="flex justify-between gap-2 text-sm py-1 border-b border-slate-100 last:border-0"><span>${esc(x.ch)}</span><span class="${x.st === 'ok' ? 't-ok' : 't-bad'} font-semibold shrink-0">${x.st === 'ok' ? '✓ Complete' : '✗ Incomplete'}</span></div>`).join('')}</div>`).join('')}</div>` : '')
+    + (K.hw.length ? `<div class="card"><h3 class="h3">Recent homework checks</h3>${K.hw.slice(0, 40).map(x => `<div class="py-2 border-b border-slate-100 last:border-0 text-sm"><div class="flex justify-between gap-2"><span><span class="subj">${esc(x.subj)}</span> ${esc(fmtDate(x.date))}</span><b>${lab[x.hw] ? lab[x.hw][0] + ' ' + lab[x.hw][1] : ''}</b></div>${x.task ? `<p class="text-slate-600 mt-1">${esc(x.task)}</p>` : ''}${x.by ? `<p class="text-xs text-slate-400">Checked by ${esc(x.by)}</p>` : ''}</div>`).join('')}</div>` : '');
+}
+
 // ---------------------------------------------------------------- 7. PREMIUM HOME (owner, 27 Nov 2026: "better than the Teacher and Chairman apps")
 // Hero header with greeting and child switch, a "today at a glance" card, learning stories, quick actions, today's
 // lessons, class-test banner, coming-up timeline and the latest notice. The WhatsApp-style update list follows below.
@@ -359,11 +400,11 @@ function fzHome(kid, isParent, ctl) {
   const exam = examItems().filter(e => e.cls.includes(kid.cls) && e.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
   const up = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls))].filter(e => (e.to || e.date) >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
   const nt = (PD.notices || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
-  const nx = fzNextSchoolDay(kid), first = (n => n ? ((((PD.tt || {})[kid.cls] || [])[n.idx] || []).find(Boolean) || null) : null)(nx);
+  const nx = fzNextSchoolDay(kid), fday = nx ? ((((PD.tt || {})[kid.cls] || [])[nx.idx]) || []) : [], fi = fday.findIndex(Boolean), first = fi >= 0 ? fday[fi] : null;
   const name = (kid.name || '').split(' ')[0], ini = (kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   const attTxt = at.today ? (at.today.present ? 'Present' : 'Absent') : 'Not marked', attTone = at.today ? (at.today.present ? 'ok' : 'bad') : 'mut';
   const QA = [['phw', '📘', 'Homework', '#2563eb'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['presults', '📊', 'Results', '#d6336c'], ['pcal', '📅', 'Calendar', '#0e9f9a'],
-    ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5']]
+    ['pchk', '📒', 'Checks', '#0f8a5f'], ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5']]
     .filter(q => VIEWS[q[0]]);
   const test = g && g.today && g.today.ready && !g.today.played;
   return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
@@ -376,7 +417,9 @@ function fzHome(kid, isParent, ctl) {
     <section class="fh-glance">
       <button onclick="go('presults')"><span class="fh-ring ${attTone}" style="--p:${sp == null ? 0 : sp}"><b>${sp == null ? '—' : sp + '%'}</b></span><b class="t-${attTone}">${attTxt}</b><small>attendance</small></button>
       <button onclick="go('phw')"><span class="fh-num">${hwN}</span><b>${hwN === 1 ? 'Task' : 'Tasks'}</b><small>homework today</small></button>
-      <button onclick="go('game')"><span class="fh-num">${g && g.season ? g.season.tier.icon : '🎯'}</span><b>${g && g.season ? esc(g.season.tier.name) + (g.season.tier.div ? ' ' + g.season.tier.div : '') : 'Game Zone'}</b><small>${g && g.season ? '#' + g.season.pos + ' in class' : 'level'}</small></button>
+      ${(() => { const T = fzTerm(kid), K = fzChecks(kid);
+        if (T) return `<button onclick="go('presults')"><span class="fh-num">${T.rank ? (['🥇', '🥈', '🥉'][T.rank - 1] || T.rank) : esc(T.pct != null ? grade(T.pct) : '—')}</span><b>${T.rank ? FZ_ORD(T.rank) + ' in class' : T.pct != null ? T.pct + '%' : 'Result'}</b><small>${esc(T.exam)}</small></button>`;
+        return `<button onclick="go('pchk')"><span class="fh-num">${K.pct != null ? K.pct + '%' : '—'}</span><b>Homework</b><small>${K.pct != null ? 'completed' : 'checks'}</small></button>`; })()}
       <button onclick="go('pcal')"><span class="fh-num">${exam ? Math.max(0, fzDaysTo(exam.date)) : '—'}</span><b>${exam ? (fzDaysTo(exam.date) === 1 ? 'Day' : 'Days') : 'No exam'}</b><small>${exam ? 'to ' + esc(exam.title.split(':')[0]) : 'scheduled'}</small></button>
     </section>
     ${gyStatusRow(kid)}
@@ -386,7 +429,8 @@ function fzHome(kid, isParent, ctl) {
     <div class="fh-sec"><h3>Today in class</h3><button onclick="go('phw')">See all</button></div>
     ${hwT.length ? `<section class="fh-rail">${hwT.map(h => `<button onclick="go('phw')" class="fh-lesson" style="--c:${fzColor(h.subj)}"><small>${esc(h.subj)}</small><b>${esc(h.topic || 'Class work')}</b>${h.hw ? `<p>📝 ${esc(h.hw)}</p>` : '<p class="mut">No homework</p>'}</button>`).join('')}</section>`
       : `<div class="fh-empty">📖 Lessons appear here as soon as the teachers fill in today’s diary.</div>`}
-    ${nx ? `<button class="fh-next" onclick="go('ptmr')"><span>🎒</span><div><small>Next school day · ${esc(fmtDate(nx.date))}</small><b>${first ? 'First period: ' + esc(first.s) + ' at 9:00 AM' : 'Timetable, homework and bag checklist'}</b></div><em>›</em></button>` : ''}
+    ${nx ? `<button class="fh-next" onclick="go('ptmr')"><span>🎒</span><div><small>Next school day · ${esc(fmtDate(nx.date))}</small><b>${first ? 'First period: ' + esc(first.s) + ' at ' + t12(BELLS[fi].s) : 'Timetable, homework and bag checklist'}</b></div><em>›</em></button>` : ''}
+    ${fzTerm(kid) || fzChecks(kid).hw.length ? `<div class="fh-sec"><h3>Progress</h3><button onclick="go('presults')">Results</button></div><div class="fh-pad">${(() => { const T = fzTerm(kid); return T ? `<button class="fc-card" onclick="go('presults')"><div><small>${esc(T.exam)} result</small><b>${T.pct}% · Grade ${grade(T.pct)}${T.rank ? ' · ' + FZ_ORD(T.rank) + ' in class' : ''}</b><p>${T.toppers.length ? 'Rankers: ' + T.toppers.map(x => esc(x.name.split(' ')[0]) + ' (' + FZ_ORD(x.rank) + ')').join(', ') : 'Tap for subject-wise marks'}</p></div><span class="fh-ring ok" style="--p:${T.pct}"><b>${T.pct}%</b></span></button>` : ''; })()}${fzChecksCard(kid, true)}</div>` : ''}
     ${up.length ? `<div class="fh-sec"><h3>Coming up</h3><button onclick="go('pcal')">Calendar</button></div><section class="fh-time">${up.map(e => { const d = new Date(e.date + 'T00:00:00'); return `<div><span class="${e.type === 'Holiday' ? 'hol' : e.type === 'Exam' ? 'exam' : e.type === 'PTM' ? 'ptm' : 'evt'}"><b>${d.getDate()}</b>${d.toLocaleDateString('en-IN', { month: 'short' })}</span><p><b>${esc(e.title)}</b><small>${esc(e.type || '')}${fzDaysTo(e.date) > 0 ? ' · in ' + fzDaysTo(e.date) + ' day' + (fzDaysTo(e.date) > 1 ? 's' : '') : ' · today'}</small></p></div>`; }).join('')}</section>` : ''}
     ${nt ? `<button class="fh-notice" onclick="go('pnotices')"><small>📢 Latest notice · ${esc(fmtDate(String(nt.date || '')))}</small><b>${esc(nt.title || '')}</b>${nt.body ? `<p>${esc(String(nt.body).slice(0, 140))}${String(nt.body).length > 140 ? '…' : ''}</p>` : ''}</button>` : ''}
     <div class="fh-sec"><h3>All updates</h3></div>
@@ -395,10 +439,12 @@ function fzHome(kid, isParent, ctl) {
 
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
-  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings });
-  const add = [['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
+  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks });
+  const res0 = VIEWS.presults; if (res0) VIEWS.presults = () => { const kid = PD && PD.kids && PD.kids.length ? pKid() : null; if (!kid) return res0();
+    const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
+  const add = [['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
-    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('prec', 'psyl', 'pset'); } }
+    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pchk', 'prec', 'psyl', 'pset'); } }
   // web (not the app): quick links on the parent home
   const home = VIEWS.phome;
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();
@@ -413,6 +459,8 @@ window.FZ = {
     return (sp != null ? 'Attendance ' + sp + '% this session · ' : '') + got + ' badge' + (got === 1 ? '' : 's'); },
   calendar(kid) { const d = todayISO(); const n = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls))].filter(e => (e.to || e.date) >= d).sort((a, b) => a.date.localeCompare(b.date))[0]; return n ? n.title + ' · ' + fmtDate(n.date) : 'Holidays, exams and events'; },
   zone() { return '💡 ' + fzPick(GYAAN.tricks).t + ' · 📖 ' + fzPick(GYAAN.stories).t; },
+  result(kid) { const T = fzTerm(kid); return T ? T.exam + ' · ' + T.pct + '% · Grade ' + grade(T.pct) + (T.rank ? ' · ' + FZ_ORD(T.rank) + ' in class' : '') : ''; },
+  checks(kid) { const K = fzChecks(kid); return K.hw.length || K.cp.length ? (K.pct != null ? K.pct + '% homework done' : '') + (K.not ? ' · ' + K.not + ' not done' : '') + ' · ' + K.cpOk + ' copies complete' : ''; },
   status: gyStatusRow,
   home: fzHome
 };

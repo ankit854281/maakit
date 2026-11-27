@@ -3925,7 +3925,7 @@ function gArena() {
       <button onclick="gBattlePlay(${jsq(x.bid)})" class="btn btn-g" ${GZ.open ? 'disabled' : ''}>Play</button></div>`).join('')}
     <section class="arena-card tier-${esc(tn)}"><div class="flex items-center gap-4">
       <div class="arena-badge">${S.tier.icon}</div>
-      <div class="flex-1 min-w-0"><p class="text-white/70 text-xs">${esc(S.month)} season · #${S.pos} of ${S.of} in class</p>
+      <div class="flex-1 min-w-0"><p class="text-white/70 text-xs">Game Zone level · ${esc(S.month)} · #${S.pos} of ${S.of} players</p>
         <h2 class="text-2xl font-extrabold leading-tight">${esc(S.tier.name)}${S.tier.div ? ' ' + S.tier.div : ''}</h2>
         <div class="arena-bar mt-2"><i style="width:${pct}%"></i></div>
         <p class="text-xs text-white/70 mt-1">⭐ ${S.rp} points${S.rpNext ? ` · ${S.rpNext - S.rp} more to the next level` : ' · top level!'}</p></div></div>
@@ -3939,11 +3939,11 @@ function gArena() {
 }
 function gRankCard() {
   const R = GZ.rank || []; if (!R.length || !GZ.season) return '';
-  return `<div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">🏆 Class ${esc(GZ.kid.cls)} rank · ${esc(GZ.season.month)}</h3><span class="text-xs text-slate-500">points · right %</span></div>
+  return `<div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">🎮 Game Zone leaderboard · ${esc(GZ.season.month)}</h3><span class="text-xs text-slate-500">points · right %</span></div>
     <div class="mt-2">${R.map(x => `<div class="arena-row ${x.me ? 'me' : ''}"><span class="arena-pos">${['🥇', '🥈', '🥉'][x.pos - 1] || x.pos}</span>
       <span class="flex-1 min-w-0 truncate ${x.me ? 'font-semibold text-ink' : ''}">${esc(x.name)}</span>${gTier(x.tier)}
       <span class="w-12 text-right text-sm font-semibold">${x.rp}</span><span class="w-10 text-right text-xs text-slate-500">${x.acc}%</span></div>`).join('')}</div>
-    <p class="text-xs text-slate-500 mt-2">A new season starts on the 1st of every month — everyone starts again from Bronze.</p></div>`;
+    <p class="text-xs text-slate-500 mt-2">Game Zone levels restart on the 1st of every month. Exam ranks are shown in Results.</p></div>`;
 }
 function gBattleScreen() {
   const B = GZ.battle, L = GBAT.list;
