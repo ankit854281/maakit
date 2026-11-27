@@ -302,15 +302,15 @@ try {
         if ($mode === 'today') {
             $td = gm_today_topics($cls);
             if (!$td['date']) sch_fail('No class topic is in the diary yet. The test opens after your teacher fills today\'s diary.');
-            foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today' && ($r['tdate'] ?? '') === $td['date']) sch_fail('You have already taken the test for this class day. 👏 The next test comes with the next class.');
+            foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today' && ($r['tdate'] ?? '') === $td['date']) sch_fail('You have already taken the test for this class day. The next test will be available after the next class.');
             $items = gm_today_items($td['topics'], $packs, $seed, $duelQ);
             if (!$items) sch_fail('Questions for today\'s class are still being made. Try again in a few minutes. ⏳');
             sch_json($newRound($items, 'today', ['tdate' => $td['date']], $seed . '|x'));
         }
-        if (count($limited) >= GM_ROUNDS_PER_DAY) sch_fail('That is ' . GM_ROUNDS_PER_DAY . ' rounds today — brilliant! Your brain stores it while you sleep. Come back tomorrow. 😴🧠');
-        if ($mode === 'words' && $band < 2) sch_fail('Word games start from Class 3.');
+        if (count($limited) >= GM_ROUNDS_PER_DAY) sch_fail('You have completed today\'s ' . GM_ROUNDS_PER_DAY . ' rounds. Well done — please come back tomorrow.');
+        if ($mode === 'words' && $band < 2) sch_fail('Vocabulary Sprint is available from Class 3.');
         if ($mode === 'revenge') {
-            if (!$due) sch_fail('No revenge questions today — you have beaten them all! 💪');
+            if (!$due) sch_fail('There are no questions to review today. Well done!');
             foreach (array_slice($due, 0, GM_ROUND) as $m) $items[] = ['src' => $m['src'], 'ref' => $m['ref']];
         } else {
             $pool = [];
@@ -344,7 +344,7 @@ try {
             if ($b['a'] === $sid && date('Y-m-d', (int)$b['at']) === $today) $started++;
             if ((($b['a'] === $sid && $b['b'] === $opp) || ($b['a'] === $opp && $b['b'] === $sid)) && $A['bres'][$id] === 'wait') sch_fail('You already have a challenge going with ' . $short($opp) . '. Wait for that one first.');
         }
-        if ($started >= GM_BATTLES_PER_DAY) sch_fail('That is ' . GM_BATTLES_PER_DAY . ' challenges today. 🎯 Come back tomorrow — or play the challenges sent to you.');
+        if ($started >= GM_BATTLES_PER_DAY) sch_fail('You have sent today\'s ' . GM_BATTLES_PER_DAY . ' challenges. You can still play the challenges sent to you.');
         $bid = 'b' . substr(hash('sha256', $sid . '|' . $opp . '|' . $now . '|' . random_int(0, PHP_INT_MAX)), 0, 14);
         $pk = []; foreach ($packs as $p) foreach ((array)($p['qs'] ?? []) as $i => $q) if (!in_array($i, (array)($p['hidden'] ?? []), true)) $pk[] = $p['id'] . '#' . $i;
         usort($pk, fn($x, $y) => strcmp(hash('md5', $bid . $x), hash('md5', $bid . $y)));
@@ -359,7 +359,7 @@ try {
         $b = sch_rec_get('gameB', (string)($in['bid'] ?? ''));
         if (!$b || ($b['b'] ?? '') !== $sid) sch_fail('This challenge was not sent to you.', 403);
         if (!empty($b['rb'])) sch_fail('You have already played this challenge.');
-        if ($now > (int)$b['at'] + GM_BATTLE_HOURS * 3600) sch_fail('This challenge was not played in time. Send a new one! 🎯');
+        if ($now > (int)$b['at'] + GM_BATTLE_HOURS * 3600) sch_fail('This challenge has expired. You can send a new one.');
         $mustFinish();
         $resp = $newRound($b['items'], 'battle', ['bid' => $b['id']], $b['id'] . '|x');
         $b['rb'] = $resp['rid']; sch_rec_put('gameB', $b['id'], $b, $uid);

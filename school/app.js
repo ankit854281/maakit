@@ -3815,7 +3815,7 @@ async function gAnswer(choice) {
     const r = await gapi('answer', { sid: GZ.kid.id, rid: GP.rid, choice });
     GP.res = r; GP.chosen = choice; GP.combo = r.combo; GP.xp += r.xp; if (r.correct) GP.right++; if (r.battle) GP.battle = r.battle;
     render();
-    if (r.levelUp) setTimeout(() => toast('Level up! You are now a ' + r.levelUp + ' 🎉'), 400);
+    if (r.levelUp) setTimeout(() => toast('Level up! You are now ' + r.levelUp + ' 🎉'), 400);
   } catch (e) { toast(e.message, 'r'); GP = null; GZ = null; loadGame(); }
   finally { if (GP) GP.busy = false; }
 }
@@ -3828,7 +3828,7 @@ async function gNext() {
   catch (e) { toast(e.message, 'r'); }
 }
 async function gFlag() {
-  try { const r = await gapi('flag', { sid: GZ.kid.id, rid: GP.rid, i: GP.res.i }); GP.res.flagged = true; render(); toast(r.hidden ? 'Thanks! This question is hidden until a teacher checks it.' : 'Thanks! Your teacher will check it.'); }
+  try { const r = await gapi('flag', { sid: GZ.kid.id, rid: GP.rid, i: GP.res.i }); GP.res.flagged = true; render(); toast(r.hidden ? 'Thank you. This question is hidden until a teacher reviews it.' : 'Thank you. Your teacher will review it.'); }
   catch (e) { toast(e.message, 'a'); }
 }
 function gPlayCard() {
@@ -3837,8 +3837,8 @@ function gPlayCard() {
   if (p.done) {
     const great = p.right >= p.n - 1;
     return `<section class="game-card text-center space-y-3"><div class="text-6xl pop">${great ? '🏆' : p.right >= p.n / 2 ? '💪' : '🌱'}</div>
-      <h3 class="text-2xl font-semibold">${p.right} of ${p.n} right</h3><p class="text-white/80">+${p.xp} XP${great ? ' · Superb!' : p.right ? ' · Good going — the ones you missed come back in a revenge round.' : ' · Every wrong answer comes back later, and next time you will know it.'}</p>
-      ${p.chest ? `<p class="text-lg">🎁 Chest opened: <span class="text-3xl">${p.chest[0]}</span> ${esc(p.chest[1])}</p>` : ''}
+      <h3 class="text-2xl font-semibold">${p.right} of ${p.n} right</h3><p class="text-white/80">+${p.xp} XP${great ? ' · Excellent work!' : p.right ? ' · Good effort — the questions you missed will return in a Review Round.' : ' · Every missed question returns later for review, so you can master it.'}</p>
+      ${p.chest ? `<p class="text-lg">🎁 Reward unlocked: <span class="text-3xl">${p.chest[0]}</span> ${esc(p.chest[1])}</p>` : ''}
       <button onclick="GP=null;GZ=null;loadGame()" class="btn bg-marigold text-ink w-full py-3">Back to Game Zone</button></section>`;
   }
   const r = p.res, left = Math.max(0, Math.ceil((p.deadline - Date.now()) / 1000));
@@ -3853,12 +3853,12 @@ function gPlayCard() {
       const c = !r ? 'bg-white/10 border-white/20 hover:bg-white/20' : i === r.ans ? 'bg-leaf border-leaf' : i === p.chosen ? 'bg-rose border-rose' : 'bg-white/5 border-white/10 opacity-50';
       return `<button ${r ? 'disabled' : ''} onclick="gAnswer(${i})" class="w-full text-left p-4 rounded-2xl border-2 ${c} text-lg font-medium">${esc(o)}</button>`; }).join('')}</div>
     ${r ? `<div class="space-y-3 pop">
-      <p class="text-xl font-semibold">${r.correct ? ['Boom! ✅', 'Correct! 🎯', 'Sahi pakde! ✅', 'Wah! 🌟'][p.i % 4] : r.late ? 'Time up! ⏰' : 'Oops! 😅'} ${r.xp ? `<span class="text-marigold">+${r.xp} XP</span>` : ''}</p>
-      ${r.fun ? `<div class="rounded-2xl bg-white/10 p-3"><p class="text-sm text-marigold font-semibold">Yaad rakh</p><p>${esc(r.fun)}</p></div>` : ''}
+      <p class="text-xl font-semibold">${r.correct ? ['Correct! ✅', 'Excellent! 🎯', 'Well done! ✅', 'Great answer! 🌟'][p.i % 4] : r.late ? 'Time is up ⏰' : 'Not quite — see the explanation'} ${r.xp ? `<span class="text-marigold">+${r.xp} XP</span>` : ''}</p>
+      ${r.fun ? `<div class="rounded-2xl bg-white/10 p-3"><p class="text-sm text-marigold font-semibold">Remember</p><p>${esc(r.fun)}</p></div>` : ''}
       ${r.rule ? `<div class="rounded-2xl bg-white p-3 text-ink"><p class="text-sm font-semibold">Rule</p><p>${esc(r.rule)}</p></div>` : ''}
-      ${r.word && r.word[0] ? `<p class="text-sm">📖 New English word: <b>${esc(r.word[0])}</b> = ${esc(r.word[1] || '')}</p>` : ''}
+      ${r.word && r.word[0] ? `<p class="text-sm">📖 Vocabulary: <b>${esc(r.word[0])}</b> = ${esc(r.word[1] || '')}</p>` : ''}
       <div class="flex gap-2"><button onclick="gNext()" class="btn bg-marigold text-ink flex-1 py-3 text-base">${r.more ? 'Next question' : 'See my score'}</button>
-        ${r.flaggable && !r.flagged ? '<button onclick="gFlag()" class="btn bg-white/10 text-white text-xs">This looks wrong</button>' : ''}</div></div>` : ''}
+        ${r.flaggable && !r.flagged ? '<button onclick="gFlag()" class="btn bg-white/10 text-white text-xs">Report an error</button>' : ''}</div></div>` : ''}
   </section>`;
 }
 function vGame() {
@@ -3879,23 +3879,23 @@ function vGame() {
         <div class="h-2 rounded-full bg-white/15 mt-2 overflow-hidden"><div class="h-2 bg-marigold" style="width:${Math.round(st.levelXp / st.levelNeed * 100)}%"></div></div>
         <p class="text-xs text-white/70 mt-1">${st.levelXp} / ${st.levelNeed} XP to level ${st.level + 1}</p></div></div>
       <div class="grid grid-cols-3 gap-2 mt-4 text-center">
-        <div class="kstat"><b>${st.streak ? '🔥 ' + st.streak : '—'}</b><span>${st.streak === 1 ? 'day streak' : 'day streak'}${!st.playedToday && st.streak ? ' · play today to keep it!' : ''}</span></div>
-        <div class="kstat"><b>🎁 ${st.toChest}</b><span>right answers to the next chest</span></div>
+        <div class="kstat"><b>${st.streak ? '🔥 ' + st.streak : '—'}</b><span>day streak${!st.playedToday && st.streak ? ' · practise today to keep it' : ''}</span></div>
+        <div class="kstat"><b>🎁 ${st.toChest}</b><span>correct answers to the next reward</span></div>
         <div class="kstat"><b>${st.xp}</b><span>total XP</span></div></div></section>
     ${GZ.open ? `<button onclick="gContinue()" class="btn btn-p w-full py-3">Continue your round (${GZ.open.done} of ${GZ.open.n} done)</button>` : ''}
     <div class="grid grid-cols-2 gap-3">
-      ${tile('daily', '⚡', "Today's Round", GZ.topicPacks ? 'What your class studied, plus words and maths' : 'Maths and English words — topics from class come soon', !noRounds && !GZ.open, 'game-tile-main col-span-2')}
-      ${tile('revenge', '😤', 'Revenge Round', GZ.revengeDue ? `${GZ.revengeDue} question${GZ.revengeDue > 1 ? 's' : ''} that beat you are back` : 'Nothing to avenge today', GZ.revengeDue > 0 && !noRounds && !GZ.open)}
-      ${tile('words', '💣', 'Word Bomb', GZ.words ? 'English words in 20 seconds' : 'Starts from Class 3', GZ.words && !noRounds && !GZ.open)}
-      ${tile('math', '🧮', 'Maths Sprint', 'Fast maths, your level', !noRounds && !GZ.open)}
-      ${tile('duel', '⚔️', 'Duel a Friend', 'Make a question, challenge a classmate', true)}
+      ${tile('daily', '⚡', "Today's Round", GZ.topicPacks ? 'Topics from your classes, plus vocabulary and maths' : 'Maths and vocabulary — class topics will appear soon', !noRounds && !GZ.open, 'game-tile-main col-span-2')}
+      ${tile('revenge', '🔁', 'Review Round', GZ.revengeDue ? `${GZ.revengeDue} question${GZ.revengeDue > 1 ? 's' : ''} to review today` : 'Nothing to review today', GZ.revengeDue > 0 && !noRounds && !GZ.open)}
+      ${tile('words', '🔤', 'Vocabulary Sprint', GZ.words ? 'English words, 20 seconds each' : 'Available from Class 3', GZ.words && !noRounds && !GZ.open)}
+      ${tile('math', '🧮', 'Mental Maths', 'Quick calculations at your level', !noRounds && !GZ.open)}
+      ${tile('duel', '🤝', 'Quiz Duel', 'Write a question and invite a classmate', true)}
     </div>
-    <p class="text-sm text-center text-slate-500">${noRounds ? 'That is all the rounds for today — your brain stores it while you sleep. 😴 Come back tomorrow!' : `${GZ.roundsLeft} round${GZ.roundsLeft > 1 ? 's' : ''} left today · ${GZ.seconds} seconds a question`}</p>
-    <div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">Class ${esc(GZ.kid.cls)} mission this week</h3><span class="text-sm text-slate-500">${m.right} / ${m.target}</span></div>
+    <p class="text-sm text-center text-slate-500">${noRounds ? 'You have completed today\'s rounds. Rest well — your brain consolidates learning during sleep. See you tomorrow.' : `${GZ.roundsLeft} round${GZ.roundsLeft > 1 ? 's' : ''} left today · ${GZ.seconds} seconds a question`}</p>
+    <div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">Class ${esc(GZ.kid.cls)} weekly goal</h3><span class="text-sm text-slate-500">${m.right} / ${m.target}</span></div>
       <div class="h-3 rounded-full bg-paper mt-3 overflow-hidden"><div class="h-3 bg-leaf" style="width:${pct}%"></div></div>
-      <p class="text-sm text-slate-600 mt-2">${pct >= 100 ? '🎉 Mission complete! Your whole class did it together.' : 'Every right answer from anyone in your class counts. Do it together!'}</p></div>
+      <p class="text-sm text-slate-600 mt-2">${pct >= 100 ? '🎉 Goal achieved! Your whole class reached it together.' : 'Every correct answer from your class counts towards this goal.'}</p></div>
     ${gRankCard()}
-    <div class="card"><h3 class="h3">My sticker book</h3>${GZ.stickers.length ? `<div class="flex flex-wrap gap-2 mt-2">${GZ.stickers.map(x => `<span title="${esc(x[1])}" class="text-3xl">${x[0]}</span>`).join('')}</div>` : `<p class="text-sm text-slate-500 mt-1">Get ${st.toChest} more right answers to open your first chest.</p>`}</div>`;
+    <div class="card"><h3 class="h3">My rewards</h3>${GZ.stickers.length ? `<div class="flex flex-wrap gap-2 mt-2">${GZ.stickers.map(x => `<span title="${esc(x[1])}" class="text-3xl">${x[0]}</span>`).join('')}</div>` : `<p class="text-sm text-slate-500 mt-1">Answer ${st.toChest} more questions correctly to unlock your first reward.</p>`}</div>`;
 }
 
 // ---------------------------------------------------------------- CHALLENGE ZONE (27 Nov 2026; friendly words, owner)
@@ -3912,7 +3912,7 @@ function gArena() {
   else if (!T.date) tSub = 'Opens when your teacher fills the class diary.';
   else if (!T.ready) tSub = `${topics} — questions are being made ⏳`;
   else { tSub = `${topics} · ${T.ready} questions · checked instantly`; tOn = !GZ.open; }
-  return `${B.incoming.map(x => `<div class="arena-alert pop"><span class="text-3xl">🎯</span><div class="flex-1 min-w-0"><p class="font-semibold text-ink">${esc(x.from)} sent you a quiz challenge!</p>
+  return `${B.incoming.map(x => `<div class="arena-alert pop"><span class="text-3xl">🎯</span><div class="flex-1 min-w-0"><p class="font-semibold text-ink">${esc(x.from)} has sent you a quiz challenge</p>
       <p class="text-xs text-slate-600">${gTier(x.tier)} · ${x.hoursLeft} hour${x.hoursLeft > 1 ? 's' : ''} left</p></div>
       <button onclick="gBattlePlay(${jsq(x.bid)})" class="btn btn-g" ${GZ.open ? 'disabled' : ''}>Play</button></div>`).join('')}
     <section class="arena-card tier-${esc(tn)}"><div class="flex items-center gap-4">
@@ -3922,7 +3922,7 @@ function gArena() {
         <div class="arena-bar mt-2"><i style="width:${pct}%"></i></div>
         <p class="text-xs text-white/70 mt-1">⭐ ${S.rp} points${S.rpNext ? ` · ${S.rpNext - S.rp} more to the next level` : ' · top level!'}</p></div></div>
       <div class="grid grid-cols-4 gap-2 mt-4">
-        <div class="arena-stat"><b>${S.right}<small class="text-leaf">✓</small> ${S.wrong}<small>✗</small></b><span>right and<br>wrong</span></div>
+        <div class="arena-stat"><b>${S.right}/${S.wrong}</b><span>right /<br>wrong</span></div>
         <div class="arena-stat"><b>${S.acc}%</b><span>accuracy</span></div>
         <div class="arena-stat"><b>${S.win}</b><span>challenges<br>won</span></div>
         <div class="arena-stat"><b>${S.speed ? S.speed + 's' : '—'}</b><span>speed per<br>right answer</span></div></div></section>
@@ -3939,13 +3939,13 @@ function gRankCard() {
 }
 function gBattleScreen() {
   const B = GZ.battle, L = GBAT.list;
-  const resTxt = { win: 'Won 🎉', loss: 'Next time 💪', draw: 'Tie 🤝', wait: 'Waiting', expired: 'Not played' };
+  const resTxt = { win: 'Won 🎉', loss: 'Lost', draw: 'Tie 🤝', wait: 'Waiting', expired: 'Not played' };
   const opp = !L ? '<p class="text-sm text-slate-500">Loading classmates…</p>' : GBAT.error ? `<p class="text-sm text-rose">${esc(GBAT.error)}</p>` : !L.length ? '<p class="text-sm text-slate-500">No classmates found.</p>' :
     L.map(x => `<div class="arena-row"><span class="flex-1 min-w-0 truncate">${esc(x.name)}</span>${gTier(x.tier)}<span class="w-10 text-right text-xs text-slate-500">${x.acc}%</span>
       <button onclick="gBattle(${jsq(x.id)})" class="btn btn-sm ${x.busy ? 'btn-l' : 'btn-g'}" ${x.busy || !B.left ? 'disabled' : ''}>${x.busy ? 'Waiting' : 'Challenge'}</button></div>`).join('');
   return `${kidSwitch()}<button onclick="GBAT=null;render()" class="btn btn-l btn-sm">← Back to Game Zone</button>
     <section class="arena-card text-center"><div class="text-5xl">🎯</div><h2 class="text-2xl font-extrabold mt-1">Challenge Zone</h2>
-      <p class="text-sm text-white/80 mt-1">You and your classmate get the same 5 questions. More right answers wins; if equal, the quicker one wins.<br>Win +30 points · Tie +10 · Try again −10</p>
+      <p class="text-sm text-white/80 mt-1">You and your classmate answer the same 5 questions. The higher score wins; if scores are equal, the faster time wins.<br>Win +30 points · Tie +10 · Loss −10</p>
       <p class="text-xs text-white/60 mt-2">${B.left} challenge${B.left === 1 ? '' : 's'} left today · your classmate has ${B.hours} hours to play</p></section>
     ${B.incoming.length ? `<div class="card"><h3 class="h3">Sent to you</h3>${B.incoming.map(x => `<div class="arena-row"><span class="flex-1 min-w-0 truncate font-semibold">${esc(x.from)}</span>${gTier(x.tier)}<button onclick="gBattlePlay(${jsq(x.bid)})" class="btn btn-sm btn-g">Play</button></div>`).join('')}</div>` : ''}
     <div class="card"><h3 class="h3">Choose a classmate</h3><p class="text-xs text-slate-500 mb-1">Closest in level first · % = right answers</p>${opp}</div>
@@ -3955,8 +3955,8 @@ function gBattleScreen() {
 function gBattleDone(p) {
   const b = p.battle, back = '<button onclick="GP=null;GZ=null;loadGame()" class="btn bg-marigold text-ink w-full py-3">Back to Game Zone</button>';
   if (b.state === 'wait') return `<section class="arena-card text-center space-y-3"><div class="text-6xl pop">⏳</div><h3 class="text-2xl font-extrabold">${p.right} of ${p.n} right</h3>
-    <p class="text-white/80">Your score is locked in. Now ${esc(b.opp)} plays the same questions — you will see who won in Game Zone. +${p.xp} XP</p>${back}</section>`;
-  const head = { win: ['🏆', 'You won! 🎉', '+30 points'], loss: ['💪', 'Good try!', '−10 points · you will get it next time'], draw: ['🤝', 'It\'s a tie!', '+10 points'] }[b.state] || ['🎯', 'Challenge over', ''];
+    <p class="text-white/80">Your score is saved. ${esc(b.opp)} will now answer the same questions; the result will appear in the Game Zone. +${p.xp} XP</p>${back}</section>`;
+  const head = { win: ['🏆', 'You won! 🎉', '+30 points'], loss: ['💪', 'Good effort!', '−10 points · review and try again'], draw: ['🤝', 'It\'s a tie!', '+10 points'] }[b.state] || ['🎯', 'Challenge over', ''];
   const side = (name, x) => `<div class="arena-stat"><b>${x.right} / ${x.n}</b><span>${esc(name)}<br>${x.secs}s on right answers</span></div>`;
   return `<section class="arena-card text-center space-y-3"><div class="text-6xl pop">${head[0]}</div><h3 class="arena-vs">${head[1]}</h3><p class="text-marigold font-semibold">${head[2]} · +${p.xp} XP</p>
     <div class="grid grid-cols-2 gap-2">${side('You', b.me)}${side(b.opp, b.them)}</div>${back}</section>`;

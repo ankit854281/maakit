@@ -5,7 +5,7 @@
 //   pcal  Calendar      month view: holidays, exams, events, PTM and the child's own present/absent days
 //   prec  My record     attendance (session + this month + streak), exams, points, game level, achievements
 //   psyl  Exam syllabus chapters marked for each exam + date sheets
-//   pzone Gyaan Zone    basics, tricks, study tips, short stories, fun facts, extra class, classmates' tricks
+//   pzone Learning Hub  basics, tricks, study tips, short stories, fun facts, extra class, classmates' tricks
 //   pset  Settings      language, bigger text, screen time (today / 7 days / daily reminder), PIN, log out
 // Status stories (WhatsApp-style rings) = word of the day, trick, fact, story and teacher-approved classmates' tricks.
 // Only this family's data (PD from pdata) and teacher-approved posts (tips_api.php) are shown. Loaded after app.js.
@@ -60,14 +60,14 @@ const GYAAN = {
     { t: 'Water and a walk', x: 'Feeling sleepy while studying? Drink a glass of water and walk for two minutes.' }
   ],
   stories: [
-    { t: 'The cracked pot', x: 'A water carrier had two pots. One was cracked and leaked half its water every day, and it felt ashamed. One morning the carrier said, "Look at your side of the path." Flowers were growing all along it — the leaking water had watered them every day.', m: 'हर किसी में कोई ख़ूबी होती है।' },
-    { t: 'The thirsty crow', x: 'A thirsty crow found a pot with very little water at the bottom. Its beak could not reach. It did not give up: it dropped small stones into the pot, one by one, until the water rose to the top. Then it drank.', m: 'सोचो, हार मत मानो — रास्ता मिल जाता है।' },
-    { t: 'The hare and the tortoise', x: 'A fast hare laughed at a slow tortoise and agreed to a race. Sure of winning, the hare slept under a tree. The tortoise kept walking, step by step, and crossed the finish line first.', m: 'रोज़ थोड़ा-थोड़ा, लगातार — यही जीत है।' },
-    { t: 'The lion and the mouse', x: 'A lion let a tiny mouse go instead of eating it. Days later the lion was caught in a hunter’s net. The mouse heard it roar, came running and cut the ropes with its teeth.', m: 'छोटी मदद भी बड़ी होती है।' },
-    { t: 'Ten minutes a day', x: 'Riya and Aman had the same exam. Aman studied for six hours the night before. Riya read for ten minutes every day for a month. On exam day Aman was tired and confused; Riya was calm and remembered everything.', m: 'रोज़ 10 मिनट, एक रात के 6 घंटे से बेहतर।' },
-    { t: 'The mistake copy', x: 'Kabir kept losing marks in maths. His teacher gave him a thin copy: "Write every mistake here, and the right way." Each week the list got shorter. In the next test, he did not repeat a single old mistake.', m: 'ग़लती से सीखो, उसे दोहराओ मत।' },
-    { t: 'The girl who asked', x: 'Meera never understood fractions, but she was shy to ask. One day she raised her hand. The teacher smiled and explained again — and five other children said, "We didn’t understand either!"', m: 'सवाल पूछना बहादुरी है।' },
-    { t: 'The ant and the grasshopper', x: 'All summer the ant carried grain while the grasshopper sang and laughed. When winter came, the ant had food and a warm home. The grasshopper was cold and hungry, and learnt to prepare for tomorrow.', m: 'आज की मेहनत, कल का आराम।' }
+    { t: 'The cracked pot', x: 'A water carrier had two pots. One was cracked and leaked half its water every day, and it felt ashamed. One morning the carrier said, "Look at your side of the path." Flowers were growing all along it — the leaking water had watered them every day.', m: 'Moral: everyone has a strength of their own.' },
+    { t: 'The thirsty crow', x: 'A thirsty crow found a pot with very little water at the bottom. Its beak could not reach. It did not give up: it dropped small stones into the pot, one by one, until the water rose to the top. Then it drank.', m: 'Moral: think, keep trying, and you will find a way.' },
+    { t: 'The hare and the tortoise', x: 'A fast hare laughed at a slow tortoise and agreed to a race. Sure of winning, the hare slept under a tree. The tortoise kept walking, step by step, and crossed the finish line first.', m: 'Moral: slow and steady wins the race.' },
+    { t: 'The lion and the mouse', x: 'A lion let a tiny mouse go instead of eating it. Days later the lion was caught in a hunter’s net. The mouse heard it roar, came running and cut the ropes with its teeth.', m: 'Moral: no act of kindness is too small.' },
+    { t: 'Ten minutes a day', x: 'Riya and Aman had the same exam. Aman studied for six hours the night before. Riya read for ten minutes every day for a month. On exam day Aman was tired and confused; Riya was calm and remembered everything.', m: 'Moral: ten minutes every day beats six hours in one night.' },
+    { t: 'The mistake copy', x: 'Kabir kept losing marks in maths. His teacher gave him a thin copy: "Write every mistake here, and the right way." Each week the list got shorter. In the next test, he did not repeat a single old mistake.', m: 'Moral: learn from a mistake so you never repeat it.' },
+    { t: 'The girl who asked', x: 'Meera never understood fractions, but she was shy to ask. One day she raised her hand. The teacher smiled and explained again — and five other children said, "We didn’t understand either!"', m: 'Moral: asking a question takes courage — and helps everyone.' },
+    { t: 'The ant and the grasshopper', x: 'All summer the ant carried grain while the grasshopper sang and laughed. When winter came, the ant had food and a warm home. The grasshopper was cold and hungry, and learnt to prepare for tomorrow.', m: 'Moral: work hard today to be ready for tomorrow.' }
   ],
   facts: [
     'An octopus has three hearts.', 'Light from the Sun takes about 8 minutes to reach the Earth.', 'A day on Venus is longer than its whole year.',
@@ -79,7 +79,7 @@ const GYAAN = {
     'Honeybees tell each other where flowers are with a "waggle dance".', 'The tiger is India’s national animal and the peacock is the national bird.'
   ]
 };
-const FZ_KIND = { trick: ['💡', 'Trick'], formula: ['📐', 'Formula'], question: ['❓', 'Question'], fact: ['🌍', 'Fact'] };
+const FZ_KIND = { trick: ['💡', 'Shortcut'], formula: ['📐', 'Formula'], question: ['❓', 'Question'], fact: ['🌍', 'Fact'] };
 const fzDay = () => Math.floor(new Date(todayISO() + 'T00:00:00').getTime() / 86400000);
 const fzPick = (list, k = 0) => list[(fzDay() + k) % list.length];
 const fzBand = kid => (/^(PG|LKG|UKG|1st|2nd|3rd|4th|5th)$/.test(kid.cls) ? 'p' : 'u');
@@ -109,7 +109,7 @@ function fzBack(title, sub) { return `${kidSwitch()}${head(title, sub || '')}`; 
 function vPTomorrow() {
   const kid = pKid(); if (!kid) return vPHome();
   const nx = fzNextSchoolDay(kid), today = todayISO();
-  if (!nx) return fzBack('Tomorrow', 'Class ' + esc(kid.cls)) + '<div class="card text-sm">No school day in the next two weeks.</div>';
+  if (!nx) return fzBack('Next school day', 'Class ' + esc(kid.cls)) + '<div class="card text-sm">There is no school day in the next two weeks.</div>';
   const tt = (PD.tt || {})[kid.cls], day = tt && tt[nx.idx] ? tt[nx.idx] : null;
   const exams = examItems().filter(e => e.cls.includes(kid.cls) && e.date === nx.date);
   const subs = day ? [...new Set(day.filter(Boolean).map(x => x.s))] : [];
@@ -120,17 +120,17 @@ function vPTomorrow() {
     return `<div class="fz-bell"><span class="fz-time">${t12(b.s)}<small>${t12(b.e)}</small></span><span class="fz-dot" style="background:${a ? fzColor(a.s) : '#cbd5e1'}"></span>
       <span class="flex-1 min-w-0"><b>${a ? esc(a.s) : 'Self study'}</b>${a && a.t ? `<small class="block text-slate-500">${esc(a.t)}</small>` : ''}</span><span class="text-xs text-slate-400">${b.n}</span></div>`
       + (i === RECESS_AFTER ? '<div class="fz-bell fz-recess"><span class="fz-time">10:45<small>11:05</small></span><span class="fz-dot" style="background:#f2a93b"></span><b class="flex-1">Recess 🍎</b></div>' : ''); }).join('') : '';
-  return fzBack('Tomorrow · ' + fmtDate(nx.date), 'Class ' + esc(kid.cls) + ' · what to bring, what to study')
-    + (exams.length ? `<div class="card border-2 border-rose bg-rose-50"><h3 class="h3">📝 Exam on this day</h3>${exams.map(e => `<p class="mt-1 font-semibold">${esc(e.title)}</p>`).join('')}<p class="text-sm text-slate-600 mt-1">Revise tonight and sleep on time.</p></div>` : '')
+  return fzBack('Next school day · ' + fmtDate(nx.date), 'Class ' + esc(kid.cls) + ' · timetable, homework and bag checklist')
+    + (exams.length ? `<div class="card border-2 border-rose bg-rose-50"><h3 class="h3">📝 Exam on this day</h3>${exams.map(e => `<p class="mt-1 font-semibold">${esc(e.title)}</p>`).join('')}<p class="text-sm text-slate-600 mt-1">Revise this evening and get a good night’s sleep.</p></div>` : '')
     + `<div class="card"><div class="flex justify-between items-baseline gap-2"><h3 class="h3">⏰ Timetable</h3><span class="text-xs text-slate-500">Assembly 8:40 AM · leave 1:30 PM</span></div>
       ${day ? `<div class="mt-2">${bells}</div>` : '<p class="text-sm text-slate-500 mt-1">The school has not shared this class’s timetable yet.</p>'}</div>`
-    + `<div class="card"><h3 class="h3">🎒 Pack the bag</h3><p class="text-xs text-slate-500">Tick each book as you put it in the bag.</p>
+    + `<div class="card"><h3 class="h3">🎒 Bag checklist</h3><p class="text-xs text-slate-500">Tick each item as you pack it.</p>
       ${subs.length ? `<div class="fz-bag mt-2">${subs.map(s => `<label class="${bag[s] ? 'on' : ''}"><input type="checkbox" ${bag[s] ? 'checked' : ''} onchange="fzBag(${jsq(bagKey)},${jsq(s)},this.checked)"> ${esc(s)} book &amp; copy</label>`).join('')}
         <label class="${bag._diary ? 'on' : ''}"><input type="checkbox" ${bag._diary ? 'checked' : ''} onchange="fzBag(${jsq(bagKey)},'_diary',this.checked)"> School diary, pencil box, water bottle</label></div>
-        <p class="text-sm mt-2 ${Object.values(bag).filter(Boolean).length >= subs.length + 1 ? 'text-leaf font-semibold' : 'text-slate-500'}">${Object.values(bag).filter(Boolean).length} of ${subs.length + 1} packed${Object.values(bag).filter(Boolean).length >= subs.length + 1 ? ' — bag ready! ✅' : ''}</p>` : '<p class="text-sm text-slate-500 mt-1">Bag list appears once the timetable is shared.</p>'}</div>`
-    + `<div class="card"><h3 class="h3">✍️ Finish tonight</h3>${hwToday.length ? hwToday.map(h => `<div class="py-2 border-b border-slate-100 last:border-0 text-sm"><span class="subj">${esc(h.subj)}</span> ${h.hw ? `<b>${esc(h.hw)}</b>` : ''}${h.books ? `<span class="block text-slate-600 mt-1">Bring: ${esc(h.books)}</span>` : ''}</div>`).join('') : '<p class="text-sm text-slate-500 mt-1">No homework written in today’s diary yet.</p>'}
+        <p class="text-sm mt-2 ${Object.values(bag).filter(Boolean).length >= subs.length + 1 ? 'text-leaf font-semibold' : 'text-slate-500'}">${Object.values(bag).filter(Boolean).length} of ${subs.length + 1} packed${Object.values(bag).filter(Boolean).length >= subs.length + 1 ? ' — all packed ✅' : ''}</p>` : '<p class="text-sm text-slate-500 mt-1">Bag list appears once the timetable is shared.</p>'}</div>`
+    + `<div class="card"><h3 class="h3">✍️ Homework due</h3>${hwToday.length ? hwToday.map(h => `<div class="py-2 border-b border-slate-100 last:border-0 text-sm"><span class="subj">${esc(h.subj)}</span> ${h.hw ? `<b>${esc(h.hw)}</b>` : ''}${h.books ? `<span class="block text-slate-600 mt-1">Bring: ${esc(h.books)}</span>` : ''}</div>`).join('') : '<p class="text-sm text-slate-500 mt-1">No homework written in today’s diary yet.</p>'}
       ${pending.length ? `<p class="text-sm font-semibold text-rose mt-3">Still pending from before:</p>${pending.map(t => `<p class="text-sm">${esc(t.date)} · ${esc(t.subj)} — ${esc(t.task || 'Homework')}</p>`).join('')}` : ''}</div>`
-    + `<div class="card word-card"><h3 class="h3">💡 Tonight's 2-minute trick</h3><p class="font-semibold mt-1">${esc(fzPick(GYAAN.tricks).t)}</p><p class="text-sm mt-1">${esc(fzPick(GYAAN.tricks).x)}</p></div>`;
+    + `<div class="card word-card"><h3 class="h3">💡 Today’s shortcut</h3><p class="font-semibold mt-1">${esc(fzPick(GYAAN.tricks).t)}</p><p class="text-sm mt-1">${esc(fzPick(GYAAN.tricks).x)}</p></div>`;
 }
 function fzBag(key, s, on) { const b = fzLS.get(key, {}); b[s] = on; fzLS.set(key, b); render(); }
 function fzColor(s) { const C = ['#1FA855', '#027EB5', '#E0662B', '#8E44C9', '#D6336C', '#0E9F9A', '#B7791F', '#3D5AFE']; let h = 0; for (const ch of String(s || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return C[h % C.length]; }
@@ -183,10 +183,10 @@ function fzBadges(kid) {
     ['🎯', 'Challenge winner', 'Won a quiz challenge this month', !!(g && g.season && g.season.win > 0)],
     ['🥇', 'Gold level', 'Reached Gold in the Game Zone', !!(g && g.season && ['Gold', 'Platinum', 'Diamond', 'Crown', 'Ace', 'Conqueror'].includes(g.season.tier.name))],
     ['🎮', '7-day player', 'Learned in the Game Zone 7 days in a row', !!(g && g.stats && g.stats.streak >= 7)],
-    ['🎤', 'Speaker', 'Spoke in 3 class speaking activities', spk >= 3],
+    ['🎤', 'Confident speaker', 'Took part in 3 speaking activities', spk >= 3],
     ['👍', 'Good conduct', '10 or more good points from teachers', pts >= 10],
-    ['🧩', 'Sticker collector', 'Collected 5 stickers', !!(g && g.stickers && g.stickers.length >= 5)],
-    ['💡', 'Trick sharer', 'A trick you shared was approved for the class', tp > 0]
+    ['🧩', 'Reward collector', 'Earned 5 Game Zone rewards', !!(g && g.stickers && g.stickers.length >= 5)],
+    ['💡', 'Knowledge sharer', 'Shared a post approved for the class', tp > 0]
   ];
 }
 function vPRecord() {
@@ -195,14 +195,14 @@ function vPRecord() {
   const ym = todayISO().slice(0, 7), ma = fzMonthAtt(kid, ym), ex = fzExamPct(kid), g = FZG[kid.id] && !FZG[kid.id].error ? FZG[kid.id] : null;
   const pts = PD.behav.filter(b => b.sid === kid.id).reduce((s, b) => s + (+b.pts || 0), 0), B = fzBadges(kid), got = B.filter(b => b[3]).length;
   const ring = (pct, label, sub, c) => `<div class="fz-ring" style="--p:${pct == null ? 0 : pct};--c:${c}"><div><b>${pct == null ? '—' : pct + '%'}</b><span>${label}</span></div><small>${sub}</small></div>`;
-  return fzBack('My record', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · ' + esc(S.settings.session || ''))
+  return fzBack('Achievements & record', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · ' + esc(S.settings.session || ''))
     + `<section class="arena-card"><div class="flex items-center gap-3"><div class="arena-badge" style="--tier:#f2a93b">🏆</div><div><p class="text-white/70 text-xs">Achievements</p><h2 class="text-2xl font-extrabold">${got} of ${B.length} unlocked</h2>
-      <p class="text-sm text-white/80">${got ? 'Keep going — every badge is a habit.' : 'Your first badge is one good week away!'}</p></div></div></section>`
+      <p class="text-sm text-white/80">${got ? 'Keep it up — each badge reflects a good habit.' : 'Your first badge is within reach this week.'}</p></div></div></section>`
     + `<div class="card"><h3 class="h3">📅 Attendance</h3><div class="grid grid-cols-3 gap-2 mt-3">
       ${ring(sp, 'session', sum.total ? `${sum.present} of ${sum.total} days` : 'not marked yet', '#0f8a5f')}
       ${ring(ma.pct, 'this month', ma.n ? `${ma.p} of ${ma.n} days` : 'not marked yet', '#3aa7e8')}
       <div class="fz-ring" style="--p:${Math.min(100, fzStreak(kid) * 10)};--c:#f08c00"><div><b>${fzStreak(kid)}</b><span>day streak</span></div><small>present in a row</small></div></div>
-      ${sp != null && sp < 75 ? '<p class="text-sm text-rose font-semibold mt-3">Attendance is below 75%. Every day in school counts.</p>' : ''}</div>`
+      ${sp != null && sp < 75 ? '<p class="text-sm text-rose font-semibold mt-3">Attendance is below the required 75%. Regular attendance is important.</p>' : ''}</div>`
     + `<div class="card"><h3 class="h3">🏅 Badges</h3><div class="fz-badges mt-3">${B.map(([e, n, d, ok]) => `<div class="${ok ? 'on' : ''}" title="${esc(d)}"><span>${ok ? e : '🔒'}</span><b>${esc(n)}</b><small>${esc(d)}</small></div>`).join('')}</div></div>`
     + `<div class="card"><h3 class="h3">📊 Exams</h3>${ex.length ? ex.map(e => `<div class="mt-3"><div class="flex justify-between text-sm"><b>${esc(e.name)}</b><span>${e.pct}% · ${grade(e.pct)}</span></div><div class="fz-meter mt-1"><i style="width:${Math.min(100, e.pct)}%;background:${e.pct >= 80 ? '#0f8a5f' : e.pct >= 60 ? '#f2a93b' : '#c0352b'}"></i></div></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">No exam marks published yet.</p>'}</div>`
     + `<div class="card"><h3 class="h3">🎮 Learning & conduct</h3><div class="grid grid-cols-2 gap-2 mt-3 text-sm">
@@ -216,7 +216,7 @@ function vPRecord() {
 function vPSyl() { const kid = pKid(); if (!kid) return vPHome(); const a = (typeof parentDateSheets === 'function' ? parentDateSheets(kid) : '') + pExamSyl(kid);
   return fzBack('Exam syllabus', 'Class ' + esc(kid.cls) + ' · chapters the teachers marked for each exam') + (a || '<div class="card text-sm text-slate-500">The teachers have not marked exam chapters yet.</div>'); }
 
-// ---------------------------------------------------------------- 4. GYAAN ZONE + classmates' tricks
+// ---------------------------------------------------------------- 4. LEARNING HUB + classmates' tricks
 let FZTAB = 'tricks';
 async function tapi(a, body, q) {
   const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
@@ -229,39 +229,39 @@ async function tapi(a, body, q) {
 async function fzTips(kid) { try { FZT[kid.id] = await tapi('list', null, { sid: kid.id }); } catch (e) { FZT[kid.id] = { error: e.message, tips: [], mine: [] }; } if (['pzone', 'prec', 'phome'].includes(view)) render(); }
 async function fzPost() {
   const kid = pKid(), v = id => (document.getElementById(id) || {}).value || '';
-  try { await tapi('post', { sid: kid.id, kind: v('fz-kind'), subj: v('fz-subj'), text: v('fz-text'), ans: v('fz-ans') }); toast('Sent! Your teacher will check it, then the whole class can learn it. 🌟'); FZT[kid.id] = null; fzTips(kid); }
+  try { await tapi('post', { sid: kid.id, kind: v('fz-kind'), subj: v('fz-subj'), text: v('fz-text'), ans: v('fz-ans') }); toast('Sent for review. Once your teacher approves it, your class will see it.'); FZT[kid.id] = null; fzTips(kid); }
   catch (e) { toast(e.message, 'a'); }
 }
 function fzCard(icon, title, body, extra) { return `<div class="fz-card"><span class="fz-ic">${icon}</span><div class="min-w-0"><b>${esc(title)}</b><p>${esc(body)}</p>${extra || ''}</div></div>`; }
 function vPZone() {
   const kid = pKid(); if (!kid) return vPHome();
   if (FZT[kid.id] === undefined) { FZT[kid.id] = null; fzTips(kid); }
-  const tabs = [['tricks', '💡 Tricks'], ['basics', '🧱 Basics'], ['tips', '🎯 Study tips'], ['stories', '📖 Stories'], ['fun', '🤩 Fun facts'], ['extra', '➕ Extra class'], ['class', '👫 Classmates']];
+  const tabs = [['tricks', '💡 Shortcuts'], ['basics', '🧱 Basics'], ['tips', '🎯 Study tips'], ['stories', '📖 Stories'], ['fun', '🌍 Facts'], ['extra', '➕ Extra practice'], ['class', '👫 Class corner']];
   const T = FZT[kid.id], band = fzBand(kid);
   let body = '';
-  if (FZTAB === 'tricks') body = GYAAN.tricks.map((x, i) => fzCard('💡', x.t, x.x, i === (fzDay() % GYAAN.tricks.length) ? '<span class="pill bg-marigold/20 text-ink mt-1">Today’s trick</span>' : '')).join('');
+  if (FZTAB === 'tricks') body = GYAAN.tricks.map((x, i) => fzCard('💡', x.t, x.x, i === (fzDay() % GYAAN.tricks.length) ? '<span class="pill bg-marigold/20 text-ink mt-1">Today’s shortcut</span>' : '')).join('');
   else if (FZTAB === 'basics') body = `<p class="text-sm text-slate-600">Strong basics for Class ${esc(kid.cls)}. Read one a day and say it aloud.</p>` + GYAAN.basics.filter(x => x.b === band).concat(GYAAN.basics.filter(x => x.b !== band)).map(x => fzCard('🧱', x.t, x.x)).join('');
   else if (FZTAB === 'tips') body = GYAAN.tips.map(x => fzCard('🎯', x.t, x.x)).join('');
   else if (FZTAB === 'stories') body = GYAAN.stories.map(x => fzCard('📖', x.t, x.x, `<p class="fz-moral">${esc(x.m)}</p>`)).join('');
   else if (FZTAB === 'fun') body = GYAAN.facts.map((x, i) => fzCard(['🌍', '🔭', '🐙', '🌿', '🧪', '🚀'][i % 6], 'Did you know?', x)).join('');
   else if (FZTAB === 'extra') {
     const notes = typeof pNotes === 'function' ? pNotes(kid) : '', g = FZG[kid.id] && !FZG[kid.id].error ? FZG[kid.id] : null; if (FZG[kid.id] === undefined) fzLoadExtra(kid);
-    body = `<div class="card"><h3 class="h3">➕ Extra class at home</h3><p class="text-sm text-slate-600 mt-1">Questions you got wrong in the Game Zone come back on day 1, 3 and 7 — that is your own extra class.</p>
-      <button class="btn btn-g mt-3" onclick="go('game')">${g && g.revengeDue ? `Practise ${g.revengeDue} question${g.revengeDue > 1 ? 's' : ''} you missed` : 'Open the Game Zone'}</button></div>`
+    body = `<div class="card"><h3 class="h3">➕ Extra practice at home</h3><p class="text-sm text-slate-600 mt-1">Questions you missed in the Game Zone return after 1, 3 and 7 days, so you can master them.</p>
+      <button class="btn btn-g mt-3" onclick="go('game')">${g && g.revengeDue ? `Review ${g.revengeDue} question${g.revengeDue > 1 ? 's' : ''} you missed` : 'Open the Game Zone'}</button></div>`
       + (g && g.today && g.today.topics.length ? `<div class="card"><h3 class="h3">Today in class</h3>${g.today.topics.map(t => `<p class="text-sm mt-1"><span class="subj">${esc(t.subj)}</span> ${esc(t.topic)}</p>`).join('')}<p class="text-xs text-slate-500 mt-2">Read these once tonight, then take the class test in the Game Zone.</p></div>` : '')
       + (notes || '<div class="card text-sm text-slate-500">Chapter notes from the teachers will appear here.</div>');
   } else {
-    body = `<div class="card"><h3 class="h3">💬 Share something your class doesn't know</h3><p class="text-xs text-slate-500">A trick, a formula, a tricky question (with its answer) or an amazing fact. Your teacher checks it first; then it shows as a Status for your whole class.</p>
+    body = `<div class="card"><h3 class="h3">💬 Share with your class</h3><p class="text-xs text-slate-500">A shortcut, a formula, a challenging question (with its answer) or an interesting fact. Your teacher reviews it first; once approved, your whole class can see it.</p>
       <div class="grid grid-cols-2 gap-2 mt-3"><select id="fz-kind" class="inp" onchange="document.getElementById('fz-answ').style.display=this.value==='question'?'block':'none'">${Object.entries(FZ_KIND).map(([k, v]) => `<option value="${k}">${v[0]} ${v[1]}</option>`).join('')}</select>
       <input id="fz-subj" class="inp" maxlength="40" placeholder="Subject (e.g. Maths)"></div>
       <textarea id="fz-text" class="inp mt-2" rows="3" maxlength="300" placeholder="Write it clearly, in your own words"></textarea>
       <div id="fz-answ" style="display:none"><input id="fz-ans" class="inp mt-2" maxlength="200" placeholder="Answer (shown when classmates tap)"></div>
       <button class="btn btn-g mt-3" onclick="fzPost()" ${T && T.left === 0 ? 'disabled' : ''}>Send to teacher</button> <span class="text-xs text-slate-500">${T && T.left != null ? T.left + ' left today' : ''}</span></div>`
       + (!T ? '<div class="card text-sm text-slate-500">Loading…</div>' : T.error ? `<div class="card text-sm">${esc(T.error)}</div>`
-        : (T.mine.length ? `<div class="card"><h3 class="h3">What I shared</h3>${T.mine.map(t => `<p class="text-sm mt-2">${FZ_KIND[t.kind][0]} ${esc(t.text)} <span class="pill ${t.status === 'approved' ? 'bg-leaf/10 text-leaf' : t.status === 'rejected' ? 'bg-rose/10 text-rose' : 'bg-marigold/20 text-ink'}">${t.status === 'approved' ? 'Shown to class' : t.status === 'rejected' ? 'Not approved' : 'Teacher will check'}</span></p>`).join('')}</div>` : '')
-        + (T.tips.length ? T.tips.map(t => fzCard(FZ_KIND[t.kind][0], FZ_KIND[t.kind][1] + ' by ' + t.by + (t.subj ? ' · ' + t.subj : ''), t.text, t.ans ? `<details class="mt-1 text-sm"><summary class="cursor-pointer font-semibold text-leaf">Show answer</summary>${esc(t.ans)}</details>` : '')).join('') : '<div class="card text-sm text-slate-500">No classmate has shared yet. Be the first! 🌟</div>'));
+        : (T.mine.length ? `<div class="card"><h3 class="h3">My submissions</h3>${T.mine.map(t => `<p class="text-sm mt-2">${FZ_KIND[t.kind][0]} ${esc(t.text)} <span class="pill ${t.status === 'approved' ? 'bg-leaf/10 text-leaf' : t.status === 'rejected' ? 'bg-rose/10 text-rose' : 'bg-marigold/20 text-ink'}">${t.status === 'approved' ? 'Approved' : t.status === 'rejected' ? 'Not approved' : 'Awaiting review'}</span></p>`).join('')}</div>` : '')
+        + (T.tips.length ? T.tips.map(t => fzCard(FZ_KIND[t.kind][0], FZ_KIND[t.kind][1] + ' by ' + t.by + (t.subj ? ' · ' + t.subj : ''), t.text, t.ans ? `<details class="mt-1 text-sm"><summary class="cursor-pointer font-semibold text-leaf">Show answer</summary>${esc(t.ans)}</details>` : '')).join('') : '<div class="card text-sm text-slate-500">Nothing has been shared yet. Be the first to share.</div>'));
   }
-  return fzBack('Gyaan Zone', 'Basics, tricks, tips, stories and fun — become strong, one small step a day')
+  return fzBack('Learning Hub', 'Basics, shortcuts, study tips, stories and facts — grow stronger every day')
     + `<div class="flex gap-2 overflow-x-auto noscroll">${tabs.map(([k, l]) => `<button onclick="FZTAB='${k}';render()" class="chip ${FZTAB === k ? 'chip-on' : ''}">${l}</button>`).join('')}</div>` + body;
 }
 
@@ -270,7 +270,7 @@ function fzStories(kid) {
   const w = typeof wordOf === 'function' ? wordOf(todayISO()) : null, tr = fzPick(GYAAN.tricks), st = fzPick(GYAAN.stories), fa = fzPick(GYAAN.facts), ti = fzPick(GYAAN.tips);
   const S1 = [];
   if (w) S1.push({ k: 'word', l: 'Word', e: '🔤', bg: '#3D5AFE', h: 'Word of the day', b: w.w + ' (' + w.h + ')', s: w.m + ' — "' + w.e + '"' });
-  S1.push({ k: 'trick', l: 'Trick', e: '💡', bg: '#E0662B', h: tr.t, b: tr.x });
+  S1.push({ k: 'trick', l: 'Shortcut', e: '💡', bg: '#E0662B', h: tr.t, b: tr.x });
   S1.push({ k: 'fact', l: 'Fact', e: '🌍', bg: '#0E9F9A', h: 'Did you know?', b: fa });
   S1.push({ k: 'story', l: 'Story', e: '📖', bg: '#8E44C9', h: st.t, b: st.x, s: st.m });
   S1.push({ k: 'tip', l: 'Tip', e: '🎯', bg: '#1FA855', h: ti.t, b: ti.x });
@@ -280,7 +280,7 @@ function fzStories(kid) {
 }
 function gyStatusRow(kid) {
   const L = fzStories(kid), seen = fzLS.get('sn_story_seen', {}), day = todayISO();
-  return `<div class="fz-status"><p>Status · learn something new today</p><div>${L.map((s, i) => `<button onclick="gyOpen(${i})" class="${seen[s.k] === day ? 'seen' : ''}"><span class="r" style="--bg:${s.bg}"><span>${s.e}</span></span><small>${esc(s.l)}</small></button>`).join('')}
+  return `<div class="fz-status"><p>Today’s learning</p><div>${L.map((s, i) => `<button onclick="gyOpen(${i})" class="${seen[s.k] === day ? 'seen' : ''}"><span class="r" style="--bg:${s.bg}"><span>${s.e}</span></span><small>${esc(s.l)}</small></button>`).join('')}
     <button onclick="FZTAB='class';go('pzone')"><span class="r add"><span>＋</span></span><small>Share</small></button></div></div>`;
 }
 let GYI = 0, GYT = null;
@@ -293,7 +293,7 @@ function gyOpen(i) {
     <div class="gy-head"><span>${s.e}</span><b>${esc(s.l)}</b><button onclick="gyClose()" aria-label="Close">×</button></div>
     <div class="gy-body" onclick="gyTap(event)"><small>${esc(s.h)}</small><h2>${esc(s.b)}</h2>${s.s ? `<p>${esc(s.s)}</p>` : ''}
       ${s.a ? '<button class="gy-ans" onclick="event.stopPropagation();gyAns(this)">Tap to see the answer</button>' : ''}</div>
-    <p class="gy-foot">Tap right for next · left for back</p>`;
+    <p class="gy-foot">Tap right for next · left to go back</p>`;
   clearTimeout(GYT); GYT = setTimeout(() => gyOpen(GYI + 1), s.a ? 15000 : 9000);
 }
 let GYA = '';
@@ -309,7 +309,7 @@ setInterval(() => {
   const u = fzLS.get(FZ_USE, {}), d = todayISO(); u[d] = (u[d] || 0) + 15;
   Object.keys(u).sort().slice(0, -30).forEach(k => delete u[k]); fzLS.set(FZ_USE, u);
   const lim = +fzLS.get(FZ_LIMIT, 0), told = fzLS.get('sn_use_told', '');
-  if (lim && u[d] / 60 >= lim && told !== d) { fzLS.set('sn_use_told', d); toast(`You have used the app for ${lim} minutes today. Time for a break — read a book or play outside! 🌿`, 'a'); }
+  if (lim && u[d] / 60 >= lim && told !== d) { fzLS.set('sn_use_told', d); toast(`You have used the app for ${lim} minutes today. It is a good time to take a break.`, 'a'); }
 }, 15000);
 function fzApplyBig() { document.documentElement.classList.toggle('sn-big', !!fzLS.get('sn_big', false)); }
 fzApplyBig();
@@ -324,12 +324,12 @@ function vPSettings() {
       <p class="text-xs text-slate-500 mt-2">Counted only while the school app is open on this phone. Nothing is sent to the school.</p></div>`
     + `<div class="card space-y-1">
       ${row('🌐', 'Language', 'English or Hinglish', window.SchoolLang && SchoolLang.control ? SchoolLang.control() : '')}
-      ${row('🔠', 'Bigger text', 'Easier to read for grandparents', `<button class="fz-sw ${big ? 'on' : ''}" onclick="fzLS.set('sn_big',${!big});fzApplyBig();render()" aria-pressed="${big}"><i></i></button>`)}
+      ${row('🔠', 'Larger text', 'Makes every screen easier to read', `<button class="fz-sw ${big ? 'on' : ''}" onclick="fzLS.set('sn_big',${!big});fzApplyBig();render()" aria-pressed="${big}"><i></i></button>`)}
       ${PD.kids.length > 1 ? row('👧', 'Child', 'Switch between your children', `<select class="inp w-auto" onchange="PKID=this.value;render()">${PD.kids.map(k => `<option value="${esc(k.id)}" ${k.id === PKID ? 'selected' : ''}>${esc(k.name.split(' ')[0])} · ${esc(k.cls)}</option>`).join('')}</select>`) : ''}
       ${row('🔑', 'Login PIN', 'Change your 4-digit PIN', '<button class="btn btn-sm btn-l" onclick="changeMyPin()">Change</button>')}
       ${window.SNFamily && SNFamily.intro ? row('🎬', 'Welcome screens', 'See the welcome again', '<button class="btn btn-sm btn-l" onclick="SNFamily.intro()">Play</button>') : ''}
       ${row('🚪', 'Log out', 'Sign out from this phone', '<button class="btn btn-sm btn-r" onclick="logout()">Log out</button>')}</div>`
-    + `<div class="card text-sm text-slate-600">🔒 This app shows only your own child's school information. Classmates see only short names in ranks, and only posts a teacher has approved.</div>`;
+    + `<div class="card text-sm text-slate-600">🔒 This app shows only your own family's school information. Classmates see only short names in ranks, and only posts a teacher has approved.</div>`;
 }
 
 // ---------------------------------------------------------------- teacher: check classmates' tricks (Quiz Duel page)
@@ -348,13 +348,13 @@ function tipTeacherCard() {
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
   Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings });
-  const add = [['ptmr', 'fa-calendar-day', 'Tomorrow'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'My Record'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Gyaan Zone'], ['pset', 'fa-gear', 'Settings']];
+  const add = [['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
     if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('prec', 'psyl', 'pset'); } }
   // web (not the app): quick links on the parent home
   const home = VIEWS.phome;
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();
-    return `<div class="fz-quick">${[['ptmr', '🎒', 'Tomorrow'], ['pcal', '📅', 'Calendar'], ['prec', '🏆', 'My record'], ['pzone', '💡', 'Gyaan Zone'], ['pset', '⚙️', 'Settings']].map(([k, e, l]) => `<button onclick="go('${k}')"><span>${e}</span>${l}</button>`).join('')}</div>${gyStatusRow(kid)}` + h; };
+    return `<div class="fz-quick">${[['ptmr', '🎒', 'Next day'], ['pcal', '📅', 'Calendar'], ['prec', '🏆', 'Achievements'], ['pzone', '💡', 'Learning Hub'], ['pset', '⚙️', 'Settings']].map(([k, e, l]) => `<button onclick="go('${k}')"><span>${e}</span>${l}</button>`).join('')}</div>${gyStatusRow(kid)}` + h; };
 }
 // For the Family app chat list (family-start.js): one-line previews
 window.FZ = {
@@ -364,6 +364,6 @@ window.FZ = {
   record(kid) { const sum = (PD.attSum || {})[kid.id]; const sp = sum && sum.total ? Math.round(sum.present / sum.total * 100) : null; const got = fzBadges(kid).filter(b => b[3]).length;
     return (sp != null ? 'Attendance ' + sp + '% this session · ' : '') + got + ' badge' + (got === 1 ? '' : 's'); },
   calendar(kid) { const d = todayISO(); const n = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls))].filter(e => (e.to || e.date) >= d).sort((a, b) => a.date.localeCompare(b.date))[0]; return n ? n.title + ' · ' + fmtDate(n.date) : 'Holidays, exams and events'; },
-  zone() { return '💡 ' + fzPick(GYAAN.tricks).t + ' · ' + fzPick(GYAAN.stories).t; },
+  zone() { return '💡 ' + fzPick(GYAAN.tricks).t + ' · 📖 ' + fzPick(GYAAN.stories).t; },
   status: gyStatusRow
 };

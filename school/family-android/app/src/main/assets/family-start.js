@@ -56,25 +56,25 @@
   const R=[];
   R.push({g:'study',go:'phw',ic:'book',c:'#1FA855',title:t('Homework & class work'),prev:last?('<b style="color:'+subColor(last.subj)+'">'+esc(last.subj)+':</b> '+esc(last.hw||last.classwork||last.topic||'')):t('Homework will appear here when the teacher writes the diary'),time:last?short(last.date):'',n:hwNew});
   const Z=window.FZ&&VIEWS.ptmr?window.FZ:null;
-  if(Z)R.push({g:'study',go:'ptmr',ic:'bag',c:'#F08C00',title:t('Tomorrow — pack the bag'),prev:esc(Z.tomorrow(kid)),time:Z.tomorrowDate(kid)?short(Z.tomorrowDate(kid)):''});
+  if(Z)R.push({g:'study',go:'ptmr',ic:'bag',c:'#F08C00',title:t('Next school day'),prev:esc(Z.tomorrow(kid)),time:Z.tomorrowDate(kid)?short(Z.tomorrowDate(kid)):''});
   R.push({g:'school',go:'presults',ic:'check',c:at.today&&!at.today.present?'#E5484D':'#00A884',title:t('Attendance'),prev:(at.today?(at.today.present?'✅ '+t('Present today'):'❌ '+t('Absent today')):t("Today's attendance not marked yet"))+(at.pct!=null?' · '+at.pct+'% '+t('overall'):''),time:at.today?short(date):''});
   if(isParent&&navHas('pfees'))R.push({g:'school',go:'pfees',ic:'fee',c:'#E0662B',title:t('Fees'),prev:t('Fee account, receipts and online payment'),time:''});
   R.push({g:'school',go:'pnotices',ic:'bell',c:'#027EB5',title:t('Notices & calendar'),prev:nts[0]?esc(nts[0].title||''):t('No notice yet'),time:nts[0]?short(String(nts[0].date||'')):'',n:nNew});
   if(Z)R.push({g:'school',go:'pcal',ic:'cal',c:'#5B6B7B',title:t('Calendar'),prev:esc(Z.calendar(kid)),time:''});
   if(navHas('studio'))R.push({g:'school',go:'studio',ic:'person',c:'#8E44C9',title:kid.ct?esc(kid.ct):t('Class teacher'),prev:t('Class teacher')+' · Class '+esc(kid.cls)+' — '+t('message the teacher'),time:''});
   R.push({g:'study',go:'presults',ic:'chart',c:'#D6336C',title:t('Results & progress'),prev:le?esc(le.name)+(pct!=null?' · '+pct+'%':''):t('No exam marks published yet'),time:''});
-  if(Z)R.push({g:'study',go:'prec',ic:'trophy',c:'#B7791F',title:t('My record & badges'),prev:esc(Z.record(kid)),time:''});
-  if(Z)R.push({g:'study',go:'pzone',ic:'bulb',c:'#E0662B',title:t('Gyaan Zone'),prev:esc(Z.zone()),time:''});
+  if(Z)R.push({g:'study',go:'prec',ic:'trophy',c:'#B7791F',title:t('Achievements & record'),prev:esc(Z.record(kid)),time:''});
+  if(Z)R.push({g:'study',go:'pzone',ic:'bulb',c:'#E0662B',title:t('Learning Hub'),prev:esc(Z.zone()),time:''});
   if(Z)R.push({g:'study',go:'psyl',ic:'list',c:'#0E9F9A',title:t('Exam syllabus'),prev:t('Chapters coming in each exam'),time:''});
-  if(navHas('game'))R.push({g:'study',go:'game',ic:'play',c:'#3D5AFE',title:t('Game Zone'),prev:t('Play and learn — 5 questions a round'),time:''});
-  if(navHas('quiz'))R.push({g:'study',go:'quiz',ic:'star',c:'#B7791F',title:t('Quiz Duel'),prev:t('Challenge classmates on what you learnt'),time:''});
+  if(navHas('game'))R.push({g:'study',go:'game',ic:'play',c:'#3D5AFE',title:t('Game Zone'),prev:t('Practise and learn — 5 questions a round'),time:''});
+  if(navHas('quiz'))R.push({g:'study',go:'quiz',ic:'star',c:'#B7791F',title:t('Quiz Duel'),prev:t('Test classmates on what you have learnt'),time:''});
   if(navHas('learning'))R.push({g:'study',go:'learning',ic:'book',c:'#0E9F9A',title:t('Learning Adventure'),prev:t('Lessons and practice from the teachers'),time:''});
   if(navHas('faculty'))R.push({g:'school',go:'faculty',ic:'person',c:'#5B6B7B',title:t('Our Teachers'),prev:t('Meet the teachers'),time:''});
   const F=WA.f,list=R.filter(r=>F==='all'||(F==='unread'?r.n>0:r.g===F));
   const chip=(k,l)=>'<button class="'+(F===k?'on':'')+'" onclick="SNFamily.filter(\''+k+'\')">'+t(l)+'</button>';
   return '<div class="wa-chips">'+chip('all','All')+chip('unread','Unread')+chip('study','Study')+chip('school','School')+'</div>'+
    '<div class="wa-list fam-real-screen fam-stats">'+(list.length?list.map(r=>'<button class="wa-row" onclick="go(\''+r.go+'\')"><span class="wa-av" style="background:'+r.c+'">'+ic(r.ic)+'</span><span class="wa-mid"><b>'+r.title+'</b><small>'+r.prev+'</small></span><span class="wa-end"><small class="'+(r.n?'g':'')+'">'+esc(r.time||'')+'</small>'+(r.n?'<em>'+r.n+'</em>':'')+'</span></button>').join(''):'<p class="wa-none">'+t('No unread updates')+' ✓</p>')+'</div>'+
-   '<p class="wa-lock">🔒 '+t('Only your child\'s school information is shown here.')+'</p>';
+   '<p class="wa-lock">🔒 '+(isParent?t('Only your child\'s school information is shown here.'):t('Only your own school information is shown here.'))+'</p>';
  }
  function hwChat(kid){
   const rows=PD.hw.filter(h=>h.cls===kid.cls).sort((a,b)=>a.date.localeCompare(b.date)),by={};rows.forEach(h=>(by[h.date]=by[h.date]||[]).push(h));
@@ -93,14 +93,14 @@
    (up.length?'<div class="wa-day"><span>'+t('Coming up')+'</span></div><div class="wa-b">'+up.map(e=>'<p>'+ic('cal').replace('<svg','<svg class="mini"')+' <b>'+esc(e.title)+'</b> · '+esc(dayLabel(e.date))+(e.type?' <i>'+esc(e.type)+'</i>':'')+'</p>').join('')+'</div>':'')+
    '<div class="wa-sys">'+t('Change your login PIN')+' <button class="wa-mini" onclick="changeMyPin()">'+t('Change PIN')+'</button></div></div>';
  }
- const TITLES={ptmr:'Tomorrow',pcal:'Calendar',prec:'My record & badges',psyl:'Exam syllabus',pzone:'Gyaan Zone',pset:'Settings',phw:'Homework & class work',pfees:'Fees',presults:'Results & progress',pnotices:'Notices & calendar',game:'Game Zone',quiz:'Quiz Duel',learning:'Learning Adventure',faculty:'Our Teachers',studio:'Class teacher',finance:'Fee Ledger'};
+ const TITLES={ptmr:'Next school day',pcal:'Calendar',prec:'Achievements & record',psyl:'Exam syllabus',pzone:'Learning Hub',pset:'Settings',phw:'Homework & class work',pfees:'Fees',presults:'Results & progress',pnotices:'Notices & calendar',game:'Game Zone',quiz:'Quiz Duel',learning:'Learning Adventure',faculty:'Our Teachers',studio:'Class teacher',finance:'Fee Ledger'};
  if(originalRender)render=function(){
   originalRender();
   if(typeof U==='undefined'||!U||!allowed.includes(U.role)||typeof S==='undefined'||!S){document.body.classList.remove('fam-signed-in');return;}
   document.body.classList.add('fam-signed-in');
   const content=root.querySelector('main.erp-wrap');if(!content)return;
   const all=NAV[U.role]||[],isParent=U.role==='parent';
-  const tabs=[['phome','Chats','chat'],['phw','Homework','book'],[isParent?'pfees':'game',isParent?'Fees':'Play',isParent?'fee':'play'],['presults','Progress','chart'],['pnotices','Updates','bell']];
+  const tabs=[['phome','Chats','chat'],['phw','Homework','book'],[isParent?'pfees':'game',isParent?'Fees':'Practice',isParent?'fee':'play'],['presults','Progress','chart'],['pnotices','Updates','bell']];
   const kid=typeof pKid==='function'&&typeof PD!=='undefined'&&PD&&PD.kids&&PD.kids.length?pKid():null;
   const home=view==='phome',chatView=view==='phw'||view==='pnotices';
   const oldNodes=[...content.childNodes];

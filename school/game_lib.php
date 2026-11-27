@@ -228,11 +228,11 @@ function gm_stats(array $rounds, string $sid, int $now, string $today): array {
             'toChest' => GM_CHEST_EVERY - $right % GM_CHEST_EVERY, 'streak' => $streak, 'playedToday' => isset($days[$today]), 'weekXp' => $weekXp];
 }
 function gm_level_name(int $lv): string {
-    $n = ['Curious Cub', 'Bright Spark', 'Quick Learner', 'Smart Explorer', 'Brain Builder', 'Idea Hunter', 'Knowledge Ninja', 'Wise Owl', 'Master Mind', 'Super Scholar', 'Legend'];
+    $n = ['Beginner', 'Learner', 'Quick Learner', 'Explorer', 'Achiever', 'Thinker', 'Scholar', 'Expert', 'Master', 'Champion', 'Legend'];
     return $n[min($lv - 1, count($n) - 1)];
 }
 function gm_chest_reward(string $sid, int $n): array {
-    $R = [['🦉', 'Wise Owl sticker'], ['🚀', 'Rocket sticker'], ['🏏', 'Sixer sticker'], ['🌟', 'Gold Star sticker'], ['🐯', 'Tiger sticker'], ['🎯', 'Bullseye sticker'], ['🧠', 'Big Brain sticker'], ['🦚', 'Peacock sticker'], ['⚡', 'Lightning sticker'], ['🏆', 'Trophy sticker']];
+    $R = [['🦉', 'Owl badge'], ['🚀', 'Rocket badge'], ['🏏', 'Cricket badge'], ['🌟', 'Gold Star badge'], ['🐯', 'Tiger badge'], ['🎯', 'Bullseye badge'], ['🧠', 'Thinker badge'], ['🦚', 'Peacock badge'], ['⚡', 'Lightning badge'], ['🏆', 'Trophy badge']];
     return $R[hexdec(substr(hash('sha256', $sid . '|' . $n), 0, 6)) % count($R)];
 }
 

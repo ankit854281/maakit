@@ -76,12 +76,12 @@ try {
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') sch_fail('POST only', 405);
         $kind = (string)($in['kind'] ?? ''); $text = trim(preg_replace('/\s+/u', ' ', (string)($in['text'] ?? ''))); $ans = trim(preg_replace('/\s+/u', ' ', (string)($in['ans'] ?? '')));
         $subj = trim(mb_substr((string)($in['subj'] ?? ''), 0, 40));
-        if (!in_array($kind, TIP_KINDS, true)) sch_fail('Choose trick, formula, question or fact.');
-        if (mb_strlen($text) < 10) sch_fail('Write a little more — at least 10 letters.');
-        if (mb_strlen($text) > 300 || mb_strlen($ans) > 200) sch_fail('Keep it short — 300 letters at most (answer: 200).');
-        if ($kind === 'question' && $ans === '') sch_fail('Write the answer too — your teacher checks it before classmates see it.');
+        if (!in_array($kind, TIP_KINDS, true)) sch_fail('Please choose shortcut, formula, question or fact.');
+        if (mb_strlen($text) < 10) sch_fail('Please write at least 10 characters.');
+        if (mb_strlen($text) > 300 || mb_strlen($ans) > 200) sch_fail('Please keep it within 300 characters (answer: 200).');
+        if ($kind === 'question' && $ans === '') sch_fail('Please add the answer as well; your teacher reviews it before your class sees it.');
         $today = count(array_filter($tips, fn($t) => $t['sid'] === $sid && date('Y-m-d', (int)$t['at']) === date('Y-m-d', $now)));
-        if ($today >= TIP_PER_DAY) sch_fail('That is ' . TIP_PER_DAY . ' for today. Share more tomorrow! 🌟');
+        if ($today >= TIP_PER_DAY) sch_fail('You have shared ' . TIP_PER_DAY . ' posts today. You can share more tomorrow.');
         $id = 't' . substr(hash('sha256', $sid . '|' . $now . '|' . random_int(0, PHP_INT_MAX)), 0, 14);
         sch_rec_put('quizTip', $id, ['id' => $id, 'sid' => $sid, 'cls' => $cls, 'kind' => $kind, 'subj' => $subj, 'text' => $text, 'ans' => $kind === 'question' ? $ans : '', 'at' => $now, 'status' => 'pending'], $uid);
         sch_log($u, 'Classmates\' Tricks', tip_short((string)$students[$sid]['name']) . ' sent a ' . $kind . ' for the teacher to check');

@@ -1453,3 +1453,7 @@ papers only from photos the owner sends.
 
 - Teachers mostly use the Teacher App, so the class-test report and the students'-tricks check now live there too (TAB `arena`, Home card "🎯 Class test & students' tricks", also on the Principal dashboard).
 - Tricks tab: approve / "not now" (`tips_api.php`). Class test tab: took / average / below 60%, "help these children", not taken yet, class rank (`game_api.php?a=tarena`), and **Add a test question** for today's diary topic (`quiz_api.php?a=add`, goes straight into the class test, works without the AI key).
+
+## 2026-11-27 — Student app wording: professional English
+
+- Owner: use professional English for students. Game Zone: Review Round (was Revenge Round), Vocabulary Sprint (Word Bomb), Mental Maths (Maths Sprint), Quiz Duel, "Correct! / Excellent! / Not quite", "Remember", rewards and badges (not chests and stickers), level names Beginner → Legend. Family app: Learning Hub (was Gyaan Zone), Next school day, Achievements & record, Practice tab for students; story morals in English. Server messages in `game_api.php` and `tips_api.php` follow the same tone. Keep new student-facing text in this style.
