@@ -85,6 +85,14 @@ $put('tchChk', "$today|10th|Hindi", ['date' => $today, 'cls' => '10th', 'subj' =
 [, $j] = $du('hwsum', null, $tok['P']); df_check(isset($j['last']['10th|Hindi'], $j['last']['9th|Hindi']), 'Principal sees all');
 [, $j] = $du('hwsum', null, $tok['AD']); df_check(isset($j['last']['10th|Hindi'], $j['last']['9th|Hindi']), 'Duty teacher sees every class (homework check report)');
 
+// ---- copy check by chapter ----
+[$c] = $du('copy', ['cls' => '9th', 'subj' => 'Hindi', 'ch' => 'Do Bailon ki Katha', 'rows' => ['s1' => 'inc', 's3' => 'ok']], $tok['K']); df_check($c === 200, 'subject teacher saves a chapter copy check');
+[$c, $j] = $du('copy', null, $tok['K'], '&cls=9th&subj=Hindi'); df_check($c === 200 && ($j['chapters']['Do Bailon ki Katha']['rows']['s1'] ?? '') === 'inc' && !isset($j['chapters']['Do Bailon ki Katha']['rows']['s3']), 'chapter record kept; a child of another class is dropped');
+[$c] = $du('copy', ['cls' => '9th', 'subj' => 'Hindi', 'ch' => 'X', 'rows' => ['s1' => 'ok']], $tok['MA']); df_check($c === 403, 'another subject teacher cannot save');
+[$c] = $du('copy', null, $tok['MA'], '&cls=9th&subj=Hindi'); df_check($c === 403, 'a teacher outside the class cannot read');
+[$c] = $du('copy', null, $tok['AD'], '&cls=9th&subj=Hindi'); df_check($c === 200, 'Duty teacher reads');
+[$c] = $du('copy', ['cls' => '9th', 'subj' => 'Hindi', 'ch' => 'a|b', 'rows' => ['s1' => 'ok']], $tok['K']); df_check($c === 400, 'bad chapter name refused');
+
 // ---- problem reports ----
 [$c, $j] = $du('bug', ['msg' => 'Save does nothing', 'screen' => 'diary', 'err' => 'x'], $tok['K']); df_check($c === 200 && $j['ok'], 'teacher sends a problem'); $bid = $j['id'];
 [$c] = $du('bugs', null, $tok['K']); df_check($c === 403, 'teacher cannot read reports');

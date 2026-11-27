@@ -12,6 +12,10 @@
 //   POST ?a=sent {date,type,sid,subj,on}  Duty teacher / Principal: a parent message was sent on WhatsApp (type abs | hw)
 //   POST ?a=bug {screen,msg,err,ver}  any staff login: "🐞 Problem batao" — what went wrong, on which screen
 //   GET  ?a=bugs                     Principal / Chairman: the last 60 days' problem reports
+//   GET  ?a=copy&cls=&subj=         copy (notebook) checking by chapter of one class + subject (teachers of that class, Principal,
+//                                    Chairman, Duty teacher); POST {cls,subj,ch,rows:{sid:'ok'|'inc'}} = the subject teacher / Principal
+//                                    (kind tchCopy r = cls|subj|chapter name) — owner, 27 Nov 2026: "syllabus add hai to copy chapter
+//                                    ke according waha par entry karne ko de — checked complete or not"
 //   GET  ?a=sentlist&date=           parent messages marked sent that day (any staff; used by Report & Message screens)
 //   GET  ?a=hwsum                    homework checks of MY classes (teacher: classes he teaches; Principal/Chairman: all):
 //                                    last check date per class|subject, 30-day "not done" counts per child, today's checks
@@ -95,6 +99,28 @@ case 'hwnot': {
     sch_json(['ok' => true, 'date' => $date, 'items' => $items, 'sent' => (object)$sent]);
 }
 
+case 'copy': {
+    $cls = du_txt($method === 'POST' ? ($in['cls'] ?? '') : ($_GET['cls'] ?? ''), 20); $subj = du_txt($method === 'POST' ? ($in['subj'] ?? '') : ($_GET['subj'] ?? ''), 60);
+    if (!in_array($cls, du_classes(), true) || $subj === '') sch_fail('Choose the class and subject.');
+    if ($method === 'GET') {
+        if ($role === 'teacher' && !$duty && !sch_in_class($tid, $cls)) sch_fail('You can see only your own classes.', 403);
+        $out = [];
+        foreach (du_rows($db, 'tchCopy', "$cls|$subj|") as $r => $d) $out[substr($r, strlen("$cls|$subj|"))] = ['rows' => (object)($d['rows'] ?? []), 'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
+        sch_json(['ok' => true, 'chapters' => (object)$out]);
+    }
+    if (!($role === 'principal' || ($role === 'teacher' && sch_teaches($tid, $cls, $subj)))) sch_fail('Only the teacher of this subject checks its copies.', 403);
+    // r ≤ 190 chars: class 20 + subject 60 + chapter 100
+    $ch = du_txt($in['ch'] ?? '', 100); if ($ch === '' || str_contains($ch, '|')) sch_fail('Choose the chapter.');
+    $ids = []; foreach ($db->query("SELECT r, d FROM sch_records WHERE k='student' AND deleted=0") as $row) { $d = json_decode((string)$row['d'], true); if (($d['cls'] ?? '') === $cls) $ids[(string)$row['r']] = true; }
+    $rows = []; foreach ((array)($in['rows'] ?? []) as $sid => $v) { $sid = (string)$sid; if (isset($ids[$sid]) && in_array($v, ['ok', 'inc'], true)) $rows[$sid] = $v; }
+    if (!$rows) sch_fail('Mark at least one child.');
+    $rec = ['cls' => $cls, 'subj' => $subj, 'ch' => $ch, 'rows' => $rows, 'tid' => $role === 'teacher' ? $tid : 'P', 'by' => (string)($u['label'] ?? $uid), 'at' => sch_now_ms()];
+    sch_rec_put('tchCopy', "$cls|$subj|$ch", $rec, $uid);
+    $inc = count(array_filter($rows, fn($v) => $v === 'inc'));
+    sch_log($u, 'Copy check', "Class $cls $subj, chapter \"$ch\": " . (count($rows) - $inc) . " complete, $inc incomplete");
+    sch_json(['ok' => true, 'rec' => $rec]);
+}
+
 case 'sentlist': {
     if ($method !== 'GET') sch_fail('GET only', 405);
     $date = du_date($_GET['date'] ?? date('Y-m-d')); $sent = [];
@@ -124,7 +150,7 @@ case 'sent': {
     if ($method !== 'POST') sch_fail('POST only', 405);
     $date = du_date($in['date'] ?? ''); $type = (string)($in['type'] ?? ''); $sid = du_txt($in['sid'] ?? '', 40); $subj = du_txt($in['subj'] ?? '', 60);
     $stu = $sid === '' ? null : sch_rec_get('student', $sid);
-    if (!in_array($type, ['abs', 'abs3', 'low', 'hw', 'hw3', 'catch'], true) || $stu === null) sch_fail('Choose the child.');
+    if (!in_array($type, ['abs', 'abs3', 'low', 'hw', 'hw3', 'catch', 'copy'], true) || $stu === null) sch_fail('Choose the child.');
     // Duty teacher / Principal: any child. A teacher: children of a class he teaches or is class teacher of (owner, 27 Nov 2026).
     if (!$duty && !($role === 'teacher' && sch_in_class($tid, (string)($stu['cls'] ?? '')))) sch_fail('You can mark messages only for your own classes.', 403);
     $key = "$date|$type|$sid|$subj";

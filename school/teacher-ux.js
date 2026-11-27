@@ -51,7 +51,7 @@
   let TS = null;
   document.addEventListener('touchstart', e => {
     if (!S || e.touches.length !== 1) { TS = null; return; }
-    const t = e.target; if (t.closest && t.closest('input,textarea,select,.qn,.reg,.bd-graph,.chips,.seg,.tiles,.calendar-grid,.hwb,.pick,.res,.weekbar,.cr-cs,.cr-tabs,.cr-sum,.cr-list,.cr-more,.cr-share,.dform')) { TS = null; return; }
+    const t = e.target; if (t.closest && t.closest('input,textarea,select,.qn,.reg,.bd-graph,.chips,.seg,.tiles,.calendar-grid,.hwb,.pick,.res,.weekbar,.cr-cs,.cr-tabs,.cr-sum,.cr-list,.cr-more,.cr-share,.dform,.cp-chs,.cp-sw')) { TS = null; return; }
     const sc = document.querySelector('.scroll'), sh = t.closest && t.closest('.sheet');
     TS = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now(), sheet: !!sh, top: sh ? sh.scrollTop : (sc ? sc.scrollTop : 0) };
   }, { passive: true });

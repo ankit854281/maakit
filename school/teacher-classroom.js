@@ -198,13 +198,18 @@ function vHwRep() {
   const f = ['today', 'x3', 'pct'].includes(P.f) ? P.f : 'today';
   if (H.loading && !H.last) return '<div class="load"><i></i></div>';
   const today = [], x3 = [];
-  mine.forEach(x => { const ch = (H.checks || {})[x.k]; if (ch) Object.entries(ch.rows || {}).forEach(([sid, r]) => { const s = studentById(sid); if (s && (r.hw === 'not' || r.hw === 'half')) today.push({ s, c: x.c, subj: x.s, hw: r.hw, task: ch.hw }); });
-    Object.entries((H.miss || {})[x.k] || {}).forEach(([sid, n]) => { const s = studentById(sid); if (s && n >= 3) x3.push({ s, c: x.c, subj: x.s, n }); }); });
+  // owner, 27 Nov 2026: "koun koun sa bachcha homework karke nahi aya — sabhi me show kare": my own subjects + EVERY subject of
+  // the class I am class teacher of (hwsum already gives a class teacher's whole class).
+  const ctc = myCT(), keys = new Set(mine.map(x => x.k));
+  [...new Set([...Object.keys(H.checks || {}), ...Object.keys(H.miss || {})])].forEach(k => { const [c] = k.split('|'); if (!keys.has(k) && ctc.includes(c)) keys.add(k); });
+  [...keys].forEach(k => { const [c, sb] = k.split('|'), ch = (H.checks || {})[k];
+    if (ch) Object.entries(ch.rows || {}).forEach(([sid, r]) => { const s = studentById(sid); if (s && (r.hw === 'not' || r.hw === 'half')) today.push({ s, c, subj: sb, hw: r.hw, task: ch.hw, by: ch.by }); });
+    Object.entries((H.miss || {})[k] || {}).forEach(([sid, n]) => { const s = studentById(sid); if (s && n >= 3) x3.push({ s, c, subj: sb, n }); }); });
   const pct = mine.map(x => { const ch = (H.checks || {})[x.k], last = (H.last || {})[x.k]; return { x, ch, last }; });
   const G = crGiven(t), fG = ['diary', 'share', 'catch'].includes(P.f);
   if (fG) return crHead('Homework given today', esc(fmtLong(t))) + crGivenStats(G, P.f) + (P.f === 'share' ? crShareView(G) : P.f === 'catch' ? crCatchView(G) : crDiaryView(G)) + crCheckedStats(today, x3, mine, '');
   const head = crHead('Homework checked', esc(fmtLong(t))) + crGivenStats(G, '') + crCheckedStats(today, x3, mine, f);
-  if (f === 'today') return head + crMsgList(t, 'hw', today.map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: y.hw === 'half' ? 'amber' : 'red', why: (y.hw === 'half' ? 'Half done' : 'Not done') + (y.task ? ' · ' + esc(y.task.slice(0, 50)) : ''), text: msgText('hw', y.s, y.c, { subj: y.subj, note: y.task, date: t }) })), 'Nobody is marked “not done” today', 'Check homework first — this list fills from it.');
+  if (f === 'today') return head + crMsgList(t, 'hw', today.map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: y.hw === 'half' ? 'amber' : 'red', why: (y.hw === 'half' ? 'Half done' : 'Not done') + (y.task ? ' · ' + esc(y.task.slice(0, 50)) : '') + (y.by ? ' · checked by ' + esc(String(y.by).replace(/\s*\(.*\)/, '')) : ''), text: msgText('hw', y.s, y.c, { subj: y.subj, note: y.task, date: t }) })), 'Nobody is marked “not done” today', 'Check homework first — this list fills from it.');
   if (f === 'x3') return head + crMsgList(t, 'hw3', x3.sort((a, b) => b.n - a.n).map(y => ({ s: y.s, c: y.c, subj: y.subj, tone: 'amber', why: `${y.n} times not done in 30 days`,
     text: `Dear Parent,\n${y.s.name} (Class ${y.c}) did not complete the ${y.subj} homework ${y.n} times in the last 30 days. Kindly check the homework at home every day and meet the teacher if needed.\n${y.s.name} ने पिछले 30 दिनों में ${y.n} बार ${y.subj} का गृहकार्य पूरा नहीं किया। कृपया रोज़ घर पर गृहकार्य देखें और ज़रूरत हो तो शिक्षक से मिलें।\n${crSign()}` })), 'No child missed homework 3+ times', 'Nothing to send.');
   return head + `<div class="card">${pct.map(({ x, ch, last }) => { const rows = ch ? Object.values(ch.rows || {}) : [], d = rows.filter(r => r.hw === 'done').length, tot = rows.filter(r => r.hw).length, p = tot ? Math.round(d / tot * 100) : null;
@@ -254,12 +259,60 @@ function crCatchView(G) {
     text: `Dear Parent,\n${y.s.name} was absent today. Here is today's work of Class ${y.c} so that nothing is missed:\n` + y.items.map(e => `• ${e.subj}${e.classwork ? ' — CW: ' + e.classwork : ''}${e.hw ? ' — HW: ' + e.hw : ''}`).join('\n') + `\nआज ${y.s.name} अनुपस्थित था/थी। ऊपर आज का कक्षा कार्य और गृहकार्य है, कृपया घर पर पूरा करवाएँ।\n${crSign()}` })), 'No absent child in the classes you wrote today', 'Nothing to send.');
 }
 
+
+// ---------------------------------------------------------------- COPY CHECK BY CHAPTER (27 Nov 2026)
+// owner: "homework add kar diye ho to copy checking bhi add kardo — syllabus add hai to copy chapter ke according waha par entry
+// karne ko de, checked complete or not". Classroom → Check HW → 📓 Copy by chapter. Chapters come from the syllabus (syl);
+// pick a chapter, everyone starts ✓ Complete, tap a child whose copy is incomplete (✗), Save → duty_api.php ?a=copy
+// (kind tchCopy, one record per class + subject + chapter, saved again to correct). Each chapter shows its % complete;
+// incomplete children get a parent message (sent mark 'copy').
+const CP = {};
+function crNeedCopy(k, force) {
+  if (CP[k] && !force && (CP[k].loading || Date.now() - CP[k].at < 90000)) return CP[k];
+  const [c, sb] = k.split('|'), old = CP[k]; CP[k] = Object.assign({}, old || { chapters: {} }, { loading: !old, at: Date.now() });
+  api(`duty_api.php?a=copy&cls=${encodeURIComponent(c)}&subj=${encodeURIComponent(sb)}`).then(r => { CP[k] = { at: Date.now(), chapters: r.chapters || {} }; softRender(); }).catch(e => { CP[k] = Object.assign({}, old || { chapters: {} }, { at: Date.now(), err: e.message }); softRender(); });
+  return CP[k];
+}
+function crChName(ch) { return String((ch && ch.n) || '').trim().slice(0, 100); }
+function vCopy() {
+  const list = crMyCS(); if (!list.length) return crEmpty('📓', 'No subjects given to you yet', 'The Principal sets them in the timetable.');
+  const key = list.some(x => x.k === P.key) ? P.key : list[0].k, [c, sb] = key.split('|'), y = S.syl[key] || { chapters: [] }, chs = (y.chapters || []).filter(x => crChName(x));
+  const C = crNeedCopy(key), kids = studentsOf(c), pct = rec => { const v = Object.values((rec && rec.rows) || {}); return v.length ? Math.round(v.filter(x => x === 'ok').length / v.length * 100) : null; };
+  const picker = `<div class="cr-cs">${list.map(x => { const yy = S.syl[x.k] || {}; return `<button class="${x.k === key ? 'on' : ''} ${(yy.chapters || []).length ? 'd' : 'n'}" onclick="DRAFT.cp=null;go('diary',{m:'check',cm:'copy',key:${jsq(x.k)}})"><i></i><b>${esc(x.c)} · ${esc(x.s)}</b><small>${(yy.chapters || []).length} chapters</small></button>`; }).join('')}</div>`;
+  if (!chs.length) return picker + `<div class="card cr-empty"><div class="ei">📚</div><b>No syllabus for Class ${esc(c)} ${esc(sb)} yet</b><small>Add the chapters once — copy checking then works chapter by chapter.</small><button class="btn go" style="margin-top:10px" onclick="go('plan',{m:'syl',key:${jsq(key)}})">Add syllabus</button></div>`;
+  if (C.loading && !Object.keys(C.chapters || {}).length) return picker + '<div class="load"><i></i></div>';
+  const recs = C.chapters || {};
+  // default chapter: the latest finished chapter not checked yet, else the first not checked, else the first
+  const firstTodo = [...chs].reverse().find(x => x.done && !recs[crChName(x)]) || chs.find(x => !recs[crChName(x)]) || chs[0];
+  const chn = chs.some(x => crChName(x) === P.ch) ? P.ch : crChName(firstTodo), rec = recs[chn];
+  const chips = `<div class="cp-chs">${chs.map((x, i) => { const n = crChName(x), p = pct(recs[n]); return `<button class="${n === chn ? 'on' : ''} ${p === null ? '' : p === 100 ? 'full' : 'part'}" onclick="DRAFT.cp=null;go('diary',{m:'check',cm:'copy',key:${jsq(key)},ch:${jsq(n)}})"><em>${i + 1}</em><span>${esc(n)}</span><small>${p === null ? (x.done ? 'Taught · not checked' : 'Not checked') : p + '% complete'}</small></button>`; }).join('')}</div>`;
+  // rebuilt when the chapter changes, or when a newer saved record arrives and nothing was tapped yet
+  if (!DRAFT.cp || DRAFT.cp.k !== key + '|' + chn || (!DRAFT.cp.changed && (rec ? rec.at : 0) !== DRAFT.cp.at)) { const rows = {}; kids.forEach(s2 => { rows[s2.id] = ((rec && rec.rows) || {})[s2.id] || 'ok'; }); DRAFT.cp = { k: key + '|' + chn, rows, at: rec ? rec.at : 0, changed: false }; }
+  const R = DRAFT.cp.rows, nOk = kids.filter(s2 => R[s2.id] === 'ok').length, nInc = kids.length - nOk, ph = needPhotos(c);
+  const inc = rec ? Object.entries(rec.rows || {}).filter(([, v]) => v === 'inc').map(([sid]) => studentById(sid)).filter(Boolean) : [];
+  return picker + chips + `<div class="card cr-check">
+    <div class="cr-hw cp"><div class="tag">Class ${esc(c)} · ${esc(sb)}</div><small>Copy check · chapter</small><b>${esc(chn)}</b>${rec ? `<small style="margin:6px 0 0">Last saved by ${esc(String(rec.by || '').replace(/\s*\(.*\)/, ''))} · ${esc(fmtTime(rec.at))}</small>` : ''}</div>
+    <div class="cr-cnt" style="grid-template-columns:1fr 1fr"><div class="t-green"><b>${nOk}</b>Complete</div><div class="t-red"><b>${nInc}</b>Incomplete</div></div>
+    <p class="cr-hint">👆 Everyone starts <b>✓ Complete</b>. Tap a child whose copy of this chapter is <b>incomplete</b>.</p>
+    <div class="tiles">${kids.map((s2, i) => { const v = R[s2.id], pic = ph[s2.id];
+      return `<button type="button" class="tile cr-t ${v === 'inc' ? 'sA' : ''}" onclick="crCpTap(${jsq(s2.id)})"><span class="ph">${pic ? `<img src="${esc(pic.src)}" alt="" loading="lazy">` : `<i>${esc(initials(s2.name))}</i>`}<em class="badge">${v === 'inc' ? '✗' : '✓'}</em></span><b>${esc(s2.name)}</b><small>Roll ${esc(s2.rollno || i + 1)}</small></button>`; }).join('')}</div>
+    <div class="sticky"><button class="btn go full submit" onclick="crCpSave(${jsq(c)},${jsq(sb)},${jsq(chn)})">Save · ${nOk} complete · ${nInc} incomplete</button></div></div>
+    ${inc.length ? crMsgList(todayISO(), 'copy', inc.map(s2 => ({ s: s2, c, subj: (sb.slice(0, 20) + ' · ' + chn).slice(0, 58), tone: 'red', why: 'Copy incomplete · ' + esc(chn.slice(0, 40)),
+      text: `Dear Parent,\n${s2.name}'s ${sb} copy (Class ${c}) is incomplete for the chapter “${chn}”. Kindly help ${s2.name} complete it at home and show it to the teacher.\n${s2.name} की ${sb} की कॉपी में अध्याय “${chn}” का काम अधूरा है। कृपया घर पर पूरा करवाएँ और शिक्षक को दिखाएँ।\n${crSign()}` })), '', '') : ''}`;
+}
+function crCpTap(id) { const R = DRAFT.cp.rows; R[id] = R[id] === 'inc' ? 'ok' : 'inc'; DRAFT.cp.changed = true; render(); }
+async function crCpSave(c, sb, ch) {
+  try { await api('duty_api.php?a=copy', { cls: c, subj: sb, ch, rows: DRAFT.cp.rows }); DRAFT.cp = null; P.key = sylKey(c, sb); P.ch = ch; crNeedCopy(sylKey(c, sb), true); toast('Copy check saved ✓ — the parents of incomplete copies are listed below.'); render(); }
+  catch (e) { toast(e.message); }
+}
+
 if (typeof vDiary === 'function') {
   vDiary = function () {
     const m = ['check', 'rep'].includes(P.m) ? P.m : 'write', d = P.date || todayISO();
     const n = (() => { try { return crHwState().filter(x => x.pending).length; } catch (e) { return 0; } })();
     const tabs = crTabs([['write', 'book', 'Diary'], ['check', 'check', 'Check HW', n || ''], ['rep', 'wa', 'Report & Share']], m, k => `DRAFT.hc=null;go('diary',{m:'${k}',date:'${d}'})`);
-    return tabs + (m === 'check' ? vHwCheck() : m === 'rep' ? vHwRep() : vDiaryWrite());
+    const sw = m === 'check' ? `<div class="cp-sw"><button class="${P.cm !== 'copy' ? 'on' : ''}" onclick="go('diary',{m:'check'})">📕 Homework</button><button class="${P.cm === 'copy' ? 'on' : ''}" onclick="go('diary',{m:'check',cm:'copy'})">📓 Copy by chapter</button></div>` : '';
+    return tabs + sw + (m === 'check' ? (P.cm === 'copy' ? vCopy() : vHwCheck()) : m === 'rep' ? vHwRep() : vDiaryWrite());
   };
 }
 
@@ -416,6 +469,12 @@ if (typeof sdCard === 'function') {
   .md-ok{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:var(--okbg);color:var(--ok);font-weight:800;display:flex;align-items:center;justify-content:center}
   .md-arr,.md-now{font-style:normal;font-size:9.5px;font-weight:700;border-radius:999px;padding:1px 6px;vertical-align:1px}.md-arr{background:#F1EAFE;color:#6D28D9}.md-now{background:#F04438;color:#fff}
   .md-key{font-size:10.5px;color:var(--faint);margin:6px 2px 0;text-align:center}
+  .cp-sw{display:flex;gap:6px;margin:0 0 10px}.cp-sw button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 6px;font-weight:600;font-size:12px;color:var(--muted);cursor:pointer}.cp-sw button.on{border-color:var(--a);color:var(--a);background:var(--tint)}
+  .cp-chs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:none}.cp-chs::-webkit-scrollbar{display:none}
+  .cp-chs button{flex:0 0 auto;width:150px;text-align:left;border:2px solid transparent;background:#fff;border-radius:14px;padding:8px 10px;box-shadow:0 2px 10px rgba(16,40,36,.06);cursor:pointer;display:flex;flex-direction:column;gap:2px}
+  .cp-chs button em{font-style:normal;font-size:10px;font-weight:700;color:var(--a);background:var(--tint);border-radius:6px;width:20px;text-align:center}.cp-chs button span{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cp-chs button small{font-size:10.5px;color:var(--muted)}.cp-chs button.full small{color:var(--ok);font-weight:700}.cp-chs button.part small{color:#A15C07;font-weight:700}.cp-chs button.on{border-color:var(--a)}
+  .cr-hw.cp{border-left-color:#2E90FA;border-color:#B9D7FB;background:#F4F9FF}.cr-hw.cp .tag{background:#DCEBFE;color:#1D5FB8}.cr-hw.cp small{color:#3B6AA8}
   .cr-quick{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.cr-quick small{color:var(--muted);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`;
   document.head.appendChild(st);
 })();
