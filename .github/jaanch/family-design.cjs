@@ -56,7 +56,7 @@ assert.equal(w.document.querySelectorAll('#fam-intro').length,0);
 dom.window.close();
 ({dom,w}=fixture('student'));
 assert(!w.document.querySelector('.fam-tabs').textContent.includes('Fees'));
-assert(w.document.querySelector('.fam-tabs').textContent.includes('Play'));
+assert(w.document.querySelector('.fam-tabs').textContent.includes('Practice'));
 assert(!w.document.querySelector('#fam-menu').textContent.includes('Staff'));
 dom.window.close();
 console.log('Family design: real ERP render, child switch/scoped homework, attendance, results, fees, student restrictions, intro, account sheet and mandatory PIN passed');
