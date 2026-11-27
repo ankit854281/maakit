@@ -29,28 +29,88 @@
  const root=document.getElementById('root');
  document.documentElement.classList.add('sn-family');
  const originalRender=typeof render==='function'?render:null;
+ // ---- WhatsApp look (owner, 27 Nov 2026: "ekdam WhatsApp look do") -------------------------------------------------
+ // Home = a chat list (Homework, Attendance, Fees, Notices, Class teacher, Results, Games…) with last update, time and a
+ // green unread badge; children as Status circles; Homework and Notices open as chat bubbles on the WhatsApp wallpaper;
+ // every other screen keeps the school's real screen under a WhatsApp chat header. Only this family's data (PD) is used.
+ const WA={f:'all',seen:{}};
+ try{WA.seen=JSON.parse(localStorage.getItem('sn_wa_seen')||'{}')||{};}catch(e){}
+ const seenOf=k=>WA.seen[k]||'',markSeen=(k,v)=>{if(WA.seen[k]===v)return;WA.seen[k]=v;try{localStorage.setItem('sn_wa_seen',JSON.stringify(WA.seen));}catch(e){}};
+ const P={chat:'<path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/>',book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M4 19a2 2 0 0 1 2-2h13v4H6a2 2 0 0 1-2-2Z"/>',fee:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',play:'<rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17.5 13.5h.01"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4Z"/><path d="M10 21h4"/>',back:'<path d="M15 5l-7 7 7 7"/>',dots:'<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>',check:'<path d="M5 12l4 4 10-10"/>',person:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',star:'<path d="M12 3l2.6 5.6 6 .7-4.5 4 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.5-4 6-.7Z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'};
+ const ic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+(P[n]||'')+'</svg>';
+ const SUBC=['#1FA855','#027EB5','#E0662B','#8E44C9','#D6336C','#0E9F9A','#B7791F','#3D5AFE'];
+ const subColor=s=>{let h=0;for(const ch of String(s||''))h=(h*31+ch.charCodeAt(0))>>>0;return SUBC[h%SUBC.length];};
+ const dayLabel=d=>{if(!d)return '';const t0=todayISO();if(d===t0)return t('Today');if(typeof addDays==='function'&&d===addDays(t0,-1))return t('Yesterday');try{return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});}catch(e){return d;}};
+ const short=d=>{if(!d)return '';const t0=todayISO();if(d===t0)return t('Today');if(typeof addDays==='function'&&d===addDays(t0,-1))return t('Yesterday');return d.slice(8,10)+'/'+d.slice(5,7);};
+ const navHas=k=>(NAV[U.role]||[]).some(x=>x[0]===k);
+ function kidStatus(kid){
+  if(!PD.kids.length)return '';
+  return '<div class="wa-status fam-child">'+PD.kids.map(k=>'<button class="'+(k.id===kid.id?'on':'')+'" onclick="PKID=\''+esc(k.id)+'\';render()"><span class="ring"><span>'+esc((k.name||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join(''))+'</span></span><small>'+esc((k.name||'').split(' ')[0])+'</small><i>'+esc(k.cls)+'</i></button>').join('')+'</div>';
+ }
+ function chats(kid,isParent){
+  const date=todayISO(),at=pAtt(kid),hw=PD.hw.filter(h=>h.cls===kid.cls).sort((a,b)=>b.date.localeCompare(a.date)),last=hw[0];
+  const hwNew=hw.filter(h=>h.date>(seenOf('hw:'+kid.id)||'0000')).length;
+  const nts=(PD.notices||[]).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))),nNew=nts.filter(n=>String(n.date)>(seenOf('nt')||'0000')).length;
+  const exams=(S.exams||[]).filter(e=>PD.marks.some(m=>m.sid===kid.id&&m.exam===e.id)),le=exams[exams.length-1];
+  let pct=null;if(le){let g=0,mx=0;PD.marks.filter(m=>m.sid===kid.id&&m.exam===le.id).forEach(m=>{if(m.mark!=='AB'&&m.mark!==''&&m.max){g+=+m.mark;mx+=+m.max;}});pct=mx?Math.round(g/mx*1000)/10:null;}
+  const R=[];
+  R.push({g:'study',go:'phw',ic:'book',c:'#1FA855',title:t('Homework & class work'),prev:last?('<b style="color:'+subColor(last.subj)+'">'+esc(last.subj)+':</b> '+esc(last.hw||last.classwork||last.topic||'')):t('Homework will appear here when the teacher writes the diary'),time:last?short(last.date):'',n:hwNew});
+  R.push({g:'school',go:'presults',ic:'check',c:at.today&&!at.today.present?'#E5484D':'#00A884',title:t('Attendance'),prev:(at.today?(at.today.present?'✅ '+t('Present today'):'❌ '+t('Absent today')):t("Today's attendance not marked yet"))+(at.pct!=null?' · '+at.pct+'% '+t('overall'):''),time:at.today?short(date):''});
+  if(isParent&&navHas('pfees'))R.push({g:'school',go:'pfees',ic:'fee',c:'#E0662B',title:t('Fees'),prev:t('Fee account, receipts and online payment'),time:''});
+  R.push({g:'school',go:'pnotices',ic:'bell',c:'#027EB5',title:t('Notices & calendar'),prev:nts[0]?esc(nts[0].title||''):t('No notice yet'),time:nts[0]?short(String(nts[0].date||'')):'',n:nNew});
+  if(navHas('studio'))R.push({g:'school',go:'studio',ic:'person',c:'#8E44C9',title:kid.ct?esc(kid.ct):t('Class teacher'),prev:t('Class teacher')+' · Class '+esc(kid.cls)+' — '+t('message the teacher'),time:''});
+  R.push({g:'study',go:'presults',ic:'chart',c:'#D6336C',title:t('Results & progress'),prev:le?esc(le.name)+(pct!=null?' · '+pct+'%':''):t('No exam marks published yet'),time:''});
+  if(navHas('game'))R.push({g:'study',go:'game',ic:'play',c:'#3D5AFE',title:t('Game Zone'),prev:t('Play and learn — 5 questions a round'),time:''});
+  if(navHas('quiz'))R.push({g:'study',go:'quiz',ic:'star',c:'#B7791F',title:t('Quiz Duel'),prev:t('Challenge classmates on what you learnt'),time:''});
+  if(navHas('learning'))R.push({g:'study',go:'learning',ic:'book',c:'#0E9F9A',title:t('Learning Adventure'),prev:t('Lessons and practice from the teachers'),time:''});
+  if(navHas('faculty'))R.push({g:'school',go:'faculty',ic:'person',c:'#5B6B7B',title:t('Our Teachers'),prev:t('Meet the teachers'),time:''});
+  const F=WA.f,list=R.filter(r=>F==='all'||(F==='unread'?r.n>0:r.g===F));
+  const chip=(k,l)=>'<button class="'+(F===k?'on':'')+'" onclick="SNFamily.filter(\''+k+'\')">'+t(l)+'</button>';
+  return '<div class="wa-chips">'+chip('all','All')+chip('unread','Unread')+chip('study','Study')+chip('school','School')+'</div>'+
+   '<div class="wa-list fam-real-screen fam-stats">'+(list.length?list.map(r=>'<button class="wa-row" onclick="go(\''+r.go+'\')"><span class="wa-av" style="background:'+r.c+'">'+ic(r.ic)+'</span><span class="wa-mid"><b>'+r.title+'</b><small>'+r.prev+'</small></span><span class="wa-end"><small class="'+(r.n?'g':'')+'">'+esc(r.time||'')+'</small>'+(r.n?'<em>'+r.n+'</em>':'')+'</span></button>').join(''):'<p class="wa-none">'+t('No unread updates')+' ✓</p>')+'</div>'+
+   '<p class="wa-lock">🔒 '+t('Only your child\'s school information is shown here.')+'</p>';
+ }
+ function hwChat(kid){
+  const rows=PD.hw.filter(h=>h.cls===kid.cls).sort((a,b)=>a.date.localeCompare(b.date)),by={};rows.forEach(h=>(by[h.date]=by[h.date]||[]).push(h));
+  markSeen('hw:'+kid.id,todayISO());
+  const extra=(typeof parentAcademicChecks==='function'?parentAcademicChecks(kid):'')+(typeof pNotes==='function'?pNotes(kid):'');
+  return '<div class="wa-chat fam-real-screen"><div class="wa-sys">🔒 '+t('Class work and homework from the teachers\' diary — last 10 days.')+'</div>'+
+   (Object.keys(by).length?Object.entries(by).map(([d,l])=>'<div class="wa-day"><span>'+esc(dayLabel(d))+'</span></div>'+l.map(h=>'<div class="wa-b"><b style="color:'+subColor(h.subj)+'">'+esc(h.subj)+'</b>'+(h.topic?'<p>📖 '+esc(h.topic)+'</p>':'')+(h.classwork?'<p><i>'+t('Class work')+':</i> '+esc(h.classwork)+'</p>':'')+(h.hw?'<p class="hw"><i>'+t('Homework')+':</i> <strong>'+esc(h.hw)+'</strong></p>':'')+(h.books?'<p><i>'+t('Bring')+':</i> '+esc(h.books)+'</p>':'')+(h.revision?'<p><i>'+t('Revision')+':</i> '+esc(h.revision)+'</p>':'')+'<time>'+esc(short(d))+' ✓✓</time></div>').join('')).join(''):'<div class="wa-sys">'+t('Nothing written in the last 10 days.')+'</div>')+
+   (extra?'<div class="wa-extra">'+extra+'</div>':'')+'</div>';
+ }
+ function noticeChat(){
+  const nts=(PD.notices||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  if(nts.length)markSeen('nt',String(nts[nts.length-1].date||''));
+  const date=todayISO(),kidCls=PD.kids.map(k=>k.cls),up=[...S.cal,...(typeof examItems==='function'?examItems().filter(e=>e.cls.some(c=>kidCls.includes(c))):[])].filter(e=>(e.to||e.date)>=date).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,12);
+  return '<div class="wa-chat fam-real-screen"><div class="wa-sys">📢 '+t('School notices — only the school can send messages here.')+'</div>'+
+   nts.map(n=>'<div class="wa-b"><b style="color:#027EB5">'+esc(n.title||'')+'</b>'+(n.body?'<p>'+esc(n.body)+'</p>':'')+'<time>'+esc(short(String(n.date||'')))+'</time></div>').join('')+
+   (up.length?'<div class="wa-day"><span>'+t('Coming up')+'</span></div><div class="wa-b">'+up.map(e=>'<p>'+ic('cal').replace('<svg','<svg class="mini"')+' <b>'+esc(e.title)+'</b> · '+esc(dayLabel(e.date))+(e.type?' <i>'+esc(e.type)+'</i>':'')+'</p>').join('')+'</div>':'')+
+   '<div class="wa-sys">'+t('Change your login PIN')+' <button class="wa-mini" onclick="changeMyPin()">'+t('Change PIN')+'</button></div></div>';
+ }
+ const TITLES={phw:'Homework & class work',pfees:'Fees',presults:'Results & progress',pnotices:'Notices & calendar',game:'Game Zone',quiz:'Quiz Duel',learning:'Learning Adventure',faculty:'Our Teachers',studio:'Class teacher',finance:'Fee Ledger'};
  if(originalRender)render=function(){
   originalRender();
   if(typeof U==='undefined'||!U||!allowed.includes(U.role)||typeof S==='undefined'||!S){document.body.classList.remove('fam-signed-in');return;}
   document.body.classList.add('fam-signed-in');
   const content=root.querySelector('main.erp-wrap');if(!content)return;
   const all=NAV[U.role]||[],isParent=U.role==='parent';
-  const tabs=[['phome','Home',0],['phw','Homework',1],[isParent?'pfees':'game',isParent?'Fees':'Play',2],['presults','Progress',3],['pnotices','Notices',4]];
-  const active=Math.max(0,tabs.findIndex(x=>x[0]===view));
-  const previousIndex=lastTheme,theme=themes[active],previous=themes[lastTheme];lastTheme=active;
-  const kid=typeof pKid==='function'&&typeof PD!=='undefined'&&PD?pKid():null;
-  const hero='<div class="fam-thought"><span>✦</span><div><b>'+t('A little better, every day')+'</b><p>'+t('Together, we help every child shine.')+'</p></div>'+drawing(1)+'</div>';
-  const child=kid?'<div class="fam-child"><span class="fam-avatar">'+esc((kid.name||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join(''))+'</span><div><small>'+t('Your learning journey')+'</small><b>'+esc(kid.name)+'</b><p>Class '+esc(kid.cls)+'</p></div><span class="fam-star">✦</span></div>':'';
+  const tabs=[['phome','Chats','chat'],['phw','Homework','book'],[isParent?'pfees':'game',isParent?'Fees':'Play',isParent?'fee':'play'],['presults','Progress','chart'],['pnotices','Updates','bell']];
+  const kid=typeof pKid==='function'&&typeof PD!=='undefined'&&PD&&PD.kids&&PD.kids.length?pKid():null;
+  const home=view==='phome',chatView=view==='phw'||view==='pnotices';
   const oldNodes=[...content.childNodes];
-  root.innerHTML='<div class="fam-phone" style="--fa:'+theme[1]+';--fb:'+theme[0]+';--ft:'+theme[2]+';--old:'+previous[1]+'"><header class="fam-head"><div class="fam-head-wash"></div><div class="fam-heading"><img src="img/chairman-512.png" alt="School logo"><div><small>SNMSIS · '+t(isParent?'Parent':'Student')+'</small><b>'+t('Welcome to your school')+'</b></div><button class="fam-account" onclick="SNFamily.menu()" aria-label="Open account menu">☰</button></div><nav class="fam-tabs" aria-label="Main menu"><span class="fam-fold" style="transform:translateX('+(active*100)+'%)"></span>'+tabs.map(([key,label,icon])=>'<button class="fam-tab '+(view===key?'on':'')+'" onclick="go(\''+key+'\')" '+(view===key?'aria-current="page"':'')+'>'+drawing(icon)+'<span>'+t(label)+'</span></button>').join('')+'</nav><div class="fam-session"><span>● '+esc(S.settings.session||'School session')+'</span>'+language()+'</div></header><main class="fam-content">'+(view==='phome'?hero+child:'')+'<div class="fam-real-screen"></div><footer class="fam-footer">SNMSIS Family · Powered by Maakit</footer></main><dialog id="fam-menu"><div class="fam-sheet"><div class="fam-sheet-top"><b>'+t('Your school, at a glance')+'</b><button onclick="document.getElementById(\'fam-menu\').close()" aria-label="Close menu">×</button></div><div class="fam-shortcuts">'+all.map(([key,icon,label])=>'<button onclick="document.getElementById(\'fam-menu\').close();go(\''+key+'\')"><i class="fa-solid '+icon+'"></i>'+t(label)+'</button>').join('')+'</div><button onclick="SNFamily.intro()">'+t('Replay welcome')+'</button><button onclick="changeMyPin()">'+t('Change PIN')+'</button><button onclick="logout()">'+t('Log out')+'</button></div></dialog></div>';
-  const fold=root.querySelector('.fam-fold');
-  if(fold.animate&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){fold.animate([{transform:'translateX('+(previousIndex*100)+'%)'},{transform:'translateX('+(active*100)+'%)'}],{duration:500,easing:'cubic-bezier(.22,1,.36,1)'});const wash=root.querySelector('.fam-head-wash');wash.style.background=previous[1];wash.animate([{opacity:1},{opacity:0}],{duration:550,fill:'forwards'});}
-  const target=root.querySelector('.fam-real-screen');oldNodes.forEach(n=>target.appendChild(n));
-  if(view==='phome'){const oldHero=target.querySelector('.kid-hero');if(oldHero){oldHero.classList.add('fam-stats');const stats=oldHero.querySelector('.grid');if(stats){oldHero.replaceChildren(stats);stats.classList.add('fam-stat-grid');}}}
+  const head=home
+   ?'<header class="wa-top"><div class="wa-brand"><b>SNMSIS</b><small>'+t(isParent?'Parent':'Student')+' · '+esc(S.settings.session||'')+'</small></div><span class="wa-lang">'+language()+'</span><button class="wa-ib fam-account" onclick="SNFamily.menu()" aria-label="Open account menu">'+ic('dots')+'</button></header>'
+   :'<header class="wa-top wa-chathead"><button class="wa-ib" onclick="go(\'phome\')" aria-label="Back">'+ic('back')+'</button><span class="wa-av sm" style="background:'+(view==='phw'?'#1FA855':view==='pnotices'?'#027EB5':'#00A884')+'">'+ic(view==='phw'?'book':view==='pnotices'?'bell':view==='pfees'?'fee':view==='presults'?'chart':'chat')+'</span><div class="wa-brand"><b>'+t(TITLES[view]||'SNMSIS')+'</b><small>'+(kid?esc(kid.name)+' · Class '+esc(kid.cls):'SNMSIS')+'</small></div><button class="wa-ib fam-account" onclick="SNFamily.menu()" aria-label="Open account menu">'+ic('dots')+'</button></header>';
+  const body=!kid?'<div class="wa-page fam-real-screen"></div>':home?kidStatus(kid)+chats(kid,isParent):view==='phw'?(PD.kids.length>1?kidStatus(kid):'')+hwChat(kid):view==='pnotices'?noticeChat():'<div class="wa-page fam-real-screen"></div>';
+  root.innerHTML='<div class="fam-phone wa'+(chatView?' wa-wall':'')+'">'+head+'<main class="wa-main">'+body+'</main><nav class="fam-tabs wa-nav" aria-label="Main menu">'+tabs.map(([key,label,icon])=>'<button class="fam-tab '+(view===key?'on':'')+'" onclick="go(\''+key+'\')" '+(view===key?'aria-current="page"':'')+'><span class="pill">'+ic(icon)+'</span><span>'+t(label)+'</span></button>').join('')+'</nav>'+
+   '<dialog id="fam-menu"><div class="fam-sheet"><div class="fam-sheet-top"><b>'+t('Your school, at a glance')+'</b><button onclick="document.getElementById(\'fam-menu\').close()" aria-label="Close menu">×</button></div><div class="fam-shortcuts">'+all.map(([key,icon,label])=>'<button onclick="document.getElementById(\'fam-menu\').close();go(\''+key+'\')"><i class="fa-solid '+icon+'"></i>'+t(label)+'</button>').join('')+'</div><button onclick="SNFamily.intro()">'+t('Replay welcome')+'</button><button onclick="changeMyPin()">'+t('Change PIN')+'</button><button onclick="logout()">'+t('Log out')+'</button></div></dialog></div>';
+  const target=root.querySelector('.wa-page');if(target)oldNodes.forEach(n=>target.appendChild(n));
   if(view==='faculty'&&typeof loadParentFaculty==='function')loadParentFaculty();
+  if(chatView){const m=root.querySelector('.wa-main');if(m)requestAnimationFrame(()=>{m.scrollTop=m.scrollHeight;});}
   if(window.SchoolLang)SchoolLang.apply();
  };
  window.SNFamily={
+  filter(k){WA.f=k;render();},
   menu(){const d=document.getElementById('fam-menu');if(d)d.showModal();},
   closeIntro(){clearTimeout(introTimer);document.getElementById('fam-intro')?.remove();},
   intro(){

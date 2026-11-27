@@ -28,3 +28,44 @@
 @keyframes fam-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes fam-bounce{from{transform:translateY(3px) scale(.9)}to{transform:translateY(-3px) scale(1.08)}}@keyframes fam-float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}@keyframes fam-pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 @media(min-width:600px){.sn-family body{background:radial-gradient(at 15% 15%,#383561,#171321)!important;min-height:100vh}.fam-phone,.fam-login{box-shadow:0 10px 70px #0003}.fam-language{border-radius:15px 15px 0 0}}
 @media(prefers-reduced-motion:reduce){.sn-family *,#fam-intro *{animation:none!important;transition:none!important}}
+/* ---- WhatsApp look (owner, 27 Nov 2026: "ekdam WhatsApp look do") ---- */
+.fam-phone.wa{max-width:480px;margin:auto;height:100dvh;min-height:0;display:flex;flex-direction:column;background:#fff;overflow:hidden;font-family:FamilyPoppins,system-ui,sans-serif;color:#111B21}
+.wa-top{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 10px 10px 16px;background:#fff;border-bottom:1px solid #F0F2F5}
+.wa-brand{flex:1;min-width:0}.wa-brand b{display:block;font-size:22px;font-weight:600;color:#1DAA61;letter-spacing:.2px;line-height:1.15}.wa-brand small{display:block;font-size:11.5px;color:#667781;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-chathead{background:#fff;padding:8px 6px}.wa-chathead .wa-brand b{font-size:16px;color:#111B21}.wa-chathead .wa-brand small{font-size:12px}
+.wa-ib{width:40px;height:40px;flex-shrink:0;border:0;background:none;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#3B4A54}.wa-ib:active{background:#F0F2F5}.wa-ib svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wa-ib svg circle{fill:currentColor;stroke:none}
+.wa-lang .school-language{background:#F0F2F5!important;border:0!important;color:#3B4A54!important;border-radius:16px!important;padding:6px 8px!important;font-size:11px!important}
+.wa-main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.wa-status{display:flex;gap:14px;overflow-x:auto;padding:12px 16px 6px;scrollbar-width:none}.wa-status::-webkit-scrollbar{display:none}
+.wa-status button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:64px;padding:0}
+.wa-status .ring{width:62px;height:62px;border-radius:50%;padding:3px;background:#D1D7DB;display:flex}.wa-status button.on .ring{background:conic-gradient(#25D366,#1DAA61,#25D366)}
+.wa-status .ring span{width:100%;height:100%;flex:none;border-radius:50%;background:#DFF5E7;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:600;color:#1DAA61;font-size:17px}
+.wa-status small{font-size:12px;color:#111B21;max-width:70px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wa-status i{font-style:normal;font-size:10.5px;color:#667781}
+.wa-chips{display:flex;gap:8px;padding:8px 16px 6px;overflow-x:auto;scrollbar-width:none}.wa-chips button{flex-shrink:0;border:0;border-radius:999px;background:#F0F2F5;color:#54656F;font:500 13px inherit;padding:7px 14px}.wa-chips button.on{background:#D9FDD3;color:#008069}
+.wa-list{padding:2px 0 8px}.wa-row{width:100%;display:flex;align-items:center;gap:13px;border:0;background:#fff;padding:9px 16px;text-align:left}.wa-row:active{background:#F5F6F6}
+.wa-av{width:50px;height:50px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}.wa-av svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wa-av.sm{width:38px;height:38px}.wa-av.sm svg{width:19px;height:19px}
+.wa-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #F0F2F5;padding:4px 0 12px}.wa-mid b{font-size:16px;font-weight:600;color:#111B21;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-mid small{font-size:13.5px;color:#667781;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wa-mid small b{font-size:13.5px;font-weight:600}
+.wa-end{align-self:stretch;display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-top:6px;border-bottom:1px solid #F0F2F5;padding-bottom:12px}.wa-end small{font-size:12px;color:#667781;white-space:nowrap}.wa-end small.g{color:#1DAA61;font-weight:600}
+.wa-end em{font-style:normal;min-width:21px;height:21px;border-radius:11px;background:#25D366;color:#fff;font:700 11.5px/21px inherit;text-align:center;padding:0 6px}
+.wa-none{text-align:center;color:#667781;font-size:13px;padding:30px 0}.wa-lock{text-align:center;font-size:11.5px;color:#8696A0;padding:10px 24px 18px;margin:0}
+.wa-wall{background:#EFEAE2}.wa-wall .wa-main{background:#EFEAE2 radial-gradient(#E4DCD2 1px,transparent 1.4px) 0 0/22px 22px}
+.wa-chat{padding:10px 12px 18px;display:flex;flex-direction:column;gap:6px}
+.wa-day{align-self:center;margin:8px 0 2px}.wa-day span{display:inline-block;background:#fff;color:#54656F;font-size:12px;font-weight:500;padding:5px 12px;border-radius:8px;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.wa-sys{align-self:center;max-width:88%;text-align:center;background:#FFEECD;color:#54656F;font-size:12px;line-height:1.4;padding:6px 12px;border-radius:8px;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.wa-b{position:relative;align-self:flex-start;max-width:86%;background:#fff;border-radius:0 8px 8px 8px;padding:6px 9px 18px;box-shadow:0 1px .5px rgba(11,20,26,.13);font-size:14.2px;line-height:1.4;color:#111B21;min-width:120px}
+.wa-b::before{content:'';position:absolute;left:-7px;top:0;border:7px solid transparent;border-top-color:#fff;border-right-color:#fff;border-width:0 7px 8px 0}
+.wa-b>b{display:block;font-size:13px;font-weight:600;margin-bottom:2px}.wa-b p{margin:2px 0}.wa-b p i{font-style:normal;color:#667781}.wa-b p.hw strong{font-weight:600}
+.wa-b time{position:absolute;right:8px;bottom:3px;font-size:11px;color:#667781}.wa-b svg.mini{width:14px;height:14px;fill:none;stroke:#667781;stroke-width:2;vertical-align:-2px}
+.wa-mini{border:0;background:#25D366;color:#fff;font:600 12px inherit;border-radius:14px;padding:4px 10px;margin-left:6px}
+.wa-extra{margin-top:8px}.wa-extra>*{border-radius:10px!important}
+.wa-page{padding:10px 12px 16px;background:#F7F8FA;min-height:100%}
+.wa-nav{flex-shrink:0;display:flex;justify-content:space-around;background:#fff;border-top:1px solid #E9EDEF;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.wa-nav .fam-tab{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px 0;color:#54656F;font:500 11.5px inherit}
+.wa-nav .pill{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .2s}.wa-nav .pill svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wa-nav .fam-tab.on{color:#111B21;font-weight:600}.wa-nav .fam-tab.on .pill{background:#D9FDD3;color:#008069}
+.fam-signed-in .fam-language{display:none}
+.wa-page .chip{background:#F0F2F5!important;color:#54656F!important;border:0!important}.wa-page .chip.chip-on{background:#D9FDD3!important;color:#008069!important}
+/* login + intro in WhatsApp green */
+.fam-login-art{background:linear-gradient(160deg,#25D366,#008069)!important}.fam-start,.fam-login-form .btn,.fam-login-form button.btn-p{background:#1DAA61!important}
+@media (prefers-reduced-motion:reduce){.wa-nav .pill{transition:none}}

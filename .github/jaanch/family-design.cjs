@@ -10,20 +10,23 @@ function fixture(role='parent'){
  return {dom,w};
 }
 let {dom,w}=fixture();
+// WhatsApp look (27 Nov 2026): Home = chat list, children = Status circles, Homework / Notices = chat bubbles, 5 bottom tabs
 assert.equal(w.document.querySelectorAll('.fam-tab').length,5);
-assert(w.document.querySelector('.fam-child').textContent.includes('QA Child One'));
-assert(w.document.querySelector('.fam-stats').textContent.includes('100%'));
-assert(!w.document.querySelector('.fam-real-screen').textContent.includes('QA homework TWO'));
+assert(w.document.querySelector('.fam-child').textContent.includes('QA') && w.document.querySelector('.fam-child').textContent.includes('5th'),'children as Status circles (first name + class)');
+assert(w.document.querySelectorAll('.wa-row').length>=4,'chat list rows');
+assert(w.document.querySelector('.fam-stats').textContent.includes('100%'),'attendance row shows the attendance %');
+assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA homework ONE'),'homework row shows the latest homework of the chosen child');
+assert(!w.document.querySelector('.fam-real-screen').textContent.includes('QA homework TWO'),'never the sibling\'s homework on the first child');
 w.eval("view='phw';render()");
-assert(w.document.querySelector('.fam-phone').style.getPropertyValue('--fa')==='#ed641c');
-assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA homework ONE'));
-assert(!w.document.querySelector('.fam-real-screen').textContent.includes('QA homework TWO'));
+assert(w.document.querySelector('.fam-phone').classList.contains('wa-wall'),'homework opens as a chat');
+assert(w.document.querySelector('.wa-chat').textContent.includes('QA homework ONE'));
+assert(!w.document.querySelector('.wa-chat').textContent.includes('QA homework TWO'));
 w.eval("PKID='qa2';render()");
-assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA homework TWO'));
-assert(!w.document.querySelector('.fam-real-screen').textContent.includes('QA homework ONE'));
+assert(w.document.querySelector('.wa-chat').textContent.includes('QA homework TWO'));
+assert(!w.document.querySelector('.wa-chat').textContent.includes('QA homework ONE'));
 w.eval("PKID='qa1';view='presults';render()");
 assert(w.document.querySelector('.fam-real-screen').textContent.includes('42 / 50'));
-assert.equal(w.document.querySelector('.fam-phone').style.getPropertyValue('--fa'),'#14915a');
+assert(w.document.querySelector('.wa-chathead'),'inner screens have the chat header with a back arrow');
 w.eval("view='pfees';render()");
 assert(!w.document.querySelector('.fam-real-screen').textContent.includes('could not open'));
 w.eval("view='pnotices';render()");
