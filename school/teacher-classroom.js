@@ -26,8 +26,10 @@ function crNeedSent(date) {
   return CR.sent[date];
 }
 function crSent(date, type, sid, subj) { return (crNeedSent(date).map || {})[type + '|' + sid + '|' + (subj || '')] || null; }
+// "✓ Sent by Rati Ma'am · 10:42" (owner, 27 Nov 2026: "bheja gaya aur jiske dwara bheja gaya vo bhi show kare")
+function crSentBy(r) { if (!r) return ''; const tm = r.at ? new Date(r.at).toLocaleTimeString(LOC(), { hour: 'numeric', minute: '2-digit' }) : ''; return `✓ Sent${r.by ? ' by ' + esc(String(r.by).replace(/\s*\(.*\)/, '')) : ''}${tm ? ' · ' + esc(tm) : ''}`; }
 async function crMark(date, type, sid, subj) {
-  const R = crNeedSent(date); R.map = Object.assign({}, R.map, { [type + '|' + sid + '|' + (subj || '')]: { at: Date.now() } });
+  const R = crNeedSent(date); R.map = Object.assign({}, R.map, { [type + '|' + sid + '|' + (subj || '')]: { at: Date.now(), by: myName() } });
   try { await api('duty_api.php?a=sent', { date, type, sid, subj: subj || '', on: true }); } catch (e) { toast(e.message); }
   setTimeout(render, 500);
 }
@@ -54,7 +56,7 @@ function crMsgList(date, type, items, emptyTitle, emptySub) {
     <div class="cr-prog"><div><b>${sent.length}/${withPhone.length}</b> parents told</div><span class="pill ${unsent.length ? 'warn' : 'ok'}">${unsent.length ? unsent.length + ' left' : '✓ all sent'}</span></div>
     <div class="cr-bar"><i style="width:${pct}%"></i></div>
     ${items.map(x => { const ok = crSent(date, type, x.s.id, x.subj);
-      return `<div class="cr-row ${ok ? 'sent' : ''}">${crAva(x.s)}<div class="n"><b>${esc(x.s.name)}</b><small>Class ${esc(x.c)} · Roll ${esc(crRoll(x.c, x.s))}${x.subj ? ' · ' + esc(x.subj) : ''}</small><span class="cr-why t-${x.tone || 'red'}">${x.why}</span></div>
+      return `<div class="cr-row ${ok ? 'sent' : ''}">${crAva(x.s)}<div class="n"><b>${esc(x.s.name)}</b><small>Class ${esc(x.c)} · Roll ${esc(crRoll(x.c, x.s))}${x.subj ? ' · ' + esc(x.subj) : ''}</small><span class="cr-why t-${x.tone || 'red'}">${x.why}</span>${ok ? `<small class="cr-by">${crSentBy(ok)}</small>` : ''}</div>
         ${x.s.phone ? (ok ? `<a class="cr-sentb" target="_blank" rel="noopener" href="${wa(x.s.phone, x.text)}" onclick="crMark('${date}','${type}',${jsq(x.s.id)},${jsq(x.subj || '')})" aria-label="Send again">✓ Sent</a>` : `<a class="cr-wab" target="_blank" rel="noopener" href="${wa(x.s.phone, x.text)}" onclick="crMark('${date}','${type}',${jsq(x.s.id)},${jsq(x.subj || '')})" aria-label="WhatsApp ${esc(x.s.name)}'s parent">${ic('wa')}</a>`) : '<small class="mut">No mobile</small>'}</div>`; }).join('')}
     ${nx ? `<div class="cr-next"><a class="btn wa full" target="_blank" rel="noopener" href="${wa(nx.s.phone, nx.text)}" onclick="crMark('${date}','${type}',${jsq(nx.s.id)},${jsq(nx.subj || '')})">${ic('wa')} Send next · ${esc(nx.s.name)} <small>(${sent.length + 1}/${withPhone.length})</small></a></div>` : ''}
     <p class="cr-foot">🔒 Each message goes to the parent alone — never to the class group.</p></div>`;
@@ -377,7 +379,7 @@ if (typeof sdCard === 'function') {
   .cr-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.cr-row:first-of-type{border-top:0}
   .cr-row .n{flex:1;min-width:0}.cr-row .n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cr-row .n small{display:block;color:var(--faint);font-size:11px;margin-top:1px}
   .cr-why{display:inline-block;margin-top:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .cr-row.sent .n,.cr-row.sent .cr-av{opacity:.55}
+  .cr-row.sent .n b,.cr-row.sent .n small:not(.cr-by),.cr-row.sent .cr-why,.cr-row.sent .cr-av{opacity:.55}.cr-row .n small.cr-by{color:var(--ok);font-weight:700;font-size:11px;margin-top:4px}
   .cr-av{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:var(--tint);color:var(--a);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.cr-av img{width:100%;height:100%;object-fit:cover}
   .cr-wab{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(37,211,102,.35)}.cr-wab svg.i{width:18px;height:18px}
   .cr-sentb{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--ok);background:var(--okbg);padding:6px 10px;border-radius:999px;text-decoration:none}

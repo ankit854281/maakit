@@ -107,12 +107,13 @@ function dutyData(date) {
 }
 function vDuty() {
   if (!isDutyMe()) return `<div class="card"><h3>Duty</h3><p class="mut">This page is for the Duty teacher and the Principal.</p></div>`;
-  const t = todayISO(), date = P.date && P.date <= t ? P.date : t, D = dutyData(date), m = ['arr', 'att', 'abs', 'hw', 'chk'].includes(P.m) ? P.m : 'arr';
+  const t = todayISO(), date = P.date && P.date <= t ? P.date : t, D = dutyData(date), m = ['arr', 'att', 'abs', 'hw', 'chk', 'log'].includes(P.m) ? P.m : 'arr';
   const nav = `<div class="datebar"><button class="btn s w" onclick="go('duty',{m:'${m}',date:'${addDays(date, -1)}'})">${ic('back')}</button><label class="dpick"><b>${date === t ? 'Today' : fmtDate(date)}</b><small>${esc(fmtLong(date))}</small><input type="date" max="${t}" value="${date}" onchange="go('duty',{m:'${m}',date:this.value})"></label><button class="btn s w" ${date >= t ? 'disabled' : ''} onclick="go('duty',{m:'${m}',date:'${addDays(date, 1)}'})">${ic('next')}</button></div>`;
   const n = x => x ? ` <span class="dot" style="position:static;display:inline-flex">${x}</span>` : '';
   const head = `<div class="card dutyhead"><h2 style="margin:0">🛡 Duty desk</h2><p class="mut" style="margin:4px 0 0">Arrangement bells, attendance of absent teachers' classes, and parent messages — all in one place.</p></div>` + nav +
-    seg([['arr', '🔁 Arrangement' + n(D.nArr)], ['att', '✅ Attendance' + n(D.nAtt)], ['abs', '🙋 Absent' + n(D.nAbs)], ['hw', '📕 Homework' + n(D.nHw)], ['chk', '📚 HW check' + n(dutyHwCount())]], m, "(k=>go('duty',{m:k,date:'" + date + "'}))");
+    '<div class="duty-seg">' + seg([['arr', '🔁 Arrangement' + n(D.nArr)], ['att', '✅ Attendance' + n(D.nAtt)], ['abs', '🙋 Absent' + n(D.nAbs)], ['hw', '📕 Homework' + n(D.nHw)], ['chk', '📚 HW check' + n(dutyHwCount())], ['log', '📨 Sent']], m, "(k=>go('duty',{m:k,date:'" + date + "'}))") + '</div>';
   if (!D.work) return head + '<div class="ban hol">No school on this day.</div>';
+  if (m === 'log') return head + vDutyLog(date);
   if (m === 'chk') return head + (date === t ? vDutyHw() : '<div class="card"><p class="mut" style="margin:0">The homework check report is for today. Go to Today.</p></div>');
   if (m === 'arr') {
     if (!D.arr.length) return head + `<div class="card"><p class="mut" style="margin:0">No teacher is absent — no arrangement ${date === t ? 'today' : 'on this day'}.</p></div>`;
@@ -134,13 +135,13 @@ function vDuty() {
     const sent = D.H.sent || {}, by = {}; D.abs.forEach(x => (by[x.c] = by[x.c] || []).push(x));
     return head + (notMarked.length ? `<div class="ban warn"><div>Attendance not marked yet: ${notMarked.map(c => 'Class ' + esc(c)).join(', ')}</div></div>` : '') +
       (D.abs.length ? Object.keys(by).map(c => `<div class="card"><h3 style="margin:0 0 4px">Class ${esc(c)} · ${by[c].length} absent</h3>${by[c].map(x => { const ok = sent['abs|' + x.s.id + '|'], txt = msgText('absent', x.s, c, { date });
-        return `<div class="cwr"><div><b>${esc(x.s.name)}</b><small>${x.lv ? 'Leave' : 'Absent'}${x.s.father ? ' · ' + esc(x.s.father) : ''}${ok ? ' · ✓ sent' : ''}</small></div>${x.s.phone ? `<a class="btn s ${ok ? 'l' : 'wa'}" target="_blank" rel="noopener" href="${wa(x.s.phone, txt)}" onclick="dutySent('${date}','abs',${jsq(x.s.id)},'')">${ok ? 'Again' : 'WhatsApp'}</a>` : '<small>No mobile</small>'}</div>`; }).join('')}</div>`).join('')
+        return `<div class="cwr"><div><b>${esc(x.s.name)}</b><small>${x.lv ? 'Leave' : 'Absent'}${x.s.father ? ' · ' + esc(x.s.father) : ''}</small>${ok ? `<small class="cr-by" style="color:#15803D;font-weight:700">${dutyBy(ok)}</small>` : ''}</div>${x.s.phone ? `<a class="btn s ${ok ? 'l' : 'wa'}" target="_blank" rel="noopener" href="${wa(x.s.phone, txt)}" onclick="dutySent('${date}','abs',${jsq(x.s.id)},'')">${ok ? 'Again' : 'WhatsApp'}</a>` : '<small>No mobile</small>'}</div>`; }).join('')}</div>`).join('')
         : `<div class="card"><p class="mut" style="margin:0">No absent child in the classes marked so far.</p></div>`);
   }
   const H = D.H, sent = H.sent || {};
   if (H.loading) return head + '<div class="load"><i></i></div>';
   return head + (H.err ? `<div class="ban warn">${esc(H.err)}</div>` : '') + ((H.items || []).length ? `<div class="card">${H.items.map(x => { const s = studentById(x.sid); if (!s) return ''; const ok = sent['hw|' + x.sid + '|' + x.subj], txt = msgText('hw', s, x.cls, { subj: x.subj, date, note: x.task });
-      return `<div class="cwr"><div><b>${esc(s.name)} · Class ${esc(x.cls)}</b><small>${esc(x.subj)} · ${x.hw === 'half' ? 'half done' : 'not done'} · checked by ${esc(x.teacher)}${ok ? ' · ✓ sent' : ''}</small></div>${s.phone ? `<a class="btn s ${ok ? 'l' : 'wa'}" target="_blank" rel="noopener" href="${wa(s.phone, txt)}" onclick="dutySent('${date}','hw',${jsq(x.sid)},${jsq(x.subj)})">${ok ? 'Again' : 'WhatsApp'}</a>` : '<small>No mobile</small>'}</div>`; }).join('')}</div>`
+      return `<div class="cwr"><div><b>${esc(s.name)} · Class ${esc(x.cls)}</b><small>${esc(x.subj)} · ${x.hw === 'half' ? 'half done' : 'not done'} · checked by ${esc(x.teacher)}</small>${ok ? `<small class="cr-by" style="color:#15803D;font-weight:700">${dutyBy(ok)}</small>` : ''}</div>${s.phone ? `<a class="btn s ${ok ? 'l' : 'wa'}" target="_blank" rel="noopener" href="${wa(s.phone, txt)}" onclick="dutySent('${date}','hw',${jsq(x.sid)},${jsq(x.subj)})">${ok ? 'Again' : 'WhatsApp'}</a>` : '<small>No mobile</small>'}</div>`; }).join('')}</div>`
     : `<div class="card"><p class="mut" style="margin:0">No child is marked "homework not done" yet ${date === t ? 'today' : 'on this day'}. The list fills when subject teachers save Check work.</p></div>`);
 }
 
@@ -189,8 +190,29 @@ async function dutyHwRemind(t, text) {
   catch (e) { toast(e.message); }
 }
 
+
+// ---------- 📨 Messages sent — who sent which parent message and when (owner, 27 Nov 2026) ----------
+function dutyBy(r) { if (typeof crSentBy === 'function') return crSentBy(r); return '✓ Sent' + (r && r.by ? ' by ' + esc(r.by) : ''); }
+const DLOG = {};
+function needLog(date) {
+  const R = DLOG[date]; if (R && (R.loading || Date.now() - R.at < 60000)) return R;
+  DLOG[date] = { loading: !R, at: Date.now(), map: R ? R.map : {} };
+  api('duty_api.php?a=sentlist&date=' + date).then(r => { DLOG[date] = { at: Date.now(), map: r.sent || {} }; softRender(); }).catch(() => { DLOG[date] = { at: Date.now(), map: (R && R.map) || {} }; });
+  return DLOG[date];
+}
+const DTYPE = { abs: ['Absent today', 'red'], abs3: ['Absent 3 days', 'amber'], low: ['Below 75%', 'violet'], hw: ['Homework not done', 'red'], hw3: ['Homework 3+ times', 'amber'], catch: ['Absent catch-up', 'violet'] };
+function vDutyLog(date) {
+  const R = needLog(date); if (R.loading) return '<div class="load"><i></i></div>';
+  const rows = Object.entries(R.map || {}).map(([k, v]) => { const [type, sid, subj] = k.split('|'); return { type, sid, subj, by: v.by || '', at: v.at || 0, s: studentById(sid) }; }).filter(x => x.s).sort((a, b) => b.at - a.at);
+  if (!rows.length) return typeof crEmpty === 'function' ? crEmpty('📨', 'No parent message marked sent ' + (date === todayISO() ? 'today' : 'on this day'), 'Messages sent from Report & Share or this Duty desk show here.') : '';
+  const byWho = {}; rows.forEach(x => { byWho[x.by] = (byWho[x.by] || 0) + 1; });
+  return `<div class="card"><b>${rows.length} parent message${rows.length > 1 ? 's' : ''} sent</b><div class="chips" style="margin-top:6px">${Object.entries(byWho).map(([w, n]) => `<span class="chip">${esc(w || 'Unknown')} <b>${n}</b></span>`).join('')}</div></div>
+    <div class="card cr-list">${rows.map(x => { const [lbl, tone] = DTYPE[x.type] || [x.type, 'grey'];
+      return `<div class="cr-row">${typeof crAva === 'function' ? crAva(x.s) : ''}<div class="n"><b>${esc(x.s.name)}</b><small>Class ${esc(x.s.cls)}${x.subj ? ' · ' + esc(x.subj) : ''}</small><span class="cr-why t-${tone}">${esc(lbl)}</span><small class="cr-by" style="color:#15803D;font-weight:700">${dutyBy({ by: x.by, at: x.at })}</small></div></div>`; }).join('')}</div>`;
+}
+
 async function dutySent(date, type, sid, subj) {
-  try { await api('duty_api.php?a=sent', { date, type, sid, subj, on: true }); const H = needHwNot(date); H.sent = Object.assign({}, H.sent, { [type + '|' + sid + '|' + subj]: { at: Date.now() } }); setTimeout(render, 600); } catch (e) { toast(e.message); }
+  try { await api('duty_api.php?a=sent', { date, type, sid, subj, on: true }); const H = needHwNot(date); H.sent = Object.assign({}, H.sent, { [type + '|' + sid + '|' + subj]: { at: Date.now(), by: myName() } }); setTimeout(render, 600); } catch (e) { toast(e.message); }
 }
 function dutyCard() {
   if (!S || !ME || !isDutyMe() || isP()) return '';
@@ -246,6 +268,7 @@ if (typeof vPdash === 'function') {
     const B = needBugs(), open = (B.list || []).filter(b => !b.done).length, t = todayISO(), D = isWorkDay(t) ? dutyData(t) : null;
     const empty = D ? D.arr.filter(x => !x.sub).length : 0;
     return (open ? `<div class="card" onclick="go('bugs')" style="cursor:pointer;border:2px solid #F0443855"><h3 style="margin:0">🐞 ${open} problem${open > 1 ? 's' : ''} reported by teachers</h3><p class="mut" style="margin:4px 0 0">Tap to see what is not working.</p></div>` : '') +
+      (D ? (() => { const L = needLog(t).map || {}, n = Object.keys(L).length; return n ? `<div class="card" onclick="go('duty',{m:'log'})" style="cursor:pointer"><h3 style="margin:0">📨 ${n} parent message${n > 1 ? 's' : ''} sent today</h3><p class="mut" style="margin:4px 0 0">Tap to see who sent which message.</p></div>` : ''; })() : '') +
       (D ? (() => { const R = dutyHwBoard(), dn = R.filter(r => r.st === 'done').length, lt = R.filter(r => r.st === 'late').length, wt = R.filter(r => r.st === 'soon' || r.st === 'next').length;
         return R.length ? `<div class="card" onclick="go('duty',{m:'chk'})" style="cursor:pointer;${lt ? 'border:2px solid #F0443855' : ''}"><h3 style="margin:0">📚 Homework check today</h3><p class="mut" style="margin:4px 0 0"><b style="color:#15803D">${dn} checked</b> · <b style="color:#B4234F">${lt} not checked</b> · ${wt} class later / next day</p></div>` : ''; })() : '') +
       (D && D.arr.length ? `<div class="card" onclick="go('duty')" style="cursor:pointer"><h3 style="margin:0">🛡 Duty desk — ${D.arr.length} arrangement bell${D.arr.length > 1 ? 's' : ''} today</h3><p class="mut" style="margin:4px 0 0">${empty ? '<b style="color:#B42318">' + empty + ' empty (nobody free in that wing)</b> · ' : ''}${D.nArr} not reached yet · ${D.nAtt} class attendance left</p></div>` : '') + _vpD.apply(this, arguments);
@@ -269,6 +292,7 @@ if (typeof MENU !== 'undefined' && Array.isArray(MENU)) {
   .cwr b+b{display:block}.bugb{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:12px;width:36px;height:36px;font-size:17px;margin-right:6px;cursor:pointer}
   .bell-alert{position:fixed;left:12px;right:12px;top:12px;z-index:200;background:#fff;border:3px solid #F04438;border-radius:18px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:6px;font-size:15px}
   .bell-alert div{display:flex;gap:8px}.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.dgrid span{background:#F4F6F8;border-radius:10px;padding:8px;font-size:12px;color:#445}.dgrid b{display:block;font-size:20px;color:#17324D}
-  .dutycard{border:2px solid #2E90FA55}`;
+  .dutycard{border:2px solid #2E90FA55}
+  .duty-seg .seg{display:grid!important;grid-template-columns:repeat(3,1fr);gap:4px;overflow:visible}.duty-seg .seg button{min-width:0;white-space:normal;font-size:11.5px;padding:6px 2px;line-height:1.2}`;
   document.head.appendChild(st);
 })();
