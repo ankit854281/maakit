@@ -5,6 +5,7 @@ function fixture(role='parent'){
  const w=dom.window;w.fetch=()=>new Promise(()=>{});w.scrollTo=()=>{};w.matchMedia=()=>({matches:false});
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open')};
  const app=w.document.createElement('script');app.textContent=fs.readFileSync('school/app.js','utf8');w.document.head.appendChild(app);
+ const fz=w.document.createElement('script');fz.textContent=fs.readFileSync('school/family-zone.js','utf8');w.document.head.appendChild(fz);
  w.eval("STATUS={school:'QA School',teachers:[]};U={role:"+JSON.stringify(role)+"};S=emptyState();S.settings={school:'QA School',session:'2026-27'};PD={kids:[{id:'qa1',name:'QA Child One',cls:'5th'},{id:'qa2',name:'QA Child Two',cls:'3rd'}],att:[{sid:'qa1',date:todayISO(),present:true},{sid:'qa2',date:todayISO(),present:false}],hw:[{cls:'5th',date:todayISO(),subj:'Maths',hw:'QA homework ONE',topic:'Fractions'},{cls:'3rd',date:todayISO(),subj:'English',hw:'QA homework TWO',topic:'Nouns'}],marks:[{sid:'qa1',exam:'e1',subj:'Maths',mark:42,max:50}],behav:[],speak:[],remarks:[],notices:[],fees:null};S.exams=[{id:'e1',name:'QA Exam',date:todayISO()}];PKID='qa1';view='phome';");
  w.eval(fs.readFileSync(prefix+'language.js','utf8'));w.eval(fs.readFileSync(prefix+'family-style.js','utf8'));w.eval(fs.readFileSync(prefix+'family-ui.js','utf8'));w.SNFamily.closeIntro();
  return {dom,w};
@@ -31,6 +32,20 @@ w.eval("view='pfees';render()");
 assert(!w.document.querySelector('.fam-real-screen').textContent.includes('could not open'));
 w.eval("view='pnotices';render()");
 assert(w.document.querySelector('.fam-real-screen').textContent.includes('Change PIN'));
+// Family Zone (27 Nov 2026): tomorrow, calendar, record, Gyaan Zone, status stories, settings
+w.eval("PD.tt={'5th':[0,1,2,3,4,5].map(()=>[{s:'Maths',t:'QA Teacher'},{s:'Hindi',t:'QA Two'},null,{s:'EVS',t:'QA Three'},null,null,null])};PD.attSum={qa1:{present:18,total:20},qa2:{present:10,total:20}};view='phome';render()");
+assert(w.document.querySelector('.fz-status')&&w.document.querySelectorAll('.fz-status button').length>=6,'status stories on home');
+assert(w.document.querySelector('.fam-stats').textContent.includes('Tomorrow')&&w.document.querySelector('.fam-stats').textContent.includes('Maths, Hindi, EVS'),'tomorrow row lists the subjects');
+assert(w.document.querySelector('.fam-stats').textContent.includes('Attendance 90% this session'),'record row shows the session attendance');
+w.eval("gyOpen(0)");assert(w.document.querySelector('#gy-story .gy-body'),'status story opens full screen');w.eval("gyClose()");assert(!w.document.querySelector('#gy-story'));
+w.eval("view='ptmr';render()");
+assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA Teacher')&&w.document.querySelectorAll('.fz-bag label').length===4,'tomorrow: bells with teacher + bag list (3 subjects + diary)');
+w.eval("view='pcal';render()");assert(w.document.querySelectorAll('.fz-day').length>=28,'month calendar');
+w.eval("view='prec';render()");assert(w.document.querySelectorAll('.fz-badges > div').length===12&&w.document.querySelector('.fam-real-screen').textContent.includes('18 of 20 days'),'record: badges + session attendance');
+w.eval("view='pzone';FZTAB='stories';render()");assert(w.document.querySelectorAll('.fz-card').length===8,'Gyaan Zone stories');
+w.eval("view='pset';render()");assert(w.document.querySelector('.fz-week')&&w.document.querySelector('.fam-real-screen').textContent.includes('Bigger text'),'settings: screen time + bigger text');
+w.eval("PKID='qa2';view='ptmr';render()");assert(w.document.querySelector('.fam-real-screen').textContent.includes('not shared'),'no timetable of another class leaks into the sibling');
+w.eval("PKID='qa1';view='phome';render()");
 w.SNFamily.menu();assert(w.document.querySelector('#fam-menu').open);
 assert(w.document.querySelector('#fam-menu').textContent.includes('Game Zone'));
 w.SNFamily.intro();assert.equal(w.document.querySelectorAll('#fam-intro').length,1);w.SNFamily.closeIntro();

@@ -264,5 +264,36 @@ gf_check($c === 403, "parent opened another child's rivals");
 [, , $raw] = $api('load', null, $P);
 gf_check(!str_contains($raw, '"gameB"'), 'battle records leaked into normal load');
 
+// ================= CLASSMATES' TRICKS (tips_api.php) + parent timetable / session attendance (27 Nov 2026) =================
+$tp = fn($a, $b = null, $t = null, $q = '') => gf_http('/school/tips_api.php?a=' . $a . $q, $b, $t);
+[$c] = $tp('post', ['sid' => 'g1', 'kind' => 'question', 'text' => 'What is 15% of 40 in one second?'], $tok['g1']);
+gf_check($c === 400, 'question without an answer accepted');
+[$c, $j] = $tp('post', ['sid' => 'g1', 'kind' => 'question', 'subj' => 'Maths', 'text' => 'What is 15% of 40 in one second?', 'ans' => '40% of 15 = 6'], $tok['g1']);
+gf_check($c === 200, 'student could not share a question');
+$tid = $j['id'];
+[, $l2] = $tp('list', null, $tok['g2'], '&sid=g2');
+gf_check(count($l2['tips']) === 0, 'classmates saw a trick before the teacher checked it');
+[$c] = $tp('decide', ['id' => $tid, 'status' => 'approved'], $tok['g2']);
+gf_check($c === 403, 'student approved a trick');
+[$c, $tl] = $tp('tlist', null, $K);
+gf_check($c === 200 && $tl['tips'][0]['id'] === $tid && $tl['tips'][0]['name'] === 'Aman Gupta', 'teacher cannot see the trick to check');
+[$c] = $tp('decide', ['id' => $tid, 'status' => 'approved'], $K);
+gf_check($c === 200, 'teacher could not approve');
+[, $l2] = $tp('list', null, $tok['g2'], '&sid=g2');
+gf_check(count($l2['tips']) === 1 && $l2['tips'][0]['by'] === 'Aman G.' && $l2['tips'][0]['ans'] === '40% of 15 = 6', 'approved trick not shown to the class with a short name');
+for ($n = 0; $n < 2; $n++) $tp('post', ['sid' => 'g1', 'kind' => 'trick', 'text' => 'Trick number ' . $n . ' for the class'], $tok['g1']);
+[$c] = $tp('post', ['sid' => 'g1', 'kind' => 'fact', 'text' => 'One more fact for today please'], $tok['g1']);
+gf_check($c === 400, 'more than 3 posts in a day');
+[$c] = $tp('list', null, $PA, '&sid=g2');
+gf_check($c === 403, "parent opened another child's class tricks");
+[, , $raw] = $api('load', null, $P);
+gf_check(!str_contains($raw, '"quizTip"'), 'tricks leaked into normal load');
+// timetable + whole-session attendance in pdata, only for the child's own class
+$api('sync', ['put' => [['k' => 'grid', 'r' => 'main', 'd' => ['7th' => array_fill(0, 6, [0, -1, -1, -1, -1, -1, -1]), '9th' => array_fill(0, 6, [0, 0, 0, 0, 0, 0, 0])]],
+                       ['k' => 'studAtt', 'r' => date('Y-m-d') . '|7th', 'd' => ['absent' => ['g2']]]]], $P);
+[$c, $pd] = $api('pdata', null, $PA);
+gf_check($c === 200 && $pd['tt']['7th'][0][0]['s'] === 'Social Science' && $pd['tt']['7th'][0][0]['t'] === 'Kartikey Sir' && $pd['tt']['7th'][0][1] === null && !isset($pd['tt']['9th']), 'parent timetable wrong or leaked another class');
+gf_check($pd['attSum']['g1']['total'] >= 1 && $pd['attSum']['g1']['present'] === $pd['attSum']['g1']['total'] && !isset($pd['attSum']['g2']), 'session attendance wrong or leaked');
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";

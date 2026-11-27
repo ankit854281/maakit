@@ -233,8 +233,8 @@ try {
             + array_intersect_key($mine, array_flip(['rp', 'xp', 'right', 'wrong', 'kd', 'acc', 'speed', 'best', 'win', 'loss', 'draw']));
         $resp['rank'] = [];
         foreach (array_slice($rank, 0, 10, true) as $id => $x) if ($x['rp'] > 0 || $id === $sid)
-            $resp['rank'][] = ['pos' => count($resp['rank']) + 1, 'name' => $short((string)$id), 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'me' => $id === $sid];
-        if ($pos > 10) $resp['rank'][] = ['pos' => $pos, 'name' => $short($sid), 'rp' => $mine['rp'], 'tier' => gm_tier_pub($mine['tier']), 'kd' => $mine['kd'], 'me' => true];
+            $resp['rank'][] = ['pos' => count($resp['rank']) + 1, 'name' => $short((string)$id), 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'acc' => $x['acc'], 'me' => $id === $sid];
+        if ($pos > 10) $resp['rank'][] = ['pos' => $pos, 'name' => $short($sid), 'rp' => $mine['rp'], 'tier' => gm_tier_pub($mine['tier']), 'kd' => $mine['kd'], 'acc' => $mine['acc'], 'me' => true];
         $td = gm_today_topics($cls); $played = null;
         foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today' && $td['date'] && ($r['tdate'] ?? '') === $td['date']) { $d = gm_round_detail($r, $now); $played = ['right' => $d['right'], 'n' => $d['n'], 'done' => $d['done']]; }
         $resp['today'] = ['date' => $td['date'], 'isToday' => $td['date'] === $today, 'topics' => array_values($td['topics']),
@@ -271,7 +271,7 @@ try {
         $A = gm_arena($cls, $now); $rank = gm_class_rank($students, $cls, $A, $now); $myRp = $rank[$sid]['rp'];
         $busy = []; foreach ($A['battles'] as $id => $b) if ($A['bres'][$id] === 'wait' && ($b['a'] === $sid || $b['b'] === $sid)) $busy[$b['a'] === $sid ? $b['b'] : $b['a']] = true;
         $list = [];
-        foreach ($rank as $id => $x) if ($id !== $sid) $list[] = ['id' => (string)$id, 'name' => $short((string)$id), 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'busy' => isset($busy[$id]), 'gap' => abs($x['rp'] - $myRp)];
+        foreach ($rank as $id => $x) if ($id !== $sid) $list[] = ['id' => (string)$id, 'name' => $short((string)$id), 'rp' => $x['rp'], 'tier' => gm_tier_pub($x['tier']), 'kd' => $x['kd'], 'acc' => $x['acc'], 'busy' => isset($busy[$id]), 'gap' => abs($x['rp'] - $myRp)];
         usort($list, fn($x, $y) => [$x['busy'], $x['gap'], $x['name']] <=> [$y['busy'], $y['gap'], $y['name']]);
         sch_json(['ok' => true, 'list' => array_map(fn($x) => array_diff_key($x, ['gap' => 1]), $list)]);
     }
@@ -337,14 +337,14 @@ try {
     // ---- Battle: dono ko wahi sawaal; pehle bhejne wala khelta hai, phir saamne wala ----
     if ($a === 'bstart') {
         $opp = (string)($in['opp'] ?? '');
-        if ($opp === $sid || !isset($students[$opp]) || ($students[$opp]['cls'] ?? '') !== $cls) sch_fail('Choose a classmate to battle.');
+        if ($opp === $sid || !isset($students[$opp]) || ($students[$opp]['cls'] ?? '') !== $cls) sch_fail('Choose a classmate to challenge.');
         $mustFinish();
         $A = gm_arena($cls, $now); $started = 0;
         foreach ($A['battles'] as $id => $b) {
             if ($b['a'] === $sid && date('Y-m-d', (int)$b['at']) === $today) $started++;
-            if ((($b['a'] === $sid && $b['b'] === $opp) || ($b['a'] === $opp && $b['b'] === $sid)) && $A['bres'][$id] === 'wait') sch_fail('You already have a battle going with ' . $short($opp) . '. Finish that one first.');
+            if ((($b['a'] === $sid && $b['b'] === $opp) || ($b['a'] === $opp && $b['b'] === $sid)) && $A['bres'][$id] === 'wait') sch_fail('You already have a challenge going with ' . $short($opp) . '. Wait for that one first.');
         }
-        if ($started >= GM_BATTLES_PER_DAY) sch_fail('That is ' . GM_BATTLES_PER_DAY . ' battles today. ⚔️ Come back tomorrow — or play the battles sent to you.');
+        if ($started >= GM_BATTLES_PER_DAY) sch_fail('That is ' . GM_BATTLES_PER_DAY . ' challenges today. 🎯 Come back tomorrow — or play the challenges sent to you.');
         $bid = 'b' . substr(hash('sha256', $sid . '|' . $opp . '|' . $now . '|' . random_int(0, PHP_INT_MAX)), 0, 14);
         $pk = []; foreach ($packs as $p) foreach ((array)($p['qs'] ?? []) as $i => $q) if (!in_array($i, (array)($p['hidden'] ?? []), true)) $pk[] = $p['id'] . '#' . $i;
         usort($pk, fn($x, $y) => strcmp(hash('md5', $bid . $x), hash('md5', $bid . $y)));
@@ -352,14 +352,14 @@ try {
         while (count($items) < GM_ROUND) $items[] = ['src' => ($band >= 2 && $i % 2) ? 'word' : 'math', 'ref' => $bid . '|' . $i++];
         $resp = $newRound($items, 'battle', ['bid' => $bid], $bid . '|x');
         sch_rec_put('gameB', $bid, ['id' => $bid, 'cls' => $cls, 'a' => $sid, 'b' => $opp, 'at' => $now, 'items' => $items, 'ra' => $resp['rid'], 'rb' => null], $uid);
-        sch_log($u, 'Game Zone', $short($sid) . ' started a battle with ' . $short($opp));
+        sch_log($u, 'Game Zone', $short($sid) . ' sent a quiz challenge to ' . $short($opp));
         sch_json($resp + ['bid' => $bid, 'opp' => $short($opp)]);
     }
     if ($a === 'bplay') {
         $b = sch_rec_get('gameB', (string)($in['bid'] ?? ''));
-        if (!$b || ($b['b'] ?? '') !== $sid) sch_fail('This battle was not sent to you.', 403);
-        if (!empty($b['rb'])) sch_fail('You have already played this battle.');
-        if ($now > (int)$b['at'] + GM_BATTLE_HOURS * 3600) sch_fail('This battle has expired. Send a new one! ⚔️');
+        if (!$b || ($b['b'] ?? '') !== $sid) sch_fail('This challenge was not sent to you.', 403);
+        if (!empty($b['rb'])) sch_fail('You have already played this challenge.');
+        if ($now > (int)$b['at'] + GM_BATTLE_HOURS * 3600) sch_fail('This challenge was not played in time. Send a new one! 🎯');
         $mustFinish();
         $resp = $newRound($b['items'], 'battle', ['bid' => $b['id']], $b['id'] . '|x');
         $b['rb'] = $resp['rid']; sch_rec_put('gameB', $b['id'], $b, $uid);

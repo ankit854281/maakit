@@ -447,6 +447,18 @@ case 'pdata': {
                     $o[] = ['cls' => $c, 'subj' => $sb, 'sr' => $i + 1, 'n' => (string)($ch['n'] ?? ''), 'book' => (string)($ch['book'] ?? ''), 'pf' => (string)($ch['pf'] ?? ''), 'pt' => (string)($ch['pt'] ?? ''), 'ex' => $ex, 'done' => $ch['done'] ?? null]; } }
             return $o; })(),
         'clsHol' => array_values(array_filter($get('clsHol', $from), fn($h) => in_array($h['cls'] ?? '', $classes, true))),
+        // Owner, 27 Nov 2026: "timetable next day kya padh ke aana hai" — the class week timetable (subject + teacher per bell)
+        'tt' => (function () use ($classes, $teachers) { $g = (array)(sch_rec_get('grid', 'main') ?? []); $al = (array)(sch_rec_get('alloc', 'main') ?? []); $o = [];
+            foreach ($classes as $c) if (isset($g[$c]) && is_array($g[$c]))
+                $o[$c] = array_map(fn($day) => array_map(function ($i) use ($al, $teachers) { $a = is_int($i) && $i >= 0 ? ($al[$i] ?? null) : null;
+                    return is_array($a) ? ['s' => (string)($a['s'] ?? ''), 't' => (string)($teachers[$a['t'] ?? '']['name'] ?? '')] : null; }, (array)$day), $g[$c]);
+            return $o; })(),
+        // Owner, 27 Nov 2026: "all over record ... attendance percentage" — whole-session present/total per child
+        'attSum' => (function () use ($get, $kids, $set) { $start = preg_match('/^(\d{4})-/', (string)($set['session'] ?? ''), $m) ? $m[1] . '-04-01' : date('Y-m-d', time() - 365 * 86400); $o = [];
+            foreach ($kids as $k) $o[$k['id']] = ['present' => 0, 'total' => 0, 'from' => $start];
+            foreach ($get('studAtt', $start) as $r => $d) { [, $cls] = array_pad(explode('|', (string)$r), 2, '');
+                foreach ($kids as $k) if (($k['cls'] ?? '') === $cls) { $o[$k['id']]['total']++; if (!in_array($k['id'], (array)($d['absent'] ?? []), true)) $o[$k['id']]['present']++; } }
+            return $o; })(),
         'notices' => $notices, 'cal' => array_values($get('cal')), 'fees' => sch_rec_get('fees', 'main'),
         // 'sent' = kis bachche ke ghar result gaya — doosre parents ko nahi dikhna chahiye
         'exams' => array_map(fn($e) => is_array($e) ? array_diff_key($e, ['sent' => 1]) : $e, (array)(sch_rec_get('exams', 'main') ?? []))]);
