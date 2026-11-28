@@ -4,6 +4,9 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -105,6 +108,7 @@ public class MainActivity extends Activity {
             @Override public void onPageFinished(WebView view, String url) {
                 progress.setVisibility(View.GONE);
                 if (!failed && trusted(Uri.parse(url))) installFamilyInterface(view);
+                if (!failed && pendingGo != null) { final String v = pendingGo; pendingGo = null; view.postDelayed(() -> view.evaluateJavascript("try{if(window.U)go('" + v + "')}catch(e){}", null), 2500); }
                 if (!failed && trusted(Uri.parse(url))) {
                     view.evaluateJavascript("(function(){if(window.__snFiles)return;window.__snFiles=true;"
                         + "document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[download]');"
@@ -117,6 +121,20 @@ public class MainActivity extends Activity {
             }
         });
         if (state == null || web.restoreState(state) == null) web.loadUrl(HOME);
+        NotifyJob.channel(this);
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 7);
+        String tk = getSharedPreferences(NotifyJob.PREFS, MODE_PRIVATE).getString("token", "");
+        if (tk != null && !tk.isEmpty()) NotifyJob.schedule(this);
+        pendingGo = safeView(getIntent().getStringExtra("go"));
+    }
+
+    private String pendingGo;
+    private static String safeView(String v) { return v != null && v.matches("[a-z]{2,12}") ? v : null; }
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String v = safeView(intent.getStringExtra("go"));
+        if (v != null && web != null) web.evaluateJavascript("try{go('" + v + "')}catch(e){}", null);
     }
 
 
@@ -143,6 +161,16 @@ public class MainActivity extends Activity {
     // The native save bridge is only exposed to school-origin pages; Android's
     // document picker controls the destination. It never accepts a filesystem path.
     public final class Reports {
+        // Saves the parent's / student's own login so NotifyJob can check for new school notifications in the background.
+        @JavascriptInterface public void setSession(String token, String role) {
+            runOnUiThread(() -> {
+                if (!trusted(Uri.parse(web.getUrl() == null ? "" : web.getUrl()))) return;
+                SharedPreferences p = getSharedPreferences(NotifyJob.PREFS, MODE_PRIVATE);
+                boolean ok = token != null && token.matches("[a-f0-9]{64}") && ("parent".equals(role) || "student".equals(role));
+                if (ok) { if (!token.equals(p.getString("token", ""))) p.edit().putString("token", token).putLong("last", 0L).apply(); NotifyJob.schedule(MainActivity.this); }
+                else { p.edit().remove("token").apply(); NotifyJob.cancel(MainActivity.this); }
+            });
+        }
         @JavascriptInterface public void saveCsv(String filename, String encoded) {
             if (encoded == null || encoded.length() > 7_000_000) return;
             runOnUiThread(() -> {

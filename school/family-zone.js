@@ -492,6 +492,36 @@ function vPFeedback() {
     + (FZFB.mine.items.length ? `<div class="card"><h3 class="h3">My messages</h3>${FZFB.mine.items.map(x => `<div class="py-2 border-b border-slate-100 last:border-0 text-sm"><b>${K[x.kind]}</b>${x.rating ? ' · ' + '★'.repeat(x.rating) : ''} <span class="text-slate-400">${esc(fmtDate(new Date(x.at * 1000).toISOString().slice(0, 10)))}</span>${x.text ? `<p class="mt-1">${esc(x.text)}</p>` : ''}${x.reply ? `<p class="mt-1 text-leaf"><b>School:</b> ${esc(x.reply)}</p>` : ''}</div>`).join('')}</div>` : '');
 }
 
+// ---------------------------------------------------------------- 6e. NOTIFICATIONS (owner, 28 Nov 2026: "bachcha absent ho, homework nahi kiya — message jaye")
+// famnotif_api.php builds them from attendance, homework / copy checks, diary, leave, notices and replies. The bell on the home shows
+// the unread count; the Android app (MainActivity → NotifyJob) checks every 15–20 minutes and shows new ones as phone notifications.
+let FZN = { items: null, at: 0, busy: false };
+const FZN_IC = { absent: '❌', leave: '🗓', homework: '📝', copy: '📒', diary: '📘', notice: '📢', reply: '💬' };
+function fzNSeen() { return +fzLS.get('sn_notif_seen', 0) || 0; }
+async function fzNLoad(force) {
+  if (FZN.busy || (!force && FZN.items && Date.now() - FZN.at < 120000)) return; FZN.busy = true;
+  try { const r = await fzApi('famnotif_api.php?a=list'); FZN.items = r.items || []; if (!fzLS.get('sn_notif_seen', 0)) fzLS.set('sn_notif_seen', r.now - 86400); } catch (e) { FZN.items = FZN.items || []; }
+  FZN.at = Date.now(); FZN.busy = false; if (['phome', 'pnotif'].includes(view)) render();
+}
+function fzNUnread() { const s0 = fzNSeen(); return (FZN.items || []).filter(x => x.at > s0).length; }
+function fzBell() { fzNLoad(); const n = fzNUnread(); return `<button class="fz-bell-btn" onclick="go('pnotif')" aria-label="Notifications">🔔${n ? `<em>${n > 9 ? '9+' : n}</em>` : ''}</button>`; }
+function vPNotif() {
+  fzNLoad(); const L = FZN.items, s0 = fzNSeen();
+  setTimeout(() => { if (L && L.length) fzLS.set('sn_notif_seen', Math.max(s0, L[0].at)); }, 1500);
+  const today = todayISO(), grp = { Today: [], Yesterday: [], Earlier: [] };
+  (L || []).forEach(x => { const d = new Date(x.at * 1000), iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    (iso === today ? grp.Today : iso === addDays(today, -1) ? grp.Yesterday : grp.Earlier).push(x); });
+  return head('Notifications', 'Attendance, homework checks, leave, notices and replies — for your children only.')
+    + (!L ? '<div class="card text-sm text-slate-500">Loading…</div>' : !L.length ? '<div class="card text-sm text-slate-500">No notifications in the last 14 days.</div>'
+      : Object.entries(grp).filter(([, l]) => l.length).map(([g, l]) => `<div class="fn-g">${g}</div>${l.map(x => `<button class="fn-item ${x.at > s0 ? 'new' : ''} k-${esc(x.kind)}" onclick="${x.sid ? `PKID='${esc(x.sid)}';` : ''}go('${esc(x.go)}')"><span>${FZN_IC[x.kind] || '🔔'}</span><div><b>${esc(x.title)}</b><p>${esc(x.body)}</p><small>${new Date(x.at * 1000).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</small></div></button>`).join('')}`).join(''))
+    + `<p class="text-xs text-slate-500 text-center mt-3">In the Android app these also arrive as phone notifications. Allow notifications when the phone asks.</p>`;
+}
+// hand the login to the Android app, so it can check for new notifications in the background (token only; never shown)
+let FZ_TOK = null;
+setInterval(() => { try { if (!window.SNMSISFiles || !SNMSISFiles.setSession) return; const tk = (typeof U !== 'undefined' && U && isFam()) ? (TOKEN || '') : '';
+  if (tk !== FZ_TOK) { FZ_TOK = tk; SNMSISFiles.setSession(tk, tk ? U.role : ''); } } catch (e) {} }, 3000);
+setInterval(() => { if (typeof U !== 'undefined' && U && isFam()) fzNLoad(true); }, 180000);
+
 // ---------------------------------------------------------------- 7. PREMIUM HOME (owner, 27 Nov 2026: "better than the Teacher and Chairman apps")
 // Hero header with greeting and child switch, a "today at a glance" card, learning stories, quick actions, today's
 // lessons, class-test banner, coming-up timeline and the latest notice. The WhatsApp-style update list follows below.
@@ -514,7 +544,7 @@ function fzHome(kid, isParent, ctl) {
     .filter(q => VIEWS[q[0]]);
   return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
     <section class="fh-hero"><i class="fh-glow a"></i><i class="fh-glow b"></i>
-      <div class="fh-top"><img src="img/chairman-512.png" alt="School logo"><div><b>SNMSIS</b><small>${isParent ? 'Parent' : 'Student'} · ${esc(S.settings.session || '')}</small></div><span class="fh-ctl">${ctl || ''}</span></div>
+      <div class="fh-top"><img src="img/chairman-512.png" alt="School logo"><div><b>SNMSIS</b><small>${isParent ? 'Parent' : 'Student'} · ${esc(S.settings.session || '')}</small></div><span class="fh-ctl">${fzBell()}${ctl || ''}</span></div>
       <div class="fh-me"><button onclick="go('pinfo')" aria-label="Student profile">${fzAva(kid, 'fh-pic')}</button><div><p class="fh-hi">${fzGreet()},</p><h1>${esc(isParent ? name + '’s family' : name)}</h1></div></div>
       <div class="fh-tags"><span>Class ${esc(kid.cls)}</span>${kid.ct ? `<span>Class teacher · ${esc(kid.ct)}</span>` : ''}<span>${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
       ${PD.kids.length > 1 ? `<div class="fh-kids fam-child">${PD.kids.map(k => `<button class="${k.id === kid.id ? 'on' : ''}" onclick="PKID='${esc(k.id)}';render()">${k.photo ? `<img src="${esc(k.photo)}" alt="">` : `<span>${esc((k.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span>`}${esc((k.name || '').split(' ')[0])} · ${esc(k.cls)}</button>`).join('')}</div>` : ''}
@@ -549,12 +579,12 @@ function fzHome(kid, isParent, ctl) {
 
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
-  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback });
+  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback, pnotif: vPNotif });
   const res0 = VIEWS.presults; if (res0) VIEWS.presults = () => { const kid = PD && PD.kids && PD.kids.length ? pKid() : null; if (!kid) return res0();
     const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
-  const add = [['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
+  const add = [['pnotif', 'fa-bell', 'Notifications'], ['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
-    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pstudy', 'pchk', 'prec', 'psyl', 'pfb', 'pset'); } }
+    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pnotif', 'pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pstudy', 'pchk', 'prec', 'psyl', 'pfb', 'pset'); } }
   // web (not the app): quick links on the parent home
   const home = VIEWS.phome;
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();
@@ -606,7 +636,7 @@ const FZ_HI = {
   'Shortcuts': 'शॉर्टकट', 'Basics': 'मूल बातें', 'Study tips': 'पढ़ाई के सुझाव', 'Stories': 'कहानियाँ', 'Facts': 'तथ्य', 'Extra practice': 'अतिरिक्त अभ्यास', 'Class corner': 'कक्षा कोना',
   'Screen time on this phone': 'इस फ़ोन पर स्क्रीन समय', 'Language': 'भाषा', 'Larger text': 'बड़े अक्षर', 'Login PIN': 'लॉगिन पिन', 'Log out': 'लॉग आउट', 'Change': 'बदलें', 'Open': 'खोलें',
   'Send to the school': 'स्कूल को भेजें', 'My messages': 'मेरे संदेश', 'How do you like the app?': 'आपको ऐप कैसा लगा?', 'What do you like most? (tap any)': 'सबसे अच्छा क्या लगा? (चुनें)',
-  'Feedback to the school': 'स्कूल को सुझाव', 'Start': 'शुरू करें', 'Continue': 'जारी रखें', 'Class test is being prepared': 'कक्षा परीक्षा तैयार हो रही है',
+  'Feedback to the school': 'स्कूल को सुझाव', 'Notifications': 'सूचनाएँ', 'Earlier': 'पहले', 'Start': 'शुरू करें', 'Continue': 'जारी रखें', 'Class test is being prepared': 'कक्षा परीक्षा तैयार हो रही है',
   'Today’s class test is ready': 'आज की कक्षा परीक्षा तैयार है', 'Latest notice': 'नई सूचना', 'No notice yet': 'अभी कोई सूचना नहीं', 'Back': 'वापस', 'Log in': 'लॉग इन',
   'Student': 'छात्र', 'Parent': 'अभिभावक', 'Mobile number registered with the school': 'स्कूल में दर्ज मोबाइल नंबर', 'Family mobile number registered with the school': 'स्कूल में दर्ज परिवार का मोबाइल नंबर',
   'Which student is logging in?': 'कौन सा छात्र लॉग इन कर रहा है?', 'Today’s shortcut': 'आज का शॉर्टकट', 'Did you know?': 'क्या आप जानते हैं?', 'Remember': 'याद रखें'

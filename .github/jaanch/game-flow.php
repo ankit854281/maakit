@@ -394,5 +394,16 @@ $fb = fn($a, $b = null, $t = null) => gf_http('/school/famfb_api.php?a=' . $a, $
 [, $FM] = $fb('mine', null, $PA); gf_check($FM['items'][0]['reply'] === 'Thank you!', 'parent does not see the reply');
 [$c] = $fb('list', null, $K); gf_check($c === 403, 'a teacher opened parents feedback');
 
+// ================= NOTIFICATIONS (famnotif_api.php, 28 Nov 2026) =================
+$nf = fn($t, $q = '') => gf_http('/school/famnotif_api.php?a=list' . $q, null, $t);
+[$c, $NA] = $nf($PA); $kinds = array_column($NA['items'], 'kind'); $nids = array_column($NA['items'], 'id');
+gf_check($c === 200 && in_array('absent', $kinds, true) && in_array("abs|$dy|g1", $nids, true), 'absent notification missing');
+gf_check(in_array('leave', $kinds, true) && in_array('reply', $kinds, true) && in_array('diary', $kinds, true), 'leave / reply / homework-diary notifications missing');
+gf_check(!array_filter($NA['items'], fn($x) => ($x['sid'] ?? '') === 'g2'), "another family's notification leaked");
+[, $NB] = $nf($PB); $hwN = array_values(array_filter($NB['items'], fn($x) => $x['kind'] === 'homework' && $x['sid'] === 'g2'));
+gf_check(count($hwN) >= 2 && str_contains($hwN[0]['title'], 'did not do Hindi homework'), 'homework-not-done notification missing');
+[, $NS] = $nf($PA, '&since=' . (time() + 60)); gf_check($NS['items'] === [], '"since" filter does not work');
+[$c] = $nf($K); gf_check($c === 403, 'a teacher opened family notifications');
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";
