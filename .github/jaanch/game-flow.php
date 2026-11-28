@@ -330,5 +330,17 @@ gf_check($c === 403, 'unknown number logged in');
 gf_check($c === 200 && $j['me']['tid'] === 'g2', 'admission-number login broke');
 $pdo->exec("DELETE FROM sch_login_fail");
 
+// ================= FAMILY APP USAGE REPORT (famstats_api.php, 28 Nov 2026) =================
+$fs = fn($t) => gf_http('/school/famstats_api.php?a=data', null, $t);
+[$c, $F] = $fs($P);
+gf_check($c === 200 && $F['totals']['students'] >= 5 && $F['totals']['famLogged'] >= 1 && $F['totals']['stuLogged'] >= 3 && $F['totals']['today'] >= 1 && count($F['trend']) === 14, 'family usage totals wrong');
+$c7 = array_values(array_filter($F['classes'], fn($x) => $x['cls'] === '7th'))[0];
+gf_check($c7['students'] === 3 && $c7['covered'] === 3 && $c7['parent'] >= 2, 'class-wise usage wrong');
+gf_check(!in_array('Aman Gupta', array_column($F['never'], 'name'), true), 'a logged-in child is listed as never logged in');
+gf_check((int)$pdo->query("SELECT COUNT(*) FROM sch_records WHERE k='famSeen' AND r LIKE '" . date('Y-m-d') . "|p:9839100001'")->fetchColumn() === 1, 'daily open not recorded once');
+[$c] = $fs($K); gf_check($c === 403, 'a teacher opened the family usage report');
+[$c] = $fs($PA); gf_check($c === 403, 'a parent opened the family usage report');
+[, , $raw] = $api('load', null, $P); gf_check(!str_contains($raw, 'famSeen'), 'family usage rows leaked into normal load');
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";

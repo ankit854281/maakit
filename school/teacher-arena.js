@@ -81,4 +81,12 @@ function vArena() {
   return `<div class="card"><h2 style="margin:0">🎯 Class test & tricks</h2><p class="mut" style="margin:4px 0 0">What the children learnt from your diary, and the tricks they want to share.</p></div>` + tabs + body;
 }
 if (typeof vHome === 'function') { const _vhA = vHome; vHome = function () { return arHomeCard() + _vhA.apply(this, arguments); }; }
-if (typeof vPdash === 'function') { const _vpA = vPdash; vPdash = function () { return arHomeCard() + _vpA.apply(this, arguments); }; }
+// Principal: Family App usage at a glance (owner, 28 Nov 2026: "kitne student login kiye hain kaise pata chalega")
+const FAM = { d: null, at: 0, busy: false };
+function famCard() {
+  if (!FAM.busy && (!FAM.d || Date.now() - FAM.at > 300000)) { FAM.busy = true; api('famstats_api.php?a=data').then(r => { FAM.d = r; }).catch(() => {}).finally(() => { FAM.at = Date.now(); FAM.busy = false; softRender(); }); }
+  if (!FAM.d) return ''; const T = FAM.d.totals, p = T.families ? Math.round(T.famLogged * 100 / T.families) : 0;
+  return `<a class="card" href="famstats.php" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit"><h3 style="margin:0 0 4px">📱 Family App ${p < 50 ? '<span class="pill bad">' + p + '%</span>' : '<span class="pill ok">' + p + '%</span>'}</h3>
+    <p class="mut" style="margin:0"><b>${T.famLogged} of ${T.families}</b> families logged in · <b>${T.today}</b> opened today · <b>${T.week}</b> this week · ${FAM.d.never.length} students not yet — tap to send invites</p></a>`;
+}
+if (typeof vPdash === 'function') { const _vpA = vPdash; vPdash = function () { return famCard() + arHomeCard() + _vpA.apply(this, arguments); }; }

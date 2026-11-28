@@ -616,6 +616,7 @@ function sheetBody() {
     <a class="opt" href="feedash.php" target="_blank" rel="noopener">Office Fee Control Room <small>full tables</small></a>
     <a class="opt" href="callreport.php" target="_blank" rel="noopener">Fee Calling Report <small>date, remark, promise</small></a>
     <a class="opt" href="callreport.php?by=status" target="_blank" rel="noopener">Fee baaki — kiski kya sthiti <small>date di · baat nahi hui · call nahi hua</small></a>
+    <a class="opt" href="famstats.php" target="_blank" rel="noopener">📱 Family App — kaun use kar raha hai <small>kitne login · aaj active · jinhone login nahi kiya</small></a>
     <a class="opt" href="feeslip.php" target="_blank" rel="noopener">Fee Reminder Slip <small>print + list given</small></a>
     <div style="height:12px"></div><button class="cta dn" onclick="logout()">Log out</button>`;
   return '';

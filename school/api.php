@@ -177,6 +177,7 @@ case 'login': {
         require_once __DIR__ . '/login_otp.php';
         if (sch_teacher_otp_enabled()) sch_json(sch_teacher_otp_start($u));
     }
+    if ($role === 'parent' || $role === 'student') sch_fam_seen($uid, $role);
     $tok = bin2hex(random_bytes(32));
     $db->prepare('INSERT INTO sch_sessions (token_hash, uid, expires_at, last_seen) VALUES (?,?,?,NOW())')
        ->execute([hash('sha256', $tok), $uid, date('Y-m-d H:i:s', time() + SCH_SESSION_DAYS * 86400)]);

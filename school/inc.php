@@ -83,7 +83,7 @@ function sch_rows_to_records(array $rows): array {
     foreach ($rows as $row) {
         if (str_starts_with($row['k'], 'ac')) continue; // Daily teaching uses its own child/subject-scoped API.
         // Learning content has its own subject/child-scoped API; keys never use legacy sync.
-        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct') || str_starts_with($row['k'], 'scan') || str_starts_with($row['k'], 'sal') || str_starts_with($row['k'], 'prof') || str_starts_with($row['k'], 'fin') || str_starts_with($row['k'], 'reg') || str_starts_with($row['k'], 'ofc') || str_starts_with($row['k'], 'prc') || str_starts_with($row['k'], 'pho') || str_starts_with($row['k'], 'tch') || str_starts_with($row['k'], 'brd') || str_starts_with($row['k'], 'ptm')) continue;   // reg* = School Office registers (registers_api.php), ofc* = Fee Receipt (feecollect_api.php), prc*/pho* = Progress Report + photos (progress_api.php), tch* = Teacher App notes (teacher_api.php), brd* = Class 10 Board Prep (board_api.php), ptm* = PTM Desk (ptm_api.php)
+        if (str_starts_with($row['k'], 'studio') || str_starts_with($row['k'], 'tool') || str_starts_with($row['k'], 'faculty') || str_starts_with($row['k'], 'quiz') || str_starts_with($row['k'], 'game') || str_starts_with($row['k'], 'acct') || str_starts_with($row['k'], 'scan') || str_starts_with($row['k'], 'sal') || str_starts_with($row['k'], 'prof') || str_starts_with($row['k'], 'fin') || str_starts_with($row['k'], 'reg') || str_starts_with($row['k'], 'ofc') || str_starts_with($row['k'], 'prc') || str_starts_with($row['k'], 'pho') || str_starts_with($row['k'], 'tch') || str_starts_with($row['k'], 'brd') || str_starts_with($row['k'], 'ptm') || str_starts_with($row['k'], 'fam')) continue;   // reg* = School Office registers (registers_api.php), ofc* = Fee Receipt (feecollect_api.php), prc*/pho* = Progress Report + photos (progress_api.php), tch* = Teacher App notes (teacher_api.php), brd* = Class 10 Board Prep (board_api.php), ptm* = PTM Desk (ptm_api.php)
         if (in_array($row['k'], ['learnKey','learnMission','learnTry','learnReview','skillCheck','chPick','chBad'], true)) continue;   // chPick / chBad: Chairman calls (feedash_api.php)
         $out[] = ['k' => $row['k'], 'r' => $row['r'], 'v' => (int)$row['ver'], 'x' => (int)$row['deleted'],
                   'd' => $row['d'] === null ? null : json_decode((string)$row['d'])];   // object: {} stays {}
@@ -164,7 +164,7 @@ const SCH_MAX_STRIKES = 15;      // itni baar kul galat PIN = login band, naya P
 function sch_auth(bool $allowMustChange = false): array {
     $tok = (string)($_SERVER['HTTP_X_SCHOOL_TOKEN'] ?? '');
     if (!preg_match('/^[a-f0-9]{64}$/', $tok)) sch_fail('Please log in again.', 401);
-    $st = sch_db()->prepare('SELECT s.uid, u.role, u.tid, u.must_change FROM sch_sessions s JOIN sch_users u ON u.uid = s.uid
+    $st = sch_db()->prepare('SELECT s.uid, u.role, u.tid, u.must_change, s.last_seen FROM sch_sessions s JOIN sch_users u ON u.uid = s.uid
                              WHERE s.token_hash = ? AND s.expires_at > NOW()');
     $st->execute([hash('sha256', $tok)]);
     $u = $st->fetch();
@@ -177,8 +177,17 @@ function sch_auth(bool $allowMustChange = false): array {
     }
     if ((int)$u['must_change'] === 1 && !$allowMustChange) sch_fail('Please choose your own PIN first.', 428);
     sch_db()->prepare('UPDATE sch_sessions SET last_seen = NOW() WHERE token_hash = ?')->execute([hash('sha256', $tok)]);
+    if (in_array($u['role'], ['parent', 'student'], true) && substr((string)($u['last_seen'] ?? ''), 0, 10) !== date('Y-m-d')) sch_fam_seen((string)$u['uid'], (string)$u['role']);
+    unset($u['last_seen']);
     $u['label'] = sch_user_label($u);
     return $u;
+}
+
+// Family app usage (owner, 28 Nov 2026: "kitne student login kiye hain kaise pata chalega"): one row per parent/student per day
+// they open the app — famSeen 'YYYY-MM-DD|uid'. Written at most once a day per session. Read by famstats_api.php.
+function sch_fam_seen(string $uid, string $role): void {
+    try { sch_db()->prepare("INSERT IGNORE INTO sch_records (k,r,d,deleted,dkey,ver,by_uid,updated_at) VALUES ('famSeen',?,?,0,?,1,?,NOW())")
+        ->execute([date('Y-m-d') . '|' . $uid, json_encode(['uid' => $uid, 'role' => $role, 'at' => time()]), date('Y-m-d'), $uid]); } catch (Throwable $e) { error_log('fam seen: ' . $e->getMessage()); }
 }
 
 function sch_log(array $u, string $k, string $x): void {

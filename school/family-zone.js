@@ -450,6 +450,12 @@ if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();
     return `<div class="fz-quick">${[['ptmr', '🎒', 'Next day'], ['pcal', '📅', 'Calendar'], ['prec', '🏆', 'Achievements'], ['pzone', '💡', 'Learning Hub'], ['pset', '⚙️', 'Settings']].map(([k, e, l]) => `<button onclick="go('${k}')"><span>${e}</span>${l}</button>`).join('')}</div>${gyStatusRow(kid)}` + h; };
 }
+// Principal / Chairman (web ERP): Family App usage report (famstats.php)
+if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
+  for (const role of ['principal', 'chairman']) if (NAV[role] && !NAV[role].some(x => x[0] === 'famstats')) NAV[role].push(['famstats', 'fa-mobile-screen', 'Family App Usage']);
+  VIEWS.famstats = () => head('Family App usage', 'Who has logged in to the Student & Parents app, who uses it, and who has not yet.', '<a href="famstats.php" target="_blank" class="btn btn-l"><i class="fa-solid fa-up-right-from-square"></i> Open full page</a>')
+    + '<iframe title="Family App usage" src="famstats.php?embed=1" style="width:100%;min-height:85vh;border:0;border-radius:16px"></iframe>';
+}
 // For the Family app chat list (family-start.js): one-line previews
 window.FZ = {
   tomorrow(kid) { const nx = fzNextSchoolDay(kid); if (!nx) return ''; const day = ((PD.tt || {})[kid.cls] || [])[nx.idx]; const s = day ? [...new Set(day.filter(Boolean).map(x => x.s))] : [];
