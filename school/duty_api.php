@@ -20,6 +20,8 @@
 //   GET  ?a=hwsum                    homework checks of MY classes (teacher: classes he teaches; Principal/Chairman: all):
 //                                    last check date per class|subject, 30-day "not done" counts per child, today's checks
 //   POST ?a=bugdone {id,on}           Principal: mark a report as fixed / open again
+//   GET  ?a=hwreg&from=&to=          homework register: checks with each child's done / half / not + diary homework not checked yet
+//                                    (Principal, Chairman, Duty teacher, Rati Ma'am: every class; other teachers: own classes)
 //
 //  Kinds (all start with "tch" so they never reach the legacy load/sync):
 //   tchReach  r = date|bell|cls     {tid, by, at}
@@ -144,6 +146,40 @@ case 'hwsum': {
         if ($d0 === $today) $todayRecs[$cs] = ['hw' => (string)($d['hw'] ?? ''), 'rows' => (object)($d['rows'] ?? []), 'by' => (string)($d['by'] ?? ''), 'at' => (int)($d['at'] ?? 0)];
     }
     sch_json(['ok' => true, 'today' => $today, 'last' => (object)$last, 'miss' => (object)array_map(fn($m) => (object)$m, $miss), 'checks' => (object)$todayRecs]);
+}
+
+case 'hwreg': {
+    // Homework register (owner, 28 Nov 2026: "Adarsh Sir, Rati Ma'am aur Principal Sir me class ke according, student ke according
+    // show kare ki homework done or not done"). GET &from=&to= (max 31 days) → every homework check (tchChk) in those days with each
+    // child's done / half / not, plus homework written in the diary (last 14 days up to `to`) that has no check after it yet.
+    // Principal / Chairman / Duty teacher / homework sharer (Rati Ma'am): every class. Any other teacher: only own classes.
+    if ($method !== 'GET') sch_fail('GET only', 405);
+    $to = du_date($_GET['to'] ?? date('Y-m-d')); $from = du_date($_GET['from'] ?? $to);
+    if ($from > $to || strtotime($to) - strtotime($from) > 31 * 86400) sch_fail('Choose up to 31 days.');
+    $all = $role !== 'teacher' || $duty || sch_hw_sharer($tid);
+    $SHOW = ['PG', 'LKG', 'UKG', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
+    $classes = array_values(array_filter(du_classes(), fn($c) => $all || sch_in_class($tid, $c)));
+    usort($classes, fn($x, $y) => (array_search($x, $SHOW, true) === false ? 99 : array_search($x, $SHOW, true)) <=> (array_search($y, $SHOW, true) === false ? 99 : array_search($y, $SHOW, true)));
+    $since = date('Y-m-d', strtotime($to) - 14 * 86400); $first = min($since, $from);
+    $checks = []; $after = [];   // after[cls|subj] = list of [date, task] for the "not checked yet" rule
+    $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='tchChk' AND deleted=0 AND r >= ?"); $q->execute([$first]);
+    foreach ($q as $row) { [$d0, $c0, $s0] = array_pad(explode('|', (string)$row['r'], 3), 3, ''); if (!in_array($c0, $classes, true)) continue;
+        $d = json_decode((string)$row['d'], true) ?: []; $dt = (string)($d['date'] ?? $d0); $subj = (string)($d['subj'] ?? $s0);
+        $after["$c0|$subj"][] = [$dt, trim((string)($d['hw'] ?? ''))];
+        if ($dt < $from || $dt > $to) continue;
+        $rows = []; foreach ((array)($d['rows'] ?? []) as $sid => $x) { $h = (string)($x['hw'] ?? ''); if (in_array($h, ['done', 'half', 'not'], true)) $rows[(string)$sid] = $h; }
+        if ($rows) $checks[] = ['date' => $dt, 'cls' => $c0, 'subj' => $subj, 'hw' => (string)($d['hw'] ?? ''), 'by' => (string)($d['by'] ?? ''), 'rows' => (object)$rows]; }
+    usort($checks, fn($x, $y) => strcmp($y['date'], $x['date']) ?: strcmp($x['subj'], $y['subj']));
+    $given = [];   // latest diary homework per class|subject up to `to`
+    $q = $db->prepare("SELECT r, d FROM sch_records WHERE k='diary' AND deleted=0 AND r >= ? AND r < ?"); $q->execute([$since, date('Y-m-d', strtotime($to) + 86400)]);
+    foreach ($q as $row) { $e = json_decode((string)$row['d'], true); if (!is_array($e)) continue; $p = explode('|', (string)$row['r']);
+        $c0 = (string)($e['cls'] ?? ''); $hw = trim((string)($e['hw'] ?? '')); $dt = (string)($p[0] ?? ''); if ($hw === '' || !in_array($c0, $classes, true)) continue;
+        $k = $c0 . '|' . (string)($e['subj'] ?? ''); if (!isset($given[$k]) || $dt > $given[$k]['date']) $given[$k] = ['date' => $dt, 'cls' => $c0, 'subj' => (string)($e['subj'] ?? ''), 'hw' => $hw, 'teacher' => sch_teacher_name($p[1] ?? '')]; }
+    $pending = [];
+    foreach ($given as $k => $g) { $ok = false; foreach ($after[$k] ?? [] as [$cd, $task]) if ($cd > $g['date'] || ($cd === $g['date'] && $task !== '' && $task === $g['hw'])) { $ok = true; break; }
+        if (!$ok) $pending[] = $g; }
+    usort($pending, fn($x, $y) => strcmp($x['date'], $y['date']));
+    sch_json(['ok' => true, 'from' => $from, 'to' => $to, 'classes' => $classes, 'checks' => $checks, 'pending' => $pending]);
 }
 
 case 'sent': {

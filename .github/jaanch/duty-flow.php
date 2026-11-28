@@ -103,4 +103,21 @@ $put('tchChk', "$today|10th|Hindi", ['date' => $today, 'cls' => '10th', 'subj' =
 // tch kinds never reach the legacy load
 [, $j] = $api('load', null, $tok['K']); $raw = json_encode($j);
 df_check(!str_contains($raw, 'Save does nothing') && !str_contains($raw, 'tchReach'), 'duty kinds stay out of the legacy load');
+// ---- homework register: class-wise + child-wise (28 Nov 2026) ----
+$put('teacher', 'RT', ['name' => 'Rati Ma\'am']); $pin('t:RT', 'teacher', 'RT', '4444');
+[, $j] = $api('login', ['role' => 'teacher', 'tid' => 'RT', 'pin' => '4444']); $tok['RT'] = $j['token'];
+$d2 = date('Y-m-d', time() - 2 * 86400);
+$put('tchChk', "$yday|10th|Hindi", ['date' => $yday, 'cls' => '10th', 'subj' => 'Hindi', 'hw' => 'Q1-Q4', 'by' => 'Mamta Ma\'am', 'rows' => ['s3' => ['hw' => 'done', 'cp' => '']]]);
+$put('diary', "$yday|K|2", ['cls' => '9th', 'subj' => 'Hindi', 'topic' => 'Kabir', 'hw' => 'Page 20']);              // checked today → not pending
+$put('diary', "$d2|MA|3", ['cls' => '10th', 'subj' => 'Science', 'topic' => 'Light', 'hw' => 'Draw ray diagram']);     // never checked → pending
+$put('diary', "$today|MA|4", ['cls' => '10th', 'subj' => 'Hindi', 'topic' => 'Poem', 'hw' => 'Learn the poem']);       // due next class
+[$c, $j] = $du('hwreg', null, $tok['AD'], "&from=$yday&to=$today");
+df_check($c === 200 && $j['classes'] === ['9th', '10th'] && count($j['checks']) === 3 && array_values(array_filter($j['checks'], fn($x) => $x['cls'] === '9th'))[0]['rows']['s1'] === 'not', 'Duty teacher register: every class, child status');
+$pend = array_map(fn($p) => $p['cls'] . '|' . $p['subj'], $j['pending']);
+df_check(in_array('10th|Science', $pend, true) && in_array('10th|Hindi', $pend, true) && !in_array('9th|Hindi', $pend, true), 'pending = diary homework with no check after it');
+[$c, $j] = $du('hwreg', null, $tok['RT'], "&from=$today&to=$today"); df_check($c === 200 && count($j['classes']) === 2 && count($j['checks']) === 2, 'Rati Ma\'am sees every class (one day)');
+[$c, $j] = $du('hwreg', null, $tok['K'], "&from=$yday&to=$today"); df_check($c === 200 && $j['classes'] === ['9th'] && !str_contains(json_encode($j), 's3'), 'ordinary teacher: only own class');
+[$c] = $du('hwreg', null, $tok['CH'], "&from=$today&to=$today"); df_check($c === 200, 'Chairman can view the register');
+[$c] = $du('hwreg', null, $tok['P'], '&from=' . date('Y-m-d', time() - 40 * 86400) . "&to=$today"); df_check($c === 400, 'more than 31 days refused');
+[$c] = $du('hwreg', null, $tok['P'], '&from=' . date('Y-m-d', time() + 86400) . '&to=' . date('Y-m-d', time() + 86400)); df_check($c === 400, 'future date refused');
 echo "Duty desk flow: OK\n";

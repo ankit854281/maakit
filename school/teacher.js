@@ -365,9 +365,9 @@ function go(tab, p) { if ($('tv-command')) teacherVoiceStop(); TAB = tab; P = p 
 function render() {
   if (!S) return loginView();
   allocSync();
-  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord, hwshare: (typeof vHwShare === 'function' ? vHwShare : vHome), support: (typeof vSupport === 'function' ? vSupport : vHome), duty: (typeof vDuty === 'function' ? vDuty : vHome), bugs: (typeof vBugs === 'function' ? vBugs : vHome), arena: (typeof vArena === 'function' ? vArena : vHome) };
+  const views = { home: vHome, att: vAtt, diary: vDiary, plan: vPlan, notes: vNotes, res: vResult, conn: vConn, prin: vPrin, board: vBoard, pdash: vPdash, staffhub: vStaffHub, comp: vComp, acts: vActs, coord: vCoord, hwshare: (typeof vHwShare === 'function' ? vHwShare : vHome), support: (typeof vSupport === 'function' ? vSupport : vHome), duty: (typeof vDuty === 'function' ? vDuty : vHome), bugs: (typeof vBugs === 'function' ? vBugs : vHome), arena: (typeof vArena === 'function' ? vArena : vHome), hwreg: (typeof vHwReg === 'function' ? vHwReg : vHome) };
   const pm = pMode(), tabs = pm ? PTABS : TABS;
-  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord', 'hwshare', 'support', 'duty', 'bugs', 'arena'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
+  if (!views[TAB] || (pm && !PTABS.some(t => t[0] === TAB) && !['att', 'diary', 'plan', 'notes', 'res', 'comp', 'acts', 'coord', 'hwshare', 'support', 'duty', 'bugs', 'arena', 'hwreg'].includes(TAB)) || (!pm && ['prin', 'pdash', 'staffhub'].includes(TAB))) TAB = pm ? 'pdash' : 'home'; theme();
   let body = ''; try { body = views[TAB](); } catch (e) { console.error(e); body = `<div class="card">This screen could not open: ${esc(e.message)}</div>`; }
   const initials = myName().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || 'T';
   const dueAtt = myCT().reduce((n, c) => n + (attOf(todayISO(), c) || clsHolOn(todayISO(), c) || !isWorkDay(todayISO(), c) || !studentsOf(c).length ? 0 : 1), 0);
