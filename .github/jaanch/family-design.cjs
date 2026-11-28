@@ -50,6 +50,8 @@ w.eval("PD.term=[{sid:'qa1',exam:'Half-Yearly',cls:'5th',rows:[{s:'Maths',pt:9,n
 assert(w.document.querySelector('.fh-glance').textContent.includes('1st in class')&&!w.document.querySelector('.fh-glance').textContent.includes('Bronze'),'home glance shows the class rank, not the game level');
 w.eval("view='presults';render()");assert(w.document.querySelector('.fr-rankers').textContent.includes('QA Rival')&&w.document.querySelector('.fr-card').textContent.includes('91%'),'results: half-yearly card + rankers');
 w.eval("view='pchk';render()");const ck=w.document.querySelector('.fam-real-screen').textContent;assert(ck.includes('50%')&&ck.includes('Incomplete')&&!ck.includes('QA SIBLING TASK'),'checks: own child only, completion and copy status');
+w.eval("PD.kids[0].info={adm:'A-101',father:'QA Father',dob:'2015-04-02'};view='pinfo';render()");assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA Father')&&w.document.querySelector('.fp-hero'),'student profile');
+w.eval("view='pleave';render()");assert(w.document.querySelector('#lv-from')&&w.document.querySelector('.fam-real-screen').textContent.includes('Send to class teacher'),'leave form');
 w.eval("PKID='qa1';view='phome';render()");
 w.SNFamily.menu();assert(w.document.querySelector('#fam-menu').open);
 assert(w.document.querySelector('#fam-menu').textContent.includes('Game Zone'));

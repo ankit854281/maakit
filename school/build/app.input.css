@@ -277,3 +277,17 @@ html.sn-big body { zoom: 1.14; }
 .fc-card > div { flex: 1; min-width: 0; } .fc-card small { font-size: .7rem; color: #64748b; font-weight: 600; } .fc-card b { display: block; color: #0f172a; font-size: .95rem; } .fc-card p { font-size: .76rem; color: #475569; margin-top: .15rem; }
 .fc-card .fh-ring { width: 3.1rem; height: 3.1rem; flex: none; }
 .fh-pad { margin: 0 .9rem; display: grid; gap: .6rem; }
+/* Profile + leave (28 Nov 2026) */
+.fh-me { position: relative; display: flex; align-items: center; gap: .8rem; margin-top: 1rem; }
+.fh-me .fh-hi { margin-top: 0; }
+.fh-pic { width: 3.9rem; height: 3.9rem; border-radius: 99px; object-fit: cover; display: grid; place-items: center; border: 3px solid #ffffffcc; box-shadow: 0 8px 20px -8px #0009; background: #ffffff26; color: #fff; font-weight: 700; font-size: 1.2rem; }
+.fh-kids img { width: 1.6rem; height: 1.6rem; border-radius: 99px; object-fit: cover; }
+.fh-cta.done { background: linear-gradient(120deg, #1e1b4b, #4338ca); } .fh-cta.done em { color: #4338ca; }
+.fh-cta.wait { background: #fff; color: #1e1b4b; border: 1px dashed #c7cbe0; box-shadow: none; } .fh-cta.wait small { color: #64748b; opacity: 1; }
+.fp-hero { text-align: center; color: #fff; padding: 1.4rem 1rem 1.1rem; border-radius: 1.6rem; background: linear-gradient(150deg, #1e1b4b 0%, #312e81 45%, #4338ca 75%, #0f766e 130%); }
+.fp-pic { width: 6.5rem; height: 6.5rem; border-radius: 99px; object-fit: cover; margin: 0 auto; display: grid; place-items: center; border: 4px solid #fff; box-shadow: 0 12px 26px -10px #000a; background: #e0e7ff; color: #312e81; font-size: 2rem; font-weight: 800; }
+.fp-hero h2 { margin-top: .7rem; font-size: 1.45rem; font-weight: 800; color: #fff; } .fp-hero p { font-size: .85rem; opacity: .85; }
+.fp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: 1rem; }
+.fp-stats div { border-radius: 1rem; background: #ffffff1c; border: 1px solid #ffffff30; padding: .6rem .3rem; } .fp-stats b { display: block; font-size: 1.15rem; } .fp-stats span { font-size: .65rem; opacity: .85; }
+.fp-list > div { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-top: 1px solid #eef0f6; font-size: .88rem; } .fp-list > div:first-child { border-top: 0; }
+.fp-list span { color: #64748b; flex: none; } .fp-list b { text-align: right; color: #0f172a; font-weight: 600; }

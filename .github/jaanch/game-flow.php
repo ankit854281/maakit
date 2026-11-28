@@ -304,12 +304,12 @@ $pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchChk',?,?
 $pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchCopy',?,?,0,1)")->execute(['7th|Maths|Fractions', json_encode(['cls' => '7th', 'subj' => 'Maths', 'ch' => 'Fractions', 'rows' => ['g1' => 'ok', 'g2' => 'inc'], 'by' => 'Kartikey Sir', 'at' => 1])]);
 [$c, $pd] = $api('pdata', null, $PA);
 $t1 = array_values(array_filter($pd['term'], fn($t) => $t['sid'] === 'g1'))[0] ?? null;
-gf_check($t1 && $t1['exam'] === 'Half-Yearly' && $t1['pct'] == 86 && $t1['rank'] === 1 && $t1['of'] === 3 && count($t1['toppers']) === 1 && $t1['toppers'][0]['name'] === 'Aman Gupta', 'half-yearly result / rank / rankers wrong (rankers only from the upper half, as on the slip)');
+gf_check($t1 && $t1['exam'] === 'Half-Yearly' && $t1['pct'] == 86 && $t1['rank'] === 1 && $t1['of'] === 3 && count($t1['toppers']) === 3 && $t1['toppers'][0]['name'] === 'Aman Gupta', 'half-yearly result / rank / rankers wrong (rank 1st–5th only)');
 gf_check(!array_filter($pd['term'], fn($t) => $t['sid'] === 'g2'), "another family's result leaked");
 gf_check(count($pd['checks']['hw']) === 1 && $pd['checks']['hw'][0]['hw'] === 'done' && count($pd['checks']['copy']) === 1 && $pd['checks']['copy'][0]['st'] === 'ok', 'checks wrong or leaked');
 $PB = null; $pin('p:9839100002', 'parent', '9839100002', '3333'); [, $j] = $api('login', ['role' => 'parent', 'phone' => '9839100002', 'pin' => '3333']); $PB = $j['token'];
 [, $pd2] = $api('pdata', null, $PB); $t2 = $pd2['term'][0];
-gf_check($t2['sid'] === 'g2' && $t2['rank'] === null && (fn($m) => abs($m['t'] - 33) < 0.01 && $m['te'] == 22)(array_values(array_filter($t2['rows'], fn($r) => $r['s'] === 'Maths'))[0]), 'lower-half rank shown, or grace (29 → 33) not applied like the slip');
+gf_check($t2['sid'] === 'g2' && $t2['rank'] === 3 && (fn($m) => abs($m['t'] - 33) < 0.01 && $m['te'] == 22)(array_values(array_filter($t2['rows'], fn($r) => $r['s'] === 'Maths'))[0]), 'rank 1st–5th not shown, or grace (29 → 33) not applied like the slip');
 
 // ================= STUDENT LOGIN WITH THE FAMILY MOBILE NUMBER (27 Nov 2026) =================
 $api('sync', ['put' => [['k' => 'student', 'r' => 'g4', 'd' => ['id' => 'g4', 'adm' => 'g4', 'name' => 'Kavya Gupta', 'cls' => '3rd', 'phone' => '9839100001']],
@@ -341,6 +341,32 @@ gf_check((int)$pdo->query("SELECT COUNT(*) FROM sch_records WHERE k='famSeen' AN
 [$c] = $fs($K); gf_check($c === 403, 'a teacher opened the family usage report');
 [$c] = $fs($PA); gf_check($c === 403, 'a parent opened the family usage report');
 [, , $raw] = $api('load', null, $P); gf_check(!str_contains($raw, 'famSeen'), 'family usage rows leaked into normal load');
+
+// ================= STUDENT LEAVE, PROFILE + PHOTO, CLASS-WORK TEST, RANK 1–5 (28 Nov 2026) =================
+$lv = fn($a, $b = null, $t = null, $q = '') => gf_http('/school/famleave_api.php?a=' . $a . $q, $b, $t);
+$d0 = date('Y-m-d');
+[$c, $j] = $lv('apply', ['sid' => 'g1', 'from' => $d0, 'to' => $d0, 'reason' => 'Illness', 'note' => 'Fever'], $PA);
+gf_check($c === 200 && $j['leave']['status'] === 'pending', 'parent could not apply for leave');
+$lid = $j['leave']['id'];
+[$c] = $lv('apply', ['sid' => 'g1', 'from' => $d0, 'to' => $d0, 'reason' => 'Travel'], $PA); gf_check($c === 400, 'two leaves for the same day');
+[$c] = $lv('apply', ['sid' => 'g1', 'from' => date('Y-m-d', strtotime('+3 day')), 'to' => date('Y-m-d', strtotime('+3 day')), 'reason' => 'Other'], $PA); gf_check($c === 400, '"Other" without a reason accepted');
+[$c] = $lv('apply', ['sid' => 'g1', 'from' => date('Y-m-d', strtotime('+5 day')), 'to' => date('Y-m-d', strtotime('+30 day')), 'reason' => 'Travel'], $PA); gf_check($c === 400, 'leave longer than 15 school days accepted');
+[$c] = $lv('apply', ['sid' => 'g2', 'from' => $d0, 'to' => $d0, 'reason' => 'Illness'], $PA); gf_check($c === 403, "leave applied for another family's child");
+[$c] = $lv('decide', ['id' => $lid, 'status' => 'approved'], $tok['g2']); gf_check($c === 403, 'a student approved a leave');
+[$c, $tl] = $lv('tlist', null, $K); gf_check($c === 200 && $tl['leaves'][0]['id'] === $lid && $tl['leaves'][0]['name'] === 'Aman Gupta', 'class teacher cannot see the leave');
+[$c] = $lv('decide', ['id' => $lid, 'status' => 'approved'], $K); gf_check($c === 200, 'class teacher could not approve');
+[, $ll] = $lv('list', null, $PA, '&sid=g1'); gf_check($ll['leaves'][0]['status'] === 'approved' && $ll['leaves'][0]['decidedBy'] !== '', 'parent does not see the approval');
+[, , $raw] = $api('load', null, $P); gf_check(!str_contains($raw, 'famLeave'), 'leave rows leaked into normal load');
+// profile + photo in pdata (own children only)
+$api('sync', ['put' => [['k' => 'student', 'r' => 'g1', 'd' => ['id' => 'g1', 'adm' => 'g1', 'name' => 'Aman Gupta', 'cls' => '7th', 'phone' => '9839100001', 'father' => 'Rakesh Gupta', 'dob' => '2014-05-09', 'aadhaar' => '1234 5678 9012']]]], $P);
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('phoImg','img1',?,0,1)")->execute([json_encode(['data' => 'data:image/jpeg;base64,QUFB'])]);
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('phoStu','g1',?,0,1)")->execute([json_encode(['img' => 'img1'])]);
+[, $pd] = $api('pdata', null, $PA); $k1 = array_values(array_filter($pd['kids'], fn($k) => $k['id'] === 'g1'))[0];
+gf_check($k1['info']['father'] === 'Rakesh Gupta' && $k1['info']['dob'] === '2014-05-09' && !isset($k1['info']['aadhaar']) && $k1['photo'] === 'data:image/jpeg;base64,QUFB', 'profile / photo wrong, or a private field (Aadhaar) was sent');
+// class test from the class work when the diary has no topic
+$api('sync', ['put' => [['k' => 'diary', 'r' => $d0 . '|K|5', 'd' => ['cls' => '7th', 'subj' => 'Social Science', 'topic' => '', 'classwork' => 'Map work: rivers of India']]]], $K);
+[, $st3] = $g('state', null, $tok['g3']);
+gf_check(in_array('Map work: rivers of India', array_column($st3['today']['topics'], 'topic'), true), 'class work was not used as the test topic');
 
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";

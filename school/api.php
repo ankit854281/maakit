@@ -448,7 +448,10 @@ case 'pdata': {
     $ct = [];
     foreach ((array)sch_rec_get('classes', 'main') as $c) if (in_array($c['c'] ?? '', $classes, true)) $ct[$c['c']] = (string)($teachers[$c['ct'] ?? '']['name'] ?? '');
     $kidsOut = array_map(fn($k) => ['id' => $k['id'], 'name' => $k['name'] ?? '', 'cls' => $k['cls'] ?? '', 'adm' => $k['adm'] ?? '', 'ct' => $ct[$k['cls'] ?? ''] ?? '',
-                                     'km' => isset($k['km']) && is_numeric($k['km']) ? (float)$k['km'] : null], $kids);
+                                     'km' => isset($k['km']) && is_numeric($k['km']) ? (float)$k['km'] : null,
+                                     // Owner, 28 Nov 2026: "students information ... student images" — the child's own school record and photo
+                                     'info' => array_filter(array_intersect_key(array_map(fn($v) => is_scalar($v) ? trim((string)$v) : '', $k), array_flip(['adm', 'section', 'rollno', 'dob', 'gender', 'father', 'mother', 'phone', 'phone2', 'address', 'blood', 'admDate', 'house'])), fn($v) => $v !== ''),
+                                     'photo' => (function () use ($k) { $p = sch_rec_get('phoStu', (string)$k['id']); $i = $p ? sch_rec_get('phoImg', (string)($p['img'] ?? '')) : null; return $i ? (string)($i['data'] ?? '') : ''; })()], $kids);
     $set = sch_rec_get('settings', 'main') ?? [];
     sch_json(['ok' => true, 'me' => ['role' => $u['role'], 'tid' => $u['tid'], 'label' => $u['label']],
         'school' => (string)($set['school'] ?? ''), 'session' => (string)($set['session'] ?? ''),
@@ -474,8 +477,8 @@ case 'pdata': {
             return $o; })(),
         // Owner, 27 Nov 2026: "rankers" — Half-Yearly / Annual marks entered in Marks Entry (progress_api.php, prcMarks), worked out
         // exactly as the marks slip does (results.js): Pre. Test 10 + Notebook 5 + SEA 5 + Term Exam 80; grace 28–32 → 33 is added
-        // quietly; rank uses the real marks and only children with every subject entered. A child's rank is shown only in the upper
-        // half (as on the slip); the class's 1st, 2nd and 3rd (rankers) are shown to the class, as on the certificates.
+        // quietly; rank uses the real marks and only children with every subject entered. Owner, 28 Nov 2026: "bas 1st to 5th ka rank
+        // dikhaye, uske baad ka nahi" — a rank is shown only for 1st–5th (the child's own and the class rankers list); others see the grade.
         'term' => (function () use ($get, $kids, $classes, $set) {
             $y0 = preg_match('/^(\d{4})-/', (string)($set['session'] ?? ''), $m) ? (int)$m[1] : ((int)date('n') >= 4 ? (int)date('Y') : (int)date('Y') - 1);
             $ses = $y0 . '-' . substr((string)($y0 + 1), 2); $all = $get('prcMarks'); $stu = $get('student'); $out = [];
@@ -505,10 +508,10 @@ case 'pdata': {
                 uasort($ranked, fn($a, $b) => [$b['rraw'], $b['pct']] <=> [$a['rraw'], $a['pct']]);
                 $rank = []; $last = null; $r = 0; $i = 0; foreach ($ranked as $sid => $x) { $i++; if ($last === null || $x['rraw'] < $last - 1e-9) { $r = $i; $last = $x['rraw']; } $rank[$sid] = $r; }
                 $n = count($ranked); $top = [];
-                foreach ($rank as $sid => $rk) if ($rk <= 3 && $rk * 2 <= $n) $top[] = ['rank' => $rk, 'name' => $res[$sid]['name'], 'pct' => $res[$sid]['pct']];
+                foreach ($rank as $sid => $rk) if ($rk <= 5) $top[] = ['rank' => $rk, 'name' => $res[$sid]['name'], 'pct' => $res[$sid]['pct']];
                 foreach ($kids as $k) if (($k['cls'] ?? '') === $cls && isset($res[$k['id']])) { $x = $res[$k['id']]; $rk = $rank[$k['id']] ?? null;
                     $out[] = ['sid' => (string)$k['id'], 'exam' => $label, 'cls' => $cls, 'rows' => $x['rows'], 'tot' => $x['tot'], 'max' => $x['max'], 'pct' => $x['pct'],
-                              'rank' => $rk && $rk * 2 <= $n ? $rk : null, 'of' => $n, 'complete' => $x['done'] === $full, 'toppers' => $top]; }
+                              'rank' => $rk && $rk <= 5 ? $rk : null, 'of' => $n, 'complete' => $x['done'] === $full, 'toppers' => $top]; }
             }
             return $out; })(),
         // Owner, 27 Nov 2026: "all over copy homework checking" — every homework check (tchChk) and chapter copy check (tchCopy) of the children

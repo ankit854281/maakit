@@ -8,12 +8,16 @@
 //      (game_api.php?a=tarena). Below 60% is red, so the teacher knows whom to help.
 // Home card shows what is waiting. Screen: TAB 'arena'.
 // =====================================================================================================
-const AR = { tips: null, tipsAt: 0, tipsLoading: false, rep: {}, repLoading: false, cls: '', tab: 'tips' };
+const AR = { tips: null, tipsAt: 0, tipsLoading: false, rep: {}, repLoading: false, cls: '', tab: 'tips', lv: null, lvAt: 0, lvLoading: false };
 function arNeed(force) {
   if (!AR.tipsLoading && (force || !AR.tips || Date.now() - AR.tipsAt > 120000)) {
     AR.tipsLoading = true;
     api('tips_api.php?a=tlist').then(r => { AR.tips = r.tips || []; AR.tipsErr = ''; }).catch(e => { AR.tips = AR.tips || []; AR.tipsErr = e.message; })
       .finally(() => { AR.tipsAt = Date.now(); AR.tipsLoading = false; softRender(); });
+  }
+  if (!AR.lvLoading && (force || !AR.lv || Date.now() - AR.lvAt > 120000)) {
+    AR.lvLoading = true;
+    api('famleave_api.php?a=tlist').then(r => { AR.lv = r.leaves || []; }).catch(() => { AR.lv = AR.lv || []; }).finally(() => { AR.lvAt = Date.now(); AR.lvLoading = false; softRender(); });
   }
   const key = AR.cls || '_';
   if (!AR.repLoading && (force || !AR.rep[key] || Date.now() - AR.rep[key].at > 120000)) {
@@ -35,19 +39,36 @@ async function arAddQ() {
     toast('Added — it is in the class test now ✓'); ['ar-q', 'ar-o0', 'ar-o1', 'ar-o2', 'ar-o3'].forEach(id => { if ($(id)) $(id).value = ''; }); }
   catch (e) { toast(e.message); }
 }
+async function arLeave(id, status) {
+  try { await api('famleave_api.php?a=decide', { id, status }); toast(status === 'approved' ? 'Leave approved — attendance will show L on those days' : 'Leave not approved'); arNeed(true); }
+  catch (e) { toast(e.message); }
+}
+// Approved student leave → the attendance screen starts that child as "L" on those days (only when attendance is not saved yet)
+if (typeof stOf === 'function') { const _stOf = stOf; stOf = function (saved, list, date) { const st = _stOf(saved, list);
+  if (!saved && date && AR.lv) AR.lv.forEach(x => { if (x.status === 'approved' && x.from <= date && x.to >= date && st[x.sid] === 'P') st[x.sid] = 'L'; }); return st; }; }
 function arHomeCard() {
-  arNeed(); const pend = (AR.tips || []).filter(t => t.status === 'pending').length, R = AR.rep[AR.cls || '_'];
-  if (!pend && !(R && R.date && R.rows)) return '';
+  arNeed(); const pend = (AR.tips || []).filter(t => t.status === 'pending').length, R = AR.rep[AR.cls || '_'], lvp = (AR.lv || []).filter(x => x.status === 'pending');
+  const lvCard = lvp.length ? `<div class="card" onclick="AR.tab='leave';go('arena')" style="cursor:pointer;border-left:4px solid #E0662B"><h3 style="margin:0 0 4px">🗓 Leave applications <span class="pill bad">${lvp.length} new</span></h3><p class="mut" style="margin:0">${lvp.slice(0, 3).map(x => esc(x.name) + ' (' + esc(x.cls) + ') · ' + esc(fmtDate(x.from)) + (x.to !== x.from ? '–' + esc(fmtDate(x.to)) : '')).join(' · ')}</p></div>` : '';
+  if (!pend && !(R && R.date && R.rows)) return lvCard;
   const took = R && R.rows ? R.rows.filter(r => r.test && r.test.done) : [];
   const low = took.filter(r => r.test.right / r.test.n < 0.6).length;
   return `<div class="card" onclick="go('arena')" style="cursor:pointer"><h3 style="margin:0 0 4px">🎯 Class test & students' tricks ${pend ? `<span class="pill bad">${pend} to check</span>` : ''}</h3>
-    <p class="mut" style="margin:0">${R && R.date ? `Class ${esc(R.cls)}: <b>${took.length} of ${R.rows.length}</b> took the test${low ? ` · <b style="color:#B42318">${low} below 60%</b>` : ''}` : ''}${pend ? (R && R.date ? ' · ' : '') + `${pend} trick${pend > 1 ? 's' : ''} waiting for you` : ''}</p></div>`;
+    <p class="mut" style="margin:0">${R && R.date ? `Class ${esc(R.cls)}: <b>${took.length} of ${R.rows.length}</b> took the test${low ? ` · <b style="color:#B42318">${low} below 60%</b>` : ''}` : ''}${pend ? (R && R.date ? ' · ' : '') + `${pend} trick${pend > 1 ? 's' : ''} waiting for you` : ''}</p></div>` + lvCard;
 }
 function vArena() {
   arNeed(); const pend = (AR.tips || []).filter(t => t.status === 'pending');
-  const tabs = crTabs([['tips', 'chat', "Students' tricks", pend.length || ''], ['test', 'chart', 'Class test & rank']], AR.tab, k => `AR.tab='${k}';render()`);
+  const lvp = (AR.lv || []).filter(x => x.status === 'pending');
+  const tabs = crTabs([['leave', 'note', 'Leave', lvp.length || ''], ['tips', 'chat', "Students' tricks", pend.length || ''], ['test', 'chart', 'Class test & rank']], AR.tab, k => `AR.tab='${k}';render()`);
   let body = '';
-  if (AR.tab === 'tips') {
+  if (AR.tab === 'leave') {
+    const done = (AR.lv || []).filter(x => x.status !== 'pending' && x.status !== 'cancelled');
+    body = !AR.lv ? '<div class="load"><i></i></div>' : crHead('Leave applications', 'Sent by parents from the Family app. Approved leave shows as L in attendance, not absent.')
+      + (lvp.length ? lvp.map(x => `<div class="card"><b>${esc(x.name)} · Class ${esc(x.cls)}</b> <span class="pill">${x.days} day${x.days > 1 ? 's' : ''}</span>
+          <p style="margin:6px 0">${esc(fmtDate(x.from))}${x.to !== x.from ? ' to ' + esc(fmtDate(x.to)) : ''} · <b>${esc(x.reason)}</b>${x.note ? ' — ' + esc(x.note) : ''}</p>
+          <div style="display:flex;gap:8px"><button class="btn s go" onclick="arLeave(${jsq(x.id)},'approved')">✓ Approve</button><button class="btn s l" onclick="arLeave(${jsq(x.id)},'rejected')">Not approved</button></div></div>`).join('')
+        : crEmpty('✅', 'No new leave application', 'Applications from parents appear here.'))
+      + (done.length ? `<div class="card"><b>Recent</b>${done.slice(0, 20).map(x => `<p style="margin:6px 0 0;font-size:14px">${esc(x.name)} (${esc(x.cls)}) · ${esc(fmtDate(x.from))}${x.to !== x.from ? '–' + esc(fmtDate(x.to)) : ''} · ${esc(x.reason)} <small class="mut">— ${x.status === 'approved' ? '✓ approved' : 'not approved'}${x.decidedBy ? ' by ' + esc(x.decidedBy) : ''}</small></p>`).join('')}</div>` : '');
+  } else if (AR.tab === 'tips') {
     if (!AR.tips) body = '<div class="load"><i></i></div>';
     else {
       body = (AR.tipsErr ? `<div class="ban warn">${esc(AR.tipsErr)}</div>` : '') + crHead("Students' tricks", 'Approve good ones — the whole class sees them as a Status, with the student’s short name.')
@@ -78,7 +99,7 @@ function vArena() {
           <p class="mut" style="margin:8px 0 0;font-size:12px">Questions come from the AI pack for your diary topic and from questions you add in Quiz Duel with the same topic.</p></div>`;
     }
   }
-  return `<div class="card"><h2 style="margin:0">🎯 Class test & tricks</h2><p class="mut" style="margin:4px 0 0">What the children learnt from your diary, and the tricks they want to share.</p></div>` + tabs + body;
+  return `<div class="card"><h2 style="margin:0">🎯 Students: leave, test & tricks</h2><p class="mut" style="margin:4px 0 0">Leave applications from parents, the class test from your diary, and the tricks children want to share.</p></div>` + tabs + body;
 }
 if (typeof vHome === 'function') { const _vhA = vHome; vHome = function () { return arHomeCard() + _vhA.apply(this, arguments); }; }
 // Principal: Family App usage at a glance (owner, 28 Nov 2026: "kitne student login kiye hain kaise pata chalega")

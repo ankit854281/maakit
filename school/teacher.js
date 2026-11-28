@@ -647,7 +647,7 @@ function vAttDay(c) {
   if (dayIdx(date) < 0) return nav + '<div class="ban hol">Sunday — no attendance.</div>';
   if (hol) return nav + `<div class="ban hol"><div><b>School holiday:</b> ${esc(hol.title)}<br><span class="sm">No attendance is taken on a holiday.</span></div></div>`;
   if (ch) return nav + `<div class="ban hol"><div><b>Class ${esc(c)} holiday:</b> ${esc(ch.title)}<br><span class="sm">Marked by ${esc(ch.by || '')}. This day is not counted as present or absent.</span><br><button class="btn s w" style="margin-top:8px" onclick="setClsHol(${jsq(c)},'${date}',false)">Remove holiday — take attendance</button></div></div>`;
-  if (!DRAFT.att || DRAFT.att.key !== date + c) DRAFT.att = { key: date + c, st: stOf(saved, list), changed: false };
+  if (!DRAFT.att || DRAFT.att.key !== date + c) DRAFT.att = { key: date + c, st: stOf(saved, list, date), changed: false };
   const st = DRAFT.att.st, nA = list.filter(s => st[s.id] === 'A').length, nL = list.filter(s => st[s.id] === 'L').length;
   const absent = saved ? (saved.absent || []).filter(id => studentById(id)) : [];
   const nP = list.length - nA - nL, f = DRAFT.att.f || 'all', photoMode = !!DRAFT.att.photo;

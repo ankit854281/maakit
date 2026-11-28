@@ -358,7 +358,7 @@ function fzChecks(kid) {
 }
 function fzResultCard(kid) {
   const T = fzTerm(kid); if (!T) return '';
-  const medal = r => ['🥇', '🥈', '🥉'][r - 1] || '🏅';
+  const medal = r => ['🥇', '🥈', '🥉', '🏅', '🎖️'][r - 1] || '🏅';
   return `<section class="fr-card"><div class="fr-top"><div><small>${esc(T.exam)} examination · Class ${esc(T.cls)}</small><h2>${T.pct != null ? T.pct + '%' : '—'}</h2><p>Grade ${T.pct != null ? grade(T.pct) : '—'} · ${esc(String(T.tot))} / ${T.max}</p></div>
       ${T.rank ? `<div class="fr-rank"><small>Rank in class</small><b>${T.rank}</b><small>of ${T.of}</small></div>` : `<div class="fr-rank"><small>Grade</small><b>${T.pct != null ? grade(T.pct) : '—'}</b><small>${T.complete ? 'well done' : 'marks pending'}</small></div>`}</div>
     <div class="fr-tbl"><div class="fr-h"><span>Subject</span><span>PT</span><span>NB</span><span>SEA</span><span>Exam</span><span>Total</span></div>
@@ -386,6 +386,52 @@ function vPChecks() {
     + (K.hw.length ? `<div class="card"><h3 class="h3">Recent homework checks</h3>${K.hw.slice(0, 40).map(x => `<div class="py-2 border-b border-slate-100 last:border-0 text-sm"><div class="flex justify-between gap-2"><span><span class="subj">${esc(x.subj)}</span> ${esc(fmtDate(x.date))}</span><b>${lab[x.hw] ? lab[x.hw][0] + ' ' + lab[x.hw][1] : ''}</b></div>${x.task ? `<p class="text-slate-600 mt-1">${esc(x.task)}</p>` : ''}${x.by ? `<p class="text-xs text-slate-400">Checked by ${esc(x.by)}</p>` : ''}</div>`).join('')}</div>` : '');
 }
 
+// ---------------------------------------------------------------- 6c. STUDENT PROFILE + LEAVE (owner, 28 Nov 2026)
+async function fzApi(path, body) {
+  const opt = { method: body ? 'POST' : 'GET', headers: { 'X-School-Token': TOKEN || '' } };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  let r, j = null; try { r = await fetch(path, opt); } catch (e) { throw new Error('No internet connection. Please try again.'); }
+  try { j = await r.json(); } catch (e) {}
+  if (!r.ok || !j || !j.ok) throw new Error((j && j.error) || 'Server problem. Please try again.');
+  return j;
+}
+function fzAva(kid, cls) { const ini = esc((kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('')); return kid.photo ? `<img class="${cls || ''}" src="${esc(kid.photo)}" alt="${esc(kid.name)}">` : `<span class="${cls || ''} fz-ini">${ini}</span>`; }
+function vPInfo() {
+  const kid = pKid(); if (!kid) return vPHome(); const I = kid.info || {}, T = fzTerm(kid), sum = (PD.attSum || {})[kid.id] || { present: 0, total: 0 }, sp = sum.total ? Math.round(sum.present / sum.total * 100) : null;
+  const fd = d => /^\d{4}-\d{2}-\d{2}$/.test(d) ? fmtDate(d) : d;
+  const rows = [['Admission no.', I.adm], ['Class', kid.cls + (I.section ? ' – ' + I.section : '')], ['Roll no.', I.rollno], ['Date of birth', I.dob ? fd(I.dob) : ''], ['Gender', I.gender], ['Blood group', I.blood], ['House', I.house],
+    ['Father’s name', I.father], ['Mother’s name', I.mother], ['Mobile', I.phone], ['Other mobile', I.phone2], ['Address', I.address], ['Admission date', I.admDate ? fd(I.admDate) : ''], ['Class teacher', kid.ct]].filter(r => r[1]);
+  return `${kidSwitch()}<section class="fp-hero">${fzAva(kid, 'fp-pic')}<h2>${esc(kid.name)}</h2><p>Class ${esc(kid.cls)}${I.adm ? ' · Adm. ' + esc(I.adm) : ''}</p>
+      <div class="fp-stats"><div><b>${sp == null ? '—' : sp + '%'}</b><span>attendance</span></div><div><b>${T ? (T.rank ? FZ_ORD(T.rank) : grade(T.pct)) : '—'}</b><span>${T ? (T.rank ? 'rank · ' : 'grade · ') + esc(T.exam) : 'result'}</span></div><div><b>${(K => K.pct != null ? K.pct + '%' : '—')(fzChecks(kid))}</b><span>homework done</span></div></div></section>
+    <div class="card"><h3 class="h3">Student information</h3><div class="fp-list">${rows.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      <p class="text-xs text-slate-500 mt-3">To correct any detail or the photo, please contact the school office.</p></div>
+    <div class="grid grid-cols-2 gap-2"><button class="btn btn-l" onclick="go('pleave')">🗓 Apply for leave</button><button class="btn btn-l" onclick="go('prec')">🏆 Achievements</button></div>`;
+}
+let FZL = {};
+async function fzLvLoad(kid, force) { if (FZL[kid.id] && !force) return; FZL[kid.id] = FZL[kid.id] || null; try { FZL[kid.id] = await fzApi('famleave_api.php?a=list&sid=' + encodeURIComponent(kid.id)); } catch (e) { FZL[kid.id] = { error: e.message, leaves: [], reasons: [] }; } if (view === 'pleave') render(); }
+let FZLR = 'Illness';
+async function fzLvApply() {
+  const kid = pKid(), v = id => (document.getElementById(id) || {}).value || '';
+  try { await fzApi('famleave_api.php?a=apply', { sid: kid.id, from: v('lv-from'), to: v('lv-to') || v('lv-from'), reason: FZLR, note: v('lv-note') }); toast('Leave application sent to the class teacher.'); fzLvLoad(kid, true); }
+  catch (e) { toast(e.message, 'a'); }
+}
+async function fzLvCancel(id) { const kid = pKid(); try { await fzApi('famleave_api.php?a=cancel', { sid: kid.id, id }); toast('Application withdrawn.'); fzLvLoad(kid, true); } catch (e) { toast(e.message, 'a'); } }
+function vPLeave() {
+  const kid = pKid(); if (!kid) return vPHome(); if (FZL[kid.id] === undefined) fzLvLoad(kid); const L = FZL[kid.id], t = todayISO();
+  const st = { pending: ['Waiting for class teacher', 'bg-marigold/20 text-ink'], approved: ['Approved', 'bg-leaf/10 text-leaf'], rejected: ['Not approved', 'bg-rose/10 text-rose'], cancelled: ['Withdrawn', 'bg-slate-100 text-slate-500'] };
+  return fzBack('Leave application', esc(kid.name) + ' · Class ' + esc(kid.cls))
+    + `<div class="card space-y-3"><h3 class="h3">🗓 Apply for leave</h3>
+      <div class="grid grid-cols-2 gap-2"><div><label class="lbl">From</label><input id="lv-from" type="date" class="inp" value="${t}" min="${addDays(t, -7)}"></div><div><label class="lbl">To</label><input id="lv-to" type="date" class="inp" value="${t}" min="${addDays(t, -7)}"></div></div>
+      <div><label class="lbl">Reason</label><div class="flex flex-wrap gap-2">${['Illness', 'Family function', 'Travel', 'Other'].map(r => `<button class="chip ${FZLR === r ? 'chip-on' : ''}" onclick="FZLR='${r}';render()">${{ Illness: '🤒', 'Family function': '🎉', Travel: '🚌', Other: '✏️' }[r]} ${r}</button>`).join('')}</div></div>
+      <div><label class="lbl">Note for the teacher ${FZLR === 'Other' ? '(required)' : '(optional)'}</label><textarea id="lv-note" class="inp" rows="2" maxlength="300" placeholder="e.g. fever since last night"></textarea></div>
+      <button class="btn btn-p w-full py-3" onclick="fzLvApply()">Send to class teacher</button>
+      <p class="text-xs text-slate-500">Approved leave is shown as Leave (L) in attendance, not as absent. Sundays are not counted.</p></div>`
+    + (!L ? '<div class="card text-sm text-slate-500">Loading…</div>' : L.error ? `<div class="card text-sm">${esc(L.error)}</div>`
+      : `<div class="card"><h3 class="h3">My applications</h3>${L.leaves.length ? L.leaves.map(x => `<div class="py-3 border-b border-slate-100 last:border-0 text-sm"><div class="flex justify-between gap-2"><b>${esc(fmtDate(x.from))}${x.to !== x.from ? ' – ' + esc(fmtDate(x.to)) : ''}</b><span class="pill ${st[x.status][1]}">${st[x.status][0]}</span></div>
+          <p class="text-slate-600 mt-1">${esc(x.reason)} · ${x.days} school day${x.days > 1 ? 's' : ''}${x.note ? ' — ' + esc(x.note) : ''}</p>${x.decidedBy ? `<p class="text-xs text-slate-400">${x.status === 'approved' ? 'Approved' : 'Reviewed'} by ${esc(x.decidedBy)}${x.reply ? ': ' + esc(x.reply) : ''}</p>` : ''}
+          ${x.status === 'pending' ? `<button class="text-xs underline text-rose mt-1" onclick="fzLvCancel(${jsq(x.id)})">Withdraw</button>` : ''}</div>`).join('') : '<p class="text-sm text-slate-500 mt-1">No leave applied yet.</p>'}</div>`);
+}
+
 // ---------------------------------------------------------------- 7. PREMIUM HOME (owner, 27 Nov 2026: "better than the Teacher and Chairman apps")
 // Hero header with greeting and child switch, a "today at a glance" card, learning stories, quick actions, today's
 // lessons, class-test banner, coming-up timeline and the latest notice. The WhatsApp-style update list follows below.
@@ -404,15 +450,14 @@ function fzHome(kid, isParent, ctl) {
   const name = (kid.name || '').split(' ')[0], ini = (kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   const attTxt = at.today ? (at.today.present ? 'Present' : 'Absent') : 'Not marked', attTone = at.today ? (at.today.present ? 'ok' : 'bad') : 'mut';
   const QA = [['phw', '📘', 'Homework', '#2563eb'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['presults', '📊', 'Results', '#d6336c'], ['pcal', '📅', 'Calendar', '#0e9f9a'],
-    ['pchk', '📒', 'Checks', '#0f8a5f'], ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5']]
+    ['pchk', '📒', 'Checks', '#0f8a5f'], ['pleave', '🗓', 'Leave', '#e0662b'], ['pinfo', '🪪', 'Profile', '#5b6b7b'], ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5']]
     .filter(q => VIEWS[q[0]]);
-  const test = g && g.today && g.today.ready && !g.today.played;
   return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
     <section class="fh-hero"><i class="fh-glow a"></i><i class="fh-glow b"></i>
       <div class="fh-top"><img src="img/chairman-512.png" alt="School logo"><div><b>SNMSIS</b><small>${isParent ? 'Parent' : 'Student'} · ${esc(S.settings.session || '')}</small></div><span class="fh-ctl">${ctl || ''}</span></div>
-      <p class="fh-hi">${fzGreet()},</p><h1>${esc(isParent ? name + '’s family' : name)}</h1>
+      <div class="fh-me"><button onclick="go('pinfo')" aria-label="Student profile">${fzAva(kid, 'fh-pic')}</button><div><p class="fh-hi">${fzGreet()},</p><h1>${esc(isParent ? name + '’s family' : name)}</h1></div></div>
       <div class="fh-tags"><span>Class ${esc(kid.cls)}</span>${kid.ct ? `<span>Class teacher · ${esc(kid.ct)}</span>` : ''}<span>${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
-      ${PD.kids.length > 1 ? `<div class="fh-kids fam-child">${PD.kids.map(k => `<button class="${k.id === kid.id ? 'on' : ''}" onclick="PKID='${esc(k.id)}';render()"><span>${esc((k.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span>${esc((k.name || '').split(' ')[0])} · ${esc(k.cls)}</button>`).join('')}</div>` : ''}
+      ${PD.kids.length > 1 ? `<div class="fh-kids fam-child">${PD.kids.map(k => `<button class="${k.id === kid.id ? 'on' : ''}" onclick="PKID='${esc(k.id)}';render()">${k.photo ? `<img src="${esc(k.photo)}" alt="">` : `<span>${esc((k.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span>`}${esc((k.name || '').split(' ')[0])} · ${esc(k.cls)}</button>`).join('')}</div>` : ''}
     </section>
     <section class="fh-glance">
       <button onclick="go('presults')"><span class="fh-ring ${attTone}" style="--p:${sp == null ? 0 : sp}"><b>${sp == null ? '—' : sp + '%'}</b></span><b class="t-${attTone}">${attTxt}</b><small>attendance</small></button>
@@ -423,7 +468,10 @@ function fzHome(kid, isParent, ctl) {
       <button onclick="go('pcal')"><span class="fh-num">${exam ? Math.max(0, fzDaysTo(exam.date)) : '—'}</span><b>${exam ? (fzDaysTo(exam.date) === 1 ? 'Day' : 'Days') : 'No exam'}</b><small>${exam ? 'to ' + esc(exam.title.split(':')[0]) : 'scheduled'}</small></button>
     </section>
     ${gyStatusRow(kid)}
-    ${test ? `<button class="fh-cta" onclick="go('game')"><span>📝</span><div><b>Today’s class test is ready</b><small>${g.today.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ')} · ${g.today.ready} questions</small></div><em>Start</em></button>` : ''}
+    ${(() => { if (!g || !g.today || !g.today.topics.length) return ''; const td = g.today, tp = td.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ');
+      if (td.played && td.played.done) return `<button class="fh-cta done" onclick="go('game')"><span>✅</span><div><b>Class test done · ${td.played.right} of ${td.played.n} correct</b><small>${tp}</small></div><em>${Math.round(td.played.right / td.played.n * 100)}%</em></button>`;
+      if (td.ready) return `<button class="fh-cta" onclick="go('game')"><span>📝</span><div><b>${td.isToday ? 'Today’s' : 'Last class’s'} test is ready</b><small>${tp} · ${td.ready} questions</small></div><em>${td.played ? 'Continue' : 'Start'}</em></button>`;
+      return `<div class="fh-cta wait"><span>⏳</span><div><b>Class test is being prepared</b><small>From today’s class: ${tp}</small></div></div>`; })()}
     <div class="fh-sec"><h3>Quick access</h3></div>
     <section class="fh-grid">${QA.map(([k, e, l, c]) => `<button onclick="go('${k}')" style="--c:${c}"><span>${e}</span><b>${l}</b></button>`).join('')}</section>
     <div class="fh-sec"><h3>Today in class</h3><button onclick="go('phw')">See all</button></div>
@@ -439,12 +487,12 @@ function fzHome(kid, isParent, ctl) {
 
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
-  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks });
+  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave });
   const res0 = VIEWS.presults; if (res0) VIEWS.presults = () => { const kid = PD && PD.kids && PD.kids.length ? pKid() : null; if (!kid) return res0();
     const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
-  const add = [['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
+  const add = [['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
-    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pchk', 'prec', 'psyl', 'pset'); } }
+    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pchk', 'prec', 'psyl', 'pset'); } }
   // web (not the app): quick links on the parent home
   const home = VIEWS.phome;
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();

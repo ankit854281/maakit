@@ -58,8 +58,10 @@ function gm_today_topics(string $cls): array {
     $st->execute([date('Y-m-d', time() - 3 * 86400), date('Y-m-d')]);
     $by = [];
     foreach ($st as $row) { $e = json_decode((string)$row['d'], true);
-        if (is_array($e) && ($e['cls'] ?? '') === $cls && trim((string)($e['topic'] ?? '')) !== '' && !preg_match(GM_SKIP_SUBJ, (string)($e['subj'] ?? '')))
-            $by[(string)$row['dkey']][gm_pid($cls, $e['subj'], $e['topic'])] = ['subj' => $e['subj'], 'topic' => trim($e['topic'])]; }
+        // Owner, 28 Nov 2026: "test related to class classwork topic" — the topic, or the class work when no topic is written
+        $tp = is_array($e) ? trim((string)($e['topic'] ?? '')) ?: trim((string)($e['classwork'] ?? $e['cw'] ?? '')) : '';
+        if (is_array($e) && ($e['cls'] ?? '') === $cls && $tp !== '' && mb_strlen($tp) <= 160 && !preg_match(GM_SKIP_SUBJ, (string)($e['subj'] ?? '')))
+            $by[(string)$row['dkey']][gm_pid($cls, $e['subj'], $tp)] = ['subj' => $e['subj'], 'topic' => $tp]; }
     if (!$by) return ['date' => null, 'topics' => []];
     krsort($by); $date = (string)array_key_first($by);
     return ['date' => $date, 'topics' => $by[$date]];
