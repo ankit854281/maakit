@@ -162,7 +162,6 @@ public class MainActivity extends Activity {
     // document picker controls the destination. It never accepts a filesystem path.
     private android.speech.tts.TextToSpeech tts;
     private boolean ttsReady;
-    @Override protected void onDestroy() { if (tts != null) tts.shutdown(); super.onDestroy(); }
 
     public final class Reports {
         // Reads the homework aloud in Hindi or English (owner, 28 Nov 2026: parents who cannot read can listen).
@@ -236,6 +235,7 @@ public class MainActivity extends Activity {
             .setPositiveButton("Close",(d,w) -> finish()).setNegativeButton("Stay",null).show();
     }
     @Override protected void onDestroy() {
+        if (tts != null) tts.shutdown();
         web.removeJavascriptInterface("SNMSISFiles");
         web.destroy();
         report = null;
