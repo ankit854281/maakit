@@ -52,7 +52,7 @@ try {
     foreach ($rows('famLeave', false) as $r => [$d, $t]) { $sid = (string)($d['sid'] ?? ''); if (!in_array($sid, $ids, true) || !in_array($d['status'] ?? '', ['approved', 'rejected'], true)) continue;
         $add("lvd|$r", (int)($d['decidedAt'] ?? $t), 'leave', 'Leave ' . ($d['status'] === 'approved' ? 'approved' : 'not approved') . ' for ' . $first($sid), $fd((string)$d['from']) . ($d['to'] !== $d['from'] ? ' – ' . $fd((string)$d['to']) : '') . ' · by ' . ($d['decidedBy'] ?? 'the class teacher') . (($d['reply'] ?? '') !== '' ? ': ' . $d['reply'] : '') . '.', 'pleave', $sid); }
     foreach ($rows('notice', false) as $r => [$d, $t]) { if (($d['to'] ?? '') === 'Teachers' || $t < strtotime($from)) continue;
-        $add("nt|$r", $t, 'notice', '📢 ' . (string)($d['title'] ?? 'School notice'), mb_substr(trim((string)($d['body'] ?? '')), 0, 160), 'pnotices'); }
+        $add("nt|$r", $t, 'notice', (string)($d['title'] ?? 'School notice'), mb_substr(trim((string)($d['body'] ?? '')), 0, 160), 'pnotices'); }
     foreach ($rows('famFb', false) as $r => [$d, $t]) if (($d['uid'] ?? '') === $u['uid'] && ($d['reply'] ?? '') !== '' && (int)($d['replyAt'] ?? 0) >= strtotime($from))
         $add("fb|$r", (int)$d['replyAt'], 'reply', 'The school replied to your message', mb_substr((string)$d['reply'], 0, 160), 'pfb');
 
