@@ -8,6 +8,17 @@
 //      (game_api.php?a=tarena). Below 60% is red, so the teacher knows whom to help.
 // Home card shows what is waiting. Screen: TAB 'arena'.
 // =====================================================================================================
+const PAR = { d: {}, busy: false, cls: '', note: null };
+const PAR_PRESET = { praise: ['Very good work in class today', 'Beautiful handwriting', 'Homework done neatly', 'Answered well in class', 'Improving well — keep it up', 'Helped a classmate today'],
+  care: ['Looked tired today', 'Was not feeling well', 'Needs more practice at home', 'Was very quiet today', 'Please check the copy at home', 'Came late today'] };
+function parNeed(force) {
+  const c = PAR.cls || (typeof myCT === 'function' && myCT()[0]) || ((AR.rep[AR.cls || '_'] || {}).cls) || ''; if (!c) return null; PAR.cls = c;
+  const x = PAR.d[c]; if (!PAR.busy && (force || !x || Date.now() - x.at > 120000)) { PAR.busy = true;
+    api('famcare_api.php?a=class&cls=' + encodeURIComponent(c)).then(r => { PAR.d[c] = { ...r, at: Date.now() }; }).catch(e => { PAR.d[c] = { error: e.message, at: Date.now() }; }).finally(() => { PAR.busy = false; softRender(); }); }
+  return PAR.d[c] || null;
+}
+async function parNote(sid, kind, text) { if (!text) return; try { await api('famcare_api.php?a=note', { sid, kind, text }); toast(kind === 'praise' ? '⭐ Sent — the parents get a notification' : '🩺 Note sent to the parents'); PAR.note = null; parNeed(true); } catch (e) { toast(e.message); } }
+const parT = t => t ? new Date(t * 1000).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : '';
 const AR = { tips: null, tipsAt: 0, tipsLoading: false, rep: {}, repLoading: false, cls: '', tab: 'tips', lv: null, lvAt: 0, lvLoading: false };
 function arNeed(force) {
   if (!AR.tipsLoading && (force || !AR.tips || Date.now() - AR.tipsAt > 120000)) {
@@ -49,18 +60,35 @@ if (typeof stOf === 'function') { const _stOf = stOf; stOf = function (saved, li
 function arHomeCard() {
   arNeed(); const pend = (AR.tips || []).filter(t => t.status === 'pending').length, R = AR.rep[AR.cls || '_'], lvp = (AR.lv || []).filter(x => x.status === 'pending');
   const lvCard = lvp.length ? `<div class="card" onclick="AR.tab='leave';go('arena')" style="cursor:pointer;border-left:4px solid #E0662B"><h3 style="margin:0 0 4px">🗓 Leave applications <span class="pill bad">${lvp.length} new</span></h3><p class="mut" style="margin:0">${lvp.slice(0, 3).map(x => esc(x.name) + ' (' + esc(x.cls) + ') · ' + esc(fmtDate(x.from)) + (x.to !== x.from ? '–' + esc(fmtDate(x.to)) : '')).join(' · ')}</p></div>` : '';
-  if (!pend && !(R && R.date && R.rows)) return lvCard;
+  const PDh = parNeed(), parCard = PDh && PDh.sum && PDh.sum.n ? `<div class="card" onclick="AR.tab='par';go('arena')" style="cursor:pointer"><h3 style="margin:0 0 4px">👨‍👩‍👧 Parents today · Class ${esc(PDh.cls)} ${PDh.sum.mismatch ? '<span class="pill bad">' + PDh.sum.mismatch + ' said done, not done</span>' : ''}</h3><p class="mut" style="margin:0"><b>${PDh.sum.seenHw} of ${PDh.sum.n}</b> saw today's homework · <b>${PDh.sum.signed}</b> signed · tap to send ⭐ or 🩺</p></div>` : '';
+  if (!pend && !(R && R.date && R.rows)) return parCard + lvCard;
   const took = R && R.rows ? R.rows.filter(r => r.test && r.test.done) : [];
   const low = took.filter(r => r.test.right / r.test.n < 0.6).length;
   return `<div class="card" onclick="go('arena')" style="cursor:pointer"><h3 style="margin:0 0 4px">🎯 Class test & students' tricks ${pend ? `<span class="pill bad">${pend} to check</span>` : ''}</h3>
-    <p class="mut" style="margin:0">${R && R.date ? `Class ${esc(R.cls)}: <b>${took.length} of ${R.rows.length}</b> took the test${low ? ` · <b style="color:#B42318">${low} below 60%</b>` : ''}` : ''}${pend ? (R && R.date ? ' · ' : '') + `${pend} trick${pend > 1 ? 's' : ''} waiting for you` : ''}</p></div>` + lvCard;
+    <p class="mut" style="margin:0">${R && R.date ? `Class ${esc(R.cls)}: <b>${took.length} of ${R.rows.length}</b> took the test${low ? ` · <b style="color:#B42318">${low} below 60%</b>` : ''}` : ''}${pend ? (R && R.date ? ' · ' : '') + `${pend} trick${pend > 1 ? 's' : ''} waiting for you` : ''}</p></div>` + parCard + lvCard;
 }
 function vArena() {
   arNeed(); const pend = (AR.tips || []).filter(t => t.status === 'pending');
   const lvp = (AR.lv || []).filter(x => x.status === 'pending');
-  const tabs = crTabs([['leave', 'note', 'Leave', lvp.length || ''], ['tips', 'chat', "Students' tricks", pend.length || ''], ['test', 'chart', 'Class test & rank']], AR.tab, k => `AR.tab='${k}';render()`);
+  const PD0 = parNeed();
+  const tabs = crTabs([['par', 'chat', 'Parents', PD0 && PD0.sum && PD0.sum.mismatch ? PD0.sum.mismatch : ''], ['leave', 'note', 'Leave', lvp.length || ''], ['tips', 'chat', "Students' tricks", pend.length || ''], ['test', 'chart', 'Class test & rank']], AR.tab, k => `AR.tab='${k}';render()`);
   let body = '';
-  if (AR.tab === 'leave') {
+  if (AR.tab === 'par') {
+    const D = PD0, cls = (typeof myCT === 'function' ? myCT() : []).concat(((AR.rep[AR.cls || '_'] || {}).classes) || []).filter((v, i, a) => v && a.indexOf(v) === i);
+    if (!D) body = '<div class="load"><i></i></div>';
+    else if (D.error) body = `<div class="ban warn">${esc(D.error)}</div>`;
+    else { const S2 = D.sum;
+      body = (cls.length > 1 ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:8px">${cls.map(c => `<button class="btn s ${c === D.cls ? 'go' : 'l'}" onclick="PAR.cls=${jsq(c)};parNeed(true);render()">${esc(c)}</button>`).join('')}</div>` : '')
+        + crHead(`Class ${esc(D.cls)} · parents today`, 'Did the parents see today’s homework and sign it in the Family app? Send a ⭐ for good work or a 🩺 care note.')
+        + crStats([['s', 'saw homework', S2.seenHw, S2.seenHw * 2 >= S2.n ? 'green' : 'red', 'of ' + S2.n], ['g', 'signed', S2.signed, 'amber', 'parent check'], ['m', 'said done, not done', S2.mismatch, S2.mismatch ? 'red' : 'green', 'next check']], '', () => '')
+        + (S2.mismatch ? `<div class="card" style="border-left:4px solid #B42318"><b style="color:#B42318">Parent said "done", but the homework check found it not done</b>${D.rows.filter(r => r.mismatch.length).map(r => `<p style="margin:6px 0 0">${esc(r.name)} — ${esc(r.mismatch.join(', '))}</p>`).join('')}<p class="mut" style="margin:6px 0 0;font-size:12px">Talk to the child and call the parent — the child may be telling the parent it is done.</p></div>` : '')
+        + `<div class="card">${D.rows.map(r => `<div style="padding:8px 0;border-top:1px solid #eef0f4"><div style="display:flex;align-items:center;gap:8px"><b style="flex:1">${r.roll ? esc(r.roll) + '. ' : ''}${esc(r.name)}</b>
+            <span class="pill ${r.seenHw ? 'ok' : ''}" title="Homework seen">${r.seenHw ? '✓✓ ' + parT(r.seenHw) : '✓ not seen'}</span>${r.sign ? `<span class="pill ${r.sign === 'done' ? 'ok' : 'bad'}">✍️ ${r.sign === 'done' ? 'done' : r.sign === 'partial' ? 'partly' : 'not done'}</span>` : ''}
+            <button class="btn s l" onclick="PAR.note=PAR.note&&PAR.note.sid===${jsq(r.sid)}&&PAR.note.kind==='praise'?null:{sid:${jsq(r.sid)},kind:'praise'};render()">⭐</button><button class="btn s l" onclick="PAR.note=PAR.note&&PAR.note.sid===${jsq(r.sid)}&&PAR.note.kind==='care'?null:{sid:${jsq(r.sid)},kind:'care'};render()">🩺</button></div>
+            ${r.mismatch.length ? `<small style="color:#B42318">Parent said done · not done in ${esc(r.mismatch.join(', '))}</small>` : ''}
+            ${PAR.note && PAR.note.sid === r.sid ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${PAR_PRESET[PAR.note.kind].map(t => `<button class="btn s ${PAR.note.kind === 'praise' ? 'go' : 'l'}" onclick="parNote(${jsq(r.sid)},'${PAR.note.kind}',${jsq(t)})">${esc(t)}</button>`).join('')}
+              <button class="btn s l" onclick="parNote(${jsq(r.sid)},'${PAR.note.kind}',prompt('Write your note for the parents:'))">✏️ Write</button></div>` : ''}</div>`).join('')}</div>`; }
+  } else if (AR.tab === 'leave') {
     const done = (AR.lv || []).filter(x => x.status !== 'pending' && x.status !== 'cancelled');
     body = !AR.lv ? '<div class="load"><i></i></div>' : crHead('Leave applications', 'Sent by parents from the Family app. Approved leave shows as L in attendance, not absent.')
       + (lvp.length ? lvp.map(x => `<div class="card"><b>${esc(x.name)} · Class ${esc(x.cls)}</b> <span class="pill">${x.days} day${x.days > 1 ? 's' : ''}</span>

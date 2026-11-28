@@ -7,7 +7,7 @@
 // Nothing is stored: every notification is built from the school's own records when asked —
 //   absent / on leave (studAtt) · homework not done or half done (tchChk) · copy incomplete (tchCopy) · today's homework
 //   written in the diary (diary, one per class per day) · leave approved / not approved (famLeave) · new notice (notice)
-//   · the school's reply to feedback (famFb)
+//   · the school's reply to feedback (famFb) · praise / care notes from teachers (famNote)
 // The app's bell shows them; the Android app checks this every 15–20 minutes and shows new ones as phone notifications.
 // ============================================================
 declare(strict_types=1);
@@ -53,6 +53,8 @@ try {
         $add("lvd|$r", (int)($d['decidedAt'] ?? $t), 'leave', 'Leave ' . ($d['status'] === 'approved' ? 'approved' : 'not approved') . ' for ' . $first($sid), $fd((string)$d['from']) . ($d['to'] !== $d['from'] ? ' – ' . $fd((string)$d['to']) : '') . ' · by ' . ($d['decidedBy'] ?? 'the class teacher') . (($d['reply'] ?? '') !== '' ? ': ' . $d['reply'] : '') . '.', 'pleave', $sid); }
     foreach ($rows('notice', false) as $r => [$d, $t]) { if (($d['to'] ?? '') === 'Teachers' || $t < strtotime($from)) continue;
         $add("nt|$r", $t, 'notice', (string)($d['title'] ?? 'School notice'), mb_substr(trim((string)($d['body'] ?? '')), 0, 160), 'pnotices'); }
+    foreach ($rows('famNote', false) as $r => [$d, $t]) { $sid = (string)($d['sid'] ?? ''); if (!in_array($sid, $ids, true) || (int)($d['at'] ?? 0) < strtotime($from)) continue;
+        $add("tn|$r", (int)$d['at'], $d['kind'] === 'care' ? 'care' : 'praise', ($d['kind'] === 'care' ? '🩺 A note about ' : '⭐ Well done, ') . $first($sid) . ($d['kind'] === 'care' ? ' from ' : '! — ') . ($d['by'] ?? 'the teacher'), (string)$d['text'], 'phome', $sid); }
     foreach ($rows('famFb', false) as $r => [$d, $t]) if (($d['uid'] ?? '') === $u['uid'] && ($d['reply'] ?? '') !== '' && (int)($d['replyAt'] ?? 0) >= strtotime($from))
         $add("fb|$r", (int)$d['replyAt'], 'reply', 'The school replied to your message', mb_substr((string)$d['reply'], 0, 160), 'pfb');
 

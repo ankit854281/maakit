@@ -405,5 +405,25 @@ gf_check(count($hwN) >= 2 && str_contains($hwN[0]['title'], 'did not do Hindi ho
 [, $NS] = $nf($PA, '&since=' . (time() + 60)); gf_check($NS['items'] === [], '"since" filter does not work');
 [$c] = $nf($K); gf_check($c === 403, 'a teacher opened family notifications');
 
+// ================= PARENT CONNECTION: seen, evening sign, praise / care notes (famcare_api.php, 28 Nov 2026) =================
+$fc = fn($a, $b = null, $t = null, $q = '') => gf_http('/school/famcare_api.php?a=' . $a . $q, $b, $t);
+[$c] = $fc('seen', ['sid' => 'g1', 'what' => 'hw'], $PA); gf_check($c === 200, 'seen not saved');
+$fc('seen', ['sid' => 'g1', 'what' => 'hw'], $PA);
+gf_check((int)$pdo->query("SELECT COUNT(*) FROM sch_records WHERE k='famRead' AND r='" . date('Y-m-d') . "|g1|hw'")->fetchColumn() === 1, 'seen saved twice');
+[$c] = $fc('seen', ['sid' => 'g2', 'what' => 'hw'], $PA); gf_check($c === 403, "marked another family's child as seen");
+[$c] = $fc('sign', ['sid' => 'g1', 'status' => 'done'], $tok['g1']); gf_check($c === 403, 'a student signed as the parent');
+[$c] = $fc('sign', ['sid' => 'g1', 'status' => 'done'], $PA); gf_check($c === 200, 'parent could not sign');
+// yesterday: parent said done, the next check found Maths not done → flagged
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('famSign',?,?,0,1)")->execute([$dy . '|g1', json_encode(['sid' => 'g1', 'date' => $dy, 'status' => 'done', 'at' => time() - 86400])]);
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchChk',?,?,0,1)")->execute([date('Y-m-d') . '|7th|Maths', json_encode(['date' => date('Y-m-d'), 'cls' => '7th', 'subj' => 'Maths', 'hw' => 'Ex 2', 'rows' => ['g1' => ['hw' => 'not', 'cp' => '']]])]);
+[$c, $CV] = $fc('class', null, $K, '&cls=7th&date=' . $dy); $r1 = array_values(array_filter($CV['rows'], fn($r) => $r['sid'] === 'g1'))[0];
+gf_check($c === 200 && $r1['sign'] === 'done' && $r1['mismatch'] === ['Maths'] && $CV['sum']['mismatch'] === 1, '"parent said done, not done" not flagged');
+[$c, $CT] = $fc('class', null, $K, '&cls=7th'); $r1 = array_values(array_filter($CT['rows'], fn($r) => $r['sid'] === 'g1'))[0];
+gf_check($r1['seenHw'] > 0 && $r1['sign'] === 'done' && $CT['sum']['seenHw'] === 1, "today's seen / sign not shown to the teacher");
+[$c] = $fc('class', null, $PA, '&cls=7th'); gf_check($c === 403, 'a parent opened the class parent view');
+[$c] = $fc('note', ['sid' => 'g1', 'kind' => 'praise', 'text' => 'Beautiful handwriting'], $K); gf_check($c === 200, 'teacher could not send praise');
+[, $NT] = $fc('notes', null, $PA, '&sid=g1'); gf_check($NT['notes'][0]['text'] === 'Beautiful handwriting' && $NT['signToday']['status'] === 'done', 'parent does not see the praise / own sign');
+[, $NN] = $nf($PA); gf_check(in_array('praise', array_column($NN['items'], 'kind'), true), 'praise did not become a notification');
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";

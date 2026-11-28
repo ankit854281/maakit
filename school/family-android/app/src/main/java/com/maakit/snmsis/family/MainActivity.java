@@ -160,7 +160,26 @@ public class MainActivity extends Activity {
 
     // The native save bridge is only exposed to school-origin pages; Android's
     // document picker controls the destination. It never accepts a filesystem path.
+    private android.speech.tts.TextToSpeech tts;
+    private boolean ttsReady;
+    @Override protected void onDestroy() { if (tts != null) tts.shutdown(); super.onDestroy(); }
+
     public final class Reports {
+        // Reads the homework aloud in Hindi or English (owner, 28 Nov 2026: parents who cannot read can listen).
+        @JavascriptInterface public void speak(String text, String lang) {
+            if (text == null || text.length() > 3000) return;
+            runOnUiThread(() -> {
+                if (!trusted(Uri.parse(web.getUrl() == null ? "" : web.getUrl()))) return;
+                java.util.Locale loc = "en".equals(lang) ? new java.util.Locale("en", "IN") : new java.util.Locale("hi", "IN");
+                if (tts == null) {
+                    tts = new android.speech.tts.TextToSpeech(MainActivity.this, status -> {
+                        ttsReady = status == android.speech.tts.TextToSpeech.SUCCESS;
+                        if (ttsReady) { tts.setLanguage(loc); tts.setSpeechRate(0.9f); tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "hw"); }
+                        else toast("Voice is not available on this phone.");
+                    });
+                } else if (ttsReady) { tts.setLanguage(loc); tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "hw"); }
+            });
+        }
         // Saves the parent's / student's own login so NotifyJob can check for new school notifications in the background.
         @JavascriptInterface public void setSession(String token, String role) {
             runOnUiThread(() -> {

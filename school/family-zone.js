@@ -496,7 +496,7 @@ function vPFeedback() {
 // famnotif_api.php builds them from attendance, homework / copy checks, diary, leave, notices and replies. The bell on the home shows
 // the unread count; the Android app (MainActivity → NotifyJob) checks every 15–20 minutes and shows new ones as phone notifications.
 let FZN = { items: null, at: 0, busy: false };
-const FZN_IC = { absent: '❌', leave: '🗓', homework: '📝', copy: '📒', diary: '📘', notice: '📢', reply: '💬' };
+const FZN_IC = { praise: '⭐', care: '🩺', absent: '❌', leave: '🗓', homework: '📝', copy: '📒', diary: '📘', notice: '📢', reply: '💬' };
 function fzNSeen() { return +fzLS.get('sn_notif_seen', 0) || 0; }
 async function fzNLoad(force) {
   if (FZN.busy || (!force && FZN.items && Date.now() - FZN.at < 120000)) return; FZN.busy = true;
@@ -506,7 +506,7 @@ async function fzNLoad(force) {
 function fzNUnread() { const s0 = fzNSeen(); return (FZN.items || []).filter(x => x.at > s0).length; }
 function fzBell() { fzNLoad(); const n = fzNUnread(); return `<button class="fz-bell-btn" onclick="go('pnotif')" aria-label="Notifications">🔔${n ? `<em>${n > 9 ? '9+' : n}</em>` : ''}</button>`; }
 function vPNotif() {
-  fzNLoad(); const L = FZN.items, s0 = fzNSeen();
+  fzNLoad(); const L = FZN.items, s0 = fzNSeen(); if (PD && PD.kids) PD.kids.forEach(k => fzSeen(k, 'notif'));
   setTimeout(() => { if (L && L.length) fzLS.set('sn_notif_seen', Math.max(s0, L[0].at)); }, 1500);
   const today = todayISO(), grp = { Today: [], Yesterday: [], Earlier: [] };
   (L || []).forEach(x => { const d = new Date(x.at * 1000), iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -521,6 +521,58 @@ let FZ_TOK = null;
 setInterval(() => { try { if (!window.SNMSISFiles || !SNMSISFiles.setSession) return; const tk = (typeof U !== 'undefined' && U && isFam()) ? (TOKEN || '') : '';
   if (tk !== FZ_TOK) { FZ_TOK = tk; SNMSISFiles.setSession(tk, tk ? U.role : ''); } } catch (e) {} }, 3000);
 setInterval(() => { if (typeof U !== 'undefined' && U && isFam()) fzNLoad(true); }, 180000);
+
+// ---------------------------------------------------------------- 6f. HOMEWORK REPORT (like the Principal's), PARENT SIGN, SEEN, TEACHER NOTES, VOICE (owner, 28 Nov 2026)
+// Each homework given (diary) is matched with the next homework check of that subject (tchChk) → ✓ done / ½ half / ✗ not done /
+// ⏳ not checked yet. Parents sign each evening; opening the homework tells the school it was seen (famcare_api.php).
+function fzHwRows(kid, days) {
+  const C = (PD.checks || { hw: [] }).hw.filter(x => x.sid === kid.id && x.hw), out = [];
+  PD.hw.filter(h => h.cls === kid.cls && h.hw).forEach(h => {
+    const ck = C.filter(x => x.subj === h.subj && (x.date > h.date || (x.date === h.date && x.task && x.task === h.hw))).sort((a, b) => a.date.localeCompare(b.date))[0];
+    out.push({ date: h.date, subj: h.subj, hw: h.hw, topic: h.topic, st: ck ? ck.hw : (h.date === todayISO() ? 'today' : 'wait'), by: ck ? ck.by : '', on: ck ? ck.date : '' });
+  });
+  return out.sort((a, b) => b.date.localeCompare(a.date) || a.subj.localeCompare(b.subj)).filter(x => !days || x.date >= addDays(todayISO(), -days));
+}
+const FZ_ST = { done: ['✓ Done', 'ok'], half: ['½ Half done', 'half'], not: ['✗ Not done', 'bad'], wait: ['⏳ Not checked yet', 'wait'], today: ['📝 Due next class', 'today'] };
+function fzSeen(kid, what) { const k = 'sn_seen_' + what + '_' + kid.id, d = todayISO(); if (fzLS.get(k, '') === d) return; fzLS.set(k, d); fzApi('famcare_api.php?a=seen', { sid: kid.id, what, date: d }).catch(() => { fzLS.set(k, ''); }); }
+let FZC = {};
+async function fzCareLoad(kid, force) { if (FZC[kid.id] && !force) return; FZC[kid.id] = FZC[kid.id] || { notes: [] }; try { FZC[kid.id] = await fzApi('famcare_api.php?a=notes&sid=' + encodeURIComponent(kid.id)); } catch (e) {} if (['phome', 'phwr'].includes(view)) render(); }
+async function fzSign(st) { const kid = pKid(); try { await fzApi('famcare_api.php?a=sign', { sid: kid.id, status: st, date: todayISO() }); toast(st === 'done' ? 'Thank you! The teacher will see that you checked the homework.' : 'Noted. The teacher will see it.'); fzCareLoad(kid, true); } catch (e) { toast(e.message, 'a'); } }
+function fzSpeak(text) {
+  try { if (window.SNMSISFiles && SNMSISFiles.speak) { SNMSISFiles.speak(text, FZ_LANG === 'en' ? 'en' : 'hi'); return; } } catch (e) {}
+  try { const u = new SpeechSynthesisUtterance(text); u.lang = FZ_LANG === 'en' ? 'en-IN' : 'hi-IN'; u.rate = .9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { toast('Voice is not available on this phone.', 'a'); }
+}
+function fzHwSpeech(kid, rows) { const n = (kid.name || '').split(' ')[0];
+  if (FZ_LANG === 'en') return `Homework for ${n}. ` + rows.map(r => `${r.subj}: ${r.hw}.`).join(' ');
+  return `${n} का आज का गृहकार्य। ` + rows.map(r => `${r.subj}: ${r.hw}।`).join(' '); }
+function fzHwToday(kid) {
+  const t = todayISO(), rows = fzHwRows(kid, 0), lastDate = rows.length ? rows[0].date : null, R = rows.filter(r => r.date === lastDate);
+  const C = FZC[kid.id] || {}; if (!FZC[kid.id]) fzCareLoad(kid); if (R.length) fzSeen(kid, 'hw');
+  const sg = C.signToday, isP = U && U.role === 'parent';
+  const pend = rows.filter(r => r.date < (lastDate || t) && (r.st === 'not' || r.st === 'half')).slice(0, 3);
+  if (!R.length) return `<section class="fhr"><div class="fhr-h"><b>📘 Homework</b></div><p class="fhr-empty">No homework written in the diary in the last 10 days.</p></section>`;
+  return `<section class="fhr"><div class="fhr-h"><b>📘 Homework · ${esc(dayLabelShort(lastDate))}</b><button onclick='fzSpeak(${JSON.stringify(fzHwSpeech(kid, R)).replace(/'/g, "&#39;")})' aria-label="Listen">🔊 Listen</button></div>
+    ${R.map(r => `<div class="fhr-row"><span class="fhr-s" style="--c:${fzColor(r.subj)}">${esc(r.subj)}</span><p>${esc(r.hw)}</p><em class="${FZ_ST[r.st][1]}">${FZ_ST[r.st][0]}</em></div>`).join('')}
+    ${pend.length ? `<div class="fhr-pend">⚠️ Not done earlier: ${pend.map(r => esc(r.subj) + ' (' + esc(dayLabelShort(r.date)) + ')').join(', ')}</div>` : ''}
+    ${isP ? (sg ? `<div class="fhr-sign done">✍️ You signed today: <b>${sg.status === 'done' ? 'All homework done' : sg.status === 'partial' ? 'Partly done' : 'Not done'}</b> · ${new Date(sg.at * 1000).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</div>`
+      : `<div class="fhr-sign"><p>✍️ <b>Parent check tonight</b> — did your child finish today's homework?</p><div><button onclick="fzSign('done')" class="ok">✓ All done</button><button onclick="fzSign('partial')" class="half">½ Partly</button><button onclick="fzSign('not')" class="bad">✗ Not done</button></div></div>`) : ''}
+    <button class="fhr-more" onclick="go('phwr')">Full homework report ›</button></section>`;
+}
+function fzNotesCard(kid) { const N = (FZC[kid.id] || {}).notes || []; if (!N.length) return '';
+  return `<section class="fnt">${N.slice(0, 2).map(x => `<div class="${x.kind}"><span>${x.kind === 'care' ? '🩺' : '⭐'}</span><div><b>${x.kind === 'care' ? 'A note from ' : 'Shabash from '}${esc(x.by)}</b><p>${esc(x.text)}</p><small>${esc(dayLabelShort(new Date(x.at * 1000).toISOString().slice(0, 10)))}</small></div></div>`).join('')}</section>`; }
+let FZHF = 'all';
+function vPHwReport() {
+  const kid = pKid(); if (!kid) return vPHome(); fzSeen(kid, 'hw');
+  const rows = fzHwRows(kid, 0), cnt = k => rows.filter(r => r.st === k).length, L = rows.filter(r => FZHF === 'all' || r.st === FZHF || (FZHF === 'wait' && r.st === 'today'));
+  const by = {}; L.forEach(r => (by[r.date] = by[r.date] || []).push(r));
+  const box = (k, l, n, tone) => `<button class="t-${tone} ${FZHF === k ? 'on' : ''}" onclick="FZHF='${k}';render()"><b>${n}</b><span>${l}</span></button>`;
+  return fzBack('Homework report', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · last 10 days')
+    + `<div class="fhs">${box('all', 'All', rows.length, 'ink')}${box('done', 'Done', cnt('done'), 'ok')}${box('not', 'Not done', cnt('not') + cnt('half'), 'bad')}${box('wait', 'Not checked', cnt('wait') + cnt('today'), 'amber')}</div>`
+    + (Object.keys(by).length ? Object.entries(by).map(([d, l]) => `<section class="fhr"><div class="fhr-h"><b>${esc(fmtDate(d))}</b><span class="pill">${l.length} subject${l.length > 1 ? 's' : ''}</span></div>
+      ${l.map(r => `<div class="fhr-row"><span class="fhr-s" style="--c:${fzColor(r.subj)}">${esc(r.subj)}</span><p>${esc(r.hw)}${r.by ? `<small>Checked by ${esc(r.by)} · ${esc(dayLabelShort(r.on))}</small>` : ''}</p><em class="${FZ_ST[r.st][1]}">${FZ_ST[r.st][0]}</em></div>`).join('')}</section>`).join('')
+      : '<div class="card text-sm text-slate-500">Nothing here.</div>')
+    + '<p class="text-xs text-slate-500 text-center mt-2">Status comes from the teacher’s homework check in the next class.</p>';
+}
 
 // ---------------------------------------------------------------- 7. PREMIUM HOME (owner, 27 Nov 2026: "better than the Teacher and Chairman apps")
 // Hero header with greeting and child switch, a "today at a glance" card, learning stories, quick actions, today's
@@ -539,8 +591,8 @@ function fzHome(kid, isParent, ctl) {
   const nx = fzNextSchoolDay(kid), fday = nx ? ((((PD.tt || {})[kid.cls] || [])[nx.idx]) || []) : [], fi = fday.findIndex(Boolean), first = fi >= 0 ? fday[fi] : null;
   const name = (kid.name || '').split(' ')[0], ini = (kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   const attTxt = at.today ? (at.today.present ? 'Present' : 'Absent') : 'Not marked', attTone = at.today ? (at.today.present ? 'ok' : 'bad') : 'mut';
-  const QA = [['phw', '📘', 'Homework', '#2563eb'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['presults', '📊', 'Results', '#d6336c'], ['pcal', '📅', 'Calendar', '#0e9f9a'],
-    ['pchk', '📒', 'Checks', '#0f8a5f'], ['pstudy', '📈', 'Study graph', '#3d5afe'], ['pleave', '🗓', 'Leave', '#e0662b'], ['pinfo', '🪪', 'Profile', '#5b6b7b'], ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5'], ['pfb', '💬', 'Feedback', '#d6336c']]
+  const QA = [['phwr', '📘', 'Homework', '#2563eb'], ['pcal', '📅', 'Attendance', '#0e9f9a'], ['presults', '📊', 'Results', '#d6336c'], ['pnotices', '📢', 'Notices', '#027eb5'],
+    ['pleave', '🗓', 'Leave', '#e0662b'], isParent ? ['pfees', '💳', 'Fees', '#b7791f'] : ['game', '🎯', 'Game Zone', '#3d5afe'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['pmore', '➕', 'More', '#5b6b7b']]
     .filter(q => VIEWS[q[0]]);
   return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
     <section class="fh-hero"><i class="fh-glow a"></i><i class="fh-glow b"></i>
@@ -557,14 +609,16 @@ function fzHome(kid, isParent, ctl) {
         return `<button onclick="go('pchk')"><span class="fh-num">${K.pct != null ? K.pct + '%' : '—'}</span><b>Homework</b><small>${K.pct != null ? 'completed' : 'checks'}</small></button>`; })()}
       <button onclick="go('pcal')"><span class="fh-num">${exam ? Math.max(0, fzDaysTo(exam.date)) : '—'}</span><b>${exam ? (fzDaysTo(exam.date) === 1 ? 'Day' : 'Days') : 'No exam'}</b><small>${exam ? 'to ' + esc(exam.title.split(':')[0]) : 'scheduled'}</small></button>
     </section>
-    <div class="fh-pad fh-top-gap">${fzHwStatus(kid)}${fzAttStrip(kid)}${fzMissedCard(kid)}</div>
-    ${gyStatusRow(kid)}
+    <div class="fh-pad fh-top-gap">${fzHwToday(kid)}${fzNotesCard(kid)}${fzAttStrip(kid)}${fzMissedCard(kid)}</div>
     ${(() => { if (!g || !g.today || !g.today.topics.length) return ''; const td = g.today, tp = td.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ');
       if (td.played && td.played.done) return `<button class="fh-cta done" onclick="go('game')"><span>✅</span><div><b>Class test done · ${td.played.right} of ${td.played.n} correct</b><small>${tp}</small></div><em>${Math.round(td.played.right / td.played.n * 100)}%</em></button>`;
       if (td.ready) return `<button class="fh-cta" onclick="go('game')"><span>📝</span><div><b>${td.isToday ? 'Today’s' : 'Last class’s'} test is ready</b><small>${tp} · ${td.ready} questions</small></div><em>${td.played ? 'Continue' : 'Start'}</em></button>`;
       return `<div class="fh-cta wait"><span>⏳</span><div><b>Class test is being prepared</b><small>From today’s class: ${tp}</small></div></div>`; })()}
+    ${nt ? `<button class="fh-notice" onclick="go('pnotices')"><small>📢 Latest notice · ${esc(fmtDate(String(nt.date || '')))}</small><b>${esc(nt.title || '')}</b>${nt.body ? `<p>${esc(String(nt.body).slice(0, 140))}${String(nt.body).length > 140 ? '…' : ''}</p>` : ''}</button>` : ''}
     <div class="fh-sec"><h3>Quick access</h3></div>
     <section class="fh-grid">${QA.map(([k, e, l, c]) => `<button onclick="go('${k}')" style="--c:${c}"><span>${e}</span><b>${l}</b></button>`).join('')}</section>
+    <details class="fh-moreall"><summary>More for your child · learning, progress, stars, calendar</summary>
+    ${gyStatusRow(kid)}
     <div class="fh-sec"><h3>Today in class</h3><button onclick="go('phw')">See all</button></div>
     ${hwT.length ? `<section class="fh-rail">${hwT.map(h => `<button onclick="go('phw')" class="fh-lesson" style="--c:${fzColor(h.subj)}"><small>${esc(h.subj)}</small><b>${esc(h.topic || 'Class work')}</b>${h.hw ? `<p>📝 ${esc(h.hw)}</p>` : '<p class="mut">No homework</p>'}</button>`).join('')}</section>`
       : `<div class="fh-empty">📖 Lessons appear here as soon as the teachers fill in today’s diary.</div>`}
@@ -572,17 +626,22 @@ function fzHome(kid, isParent, ctl) {
     ${fzTerm(kid) || fzChecks(kid).hw.length ? `<div class="fh-sec"><h3>Progress</h3><button onclick="go('presults')">Results</button></div><div class="fh-pad">${(() => { const T = fzTerm(kid); return T ? `<button class="fc-card" onclick="go('presults')"><div><small>${esc(T.exam)} result</small><b>${T.pct}% · Grade ${grade(T.pct)}${T.rank ? ' · ' + FZ_ORD(T.rank) + ' in class' : ''}</b><p>${T.toppers.length ? 'Rankers: ' + T.toppers.map(x => esc(x.name.split(' ')[0]) + ' (' + FZ_ORD(x.rank) + ')').join(', ') : 'Tap for subject-wise marks'}</p></div><span class="fh-ring ok" style="--p:${T.pct}"><b>${T.pct}%</b></span></button>` : ''; })()}${fzChecksCard(kid, true)}</div>` : ''}
     ${(PD.stars || {})[kid.cls] && ((PD.stars[kid.cls].att || []).length || (PD.stars[kid.cls].hw || []).length) ? `<div class="fh-pad" style="margin-top:.7rem">${fzStarsCard(kid)}</div>` : ''}
     ${up.length ? `<div class="fh-sec"><h3>Coming up</h3><button onclick="go('pcal')">Calendar</button></div><section class="fh-time">${up.map(e => { const d = new Date(e.date + 'T00:00:00'); return `<div><span class="${e.type === 'Holiday' ? 'hol' : e.type === 'Exam' ? 'exam' : e.type === 'PTM' ? 'ptm' : 'evt'}"><b>${d.getDate()}</b>${d.toLocaleDateString('en-IN', { month: 'short' })}</span><p><b>${esc(e.title)}</b><small>${esc(e.type || '')}${fzDaysTo(e.date) > 0 ? ' · in ' + fzDaysTo(e.date) + ' day' + (fzDaysTo(e.date) > 1 ? 's' : '') : ' · today'}</small></p></div>`; }).join('')}</section>` : ''}
-    ${nt ? `<button class="fh-notice" onclick="go('pnotices')"><small>📢 Latest notice · ${esc(fmtDate(String(nt.date || '')))}</small><b>${esc(nt.title || '')}</b>${nt.body ? `<p>${esc(String(nt.body).slice(0, 140))}${String(nt.body).length > 140 ? '…' : ''}</p>` : ''}</button>` : ''}
-    <div class="fh-sec"><h3>All updates</h3></div>
+    </details>
   </div>`;
 }
 
+function vPMore() {
+  const isP = U && U.role === 'parent';
+  const L = [['pchk', '📒', 'Homework & copy checks'], ['pstudy', '📈', 'Study progress'], ['prec', '🏆', 'Achievements'], ['psyl', '📚', 'Exam syllabus'], ['pinfo', '🪪', 'Student profile'], ['pzone', '💡', 'Learning Hub'],
+    ['game', '🎯', 'Game Zone'], ['quiz', '🤝', 'Quiz Duel'], ['phw', '💬', 'Homework chat'], isP ? ['pfees', '💳', 'Fees'] : null, ['pfb', '💬', 'Feedback'], ['pset', '⚙️', 'Settings']].filter(x => x && VIEWS[x[0]]);
+  return head('More', 'Everything else in the app') + `<section class="fh-grid" style="margin:0">${L.map(([k, e, l]) => `<button onclick="go('${k}')" style="--c:#4338ca"><span>${e}</span><b>${l}</b></button>`).join('')}</section>`;
+}
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
-  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback, pnotif: vPNotif });
+  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback, pnotif: vPNotif, phwr: vPHwReport, pmore: vPMore });
   const res0 = VIEWS.presults; if (res0) VIEWS.presults = () => { const kid = PD && PD.kids && PD.kids.length ? pKid() : null; if (!kid) return res0();
     const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
-  const add = [['pnotif', 'fa-bell', 'Notifications'], ['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
+  const add = [['phwr', 'fa-book', 'Homework Report'], ['pnotif', 'fa-bell', 'Notifications'], ['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
     if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pnotif', 'pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pstudy', 'pchk', 'prec', 'psyl', 'pfb', 'pset'); } }
   // web (not the app): quick links on the parent home
@@ -636,7 +695,7 @@ const FZ_HI = {
   'Shortcuts': 'शॉर्टकट', 'Basics': 'मूल बातें', 'Study tips': 'पढ़ाई के सुझाव', 'Stories': 'कहानियाँ', 'Facts': 'तथ्य', 'Extra practice': 'अतिरिक्त अभ्यास', 'Class corner': 'कक्षा कोना',
   'Screen time on this phone': 'इस फ़ोन पर स्क्रीन समय', 'Language': 'भाषा', 'Larger text': 'बड़े अक्षर', 'Login PIN': 'लॉगिन पिन', 'Log out': 'लॉग आउट', 'Change': 'बदलें', 'Open': 'खोलें',
   'Send to the school': 'स्कूल को भेजें', 'My messages': 'मेरे संदेश', 'How do you like the app?': 'आपको ऐप कैसा लगा?', 'What do you like most? (tap any)': 'सबसे अच्छा क्या लगा? (चुनें)',
-  'Feedback to the school': 'स्कूल को सुझाव', 'Notifications': 'सूचनाएँ', 'Earlier': 'पहले', 'Start': 'शुरू करें', 'Continue': 'जारी रखें', 'Class test is being prepared': 'कक्षा परीक्षा तैयार हो रही है',
+  'Feedback to the school': 'स्कूल को सुझाव', 'Notifications': 'सूचनाएँ', 'Earlier': 'पहले', 'Homework report': 'गृहकार्य रिपोर्ट', '🔊 Listen': '🔊 सुनें', '✓ All done': '✓ सब पूरा', '½ Partly': '½ थोड़ा', '✗ Not done': '✗ नहीं किया', '✓ Done': '✓ पूरा', '½ Half done': '½ आधा', '⏳ Not checked yet': '⏳ अभी जाँच नहीं', '📝 Due next class': '📝 अगली कक्षा में', 'Full homework report ›': 'पूरी गृहकार्य रिपोर्ट ›', 'More': 'और', 'Not checked': 'जाँच बाकी', 'Done': 'पूरा', 'Not done': 'नहीं किया', 'Start': 'शुरू करें', 'Continue': 'जारी रखें', 'Class test is being prepared': 'कक्षा परीक्षा तैयार हो रही है',
   'Today’s class test is ready': 'आज की कक्षा परीक्षा तैयार है', 'Latest notice': 'नई सूचना', 'No notice yet': 'अभी कोई सूचना नहीं', 'Back': 'वापस', 'Log in': 'लॉग इन',
   'Student': 'छात्र', 'Parent': 'अभिभावक', 'Mobile number registered with the school': 'स्कूल में दर्ज मोबाइल नंबर', 'Family mobile number registered with the school': 'स्कूल में दर्ज परिवार का मोबाइल नंबर',
   'Which student is logging in?': 'कौन सा छात्र लॉग इन कर रहा है?', 'Today’s shortcut': 'आज का शॉर्टकट', 'Did you know?': 'क्या आप जानते हैं?', 'Remember': 'याद रखें'
