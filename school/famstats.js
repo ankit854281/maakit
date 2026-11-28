@@ -7,11 +7,13 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const pct = (a, b) => b ? Math.round(a * 100 / b) : 0;
   const tone = p => p >= 70 ? '#0f8a5f' : p >= 40 ? '#f2a93b' : '#c0352b';
-  let D = null, CLS = '', Q = '';
+  let D = null, CLS = '', Q = '', FB = null;
   if (/[?&]embed=1/.test(location.search)) document.body.classList.add('emb');
   async function load() {
     const t = store.get('sch_token'); if (!t) { app.innerHTML = '<div class="msg">Please log in as the Principal or Chairman first, then open this page again.</div>'; return; }
-    try { const r = await fetch('famstats_api.php?a=data', { cache: 'no-store', headers: { 'X-School-Token': t } }); const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || 'Could not load.'); D = j; draw(); }
+    try { const r = await fetch('famstats_api.php?a=data', { cache: 'no-store', headers: { 'X-School-Token': t } }); const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || 'Could not load.'); D = j;
+      try { const f = await fetch('famfb_api.php?a=list', { cache: 'no-store', headers: { 'X-School-Token': t } }); const fj = await f.json(); if (f.ok && fj.ok) FB = fj; } catch (e) {}
+      draw(); }
     catch (e) { app.innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
   }
   function invite(n) {
@@ -40,7 +42,14 @@
       <input id="q" placeholder="Search name or number" value="${esc(Q)}"><button class="btn" id="csv">Download list (CSV)</button><span class="mut">Tap "Send invite" — WhatsApp opens with the app link and login steps.</span></div>
     <div class="card"><table class="nl"><tr><th>Student</th><th>Class</th><th>Mobile</th><th></th></tr>
       ${never.map(n => `<tr><td><b>${esc(n.name)}</b></td><td>${esc(n.cls)}</td><td>${n.phone ? esc(n.phone.slice(0, 5) + ' ' + n.phone.slice(5)) : '<span class="bad">No number</span>'}</td><td>${n.phone ? `<a class="btn wa" target="_blank" rel="noopener" href="${invite(n)}">Send invite</a>` : '<span class="mut">Add the number in Students</span>'}</td></tr>`).join('') || '<tr><td colspan="4" class="msg ok">Everyone has logged in. 🎉</td></tr>'}</table></div>
+    ${FB ? `<h3>Parents' feedback (${FB.n})${FB.avg ? ' · ' + FB.avg + ' ★ average' : ''}</h3>
+    ${Object.keys(FB.likes).length ? `<div class="card" style="padding:10px 12px"><b style="font-size:13px">What parents like most:</b> ${Object.entries(FB.likes).map(([k, n]) => `<span class="pill" style="background:#eef2ff;color:#312e81;margin:2px">${esc(k)} · ${n}</span>`).join('')}</div>` : ''}
+    <div class="card"><table class="nl"><tr><th>When</th><th>Who</th><th>Message</th><th></th></tr>${FB.items.slice(0, 100).map(x => `<tr><td class="mut">${new Date(x.at * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td><td>${esc(x.who)}<br><span class="mut">${esc(x.phone || x.role)}</span></td>
+      <td><b>${x.kind === 'feedback' ? '★'.repeat(x.rating || 0) : x.kind === 'complaint' ? '📣 Complaint' : '💡 Suggestion'}</b>${(x.liked || []).length ? ' <span class="mut">likes: ' + esc(x.liked.join(', ')) + '</span>' : ''}${x.text ? '<br>' + esc(x.text) : ''}${x.reply ? `<br><span class="ok">Reply: ${esc(x.reply)}</span>` : ''}</td>
+      <td>${x.reply ? '' : `<button class="btn" data-fb="${esc(x.id)}">Reply</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="msg">No feedback yet.</td></tr>'}</table></div>` : ''}
     <p class="mut" style="padding:10px 14px">"Logged in" = the family's parent login or the child's own student login has been used at least once. Counting of daily opens started on 28 Nov 2026.</p>`;
+    document.querySelectorAll('[data-fb]').forEach(b => b.onclick = async () => { const text = prompt('Reply to this parent (shown in their app):'); if (!text) return;
+      try { const r = await fetch('famfb_api.php?a=reply', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-School-Token': store.get('sch_token') || '' }, body: JSON.stringify({ id: b.dataset.fb, text }) }); const j = await r.json(); if (!j.ok) throw new Error(j.error); load(); } catch (e) { alert(e.message || 'Could not save.'); } });
     $('rf').onclick = load; $('cl').onchange = e => { CLS = e.target.value; draw(); }; $('q').oninput = e => { Q = e.target.value.toLowerCase(); const pos = e.target.selectionStart; draw(); const q = $('q'); q.focus(); q.setSelectionRange(pos, pos); };
     $('csv').onclick = () => { const rows = [['Student', 'Class', 'Admission no', 'Mobile'], ...never.map(n => [n.name, n.cls, n.adm, n.phone])];
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + rows.map(r => r.map(x => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n')], { type: 'text/csv' })); a.download = 'family-app-not-logged-in.csv'; a.click(); };

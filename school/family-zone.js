@@ -143,14 +143,14 @@ function vPCal() {
   const y = base.getFullYear(), m = base.getMonth(), ym = y + '-' + String(m + 1).padStart(2, '0');
   const items = [...S.cal, ...examItems().filter(e => e.cls.includes(kid.cls)), ...(PD.clsHol || []).filter(h => h.cls === kid.cls).map(h => ({ date: h.date, title: h.title || 'Class holiday', type: 'Holiday' }))];
   const on = iso => items.filter(e => e.date <= iso && (e.to || e.date) >= iso);
-  const att = {}; PD.att.filter(a => a.sid === kid.id).forEach(a => { att[a.date] = a.present; });
+  const att = {}; PD.att.filter(a => a.sid === kid.id).forEach(a => { att[a.date] = a.present ? true : a.leave ? 'L' : false; });
   const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(), today = todayISO();
   const col = t => t === 'Holiday' ? 'hol' : t === 'Exam' ? 'exam' : t === 'PTM' ? 'ptm' : 'evt';
   let cells = '';
   for (let i = 0; i < first; i++) cells += '<span></span>';
   for (let d = 1; d <= days; d++) {
     const iso = ym + '-' + String(d).padStart(2, '0'), it = on(iso), sun = new Date(iso + 'T00:00:00').getDay() === 0;
-    cells += `<button onclick="FZD='${iso}';render()" class="fz-day ${iso === today ? 'today' : ''} ${FZD === iso ? 'sel' : ''} ${sun ? 'sun' : ''} ${att[iso] === true ? 'p' : att[iso] === false ? 'a' : ''}">
+    cells += `<button onclick="FZD='${iso}';render()" class="fz-day ${iso === today ? 'today' : ''} ${FZD === iso ? 'sel' : ''} ${sun ? 'sun' : ''} ${att[iso] === true ? 'p' : att[iso] === 'L' ? 'l' : att[iso] === false ? 'a' : ''}">
       <b>${d}</b><i>${it.slice(0, 3).map(e => `<em class="${col(e.type)}"></em>`).join('')}</i></button>`;
   }
   const ma = fzMonthAtt(kid, ym), list = items.filter(e => (e.date || '').slice(0, 7) === ym || ((e.to || '') >= ym + '-01' && (e.date || '') <= ym + '-31')).sort((a, b) => a.date.localeCompare(b.date));
@@ -159,9 +159,9 @@ function vPCal() {
     + `<div class="card"><div class="flex items-center justify-between gap-2"><button class="btn btn-l btn-sm" onclick="FZM--;FZD=null;render()">‹</button>
       <h3 class="h3">${base.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</h3><button class="btn btn-l btn-sm" onclick="FZM++;FZD=null;render()">›</button></div>
       <div class="fz-cal mt-3">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(x => `<span class="fz-wk">${x}</span>`).join('')}${cells}</div>
-      <div class="fz-legend mt-3"><span><em class="hol"></em>Holiday</span><span><em class="exam"></em>Exam</span><span><em class="evt"></em>Event</span><span><em class="ptm"></em>PTM</span><span><i class="p"></i>Present</span><span><i class="a"></i>Absent</span></div>
+      <div class="fz-legend mt-3"><span><em class="hol"></em>Holiday</span><span><em class="exam"></em>Exam</span><span><em class="evt"></em>Event</span><span><em class="ptm"></em>PTM</span><span><i class="p"></i>Present</span><span><i class="a"></i>Absent</span><span><i class="l"></i>Leave</span></div>
       ${ma.n ? `<p class="text-sm mt-2">This month: present <b>${ma.p}</b> of ${ma.n} day${ma.n === 1 ? '' : 's'} (${ma.pct}%)</p>` : ''}</div>`
-    + (sel ? `<div class="card"><h3 class="h3">${fmtDate(FZD)}</h3>${sel.length ? sel.map(e => `<p class="text-sm mt-1"><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type || '')}</span></p>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing on this day.</p>'}${att[FZD] != null ? `<p class="text-sm mt-1">${att[FZD] ? '✅ Present' : '❌ Absent'}</p>` : ''}</div>` : '')
+    + (sel ? `<div class="card"><h3 class="h3">${fmtDate(FZD)}</h3>${sel.length ? sel.map(e => `<p class="text-sm mt-1"><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type || '')}</span></p>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing on this day.</p>'}${att[FZD] != null ? `<p class="text-sm mt-1">${att[FZD] === true ? '✅ Present' : att[FZD] === 'L' ? '🟡 On leave' : '❌ Absent'}</p>` : ''}</div>` : '')
     + `<div class="card"><h3 class="h3">This month</h3>${list.length ? list.map(e => `<div class="flex justify-between gap-2 py-2 border-b border-slate-100 last:border-0 text-sm"><span><em class="fz-chip ${col(e.type)}"></em><b>${esc(e.title)}</b> <span class="text-slate-500">${esc(e.type || '')}</span></span><span class="text-slate-500 shrink-0">${fmtDate(e.date)}${e.to && e.to !== e.date ? ' – ' + fmtDate(e.to) : ''}</span></div>`).join('') : '<p class="text-sm text-slate-500 mt-1">Nothing scheduled this month.</p>'}</div>`;
 }
 
@@ -328,6 +328,7 @@ function vPSettings() {
       ${row('🌐', 'Language', 'English or Hinglish', window.SchoolLang && SchoolLang.control ? SchoolLang.control() : '')}
       ${row('🔠', 'Larger text', 'Makes every screen easier to read', `<button class="fz-sw ${big ? 'on' : ''}" onclick="fzLS.set('sn_big',${!big});fzApplyBig();render()" aria-pressed="${big}"><i></i></button>`)}
       ${PD.kids.length > 1 ? row('👧', 'Child', 'Switch between your children', `<select class="inp w-auto" onchange="PKID=this.value;render()">${PD.kids.map(k => `<option value="${esc(k.id)}" ${k.id === PKID ? 'selected' : ''}>${esc(k.name.split(' ')[0])} · ${esc(k.cls)}</option>`).join('')}</select>`) : ''}
+      ${row('💬', 'Feedback', 'Tell the school what you like or what to improve', '<button class="btn btn-sm btn-l" onclick="go(\'pfb\')">Open</button>')}
       ${row('🔑', 'Login PIN', 'Change your 4-digit PIN', '<button class="btn btn-sm btn-l" onclick="changeMyPin()">Change</button>')}
       ${window.SNFamily && SNFamily.intro ? row('🎬', 'Welcome screens', 'See the welcome again', '<button class="btn btn-sm btn-l" onclick="SNFamily.intro()">Play</button>') : ''}
       ${row('🚪', 'Log out', 'Sign out from this phone', '<button class="btn btn-sm btn-r" onclick="logout()">Log out</button>')}</div>`
@@ -364,7 +365,7 @@ function fzResultCard(kid) {
     <div class="fr-tbl"><div class="fr-h"><span>Subject</span><span>PT</span><span>NB</span><span>SEA</span><span>Exam</span><span>Total</span></div>
       ${T.rows.map(r => r.none ? `<div><span>${esc(r.s)}</span><span class="mut" style="grid-column:span 5">Marks not entered yet</span></div>` : `<div><span>${esc(r.s)}</span><span>${esc(String(r.pt))}</span><span>${esc(String(r.nb))}</span><span>${esc(String(r.sea))}</span><span>${esc(String(r.te))}</span><b class="${r.ab ? 'mut' : r.t >= 80 ? 'hi' : r.t < 33 ? 'lo' : ''}">${r.ab ? 'AB' : r.t}</b></div>`).join('')}</div>
     <p class="fr-note">Pre-Test 10 + Notebook 5 + Subject Enrichment 5 + Term Exam 80 = 100 per subject.</p></section>
-  ${T.toppers.length ? `<section class="fr-rankers"><h3>🏆 Class ${esc(T.cls)} rankers · ${esc(T.exam)}</h3>${T.toppers.map(x => `<div class="r${x.rank}"><span>${medal(x.rank)}</span><b>${esc(x.name)}</b><em>${FZ_ORD(x.rank)}</em><strong>${x.pct}%</strong></div>`).join('')}</section>` : ''}`;
+  ${T.toppers.length ? `<section class="fr-rankers"><h3>🏆 Class ${esc(T.cls)} rankers · ${esc(T.exam)}</h3>${T.toppers.map(x => `<div class="r${x.rank}"><span>${medal(x.rank)}</span>${fzFace(x.sid, x.name)}<b>${esc(x.name)}</b><em>${FZ_ORD(x.rank)}</em><strong>${x.pct}%</strong></div>`).join('')}</section>` : ''}`;
 }
 function fzChecksCard(kid, compact) {
   const K = fzChecks(kid); if (!K.hw.length && !K.cp.length) return compact ? '' : '<div class="card text-sm text-slate-500">Homework and copy checks appear here once the teachers record them.</div>';
@@ -432,6 +433,65 @@ function vPLeave() {
           ${x.status === 'pending' ? `<button class="text-xs underline text-rose mt-1" onclick="fzLvCancel(${jsq(x.id)})">Withdraw</button>` : ''}</div>`).join('') : '<p class="text-sm text-slate-500 mt-1">No leave applied yet.</p>'}</div>`);
 }
 
+// ---------------------------------------------------------------- 6d. PARENT SUPPORT: study progress, missed work, class stars, feedback (owner, 28 Nov 2026)
+const fzPhoto = sid => (PD.photos || {})[sid] || ((PD.kids || []).find(k => k.id === sid) || {}).photo || '';
+function fzFace(sid, name, cls) { const p = fzPhoto(sid); return p ? `<img class="${cls || 'fz-face'}" src="${esc(p)}" alt="">` : `<span class="${cls || 'fz-face'} fz-ini">${esc((name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span>`; }
+function fzStudy(kid) { return (PD.study || {})[kid.id] || { missed: [], syl: [], absentDays: 0 }; }
+function fzStarsCard(kid) {
+  const S2 = (PD.stars || {})[kid.cls]; if (!S2 || (!S2.att.length && !S2.hw.length)) return '';
+  const col = (title, L) => L.length ? `<div><h4>${title}</h4>${L.map((x, i) => `<div class="${x.sid === kid.id ? 'me' : ''}"><em>${i + 1}</em>${fzFace(x.sid, x.name)}<b>${esc(x.name)}</b><strong>${x.pct}%</strong></div>`).join('')}</div>` : '';
+  return `<section class="fs-card"><h3>⭐ Class ${esc(kid.cls)} stars · this session</h3><div class="fs-cols">${col('Best attendance', S2.att)}${col('Homework champions', S2.hw)}</div></section>`;
+}
+function fzHwStatus(kid) {
+  const K = fzChecks(kid); if (!K.hw.length) return '';
+  const days = []; K.hw.forEach(x => { if (!days.includes(x.date)) days.push(x.date); });
+  const lab = { done: ['✓', 'ok'], half: ['½', 'half'], not: ['✗', 'bad'] };
+  return `<button class="fhw" onclick="go('pchk')"><div class="fhw-top"><b>Homework checked by teachers</b><span>${K.pct}% done</span></div>${days.slice(0, 3).map(d => `<div class="fhw-day"><small>${esc(dayLabelShort(d))}</small><div>${K.hw.filter(x => x.date === d).map(x => `<span class="${lab[x.hw][1]}" title="${esc(x.task)}">${lab[x.hw][0]} ${esc(x.subj)}</span>`).join('')}</div></div>`).join('')}</button>`;
+}
+function dayLabelShort(d) { const t0 = todayISO(); if (d === t0) return 'Today'; if (d === addDays(t0, -1)) return 'Yesterday'; return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }); }
+function fzAttStrip(kid) {
+  const rows = PD.att.filter(a => a.sid === kid.id).sort((a, b) => a.date.localeCompare(b.date)).slice(-14); if (!rows.length) return '';
+  return `<button class="fat" onclick="go('pcal')"><div class="fhw-top"><b>Attendance · last ${rows.length} school days</b><span>Calendar ›</span></div><div class="fat-row">${rows.map(r => `<span class="${r.present ? 'p' : r.leave ? 'l' : 'a'}"><b>${new Date(r.date + 'T00:00:00').getDate()}</b><i>${r.present ? 'P' : r.leave ? 'L' : 'A'}</i></span>`).join('')}</div></button>`;
+}
+function fzMissedCard(kid) {
+  const St = fzStudy(kid); if (!St.absentDays) return '';
+  const tp = St.missed.filter(x => x.topic).length, hw = St.missed.filter(x => x.hw).length;
+  return `<button class="fms" onclick="go('pstudy')"><span>📚</span><div><b>Missed while absent</b><small>${St.absentDays} day${St.absentDays > 1 ? 's' : ''} absent this session · ${tp} topic${tp === 1 ? '' : 's'} and ${hw} homework${hw === 1 ? '' : 's'} missed</small></div><em>Catch up ›</em></button>`;
+}
+function vPStudy() {
+  const kid = pKid(); if (!kid) return vPHome(); const St = fzStudy(kid);
+  const tot = St.syl.reduce((a, x) => a + x.total, 0), done = St.syl.reduce((a, x) => a + x.done, 0), cov = tot ? Math.round(done * 100 / tot) : null;
+  const missBy = {}; St.missed.forEach(x => { if (x.topic) missBy[x.subj] = (missBy[x.subj] || 0) + 1; });
+  const byDate = {}; St.missed.forEach(x => (byDate[x.date] = byDate[x.date] || []).push(x));
+  return fzBack('Study progress', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · this session')
+    + `<section class="fr-card"><div class="fr-top"><div><small>Syllabus completed in class</small><h2>${cov == null ? '—' : cov + '%'}</h2><p>${done} of ${tot} chapters taught</p></div>
+      <div class="fr-rank"><small>Missed topics</small><b>${St.missed.filter(x => x.topic).length}</b><small>${St.absentDays} day${St.absentDays === 1 ? '' : 's'} absent</small></div></div>
+      <div class="fsy">${St.syl.length ? St.syl.map(x => { const p = x.total ? Math.round(x.done * 100 / x.total) : 0, m = missBy[x.subj] || 0;
+        return `<div><div class="fsy-h"><b>${esc(x.subj)}</b><span>${x.done}/${x.total} chapters · ${p}%${m ? ` · <span class="t-bad">${m} missed</span>` : ''}</span></div><div class="fsy-bar"><i style="width:${p}%;background:${fzColor(x.subj)}"></i>${m && x.total ? `<u style="width:${Math.min(p, Math.round(m * 100 / Math.max(1, x.total * 4)))}%"></u>` : ''}</div></div>`; }).join('')
+        : '<p class="text-sm text-slate-500">The syllabus plan appears here once the teachers mark chapters as taught.</p>'}</div>
+      <p class="fr-note">Bar = chapters taught in class. Red part = lessons this child missed while absent.</p></section>`
+    + (St.missed.length ? `<div class="card"><h3 class="h3">📚 Catch-up list — what was taught on absent days</h3><p class="text-xs text-slate-500">Copy these from a classmate and ask the teacher if anything is unclear.</p>
+      ${Object.entries(byDate).map(([d, l]) => `<div class="mt-3"><p class="text-sm font-semibold">${esc(fmtDate(d))}</p>${l.map(x => `<div class="text-sm py-1 border-b border-slate-100 last:border-0"><span class="subj">${esc(x.subj)}</span> ${esc(x.topic || '')}${x.hw ? `<span class="block text-slate-600 mt-1">📝 Homework: ${esc(x.hw)}</span>` : ''}</div>`).join('')}</div>`).join('')}</div>`
+      : '<div class="card text-sm text-slate-500">No lesson missed — full attendance on days with lessons. 🎉</div>')
+    + fzStarsCard(kid);
+}
+let FZFB = { r: 0, liked: [], kind: 'feedback', mine: null };
+async function fzFbLoad() { try { FZFB.mine = await fzApi('famfb_api.php?a=mine'); } catch (e) { FZFB.mine = { items: [], likes: [], error: e.message }; } if (view === 'pfb') render(); }
+async function fzFbSend() { const t = (document.getElementById('fb-text') || {}).value || '';
+  try { await fzApi('famfb_api.php?a=send', { rating: FZFB.r, liked: FZFB.liked, kind: FZFB.kind, text: t }); toast('Thank you! Your message has reached the school.'); FZFB.r = 0; FZFB.liked = []; fzFbLoad(); } catch (e) { toast(e.message, 'a'); } }
+function vPFeedback() {
+  if (!FZFB.mine) { FZFB.mine = { items: [], likes: [] }; fzFbLoad(); }
+  const likes = FZFB.mine.likes && FZFB.mine.likes.length ? FZFB.mine.likes : ['Homework', 'Attendance', 'Results', 'Calendar', 'Learning Hub', 'Game Zone', 'Class test', 'Leave', 'Notices', 'Design'];
+  const K = { feedback: '⭐ Rate the app', suggestion: '💡 Suggestion', complaint: '📣 Complaint' };
+  return head('Feedback to the school', 'Your opinion goes directly to the Principal.')
+    + `<div class="card space-y-3"><div class="flex flex-wrap gap-2">${Object.entries(K).map(([k, l]) => `<button class="chip ${FZFB.kind === k ? 'chip-on' : ''}" onclick="FZFB.kind='${k}';render()">${l}</button>`).join('')}</div>
+      ${FZFB.kind === 'feedback' ? `<div><p class="lbl">How do you like the app?</p><div class="ffb-stars">${[1, 2, 3, 4, 5].map(n => `<button onclick="FZFB.r=${n};render()" class="${n <= FZFB.r ? 'on' : ''}" aria-label="${n} stars">★</button>`).join('')}</div></div>
+      <div><p class="lbl">What do you like most? (tap any)</p><div class="flex flex-wrap gap-2">${likes.map(l => `<button class="chip ${FZFB.liked.includes(l) ? 'chip-on' : ''}" onclick="FZFB.liked=FZFB.liked.includes('${l}')?FZFB.liked.filter(x=>x!=='${l}'):FZFB.liked.concat('${l}');render()">${l}</button>`).join('')}</div></div>` : ''}
+      <div><p class="lbl">${FZFB.kind === 'feedback' ? 'Anything else? (optional)' : FZFB.kind === 'suggestion' ? 'Your suggestion' : 'What is the problem?'}</p><textarea id="fb-text" class="inp" rows="3" maxlength="600" placeholder="Write in English, Hindi or Hinglish"></textarea></div>
+      <button class="btn btn-p w-full py-3" onclick="fzFbSend()">Send to the school</button></div>`
+    + (FZFB.mine.items.length ? `<div class="card"><h3 class="h3">My messages</h3>${FZFB.mine.items.map(x => `<div class="py-2 border-b border-slate-100 last:border-0 text-sm"><b>${K[x.kind]}</b>${x.rating ? ' · ' + '★'.repeat(x.rating) : ''} <span class="text-slate-400">${esc(fmtDate(new Date(x.at * 1000).toISOString().slice(0, 10)))}</span>${x.text ? `<p class="mt-1">${esc(x.text)}</p>` : ''}${x.reply ? `<p class="mt-1 text-leaf"><b>School:</b> ${esc(x.reply)}</p>` : ''}</div>`).join('')}</div>` : '');
+}
+
 // ---------------------------------------------------------------- 7. PREMIUM HOME (owner, 27 Nov 2026: "better than the Teacher and Chairman apps")
 // Hero header with greeting and child switch, a "today at a glance" card, learning stories, quick actions, today's
 // lessons, class-test banner, coming-up timeline and the latest notice. The WhatsApp-style update list follows below.
@@ -450,7 +510,7 @@ function fzHome(kid, isParent, ctl) {
   const name = (kid.name || '').split(' ')[0], ini = (kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   const attTxt = at.today ? (at.today.present ? 'Present' : 'Absent') : 'Not marked', attTone = at.today ? (at.today.present ? 'ok' : 'bad') : 'mut';
   const QA = [['phw', '📘', 'Homework', '#2563eb'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['presults', '📊', 'Results', '#d6336c'], ['pcal', '📅', 'Calendar', '#0e9f9a'],
-    ['pchk', '📒', 'Checks', '#0f8a5f'], ['pleave', '🗓', 'Leave', '#e0662b'], ['pinfo', '🪪', 'Profile', '#5b6b7b'], ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5']]
+    ['pchk', '📒', 'Checks', '#0f8a5f'], ['pstudy', '📈', 'Study graph', '#3d5afe'], ['pleave', '🗓', 'Leave', '#e0662b'], ['pinfo', '🪪', 'Profile', '#5b6b7b'], ['pzone', '💡', 'Learning Hub', '#8e44c9'], ['game', '🎯', 'Game Zone', '#3d5afe'], isParent ? ['pfees', '💳', 'Fees', '#e0662b'] : ['prec', '🏆', 'Achievements', '#b7791f'], ['pnotices', '📢', 'Notices', '#027eb5'], ['pfb', '💬', 'Feedback', '#d6336c']]
     .filter(q => VIEWS[q[0]]);
   return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
     <section class="fh-hero"><i class="fh-glow a"></i><i class="fh-glow b"></i>
@@ -467,6 +527,7 @@ function fzHome(kid, isParent, ctl) {
         return `<button onclick="go('pchk')"><span class="fh-num">${K.pct != null ? K.pct + '%' : '—'}</span><b>Homework</b><small>${K.pct != null ? 'completed' : 'checks'}</small></button>`; })()}
       <button onclick="go('pcal')"><span class="fh-num">${exam ? Math.max(0, fzDaysTo(exam.date)) : '—'}</span><b>${exam ? (fzDaysTo(exam.date) === 1 ? 'Day' : 'Days') : 'No exam'}</b><small>${exam ? 'to ' + esc(exam.title.split(':')[0]) : 'scheduled'}</small></button>
     </section>
+    <div class="fh-pad fh-top-gap">${fzHwStatus(kid)}${fzAttStrip(kid)}${fzMissedCard(kid)}</div>
     ${gyStatusRow(kid)}
     ${(() => { if (!g || !g.today || !g.today.topics.length) return ''; const td = g.today, tp = td.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ');
       if (td.played && td.played.done) return `<button class="fh-cta done" onclick="go('game')"><span>✅</span><div><b>Class test done · ${td.played.right} of ${td.played.n} correct</b><small>${tp}</small></div><em>${Math.round(td.played.right / td.played.n * 100)}%</em></button>`;
@@ -479,6 +540,7 @@ function fzHome(kid, isParent, ctl) {
       : `<div class="fh-empty">📖 Lessons appear here as soon as the teachers fill in today’s diary.</div>`}
     ${nx ? `<button class="fh-next" onclick="go('ptmr')"><span>🎒</span><div><small>Next school day · ${esc(fmtDate(nx.date))}</small><b>${first ? 'First period: ' + esc(first.s) + ' at ' + t12(BELLS[fi].s) : 'Timetable, homework and bag checklist'}</b></div><em>›</em></button>` : ''}
     ${fzTerm(kid) || fzChecks(kid).hw.length ? `<div class="fh-sec"><h3>Progress</h3><button onclick="go('presults')">Results</button></div><div class="fh-pad">${(() => { const T = fzTerm(kid); return T ? `<button class="fc-card" onclick="go('presults')"><div><small>${esc(T.exam)} result</small><b>${T.pct}% · Grade ${grade(T.pct)}${T.rank ? ' · ' + FZ_ORD(T.rank) + ' in class' : ''}</b><p>${T.toppers.length ? 'Rankers: ' + T.toppers.map(x => esc(x.name.split(' ')[0]) + ' (' + FZ_ORD(x.rank) + ')').join(', ') : 'Tap for subject-wise marks'}</p></div><span class="fh-ring ok" style="--p:${T.pct}"><b>${T.pct}%</b></span></button>` : ''; })()}${fzChecksCard(kid, true)}</div>` : ''}
+    ${(PD.stars || {})[kid.cls] && ((PD.stars[kid.cls].att || []).length || (PD.stars[kid.cls].hw || []).length) ? `<div class="fh-pad" style="margin-top:.7rem">${fzStarsCard(kid)}</div>` : ''}
     ${up.length ? `<div class="fh-sec"><h3>Coming up</h3><button onclick="go('pcal')">Calendar</button></div><section class="fh-time">${up.map(e => { const d = new Date(e.date + 'T00:00:00'); return `<div><span class="${e.type === 'Holiday' ? 'hol' : e.type === 'Exam' ? 'exam' : e.type === 'PTM' ? 'ptm' : 'evt'}"><b>${d.getDate()}</b>${d.toLocaleDateString('en-IN', { month: 'short' })}</span><p><b>${esc(e.title)}</b><small>${esc(e.type || '')}${fzDaysTo(e.date) > 0 ? ' · in ' + fzDaysTo(e.date) + ' day' + (fzDaysTo(e.date) > 1 ? 's' : '') : ' · today'}</small></p></div>`; }).join('')}</section>` : ''}
     ${nt ? `<button class="fh-notice" onclick="go('pnotices')"><small>📢 Latest notice · ${esc(fmtDate(String(nt.date || '')))}</small><b>${esc(nt.title || '')}</b>${nt.body ? `<p>${esc(String(nt.body).slice(0, 140))}${String(nt.body).length > 140 ? '…' : ''}</p>` : ''}</button>` : ''}
     <div class="fh-sec"><h3>All updates</h3></div>
@@ -487,12 +549,12 @@ function fzHome(kid, isParent, ctl) {
 
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
-  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave });
+  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback });
   const res0 = VIEWS.presults; if (res0) VIEWS.presults = () => { const kid = PD && PD.kids && PD.kids.length ? pKid() : null; if (!kid) return res0();
     const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
-  const add = [['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
+  const add = [['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
-    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pchk', 'prec', 'psyl', 'pset'); } }
+    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pstudy', 'pchk', 'prec', 'psyl', 'pfb', 'pset'); } }
   // web (not the app): quick links on the parent home
   const home = VIEWS.phome;
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();
@@ -518,3 +580,59 @@ window.FZ = {
   status: gyStatusRow,
   home: fzHome
 };
+
+// ---------------------------------------------------------------- 8. LANGUAGE: English · Hinglish · हिंदी (owner, 28 Nov 2026)
+// language.js gives English ⇄ Hinglish. Hindi (Devanagari) is added here for the Family screens: the language button becomes a
+// three-way switch; with Hindi on, visible labels are translated from this dictionary (other text stays in English).
+const FZ_HI = {
+  'Chats': 'चैट', 'Homework': 'गृहकार्य', 'Practice': 'अभ्यास', 'Progress': 'प्रगति', 'Updates': 'सूचनाएँ', 'Fees': 'फ़ीस', 'Results': 'परिणाम', 'Calendar': 'कैलेंडर', 'Notices': 'सूचनाएँ',
+  'Good morning,': 'सुप्रभात,', 'Good afternoon,': 'नमस्कार,', 'Good evening,': 'शुभ संध्या,', 'Present': 'उपस्थित', 'Absent': 'अनुपस्थित', 'Not marked': 'दर्ज नहीं', 'attendance': 'उपस्थिति',
+  'Task': 'कार्य', 'Tasks': 'कार्य', 'homework today': 'आज का गृहकार्य', 'No exam': 'कोई परीक्षा नहीं', 'scheduled': 'निर्धारित', 'Day': 'दिन', 'Days': 'दिन',
+  'Quick access': 'त्वरित पहुँच', 'Today in class': 'आज कक्षा में', 'See all': 'सभी देखें', 'Coming up': 'आगामी', 'All updates': 'सभी अपडेट', 'Progress ': 'प्रगति',
+  'Next day': 'अगला दिन', 'Learning Hub': 'ज्ञान केंद्र', 'Game Zone': 'गेम ज़ोन', 'Achievements': 'उपलब्धियाँ', 'Checks': 'जाँच', 'Study graph': 'पढ़ाई ग्राफ़', 'Leave': 'छुट्टी', 'Profile': 'प्रोफ़ाइल', 'Feedback': 'सुझाव',
+  'Today’s learning': 'आज की सीख', 'Word': 'शब्द', 'Shortcut': 'शॉर्टकट', 'Fact': 'तथ्य', 'Story': 'कहानी', 'Tip': 'सुझाव', 'Share': 'साझा करें',
+  'Homework checked by teachers': 'शिक्षकों द्वारा जाँचा गया गृहकार्य', 'Today': 'आज', 'Yesterday': 'कल', 'Calendar ›': 'कैलेंडर ›', 'Catch up ›': 'पूरा करें ›', 'Missed while absent': 'अनुपस्थिति में छूटा काम',
+  'Best attendance': 'सर्वश्रेष्ठ उपस्थिति', 'Homework champions': 'गृहकार्य चैंपियन', 'Study progress': 'पढ़ाई की प्रगति', 'Syllabus completed in class': 'कक्षा में पूरा हुआ पाठ्यक्रम', 'Missed topics': 'छूटे विषय',
+  'Homework & class work': 'गृहकार्य और कक्षा कार्य', 'Attendance': 'उपस्थिति', 'Notices & calendar': 'सूचनाएँ और कैलेंडर', 'Results & progress': 'परिणाम और प्रगति', 'Next school day': 'अगला स्कूल दिवस',
+  'Achievements & record': 'उपलब्धियाँ और रिकॉर्ड', 'Exam syllabus': 'परीक्षा पाठ्यक्रम', 'Homework & copy checks': 'गृहकार्य और कॉपी जाँच', 'Leave application': 'छुट्टी आवेदन', 'Student profile': 'छात्र प्रोफ़ाइल',
+  'Settings': 'सेटिंग्स', 'Class teacher': 'कक्षा अध्यापक', 'All': 'सभी', 'Unread': 'अपठित', 'Study': 'पढ़ाई', 'School': 'स्कूल',
+  'Student information': 'छात्र जानकारी', 'Admission no.': 'प्रवेश संख्या', 'Class': 'कक्षा', 'Roll no.': 'रोल नंबर', 'Date of birth': 'जन्म तिथि', 'Gender': 'लिंग', 'Blood group': 'रक्त समूह',
+  'Father’s name': 'पिता का नाम', 'Mother’s name': 'माता का नाम', 'Mobile': 'मोबाइल', 'Address': 'पता', 'Apply for leave': 'छुट्टी के लिए आवेदन', 'From': 'से', 'To': 'तक', 'Reason': 'कारण',
+  'Illness': 'बीमारी', 'Family function': 'पारिवारिक कार्यक्रम', 'Travel': 'यात्रा', 'Other': 'अन्य', 'Send to class teacher': 'कक्षा अध्यापक को भेजें', 'My applications': 'मेरे आवेदन',
+  'Approved': 'स्वीकृत', 'Not approved': 'अस्वीकृत', 'Waiting for class teacher': 'कक्षा अध्यापक की प्रतीक्षा', 'Withdraw': 'वापस लें', 'Withdrawn': 'वापस लिया',
+  'Rank in class': 'कक्षा में स्थान', 'Grade': 'ग्रेड', 'Subject': 'विषय', 'Total': 'कुल', 'Exam': 'परीक्षा', 'Holiday': 'अवकाश', 'Event': 'कार्यक्रम', 'This month': 'इस महीने',
+  'done': 'पूरा', 'half done': 'आधा', 'not done': 'नहीं किया', 'By subject': 'विषय अनुसार', 'Recent homework checks': 'हाल की गृहकार्य जाँच', '✓ Complete': '✓ पूर्ण', '✗ Incomplete': '✗ अपूर्ण',
+  'Badges': 'बैज', 'Exams': 'परीक्षाएँ', 'Timetable': 'समय-सारणी', 'Bag checklist': 'बस्ता सूची', 'Homework due': 'बाकी गृहकार्य', 'Recess 🍎': 'मध्यावकाश 🍎', 'Self study': 'स्व-अध्ययन',
+  'Shortcuts': 'शॉर्टकट', 'Basics': 'मूल बातें', 'Study tips': 'पढ़ाई के सुझाव', 'Stories': 'कहानियाँ', 'Facts': 'तथ्य', 'Extra practice': 'अतिरिक्त अभ्यास', 'Class corner': 'कक्षा कोना',
+  'Screen time on this phone': 'इस फ़ोन पर स्क्रीन समय', 'Language': 'भाषा', 'Larger text': 'बड़े अक्षर', 'Login PIN': 'लॉगिन पिन', 'Log out': 'लॉग आउट', 'Change': 'बदलें', 'Open': 'खोलें',
+  'Send to the school': 'स्कूल को भेजें', 'My messages': 'मेरे संदेश', 'How do you like the app?': 'आपको ऐप कैसा लगा?', 'What do you like most? (tap any)': 'सबसे अच्छा क्या लगा? (चुनें)',
+  'Feedback to the school': 'स्कूल को सुझाव', 'Start': 'शुरू करें', 'Continue': 'जारी रखें', 'Class test is being prepared': 'कक्षा परीक्षा तैयार हो रही है',
+  'Today’s class test is ready': 'आज की कक्षा परीक्षा तैयार है', 'Latest notice': 'नई सूचना', 'No notice yet': 'अभी कोई सूचना नहीं', 'Back': 'वापस', 'Log in': 'लॉग इन',
+  'Student': 'छात्र', 'Parent': 'अभिभावक', 'Mobile number registered with the school': 'स्कूल में दर्ज मोबाइल नंबर', 'Family mobile number registered with the school': 'स्कूल में दर्ज परिवार का मोबाइल नंबर',
+  'Which student is logging in?': 'कौन सा छात्र लॉग इन कर रहा है?', 'Today’s shortcut': 'आज का शॉर्टकट', 'Did you know?': 'क्या आप जानते हैं?', 'Remember': 'याद रखें'
+};
+let FZ_LANG = fzLS.get('sn_lang3', null) || ((() => { try { return localStorage.getItem('sch_ui_lang') === 'hinglish' ? 'hinglish' : 'en'; } catch (e) { return 'en'; } })());
+const fzOrig = new WeakMap();
+function fzSchoolLang(target) {   // drive language.js (en ⇄ hinglish) by its own toggle
+  if (!window.SchoolLang || !SchoolLang.get) return; const cur = SchoolLang.get() === 'hinglish' ? 'hinglish' : 'en'; if (cur === target) return;
+  const b = document.createElement('button'); b.setAttribute('data-school-language', ''); b.style.display = 'none'; document.body.appendChild(b); b.click(); b.remove();
+}
+function fzSetLang(l) { FZ_LANG = l; fzLS.set('sn_lang3', l); fzSchoolLang(l === 'hinglish' ? 'hinglish' : 'en'); fzHiApply(true); document.querySelectorAll('.fz-lang button').forEach(x => x.classList.toggle('on', x.dataset.l === l)); }
+function fzLangCtl() { return `<span class="fz-lang">${[['en', 'EN'], ['hinglish', 'Hinglish'], ['hi', 'हिंदी']].map(([k, l]) => `<button type="button" data-l="${k}" class="${FZ_LANG === k ? 'on' : ''}" onclick="event.stopPropagation();fzSetLang('${k}')">${l}</button>`).join('')}</span>`; }
+function fzHiApply(force) {
+  const hi = FZ_LANG === 'hi'; document.documentElement.lang = hi ? 'hi' : (FZ_LANG === 'hinglish' ? 'hi-Latn' : 'en');
+  document.querySelectorAll('[data-school-language]').forEach(b => { if (!b.closest('.fz-lang-wrap')) { const w = document.createElement('span'); w.className = 'fz-lang-wrap'; w.innerHTML = fzLangCtl(); b.replaceWith(w); } });
+  if (!hi && !force) return;
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+  while ((n = walk.nextNode())) {
+    const p = n.parentElement; if (!p || p.closest('script,style,textarea,.fz-lang,input')) continue;
+    const o = fzOrig.get(n);
+    if (!hi) { if (o && n.nodeValue === o.hi) n.nodeValue = o.src; continue; }
+    const src = o && n.nodeValue === o.hi ? o.src : n.nodeValue, k = src.trim(), tr = FZ_HI[k];
+    if (tr) { const v = src.replace(k, tr); if (n.nodeValue !== v) n.nodeValue = v; fzOrig.set(n, { src, hi: v }); }
+  }
+  document.querySelectorAll('[placeholder]').forEach(e => { const o = e.dataset.fzPh || e.getAttribute('placeholder'); e.dataset.fzPh = o; const v = hi && FZ_HI[o] ? FZ_HI[o] : o; if (e.getAttribute('placeholder') !== v) e.setAttribute('placeholder', v); });
+}
+let fzHiQ = false;
+new MutationObserver(() => { if (fzHiQ) return; fzHiQ = true; requestAnimationFrame(() => { fzHiQ = false; fzHiApply(false); }); }).observe(document.documentElement, { subtree: true, childList: true, characterData: true });
+if (FZ_LANG === 'hinglish') setTimeout(() => fzSchoolLang('hinglish'), 500);

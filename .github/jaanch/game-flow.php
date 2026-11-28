@@ -368,5 +368,31 @@ $api('sync', ['put' => [['k' => 'diary', 'r' => $d0 . '|K|5', 'd' => ['cls' => '
 [, $st3] = $g('state', null, $tok['g3']);
 gf_check(in_array('Map work: rivers of India', array_column($st3['today']['topics'], 'topic'), true), 'class work was not used as the test topic');
 
+// ================= PARENT SUPPORT: missed work, syllabus, class stars, leave in attendance, feedback (28 Nov 2026) =================
+$dy = date('Y-m-d', strtotime('-1 day'));
+$api('sync', ['put' => [['k' => 'studAtt', 'r' => $dy . '|7th', 'd' => ['absent' => ['g1', 'g3'], 'st' => ['g3' => 'L']]],
+                       ['k' => 'diary', 'r' => $dy . '|K|2', 'd' => ['cls' => '7th', 'subj' => 'Social Science', 'topic' => 'The Mughal Empire', 'hw' => 'Q1 to Q4 page 52']],
+                       ['k' => 'syl', 'r' => '7th|Social Science', 'd' => ['chapters' => [['n' => 'Ch 1', 'done' => true], ['n' => 'Ch 2', 'done' => true], ['n' => 'Ch 3']]]]]], $P);
+for ($i = 1; $i <= 5; $i++) $pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchChk',?,?,0,1)")->execute([date('Y-m-d', strtotime("-$i day")) . '|7th|Hindi', json_encode(['date' => date('Y-m-d', strtotime("-$i day")), 'cls' => '7th', 'subj' => 'Hindi', 'hw' => 'x', 'rows' => ['g1' => ['hw' => 'done', 'cp' => ''], 'g2' => ['hw' => $i > 2 ? 'done' : 'not', 'cp' => ''], 'g3' => ['hw' => 'half', 'cp' => '']]])]);
+[, $pd] = $api('pdata', null, $PA);
+$S1 = $pd['study']['g1'];
+gf_check($S1['absentDays'] >= 1 && in_array('The Mughal Empire', array_column($S1['missed'], 'topic'), true) && in_array('Q1 to Q4 page 52', array_column($S1['missed'], 'hw'), true), 'missed topics / homework on absent days not shown');
+$sy = array_values(array_filter($S1['syl'], fn($x) => $x['subj'] === 'Social Science'))[0];
+gf_check($sy['total'] === 3 && $sy['done'] === 2, 'syllabus coverage wrong');
+gf_check(!isset($pd['study']['g2']), "another family's study record leaked");
+gf_check($pd['stars']['7th']['hw'][0]['name'] === 'Aman Gupta' && count($pd['stars']['7th']['hw']) === 3 && isset($pd['photos']['g1']), 'class stars / photos wrong');
+$aY = array_values(array_filter($pd['att'], fn($a) => $a['sid'] === 'g1' && $a['date'] === $dy))[0];
+gf_check($aY['present'] === false && empty($aY['leave']), 'absent day wrong');
+[, $pdB] = $api('pdata', null, $tok['g3']); $aL = array_values(array_filter($pdB['att'], fn($a) => $a['date'] === $dy))[0];
+gf_check(!empty($aL['leave']), 'leave day not marked as leave');
+// feedback
+$fb = fn($a, $b = null, $t = null) => gf_http('/school/famfb_api.php?a=' . $a, $b, $t);
+[$c] = $fb('send', ['kind' => 'feedback', 'rating' => 0], $PA); gf_check($c === 400, 'feedback without stars accepted');
+[$c] = $fb('send', ['kind' => 'feedback', 'rating' => 5, 'liked' => ['Homework', 'Hacked'], 'text' => 'Very useful'], $PA); gf_check($c === 200, 'parent could not send feedback');
+[$c, $FL] = $fb('list', null, $P); gf_check($c === 200 && $FL['avg'] == 5 && $FL['items'][0]['liked'] === ['Homework'] && str_contains($FL['items'][0]['who'], 'Aman Gupta'), 'principal feedback list wrong');
+[$c] = $fb('reply', ['id' => $FL['items'][0]['id'], 'text' => 'Thank you!'], $P); gf_check($c === 200, 'principal could not reply');
+[, $FM] = $fb('mine', null, $PA); gf_check($FM['items'][0]['reply'] === 'Thank you!', 'parent does not see the reply');
+[$c] = $fb('list', null, $K); gf_check($c === 403, 'a teacher opened parents feedback');
+
 foreach (['sch_sessions', 'sch_users', 'sch_records', 'sch_log', 'sch_login_fail'] as $t) $pdo->exec("DELETE FROM $t");
 echo "✅ Game Zone: 24,000 maths sawaal sahi, chhupa jawab, ghadi, revenge, report, din ki hadd, parent ki seema, Aaj ka Test, Battle, Rank/K-D, teacher report — sab theek\n";
