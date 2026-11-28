@@ -311,7 +311,7 @@ html.sn-big body { zoom: 1.14; }
 .fs-cols > div > div { display: flex; align-items: center; gap: .4rem; padding: .25rem 0; } .fs-cols em { font-style: normal; font-size: .68rem; font-weight: 800; color: #94a3b8; width: .8rem; }
 .fs-cols b { flex: 1; min-width: 0; font-size: .74rem; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .fs-cols strong { font-size: .7rem; color: #0f8a5f; }
 .fs-cols .me { background: #eef2ff; border-radius: .6rem; padding-left: .25rem; padding-right: .25rem; } .fs-cols .fz-face { width: 1.6rem; height: 1.6rem; font-size: .55rem; }
-.fr-rankers .fz-face { width: 2rem; height: 2rem; border: 2px solid #f6d79a; }
+.fr-rankers .fz-face { width: 2rem; height: 2rem; border: 2px solid #f6d79a; font-size: .66rem; }
 .fsy { padding: .6rem 1rem .3rem; } .fsy > div { padding: .4rem 0; } .fsy-h { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; } .fsy-h b { color: #0f172a; } .fsy-h span { color: #64748b; font-size: .72rem; }
 .fsy-bar { position: relative; height: .55rem; border-radius: 99px; background: #edf0f6; overflow: hidden; margin-top: .25rem; } .fsy-bar i { display: block; height: 100%; border-radius: 99px; } .fsy-bar u { position: absolute; top: 0; right: auto; height: 100%; background: #e5484d; left: 0; opacity: .85; text-decoration: none; }
 .ffb-stars { display: flex; gap: .3rem; } .ffb-stars button { font-size: 2rem; line-height: 1; color: #d6dae5; } .ffb-stars button.on { color: #f5b301; }
@@ -364,3 +364,66 @@ html.sn-big body { zoom: 1.14; }
 .fh-moreall > summary { list-style: none; cursor: pointer; padding: .8rem 1rem; font-size: .85rem; font-weight: 700; color: #4338ca; }
 .fh-moreall > summary::after { content: ' ▾'; } .fh-moreall[open] > summary::after { content: ' ▴'; } .fh-moreall > summary::-webkit-details-marker { display: none; }
 .fh-moreall[open] { padding-bottom: .6rem; background: #f3f5fb; border-color: transparent; }
+
+/* Family app · charts, attendance insights, daily kit check, richer cards (owner, 28 Nov 2026: "design bahut sada", "graph add karo") */
+.fzc { width: 100%; height: auto; display: block; overflow: visible; }
+.fzc-x { font-size: 9px; fill: #64748b; font-weight: 600; } .fzc-v { font-size: 9px; fill: #1e1b4b; font-weight: 800; }
+.fzc-ln { stroke: #f97316; stroke-width: 1; stroke-dasharray: 4 3; } .fzc-lt { font-size: 8px; fill: #ea580c; font-weight: 700; }
+.fzc-mk { stroke: #0f172a; stroke-width: 2.4; stroke-linecap: round; } .fzc-none { fill: #e2e8f0; }
+.fzc-bar { animation: fzc-up .7s cubic-bezier(.2,.8,.2,1) both; transform-origin: bottom; transform-box: fill-box; }
+@keyframes fzc-up { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.fzc-lg { display: flex; flex-wrap: wrap; gap: .35rem .8rem; margin-top: .45rem; font-size: .68rem; color: #475569; font-weight: 600; }
+.fzc-lg i { display: inline-block; width: .65rem; height: .65rem; border-radius: 3px; background: var(--c); margin-right: .3rem; vertical-align: -1px; }
+.fzc-lg i.ln { height: 3px; border-radius: 2px; vertical-align: 2px; }
+.fzd { width: 100%; height: auto; display: block; } .fzd circle { transition: stroke-dasharray .6s; }
+.fzd-m { font-size: 7.4px; font-weight: 800; fill: #0f172a; } .fzd-s { font-size: 3.6px; fill: #64748b; font-weight: 600; }
+.fchart { margin-top: .7rem; padding: .85rem .9rem .75rem; border-radius: 1.3rem; background: linear-gradient(180deg, #fff, #f8f9ff); border: 1px solid #e6e9f2; box-shadow: 0 12px 28px -22px #312e81; }
+.fchart-h { display: flex; flex-direction: column; margin-bottom: .45rem; } .fchart-h b { font-size: .9rem; color: #1e1b4b; } .fchart-h small { font-size: .7rem; color: #64748b; }
+.fchart-n { margin-top: .5rem; font-size: .75rem; color: #475569; background: #fff7ed; border-radius: .7rem; padding: .45rem .6rem; }
+.fai-hero { display: grid; grid-template-columns: 7.2rem 1fr; gap: .9rem; align-items: center; padding: 1rem; border-radius: 1.5rem; color: #fff;
+  background: radial-gradient(circle at 15% 0%, #818cf8 0, transparent 55%), linear-gradient(135deg, #312e81, #4338ca 55%, #0e9f9a); box-shadow: 0 18px 36px -22px #312e81; }
+.fai-hero.g { background: radial-gradient(circle at 15% 0%, #86efac 0, transparent 55%), linear-gradient(135deg, #065f46, #0f766e 55%, #0891b2); }
+.fai-hero.r { background: radial-gradient(circle at 15% 0%, #fca5a5 0, transparent 55%), linear-gradient(135deg, #7f1d1d, #b91c1c 55%, #ea580c); }
+.fai-hero > div:first-child { background: #fff; border-radius: 50%; padding: .35rem; box-shadow: 0 8px 20px -10px #0008; }
+.fai-hero small { font-size: .72rem; opacity: .85; font-weight: 600; } .fai-hero h2 { font-size: 1.35rem; font-weight: 800; color: #fff; line-height: 1.2; }
+.fai-hero p { font-size: .74rem; margin-top: .35rem; font-weight: 700; opacity: .95; } .fai-hero .fzc-lg { color: #fff; }
+.fai-calc { display: flex; gap: .7rem; align-items: flex-start; margin-top: .7rem; padding: .75rem .9rem; border-radius: 1.1rem; border: 1px solid; }
+.fai-calc.ok { background: #ecfdf5; border-color: #a7f3d0; } .fai-calc.bad { background: #fef2f2; border-color: #fecaca; }
+.fai-calc > span { font-size: 1.5rem; } .fai-calc b { font-size: .85rem; color: #0f172a; } .fai-calc p { font-size: .78rem; color: #334155; }
+.fai-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .7rem; }
+.fai-tiles div { text-align: center; padding: .7rem .4rem; border-radius: 1.1rem; background: #fff; border: 1px solid #e6e9f2; }
+.fai-tiles b { display: block; font-size: 1.45rem; font-weight: 800; background: linear-gradient(135deg, #4338ca, #0e9f9a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fai-tiles small { font-size: .66rem; color: #64748b; line-height: 1.2; display: block; }
+.fai-wd { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .4rem; height: 7.5rem; align-items: end; }
+.fai-wd div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+.fai-wd i { width: 70%; min-height: 4px; border-radius: .5rem .5rem .2rem .2rem; background: linear-gradient(180deg, #fda4af, #f43f5e); animation: fzc-up .7s both; transform-origin: bottom; }
+.fai-wd .hi i { background: linear-gradient(180deg, #f97316, #b91c1c); }
+.fai-wd em { font-style: normal; font-size: .7rem; font-weight: 800; color: #1e1b4b; order: -1; } .fai-wd small { font-size: .66rem; color: #64748b; font-weight: 700; margin-top: .2rem; }
+.fai-cal { margin-top: .8rem; }
+.fkit { display: block; width: 100%; text-align: left; margin-top: .6rem; padding: .75rem .9rem; border-radius: 1.1rem; background: #fff; border: 1px solid #e6e9f2; }
+.fkit.ok { background: linear-gradient(135deg, #f0fdf4, #fff); border-color: #bbf7d0; } .fkit.bad { background: linear-gradient(135deg, #fff7ed, #fff); border-color: #fed7aa; }
+.fkit .fhw-top span { font-size: .7rem; font-weight: 800; } .fkit.ok .fhw-top span { color: #15803d; } .fkit.bad .fhw-top span { color: #c2410c; }
+.fkit-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; margin-top: .4rem; }
+.fkit-row span { text-align: center; padding: .4rem .2rem; border-radius: .8rem; background: #f8fafc; }
+.fkit-row i { display: block; font-style: normal; font-size: 1.15rem; } .fkit-row b { display: block; font-size: .66rem; color: #334155; } .fkit-row em { display: block; font-style: normal; font-size: .64rem; font-weight: 800; }
+.fkit-row .yes { background: #dcfce7; } .fkit-row .yes em { color: #15803d; } .fkit-row .no { background: #fee2e2; } .fkit-row .no em { color: #b91c1c; } .fkit-row .na em { color: #94a3b8; }
+.fkit-sum { margin-top: .45rem; font-size: .72rem; color: #475569; }
+.fpg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; margin: 0 1.1rem; }
+.fpg-t { display: flex; flex-direction: column; align-items: flex-start; gap: .1rem; min-width: 0; text-align: left; padding: .6rem .65rem .55rem; border-radius: 1.05rem;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 9%, #fff), #fff 70%); border: 1px solid color-mix(in srgb, var(--c) 22%, #e6e9f2); box-shadow: 0 10px 24px -20px #1e1b4b; }
+.fpg-t small { font-size: .66rem; color: #475569; font-weight: 700; white-space: nowrap; } .fpg-t b { font-size: 1.25rem; font-weight: 800; color: var(--c); line-height: 1.1; }
+.fpg-t em { font-style: normal; font-size: .6rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.fzs { width: 100%; height: 1.6rem; } .fpg-bar { display: block; width: 100%; height: .4rem; margin: .55rem 0 .35rem; border-radius: 99px; background: #eef0f6; overflow: hidden; }
+.fpg-bar i { display: block; height: 100%; border-radius: 99px; background: var(--c); }
+.fsy-donut { display: grid; grid-template-columns: 5.5rem 1fr; gap: .8rem; align-items: center; padding: .8rem 1rem 0; } .fsy-donut p { font-size: .76rem; color: #475569; margin-top: .35rem; }
+.fmk > div { display: grid; grid-template-columns: 5.5rem 1fr 2rem; gap: .5rem; align-items: center; padding: .25rem 0; }
+.fmk span { font-size: .74rem; color: #334155; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fmk > div > div { height: .65rem; border-radius: 99px; background: #eef0f6; overflow: hidden; }
+.fmk i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 60%, #fff), var(--c)); animation: fmk-in .8s both; transform-origin: left; }
+@keyframes fmk-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.fmk b { font-size: .78rem; text-align: right; color: #0f172a; }
+/* richer cards */
+.fh .fhr, .fh .fat, .fh .fhw { background: linear-gradient(180deg, #fff, #fbfbff); box-shadow: 0 12px 28px -22px #312e81; }
+.fh .fhr { border-top: 3px solid #6366f1; } .fh .fat { border-top: 3px solid #0e9f9a; }
+.fh-grid button span { box-shadow: 0 8px 16px -10px var(--c); }
+.fh-glance { box-shadow: 0 18px 40px -24px #312e81; }

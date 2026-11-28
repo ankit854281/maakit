@@ -451,7 +451,7 @@ function fzHwStatus(kid) {
 function dayLabelShort(d) { const t0 = todayISO(); if (d === t0) return 'Today'; if (d === addDays(t0, -1)) return 'Yesterday'; return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }); }
 function fzAttStrip(kid) {
   const rows = PD.att.filter(a => a.sid === kid.id).sort((a, b) => a.date.localeCompare(b.date)).slice(-14); if (!rows.length) return '';
-  return `<button class="fat" onclick="go('pcal')"><div class="fhw-top"><b>Attendance · last ${rows.length} school days</b><span>Calendar ›</span></div><div class="fat-row">${rows.map(r => `<span class="${r.present ? 'p' : r.leave ? 'l' : 'a'}"><b>${new Date(r.date + 'T00:00:00').getDate()}</b><i>${r.present ? 'P' : r.leave ? 'L' : 'A'}</i></span>`).join('')}</div></button>`;
+  return `<button class="fat" onclick="go('patt')"><div class="fhw-top"><b>Attendance · last ${rows.length} school days</b><span>Insights ›</span></div><div class="fat-row">${rows.map(r => `<span class="${r.present ? 'p' : r.leave ? 'l' : 'a'}"><b>${new Date(r.date + 'T00:00:00').getDate()}</b><i>${r.present ? 'P' : r.leave ? 'L' : 'A'}</i></span>`).join('')}</div></button>`;
 }
 function fzMissedCard(kid) {
   const St = fzStudy(kid); if (!St.absentDays) return '';
@@ -466,6 +466,7 @@ function vPStudy() {
   return fzBack('Study progress', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · this session')
     + `<section class="fr-card"><div class="fr-top"><div><small>Syllabus completed in class</small><h2>${cov == null ? '—' : cov + '%'}</h2><p>${done} of ${tot} chapters taught</p></div>
       <div class="fr-rank"><small>Missed topics</small><b>${St.missed.filter(x => x.topic).length}</b><small>${St.absentDays} day${St.absentDays === 1 ? '' : 's'} absent</small></div></div>
+      ${tot ? `<div class="fsy-donut">${fzDonut([{ v: done, c: '#6366f1', l: 'Taught' }, { v: tot - done, c: '#e2e8f0', l: 'Still to teach' }], cov + '%', 'taught')}<div>${fzLegend([['#6366f1', `Taught ${done}`], ['#cbd5e1', `Still to teach ${tot - done}`]])}<p>${St.missed.filter(x => x.topic).length ? `This child was absent for <b>${St.missed.filter(x => x.topic).length}</b> of the lessons taught — see the catch-up list below.` : 'This child attended every lesson taught so far. 🎉'}</p></div></div>` : ''}
       <div class="fsy">${St.syl.length ? St.syl.map(x => { const p = x.total ? Math.round(x.done * 100 / x.total) : 0, m = missBy[x.subj] || 0;
         return `<div><div class="fsy-h"><b>${esc(x.subj)}</b><span>${x.done}/${x.total} chapters · ${p}%${m ? ` · <span class="t-bad">${m} missed</span>` : ''}</span></div><div class="fsy-bar"><i style="width:${p}%;background:${fzColor(x.subj)}"></i>${m && x.total ? `<u style="width:${Math.min(p, Math.round(m * 100 / Math.max(1, x.total * 4)))}%"></u>` : ''}</div></div>`; }).join('')
         : '<p class="text-sm text-slate-500">The syllabus plan appears here once the teachers mark chapters as taught.</p>'}</div>
@@ -568,6 +569,7 @@ function vPHwReport() {
   const box = (k, l, n, tone) => `<button class="t-${tone} ${FZHF === k ? 'on' : ''}" onclick="FZHF='${k}';render()"><b>${n}</b><span>${l}</span></button>`;
   return fzBack('Homework report', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · last 10 days')
     + `<div class="fhs">${box('all', 'All', rows.length, 'ink')}${box('done', 'Done', cnt('done'), 'ok')}${box('not', 'Not done', cnt('not') + cnt('half'), 'bad')}${box('wait', 'Not checked', cnt('wait') + cnt('today'), 'amber')}</div>`
+    + fzHwChart(kid)
     + (Object.keys(by).length ? Object.entries(by).map(([d, l]) => `<section class="fhr"><div class="fhr-h"><b>${esc(fmtDate(d))}</b><span class="pill">${l.length} subject${l.length > 1 ? 's' : ''}</span></div>
       ${l.map(r => `<div class="fhr-row"><span class="fhr-s" style="--c:${fzColor(r.subj)}">${esc(r.subj)}</span><p>${esc(r.hw)}${r.by ? `<small>Checked by ${esc(r.by)} · ${esc(dayLabelShort(r.on))}</small>` : ''}</p><em class="${FZ_ST[r.st][1]}">${FZ_ST[r.st][0]}</em></div>`).join('')}</section>`).join('')
       : '<div class="card text-sm text-slate-500">Nothing here.</div>')
@@ -591,7 +593,7 @@ function fzHome(kid, isParent, ctl) {
   const nx = fzNextSchoolDay(kid), fday = nx ? ((((PD.tt || {})[kid.cls] || [])[nx.idx]) || []) : [], fi = fday.findIndex(Boolean), first = fi >= 0 ? fday[fi] : null;
   const name = (kid.name || '').split(' ')[0], ini = (kid.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('');
   const attTxt = at.today ? (at.today.present ? 'Present' : 'Absent') : 'Not marked', attTone = at.today ? (at.today.present ? 'ok' : 'bad') : 'mut';
-  const QA = [['phwr', '📘', 'Homework', '#2563eb'], ['pcal', '📅', 'Attendance', '#0e9f9a'], ['presults', '📊', 'Results', '#d6336c'], ['pnotices', '📢', 'Notices', '#027eb5'],
+  const QA = [['phwr', '📘', 'Homework', '#2563eb'], ['patt', '📅', 'Attendance', '#0e9f9a'], ['presults', '📊', 'Results', '#d6336c'], ['pnotices', '📢', 'Notices', '#027eb5'],
     ['pleave', '🗓', 'Leave', '#e0662b'], isParent ? ['pfees', '💳', 'Fees', '#b7791f'] : ['game', '🎯', 'Game Zone', '#3d5afe'], ['ptmr', '🎒', 'Next day', '#f08c00'], ['pmore', '➕', 'More', '#5b6b7b']]
     .filter(q => VIEWS[q[0]]);
   return `<div class="fh fam-real-screen${anim ? ' anim' : ''}">
@@ -602,14 +604,15 @@ function fzHome(kid, isParent, ctl) {
       ${PD.kids.length > 1 ? `<div class="fh-kids fam-child">${PD.kids.map(k => `<button class="${k.id === kid.id ? 'on' : ''}" onclick="PKID='${esc(k.id)}';render()">${k.photo ? `<img src="${esc(k.photo)}" alt="">` : `<span>${esc((k.name || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join(''))}</span>`}${esc((k.name || '').split(' ')[0])} · ${esc(k.cls)}</button>`).join('')}</div>` : ''}
     </section>
     <section class="fh-glance">
-      <button onclick="go('presults')"><span class="fh-ring ${attTone}" style="--p:${sp == null ? 0 : sp}"><b>${sp == null ? '—' : sp + '%'}</b></span><b class="t-${attTone}">${attTxt}</b><small>attendance</small></button>
+      <button onclick="go('patt')"><span class="fh-ring ${attTone}" style="--p:${sp == null ? 0 : sp}"><b>${sp == null ? '—' : sp + '%'}</b></span><b class="t-${attTone}">${attTxt}</b><small>attendance</small></button>
       <button onclick="go('phw')"><span class="fh-num">${hwN}</span><b>${hwN === 1 ? 'Task' : 'Tasks'}</b><small>homework today</small></button>
       ${(() => { const T = fzTerm(kid), K = fzChecks(kid);
         if (T) return `<button onclick="go('presults')"><span class="fh-num">${T.rank ? (['🥇', '🥈', '🥉'][T.rank - 1] || T.rank) : esc(T.pct != null ? grade(T.pct) : '—')}</span><b>${T.rank ? FZ_ORD(T.rank) + ' in class' : T.pct != null ? T.pct + '%' : 'Result'}</b><small>${esc(T.exam)}</small></button>`;
         return `<button onclick="go('pchk')"><span class="fh-num">${K.pct != null ? K.pct + '%' : '—'}</span><b>Homework</b><small>${K.pct != null ? 'completed' : 'checks'}</small></button>`; })()}
       <button onclick="go('pcal')"><span class="fh-num">${exam ? Math.max(0, fzDaysTo(exam.date)) : '—'}</span><b>${exam ? (fzDaysTo(exam.date) === 1 ? 'Day' : 'Days') : 'No exam'}</b><small>${exam ? 'to ' + esc(exam.title.split(':')[0]) : 'scheduled'}</small></button>
     </section>
-    <div class="fh-pad fh-top-gap">${fzHwToday(kid)}${fzNotesCard(kid)}${fzAttStrip(kid)}${fzMissedCard(kid)}</div>
+    <div class="fh-pad fh-top-gap">${fzHwToday(kid)}${fzNotesCard(kid)}${fzAttStrip(kid)}${fzKitCard(kid)}${fzMissedCard(kid)}</div>
+    ${fzGlanceCharts(kid)}
     ${(() => { if (!g || !g.today || !g.today.topics.length) return ''; const td = g.today, tp = td.topics.map(t => esc(t.subj) + ': ' + esc(t.topic)).join(' · ');
       if (td.played && td.played.done) return `<button class="fh-cta done" onclick="go('game')"><span>✅</span><div><b>Class test done · ${td.played.right} of ${td.played.n} correct</b><small>${tp}</small></div><em>${Math.round(td.played.right / td.played.n * 100)}%</em></button>`;
       if (td.ready) return `<button class="fh-cta" onclick="go('game')"><span>📝</span><div><b>${td.isToday ? 'Today’s' : 'Last class’s'} test is ready</b><small>${tp} · ${td.ready} questions</small></div><em>${td.played ? 'Continue' : 'Start'}</em></button>`;
@@ -636,14 +639,100 @@ function vPMore() {
     ['game', '🎯', 'Game Zone'], ['quiz', '🤝', 'Quiz Duel'], ['phw', '💬', 'Homework chat'], isP ? ['pfees', '💳', 'Fees'] : null, ['pfb', '💬', 'Feedback'], ['pset', '⚙️', 'Settings']].filter(x => x && VIEWS[x[0]]);
   return head('More', 'Everything else in the app') + `<section class="fh-grid" style="margin:0">${L.map(([k, e, l]) => `<button onclick="go('${k}')" style="--c:#4338ca"><span>${e}</span><b>${l}</b></button>`).join('')}</section>`;
 }
+// ---------------------------------------------------------------- 8. CHARTS + ATTENDANCE INSIGHTS + DAILY KIT CHECK (owner, 28 Nov 2026:
+// "graph add karne ko bola tha", "attendance or kya kya track karke dikha sakte hain", "design bahut sada"). Plain SVG, no library.
+const FZ_MON = ym => new Date(ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short' });
+// vertical bars; d = [{l, v (0-100 or null), m (class mark, optional), c}]
+function fzBars(d, o) { o = o || {}; const W = 320, H = o.h || 130, B = 22, n = Math.max(1, d.length), bw = Math.min(34, (W - 8) / n * .6), step = (W - 8) / n, max = o.max || 100;
+  const y = v => H - B - (Math.max(0, Math.min(max, v)) / max) * (H - B - 16);
+  const lines = (o.lines || []).map(v => `<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="fzc-ln"><title>${v}${o.unit || '%'} line</title></line>`).join('');
+  return `<svg class="fzc" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || 'Chart')}">${lines}${d.map((x, i) => { const cx = 4 + step * i + step / 2, v = x.v;
+    return `<g>${v == null ? `<rect x="${cx - bw / 2}" y="${H - B - 4}" width="${bw}" height="4" rx="2" class="fzc-none"/>` : `<rect x="${cx - bw / 2}" y="${y(v)}" width="${bw}" height="${Math.max(3, H - B - y(v))}" rx="${Math.min(7, bw / 2)}" fill="${x.c || 'url(#fzg)'}" class="fzc-bar"><title>${esc(x.l)}: ${v}${o.unit || '%'}</title></rect>
+      <text x="${cx}" y="${Math.min(y(v), x.m != null ? y(x.m) : 1e9) - 5}" text-anchor="middle" class="fzc-v">${v}${o.unit === '' ? '' : o.unit || '%'}</text>`}
+      ${x.m != null ? `<line x1="${cx - bw / 2 - 4}" x2="${cx + bw / 2 + 4}" y1="${y(x.m)}" y2="${y(x.m)}" class="fzc-mk"><title>Class average ${x.m}%</title></line>` : ''}
+      <text x="${cx}" y="${H - 6}" text-anchor="middle" class="fzc-x">${esc(x.l)}</text></g>`; }).join('')}
+    <defs><linearGradient id="fzg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#22c1c3"/></linearGradient></defs></svg>`; }
+// line with soft area; d = [{l, v}]
+function fzLine(d, o) { o = o || {}; const W = 320, H = o.h || 120, B = 20, P = 14, max = o.max || 100, n = d.length; if (!n) return '';
+  const X = i => n === 1 ? W / 2 : P + i * (W - 2 * P) / (n - 1), Y = v => H - B - (Math.max(0, Math.min(max, v)) / max) * (H - B - 18);
+  const pts = d.map((x, i) => [X(i), Y(x.v)]), path = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const gid = 'fzl' + Math.random().toString(36).slice(2, 7), col = o.c || '#7c3aed';
+  return `<svg class="fzc" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || 'Chart')}"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".28"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    ${n > 1 ? `<path d="${path} L${pts[n - 1][0]} ${H - B} L${pts[0][0]} ${H - B} Z" fill="url(#${gid})"/><path d="${path}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+    ${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="${col}" stroke-width="2.4"><title>${esc(d[i].l)}: ${d[i].v}${o.unit || '%'}</title></circle>${i === n - 1 || n <= 8 ? `<text x="${p[0]}" y="${p[1] - 8}" text-anchor="middle" class="fzc-v">${d[i].v}${o.unit || '%'}</text>` : ''}`).join('')}
+    ${d.map((x, i) => (n <= 8 || i % 2 === 0 || i === n - 1) ? `<text x="${X(i)}" y="${H - 5}" text-anchor="middle" class="fzc-x">${esc(x.l)}</text>` : '').join('')}</svg>`; }
+// donut; parts = [{v, c, l}]
+function fzDonut(parts, mid, sub) { const T = parts.reduce((s, p) => s + p.v, 0), R = 15.9155; let off = 25;
+  return `<svg class="fzd" viewBox="0 0 42 42" role="img" aria-label="${esc(parts.map(p => p.l + ' ' + p.v).join(', '))}"><circle cx="21" cy="21" r="${R}" fill="none" stroke="#eef0f6" stroke-width="5.2"/>
+    ${T ? parts.filter(p => p.v).map(p => { const len = p.v / T * 100, s = `<circle cx="21" cy="21" r="${R}" fill="none" stroke="${p.c}" stroke-width="5.2" stroke-dasharray="${len} ${100 - len}" stroke-dashoffset="${off}"><title>${esc(p.l)}: ${p.v}</title></circle>`; off -= len; return s; }).join('') : ''}
+    <text x="21" y="${sub ? 21 : 23}" text-anchor="middle" class="fzd-m">${esc(mid)}</text>${sub ? `<text x="21" y="27" text-anchor="middle" class="fzd-s">${esc(sub)}</text>` : ''}</svg>`; }
+function fzSpark(vals, col) { const v = vals.filter(x => x != null); if (v.length < 2) return ''; const W = 96, H = 30, mx = 100, X = i => 3 + i * (W - 6) / (v.length - 1), Y = x => H - 3 - x / mx * (H - 6);
+  return `<svg class="fzs" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${v.map((x, i) => X(i).toFixed(1) + ',' + Y(x).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${X(v.length - 1)}" cy="${Y(v[v.length - 1])}" r="3" fill="${col}"/></svg>`; }
+const fzLegend = L => `<div class="fzc-lg">${L.map(([c, l, line]) => `<span><i class="${line ? 'ln' : ''}" style="--c:${c}"></i>${l}</span>`).join('')}</div>`;
+
+// data helpers
+function fzMonths(kid) { return (fzStudy(kid).months || []).filter(m => m.n || m.cn).map(m => ({ ym: m.ym, l: FZ_MON(m.ym), v: m.n ? Math.round(m.p * 100 / m.n) : null, m: m.cn ? Math.round(m.cp * 100 / m.cn) : null, p: m.p, n: m.n })); }
+function fzHwWeeks(kid, k) { const hw = fzChecks(kid).hw, W = {};
+  hw.forEach(x => { const d = new Date(x.date + 'T00:00:00'), mon = addDays(x.date, -((d.getDay() + 6) % 7)); const w = W[mon] = W[mon] || { n: 0, d: 0 }; w.n++; w.d += x.hw === 'done' ? 1 : x.hw === 'half' ? .5 : 0; });
+  return Object.keys(W).sort().slice(-(k || 8)).map(m => ({ l: new Date(m + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), v: Math.round(W[m].d * 100 / W[m].n), n: W[m].n })); }
+function fzTests(kid) { const g = FZG[kid.id]; return g && !g.error && Array.isArray(g.tests) ? g.tests.filter(t => t.n).map(t => ({ l: new Date(t.date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), v: Math.round(t.right * 100 / t.n), r: t.right, n: t.n })) : []; }
+function fzAttCalc(p, n) { if (!n) return null; const pct = p * 100 / n;
+  if (pct >= 75) { const k = Math.floor(p / .75 - n + 1e-9); return { ok: true, k, txt: k > 0 ? `Can miss at most <b>${k} more day${k === 1 ? '' : 's'}</b> and still stay at 75% or above.` : '<b>Right at the 75% line</b> — one more absence takes attendance below 75%.' }; }
+  const x = Math.ceil(3 * n - 4 * p - 1e-9); return { ok: false, k: x, txt: `Below 75%. Needs <b>${x} school day${x === 1 ? '' : 's'} in a row present</b> to get back to 75%.` }; }
+const FZ_KIT = [['d', '📘', 'Diary'], ['i', '🪪', 'ID card'], ['b', '📚', 'Books'], ['u', '👕', 'Uniform']];
+function fzKit(kid) { const L = fzStudy(kid).kit || [], miss = {}; FZ_KIT.forEach(([k]) => { miss[k] = L.filter(r => r[k] === 0).length; }); return { L, miss, last: L[0] || null, bad: Object.values(miss).reduce((a, b) => a + b, 0) }; }
+function fzKitCard(kid, full) { const K = fzKit(kid); if (!K.last) return full ? '<div class="card text-sm text-slate-500">The daily diary, ID card, book and uniform check appears here once the class teacher records it.</div>' : '';
+  const r = K.last, allOk = FZ_KIT.every(([k]) => r[k] !== 0);
+  return `<${full ? 'section' : 'button onclick="go(\'patt\')"'} class="fkit ${allOk ? 'ok' : 'bad'}"><div class="fhw-top"><b>🎒 Daily check · ${esc(dayLabelShort(r.date))}</b><span>${allOk ? 'All good ✓' : 'Something missing'}</span></div>
+    <div class="fkit-row">${FZ_KIT.map(([k, ic, l]) => `<span class="${r[k] === 0 ? 'no' : r[k] === 1 ? 'yes' : 'na'}"><i>${ic}</i><b>${l}</b><em>${r[k] === 0 ? '✗ Missing' : r[k] === 1 ? '✓' : '—'}</em></span>`).join('')}</div>
+    ${K.L.length > 1 ? `<p class="fkit-sum">Last ${K.L.length} checks: ${K.bad ? FZ_KIT.filter(([k]) => K.miss[k]).map(([k, , l]) => `${l} missing ${K.miss[k]}×`).join(' · ') : 'nothing missing — very good! ⭐'}</p>` : ''}</${full ? 'section' : 'button'}>`; }
+
+function vPAtt() {
+  const kid = pKid(); if (!kid) return vPHome(); const St = fzStudy(kid), sum = (PD.attSum || {})[kid.id] || { present: 0, total: 0 };
+  const M = fzMonths(kid), pct = sum.total ? Math.round(sum.present * 100 / sum.total) : null, C = fzAttCalc(sum.present, sum.total);
+  const cls = M.filter(m => m.m != null), cAvg = cls.length ? Math.round(cls.reduce((s, m) => s + m.m, 0) / cls.length) : null;
+  const wd = St.weekday || [], wdN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], wMax = Math.max(1, ...wd), worst = wd.length && Math.max(...wd) > 0 ? wd.indexOf(Math.max(...wd)) : -1;
+  const pr = St.present != null ? St.present : sum.present, ab = St.absent != null ? St.absent : sum.total - sum.present, lv = St.leave || 0;
+  return fzBack('Attendance insights', esc(kid.name) + ' · Class ' + esc(kid.cls) + ' · this session')
+    + `<section class="fai-hero ${pct == null ? '' : pct >= 90 ? 'g' : pct >= 75 ? 'b' : 'r'}"><div>${fzDonut([{ v: pr, c: '#22c55e', l: 'Present' }, { v: ab, c: '#ef4444', l: 'Absent' }, { v: lv, c: '#f59e0b', l: 'Leave' }], pct == null ? '—' : pct + '%', 'present')}</div>
+      <div><small>Session attendance</small><h2>${sum.present} / ${sum.total} days</h2>
+      ${fzLegend([['#22c55e', `Present ${pr}`], ['#ef4444', `Absent ${ab}`], ['#f59e0b', `Leave ${lv}`]])}
+      ${cAvg != null && pct != null ? `<p>${pct > cAvg ? '▲ Above' : pct < cAvg ? '▼ Below' : '● Same as'} class average (${cAvg}%)</p>` : ''}</div></section>`
+    + (C ? `<section class="fai-calc ${C.ok ? 'ok' : 'bad'}"><span>${C.ok ? '🛡️' : '⚠️'}</span><div><b>75% rule</b><p>${C.txt}</p></div></section>` : '')
+    + `<div class="fai-tiles"><div><b>${fzStreak(kid)}</b><small>present in a row now</small></div><div><b>${St.run || 0}</b><small>longest absence in a row</small></div><div><b>${St.absentDays || 0}</b><small>absent days with lessons missed</small></div></div>`
+    + (M.length ? `<section class="fchart"><div class="fchart-h"><b>📊 Month by month</b><small>${esc(kid.name.split(' ')[0])} vs class average</small></div>${fzBars(M.map(m => ({ l: m.l, v: m.v, m: m.m, c: m.v == null ? null : m.v >= 90 ? '#22c55e' : m.v >= 75 ? '#6366f1' : '#ef4444' })), { label: 'Attendance by month', lines: [75] })}
+      ${fzLegend([['#22c55e', '90%+'], ['#6366f1', '75–89%'], ['#ef4444', 'Below 75%'], ['#0f172a', 'Class average', 1], ['#f97316', '75% line', 1]])}</section>` : '')
+    + (wd.some(Boolean) ? `<section class="fchart"><div class="fchart-h"><b>📅 Which day is missed most</b><small>absences by weekday</small></div>
+      <div class="fai-wd">${wdN.map((d, i) => `<div class="${i === worst ? 'hi' : ''}"><i style="height:${Math.round((wd[i] || 0) / wMax * 100)}%"></i><em>${wd[i] || 0}</em><small>${d}</small></div>`).join('')}</div>
+      ${worst >= 0 && wd[worst] >= 2 ? `<p class="fchart-n">Most absences fall on <b>${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][worst]}</b>. A fixed routine the night before helps.</p>` : ''}</section>` : '')
+    + fzKitCard(kid, true)
+    + `<button class="fhr-more fai-cal" onclick="go('pcal')">📅 Open the attendance calendar ›</button>`;
+}
+// home: progress at a glance (sparklines) — tap opens the detail
+function fzGlanceCharts(kid) {
+  const M = fzMonths(kid).filter(m => m.v != null), W = fzHwWeeks(kid, 6), T = fzTests(kid).slice(-6);
+  const tile = (go2, ic, t, val, sub, vals, col) => `<button class="fpg-t" onclick="go('${go2}')" style="--c:${col}"><small>${ic} ${t}</small><b>${val}</b>${fzSpark(vals, col) || `<span class="fpg-bar"><i style="width:${Math.max(3, Math.min(100, vals[vals.length - 1]))}%"></i></span>`}<em>${sub}</em></button>`;
+  if (!M.length && !W.length && !T.length) return '';
+  return `<div class="fh-sec"><h3>Progress at a glance</h3><button onclick="go('patt')">Details</button></div><section class="fpg">
+    ${M.length ? tile('patt', '📅', 'Present', M[M.length - 1].v + '%', FZ_MON(M[M.length - 1].ym), M.map(m => m.v), '#0e9f9a') : ''}
+    ${W.length ? tile('phwr', '📘', 'Homework', W[W.length - 1].v + '%', 'week of ' + W[W.length - 1].l, W.map(w => w.v), '#4f46e5') : ''}
+    ${T.length ? tile('game', '📝', 'Tests', T[T.length - 1].v + '%', 'latest test', T.map(t => t.v), '#d6336c') : ''}</section>`;
+}
+function fzHwChart(kid) { const W = fzHwWeeks(kid, 8); if (!W.length) return '';
+  return `<section class="fchart"><div class="fchart-h"><b>📈 Homework done, week by week</b><small>from teachers’ checks</small></div>${fzBars(W.map(w => ({ l: w.l, v: w.v, c: w.v >= 80 ? '#22c55e' : w.v >= 50 ? '#f59e0b' : '#ef4444' })), { label: 'Homework done by week', lines: [80] })}${fzLegend([['#22c55e', '80%+'], ['#f59e0b', '50–79%'], ['#ef4444', 'Below 50%'], ['#f97316', '80% target', 1]])}</section>`; }
+function fzTestChart(kid) { const T = fzTests(kid); if (!T.length) return '';
+  const avg = Math.round(T.reduce((s, t) => s + t.v, 0) / T.length);
+  return `<section class="fchart"><div class="fchart-h"><b>📝 Class test scores</b><small>auto-checked tests from class topics · average ${avg}%</small></div>${fzLine(T, { label: 'Class test scores', c: '#d6336c' })}</section>`; }
+function fzMarksChart(kid) { const T = fzTerm(kid); if (!T) return ''; const R = T.rows.filter(r => !r.none && !r.ab); if (!R.length) return '';
+  return `<section class="fchart"><div class="fchart-h"><b>📊 ${esc(T.exam)} · subject-wise marks</b><small>out of 100 per subject</small></div><div class="fmk">${R.map(r => `<div><span>${esc(r.s)}</span><div><i style="width:${Math.max(2, Math.min(100, r.t))}%;--c:${r.t >= 80 ? '#22c55e' : r.t >= 60 ? '#6366f1' : r.t >= 33 ? '#f59e0b' : '#ef4444'}"></i></div><b>${r.t}</b></div>`).join('')}</div></section>`; }
 // ---------------------------------------------------------------- register views + menu
 if (typeof VIEWS !== 'undefined' && typeof NAV !== 'undefined') {
-  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback, pnotif: vPNotif, phwr: vPHwReport, pmore: vPMore });
+  Object.assign(VIEWS, { ptmr: vPTomorrow, pcal: vPCal, prec: vPRecord, psyl: vPSyl, pzone: vPZone, pset: vPSettings, pchk: vPChecks, pinfo: vPInfo, pleave: vPLeave, pstudy: vPStudy, pfb: vPFeedback, pnotif: vPNotif, phwr: vPHwReport, pmore: vPMore, patt: vPAtt });
   const res0 = VIEWS.presults; if (res0) VIEWS.presults = () => { const kid = PD && PD.kids && PD.kids.length ? pKid() : null; if (!kid) return res0();
-    const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
-  const add = [['phwr', 'fa-book', 'Homework Report'], ['pnotif', 'fa-bell', 'Notifications'], ['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
+    const T = fzTerm(kid); let h = res0(); if (T) h = h.replace('<div class="card text-sm text-slate-500">No exam marks published yet.</div>', ''); const extra = fzResultCard(kid) + fzMarksChart(kid) + fzTestChart(kid) + fzChecksCard(kid, true), at = h.indexOf('<div class="card">'); return at < 0 ? h + extra : h.slice(0, at) + extra + h.slice(at); };
+  const add = [['phwr', 'fa-book', 'Homework Report'], ['pnotif', 'fa-bell', 'Notifications'], ['pstudy', 'fa-chart-line', 'Study Progress'], ['pfb', 'fa-comment-dots', 'Feedback'], ['pinfo', 'fa-id-card', 'Student Profile'], ['pleave', 'fa-calendar-xmark', 'Leave Application'], ['pchk', 'fa-clipboard-check', 'Homework & Copy Checks'], ['ptmr', 'fa-calendar-day', 'Next School Day'], ['pcal', 'fa-calendar', 'Calendar'], ['patt', 'fa-chart-pie', 'Attendance Insights'], ['prec', 'fa-trophy', 'Achievements'], ['psyl', 'fa-list-check', 'Exam Syllabus'], ['pzone', 'fa-lightbulb', 'Learning Hub'], ['pset', 'fa-gear', 'Settings']];
   for (const role of ['parent', 'student']) { if (!NAV[role]) continue; add.forEach(x => { if (!NAV[role].some(y => y[0] === x[0])) NAV[role].push(x); });
-    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pnotif', 'pinfo', 'pleave', 'ptmr', 'pcal'); g[1][2].push('pzone'); g[g.length - 1][2].push('pstudy', 'pchk', 'prec', 'psyl', 'pfb', 'pset'); } }
+    if (typeof GROUPS !== 'undefined' && GROUPS[role]) { const g = GROUPS[role]; g[0][2].push('pnotif', 'pinfo', 'pleave', 'ptmr', 'pcal', 'patt'); g[1][2].push('pzone'); g[g.length - 1][2].push('pstudy', 'pchk', 'prec', 'psyl', 'pfb', 'pset'); } }
   // web (not the app): quick links on the parent home
   const home = VIEWS.phome;
   if (home) VIEWS.phome = () => { const h = home(); if (!PD || !PD.kids.length || document.documentElement.classList.contains('sn-family')) return h; const kid = pKid();
@@ -698,7 +787,13 @@ const FZ_HI = {
   'Feedback to the school': 'स्कूल को सुझाव', 'Notifications': 'सूचनाएँ', 'Earlier': 'पहले', 'Homework report': 'गृहकार्य रिपोर्ट', '🔊 Listen': '🔊 सुनें', '✓ All done': '✓ सब पूरा', '½ Partly': '½ थोड़ा', '✗ Not done': '✗ नहीं किया', '✓ Done': '✓ पूरा', '½ Half done': '½ आधा', '⏳ Not checked yet': '⏳ अभी जाँच नहीं', '📝 Due next class': '📝 अगली कक्षा में', 'Full homework report ›': 'पूरी गृहकार्य रिपोर्ट ›', 'More': 'और', 'Not checked': 'जाँच बाकी', 'Done': 'पूरा', 'Not done': 'नहीं किया', 'Start': 'शुरू करें', 'Continue': 'जारी रखें', 'Class test is being prepared': 'कक्षा परीक्षा तैयार हो रही है',
   'Today’s class test is ready': 'आज की कक्षा परीक्षा तैयार है', 'Latest notice': 'नई सूचना', 'No notice yet': 'अभी कोई सूचना नहीं', 'Back': 'वापस', 'Log in': 'लॉग इन',
   'Student': 'छात्र', 'Parent': 'अभिभावक', 'Mobile number registered with the school': 'स्कूल में दर्ज मोबाइल नंबर', 'Family mobile number registered with the school': 'स्कूल में दर्ज परिवार का मोबाइल नंबर',
-  'Which student is logging in?': 'कौन सा छात्र लॉग इन कर रहा है?', 'Today’s shortcut': 'आज का शॉर्टकट', 'Did you know?': 'क्या आप जानते हैं?', 'Remember': 'याद रखें'
+  'Which student is logging in?': 'कौन सा छात्र लॉग इन कर रहा है?', 'Today’s shortcut': 'आज का शॉर्टकट', 'Did you know?': 'क्या आप जानते हैं?', 'Remember': 'याद रखें',
+  'Attendance insights': 'उपस्थिति विश्लेषण', 'Session attendance': 'सत्र की उपस्थिति', '75% rule': '75% नियम', 'Month by month': 'महीने के अनुसार', 'Class average': 'कक्षा औसत',
+  'Which day is missed most': 'किस दिन सबसे ज़्यादा छुट्टी', 'absences by weekday': 'दिन के अनुसार अनुपस्थिति', 'Progress at a glance': 'प्रगति एक नज़र में', 'Details': 'विवरण',
+  'Diary': 'डायरी', 'ID card': 'आई-डी कार्ड', 'Books': 'किताबें', 'Uniform': 'वर्दी', 'All good ✓': 'सब ठीक ✓', 'Something missing': 'कुछ कम है', 'Insights ›': 'विश्लेषण ›',
+  'Tests': 'परीक्षा', '📊 Month by month': '📊 महीने के अनुसार', '📅 Which day is missed most': '📅 किस दिन सबसे ज़्यादा छुट्टी', '📈 Homework done, week by week': '📈 हर हफ़्ते का पूरा गृहकार्य',
+  '📝 Class test scores': '📝 कक्षा परीक्षा के अंक', 'from teachers’ checks': 'शिक्षकों की जाँच से', 'out of 100 per subject': 'हर विषय 100 में से', 'present': 'उपस्थित', 'present in a row now': 'लगातार उपस्थित',
+  'longest absence in a row': 'सबसे लंबी लगातार अनुपस्थिति', 'absent days with lessons missed': 'अनुपस्थित दिन (पाठ छूटे)', '📅 Open the attendance calendar ›': '📅 उपस्थिति कैलेंडर खोलें ›', 'latest test': 'नई परीक्षा'
 };
 let FZ_LANG = fzLS.get('sn_lang3', null) || ((() => { try { return localStorage.getItem('sch_ui_lang') === 'hinglish' ? 'hinglish' : 'en'; } catch (e) { return 'en'; } })());
 const fzOrig = new WeakMap();

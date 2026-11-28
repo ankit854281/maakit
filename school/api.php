@@ -531,10 +531,15 @@ case 'pdata': {
         //   stars[cls] = {att: top 5 by attendance %, hw: top 5 by homework done % (5+ checks)}; photos = {sid: data} for those shown
         'study' => (function () use ($get, $kids, $classes, $set, &$STARS, &$PHOTOS, &$RANKSIDS) {
             $start = preg_match('/^(\d{4})-/', (string)($set['session'] ?? ''), $m) ? $m[1] . '-04-01' : date('Y-m-d', time() - 365 * 86400);
-            $stu = $get('student'); $att = []; $abs = [];
-            foreach ($get('studAtt', $start) as $r => $d) { [$date, $cls] = array_pad(explode('|', (string)$r), 2, ''); if (!in_array($cls, $classes, true)) continue;
-                foreach ($stu as $sid => $s) if (($s['cls'] ?? '') === $cls && empty($s['inactive'])) { $a = in_array($sid, (array)($d['absent'] ?? []), true);
-                    $att[$sid]['n'] = ($att[$sid]['n'] ?? 0) + 1; $att[$sid]['p'] = ($att[$sid]['p'] ?? 0) + ($a ? 0 : 1); if ($a) $abs[(string)$sid][$date] = true; } }
+            $stu = $get('student'); $att = []; $abs = []; $mon = []; $cmon = []; $days = []; $kidIds = array_map(fn($k) => (string)$k['id'], $kids);
+            foreach ($get('studAtt', $start) as $r => $d) { [$date, $cls] = array_pad(explode('|', (string)$r), 2, ''); if (!in_array($cls, $classes, true)) continue; $ym = substr($date, 0, 7);
+                foreach ($stu as $sid => $s) if (($s['cls'] ?? '') === $cls && empty($s['inactive'])) { $sid = (string)$sid; $a = in_array($sid, array_map('strval', (array)($d['absent'] ?? [])), true);
+                    $att[$sid]['n'] = ($att[$sid]['n'] ?? 0) + 1; $att[$sid]['p'] = ($att[$sid]['p'] ?? 0) + ($a ? 0 : 1); if ($a) $abs[$sid][$date] = true;
+                    $cmon[$cls][$ym]['n'] = ($cmon[$cls][$ym]['n'] ?? 0) + 1; $cmon[$cls][$ym]['p'] = ($cmon[$cls][$ym]['p'] ?? 0) + ($a ? 0 : 1);
+                    if (in_array($sid, $kidIds, true)) { $mon[$sid][$ym]['n'] = ($mon[$sid][$ym]['n'] ?? 0) + 1; $mon[$sid][$ym]['p'] = ($mon[$sid][$ym]['p'] ?? 0) + ($a ? 0 : 1);
+                        $days[$sid][$date] = $a ? ((((array)($d['st'] ?? []))[$sid] ?? '') === 'L' ? 'L' : 'A') : 'P'; } } }
+            $kit = []; foreach ($get('tchKit') as $r => $d) { if (($d['date'] ?? '') < date('Y-m-d', time() - 30 * 86400) || !in_array($d['cls'] ?? '', $classes, true)) continue;
+                foreach ((array)($d['rows'] ?? []) as $sid => $x) if (in_array((string)$sid, $kidIds, true)) $kit[(string)$sid][] = ['date' => (string)$d['date']] + array_map('intval', array_intersect_key((array)$x, array_flip(['d', 'i', 'b', 'u']))); }
             $diary = []; foreach ($get('diary', $start) as $r => $d) { $c = (string)($d['cls'] ?? ''); if (in_array($c, $classes, true)) $diary[$c][explode('|', (string)$r)[0]][] = $d; }
             $hw = []; foreach ($get('tchChk') as $d) { if (($d['date'] ?? '') < $start || !in_array($d['cls'] ?? '', $classes, true)) continue;
                 foreach ((array)($d['rows'] ?? []) as $sid => $x) if (($x['hw'] ?? '') !== '') { $hw[(string)$sid]['n'] = ($hw[(string)$sid]['n'] ?? 0) + 1; $hw[(string)$sid]['d'] = ($hw[(string)$sid]['d'] ?? 0) + ($x['hw'] === 'done' ? 1 : ($x['hw'] === 'half' ? .5 : 0)); } }
@@ -546,7 +551,15 @@ case 'pdata': {
                 $syl = []; foreach ($get('syl') as $r => $y) { [$cc, $sb] = array_pad(explode('|', (string)$r, 2), 2, ''); if ($cc !== $c) continue; $ch = (array)($y['chapters'] ?? []); if (!$ch) continue;
                     $syl[] = ['subj' => $sb, 'total' => count($ch), 'done' => count(array_filter($ch, fn($x) => !empty($x['done'])))]; }
                 usort($syl, fn($a, $b) => strcmp($a['subj'], $b['subj']));
-                $out[$sid] = ['missed' => array_slice($missed, 0, 120), 'syl' => $syl, 'absentDays' => count($abs[$sid] ?? [])];
+                // Owner, 28 Nov 2026: "attendance or kya kya track karke dikha sakte hain" — month by month (child vs class), weekday
+                // pattern, absent vs leave, longest absent run, daily check (diary · ID card · book · uniform)
+                $months = []; foreach ((array)($cmon[$c] ?? []) as $ym => $x) $months[] = ['ym' => $ym, 'p' => (int)($mon[$sid][$ym]['p'] ?? 0), 'n' => (int)($mon[$sid][$ym]['n'] ?? 0), 'cp' => (int)$x['p'], 'cn' => (int)$x['n']];
+                usort($months, fn($a, $b) => strcmp($a['ym'], $b['ym']));
+                $wd = array_fill(0, 6, 0); $run = 0; $best = 0; $D = (array)($days[$sid] ?? []); ksort($D);
+                foreach ($D as $dt => $v) { if ($v !== 'P') { $w = (int)date('N', strtotime($dt)) - 1; if ($w < 6) $wd[$w]++; } $run = $v === 'A' ? $run + 1 : 0; $best = max($best, $run); }
+                $kk = (array)($kit[$sid] ?? []); usort($kk, fn($a, $b) => strcmp($b['date'], $a['date']));
+                $out[$sid] = ['missed' => array_slice($missed, 0, 120), 'syl' => $syl, 'absentDays' => count($abs[$sid] ?? []), 'months' => $months, 'weekday' => $wd,
+                    'leave' => count(array_filter($D, fn($v) => $v === 'L')), 'absent' => count(array_filter($D, fn($v) => $v === 'A')), 'present' => count(array_filter($D, fn($v) => $v === 'P')), 'run' => $best, 'kit' => array_slice($kk, 0, 14)];
                 if (!isset($STARS[$c])) {
                     $ids = array_keys(array_filter($stu, fn($s) => ($s['cls'] ?? '') === $c && empty($s['inactive'])));
                     $A = []; foreach ($ids as $i) if (($att[$i]['n'] ?? 0) >= 5) $A[] = ['sid' => (string)$i, 'name' => (string)$stu[$i]['name'], 'pct' => round($att[$i]['p'] * 100 / $att[$i]['n'], 1), 'n' => $att[$i]['n']];

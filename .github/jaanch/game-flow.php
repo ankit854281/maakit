@@ -197,6 +197,8 @@ $last = $playAll('g1', $j['rid'], true);
 gf_check($last['summary']['right'] === 3 && $last['mode'] === 'today', 'class test not auto-checked');
 [$c] = $g('start', ['sid' => 'g1', 'mode' => 'today'], $tok['g1']);
 gf_check($c === 400, 'class test taken twice for the same class day');
+[, $stH] = $g('state', null, $tok['g1']); $tl = end($stH['tests']);
+gf_check($tl && $tl['date'] === date('Y-m-d') && $tl['right'] === 3 && $tl['n'] === 3, 'class-test history (parents chart) wrong');
 
 // ---- battle: g1 challenges g2; g2 must finish its open round first; same questions for both ----
 [$c] = $g('bstart', ['sid' => 'g1', 'opp' => 'g1'], $tok['g1']);
@@ -380,6 +382,15 @@ gf_check($S1['absentDays'] >= 1 && in_array('The Mughal Empire', array_column($S
 $sy = array_values(array_filter($S1['syl'], fn($x) => $x['subj'] === 'Social Science'))[0];
 gf_check($sy['total'] === 3 && $sy['done'] === 2, 'syllabus coverage wrong');
 gf_check(!isset($pd['study']['g2']), "another family's study record leaked");
+// attendance insights + daily kit check (28 Nov 2026)
+$pdo->prepare("REPLACE INTO sch_records (k,r,d,deleted,ver) VALUES ('tchKit',?,?,0,1)")->execute([$dy . '|7th', json_encode(['date' => $dy, 'cls' => '7th', 'rows' => ['g1' => ['d' => 1, 'i' => 0, 'b' => 1, 'u' => 1, 'x' => 'junk'], 'g2' => ['d' => 0, 'i' => 0, 'b' => 0, 'u' => 0]], 'by' => 'K', 'at' => time()])]);
+[, $pd] = $api('pdata', null, $PA); $S1 = $pd['study']['g1'];
+$ym = substr($dy, 0, 7); $m1 = array_values(array_filter($S1['months'], fn($m) => $m['ym'] === $ym))[0] ?? null;
+gf_check($m1 && $m1['n'] >= 1 && $m1['p'] < $m1['n'] && $m1['cn'] >= $m1['n'], 'month-wise attendance (child vs class) wrong');
+gf_check(array_sum($S1['weekday']) >= 1 && $S1['absent'] >= 1 && $S1['run'] >= 1 && count($S1['weekday']) === 6, 'weekday pattern / absence run wrong');
+gf_check($S1['kit'][0]['date'] === $dy && $S1['kit'][0]['i'] === 0 && $S1['kit'][0]['d'] === 1 && !isset($S1['kit'][0]['x']), 'daily kit check wrong');
+gf_check(!str_contains(json_encode($pd['study']), '"g2"'), "another child's kit / attendance leaked");
+[, $stT] = $g('state', null, $tok['g3']); gf_check(isset($stT['tests']) && is_array($stT['tests']), 'class-test history missing from game state');
 gf_check($pd['stars']['7th']['hw'][0]['name'] === 'Aman Gupta' && count($pd['stars']['7th']['hw']) === 3 && isset($pd['photos']['g1']), 'class stars / photos wrong');
 $aY = array_values(array_filter($pd['att'], fn($a) => $a['sid'] === 'g1' && $a['date'] === $dy))[0];
 gf_check($aY['present'] === false && empty($aY['leave']), 'absent day wrong');

@@ -239,6 +239,9 @@ try {
         if ($pos > 10) $resp['rank'][] = ['pos' => $pos, 'name' => $short($sid), 'rp' => $mine['rp'], 'tier' => gm_tier_pub($mine['tier']), 'kd' => $mine['kd'], 'acc' => $mine['acc'], 'me' => true];
         $td = gm_today_topics($cls); $played = null;
         foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today' && $td['date'] && ($r['tdate'] ?? '') === $td['date']) { $d = gm_round_detail($r, $now); $played = ['right' => $d['right'], 'n' => $d['n'], 'done' => $d['done']]; }
+        // class-test history for the parents' chart (owner, 28 Nov 2026)
+        $hist2 = []; foreach ($rounds as $r) if (($r['mode'] ?? '') === 'today') { $d = gm_round_detail($r, $now); if ($d['done']) $hist2[(string)($r['tdate'] ?? $r['date'])] = ['date' => (string)($r['tdate'] ?? $r['date']), 'right' => $d['right'], 'n' => $d['n']]; }
+        ksort($hist2); $resp['tests'] = array_values(array_slice($hist2, -12));
         $resp['today'] = ['date' => $td['date'], 'isToday' => $td['date'] === $today, 'topics' => array_values($td['topics']),
             'ready' => count(gm_today_items($td['topics'], $packs, 'x', array_filter(gm_rows('quizQ'), fn($q) => ($q['cls'] ?? '') === $cls && ($q['status'] ?? '') === 'approved' && ($q['bySid'] ?? null) !== $sid))), 'played' => $played];
         $inc = []; $hist = []; $started = 0;

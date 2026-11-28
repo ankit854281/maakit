@@ -52,6 +52,16 @@ w.eval("view='presults';render()");assert(w.document.querySelector('.fr-rankers'
 w.eval("view='pchk';render()");const ck=w.document.querySelector('.fam-real-screen').textContent;assert(ck.includes('50%')&&ck.includes('Incomplete')&&!ck.includes('QA SIBLING TASK'),'checks: own child only, completion and copy status');
 w.eval("PD.kids[0].info={adm:'A-101',father:'QA Father',dob:'2015-04-02'};view='pinfo';render()");assert(w.document.querySelector('.fam-real-screen').textContent.includes('QA Father')&&w.document.querySelector('.fp-hero'),'student profile');
 w.eval("view='pleave';render()");assert(w.document.querySelector('#lv-from')&&w.document.querySelector('.fam-real-screen').textContent.includes('Send to class teacher'),'leave form');
+// charts + attendance insights + kit check (28 Nov 2026)
+w.eval("PD.study={qa1:{missed:[],syl:[{subj:'Maths',total:10,done:6}],absentDays:2,months:[{ym:'2026-10',p:20,n:22,cp:600,cn:660},{ym:'2026-11',p:15,n:20,cp:500,cn:600}],weekday:[3,0,1,0,0,1],present:35,absent:5,leave:2,run:2,kit:[{date:todayISO(),d:1,i:0,b:1,u:1},{date:addDays(todayISO(),-1),d:1,i:1,b:1,u:0}]},qa2:{missed:[],syl:[],absentDays:0,months:[],kit:[{date:todayISO(),d:0,i:0,b:0,u:0}]}};PD.attSum.qa1={present:35,total:42};PKID='qa1';view='patt';render()");
+{const t=w.document.querySelector('.fam-real-screen').textContent;assert(w.document.querySelector('.fai-hero .fzd')&&w.document.querySelectorAll('.fchart .fzc rect.fzc-bar').length===2&&w.document.querySelectorAll('.fzc-mk').length===2,'attendance insights: donut + month bars with class mark');
+assert(t.includes('Can miss at most')&&t.includes('Monday')&&t.includes('ID card')&&t.includes('✗ Missing')&&t.includes('Uniform missing 1×'),'75% rule, weekday pattern, kit check');}
+w.eval("PD.attSum.qa1={present:28,total:42};render()");assert(w.document.querySelector('.fai-calc.bad').textContent.includes('14 school days in a row'),'below-75 calculator: (28+14)/(42+14)=75%');
+w.eval("PKID='qa1';view='phome';render()");assert(w.document.querySelector('.fpg-t .fzs')&&w.document.querySelector('.fkit.bad')&&w.document.querySelector('.fh-grid').innerHTML.includes("go('patt')"),'home: progress sparklines + kit card + Attendance → insights');
+w.eval("view='phwr';render()");assert(w.document.querySelector('.fchart .fzc'),'homework report: weekly chart');
+w.eval("view='presults';render()");assert(w.document.querySelector('.fmk i'),'results: subject marks chart');
+w.eval("view='pstudy';render()");assert(w.document.querySelector('.fsy-donut .fzd'),'study progress: syllabus donut');
+w.eval("PKID='qa2';view='patt';render()");assert(!w.document.querySelector('.fam-real-screen').textContent.includes('Uniform missing 1×'),'sibling does not see the other child kit');
 w.eval("PKID='qa1';view='phome';render()");
 w.SNFamily.menu();assert(w.document.querySelector('#fam-menu').open);
 assert(w.document.querySelector('#fam-menu').textContent.includes('Game Zone'));
