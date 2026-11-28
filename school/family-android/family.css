@@ -69,3 +69,108 @@
 /* login + intro in WhatsApp green */
 .fam-login-art{background:linear-gradient(150deg,#1e1b4b 0%,#312e81 45%,#4338ca 75%,#0f766e 130%)!important}.fam-start,.fam-login-form .btn,.fam-login-form button.btn-p{background:#1DAA61!important}
 @media (prefers-reduced-motion:reduce){.wa-nav .pill{transition:none}}
+
+/* Family home actions, homework date controls and the parent fee overview. */
+.fam-focus,.fam-fee-summary{
+ margin:14px 14px 16px;
+ padding:16px;
+ border:1px solid #dce3fa;
+ border-radius:20px;
+ background:#fff;
+ color:#18233d;
+}
+.fam-focus h2,.fam-fee-summary h2{margin:0 0 12px;font-size:16px;font-weight:600}
+.fam-focus-card{
+ display:grid;
+ grid-template-columns:40px minmax(0,1fr);
+ align-items:start;
+ gap:10px;
+ padding:13px;
+ border-radius:14px;
+ background:#edf0ff;
+}
+.fam-focus-icon{
+ display:grid;
+ place-items:center;
+ width:40px;
+ height:40px;
+ border-radius:12px;
+ background:#dadfff;
+ color:#393394;
+}
+.fam-focus-icon svg,.fam-focus-links svg{
+ width:21px;
+ height:21px;
+ flex:none;
+ fill:none;
+ stroke:currentColor;
+ stroke-width:1.8;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+}
+.fam-focus-card h3{margin:0;font-size:16px;font-weight:600}
+.fam-focus-card p{
+ display:-webkit-box;
+ -webkit-box-orient:vertical;
+ -webkit-line-clamp:2;
+ overflow:hidden;
+ overflow-wrap:anywhere;
+ margin:3px 0 0;
+ color:#404c66;
+ font-size:14px;
+}
+.fam-primary{
+ grid-column:1/-1;
+ min-height:44px;
+ padding:9px 12px;
+ border:0;
+ border-radius:10px;
+ background:#3e359a;
+ color:#fff;
+ font-size:14px;
+ font-weight:600;
+}
+.fam-focus-links{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;
+ margin-top:10px;
+}
+.fam-focus-links button,.fam-hw-filters button{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:7px;
+ min-height:44px;
+ padding:7px;
+ border:1px solid #dce3fa;
+ border-radius:10px;
+ background:#fff;
+ color:#29355a;
+ text-align:center;
+ font-size:14px;
+ font-weight:600;
+}
+.fam-focus button:focus-visible,.fam-fee-summary button:focus-visible,.fam-hw-filters button:focus-visible{
+ outline:2px solid #253a89;
+ outline-offset:2px;
+}
+.fam-hw-filters{
+ position:sticky;
+ top:0;
+ z-index:1;
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;
+ padding:5px;
+ border-radius:13px;
+ background:#fff;
+}
+.fam-hw-filters button[aria-pressed=true]{background:#255d50;color:#fff;border-color:#255d50}
+.wa-chat .wa-day{scroll-margin-top:62px}
+.fam-fee-summary{margin:0}
+.fam-fee-summary dl{margin:0 0 12px}
+.fam-fee-summary dl div{padding:8px 0;border-bottom:1px solid #e6e9f0}
+.fam-fee-summary dt{font-size:14px;color:#404c66}
+.fam-fee-summary dd{margin:2px 0 0;font-size:16px;font-weight:600}
+.fam-fee-summary .fam-primary{width:100%}

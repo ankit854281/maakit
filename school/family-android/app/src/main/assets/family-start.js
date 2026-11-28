@@ -33,9 +33,52 @@
  // Home = a chat list (Homework, Attendance, Fees, Notices, Class teacher, Results, Games…) with last update, time and a
  // green unread badge; children as Status circles; Homework and Notices open as chat bubbles on the WhatsApp wallpaper;
  // every other screen keeps the school's real screen under a WhatsApp chat header. Only this family's data (PD) is used.
- const WA={f:'all',seen:{}};
- try{WA.seen=JSON.parse(localStorage.getItem('sn_wa_seen')||'{}')||{};}catch(e){}
- const seenOf=k=>WA.seen[k]||'',markSeen=(k,v)=>{if(WA.seen[k]===v)return;WA.seen[k]=v;try{localStorage.setItem('sn_wa_seen',JSON.stringify(WA.seen));}catch(e){}};
+ const WA={f:'all',homework:'recent',seen:{},legacy:{}};
+ try{
+  WA.seen=JSON.parse(localStorage.getItem('sn_family_read')||'{}')||{};
+  WA.legacy=JSON.parse(localStorage.getItem('sn_wa_seen')||'{}')||{};
+ }catch(e){}
+ const feedFields={
+  homework:['id','date','cls','subj','topic','classwork','hw','books','revision'],
+  notices:['id','date','title','body','to']
+ };
+ // Keep fingerprints on this device, without storing homework or notice text.
+ function feedFingerprint(value){
+  let a=2166136261,b=5381;
+  for(let i=0;i<value.length;i++){
+   const code=value.charCodeAt(i);
+   a=Math.imul(a^code,16777619);
+   b=Math.imul(b,33)^code;
+  }
+  return (a>>>0).toString(36)+'.'+(b>>>0).toString(36);
+ }
+ function feedEntries(type,rows,kid){
+  const account=U.tid||PD.kids.map(k=>k.id).sort().join('|');
+  const key=feedFingerprint(JSON.stringify([U.role,account,type,kid?.id||'']));
+  const saved=WA.seen[key];
+  const seen=new Set(Array.isArray(saved)?saved:[]);
+  const cutoff=Array.isArray(saved)?'':WA.legacy[type==='homework'?'hw:'+kid.id:'nt']||'';
+  const repeated=new Map();
+  const entries=rows.map(row=>{
+   const version=feedFingerprint(JSON.stringify(feedFields[type].map(field=>row[field]??'')));
+   const index=repeated.get(version)||0;
+   repeated.set(version,index+1);
+   const token=version+':'+index;
+   return {row,token,read:seen.has(token)||String(row.date||'')<cutoff};
+  });
+  return {key,entries};
+ }
+ function readFeed(feed,visible=()=>true){
+  const tokens=feed.entries.filter(entry=>entry.read||visible(entry.row)).map(entry=>entry.token);
+  if(JSON.stringify(WA.seen[feed.key])===JSON.stringify(tokens))return;
+  delete WA.seen[feed.key];
+  WA.seen[feed.key]=tokens;
+  WA.seen=Object.fromEntries(Object.entries(WA.seen).slice(-30));
+  try{localStorage.setItem('sn_family_read',JSON.stringify(WA.seen));}catch(e){}
+ }
+ const homeworkRows=kid=>PD.hw.filter(h=>h.cls===kid.cls);
+ const noticeRows=()=> (PD.notices||[]).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ const unread=feed=>feed.entries.filter(entry=>!entry.read).length;
  const P={chat:'<path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/>',book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M4 19a2 2 0 0 1 2-2h13v4H6a2 2 0 0 1-2-2Z"/>',fee:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',play:'<rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17.5 13.5h.01"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4Z"/><path d="M10 21h4"/>',back:'<path d="M15 5l-7 7 7 7"/>',dots:'<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>',check:'<path d="M5 12l4 4 10-10"/>',person:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',star:'<path d="M12 3l2.6 5.6 6 .7-4.5 4 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.5-4 6-.7Z"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',bag:'<path d="M6 8h12l1 12H5Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',bulb:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3Z"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9 17h6"/>',list:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>'};
  const ic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+(P[n]||'')+'</svg>';
  const SUBC=['#1FA855','#027EB5','#E0662B','#8E44C9','#D6336C','#0E9F9A','#B7791F','#3D5AFE'];
@@ -48,9 +91,9 @@
   return '<div class="wa-status fam-child">'+PD.kids.map(k=>'<button class="'+(k.id===kid.id?'on':'')+'" onclick="PKID=\''+esc(k.id)+'\';render()"><span class="ring"><span>'+esc((k.name||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join(''))+'</span></span><small>'+esc((k.name||'').split(' ')[0])+'</small><i>'+esc(k.cls)+'</i></button>').join('')+'</div>';
  }
  function chats(kid,isParent){
-  const date=todayISO(),at=pAtt(kid),hw=PD.hw.filter(h=>h.cls===kid.cls).sort((a,b)=>b.date.localeCompare(a.date)),last=hw[0];
-  const hwNew=hw.filter(h=>h.date>(seenOf('hw:'+kid.id)||'0000')).length;
-  const nts=(PD.notices||[]).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))),nNew=nts.filter(n=>String(n.date)>(seenOf('nt')||'0000')).length;
+  const date=todayISO(),at=pAtt(kid),hw=homeworkRows(kid).sort((a,b)=>b.date.localeCompare(a.date)),last=hw[0];
+  const nts=noticeRows();
+  const hwNew=unread(feedEntries('homework',hw,kid)),nNew=unread(feedEntries('notices',nts));
   const exams=(S.exams||[]).filter(e=>PD.marks.some(m=>m.sid===kid.id&&m.exam===e.id)),le=exams[exams.length-1];
   let pct=null;if(le){let g=0,mx=0;PD.marks.filter(m=>m.sid===kid.id&&m.exam===le.id).forEach(m=>{if(m.mark!=='AB'&&m.mark!==''&&m.max){g+=+m.mark;mx+=+m.max;}});pct=mx?Math.round(g/mx*1000)/10:null;}
   const R=[];
@@ -79,21 +122,73 @@
    '<p class="wa-lock">🔒 '+(isParent?t('Only your child\'s school information is shown here.'):t('Only your own school information is shown here.'))+'</p>';
  }
  function hwChat(kid){
-  const rows=PD.hw.filter(h=>h.cls===kid.cls).sort((a,b)=>a.date.localeCompare(b.date)),by={};rows.forEach(h=>(by[h.date]=by[h.date]||[]).push(h));
-  markSeen('hw:'+kid.id,todayISO());
+  const today=todayISO(),onlyToday=WA.homework==='today';
+  const rows=homeworkRows(kid).sort((a,b)=>a.date.localeCompare(b.date));
+  const visible=h=>!onlyToday||h.date===today;
+  const by={};
+  const feed=feedEntries('homework',rows,kid);
+  feed.entries.filter(entry=>visible(entry.row)).forEach(({row})=>(by[row.date]=by[row.date]||[]).push(row));
+  readFeed(feed,visible);
+  const filters=[['recent','Last 10 days'],['today','Today']].map(([key,label])=>
+   '<button type="button" data-hw-range="'+key+'" aria-pressed="'+(WA.homework===key)+'" onclick="SNFamily.homeworkRange(\''+key+'\')">'+t(label)+'</button>').join('');
   const extra=(typeof parentAcademicChecks==='function'?parentAcademicChecks(kid):'')+(typeof pNotes==='function'?pNotes(kid):'');
-  return '<div class="wa-chat fam-real-screen"><div class="wa-sys">🔒 '+t('Class work and homework from the teachers\' diary — last 10 days.')+'</div>'+
-   (Object.keys(by).length?Object.entries(by).map(([d,l])=>'<div class="wa-day"><span>'+esc(dayLabel(d))+'</span></div>'+l.map(h=>'<div class="wa-b"><b style="color:'+subColor(h.subj)+'">'+esc(h.subj)+'</b>'+(h.topic?'<p>📖 '+esc(h.topic)+'</p>':'')+(h.classwork?'<p><i>'+t('Class work')+':</i> '+esc(h.classwork)+'</p>':'')+(h.hw?'<p class="hw"><i>'+t('Homework')+':</i> <strong>'+esc(h.hw)+'</strong></p>':'')+(h.books?'<p><i>'+t('Bring')+':</i> '+esc(h.books)+'</p>':'')+(h.revision?'<p><i>'+t('Revision')+':</i> '+esc(h.revision)+'</p>':'')+'<time>'+esc(short(d))+' ✓✓</time></div>').join('')).join(''):'<div class="wa-sys">'+t('Nothing written in the last 10 days.')+'</div>')+
+  return '<div class="wa-chat fam-real-screen"><div class="fam-hw-filters" role="group" aria-label="'+t('Homework date range')+'">'+filters+'</div><div class="wa-sys">'+t('Class work and homework from the teachers’ diary')+'</div>'+
+   (Object.keys(by).length?Object.entries(by).map(([d,l])=>'<div class="wa-day"><span>'+esc(dayLabel(d))+'</span></div>'+l.map(h=>'<div class="wa-b"><b style="color:'+subColor(h.subj)+'">'+esc(h.subj)+'</b>'+(h.topic?'<p>📖 '+esc(h.topic)+'</p>':'')+(h.classwork?'<p><i>'+t('Class work')+':</i> '+esc(h.classwork)+'</p>':'')+(h.hw?'<p class="hw"><i>'+t('Homework')+':</i> <strong>'+esc(h.hw)+'</strong></p>':'')+(h.books?'<p><i>'+t('Bring')+':</i> '+esc(h.books)+'</p>':'')+(h.revision?'<p><i>'+t('Revision')+':</i> '+esc(h.revision)+'</p>':'')+'<time>'+esc(short(d))+'</time></div>').join('')).join(''):'<div class="wa-sys">'+t(onlyToday?'No diary entries for today yet.':'Nothing written in the last 10 days.')+'</div>')+
    (extra?'<div class="wa-extra">'+extra+'</div>':'')+'</div>';
  }
  function noticeChat(){
-  const nts=(PD.notices||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  if(nts.length)markSeen('nt',String(nts[nts.length-1].date||''));
+  const nts=noticeRows();
+  readFeed(feedEntries('notices',nts));
   const date=todayISO(),kidCls=PD.kids.map(k=>k.cls),up=[...S.cal,...(typeof examItems==='function'?examItems().filter(e=>e.cls.some(c=>kidCls.includes(c))):[])].filter(e=>(e.to||e.date)>=date).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,12);
   return '<div class="wa-chat fam-real-screen"><div class="wa-sys">📢 '+t('School notices — only the school can send messages here.')+'</div>'+
    nts.map(n=>'<div class="wa-b"><b style="color:#027EB5">'+esc(n.title||'')+'</b>'+(n.body?'<p>'+esc(n.body)+'</p>':'')+'<time>'+esc(short(String(n.date||'')))+'</time></div>').join('')+
    (up.length?'<div class="wa-day"><span>'+t('Coming up')+'</span></div><div class="wa-b">'+up.map(e=>'<p>'+ic('cal').replace('<svg','<svg class="mini"')+' <b>'+esc(e.title)+'</b> · '+esc(dayLabel(e.date))+(e.type?' <i>'+esc(e.type)+'</i>':'')+'</p>').join('')+'</div>':'')+
    '<div class="wa-sys">'+t('Change your login PIN')+' <button class="wa-mini" onclick="changeMyPin()">'+t('Change PIN')+'</button></div></div>';
+ }
+ function familyFocus(kid,isParent){
+  const today=todayISO(),att=pAtt(kid).today;
+  const homework=homeworkRows(kid).filter(row=>row.date===today&&row.hw);
+  const notice=feedEntries('notices',noticeRows()).entries.find(entry=>!entry.read);
+  const lesson=homework[0];
+  const homeworkAction="SNFamily.openHomework('today')";
+  const noticeAction="go('pnotices')";
+  const homeworkCard=lesson&&{
+   icon:'book',title:t('Today’s homework'),detail:[lesson.subj,lesson.hw].filter(Boolean).join(' · '),
+   label:t('Open today’s homework'),action:homeworkAction
+  };
+  const noticeCard=notice&&{
+   icon:'bell',title:t('New school notice'),detail:notice.row.title||'',label:t('Read school notice'),action:noticeAction
+  };
+  const absenceCard=isParent&&att&&!att.present&&{
+   icon:'check',title:t('Marked absent today'),detail:t('Check your child’s attendance record.'),
+   label:t('View attendance'),action:"go('presults')"
+  };
+  const primary=absenceCard||(isParent?noticeCard||homeworkCard:homeworkCard||noticeCard)||{
+   icon:'book',title:t('School diary'),detail:t('See the classwork and homework shared by teachers.'),
+   label:t('Open school diary'),action:"SNFamily.openHomework('recent')"
+  };
+  const quick=isParent
+   ? [['fee','Fees & receipts',"go('pfees')"],['bell','School notices',noticeAction]]
+   : [['play','Start practice',"go('game')"],['chart','My progress',"go('presults')"]];
+  return '<section class="fam-focus" aria-label="'+t('Today’s priorities')+'"><h2>'+t(isParent?'Today for your child':'Your study plan today')+'</h2>'+
+   '<div class="fam-focus-card"><span class="fam-focus-icon">'+ic(primary.icon)+'</span><div><h3>'+esc(primary.title)+'</h3>'+
+   (primary.detail?'<p>'+esc(primary.detail)+'</p>':'')+'</div><button type="button" class="fam-primary" onclick="'+primary.action+'">'+esc(primary.label)+'</button></div>'+
+   '<div class="fam-focus-links">'+quick.map(([icon,label,action])=>'<button type="button" onclick="'+action+'">'+ic(icon)+'<span>'+t(label)+'</span></button>').join('')+'</div></section>';
+ }
+ function familyFeeSummary(kid){
+  if(typeof PFD==='undefined'||!PFD||PFD.error)return '';
+  const dues=PFD.kids.find(item=>String(item.id)===String(kid.id))?.dues;
+  const receipt=PFD.receipts.find(item=>String(item.sid)===String(kid.id));
+  if(!dues&&!receipt)return '';
+  const due=dues?.due;
+  const hasBalance=dues&&!dues.missing&&Number.isFinite(due);
+  const balance=hasBalance?rs(Math.abs(due)):t('Check with the school office');
+  const balanceLabel=t(hasBalance&&due<0?'Advance balance':'Balance due');
+  const payment=dues?.detailed?t('See receipts in the fee ledger'):receipt?rs(receipt.amt)+' · '+fmtDate(receipt.date):t('No receipt recorded yet');
+  return '<section class="fam-fee-summary" aria-label="'+t('Fee summary')+'"><h2>'+t('Fees & receipts')+'</h2>'+
+   '<dl><div><dt>'+balanceLabel+'</dt><dd>'+esc(balance)+'</dd></div>'+
+   '<div><dt>'+t('Last recorded payment')+'</dt><dd>'+esc(payment)+'</dd></div></dl>'+
+   '<button type="button" class="fam-primary" onclick="go(\'finance\')">'+t('Open fee ledger & receipts')+'</button></section>';
  }
  const TITLES={pchk:'Homework & copy checks',ptmr:'Next school day',pcal:'Calendar',prec:'Achievements & record',psyl:'Exam syllabus',pzone:'Learning Hub',pset:'Settings',phw:'Homework & class work',pfees:'Fees',presults:'Results & progress',pnotices:'Notices & calendar',game:'Game Zone',quiz:'Quiz Duel',learning:'Learning Adventure',faculty:'Our Teachers',studio:'Class teacher',finance:'Fee Ledger'};
  if(originalRender)render=function(){
@@ -102,7 +197,7 @@
   document.body.classList.add('fam-signed-in');
   const content=root.querySelector('main.erp-wrap');if(!content)return;
   const all=NAV[U.role]||[],isParent=U.role==='parent';
-  const tabs=[['phome','Chats','chat'],['phw','Homework','book'],[isParent?'pfees':'game',isParent?'Fees':'Practice',isParent?'fee':'play'],['presults','Progress','chart'],['pnotices','Updates','bell']];
+  const tabs=[['phome','Home','chat'],['phw','Homework','book'],[isParent?'pfees':'game',isParent?'Fees':'Practice',isParent?'fee':'play'],['presults','Progress','chart'],['pnotices','Updates','bell']];
   const kid=typeof pKid==='function'&&typeof PD!=='undefined'&&PD&&PD.kids&&PD.kids.length?pKid():null;
   const home=view==='phome',chatView=view==='phw'||view==='pnotices';
   const oldNodes=[...content.childNodes];
@@ -113,13 +208,32 @@
   const body=!kid?'<div class="wa-page fam-real-screen"></div>':rich?FZ.home(kid,isParent,'<span class="wa-lang">'+language()+'</span><button class="wa-ib fam-account" onclick="SNFamily.menu()" aria-label="Open account menu">'+ic('dots')+'</button>')+chats(kid,isParent):home?kidStatus(kid)+(window.FZ&&FZ.status?FZ.status(kid):'')+chats(kid,isParent):view==='phw'?(PD.kids.length>1?kidStatus(kid):'')+hwChat(kid):view==='pnotices'?noticeChat():'<div class="wa-page fam-real-screen"></div>';
   root.innerHTML='<div class="fam-phone wa'+(chatView?' wa-wall':'')+(home&&kid&&window.FZ&&FZ.home?' fh-on':'')+'">'+head+'<main class="wa-main">'+body+'</main><nav class="fam-tabs wa-nav" aria-label="Main menu">'+tabs.map(([key,label,icon])=>'<button class="fam-tab '+(view===key?'on':'')+'" onclick="go(\''+key+'\')" '+(view===key?'aria-current="page"':'')+'><span class="pill">'+ic(icon)+'</span><span>'+t(label)+'</span></button>').join('')+'</nav>'+
    '<dialog id="fam-menu"><div class="fam-sheet"><div class="fam-sheet-top"><b>'+t('Your school, at a glance')+'</b><button onclick="document.getElementById(\'fam-menu\').close()" aria-label="Close menu">×</button></div><div class="fam-shortcuts">'+all.map(([key,icon,label])=>'<button onclick="document.getElementById(\'fam-menu\').close();go(\''+key+'\')"><i class="fa-solid '+icon+'"></i>'+t(label)+'</button>').join('')+'</div>'+(VIEWS.pset?'<button onclick="document.getElementById(\'fam-menu\').close();go(\'pset\')">⚙️ '+t('Settings')+'</button>':'')+'<button onclick="SNFamily.intro()">'+t('Replay welcome')+'</button><button onclick="changeMyPin()">'+t('Change PIN')+'</button><button onclick="logout()">'+t('Log out')+'</button></div></dialog></div>';
-  const target=root.querySelector('.wa-page');if(target)oldNodes.forEach(n=>target.appendChild(n));
+  const target=root.querySelector('.wa-page');
+  if(target)oldNodes.forEach(n=>target.appendChild(n));
+  if(home&&kid){
+   const hero=root.querySelector('.fh-hero'),main=root.querySelector('.wa-main');
+   if(hero)hero.insertAdjacentHTML('afterend',familyFocus(kid,isParent));
+   else main.insertAdjacentHTML('afterbegin',familyFocus(kid,isParent));
+  }
+  if(view==='pfees'&&isParent&&kid&&navHas('finance')&&target){
+   target.insertAdjacentHTML('afterbegin',familyFeeSummary(kid));
+  }
   if(view==='faculty'&&typeof loadParentFaculty==='function')loadParentFaculty();
-  if(chatView){const m=root.querySelector('.wa-main');if(m)requestAnimationFrame(()=>{m.scrollTop=m.scrollHeight;});}
+  if(view==='pnotices'){const m=root.querySelector('.wa-main');if(m)requestAnimationFrame(()=>{m.scrollTop=0;});}
+  if(view==='phw'&&WA.homework==='recent'){
+   const latest=root.querySelectorAll('.wa-chat .wa-day');
+   if(latest.length)requestAnimationFrame(()=>latest[latest.length-1].scrollIntoView?.({block:'nearest'}));
+  }
   if(window.SchoolLang)SchoolLang.apply();
  };
  window.SNFamily={
   filter(k){WA.f=k;render();},
+  openHomework(range){WA.homework=range;go('phw');},
+  homeworkRange(range){
+   WA.homework=range;
+   render();
+   root.querySelector('[data-hw-range="'+range+'"]')?.focus();
+  },
   menu(){const d=document.getElementById('fam-menu');if(d)d.showModal();},
   closeIntro(){clearTimeout(introTimer);document.getElementById('fam-intro')?.remove();},
   intro(){
